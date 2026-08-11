@@ -376,3 +376,67 @@ func ParseVideoPath(path string) (*dto.FileInfo, error) {
 	}
 	return info, nil
 }
+
+/**
+ * StoreContent lưu dữ liệu từ io.Reader mà không phụ thuộc vào multipart hoặc HTTP.
+ *
+ * Hàm này dùng cho gRPC nội bộ và các background job.
+ */
+func (s *StorageService) StoreContent(
+	reader io.Reader,
+	fileName string,
+	contentType string,
+	size int64,
+	accessID *uint64,
+	fileID uint64,
+	relativePaths ...string,
+) (*dto.FileInfo, error) {
+	if reader == nil {
+		return nil, errors.New("không có nội dung file")
+	}
+
+	filePath, ext, err := s.BuildFilePath(fileName, accessID, fileID, true, relativePaths...)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+		return nil, fmt.Errorf("không thể tạo thư mục: %w", err)
+	}
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	written, copyErr := io.Copy(dst, reader)
+	closeErr := dst.Close()
+	if copyErr != nil {
+		_ = os.Remove(filePath)
+		return nil, copyErr
+	}
+	if closeErr != nil {
+		_ = os.Remove(filePath)
+		return nil, closeErr
+	}
+	if size > 0 && written != size {
+		_ = os.Remove(filePath)
+		return nil, fmt.Errorf("file size không khớp: expected=%d actual=%d", size, written)
+	}
+
+	hash, err := computeFileHash(filePath)
+	if err != nil {
+		_ = os.Remove(filePath)
+		return nil, err
+	}
+
+	return &dto.FileInfo{
+		FileName:     fileName,
+		RelativePath: strings.TrimPrefix(filePath, s.RootLocation+"/"),
+		AbsolutePath: filePath,
+		Extension:    ext,
+		Size:         written,
+		Hash:         hash,
+		ContentType:  contentType,
+	}, nil
+}

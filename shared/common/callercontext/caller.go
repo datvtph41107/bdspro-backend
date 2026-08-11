@@ -2,6 +2,7 @@ package callercontext
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -35,6 +36,11 @@ type Caller struct {
 
 type callerContextKey struct{}
 
+var (
+	ErrInvalidCaller         = errors.New("caller classification is invalid")
+	ErrCallerContextConflict = errors.New("caller classification conflicts with the existing context")
+)
+
 /**
  * IsValid reports whether the caller classification is internally consistent.
  */
@@ -53,14 +59,23 @@ func (c Caller) IsValid() bool {
 }
 
 /**
- * WithCaller stores a validated caller classification in context.
+ * BindCaller validates and immutably binds one logical caller.
  */
-func WithCaller(ctx context.Context, caller Caller) context.Context {
-	if ctx == nil || !caller.IsValid() {
-		return ctx
+func BindCaller(ctx context.Context, caller Caller) (context.Context, error) {
+	if ctx == nil {
+		return nil, errors.New("context is nil")
+	}
+	if !caller.IsValid() {
+		return ctx, ErrInvalidCaller
 	}
 	caller.APIKeyApp = strings.TrimSpace(caller.APIKeyApp)
-	return context.WithValue(ctx, callerContextKey{}, caller)
+	if existing, ok := FromContext(ctx); ok {
+		if existing == caller {
+			return ctx, nil
+		}
+		return ctx, ErrCallerContextConflict
+	}
+	return context.WithValue(ctx, callerContextKey{}, caller), nil
 }
 
 /**
@@ -144,16 +159,19 @@ func singleOptional(md metadata.MD, key string) (string, bool, error) {
 	if len(values) != 1 {
 		return "", false, fmt.Errorf("duplicate %s metadata", key)
 	}
-	value := strings.TrimSpace(values[0])
+	raw := values[0]
+	value := strings.TrimSpace(raw)
 	if value == "" {
 		return "", false, fmt.Errorf("empty %s metadata", key)
+	}
+	if value != raw {
+		return "", false, fmt.Errorf("invalid %s metadata", key)
 	}
 	return value, true, nil
 }
 
 func validText(value string) bool {
-	value = strings.TrimSpace(value)
-	if value == "" || len(value) > 128 {
+	if value == "" || strings.TrimSpace(value) != value || len(value) > 128 {
 		return false
 	}
 	for _, r := range value {

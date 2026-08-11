@@ -22,6 +22,7 @@ import (
 	_middleware "common/middleware"
 	"common/quota"
 	_redis "common/redis"
+	"common/transporttrust"
 
 	tqdpb "pb/types/tqd"
 
@@ -60,6 +61,8 @@ func RunGRPCServer() error {
 
 func runGRPCServer() error {
 	log.Println("Starting TQD gRPC Server...")
+	targetReportEnabled := reportTargetEnabled()
+	log.Printf("[REPORT-TARGET] enabled=%t", targetReportEnabled)
 
 	// Load configuration
 	cfg := config.LoadConfig()
@@ -149,17 +152,33 @@ func runGRPCServer() error {
 		}
 	}
 
+	legacyQuotaInterceptor := quotaInterceptor
+	quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if info != nil && usesTargetQuota(targetReportEnabled, info.FullMethod) {
+			return handler(ctx, req)
+		}
+		return legacyQuotaInterceptor(ctx, req, info, handler)
+	}
+
+	businessOperationInterceptor, err := newBusinessOperationInterceptor(targetReportEnabled)
+	if err != nil {
+		return err
+	}
+
 	operationRuntime, err := newTQDOperationRuntime()
 	if err != nil {
 		return err
 	}
+	legacyOperationInterceptor := skipTargetOperationRuntime(operationRuntime.UnaryServerInterceptor, targetReportEnabled)
+	trustConfig := transporttrust.ConfigFromEnv()
 
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
 		grpc.ChainUnaryInterceptor(
-			_middleware.ParseGrpcMetadataContextMiddleware,
-			operationRuntime.UnaryServerInterceptor,
+			targetIngress(trustConfig, targetReportEnabled),
+			businessOperationInterceptor,
+			legacyOperationInterceptor,
 			quotaInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
@@ -204,6 +223,19 @@ func runGRPCServer() error {
 	reflection.Register(s)
 
 	workerCtx, workerCancel := context.WithCancel(context.Background())
+	closeReportTarget, err := startReportTarget(
+		workerCtx,
+		projectionDB,
+		app.WorkspaceMapGrpcHandler,
+		nil,
+		targetReportEnabled,
+	)
+	if err != nil {
+		workerCancel()
+		return fmt.Errorf("start generated report target: %w", err)
+	}
+	defer closeReportTarget()
+
 	if app.QHPlanningClassifyWorker != nil {
 		app.QHPlanningClassifyWorker.Start(workerCtx)
 	}

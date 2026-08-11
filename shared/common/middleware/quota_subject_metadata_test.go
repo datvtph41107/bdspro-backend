@@ -15,6 +15,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func mustBindSubject(ctx context.Context, subject _quotasubject.Subject) context.Context {
+	bound, err := _quotasubject.BindSubject(ctx, subject)
+	if err != nil {
+		panic(err)
+	}
+	return bound
+}
+
 func TestParseGrpcMetadataStoresVerifiedQuotaSubject(t *testing.T) {
 	t.Parallel()
 
@@ -90,7 +98,7 @@ func TestGrpcClientMetadataPropagatesQuotaSubject(t *testing.T) {
 	want := _quotasubject.Subject{
 		Kind: _quotasubject.KindOrganization, ID: "12", Source: _quotasubject.SourceOrganizationMembership,
 	}
-	ctx := _quotasubject.WithSubject(context.Background(), want)
+	ctx := mustBindSubject(context.Background(), want)
 	md := GrpcClientMetadataFromContext(ctx)
 
 	got, ok, err := _quotasubject.FromMetadata(md)

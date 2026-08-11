@@ -3,6 +3,7 @@ package main
 import (
 	_db "common/db"
 	_jwt "common/jwt"
+	"context"
 	"file/config"
 	_ "file/docs/file"
 	"file/models"
@@ -103,6 +104,17 @@ func main() {
 	versionService := services.NewVersionService(fileService, storageService)
 	RootApp := NewConfigApp(db, fileService, versionService)
 	// RootApp.
+	grpcCtx, stopGRPC := context.WithCancel(context.Background())
+	defer stopGRPC()
+	if fileGRPCTargetEnabled() {
+		grpcPort := fileGRPCTargetPort()
+		go func() {
+			log.Printf("Internal file gRPC server listening on :%s", grpcPort)
+			if err := serveFileGRPCTarget(grpcCtx, grpcPort, fileService); err != nil {
+				log.Fatalf("Internal file gRPC server failed: %v", err)
+			}
+		}()
+	}
 
 	layerAllowedRe := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 

@@ -32,6 +32,12 @@ func RequestLifecycle(
 				ctx.Request.Context(),
 			)
 
+		operationID, _ :=
+			_requestcontext.
+				OperationIDFromContext(
+					ctx.Request.Context(),
+				)
+
 		route := normalizedRoute(
 			ctx,
 		)
@@ -40,6 +46,7 @@ func RequestLifecycle(
 			ctx.Request.Context(),
 			HTTPRequestResult{
 				RequestID:        requestID,
+				OperationID:      operationID,
 				Method:           ctx.Request.Method,
 				Route:            route,
 				StatusCode:       ctx.Writer.Status(),

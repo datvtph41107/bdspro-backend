@@ -6,6 +6,7 @@ import (
 	"errors"
 	hubpb "pb/types/hub"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -57,5 +58,46 @@ func TestHubAPIKeyVerifierMapsTransportFailure(t *testing.T) {
 	_, err := verifier.VerifyAPIKey(context.Background(), "0123456789abcdef")
 	if !errors.Is(err, _jwt.ErrAPIKeyUnavailable) {
 		t.Fatalf("error = %v, want ErrAPIKeyUnavailable", err)
+	}
+}
+
+type blockingHubAPIKeyClient struct {
+	hubpb.ApiKeyServiceClient
+}
+
+func (blockingHubAPIKeyClient) VerifyApiKey(
+	ctx context.Context,
+	_ *hubpb.VerifyApiKeyRequest,
+	_ ...grpc.CallOption,
+) (*hubpb.VerifyApiKeyResponse, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestHubAPIKeyVerifierPreservesParentCancellation(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	verifier := &HubAPIKeyVerifier{
+		client:  blockingHubAPIKeyClient{},
+		timeout: time.Second,
+	}
+	_, err := verifier.VerifyAPIKey(ctx, "0123456789abcdef")
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("error = %v, want context.Canceled", err)
+	}
+}
+
+func TestHubAPIKeyVerifierPreservesDeadlineExceeded(t *testing.T) {
+	t.Parallel()
+
+	verifier := &HubAPIKeyVerifier{
+		client:  blockingHubAPIKeyClient{},
+		timeout: time.Millisecond,
+	}
+	_, err := verifier.VerifyAPIKey(context.Background(), "0123456789abcdef")
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want context.DeadlineExceeded", err)
 	}
 }

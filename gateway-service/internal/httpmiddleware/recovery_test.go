@@ -92,6 +92,30 @@ func TestRecoveryOwnsPanicLogging(
 			"structured panic evidence was not recorded",
 		)
 	}
+
+	var event map[string]any
+
+	if err := json.Unmarshal(
+		bytes.TrimSpace(
+			structuredOutput.Bytes(),
+		),
+		&event,
+	); err != nil {
+		t.Fatalf(
+			"invalid panic JSON: %v\n%s",
+			err,
+			structuredOutput.String(),
+		)
+	}
+
+	if operationID, exists :=
+		event["operation_id"]; exists {
+
+		t.Fatalf(
+			"operation_id = %v, want field omitted",
+			operationID,
+		)
+	}
 }
 
 func TestRecoveryRecordsStructuredPanicEvidence(
@@ -120,6 +144,7 @@ func TestRecoveryRecordsStructuredPanicEvidence(
 			recorder,
 		),
 		Recovery(logger),
+		OperationID(),
 	)
 
 	router.GET(
@@ -141,6 +166,11 @@ func TestRecoveryRecordsStructuredPanicEvidence(
 	request.Header.Set(
 		_requestcontext.RequestIDHeader,
 		"request-panic-evidence-123",
+	)
+
+	request.Header.Set(
+		_requestcontext.OperationIDHeader,
+		"operation-panic-evidence-456",
 	)
 
 	response :=
@@ -194,6 +224,15 @@ func TestRecoveryRecordsStructuredPanicEvidence(
 		)
 	}
 
+	if result.OperationID !=
+		"operation-panic-evidence-456" {
+
+		t.Fatalf(
+			"recorded operation ID = %q",
+			result.OperationID,
+		)
+	}
+
 	var event map[string]any
 
 	if err :=
@@ -226,6 +265,15 @@ func TestRecoveryRecordsStructuredPanicEvidence(
 		t.Fatalf(
 			"request_id = %v",
 			event["request_id"],
+		)
+	}
+
+	if event["operation_id"] !=
+		"operation-panic-evidence-456" {
+
+		t.Fatalf(
+			"operation_id = %v",
+			event["operation_id"],
 		)
 	}
 

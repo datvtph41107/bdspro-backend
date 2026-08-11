@@ -24,6 +24,7 @@ type RequestIDDecisionRecorder interface {
 
 type HTTPRequestResult struct {
 	RequestID        string
+	OperationID      string
 	Method           string
 	Route            string
 	StatusCode       int

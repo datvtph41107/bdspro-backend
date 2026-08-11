@@ -1,28 +1,27 @@
 package repositories
 
 import (
-	_db "common/db"
 	cmodels "common/models"
 	"file/models"
 
 	"gorm.io/gorm"
 )
 
-// FileRepository thao tác với FileEntity trong DB
+// AccessRepository lưu quyền truy cập file.
 type AccessRepository struct {
 	cmodels.BaseRepository
 }
 
-// NewUserRepository khởi tạo UserRepository
+// NewFileAccessRepository tạo repository với database hiện tại.
 func NewFileAccessRepository(db *gorm.DB) *AccessRepository {
 	return &AccessRepository{
 		BaseRepository: cmodels.BaseRepository{DB: db},
 	}
 }
 
-// Save lưu file vào DB
+// Create lưu một quyền truy cập file.
 func (r *AccessRepository) Create(file *models.AccessEntity) error {
-	return _db.DB.Create(file).Error
+	return r.DB.Create(file).Error
 }
 
 // existAccess kiểm tra sự tồn tại của quyền truy cập

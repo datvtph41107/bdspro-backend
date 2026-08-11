@@ -4,6 +4,7 @@ import (
 	"common"
 	_jwt "common/jwt"
 	"context"
+	"errors"
 	"fmt"
 	hubpb "pb/types/hub"
 	"strings"
@@ -43,7 +44,7 @@ func NewHubAPIKeyVerifier(env string, opts []grpc.DialOption) (*HubAPIKeyVerifie
  * VerifyAPIKey returns non-secret identity for one valid key.
  */
 func (v *HubAPIKeyVerifier) VerifyAPIKey(ctx context.Context, rawKey string) (_jwt.VerifiedAPIKey, error) {
-	if v == nil || v.client == nil {
+	if ctx == nil || v == nil || v.client == nil {
 		return _jwt.VerifiedAPIKey{}, _jwt.ErrAPIKeyUnavailable
 	}
 
@@ -56,7 +57,14 @@ func (v *HubAPIKeyVerifier) VerifyAPIKey(ctx context.Context, rawKey string) (_j
 
 	resp, err := v.client.VerifyApiKey(callCtx, &hubpb.VerifyApiKeyRequest{ApiKey: rawKey})
 	if err != nil {
-		return _jwt.VerifiedAPIKey{}, fmt.Errorf("%w: %v", _jwt.ErrAPIKeyUnavailable, err)
+		switch {
+		case errors.Is(err, context.Canceled), errors.Is(callCtx.Err(), context.Canceled):
+			return _jwt.VerifiedAPIKey{}, context.Canceled
+		case errors.Is(err, context.DeadlineExceeded), errors.Is(callCtx.Err(), context.DeadlineExceeded):
+			return _jwt.VerifiedAPIKey{}, context.DeadlineExceeded
+		default:
+			return _jwt.VerifiedAPIKey{}, fmt.Errorf("%w: %v", _jwt.ErrAPIKeyUnavailable, err)
+		}
 	}
 	if resp == nil || !resp.GetValid() || resp.GetData() == nil {
 		return _jwt.VerifiedAPIKey{}, _jwt.ErrAPIKeyInvalid

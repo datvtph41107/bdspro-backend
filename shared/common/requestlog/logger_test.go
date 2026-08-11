@@ -1,0 +1,55 @@
+package requestlog
+
+import (
+	"bytes"
+	"common/businessoperation"
+	"common/identitycontext"
+	"common/requestcontext"
+	"context"
+	"log/slog"
+	"strings"
+	"testing"
+)
+
+func TestFromContextAddsTraceFieldsWithoutLoggingIdempotencyKey(t *testing.T) {
+	ctx := context.Background()
+	ctx = requestcontext.WithRequestID(ctx, "req_123")
+
+	var err error
+	ctx, err = requestcontext.BindOperationID(ctx, "op_123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, err = requestcontext.BindIdempotencyKey(ctx, "idem_secret_123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, err = identitycontext.BindActor(ctx, identitycontext.Actor{ProfileID: 42})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, err = businessoperation.Bind(ctx, businessoperation.WorkspaceReportGenerate)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buffer bytes.Buffer
+	base := slog.New(slog.NewTextHandler(&buffer, nil))
+	FromContext(ctx, base).Info("request trace")
+	output := buffer.String()
+
+	for _, expected := range []string{
+		"request_id=req_123",
+		"operation_id=op_123",
+		"idempotency_key_set=true",
+		"profile_id=42",
+		"business_operation=workspace.report.generate",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("log output %q missing %q", output, expected)
+		}
+	}
+	if strings.Contains(output, "idem_secret_123") {
+		t.Fatalf("log output leaked idempotency key: %q", output)
+	}
+}

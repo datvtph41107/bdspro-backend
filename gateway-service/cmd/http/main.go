@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	_grpcclient "common/grpcclient"
 	_jwt "common/jwt"
 	_middleware "common/middleware"
-	_requestcontext "common/requestcontext"
+	_transporttrust "common/transporttrust"
 
 	"context"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"gateway/config"
+	_grpcmetadata "gateway/internal/grpcmetadata"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_observability "gateway/internal/observability"
 	"gateway/pkg"
@@ -231,6 +233,12 @@ var HttpCmd = &cobra.Command{
 
 		gin.DefaultWriter = logOutput
 
+		configureGinMode(
+			os.Getenv(
+				gin.EnvGinMode,
+			),
+		)
+
 		logger :=
 			slog.New(
 				slog.NewJSONHandler(
@@ -280,25 +288,6 @@ var HttpCmd = &cobra.Command{
 				),
 		)
 
-		r.Use(
-			func(
-				c *gin.Context,
-			) {
-				operationID :=
-					_requestcontext.
-						EnsureOperationID(
-							c.Request,
-						)
-
-				_requestcontext.
-					SetOperationResponseHeader(
-						c.Writer,
-						operationID,
-					)
-
-				c.Next()
-			},
-		)
 		// CORS middleware
 		corsConfig :=
 			_httpmiddleware.
@@ -348,8 +337,6 @@ var HttpCmd = &cobra.Command{
 							"X-QHPro-Telemetry-Key",
 							"Referer",
 							"timezone_offset",
-							_requestcontext.OperationIDHeader,
-							_requestcontext.IdempotencyKeyHeader,
 						},
 
 						ExposeHeaders: []string{
@@ -360,11 +347,22 @@ var HttpCmd = &cobra.Command{
 							"Cache-Control",
 							"X-Robots-Tag",
 							"X-Content-Type-Options",
-							_requestcontext.OperationIDHeader,
 						},
 						AllowCredentials: true,
 						MaxAge:           12 * time.Hour,
 					},
+				)
+
+		corsConfig =
+			_httpmiddleware.
+				WithOperationIDCORS(
+					corsConfig,
+				)
+
+		corsConfig =
+			_httpmiddleware.
+				WithIdempotencyKeyCORS(
+					corsConfig,
 				)
 		r.Use(
 			cors.New(
@@ -372,36 +370,22 @@ var HttpCmd = &cobra.Command{
 			),
 		)
 
-		/**
-		 * Reject malformed optional idempotency keys.
-		 */
 		r.Use(
-			func(
-				c *gin.Context,
-			) {
-				if _, _, err :=
-					_requestcontext.
-						IdempotencyKeyFromRequest(
-							c.Request,
-						); err != nil {
+			_httpmiddleware.
+				OperationID(),
+		)
 
-					c.AbortWithStatusJSON(
-						http.StatusBadRequest,
-						gin.H{
-							"error": "invalid Idempotency-Key header",
-						},
-					)
-
-					return
-				}
-
-				c.Next()
-			},
+		r.Use(
+			_httpmiddleware.
+				IdempotencyKey(),
 		)
 
 		// gRPC Gateway muxcs
 		mux := runtime.NewServeMux(
-			runtime.WithMetadata(_middleware.InjectGrpcMetadataContextMiddleware),
+			runtime.WithMetadata(_grpcmetadata.DuringReportMigration(
+				_grpcmetadata.ReportTargetEnabled(),
+				_middleware.InjectGrpcMetadataContextMiddleware,
+			)),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 				if tokenErr, ok := ctx.Value("token_error").(error); ok {
 					http.Error(w, tokenErr.Error(), http.StatusUnauthorized)
@@ -438,10 +422,11 @@ var HttpCmd = &cobra.Command{
 		)
 
 		ctx := context.Background()
+		trustConfig := _transporttrust.ConfigFromEnv()
 		opts := []grpc.DialOption{
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithChainUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithChainStreamInterceptor(_middleware.StreamClientInterceptor),
+			grpc.WithChainUnaryInterceptor(_grpcclient.UnaryClientInterceptor(trustConfig)),
+			grpc.WithChainStreamInterceptor(_grpcclient.StreamClientInterceptor(trustConfig)),
 			grpc.WithConnectParams(grpc.ConnectParams{
 				Backoff: backoff.Config{
 					BaseDelay:  5 * time.Second,

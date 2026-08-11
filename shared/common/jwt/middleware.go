@@ -2,6 +2,7 @@ package _jwt
 
 import (
 	_callercontext "common/callercontext"
+	_identitycontext "common/identitycontext"
 
 	"context"
 	"encoding/json"
@@ -11,12 +12,10 @@ import (
 	"net/http"
 	sharepb "pb/types/shared"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -35,83 +34,38 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string, options ...AuthO
 			return
 		}
 
-		rawAPIKey, hasAPIKey, apiKeyErr := APIKeyFromRequest(c.Request)
-		if apiKeyErr != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": "Invalid API key header",
-			})
-			return
-		}
-
-		var verifiedAPIKey VerifiedAPIKey
-		if hasAPIKey {
-			if cfg.apiKeyVerifier == nil {
-				c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
-					"code":    http.StatusServiceUnavailable,
-					"message": "API key verification unavailable",
-				})
-				return
-			}
-
-			verifiedAPIKey, apiKeyErr = cfg.apiKeyVerifier.VerifyAPIKey(c.Request.Context(), rawAPIKey)
-			if apiKeyErr != nil {
-				statusCode := http.StatusUnauthorized
-				if errors.Is(apiKeyErr, ErrAPIKeyUnavailable) {
-					statusCode = http.StatusServiceUnavailable
-				}
-				c.AbortWithStatusJSON(statusCode, gin.H{
-					"code":    statusCode,
-					"message": "API key verification failed",
-				})
-				return
-			}
-			if verifiedAPIKey.ID == 0 || strings.TrimSpace(verifiedAPIKey.AppName) == "" {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"code":    http.StatusUnauthorized,
-					"message": "Invalid API key",
-				})
-				return
-			}
-
-			c.Request.Header.Set(APIKeyHeader, rawAPIKey)
-			c.Set("api-key", rawAPIKey)
-			c.Set("api-key-id", verifiedAPIKey.ID)
-			c.Set("api-key-app", verifiedAPIKey.AppName)
-		}
-
 		tokenString := strings.TrimSpace(c.GetHeader("Authorization"))
 		ignoreToken := pubRoutes != nil && isPublicRoute(pubRoutes, c.Request.URL.Path)
-		if tokenString == "" && !ignoreToken && !hasAPIKey {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": "Authorization header missing",
-			})
-			return
-		}
 
 		var claims *Principal
-		var tokenErr error
 		if tokenString != "" {
 			tokenString = strings.TrimSpace(strings.TrimPrefix(tokenString, "Bearer "))
+			var tokenErr error
 			claims, tokenErr = ParseJWT(tokenString)
-		}
-		if tokenErr != nil && !ignoreToken {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": "Invalid or expired token",
-			})
-			return
+			if tokenErr != nil || claims == nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"code":    http.StatusUnauthorized,
+					"message": "Invalid or expired token",
+				})
+				return
+			}
 		}
 
-		caller := _callercontext.Caller{Kind: _callercontext.KindAnonymous}
-		if claims != nil && tokenErr == nil {
-			c.Request = c.Request.WithContext(WithPrincipal(c.Request.Context(), claims))
+		if claims != nil {
+			requestCtx := WithPrincipal(c.Request.Context(), claims)
+			boundActorCtx, bindActorErr := _identitycontext.BindActor(requestCtx, ActorFromPrincipal(claims))
+			if bindActorErr != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"code":    http.StatusInternalServerError,
+					"message": "actor context conflict",
+				})
+				return
+			}
+			c.Request = c.Request.WithContext(boundActorCtx)
 			c.Set("claims", claims)
 			c.Set("organizationId", claims.OrganizationId)
 			c.Set("profileId", claims.ProfileId)
 			c.Set("planId", claims.PlanId)
-			caller.Kind = _callercontext.KindUser
 
 			if claims.Type == string(TempToken) {
 				isTempRoute := false
@@ -129,101 +83,55 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string, options ...AuthO
 					return
 				}
 			}
-		} else if hasAPIKey {
-			caller.Kind = _callercontext.KindAPIKey
 		}
 
-		if hasAPIKey {
-			caller.APIKeyID = verifiedAPIKey.ID
-			caller.APIKeyApp = verifiedAPIKey.AppName
-		}
-		if !caller.IsValid() {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": "Invalid caller classification",
+		resolution, callerErr := ResolveHTTPCaller(
+			c.Request.Context(),
+			c.Request,
+			claims,
+			ignoreToken,
+			cfg.apiKeyVerifier,
+		)
+		if callerErr != nil {
+			statusCode := http.StatusUnauthorized
+			message := "Invalid caller classification"
+			switch {
+			case errors.Is(callerErr, ErrAPIKeyHeaderInvalid):
+				statusCode = http.StatusBadRequest
+				message = "Invalid API key header"
+			case errors.Is(callerErr, ErrAPIKeyInvalid):
+				message = "API key verification failed"
+			case errors.Is(callerErr, ErrAPIKeyUnavailable), errors.Is(callerErr, context.DeadlineExceeded):
+				statusCode = http.StatusServiceUnavailable
+				message = "API key verification unavailable"
+			case errors.Is(callerErr, context.Canceled):
+				c.Abort()
+				return
+			case errors.Is(callerErr, ErrAuthenticationRequired):
+				message = "Authorization header missing"
+			}
+			c.AbortWithStatusJSON(statusCode, gin.H{
+				"code":    statusCode,
+				"message": message,
 			})
 			return
 		}
-		c.Request = c.Request.WithContext(_callercontext.WithCaller(c.Request.Context(), caller))
+		boundCallerContext, bindErr := _callercontext.BindCaller(c.Request.Context(), resolution.Caller)
+		if bindErr != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": "caller context conflict",
+			})
+			return
+		}
+		c.Request = c.Request.WithContext(boundCallerContext)
 		c.Next()
 	}
-}
-
-type AuthError struct {
-	Message string
-}
-
-type authErrorKeyType string
-
-const authErrorKey authErrorKeyType = "auth_error"
-
-func ExtractMetadataFromRequest(ctx context.Context, r *http.Request) metadata.MD {
-	md := metadata.MD{}
-
-	tokenString := r.Header.Get("Authorization")
-	if tokenString == "" {
-		// Gắn lỗi vào context để xử lý sau
-		_ = context.WithValue(ctx, authErrorKey, AuthError{
-			Message: "Missing Authorization header",
-		})
-		return md
-	}
-
-	// Parse token từ "Bearer xxx"
-	splitToken := strings.Split(tokenString, "Bearer ")
-	var tokenStr string
-	if len(splitToken) == 2 {
-		tokenStr = strings.TrimSpace(splitToken[1])
-	} else {
-		tokenStr = strings.TrimSpace(splitToken[0])
-	}
-
-	claims, err := ParseJWT(tokenStr)
-	if err != nil || claims == nil {
-		_ = context.WithValue(ctx, authErrorKey, AuthError{Message: "invalid or expired token"})
-		return md
-	}
-
-	md.Append("profileId", fmt.Sprintf("%d", claims.ProfileId))
-	if claims.OrganizationId != nil {
-		md.Append("organizationId", fmt.Sprintf("%d", *claims.OrganizationId))
-	}
-	if claims.Session != 0 {
-		md.Append("session", fmt.Sprintf("%d", claims.Session))
-	}
-	if claims.Role != "" {
-		md.Append("role", claims.Role)
-	}
-	if claims.Type != "" {
-		md.Append("type", claims.Type)
-	}
-	if claims.AuthID != 0 {
-		md.Append("authId", fmt.Sprintf("%d", claims.AuthID))
-	}
-	if claims.PlanId != nil {
-		md.Append("planId", fmt.Sprintf("%d", *claims.PlanId))
-	}
-	if claims.PlanFrom != nil && !claims.PlanFrom.Time.IsZero() {
-		md.Append("planFrom", claims.PlanFrom.Time.Format(time.RFC3339))
-	}
-	md.Append("method", r.Method)
-
-	return md
 }
 
 func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	log.Println("ErrorToGatewayResponse", err)
-
-	// Nếu context có lỗi auth -> xử lý ở đây
-	if ae, ok := ctx.Value(authErrorKey).(AuthError); ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{
-			"code":    "401",
-			"message": ae.Message,
-		})
-		return
-	}
 
 	// Nếu là lỗi gRPC bình thường
 	grpcErr, ok := status.FromError(err)
@@ -291,6 +199,8 @@ func httpStatusFromCode(code codes.Code) int {
 		return http.StatusNotFound
 	case codes.AlreadyExists:
 		return http.StatusConflict
+	case codes.ResourceExhausted:
+		return http.StatusTooManyRequests
 	case codes.Unimplemented:
 		return http.StatusNotImplemented
 	case codes.Unavailable:

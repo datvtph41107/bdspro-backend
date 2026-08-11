@@ -12,6 +12,7 @@ import (
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/infra/reportgrpc"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
@@ -26,6 +27,7 @@ type MapWorkspaceGrpcHandler struct {
 	usecase      usecase.MapWorkspaceUsecase
 	mapper       *mapper.WorkspaceMapper
 	SyncProvider *_utils.SyncUtil
+	createReport *reportgrpc.Adapter
 }
 
 func NewMapWorkspaceGrpcHandler(
@@ -38,6 +40,15 @@ func NewMapWorkspaceGrpcHandler(
 		mapper:       mapper,
 		SyncProvider: syncProvider,
 	}
+}
+
+/**
+ * UseCreateReportAdapter chuyển riêng CreateGeneratedReport sang flow mới.
+ *
+ * Các RPC workspace khác vẫn chạy code cũ cho tới khi được migrate từng phần.
+ */
+func (h *MapWorkspaceGrpcHandler) UseCreateReportAdapter(adapter *reportgrpc.Adapter) {
+	h.createReport = adapter
 }
 
 func (h *MapWorkspaceGrpcHandler) currentUserID(ctx context.Context) (uint64, error) {
@@ -684,6 +695,11 @@ func (h *MapWorkspaceGrpcHandler) CreateGeneratedReport(
 	ctx context.Context,
 	req *tqdpb.CreateGeneratedReportRequest,
 ) (*tqdpb.CreateGeneratedReportResponse, error) {
+	if h.createReport != nil {
+		return h.createReport.CreateGeneratedReport(ctx, req)
+	}
+
+	// Migration fallback: bỏ nhánh này sau khi flow mới được cutover hoàn toàn.
 	userID, err := h.currentUserID(ctx)
 	if err != nil {
 		return nil, err

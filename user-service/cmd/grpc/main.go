@@ -20,6 +20,7 @@ import (
 	_middleware "common/middleware"
 	"common/quota"
 	_redis "common/redis"
+	"common/transporttrust"
 	admin_middleware "user/infra/middleware"
 
 	"github.com/spf13/cobra"
@@ -76,6 +77,14 @@ var GrpcCmd = &cobra.Command{
 				return handler(ctx, req)
 			}
 		}
+
+		legacyQuotaInterceptor := quotaInterceptor
+		quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			if info != nil && internalAccessMethod(info.FullMethod) {
+				return handler(ctx, req)
+			}
+			return legacyQuotaInterceptor(ctx, req, info, handler)
+		}
 		// =========================
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
@@ -84,9 +93,10 @@ var GrpcCmd = &cobra.Command{
 			log.Fatalf("failed to listen: %v", err)
 		}
 
+		trustConfig := transporttrust.ConfigFromEnv()
 		s := grpc.NewServer(
 			grpc.ChainUnaryInterceptor(
-				_middleware.ParseGrpcMetadataContextMiddleware,
+				accessIngress(trustConfig),
 				admin_middleware.AdminAuthInterceptor,
 				quotaInterceptor,
 			),
@@ -103,6 +113,9 @@ var GrpcCmd = &cobra.Command{
 		userpb.RegisterMembershipServiceServer(s, app.MembershipHandler)
 		userpb.RegisterPlanServiceServer(s, app.PlanHandler)
 		userpb.RegisterInternalUserServiceServer(s, app.InternalHandler)
+		if err := registerAccessService(s); err != nil {
+			log.Fatal(accessRegistrationError(err))
+		}
 		userpb.RegisterMainAreaServiceServer(s, app.MainAreaHandler)
 		userpb.RegisterPurposeUseServiceServer(s, app.PurposeUseHandler)
 		userpb.RegisterProfessionServiceServer(s, app.ProfessionHandler)

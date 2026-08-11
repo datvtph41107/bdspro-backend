@@ -2,6 +2,7 @@ package quotasubject
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"google.golang.org/grpc/metadata"
@@ -28,7 +29,10 @@ func TestSubjectContextAndMetadataRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	want := Subject{Kind: KindProject, ID: "project_9", Source: SourceProjectAccess}
-	ctx := WithSubject(context.Background(), want)
+	ctx, err := BindSubject(context.Background(), want)
+	if err != nil {
+		t.Fatalf("BindSubject() error = %v", err)
+	}
 	got, ok := FromContext(ctx)
 	if !ok || got != want {
 		t.Fatalf("context subject = %+v, %v, want %+v", got, ok, want)
@@ -60,16 +64,39 @@ func TestSubjectMetadataRejectsPartialOrDuplicateValues(t *testing.T) {
 	}
 }
 
-func TestWithSubjectDoesNotOverwriteExistingSubject(t *testing.T) {
+func TestBindSubjectRejectsConflict(t *testing.T) {
 	t.Parallel()
 
 	first := Subject{Kind: KindUser, ID: "42", Source: SourceActorProfile}
 	second := Subject{Kind: KindAPIKey, ID: "88", Source: SourceAPIKeyAuthority}
-	ctx := WithSubject(context.Background(), first)
-	ctx = WithSubject(ctx, second)
+	ctx, err := BindSubject(context.Background(), first)
+	if err != nil {
+		t.Fatalf("first BindSubject() error = %v", err)
+	}
+	unchanged, err := BindSubject(ctx, second)
+	if !errors.Is(err, ErrSubjectContextConflict) {
+		t.Fatalf("conflicting BindSubject() error = %v", err)
+	}
+	if unchanged != ctx {
+		t.Fatal("conflicting subject changed context")
+	}
 
-	got, ok := FromContext(ctx)
+	got, ok := FromContext(unchanged)
 	if !ok || got != first {
 		t.Fatalf("subject = %+v, %v, want %+v", got, ok, first)
+	}
+}
+
+func TestBindSubjectIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	subject := Subject{Kind: KindUser, ID: "42", Source: SourceActorProfile}
+	ctx, err := BindSubject(context.Background(), subject)
+	if err != nil {
+		t.Fatalf("first BindSubject() error = %v", err)
+	}
+	rebound, err := BindSubject(ctx, subject)
+	if err != nil || rebound != ctx {
+		t.Fatalf("same subject bind = %v, %v", rebound, err)
 	}
 }

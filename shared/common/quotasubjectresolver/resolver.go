@@ -14,15 +14,18 @@ import (
 )
 
 var (
-	ErrUnverifiedTransport = errors.New("verified transport is required")
-	ErrCallerMismatch      = errors.New("caller cannot own the requested quota subject")
-	ErrEvidenceRequired    = errors.New("authoritative subject evidence is required")
-	ErrEvidenceMismatch    = errors.New("subject evidence does not match the caller")
-	ErrSubjectConflict     = errors.New("quota subject conflicts with the existing subject")
+	ErrUnverifiedTransport       = errors.New("verified transport is required")
+	ErrCallerMismatch            = errors.New("caller cannot own the requested quota subject")
+	ErrEvidenceRequired          = errors.New("authoritative subject evidence is required")
+	ErrEvidenceMismatch          = errors.New("subject evidence does not match the caller or requirement")
+	ErrSubjectConflict           = errors.New("quota subject conflicts with the existing subject")
+	ErrInvalidRequirement        = errors.New("invalid quota subject requirement")
+	ErrExpectedSubjectIDRequired = errors.New("expected quota subject ID is required for subject continuation")
 )
 
 /**
- * Grant records one authoritative subject assignment.
+ * Grant records one request-scoped decision returned by an authoritative
+ * domain lookup. EvidenceID is a traceable decision reference, not a secret.
  */
 type Grant struct {
 	SubjectKind _quotasubject.Kind
@@ -30,14 +33,21 @@ type Grant struct {
 	GranteeKind _quotasubject.Kind
 	GranteeID   string
 	Authority   string
+	EvidenceID  string
 }
 
 /**
  * Requirement asks for one exact quota subject kind.
+ *
+ * ExpectedID binds the decision to the resource or account selected by the
+ * operation. Authority names the domain service that must have produced a
+ * supplied Grant. Neither field is inferred from arbitrary request metadata.
  */
 type Requirement struct {
-	Kind  _quotasubject.Kind
-	Grant *Grant
+	Kind       _quotasubject.Kind
+	ExpectedID string
+	Authority  string
+	Grant      *Grant
 }
 
 /**
@@ -49,86 +59,16 @@ func Resolve(ctx context.Context, requirement Requirement) (_quotasubject.Subjec
 		return _quotasubject.Subject{}, ErrUnverifiedTransport
 	}
 
+	requirement, err := normalizeRequirement(requirement)
+	if err != nil {
+		return _quotasubject.Subject{}, err
+	}
+
 	if existing, ok := _quotasubject.FromContext(ctx); ok {
-		if existing.Kind != requirement.Kind {
-			return _quotasubject.Subject{}, ErrSubjectConflict
-		}
-		return existing, nil
+		return resolveExisting(ctx, transport, existing, requirement)
 	}
 
-	caller, hasCaller := _callercontext.FromContext(ctx)
-	actor, hasActor := _identitycontext.FromContext(ctx)
-
-	switch requirement.Kind {
-	case _quotasubject.KindUser:
-		if !hasCaller || caller.Kind != _callercontext.KindUser || !hasActor || actor.ProfileID == 0 {
-			return _quotasubject.Subject{}, ErrCallerMismatch
-		}
-		return _quotasubject.Subject{
-			Kind:   _quotasubject.KindUser,
-			ID:     strconv.FormatUint(actor.ProfileID, 10),
-			Source: _quotasubject.SourceActorProfile,
-		}, nil
-
-	case _quotasubject.KindAPIKey:
-		if !hasCaller || (caller.Kind != _callercontext.KindAPIKey && caller.Kind != _callercontext.KindUser) || caller.APIKeyID == 0 {
-			return _quotasubject.Subject{}, ErrCallerMismatch
-		}
-		return _quotasubject.Subject{
-			Kind:   _quotasubject.KindAPIKey,
-			ID:     strconv.FormatUint(caller.APIKeyID, 10),
-			Source: _quotasubject.SourceAPIKeyAuthority,
-		}, nil
-
-	case _quotasubject.KindInternalService:
-		if !hasCaller || caller.Kind != _callercontext.KindInternalService {
-			return _quotasubject.Subject{}, ErrCallerMismatch
-		}
-		return _quotasubject.Subject{
-			Kind:   _quotasubject.KindInternalService,
-			ID:     transport.ServiceID,
-			Source: _quotasubject.SourceTransportService,
-		}, nil
-
-	case _quotasubject.KindOrganization,
-		_quotasubject.KindProject,
-		_quotasubject.KindSubscription:
-		if requirement.Grant == nil {
-			return _quotasubject.Subject{}, ErrEvidenceRequired
-		}
-		if err := validateGrant(*requirement.Grant, requirement.Kind); err != nil {
-			return _quotasubject.Subject{}, err
-		}
-		if !grantMatchesCaller(ctx, *requirement.Grant) {
-			return _quotasubject.Subject{}, ErrEvidenceMismatch
-		}
-		if requirement.Kind == _quotasubject.KindOrganization && hasActor && actor.OrganizationID != nil {
-			assertedID := strconv.FormatUint(*actor.OrganizationID, 10)
-			if assertedID != requirement.Grant.SubjectID {
-				return _quotasubject.Subject{}, ErrEvidenceMismatch
-			}
-		}
-		return subjectFromGrant(*requirement.Grant), nil
-
-	case _quotasubject.KindAnonymous:
-		if !hasCaller || caller.Kind != _callercontext.KindAnonymous {
-			return _quotasubject.Subject{}, ErrCallerMismatch
-		}
-		if requirement.Grant == nil {
-			return _quotasubject.Subject{}, ErrEvidenceRequired
-		}
-		grant := *requirement.Grant
-		if err := validateGrant(grant, _quotasubject.KindAnonymous); err != nil {
-			return _quotasubject.Subject{}, err
-		}
-		if grant.GranteeKind != "" || grant.GranteeID != "" || grant.Authority != transport.ServiceID {
-			return _quotasubject.Subject{}, ErrEvidenceMismatch
-		}
-		return subjectFromGrant(grant), nil
-
-	default:
-		return _quotasubject.Subject{}, fmt.Errorf("unsupported quota subject kind %q", requirement.Kind)
-	}
+	return resolveFresh(ctx, transport, requirement)
 }
 
 /**
@@ -139,26 +79,232 @@ func ResolveAndAttach(ctx context.Context, requirement Requirement) (context.Con
 	if err != nil {
 		return ctx, _quotasubject.Subject{}, err
 	}
-	return _quotasubject.WithSubject(ctx, subject), subject, nil
+	bound, err := _quotasubject.BindSubject(ctx, subject)
+	if err != nil {
+		return ctx, _quotasubject.Subject{}, err
+	}
+	return bound, subject, nil
 }
 
-func validateGrant(grant Grant, expected _quotasubject.Kind) error {
+func resolveExisting(
+	ctx context.Context,
+	transport _transporttrust.Caller,
+	existing _quotasubject.Subject,
+	requirement Requirement,
+) (_quotasubject.Subject, error) {
+	if existing.Kind != requirement.Kind {
+		return _quotasubject.Subject{}, ErrSubjectConflict
+	}
+	if requirement.ExpectedID != "" && existing.ID != requirement.ExpectedID {
+		return _quotasubject.Subject{}, ErrSubjectConflict
+	}
+	if requirement.Grant != nil {
+		grantKind := requirement.Grant.SubjectKind
+		grantID := strings.TrimSpace(requirement.Grant.SubjectID)
+		if grantKind != existing.Kind || grantID != existing.ID {
+			return _quotasubject.Subject{}, ErrSubjectConflict
+		}
+	}
+
+	// A propagated resource-scoped subject is trustworthy only because it was
+	// verified and signed on the incoming transport. The downstream operation
+	// must still name the exact expected ID; kind-only continuation is too weak.
+	if requirement.Grant == nil && requiresExpectedIDForContinuation(existing.Kind) && requirement.ExpectedID == "" {
+		return _quotasubject.Subject{}, ErrExpectedSubjectIDRequired
+	}
+
+	switch existing.Kind {
+	case _quotasubject.KindUser, _quotasubject.KindAPIKey:
+		candidate, err := resolveFresh(ctx, transport, requirement)
+		if err != nil {
+			return _quotasubject.Subject{}, err
+		}
+		if candidate != existing {
+			return _quotasubject.Subject{}, ErrSubjectConflict
+		}
+		return existing, nil
+
+	case _quotasubject.KindInternalService:
+		caller, ok := _callercontext.FromContext(ctx)
+		if !ok || caller.Kind != _callercontext.KindInternalService {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		return existing, nil
+
+	case _quotasubject.KindOrganization,
+		_quotasubject.KindProject,
+		_quotasubject.KindSubscription,
+		_quotasubject.KindAnonymous:
+		caller, ok := _callercontext.FromContext(ctx)
+		if !ok {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		if existing.Kind == _quotasubject.KindAnonymous && caller.Kind != _callercontext.KindAnonymous {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		if requirement.Grant == nil {
+			return existing, nil
+		}
+		candidate, err := resolveFresh(ctx, transport, requirement)
+		if err != nil {
+			return _quotasubject.Subject{}, err
+		}
+		if candidate != existing {
+			return _quotasubject.Subject{}, ErrSubjectConflict
+		}
+		return existing, nil
+
+	default:
+		return _quotasubject.Subject{}, ErrInvalidRequirement
+	}
+}
+
+func resolveFresh(
+	ctx context.Context,
+	transport _transporttrust.Caller,
+	requirement Requirement,
+) (_quotasubject.Subject, error) {
+	caller, hasCaller := _callercontext.FromContext(ctx)
+	actor, hasActor := _identitycontext.FromContext(ctx)
+
+	var subject _quotasubject.Subject
+
+	switch requirement.Kind {
+	case _quotasubject.KindUser:
+		if requirement.Grant != nil || requirement.Authority != "" {
+			return _quotasubject.Subject{}, ErrInvalidRequirement
+		}
+		if !hasCaller || caller.Kind != _callercontext.KindUser || !hasActor || actor.ProfileID == 0 {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		subject = _quotasubject.Subject{
+			Kind:   _quotasubject.KindUser,
+			ID:     strconv.FormatUint(actor.ProfileID, 10),
+			Source: _quotasubject.SourceActorProfile,
+		}
+
+	case _quotasubject.KindAPIKey:
+		if requirement.Grant != nil || requirement.Authority != "" {
+			return _quotasubject.Subject{}, ErrInvalidRequirement
+		}
+		if !hasCaller || (caller.Kind != _callercontext.KindAPIKey && caller.Kind != _callercontext.KindUser) || caller.APIKeyID == 0 {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		subject = _quotasubject.Subject{
+			Kind:   _quotasubject.KindAPIKey,
+			ID:     strconv.FormatUint(caller.APIKeyID, 10),
+			Source: _quotasubject.SourceAPIKeyAuthority,
+		}
+
+	case _quotasubject.KindInternalService:
+		if requirement.Grant != nil || requirement.Authority != "" {
+			return _quotasubject.Subject{}, ErrInvalidRequirement
+		}
+		if !hasCaller || caller.Kind != _callercontext.KindInternalService {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		subject = _quotasubject.Subject{
+			Kind:   _quotasubject.KindInternalService,
+			ID:     transport.ServiceID,
+			Source: _quotasubject.SourceTransportService,
+		}
+
+	case _quotasubject.KindOrganization,
+		_quotasubject.KindProject,
+		_quotasubject.KindSubscription:
+		if requirement.Grant == nil {
+			return _quotasubject.Subject{}, ErrEvidenceRequired
+		}
+		grant, err := normalizeAndValidateGrant(*requirement.Grant, requirement)
+		if err != nil {
+			return _quotasubject.Subject{}, err
+		}
+		if !grantMatchesCaller(ctx, grant) {
+			return _quotasubject.Subject{}, ErrEvidenceMismatch
+		}
+		if requirement.Kind == _quotasubject.KindOrganization && hasActor && actor.OrganizationID != nil {
+			assertedID := strconv.FormatUint(*actor.OrganizationID, 10)
+			if assertedID != grant.SubjectID {
+				return _quotasubject.Subject{}, ErrEvidenceMismatch
+			}
+		}
+		subject = subjectFromGrant(grant)
+
+	case _quotasubject.KindAnonymous:
+		if !hasCaller || caller.Kind != _callercontext.KindAnonymous {
+			return _quotasubject.Subject{}, ErrCallerMismatch
+		}
+		if requirement.Grant == nil {
+			return _quotasubject.Subject{}, ErrEvidenceRequired
+		}
+		grant, err := normalizeAndValidateGrant(*requirement.Grant, requirement)
+		if err != nil {
+			return _quotasubject.Subject{}, err
+		}
+		if grant.GranteeKind != "" || grant.GranteeID != "" || grant.Authority != transport.ServiceID {
+			return _quotasubject.Subject{}, ErrEvidenceMismatch
+		}
+		subject = subjectFromGrant(grant)
+
+	default:
+		return _quotasubject.Subject{}, fmt.Errorf("%w: unsupported quota subject kind %q", ErrInvalidRequirement, requirement.Kind)
+	}
+
+	if requirement.ExpectedID != "" && subject.ID != requirement.ExpectedID {
+		return _quotasubject.Subject{}, ErrEvidenceMismatch
+	}
+	return subject, nil
+}
+
+func normalizeRequirement(requirement Requirement) (Requirement, error) {
+	requirement.ExpectedID = strings.TrimSpace(requirement.ExpectedID)
+	requirement.Authority = strings.TrimSpace(requirement.Authority)
+
+	if requirement.ExpectedID != "" && !validText(requirement.ExpectedID) {
+		return Requirement{}, ErrInvalidRequirement
+	}
+	if requirement.Authority != "" && !validText(requirement.Authority) {
+		return Requirement{}, ErrInvalidRequirement
+	}
+
+	switch requirement.Kind {
+	case _quotasubject.KindUser,
+		_quotasubject.KindAPIKey,
+		_quotasubject.KindOrganization,
+		_quotasubject.KindProject,
+		_quotasubject.KindSubscription,
+		_quotasubject.KindAnonymous,
+		_quotasubject.KindInternalService:
+		return requirement, nil
+	default:
+		return Requirement{}, ErrInvalidRequirement
+	}
+}
+
+func normalizeAndValidateGrant(grant Grant, requirement Requirement) (Grant, error) {
 	grant.SubjectID = strings.TrimSpace(grant.SubjectID)
 	grant.GranteeID = strings.TrimSpace(grant.GranteeID)
 	grant.Authority = strings.TrimSpace(grant.Authority)
+	grant.EvidenceID = strings.TrimSpace(grant.EvidenceID)
 
-	if grant.SubjectKind != expected || grant.SubjectID == "" || grant.Authority == "" {
-		return ErrEvidenceMismatch
+	if requirement.Authority == "" || grant.Authority != requirement.Authority {
+		return Grant{}, ErrEvidenceMismatch
 	}
-	if !validText(grant.SubjectID) || !validText(grant.Authority) {
-		return ErrEvidenceMismatch
+	if grant.SubjectKind != requirement.Kind || grant.SubjectID == "" || grant.EvidenceID == "" {
+		return Grant{}, ErrEvidenceMismatch
+	}
+	if requirement.ExpectedID != "" && grant.SubjectID != requirement.ExpectedID {
+		return Grant{}, ErrEvidenceMismatch
+	}
+	if !validText(grant.SubjectID) || !validText(grant.Authority) || !validText(grant.EvidenceID) {
+		return Grant{}, ErrEvidenceMismatch
 	}
 
-	if expected == _quotasubject.KindAnonymous {
+	if requirement.Kind == _quotasubject.KindAnonymous {
 		if grant.GranteeKind != "" || grant.GranteeID != "" {
-			return ErrEvidenceMismatch
+			return Grant{}, ErrEvidenceMismatch
 		}
-		return nil
+		return grant, nil
 	}
 
 	switch grant.GranteeKind {
@@ -166,20 +312,15 @@ func validateGrant(grant Grant, expected _quotasubject.Kind) error {
 		_quotasubject.KindAPIKey,
 		_quotasubject.KindInternalService:
 		if !validText(grant.GranteeID) {
-			return ErrEvidenceMismatch
+			return Grant{}, ErrEvidenceMismatch
 		}
 	default:
-		return ErrEvidenceMismatch
+		return Grant{}, ErrEvidenceMismatch
 	}
-	return nil
+	return grant, nil
 }
 
 func grantMatchesCaller(ctx context.Context, grant Grant) bool {
-	if subject, ok := _quotasubject.FromContext(ctx); ok &&
-		subject.Kind == grant.GranteeKind && subject.ID == grant.GranteeID {
-		return true
-	}
-
 	caller, hasCaller := _callercontext.FromContext(ctx)
 	actor, hasActor := _identitycontext.FromContext(ctx)
 	transport, hasTransport := _transporttrust.FromContext(ctx)
@@ -215,6 +356,19 @@ func subjectFromGrant(grant Grant) _quotasubject.Subject {
 		Kind:   grant.SubjectKind,
 		ID:     strings.TrimSpace(grant.SubjectID),
 		Source: source,
+	}
+}
+
+func requiresExpectedIDForContinuation(kind _quotasubject.Kind) bool {
+	switch kind {
+	case _quotasubject.KindOrganization,
+		_quotasubject.KindProject,
+		_quotasubject.KindSubscription,
+		_quotasubject.KindAnonymous,
+		_quotasubject.KindInternalService:
+		return true
+	default:
+		return false
 	}
 }
 

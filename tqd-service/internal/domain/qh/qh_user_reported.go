@@ -46,7 +46,8 @@ type QHUserReported struct {
 	Comparison datatypes.JSON `gorm:"column:comparison;type:jsonb;default:'{}'::jsonb" json:"comparison"`
 	Metadata   datatypes.JSON `gorm:"column:metadata;type:jsonb;default:'{}'::jsonb" json:"metadata"`
 
-	ClientRequestID string `gorm:"column:client_request_id;type:varchar(100);default:'';uniqueIndex:uidx_user_report_client_request,priority:2" json:"clientRequestId"`
+	ClientRequestID string `gorm:"column:client_request_id;type:varchar(128);default:'';uniqueIndex:uidx_user_report_client_request,priority:2" json:"clientRequestId"`
+	RequestHash     string `gorm:"column:request_hash;type:varchar(64);default:''" json:"-"`
 	JobID           string `gorm:"column:job_id;type:varchar(100);default:'';index:idx_generated_reports_job_id" json:"jobId"`
 	ErrorMessage    string `gorm:"column:error_message;type:text;default:''" json:"errorMessage"`
 

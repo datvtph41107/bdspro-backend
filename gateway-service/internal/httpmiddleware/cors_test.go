@@ -40,6 +40,9 @@ func newCORSTestRouter() *gin.Engine {
 		},
 	)
 
+	config = WithOperationIDCORS(config)
+	config = WithIdempotencyKeyCORS(config)
+
 	router.Use(
 		cors.New(config),
 	)
@@ -149,5 +152,111 @@ func TestCORSExposesResponseRequestID(
 			"exposed headers = %q",
 			exposedHeaders,
 		)
+	}
+}
+
+func TestCORSAllowsClientOperationIDHeader(
+	t *testing.T,
+) {
+	router := newCORSTestRouter()
+
+	request := httptest.NewRequest(
+		http.MethodOptions,
+		"/ok",
+		nil,
+	)
+	request.Header.Set("Origin", "https://app.example.test")
+	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	request.Header.Set(
+		"Access-Control-Request-Headers",
+		_requestcontext.OperationIDHeader,
+	)
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf(
+			"preflight status = %d, want %d",
+			response.Code,
+			http.StatusNoContent,
+		)
+	}
+
+	allowedHeaders := response.Header().Get(
+		"Access-Control-Allow-Headers",
+	)
+	if !strings.Contains(
+		strings.ToLower(allowedHeaders),
+		strings.ToLower(_requestcontext.OperationIDHeader),
+	) {
+		t.Fatalf("allowed headers = %q", allowedHeaders)
+	}
+}
+
+func TestCORSExposesResponseOperationID(
+	t *testing.T,
+) {
+	router := newCORSTestRouter()
+
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/ok",
+		nil,
+	)
+	request.Header.Set("Origin", "https://app.example.test")
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	exposedHeaders := response.Header().Get(
+		"Access-Control-Expose-Headers",
+	)
+	if !strings.Contains(
+		strings.ToLower(exposedHeaders),
+		strings.ToLower(_requestcontext.OperationIDHeader),
+	) {
+		t.Fatalf("exposed headers = %q", exposedHeaders)
+	}
+}
+
+func TestCORSAllowsClientIdempotencyKeyHeader(t *testing.T) {
+	router := newCORSTestRouter()
+	request := httptest.NewRequest(http.MethodOptions, "/ok", nil)
+	request.Header.Set("Origin", "https://app.example.test")
+	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	request.Header.Set(
+		"Access-Control-Request-Headers",
+		_requestcontext.IdempotencyKeyHeader,
+	)
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("preflight status = %d, want %d", response.Code, http.StatusNoContent)
+	}
+	allowedHeaders := response.Header().Get("Access-Control-Allow-Headers")
+	if !strings.Contains(
+		strings.ToLower(allowedHeaders),
+		strings.ToLower(_requestcontext.IdempotencyKeyHeader),
+	) {
+		t.Fatalf("allowed headers = %q", allowedHeaders)
+	}
+}
+
+func TestCORSDoesNotExposeIdempotencyKeyResponseHeader(t *testing.T) {
+	router := newCORSTestRouter()
+	request := httptest.NewRequest(http.MethodGet, "/ok", nil)
+	request.Header.Set("Origin", "https://app.example.test")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	exposedHeaders := response.Header().Get("Access-Control-Expose-Headers")
+	if strings.Contains(
+		strings.ToLower(exposedHeaders),
+		strings.ToLower(_requestcontext.IdempotencyKeyHeader),
+	) {
+		t.Fatalf("idempotency key unexpectedly exposed: %q", exposedHeaders)
 	}
 }

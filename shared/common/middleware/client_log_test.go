@@ -25,8 +25,8 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 		context.Background(),
 		"req-outbound-123",
 	)
-	ctx = _requestcontext.WithOperationID(ctx, "op-outbound-456")
-	ctx = _requestcontext.WithIdempotencyKey(ctx, "idem-outbound-789")
+	ctx = mustBindOperationID(t, ctx, "op-outbound-456")
+	ctx = mustBindIdempotencyKey(t, ctx, "idem-outbound-789")
 	ctx = context.WithValue(ctx, _enums.ProfileIDKey, uint64(42))
 	ctx = metadata.NewOutgoingContext(
 		ctx,

@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_USER: qhpro_lab
+      POSTGRES_PASSWORD: qhpro_local_only
+      POSTGRES_DB: postgres
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - qhpro_report_lab_postgres:/var/lib/postgresql/data
+      - ../..:/workspace:ro
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qhpro_lab -d qhpro_tqd_lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - qhpro_local_only
+    ports:
+      - "127.0.0.1:56379:6379"
+    volumes:
+      - qhpro_report_lab_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "qhpro_local_only", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  qhpro_report_lab_postgres:
+    name: qhpro_report_lab_postgres
+  qhpro_report_lab_redis:
+    name: qhpro_report_lab_redis

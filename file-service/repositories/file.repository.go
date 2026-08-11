@@ -23,3 +23,11 @@ func NewFileRepository(db *gorm.DB) *FileRepository {
 func (r *FileRepository) Save(file *models.FileEntity) error {
 	return r.DB.Save(file).Error
 }
+
+// DeleteByID is used to compensate a failed filesystem/access write.
+func (r *FileRepository) DeleteByID(id uint64) error {
+	if id == 0 {
+		return nil
+	}
+	return r.DB.Unscoped().Delete(&models.FileEntity{}, id).Error
+}

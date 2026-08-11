@@ -33,13 +33,14 @@ func TestHTTPRecorderWritesStructuredCompletionLog(
 	recorder.RecordHTTPRequest(
 		context.Background(),
 		_httpmiddleware.HTTPRequestResult{
-			RequestID:  "request-log-123",
-			Method:     "POST",
-			Route:      "/v2/tqd/reports",
-			StatusCode: 503,
-			Duration:   125 * time.Millisecond,
-			Aborted:    true,
-			ErrorCount: 1,
+			RequestID:   "request-log-123",
+			OperationID: "operation-log-456",
+			Method:      "POST",
+			Route:       "/v2/tqd/reports",
+			StatusCode:  503,
+			Duration:    125 * time.Millisecond,
+			Aborted:     true,
+			ErrorCount:  1,
 			TransportOutcome: _httpmiddleware.
 				HTTPTransportOutcomeCompleted,
 
@@ -75,6 +76,15 @@ func TestHTTPRecorderWritesStructuredCompletionLog(
 		)
 	}
 
+	if event["operation_id"] !=
+		"operation-log-456" {
+
+		t.Fatalf(
+			"operation_id = %v",
+			event["operation_id"],
+		)
+	}
+
 	if event["http_status_code"] != float64(503) {
 		t.Fatalf(
 			"http_status_code = %v",
@@ -88,6 +98,61 @@ func TestHTTPRecorderWritesStructuredCompletionLog(
 		t.Fatalf(
 			"http_transport_outcome = %v",
 			event["http_transport_outcome"],
+		)
+	}
+}
+
+func TestHTTPRecorderDoesNotOriginateMissingOperationID(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	var output bytes.Buffer
+
+	logger := slog.New(
+		slog.NewJSONHandler(
+			&output,
+			nil,
+		),
+	)
+
+	recorder := NewHTTPRecorder(logger)
+
+	recorder.RecordHTTPRequest(
+		context.Background(),
+		_httpmiddleware.HTTPRequestResult{
+			RequestID:  "request-without-operation-123",
+			Method:     http.MethodGet,
+			Route:      "/health",
+			StatusCode: http.StatusOK,
+
+			TransportOutcome: _httpmiddleware.
+				HTTPTransportOutcomeCompleted,
+
+			TransportReason: _httpmiddleware.
+				HTTPTransportReasonNone,
+		},
+	)
+
+	var event map[string]any
+
+	if err := json.Unmarshal(
+		output.Bytes(),
+		&event,
+	); err != nil {
+		t.Fatalf(
+			"invalid JSON log: %v\n%s",
+			err,
+			output.String(),
+		)
+	}
+
+	if operationID, exists :=
+		event["operation_id"]; exists {
+
+		t.Fatalf(
+			"operation_id = %v, want field omitted",
+			operationID,
 		)
 	}
 }

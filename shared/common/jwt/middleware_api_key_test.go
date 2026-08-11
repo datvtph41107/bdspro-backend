@@ -80,3 +80,38 @@ func TestJWTAuthMiddlewareReturnsUnavailableWhenAuthorityFails(t *testing.T) {
 		t.Fatalf("status = %d, want %d", resp.Code, http.StatusServiceUnavailable)
 	}
 }
+
+func TestJWTAuthMiddlewareRejectsInvalidJWTOnPublicRoute(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(JWTAuthMiddleware([]string{"/public"}, nil))
+	router.GET("/public", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+
+	req := httptest.NewRequest(http.MethodGet, "/public", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	if resp.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", resp.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestJWTAuthMiddlewareRejectsDuplicateAPIKeyHeaders(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(JWTAuthMiddleware([]string{"/public"}, nil, WithAPIKeyVerifier(fakeAPIKeyVerifier{
+		result: VerifiedAPIKey{ID: 7, AppName: "release-uploader"},
+	})))
+	router.GET("/public", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+
+	req := httptest.NewRequest(http.MethodGet, "/public", nil)
+	req.Header.Add(APIKeyHeader, "0123456789abcdef")
+	req.Header.Add(APIKeyHeader, "0123456789abcdef")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	if resp.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", resp.Code, http.StatusBadRequest)
+	}
+}

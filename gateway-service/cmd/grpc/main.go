@@ -2,9 +2,11 @@ package cmd
 
 import (
 	_jwt "common/jwt"
+	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"gateway/config"
+	_grpcmetadata "gateway/internal/grpcmetadata"
 	"log"
 	"net/http"
 	"strconv"
@@ -55,10 +57,14 @@ var GrpcCmd = &cobra.Command{
 		// notificationEndpoint := fmt.Sprintf("%s:%s", url, viper.GetString("service.port.notification"))
 
 		r := gin.Default()
+		r.Use(_jwt.JWTAuthMiddleware(nil, nil))
 
 		// gRPC Gateway
 		mux := runtime.NewServeMux(
-			runtime.WithMetadata(_jwt.ExtractMetadataFromRequest),
+			runtime.WithMetadata(_grpcmetadata.DuringReportMigration(
+				_grpcmetadata.ReportTargetEnabled(),
+				_middleware.InjectGrpcMetadataContextMiddleware,
+			)),
 			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler,
 				w http.ResponseWriter, r *http.Request, err error) {
 				log.Printf("gRPC Error: %v", err)

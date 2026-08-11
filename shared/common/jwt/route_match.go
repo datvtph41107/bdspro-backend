@@ -27,53 +27,47 @@ func matchRoute(pattern, path string) bool {
 		return path == pattern || strings.HasPrefix(path, pattern+"/")
 	}
 
-	patternSegments := strings.Split(strings.Trim(pattern, "/"), "/")
-	pathSegments := strings.Split(strings.Trim(path, "/"), "/")
-
-	for len(pathSegments) > 0 && pathSegments[len(pathSegments)-1] == "" {
-		pathSegments = pathSegments[:len(pathSegments)-1]
-	}
-	for len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "" {
-		patternSegments = patternSegments[:len(patternSegments)-1]
-	}
-
-	if len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "*" {
-		patternSegments = patternSegments[:len(patternSegments)-1]
-		if len(pathSegments) != len(patternSegments)+1 {
+	patternSegments := splitRouteSegments(pattern)
+	pathSegments := splitRouteSegments(path)
+	for index, patternSegment := range patternSegments {
+		if isWildcardSegment(patternSegment) {
+			return index == len(patternSegments)-1 && len(pathSegments) >= index
+		}
+		if index >= len(pathSegments) {
 			return false
 		}
-		for i, patternSegment := range patternSegments {
-			pathSegment := pathSegments[i]
-			if patternSegment == ":" {
-				if pathSegment == "" {
-					return false
-				}
-				continue
-			}
-			if patternSegment != pathSegment {
+		if isParameterSegment(patternSegment) {
+			if pathSegments[index] == "" {
 				return false
 			}
-		}
-		return true
-	}
-
-	if len(patternSegments) != len(pathSegments) {
-		return false
-	}
-	for i, patternSegment := range patternSegments {
-		pathSegment := pathSegments[i]
-		switch patternSegment {
-		case "*":
 			continue
-		case ":":
-			if pathSegment == "" {
-				return false
-			}
-		default:
-			if patternSegment != pathSegment {
-				return false
-			}
+		}
+		if patternSegment != pathSegments[index] {
+			return false
 		}
 	}
-	return true
+	return len(pathSegments) == len(patternSegments)
+}
+
+func splitRouteSegments(value string) []string {
+	value = strings.Trim(value, "/")
+	if value == "" {
+		return nil
+	}
+	segments := strings.Split(value, "/")
+	result := segments[:0]
+	for _, segment := range segments {
+		if segment != "" {
+			result = append(result, segment)
+		}
+	}
+	return result
+}
+
+func isParameterSegment(segment string) bool {
+	return segment == ":" || (strings.HasPrefix(segment, ":") && len(segment) > 1)
+}
+
+func isWildcardSegment(segment string) bool {
+	return segment == "*" || (strings.HasPrefix(segment, "*") && len(segment) > 1)
 }

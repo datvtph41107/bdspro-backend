@@ -2,6 +2,8 @@ package httpmiddleware
 
 import (
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -267,6 +269,116 @@ func TestRequestLifecycleRecordsAbortAndGinErrors(
 			"recorded status = %d, want %d",
 			result.StatusCode,
 			http.StatusTeapot,
+		)
+	}
+}
+
+func TestRequestLifecycleRecordsOperationIDBoundByInnerMiddleware(
+	t *testing.T,
+) {
+	recorder :=
+		&testRecorder{}
+
+	gin.SetMode(
+		gin.TestMode,
+	)
+
+	router :=
+		gin.New()
+
+	logger :=
+		slog.New(
+			slog.NewJSONHandler(
+				io.Discard,
+				nil,
+			),
+		)
+
+	router.Use(
+		RequestID(
+			recorder,
+		),
+	)
+
+	router.Use(
+		RequestLifecycle(
+			recorder,
+		),
+	)
+
+	router.Use(
+		Recovery(
+			logger,
+		),
+	)
+
+	router.Use(
+		OperationID(),
+	)
+
+	router.GET(
+		"/ok",
+		func(ctx *gin.Context) {
+			ctx.Status(
+				http.StatusNoContent,
+			)
+		},
+	)
+
+	request :=
+		httptest.NewRequest(
+			http.MethodGet,
+			"/ok",
+			nil,
+		)
+
+	const requestID = "req-lifecycle-operation-123"
+
+	const operationID = "op-lifecycle-operation-456"
+
+	request.Header.Set(
+		_requestcontext.RequestIDHeader,
+		requestID,
+	)
+
+	request.Header.Set(
+		_requestcontext.OperationIDHeader,
+		operationID,
+	)
+
+	response :=
+		httptest.NewRecorder()
+
+	router.ServeHTTP(
+		response,
+		request,
+	)
+
+	if len(
+		recorder.results,
+	) != 1 {
+		t.Fatalf(
+			"lifecycle results = %d, want 1",
+			len(recorder.results),
+		)
+	}
+
+	result :=
+		recorder.results[0]
+
+	if result.RequestID != requestID {
+		t.Fatalf(
+			"request ID = %q, want %q",
+			result.RequestID,
+			requestID,
+		)
+	}
+
+	if result.OperationID != operationID {
+		t.Fatalf(
+			"operation ID = %q, want %q",
+			result.OperationID,
+			operationID,
 		)
 	}
 }

@@ -26,16 +26,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) metadata.MD {
+func InjectGrpcMetadataContextMiddleware(_ context.Context, r *http.Request) metadata.MD {
 	md := metadata.MD{}
-	requestID := _requestcontext.EnsureRequestID(r)
-	operationID := _requestcontext.EnsureOperationID(r)
+	if r == nil {
+		return md
+	}
 
-	appendIfExists(md, _requestcontext.RequestIDMetadataKey, requestID)
-	appendIfExists(md, _requestcontext.OperationIDMetadataKey, operationID)
-
-	if idempotencyKey, ok, err := _requestcontext.IdempotencyKeyFromRequest(r); err == nil && ok {
-		appendIfExists(md, _requestcontext.IdempotencyKeyMetadataKey, idempotencyKey)
+	requestCtx := r.Context()
+	if requestID, ok := _requestcontext.FromContext(requestCtx); ok {
+		md.Set(_requestcontext.RequestIDMetadataKey, requestID)
+	}
+	if operationID, ok := _requestcontext.OperationIDFromContext(requestCtx); ok {
+		md.Set(_requestcontext.OperationIDMetadataKey, operationID)
+	}
+	if idempotencyKey, ok := _requestcontext.IdempotencyKeyFromContext(requestCtx); ok {
+		md.Set(_requestcontext.IdempotencyKeyMetadataKey, idempotencyKey)
 	}
 	// Luôn inject IP và User-Agent vào metadata (dù có token hay không)
 	appendIfExists(md, "client-ip", getClientIP(r))
@@ -60,18 +65,12 @@ func InjectGrpcMetadataContextMiddleware(ctx context.Context, r *http.Request) m
 		return md
 	}
 
-	appendActorMetadata(md, actorFromPrincipal(claims))
+	appendActorMetadata(md, _jwt.ActorFromPrincipal(claims))
 	if claims.PlanId != nil {
 		appendIfExists(md, "planId", *claims.PlanId)
 	}
 	if claims.PlanFrom != nil {
 		appendIfExists(md, "planFrom", *claims.PlanFrom)
-	}
-
-	// Thêm writer vào context để có thể truy cập từ gRPC server
-	if writer, ok := r.Context().Value("response-writer").(http.ResponseWriter); ok {
-		// Lưu writer vào context để có thể truy cập từ gRPC server
-		ctx = context.WithValue(ctx, "response-writer", writer)
 	}
 
 	return md
@@ -134,19 +133,25 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	if info != nil {
 		fullMethod = info.FullMethod
 	}
-	caller, trustErr := _transporttrust.Verify(fullMethod, md, trustConfig)
-	hasPrivilegedMetadata := _transporttrust.HasPrivilegedMetadata(md)
-	hasTrustAssertion := _transporttrust.HasAssertion(md)
-	if trustErr == nil {
-		ctx = _transporttrust.WithCaller(ctx, caller)
-	} else if trustConfig.Mode == _transporttrust.ModeEnforce {
+	trustAssessment := _transporttrust.Assess(fullMethod, md, trustConfig)
+	if trustAssessment.Verified() {
+		bound, bindErr := _transporttrust.BindCaller(ctx, trustAssessment.Caller)
+		if bindErr != nil {
+			return nil, status.Error(codes.Internal, "transport caller context conflict")
+		}
+		ctx = bound
+	} else if trustAssessment.Reject() {
 		return nil, status.Error(codes.Unauthenticated, "trusted transport assertion required")
-	} else if hasPrivilegedMetadata || hasTrustAssertion {
-		ctx = _transporttrust.WithCaller(ctx, _transporttrust.Caller{
+	} else if trustAssessment.LegacyUnverified() {
+		bound, bindErr := _transporttrust.BindCaller(ctx, _transporttrust.Caller{
 			ServiceID: "legacy-unverified",
 			Level:     _transporttrust.LevelLegacyUnverified,
 		})
-		log.Printf("[gRPC Server] Legacy unverified metadata on %s: %v", fullMethod, trustErr)
+		if bindErr != nil {
+			return nil, status.Error(codes.Internal, "transport caller context conflict")
+		}
+		ctx = bound
+		log.Printf("[gRPC Server] Legacy unverified metadata on %s: %v", fullMethod, trustAssessment.Err)
 	}
 
 	actor, hasActor, err := actorFromMetadata(md)
@@ -158,7 +163,7 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	if !hasRequestCaller && trustErr == nil {
+	if !hasRequestCaller && trustAssessment.CanPromotePrivilegedContext() {
 		requestCaller = _callercontext.Caller{Kind: _callercontext.KindInternalService}
 		if hasActor {
 			requestCaller.Kind = _callercontext.KindUser
@@ -168,8 +173,15 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	if err := validateCallerActor(requestCaller, hasRequestCaller, hasActor); err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
-	if hasRequestCaller {
-		ctx = _callercontext.WithCaller(ctx, requestCaller)
+	if hasRequestCaller && trustAssessment.CanPromotePrivilegedContext() {
+		bound, bindErr := _callercontext.BindCaller(ctx, requestCaller)
+		if bindErr != nil {
+			if errors.Is(bindErr, _callercontext.ErrCallerContextConflict) {
+				return nil, status.Error(codes.Internal, "caller context conflict")
+			}
+			return nil, status.Error(codes.Unauthenticated, "invalid caller classification")
+		}
+		ctx = bound
 	}
 
 	quotaSubject, hasQuotaSubject, err := _quotasubject.FromMetadata(md)
@@ -177,10 +189,17 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 	if hasQuotaSubject {
-		if trustErr != nil {
+		if !trustAssessment.CanPromotePrivilegedContext() {
 			return nil, status.Error(codes.Unauthenticated, "verified quota subject assertion required")
 		}
-		ctx = _quotasubject.WithSubject(ctx, quotaSubject)
+		bound, bindErr := _quotasubject.BindSubject(ctx, quotaSubject)
+		if bindErr != nil {
+			if errors.Is(bindErr, _quotasubject.ErrSubjectContextConflict) {
+				return nil, status.Error(codes.Internal, "quota subject context conflict")
+			}
+			return nil, status.Error(codes.Unauthenticated, "invalid quota subject")
+		}
+		ctx = bound
 	}
 
 	operation, hasOperation, err := _operationcontext.FromMetadata(md)
@@ -188,7 +207,7 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 	if hasOperation {
-		if trustErr != nil {
+		if !trustAssessment.CanPromotePrivilegedContext() {
 			return nil, status.Error(codes.Unauthenticated, "verified operation assertion required")
 		}
 		ctx, err = _operationcontext.Bind(ctx, operation)
@@ -198,7 +217,16 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	}
 
 	if hasActor {
-		ctx = _identitycontext.WithActor(ctx, actor)
+		if trustAssessment.CanPromotePrivilegedContext() {
+			bound, bindErr := _identitycontext.BindActor(ctx, actor)
+			if bindErr != nil {
+				if errors.Is(bindErr, _identitycontext.ErrActorContextConflict) {
+					return nil, status.Error(codes.Internal, "actor identity context conflict")
+				}
+				return nil, status.Error(codes.Unauthenticated, "invalid actor identity")
+			}
+			ctx = bound
+		}
 		ctx = withLegacyActorContext(ctx, actor)
 	}
 
@@ -206,19 +234,25 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	ctx = parseTimeMetadata(ctx, md, "planFrom", _enums.PlanFromKey)
 	ctx = parseStringMetadata(ctx, md, "x-api-key", _enums.APIKeyKey)
 
-	if requestIDs := md.Get(_requestcontext.RequestIDMetadataKey); len(requestIDs) > 0 {
-		ctx = _requestcontext.WithRequestID(ctx, requestIDs[0])
-	}
-	if operationIDs := md.Get(_requestcontext.OperationIDMetadataKey); len(operationIDs) > 0 {
-		ctx = _requestcontext.WithOperationID(ctx, operationIDs[0])
+	ctx = acceptIncomingRequestID(
+		ctx,
+		md.Get(_requestcontext.RequestIDMetadataKey),
+	)
+
+	ctx, err = bindIncomingOperationID(
+		ctx,
+		md.Get(_requestcontext.OperationIDMetadataKey),
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	idempotencyKeys := md.Get(_requestcontext.IdempotencyKeyMetadataKey)
-	if len(idempotencyKeys) > 0 {
-		if len(idempotencyKeys) != 1 || !_requestcontext.IsValidIdempotencyKey(idempotencyKeys[0]) {
-			return nil, status.Error(codes.InvalidArgument, "invalid idempotency-key metadata")
-		}
-		ctx = _requestcontext.WithIdempotencyKey(ctx, idempotencyKeys[0])
+	ctx, err = bindIncomingIdempotencyKey(
+		ctx,
+		md.Get(_requestcontext.IdempotencyKeyMetadataKey),
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	// Parse IP address và User-Agent từ metadata
@@ -233,6 +267,51 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	}
 
 	return handler(ctx, req)
+}
+
+func acceptIncomingRequestID(ctx context.Context, values []string) context.Context {
+	if len(values) != 1 {
+		return ctx
+	}
+
+	requestID := _requestcontext.NormalizeRequestID(values[0])
+	if !_requestcontext.IsValidRequestID(requestID) {
+		return ctx
+	}
+	return _requestcontext.WithRequestID(ctx, requestID)
+}
+
+func bindIncomingOperationID(ctx context.Context, values []string) (context.Context, error) {
+	if len(values) == 0 {
+		return ctx, nil
+	}
+
+	operationID, ok := _requestcontext.AcceptOperationID(values)
+	if !ok {
+		return ctx, status.Error(codes.InvalidArgument, "invalid operation identity metadata")
+	}
+
+	bound, err := _requestcontext.BindOperationID(ctx, operationID)
+	if err != nil {
+		return ctx, status.Error(codes.Internal, "operation identity context conflict")
+	}
+	return bound, nil
+}
+
+func bindIncomingIdempotencyKey(ctx context.Context, values []string) (context.Context, error) {
+	key, ok, err := _requestcontext.ParseIdempotencyKey(values)
+	if err != nil {
+		return ctx, status.Error(codes.InvalidArgument, "invalid idempotency identity metadata")
+	}
+	if !ok {
+		return ctx, nil
+	}
+
+	bound, err := _requestcontext.BindIdempotencyKey(ctx, key)
+	if err != nil {
+		return ctx, status.Error(codes.Internal, "idempotency identity context conflict")
+	}
+	return bound, nil
 }
 
 func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
@@ -255,9 +334,10 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
+	allowLegacyPrivilegedPropagation := _transporttrust.CanPropagateLegacyPrivilegedContext(ctx)
 	if actor, ok := _identitycontext.FromContext(ctx); ok {
 		appendActorMetadata(md, actor)
-	} else {
+	} else if allowLegacyPrivilegedPropagation {
 		appendUint64IfExists(_enums.ProfileIDKey, _identitycontext.ProfileIDMetadataKey)
 		appendUint64IfExists(_enums.OriginIDKey, _identitycontext.OriginIDMetadataKey)
 		appendUint64IfExists(_enums.OrganizationIDKey, _identitycontext.OrganizationIDMetadataKey)
@@ -280,8 +360,10 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 		_operationcontext.AppendMetadata(md, operation)
 	}
 
-	appendUint64IfExists(_enums.PlanIDKey, "planId")
-	appendStringIfExists(_enums.APIKeyKey, "x-api-key")
+	if allowLegacyPrivilegedPropagation {
+		appendUint64IfExists(_enums.PlanIDKey, "planId")
+		appendStringIfExists(_enums.APIKeyKey, "x-api-key")
+	}
 	appendStringIfExists(_enums.DeviceIDKey, "device-id")
 
 	if requestID, ok := _requestcontext.FromContext(ctx); ok {
@@ -294,7 +376,9 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 		md.Append(_requestcontext.IdempotencyKeyMetadataKey, idempotencyKey)
 	}
 
-	appendTimeIfExists(_enums.PlanFromKey, "planFrom")
+	if allowLegacyPrivilegedPropagation {
+		appendTimeIfExists(_enums.PlanFromKey, "planFrom")
+	}
 
 	return md
 }
@@ -354,42 +438,16 @@ func principalFromHTTPRequest(r *http.Request) (*_jwt.Principal, bool) {
 	if r == nil {
 		return nil, false
 	}
-	if principal, ok := _jwt.PrincipalFromRequestContext(r.Context()); ok {
-		return principal, true
-	}
-
-	tokenString := strings.TrimSpace(r.Header.Get("Authorization"))
-	if tokenString == "" {
-		return nil, false
-	}
-
-	tokenString = strings.TrimSpace(strings.TrimPrefix(tokenString, "Bearer "))
-	principal, err := _jwt.ParseJWT(tokenString)
-	return principal, err == nil && principal != nil
-}
-
-/**
- * actorFromPrincipal removes entitlement data from identity.
- */
-func actorFromPrincipal(principal *_jwt.Principal) _identitycontext.Actor {
-	if principal == nil {
-		return _identitycontext.Actor{}
-	}
-	return _identitycontext.Actor{
-		AuthID:         principal.AuthID,
-		ProfileID:      principal.ProfileId,
-		OriginID:       principal.OriginId,
-		OrganizationID: cloneUint64Pointer(principal.OrganizationId),
-		SessionID:      principal.Session,
-		Role:           principal.Role,
-		TokenType:      principal.Type,
-	}
+	return _jwt.PrincipalFromRequestContext(r.Context())
 }
 
 /**
  * appendActorMetadata serializes one canonical actor assertion.
  */
 func appendActorMetadata(md metadata.MD, actor _identitycontext.Actor) {
+	if !actor.IsValid() {
+		return
+	}
 	if actor.AuthID != 0 {
 		md.Set(_identitycontext.AuthIDMetadataKey, strconv.FormatUint(actor.AuthID, 10))
 	}
@@ -463,7 +521,13 @@ func actorFromMetadata(md metadata.MD) (_identitycontext.Actor, bool, error) {
 		present = true
 	}
 
-	return actor, present && !actor.IsZero(), nil
+	if !present {
+		return actor, false, nil
+	}
+	if !actor.IsValid() {
+		return actor, false, errors.New("invalid actor identity metadata")
+	}
+	return actor, true, nil
 }
 
 func singleUint64Metadata(md metadata.MD, key string) (uint64, bool, error) {

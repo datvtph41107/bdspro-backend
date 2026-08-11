@@ -14,8 +14,9 @@ const (
 )
 
 var (
-	ErrAPIKeyInvalid     = errors.New("api key is invalid")
-	ErrAPIKeyUnavailable = errors.New("api key verifier is unavailable")
+	ErrAPIKeyHeaderInvalid = errors.New("api key header is invalid")
+	ErrAPIKeyInvalid       = errors.New("api key is invalid")
+	ErrAPIKeyUnavailable   = errors.New("api key verifier is unavailable")
 )
 
 /**
@@ -59,29 +60,29 @@ func APIKeyFromRequest(r *http.Request) (string, bool, error) {
 		return "", false, nil
 	}
 
-	values := make([]string, 0, 3)
-	for _, header := range []string{APIKeyHeader, LegacyAPIKeyHeader, "api-key"} {
-		for _, value := range r.Header.Values(header) {
-			value = strings.TrimSpace(value)
-			if value != "" {
-				values = append(values, value)
+	values := make([]string, 0, 2)
+	present := false
+	for _, header := range []string{APIKeyHeader, LegacyAPIKeyHeader} {
+		rawValues, exists := r.Header[http.CanonicalHeaderKey(header)]
+		if !exists {
+			continue
+		}
+		present = true
+		for _, rawValue := range rawValues {
+			value := strings.TrimSpace(rawValue)
+			if value == "" {
+				return "", false, ErrAPIKeyHeaderInvalid
 			}
+			values = append(values, value)
 		}
 	}
-	if len(values) == 0 {
+	if !present {
 		return "", false, nil
 	}
-
-	first := values[0]
-	for _, value := range values[1:] {
-		if value != first {
-			return "", false, ErrAPIKeyInvalid
-		}
+	if len(values) != 1 || !isValidAPIKey(values[0]) {
+		return "", false, ErrAPIKeyHeaderInvalid
 	}
-	if !isValidAPIKey(first) {
-		return "", false, ErrAPIKeyInvalid
-	}
-	return first, true, nil
+	return values[0], true, nil
 }
 
 func isValidAPIKey(value string) bool {
@@ -89,7 +90,7 @@ func isValidAPIKey(value string) bool {
 		return false
 	}
 	for _, r := range value {
-		if r <= 0x20 || r == 0x7f {
+		if r < 0x21 || r > 0x7e || r == ',' {
 			return false
 		}
 	}

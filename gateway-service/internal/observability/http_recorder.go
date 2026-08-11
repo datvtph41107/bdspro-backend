@@ -72,10 +72,7 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 		result,
 	)
 
-	recorder.logger.LogAttrs(
-		ctx,
-		level,
-		"HTTP request completed",
+	attrs := []slog.Attr{
 		slog.String(
 			"event_name",
 			"http.request.completed",
@@ -84,6 +81,20 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 			"request_id",
 			result.RequestID,
 		),
+	}
+
+	if result.OperationID != "" {
+		attrs = append(
+			attrs,
+			slog.String(
+				"operation_id",
+				result.OperationID,
+			),
+		)
+	}
+
+	attrs = append(
+		attrs,
 		slog.String(
 			"http_method",
 			result.Method,
@@ -114,13 +125,19 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 				result.TransportOutcome,
 			),
 		),
-
 		slog.String(
 			"http_transport_reason",
 			string(
 				result.TransportReason,
 			),
 		),
+	)
+
+	recorder.logger.LogAttrs(
+		ctx,
+		level,
+		"HTTP request completed",
+		attrs...,
 	)
 }
 

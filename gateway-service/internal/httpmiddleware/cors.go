@@ -25,6 +25,42 @@ func WithRequestIDCORS(
 	return config
 }
 
+/**
+ * WithOperationIDCORS authorizes client propagation and response visibility
+ * for the public Operation-ID contract.
+ */
+func WithOperationIDCORS(
+	config cors.Config,
+) cors.Config {
+	config.AllowHeaders =
+		appendUniqueHeader(
+			config.AllowHeaders,
+			_requestcontext.OperationIDHeader,
+		)
+
+	config.ExposeHeaders =
+		appendUniqueHeader(
+			config.ExposeHeaders,
+			_requestcontext.OperationIDHeader,
+		)
+
+	return config
+}
+
+// WithIdempotencyKeyCORS authorizes caller propagation of the optional
+// command identity. The key is not a response contract and is not exposed.
+func WithIdempotencyKeyCORS(
+	config cors.Config,
+) cors.Config {
+	config.AllowHeaders =
+		appendUniqueHeader(
+			config.AllowHeaders,
+			_requestcontext.IdempotencyKeyHeader,
+		)
+
+	return config
+}
+
 func appendUniqueHeader(
 	headers []string,
 	header string,

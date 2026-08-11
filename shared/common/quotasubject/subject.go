@@ -2,6 +2,7 @@ package quotasubject
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -50,6 +51,11 @@ type Subject struct {
 
 type contextKey struct{}
 
+var (
+	ErrInvalidSubject         = errors.New("quota subject is invalid")
+	ErrSubjectContextConflict = errors.New("quota subject conflicts with the existing context")
+)
+
 /**
  * IsValid reports whether the subject is internally consistent.
  */
@@ -90,17 +96,23 @@ func (s Subject) Key() string {
 }
 
 /**
- * WithSubject stores one validated quota subject in context.
+ * BindSubject validates and immutably binds one exact quota owner.
  */
-func WithSubject(ctx context.Context, subject Subject) context.Context {
-	if ctx == nil || !subject.IsValid() {
-		return ctx
+func BindSubject(ctx context.Context, subject Subject) (context.Context, error) {
+	if ctx == nil {
+		return nil, errors.New("context is nil")
 	}
-	if _, exists := FromContext(ctx); exists {
-		return ctx
+	if !subject.IsValid() {
+		return ctx, ErrInvalidSubject
 	}
 	subject.ID = strings.TrimSpace(subject.ID)
-	return context.WithValue(ctx, contextKey{}, subject)
+	if existing, exists := FromContext(ctx); exists {
+		if existing == subject {
+			return ctx, nil
+		}
+		return ctx, ErrSubjectContextConflict
+	}
+	return context.WithValue(ctx, contextKey{}, subject), nil
 }
 
 /**

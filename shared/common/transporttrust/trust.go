@@ -9,6 +9,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -47,18 +48,21 @@ var (
 	ErrMissingAssertion = errors.New("trusted metadata assertion is missing")
 	ErrInvalidAssertion = errors.New("trusted metadata assertion is invalid")
 	ErrExpiredAssertion = errors.New("trusted metadata assertion is expired")
+	ErrCallerConflict   = errors.New("transport caller conflicts with the existing context")
 )
 
 /**
  * Config controls internal metadata signing and verification.
  */
 type Config struct {
-	ServiceID string
-	Secret    string
-	Mode      Mode
-	MaxAge    time.Duration
-	ClockSkew time.Duration
-	Now       func() time.Time
+	ServiceID                  string
+	Secret                     string
+	VerificationSecrets        map[string]string
+	VerificationKeysConfigured bool
+	Mode                       Mode
+	MaxAge                     time.Duration
+	ClockSkew                  time.Duration
+	Now                        func() time.Time
 }
 
 /**
@@ -81,26 +85,41 @@ func ConfigFromEnv() Config {
 		mode = ModeAudit
 	}
 
+	verificationSecrets, verificationKeysConfigured := verificationSecretsFromEnv(
+		"QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS",
+	)
+
 	return Config{
 		ServiceID: firstNonEmpty(
 			os.Getenv("QHPRO_SERVICE_ID"),
 			os.Getenv("SERVICE_NAME"),
 		),
-		Secret:    strings.TrimSpace(os.Getenv("QHPRO_INTERNAL_METADATA_SECRET")),
-		Mode:      mode,
-		MaxAge:    durationFromEnv("QHPRO_INTERNAL_METADATA_MAX_AGE", 30*time.Second),
-		ClockSkew: durationFromEnv("QHPRO_INTERNAL_METADATA_CLOCK_SKEW", 5*time.Second),
+		Secret:                     strings.TrimSpace(os.Getenv("QHPRO_INTERNAL_METADATA_SECRET")),
+		VerificationSecrets:        verificationSecrets,
+		VerificationKeysConfigured: verificationKeysConfigured,
+		Mode:                       mode,
+		MaxAge:                     durationFromEnv("QHPRO_INTERNAL_METADATA_MAX_AGE", 30*time.Second),
+		ClockSkew:                  durationFromEnv("QHPRO_INTERNAL_METADATA_CLOCK_SKEW", 5*time.Second),
 	}
 }
 
 /**
- * WithCaller stores the transport caller in context.
+ * BindCaller immutably binds the verified transport provenance.
  */
-func WithCaller(ctx context.Context, caller Caller) context.Context {
-	if ctx == nil || caller.ServiceID == "" || caller.Level == "" {
-		return ctx
+func BindCaller(ctx context.Context, caller Caller) (context.Context, error) {
+	if ctx == nil {
+		return nil, errors.New("context is nil")
 	}
-	return context.WithValue(ctx, callerContextKey{}, caller)
+	if !caller.IsValid() {
+		return ctx, ErrInvalidAssertion
+	}
+	if existing, ok := FromContext(ctx); ok {
+		if existing == caller {
+			return ctx, nil
+		}
+		return ctx, ErrCallerConflict
+	}
+	return context.WithValue(ctx, callerContextKey{}, caller), nil
 }
 
 /**
@@ -111,7 +130,21 @@ func FromContext(ctx context.Context) (Caller, bool) {
 		return Caller{}, false
 	}
 	caller, ok := ctx.Value(callerContextKey{}).(Caller)
-	return caller, ok && caller.ServiceID != "" && caller.Level != ""
+	return caller, ok && caller.IsValid()
+}
+
+func (c Caller) IsValid() bool {
+	if !validServiceID(c.ServiceID) {
+		return false
+	}
+	switch c.Level {
+	case LevelVerified:
+		return !c.IssuedAt.IsZero()
+	case LevelLegacyUnverified:
+		return c.ServiceID == "legacy-unverified" && c.IssuedAt.IsZero()
+	default:
+		return false
+	}
 }
 
 /**
@@ -175,10 +208,6 @@ func Sign(method string, md metadata.MD, cfg Config) error {
  * Verify validates a method-bound HMAC assertion.
  */
 func Verify(method string, md metadata.MD, cfg Config) (Caller, error) {
-	if strings.TrimSpace(cfg.Secret) == "" {
-		return Caller{}, ErrNotConfigured
-	}
-
 	version, err := single(md, VersionMetadataKey)
 	if err != nil || version != SignatureVersion {
 		return Caller{}, ErrMissingAssertion
@@ -186,6 +215,10 @@ func Verify(method string, md metadata.MD, cfg Config) (Caller, error) {
 	caller, err := single(md, CallerMetadataKey)
 	if err != nil || !validServiceID(caller) {
 		return Caller{}, ErrInvalidAssertion
+	}
+	verificationSecret, err := secretForCaller(cfg, caller)
+	if err != nil {
+		return Caller{}, err
 	}
 	issuedAtRaw, err := single(md, IssuedAtMetadataKey)
 	if err != nil {
@@ -216,7 +249,7 @@ func Verify(method string, md metadata.MD, cfg Config) (Caller, error) {
 
 	copyMD := md.Copy()
 	copyMD.Delete(SignatureMetadataKey)
-	expected := calculateSignature(method, copyMD, cfg.Secret)
+	expected := calculateSignature(method, copyMD, verificationSecret)
 	if !hmac.Equal([]byte(signature), []byte(expected)) {
 		return Caller{}, ErrInvalidAssertion
 	}
@@ -346,4 +379,44 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func secretForCaller(cfg Config, caller string) (string, error) {
+	if cfg.VerificationKeysConfigured || len(cfg.VerificationSecrets) > 0 {
+		secret := strings.TrimSpace(cfg.VerificationSecrets[caller])
+		if secret == "" {
+			return "", ErrInvalidAssertion
+		}
+		return secret, nil
+	}
+	secret := strings.TrimSpace(cfg.Secret)
+	if secret == "" {
+		return "", ErrNotConfigured
+	}
+	return secret, nil
+}
+
+func verificationSecretsFromEnv(key string) (map[string]string, bool) {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return nil, false
+	}
+
+	var values map[string]string
+	if err := json.Unmarshal([]byte(raw), &values); err != nil {
+		return nil, true
+	}
+
+	result := make(map[string]string, len(values))
+	for serviceID, secret := range values {
+		serviceID = strings.TrimSpace(serviceID)
+		secret = strings.TrimSpace(secret)
+		if validServiceID(serviceID) && secret != "" {
+			result[serviceID] = secret
+		}
+	}
+	if len(result) == 0 {
+		return nil, true
+	}
+	return result, true
 }

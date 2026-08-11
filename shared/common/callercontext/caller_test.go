@@ -2,6 +2,7 @@ package callercontext
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"google.golang.org/grpc/metadata"
@@ -11,10 +12,34 @@ func TestCallerRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	want := Caller{Kind: KindAPIKey, APIKeyID: 42, APIKeyApp: "release-uploader"}
-	ctx := WithCaller(context.Background(), want)
+	ctx, err := BindCaller(context.Background(), want)
+	if err != nil {
+		t.Fatalf("BindCaller() error = %v", err)
+	}
 	got, ok := FromContext(ctx)
 	if !ok || got != want {
 		t.Fatalf("FromContext() = %#v, %v; want %#v, true", got, ok, want)
+	}
+}
+
+func TestBindCallerRejectsConflictAndAllowsSameValue(t *testing.T) {
+	t.Parallel()
+
+	first := Caller{Kind: KindUser}
+	ctx, err := BindCaller(context.Background(), first)
+	if err != nil {
+		t.Fatalf("first BindCaller() error = %v", err)
+	}
+	if rebound, err := BindCaller(ctx, first); err != nil || rebound != ctx {
+		t.Fatalf("same caller bind = %v, %v", rebound, err)
+	}
+
+	unchanged, err := BindCaller(ctx, Caller{Kind: KindAnonymous})
+	if !errors.Is(err, ErrCallerContextConflict) {
+		t.Fatalf("conflicting BindCaller() error = %v", err)
+	}
+	if unchanged != ctx {
+		t.Fatal("conflicting caller changed context")
 	}
 }
 
@@ -47,6 +72,19 @@ func TestMetadataRejectsMismatchedAPIKeyFields(t *testing.T) {
 	)
 	if _, _, err := FromMetadata(md); err == nil {
 		t.Fatal("mismatched caller metadata was accepted")
+	}
+}
+
+func TestMetadataRejectsNonCanonicalCallerText(t *testing.T) {
+	t.Parallel()
+
+	md := metadata.Pairs(
+		CallerKindMetadataKey, string(KindAPIKey),
+		APIKeyIDMetadataKey, "42",
+		APIKeyAppMetadataKey, " partner-app ",
+	)
+	if _, _, err := FromMetadata(md); err == nil {
+		t.Fatal("caller metadata with surrounding whitespace was accepted")
 	}
 }
 

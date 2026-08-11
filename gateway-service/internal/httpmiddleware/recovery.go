@@ -37,10 +37,7 @@ func Recovery(
 				recoveredErr,
 			)
 
-			logger.LogAttrs(
-				ctx.Request.Context(),
-				slog.LevelError,
-				"gateway request panic",
+			attrs := []slog.Attr{
 				slog.String(
 					"event_name",
 					"http.request.panic",
@@ -49,6 +46,24 @@ func Recovery(
 					"request_id",
 					requestID,
 				),
+			}
+
+			if operationID, ok :=
+				_requestcontext.OperationIDFromContext(
+					ctx.Request.Context(),
+				); ok {
+
+				attrs = append(
+					attrs,
+					slog.String(
+						"operation_id",
+						operationID,
+					),
+				)
+			}
+
+			attrs = append(
+				attrs,
 				slog.String(
 					"http_method",
 					ctx.Request.Method,
@@ -74,6 +89,13 @@ func Recovery(
 						debug.Stack(),
 					),
 				),
+			)
+
+			logger.LogAttrs(
+				ctx.Request.Context(),
+				slog.LevelError,
+				"gateway request panic",
+				attrs...,
 			)
 
 			if ctx.Writer.Written() {

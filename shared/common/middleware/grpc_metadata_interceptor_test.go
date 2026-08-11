@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,18 +16,36 @@ import (
 	_requestcontext "common/requestcontext"
 	_transporttrust "common/transporttrust"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
+func mustBindActor(ctx context.Context, actor _identitycontext.Actor) context.Context {
+	bound, err := _identitycontext.BindActor(ctx, actor)
+	if err != nil {
+		panic(err)
+	}
+	return bound
+}
+
+func mustBindCaller(ctx context.Context, caller _callercontext.Caller) context.Context {
+	bound, err := _callercontext.BindCaller(ctx, caller)
+	if err != nil {
+		panic(err)
+	}
+	return bound
+}
+
 func TestInjectGrpcMetadataIncludesCanonicalIDs(t *testing.T) {
 	t.Parallel()
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.test/v2/tqd/public/enums", nil)
-	req.Header.Set(_requestcontext.RequestIDHeader, "req-http-123")
-	req.Header.Set(_requestcontext.OperationIDHeader, "op-http-456")
+	ctx := _requestcontext.WithRequestID(req.Context(), "req-http-123")
+	ctx = mustBindOperationID(t, ctx, "op-http-456")
+	req = req.WithContext(ctx)
 
 	md := InjectGrpcMetadataContextMiddleware(context.Background(), req)
 
@@ -74,28 +93,145 @@ func TestParseGrpcMetadataStoresCanonicalIDs(t *testing.T) {
 
 func TestParseGrpcMetadataRejectsInvalidOperationID(t *testing.T) {
 	t.Parallel()
+	const malformed = "unsafe operation id"
 
 	ctx := metadata.NewIncomingContext(
 		context.Background(),
 		metadata.Pairs(
 			_requestcontext.OperationIDMetadataKey,
-			"unsafe operation id",
+			malformed,
 		),
 	)
 
+	called := false
 	_, err := ParseGrpcMetadataContextMiddleware(
 		ctx,
 		nil,
 		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
 		func(handlerCtx context.Context, req interface{}) (interface{}, error) {
+			called = true
+			return nil, nil
+		},
+	)
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status code = %v, want InvalidArgument", status.Code(err))
+	}
+	if called {
+		t.Fatal("handler was called with invalid operation identity")
+	}
+	if strings.Contains(status.Convert(err).Message(), malformed) {
+		t.Fatalf("malformed operation identity leaked into status: %v", err)
+	}
+}
+
+func TestParseGrpcMetadataAllowsMissingOperationIDWithoutOriginating(t *testing.T) {
+	t.Parallel()
+
+	called := false
+	_, err := ParseGrpcMetadataContextMiddleware(
+		metadata.NewIncomingContext(context.Background(), metadata.MD{}),
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(handlerCtx context.Context, _ interface{}) (interface{}, error) {
+			called = true
 			if operationID, ok := _requestcontext.OperationIDFromContext(handlerCtx); ok || operationID != "" {
-				t.Fatalf("invalid operation ID reached context: %q", operationID)
+				t.Fatalf("missing operation identity was originated: %q", operationID)
 			}
 			return nil, nil
 		},
 	)
-	if err != nil {
-		t.Fatalf("ParseGrpcMetadataContextMiddleware() error = %v", err)
+	if err != nil || !called {
+		t.Fatalf("error/called = %v/%v", err, called)
+	}
+}
+
+func TestParseGrpcMetadataRejectsMultipleOperationIDs(t *testing.T) {
+	t.Parallel()
+
+	for _, values := range [][]string{
+		{"op-first-123", "op-second-456"},
+		{"op-repeat-123", "op-repeat-123"},
+	} {
+		values := values
+		t.Run(strings.Join(values, "+"), func(t *testing.T) {
+			t.Parallel()
+			md := metadata.MD{}
+			for _, value := range values {
+				md.Append(_requestcontext.OperationIDMetadataKey, value)
+			}
+			called := false
+			_, err := ParseGrpcMetadataContextMiddleware(
+				metadata.NewIncomingContext(context.Background(), md),
+				nil,
+				&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+				func(context.Context, interface{}) (interface{}, error) {
+					called = true
+					return nil, nil
+				},
+			)
+			if status.Code(err) != codes.InvalidArgument {
+				t.Fatalf("status code = %v, want InvalidArgument", status.Code(err))
+			}
+			if called {
+				t.Fatal("handler was called with multiple operation identities")
+			}
+		})
+	}
+}
+
+func TestParseGrpcMetadataAcceptsSamePreboundOperationID(t *testing.T) {
+	t.Parallel()
+
+	ctx := mustBindOperationID(t, context.Background(), "op-same-123")
+	ctx = metadata.NewIncomingContext(
+		ctx,
+		metadata.Pairs(_requestcontext.OperationIDMetadataKey, "op-same-123"),
+	)
+	called := false
+	_, err := ParseGrpcMetadataContextMiddleware(
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(handlerCtx context.Context, _ interface{}) (interface{}, error) {
+			called = true
+			operationID, ok := _requestcontext.OperationIDFromContext(handlerCtx)
+			if !ok || operationID != "op-same-123" {
+				t.Fatalf("operation identity = %q, %v", operationID, ok)
+			}
+			return nil, nil
+		},
+	)
+	if err != nil || !called {
+		t.Fatalf("error/called = %v/%v", err, called)
+	}
+}
+
+func TestParseGrpcMetadataMapsOperationIDContextConflictToInternal(t *testing.T) {
+	t.Parallel()
+
+	ctx := mustBindOperationID(t, context.Background(), "op-existing-123")
+	ctx = metadata.NewIncomingContext(
+		ctx,
+		metadata.Pairs(_requestcontext.OperationIDMetadataKey, "op-different-456"),
+	)
+	called := false
+	_, err := ParseGrpcMetadataContextMiddleware(
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(context.Context, interface{}) (interface{}, error) {
+			called = true
+			return nil, nil
+		},
+	)
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("status code = %v, want Internal", status.Code(err))
+	}
+	if called {
+		t.Fatal("handler was called after operation identity conflict")
+	}
+	if strings.Contains(status.Convert(err).Message(), "op-different-456") {
+		t.Fatalf("conflicting operation identity leaked into status: %v", err)
 	}
 }
 
@@ -103,7 +239,7 @@ func TestGrpcClientMetadataFromContextIncludesCanonicalIDs(t *testing.T) {
 	t.Parallel()
 
 	ctx := _requestcontext.WithRequestID(context.Background(), "req-client-123")
-	ctx = _requestcontext.WithOperationID(ctx, "op-client-456")
+	ctx = mustBindOperationID(t, ctx, "op-client-456")
 
 	md := GrpcClientMetadataFromContext(ctx)
 	if got := md.Get(_requestcontext.RequestIDMetadataKey); len(got) != 1 || got[0] != "req-client-123" {
@@ -118,7 +254,8 @@ func TestInjectGrpcMetadataIncludesOptionalIdempotencyKey(t *testing.T) {
 	t.Parallel()
 
 	req := httptest.NewRequest("POST", "/reports", nil)
-	req.Header.Set(_requestcontext.IdempotencyKeyHeader, "idem-http-123")
+	ctx := mustBindIdempotencyKey(t, req.Context(), "idem-http-123")
+	req = req.WithContext(ctx)
 
 	md := InjectGrpcMetadataContextMiddleware(context.Background(), req)
 	if got := md.Get(_requestcontext.IdempotencyKeyMetadataKey); len(got) != 1 || got[0] != "idem-http-123" {
@@ -133,6 +270,26 @@ func TestInjectGrpcMetadataOmitsMissingIdempotencyKey(t *testing.T) {
 	md := InjectGrpcMetadataContextMiddleware(context.Background(), req)
 	if got := md.Get(_requestcontext.IdempotencyKeyMetadataKey); len(got) != 0 {
 		t.Fatalf("idempotency metadata = %v, want empty", got)
+	}
+}
+
+func TestInjectGrpcMetadataDoesNotReparseUnboundIdentityHeaders(t *testing.T) {
+	t.Parallel()
+
+	req := httptest.NewRequest(http.MethodPost, "/commands", nil)
+	req.Header.Set(_requestcontext.RequestIDHeader, "req-raw-123")
+	req.Header.Set(_requestcontext.OperationIDHeader, "op-raw-456")
+	req.Header.Set(_requestcontext.IdempotencyKeyHeader, "idem-raw-789")
+
+	md := InjectGrpcMetadataContextMiddleware(context.Background(), req)
+	for _, key := range []string{
+		_requestcontext.RequestIDMetadataKey,
+		_requestcontext.OperationIDMetadataKey,
+		_requestcontext.IdempotencyKeyMetadataKey,
+	} {
+		if values := md.Get(key); len(values) != 0 {
+			t.Fatalf("unbound %s metadata = %v, want empty", key, values)
+		}
 	}
 }
 
@@ -187,14 +344,122 @@ func TestParseGrpcMetadataRejectsInvalidIdempotencyKey(t *testing.T) {
 	}
 }
 
+func TestParseGrpcMetadataRejectsMultipleIdempotencyKeys(t *testing.T) {
+	t.Parallel()
+
+	for _, values := range [][]string{
+		{"idem-first-123", "idem-second-456"},
+		{"idem-repeat-123", "idem-repeat-123"},
+	} {
+		values := values
+		t.Run(strings.Join(values, "+"), func(t *testing.T) {
+			t.Parallel()
+			md := metadata.MD{}
+			for _, value := range values {
+				md.Append(_requestcontext.IdempotencyKeyMetadataKey, value)
+			}
+			called := false
+			_, err := ParseGrpcMetadataContextMiddleware(
+				metadata.NewIncomingContext(context.Background(), md),
+				nil,
+				&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+				func(context.Context, interface{}) (interface{}, error) {
+					called = true
+					return nil, nil
+				},
+			)
+			if status.Code(err) != codes.InvalidArgument {
+				t.Fatalf("status code = %v, want InvalidArgument", status.Code(err))
+			}
+			if called {
+				t.Fatal("handler was called with multiple idempotency identities")
+			}
+		})
+	}
+}
+
+func TestParseGrpcMetadataAcceptsSamePreboundIdempotencyKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := mustBindIdempotencyKey(t, context.Background(), "idem-same-123")
+	ctx = metadata.NewIncomingContext(
+		ctx,
+		metadata.Pairs(_requestcontext.IdempotencyKeyMetadataKey, "idem-same-123"),
+	)
+	called := false
+	_, err := ParseGrpcMetadataContextMiddleware(
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(handlerCtx context.Context, _ interface{}) (interface{}, error) {
+			called = true
+			key, ok := _requestcontext.IdempotencyKeyFromContext(handlerCtx)
+			if !ok || key != "idem-same-123" {
+				t.Fatalf("idempotency identity = %q, %v", key, ok)
+			}
+			return nil, nil
+		},
+	)
+	if err != nil || !called {
+		t.Fatalf("error/called = %v/%v", err, called)
+	}
+}
+
+func TestParseGrpcMetadataMapsIdempotencyContextConflictToInternal(t *testing.T) {
+	t.Parallel()
+
+	ctx := mustBindIdempotencyKey(t, context.Background(), "idem-existing-123")
+	ctx = metadata.NewIncomingContext(
+		ctx,
+		metadata.Pairs(_requestcontext.IdempotencyKeyMetadataKey, "idem-different-456"),
+	)
+	called := false
+	_, err := ParseGrpcMetadataContextMiddleware(
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(context.Context, interface{}) (interface{}, error) {
+			called = true
+			return nil, nil
+		},
+	)
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("status code = %v, want Internal", status.Code(err))
+	}
+	if called {
+		t.Fatal("handler was called after idempotency identity conflict")
+	}
+	if strings.Contains(status.Convert(err).Message(), "idem-different-456") {
+		t.Fatalf("conflicting idempotency identity leaked into status: %v", err)
+	}
+}
+
 func TestGrpcClientMetadataFromContextIncludesIdempotencyKey(t *testing.T) {
 	t.Parallel()
 
-	ctx := _requestcontext.WithIdempotencyKey(context.Background(), "idem-client-123")
+	ctx := mustBindIdempotencyKey(t, context.Background(), "idem-client-123")
 	md := GrpcClientMetadataFromContext(ctx)
 	if got := md.Get(_requestcontext.IdempotencyKeyMetadataKey); len(got) != 1 || got[0] != "idem-client-123" {
 		t.Fatalf("idempotency metadata = %v, want [idem-client-123]", got)
 	}
+}
+
+func mustBindOperationID(t *testing.T, ctx context.Context, operationID string) context.Context {
+	t.Helper()
+	bound, err := _requestcontext.BindOperationID(ctx, operationID)
+	if err != nil {
+		t.Fatalf("BindOperationID() error = %v", err)
+	}
+	return bound
+}
+
+func mustBindIdempotencyKey(t *testing.T, ctx context.Context, key string) context.Context {
+	t.Helper()
+	bound, err := _requestcontext.BindIdempotencyKey(ctx, key)
+	if err != nil {
+		t.Fatalf("BindIdempotencyKey() error = %v", err)
+	}
+	return bound
 }
 
 func TestParseGrpcMetadataPreservesCancellation(t *testing.T) {
@@ -284,23 +549,55 @@ func TestInjectGrpcMetadataUsesVerifiedRequestPrincipal(t *testing.T) {
 	}
 }
 
+func TestInjectGrpcMetadataNeverParsesRawAuthorization(t *testing.T) {
+	viper.Set("jwt.key-generate", "first-hop-test-secret")
+	viper.Set("jwt.accessExpAfterMinutes", int64(5))
+	t.Cleanup(viper.Reset)
+
+	token, err := _jwt.GenerateToken(_jwt.JwtTokenProperties{
+		ProfileID: 42,
+		SessionID: 9,
+		Type:      _jwt.AccessToken,
+	})
+	if err != nil {
+		t.Fatalf("GenerateToken() error = %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.test/v2/resource", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	md := InjectGrpcMetadataContextMiddleware(context.Background(), req)
+	if got := md.Get(_identitycontext.ProfileIDMetadataKey); len(got) != 0 {
+		t.Fatalf("raw Authorization became trusted Actor metadata: %v", got)
+	}
+}
+
 func TestParseGrpcMetadataStoresCanonicalActorAndLegacyProjection(t *testing.T) {
-	t.Parallel()
-
-	ctx := metadata.NewIncomingContext(
-		context.Background(),
-		metadata.Pairs(
-			_identitycontext.AuthIDMetadataKey, "11",
-			_identitycontext.ProfileIDMetadataKey, "12",
-			_identitycontext.OriginIDMetadataKey, "13",
-			_identitycontext.OrganizationIDMetadataKey, "19",
-			_identitycontext.SessionIDMetadataKey, "14",
-			_identitycontext.RoleMetadataKey, "user",
-			_identitycontext.TokenTypeMetadataKey, "ACCESS",
-		),
+	now := time.Unix(1_700_000_000, 0)
+	cfg := _transporttrust.Config{
+		ServiceID: "gateway-service",
+		Secret:    "test-secret",
+		Mode:      _transporttrust.ModeEnforce,
+		MaxAge:    30 * time.Second,
+		Now:       func() time.Time { return now },
+	}
+	md := metadata.Pairs(
+		_identitycontext.AuthIDMetadataKey, "11",
+		_identitycontext.ProfileIDMetadataKey, "12",
+		_identitycontext.OriginIDMetadataKey, "13",
+		_identitycontext.OrganizationIDMetadataKey, "19",
+		_identitycontext.SessionIDMetadataKey, "14",
+		_identitycontext.RoleMetadataKey, "user",
+		_identitycontext.TokenTypeMetadataKey, "ACCESS",
+		_callercontext.CallerKindMetadataKey, string(_callercontext.KindUser),
 	)
+	if err := _transporttrust.Sign("/test.Service/Call", md, cfg); err != nil {
+		t.Fatalf("Sign() error = %v", err)
+	}
+	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	_, err := ParseGrpcMetadataContextMiddleware(
+	_, err := parseGrpcMetadataContextMiddlewareWithTrust(
+		cfg,
 		ctx,
 		nil,
 		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
@@ -323,6 +620,44 @@ func TestParseGrpcMetadataStoresCanonicalActorAndLegacyProjection(t *testing.T) 
 	)
 	if err != nil {
 		t.Fatalf("ParseGrpcMetadataContextMiddleware() error = %v", err)
+	}
+}
+
+func TestParseGrpcMetadataMapsActorContextConflictToInternal(t *testing.T) {
+	now := time.Unix(1_700_000_000, 0)
+	cfg := _transporttrust.Config{
+		ServiceID: "gateway-service",
+		Secret:    "test-secret",
+		Mode:      _transporttrust.ModeEnforce,
+		MaxAge:    30 * time.Second,
+		Now:       func() time.Time { return now },
+	}
+	md := metadata.Pairs(
+		_identitycontext.ProfileIDMetadataKey, "99",
+		_callercontext.CallerKindMetadataKey, string(_callercontext.KindUser),
+	)
+	if err := _transporttrust.Sign("/test.Service/Call", md, cfg); err != nil {
+		t.Fatalf("Sign() error = %v", err)
+	}
+
+	parent := mustBindActor(context.Background(), _identitycontext.Actor{ProfileID: 12})
+	ctx := metadata.NewIncomingContext(parent, md)
+	called := false
+	_, err := parseGrpcMetadataContextMiddlewareWithTrust(
+		cfg,
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/test.Service/Call"},
+		func(context.Context, interface{}) (interface{}, error) {
+			called = true
+			return nil, nil
+		},
+	)
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("status code = %v, want Internal", status.Code(err))
+	}
+	if called {
+		t.Fatal("handler was called after Actor context conflict")
 	}
 }
 
@@ -358,7 +693,7 @@ func TestGrpcClientMetadataPrefersCanonicalActor(t *testing.T) {
 	t.Parallel()
 
 	actor := _identitycontext.Actor{AuthID: 11, ProfileID: 12, Role: "user"}
-	ctx := _identitycontext.WithActor(context.Background(), actor)
+	ctx := mustBindActor(context.Background(), actor)
 	ctx = context.WithValue(ctx, _enums.ProfileIDKey, uint64(99))
 
 	md := GrpcClientMetadataFromContext(ctx)
@@ -371,7 +706,7 @@ func TestPrincipalFromContextProjectsCanonicalActor(t *testing.T) {
 	t.Parallel()
 
 	organizationID := uint64(19)
-	ctx := _identitycontext.WithActor(context.Background(), _identitycontext.Actor{
+	ctx := mustBindActor(context.Background(), _identitycontext.Actor{
 		AuthID:         11,
 		ProfileID:      12,
 		OriginID:       13,
@@ -526,7 +861,7 @@ func TestInjectGrpcMetadataIncludesCallerClassification(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.test/v2/resource", nil)
 	req.Header.Set(_jwt.APIKeyHeader, "0123456789abcdef")
-	req = req.WithContext(_callercontext.WithCaller(req.Context(), _callercontext.Caller{
+	req = req.WithContext(mustBindCaller(req.Context(), _callercontext.Caller{
 		Kind:      _callercontext.KindAPIKey,
 		APIKeyID:  7,
 		APIKeyApp: "release-uploader",
@@ -636,6 +971,60 @@ func (s *metadataTestServerStream) Context() context.Context {
 	return s.ctx
 }
 
+func TestStreamMetadataInterceptorAppliesOperationIDAcceptancePolicy(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		values   []string
+		wantCode codes.Code
+		called   bool
+	}{
+		{name: "missing allowed", values: nil, wantCode: codes.OK, called: true},
+		{name: "valid accepted", values: []string{"op-stream-123"}, wantCode: codes.OK, called: true},
+		{name: "invalid rejected", values: []string{"unsafe stream operation"}, wantCode: codes.InvalidArgument},
+		{name: "multiple rejected", values: []string{"op-first", "op-second"}, wantCode: codes.InvalidArgument},
+	}
+
+	for _, testCase := range testCases {
+		testCase := testCase
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			md := metadata.MD{}
+			for _, value := range testCase.values {
+				md.Append(_requestcontext.OperationIDMetadataKey, value)
+			}
+			stream := &metadataTestServerStream{
+				ctx: metadata.NewIncomingContext(context.Background(), md),
+			}
+			called := false
+			err := ParseGrpcMetadataContextStreamMiddleware(
+				nil,
+				stream,
+				&grpc.StreamServerInfo{FullMethod: "/test.StreamService/Watch"},
+				func(_ interface{}, handlerStream grpc.ServerStream) error {
+					called = true
+					operationID, ok := _requestcontext.OperationIDFromContext(handlerStream.Context())
+					if len(testCase.values) == 1 && testCase.wantCode == codes.OK {
+						if !ok || operationID != "op-stream-123" {
+							t.Fatalf("operation identity = %q, %v", operationID, ok)
+						}
+					} else if ok || operationID != "" {
+						t.Fatalf("operation identity = %q, %v; want absent", operationID, ok)
+					}
+					return nil
+				},
+			)
+			if status.Code(err) != testCase.wantCode {
+				t.Fatalf("status code = %v, want %v", status.Code(err), testCase.wantCode)
+			}
+			if called != testCase.called {
+				t.Fatalf("handler called = %v, want %v", called, testCase.called)
+			}
+		})
+	}
+}
+
 func TestStreamMetadataInterceptorStoresCallerContext(t *testing.T) {
 	t.Setenv("QHPRO_SERVICE_ID", "gateway-service")
 	t.Setenv("QHPRO_INTERNAL_METADATA_SECRET", "test-secret")
@@ -671,5 +1060,164 @@ func TestStreamMetadataInterceptorStoresCallerContext(t *testing.T) {
 	}
 	if !called {
 		t.Fatal("stream handler was not called")
+	}
+}
+
+func TestParseGrpcMetadataDoesNotAcceptAmbiguousRequestID(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	ctx :=
+		metadata.NewIncomingContext(
+			context.Background(),
+			metadata.Pairs(
+				_requestcontext.
+					RequestIDMetadataKey,
+				"req-first-123",
+
+				_requestcontext.
+					RequestIDMetadataKey,
+				"req-second-456",
+			),
+		)
+
+	_, err :=
+		ParseGrpcMetadataContextMiddleware(
+			ctx,
+			nil,
+			&grpc.UnaryServerInfo{
+				FullMethod: "/test.Service/Call",
+			},
+			func(
+				handlerCtx context.Context,
+				_ interface{},
+			) (
+				interface{},
+				error,
+			) {
+				if requestID, ok :=
+					_requestcontext.
+						FromContext(
+							handlerCtx,
+						); ok || requestID != "" {
+
+					t.Fatalf(
+						"ambiguous request ID reached handler: %q",
+						requestID,
+					)
+				}
+
+				return nil, nil
+			},
+		)
+
+	if err != nil {
+		t.Fatalf(
+			"ParseGrpcMetadataContextMiddleware() error = %v",
+			err,
+		)
+	}
+}
+
+func TestParseGrpcMetadataDoesNotInventMissingRequestID(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	ctx :=
+		metadata.NewIncomingContext(
+			context.Background(),
+			metadata.MD{},
+		)
+
+	_, err :=
+		ParseGrpcMetadataContextMiddleware(
+			ctx,
+			nil,
+			&grpc.UnaryServerInfo{
+				FullMethod: "/test.Service/Call",
+			},
+			func(
+				handlerCtx context.Context,
+				_ interface{},
+			) (
+				interface{},
+				error,
+			) {
+				if requestID, ok :=
+					_requestcontext.
+						FromContext(
+							handlerCtx,
+						); ok || requestID != "" {
+
+					t.Fatalf(
+						"missing request ID was invented: %q",
+						requestID,
+					)
+				}
+
+				return nil, nil
+			},
+		)
+
+	if err != nil {
+		t.Fatalf(
+			"ParseGrpcMetadataContextMiddleware() error = %v",
+			err,
+		)
+	}
+}
+
+func TestParseGrpcMetadataDoesNotBindInvalidRequestID(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	ctx :=
+		metadata.NewIncomingContext(
+			context.Background(),
+			metadata.Pairs(
+				_requestcontext.
+					RequestIDMetadataKey,
+				"unsafe request id",
+			),
+		)
+
+	_, err :=
+		ParseGrpcMetadataContextMiddleware(
+			ctx,
+			nil,
+			&grpc.UnaryServerInfo{
+				FullMethod: "/test.Service/Call",
+			},
+			func(
+				handlerCtx context.Context,
+				_ interface{},
+			) (
+				interface{},
+				error,
+			) {
+				if requestID, ok :=
+					_requestcontext.
+						FromContext(
+							handlerCtx,
+						); ok || requestID != "" {
+
+					t.Fatalf(
+						"invalid request ID reached handler: %q",
+						requestID,
+					)
+				}
+
+				return nil, nil
+			},
+		)
+
+	if err != nil {
+		t.Fatalf(
+			"ParseGrpcMetadataContextMiddleware() error = %v",
+			err,
+		)
 	}
 }
