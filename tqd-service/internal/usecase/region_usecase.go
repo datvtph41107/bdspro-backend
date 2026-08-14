@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
 	"tqd/internal/geometry"
@@ -145,7 +146,7 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 		Name:               name,
 		DisplayName:        name,
 		LabelID:            &labelID,
-		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
+		Geometry:           domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            areaSqm,
 		AreaHa:             areaSqm / 10000,

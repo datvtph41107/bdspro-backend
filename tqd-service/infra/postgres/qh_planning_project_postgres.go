@@ -3,6 +3,8 @@ package postgres
 import (
 	_db "common/db"
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"strings"
 	qh_domain "tqd/internal/domain/qh"
@@ -109,4 +111,77 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 func (r *QHPlanningProjectRepo) UpdateProcessStatus(ctx context.Context, id uint64, status uint32) error {
 	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("id = ?", id).
 		Update("process_status", status).Error
+}
+
+func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSource(ctx context.Context, planningProjectID uint64) (*qh_dto.PlanningProjectSeoSource, error) {
+	var source qh_dto.PlanningProjectSeoSource
+	err := r.db.GetDB(ctx).
+		Raw(`
+			SELECT
+				id AS planning_project_id,
+				COALESCE(NULLIF(name, ''), '') AS name,
+				COALESCE(NULLIF(slug, ''), NULLIF(name, ''), '') AS slug,
+				seo_id AS seo_id
+			FROM qh_planning_projects
+			WHERE id = ? AND deleted_at IS NULL
+			LIMIT 1
+		`, planningProjectID).
+		Scan(&source).Error
+	if err != nil {
+		return nil, fmt.Errorf("get planning project seo source failed: %w", err)
+	}
+	if source.PlanningProjectID == 0 {
+		return nil, nil
+	}
+	return &source, nil
+}
+
+func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSourcesByIDs(ctx context.Context, planningProjectIDs []uint64) ([]qh_dto.PlanningProjectSeoSource, error) {
+	ids := dedupePlanningProjectIDs(planningProjectIDs)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	var sources []qh_dto.PlanningProjectSeoSource
+	err := r.db.GetDB(ctx).
+		Raw(`
+			SELECT
+				id AS planning_project_id,
+				COALESCE(NULLIF(name, ''), '') AS name,
+				COALESCE(NULLIF(slug, ''), NULLIF(name, ''), '') AS slug,
+				seo_id AS seo_id
+			FROM qh_planning_projects
+			WHERE id IN ? AND deleted_at IS NULL
+		`, ids).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get planning project seo sources failed: %w", err)
+	}
+	return sources, nil
+}
+
+func (r *QHPlanningProjectRepo) UpdatePlanningProjectSeoID(ctx context.Context, planningProjectID uint64, seoID uint64) error {
+	if planningProjectID == 0 || seoID == 0 {
+		return errors.New("planning_project_id và seo_id là bắt buộc")
+	}
+	return r.db.GetDB(ctx).
+		Model(&qh_domain.QHPlanningProject{}).
+		Where("id = ? AND deleted_at IS NULL", planningProjectID).
+		Update("seo_id", seoID).Error
+}
+
+func dedupePlanningProjectIDs(ids []uint64) []uint64 {
+	seen := make(map[uint64]struct{}, len(ids))
+	out := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
 }

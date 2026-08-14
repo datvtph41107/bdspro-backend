@@ -70,6 +70,8 @@ type QHLayer struct {
 	Family   *QHLayerFamily `gorm:"foreignKey:FamilyID;references:ID"`
 	ParentID *uint64        `gorm:"column:parent_id;index" json:"parentId,omitempty"`
 	Parent   *QHLayer       `gorm:"foreignKey:ParentID;references:ID"`
+
+	SeoID *uint64 `gorm:"column:seo_id;index" json:"seoId,omitempty"`
 }
 
 func (QHLayer) TableName() string {

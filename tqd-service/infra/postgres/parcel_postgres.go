@@ -348,7 +348,7 @@ func (p *ParcelPostgres) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domai
 	}
 
 	query := fmt.Sprintf(`
-        SELECT id, ST_AsGeoJSON(geometry) as geometry, lat, lon, ref_id, ref_type, created_at, updated_at
+        SELECT id, ST_AsGeoJSON(geometry) as geometry, lat, lon, ref_id, ref_type, seo_id, created_at, updated_at
         FROM parcels WHERE id IN (%s) AND deleted_at IS NULL`, strings.Join(placeholders, ","))
 
 	err := p.DB.WithContext(ctx).Raw(query, args...).Scan(&parcels).Error
@@ -373,6 +373,34 @@ func (p *ParcelPostgres) FindByLocation(ctx context.Context, lat, lng float64) (
 		return nil, nil
 	}
 	return &parcel, nil
+}
+
+// GetPOIMapPoint lấy tọa độ focus của POI từ geom (fallback latitude/longitude).
+func (p *ParcelPostgres) GetPOIMapPoint(ctx context.Context, poiID uint64) (lat, lng float64, err error) {
+	if poiID == 0 {
+		return 0, 0, fmt.Errorf("poi id is required")
+	}
+
+	var row struct {
+		Lat float64 `gorm:"column:lat"`
+		Lng float64 `gorm:"column:lng"`
+	}
+	err = p.DB.WithContext(ctx).Raw(`
+		SELECT
+			COALESCE(ST_Y(geom), latitude, 0)::float8 AS lat,
+			COALESCE(ST_X(geom), longitude, 0)::float8 AS lng
+		FROM pois
+		WHERE id = ?
+		  AND deleted_at IS NULL
+		  AND is_active = true
+		LIMIT 1`, poiID).Scan(&row).Error
+	if err != nil {
+		return 0, 0, fmt.Errorf("get poi map point failed: %w", err)
+	}
+	if row.Lat == 0 && row.Lng == 0 {
+		return 0, 0, fmt.Errorf("poi not found or missing coordinates")
+	}
+	return row.Lat, row.Lng, nil
 }
 
 func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
@@ -2141,7 +2169,7 @@ func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64
 				p.id AS parcel_id,
 				`+parcelSeoAdrSearchExpr+` AS adr_search,
 				p.seo_id AS seo_id
-			FROM parcels p\
+			FROM parcels p
 			LEFT JOIN LATERAL (
 				SELECT *
 				FROM qh_parcel_info
@@ -2160,6 +2188,37 @@ func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64
 		return nil, nil
 	}
 	return &source, nil
+}
+
+func (p *ParcelPostgres) GetParcelSeoSourcesByIDs(ctx context.Context, parcelIDs []uint64) ([]dto.ParcelSeoSource, error) {
+	if len(parcelIDs) == 0 {
+		return nil, nil
+	}
+
+	var sources []dto.ParcelSeoSource
+	err := p.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				p.id AS parcel_id,
+				`+parcelSeoAdrSearchExpr+` AS adr_search,
+				p.seo_id AS seo_id
+			FROM parcels p
+			LEFT JOIN LATERAL (
+				SELECT *
+				FROM qh_parcel_info
+				WHERE parcel_id = p.id
+				ORDER BY id DESC
+				LIMIT 1
+			) pi ON true
+			WHERE p.deleted_at IS NULL
+			  AND p.id IN ?
+			ORDER BY p.id
+		`, parcelIDs).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel seo sources by ids failed: %w", err)
+	}
+	return sources, nil
 }
 
 func (p *ParcelPostgres) ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error) {
@@ -2200,4 +2259,175 @@ func (p *ParcelPostgres) UpdateParcelSeoID(ctx context.Context, parcelID uint64,
 		Table("parcels").
 		Where("id = ? AND deleted_at IS NULL", parcelID).
 		Update("seo_id", seoID).Error
+}
+
+func (p *ParcelPostgres) GetParcelHistory(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]qh_domain.ParcelHistory, int64, error) {
+	var (
+		rows  []qh_domain.ParcelHistory
+		total int64
+	)
+
+	base := p.DB.WithContext(ctx).
+		Model(&qh_domain.ParcelHistory{}).
+		Where("parcel_id = ? AND deleted_at IS NULL", parcelID)
+
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count parcel history failed: %w", err)
+	}
+	if total == 0 {
+		return []qh_domain.ParcelHistory{}, 0, nil
+	}
+
+	if err := base.
+		Order("event_date DESC NULLS LAST, id DESC").
+		Limit(pagable.GetLimit()).
+		Offset(pagable.GetOffset()).
+		Find(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("list parcel history failed: %w", err)
+	}
+
+	return rows, total, nil
+}
+
+func (p *ParcelPostgres) FindParcelsAround(ctx context.Context, parcelID uint64, limit int) ([]dto.NearbyParcelItem, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+	if limit <= 0 {
+		limit = 5
+	}
+	if limit > 20 {
+		limit = 20
+	}
+
+	const radiusMeters = 300.0
+
+	query := `
+		WITH src AS (
+			SELECT
+				p.id,
+				p.geometry,
+				p.geometry::geography AS geog
+			FROM parcels p
+			WHERE p.id = $1
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			LIMIT 1
+		)
+		SELECT
+			n.id AS parcel_id,
+			COALESCE(n.lat, ST_Y(ST_PointOnSurface(n.geometry)), 0) AS lat,
+			COALESCE(n.lon, ST_X(ST_PointOnSurface(n.geometry)), 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(n.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			ST_AsGeoJSON(ST_SimplifyPreserveTopology(n.geometry, 0.000002)) AS geometry,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			ST_Distance(n.geometry::geography, src.geog) AS distance_meters
+		FROM parcels n
+		CROSS JOIN src
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = n.id
+		WHERE n.deleted_at IS NULL
+		  AND n.id <> src.id
+		  AND n.geometry IS NOT NULL
+		  AND n.geometry && ST_Expand(src.geometry, 0.003)
+		  AND (
+		    ST_Touches(n.geometry, src.geometry)
+		    OR ST_DWithin(n.geometry::geography, src.geog, $2)
+		  )
+		ORDER BY
+			CASE WHEN ST_Touches(n.geometry, src.geometry) THEN 0 ELSE 1 END,
+			ST_Distance(n.geometry::geography, src.geog) ASC,
+			n.id ASC
+		LIMIT $3
+	`
+
+	var rows []dto.NearbyParcelItem
+	if err := p.DB.WithContext(ctx).Raw(query, parcelID, radiusMeters, limit).Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("find parcels around failed: %w", err)
+	}
+	for i := range rows {
+		rows[i].Geometry = decodePostgresGeometry(rows[i].Geometry)
+	}
+	if rows == nil {
+		rows = []dto.NearbyParcelItem{}
+	}
+	return rows, nil
+}
+
+func (p *ParcelPostgres) AdminListParcels(ctx context.Context, search string, pagable _dto.Pagable) ([]dto.AdminParcelListItem, int64, error) {
+	var total int64
+
+	baseFrom := `
+		FROM parcels p
+		LEFT JOIN LATERAL (
+			SELECT *
+			FROM qh_parcel_info
+			WHERE parcel_id = p.id
+			ORDER BY id DESC
+			LIMIT 1
+		) pi ON true
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+		LEFT JOIN (
+			SELECT target_id, COUNT(*) AS follower_count
+			FROM user_subscriptions
+			WHERE target_type = 'parcel'
+			  AND deleted_at IS NULL
+			  AND status = 10
+			GROUP BY target_id
+		) fc ON fc.target_id = p.id
+		WHERE p.deleted_at IS NULL`
+
+	args := make([]any, 0, 4)
+	if strings.TrimSpace(search) != "" {
+		term := "%" + strings.ToLower(strings.TrimSpace(search)) + "%"
+		baseFrom += `
+		  AND (
+		    LOWER(COALESCE(pi.address_text, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.map_number, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.land_number, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.property_code, '')) LIKE ?
+		    OR CAST(p.id AS TEXT) LIKE ?
+		  )`
+		args = append(args, term, term, term, term, term)
+	}
+
+	countSQL := `SELECT COUNT(*) ` + baseFrom
+	if err := p.DB.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count admin parcels failed: %w", err)
+	}
+	if total == 0 {
+		return []dto.AdminParcelListItem{}, 0, nil
+	}
+
+	listSQL := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(pi.is_seo, false) AS is_seo,
+			COALESCE(fc.follower_count, 0) AS follower_count,
+			COALESCE(p.created_at, NOW()) AS created_at
+	` + baseFrom + `
+		ORDER BY p.id DESC
+		LIMIT ? OFFSET ?`
+
+	listArgs := append(append([]any{}, args...), pagable.GetLimit(), pagable.GetOffset())
+	var rows []dto.AdminParcelListItem
+	if err := p.DB.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("list admin parcels failed: %w", err)
+	}
+	if rows == nil {
+		rows = []dto.AdminParcelListItem{}
+	}
+	return rows, total, nil
 }

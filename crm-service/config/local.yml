@@ -39,7 +39,10 @@ seo:
   runtime_event_ingest_key: "local-runtime-event-ingest-key-change-me"
   internal_secret_key: "local-seo-secret"
   timezone: "Asia/Ho_Chi_Minh"
-  parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
+  parcelUrlTemplate: /tin-tuc/thua-dat/{id}-{slug}
+  layerUrlTemplate: /quy-hoach/lop/{id}-{slug}
+  planningProjectUrlTemplate: /do-an-quy-hoach/{slug}
+  administrativeUnitUrlTemplate: /dia-ban/{slug}
 
   sitemap:
     default_change_freq: "daily"

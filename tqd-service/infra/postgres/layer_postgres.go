@@ -9,6 +9,7 @@ import (
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 
@@ -317,4 +318,59 @@ func (r *layerRepoImpl) GetZoomRangeByFamilyID(ctx context.Context, familyID uin
 		result.MaxZoom = 16
 	}
 	return result.MinZoom, result.MaxZoom, nil
+}
+
+func (r *layerRepoImpl) GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error) {
+	var source dto.LayerSeoSource
+	err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT
+				id AS layer_id,
+				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
+				seo_id AS seo_id
+			FROM qh_layers
+			WHERE id = ? AND deleted_at IS NULL
+			LIMIT 1
+		`, layerID).
+		Scan(&source).Error
+	if err != nil {
+		return nil, fmt.Errorf("get layer seo source failed: %w", err)
+	}
+	if source.LayerID == 0 {
+		return nil, nil
+	}
+	return &source, nil
+}
+
+func (r *layerRepoImpl) GetLayerSeoSourcesByIDs(ctx context.Context, layerIDs []uint64) ([]dto.LayerSeoSource, error) {
+	layerIDs = dedupeNonZeroUint64(layerIDs)
+	if len(layerIDs) == 0 {
+		return nil, nil
+	}
+
+	var sources []dto.LayerSeoSource
+	err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT
+				id AS layer_id,
+				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
+				seo_id AS seo_id
+			FROM qh_layers
+			WHERE id IN ? AND deleted_at IS NULL
+		`, layerIDs).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get layer seo sources failed: %w", err)
+	}
+	return sources, nil
+}
+
+func (r *layerRepoImpl) UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error {
+	if layerID == 0 || seoID == 0 {
+		return errors.New("layer_id và seo_id là bắt buộc")
+	}
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
+		Where("id = ? AND deleted_at IS NULL", layerID).
+		Update("seo_id", seoID).Error
 }

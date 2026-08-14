@@ -639,9 +639,9 @@ func (h *SeoDomainHandler) CreateSeoFromParcel(ctx context.Context, req *crmpb.C
 	return h.seoDomainMapper.SeoDomainToPb(seoDomain), nil
 }
 
-// GenerateSeoFromParcels tự động tạo SEO domain cho các parcel có bật isSeo và chưa có seoId.
+// GenerateSeoFromParcels tự động tạo/cập nhật SEO domain cho parcel.
 // @Summary Tự động tạo SEO từ parcel
-// @Description Quét parcels.is_seo = true, seo_id trống, sinh URL theo seo.parcelUrlTemplate rồi tạo seo_domain.
+// @Description Quét parcel is_seo hoặc danh sách parcelIds; nếu seo_domain đã tồn tại thì gen lại và update.
 // @Tags SEO Domain
 // @Accept json
 // @Produce json
@@ -650,13 +650,95 @@ func (h *SeoDomainHandler) CreateSeoFromParcel(ctx context.Context, req *crmpb.C
 // @Router /v2/crm/admin/seo-domains/parcels/generate [post]
 func (h *SeoDomainHandler) GenerateSeoFromParcels(ctx context.Context, req *crmpb.GenerateSeoFromParcelsRequest) (*crmpb.GenerateSeoFromParcelsResponse, error) {
 	items, result, err := h.seoDomainUsecase.GenerateSeoFromParcels(ctx, &dto.GenerateSeoFromParcelsRequest{
-		Limit: req.Limit,
+		Limit:     req.Limit,
+		ParcelIDs: req.ParcelIds,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &crmpb.GenerateSeoFromParcelsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromLayers tự động tạo SEO domain cho các layer quy hoạch.
+// @Summary Tự động tạo SEO từ layer
+// @Description Nhận danh sách layerIds, sinh URL theo seo.layerUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromLayersRequest true "Danh sách layerIds"
+// @Router /v2/crm/admin/seo-domains/layers/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromLayers(ctx context.Context, req *crmpb.GenerateSeoFromLayersRequest) (*crmpb.GenerateSeoFromLayersResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromLayers(ctx, &dto.GenerateSeoFromLayersRequest{
+		LayerIDs: req.LayerIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromLayersResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromPlanningProjects tự động tạo SEO domain cho các đồ án quy hoạch.
+// @Summary Tự động tạo SEO từ planning project
+// @Description Nhận danh sách planningProjectIds, sinh URL theo seo.planningProjectUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromPlanningProjectsRequest true "Danh sách planningProjectIds"
+// @Router /v2/crm/admin/seo-domains/planning-projects/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromPlanningProjects(ctx context.Context, req *crmpb.GenerateSeoFromPlanningProjectsRequest) (*crmpb.GenerateSeoFromPlanningProjectsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromPlanningProjects(ctx, &dto.GenerateSeoFromPlanningProjectsRequest{
+		PlanningProjectIDs: req.PlanningProjectIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromPlanningProjectsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromAdministrativeUnits tự động tạo SEO domain cho province/ward.
+// @Summary Tự động tạo SEO từ đơn vị hành chính
+// @Description Nhận danh sách identities dạng province:<id>|ward:<id>, sinh URL /dia-ban/{slug} rồi tạo/cập nhật seo_domain và sync seoId về TQD.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromAdministrativeUnitsRequest true "Danh sách identities"
+// @Router /v2/crm/admin/seo-domains/administrative-units/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromAdministrativeUnits(ctx context.Context, req *crmpb.GenerateSeoFromAdministrativeUnitsRequest) (*crmpb.GenerateSeoFromAdministrativeUnitsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromAdministrativeUnits(ctx, &dto.GenerateSeoFromAdministrativeUnitsRequest{
+		Identities: req.Identities,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromAdministrativeUnitsResponse{
 		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
 		Total:   result.Total,
 		Created: result.Created,

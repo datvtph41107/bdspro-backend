@@ -116,6 +116,8 @@ type Document struct {
 	Title             string          `json:"title"`
 	Description       string          `json:"description,omitempty"`
 	Filepath          string          `json:"filepath,omitempty"`
+	RelativePath      string          `json:"relativePath,omitempty"`
+	Ext               string          `json:"ext,omitempty"`
 	Thumbnail         string          `json:"thumbnail,omitempty"`
 	VersionNo         string          `json:"versionNo,omitempty"`
 	ValidityStatus    string          `json:"validityStatus,omitempty"`

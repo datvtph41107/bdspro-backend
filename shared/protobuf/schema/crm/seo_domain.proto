@@ -215,6 +215,27 @@ service SeoDomainService {
     };
   }
 
+  rpc GenerateSeoFromLayers(GenerateSeoFromLayersRequest) returns (GenerateSeoFromLayersResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/layers/generate"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromPlanningProjects(GenerateSeoFromPlanningProjectsRequest) returns (GenerateSeoFromPlanningProjectsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/planning-projects/generate"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromAdministrativeUnits(GenerateSeoFromAdministrativeUnitsRequest) returns (GenerateSeoFromAdministrativeUnitsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/administrative-units/generate"
+      body: "*"
+    };
+  }
+
   rpc TouchSeoDomainByRef(TouchSeoDomainByRefRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/touch-by-ref"
@@ -890,6 +911,7 @@ message SeoDomainResponse {
   string lastRenderError = 45;
   string templateKey = 46;
   string templateVersion = 47;
+  sharepb.EnumItem visibleOn = 48;
 }
 
 message SeoDomainBriefResponse {
@@ -1034,9 +1056,50 @@ message CreateSeoFromParcelRequest {
 
 message GenerateSeoFromParcelsRequest {
   uint32 limit = 1;
+  repeated uint64 parcelIds = 2;
 }
 
 message GenerateSeoFromParcelsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromLayersRequest {
+  repeated uint64 layerIds = 1;
+}
+
+message GenerateSeoFromLayersResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromPlanningProjectsRequest {
+  repeated uint64 planningProjectIds = 1;
+}
+
+message GenerateSeoFromPlanningProjectsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromAdministrativeUnitsRequest {
+  // Typed identities: province:<id> | ward:<id>
+  repeated string identities = 1;
+}
+
+message GenerateSeoFromAdministrativeUnitsResponse {
   repeated SeoDomainResponse data = 1;
   int64 total = 2;
   int64 created = 3;

@@ -8,7 +8,9 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"strings"
 	"tqd/infra/mapper"
+	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -189,6 +191,51 @@ func (h *LocationHandler) ListWardsByProvince(ctx context.Context, req *tqdpb.Li
 	return h.mapper.ToProtoListWardsResponse(resp), nil
 }
 
+// AdminListProvinces — GET /v2/tqd/admin/provinces
+// @Summary Admin danh sách tỉnh/thành
+// @Description Trả danh sách province có phân trang + search
+// @Tags Location Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param search query string false "Search keyword"
+// @Param sort query string false "Sort, e.g. fullName,asc"
+// @Success 200 {object} tqdpb.AdminListProvincesResponse
+// @Router /v2/tqd/admin/provinces [get]
+func (h *LocationHandler) AdminListProvinces(ctx context.Context, req *tqdpb.AdminListProvincesRequest) (*tqdpb.AdminListProvincesResponse, error) {
+	dtoReq := h.mapper.FromProtoAdminListProvincesRequest(req)
+	resp, err := h.locationUsecase.AdminListProvinces(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	return h.mapper.ToProtoAdminListProvincesResponse(resp), nil
+}
+
+// AdminListWards — GET /v2/tqd/admin/wards
+// @Summary Admin danh sách phường/xã
+// @Description Trả danh sách ward có phân trang + search, lọc theo provinceId
+// @Tags Location Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param search query string false "Search keyword"
+// @Param provinceId query string false "Province ID"
+// @Param sort query string false "Sort, e.g. fullName,asc"
+// @Success 200 {object} tqdpb.AdminListWardsResponse
+// @Router /v2/tqd/admin/wards [get]
+func (h *LocationHandler) AdminListWards(ctx context.Context, req *tqdpb.AdminListWardsRequest) (*tqdpb.AdminListWardsResponse, error) {
+	dtoReq := h.mapper.FromProtoAdminListWardsRequest(req)
+	resp, err := h.locationUsecase.AdminListWards(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	return h.mapper.ToProtoAdminListWardsResponse(resp), nil
+}
+
 func (h *LocationHandler) SearchTxtClient(ctx context.Context, req *sharepb.RequestV3Proto) (*tqdpb.SearchResponse, error) {
 	// Call usecase
 	resp, err := h.locationUsecase.SearchTxtClient(ctx, _utils.CleanSearchText(req.Text), 20)
@@ -305,6 +352,97 @@ func (h *LocationHandler) validateListWardsByProvince(req *tqdpb.ListWardsByProv
 		return status.Error(codes.InvalidArgument, "page_size must be between 1 and 100")
 	}
 	return nil
+}
+
+// GetAdministrativeUnitSeoSource - Internal: lấy nguồn SEO cho đơn vị hành chính
+func (h *LocationHandler) GetAdministrativeUnitSeoSource(
+	ctx context.Context,
+	req *tqdpb.GetAdministrativeUnitSeoSourceRequest,
+) (*tqdpb.AdministrativeUnitSeoSourceResponse, error) {
+	if req == nil || strings.TrimSpace(req.GetIdentity()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "identity là bắt buộc")
+	}
+	source, err := h.locationUsecase.GetAdministrativeUnitSeoSource(ctx, req.GetIdentity())
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	if source == nil {
+		return nil, status.Error(codes.NotFound, "administrative unit not found")
+	}
+	return administrativeUnitSeoSourceToProto(source), nil
+}
+
+// UpdateAdministrativeUnitSeoID - Internal: cập nhật seo_id cho province/ward
+func (h *LocationHandler) UpdateAdministrativeUnitSeoID(
+	ctx context.Context,
+	req *tqdpb.UpdateAdministrativeUnitSeoIDRequest,
+) (*sharepb.SubmitResponse, error) {
+	if req == nil || strings.TrimSpace(req.GetIdentity()) == "" || req.GetSeoId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "identity và seoId là bắt buộc")
+	}
+	if err := h.locationUsecase.UpdateAdministrativeUnitSeoID(ctx, req.GetIdentity(), req.GetSeoId()); err != nil {
+		return nil, h.handleError(err)
+	}
+	return &sharepb.SubmitResponse{
+		Message: "administrative unit seo_id updated successfully",
+	}, nil
+}
+
+// AdminGenAdministrativeUnitSeo - Admin: tạo SEO domain trên CRM cho danh sách đơn vị hành chính
+func (h *LocationHandler) AdminGenAdministrativeUnitSeo(
+	ctx context.Context,
+	req *tqdpb.AdminGenAdministrativeUnitSeoRequest,
+) (*tqdpb.AdminGenAdministrativeUnitSeoResponse, error) {
+	if req == nil || len(req.GetIdentities()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "identities không được để trống")
+	}
+
+	result, err := h.locationUsecase.AdminGenAdministrativeUnitSeo(ctx, req.GetIdentities())
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	if result == nil {
+		return &tqdpb.AdminGenAdministrativeUnitSeoResponse{}, nil
+	}
+
+	items := make([]*tqdpb.AdminGenAdministrativeUnitSeoItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, &tqdpb.AdminGenAdministrativeUnitSeoItem{
+			Identity:     item.Identity,
+			SeoId:        item.SeoID,
+			CanonicalUrl: item.CanonicalURL,
+			Slug:         item.Slug,
+			Created:      item.Created,
+			Message:      item.Message,
+		})
+	}
+	return &tqdpb.AdminGenAdministrativeUnitSeoResponse{
+		Data:    items,
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+func administrativeUnitSeoSourceToProto(source *dto.AdministrativeUnitSeoSource) *tqdpb.AdministrativeUnitSeoSourceResponse {
+	if source == nil {
+		return nil
+	}
+	resp := &tqdpb.AdministrativeUnitSeoSourceResponse{
+		Identity:           source.Identity,
+		UnitType:           source.UnitType,
+		SourceId:           source.SourceID,
+		Name:               source.Name,
+		Slug:               source.Slug,
+		CanonicalPath:      source.CanonicalPath,
+		AdministrativeCode: source.AdministrativeCode,
+	}
+	if source.SeoID != nil && *source.SeoID > 0 {
+		resp.SeoId = *source.SeoID
+	}
+	return resp
 }
 
 // ==================== ERROR HANDLING ====================

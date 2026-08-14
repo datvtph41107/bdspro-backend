@@ -62,6 +62,20 @@ message ListFollowedPlanningProjectsRequest {
   string search = 3;
 }
 
+message ListParcelPlanningRelationRequest {
+  uint64 parcel_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ListLayerPlanDocRelationRequest {
+  uint64 parcel_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  // docType: CSV document_type, lọc OR (vd. "30,50"). Không truyền = bỏ lọc.
+  string docType = 4;
+}
+
 message ParcelQuickViewRequest {
   uint64 parcel_id = 1;
 }
@@ -90,6 +104,12 @@ service PlanningClientService {
       additional_bindings {
         get: "/v2/tqd/client/planning-projects/{project_id}/planning-documents"
       }
+    };
+  }
+  // Danh sách tài liệu QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation.
+  rpc ListLayerPlanDocRelations(ListLayerPlanDocRelationRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/relation-layer/{parcel_id}"
     };
   }
   rpc GetPlanningDocument(PlanningDocumentIdRequest) returns (google.protobuf.BytesValue) {
@@ -121,6 +141,12 @@ service PlanningClientService {
   rpc ListFollowedPlanningProjects(ListFollowedPlanningProjectsRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/followed"
+    };
+  }
+  // Danh sách đồ án QH liên quan thửa: parcel → regions → layers → layer_planning_relation.
+  rpc ListParcelPlanningRelations(ListParcelPlanningRelationRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/relation-parcel"
     };
   }
   // gRPC compatibility method. Public HTTP ownership belongs to

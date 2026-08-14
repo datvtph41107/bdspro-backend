@@ -18,6 +18,8 @@ type IParcelRepo interface {
 	GetByIDs(ctx context.Context, ids []uint64) ([]qh_domain.Parcel, error)
 	CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
+	// GetPOIMapPoint lấy lat/lng từ pois.geom để resolve map-target theo POI.
+	GetPOIMapPoint(ctx context.Context, poiID uint64) (lat, lng float64, err error)
 	FindIntersectPolygon(ctx context.Context, points []Point, limit, offset int, filter *dto.PolygonTargetFilter) ([]qh_domain.Parcel, int64, error)
 	FindWithinPolygon(ctx context.Context, points []Point, limit, offset int, filter *dto.PolygonTargetFilter) ([]qh_domain.Parcel, int64, error)
 	FindRegionByLocation(ctx context.Context, lat, lng float64) (*dto.RegionInfoResponse, error)
@@ -32,12 +34,22 @@ type IParcelRepo interface {
 	GetParcelLayerRowsV2(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerRowV2, error)
 
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
+	GetParcelSeoSourcesByIDs(ctx context.Context, parcelIDs []uint64) ([]dto.ParcelSeoSource, error)
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
 	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
 
 	// GetZoneGeometry — Lấy geometry của một zone cụ thể
 	GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *dto.RegionInfoResponse, error)
+
+	// GetParcelHistory — Lịch sử thay đổi thửa đất theo parcel_id
+	GetParcelHistory(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]qh_domain.ParcelHistory, int64, error)
+
+	// FindParcelsAround — các thửa quanh thửa hiện tại (mặc định ~5)
+	FindParcelsAround(ctx context.Context, parcelID uint64, limit int) ([]dto.NearbyParcelItem, error)
+
+	// AdminListParcels — danh sách thửa đất cho admin
+	AdminListParcels(ctx context.Context, search string, pagable _dto.Pagable) ([]dto.AdminParcelListItem, int64, error)
 }
 
 type Point struct {

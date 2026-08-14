@@ -32,6 +32,13 @@ service ParcelService {
     };
   }
 
+  // ResolveMapTargetByPoi — resolve parcel/region từ tọa độ của POI (ưu tiên parcel, fallback region).
+  rpc ResolveMapTargetByPoi(ResolveMapTargetByPoiRequest) returns (ResolveMapTargetByLocationResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-target/by-poi/{poi_id}"
+    };
+  }
+
   rpc FindParcelsByPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
     option (google.api.http) = {
       post: "/v2/tqd/parcels/by-polygon"
@@ -73,6 +80,13 @@ service ParcelService {
   rpc GetParcelInfo(GetParcelDetailRequest) returns (ParcelInfoResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/parcels/{parcelId}/info"
+    };
+  }
+
+  // GetParcelsAround — khoảng 5 thửa quanh thửa hiện tại (ưu tiên tiếp giáp, rồi gần nhất).
+  rpc GetParcelsAround(GetParcelsAroundRequest) returns (GetParcelsAroundResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/around/{parcelId}"
     };
   }
 
@@ -121,6 +135,13 @@ service ParcelService {
     };
   }
 
+  // GetParcelPlanningEval — tạm thời: mức kiểm tra + đánh giá chính + gợi ý kiểm tra.
+  rpc GetParcelPlanningEval(GetParcelDetailRequest) returns (ParcelPlanningEvalResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/planning-eval"
+    };
+  }
+
   rpc GetParcelQuickLayers(GetParcelPlanningRequest) returns (LayerQuickInfoResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/public/parcels/{parcelId}/quick-layers"
@@ -130,6 +151,14 @@ service ParcelService {
   rpc GetParcelTimeline(GetParcelDetailRequest) returns (ParcelTimelineResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/parcels/{parcelId}/timeline"
+    };
+  }
+
+  // Lịch sử thửa đất — shape giống ListPlanningEvents (Đồ án quy hoạch).
+  // EventType: CREATE | UPDATE_INFO | UPDATE_GEOMETRY | OWNERSHIP | STATUS | NOTE | OTHER
+  rpc GetParcelHistory(GetParcelHistoryRequest) returns (GetParcelHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/history"
     };
   }
 
@@ -156,6 +185,20 @@ service ParcelService {
     option (google.api.http) = {
       put: "/v2/tqd/internal/parcels/{parcelId}/seo-id"
       body: "*"
+    };
+  }
+
+  rpc AdminGenParcelSeo(AdminGenParcelSeoRequest) returns (AdminGenParcelSeoResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/parcels/gen-seo"
+      body: "*"
+    };
+  }
+
+  // AdminListParcels — danh sách thửa đất cho admin (phân trang + followerCount).
+  rpc AdminListParcels(AdminListParcelsRequest) returns (AdminListParcelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/parcels"
     };
   }
 }
@@ -212,6 +255,17 @@ message Location {
   string province = 1;
   string provinceCode = 2;
   string wardCode = 3;
+  string ward = 4;
+  AdministrativeUnitSummary provinceInfo = 5;
+  AdministrativeUnitSummary wardInfo = 6;
+}
+
+message AdministrativeUnitSummary {
+  string id = 1;
+  string code = 2;
+  string fullName = 3;
+  string shortName = 4;
+  string description = 5;
 }
 
 message CurrentUse {
@@ -548,6 +602,20 @@ message ParcelPlanningResponse {
   ResponseMetadataInfo metadata = 5;
 }
 
+// Mức cần kiểm tra: 90 = cao, 10 = thấp
+enum ParcelCheckLevel {
+  PARCEL_CHECK_LEVEL_UNSPECIFIED = 0;
+  PARCEL_CHECK_LEVEL_LOW = 10;
+  PARCEL_CHECK_LEVEL_HIGH = 90;
+}
+
+message ParcelPlanningEvalResponse {
+  uint64 parcelId = 1;
+  ParcelCheckLevel checkLevel = 2;       // Mức cần kiểm tra (90-cao / 10-thấp)
+  repeated string mainAssessment = 3;    // Đánh giá chính
+  repeated string checkSuggestions = 4;  // Gợi ý kiểm tra
+}
+
 // ============================================================
 // LEGACY — CÁC MESSAGE KHÁC GIỮ NGUYÊN
 // ============================================================
@@ -576,6 +644,28 @@ message UpdateParcelSeoIDRequest {
   uint64 seoId = 2;
 }
 
+message AdminGenParcelSeoRequest {
+  repeated uint64 parcelIds = 1;
+}
+
+message AdminGenParcelSeoItem {
+  uint64 parcelId = 1;
+  uint64 seoId = 2;
+  string canonicalUrl = 3;
+  string slug = 4;
+  bool created = 5;
+  string message = 6;
+}
+
+message AdminGenParcelSeoResponse {
+  repeated AdminGenParcelSeoItem data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
 message ParcelInfoResponse {
   uint64 parcelId = 1;
   double lat = 2;
@@ -597,6 +687,28 @@ message ParcelInfoResponse {
   string wardCode = 18;
   uint64 seoId = 19;
   bool isSeo = 20;
+}
+
+message GetParcelsAroundRequest {
+  uint64 parcelId = 1;
+  uint32 limit = 2; // mặc định 5
+}
+
+message NearbyParcelItem {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  bytes geometry = 6;
+  string mapNumber = 7;
+  string landNumber = 8;
+  double distanceMeters = 9;
+}
+
+message GetParcelsAroundResponse {
+  repeated NearbyParcelItem data = 1;
+  uint32 total = 2;
 }
 
 message ParcelSummary {
@@ -788,6 +900,35 @@ message AuthorityDetail {
   string name = 2;
   string code = 3;
   string description = 4;
+}
+
+// ─── Parcel history messages (giống planning Event) ───
+
+message GetParcelHistoryRequest {
+  uint64 parcelId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message ParcelHistoryItem {
+  uint64 id = 1;
+  uint64 parcelId = 2;
+  string eventType = 3;
+  string eventName = 4;
+  string description = 5;
+  string eventDate = 6;
+  optional uint64 documentId = 7;
+  string sourceUrl = 8;
+  string metadata = 9;
+  string createdAt = 10;
+  string updatedAt = 11;
+}
+
+message GetParcelHistoryResponse {
+  repeated ParcelHistoryItem data = 1;
+  int64 total = 2;
+  uint32 page = 3;
+  uint32 size = 4;
 }
 
 // ─── Timeline messages ───
@@ -1052,6 +1193,10 @@ message ResolveMapTargetByLocationRequest {
   int64 timestamp = 4;
 }
 
+message ResolveMapTargetByPoiRequest {
+  uint64 poi_id = 1;
+}
+
 message ResolveMapTargetByLocationResponse {
   uint32 targetType = 1;
   uint64 targetId = 2;
@@ -1142,4 +1287,33 @@ message ListParcelsRequest {
 message ListParcelsResponse {
   repeated Parcel parcels = 1;
   int32           total   = 2;
+}
+
+message AdminListParcelsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+}
+
+message AdminParcelListItem {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  string mapNumber = 6;
+  string landNumber = 7;
+  string propertyCode = 8;
+  string province = 9;
+  string provinceCode = 10;
+  string wardCode = 11;
+  uint64 seoId = 12;
+  bool isSeo = 13;
+  int64 followerCount = 14;
+  string createdAt = 15;
+}
+
+message AdminListParcelsResponse {
+  repeated AdminParcelListItem data = 1;
+  int64 total = 2;
 }

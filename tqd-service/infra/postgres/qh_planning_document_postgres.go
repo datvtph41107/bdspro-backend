@@ -7,6 +7,7 @@ import (
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
+	tqdutils "tqd/internal/utils"
 )
 
 type QHPlanningDocumentRepo struct {
@@ -19,11 +20,20 @@ func NewQHPlanningDocumentRepo(db *_db.TransactionRepo) repo.IQHPlanningDocument
 }
 
 func (r *QHPlanningDocumentRepo) Create(ctx context.Context, entity *qh_domain.QHPlanningDocument) error {
+	normalizePlanningDocumentExt(entity)
 	return r.db.GetDB(ctx).Create(entity).Error
 }
 
 func (r *QHPlanningDocumentRepo) Update(ctx context.Context, id uint64, entity *qh_domain.QHPlanningDocument) error {
+	normalizePlanningDocumentExt(entity)
 	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("id = ?", id).Updates(entity).Error
+}
+
+func normalizePlanningDocumentExt(entity *qh_domain.QHPlanningDocument) {
+	if entity == nil {
+		return
+	}
+	entity.Ext = tqdutils.ResolveDocumentExt(entity.RelativePath, entity.Filepath)
 }
 
 func (r *QHPlanningDocumentRepo) Delete(ctx context.Context, id uint64) error {

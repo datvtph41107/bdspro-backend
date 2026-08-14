@@ -401,7 +401,7 @@ func (r *seoRefResolver) normalizeParcel(source dto.ParcelSeoSource) normalizedS
 	if label == "" {
 		label = fmt.Sprintf("Thửa đất #%d", source.ParcelID)
 	}
-	slug := slugify(label)
+	slug := seoSlugSegment(label, source.ParcelID)
 
 	data := map[string]interface{}{
 		"parcelId":  source.ParcelID,

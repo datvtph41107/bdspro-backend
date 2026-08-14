@@ -4,6 +4,7 @@ import (
 	_err "common/domain/err"
 	"context"
 	"errors"
+	"log"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/infra/validator"
@@ -308,6 +309,95 @@ func (h *QHPlanningGrpcHandler) RetryFailedPlanningDocuments(ctx context.Context
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return h.mapper.ToProjectProto(result), nil
+}
+
+func (h *QHPlanningGrpcHandler) GetPlanningProjectSeoSource(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningProjectSeoSourceResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	source, err := h.projectUsecase.GetPlanningProjectSeoSource(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return planningProjectSeoSourceToProto(source), nil
+}
+
+func (h *QHPlanningGrpcHandler) UpdatePlanningProjectSeoID(ctx context.Context, req *tqdpb.UpdatePlanningProjectSeoIDRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningProjectId == 0 || req.SeoId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningProjectId và seoId là bắt buộc")
+	}
+
+	if err := h.projectUsecase.UpdatePlanningProjectSeoID(ctx, req.PlanningProjectId, req.SeoId); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.SubmitResponse{
+		Success: true,
+		Message: "planning project seo_id updated successfully",
+	}, nil
+}
+
+// AdminGenPlanningProjectSeo tạo seo_domain trên CRM cho danh sách đồ án quy hoạch.
+// @Summary Admin tạo SEO domain từ planning project
+// @Description Nhận danh sách planningProjectIds, gọi CRM sinh bản ghi seo_domain tương ứng.
+// @Tags Planning Project Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AdminGenPlanningProjectSeoRequest true "Danh sách planningProjectIds"
+// @Router /v2/tqd/admin/planning-projects/gen-seo [post]
+func (h *QHPlanningGrpcHandler) AdminGenPlanningProjectSeo(ctx context.Context, req *tqdpb.AdminGenPlanningProjectSeoRequest) (*tqdpb.AdminGenPlanningProjectSeoResponse, error) {
+	if req == nil || len(req.PlanningProjectIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningProjectIds is required")
+	}
+
+	log.Printf("[AdminGenPlanningProjectSeo] planningProjectIds=%v", req.PlanningProjectIds)
+
+	result, err := h.projectUsecase.AdminGenPlanningProjectSeo(ctx, req.PlanningProjectIds)
+	if err != nil {
+		log.Printf("[AdminGenPlanningProjectSeo] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if result == nil {
+		return &tqdpb.AdminGenPlanningProjectSeoResponse{}, nil
+	}
+
+	items := make([]*tqdpb.AdminGenPlanningProjectSeoItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, &tqdpb.AdminGenPlanningProjectSeoItem{
+			PlanningProjectId: item.PlanningProjectID,
+			SeoId:             item.SeoID,
+			CanonicalUrl:      item.CanonicalURL,
+			Slug:              item.Slug,
+			Created:           item.Created,
+			Message:           item.Message,
+		})
+	}
+
+	return &tqdpb.AdminGenPlanningProjectSeoResponse{
+		Data:    items,
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+func planningProjectSeoSourceToProto(source *qh_dto.PlanningProjectSeoSource) *tqdpb.PlanningProjectSeoSourceResponse {
+	if source == nil || source.PlanningProjectID == 0 {
+		return nil
+	}
+	resp := &tqdpb.PlanningProjectSeoSourceResponse{
+		PlanningProjectId: source.PlanningProjectID,
+		Name:              source.Name,
+		Slug:              source.Slug,
+	}
+	if source.SeoID != nil && *source.SeoID > 0 {
+		resp.SeoId = *source.SeoID
+	}
+	return resp
 }
 
 // Client APIs

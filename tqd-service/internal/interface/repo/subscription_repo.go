@@ -17,4 +17,6 @@ type SubscriptionRepository interface {
 	ListByUserWithStatus(ctx context.Context, userID uint64, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error)
 	AdminList(ctx context.Context, userID *uint64, targetType *string, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error)
 	AdminDelete(ctx context.Context, id uint64) error
+	CountFollowersByParcelIDs(ctx context.Context, parcelIDs []uint64, status *uint32) (map[uint64]int64, error)
+	CountSubscribersByLayerIDs(ctx context.Context, layerIDs []uint64, status *uint32) (map[uint64]int64, error)
 }

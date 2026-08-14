@@ -107,6 +107,10 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		LegalDoc:        layer.LegalDoc,
 		DefaultVisible:  layer.DefaultVisible,
 	}
+	if layer.SeoID != nil && *layer.SeoID > 0 {
+		seoID := *layer.SeoID
+		resp.SeoId = &seoID
+	}
 	if layer.ReplacedByID != nil {
 		rid := *layer.ReplacedByID
 		resp.ReplacedByLayerId = &rid

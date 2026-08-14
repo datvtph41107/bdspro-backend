@@ -132,8 +132,12 @@ func (r *PoiResponse) FromDomain(p *domain.POI) {
 	r.CoverImage = p.CoverImage
 	r.ViewCount = p.ViewCount
 	r.LikeCount = p.LikeCount
-	r.CreatedAt = *p.CreatedAt
-	r.UpdatedAt = *p.UpdatedAt
+	if p.CreatedAt != nil {
+		r.CreatedAt = *p.CreatedAt
+	}
+	if p.UpdatedAt != nil {
+		r.UpdatedAt = *p.UpdatedAt
+	}
 	r.CreatedBy = p.CreatedBy
 	r.UpdatedBy = p.UpdatedBy
 

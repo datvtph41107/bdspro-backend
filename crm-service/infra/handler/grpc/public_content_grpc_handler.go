@@ -74,6 +74,63 @@ func validatePlanningNewsVisibleOn(value uint32) error {
 	)
 }
 
+func parsePlanningNewsVisibleOns(values ...string) ([]uint32, error) {
+	seen := make(map[uint32]struct{})
+	result := make([]uint32, 0)
+
+	for _, raw := range values {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		for _, part := range strings.Split(raw, ",") {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			parsed, err := strconv.ParseUint(part, 10, 32)
+			if err != nil || parsed == 0 {
+				return nil, status.Error(
+					codes.InvalidArgument,
+					"visibleOns chỉ chấp nhận danh sách giá trị 10, 20, 30, 40 hoặc 50",
+				)
+			}
+			value := uint32(parsed)
+			if err := validatePlanningNewsVisibleOn(value); err != nil {
+				return nil, err
+			}
+			if _, ok := seen[value]; ok {
+				continue
+			}
+			seen[value] = struct{}{}
+			result = append(result, value)
+		}
+	}
+
+	return result, nil
+}
+
+func appendUniqueVisibleOns(values []uint32, items ...uint32) []uint32 {
+	if len(items) == 0 {
+		return values
+	}
+	seen := make(map[uint32]struct{}, len(values)+len(items))
+	for _, value := range values {
+		seen[value] = struct{}{}
+	}
+	for _, item := range items {
+		if item == 0 {
+			continue
+		}
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		values = append(values, item)
+	}
+	return values
+}
+
 // TASK9_VISIBLE_ON_VALIDATOR_END
 
 func requestMap(req proto.Message) map[string]any {
@@ -328,7 +385,42 @@ func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *cr
 	// TASK9_LIST_VISIBLE_ON_VALIDATION_END
 
 	m := requestMap(req)
-	filter := catalogdomain.PlanningNewsListFilter{Page: intValue(m, "page", 1), Size: intValue(m, "size", 20), Keyword: stringValue(m, "keyword", "q", "search"), Topic: stringValue(m, "topic", "category"), Location: stringValue(m, "location"), Range: stringValue(m, "range"), VisibleOn: uintValue(m, "visibleOn")}
+	visibleOns, err := parsePlanningNewsVisibleOns(
+		req.GetVisibleOns(),
+		stringValue(m, "visibleOns", "visible_ons"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, part := range stringSlice(m, "visibleOns") {
+		more, parseErr := parsePlanningNewsVisibleOns(part)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		visibleOns = appendUniqueVisibleOns(visibleOns, more...)
+	}
+	if req.VisibleOn != nil && req.GetVisibleOn() > 0 {
+		visibleOns = appendUniqueVisibleOns(visibleOns, req.GetVisibleOn())
+	}
+	if single := uintValue(m, "visibleOn"); single > 0 {
+		if validateErr := validatePlanningNewsVisibleOn(single); validateErr != nil {
+			return nil, validateErr
+		}
+		visibleOns = appendUniqueVisibleOns(visibleOns, single)
+	}
+
+	filter := catalogdomain.PlanningNewsListFilter{
+		Page:       intValue(m, "page", 0),
+		Size:       intValue(m, "size", 20),
+		Keyword:    stringValue(m, "keyword", "q", "search"),
+		Topic:      stringValue(m, "topic", "category"),
+		Location:   stringValue(m, "location"),
+		Range:      stringValue(m, "range"),
+		VisibleOns: visibleOns,
+	}
+	if len(filter.VisibleOns) == 1 {
+		filter.VisibleOn = filter.VisibleOns[0]
+	}
 	result, err := h.catalog.ListPlanningNews(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list planning news: %v", err)
@@ -427,6 +519,21 @@ func (h *PublicContentGrpcHandler) UpdatePlanningNewsVisibility(ctx context.Cont
 			return nil, status.Error(codes.NotFound, "planning news was not found")
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"data": item})
+}
+
+func (h *PublicContentGrpcHandler) SetPlanningNewsTop(ctx context.Context, req *crmpb.SetPlanningNewsTopRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planning news id is required")
+	}
+	item, err := h.catalog.SetPlanningNewsTop(ctx, req.GetId())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "planning news was not found")
+		}
+		return nil, status.Errorf(codes.Internal, "set planning news top: %v", err)
 	}
 	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
 	return jsonBytes(map[string]any{"data": item})

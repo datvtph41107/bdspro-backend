@@ -10,6 +10,7 @@ import (
 
 	"tqd/internal/domain"
 	"tqd/internal/dto"
+	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
 )
 
@@ -21,12 +22,14 @@ var (
 )
 
 type LocationUsecase struct {
-	repo repo.LocationRepository
+	repo           repo.LocationRepository
+	crmSeoProvider provider.CrmSeoProvider
 }
 
-func NewLocationUsecase(repo repo.LocationRepository) *LocationUsecase {
+func NewLocationUsecase(repo repo.LocationRepository, crmSeoProvider provider.CrmSeoProvider) *LocationUsecase {
 	return &LocationUsecase{
-		repo: repo,
+		repo:           repo,
+		crmSeoProvider: crmSeoProvider,
 	}
 }
 
@@ -217,6 +220,42 @@ func (u *LocationUsecase) ListWardsByProvince(ctx context.Context, req *dto.List
 	}, nil
 }
 
+// AdminListProvinces - Admin danh sách tỉnh/thành
+func (u *LocationUsecase) AdminListProvinces(ctx context.Context, req *dto.AdminListProvincesRequest) (*dto.AdminListProvincesResponse, error) {
+	if req == nil {
+		req = &dto.AdminListProvincesRequest{}
+	}
+	req.Pagable.Normalize()
+
+	provinces, total, err := u.repo.AdminListProvinces(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("admin list provinces: %w", err)
+	}
+
+	return &dto.AdminListProvincesResponse{
+		Data:  u.toProvinceDTOs(provinces),
+		Total: total,
+	}, nil
+}
+
+// AdminListWards - Admin danh sách phường/xã
+func (u *LocationUsecase) AdminListWards(ctx context.Context, req *dto.AdminListWardsRequest) (*dto.AdminListWardsResponse, error) {
+	if req == nil {
+		req = &dto.AdminListWardsRequest{}
+	}
+	req.Pagable.Normalize()
+
+	wards, total, err := u.repo.AdminListWards(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("admin list wards: %w", err)
+	}
+
+	return &dto.AdminListWardsResponse{
+		Data:  u.toWardDTOs(wards),
+		Total: total,
+	}, nil
+}
+
 // ==================== PRIVATE HELPERS ====================
 
 func (u *LocationUsecase) buildLocationResponse(province *domain.Province, ward *domain.Ward, provDist, wardDist float64, startTime time.Time) *dto.LocationResponse {
@@ -343,6 +382,7 @@ func (u *LocationUsecase) toProvinceDTO(p *domain.Province) *dto.ProvinceDTO {
 		Lat:       p.Lat,
 		Lng:       p.Lng,
 		WardCount: p.WardCount,
+		SeoID:     p.SeoID,
 		CreatedAt: &p.CreatedAt,
 		UpdatedAt: &p.UpdatedAt,
 	}
@@ -353,15 +393,17 @@ func (u *LocationUsecase) toWardDTO(w *domain.Ward) *dto.WardDTO {
 		return nil
 	}
 	return &dto.WardDTO{
-		ID:         w.ID,
-		Code:       w.Code,
-		FullName:   w.FullName,
-		ShortName:  w.ShortName,
-		Lat:        w.Lat,
-		Lng:        w.Lng,
-		ProvinceID: w.ProvinceID,
-		CreatedAt:  &w.CreatedAt,
-		UpdatedAt:  &w.UpdatedAt,
+		ID:           w.ID,
+		Code:         w.Code,
+		FullName:     w.FullName,
+		ShortName:    w.ShortName,
+		Lat:          w.Lat,
+		Lng:          w.Lng,
+		ProvinceID:   w.ProvinceID,
+		ProvinceCode: w.ProvinceCode,
+		SeoID:        w.SeoID,
+		CreatedAt:    &w.CreatedAt,
+		UpdatedAt:    &w.UpdatedAt,
 	}
 }
 
@@ -369,6 +411,14 @@ func (u *LocationUsecase) toWardDTOs(wards []*domain.Ward) []*dto.WardDTO {
 	result := make([]*dto.WardDTO, len(wards))
 	for i, w := range wards {
 		result[i] = u.toWardDTO(w)
+	}
+	return result
+}
+
+func (u *LocationUsecase) toProvinceDTOs(provinces []*domain.Province) []*dto.ProvinceDTO {
+	result := make([]*dto.ProvinceDTO, len(provinces))
+	for i, p := range provinces {
+		result[i] = u.toProvinceDTO(p)
 	}
 	return result
 }
@@ -424,4 +474,116 @@ func (u *LocationUsecase) clamp(value, min, max float64) float64 {
 		return max
 	}
 	return value
+}
+
+func (u *LocationUsecase) GetAdministrativeUnitSeoSource(ctx context.Context, identity string) (*dto.AdministrativeUnitSeoSource, error) {
+	identity = strings.TrimSpace(identity)
+	if identity == "" {
+		return nil, fmt.Errorf("identity là bắt buộc")
+	}
+	return u.repo.GetAdministrativeUnitSeoSource(ctx, identity)
+}
+
+func (u *LocationUsecase) UpdateAdministrativeUnitSeoID(ctx context.Context, identity string, seoID uint64) error {
+	identity = strings.TrimSpace(identity)
+	if identity == "" || seoID == 0 {
+		return fmt.Errorf("identity và seo_id là bắt buộc")
+	}
+	return u.repo.UpdateAdministrativeUnitSeoID(ctx, identity, seoID)
+}
+
+func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, identities []string) (*dto.AdminGenAdministrativeUnitSeoResult, error) {
+	if len(identities) == 0 {
+		return nil, fmt.Errorf("identities không được để trống")
+	}
+	if u.crmSeoProvider == nil {
+		return nil, fmt.Errorf("crm seo provider chưa được cấu hình")
+	}
+
+	uniqueIdentities := make([]string, 0, len(identities))
+	seen := make(map[string]struct{}, len(identities))
+	for _, identity := range identities {
+		identity = strings.TrimSpace(identity)
+		if identity == "" {
+			continue
+		}
+		if _, ok := seen[identity]; ok {
+			continue
+		}
+		seen[identity] = struct{}{}
+		uniqueIdentities = append(uniqueIdentities, identity)
+	}
+	if len(uniqueIdentities) == 0 {
+		return nil, fmt.Errorf("identities không hợp lệ")
+	}
+
+	sources, err := u.repo.GetAdministrativeUnitSeoSourcesByIdentities(ctx, uniqueIdentities)
+	if err != nil {
+		return nil, fmt.Errorf("get administrative unit seo sources failed: %w", err)
+	}
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("không tìm thấy đơn vị hành chính hợp lệ")
+	}
+
+	foundIdentities := make([]string, 0, len(sources))
+	prevSeoIDByIdentity := make(map[string]uint64, len(sources))
+	for _, source := range sources {
+		foundIdentities = append(foundIdentities, source.Identity)
+		if source.SeoID != nil && *source.SeoID > 0 {
+			prevSeoIDByIdentity[source.Identity] = *source.SeoID
+		}
+	}
+
+	result, err := u.crmSeoProvider.GenerateSeoFromAdministrativeUnitIdentities(ctx, foundIdentities)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		result = &dto.AdminGenAdministrativeUnitSeoResult{}
+	}
+
+	for i := range result.Items {
+		item := &result.Items[i]
+		if strings.TrimSpace(item.Identity) == "" || item.SeoID == 0 {
+			continue
+		}
+
+		prevSeoID := prevSeoIDByIdentity[item.Identity]
+		switch {
+		case prevSeoID == 0:
+			item.Created = true
+			item.Message = "created"
+		case prevSeoID == item.SeoID:
+			item.Created = false
+			item.Message = "updated"
+		default:
+			item.Created = true
+			item.Message = "linked"
+		}
+
+		if err := u.repo.UpdateAdministrativeUnitSeoID(ctx, item.Identity, item.SeoID); err != nil {
+			item.Message = fmt.Sprintf("cập nhật seo_id thất bại: %v", err)
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", item.Identity, err))
+		}
+	}
+
+	if len(foundIdentities) < len(uniqueIdentities) {
+		foundSet := make(map[string]struct{}, len(foundIdentities))
+		for _, identity := range foundIdentities {
+			foundSet[identity] = struct{}{}
+		}
+		for _, identity := range uniqueIdentities {
+			if _, ok := foundSet[identity]; ok {
+				continue
+			}
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: đơn vị hành chính không tồn tại", identity))
+		}
+		if result.Total < int64(len(uniqueIdentities)) {
+			result.Total = int64(len(uniqueIdentities))
+		}
+	}
+
+	return result, nil
 }

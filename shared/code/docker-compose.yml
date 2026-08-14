@@ -53,7 +53,7 @@ services:
     networks:
       - internal
     volumes:
-      - ${PWD}/files:/files
+      - ./file-service/files:/files
       - ./logs/file:/app/logs
   
 
@@ -63,7 +63,7 @@ services:
       dockerfile: Dockerfile
     container_name: chat
     volumes:
-      - ${PWD}/config:/app/config
+      - ./chat-service/config:/app/config
       - ./logs/chat:/app/logs
     environment:
       - CONFIG_FILE=/app/config/develop.yml 
@@ -120,7 +120,7 @@ services:
     container_name: payment
     command: ["./main", "grpc"]
     volumes:
-      - ${PWD}/config:/app/config
+      - ./payment-service/config:/app/config
     environment:
       - CONFIG_FILE=/app/config/docker_config.yaml 
     networks:
@@ -159,23 +159,9 @@ services:
       dockerfile: Dockerfile
     container_name: organization
     volumes:
-      - ${PWD}/config:/app/config
+      - ./organization-service/config:/app/config
     environment:
       - CONFIG_FILE=/app/config/docker_config.yaml 
-    command: ["./main", "grpc"]
-    networks:
-      - internal
-
-  appointment:
-    build:
-      context: ./appointment-service
-      dockerfile: Dockerfile
-    container_name: appointment
-    volumes:
-      - ${PWD}/config:/config
-    environment:
-      - CONFIG_FILE=/app/config/docker_config.yaml 
-      - ENV_RUNTIME=release
     command: ["./main", "grpc"]
     networks:
       - internal
@@ -188,7 +174,7 @@ services:
       - "8106:8081"
     command: ["sh", "-c", "sleep 5 && /app/main http-serve --httpPort=8081 || sleep infinity"]
     volumes:
-      - ${PWD}/configs:/app/configs
+      - ./chat-service/configs:/app/configs
     environment:
       - CONFIG_FILE=/app/configs/docker_config.yaml 
     networks:
@@ -201,7 +187,7 @@ services:
       - "8308:8308"
     command: ["sh", "-c", "sleep 5 && ./main || sleep infinity"]
     volumes:
-      - ${PWD}/config:/app/config
+      - ./relay-service/config:/app/config
       - ./logs/relay:/app/logs
     environment:
       - CONFIG_FILE=/app/config/release.yml 
@@ -228,13 +214,6 @@ services:
     networks:
       - internal
 
-  transaction:
-    build: ./transaction-service
-    container_name: transaction
-    command: ["./main", "grpc"]
-    networks:
-      - internal
-
   tqd:
     build: 
       context: ./tqd-service
@@ -242,22 +221,9 @@ services:
     container_name: tqd
     command: ["./main", "--server=grpc"]
     volumes:
-      - ${PWD}/files:/files
-      - ${PWD}/template:/template
-    networks:
-      - internal
-
-  feedback:
-    build: ./feedback-service
-    container_name: feedback
-    command: ["./main", "grpc"]
-    networks:
-      - internal
-
-  marketing:
-    build: ./marketing-service
-    container_name: marketing
-    command: ["./main", "grpc"]
+      # Path relative to compose file — do NOT use ${PWD} (breaks when release.sh cds into service dir)
+      - ./tqd-service/files:/files
+      - ./tqd-service/template:/template
     networks:
       - internal
   
@@ -276,17 +242,6 @@ services:
       - ./logs/hub:/app/logs
     networks:
       - internal
-
-      
-  # eureka:
-  #   build:
-  #     context: ./eureka-server
-  #     dockerfile: Dockerfile
-  #   container_name: eureka
-  #   networks:
-  #     - internal
-  #   ports:
-  #     - "8761:8761"
 
   redis:
     image: redis:latest
@@ -316,7 +271,8 @@ services:
     ports:
       - "8032:8032"
     volumes:
-      - ${PWD}/files:/files
+      # Same tiles dir as tqd; relative to compose file (stable across deploy cwd)
+      - ./tqd-service/files:/files
     networks:
       - internal
   
@@ -328,8 +284,8 @@ services:
     environment:
       - NODE_ENV=develop
     volumes:
-      - ${PWD}/build:/usr/share/nginx/html:ro
-      - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./build:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: always
 
   nextjs-website:
@@ -340,7 +296,7 @@ services:
     ports:
       - "3103:3000"
     volumes:
-      - ${PWD}:/app
+      - ./nextjs-website:/app
     restart: unless-stopped
     networks:
       - internal
@@ -353,8 +309,8 @@ services:
     ports:
       - "3108:3000"
     volumes:
-      - ${PWD}:/app
-      - ${PWD}/public:/app/standalone/public
+      - ./qhpro-web:/app
+      - ./qhpro-web/public:/app/standalone/public
     networks:
       - internal
 
@@ -365,9 +321,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${PWD}/nginx/conf:/etc/nginx/conf.d
-      - ${PWD}/nginx/certs:/etc/letsencrypt
-      - ${PWD}/nginx/www:/var/www/certbot
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/www:/var/www/certbot
     restart: always
     networks:
       - internal
@@ -376,8 +332,8 @@ services:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - ${PWD}/nginx/certs:/etc/letsencrypt
-      - ${PWD}/nginx/www:/var/www/certbot
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/www:/var/www/certbot
 
 networks:
   internal:

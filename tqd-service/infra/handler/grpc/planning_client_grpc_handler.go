@@ -188,6 +188,36 @@ func (h *PlanningClientGrpcHandler) ListPlanningDocuments(ctx context.Context, r
 	return bytesResponse(result)
 }
 
+// @Summary Danh sách tài liệu liên quan thửa đất
+// @Description parcel → regions → layers → layer_plan_doc_relation → planning-documents
+// @Tags PlanningClient
+// @Accept json
+// @Produce json
+// @Param parcel_id path int true "Parcel ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param docType query string false "CSV document_type, lọc OR (vd. 30,50)"
+// @Success 200 {object} object
+// @Router /v2/tqd/client/planning-documents/relation-layer/{parcel_id} [get]
+func (h *PlanningClientGrpcHandler) ListLayerPlanDocRelations(ctx context.Context, req *tqdpb.ListLayerPlanDocRelationRequest) (*wrapperspb.BytesValue, error) {
+	id, err := requiredID(req.GetParcelId(), "parcel id")
+	if err != nil {
+		return nil, err
+	}
+	result, err := h.service.ListDocumentsByParcelRelation(
+		ctx,
+		id,
+		int(req.GetPage()),
+		positiveOr(req.GetSize(), 20),
+		strings.TrimSpace(req.GetDocType()),
+	)
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
+	return bytesResponse(result)
+}
+
 func (h *PlanningClientGrpcHandler) GetPlanningDocument(ctx context.Context, req *tqdpb.PlanningDocumentIdRequest) (*wrapperspb.BytesValue, error) {
 	id, err := requiredID(req.GetDocumentId(), "planning document id")
 	if err != nil {
@@ -278,6 +308,29 @@ func (h *PlanningClientGrpcHandler) ListFollowedPlanningProjects(ctx context.Con
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "no-store")
+	return bytesResponse(result)
+}
+
+// @Summary Danh sách đồ án liên quan thửa đất
+// @Description parcel → regions (intersects) → layers → layer_planning_relation → planning-projects
+// @Tags PlanningClient
+// @Accept json
+// @Produce json
+// @Param parcel_id query int true "Parcel ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} object
+// @Router /v2/tqd/client/planning-projects/relation-parcel [get]
+func (h *PlanningClientGrpcHandler) ListParcelPlanningRelations(ctx context.Context, req *tqdpb.ListParcelPlanningRelationRequest) (*wrapperspb.BytesValue, error) {
+	id, err := requiredID(req.GetParcelId(), "parcel id")
+	if err != nil {
+		return nil, err
+	}
+	result, err := h.service.ListProjectsByParcelRelation(ctx, id, int(req.GetPage()), positiveOr(req.GetSize(), 20))
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return bytesResponse(result)
 }
 

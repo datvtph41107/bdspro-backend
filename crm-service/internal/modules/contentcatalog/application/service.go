@@ -18,6 +18,7 @@ type Repository interface {
 	UnsavePlanningNews(context.Context, uint64, uint64) error
 	UpdatePlanningNewsVisibility(context.Context, uint64, uint32) (*domain.PlanningNewsItem, error)
 	AssignPlanningNewsCategory(context.Context, uint64, string) (*domain.PlanningNewsItem, error)
+	SetPlanningNewsTop(context.Context, uint64) (*domain.PlanningNewsItem, error)
 	SearchPublishedContent(context.Context, string, []string, int) (*domain.ContentSearchResult, error)
 }
 
@@ -54,6 +55,9 @@ func (s *Service) UpdatePlanningNewsVisibility(ctx context.Context, id uint64, v
 }
 func (s *Service) AssignPlanningNewsCategory(ctx context.Context, id uint64, category string) (*domain.PlanningNewsItem, error) {
 	return s.repository.AssignPlanningNewsCategory(ctx, id, category)
+}
+func (s *Service) SetPlanningNewsTop(ctx context.Context, id uint64) (*domain.PlanningNewsItem, error) {
+	return s.repository.SetPlanningNewsTop(ctx, id)
 }
 func (s *Service) SearchPublishedContent(ctx context.Context, query string, kinds []string, limit int) (*domain.ContentSearchResult, error) {
 	return s.repository.SearchPublishedContent(ctx, query, kinds, limit)

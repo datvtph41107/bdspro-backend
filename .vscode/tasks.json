@@ -184,20 +184,6 @@
             }
         },
         {
-            "label": "👤 User HTTP (8001)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev user",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            }
-        },
-        {
             "label": "🏘 BDSPro HTTP (8102)",
             "type": "shell",
             "command": "cd shared/code && make run-dev bdspro-http",
@@ -260,21 +246,6 @@
             "label": "🔌 Feedback gRPC (8217)",
             "type": "shell",
             "command": "cd shared/code && make run-dev feedback grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🔌 TQD HTTP (8230)",
-            "type": "shell",
-            "command": "cd shared/code && make tqd-http",
             "args": [],
             "problemMatcher": [
                 "$go"

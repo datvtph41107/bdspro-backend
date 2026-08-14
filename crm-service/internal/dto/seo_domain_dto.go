@@ -151,7 +151,8 @@ type CreateSeoFromParcelRequest struct {
 }
 
 type GenerateSeoFromParcelsRequest struct {
-	Limit uint32 `json:"limit"`
+	Limit     uint32   `json:"limit"`
+	ParcelIDs []uint64 `json:"parcelIds"`
 }
 
 type GenerateSeoFromParcelsResult struct {
@@ -166,6 +167,66 @@ type ParcelSeoSource struct {
 	ParcelID  uint64  `json:"parcelId" gorm:"column:parcel_id"`
 	AdrSearch string  `json:"adrSearch" gorm:"column:adr_search"`
 	SeoID     *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type LayerSeoSource struct {
+	LayerID     uint64  `json:"layerId" gorm:"column:layer_id"`
+	DisplayName string  `json:"displayName" gorm:"column:display_name"`
+	SeoID       *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type GenerateSeoFromLayersRequest struct {
+	LayerIDs []uint64 `json:"layerIds"`
+}
+
+type GenerateSeoFromLayersResult struct {
+	Total   int64    `json:"total"`
+	Created int64    `json:"created"`
+	Skipped int64    `json:"skipped"`
+	Failed  int64    `json:"failed"`
+	Errors  []string `json:"errors"`
+}
+
+type PlanningProjectSeoSource struct {
+	PlanningProjectID uint64  `json:"planningProjectId" gorm:"column:planning_project_id"`
+	Name              string  `json:"name" gorm:"column:name"`
+	Slug              string  `json:"slug" gorm:"column:slug"`
+	SeoID             *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type GenerateSeoFromPlanningProjectsRequest struct {
+	PlanningProjectIDs []uint64 `json:"planningProjectIds"`
+}
+
+type GenerateSeoFromPlanningProjectsResult struct {
+	Total   int64    `json:"total"`
+	Created int64    `json:"created"`
+	Skipped int64    `json:"skipped"`
+	Failed  int64    `json:"failed"`
+	Errors  []string `json:"errors"`
+}
+
+type AdministrativeUnitSeoSource struct {
+	Identity           string  `json:"identity"`
+	UnitType           string  `json:"unitType"`
+	SourceID           string  `json:"sourceId"`
+	Name               string  `json:"name"`
+	Slug               string  `json:"slug"`
+	CanonicalPath      string  `json:"canonicalPath"`
+	AdministrativeCode string  `json:"administrativeCode"`
+	SeoID              *uint64 `json:"seoId"`
+}
+
+type GenerateSeoFromAdministrativeUnitsRequest struct {
+	Identities []string `json:"identities"`
+}
+
+type GenerateSeoFromAdministrativeUnitsResult struct {
+	Total   int64    `json:"total"`
+	Created int64    `json:"created"`
+	Skipped int64    `json:"skipped"`
+	Failed  int64    `json:"failed"`
+	Errors  []string `json:"errors"`
 }
 
 type SeoInternalLinkCreateRequest struct {

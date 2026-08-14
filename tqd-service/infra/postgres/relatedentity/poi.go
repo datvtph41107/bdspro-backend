@@ -52,10 +52,10 @@ func (r *Repository) findPOIsForPrimaryArea(
 			CROSS JOIN primary_entity
 			WHERE poi.deleted_at IS NULL
 			  AND poi.is_active = true
-			  AND poi.longitude BETWEEN ST_XMin(focus.search_envelope) AND ST_XMax(focus.search_envelope)
-			  AND poi.latitude BETWEEN ST_YMin(focus.search_envelope) AND ST_YMax(focus.search_envelope)
+			  AND poi.geom IS NOT NULL
+			  AND poi.geom && focus.search_envelope
 			  AND ST_DWithin(
-			    ST_SetSRID(ST_Point(poi.longitude, poi.latitude), 4326)::geography,
+			    poi.geom::geography,
 			    focus.point::geography,
 			    ?
 			  )
@@ -65,12 +65,12 @@ func (r *Repository) findPOIsForPrimaryArea(
 		ORDER BY score DESC, distance_meters ASC, id DESC
 		LIMIT ?`, primaryAreaSQL, poiSelectColumns(
 		`CASE
-		   WHEN ST_Covers(primary_entity.geometry, ST_SetSRID(ST_Point(poi.longitude, poi.latitude), 4326))
+		   WHEN ST_Covers(primary_entity.geometry, poi.geom)
 		   THEN 'contained_by_primary'
 		   ELSE 'nearby'
 		 END`,
 		`CASE
-		   WHEN ST_Covers(primary_entity.geometry, ST_SetSRID(ST_Point(poi.longitude, poi.latitude), 4326))
+		   WHEN ST_Covers(primary_entity.geometry, poi.geom)
 		   THEN 62
 		   WHEN poi.is_featured THEN 42
 		   ELSE 35
@@ -99,10 +99,10 @@ func (r *Repository) findPOIsAroundPoint(ctx context.Context, query relateddomai
 		CROSS JOIN focus
 		WHERE poi.deleted_at IS NULL
 		  AND poi.is_active = true
-		  AND poi.longitude BETWEEN ST_XMin(focus.search_envelope) AND ST_XMax(focus.search_envelope)
-		  AND poi.latitude BETWEEN ST_YMin(focus.search_envelope) AND ST_YMax(focus.search_envelope)
+		  AND poi.geom IS NOT NULL
+		  AND poi.geom && focus.search_envelope
 		  AND ST_DWithin(
-		    ST_SetSRID(ST_Point(poi.longitude, poi.latitude), 4326)::geography,
+		    poi.geom::geography,
 		    focus.point::geography,
 		    ?
 		  )
@@ -132,8 +132,8 @@ func poiSelectColumns(relationship, score string) string {
 	       '' AS ward,
 	       '' AS ward_code,
 	       'Point' AS geometry_type,
-	       poi.latitude AS center_lat,
-	       poi.longitude AS center_lon,
+	       COALESCE(ST_Y(poi.geom), poi.latitude, 0)::float8 AS center_lat,
+	       COALESCE(ST_X(poi.geom), poi.longitude, 0)::float8 AS center_lon,
 	       0::float8 AS min_lon,
 	       0::float8 AS min_lat,
 	       0::float8 AS max_lon,
@@ -141,7 +141,7 @@ func poiSelectColumns(relationship, score string) string {
 	       NULL::text AS geo_json,
 	       %s AS relationship,
 	       ST_DistanceSphere(
-	         ST_SetSRID(ST_Point(poi.longitude, poi.latitude), 4326),
+	         poi.geom,
 	         focus.point
 	       ) AS distance_meters,
 	       (%s)::float8 AS score`, relationship, score)

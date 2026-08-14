@@ -16,4 +16,8 @@ type IQHPlanningProjectRepo interface {
 	GetDetail(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error)
 	// UpdateProcessStatus cập nhật riêng cột process_status (dùng cho job classify, tránh Updates() bỏ qua giá trị 0).
 	UpdateProcessStatus(ctx context.Context, id uint64, status uint32) error
+
+	GetPlanningProjectSeoSource(ctx context.Context, planningProjectID uint64) (*qh_dto.PlanningProjectSeoSource, error)
+	GetPlanningProjectSeoSourcesByIDs(ctx context.Context, planningProjectIDs []uint64) ([]qh_dto.PlanningProjectSeoSource, error)
+	UpdatePlanningProjectSeoID(ctx context.Context, planningProjectID uint64, seoID uint64) error
 }

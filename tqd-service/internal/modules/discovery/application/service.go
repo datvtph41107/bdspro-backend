@@ -176,7 +176,9 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (*domain
 		items []domain.EntityCandidate
 		err   error
 	}
-	providers := []func(context.Context, domain.SearchRequest) ([]domain.EntityCandidate, error){s.repo.SearchParcels, s.repo.SearchRegions, s.repo.SearchPlanningProjects, s.repo.SearchAdministrativeUnits, s.repo.SearchPOIs}
+	// mode=suggest: matched group = POI theo name; related = đồ án/khu vực quy hoạch.
+	// Các mode khác giữ full-text đa nguồn như trước.
+	providers := searchProviders(s, req.Mode)
 	ch := make(chan result, len(providers))
 	var wg sync.WaitGroup
 	for _, provider := range providers {
@@ -206,10 +208,32 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (*domain
 	candidates = filterKinds(dedupe(candidates), req.EntityKinds)
 	rankSearch(candidates, req, interpretation)
 	sortCandidates(candidates)
-	if len(candidates) > req.Limit {
+	suggest := strings.EqualFold(strings.TrimSpace(req.Mode), "suggest")
+	if !suggest && len(candidates) > req.Limit {
 		candidates = candidates[:req.Limit]
 	}
-	return groupSearch(newRequestID(), interpretation, candidates, partial, warnings), nil
+	resp := groupSearch(newRequestID(), interpretation, candidates, partial, warnings)
+	if suggest {
+		trimSearchGroups(resp, req.Limit)
+	}
+	return resp, nil
+}
+
+func searchProviders(s *Service, mode string) []func(context.Context, domain.SearchRequest) ([]domain.EntityCandidate, error) {
+	if strings.EqualFold(strings.TrimSpace(mode), "suggest") {
+		return []func(context.Context, domain.SearchRequest) ([]domain.EntityCandidate, error){
+			s.repo.SearchPOIs,
+			s.repo.SearchRegions,
+			s.repo.SearchPlanningProjects,
+		}
+	}
+	return []func(context.Context, domain.SearchRequest) ([]domain.EntityCandidate, error){
+		s.repo.SearchParcels,
+		s.repo.SearchRegions,
+		s.repo.SearchPlanningProjects,
+		s.repo.SearchAdministrativeUnits,
+		s.repo.SearchPOIs,
+	}
 }
 
 func (s *Service) GetEntity(ctx context.Context, key string) (*domain.EntityCandidate, error) {
@@ -357,6 +381,7 @@ func rankIdentify(items []domain.EntityCandidate, req domain.IdentifyRequest) {
 
 func rankSearch(items []domain.EntityCandidate, req domain.SearchRequest, interpretation domain.SearchInterpretation) {
 	q := interpretation.NormalizedQuery
+	suggest := strings.EqualFold(strings.TrimSpace(req.Mode), "suggest")
 	for i := range items {
 		score := items[i].Rank.Score
 		reasons := append([]string{}, items[i].Rank.ReasonCodes...)
@@ -370,6 +395,10 @@ func rankSearch(items []domain.EntityCandidate, req domain.SearchRequest, interp
 		} else if strings.Contains(title, q) {
 			score += 35
 			reasons = append(reasons, "contains_title")
+		}
+		if suggest && items[i].Entity.Kind == domain.EntityKindPOI {
+			score += 50
+			reasons = append(reasons, "suggest_poi_name")
 		}
 		if len(interpretation.DetectedIntents) > 0 && interpretation.DetectedIntents[0] == "parcel_lookup" && items[i].Entity.Kind == domain.EntityKindParcel {
 			score += 80
@@ -388,54 +417,38 @@ func rankSearch(items []domain.EntityCandidate, req domain.SearchRequest, interp
 }
 
 func groupSearch(requestID string, interpretation domain.SearchInterpretation, candidates []domain.EntityCandidate, partial bool, warnings []string) *domain.SearchResponse {
-	labels := map[domain.EntityKind]string{
-		domain.EntityKindAdministrativeUnit: "Địa bàn hành chính",
-		domain.EntityKindParcel:             "Thửa đất",
-		domain.EntityKindPlanningRegion:     "Vùng quy hoạch",
-		domain.EntityKindPlanningProject:    "Đồ án quy hoạch",
-		domain.EntityKindPlanningMap:        "Bản đồ quy hoạch",
-		domain.EntityKindMapLayer:           "Lớp bản đồ",
-		domain.EntityKindPOI:                "Điểm quan tâm",
-		domain.EntityKindLegalDocument:      "Văn bản pháp lý",
-		domain.EntityKindNewsArticle:        "Tin quy hoạch",
-		domain.EntityKindAnalysisReport:     "Báo cáo và phân tích",
+	// Nhóm gợi ý FE: kết quả trực tiếp vs khu vực/đồ án liên quan.
+	relatedKind := map[domain.EntityKind]bool{
+		domain.EntityKindPlanningRegion:  true,
+		domain.EntityKindPlanningProject: true,
+		domain.EntityKindPlanningMap:     true,
 	}
 
-	order := []domain.EntityKind{
-		domain.EntityKindAdministrativeUnit,
-		domain.EntityKindParcel,
-		domain.EntityKindPlanningRegion,
-		domain.EntityKindPlanningProject,
-		domain.EntityKindPlanningMap,
-		domain.EntityKindMapLayer,
-		domain.EntityKindPOI,
-		domain.EntityKindLegalDocument,
-		domain.EntityKindNewsArticle,
-		domain.EntityKindAnalysisReport,
-	}
-
-	byKind := map[domain.EntityKind][]domain.EntityCandidate{}
+	matched := make([]domain.EntityCandidate, 0, len(candidates))
+	related := make([]domain.EntityCandidate, 0, len(candidates))
 	for _, candidate := range candidates {
-		byKind[candidate.Entity.Kind] = append(byKind[candidate.Entity.Kind], candidate)
-	}
-
-	groups := make([]domain.SearchGroup, 0, len(byKind))
-	for _, kind := range order {
-		items := byKind[kind]
-		if len(items) == 0 {
+		if relatedKind[candidate.Entity.Kind] {
+			related = append(related, candidate)
 			continue
 		}
+		matched = append(matched, candidate)
+	}
 
-		label := labels[kind]
-		if label == "" {
-			label = string(kind)
-		}
-
+	groups := make([]domain.SearchGroup, 0, 2)
+	if len(matched) > 0 {
 		groups = append(groups, domain.SearchGroup{
-			Kind:  kind,
-			Label: label,
-			Total: len(items),
-			Items: items,
+			Kind:  domain.EntityKind("matched"),
+			Label: "Kết quả phù hợp",
+			Total: len(matched),
+			Items: matched,
+		})
+	}
+	if len(related) > 0 {
+		groups = append(groups, domain.SearchGroup{
+			Kind:  domain.EntityKind("related"),
+			Label: "Khu vực/ Đồ án liên quan",
+			Total: len(related),
+			Items: related,
 		})
 	}
 
@@ -445,5 +458,17 @@ func groupSearch(requestID string, interpretation domain.SearchInterpretation, c
 		Groups:         groups,
 		Partial:        partial,
 		Warnings:       warnings,
+	}
+}
+
+func trimSearchGroups(resp *domain.SearchResponse, limit int) {
+	if resp == nil || limit <= 0 {
+		return
+	}
+	for i := range resp.Groups {
+		if len(resp.Groups[i].Items) > limit {
+			resp.Groups[i].Items = resp.Groups[i].Items[:limit]
+		}
+		resp.Groups[i].Total = len(resp.Groups[i].Items)
 	}
 }

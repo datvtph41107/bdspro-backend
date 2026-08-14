@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	_utils "common/utils"
 	"tqd/infra/postgres/entitycandidate"
 	"tqd/internal/modules/discovery/domain"
 	"tqd/internal/modules/discovery/ports"
@@ -303,12 +304,14 @@ func (r *Repository) IdentifyPOIs(ctx context.Context, req domain.IdentifyReques
 	}
 	query := `SELECT p.id::text AS id, p.name AS title, COALESCE(p.address,'') AS subtitle, COALESCE(p.description,'') AS description,
                      COALESCE(p.address,'') AS address, '' AS province, '' AS province_code, '' AS ward, '' AS ward_code,
-                     'Point' AS geometry_type, p.latitude AS center_lat, p.longitude AS center_lon,
+                     'Point' AS geometry_type,
+                     COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS center_lat,
+                     COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS center_lon,
                      0::float8 AS min_lon,0::float8 AS min_lat,0::float8 AS max_lon,0::float8 AS max_lat,'' AS geo_json,
-                     ST_DistanceSphere(ST_SetSRID(ST_Point(p.longitude,p.latitude),4326), ST_SetSRID(ST_Point(?,?),4326)) AS distance_meters,
+                     ST_DistanceSphere(p.geom, ST_SetSRID(ST_Point(?,?),4326)) AS distance_meters,
                      CASE WHEN p.is_featured THEN 20 ELSE 10 END::float8 AS score
-              FROM pois p WHERE p.deleted_at IS NULL AND p.is_active = true
-                AND ST_DWithin(ST_SetSRID(ST_Point(p.longitude,p.latitude),4326)::geography, ST_SetSRID(ST_Point(?,?),4326)::geography, ?)
+              FROM pois p WHERE p.deleted_at IS NULL AND p.is_active = true AND p.geom IS NOT NULL
+                AND ST_DWithin(p.geom::geography, ST_SetSRID(ST_Point(?,?),4326)::geography, ?)
               ORDER BY distance_meters ASC, p.is_featured DESC, p.rating DESC LIMIT ?`
 	if err := r.db.WithContext(ctx).Raw(query, req.Point.Longitude, req.Point.Latitude, req.Point.Longitude, req.Point.Latitude, tolerance, limit(req.Options.Limit)).Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("identify pois: %w", err)
@@ -321,6 +324,17 @@ func (r *Repository) IdentifyPOIs(ctx context.Context, req domain.IdentifyReques
 }
 
 func searchPattern(q string) string { return "%" + strings.ToLower(strings.TrimSpace(q)) + "%" }
+
+// parcelAdrSearchPattern chuẩn hóa giống qh_parcel_info.adr_search (CleanSearchText + lower)
+// để khớp GIN index LOWER(adr_search) gin_trgm_ops.
+func parcelAdrSearchPattern(q string) (pattern string, ok bool) {
+	cleaned := strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(q)))
+	// pg_trgm với LIKE '%x%' khi len < 4 selectivity rất thấp → dễ seq/bitmap scan nặng.
+	if len(cleaned) < 4 {
+		return "", false
+	}
+	return "%" + cleaned + "%", true
+}
 
 // parcelSearchHitLimit caps rows per fuzzy UNION branch before GROUP BY.
 func parcelSearchHitLimit(reqLimit int) int {
@@ -449,9 +463,9 @@ func (r *Repository) SearchParcels(ctx context.Context, req domain.SearchRequest
 
 	q := strings.TrimSpace(req.Query)
 	qLower := strings.ToLower(q)
-	pattern := searchPattern(q)
 	hitLimit := parcelSearchHitLimit(req.Limit)
 	mapNo, landNo, hasMapLand := parseMapLandQuery(q)
+	adrPattern, hasAdrFuzzy := parcelAdrSearchPattern(q)
 
 	viewportClause, viewportArgs := viewportGeometryClause(req, "p.geometry")
 
@@ -477,25 +491,18 @@ func (r *Repository) SearchParcels(ctx context.Context, req domain.SearchRequest
 		}
 	}
 
-	if len(q) >= 3 && len(scores) < hitLimit {
+	// Chỉ search adr_search (đã unaccent qua CleanSearchText). Không LIKE address_text:
+	// - address_text còn dấu → "hai" không khớp "Hải"
+	// - LIKE '%..%' trên text có dấu dễ seq-scan dù có GIN (query ngắn càng tệ)
+	// Predicate khớp partial index idx_discovery_parcel_info_adr_trgm_nonempty.
+	if hasAdrFuzzy && len(scores) < hitLimit {
 		if err := r.collectParcelHits(ctx, scores, `
 			SELECT pi.parcel_id, 35::float8 AS score
 			FROM qh_parcel_info pi
-			WHERE COALESCE(pi.adr_search,'') <> ''
+			WHERE COALESCE(pi.adr_search, '') <> ''
 			  AND LOWER(pi.adr_search) LIKE ?
-			LIMIT ?`, pattern, hitLimit); err != nil {
+			LIMIT ?`, adrPattern, hitLimit); err != nil {
 			return nil, fmt.Errorf("search parcels adr_search: %w", err)
-		}
-	}
-
-	if len(q) >= 3 && len(scores) < hitLimit {
-		if err := r.collectParcelHits(ctx, scores, `
-			SELECT pi.parcel_id, 30::float8 AS score
-			FROM qh_parcel_info pi
-			WHERE COALESCE(pi.address_text,'') <> ''
-			  AND LOWER(COALESCE(pi.address_text,'')) LIKE ?
-			LIMIT ?`, pattern, hitLimit); err != nil {
-			return nil, fmt.Errorf("search parcels address_text: %w", err)
 		}
 	}
 
@@ -836,9 +843,13 @@ func (r *Repository) SearchPOIs(ctx context.Context, req domain.SearchRequest) (
 	}
 
 	var rows []spatialRow
-	viewportClause, viewportArgs := viewportPointClause(req, "p.longitude", "p.latitude")
-	pattern := searchPattern(req.Query)
+	viewportClause, viewportArgs := viewportPointClause(req, "ST_X(p.geom)", "ST_Y(p.geom)")
+	q := strings.TrimSpace(req.Query)
+	pattern := searchPattern(q)
+	prefixPattern := strings.ToLower(q) + "%"
 
+	// Suggest / discovery search: match theo name (ưu tiên), code exact là phụ.
+	// Tọa độ lấy từ geom (latitude/longitude columns thường trống).
 	query := `
 		SELECT p.id::text AS id,
 		       p.name AS title,
@@ -850,28 +861,28 @@ func (r *Repository) SearchPOIs(ctx context.Context, req domain.SearchRequest) (
 		       '' AS ward,
 		       '' AS ward_code,
 		       'Point' AS geometry_type,
-		       p.latitude AS center_lat,
-		       p.longitude AS center_lon,
-		       0::float8 AS min_lon,
-		       0::float8 AS min_lat,
-		       0::float8 AS max_lon,
-		       0::float8 AS max_lat,
+		       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS center_lat,
+		       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS center_lon,
+		       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS min_lon,
+		       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS min_lat,
+		       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS max_lon,
+		       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS max_lat,
 		       '' AS geo_json,
 		       CASE
-		         WHEN LOWER(p.name) = LOWER(?) THEN 90
-		         WHEN LOWER(p.code) = LOWER(?) THEN 100
-		         ELSE 25
+		         WHEN LOWER(p.name) = LOWER(?) THEN 100
+		         WHEN LOWER(p.name) LIKE ? THEN 80
+		         WHEN LOWER(COALESCE(p.code,'')) = LOWER(?) THEN 70
+		         ELSE 40
 		       END::float8 AS score
 		FROM pois p
 		WHERE p.deleted_at IS NULL
 		  AND p.is_active = true
 		  AND (
 		    LOWER(p.name) LIKE ?
-		    OR LOWER(COALESCE(p.address,'')) LIKE ?
-		    OR LOWER(COALESCE(p.code,'')) LIKE ?
+		    OR LOWER(COALESCE(p.code,'')) = LOWER(?)
 		  )`
 
-	args := []any{req.Query, req.Query, pattern, pattern, pattern}
+	args := []any{q, prefixPattern, q, pattern, q}
 	query += viewportClause
 	args = append(args, viewportArgs...)
 	query += " ORDER BY score DESC, p.is_featured DESC, p.rating DESC LIMIT ?"
@@ -883,7 +894,7 @@ func (r *Repository) SearchPOIs(ctx context.Context, req domain.SearchRequest) (
 
 	out := make([]domain.EntityCandidate, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, candidate(domain.EntityKindPOI, row, "full_text"))
+		out = append(out, candidate(domain.EntityKindPOI, row, "name"))
 	}
 
 	return out, nil
@@ -998,8 +1009,13 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			SELECT p.id::text AS id,p.name AS title,COALESCE(p.address,'') AS subtitle,
 			       COALESCE(p.description,'') AS description,COALESCE(p.address,'') AS address,
 			       '' AS province,'' AS province_code,'' AS ward,'' AS ward_code,
-			       'Point' AS geometry_type,p.latitude AS center_lat,p.longitude AS center_lon,
-			       0::float8 AS min_lon,0::float8 AS min_lat,0::float8 AS max_lon,0::float8 AS max_lat,
+			       'Point' AS geometry_type,
+			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS center_lat,
+			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS center_lon,
+			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS min_lon,
+			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS min_lat,
+			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS max_lon,
+			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS max_lat,
 			       '' AS geo_json,50::float8 AS score
 			FROM pois p
 			WHERE p.id = ? AND p.deleted_at IS NULL

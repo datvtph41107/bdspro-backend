@@ -47,6 +47,11 @@ type UserProperties struct {
 			Cron      string `mapstructure:"cron"`
 			BatchSize int    `mapstructure:"batch_size"`
 		} `mapstructure:"generation_job"`
+
+		ParcelUrlTemplate             string `mapstructure:"parcelUrlTemplate"`
+		LayerUrlTemplate              string `mapstructure:"layerUrlTemplate"`
+		PlanningProjectUrlTemplate    string `mapstructure:"planningProjectUrlTemplate"`
+		AdministrativeUnitUrlTemplate string `mapstructure:"administrativeUnitUrlTemplate"`
 	} `mapstructure:"seo"`
 }
 

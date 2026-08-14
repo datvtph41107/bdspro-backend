@@ -23,6 +23,7 @@ type InitialApp struct {
 	ApiKeyUsecase           usecase.IApiKeyUsecase
 	Logger                  *flogging.FabricLogger
 	InteractiveEventHandler *handler.InteractiveEventHandler
+	ClickURLHandler         *handler.ClickURLHandler
 	ErrorLogHandler         *handler.ErrorLogHandler
 	ApplinkHandler          *handler.ApplinkHandler
 }
@@ -41,6 +42,7 @@ func NewInitialApp(
 	systemConfigUsecase *usecase.SystemConfigUsecase,
 	apiKeyUsecase usecase.IApiKeyUsecase,
 	interactiveEventHandler *handler.InteractiveEventHandler,
+	clickURLHandler *handler.ClickURLHandler,
 	errorLogHandler *handler.ErrorLogHandler,
 	appLinkHandler *handler.ApplinkHandler,
 ) *InitialApp {
@@ -59,6 +61,7 @@ func NewInitialApp(
 		ApiKeyUsecase:           apiKeyUsecase,
 		Logger:                  flogging.MustGetLogger(viper.GetString("server.name")),
 		InteractiveEventHandler: interactiveEventHandler,
+		ClickURLHandler:         clickURLHandler,
 		ErrorLogHandler:         errorLogHandler,
 		ApplinkHandler:          appLinkHandler,
 	}

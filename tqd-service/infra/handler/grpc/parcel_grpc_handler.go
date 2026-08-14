@@ -28,6 +28,8 @@ type ParcelGrpcHandler struct {
 	SyncProvider *_utils.SyncUtil
 }
 
+var _ tqdpb.ParcelServiceServer = (*ParcelGrpcHandler)(nil)
+
 func NewParcelGrpcHandler(
 	usecase usecase.ParcelUsecase,
 	mapper *mapper.ParcelMapper,
@@ -66,6 +68,36 @@ func (h *ParcelGrpcHandler) GetParcelInfo(ctx context.Context, req *tqdpb.GetPar
 	}
 
 	return h.mapper.ToProtoParcelInfoDetail(data), nil
+}
+
+// @Summary Thửa đất quanh thửa hiện tại
+// @Description Trả khoảng 5 thửa gần nhất (ưu tiên tiếp giáp)
+// @Tags Parcel
+// @Accept json
+// @Produce json
+// @Param parcelId path int true "Parcel ID"
+// @Param limit query int false "Limit (default 5)"
+// @Success 200 {object} tqdpb.GetParcelsAroundResponse
+// @Router /v2/tqd/parcels/around/{parcelId} [get]
+func (h *ParcelGrpcHandler) GetParcelsAround(ctx context.Context, req *tqdpb.GetParcelsAroundRequest) (*tqdpb.GetParcelsAroundResponse, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	limit := int(req.GetLimit())
+	if limit <= 0 {
+		limit = 5
+	}
+
+	rows, err := h.usecase.GetParcelsAround(ctx, req.ParcelId, limit)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.GetParcelsAroundResponse{
+		Data:  h.mapper.ToProtoNearbyParcelItems(rows),
+		Total: uint32(len(rows)),
+	}, nil
 }
 
 func responseMetaToProto(meta *dto.ResponseMeta) *tqdpb.ResponseMetadataInfo {
@@ -117,6 +149,39 @@ func (h *ParcelGrpcHandler) GetParcelPlanning(ctx context.Context, req *tqdpb.Ge
 	return resp, nil
 }
 
+// @Summary Đánh giá quy hoạch thửa đất (tạm thời)
+// @Description Trả mức cần kiểm tra, đánh giá chính và gợi ý kiểm tra
+// @Tags Parcel
+// @Accept json
+// @Produce json
+// @Param parcelId path int true "Parcel ID"
+// @Success 200 {object} tqdpb.ParcelPlanningEvalResponse
+// @Router /v2/tqd/parcels/{parcelId}/planning-eval [get]
+func (h *ParcelGrpcHandler) GetParcelPlanningEval(
+	ctx context.Context,
+	req *tqdpb.GetParcelDetailRequest,
+) (*tqdpb.ParcelPlanningEvalResponse, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	// TODO: thay bằng logic đánh giá thật — hiện trả dữ liệu mẫu tạm thời
+	return &tqdpb.ParcelPlanningEvalResponse{
+		ParcelId:   req.ParcelId,
+		CheckLevel: tqdpb.ParcelCheckLevel_PARCEL_CHECK_LEVEL_HIGH,
+		MainAssessment: []string{
+			"Thửa đất nằm trong vùng quy hoạch sử dụng đất giao thông (đường vành đai).",
+			"Có lớp QH phân khu H2-4 chồng lấn, cần đối chiếu chi tiết.",
+			"Diện tích đất ở còn lại sau quy hoạch ước tính khoảng 85 m².",
+		},
+		CheckSuggestions: []string{
+			"Đối chiếu bản đồ quy hoạch giao thông (đường vành đai) với ranh thửa.",
+			"Kiểm tra mức độ chồng lấn với quy hoạch phân khu H2-4.",
+			"Xác nhận diện tích đất ở còn lại và hạn chế xây dựng liên quan.",
+		},
+	}, nil
+}
+
 // GetParcelTimeline - Lịch sử biến động quy hoạch của thửa đất
 func (h *ParcelGrpcHandler) GetParcelTimeline(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelTimelineResponse, error) {
 	if req == nil || req.ParcelId == 0 {
@@ -158,6 +223,41 @@ func (h *ParcelGrpcHandler) GetParcelTimeline(ctx context.Context, req *tqdpb.Ge
 		ParcelId: req.ParcelId,
 		Events:   events,
 		Summary:  summary,
+	}, nil
+}
+
+// GetParcelHistory - Lịch sử thửa đất (shape giống Đồ án quy hoạch / ListPlanningEvents)
+// @Summary Lấy lịch sử thửa đất
+// @Description Trả danh sách sự kiện lịch sử của thửa theo parcelId (phân trang)
+// @Tags Parcel
+// @Accept json
+// @Produce json
+// @Param parcelId path int true "Parcel ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.GetParcelHistoryResponse
+// @Router /v2/tqd/parcels/{parcelId}/history [get]
+func (h *ParcelGrpcHandler) GetParcelHistory(ctx context.Context, req *tqdpb.GetParcelHistoryRequest) (*tqdpb.GetParcelHistoryResponse, error) {
+	if req == nil || req.ParcelId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
+	}
+
+	pagable := _dto.Pagable{
+		Page: req.Page,
+		Size: req.Size,
+	}
+	pagable.Normalize()
+
+	rows, total, err := h.usecase.GetParcelHistory(ctx, req.ParcelId, pagable)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.GetParcelHistoryResponse{
+		Data:  h.mapper.ToProtoParcelHistoryItems(rows),
+		Total: total,
+		Page:  pagable.GetPage(),
+		Size:  uint32(pagable.GetLimit()),
 	}, nil
 }
 
@@ -337,6 +437,47 @@ func (h *ParcelGrpcHandler) ResolveMapTargetByLocation(
 		resp.Region = h.mapper.RegionInfoToProto(result.Region)
 	}
 
+	return resp, nil
+}
+
+// ResolveMapTargetByPoi - Resolve target theo POI: lấy tọa độ POI rồi ưu tiên parcel, fallback region.
+// @Summary Resolve map target by POI
+// @Description Lấy chi tiết thửa đất hoặc region liên quan tới POI (cùng contract với by-location)
+// @Tags Parcel
+// @Produce json
+// @Param poi_id path uint64 true "POI ID"
+// @Success 200 {object} tqdpb.ResolveMapTargetByLocationResponse
+// @Router /v2/tqd/map-target/by-poi/{poi_id} [get]
+// @bind: internal/usecase.ParcelUsecase
+func (h *ParcelGrpcHandler) ResolveMapTargetByPoi(
+	ctx context.Context,
+	req *tqdpb.ResolveMapTargetByPoiRequest,
+) (*tqdpb.ResolveMapTargetByLocationResponse, error) {
+	if req == nil || req.GetPoiId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "poi_id is required")
+	}
+
+	result, err := h.usecase.ResolveMapTargetByPoi(ctx, req.GetPoiId())
+	if err != nil {
+		msg := err.Error()
+		if msg == "map target not found" ||
+			msg == "poi not found or missing coordinates" ||
+			msg == "poi id is required" {
+			return nil, status.Error(codes.NotFound, msg)
+		}
+		return nil, status.Error(codes.Internal, msg)
+	}
+
+	resp := &tqdpb.ResolveMapTargetByLocationResponse{
+		TargetType: result.TargetType,
+		TargetId:   result.TargetID,
+	}
+	if result.Parcel != nil {
+		resp.Parcel = h.mapper.ToProtoParcelInfoDetail(result.Parcel)
+	}
+	if result.Region != nil {
+		resp.Region = h.mapper.RegionInfoToProto(result.Region)
+	}
 	return resp, nil
 }
 
@@ -823,6 +964,84 @@ func (h *ParcelGrpcHandler) UpdateParcelSeoID(ctx context.Context, req *tqdpb.Up
 	return &sharepb.SubmitResponse{
 		Id:      req.ParcelId,
 		Message: "parcel seo_id updated successfully",
+	}, nil
+}
+
+// AdminGenParcelSeo tạo seo_domain trên CRM cho danh sách parcel.
+// @Summary Admin tạo SEO domain từ parcel
+// @Description Nhận danh sách parcelIds, gọi CRM sinh bản ghi seo_domain tương ứng.
+// @Tags Parcel Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AdminGenParcelSeoRequest true "Danh sách parcelIds"
+// @Router /v2/tqd/admin/parcels/gen-seo [post]
+func (h *ParcelGrpcHandler) AdminGenParcelSeo(ctx context.Context, req *tqdpb.AdminGenParcelSeoRequest) (*tqdpb.AdminGenParcelSeoResponse, error) {
+	if req == nil || len(req.ParcelIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelIds is required")
+	}
+
+	log.Printf("[AdminGenParcelSeo] parcelIds=%v", req.ParcelIds)
+
+	result, err := h.usecase.AdminGenParcelSeo(ctx, req.ParcelIds)
+	if err != nil {
+		log.Printf("[AdminGenParcelSeo] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if result == nil {
+		return &tqdpb.AdminGenParcelSeoResponse{}, nil
+	}
+
+	items := make([]*tqdpb.AdminGenParcelSeoItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, &tqdpb.AdminGenParcelSeoItem{
+			ParcelId:     item.ParcelID,
+			SeoId:        item.SeoID,
+			CanonicalUrl: item.CanonicalURL,
+			Slug:         item.Slug,
+			Created:      item.Created,
+			Message:      item.Message,
+		})
+	}
+
+	return &tqdpb.AdminGenParcelSeoResponse{
+		Data:    items,
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// AdminListParcels — danh sách thửa đất cho admin (phân trang + followerCount).
+// @Summary Admin danh sách thửa đất
+// @Description Trả danh sách parcels có phân trang, kèm followerCount
+// @Tags Parcel Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param search query string false "Search keyword"
+// @Success 200 {object} tqdpb.AdminListParcelsResponse
+// @Router /v2/tqd/admin/parcels [get]
+func (h *ParcelGrpcHandler) AdminListParcels(ctx context.Context, req *tqdpb.AdminListParcelsRequest) (*tqdpb.AdminListParcelsResponse, error) {
+	pagable := _dto.Pagable{
+		Page: req.GetPage(),
+		Size: req.GetSize(),
+	}
+	pagable.Normalize()
+
+	rows, total, err := h.usecase.AdminListParcels(ctx, req.GetSearch(), int(pagable.GetPage()), int(pagable.GetSize()))
+	if err != nil {
+		log.Printf("[AdminListParcels] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.AdminListParcelsResponse{
+		Data:  h.mapper.ToProtoAdminParcelListItems(rows),
+		Total: total,
 	}, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	qh_dto "tqd/internal/dto/qh"
@@ -80,10 +81,14 @@ func (m *ParcelMapper) ToProtoParcelDetail(data *qh_dto.ParcelDetailResponseDTO)
 
 	// Location
 	if data.Parcel.Location != nil {
+		loc := data.Parcel.Location
 		resp.Parcel.Location = &tqdpb.Location{
-			Province:     data.Parcel.Location.Province,
-			ProvinceCode: data.Parcel.Location.ProvinceCode,
-			WardCode:     data.Parcel.Location.WardCode,
+			Province:     loc.Province,
+			ProvinceCode: loc.ProvinceCode,
+			Ward:         loc.Ward,
+			WardCode:     loc.WardCode,
+			ProvinceInfo: m.toProtoAdministrativeUnit(loc.ProvinceInfo),
+			WardInfo:     m.toProtoAdministrativeUnit(loc.WardInfo),
 		}
 	}
 
@@ -222,6 +227,19 @@ func (m *ParcelMapper) ToProtoParcelDetail(data *qh_dto.ParcelDetailResponseDTO)
 	}
 
 	return resp
+}
+
+func (m *ParcelMapper) toProtoAdministrativeUnit(data *qh_dto.AdministrativeUnitDTO) *tqdpb.AdministrativeUnitSummary {
+	if data == nil {
+		return nil
+	}
+	return &tqdpb.AdministrativeUnitSummary{
+		Id:          data.ID,
+		Code:        data.Code,
+		FullName:    data.FullName,
+		ShortName:   data.ShortName,
+		Description: data.Description,
+	}
 }
 
 func (m *ParcelMapper) ToProtoLegalDocumentSummary(docs []*qh_domain.QHLegalDocument) *tqdpb.LegalDocumentSummary {
@@ -775,7 +793,7 @@ func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []qh_domain.Parc
 		parcels = append(parcels, qh_domain.Parcel{
 			Lat: p.Latitude,
 			Lng: p.Longitude,
-			Geometry: qh_domain.RawGeometry{
+			Geometry: domain.RawGeometry{
 				Raw: p.Geometry,
 			},
 		})
@@ -838,6 +856,25 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 		SeoId:        resp.SeoID,
 		IsSeo:        resp.IsSeo,
 	}
+}
+
+func (m *ParcelMapper) ToProtoNearbyParcelItems(rows []dto.NearbyParcelItem) []*tqdpb.NearbyParcelItem {
+	out := make([]*tqdpb.NearbyParcelItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		out = append(out, &tqdpb.NearbyParcelItem{
+			ParcelId:       row.ParcelID,
+			Lat:            row.Lat,
+			Lon:            row.Lon,
+			AreaSqm:        row.AreaSqm,
+			Address:        row.AddressText,
+			Geometry:       row.Geometry,
+			MapNumber:      row.MapNumber,
+			LandNumber:     row.LandNumber,
+			DistanceMeters: row.DistanceMeters,
+		})
+	}
+	return out
 }
 
 func (m *ParcelMapper) RegionInfoToProto(v *dto.RegionInfoResponse) *tqdpb.RegionInfoResponse {
@@ -1629,4 +1666,58 @@ func mapTypeLayerToLayerDetail(l *types.LayerDetail) *tqdpb.LayerDetail {
 		pl.Labels = append(pl.Labels, plb)
 	}
 	return pl
+}
+
+func (m *ParcelMapper) ToProtoParcelHistoryItems(rows []qh_domain.ParcelHistory) []*tqdpb.ParcelHistoryItem {
+	out := make([]*tqdpb.ParcelHistoryItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		metadata := "{}"
+		if len(row.Metadata) > 0 {
+			metadata = string(row.Metadata)
+		}
+		item := &tqdpb.ParcelHistoryItem{
+			Id:          row.ID,
+			ParcelId:    row.ParcelID,
+			EventType:   row.EventType,
+			EventName:   row.EventName,
+			Description: row.Description,
+			EventDate:   _utils.FormatTimeToString(row.EventDate),
+			SourceUrl:   row.SourceURL,
+			Metadata:    metadata,
+			CreatedAt:   _utils.FormatTimeToString(row.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(row.UpdatedAt),
+		}
+		if row.DocumentID != nil {
+			item.DocumentId = row.DocumentID
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+func (m *ParcelMapper) ToProtoAdminParcelListItems(rows []dto.AdminParcelListItem) []*tqdpb.AdminParcelListItem {
+	out := make([]*tqdpb.AdminParcelListItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		createdAt := row.CreatedAt
+		out = append(out, &tqdpb.AdminParcelListItem{
+			ParcelId:      row.ParcelID,
+			Lat:           row.Lat,
+			Lon:           row.Lon,
+			AreaSqm:       row.AreaSqm,
+			Address:       row.AddressText,
+			MapNumber:     row.MapNumber,
+			LandNumber:    row.LandNumber,
+			PropertyCode:  row.PropertyCode,
+			Province:      row.Province,
+			ProvinceCode:  row.ProvinceCode,
+			WardCode:      row.WardCode,
+			SeoId:         row.SeoID,
+			IsSeo:         row.IsSeo,
+			FollowerCount: row.FollowerCount,
+			CreatedAt:     _utils.FormatTimeToString(&createdAt),
+		})
+	}
+	return out
 }

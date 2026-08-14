@@ -1,11 +1,13 @@
 package mapper
 
 import (
+	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	seo_domain "crm/internal/domain/seo"
 	"strings"
 	"time"
 
 	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
 
 	"gorm.io/datatypes"
 )
@@ -82,6 +84,7 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		LastRenderError: seo.LastRenderError,
 		TemplateKey:     seo.TemplateKey,
 		TemplateVersion: seo.TemplateVersion,
+		VisibleOn:       planningNewsVisibleOnToPb(seo.VisibleOn),
 	}
 }
 
@@ -380,4 +383,13 @@ func seoRenderStatusToPb(seo *seo_domain.SeoDomain) string {
 		return seo_domain.SeoRenderStatusSuccess
 	}
 	return seo_domain.SeoRenderStatusNone
+}
+
+func planningNewsVisibleOnToPb(value uint32) *sharepb.EnumItem {
+	visibleOn := catalogdomain.PlanningNewsVisibleOn(value)
+
+	return &sharepb.EnumItem{
+		Value: value,
+		Name:  visibleOn.Label(),
+	}
 }

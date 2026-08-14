@@ -57,6 +57,10 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		ProcessStatus:     uint32(project.ProcessStatus),
 		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(project.ProcessStatus)),
 	}
+	if project.SeoID != nil && *project.SeoID > 0 {
+		seoID := *project.SeoID
+		result.SeoId = &seoID
+	}
 
 	if project.Jurisdiction != nil {
 		result.Jurisdiction = &tqdpb.Jurisdiction{
@@ -111,6 +115,7 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 		ProcessStatus:     uint32(document.ProcessStatus),
 		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(document.ProcessStatus)),
 		ClassifyError:     document.ClassifyError,
+		Ext:               document.Ext,
 	}
 }
 
@@ -256,6 +261,7 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 		Title:             proto.Title,
 		Description:       proto.Description,
 		Filepath:          proto.Filepath,
+		Ext:               proto.Ext,
 		Thumbnail:         proto.Thumbnail,
 		VersionNo:         proto.VersionNo,
 		ValidityStatus:    proto.ValidityStatus,

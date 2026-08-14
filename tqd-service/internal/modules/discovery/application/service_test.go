@@ -102,8 +102,13 @@ func TestSearchFiltersEntityKinds(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, group := range res.Groups {
-		if group.Kind != domain.EntityKindPlanningRegion {
-			t.Fatalf("unexpected group kind %s", group.Kind)
+		for _, item := range group.Items {
+			if item.Entity.Kind != domain.EntityKindPlanningRegion {
+				t.Fatalf("unexpected item kind %s", item.Entity.Kind)
+			}
+		}
+		if group.Label != "Khu vực/ Đồ án liên quan" {
+			t.Fatalf("unexpected group label %q", group.Label)
 		}
 	}
 }

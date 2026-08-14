@@ -69,16 +69,19 @@ type PlanningNewsItem struct {
 	CategoryName    string         `json:"categoryName,omitempty"`
 	Metadata        map[string]any `json:"metadata,omitempty"`
 	RefSnapshotJSON map[string]any `json:"refSnapshotJson,omitempty"`
+	RefType         uint32         `json:"refType,omitempty"`
+	RefID           *uint64        `json:"refId,omitempty"`
 }
 
 type PlanningNewsListFilter struct {
-	Page      int
-	Size      int
-	Keyword   string
-	Topic     string
-	Location  string
-	Range     string
-	VisibleOn uint32
+	Page       int
+	Size       int
+	Keyword    string
+	Topic      string
+	Location   string
+	Range      string
+	VisibleOn  uint32
+	VisibleOns []uint32
 }
 
 type SavedPlanningNewsListFilter struct {

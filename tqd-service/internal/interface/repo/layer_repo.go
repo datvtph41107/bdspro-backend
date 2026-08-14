@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/enums"
 )
 
@@ -26,6 +27,10 @@ type LayerRepository interface {
 	GetByImportBatchID(ctx context.Context, batchID string) (*qh_domain.QHLayer, error)
 	ResetLayerImportTracking(ctx context.Context, id uint64) error
 	GetZoomRangeByFamilyID(ctx context.Context, familyID uint64) (minZoom, maxZoom uint32, err error)
+
+	GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error)
+	GetLayerSeoSourcesByIDs(ctx context.Context, layerIDs []uint64) ([]dto.LayerSeoSource, error)
+	UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error
 }
 
 // LayerFilter - Filter cho admin list

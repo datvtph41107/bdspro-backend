@@ -205,12 +205,12 @@ func normalizePublicSeoSlug(value string) (string, error) {
 
 func publicCanonicalPath(moduleID string, slug string) (string, error) {
 	prefixes := map[string]string{
-		"administrative-unit": "/dia-ban",
-		"parcel":              "/thua-dat",
-		"planning-region":     "/vung-quy-hoach",
-		"planning-project":    "/do-an-quy-hoach",
-		"planning-news":       "/quy-hoach/tin-tuc",
-		"planning-report":     "/quy-hoach/bao-cao",
+		"administrative-unit": "/tin-tuc/dia-ban",
+		"parcel":              "/tin-tuc/thua-dat",
+		"planning-region":     "/tin-tuc/vung-quy-hoach",
+		"planning-project":    "/tin-tuc/do-an-quy-hoach",
+		"planning-news":       "/tin-tuc/bai-viet",
+		"planning-report":     "/tin-tuc/bao-cao",
 	}
 	prefix := prefixes[moduleID]
 	if prefix == "" {

@@ -3,6 +3,8 @@ package dto
 
 import (
 	"time"
+
+	_dto "common/domain/dto"
 	"tqd/internal/domain"
 )
 
@@ -47,6 +49,27 @@ type ListWardsByProvinceRequest struct {
 	ProvinceID string `json:"provinceId"`
 	Page       *int32 `json:"page,omitempty"`
 	PageSize   *int32 `json:"pageSize,omitempty"`
+}
+
+type AdminListProvincesRequest struct {
+	_dto.Pagable
+	Search string `json:"search"`
+}
+
+type AdminListWardsRequest struct {
+	_dto.Pagable
+	Search     string `json:"search"`
+	ProvinceID string `json:"provinceId"`
+}
+
+type AdminListProvincesResponse struct {
+	Data  []*ProvinceDTO `json:"data"`
+	Total int64          `json:"total"`
+}
+
+type AdminListWardsResponse struct {
+	Data  []*WardDTO `json:"data"`
+	Total int64      `json:"total"`
 }
 
 // ==================== RESPONSE DTOs ====================
@@ -94,6 +117,7 @@ type ProvinceDTO struct {
 	Lat       float64    `json:"lat"`
 	Lng       float64    `json:"lng"`
 	WardCount int32      `json:"wardCount"`
+	SeoID     *uint64    `json:"seoId,omitempty"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
@@ -107,8 +131,38 @@ type WardDTO struct {
 	Lng          float64    `json:"lng"`
 	ProvinceID   string     `json:"provinceId"`
 	ProvinceCode string     `json:"provinceCode"`
+	SeoID        *uint64    `json:"seoId,omitempty"`
 	CreatedAt    *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
+}
+
+type AdministrativeUnitSeoSource struct {
+	Identity           string  `json:"identity" gorm:"column:identity"`
+	UnitType           string  `json:"unitType" gorm:"column:unit_type"`
+	SourceID           string  `json:"sourceId" gorm:"column:source_id"`
+	Name               string  `json:"name" gorm:"column:name"`
+	Slug               string  `json:"slug" gorm:"column:slug"`
+	CanonicalPath      string  `json:"canonicalPath" gorm:"column:canonical_path"`
+	AdministrativeCode string  `json:"administrativeCode" gorm:"column:administrative_code"`
+	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type AdminGenAdministrativeUnitSeoItem struct {
+	Identity     string `json:"identity"`
+	SeoID        uint64 `json:"seoId"`
+	CanonicalURL string `json:"canonicalUrl"`
+	Slug         string `json:"slug"`
+	Created      bool   `json:"created"`
+	Message      string `json:"message"`
+}
+
+type AdminGenAdministrativeUnitSeoResult struct {
+	Items   []AdminGenAdministrativeUnitSeoItem `json:"items"`
+	Total   int64                               `json:"total"`
+	Created int64                               `json:"created"`
+	Skipped int64                               `json:"skipped"`
+	Failed  int64                               `json:"failed"`
+	Errors  []string                            `json:"errors"`
 }
 
 type LocationResult struct {

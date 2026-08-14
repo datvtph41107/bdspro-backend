@@ -233,7 +233,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			SupportsTemplate: true,
 			DefaultPageType:  "entity",
 			AdminURLPattern:  "/admin/parcels/{id}",
-			PublicURLPattern: "/quy-hoach/thua-dat/{id}-{slug}",
+			PublicURLPattern: "/tin-tuc/thua-dat/{id}-{slug}",
 			Status:           SeoSourceStatusReady,
 			Resolvable:       true,
 			Capabilities: readyCapabilities(

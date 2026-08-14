@@ -119,6 +119,7 @@ gateway:
         - "/v2/pub/user/profile/tags"
         - "/v2/hub/applinks"
         - "/v2/hub/error/log"
+        - "/v2/hub/v2/interactive-event"
         - "/v2/bdspro/v2/property/list/all"
         - "/v2/qh/config-app"
         - "/v2/tqd/parcels/batch"

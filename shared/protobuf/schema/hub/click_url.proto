@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+enum ClickURLDomainType {
+  CLICK_URL_DOMAIN_TYPE_UNSPECIFIED = 0;
+  CLICK_URL_DOMAIN_TYPE_ADM_UNIT    = 100;
+  CLICK_URL_DOMAIN_TYPE_PARCEL      = 200;
+  CLICK_URL_DOMAIN_TYPE_REGION      = 300;
+  CLICK_URL_DOMAIN_TYPE_PROJECT     = 400;
+  CLICK_URL_DOMAIN_TYPE_DOCUMENT    = 500;
+  CLICK_URL_DOMAIN_TYPE_MAP         = 600;
+  CLICK_URL_DOMAIN_TYPE_REPORT      = 700;
+  CLICK_URL_DOMAIN_TYPE_LEGACY      = 800;
+}
+
+service ClickURLService {
+  rpc TrackClickURL(TrackClickURLBatchRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/hub/v2/click-url"
+      body: "*"
+    };
+  };
+}
+
+message TrackClickURLBatchRequest {
+  repeated TrackClickURLRequest events = 1;
+}
+
+message TrackClickURLRequest {
+  int64              event_time  = 1;
+  uint64             domain_id   = 2;
+  ClickURLDomainType domain_type = 3;
+}

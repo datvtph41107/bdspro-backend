@@ -67,6 +67,7 @@ var wireSet = wire.NewSet(
 	tqd_initial.NewApp,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAssessEngine,
 	tqd_infra_client.NewAssistantClient,
+	tqd_infra_client.NewCrmSeoClient,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAuditEngine,
 	tqd_internal_usecase.NewBaseUsecase,
 	tqd_infra_handler_grpc.NewBdsproPublicService,

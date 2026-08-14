@@ -18,6 +18,7 @@ type QHPlanningDocument struct {
 	Title          string     `gorm:"type:varchar(255);not null" json:"title"`
 	Description    string     `gorm:"type:text" json:"description"`
 	Filepath       string     `gorm:"type:varchar(255)" json:"filepath"`
+	Ext            string     `gorm:"type:varchar(20);not null;default:''" json:"ext"`
 	Thumbnail      string     `gorm:"type:varchar(255)" json:"thumbnail"`
 	VersionNo      string     `gorm:"type:varchar(50)" json:"versionNo"`
 	ValidityStatus string     `gorm:"type:varchar(50)" json:"validityStatus"`

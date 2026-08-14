@@ -40,3 +40,28 @@ type FolderFileInput struct {
 	Content      []byte
 	ContentType  string
 }
+
+type PlanningProjectSeoSource struct {
+	PlanningProjectID uint64  `json:"planningProjectId" gorm:"column:planning_project_id"`
+	Name              string  `json:"name" gorm:"column:name"`
+	Slug              string  `json:"slug" gorm:"column:slug"`
+	SeoID             *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type AdminGenPlanningProjectSeoItem struct {
+	PlanningProjectID uint64 `json:"planningProjectId"`
+	SeoID             uint64 `json:"seoId"`
+	CanonicalURL      string `json:"canonicalUrl"`
+	Slug              string `json:"slug"`
+	Created           bool   `json:"created"`
+	Message           string `json:"message"`
+}
+
+type AdminGenPlanningProjectSeoResult struct {
+	Items   []AdminGenPlanningProjectSeoItem `json:"items"`
+	Total   int64                            `json:"total"`
+	Created int64                            `json:"created"`
+	Skipped int64                            `json:"skipped"`
+	Failed  int64                            `json:"failed"`
+	Errors  []string                         `json:"errors"`
+}

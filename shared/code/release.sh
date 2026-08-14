@@ -328,7 +328,7 @@ fi
 
 
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
-cd ${REMOTE_DIR}
+cd ${REMOTE_PATH}
 docker compose build --no-cache ${payload_build}
 docker compose up -d ${payload_build}
 "

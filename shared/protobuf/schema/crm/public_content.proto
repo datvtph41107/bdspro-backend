@@ -60,6 +60,8 @@ message PlanningNewsQueryRequest {
   string range = 11;
   string sort_by = 12;
   string sort_order = 13;
+  // Danh sách visible_on cách nhau bởi dấu phẩy, ví dụ: "10,20"
+  string visibleOns = 14;
 }
 
 message PlanningNewsSlugRequest {
@@ -82,6 +84,10 @@ message UpdatePlanningNewsVisibilityRequest {
 message AssignPlanningNewsCategoryRequest {
   uint64 id = 1;
   string category = 2;
+}
+
+message SetPlanningNewsTopRequest {
+  uint64 id = 1;
 }
 
 // Canonical CRM public content and SEO contract. Gateway registers generated HTTP handlers; CRM exposes gRPC only.
@@ -204,6 +210,12 @@ service CRMPublicContentService {
   rpc AssignPlanningNewsCategory(AssignPlanningNewsCategoryRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       put: "/v2/crm/admin/content/planning-news/{id}/category"
+      body: "*"
+    };
+  }
+  rpc SetPlanningNewsTop(SetPlanningNewsTopRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/content/planning-news/{id}/set-top"
       body: "*"
     };
   }

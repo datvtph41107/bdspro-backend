@@ -78,6 +78,26 @@ service LayerService {
       body: "*"
     };
   }
+
+  rpc GetLayerSeoSource(GetLayerRequest) returns (LayerSeoSourceResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/internal/layers/{id}/seo-source"
+    };
+  }
+
+  rpc UpdateLayerSeoID(UpdateLayerSeoIDRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/internal/layers/{layerId}/seo-id"
+      body: "*"
+    };
+  }
+
+  rpc AdminGenLayerSeo(AdminGenLayerSeoRequest) returns (AdminGenLayerSeoResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layers/gen-seo"
+      body: "*"
+    };
+  }
   
   // ========== Client APIs ==========
   
@@ -266,6 +286,41 @@ message LayerResponse {
   optional QHLayerFamilyResponse family = 31;
   repeated int32 publishScopes = 32;
   bool defaultVisible = 33;
+  int64 subscriberCount = 34;
+  optional uint64 seoId = 35;
+}
+
+message LayerSeoSourceResponse {
+  uint64 layerId = 1;
+  string displayName = 2;
+  uint64 seoId = 3;
+}
+
+message UpdateLayerSeoIDRequest {
+  uint64 layerId = 1;
+  uint64 seoId = 2;
+}
+
+message AdminGenLayerSeoRequest {
+  repeated uint64 layerIds = 1;
+}
+
+message AdminGenLayerSeoItem {
+  uint64 layerId = 1;
+  uint64 seoId = 2;
+  string canonicalUrl = 3;
+  string slug = 4;
+  bool created = 5;
+  string message = 6;
+}
+
+message AdminGenLayerSeoResponse {
+  repeated AdminGenLayerSeoItem data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
 }
 
 message ListLayersResponse {

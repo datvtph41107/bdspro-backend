@@ -15,11 +15,13 @@ type PlanningRepository interface {
 	GetProject(context.Context, uint64) (*planningdomain.Project, error)
 	ListDocuments(context.Context, uint64, int, int, string, string, string) (*planningdomain.Page[planningdomain.Document], error)
 	GetDocument(context.Context, uint64) (*planningdomain.Document, error)
+	ListDocumentsByParcelRelation(context.Context, uint64, int, int, string) (*planningdomain.Page[planningdomain.Document], error)
 	ListEvents(context.Context, uint64, int, int) (*planningdomain.Page[planningdomain.Event], error)
 	Follow(context.Context, uint64, uint64, string) (*planningdomain.Follow, error)
 	GetFollow(context.Context, uint64, uint64) (*planningdomain.Follow, error)
 	Unfollow(context.Context, uint64, uint64) error
 	ListFollowed(context.Context, uint64, int, int, string) (*planningdomain.Page[planningdomain.FollowedProject], error)
+	ListProjectsByParcelRelation(context.Context, uint64, int, int) (*planningdomain.Page[planningdomain.Project], error)
 	ListProjectLayers(context.Context, uint64) ([]planningdomain.ProjectLayer, error)
 	ListProvinces(context.Context, planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error)
 }
@@ -52,6 +54,9 @@ func (s *Service) ListDocuments(ctx context.Context, projectID uint64, page, siz
 func (s *Service) GetDocument(ctx context.Context, id uint64) (*planningdomain.Document, error) {
 	return s.planning.GetDocument(ctx, id)
 }
+func (s *Service) ListDocumentsByParcelRelation(ctx context.Context, parcelID uint64, page, size int, docType string) (*planningdomain.Page[planningdomain.Document], error) {
+	return s.planning.ListDocumentsByParcelRelation(ctx, parcelID, page, size, docType)
+}
 func (s *Service) ListEvents(ctx context.Context, projectID uint64, page, size int) (*planningdomain.Page[planningdomain.Event], error) {
 	return s.planning.ListEvents(ctx, projectID, page, size)
 }
@@ -66,6 +71,9 @@ func (s *Service) Unfollow(ctx context.Context, userID, projectID uint64) error 
 }
 func (s *Service) ListFollowed(ctx context.Context, userID uint64, page, size int, search string) (*planningdomain.Page[planningdomain.FollowedProject], error) {
 	return s.planning.ListFollowed(ctx, userID, page, size, search)
+}
+func (s *Service) ListProjectsByParcelRelation(ctx context.Context, parcelID uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	return s.planning.ListProjectsByParcelRelation(ctx, parcelID, page, size)
 }
 func (s *Service) ListProjectLayers(ctx context.Context, projectID uint64) ([]planningdomain.ProjectLayer, error) {
 	return s.planning.ListProjectLayers(ctx, projectID)

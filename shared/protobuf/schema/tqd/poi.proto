@@ -64,7 +64,7 @@ service PoiService {
 
   rpc ListPois(ListPoisRequest) returns (ListPoisResponse) {
     option (google.api.http) = {
-      get: "/v2/tqd/pois"
+      get: "/v2/tqd/admin/pois"
     };
   }
 }
@@ -143,8 +143,8 @@ message ListPoisRequest {
   string search = 3;
   uint64 categoryId = 4;
   repeated uint64 categoryIds = 5;
-  bool isActive = 6;
-  bool isVerified = 7;
+  optional bool isActive = 6;
+  optional bool isVerified = 7;
   double minRating = 8;
   double maxRating = 9;
   double latitude = 10;
@@ -152,6 +152,7 @@ message ListPoisRequest {
   double radius = 12; // in km
   string sortBy = 13; // rating, distance, newest
   int64 timestamp = 14;
+  string sort = 15; // createdAt,desc
 }
 
 message ListPoisResponse {

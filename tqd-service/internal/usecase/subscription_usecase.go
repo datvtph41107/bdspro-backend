@@ -30,7 +30,10 @@ type SubscriptionUsecase interface {
 
 	// Admin
 	AdminList(ctx context.Context, userID *uint64, targetType *string, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error)
+	AdminListParcelSubscriptions(ctx context.Context, userID *uint64, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error)
 	AdminDelete(ctx context.Context, subscriptionID uint64) error
+	CountParcelFollowers(ctx context.Context, parcelIDs []uint64, status *uint32) (map[uint64]int64, error)
+	CountLayerSubscribers(ctx context.Context, layerIDs []uint64, status *uint32) (map[uint64]int64, error)
 }
 
 type subscriptionUsecase struct {
@@ -223,6 +226,19 @@ func (u *subscriptionUsecase) ListUserSubscriptions(ctx context.Context, userID 
 
 func (u *subscriptionUsecase) AdminList(ctx context.Context, userID *uint64, targetType *string, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error) {
 	return u.subRepo.AdminList(ctx, userID, targetType, status, page, limit)
+}
+
+func (u *subscriptionUsecase) AdminListParcelSubscriptions(ctx context.Context, userID *uint64, status *uint32, page, limit int) ([]domain.UserSubscription, int64, error) {
+	targetType := "parcel"
+	return u.subRepo.AdminList(ctx, userID, &targetType, status, page, limit)
+}
+
+func (u *subscriptionUsecase) CountParcelFollowers(ctx context.Context, parcelIDs []uint64, status *uint32) (map[uint64]int64, error) {
+	return u.subRepo.CountFollowersByParcelIDs(ctx, parcelIDs, status)
+}
+
+func (u *subscriptionUsecase) CountLayerSubscribers(ctx context.Context, layerIDs []uint64, status *uint32) (map[uint64]int64, error) {
+	return u.subRepo.CountSubscribersByLayerIDs(ctx, layerIDs, status)
 }
 
 func (u *subscriptionUsecase) AdminDelete(ctx context.Context, subscriptionID uint64) error {

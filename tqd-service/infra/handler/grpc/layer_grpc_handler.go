@@ -15,6 +15,7 @@ import (
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
@@ -27,14 +28,20 @@ import (
 
 type LayerGrpcHandler struct {
 	tqdpb.UnimplementedLayerServiceServer
-	layerUsecase usecase.LayerUsecase
-	SyncProvider *_utils.SyncUtil
+	layerUsecase        usecase.LayerUsecase
+	subscriptionUsecase usecase.SubscriptionUsecase
+	SyncProvider        *_utils.SyncUtil
 }
 
-func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase, syncProvider *_utils.SyncUtil) *LayerGrpcHandler {
+func NewLayerGrpcHandler(
+	layerUsecase usecase.LayerUsecase,
+	subscriptionUsecase usecase.SubscriptionUsecase,
+	syncProvider *_utils.SyncUtil,
+) *LayerGrpcHandler {
 	return &LayerGrpcHandler{
-		layerUsecase: layerUsecase,
-		SyncProvider: syncProvider,
+		layerUsecase:        layerUsecase,
+		subscriptionUsecase: subscriptionUsecase,
+		SyncProvider:        syncProvider,
 	}
 }
 
@@ -334,12 +341,29 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	layerIDs := make([]uint64, 0, len(layers))
+	for _, layer := range layers {
+		layerIDs = append(layerIDs, layer.ID)
+	}
+
+	subscriberCounts := map[uint64]int64{}
+	if h.subscriptionUsecase != nil && len(layerIDs) > 0 {
+		activeStatus := uint32(enums.SubStatusActive)
+		counts, countErr := h.subscriptionUsecase.CountLayerSubscribers(ctx, layerIDs, &activeStatus)
+		if countErr != nil {
+			log.Printf("[ListLayers] CountLayerSubscribers error: %v", countErr)
+		} else {
+			subscriberCounts = counts
+		}
+	}
+
 	protoLayers := make([]*tqdpb.LayerResponse, 0, len(layers))
 	for _, layer := range layers {
 		protoLayer, err := h.toProtoLayer(&layer, true)
 		if err != nil {
 			continue
 		}
+		protoLayer.SubscriberCount = subscriberCounts[layer.ID]
 		protoLayers = append(protoLayers, protoLayer)
 	}
 
@@ -495,6 +519,94 @@ func (h *LayerGrpcHandler) BuildPMTiles(req *tqdpb.BuildPMTilesRequest, stream g
 		Message: err.Error(),
 	})
 	return status.Error(codes.Internal, err.Error())
+}
+
+func (h *LayerGrpcHandler) GetLayerSeoSource(ctx context.Context, req *tqdpb.GetLayerRequest) (*tqdpb.LayerSeoSourceResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layer id is required")
+	}
+
+	source, err := h.layerUsecase.GetLayerSeoSource(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return layerSeoSourceToProto(source), nil
+}
+
+func (h *LayerGrpcHandler) UpdateLayerSeoID(ctx context.Context, req *tqdpb.UpdateLayerSeoIDRequest) (*sharepb.SubmitResponse, error) {
+	if req == nil || req.LayerId == 0 || req.SeoId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId và seoId là bắt buộc")
+	}
+
+	if err := h.layerUsecase.UpdateLayerSeoID(ctx, req.LayerId, req.SeoId); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &sharepb.SubmitResponse{
+		Id:      req.LayerId,
+		Message: "layer seo_id updated successfully",
+	}, nil
+}
+
+// AdminGenLayerSeo tạo seo_domain trên CRM cho danh sách layer.
+// @Summary Admin tạo SEO domain từ layer
+// @Description Nhận danh sách layerIds, gọi CRM sinh bản ghi seo_domain tương ứng.
+// @Tags Layer Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AdminGenLayerSeoRequest true "Danh sách layerIds"
+// @Router /v2/tqd/qh/admin/layers/gen-seo [post]
+func (h *LayerGrpcHandler) AdminGenLayerSeo(ctx context.Context, req *tqdpb.AdminGenLayerSeoRequest) (*tqdpb.AdminGenLayerSeoResponse, error) {
+	if req == nil || len(req.LayerIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerIds is required")
+	}
+
+	log.Printf("[AdminGenLayerSeo] layerIds=%v", req.LayerIds)
+
+	result, err := h.layerUsecase.AdminGenLayerSeo(ctx, req.LayerIds)
+	if err != nil {
+		log.Printf("[AdminGenLayerSeo] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if result == nil {
+		return &tqdpb.AdminGenLayerSeoResponse{}, nil
+	}
+
+	items := make([]*tqdpb.AdminGenLayerSeoItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, &tqdpb.AdminGenLayerSeoItem{
+			LayerId:      item.LayerID,
+			SeoId:        item.SeoID,
+			CanonicalUrl: item.CanonicalURL,
+			Slug:         item.Slug,
+			Created:      item.Created,
+			Message:      item.Message,
+		})
+	}
+
+	return &tqdpb.AdminGenLayerSeoResponse{
+		Data:    items,
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+func layerSeoSourceToProto(source *dto.LayerSeoSource) *tqdpb.LayerSeoSourceResponse {
+	if source == nil || source.LayerID == 0 {
+		return nil
+	}
+	resp := &tqdpb.LayerSeoSourceResponse{
+		LayerId:     source.LayerID,
+		DisplayName: source.DisplayName,
+	}
+	if source.SeoID != nil && *source.SeoID > 0 {
+		resp.SeoId = *source.SeoID
+	}
+	return resp
 }
 
 func (h *LayerGrpcHandler) toProtoLayer(layer *qh_domain.QHLayer, isAdmin bool) (*tqdpb.LayerResponse, error) {

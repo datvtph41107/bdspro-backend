@@ -4,6 +4,7 @@ syntax = "proto3";
 package tqdpb;
 
 import "google/api/annotations.proto";
+import "shared/common.proto";
 import "shared/v3.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
@@ -52,9 +53,43 @@ service LocationService {
         };
     }
 
+    // Admin: danh sách tỉnh/thành
+    rpc AdminListProvinces(AdminListProvincesRequest) returns (AdminListProvincesResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/provinces"
+        };
+    }
+
+    // Admin: danh sách phường/xã
+    rpc AdminListWards(AdminListWardsRequest) returns (AdminListWardsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/wards"
+        };
+    }
+
     rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
         option (google.api.http) = {
           get: "/v2/tqd/public/client/search"
+        };
+    }
+
+    rpc GetAdministrativeUnitSeoSource(GetAdministrativeUnitSeoSourceRequest) returns (AdministrativeUnitSeoSourceResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/internal/administrative-units/seo-source"
+        };
+    }
+
+    rpc UpdateAdministrativeUnitSeoID(UpdateAdministrativeUnitSeoIDRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/tqd/internal/administrative-units/seo-id"
+            body: "*"
+        };
+    }
+
+    rpc AdminGenAdministrativeUnitSeo(AdminGenAdministrativeUnitSeoRequest) returns (AdminGenAdministrativeUnitSeoResponse) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/administrative-units/seo/generate"
+            body: "*"
         };
     }
 }
@@ -155,6 +190,31 @@ message ListWardsResponse {
     int32 pageSize = 4;
 }
 
+message AdminListProvincesRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    string sort = 4;
+}
+
+message AdminListProvincesResponse {
+    repeated Province data = 1;
+    int64 total = 2;
+}
+
+message AdminListWardsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    string provinceId = 4;
+    string sort = 5;
+}
+
+message AdminListWardsResponse {
+    repeated Ward data = 1;
+    int64 total = 2;
+}
+
 // Data models
 message Province {
     string id = 1;
@@ -168,6 +228,7 @@ message Province {
     int32 wardCount = 9;
     string createdAt = 10;  // ISO format: "2006-01-02T15:04:05Z07:00"
     string updatedAt = 11;
+    optional uint64 seoId = 12;
 }
 
 message Ward {
@@ -182,4 +243,47 @@ message Ward {
     string provinceCode = 9;
     string createdAt = 10;
     string updatedAt = 11;
+    optional uint64 seoId = 12;
+}
+
+message GetAdministrativeUnitSeoSourceRequest {
+    string identity = 1; // province:<id> | ward:<id>
+}
+
+message AdministrativeUnitSeoSourceResponse {
+    string identity = 1;
+    string unitType = 2;
+    string sourceId = 3;
+    string name = 4;
+    string slug = 5;
+    string canonicalPath = 6;
+    string administrativeCode = 7;
+    uint64 seoId = 8;
+}
+
+message UpdateAdministrativeUnitSeoIDRequest {
+    string identity = 1;
+    uint64 seoId = 2;
+}
+
+message AdminGenAdministrativeUnitSeoRequest {
+    repeated string identities = 1; // province:<id> | ward:<id>
+}
+
+message AdminGenAdministrativeUnitSeoItem {
+    string identity = 1;
+    uint64 seoId = 2;
+    string canonicalUrl = 3;
+    string slug = 4;
+    bool created = 5;
+    string message = 6;
+}
+
+message AdminGenAdministrativeUnitSeoResponse {
+    repeated AdminGenAdministrativeUnitSeoItem data = 1;
+    int64 total = 2;
+    int64 created = 3;
+    int64 skipped = 4;
+    int64 failed = 5;
+    repeated string errors = 6;
 }

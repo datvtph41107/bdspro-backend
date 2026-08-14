@@ -2,6 +2,7 @@
 package mapper
 
 import (
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/internal/dto"
@@ -19,7 +20,7 @@ func (m *LocationMapper) ToProtoProvince(dto *dto.ProvinceDTO) *tqdpb.Province {
 	if dto == nil {
 		return nil
 	}
-	return &tqdpb.Province{
+	resp := &tqdpb.Province{
 		Id:        dto.ID,
 		Code:      dto.Code,
 		FullName:  dto.FullName,
@@ -30,13 +31,18 @@ func (m *LocationMapper) ToProtoProvince(dto *dto.ProvinceDTO) *tqdpb.Province {
 		CreatedAt: _utils.FormatTimeToString(dto.CreatedAt),
 		UpdatedAt: _utils.FormatTimeToString(dto.UpdatedAt),
 	}
+	if dto.SeoID != nil && *dto.SeoID > 0 {
+		seoID := *dto.SeoID
+		resp.SeoId = &seoID
+	}
+	return resp
 }
 
 func (m *LocationMapper) ToProtoWard(dto *dto.WardDTO) *tqdpb.Ward {
 	if dto == nil {
 		return nil
 	}
-	return &tqdpb.Ward{
+	resp := &tqdpb.Ward{
 		Id:           dto.ID,
 		Code:         dto.Code,
 		FullName:     dto.FullName,
@@ -48,6 +54,11 @@ func (m *LocationMapper) ToProtoWard(dto *dto.WardDTO) *tqdpb.Ward {
 		CreatedAt:    _utils.FormatTimeToString(dto.CreatedAt),
 		UpdatedAt:    _utils.FormatTimeToString(dto.UpdatedAt),
 	}
+	if dto.SeoID != nil && *dto.SeoID > 0 {
+		seoID := *dto.SeoID
+		resp.SeoId = &seoID
+	}
+	return resp
 }
 
 func (m *LocationMapper) ToProtoLocationResponse(dto *dto.LocationResponse) *tqdpb.LocationResponse {
@@ -124,6 +135,67 @@ func (m *LocationMapper) ToProtoListWardsResponse(dto *dto.ListWardsResponse) *t
 		Total:    dto.Total,
 		Page:     dto.Page,
 		PageSize: dto.PageSize,
+	}
+}
+
+func (m *LocationMapper) ToProtoAdminListProvincesResponse(dto *dto.AdminListProvincesResponse) *tqdpb.AdminListProvincesResponse {
+	if dto == nil {
+		return nil
+	}
+
+	data := make([]*tqdpb.Province, len(dto.Data))
+	for i, p := range dto.Data {
+		data[i] = m.ToProtoProvince(p)
+	}
+
+	return &tqdpb.AdminListProvincesResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
+func (m *LocationMapper) ToProtoAdminListWardsResponse(dto *dto.AdminListWardsResponse) *tqdpb.AdminListWardsResponse {
+	if dto == nil {
+		return nil
+	}
+
+	data := make([]*tqdpb.Ward, len(dto.Data))
+	for i, w := range dto.Data {
+		data[i] = m.ToProtoWard(w)
+	}
+
+	return &tqdpb.AdminListWardsResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListProvincesRequest(req *tqdpb.AdminListProvincesRequest) *dto.AdminListProvincesRequest {
+	if req == nil {
+		return &dto.AdminListProvincesRequest{}
+	}
+	return &dto.AdminListProvincesRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search: req.Search,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListWardsRequest(req *tqdpb.AdminListWardsRequest) *dto.AdminListWardsRequest {
+	if req == nil {
+		return &dto.AdminListWardsRequest{}
+	}
+	return &dto.AdminListWardsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:     req.Search,
+		ProvinceID: req.ProvinceId,
 	}
 }
 

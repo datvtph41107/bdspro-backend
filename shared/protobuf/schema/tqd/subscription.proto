@@ -72,6 +72,11 @@ service SubscriptionService {
       get: "/v2/tqd/admin/subscriptions"
     };
   }
+  rpc AdminListParcelSubscriptions(AdminListParcelSubscriptionsRequest) returns (AdminListParcelSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/subscriptions/parcels"
+    };
+  }
   rpc AdminDeleteSubscription(AdminDeleteSubscriptionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/v2/tqd/admin/subscriptions/{subscriptionId}"
@@ -227,6 +232,38 @@ message SubscriptionAdminItem {
 
 message AdminDeleteSubscriptionRequest {
   uint64 subscriptionId = 1;
+}
+
+message AdminListParcelSubscriptionsRequest {
+  optional uint64 userId = 1;
+  optional uint32 status = 2;   // 10=active, 20=paused, 30=deleted
+  optional uint32 page = 3;
+  optional uint32 size = 4;
+}
+
+message AdminListParcelSubscriptionsResponse {
+  repeated AdminParcelSubscriptionItem data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message AdminParcelSubscriptionItem {
+  uint64 subscriptionId = 1;
+  uint64 userId = 2;
+  uint64 parcelId = 3;
+  optional string parcelName = 4;
+  optional bytes geometry = 5;
+  optional double lat = 6;
+  optional double lng = 7;
+  optional string address = 8;
+  SubscriptionScopeMessage subscriptionScope = 9;
+  uint32 status = 10;
+  string createdAt = 11;
+  int64 followerCount = 12;
+  optional string userName = 13;
+  optional string userAvatar = 14;
+  optional uint64 seoId = 15;
 }
 
 message SubscriptionScopeMessage {

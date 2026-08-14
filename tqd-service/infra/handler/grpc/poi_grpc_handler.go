@@ -296,32 +296,29 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 	}, nil
 }
 
-// ListPois handles list request
+// ListPois handles admin list request
 func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisRequest) (*tqdpb.ListPoisResponse, error) {
-	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDPOIList, 0)
-	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-	if !updated {
-		return &tqdpb.ListPoisResponse{}, nil
-	}
-
 	filter := &dto.PoiFilter{
 		Pagable: _dto.Pagable{
-			Page: normalizePage(req.Page),
-			Size: normalizeSize(req.Size),
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
 		},
 		Search:      req.Search,
 		CategoryIDs: req.CategoryIds,
 		SortBy:      req.SortBy,
 	}
+	filter.Pagable.Normalize()
 
-	// Set optional filters
 	if req.CategoryId != 0 {
 		filter.CategoryID = &req.CategoryId
 	}
-	filter.IsActive = &req.IsActive
-	filter.IsVerified = &req.IsVerified
-
+	if req.IsActive != nil {
+		filter.IsActive = req.IsActive
+	}
+	if req.IsVerified != nil {
+		filter.IsVerified = req.IsVerified
+	}
 	if req.MinRating > 0 {
 		filter.MinRating = &req.MinRating
 	}
@@ -329,14 +326,12 @@ func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisReques
 		filter.MaxRating = &req.MaxRating
 	}
 
-	// Call usecase
 	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
 		log.Printf("error listing pois: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to list pois: %v", err)
 	}
 
-	// Convert to proto
 	pois := h.mapper.ToProtoListFromResponses(result.Data)
 
 	return &tqdpb.ListPoisResponse{
