@@ -2,88 +2,61 @@ syntax = "proto3";
 
 package crmpb;
 
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
 option go_package = "pb/types/crm;crmpb";
 
-import "shared/common.proto";
-import "google/api/annotations.proto";
-
+// SeoDomainService quản lý vòng đời, render và liên kết của trang SEO.
 service SeoDomainService {
   // ---------------------------------------------------------------------------
-  // Legacy SEO source APIs.
-  // Keep these for backward compatibility with current frontend/gateway.
+  // API nguồn dữ liệu cũ, chỉ giữ để tương thích với client hiện tại.
   // ---------------------------------------------------------------------------
 
+  // GetSeoRefTypes trả danh mục loại dữ liệu nguồn tương thích cũ.
   rpc GetSeoRefTypes(GetSeoRefTypesRequest) returns (GetSeoRefTypesResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/ref-types"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/ref-types"};
   }
 
+  // SearchSeoRefValues tìm bản ghi nguồn theo bộ khóa cũ.
   rpc SearchSeoRefValues(SearchSeoRefValuesRequest) returns (SearchSeoRefValuesResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/ref-values"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/ref-values"};
   }
 
+  // ResolveSeoRefValue đọc chi tiết một bản ghi nguồn theo bộ khóa cũ.
   rpc ResolveSeoRefValue(ResolveSeoRefValueRequest) returns (SeoRefSnapshotResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/ref-values/{refType}/{refId}"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/ref-values/{refType}/{refId}"};
   }
 
   // ---------------------------------------------------------------------------
-  // SEO Source Registry V2.
-  // Source-of-truth APIs for frontend/admin.
-  // Frontend should depend on sourceKey + capabilities instead of manually
-  // composing refType + resolverKey + sourceService.
+  // API đọc và phân giải dữ liệu nguồn theo sourceKey.
   // ---------------------------------------------------------------------------
 
+  // GetSeoSources trả danh sách nguồn dữ liệu đã cấu hình.
   rpc GetSeoSources(GetSeoSourcesRequest) returns (GetSeoSourcesResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/sources"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/sources"};
   }
 
-  rpc GetSeoSourceHealth(GetSeoSourceHealthRequest) returns (GetSeoSourceHealthResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/source-health"
-    };
-  }
-
+  // GetSeoSource trả cấu hình của một nguồn dữ liệu.
   rpc GetSeoSource(GetSeoSourceRequest) returns (SeoSourceResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/sources/{sourceKey}"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/sources/{sourceKey}"};
   }
 
+  // SearchSeoSourceValues tìm bản ghi theo sourceKey.
   rpc SearchSeoSourceValues(SearchSeoSourceValuesRequest) returns (SearchSeoSourceValuesResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/sources/{sourceKey}/values"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/sources/{sourceKey}/values"};
   }
 
+  // ResolveSeoSourceValue đọc bản chụp một bản ghi theo sourceKey.
   rpc ResolveSeoSourceValue(ResolveSeoSourceValueRequest) returns (SeoSourceSnapshotResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/sources/{sourceKey}/values/{refId}"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo/sources/{sourceKey}/values/{refId}"};
   }
 
   // ---------------------------------------------------------------------------
-  // SEO Operations Dashboard.
+  // API thêm, đọc, sửa và xóa bản ghi trang SEO.
   // ---------------------------------------------------------------------------
 
-  rpc GetSeoOperationsDashboard(GetSeoOperationsDashboardRequest) returns (SeoOperationsDashboardResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/operations/dashboard"
-    };
-  }
-
-  // ---------------------------------------------------------------------------
-  // Legacy SEO Domain CRUD.
-  // Keep this API because current frontend/backend already use it.
-  // New command APIs below should gradually replace direct boolean patching.
-  // ---------------------------------------------------------------------------
-
+  // CreateSeoDomain tạo một trang SEO.
   rpc CreateSeoDomain(CreateSeoDomainRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains"
@@ -91,24 +64,22 @@ service SeoDomainService {
     };
   }
 
+  // GetSeoRefs trả các trang liên kết với một bản ghi nguồn.
   rpc GetSeoRefs(GetSeoRefsRequest) returns (GetSeoDomainListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/public/seos/{refType}/{refId}/list"
-    };
+    option (google.api.http) = {get: "/v2/crm/public/seos/{refType}/{refId}/list"};
   }
 
+  // GetSeoDomain đọc một trang SEO theo ID.
   rpc GetSeoDomain(sharepb.IdRequest) returns (SeoDomainResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo-domains/{id}"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo-domains/{id}"};
   }
 
+  // GetSeoDomainList trả danh sách trang SEO có phân trang.
   rpc GetSeoDomainList(GetSeoDomainListRequest) returns (GetSeoDomainListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo-domains"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo-domains"};
   }
 
+  // UpdateSeoDomain sửa các trường được truyền lên của trang SEO.
   rpc UpdateSeoDomain(UpdateSeoDomainRequest) returns (UpdateSeoDomainResponse) {
     option (google.api.http) = {
       put: "/v2/crm/admin/seo-domains/{id}"
@@ -116,17 +87,16 @@ service SeoDomainService {
     };
   }
 
+  // DeleteSeoDomain xóa một trang SEO.
   rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
-    option (google.api.http) = {
-      delete: "/v2/crm/admin/seo-domains/{id}"
-    };
+    option (google.api.http) = {delete: "/v2/crm/admin/seo-domains/{id}"};
   }
 
   // ---------------------------------------------------------------------------
-  // SEO Page Command APIs.
-  // Commands express business actions instead of patching booleans directly.
+  // API thay đổi vòng đời trang: tạo nháp, xuất bản và lưu trữ.
   // ---------------------------------------------------------------------------
 
+  // CreateSeoDraft tạo bản nháp từ nội dung hoặc dữ liệu nguồn.
   rpc CreateSeoDraft(CreateSeoDraftRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/drafts"
@@ -134,6 +104,7 @@ service SeoDomainService {
     };
   }
 
+  // PublishSeoPage phát hành trang SEO.
   rpc PublishSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/publish"
@@ -141,6 +112,7 @@ service SeoDomainService {
     };
   }
 
+  // UnpublishSeoPage đưa trang đã phát hành về bản nháp.
   rpc UnpublishSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/unpublish"
@@ -148,6 +120,7 @@ service SeoDomainService {
     };
   }
 
+  // ArchiveSeoPage lưu trữ trang và ngừng phục vụ công khai.
   rpc ArchiveSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/archive"
@@ -155,6 +128,7 @@ service SeoDomainService {
     };
   }
 
+  // RestoreSeoPage khôi phục trang đã lưu trữ về bản nháp.
   rpc RestoreSeoPage(SeoPageCommandRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/restore"
@@ -163,9 +137,10 @@ service SeoDomainService {
   }
 
   // ---------------------------------------------------------------------------
-  // SEO Render / Generate APIs.
+  // API xem trước và tạo HTML cho trang SEO.
   // ---------------------------------------------------------------------------
 
+  // PreviewSeoPage tạo HTML xem trước từ dữ liệu chưa lưu.
   rpc PreviewSeoPage(RenderSeoPreviewRequest) returns (RenderSeoPreviewResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/preview"
@@ -173,6 +148,7 @@ service SeoDomainService {
     };
   }
 
+  // PreviewExistingSeoPage tạo HTML xem trước cho trang đã tồn tại.
   rpc PreviewExistingSeoPage(RenderExistingSeoPreviewRequest) returns (RenderSeoPreviewResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/preview"
@@ -180,6 +156,7 @@ service SeoDomainService {
     };
   }
 
+  // GenerateSeoPage tạo lại HTML của một trang SEO.
   rpc GenerateSeoPage(GenerateSeoPageRequest) returns (GenerateSeoPageResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-pages/{id}/generate"
@@ -187,20 +164,19 @@ service SeoDomainService {
     };
   }
 
+  // GetSeoGenerationLogs trả lịch sử tạo HTML của một trang.
   rpc GetSeoGenerationLogs(GetSeoGenerationLogsRequest) returns (GetSeoGenerationLogsResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo-pages/{seoDomainId}/generation-logs"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo-pages/{seoDomainId}/generation-logs"};
   }
 
   // ---------------------------------------------------------------------------
-  // Existing sitemap / internal render APIs.
+  // API sitemap, render nội bộ và tạo trang từ dữ liệu nguồn.
   // ---------------------------------------------------------------------------
 
-  // gRPC compatibility endpoint. Public HTTP sitemap ownership belongs to
-  // CRMPublicContentService in public_content.proto.
+  // Endpoint gRPC tương thích; sitemap HTTP công khai thuộc CRMPublicContentService.
   rpc GetSitemap(GetSitemapRequest) returns (sharepb.CommonResponse);
 
+  // CreateSeoFromParcel tạo trang SEO từ một thửa đất.
   rpc CreateSeoFromParcel(CreateSeoFromParcelRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/parcel"
@@ -208,6 +184,7 @@ service SeoDomainService {
     };
   }
 
+  // GenerateSeoFromParcels tạo trang SEO cho nhiều thửa đất.
   rpc GenerateSeoFromParcels(GenerateSeoFromParcelsRequest) returns (GenerateSeoFromParcelsResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/parcels/generate"
@@ -215,6 +192,7 @@ service SeoDomainService {
     };
   }
 
+  // TouchSeoDomainByRef đánh dấu trang cần cập nhật theo dữ liệu nguồn.
   rpc TouchSeoDomainByRef(TouchSeoDomainByRefRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/touch-by-ref"
@@ -222,34 +200,31 @@ service SeoDomainService {
     };
   }
 
+  // GetSeoSitemap tạo sitemap XML theo phạm vi.
   rpc GetSeoSitemap(GetSeoSitemapRequest) returns (SeoSitemapXmlResponse) {
-    option (google.api.http) = {
-      get: "/v2/seo/sitemap.xml"
-    };
+    option (google.api.http) = {get: "/v2/seo/sitemap.xml"};
   }
 
+  // GetInternalSeoRenderData trả dữ liệu render theo bản ghi nguồn.
   rpc GetInternalSeoRenderData(GetInternalSeoRenderDataRequest) returns (InternalSeoRenderDataResponse) {
-    option (google.api.http) = {
-      get: "/v2/internal/seo/render-data/{refType}/{refId}"
-    };
+    option (google.api.http) = {get: "/v2/internal/seo/render-data/{refType}/{refId}"};
   }
 
+  // GetInternalSeoRenderDataBySlug trả dữ liệu render theo slug.
   rpc GetInternalSeoRenderDataBySlug(GetInternalSeoRenderDataBySlugRequest) returns (InternalSeoRenderDataResponse) {
-    option (google.api.http) = {
-      get: "/v2/internal/seo/render-data/by-slug/{slug}"
-    };
+    option (google.api.http) = {get: "/v2/internal/seo/render-data/by-slug/{slug}"};
   }
 
+  // GetInternalSeoStaticPaths trả danh sách đường dẫn cần tạo tĩnh.
   rpc GetInternalSeoStaticPaths(GetInternalSeoStaticPathsRequest) returns (GetInternalSeoStaticPathsResponse) {
-    option (google.api.http) = {
-      get: "/v2/internal/seo/static-paths"
-    };
+    option (google.api.http) = {get: "/v2/internal/seo/static-paths"};
   }
 
   // ---------------------------------------------------------------------------
-  // Existing internal link / relative APIs.
+  // API quản lý liên kết HTML và quan hệ dữ liệu giữa các trang.
   // ---------------------------------------------------------------------------
 
+  // CreateSeoInternalLink tạo liên kết HTML giữa hai trang.
   rpc CreateSeoInternalLink(CreateSeoInternalLinkRequest) returns (SeoInternalLinkResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/internal-links"
@@ -257,12 +232,12 @@ service SeoDomainService {
     };
   }
 
+  // GetSeoInternalLinkList trả danh sách liên kết nội bộ.
   rpc GetSeoInternalLinkList(GetSeoInternalLinkListRequest) returns (GetSeoInternalLinkListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo-domains/internal-links"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo-domains/internal-links"};
   }
 
+  // UpdateSeoInternalLink sửa một liên kết nội bộ.
   rpc UpdateSeoInternalLink(UpdateSeoInternalLinkRequest) returns (UpdateSeoInternalLinkResponse) {
     option (google.api.http) = {
       put: "/v2/crm/admin/seo-domains/internal-links/{id}"
@@ -270,12 +245,12 @@ service SeoDomainService {
     };
   }
 
+  // DeleteSeoInternalLink xóa một liên kết nội bộ.
   rpc DeleteSeoInternalLink(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
-    option (google.api.http) = {
-      delete: "/v2/crm/admin/seo-domains/internal-links/{id}"
-    };
+    option (google.api.http) = {delete: "/v2/crm/admin/seo-domains/internal-links/{id}"};
   }
 
+  // CreateSeoRelative tạo quan hệ dữ liệu giữa hai trang.
   rpc CreateSeoRelative(CreateSeoRelativeRequest) returns (SeoRelativeResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/relatives"
@@ -283,111 +258,43 @@ service SeoDomainService {
     };
   }
 
+  // GetSeoRelativeList trả danh sách quan hệ giữa các trang.
   rpc GetSeoRelativeList(GetSeoRelativeListRequest) returns (GetSeoRelativeListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo-domains/relatives"
-    };
+    option (google.api.http) = {get: "/v2/crm/admin/seo-domains/relatives"};
   }
 
+  // DeleteSeoRelative xóa một quan hệ trang.
   rpc DeleteSeoRelative(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
-    option (google.api.http) = {
-      delete: "/v2/crm/admin/seo-domains/relatives/{id}"
-    };
+    option (google.api.http) = {delete: "/v2/crm/admin/seo-domains/relatives/{id}"};
   }
-
-  // ---------------------------------------------------------------------------
-  // SEO Measurement & Feedback Loop.
-  // Admin-facing APIs for SEO measurement, crawl/index visibility,
-  // issue detection, and recommendation workflow.
-  // ---------------------------------------------------------------------------
-
-  rpc GetSeoMeasurementOverview(GetSeoMeasurementOverviewRequest) returns (SeoMeasurementOverviewResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/overview"
-    };
-  }
-
-  rpc GenerateSeoMockMeasurement(GenerateSeoMockMeasurementRequest) returns (GenerateSeoMockMeasurementResponse) {
-    option (google.api.http) = {
-      post: "/v2/crm/admin/seo/measurement/mock"
-      body: "*"
-    };
-  }
-
-  rpc RunSeoFeedbackDetector(RunSeoFeedbackDetectorRequest) returns (RunSeoFeedbackDetectorResponse) {
-    option (google.api.http) = {
-      post: "/v2/crm/admin/seo/measurement/feedback/detect"
-      body: "*"
-    };
-  }
-
-  rpc GetSeoPagePerformanceList(GetSeoPagePerformanceListRequest) returns (GetSeoPagePerformanceListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/pages"
-    };
-  }
-
-  rpc GetSeoQueryPerformanceList(GetSeoQueryPerformanceListRequest) returns (GetSeoQueryPerformanceListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/queries"
-    };
-  }
-
-  rpc GetSeoIndexCoverageList(GetSeoIndexCoverageListRequest) returns (GetSeoIndexCoverageListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/index-coverage"
-    };
-  }
-
-  rpc GetSeoTrafficList(GetSeoTrafficListRequest) returns (GetSeoTrafficListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/traffic"
-    };
-  }
-
-  rpc GetSeoRankingList(GetSeoRankingListRequest) returns (GetSeoRankingListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/ranking"
-    };
-  }
-
-  rpc GetSeoCrawlEventList(GetSeoCrawlEventListRequest) returns (GetSeoCrawlEventListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/crawl-events"
-    };
-  }
-
-  rpc GetSeoIssueList(GetSeoIssueListRequest) returns (GetSeoIssueListResponse) {
-    option (google.api.http) = {
-      get: "/v2/crm/admin/seo/measurement/issues"
-    };
-  }
-
-  rpc ResolveSeoIssue(ResolveSeoIssueRequest) returns (sharepb.SubmitResponse) {
-    option (google.api.http) = {
-      post: "/v2/crm/admin/seo/measurement/issues/{id}/resolve"
-      body: "*"
-    };
-  }
-
 }
 
 // -----------------------------------------------------------------------------
-// Source registry / legacy ref-type messages.
+// Định nghĩa nguồn dữ liệu và kiểu tham chiếu tương thích.
 // -----------------------------------------------------------------------------
 
+// GetSeoRefTypesRequest không cần tham số lọc.
 message GetSeoRefTypesRequest {}
 
+// SeoSourceCapabilitiesResponse mô tả các thao tác kỹ thuật nguồn hỗ trợ.
 message SeoSourceCapabilitiesResponse {
+  // searchable cho phép tìm bản ghi nguồn.
   bool searchable = 1;
+  // resolvable cho phép đọc chi tiết một bản ghi nguồn.
   bool resolvable = 2;
+  // uniquePerRef chỉ cho phép một trang trên mỗi bản ghi nguồn.
   bool uniquePerRef = 3;
+  // supportsTemplate cho phép tạo nội dung từ mẫu.
   bool supportsTemplate = 4;
+  // supportsPreview cho phép xem trước trang.
   bool supportsPreview = 5;
+  // supportsGenerate cho phép tạo HTML.
   bool supportsGenerate = 6;
+  // supportsHealth là trường tương thích của hợp đồng cũ.
   bool supportsHealth = 7;
 }
 
+// SeoRefTypeResponse mô tả một loại dữ liệu có thể liên kết với trang SEO.
 message SeoRefTypeResponse {
   uint32 value = 1;
   string key = 2;
@@ -403,27 +310,31 @@ message SeoRefTypeResponse {
   string adminUrlPattern = 12;
   string publicUrlPattern = 13;
 
-  // V2 compatibility fields.
-  string status = 14;          // ready | coming_soon | disabled
+  // Các trường tương thích của API sourceKey.
+  string status = 14; // ready | coming_soon | disabled
   bool resolvable = 15;
   string disabledReason = 16;
   SeoSourceCapabilitiesResponse capabilities = 17;
 }
 
+// GetSeoRefTypesResponse chứa danh mục loại dữ liệu nguồn.
 message GetSeoRefTypesResponse {
   repeated SeoRefTypeResponse data = 1;
 }
 
 // -----------------------------------------------------------------------------
-// Source registry V2 messages.
+// Định nghĩa API nguồn dữ liệu theo sourceKey.
 // -----------------------------------------------------------------------------
 
+// GetSeoSourcesRequest không cần tham số lọc.
 message GetSeoSourcesRequest {}
 
+// GetSeoSourceRequest định danh nguồn bằng sourceKey.
 message GetSeoSourceRequest {
   string sourceKey = 1;
 }
 
+// SeoSourceResponse mô tả bộ kết nối đến một nguồn dữ liệu.
 message SeoSourceResponse {
   uint32 value = 1;
   string key = 2;
@@ -433,7 +344,7 @@ message SeoSourceResponse {
   string sourceService = 6;
   string resolverKey = 7;
 
-  // ready | coming_soon | disabled
+  // status là trạng thái sẵn sàng kỹ thuật của bộ kết nối.
   string status = 8;
   string disabledReason = 9;
 
@@ -443,21 +354,23 @@ message SeoSourceResponse {
   string adminUrlPattern = 12;
   string publicUrlPattern = 13;
 
-  // Compatibility aliases for older UI code.
+  // Các tên tương thích dành cho UI cũ.
   bool searchable = 14;
   bool uniquePerRef = 15;
   bool supportsTemplate = 16;
   bool resolvable = 17;
 }
 
+// GetSeoSourcesResponse chứa danh sách nguồn dữ liệu SEO.
 message GetSeoSourcesResponse {
   repeated SeoSourceResponse data = 1;
 }
 
 // -----------------------------------------------------------------------------
-// Source search / resolve messages.
+// Định nghĩa tìm kiếm và đọc bản ghi nguồn.
 // -----------------------------------------------------------------------------
 
+// SearchSeoRefValuesRequest tìm dữ liệu nguồn theo kiểu tham chiếu cũ.
 message SearchSeoRefValuesRequest {
   uint32 refType = 1;
   string text = 2;
@@ -467,6 +380,7 @@ message SearchSeoRefValuesRequest {
   string sourceService = 6;
 }
 
+// SeoRefValueResponse là kết quả rút gọn của một bản ghi nguồn.
 message SeoRefValueResponse {
   uint32 refType = 1;
   string refTypeKey = 2;
@@ -482,15 +396,17 @@ message SeoRefValueResponse {
   string resolverKey = 12;
   string sourceStatus = 13;
 
-  // V2 compatibility field.
+  // sourceKey là khóa tương thích với API nguồn mới.
   string sourceKey = 14;
 }
 
+// SearchSeoRefValuesResponse chứa kết quả tìm nguồn có phân trang.
 message SearchSeoRefValuesResponse {
   repeated SeoRefValueResponse data = 1;
   int64 total = 2;
 }
 
+// ResolveSeoRefValueRequest định danh bản ghi nguồn theo bộ khóa cũ.
 message ResolveSeoRefValueRequest {
   uint32 refType = 1;
   uint64 refId = 2;
@@ -498,6 +414,7 @@ message ResolveSeoRefValueRequest {
   string sourceService = 4;
 }
 
+// SeoRefSnapshotResponse là bản chụp đầy đủ dùng để tạo nội dung trang.
 message SeoRefSnapshotResponse {
   uint32 refType = 1;
   string refTypeKey = 2;
@@ -517,13 +434,14 @@ message SeoRefSnapshotResponse {
   string dataJson = 16;
   string sourceStatus = 17;
 
-  // V2 compatibility fields.
+  // Các trường tương thích với API nguồn mới.
   string sourceKey = 18;
   string visibility = 19; // public | restricted | private
   bool indexable = 20;
   string disabledReason = 21;
 }
 
+// SearchSeoSourceValuesRequest tìm bản ghi theo sourceKey.
 message SearchSeoSourceValuesRequest {
   string sourceKey = 1;
   string text = 2;
@@ -531,6 +449,7 @@ message SearchSeoSourceValuesRequest {
   uint32 size = 4;
 }
 
+// SeoSourceValueResponse là kết quả rút gọn theo sourceKey.
 message SeoSourceValueResponse {
   string sourceKey = 1;
   uint32 refType = 2;
@@ -548,16 +467,19 @@ message SeoSourceValueResponse {
   uint64 seoPageId = 14;
 }
 
+// SearchSeoSourceValuesResponse chứa kết quả tìm theo sourceKey.
 message SearchSeoSourceValuesResponse {
   repeated SeoSourceValueResponse data = 1;
   int64 total = 2;
 }
 
+// ResolveSeoSourceValueRequest định danh bản ghi nguồn theo sourceKey.
 message ResolveSeoSourceValueRequest {
   string sourceKey = 1;
   uint64 refId = 2;
 }
 
+// SeoSourceSnapshotResponse là bản chụp nguồn dùng khi tạo hoặc đồng bộ trang.
 message SeoSourceSnapshotResponse {
   string sourceKey = 1;
   uint32 refType = 2;
@@ -578,153 +500,33 @@ message SeoSourceSnapshotResponse {
   string dataJson = 17;
   string sourceStatus = 18;
 
-  // Policy/visibility hints.
+  // Các trường khả năng hiển thị từ dữ liệu nguồn.
   string visibility = 19; // public | restricted | private
   bool indexable = 20;
   string disabledReason = 21;
 }
 
-message GetSeoSourceHealthRequest {}
-
-message SeoSourceHealthItemResponse {
-  string sourceKey = 1;
-  string sourceService = 2;
-  string resolverKey = 3;
-  string status = 4; // healthy | degraded | unavailable | not_implemented
-  int64 latencyMs = 5;
-  string lastCheckedAt = 6;
-  string disabledReason = 7;
-  string errorMessage = 8;
-}
-
-message GetSeoSourceHealthResponse {
-  repeated SeoSourceHealthItemResponse data = 1;
-}
-
 // -----------------------------------------------------------------------------
-// Operations dashboard messages.
+// Định nghĩa thêm, đọc, sửa và xóa trang SEO.
 // -----------------------------------------------------------------------------
 
-message GetSeoOperationsDashboardRequest {
-  string range = 1;
-  uint32 limit = 2;
-}
-
-message SeoOperationKpiResponse {
-  string label = 1;
-  string value = 2;
-  string change = 3;
-  string tone = 4;
-}
-
-message SeoOperationTrendPointResponse {
-  string label = 1;
-  uint64 clicks = 2;
-  uint64 impressions = 3;
-}
-
-message SeoOperationOpportunityResponse {
-  string id = 1;
-  string title = 2;
-  string description = 3;
-  string issue = 4;
-  string impact = 5;
-  uint32 pageCount = 6;
-  string owner = 7;
-  string tone = 8;
-}
-
-message SeoOperationTopQueryResponse {
-  string query = 1;
-  uint64 clicks = 2;
-  uint64 impressions = 3;
-  double ctr = 4;
-  double avgPosition = 5;
-}
-
-message SeoOperationEventResponse {
-  string id = 1;
-  string title = 2;
-  string description = 3;
-  string createdAt = 4;
-  string tone = 5;
-}
-
-message SeoRequirementItemResponse {
-  string id = 1;
-  string title = 2;
-  string description = 3;
-  string status = 4;
-  string tone = 5;
-  string owner = 6;
-  uint32 coverage = 7;
-  string hint = 8;
-}
-
-message SeoRequirementGroupResponse {
-  string id = 1;
-  string title = 2;
-  string description = 3;
-  repeated SeoRequirementItemResponse items = 4;
-}
-
-message SeoRenderQueueItemResponse {
-  string id = 1;
-  uint64 seoDomainId = 2;
-  string title = 3;
-  string type = 4;
-  string status = 5;
-  string worker = 6;
-  string duration = 7;
-  string priority = 8;
-}
-
-message SeoIndexingRowResponse {
-  string url = 1;
-  string canonical = 2;
-  string robots = 3;
-  string sitemap = 4;
-  string state = 5;
-  string lastPing = 6;
-}
-
-message SeoSourceHealthResponse {
-  string source = 1;
-  string label = 2;
-  string service = 3;
-  string status = 4;
-  uint32 totalPages = 5;
-  uint32 needAttention = 6;
-}
-
-message SeoOperationsDashboardResponse {
-  repeated SeoOperationKpiResponse kpis = 1;
-  repeated SeoOperationTrendPointResponse trend = 2;
-  repeated SeoOperationOpportunityResponse opportunities = 3;
-  repeated SeoOperationTopQueryResponse topQueries = 4;
-  repeated SeoOperationEventResponse systemEvents = 5;
-  repeated SeoRequirementGroupResponse requirements = 6;
-  repeated SeoRenderQueueItemResponse renderQueue = 7;
-  repeated SeoIndexingRowResponse indexingRows = 8;
-  repeated SeoSourceHealthResponse sourceHealth = 9;
-}
-
-// -----------------------------------------------------------------------------
-// SEO domain CRUD messages.
-// -----------------------------------------------------------------------------
-
+// CreateSeoDomainRequest chứa toàn bộ dữ liệu tạo trang SEO.
 message CreateSeoDomainRequest {
+  // Nhóm định danh và nguồn dữ liệu.
   string slug = 1;
   string originUrl = 2;
   optional string canonicalUrl = 3;
   uint32 refType = 4;
   optional uint64 refId = 5;
   string scope = 6;
-  uint32 classify = 7;
+  reserved 7;
+  reserved "classify";
+  // Nhóm nội dung trang.
   string title = 8;
   string description = 9;
   string content = 10;
   string summary = 11;
+  // Nhóm trạng thái xuất bản và máy tìm kiếm.
   bool published = 12;
   optional string publishedAt = 13;
   bool isSiteMap = 14;
@@ -733,6 +535,7 @@ message CreateSeoDomainRequest {
   optional string siteMapLastedAt = 17;
   float sitemapPriority = 18;
   string sitemapChangeFreq = 19;
+  // Nhóm trạng thái tạo HTML.
   optional bool needGenerate = 20;
   optional string generatedAt = 21;
   optional string sourceUpdatedAt = 22;
@@ -741,6 +544,7 @@ message CreateSeoDomainRequest {
   string deepLink = 25;
   optional string metadata = 26;
   string note = 27;
+  // Nhóm bản chụp dữ liệu nguồn.
   string refSource = 28;
   string refLabel = 29;
   string refUrl = 30;
@@ -749,17 +553,19 @@ message CreateSeoDomainRequest {
   optional string refSnapshotJson = 33;
   string refHash = 34;
   optional string refLastSyncedAt = 35;
-  optional uint32 qualityScore = 36;
+  reserved 36;
+  reserved "qualityScore";
 
-  // V2 lifecycle fields.
-  string pageStatus = 37;      // draft | published | archived
-  string renderStatus = 38;    // none | pending | rendering | success | failed
+  // Nhóm vòng đời, kết quả render và mẫu HTML.
+  string pageStatus = 37; // draft | published | archived
+  string renderStatus = 38; // none | pending | rendering | success | failed
   string renderedHtml = 39;
   string lastRenderError = 40;
   string templateKey = 41;
   string templateVersion = 42;
 }
 
+// UpdateSeoDomainRequest chỉ cập nhật các trường được truyền lên.
 message UpdateSeoDomainRequest {
   uint64 id = 1;
   optional string slug = 2;
@@ -768,7 +574,8 @@ message UpdateSeoDomainRequest {
   optional uint32 refType = 5;
   optional uint64 refId = 6;
   optional string scope = 7;
-  optional uint32 classify = 8;
+  reserved 8;
+  reserved "classify";
   optional string title = 9;
   optional string description = 10;
   optional string content = 11;
@@ -797,9 +604,10 @@ message UpdateSeoDomainRequest {
   optional string refSnapshotJson = 34;
   optional string refHash = 35;
   optional string refLastSyncedAt = 36;
-  optional uint32 qualityScore = 37;
+  reserved 37;
+  reserved "qualityScore";
 
-  // V2 lifecycle fields.
+  // Nhóm vòng đời, kết quả render và mẫu HTML.
   optional string pageStatus = 38;
   optional string renderStatus = 39;
   optional string renderedHtml = 40;
@@ -808,12 +616,14 @@ message UpdateSeoDomainRequest {
   optional string templateVersion = 43;
 }
 
+// GetSeoDomainListRequest chứa bộ lọc danh sách trang SEO.
 message GetSeoDomainListRequest {
   optional string keyword = 1;
   optional uint32 refType = 2;
   optional uint64 refId = 3;
   optional string scope = 4;
-  optional uint32 classify = 5;
+  reserved 5;
+  reserved "classify";
   optional bool published = 6;
   optional bool isSiteMap = 7;
   optional bool isIndex = 8;
@@ -825,21 +635,24 @@ message GetSeoDomainListRequest {
   optional string sourceStatus = 14;
   optional bool refMissing = 15;
 
-  // V2 lifecycle filters.
+  // Bộ lọc vòng đời, render và mẫu HTML.
   optional string pageStatus = 16;
   optional string renderStatus = 17;
   optional string templateKey = 18;
 }
 
+// GetSeoDomainListResponse chứa danh sách trang SEO có phân trang.
 message GetSeoDomainListResponse {
   repeated SeoDomainResponse data = 1;
   int64 total = 2;
 }
 
+// UpdateSeoDomainResponse chứa trang SEO sau khi cập nhật.
 message UpdateSeoDomainResponse {
   SeoDomainResponse seoDomain = 1;
 }
 
+// SeoDomainResponse là dữ liệu đầy đủ của một trang SEO.
 message SeoDomainResponse {
   uint64 id = 1;
   string slug = 2;
@@ -848,7 +661,8 @@ message SeoDomainResponse {
   uint32 refType = 5;
   optional uint64 refId = 6;
   string scope = 7;
-  uint32 classify = 8;
+  reserved 8;
+  reserved "classify";
   string title = 9;
   string description = 10;
   string content = 11;
@@ -881,9 +695,10 @@ message SeoDomainResponse {
   optional string refSnapshotJson = 38;
   string refHash = 39;
   string refLastSyncedAt = 40;
-  uint32 qualityScore = 41;
+  reserved 41;
+  reserved "qualityScore";
 
-  // V2 lifecycle fields.
+  // Nhóm vòng đời, kết quả render và mẫu HTML.
   string pageStatus = 42;
   string renderStatus = 43;
   string renderedHtml = 44;
@@ -892,6 +707,7 @@ message SeoDomainResponse {
   string templateVersion = 47;
 }
 
+// SeoDomainBriefResponse là dữ liệu trang rút gọn khi lồng trong liên kết.
 message SeoDomainBriefResponse {
   uint64 id = 1;
   string slug = 2;
@@ -899,28 +715,31 @@ message SeoDomainBriefResponse {
   string canonicalUrl = 4;
   string title = 5;
   string scope = 6;
-  uint32 classify = 7;
+  reserved 7;
+  reserved "classify";
   uint32 refType = 8;
   optional uint64 refId = 9;
   string refSource = 10;
   string refLabel = 11;
   string sourceStatus = 12;
 
-  // V2 lifecycle fields.
+  // Nhóm trạng thái vòng đời và render.
   string pageStatus = 13;
   string renderStatus = 14;
   bool needGenerate = 15;
 }
 
 // -----------------------------------------------------------------------------
-// SEO draft / command messages.
+// Định nghĩa tạo bản nháp và thay đổi vòng đời trang.
 // -----------------------------------------------------------------------------
 
+// SeoDraftSourceInput xác định nguồn dữ liệu của bản nháp.
 message SeoDraftSourceInput {
   string sourceKey = 1; // manual | parcel | project | region | adm_unit | document | map | report
-  uint64 refId = 2;    // required when sourceKey != manual
+  uint64 refId = 2; // required when sourceKey != manual
 }
 
+// SeoDraftContentInput chứa nội dung và cấu hình kỹ thuật của bản nháp.
 message SeoDraftContentInput {
   string slug = 1;
   string title = 2;
@@ -935,14 +754,17 @@ message SeoDraftContentInput {
   string canonicalUrl = 11;
   string originUrl = 12;
   string scope = 13;
-  uint32 classify = 14;
+  reserved 14;
+  reserved "classify";
 }
 
+// CreateSeoDraftRequest kết hợp dữ liệu nguồn và nội dung bản nháp.
 message CreateSeoDraftRequest {
   SeoDraftSourceInput source = 1;
   SeoDraftContentInput seo = 2;
 }
 
+// SeoPageCommandRequest định danh trang cần đổi trạng thái.
 message SeoPageCommandRequest {
   uint64 id = 1;
   string reason = 2;
@@ -950,9 +772,10 @@ message SeoPageCommandRequest {
 }
 
 // -----------------------------------------------------------------------------
-// Render / generation messages.
+// Định nghĩa xem trước và tạo HTML.
 // -----------------------------------------------------------------------------
 
+// RenderSeoPreviewRequest chứa dữ liệu tạm để xem trước HTML.
 message RenderSeoPreviewRequest {
   optional string sourceKey = 1;
   optional uint64 refId = 2;
@@ -966,12 +789,14 @@ message RenderSeoPreviewRequest {
   string templateKey = 10;
 }
 
+// RenderExistingSeoPreviewRequest xem trước một trang đã tồn tại.
 message RenderExistingSeoPreviewRequest {
   uint64 id = 1;
   optional string content = 2;
   optional string templateKey = 3;
 }
 
+// RenderSeoPreviewResponse trả HTML xem trước và mã nhận diện nội dung.
 message RenderSeoPreviewResponse {
   string html = 1;
   string staticPath = 2;
@@ -979,12 +804,14 @@ message RenderSeoPreviewResponse {
   repeated string warnings = 4;
 }
 
+// GenerateSeoPageRequest yêu cầu tạo lại HTML cho một trang.
 message GenerateSeoPageRequest {
   uint64 id = 1;
   string triggerType = 2; // manual | scheduler | source_sync | publish
   string reason = 3;
 }
 
+// GenerateSeoPageResponse trả trạng thái và kết quả tạo HTML.
 message GenerateSeoPageResponse {
   uint64 id = 1;
   string renderStatus = 2; // pending | rendering | success | failed
@@ -994,17 +821,19 @@ message GenerateSeoPageResponse {
   string errorMessage = 6;
 }
 
+// GetSeoGenerationLogsRequest phân trang lịch sử tạo HTML của một trang.
 message GetSeoGenerationLogsRequest {
   uint64 seoDomainId = 1;
   uint32 page = 2;
   uint32 size = 3;
 }
 
+// SeoGenerationLogResponse mô tả một lần tạo HTML.
 message SeoGenerationLogResponse {
   uint64 id = 1;
   uint64 seoDomainId = 2;
   string triggerType = 3; // manual | scheduler | source_sync | publish
-  string status = 4;      // pending | running | success | failed
+  string status = 4; // pending | running | success | failed
   string startedAt = 5;
   string finishedAt = 6;
   string staticHtmlPath = 7;
@@ -1015,27 +844,32 @@ message SeoGenerationLogResponse {
   string updatedAt = 12;
 }
 
+// GetSeoGenerationLogsResponse chứa lịch sử tạo HTML có phân trang.
 message GetSeoGenerationLogsResponse {
   repeated SeoGenerationLogResponse data = 1;
   int64 total = 2;
 }
 
 // -----------------------------------------------------------------------------
-// Existing sitemap / parcel generation messages.
+// Định nghĩa sitemap, render nội bộ và tạo trang từ thửa đất.
 // -----------------------------------------------------------------------------
 
+// GetSitemapRequest cho phép đặt tên miền gốc khi tạo sitemap.
 message GetSitemapRequest {
   optional string baseUrl = 1;
 }
 
+// CreateSeoFromParcelRequest định danh thửa đất cần tạo trang.
 message CreateSeoFromParcelRequest {
   uint64 parcelId = 1;
 }
 
+// GenerateSeoFromParcelsRequest giới hạn số thửa đất xử lý.
 message GenerateSeoFromParcelsRequest {
   uint32 limit = 1;
 }
 
+// GenerateSeoFromParcelsResponse tổng hợp kết quả tạo trang theo lô.
 message GenerateSeoFromParcelsResponse {
   repeated SeoDomainResponse data = 1;
   int64 total = 2;
@@ -1045,41 +879,49 @@ message GenerateSeoFromParcelsResponse {
   repeated string errors = 6;
 }
 
+// TouchSeoDomainByRefRequest định danh nguồn của trang cần cập nhật.
 message TouchSeoDomainByRefRequest {
   uint32 refType = 1;
   uint64 refId = 2;
   string refSource = 3;
 }
 
+// GetSeoSitemapRequest lọc sitemap theo phạm vi sử dụng.
 message GetSeoSitemapRequest {
   optional string scope = 1;
 }
 
+// SeoSitemapXmlResponse chứa nội dung và kiểu dữ liệu XML.
 message SeoSitemapXmlResponse {
   string xml = 1;
   string contentType = 2;
 }
 
+// GetInternalSeoRenderDataRequest định danh trang bằng dữ liệu nguồn.
 message GetInternalSeoRenderDataRequest {
   uint32 refType = 1;
   uint64 refId = 2;
 }
 
+// InternalSeoRenderDataResponse gom trang, liên kết và quan hệ để render.
 message InternalSeoRenderDataResponse {
   SeoDomainResponse seoDomain = 1;
   repeated SeoInternalLinkResponse internalLinks = 2;
   repeated SeoRelativeResponse relatives = 3;
 }
 
+// GetInternalSeoRenderDataBySlugRequest định danh trang bằng slug.
 message GetInternalSeoRenderDataBySlugRequest {
   string slug = 1;
 }
 
+// GetInternalSeoStaticPathsRequest phân trang danh sách đường dẫn tĩnh.
 message GetInternalSeoStaticPathsRequest {
   uint32 page = 1;
   uint32 size = 2;
 }
 
+// SeoStaticPathResponse là đường dẫn tối thiểu dùng khi tạo trang tĩnh.
 message SeoStaticPathResponse {
   uint64 id = 1;
   string slug = 2;
@@ -1088,21 +930,23 @@ message SeoStaticPathResponse {
   optional uint64 refId = 5;
   string updatedAt = 6;
 
-  // V2 lifecycle fields.
+  // Nhóm trạng thái vòng đời và render.
   string pageStatus = 7;
   string renderStatus = 8;
   bool needGenerate = 9;
 }
 
+// GetInternalSeoStaticPathsResponse chứa các đường dẫn tĩnh có phân trang.
 message GetInternalSeoStaticPathsResponse {
   repeated SeoStaticPathResponse data = 1;
   int64 total = 2;
 }
 
 // -----------------------------------------------------------------------------
-// Internal links.
+// Định nghĩa liên kết HTML giữa các trang.
 // -----------------------------------------------------------------------------
 
+// CreateSeoInternalLinkRequest chứa dữ liệu tạo liên kết nội bộ.
 message CreateSeoInternalLinkRequest {
   string link = 1;
   string title = 2;
@@ -1112,6 +956,7 @@ message CreateSeoInternalLinkRequest {
   uint64 childSeoId = 6;
 }
 
+// UpdateSeoInternalLinkRequest chứa các trường liên kết cần sửa.
 message UpdateSeoInternalLinkRequest {
   uint64 id = 1;
   optional string link = 2;
@@ -1122,6 +967,7 @@ message UpdateSeoInternalLinkRequest {
   optional uint64 childSeoId = 7;
 }
 
+// GetSeoInternalLinkListRequest chứa bộ lọc danh sách liên kết.
 message GetSeoInternalLinkListRequest {
   optional uint64 parentSeoId = 1;
   optional uint64 childSeoId = 2;
@@ -1131,15 +977,18 @@ message GetSeoInternalLinkListRequest {
   uint32 size = 6;
 }
 
+// GetSeoInternalLinkListResponse chứa danh sách liên kết có phân trang.
 message GetSeoInternalLinkListResponse {
   repeated SeoInternalLinkResponse data = 1;
   int64 total = 2;
 }
 
+// UpdateSeoInternalLinkResponse chứa liên kết sau khi cập nhật.
 message UpdateSeoInternalLinkResponse {
   SeoInternalLinkResponse seoInternalLink = 1;
 }
 
+// SeoInternalLinkResponse là dữ liệu đầy đủ của một liên kết nội bộ.
 message SeoInternalLinkResponse {
   uint64 id = 1;
   string link = 2;
@@ -1155,9 +1004,10 @@ message SeoInternalLinkResponse {
 }
 
 // -----------------------------------------------------------------------------
-// SEO relatives.
+// Định nghĩa quan hệ dữ liệu giữa các trang.
 // -----------------------------------------------------------------------------
 
+// CreateSeoRelativeRequest chứa dữ liệu tạo quan hệ trang.
 message CreateSeoRelativeRequest {
   uint64 parentSeoId = 1;
   uint64 childSeoId = 2;
@@ -1165,6 +1015,7 @@ message CreateSeoRelativeRequest {
   uint32 priority = 4;
 }
 
+// GetSeoRelativeListRequest chứa bộ lọc danh sách quan hệ trang.
 message GetSeoRelativeListRequest {
   optional uint64 parentSeoId = 1;
   optional uint64 childSeoId = 2;
@@ -1173,11 +1024,13 @@ message GetSeoRelativeListRequest {
   uint32 size = 5;
 }
 
+// GetSeoRelativeListResponse chứa danh sách quan hệ có phân trang.
 message GetSeoRelativeListResponse {
   repeated SeoRelativeResponse data = 1;
   int64 total = 2;
 }
 
+// SeoRelativeResponse là dữ liệu đầy đủ của một quan hệ trang.
 message SeoRelativeResponse {
   uint64 id = 1;
   uint64 parentSeoId = 2;
@@ -1190,295 +1043,7 @@ message SeoRelativeResponse {
   string updatedAt = 9;
 }
 
-// -----------------------------------------------------------------------------
-// SEO Measurement & Feedback messages.
-// -----------------------------------------------------------------------------
-
-message GetSeoMeasurementOverviewRequest {
-  string range = 1; // today | 7d | 28d | 90d | custom
-  uint32 limit = 2;
-}
-
-message SeoMeasurementKPI {
-  string key = 1;
-  string label = 2;
-  double value = 3;
-  string unit = 4;
-  double delta = 5;
-  string severity = 6; // normal | warning | critical | success
-}
-
-message SeoMeasurementTrendPoint {
-  string date = 1;
-  double clicks = 2;
-  double impressions = 3;
-  double ctr = 4;
-  double position = 5;
-  double sessions = 6;
-  double conversions = 7;
-}
-
-message SeoIssueSummary {
-  string issueType = 1;
-  string severity = 2; // info | warning | critical
-  uint32 openCount = 3;
-}
-
-message SeoMeasurementOverviewResponse {
-  repeated SeoMeasurementKPI kpis = 1;
-  repeated SeoMeasurementTrendPoint trend = 2;
-  repeated SeoIssueSummary issueSummary = 3;
-  repeated SeoPagePerformanceRow topPages = 4;
-  repeated SeoIssueRow needAttention = 5;
-}
-
-message GenerateSeoMockMeasurementRequest {
-  string range = 1;
-  uint32 limit = 2;
-  bool overwrite = 3;
-}
-
-message GenerateSeoMockMeasurementResponse {
-  uint32 pages = 1;
-  uint32 searchRows = 2;
-  uint32 inspectionRows = 3;
-  uint32 trafficRows = 4;
-  uint32 rankingRows = 5;
-  uint32 crawlRows = 6;
-  uint32 keywordTargets = 7;
-  string dataSource = 8; // mock
-  repeated string messages = 9;
-}
-
-message RunSeoFeedbackDetectorRequest {
-  string range = 1;
-  uint32 limit = 2;
-}
-
-message RunSeoFeedbackDetectorResponse {
-  uint32 scanned = 1;
-  uint32 created = 2;
-  uint32 skipped = 3;
-  repeated string errors = 4;
-}
-
-message GetSeoPagePerformanceListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string keyword = 4;
-  string pageStatus = 5;
-  string renderStatus = 6;
-  string indexStatus = 7;
-  string issueStatus = 8;
-  string range = 9;
-}
-
-message SeoPagePerformanceRow {
-  uint64 seoDomainId = 1;
-  string canonicalUrl = 2;
-  string slug = 3;
-  string title = 4;
-  string pageStatus = 5;
-  string renderStatus = 6;
-  bool isSiteMap = 7;
-  bool isIndex = 8;
-  uint32 qualityScore = 9;
-  double clicks = 10;
-  double impressions = 11;
-  double ctr = 12;
-  double position = 13;
-  double sessions = 14;
-  double conversions = 15;
-  string indexStatus = 16;
-  string lastCrawlTime = 17;
-  uint32 openIssueCount = 18;
-}
-
-message GetSeoPagePerformanceListResponse {
-  repeated SeoPagePerformanceRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoQueryPerformanceListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string query = 4;
-  string canonicalUrl = 5;
-  string device = 6;
-  string country = 7;
-  string range = 8;
-}
-
-message SeoQueryPerformanceRow {
-  string query = 1;
-  string canonicalUrl = 2;
-  string device = 3;
-  string country = 4;
-  double clicks = 5;
-  double impressions = 6;
-  double ctr = 7;
-  double position = 8;
-}
-
-message GetSeoQueryPerformanceListResponse {
-  repeated SeoQueryPerformanceRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoIndexCoverageListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string canonicalUrl = 4;
-  string indexStatus = 5;
-  string verdict = 6;
-  string range = 7;
-}
-
-message SeoIndexCoverageRow {
-  uint64 seoDomainId = 1;
-  string canonicalUrl = 2;
-  string inspectionStatus = 3;
-  string indexStatus = 4;
-  string coverageState = 5;
-  string robotsTxtState = 6;
-  string googleCanonical = 7;
-  string userCanonical = 8;
-  string lastCrawlTime = 9;
-  string verdict = 10;
-  string inspectedAt = 11;
-}
-
-message GetSeoIndexCoverageListResponse {
-  repeated SeoIndexCoverageRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoTrafficListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string canonicalUrl = 4;
-  string source = 5;
-  string medium = 6;
-  string device = 7;
-  string country = 8;
-  string range = 9;
-}
-
-message SeoTrafficRow {
-  string canonicalUrl = 1;
-  string date = 2;
-  double sessions = 3;
-  double users = 4;
-  double activeUsers = 5;
-  double pageViews = 6;
-  double engagementSeconds = 7;
-  double conversions = 8;
-  string source = 9;
-  string medium = 10;
-  string device = 11;
-  string country = 12;
-}
-
-message GetSeoTrafficListResponse {
-  repeated SeoTrafficRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoRankingListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string keyword = 4;
-  string canonicalUrl = 5;
-  string device = 6;
-  string range = 7;
-}
-
-message SeoRankingRow {
-  string keyword = 1;
-  string canonicalUrl = 2;
-  double position = 3;
-  double previousPosition = 4;
-  double positionDelta = 5;
-  string device = 6;
-  string location = 7;
-  string language = 8;
-  string checkedAt = 9;
-}
-
-message GetSeoRankingListResponse {
-  repeated SeoRankingRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoCrawlEventListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string canonicalUrl = 4;
-  string botName = 5;
-  int32 statusCode = 6;
-  string range = 7;
-}
-
-message SeoCrawlEventRow {
-  uint64 id = 1;
-  uint64 seoDomainId = 2;
-  string canonicalUrl = 3;
-  string botName = 4;
-  string userAgent = 5;
-  int32 statusCode = 6;
-  string method = 7;
-  int64 responseTimeMs = 8;
-  string crawledAt = 9;
-}
-
-message GetSeoCrawlEventListResponse {
-  repeated SeoCrawlEventRow data = 1;
-  uint64 total = 2;
-}
-
-message GetSeoIssueListRequest {
-  uint32 page = 1;
-  uint32 size = 2;
-  string sort = 3;
-  string canonicalUrl = 4;
-  string issueType = 5;
-  string severity = 6;
-  string status = 7;
-  string range = 8;
-}
-
-message SeoIssueRow {
-  uint64 id = 1;
-  uint64 seoDomainId = 2;
-  string canonicalUrl = 3;
-  string issueType = 4;
-  string severity = 5;
-  string status = 6;
-  string title = 7;
-  string message = 8;
-  string evidence = 9;
-  string recommendation = 10;
-  string detectedAt = 11;
-  string resolvedAt = 12;
-}
-
-message GetSeoIssueListResponse {
-  repeated SeoIssueRow data = 1;
-  uint64 total = 2;
-}
-
-message ResolveSeoIssueRequest {
-  uint64 id = 1;
-  string status = 2; // resolved | ignored
-  string note = 3;
-}
-
+// GetSeoRefsRequest tìm trang SEO theo một bản ghi nguồn.
 message GetSeoRefsRequest {
   uint32 refType = 1;
   uint64 refId = 2;

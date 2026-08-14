@@ -18,31 +18,26 @@ import (
 
 type SeoDomainHandler struct {
 	crmpb.UnimplementedSeoDomainServiceServer
-	crmpb.UnimplementedSeoMeasurementRuntimeServiceServer
 
-	seoDomainUsecase      *usecase.SeoDomainUsecase
-	seoRenderUsecase      *usecase.SeoRenderUsecase
-	seoMeasurementUsecase *usecase.SeoMeasurementUsecase
-	seoDomainMapper       *mapper.SeoDomainMapper
+	seoDomainUsecase *usecase.SeoDomainUsecase
+	seoRenderUsecase *usecase.SeoRenderUsecase
+	seoDomainMapper  *mapper.SeoDomainMapper
 }
 
 var (
 	_ crmpb.SeoDomainServiceServer = (*SeoDomainHandler)(nil)
-	_ crmpb.SeoMeasurementRuntimeServiceServer = (*SeoDomainHandler)(nil)
 )
 
 // @bind: crm/infra/handler.SeoDomainHandler
 func NewSeoDomainHandler(
 	seoDomainUsecase *usecase.SeoDomainUsecase,
 	seoRenderUsecase *usecase.SeoRenderUsecase,
-	seoMeasurementUsecase *usecase.SeoMeasurementUsecase,
 	seoDomainMapper *mapper.SeoDomainMapper,
 ) *SeoDomainHandler {
 	return &SeoDomainHandler{
-		seoDomainUsecase:      seoDomainUsecase,
-		seoRenderUsecase:      seoRenderUsecase,
-		seoMeasurementUsecase: seoMeasurementUsecase,
-		seoDomainMapper:       seoDomainMapper,
+		seoDomainUsecase: seoDomainUsecase,
+		seoRenderUsecase: seoRenderUsecase,
+		seoDomainMapper:  seoDomainMapper,
 	}
 }
 
@@ -114,12 +109,6 @@ func (h *SeoDomainHandler) GetSeoSource(ctx context.Context, req *crmpb.GetSeoSo
 	return h.seoDomainMapper.SeoSourceConfigToPb(cfg), nil
 }
 
-func (h *SeoDomainHandler) GetSeoSourceHealth(ctx context.Context, req *crmpb.GetSeoSourceHealthRequest) (*crmpb.GetSeoSourceHealthResponse, error) {
-	return &crmpb.GetSeoSourceHealthResponse{
-		Data: h.seoDomainMapper.SeoSourceHealthListToPb(h.seoDomainUsecase.GetSeoSourceHealth(ctx)),
-	}, nil
-}
-
 func (h *SeoDomainHandler) SearchSeoSourceValues(ctx context.Context, req *crmpb.SearchSeoSourceValuesRequest) (*crmpb.SearchSeoSourceValuesResponse, error) {
 	items, total, err := h.seoDomainUsecase.SearchSeoSourceValues(ctx, &dto.SearchSeoSourceValuesRequest{
 		Pagable: _dto.Pagable{
@@ -174,9 +163,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		RefSnapshotJSON:   req.RefSnapshotJson,
 		RefHash:           req.RefHash,
 		RefLastSyncedAt:   req.RefLastSyncedAt,
-		QualityScore:      req.QualityScore,
 		Scope:             req.Scope,
-		Classify:          req.Classify,
 		Title:             req.Title,
 		Description:       req.Description,
 		Content:           req.Content,
@@ -263,7 +250,6 @@ func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetS
 		SourceStatus: req.SourceStatus,
 		RefMissing:   req.RefMissing,
 		Scope:        req.Scope,
-		Classify:     req.Classify,
 		Published:    req.Published,
 		IsSiteMap:    req.IsSiteMap,
 		IsIndex:      req.IsIndex,
@@ -300,9 +286,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		RefSnapshotJSON:   req.RefSnapshotJson,
 		RefHash:           req.RefHash,
 		RefLastSyncedAt:   req.RefLastSyncedAt,
-		QualityScore:      req.QualityScore,
 		Scope:             req.Scope,
-		Classify:          req.Classify,
 		Title:             req.Title,
 		Description:       req.Description,
 		Content:           req.Content,
@@ -931,7 +915,6 @@ func buildCreateSeoDraftRequest(req *crmpb.CreateSeoDraftRequest, refType uint32
 		SourceStatus:    sourceStatus,
 		RefMissing:      &refMissing,
 		Scope:           scope,
-		Classify:        seo.Classify,
 		Title:           strings.TrimSpace(seo.Title),
 		Description:     strings.TrimSpace(seo.Description),
 		Content:         seo.Content,
@@ -943,6 +926,7 @@ func buildCreateSeoDraftRequest(req *crmpb.CreateSeoDraftRequest, refType uint32
 		SitemapPriority: 0.5,
 		NeedGenerate:    &needGenerate,
 		Metadata:        optionalStringFromTrimmed(seo.Metadata),
+		TemplateKey:     strings.TrimSpace(seo.TemplateKey),
 	}
 }
 

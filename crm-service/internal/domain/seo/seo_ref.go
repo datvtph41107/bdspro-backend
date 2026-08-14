@@ -2,15 +2,17 @@ package seo_domain
 
 import "crm/internal/enums"
 
-// ngoài ref_type và ref_id chính từ seo thì đây là bảng chứa id trỏ đến các domain tương ứng
-// nếu các domain đó cần link tới bài viết. có thể coi đây là 1 bảng ds các
-// adminunit/parcel/project/document/report/... liên quan
-// cụ thể là dùng ở chô chi tiết thư viện tab "tin"
+// SeoRef lưu một dữ liệu nguồn liên quan bổ sung của trang SEO.
+// Bảng dùng khi một trang cần tham chiếu nhiều địa bàn, thửa đất, đồ án hoặc văn bản.
 type SeoRef struct {
+	// ID là khóa chính của quan hệ tham chiếu.
 	ID uint64 `gorm:"primaryKey;autoIncrement"`
 
-	SeoID   uint64            `gorm:"column:seo_domain_id;not null;index"`
-	RefID   uint64            `gorm:"column:ref_id;not null;index"`
+	// SeoID là mã trang SEO chứa tham chiếu.
+	SeoID uint64 `gorm:"column:seo_domain_id;not null;index"`
+	// RefID là mã bản ghi tại hệ thống nguồn.
+	RefID uint64 `gorm:"column:ref_id;not null;index"`
+	// RefType là loại dữ liệu nguồn được tham chiếu.
 	RefType enums.ESEORefType `gorm:"column:ref_type;type:int4;not null;index"`
 }
 

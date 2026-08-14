@@ -51,18 +51,8 @@ func (u *SeoPublicUsecase) GetPublicSeoPageByCanonicalURL(ctx context.Context, c
 }
 
 func buildPublicSeoPageResponse(page *seo_domain.SeoDomain) (*dto.SeoPublicPageResponse, error) {
-	decision := seo_domain.CanServePublic(page)
-	if !decision.Allowed {
-		switch decision.Code {
-		case "page_archived":
-			return nil, _errors.ReturnError(410, decision.Message)
-		case "page_nil":
-			return nil, _errors.ReturnError(404, decision.Message)
-		case "page_not_published", "not_public_scope":
-			return nil, _errors.ReturnError(404, decision.Message)
-		default:
-			return nil, _errors.ReturnError(503, decision.Message)
-		}
+	if err := validatePublicSeoPage(page); err != nil {
+		return nil, err
 	}
 
 	noIndex := !page.IsIndex
@@ -79,7 +69,7 @@ func buildPublicSeoPageResponse(page *seo_domain.SeoDomain) (*dto.SeoPublicPageR
 		NoIndex:        noIndex,
 		RenderStatus:   page.RenderStatus,
 		PageStatus:     page.PageStatus,
-		Warnings:       decision.Warnings,
+		Warnings:       nil,
 		StaticHTMLPath: page.StaticHtmlPath,
 	}, nil
 }
@@ -116,16 +106,8 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 	if err != nil {
 		return nil, err
 	}
-	decision := seo_domain.CanServePublic(page)
-	if !decision.Allowed {
-		switch decision.Code {
-		case "page_archived":
-			return nil, _errors.ReturnError(410, decision.Message)
-		case "page_nil", "page_not_published", "not_public_scope":
-			return nil, _errors.ReturnError(404, decision.Message)
-		default:
-			return nil, _errors.ReturnError(503, decision.Message)
-		}
+	if err := validatePublicSeoPage(page); err != nil {
+		return nil, err
 	}
 
 	generatedAt := page.UpdatedAt.UTC()
@@ -142,10 +124,6 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 	if document.Identity.CanonicalPath != canonicalPath || document.SEO.CanonicalPath != canonicalPath {
 		return nil, _errors.ReturnError(503, "SEO canonical contract mismatch")
 	}
-	if document.IndexDecision == nil || document.IndexDecision.PolicyVersion == "" {
-		return nil, _errors.ReturnError(503, "SEO index decision is missing")
-	}
-
 	payload, err := json.Marshal(document)
 	if err != nil {
 		return nil, fmt.Errorf("encode public SEO document: %w", err)
@@ -156,8 +134,25 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 		ETag:         hex.EncodeToString(hash[:]),
 		CacheControl: buildSeoCacheControl(page),
 		StatusCode:   200,
-		Warnings:     compactUniqueStrings(append(decision.Warnings, warnings...)),
+		Warnings:     compactUniqueStrings(warnings),
 	}, nil
+}
+
+func validatePublicSeoPage(page *seo_domain.SeoDomain) error {
+	if page == nil {
+		return _errors.ReturnError(404, "seo page không tồn tại")
+	}
+	page.NormalizeLifecycle()
+	if page.PageStatus == seo_domain.SeoPageStatusArchived {
+		return _errors.ReturnError(410, "seo page đã archived")
+	}
+	if page.PageStatus != seo_domain.SeoPageStatusPublished || !page.Published || page.Scope != seo_domain.SeoScopePublic {
+		return _errors.ReturnError(404, "seo page chưa được xuất bản công khai")
+	}
+	if page.RenderStatus != seo_domain.SeoRenderStatusSuccess || strings.TrimSpace(page.RenderedHTML) == "" {
+		return _errors.ReturnError(503, "seo page chưa render thành công")
+	}
+	return nil
 }
 
 func (u *SeoPublicUsecase) resolvePublicDocumentPage(

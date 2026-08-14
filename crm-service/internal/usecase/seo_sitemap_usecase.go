@@ -47,8 +47,9 @@ func (u *SeoSitemapUsecase) BuildSitemapXML(ctx context.Context, baseURL string)
 	for i := range items {
 		page := &items[i]
 
-		decision := seo_domain.CanIncludeInSitemap(page)
-		if !decision.Allowed {
+		if !page.IsSitemapEligible() ||
+			page.RenderStatus != seo_domain.SeoRenderStatusSuccess ||
+			strings.TrimSpace(page.CanonicalURL) == "" {
 			continue
 		}
 

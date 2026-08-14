@@ -2,7 +2,6 @@ package handler_grpc
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -10,7 +9,6 @@ import (
 
 	_middleware "common/middleware"
 	"crm/config"
-	"crm/internal/dto"
 	catalogapp "crm/internal/modules/contentcatalog/application"
 	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	"crm/internal/usecase"
@@ -24,7 +22,6 @@ import (
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
 )
@@ -34,16 +31,13 @@ import (
 // gateway-service has to understand HTTP.
 type PublicContentGrpcHandler struct {
 	crmpb.UnimplementedCRMPublicContentServiceServer
-	seoPublic             *usecase.SeoPublicUsecase
-	sitemap               *usecase.SeoSitemapUsecase
-	provisioning          *usecase.SeoAdministrativeUnitProvisioningUsecase
-	catalog               *catalogapp.Service
-	runtimeEvents         *usecase.SeoRuntimeEventUsecase
-	runtimeEventIngestKey string
+	seoPublic *usecase.SeoPublicUsecase
+	sitemap   *usecase.SeoSitemapUsecase
+	catalog   *catalogapp.Service
 }
 
-func NewPublicContentGrpcHandler(seoPublic *usecase.SeoPublicUsecase, sitemap *usecase.SeoSitemapUsecase, provisioning *usecase.SeoAdministrativeUnitProvisioningUsecase, catalog *catalogapp.Service, runtimeEvents *usecase.SeoRuntimeEventUsecase, runtimeEventIngestKey string) *PublicContentGrpcHandler {
-	return &PublicContentGrpcHandler{seoPublic: seoPublic, sitemap: sitemap, provisioning: provisioning, catalog: catalog, runtimeEvents: runtimeEvents, runtimeEventIngestKey: strings.TrimSpace(runtimeEventIngestKey)}
+func NewPublicContentGrpcHandler(seoPublic *usecase.SeoPublicUsecase, sitemap *usecase.SeoSitemapUsecase, catalog *catalogapp.Service) *PublicContentGrpcHandler {
+	return &PublicContentGrpcHandler{seoPublic: seoPublic, sitemap: sitemap, catalog: catalog}
 }
 
 func jsonBytes(value any) (*wrapperspb.BytesValue, error) {
@@ -62,26 +56,9 @@ func authenticatedProfileID(ctx context.Context) (uint64, error) {
 	return principal.ProfileId, nil
 }
 
-// TASK9_VISIBLE_ON_VALIDATOR_BEGIN
-func validatePlanningNewsVisibleOn(value uint32) error {
-	visibleOn := catalogdomain.PlanningNewsVisibleOn(value)
-	if visibleOn.IsValid() {
-		return nil
-	}
-	return status.Error(
-		codes.InvalidArgument,
-		"visibleOn chỉ chấp nhận 10, 20, 30, 40 hoặc 50",
-	)
-}
-
-// TASK9_VISIBLE_ON_VALIDATOR_END
-
 func requestMap(req proto.Message) map[string]any {
 	if req == nil {
 		return map[string]any{}
-	}
-	if value, ok := req.(*structpb.Struct); ok {
-		return value.AsMap()
 	}
 	payload, err := protojson.MarshalOptions{UseProtoNames: false}.Marshal(req)
 	if err != nil {
@@ -117,40 +94,6 @@ func intValue(m map[string]any, key string, fallback int) int {
 		}
 	}
 	return fallback
-}
-func uintValue(m map[string]any, key string) uint32 {
-	raw, ok := m[key]
-	if !ok {
-		return 0
-	}
-	switch value := raw.(type) {
-	case float64:
-		if value > 0 {
-			return uint32(value)
-		}
-	case string:
-		if parsed, err := strconv.ParseUint(strings.TrimSpace(value), 10, 32); err == nil {
-			return uint32(parsed)
-		}
-	}
-	return 0
-}
-func uint64Value(m map[string]any, key string) uint64 {
-	raw, ok := m[key]
-	if !ok {
-		return 0
-	}
-	switch value := raw.(type) {
-	case float64:
-		if value > 0 {
-			return uint64(value)
-		}
-	case string:
-		if parsed, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64); err == nil {
-			return parsed
-		}
-	}
-	return 0
 }
 func stringSlice(m map[string]any, key string) []string {
 	raw, ok := m[key]
@@ -245,19 +188,6 @@ func (h *PublicContentGrpcHandler) GetPublicSeoDocument(ctx context.Context, req
 	setHTTPMetadata(ctx, response.StatusCode, "application/json; charset=utf-8", response.CacheControl, response.ETag, robots)
 	return jsonBytes(response.Document)
 }
-func (h *PublicContentGrpcHandler) GetGovernanceSeoDocument(ctx context.Context, req *crmpb.SeoDocumentRequest) (*wrapperspb.BytesValue, error) {
-	m := requestMap(req)
-	response, err := h.seoPublic.GetSeoGovernanceDocument(ctx, stringValue(m, "module"), stringValue(m, "slug"))
-	if err != nil {
-		return nil, err
-	}
-	setHTTPMetadata(ctx, response.StatusCode, "application/json; charset=utf-8", "private, no-store", response.ETag, "")
-	return jsonBytes(map[string]any{"code": response.StatusCode, "data": response.Document})
-}
-func (h *PublicContentGrpcHandler) GetOperatingSystemManifest(ctx context.Context, _ *emptypb.Empty) (*wrapperspb.BytesValue, error) {
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
-	return jsonBytes(map[string]any{"code": 200, "data": h.seoPublic.GetSeoOperatingSystemManifest()})
-}
 func (h *PublicContentGrpcHandler) GetRenderedSeoPage(ctx context.Context, req *crmpb.RenderedSeoPageRequest) (*wrapperspb.BytesValue, error) {
 	response, err := h.seoPublic.GetPublicSeoPageBySlug(ctx, strings.TrimSpace(req.GetPath()))
 	if err != nil {
@@ -280,31 +210,6 @@ func (h *PublicContentGrpcHandler) GetSitemap(ctx context.Context, _ *emptypb.Em
 	setHTTPMetadata(ctx, 200, response.ContentType, "public, max-age=300, stale-while-revalidate=3600", "", "")
 	return wrapperspb.Bytes([]byte(response.XML)), nil
 }
-func (h *PublicContentGrpcHandler) ListContentDomains(ctx context.Context, _ *crmpb.ContentQueryRequest) (*wrapperspb.BytesValue, error) {
-	items, err := h.catalog.ListDomains(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "list content domains: %v", err)
-	}
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "public, max-age=300", "", "")
-	return jsonBytes(map[string]any{"data": items})
-}
-func (h *PublicContentGrpcHandler) ListContentCategories(ctx context.Context, req *crmpb.ContentQueryRequest) (*wrapperspb.BytesValue, error) {
-	items, err := h.catalog.ListCategories(ctx, stringValue(requestMap(req), "domain", "domainCode"))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "list content categories: %v", err)
-	}
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "public, max-age=300", "", "")
-	return jsonBytes(map[string]any{"data": items})
-}
-func (h *PublicContentGrpcHandler) ListContentFeed(ctx context.Context, req *crmpb.ContentFeedRequest) (*wrapperspb.BytesValue, error) {
-	m := requestMap(req)
-	result, err := h.catalog.ListFeed(ctx, stringValue(m, "feed"), stringValue(m, "domain", "domainCode"), stringValue(m, "category", "categoryCode"), intValue(m, "limit", 20))
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "public, max-age=60, stale-while-revalidate=300", "", "")
-	return jsonBytes(result)
-}
 func (h *PublicContentGrpcHandler) SearchContent(ctx context.Context, req *crmpb.ContentQueryRequest) (*wrapperspb.BytesValue, error) {
 	m := requestMap(req)
 	result, err := h.catalog.SearchPublishedContent(ctx, stringValue(m, "q", "query", "keyword"), stringSlice(m, "kinds"), intValue(m, "limit", 20))
@@ -315,20 +220,11 @@ func (h *PublicContentGrpcHandler) SearchContent(ctx context.Context, req *crmpb
 	return jsonBytes(result)
 }
 func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *crmpb.PlanningNewsQueryRequest) (*wrapperspb.BytesValue, error) {
-
-	// TASK9_LIST_VISIBLE_ON_VALIDATION_BEGIN
 	if req == nil {
 		req = &crmpb.PlanningNewsQueryRequest{}
 	}
-	if req.VisibleOn != nil {
-		if err := validatePlanningNewsVisibleOn(req.GetVisibleOn()); err != nil {
-			return nil, err
-		}
-	}
-	// TASK9_LIST_VISIBLE_ON_VALIDATION_END
 
-	m := requestMap(req)
-	filter := catalogdomain.PlanningNewsListFilter{Page: intValue(m, "page", 1), Size: intValue(m, "size", 20), Keyword: stringValue(m, "keyword", "q", "search"), Topic: stringValue(m, "topic", "category"), Location: stringValue(m, "location"), Range: stringValue(m, "range"), VisibleOn: uintValue(m, "visibleOn")}
+	filter := catalogdomain.PlanningNewsListFilter{Page: int(req.GetPage()), Size: int(req.GetSize())}
 	result, err := h.catalog.ListPlanningNews(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list planning news: %v", err)
@@ -399,102 +295,4 @@ func (h *PublicContentGrpcHandler) UnsavePlanningNews(ctx context.Context, req *
 	}
 	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
 	return jsonBytes(map[string]any{"saved": false, "planningNewsId": req.GetId()})
-}
-
-func (h *PublicContentGrpcHandler) UpdatePlanningNewsVisibility(ctx context.Context, req *crmpb.UpdatePlanningNewsVisibilityRequest) (*wrapperspb.BytesValue, error) {
-
-	// TASK9_UPDATE_VISIBLE_ON_VALIDATION_BEGIN
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request is required")
-	}
-	if err := validatePlanningNewsVisibleOn(req.GetVisibleOn()); err != nil {
-		return nil, err
-	}
-	// TASK9_UPDATE_VISIBLE_ON_VALIDATION_END
-
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request is required")
-	}
-
-	id := req.GetId()
-	visibleOn := uint32(req.GetVisibleOn())
-	if id == 0 || visibleOn == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id and visibleOn are required")
-	}
-	item, err := h.catalog.UpdatePlanningNewsVisibility(ctx, id, visibleOn)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, status.Error(codes.NotFound, "planning news was not found")
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
-	return jsonBytes(map[string]any{"data": item})
-}
-
-func (h *PublicContentGrpcHandler) AssignPlanningNewsCategory(ctx context.Context, req *crmpb.AssignPlanningNewsCategoryRequest) (*wrapperspb.BytesValue, error) {
-	m := requestMap(req)
-	id := uint64Value(m, "id")
-	category := stringValue(m, "category", "categoryCode", "categoryId")
-	if id == 0 || category == "" {
-		return nil, status.Error(codes.InvalidArgument, "id and category are required")
-	}
-	item, err := h.catalog.AssignPlanningNewsCategory(ctx, id, category)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, status.Error(codes.NotFound, "planning news or category was not found")
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
-	return jsonBytes(map[string]any{"data": item})
-}
-
-func (h *PublicContentGrpcHandler) ProvisionAdministrativeUnit(ctx context.Context, req *structpb.Struct) (*wrapperspb.BytesValue, error) {
-	payload, err := json.Marshal(requestMap(req))
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid provisioning request")
-	}
-	var input dto.ProvisionAdministrativeUnitSeoRequest
-	if err := json.Unmarshal(payload, &input); err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid provisioning request")
-	}
-	response, err := h.provisioning.Provision(ctx, &input)
-	if err != nil {
-		return nil, err
-	}
-	code := 200
-	if response != nil && response.Created {
-		code = 201
-	}
-	setHTTPMetadata(ctx, code, "application/json; charset=utf-8", "private, no-store", "", "")
-	return jsonBytes(map[string]any{"code": code, "data": response})
-}
-
-func (h *PublicContentGrpcHandler) IngestRuntimeEvent(ctx context.Context, req *structpb.Struct) (*wrapperspb.BytesValue, error) {
-	if h.runtimeEvents == nil || h.runtimeEventIngestKey == "" {
-		return nil, status.Error(codes.FailedPrecondition, "runtime telemetry is not configured")
-	}
-	incoming, _ := metadata.FromIncomingContext(ctx)
-	provided := ""
-	if values := incoming.Get("x-qhpro-telemetry-key"); len(values) > 0 {
-		provided = strings.TrimSpace(values[0])
-	}
-	if len(provided) != len(h.runtimeEventIngestKey) || subtle.ConstantTimeCompare([]byte(provided), []byte(h.runtimeEventIngestKey)) != 1 {
-		return nil, status.Error(codes.Unauthenticated, "invalid telemetry key")
-	}
-	payload, err := json.Marshal(requestMap(req))
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid telemetry event")
-	}
-	var input dto.SeoRuntimeEventIngestRequest
-	if err := json.Unmarshal(payload, &input); err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid telemetry event")
-	}
-	response, err := h.runtimeEvents.Ingest(ctx, &input)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	setHTTPMetadata(ctx, 202, "application/json; charset=utf-8", "no-store", "", "")
-	return jsonBytes(response)
 }

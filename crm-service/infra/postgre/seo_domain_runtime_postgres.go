@@ -4,7 +4,6 @@ import (
 	"context"
 	"crm/infra/impl"
 	seo_domain "crm/internal/domain/seo"
-	"crm/internal/enums"
 	"time"
 
 	"gorm.io/gorm"
@@ -58,8 +57,7 @@ func (r *SeoDomainPostgres) GetPublishedStaticPaths(ctx context.Context, page ui
 		Where("published = ?", true).
 		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
 		Where("is_index = ?", true).
-		Where("scope = ?", seo_domain.SeoScopePublic).
-		Where("classify <> ?", enums.ESeoClassifyN)
+		Where("scope = ?", seo_domain.SeoScopePublic)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -90,7 +88,6 @@ func (r *SeoDomainPostgres) GetPublishedSitemapItems(ctx context.Context) ([]seo
 		Where("is_site_map = ?", true).
 		Where("is_index = ?", true).
 		Where("scope = ?", seo_domain.SeoScopePublic).
-		Where("classify <> ?", enums.ESeoClassifyN).
 		Order("updated_at DESC").
 		Find(&items).Error
 	if err != nil {

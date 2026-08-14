@@ -2,49 +2,6 @@ package domain
 
 import "time"
 
-type ContentDomain struct {
-	ID          uint64 `json:"id"`
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	SortOrder   int    `json:"sortOrder"`
-}
-
-type ContentCategory struct {
-	ID          uint64 `json:"id"`
-	DomainID    uint64 `json:"domainId"`
-	DomainCode  string `json:"domainCode"`
-	Code        string `json:"code"`
-	Slug        string `json:"slug"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	SortOrder   int    `json:"sortOrder"`
-	ItemCount   int64  `json:"itemCount"`
-}
-
-type ContentFeedItem struct {
-	SEOPageID     uint64     `json:"seoPageId"`
-	Slug          string     `json:"slug"`
-	Title         string     `json:"title"`
-	Description   string     `json:"description,omitempty"`
-	Summary       string     `json:"summary,omitempty"`
-	CanonicalURL  string     `json:"canonicalUrl"`
-	PublishedAt   *time.Time `json:"publishedAt,omitempty"`
-	UpdatedAt     *time.Time `json:"updatedAt,omitempty"`
-	CategoryCode  string     `json:"categoryCode,omitempty"`
-	CategoryName  string     `json:"categoryName,omitempty"`
-	PlacementCode string     `json:"placementCode,omitempty"`
-	Priority      int        `json:"priority"`
-	VisibleOn     uint32     `json:"visibleOn"`
-}
-
-type FeedResult struct {
-	Feed     string            `json:"feed"`
-	Computed bool              `json:"computed"`
-	Items    []ContentFeedItem `json:"items"`
-	Warnings []string          `json:"warnings,omitempty"`
-}
-
 type PlanningNewsItem struct {
 	ID              uint64         `json:"id"`
 	SEOPageID       uint64         `json:"seoDomainId"`
@@ -60,25 +17,16 @@ type PlanningNewsItem struct {
 	RefSource       string         `json:"refSource,omitempty"`
 	RefLabel        string         `json:"refLabel,omitempty"`
 	SourceStatus    string         `json:"sourceStatus,omitempty"`
-	QualityScore    uint32         `json:"qualityScore"`
-	VisibleOn       uint32         `json:"visibleOn"`
 	PublishedAt     *time.Time     `json:"publishedAt,omitempty"`
 	UpdatedAt       *time.Time     `json:"updatedAt,omitempty"`
 	SavedAt         *time.Time     `json:"savedAt,omitempty"`
-	CategoryCode    string         `json:"categoryCode,omitempty"`
-	CategoryName    string         `json:"categoryName,omitempty"`
 	Metadata        map[string]any `json:"metadata,omitempty"`
 	RefSnapshotJSON map[string]any `json:"refSnapshotJson,omitempty"`
 }
 
 type PlanningNewsListFilter struct {
-	Page      int
-	Size      int
-	Keyword   string
-	Topic     string
-	Location  string
-	Range     string
-	VisibleOn uint32
+	Page int
+	Size int
 }
 
 type SavedPlanningNewsListFilter struct {
@@ -114,10 +62,8 @@ type SearchCandidate struct {
 		Badges      []string `json:"badges,omitempty"`
 	} `json:"presentation"`
 	Source struct {
-		System      string `json:"system"`
-		Dataset     string `json:"dataset,omitempty"`
-		Authority   string `json:"authority,omitempty"`
-		DataQuality string `json:"dataQuality,omitempty"`
+		System  string `json:"system"`
+		Dataset string `json:"dataset,omitempty"`
 	} `json:"source"`
 	Capabilities struct {
 		CanOpenDetail   bool `json:"canOpenDetail"`
@@ -154,9 +100,8 @@ type SearchGroup struct {
 type ContentSearchResult struct {
 	RequestID      string `json:"requestId"`
 	Interpretation struct {
-		OriginalQuery   string   `json:"originalQuery"`
-		NormalizedQuery string   `json:"normalizedQuery"`
-		DetectedIntents []string `json:"detectedIntents"`
+		OriginalQuery   string `json:"originalQuery"`
+		NormalizedQuery string `json:"normalizedQuery"`
 	} `json:"interpretation"`
 	Groups   []SearchGroup `json:"groups"`
 	Partial  bool          `json:"partial"`

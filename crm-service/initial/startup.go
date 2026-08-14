@@ -37,9 +37,8 @@ type InitialApp struct {
 	SupportTicketHandler *handler.SupportTicketHandler
 	AdminSalesHandler    *handler.AdminSalesHandler
 
-	Logger            *flogging.FabricLogger
-	SeoDomainHandler  *handler.SeoDomainHandler
-	SeoStrategyHander *handler.SeoStrategyHandler
+	Logger           *flogging.FabricLogger
+	SeoDomainHandler *handler.SeoDomainHandler
 }
 
 func NewInitialApp(
@@ -71,7 +70,6 @@ func NewInitialApp(
 	supportTicketHandler *handler.SupportTicketHandler,
 	adminSalesHandler *handler.AdminSalesHandler,
 	seoDomainHandler *handler.SeoDomainHandler,
-	seoStrategyHandler *handler.SeoStrategyHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -102,8 +100,7 @@ func NewInitialApp(
 		SupportTicketHandler: supportTicketHandler,
 		AdminSalesHandler:    adminSalesHandler,
 
-		SeoDomainHandler:  seoDomainHandler,
-		SeoStrategyHander: seoStrategyHandler,
-		Logger:            flogging.MustGetLogger(viper.GetString("server.name")),
+		SeoDomainHandler: seoDomainHandler,
+		Logger:           flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

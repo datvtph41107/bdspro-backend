@@ -56,10 +56,9 @@ func (u *SeoWorkerUsecase) GeneratePendingSeoPages(ctx context.Context, req *dto
 	for i := range items {
 		page := &items[i]
 
-		decision := seo_domain.CanGenerate(page)
-		if !decision.Allowed {
+		if err := validatePageCanGenerate(page); err != nil {
 			result.Skipped++
-			result.Errors = append(result.Errors, fmt.Sprintf("seoId=%d skipped: %s", page.ID, decision.Message))
+			result.Errors = append(result.Errors, fmt.Sprintf("seoId=%d skipped: %s", page.ID, err.Error()))
 			continue
 		}
 
@@ -69,14 +68,20 @@ func (u *SeoWorkerUsecase) GeneratePendingSeoPages(ctx context.Context, req *dto
 			continue
 		}
 
-		_, err := u.seoRenderUsecase.GenerateSeoPage(ctx, &dto.GenerateSeoPageRequest{
+		generation, err := u.seoRenderUsecase.GenerateSeoPage(ctx, &dto.GenerateSeoPageRequest{
 			ID:          page.ID,
 			TriggerType: triggerType,
 			Reason:      req.Reason,
 		})
-		if err != nil {
+		if err != nil || generation == nil || generation.RenderStatus != seo_domain.SeoRenderStatusSuccess {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("seoId=%d failed: %v", page.ID, err))
+			message := "render failed"
+			if err != nil {
+				message = err.Error()
+			} else if generation != nil && strings.TrimSpace(generation.ErrorMessage) != "" {
+				message = generation.ErrorMessage
+			}
+			result.Errors = append(result.Errors, fmt.Sprintf("seoId=%d failed: %s", page.ID, message))
 			continue
 		}
 

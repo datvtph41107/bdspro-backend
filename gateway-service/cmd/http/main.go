@@ -159,7 +159,6 @@ var publicRoutes = []string{
 	"/v2/tqd/qh/public/font",
 	"/v2/crm/sitemap.xml",
 	"/v2/crm/public",
-	"/v2/crm/internal/seo/measurement/events",
 	"/v2/tqd/qh/public",
 	"/v2/tqd/map-target/by-location",
 	"/v2/tqd/discovery/",
@@ -260,7 +259,8 @@ var HttpCmd = &cobra.Command{
 					logger,
 				)
 
-		r := gin.New()
+		r := gin.New() // custom logging, recovery with req_identity
+
 		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
 		r.RedirectTrailingSlash = false
 		r.RedirectFixedPath = false

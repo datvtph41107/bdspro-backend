@@ -17,14 +17,12 @@ import (
 )
 
 const (
-	planningProjectAnswerSpecVersion = "seo-m4/planning-project/v1"
-	seoIndexPolicyVersion            = "seo-m11/index-eligibility/v1"
-	maxSeoFacts                      = 24
-	maxSeoSections                   = 20
-	maxSeoBlocksPerSection           = 20
-	maxSeoRelatedLinks               = 24
-	maxSeoRelatedEntities            = 24
-	maxSeoFAQItems                   = 16
+	maxSeoFacts            = 24
+	maxSeoSections         = 20
+	maxSeoBlocksPerSection = 20
+	maxSeoRelatedLinks     = 24
+	maxSeoRelatedEntities  = 24
+	maxSeoFAQItems         = 16
 )
 
 var legacyHTMLTagPattern = regexp.MustCompile(`(?s)<[^>]*>`)
@@ -57,8 +55,6 @@ func composeSeoPublicDocument(page *seo_domain.SeoDomain, generatedAt time.Time)
 	applySeoDomainOwnedFields(document, page, generatedAt)
 	mergeDatabaseRelationships(document, page)
 	normalizeSeoPublicDocument(document, &warnings)
-	applySeoAnswerReadiness(document)
-
 	return document, compactUniqueStrings(warnings), nil
 }
 
@@ -114,7 +110,6 @@ func buildDefaultSeoPublicDocument(page *seo_domain.SeoDomain, generatedAt time.
 			Title:         strings.TrimSpace(page.Title),
 			Description:   strings.TrimSpace(page.Description),
 			CanonicalPath: canonicalPath,
-			IndexClass:    seoIndexClass(page),
 			Indexable:     page.IsPublicIndexable(),
 			Follow:        true,
 		},
@@ -231,26 +226,17 @@ func mergeSeoSource(target *dto.SeoPublicSource, source dto.SeoPublicSource) {
 	if target == nil {
 		return
 	}
-	if strings.TrimSpace(source.Authority) != "" {
-		target.Authority = source.Authority
-	}
 	if strings.TrimSpace(source.SourceName) != "" {
 		target.SourceName = source.SourceName
 	}
 	if strings.TrimSpace(source.SourceURL) != "" {
 		target.SourceURL = source.SourceURL
 	}
-	if strings.TrimSpace(source.Quality) != "" {
-		target.Quality = source.Quality
-	}
 	if strings.TrimSpace(source.UpdatedAt) != "" {
 		target.UpdatedAt = source.UpdatedAt
 	}
 	if strings.TrimSpace(source.PublishedAt) != "" {
 		target.PublishedAt = source.PublishedAt
-	}
-	if len(source.Limitations) > 0 {
-		target.Limitations = source.Limitations
 	}
 }
 
@@ -279,10 +265,8 @@ func applySeoDomainOwnedFields(document *dto.SeoPublicDocument, page *seo_domain
 	document.SEO.Title = strings.TrimSpace(page.Title)
 	document.SEO.Description = strings.TrimSpace(page.Description)
 	document.SEO.CanonicalPath = canonicalPath
-	document.SEO.IndexClass = seoIndexClass(page)
 	document.SEO.Indexable = page.IsPublicIndexable()
 	document.SEO.Follow = true
-	document.Source.Environment = "production"
 	if strings.TrimSpace(document.Source.UpdatedAt) == "" {
 		document.Source.UpdatedAt = chooseSeoUpdatedAt(page, generatedAt)
 	}
@@ -313,7 +297,6 @@ func seoPublicDocumentVersion(page *seo_domain.SeoDomain) string {
 	// participate in the version fingerprint.
 	material := strings.Join([]string{
 		dto.SeoPublicDocumentSchemaVersion,
-		dto.SeoOperatingSystemRelease,
 		strconv.FormatUint(page.ID, 10),
 		strings.TrimSpace(page.Slug),
 		strings.TrimSpace(page.CanonicalURL),
@@ -401,7 +384,6 @@ func normalizeSeoPublicDocument(document *dto.SeoPublicDocument, warnings *[]str
 	document.Breadcrumbs = normalizeBreadcrumbs(document.Breadcrumbs, document.Identity.CanonicalPath, document.Heading.Title)
 	document.Facts = normalizeFacts(document.Facts)
 	document.Sections = normalizeSections(document.Sections)
-	document.Sections = ensurePlanningProjectLegalTimeline(document.ModuleID, document.Sections)
 	document.RelatedLinks = dedupeRelatedLinks(document.RelatedLinks)
 	document.RelatedEntities = dedupeRelatedEntities(document.RelatedEntities)
 	document.FAQ = normalizeFAQ(document.FAQ)
@@ -417,237 +399,18 @@ func normalizeSeoPublicDocument(document *dto.SeoPublicDocument, warnings *[]str
 	}
 }
 
-func ensurePlanningProjectLegalTimeline(moduleID string, sections []dto.SeoSection) []dto.SeoSection {
-	if normalizeSeoModuleID(moduleID) != "planning-project" {
-		return sections
-	}
-
-	for _, section := range sections {
-		if section.ID == "legal-timeline" {
-			return sections
-		}
-	}
-
-	if len(sections) >= maxSeoSections {
-		return sections
-	}
-
-	return append(sections, dto.SeoSection{
-		ID:    "legal-timeline",
-		Title: "Lịch sử pháp lý",
-		Blocks: []dto.SeoContentBlock{
-			{
-				Type:  "notice",
-				Tone:  "warning",
-				Title: "Lịch sử pháp lý chưa được công bố",
-				Text:  "Nguồn dữ liệu hiện tại chưa có các mốc phê duyệt, điều chỉnh hoặc văn bản pháp lý của đồ án.",
-			},
-		},
-	})
-}
-
-func applySeoAnswerReadiness(document *dto.SeoPublicDocument) {
-	if document == nil {
-		return
-	}
-
-	requiredFacts, requiredSections, specificationVersion := answerSpecification(document.ModuleID)
-	factValues := make(map[string]string, len(document.Facts))
-	for _, fact := range document.Facts {
-		factValues[fact.ID] = strings.TrimSpace(fact.Value)
-	}
-	sectionMap := make(map[string]dto.SeoSection, len(document.Sections))
-	renderedSections := make([]string, 0, len(document.Sections))
-	for _, section := range document.Sections {
-		sectionMap[section.ID] = section
-		renderedSections = append(renderedSections, section.ID)
-	}
-
-	missingFacts := make([]string, 0)
-	for _, required := range requiredFacts {
-		value := factValues[required]
-		if !isMeaningfulSeoValue(value) {
-			missingFacts = append(missingFacts, required)
-		}
-	}
-	missingSections := make([]string, 0)
-	for _, required := range requiredSections {
-		if !hasMeaningfulSeoSection(sectionMap[required]) {
-			missingSections = append(missingSections, required)
-		}
-	}
-
-	ready := len(missingFacts) == 0 && len(missingSections) == 0
-	if moduleRequiresMapTarget(document.ModuleID) && document.MapTarget == nil {
-		ready = false
-	}
-	if moduleRequiresSourceDisclosure(document.ModuleID) && strings.TrimSpace(firstNonEmptyRender(document.Source.SourceName, document.Source.SourceURL)) == "" {
-		ready = false
-	}
-
-	document.AnswerReadiness = &dto.SeoAnswerReadiness{
-		SpecificationVersion: specificationVersion,
-		RequiredFacts:        requiredFacts,
-		MissingRequiredFacts: missingFacts,
-		RequiredSections:     requiredSections,
-		RenderedSections:     renderedSections,
-		Ready:                ready,
-	}
-
-	production := document.Source.Environment == "production"
-	trustedSource := isTrustedSeoSource(document.Source)
-	domainAllowsIndex := document.SEO.Indexable
-	reasonCodes := make([]string, 0, 8)
-	if !domainAllowsIndex {
-		reasonCodes = append(reasonCodes, "domain_index_disabled")
-	}
-	if !production {
-		reasonCodes = append(reasonCodes, "non_production_source")
-	}
-	if len(missingFacts) > 0 {
-		reasonCodes = append(reasonCodes, "missing_required_facts")
-	}
-	if len(missingSections) > 0 {
-		reasonCodes = append(reasonCodes, "missing_required_sections")
-	}
-	if moduleRequiresMapTarget(document.ModuleID) && document.MapTarget == nil {
-		reasonCodes = append(reasonCodes, "missing_map_target")
-	}
-	if moduleRequiresSourceDisclosure(document.ModuleID) && strings.TrimSpace(firstNonEmptyRender(document.Source.SourceName, document.Source.SourceURL)) == "" {
-		reasonCodes = append(reasonCodes, "missing_source_disclosure")
-	}
-	if !trustedSource {
-		reasonCodes = append(reasonCodes, "untrusted_source")
-	}
-	eligible := domainAllowsIndex && production && ready && trustedSource
-	document.SEO.Indexable = eligible
-	document.IndexDecision = &dto.SeoIndexDecision{
-		PolicyVersion: seoIndexPolicyVersion,
-		Eligible:      eligible,
-		ReasonCodes:   compactUniqueStrings(reasonCodes),
-	}
-	applySeoOperatingSystemV2U(document)
-}
-
-func answerSpecification(moduleID string) ([]string, []string, string) {
-	switch moduleID {
-	case "planning-project":
-		return []string{"planning-type", "status", "administrative-unit", "updated-at"}, []string{"overview", "research-scope", "legal-timeline", "source"}, planningProjectAnswerSpecVersion
-	case "planning-region":
-		return []string{"planning-type", "status", "updated-at"}, []string{"scope", "status", "source"}, "seo-m4/planning-region/v1"
-	case "administrative-unit":
-		return []string{"unit-type", "administrative-hierarchy", "updated-at"}, []string{"overview", "planning-context", "source"}, "seo-m4/administrative-unit/v1"
-	case "parcel":
-		return []string{"sheet-number", "parcel-number", "administrative-unit", "updated-at"}, []string{"parcel-identity", "planning-intersections", "legal-warning", "source"}, "seo-m4/parcel/v1"
-	case "planning-news":
-		return []string{"published-at", "updated-at"}, []string{"article-body", "source"}, "seo-m4/planning-news/v1"
-	case "planning-report":
-		return []string{"report-type", "updated-at"}, []string{"summary", "methodology", "limitations", "source"}, "seo-m4/planning-report/v1"
-	default:
-		return nil, []string{"overview", "source"}, "seo-m4/default/v1"
-	}
-}
-
-func hasMeaningfulSeoSection(section dto.SeoSection) bool {
-	if strings.TrimSpace(section.ID) == "" {
-		return false
-	}
-	for _, block := range section.Blocks {
-		switch block.Type {
-		case "paragraph":
-			if len([]rune(strings.TrimSpace(block.Text))) >= 24 && !isPlaceholderSeoText(block.Text) {
-				return true
-			}
-		case "list":
-			for _, item := range block.Items {
-				if strings.TrimSpace(item) != "" {
-					return true
-				}
-			}
-		case "notice":
-			if len([]rune(strings.TrimSpace(block.Text))) >= 12 && !isPlaceholderSeoText(block.Text) {
-				return true
-			}
-		case "timeline":
-			for _, item := range block.TimelineItems {
-				if strings.TrimSpace(item.Title) != "" {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-func isMeaningfulSeoValue(value string) bool {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return false
-	}
-	switch strings.ToLower(value) {
-	case "chưa công bố", "chưa cập nhật", "không xác định", "n/a", "-":
-		return false
-	default:
-		return true
-	}
-}
-
-func isPlaceholderSeoText(value string) bool {
-	value = strings.ToLower(strings.TrimSpace(value))
-	return strings.Contains(value, "đang được cập nhật") ||
-		strings.Contains(value, "chưa được công bố") ||
-		strings.Contains(value, "chưa được cấu trúc") ||
-		strings.Contains(value, "chưa có")
-}
-
-func isTrustedSeoSource(source dto.SeoPublicSource) bool {
-	quality := strings.TrimSpace(source.Quality)
-	authority := strings.TrimSpace(source.Authority)
-	if quality == "unverified" || quality == "conflicted" || quality == "stale" {
-		return false
-	}
-	if authority == "official" || authority == "government_derived" || authority == "authorized_partner" || authority == "editorial" {
-		return true
-	}
-	return authority == "aggregated" && quality == "complete" && strings.TrimSpace(source.SourceName) != ""
-}
-
 func defaultSeoSource(page *seo_domain.SeoDomain, updatedAt string) dto.SeoPublicSource {
-	authority := "unknown"
-	quality := "unverified"
-	if page != nil {
-		switch strings.TrimSpace(page.RefSource) {
-		case "tqd", "crm", "official", "government":
-			authority = "aggregated"
-		case "manual":
-			authority = "editorial"
-		}
-		switch {
-		case page.SourceStatus == seo_domain.SeoSourceStatusStale:
-			quality = "stale"
-		case page.QualityScore >= 80:
-			quality = "complete"
-		case page.QualityScore >= 50:
-			quality = "partial"
-		}
-	}
-
 	sourceName := ""
 	sourceURL := ""
-	limitations := []string{"Thông tin cần được đối chiếu với hồ sơ, quyết định và cơ quan có thẩm quyền trước khi sử dụng làm căn cứ pháp lý."}
 	if page != nil {
 		sourceName = firstNonEmptyRender(page.RefLabel, page.RefSource)
 		sourceURL = page.RefURL
 	}
 
 	return dto.SeoPublicSource{
-		Environment: "production",
-		Authority:   authority,
-		SourceName:  sourceName,
-		SourceURL:   sourceURL,
-		Quality:     quality,
-		UpdatedAt:   updatedAt,
-		Limitations: limitations,
+		SourceName: sourceName,
+		SourceURL:  sourceURL,
+		UpdatedAt:  updatedAt,
 	}
 }
 
@@ -810,24 +573,6 @@ func resourceTypeForModule(moduleID string) string {
 		return "generic_page"
 	default:
 		return ""
-	}
-}
-
-func seoIndexClass(page *seo_domain.SeoDomain) string {
-	if page == nil {
-		return "SEO-N"
-	}
-	switch uint32(page.Classify) {
-	case 10:
-		return "SEO-A"
-	case 20:
-		return "SEO-B"
-	case 30:
-		return "SEO-C"
-	case 40:
-		return "SEO-D"
-	default:
-		return "SEO-N"
 	}
 }
 
@@ -1068,9 +813,6 @@ func normalizeMedia(item dto.SeoMedia) *dto.SeoMedia {
 }
 
 func normalizeSource(source dto.SeoPublicSource) dto.SeoPublicSource {
-	source.Environment = "production"
-	source.Authority = normalizeEnum(source.Authority, []string{"official", "government_derived", "authorized_partner", "aggregated", "derived", "editorial", "unknown"}, "unknown")
-	source.Quality = normalizeEnum(source.Quality, []string{"complete", "partial", "stale", "estimated", "unverified", "conflicted"}, "unverified")
 	source.SourceName = trimLimit(source.SourceName, 300)
 	source.SourceURL = strings.TrimSpace(source.SourceURL)
 	if source.SourceURL != "" && !isSafeMediaURL(source.SourceURL) {
@@ -1078,13 +820,6 @@ func normalizeSource(source dto.SeoPublicSource) dto.SeoPublicSource {
 	}
 	source.UpdatedAt = trimLimit(source.UpdatedAt, 80)
 	source.PublishedAt = trimLimit(source.PublishedAt, 80)
-	source.Limitations = compactUniqueStrings(source.Limitations)
-	if len(source.Limitations) > 12 {
-		source.Limitations = source.Limitations[:12]
-	}
-	for index := range source.Limitations {
-		source.Limitations[index] = trimLimit(source.Limitations[index], 1000)
-	}
 	return source
 }
 

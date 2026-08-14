@@ -72,13 +72,11 @@ func prepareHTTPOperationID(
 	preparedRequest.Header =
 		request.Header.Clone()
 
-	if preparedRequest.Header ==
-		nil {
+	if preparedRequest.Header == nil {
 
-		preparedRequest.Header =
-			make(
-				http.Header,
-			)
+		preparedRequest.Header = make(
+			http.Header,
+		)
 	}
 
 	preparedRequest.Header.Del(
@@ -92,14 +90,12 @@ func prepareHTTPOperationID(
 
 	// All semantic failure points have passed.
 	// From here onward we commit the prepared boundary state.
-	*request =
-		*preparedRequest
+	*request = *preparedRequest
 
 	writer.Header().Set(
 		OperationIDHeader,
 		decision.ID,
 	)
 
-	return decision,
-		nil
+	return decision, nil
 }

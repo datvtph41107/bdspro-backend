@@ -47,15 +47,9 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 	document := buildPlanningProjectPublicDocument(projection)
 	warnings := make([]string, 0)
 	normalizeSeoPublicDocument(document, &warnings)
-	document.SEO.Indexable = true
-	applySeoAnswerReadiness(document)
-	indexable := document.AnswerReadiness != nil && document.AnswerReadiness.Ready && document.SEO.Indexable
 
-	// Answer Readiness and core SEO fields are derived again after domain-owned
-	// fields are re-applied during rendering. Persist only the source semantic
-	// document, not a stale derived result.
-	document.AnswerReadiness = nil
-	document.IndexDecision = nil
+	// Source hydration only refreshes content. It never changes publication,
+	// index or sitemap flags configured on the SEO page.
 	document.SEO = dto.SeoPublicSEO{}
 
 	projectionJSON, err := json.Marshal(projection)
@@ -69,7 +63,6 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 
 	snapshotHashBytes := sha256.Sum256(projectionJSON)
 	snapshotHash := hex.EncodeToString(snapshotHashBytes[:])
-	qualityScore := planningProjectQualityScore(projection.Source.DataQuality)
 	sourceUpdatedAt := projection.Source.UpdatedAt
 
 	updates := map[string]interface{}{
@@ -83,12 +76,9 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 		"ref_snapshot_json":  datatypes.JSON(projectionJSON),
 		"ref_hash":           snapshotHash,
 		"ref_last_synced_at": now,
-		"quality_score":      qualityScore,
 		"metadata":           datatypes.JSON(documentJSON),
 		"template_key":       "planning-project",
 		"template_version":   dto.SeoPublicDocumentSchemaVersion,
-		"is_index":           indexable,
-		"is_site_map":        indexable,
 	}
 	if sourceUpdatedAt != nil {
 		updates["source_updated_at"] = *sourceUpdatedAt
@@ -112,12 +102,9 @@ func (u *SeoRenderUsecase) hydratePlanningProjectSource(
 	page.RefSnapshotJSON = datatypes.JSON(projectionJSON)
 	page.RefHash = snapshotHash
 	page.RefLastSyncedAt = &now
-	page.QualityScore = qualityScore
 	page.Metadata = datatypes.JSON(documentJSON)
 	page.TemplateKey = "planning-project"
 	page.TemplateVersion = dto.SeoPublicDocumentSchemaVersion
-	page.IsIndex = indexable
-	page.IsSiteMap = indexable
 	page.SourceUpdatedAt = sourceUpdatedAt
 	if strings.TrimSpace(projection.Summary) != "" {
 		page.Summary = strings.TrimSpace(projection.Summary)
@@ -212,14 +199,12 @@ func buildPlanningProjectPublicDocument(
 		sections = append(sections, dto.SeoSection{ID: "documents", Title: "Văn bản liên quan", Blocks: []dto.SeoContentBlock{{Type: "list", Items: documents}}})
 	}
 
-	authority := normalizePlanningSourceAuthority(firstNonEmptyRender(projection.Source.AuthorityClass, projection.Source.Authority))
-	quality := normalizePlanningSourceQuality(projection.Source.DataQuality)
 	sourceName := firstNonEmptyRender(projection.Source.AuthorityName, projection.Source.Dataset, "TQD planning project projection")
 	sections = append(sections, dto.SeoSection{
-		ID: "source", Title: "Nguồn và giới hạn dữ liệu",
+		ID: "source", Title: "Nguồn dữ liệu",
 		Blocks: []dto.SeoContentBlock{{
 			Type: "notice", Tone: "info", Title: firstNonEmptyRender(projection.Source.Dataset, "Nguồn dữ liệu"),
-			Text: fmt.Sprintf("Cơ quan/nguồn: %s. Chất lượng: %s.", firstNonEmptyRender(projection.Source.AuthorityName, projection.Source.Authority, "Chưa công bố"), quality),
+			Text: fmt.Sprintf("Nguồn: %s. Cập nhật: %s.", sourceName, updatedAt),
 		}},
 	})
 
@@ -239,9 +224,6 @@ func buildPlanningProjectPublicDocument(
 		})
 	}
 
-	limitations := append([]string{}, projection.Source.Limitations...)
-	limitations = append(limitations, "Thông tin có giá trị tra cứu; hồ sơ pháp lý gốc là căn cứ cuối cùng.")
-
 	document := &dto.SeoPublicDocument{
 		SchemaVersion: dto.SeoPublicDocumentSchemaVersion,
 		ModuleID:      "planning-project",
@@ -255,7 +237,7 @@ func buildPlanningProjectPublicDocument(
 			{ID: "legal-reference", Question: "Có thể dùng nội dung trên trang làm căn cứ pháp lý cuối cùng không?", Answer: "Không. Nội dung có giá trị tra cứu và tham khảo; người dùng cần đối chiếu quyết định, bản vẽ và hồ sơ chính thức tại cơ quan có thẩm quyền."},
 		}},
 		MapTarget: &dto.SeoMapTarget{Path: "/ban-do?projectId=" + strconv.FormatUint(projection.ID, 10), Label: "Xem đồ án trên bản đồ"},
-		Source:    dto.SeoPublicSource{Environment: "production", Authority: authority, SourceName: sourceName, Quality: quality, UpdatedAt: updatedAt, Limitations: compactUniqueStrings(limitations)},
+		Source:    dto.SeoPublicSource{SourceName: sourceName, UpdatedAt: updatedAt},
 	}
 	if projection.Preview.Bounds != nil {
 		bounds := projection.Preview.Bounds
@@ -332,51 +314,4 @@ func planningDocumentItems(items []dto.TqdPlanningDocument) []string {
 	}
 
 	return out
-}
-
-func normalizePlanningSourceAuthority(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "official", "government", "state":
-		return "official"
-	case "government_derived", "government-derived":
-		return "government_derived"
-	case "authorized_partner", "partner":
-		return "authorized_partner"
-	case "editorial":
-		return "editorial"
-	case "derived":
-		return "derived"
-	default:
-		return "aggregated"
-	}
-}
-
-func normalizePlanningSourceQuality(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "complete", "verified", "high":
-		return "complete"
-	case "partial", "medium":
-		return "partial"
-	case "stale":
-		return "stale"
-	case "conflicted":
-		return "conflicted"
-	default:
-		return "unverified"
-	}
-}
-
-func planningProjectQualityScore(value string) uint32 {
-	switch normalizePlanningSourceQuality(value) {
-	case "complete":
-		return 95
-	case "partial":
-		return 70
-	case "stale":
-		return 40
-	case "conflicted":
-		return 20
-	default:
-		return 30
-	}
 }

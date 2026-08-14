@@ -162,20 +162,19 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 	}
 
 	htmlBody, err := renderSeoHTML(renderSeoInput{
-		Page:            page,
-		Slug:            page.Slug,
-		Title:           page.Title,
-		Description:     page.Description,
-		CanonicalURL:    page.CanonicalURL,
-		Content:         page.Content,
-		Summary:         page.Summary,
-		Metadata:        string(page.Metadata),
-		TemplateKey:     page.TemplateKey,
-		ModuleID:        firstNonEmptyRender(page.TemplateKey, page.GetSchema(), "default"),
-		Environment:     "crm-rendered",
-		Indexable:       page.IsPublicIndexable(),
-		TelemetryScript: "/static/qhpro/seo-m8-client.js",
-		GeneratedAt:     now,
+		Page:         page,
+		Slug:         page.Slug,
+		Title:        page.Title,
+		Description:  page.Description,
+		CanonicalURL: page.CanonicalURL,
+		Content:      page.Content,
+		Summary:      page.Summary,
+		Metadata:     string(page.Metadata),
+		TemplateKey:  page.TemplateKey,
+		ModuleID:     firstNonEmptyRender(page.TemplateKey, page.GetSchema(), "default"),
+		Environment:  "crm-rendered",
+		Indexable:    page.IsPublicIndexable(),
+		GeneratedAt:  now,
 	})
 	if err != nil {
 		failedAt := time.Now().UTC()
@@ -220,20 +219,19 @@ func (u *SeoRenderUsecase) GetSeoGenerationLogs(ctx context.Context, req *dto.Se
 }
 
 type renderSeoInput struct {
-	Page            *seo_domain.SeoDomain
-	Slug            string
-	Title           string
-	Description     string
-	CanonicalURL    string
-	Content         string
-	Summary         string
-	Metadata        string
-	TemplateKey     string
-	ModuleID        string
-	Environment     string
-	Indexable       bool
-	TelemetryScript string
-	GeneratedAt     time.Time
+	Page         *seo_domain.SeoDomain
+	Slug         string
+	Title        string
+	Description  string
+	CanonicalURL string
+	Content      string
+	Summary      string
+	Metadata     string
+	TemplateKey  string
+	ModuleID     string
+	Environment  string
+	Indexable    bool
+	GeneratedAt  time.Time
 }
 
 func renderSeoHTML(input renderSeoInput) (string, error) {
@@ -292,18 +290,15 @@ func renderSeoHTMLWithWarnings(input renderSeoInput) (string, []string, error) {
 		document.SEO.CanonicalPath = document.Identity.CanonicalPath
 	}
 	if input.Page == nil {
-		document.Source.Environment = "fixture"
 		document.SEO.Indexable = false
-		applySeoAnswerReadiness(document)
 	}
 
 	htmlBody, err := renderSeoPublicDocumentHTML(document, seoDocumentRenderOptions{
-		CanonicalURL:    firstNonEmptyRender(input.CanonicalURL, page.CanonicalURL, document.SEO.CanonicalPath),
-		TemplateKey:     firstNonEmptyRender(input.TemplateKey, page.TemplateKey, document.ModuleID),
-		ModuleID:        firstNonEmptyRender(input.ModuleID, document.ModuleID),
-		Environment:     firstNonEmptyRender(input.Environment, "crm-rendered"),
-		TelemetryScript: strings.TrimSpace(input.TelemetryScript),
-		GeneratedAt:     generatedAt,
+		CanonicalURL: firstNonEmptyRender(input.CanonicalURL, page.CanonicalURL, document.SEO.CanonicalPath),
+		TemplateKey:  firstNonEmptyRender(input.TemplateKey, page.TemplateKey, document.ModuleID),
+		ModuleID:     firstNonEmptyRender(input.ModuleID, document.ModuleID),
+		Environment:  firstNonEmptyRender(input.Environment, "crm-rendered"),
+		GeneratedAt:  generatedAt,
 	})
 	return htmlBody, warnings, err
 }
@@ -349,10 +344,6 @@ func validatePageCanGenerate(page *seo_domain.SeoDomain) error {
 	if strings.TrimSpace(page.CanonicalURL) == "" {
 		return _errors.ReturnError(422, "canonicalUrl là bắt buộc để generate")
 	}
-	if page.Classify == 50 {
-		return _errors.ReturnError(409, "SEO classify=N không được generate public page")
-	}
-
 	return nil
 }
 

@@ -72,14 +72,9 @@ func (u *SeoRenderUsecase) hydrateAdministrativeUnitSource(
 	document := buildAdministrativeUnitPublicDocument(projection)
 	warnings := make([]string, 0)
 	normalizeSeoPublicDocument(document, &warnings)
-	document.SEO.Indexable = true
-	applySeoAnswerReadiness(document)
-	indexable := document.IndexDecision != nil && document.IndexDecision.Eligible
 
-	// Domain-owned SEO fields and policy are recalculated after the snapshot is
-	// merged during rendering. Persist only the normalized source semantics.
-	document.AnswerReadiness = nil
-	document.IndexDecision = nil
+	// Source hydration only refreshes content. It never changes publication,
+	// index or sitemap flags configured on the SEO page.
 	document.SEO = dto.SeoPublicSEO{}
 
 	projectionJSON, err := json.Marshal(projection)
@@ -93,7 +88,6 @@ func (u *SeoRenderUsecase) hydrateAdministrativeUnitSource(
 
 	snapshotHashBytes := sha256.Sum256(projectionJSON)
 	snapshotHash := hex.EncodeToString(snapshotHashBytes[:])
-	qualityScore := planningProjectQualityScore(projection.Source.DataQuality)
 	sourceUpdatedAt := projection.Source.UpdatedAt
 	refID := administrativeUnitReferenceID(projection)
 
@@ -107,12 +101,9 @@ func (u *SeoRenderUsecase) hydrateAdministrativeUnitSource(
 		"ref_snapshot_json":  datatypes.JSON(projectionJSON),
 		"ref_hash":           snapshotHash,
 		"ref_last_synced_at": now,
-		"quality_score":      qualityScore,
 		"metadata":           datatypes.JSON(documentJSON),
 		"template_key":       "administrative-unit",
 		"template_version":   dto.SeoPublicDocumentSchemaVersion,
-		"is_index":           indexable,
-		"is_site_map":        indexable,
 		"summary":            strings.TrimSpace(projection.PlanningContext.Summary),
 	}
 	if refID > 0 {
@@ -138,12 +129,9 @@ func (u *SeoRenderUsecase) hydrateAdministrativeUnitSource(
 	page.RefSnapshotJSON = datatypes.JSON(projectionJSON)
 	page.RefHash = snapshotHash
 	page.RefLastSyncedAt = &now
-	page.QualityScore = qualityScore
 	page.Metadata = datatypes.JSON(documentJSON)
 	page.TemplateKey = "administrative-unit"
 	page.TemplateVersion = dto.SeoPublicDocumentSchemaVersion
-	page.IsIndex = indexable
-	page.IsSiteMap = indexable
 	page.SourceUpdatedAt = sourceUpdatedAt
 	page.Summary = strings.TrimSpace(projection.PlanningContext.Summary)
 	return nil
@@ -231,14 +219,12 @@ func buildAdministrativeUnitPublicDocument(
 		{ID: "planning-context", Title: "Bối cảnh quy hoạch", Blocks: []dto.SeoContentBlock{{Type: "list", Items: planningItems}}},
 	}
 
-	authority := normalizePlanningSourceAuthority(firstNonEmptyRender(projection.Source.AuthorityClass, projection.Source.Authority))
-	quality := normalizePlanningSourceQuality(projection.Source.DataQuality)
 	sourceName := firstNonEmptyRender(projection.Source.AuthorityName, projection.Source.Dataset, "TQD administrative unit projection")
 	sections = append(sections, dto.SeoSection{
-		ID: "source", Title: "Nguồn và giới hạn dữ liệu",
+		ID: "source", Title: "Nguồn dữ liệu",
 		Blocks: []dto.SeoContentBlock{{
 			Type: "notice", Tone: "info", Title: firstNonEmptyRender(projection.Source.Dataset, "Nguồn dữ liệu"),
-			Text: fmt.Sprintf("Nguồn: %s. Chất lượng: %s. Geometry hiện tại: %s.", sourceName, quality, firstNonEmptyRender(projection.GeometrySummary.Completeness, "chưa công bố")),
+			Text: fmt.Sprintf("Nguồn: %s. Cập nhật: %s.", sourceName, updatedAt),
 		}},
 	})
 
@@ -294,8 +280,7 @@ func buildAdministrativeUnitPublicDocument(
 			{ID: "boundary-limit", Question: "Vị trí trên bản đồ có phải ranh giới pháp lý không?", Answer: "Không. Nguồn hiện tại chỉ có điểm trung tâm hành chính; cần đối chiếu polygon địa giới và hồ sơ chính thức khi cần xác định ranh giới."},
 		}},
 		Source: dto.SeoPublicSource{
-			Environment: "production", Authority: authority, SourceName: sourceName,
-			Quality: quality, UpdatedAt: updatedAt, Limitations: compactUniqueStrings(projection.Source.Limitations),
+			SourceName: sourceName, UpdatedAt: updatedAt,
 		},
 	}
 	if projection.GeometrySummary.Centroid != nil {

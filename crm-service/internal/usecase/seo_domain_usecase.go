@@ -28,7 +28,6 @@ type SeoDomainUsecase struct {
 	seoDomainRepo   repo.SeoDomainRepo
 	seoInternalRepo repo.SeoInternalLinkRepo
 	seoRelativeRepo repo.SeoRelativeRepo
-	seoTrendRepo    repo.SeoTrendRepo
 	tqdProvider     provider.TqdProvider
 	transaction     provider.ITransaction
 	bdsproProvider  provider.BdsproProvider
@@ -38,7 +37,6 @@ func NewSeoDomainUsecase(
 	seoDomainRepo repo.SeoDomainRepo,
 	seoInternalRepo repo.SeoInternalLinkRepo,
 	seoRelativeRepo repo.SeoRelativeRepo,
-	seoTrendRepo repo.SeoTrendRepo,
 	tqdProvider provider.TqdProvider,
 	transaction provider.ITransaction,
 	bdsproProvider provider.BdsproProvider,
@@ -47,7 +45,6 @@ func NewSeoDomainUsecase(
 		seoDomainRepo:   seoDomainRepo,
 		seoInternalRepo: seoInternalRepo,
 		seoRelativeRepo: seoRelativeRepo,
-		seoTrendRepo:    seoTrendRepo,
 		tqdProvider:     tqdProvider,
 		transaction:     transaction,
 		bdsproProvider:  bdsproProvider,
@@ -255,7 +252,6 @@ func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source
 		RefHash:           hashString(string(metadataBytes)),
 		RefLastSyncedAt:   &now,
 		Scope:             seo_domain.SeoScopePublic,
-		Classify:          enums.ESeoClassifyA,
 		Title:             buildParcelSeoTitle(source.AdrSearch, source.ParcelID),
 		Description:       buildParcelSeoDescription(source.AdrSearch, source.ParcelID),
 		Published:         true,
@@ -339,7 +335,6 @@ func (u *SeoDomainUsecase) PublishSeoPage(ctx context.Context, id uint64) (*seo_
 		Published:  true,
 		IsSiteMap:  existing.IsSiteMap,
 		IsIndex:    existing.IsIndex,
-		Classify:   existing.Classify,
 		PageStatus: seo_domain.SeoPageStatusPublished,
 	}
 	if err := validateSeoState(state); err != nil {
@@ -765,14 +760,6 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	}
 
 	scope := normalizeScope(req.Scope)
-	classify := enums.ESeoClassifyN
-	if req.Classify != 0 {
-		if !enums.IsValidSeoClassify(req.Classify) {
-			return nil, _errors.ReturnError(400, "classify không hợp lệ")
-		}
-		classify = enums.SeoClassifyFromUint32(req.Classify)
-	}
-
 	publishedAt, err := parseSeoTime(req.PublishedAt)
 	if err != nil {
 		return nil, _errors.ReturnError(400, "publishedAt phải theo RFC3339 hoặc YYYY-MM-DD")
@@ -857,7 +844,6 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		Published:  published,
 		IsSiteMap:  req.IsSiteMap,
 		IsIndex:    req.IsIndex,
-		Classify:   classify,
 		PageStatus: pageStatus,
 	}
 	if err := validateSeoState(state); err != nil {
@@ -887,14 +873,6 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		refMissing = *req.RefMissing
 	}
 
-	qualityScore := sourceBinding.QualityScore
-	if req.QualityScore != nil {
-		qualityScore = *req.QualityScore
-	}
-	if qualityScore > 100 {
-		return nil, _errors.ReturnError(400, "qualityScore phải nằm trong khoảng 0..100")
-	}
-
 	return &seo_domain.SeoDomain{
 		Slug:              slug,
 		OriginURL:         originURL,
@@ -909,9 +887,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		RefSnapshotJSON:   refSnapshotJSON,
 		RefHash:           firstNonEmpty(strings.TrimSpace(req.RefHash), sourceBinding.RefHash),
 		RefLastSyncedAt:   refLastSyncedAt,
-		QualityScore:      qualityScore,
 		Scope:             scope,
-		Classify:          classify,
 		PageStatus:        pageStatus,
 		Title:             title,
 		Description:       description,
@@ -960,7 +936,6 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		Published:  existing.Published,
 		IsSiteMap:  existing.IsSiteMap,
 		IsIndex:    existing.IsIndex,
-		Classify:   existing.Classify,
 		PageStatus: pageStatus,
 	}
 
@@ -1043,19 +1018,10 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		updates["ref_snapshot_json"] = sourceBinding.RefSnapshotJSON
 		updates["ref_hash"] = sourceBinding.RefHash
 		updates["ref_last_synced_at"] = sourceBinding.RefLastSyncedAt
-		updates["quality_score"] = sourceBinding.QualityScore
 	}
 
 	if req.Scope != nil {
 		updates["scope"] = normalizeScope(*req.Scope)
-	}
-
-	if req.Classify != nil {
-		if !enums.IsValidSeoClassify(*req.Classify) {
-			return nil, _errors.ReturnError(400, "classify không hợp lệ")
-		}
-		state.Classify = enums.SeoClassifyFromUint32(*req.Classify)
-		updates["classify"] = state.Classify
 	}
 
 	if req.Title != nil {
@@ -1178,13 +1144,6 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		}
 		updates["ref_last_synced_at"] = parsed
 	}
-	if req.QualityScore != nil {
-		if *req.QualityScore > 100 {
-			return nil, _errors.ReturnError(400, "qualityScore phải nằm trong khoảng 0..100")
-		}
-		updates["quality_score"] = *req.QualityScore
-	}
-
 	if req.PageStatus != nil {
 		status, err := normalizePageStatusStrict(*req.PageStatus)
 		if err != nil {
@@ -1280,10 +1239,6 @@ func (u *SeoDomainUsecase) prepareInternalLink(ctx context.Context, parentID, ch
 		return nil, nil, "", 0, err
 	}
 
-	if parent.Classify == enums.ESeoClassifyN || child.Classify == enums.ESeoClassifyN {
-		return nil, nil, "", 0, _errors.ReturnError(400, "không tạo internal link cho page SEO-N")
-	}
-
 	linkType = strings.TrimSpace(linkType)
 	if linkType == "" {
 		linkType = seo_domain.SeoLinkTypeNavigation
@@ -1332,7 +1287,6 @@ type seoSourceBinding struct {
 	RefSnapshotJSON      datatypes.JSON
 	RefHash              string
 	RefLastSyncedAt      *time.Time
-	QualityScore         uint32
 	SuggestedSlug        string
 	SuggestedTitle       string
 	SuggestedDescription string
@@ -1389,7 +1343,6 @@ func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uin
 		RefSnapshotJSON:      datatypes.JSON([]byte(dataJSON)),
 		RefHash:              snapshot.Hash,
 		RefLastSyncedAt:      &now,
-		QualityScore:         0,
 		SuggestedSlug:        snapshot.SuggestedSlug,
 		SuggestedTitle:       snapshot.SuggestedTitle,
 		SuggestedDescription: snapshot.SuggestedMetaDescription,
@@ -1416,7 +1369,6 @@ type seoState struct {
 	Published  bool
 	IsSiteMap  bool
 	IsIndex    bool
-	Classify   enums.ESeoClassify
 	PageStatus string
 }
 
@@ -1430,12 +1382,6 @@ func validateSeoState(state seoState) error {
 		}
 		if state.PageStatus == seo_domain.SeoPageStatusArchived && (state.Published || state.IsSiteMap || state.IsIndex) {
 			return _errors.ReturnError(400, "page_status=archived không được published/index/sitemap")
-		}
-	}
-
-	if state.Classify == enums.ESeoClassifyN {
-		if state.Published || state.IsIndex || state.IsSiteMap {
-			return _errors.ReturnError(400, "classify=N không được publish/index/sitemap")
 		}
 	}
 

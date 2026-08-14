@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// SeoRefSourceManual là nguồn nội dung nhập trực tiếp trong CRM.
 	SeoRefSourceManual = "manual"
 
 	SeoRefSourceBdsproRegion     = "bdspro.region"
@@ -24,12 +25,14 @@ const (
 	SeoRefSourceCrmReport = "crm.report"
 )
 
+// Các trạng thái cho biết nguồn có sẵn để sử dụng hay chưa.
 const (
 	SeoSourceStatusReady      = "ready"
 	SeoSourceStatusComingSoon = "coming_soon"
 	SeoSourceStatusDisabled   = "disabled"
 )
 
+// Các trạng thái kết nối kỹ thuật tới nguồn dữ liệu.
 const (
 	SeoSourceHealthHealthy        = "healthy"
 	SeoSourceHealthDegraded       = "degraded"
@@ -37,46 +40,61 @@ const (
 	SeoSourceHealthNotImplemented = "not_implemented"
 )
 
-// SeoSourceCapabilities is the source-of-truth capability contract for FE/BE.
-// Legacy flat fields such as Searchable/UniquePerRef/SupportsTemplate are kept
-// in SeoRefTypeConfig for backward compatibility with existing handlers/mappers.
+// SeoSourceCapabilities mô tả các thao tác kỹ thuật mà một nguồn hỗ trợ.
 type SeoSourceCapabilities struct {
-	Searchable       bool `json:"searchable"`
-	Resolvable       bool `json:"resolvable"`
-	UniquePerRef     bool `json:"uniquePerRef"`
+	// Searchable cho phép tìm bản ghi nguồn.
+	Searchable bool `json:"searchable"`
+	// Resolvable cho phép đọc chi tiết một bản ghi nguồn.
+	Resolvable bool `json:"resolvable"`
+	// UniquePerRef chỉ cho phép một trang SEO trên mỗi bản ghi nguồn.
+	UniquePerRef bool `json:"uniquePerRef"`
+	// SupportsTemplate cho phép tạo nội dung từ mẫu.
 	SupportsTemplate bool `json:"supportsTemplate"`
-	SupportsPreview  bool `json:"supportsPreview"`
+	// SupportsPreview cho phép xem trước HTML.
+	SupportsPreview bool `json:"supportsPreview"`
+	// SupportsGenerate cho phép tạo HTML tĩnh.
 	SupportsGenerate bool `json:"supportsGenerate"`
-	SupportsHealth   bool `json:"supportsHealth"`
+	// SupportsHealth giữ thông tin tương thích về kiểm tra kết nối nguồn.
+	SupportsHealth bool `json:"supportsHealth"`
 }
 
-// SeoRefTypeConfig is the SEO source registry item.
-//
-// Compatibility contract:
-//   - Existing code can keep using Searchable, UniquePerRef, SupportsTemplate.
-//   - New code should prefer Status, Resolvable, DisabledReason and Capabilities.
-//   - Source registry is the only place deciding whether a source is ready.
-//   - Frontend must not hard-code source readiness.
+// SeoRefTypeConfig là cấu hình kết nối một loại dữ liệu nguồn với trang SEO.
 type SeoRefTypeConfig struct {
-	Value            uint32 `json:"value"`
-	Key              string `json:"key"`
-	Label            string `json:"label"`
-	Description      string `json:"description"`
-	Family           string `json:"family"`
-	SourceService    string `json:"sourceService"`
-	ResolverKey      string `json:"resolverKey"`
-	Searchable       bool   `json:"searchable"`
-	UniquePerRef     bool   `json:"uniquePerRef"`
-	SupportsTemplate bool   `json:"supportsTemplate"`
-	DefaultPageType  string `json:"defaultPageType"`
-	AdminURLPattern  string `json:"adminUrlPattern"`
+	// Value là mã số loại nguồn để tương thích dữ liệu cũ.
+	Value uint32 `json:"value"`
+	// Key là tên ngắn của loại dữ liệu.
+	Key string `json:"key"`
+	// Label là tên hiển thị trong Admin.
+	Label string `json:"label"`
+	// Description mô tả ngắn dữ liệu nguồn.
+	Description string `json:"description"`
+	// Family là nhóm dữ liệu nguồn.
+	Family string `json:"family"`
+	// SourceService là dịch vụ đang sở hữu dữ liệu.
+	SourceService string `json:"sourceService"`
+	// ResolverKey chọn bộ đọc dữ liệu nguồn.
+	ResolverKey string `json:"resolverKey"`
+	// Searchable là trường tương thích cho khả năng tìm kiếm.
+	Searchable bool `json:"searchable"`
+	// UniquePerRef là trường tương thích cho giới hạn một trang trên mỗi nguồn.
+	UniquePerRef bool `json:"uniquePerRef"`
+	// SupportsTemplate là trường tương thích cho khả năng dùng mẫu.
+	SupportsTemplate bool `json:"supportsTemplate"`
+	// DefaultPageType là loại trang mặc định được tạo.
+	DefaultPageType string `json:"defaultPageType"`
+	// AdminURLPattern là mẫu đường dẫn quản trị của bản ghi nguồn.
+	AdminURLPattern string `json:"adminUrlPattern"`
+	// PublicURLPattern là mẫu đường dẫn công khai của trang.
 	PublicURLPattern string `json:"publicUrlPattern"`
 
-	// V2 source-of-truth fields.
-	Status         string                `json:"status"`
-	Resolvable     bool                  `json:"resolvable"`
-	DisabledReason string                `json:"disabledReason"`
-	Capabilities   SeoSourceCapabilities `json:"capabilities"`
+	// Status là trạng thái sử dụng hiện tại của nguồn.
+	Status string `json:"status"`
+	// Resolvable cho biết có thể đọc chi tiết bản ghi nguồn.
+	Resolvable bool `json:"resolvable"`
+	// DisabledReason giải thích ngắn khi nguồn chưa dùng được.
+	DisabledReason string `json:"disabledReason"`
+	// Capabilities gom các thao tác kỹ thuật nguồn hỗ trợ.
+	Capabilities SeoSourceCapabilities `json:"capabilities"`
 }
 
 func readyCapabilities(searchable bool, resolvable bool, uniquePerRef bool, supportsTemplate bool, supportsPreview bool, supportsGenerate bool, supportsHealth bool) SeoSourceCapabilities {
@@ -115,8 +133,7 @@ func disabledCapabilities(uniquePerRef bool) SeoSourceCapabilities {
 	}
 }
 
-// NormalizeSeoRefTypeConfig keeps legacy flat fields and V2 Capabilities in sync.
-// This protects old code while new code migrates to capability-based decisions.
+// NormalizeSeoRefTypeConfig đồng bộ các trường tương thích với nhóm Capabilities.
 func NormalizeSeoRefTypeConfig(cfg SeoRefTypeConfig) SeoRefTypeConfig {
 	if cfg.Status == "" {
 		cfg.Status = SeoSourceStatusReady
@@ -150,6 +167,7 @@ func NormalizeSeoRefTypeConfig(cfg SeoRefTypeConfig) SeoRefTypeConfig {
 	return cfg
 }
 
+// SeoRefTypeConfigs trả về danh sách nguồn dữ liệu SEO đã cấu hình.
 func SeoRefTypeConfigs() []SeoRefTypeConfig {
 	items := []SeoRefTypeConfig{
 		{
@@ -167,13 +185,13 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			Status:           SeoSourceStatusReady,
 			Resolvable:       false,
 			Capabilities: readyCapabilities(
-				false, // searchable
-				false, // resolvable
-				false, // uniquePerRef
-				true,  // supportsTemplate
-				true,  // supportsPreview
-				true,  // supportsGenerate
-				false, // supportsHealth
+				false, // không tìm kiếm
+				false, // không đọc từ nguồn
+				false, // không giới hạn theo nguồn
+				true,  // hỗ trợ mẫu
+				true,  // hỗ trợ xem trước
+				true,  // hỗ trợ tạo HTML
+				false, // không kiểm tra kết nối
 			),
 		},
 		{
@@ -288,13 +306,13 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			Status:           SeoSourceStatusReady,
 			Resolvable:       true,
 			Capabilities: readyCapabilities(
-				false, // searchable
-				true,  // resolvable
-				true,  // uniquePerRef
-				true,  // supportsTemplate
-				true,  // supportsPreview
-				true,  // supportsGenerate
-				true,  // supportsHealth
+				false, // không tìm kiếm
+				true,  // đọc được từ nguồn
+				true,  // một trang trên mỗi nguồn
+				true,  // hỗ trợ mẫu
+				true,  // hỗ trợ xem trước
+				true,  // hỗ trợ tạo HTML
+				true,  // hỗ trợ kiểm tra kết nối
 			),
 		},
 		{
@@ -357,8 +375,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 	return items
 }
 
-// GetSeoRefTypeConfig keeps the legacy lookup contract.
-// Existing code passes refType + optional resolverKey/sourceService.
+// GetSeoRefTypeConfig tìm cấu hình theo mã loại và thông tin kết nối cũ.
 func GetSeoRefTypeConfig(value uint32, resolverKey string, sourceService string) (SeoRefTypeConfig, bool) {
 	resolverKey = strings.TrimSpace(resolverKey)
 	sourceService = strings.TrimSpace(sourceService)
@@ -379,8 +396,7 @@ func GetSeoRefTypeConfig(value uint32, resolverKey string, sourceService string)
 	return SeoRefTypeConfig{}, false
 }
 
-// GetSeoRefTypeConfigByKey is the V2 lookup path.
-// New APIs should prefer sourceKey over refType+resolverKey+sourceService.
+// GetSeoRefTypeConfigByKey tìm cấu hình nguồn theo một khóa duy nhất.
 func GetSeoRefTypeConfigByKey(sourceKey string) (SeoRefTypeConfig, bool) {
 	sourceKey = strings.TrimSpace(sourceKey)
 	if sourceKey == "" {
@@ -396,6 +412,7 @@ func GetSeoRefTypeConfigByKey(sourceKey string) (SeoRefTypeConfig, bool) {
 	return SeoRefTypeConfig{}, false
 }
 
+// GetSeoRefTypeConfigByResolverKey tìm cấu hình theo khóa bộ đọc dữ liệu.
 func GetSeoRefTypeConfigByResolverKey(resolverKey string) (SeoRefTypeConfig, bool) {
 	resolverKey = strings.TrimSpace(resolverKey)
 	if resolverKey == "" {
@@ -411,26 +428,24 @@ func GetSeoRefTypeConfigByResolverKey(resolverKey string) (SeoRefTypeConfig, boo
 	return SeoRefTypeConfig{}, false
 }
 
-// IsSeoRefTypeReady tells whether a source can be used by admin UI.
-// Manual is ready but not searchable/resolvable.
+// IsSeoRefTypeReady kiểm tra nguồn đã sẵn sàng cho Admin hay chưa.
 func IsSeoRefTypeReady(cfg SeoRefTypeConfig) bool {
 	return cfg.Status == SeoSourceStatusReady
 }
 
-// IsSeoRefTypeSearchable tells whether source search API should call adapter/resolver.
+// IsSeoRefTypeSearchable kiểm tra API có thể tìm kiếm nguồn hay không.
 func IsSeoRefTypeSearchable(cfg SeoRefTypeConfig) bool {
 	cfg = NormalizeSeoRefTypeConfig(cfg)
 	return cfg.Status == SeoSourceStatusReady && cfg.Capabilities.Searchable
 }
 
-// IsSeoRefTypeResolvable tells whether source resolve API should call adapter/resolver.
+// IsSeoRefTypeResolvable kiểm tra API có thể đọc chi tiết nguồn hay không.
 func IsSeoRefTypeResolvable(cfg SeoRefTypeConfig) bool {
 	cfg = NormalizeSeoRefTypeConfig(cfg)
 	return cfg.Status == SeoSourceStatusReady && cfg.Capabilities.Resolvable
 }
 
-// IsSeoResolverReady is useful while the codebase still uses the old resolver switch.
-// Once adapters fully replace the switch, this helper can be removed.
+// IsSeoResolverReady kiểm tra bộ đọc dữ liệu nguồn đã được triển khai.
 func IsSeoResolverReady(resolverKey string) bool {
 	switch strings.TrimSpace(resolverKey) {
 	case SeoRefSourceBdsproProject,
@@ -444,8 +459,7 @@ func IsSeoResolverReady(resolverKey string) bool {
 	}
 }
 
-// SeoRefTypeSourceKeys returns all configured source keys.
-// Useful for tests and frontend docs.
+// SeoRefTypeSourceKeys trả về toàn bộ khóa nguồn đã cấu hình.
 func SeoRefTypeSourceKeys() []string {
 	items := SeoRefTypeConfigs()
 	out := make([]string, 0, len(items))

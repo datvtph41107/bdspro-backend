@@ -24,6 +24,7 @@ func DuringReportMigration(
 	legacy HTTPMetadataAdapter,
 ) HTTPMetadataAdapter {
 	return func(ctx context.Context, r *http.Request) metadata.MD {
+		// chia ra các loại metadata
 		if targetEnabled && isCreateGeneratedReportRequest(r) {
 			return FromHTTPRequest(ctx, r)
 		}

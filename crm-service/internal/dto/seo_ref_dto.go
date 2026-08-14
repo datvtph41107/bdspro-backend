@@ -5,14 +5,14 @@ import (
 	"crm/internal/enums"
 )
 
+// GetSeoRefsRequest chứa bộ lọc tham chiếu nguồn của một trang SEO.
 type GetSeoRefsRequest struct {
 	_dto.Pagable
 	RefType enums.ESEORefType `json:"refType"`
 	RefID   uint64            `json:"refId"`
 }
 
-// SearchSeoRefValuesRequest is the legacy search request.
-// It is still used by /v2/crm/admin/seo/ref-values.
+// SearchSeoRefValuesRequest tìm dữ liệu nguồn theo bộ khóa tương thích cũ.
 type SearchSeoRefValuesRequest struct {
 	_dto.Pagable
 
@@ -21,15 +21,14 @@ type SearchSeoRefValuesRequest struct {
 	SourceService string `json:"sourceService" form:"sourceService"`
 }
 
-// SearchSeoSourceValuesRequest is the V2 source-key based search request.
-// New APIs should use this instead of asking frontend to compose
-// refType + resolverKey + sourceService.
+// SearchSeoSourceValuesRequest tìm dữ liệu nguồn theo một sourceKey.
 type SearchSeoSourceValuesRequest struct {
 	_dto.Pagable
 
 	SourceKey string `json:"sourceKey" form:"sourceKey"`
 }
 
+// SeoRefValueResponse là một kết quả tìm kiếm từ dữ liệu nguồn.
 type SeoRefValueResponse struct {
 	RefType           uint32 `json:"refType"`
 	RefTypeKey        string `json:"refTypeKey"`
@@ -45,10 +44,11 @@ type SeoRefValueResponse struct {
 	ResolverKey       string `json:"resolverKey"`
 	SourceStatus      string `json:"sourceStatus"`
 
-	// V2 compatibility field.
+	// SourceKey là khóa nguồn dùng cho API hiện tại.
 	SourceKey string `json:"sourceKey"`
 }
 
+// ResolveSeoRefValueRequest đọc một bản ghi nguồn theo bộ khóa tương thích cũ.
 type ResolveSeoRefValueRequest struct {
 	RefType       uint32 `json:"refType" form:"refType"`
 	RefID         uint64 `json:"refId" form:"refId"`
@@ -56,12 +56,13 @@ type ResolveSeoRefValueRequest struct {
 	SourceService string `json:"sourceService" form:"sourceService"`
 }
 
-// ResolveSeoSourceValueRequest is the V2 source-key based resolve request.
+// ResolveSeoSourceValueRequest đọc một bản ghi nguồn theo sourceKey.
 type ResolveSeoSourceValueRequest struct {
 	SourceKey string `json:"sourceKey" form:"sourceKey"`
 	RefID     uint64 `json:"refId" form:"refId"`
 }
 
+// SeoRefSnapshotResponse là bản chụp nguồn dùng để tạo hoặc cập nhật trang SEO.
 type SeoRefSnapshotResponse struct {
 	RefType                  uint32 `json:"refType"`
 	RefTypeKey               string `json:"refTypeKey"`
@@ -81,7 +82,7 @@ type SeoRefSnapshotResponse struct {
 	Hash                     string `json:"hash"`
 	DataJSON                 string `json:"dataJson"`
 
-	// V2 compatibility fields.
+	// Các trường kỹ thuật dùng bởi API theo sourceKey.
 	SourceKey      string `json:"sourceKey"`
 	Visibility     string `json:"visibility"`
 	Indexable      bool   `json:"indexable"`

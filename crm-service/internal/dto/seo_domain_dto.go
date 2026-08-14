@@ -2,6 +2,7 @@ package dto
 
 import _dto "common/domain/dto"
 
+// SeoDomainCreateRequest chứa dữ liệu tạo mới một trang SEO.
 type SeoDomainCreateRequest struct {
 	Slug              string  `json:"slug"`
 	OriginURL         string  `json:"originUrl"`
@@ -16,9 +17,7 @@ type SeoDomainCreateRequest struct {
 	RefSnapshotJSON   *string `json:"refSnapshotJson"`
 	RefHash           string  `json:"refHash"`
 	RefLastSyncedAt   *string `json:"refLastSyncedAt"`
-	QualityScore      *uint32 `json:"qualityScore"`
 	Scope             string  `json:"scope"`
-	Classify          uint32  `json:"classify"`
 	Title             string  `json:"title"`
 	Description       string  `json:"description"`
 	Content           string  `json:"content"`
@@ -40,7 +39,7 @@ type SeoDomainCreateRequest struct {
 	Metadata          *string `json:"metadata"`
 	Note              string  `json:"note"`
 
-	// V2 lifecycle/render fields.
+	// Các trường trạng thái vòng đời và render của trang.
 	PageStatus      string `json:"pageStatus"`
 	RenderStatus    string `json:"renderStatus"`
 	RenderedHTML    string `json:"renderedHtml"`
@@ -49,6 +48,7 @@ type SeoDomainCreateRequest struct {
 	TemplateVersion string `json:"templateVersion"`
 }
 
+// SeoDomainUpdateRequest chứa các trường được phép cập nhật một phần.
 type SeoDomainUpdateRequest struct {
 	Slug              *string  `json:"slug"`
 	OriginURL         *string  `json:"originUrl"`
@@ -63,9 +63,7 @@ type SeoDomainUpdateRequest struct {
 	RefSnapshotJSON   *string  `json:"refSnapshotJson"`
 	RefHash           *string  `json:"refHash"`
 	RefLastSyncedAt   *string  `json:"refLastSyncedAt"`
-	QualityScore      *uint32  `json:"qualityScore"`
 	Scope             *string  `json:"scope"`
-	Classify          *uint32  `json:"classify"`
 	Title             *string  `json:"title"`
 	Description       *string  `json:"description"`
 	Content           *string  `json:"content"`
@@ -87,7 +85,7 @@ type SeoDomainUpdateRequest struct {
 	Metadata          *string  `json:"metadata"`
 	Note              *string  `json:"note"`
 
-	// V2 lifecycle/render fields.
+	// Các trường trạng thái vòng đời và render của trang.
 	PageStatus      *string `json:"pageStatus"`
 	RenderStatus    *string `json:"renderStatus"`
 	RenderedHTML    *string `json:"renderedHtml"`
@@ -96,6 +94,7 @@ type SeoDomainUpdateRequest struct {
 	TemplateVersion *string `json:"templateVersion"`
 }
 
+// SeoDomainListRequest chứa bộ lọc danh sách trang trong Admin.
 type SeoDomainListRequest struct {
 	_dto.Pagable
 	Keyword      *string `json:"keyword" form:"keyword"`
@@ -105,19 +104,19 @@ type SeoDomainListRequest struct {
 	SourceStatus *string `json:"sourceStatus" form:"sourceStatus"`
 	RefMissing   *bool   `json:"refMissing" form:"refMissing"`
 	Scope        *string `json:"scope" form:"scope"`
-	Classify     *uint32 `json:"classify" form:"classify"`
 	Published    *bool   `json:"published" form:"published"`
 	IsSiteMap    *bool   `json:"isSiteMap" form:"isSiteMap"`
 	IsIndex      *bool   `json:"isIndex" form:"isIndex"`
 	IsRobot      *bool   `json:"isRobot" form:"isRobot"`
 	NeedGenerate *bool   `json:"needGenerate" form:"needGenerate"`
 
-	// V2 lifecycle/render filters.
+	// Các bộ lọc theo trạng thái vòng đời và render.
 	PageStatus   *string `json:"pageStatus" form:"pageStatus"`
 	RenderStatus *string `json:"renderStatus" form:"renderStatus"`
 	TemplateKey  *string `json:"templateKey" form:"templateKey"`
 }
 
+// SeoSitemapItem là dữ liệu tối thiểu để tạo một URL trong sitemap.
 type SeoSitemapItem struct {
 	CanonicalURL      string
 	UpdatedAt         string
@@ -126,34 +125,41 @@ type SeoSitemapItem struct {
 	SitemapChangeFreq string
 }
 
+// SeoSitemapRequest lọc sitemap theo phạm vi sử dụng.
 type SeoSitemapRequest struct {
 	Scope *string `json:"scope" form:"scope"`
 }
 
+// TouchSeoDomainByRefRequest đánh dấu trang cần đồng bộ lại từ dữ liệu nguồn.
 type TouchSeoDomainByRefRequest struct {
 	RefType   uint32 `json:"refType"`
 	RefID     uint64 `json:"refId"`
 	RefSource string `json:"refSource"`
 }
 
+// InternalSeoRenderDataRequest định danh trang bằng bản ghi nguồn.
 type InternalSeoRenderDataRequest struct {
 	RefType   uint32 `json:"refType"`
 	RefID     uint64 `json:"refId"`
 	RefSource string `json:"refSource"`
 }
 
+// SitemapRequest cho phép truyền URL gốc khi tạo sitemap.
 type SitemapRequest struct {
 	BaseURL *string `json:"baseUrl" form:"baseUrl"`
 }
 
+// CreateSeoFromParcelRequest tạo một trang SEO từ thửa đất.
 type CreateSeoFromParcelRequest struct {
 	ParcelID uint64 `json:"parcelId"`
 }
 
+// GenerateSeoFromParcelsRequest giới hạn số thửa đất xử lý trong một lượt.
 type GenerateSeoFromParcelsRequest struct {
 	Limit uint32 `json:"limit"`
 }
 
+// GenerateSeoFromParcelsResult tổng hợp kết quả tạo trang theo lô.
 type GenerateSeoFromParcelsResult struct {
 	Total   int64    `json:"total"`
 	Created int64    `json:"created"`
@@ -162,12 +168,14 @@ type GenerateSeoFromParcelsResult struct {
 	Errors  []string `json:"errors"`
 }
 
+// ParcelSeoSource là dữ liệu thửa đất tối thiểu dùng để tạo trang.
 type ParcelSeoSource struct {
 	ParcelID  uint64  `json:"parcelId" gorm:"column:parcel_id"`
 	AdrSearch string  `json:"adrSearch" gorm:"column:adr_search"`
 	SeoID     *uint64 `json:"seoId" gorm:"column:seo_id"`
 }
 
+// SeoInternalLinkCreateRequest chứa dữ liệu tạo liên kết nội bộ.
 type SeoInternalLinkCreateRequest struct {
 	Link        string `json:"link"`
 	Title       string `json:"title"`
@@ -177,6 +185,7 @@ type SeoInternalLinkCreateRequest struct {
 	ChildSeoID  uint64 `json:"childSeoId"`
 }
 
+// SeoInternalLinkUpdateRequest chứa dữ liệu sửa liên kết nội bộ.
 type SeoInternalLinkUpdateRequest struct {
 	Link        *string `json:"link"`
 	Title       *string `json:"title"`
@@ -186,6 +195,7 @@ type SeoInternalLinkUpdateRequest struct {
 	ChildSeoID  *uint64 `json:"childSeoId"`
 }
 
+// SeoInternalLinkListRequest chứa bộ lọc danh sách liên kết nội bộ.
 type SeoInternalLinkListRequest struct {
 	_dto.Pagable
 	ParentSeoID *uint64 `json:"parentSeoId" form:"parentSeoId"`
@@ -194,6 +204,7 @@ type SeoInternalLinkListRequest struct {
 	Keyword     *string `json:"keyword" form:"keyword"`
 }
 
+// SeoRelativeCreateRequest chứa dữ liệu tạo quan hệ giữa hai trang.
 type SeoRelativeCreateRequest struct {
 	ParentSeoID  uint64 `json:"parentSeoId"`
 	ChildSeoID   uint64 `json:"childSeoId"`
@@ -201,6 +212,7 @@ type SeoRelativeCreateRequest struct {
 	Priority     uint32 `json:"priority"`
 }
 
+// SeoRelativeListRequest chứa bộ lọc danh sách quan hệ trang.
 type SeoRelativeListRequest struct {
 	_dto.Pagable
 	ParentSeoID  *uint64 `json:"parentSeoId" form:"parentSeoId"`
@@ -208,6 +220,7 @@ type SeoRelativeListRequest struct {
 	RelationType *string `json:"relationType" form:"relationType"`
 }
 
+// SeoGenerationLogListRequest chứa bộ lọc lịch sử tạo HTML.
 type SeoGenerationLogListRequest struct {
 	_dto.Pagable
 	SeoDomainID *uint64 `json:"seoDomainId" form:"seoDomainId"`

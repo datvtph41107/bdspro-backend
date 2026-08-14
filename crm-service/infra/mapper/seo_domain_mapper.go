@@ -47,9 +47,7 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		RefSnapshotJson:   jsonToOptionalString(seo.RefSnapshotJSON),
 		RefHash:           seo.RefHash,
 		RefLastSyncedAt:   formatTimePtr(seo.RefLastSyncedAt),
-		QualityScore:      seo.QualityScore,
 		Scope:             seo.Scope,
-		Classify:          uint32(seo.Classify),
 		Title:             seo.Title,
 		Description:       seo.Description,
 		Content:           seo.Content,
@@ -96,7 +94,6 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 		CanonicalUrl: seo.CanonicalURL,
 		Title:        seo.Title,
 		Scope:        seo.Scope,
-		Classify:     uint32(seo.Classify),
 		RefType:      uint32(seo.RefType),
 		RefId:        seo.RefID,
 		RefSource:    seo.RefSource,
@@ -194,27 +191,6 @@ func (m *SeoDomainMapper) SeoSourceConfigsToPb(items []seo_domain.SeoRefTypeConf
 	responses := make([]*crmpb.SeoSourceResponse, 0, len(items))
 	for _, item := range items {
 		responses = append(responses, m.SeoSourceConfigToPb(item))
-	}
-	return responses
-}
-
-func (m *SeoDomainMapper) SeoSourceHealthToPb(item seo_domain.SeoSourceHealth) *crmpb.SeoSourceHealthItemResponse {
-	return &crmpb.SeoSourceHealthItemResponse{
-		SourceKey:      item.SourceKey,
-		SourceService:  item.SourceService,
-		ResolverKey:    item.ResolverKey,
-		Status:         string(item.Status),
-		LatencyMs:      item.LatencyMs,
-		LastCheckedAt:  item.LastCheckedAt,
-		DisabledReason: item.DisabledReason,
-		ErrorMessage:   item.ErrorMessage,
-	}
-}
-
-func (m *SeoDomainMapper) SeoSourceHealthListToPb(items []seo_domain.SeoSourceHealth) []*crmpb.SeoSourceHealthItemResponse {
-	responses := make([]*crmpb.SeoSourceHealthItemResponse, 0, len(items))
-	for _, item := range items {
-		responses = append(responses, m.SeoSourceHealthToPb(item))
 	}
 	return responses
 }

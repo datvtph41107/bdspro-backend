@@ -61,9 +61,7 @@ func registerCRMWithConn(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 	_ = crmpb.RegisterEnumServiceHandler(ctx, mux, conn)
 	_ = crmpb.RegisterAppointmentServiceHandler(ctx, mux, conn)
 	_ = crmpb.RegisterSeoDomainServiceHandler(ctx, mux, conn)
-	_ = crmpb.RegisterSeoStrategyServiceHandler(ctx, mux, conn)
 	_ = crmpb.RegisterCRMPublicContentServiceHandler(ctx, mux, conn)
-	_ = crmpb.RegisterSeoMeasurementRuntimeServiceHandler(ctx, mux, conn)
 }
 
 func registerCRMFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {
@@ -88,7 +86,5 @@ func registerCRMFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoin
 	_ = crmpb.RegisterEnumServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterAppointmentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterSeoDomainServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = crmpb.RegisterSeoStrategyServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = crmpb.RegisterCRMPublicContentServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	_ = crmpb.RegisterSeoMeasurementRuntimeServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

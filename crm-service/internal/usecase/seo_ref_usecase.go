@@ -33,50 +33,6 @@ func (u *SeoDomainUsecase) GetSeoSource(ctx context.Context, sourceKey string) (
 	return cfg, nil
 }
 
-// GetSeoSourceHealth returns lightweight source health based on registry readiness.
-// Full production health can later call adapter-specific health checks.
-func (u *SeoDomainUsecase) GetSeoSourceHealth(ctx context.Context) []seo_domain.SeoSourceHealth {
-	configs := seo_domain.SeoRefTypeConfigs()
-	items := make([]seo_domain.SeoSourceHealth, 0, len(configs))
-
-	for _, cfg := range configs {
-		cfg = seo_domain.NormalizeSeoRefTypeConfig(cfg)
-
-		status := seo_domain.SeoSourceHealthHealthy
-		message := ""
-
-		switch {
-		case cfg.Status == seo_domain.SeoSourceStatusComingSoon:
-			status = seo_domain.SeoSourceHealthNotImplemented
-			message = cfg.DisabledReason
-		case cfg.Status == seo_domain.SeoSourceStatusDisabled:
-			status = seo_domain.SeoSourceHealthUnavailable
-			message = cfg.DisabledReason
-		case !cfg.Capabilities.Resolvable && cfg.Key != "manual":
-			status = seo_domain.SeoSourceHealthNotImplemented
-			message = "source chưa hỗ trợ resolve"
-		case cfg.Key != "manual" && !seo_domain.IsSeoResolverReady(cfg.ResolverKey):
-			status = seo_domain.SeoSourceHealthNotImplemented
-			if message == "" {
-				message = "resolver chưa có adapter production"
-			}
-		}
-
-		items = append(items, seo_domain.SeoSourceHealth{
-			SourceKey:      cfg.Key,
-			SourceService:  cfg.SourceService,
-			ResolverKey:    cfg.ResolverKey,
-			Status:         status,
-			LatencyMs:      0,
-			LastCheckedAt:  "",
-			DisabledReason: cfg.DisabledReason,
-			ErrorMessage:   message,
-		})
-	}
-
-	return items
-}
-
 // SearchSeoRefValues keeps the legacy search behavior for /seo/ref-values,
 // but now enforces registry readiness/capability before calling resolver.
 func (u *SeoDomainUsecase) SearchSeoRefValues(ctx context.Context, req *dto.SearchSeoRefValuesRequest) ([]dto.SeoRefValueResponse, int64, error) {

@@ -5,7 +5,6 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"crm/config"
-	"crm/infra/client"
 	"crm/infra/db"
 	handler_grpc "crm/infra/handler/grpc"
 	"crm/infra/postgre"
@@ -62,15 +61,9 @@ var GrpcCmd = &cobra.Command{
 		seoDomainRepository := postgre.NewSeoDomainPostgres(publicDB)
 		seoPublicUsecase := usecase.NewSeoPublicUsecase(seoDomainRepository)
 		seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
-		tqdClient := client.NewTqdClient()
-		seoGenerationLogRepository := postgre.NewSeoGenerationLogPostgres(publicDB)
-		seoRenderUsecase := usecase.NewSeoRenderUsecase(seoDomainRepository, seoGenerationLogRepository, tqdClient)
-		seoProvisioningUsecase := usecase.NewSeoAdministrativeUnitProvisioningUsecase(seoDomainRepository, tqdClient, seoRenderUsecase)
 		catalogRepository := catalog_postgres.NewRepository(publicDB)
 		catalogService := catalog_application.NewService(catalogRepository)
-		runtimeEventRepository := postgre.NewSeoRuntimeEventPostgres(publicDB)
-		runtimeEventUsecase := usecase.NewSeoRuntimeEventUsecase(runtimeEventRepository)
-		publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(seoPublicUsecase, seoSitemapUsecase, seoProvisioningUsecase, catalogService, runtimeEventUsecase, config.AppProperties.Seo.RuntimeEventIngestKey)
+		publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(seoPublicUsecase, seoSitemapUsecase, catalogService)
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
@@ -111,8 +104,6 @@ var GrpcCmd = &cobra.Command{
 		crmpb.RegisterAdminSalesServiceServer(s, app.AdminSalesHandler)
 		crmpb.RegisterAppointmentServiceServer(s, app.AppointmentService)
 		crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
-		crmpb.RegisterSeoMeasurementRuntimeServiceServer(s, app.SeoDomainHandler)
-		crmpb.RegisterSeoStrategyServiceServer(s, app.SeoStrategyHander)
 		crmpb.RegisterCRMPublicContentServiceServer(s, publicContentGrpcHandler)
 		// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 
