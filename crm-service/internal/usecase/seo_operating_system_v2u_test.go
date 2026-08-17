@@ -16,7 +16,7 @@ func TestSeoOperatingSystemV2UAppliesAllSixteenModules(t *testing.T) {
 		Identity: dto.SeoPublicIdentity{
 			ID:            "ward:42",
 			Slug:          "phuong-mau-00042",
-			CanonicalPath: "/dia-ban/phuong-mau-00042",
+			CanonicalPath: "/tin-tuc/dia-ban/phuong-mau-00042",
 		},
 		Heading: dto.SeoPublicHeading{
 			Title:   "Phường Mẫu",
@@ -36,7 +36,7 @@ func TestSeoOperatingSystemV2UAppliesAllSixteenModules(t *testing.T) {
 		SEO: dto.SeoPublicSEO{
 			Title:         "Phường Mẫu | QHPro",
 			Description:   "Tra cứu Phường Mẫu.",
-			CanonicalPath: "/dia-ban/phuong-mau-00042",
+			CanonicalPath: "/tin-tuc/dia-ban/phuong-mau-00042",
 			Indexable:     true,
 			Follow:        true,
 		},
@@ -124,12 +124,12 @@ func TestSeoOperatingSystemV2UModuleSnapshotMergesStaticAndRuntimeEvidence(t *te
 		Identity: dto.SeoPublicIdentity{
 			ID:            "ward:42",
 			Slug:          "phuong-mau-00042",
-			CanonicalPath: "/dia-ban/phuong-mau-00042",
+			CanonicalPath: "/tin-tuc/dia-ban/phuong-mau-00042",
 		},
 		SEO: dto.SeoPublicSEO{
 			Title:         "Phường Mẫu | QHPro",
 			Description:   "Tra cứu Phường Mẫu.",
-			CanonicalPath: "/dia-ban/phuong-mau-00042",
+			CanonicalPath: "/tin-tuc/dia-ban/phuong-mau-00042",
 		},
 		Source: dto.SeoPublicSource{Authority: "official", UpdatedAt: "2026-07-24T00:00:00Z"},
 	}
@@ -166,7 +166,7 @@ func containsString(values []string, expected string) bool {
 func TestSeoOperatingSystemV2UOnlyActivatesAdministrativeUnitIsland(t *testing.T) {
 	administrative := &dto.SeoPublicDocument{
 		ModuleID: "administrative-unit",
-		Identity: dto.SeoPublicIdentity{ID: "ward:42", Slug: "phuong-mau-00042", CanonicalPath: "/dia-ban/phuong-mau-00042"},
+		Identity: dto.SeoPublicIdentity{ID: "ward:42", Slug: "phuong-mau-00042", CanonicalPath: "/tin-tuc/dia-ban/phuong-mau-00042"},
 	}
 	if bootstrap := buildSeoPageBootstrap(administrative); bootstrap == nil || bootstrap.MountPolicy != "client-island" {
 		t.Fatalf("administrative unit must activate the V2.U client island: %#v", bootstrap)
@@ -174,7 +174,7 @@ func TestSeoOperatingSystemV2UOnlyActivatesAdministrativeUnitIsland(t *testing.T
 
 	project := &dto.SeoPublicDocument{
 		ModuleID: "planning-project",
-		Identity: dto.SeoPublicIdentity{ID: "42", Slug: "do-an-mau", CanonicalPath: "/do-an-quy-hoach/do-an-mau"},
+		Identity: dto.SeoPublicIdentity{ID: "42", Slug: "do-an-mau", CanonicalPath: "/tin-tuc/do-an-quy-hoach/do-an-mau"},
 	}
 	if bootstrap := buildSeoPageBootstrap(project); bootstrap == nil || bootstrap.MountPolicy != "not-activated" {
 		t.Fatalf("future page families must remain framework-only until activated: %#v", bootstrap)

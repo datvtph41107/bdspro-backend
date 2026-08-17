@@ -40,6 +40,7 @@ type ParcelUsecase interface {
 	GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error)
 	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
 	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
+	GetAdministrativeUnitQuickInfo(ctx context.Context, compositeID uint64) ([]dto.ParcelLayerInfo, error)
 	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
@@ -1639,6 +1640,24 @@ func (u *parcelUsecase) GetParcelQuickInfo(ctx context.Context, parcelID uint64)
 	quickInfo, err := u.parcelRepo.GetParcelQuickInfo(ctx, parcelID)
 	if err != nil {
 		return nil, fmt.Errorf("get parcel quick info failed: %w", err)
+	}
+	return quickInfo, nil
+}
+
+func (u *parcelUsecase) GetAdministrativeUnitQuickInfo(ctx context.Context, compositeID uint64) ([]dto.ParcelLayerInfo, error) {
+	if compositeID == 0 {
+		return nil, fmt.Errorf("compositeId is required")
+	}
+	sourceID, kind, err := _utils.DecodeLocationID(compositeID)
+	if err != nil {
+		return nil, fmt.Errorf("decode compositeId: %w", err)
+	}
+	if kind != _utils.LocationIDKindProvince && kind != _utils.LocationIDKindWard {
+		return nil, fmt.Errorf("invalid compositeId kind: %d", kind)
+	}
+	quickInfo, err := u.parcelRepo.GetAdministrativeUnitQuickInfo(ctx, sourceID, kind)
+	if err != nil {
+		return nil, fmt.Errorf("get administrative unit quick info failed: %w", err)
 	}
 	return quickInfo, nil
 }

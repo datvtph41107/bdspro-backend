@@ -26,6 +26,8 @@ message ListPlanningProjectsRequest {
   string updatedTo = 16;
   string tagIds = 17;
   string provinceIds = 18;
+  // admId: administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
+  uint64 admId = 19;
 }
 
 message PlanningProjectIdRequest {
@@ -39,6 +41,10 @@ message ListPlanningDocumentsRequest {
   string keyword = 4;
   string document_type = 5;
   string status = 6;
+  // Alias cho admin list: ?planningProjectId=5 (gateway bind JSON name planningProjectId).
+  uint64 planning_project_id = 7;
+  // Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.
+  uint64 layerId = 8;
 }
 
 message PlanningDocumentIdRequest {
@@ -49,6 +55,7 @@ message ListPlanningEventsRequest {
   uint64 project_id = 1;
   int32 page = 2;
   int32 size = 3;
+  uint64 planning_project_id = 4;
 }
 
 message FollowPlanningProjectRequest {
@@ -84,6 +91,23 @@ message ListProvincesRequest {
   uint32 scope = 1;
   string search = 2;
   int64 timestamp = 3;
+}
+
+message ListNearbyAreasRequest {
+  // admId: composite ID của đơn vị hành chính cần tìm địa bàn lân cận
+  uint64 admId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ListPlanningDocumentsByAdmRequest {
+  // admId: composite ID của đơn vị hành chính, lọc tài liệu thuộc đồ án trong khu vực
+  uint64 admId = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string documentType = 4;
+  string status = 5;
+  string keyword = 6;
 }
 
 // Canonical planning client contract. Gateway registers generated HTTP handlers; TQD exposes gRPC only.
@@ -165,6 +189,18 @@ service PlanningClientService {
   rpc ListProvinces(ListProvincesRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/provinces"
+    };
+  }
+  // Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).
+  rpc ListNearbyAreas(ListNearbyAreasRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/nearby-areas"
+    };
+  }
+  // Danh sách tài liệu đồ án quy hoạch theo đơn vị hành chính (cross-project).
+  rpc ListPlanningDocumentsByAdm(ListPlanningDocumentsByAdmRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/by-adm"
     };
   }
 }

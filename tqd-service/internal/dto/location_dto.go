@@ -32,21 +32,21 @@ type SearchLocationsRequest struct {
 	Query      string  `json:"query"`
 	Type       *string `json:"type,omitempty"` // "province", "ward", "all"
 	Limit      *int32  `json:"limit,omitempty"`
-	ProvinceID *string `json:"provinceId,omitempty"`
+	ProvinceID *uint64 `json:"provinceId,omitempty"`
 }
 
 type GetProvinceRequest struct {
-	ID   *string `json:"id,omitempty"`
+	ID   *uint64 `json:"id,omitempty"`
 	Code *string `json:"code,omitempty"`
 }
 
 type GetWardRequest struct {
-	ID   *string `json:"id,omitempty"`
+	ID   *uint64 `json:"id,omitempty"`
 	Code *string `json:"code,omitempty"`
 }
 
 type ListWardsByProvinceRequest struct {
-	ProvinceID string `json:"provinceId"`
+	ProvinceID uint64 `json:"provinceId"`
 	Page       *int32 `json:"page,omitempty"`
 	PageSize   *int32 `json:"pageSize,omitempty"`
 }
@@ -59,7 +59,7 @@ type AdminListProvincesRequest struct {
 type AdminListWardsRequest struct {
 	_dto.Pagable
 	Search     string `json:"search"`
-	ProvinceID string `json:"provinceId"`
+	ProvinceID uint64 `json:"provinceId"`
 }
 
 type AdminListProvincesResponse struct {
@@ -94,6 +94,7 @@ type SearchResult struct {
 	Ward           *WardDTO     `json:"ward,omitempty"`
 	FullAddress    string       `json:"fullAddress"`
 	RelevanceScore float32      `json:"relevanceScore"`
+	CompositeID    uint64       `json:"compositeId"`
 }
 
 type SearchLocationsResponse struct {
@@ -110,50 +111,83 @@ type ListWardsResponse struct {
 
 // ==================== DATA DTOs ====================
 type ProvinceDTO struct {
-	ID        string     `json:"id"`
-	Code      string     `json:"code"`
-	FullName  string     `json:"fullName"`
-	ShortName string     `json:"shortName"`
-	Lat       float64    `json:"lat"`
-	Lng       float64    `json:"lng"`
-	WardCount int32      `json:"wardCount"`
-	SeoID     *uint64    `json:"seoId,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	ID                    uint64     `json:"id"`
+	Code                  string     `json:"code"`
+	FullName              string     `json:"fullName"`
+	ShortName             string     `json:"shortName"`
+	Lat                   float64    `json:"lat"`
+	Lng                   float64    `json:"lng"`
+	DivisionType          string     `json:"divisionType"`
+	WardCount             int32      `json:"wardCount"`
+	OfficialName          string     `json:"officialName"`
+	OfficialOperationDate *time.Time `json:"officialOperationDate,omitempty"`
+	NaturalAreaKm2        float64    `json:"naturalAreaKm2"`
+	Population            uint64     `json:"population"`
+	PopulationDensity     float64    `json:"populationDensity"`
+	Description           string     `json:"description"`
+	UnitType              uint32     `json:"unitType"`
+	UnitTypeName          string     `json:"unitTypeName"`
+	DataSource            uint32     `json:"dataSource"`
+	DataSourceName        string     `json:"dataSourceName"`
+	PlanDocID             *uint64    `json:"planDocId,omitempty"`
+	CompositeID           uint64     `json:"compositeId"`
+	SeoID                 *uint64    `json:"seoId,omitempty"`
+	OfficialRole          string     `json:"officialRole,omitempty"`
+	OfficialAddress       string     `json:"officialAddress,omitempty"`
+	CreatedAt             *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt             *time.Time `json:"updatedAt,omitempty"`
+	Geometry              string     `json:"geometry,omitempty"`
 }
 
 type WardDTO struct {
-	ID           string     `json:"id"`
-	Code         string     `json:"code"`
-	FullName     string     `json:"fullName"`
-	ShortName    string     `json:"shortName"`
-	Lat          float64    `json:"lat"`
-	Lng          float64    `json:"lng"`
-	ProvinceID   string     `json:"provinceId"`
-	ProvinceCode string     `json:"provinceCode"`
-	SeoID        *uint64    `json:"seoId,omitempty"`
-	CreatedAt    *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
+	ID                    uint64     `json:"id"`
+	Code                  string     `json:"code"`
+	FullName              string     `json:"fullName"`
+	ShortName             string     `json:"shortName"`
+	Lat                   float64    `json:"lat"`
+	Lng                   float64    `json:"lng"`
+	DivisionType          string     `json:"divisionType"`
+	ProvinceID            uint64     `json:"provinceId"`
+	ProvinceCode          string     `json:"provinceCode"`
+	OfficialName          string     `json:"officialName"`
+	OfficialOperationDate *time.Time `json:"officialOperationDate,omitempty"`
+	NaturalAreaKm2        float64    `json:"naturalAreaKm2"`
+	Population            uint64     `json:"population"`
+	PopulationDensity     float64    `json:"populationDensity"`
+	Description           string     `json:"description"`
+	CompositeID           uint64     `json:"compositeId"`
+	UnitType              uint32     `json:"unitType"`
+	UnitTypeName          string     `json:"unitTypeName"`
+	DataSource            uint32     `json:"dataSource"`
+	DataSourceName        string     `json:"dataSourceName"`
+	OfficialRole          string     `json:"officialRole,omitempty"`
+	OfficialAddress       string     `json:"officialAddress,omitempty"`
+	SeoID                 *uint64    `json:"seoId,omitempty"`
+	CreatedAt             *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt             *time.Time `json:"updatedAt,omitempty"`
+	Geometry              string     `json:"geometry,omitempty"`
 }
 
 type AdministrativeUnitSeoSource struct {
-	Identity           string  `json:"identity" gorm:"column:identity"`
-	UnitType           string  `json:"unitType" gorm:"column:unit_type"`
-	SourceID           string  `json:"sourceId" gorm:"column:source_id"`
+	Identity           uint64  `json:"identity" gorm:"column:identity"`
+	UnitType           uint32  `json:"unitType" gorm:"column:unit_type"`
+	SourceID           uint64  `json:"sourceId" gorm:"column:source_id"`
 	Name               string  `json:"name" gorm:"column:name"`
 	Slug               string  `json:"slug" gorm:"column:slug"`
 	CanonicalPath      string  `json:"canonicalPath" gorm:"column:canonical_path"`
 	AdministrativeCode string  `json:"administrativeCode" gorm:"column:administrative_code"`
 	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+	CompositeID        uint64  `json:"compositeId"`
 }
 
 type AdminGenAdministrativeUnitSeoItem struct {
-	Identity     string `json:"identity"`
+	Identity     uint64 `json:"identity"`
 	SeoID        uint64 `json:"seoId"`
 	CanonicalURL string `json:"canonicalUrl"`
 	Slug         string `json:"slug"`
 	Created      bool   `json:"created"`
 	Message      string `json:"message"`
+	CompositeID  uint64 `json:"compositeId"`
 }
 
 type AdminGenAdministrativeUnitSeoResult struct {
@@ -163,6 +197,12 @@ type AdminGenAdministrativeUnitSeoResult struct {
 	Skipped int64                               `json:"skipped"`
 	Failed  int64                               `json:"failed"`
 	Errors  []string                            `json:"errors"`
+}
+
+type SyncAreaFromGeometryResult struct {
+	Updated int64    `json:"updated"`
+	Skipped int64    `json:"skipped"`
+	Errors  []string `json:"errors"`
 }
 
 type LocationResult struct {

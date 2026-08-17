@@ -47,16 +47,16 @@ type OwnershipDTO struct {
 }
 
 type LocationDTO struct {
-	Province     string                  `json:"province"`
-	ProvinceCode string                  `json:"provinceCode"`
-	Ward         string                  `json:"ward"`
-	WardCode     string                  `json:"wardCode"`
-	ProvinceInfo *AdministrativeUnitDTO  `json:"provinceInfo,omitempty"`
-	WardInfo     *AdministrativeUnitDTO  `json:"wardInfo,omitempty"`
+	Province     string                 `json:"province"`
+	ProvinceCode string                 `json:"provinceCode"`
+	Ward         string                 `json:"ward"`
+	WardCode     string                 `json:"wardCode"`
+	ProvinceInfo *AdministrativeUnitDTO `json:"provinceInfo,omitempty"`
+	WardInfo     *AdministrativeUnitDTO `json:"wardInfo,omitempty"`
 }
 
 type AdministrativeUnitDTO struct {
-	ID          string `json:"id"`
+	ID          uint64 `json:"id"`
 	Code        string `json:"code"`
 	FullName    string `json:"fullName"`
 	ShortName   string `json:"shortName"`

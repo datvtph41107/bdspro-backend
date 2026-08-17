@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 
+	"tqd/internal/enums"
 	planningdomain "tqd/internal/modules/planningclient/domain"
 	publicdomain "tqd/internal/modules/publiccontent/domain"
 )
@@ -79,7 +80,18 @@ func (s *Service) ListProjectLayers(ctx context.Context, projectID uint64) ([]pl
 	return s.planning.ListProjectLayers(ctx, projectID)
 }
 func (s *Service) ListProvinces(ctx context.Context, filter planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error) {
-	return s.planning.ListProvinces(ctx, filter)
+	items, err := s.planning.ListProvinces(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].UnitTypeName = enums.LocationUnitType(items[i].UnitType).String()
+		items[i].DataSourceName = enums.LocationDataSource(items[i].DataSource).String()
+		if items[i].PlanDocID != nil && *items[i].PlanDocID == 0 {
+			items[i].PlanDocID = nil
+		}
+	}
+	return items, nil
 }
 func (s *Service) GetParcelQuickView(ctx context.Context, parcelID uint64) (*publicdomain.ParcelQuickView, error) {
 	return s.projection.GetParcelQuickView(ctx, parcelID)

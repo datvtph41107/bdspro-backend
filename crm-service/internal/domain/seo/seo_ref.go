@@ -1,6 +1,10 @@
 package seo_domain
 
-import "crm/internal/enums"
+import (
+	"time"
+
+	"crm/internal/enums"
+)
 
 // ngoài ref_type và ref_id chính từ seo thì đây là bảng chứa id trỏ đến các domain tương ứng
 // nếu các domain đó cần link tới bài viết. có thể coi đây là 1 bảng ds các
@@ -9,9 +13,14 @@ import "crm/internal/enums"
 type SeoRef struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement"`
 
-	SeoID   uint64            `gorm:"column:seo_domain_id;not null;index"`
-	RefID   uint64            `gorm:"column:ref_id;not null;index"`
-	RefType enums.ESEORefType `gorm:"column:ref_type;type:int4;not null;index"`
+	SeoID   uint64            `gorm:"column:seo_domain_id;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
+	RefID   uint64            `gorm:"column:ref_id;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
+	RefType enums.ESEORefType `gorm:"column:ref_type;type:int4;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
+
+	SeoDomain *SeoDomain `gorm:"foreignKey:SeoID;references:ID"`
+
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }
 
 func (SeoRef) TableName() string {

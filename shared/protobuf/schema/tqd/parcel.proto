@@ -148,6 +148,13 @@ service ParcelService {
     };
   }
 
+  // GetWardQuickLayers — tìm giao geometry đơn vị hành chính (tỉnh/phường) với qh_regions → trả quick-layers
+  rpc GetWardQuickLayers(GetWardQuickLayersRequest) returns (LayerQuickInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/administrative-units/{compositeId}/quick-layers"
+    };
+  }
+
   rpc GetParcelTimeline(GetParcelDetailRequest) returns (ParcelTimelineResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/parcels/{parcelId}/timeline"
@@ -261,7 +268,7 @@ message Location {
 }
 
 message AdministrativeUnitSummary {
-  string id = 1;
+  uint64 id = 1;
   string code = 2;
   string fullName = 3;
   string shortName = 4;
@@ -592,6 +599,10 @@ message GetParcelPlanningRequest {
   bool includeOverview = 6;
   bool includeAssessment = 7;
   int64 timestamp = 8;
+}
+
+message GetWardQuickLayersRequest {
+  uint64 compositeId = 1; // Public ID: {sourceId}{1=tỉnh|2=phường}
 }
 
 message ParcelPlanningResponse {
@@ -1026,6 +1037,7 @@ message LayerQuickInfo {
   uint32 layerType = 12;
   string updatedAt = 13;
   optional uint64 planningProjectId = 14;
+  string layerImage = 15; // ảnh lớp cho client (alias của layerAvatar)
 }
 
 message Layer {

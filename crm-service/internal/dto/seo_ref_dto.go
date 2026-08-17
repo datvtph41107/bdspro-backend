@@ -11,6 +11,25 @@ type GetSeoRefsRequest struct {
 	RefID   uint64            `json:"refId"`
 }
 
+type SeoRefCreateRequest struct {
+	SeoDomainID uint64            `json:"seoDomainId"`
+	RefType     enums.ESEORefType `json:"refType"`
+	RefID       uint64            `json:"refId"`
+}
+
+type SeoRefUpdateRequest struct {
+	SeoDomainID *uint64            `json:"seoDomainId"`
+	RefType     *enums.ESEORefType `json:"refType"`
+	RefID       *uint64            `json:"refId"`
+}
+
+type SeoRefListRequest struct {
+	_dto.Pagable
+	SeoDomainID *uint64           `json:"seoDomainId" form:"seoDomainId"`
+	RefType     enums.ESEORefType `json:"refType" form:"refType"`
+	RefID       uint64            `json:"refId" form:"refId"`
+}
+
 // SearchSeoRefValuesRequest is the legacy search request.
 // It is still used by /v2/crm/admin/seo/ref-values.
 type SearchSeoRefValuesRequest struct {

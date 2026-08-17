@@ -1,13 +1,14 @@
-// internal/repo/postgres/location_repo.go
 package postgres
 
 import (
+	_utils "common/utils"
 	"context"
 	"errors"
 	"fmt"
-	"math"
+	"math" // Thêm import strconv
 	"strings"
 	"sync"
+	"time"
 
 	"tqd/internal/domain"
 	"tqd/internal/dto"
@@ -21,15 +22,88 @@ type locationRepo struct {
 	db *gorm.DB
 }
 
+// NewLocationRepository @bind: internal/interface/repo.LocationRepository
 func NewLocationRepository(db *gorm.DB) repo.LocationRepository {
 	return &locationRepo{db: db}
 }
 
+func (r *locationRepo) active(db *gorm.DB) *gorm.DB {
+	return db.Where("deleted_at IS NULL")
+}
+
+func locationDescriptionSQL(alias string, includeDescription bool) string {
+	if !includeDescription {
+		return "'' AS description"
+	}
+	p := ""
+	if alias != "" {
+		p = alias + "."
+	}
+	return fmt.Sprintf("COALESCE(%sdescription, '') AS description", p)
+}
+
+func provinceSelectSQL(alias string, includeDescription bool) string {
+	p := ""
+	if alias != "" {
+		p = alias + "."
+	}
+	return fmt.Sprintf(`%[1]sid, %[1]sfull_name, %[1]sshort_name, %[1]slat, %[1]slng, %[1]scode,
+		%[1]sward_count, %[1]sqh_order, %[1]szoom,
+		%[2]s,
+		COALESCE(%[1]sofficial_name, '') AS official_name,
+		COALESCE(%[1]sdivision_type, '') AS division_type,
+		%[1]sofficial_operation_date,
+		COALESCE(%[1]snatural_area_km2, 0) AS natural_area_km2,
+		COALESCE(%[1]spopulation, 0) AS population,
+		COALESCE(%[1]spopulation_density, 0) AS population_density,
+		COALESCE(%[1]sunit_type, 0) AS unit_type,
+		COALESCE(%[1]sdata_source, 0) AS data_source,
+		%[1]splan_doc_id,
+		COALESCE(%[1]sofficial_role, '') AS official_role,
+		COALESCE(%[1]sofficial_address, '') AS official_address,
+		%[1]sseo_id, %[1]screated_at, %[1]supdated_at`, p, locationDescriptionSQL(alias, includeDescription))
+}
+
+func wardSelectSQL(alias string, includeDescription bool) string {
+	p := ""
+	if alias != "" {
+		p = alias + "."
+	}
+	return fmt.Sprintf(`%[1]sid, %[1]sfull_name, %[1]sshort_name, %[1]slat, %[1]slng, %[1]scode,
+		%[1]sprovince_id, %[1]sprovince_code,
+		%[2]s,
+		COALESCE(%[1]sofficial_name, '') AS official_name,
+		COALESCE(%[1]sdivision_type, '') AS division_type,
+		%[1]sofficial_operation_date,
+		COALESCE(%[1]snatural_area_km2, 0) AS natural_area_km2,
+		COALESCE(%[1]spopulation, 0) AS population,
+		COALESCE(%[1]spopulation_density, 0) AS population_density,
+		COALESCE(%[1]sunit_type, 0) AS unit_type,
+		COALESCE(%[1]sdata_source, 0) AS data_source,
+		COALESCE(%[1]sofficial_role, '') AS official_role,
+		COALESCE(%[1]sofficial_address, '') AS official_address,
+		%[1]sseo_id, %[1]screated_at, %[1]supdated_at`, p, locationDescriptionSQL(alias, includeDescription))
+}
+
 // ==================== PROVINCE OPERATIONS ====================
 
-func (r *locationRepo) GetProvinceByID(ctx context.Context, id string) (*domain.Province, error) {
+func (r *locationRepo) GetProvinceByID(ctx context.Context, id uint64) (*domain.Province, error) {
 	var province domain.Province
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", false)).
+		Where("id = ?", id).
+		First(&province).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &province, err
+}
+
+func (r *locationRepo) GetProvinceDetail(ctx context.Context, id uint64) (*domain.Province, error) {
+	var province domain.Province
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", true)+", ST_AsGeoJSON(geometry)::text AS geometry").
 		Where("id = ?", id).
 		First(&province).Error
 
@@ -41,7 +115,8 @@ func (r *locationRepo) GetProvinceByID(ctx context.Context, id string) (*domain.
 
 func (r *locationRepo) GetProvinceByCode(ctx context.Context, code string) (*domain.Province, error) {
 	var province domain.Province
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", false)).
 		Where("code = ?", code).
 		First(&province).Error
 
@@ -51,15 +126,26 @@ func (r *locationRepo) GetProvinceByCode(ctx context.Context, code string) (*dom
 	return &province, err
 }
 
+func (r *locationRepo) GetProvinceByCompositeId(ctx context.Context, compositeId string) (*domain.Province, error) {
+	sourceID, kind, err := _utils.DecodeLocationIDFromString(compositeId)
+	if err != nil {
+		return nil, err
+	}
+	if kind != _utils.LocationIDKindProvince {
+		return nil, fmt.Errorf("invalid compositeId kind, expected province but got %d", kind)
+	}
+	return r.GetProvinceByID(ctx, sourceID)
+}
+
 func (r *locationRepo) GetNearestProvince(ctx context.Context, lat, lng float64, maxDistanceKm float64) (*domain.Province, float64, error) {
 	var province domain.Province
 
 	// Sử dụng raw query cho hiệu suất tốt hơn
 	query := `
-		SELECT id, full_name, short_name, lat, lng, code, ward_count, qh_order, zoom,
-		       COALESCE(description, '') AS description
+		SELECT ` + provinceSelectSQL("", false) + `
 		FROM province_v2
-		WHERE (6371 * acos(cos(radians(?)) * cos(radians(lat)) * 
+		WHERE deleted_at IS NULL
+		  AND (6371 * acos(cos(radians(?)) * cos(radians(lat)) * 
 		      cos(radians(lng) - radians(?)) + sin(radians(?)) * 
 		      sin(radians(lat)))) < ?
 		ORDER BY (6371 * acos(cos(radians(?)) * cos(radians(lat)) * 
@@ -73,7 +159,7 @@ func (r *locationRepo) GetNearestProvince(ctx context.Context, lat, lng float64,
 		return nil, 0, fmt.Errorf("query nearest province: %w", err)
 	}
 
-	if province.ID == "" {
+	if province.ID == 0 {
 		return nil, 0, nil
 	}
 
@@ -85,7 +171,8 @@ func (r *locationRepo) SearchProvinces(ctx context.Context, query string, limit 
 	var provinces []*domain.Province
 	searchPattern := "%" + strings.ToLower(query) + "%"
 
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", false)).
 		Where("LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR code = ?",
 			searchPattern, searchPattern, query).
 		Order(clause.Expr{
@@ -106,22 +193,32 @@ func (r *locationRepo) SearchProvinces(ctx context.Context, query string, limit 
 
 func (r *locationRepo) ListAllProvinces(ctx context.Context) ([]*domain.Province, error) {
 	var provinces []*domain.Province
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", false)).
 		Order("full_name").
 		Find(&provinces).Error
 	return provinces, err
+}
+
+func locationLikePattern(search string) string {
+	search = strings.ToLower(strings.TrimSpace(search))
+	search = strings.ReplaceAll(search, "+", " ")
+	parts := strings.Fields(search)
+	if len(parts) == 0 {
+		return ""
+	}
+	return "%" + strings.Join(parts, "%") + "%"
 }
 
 func (r *locationRepo) AdminListProvinces(ctx context.Context, req *dto.AdminListProvincesRequest) ([]*domain.Province, int64, error) {
 	var provinces []*domain.Province
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Province{})
-	if req.Search != "" {
-		searchPattern := "%" + strings.ToLower(req.Search) + "%"
+	query := r.active(r.db.WithContext(ctx).Model(&domain.Province{}))
+	if p := locationLikePattern(req.Search); p != "" {
 		query = query.Where(
-			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ?",
-			searchPattern, searchPattern, searchPattern,
+			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
+			p, p, p, p,
 		)
 	}
 
@@ -130,7 +227,8 @@ func (r *locationRepo) AdminListProvinces(ctx context.Context, req *dto.AdminLis
 	}
 
 	err := query.
-		Order(adminLocationOrder(req.Sort, "full_name ASC")).
+		Select(provinceSelectSQL("", false)).
+		Order(adminLocationOrder(req.Sort, "updated_at DESC")).
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&provinces).Error
@@ -139,9 +237,23 @@ func (r *locationRepo) AdminListProvinces(ctx context.Context, req *dto.AdminLis
 
 // ==================== WARD OPERATIONS ====================
 
-func (r *locationRepo) GetWardByID(ctx context.Context, id string) (*domain.Ward, error) {
+func (r *locationRepo) GetWardByID(ctx context.Context, id uint64) (*domain.Ward, error) {
 	var ward domain.Ward
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
+		Where("id = ?", id).
+		First(&ward).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &ward, err
+}
+
+func (r *locationRepo) GetWardDetail(ctx context.Context, id uint64) (*domain.Ward, error) {
+	var ward domain.Ward
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", true)+", ST_AsGeoJSON(geometry)::text AS geometry").
 		Where("id = ?", id).
 		First(&ward).Error
 
@@ -153,7 +265,8 @@ func (r *locationRepo) GetWardByID(ctx context.Context, id string) (*domain.Ward
 
 func (r *locationRepo) GetWardByCode(ctx context.Context, code string) (*domain.Ward, error) {
 	var ward domain.Ward
-	err := r.db.WithContext(ctx).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
 		Where("code = ?", code).
 		First(&ward).Error
 
@@ -163,16 +276,25 @@ func (r *locationRepo) GetWardByCode(ctx context.Context, code string) (*domain.
 	return &ward, err
 }
 
-func (r *locationRepo) GetNearestWard(ctx context.Context, lat, lng float64, provinceID string, maxDistanceKm float64) (*domain.Ward, float64, error) {
+func (r *locationRepo) GetWardByCompositeId(ctx context.Context, compositeId string) (*domain.Ward, error) {
+	sourceID, kind, err := _utils.DecodeLocationIDFromString(compositeId)
+	if err != nil {
+		return nil, err
+	}
+	if kind != _utils.LocationIDKindWard {
+		return nil, fmt.Errorf("invalid compositeId kind, expected ward but got %d", kind)
+	}
+	return r.GetWardByID(ctx, sourceID)
+}
+
+func (r *locationRepo) GetNearestWard(ctx context.Context, lat, lng float64, provinceID uint64, maxDistanceKm float64) (*domain.Ward, float64, error) {
 	var ward domain.Ward
 
 	query := `
-		SELECT w.id, w.full_name, w.short_name, w.lat, w.lng, w.code, w.province_id,
-		       COALESCE(p.code, '') AS province_code,
-		       COALESCE(w.description, '') AS description
+		SELECT ` + wardSelectSQL("w", false) + `
 		FROM ward_v2 w
-		LEFT JOIN province_v2 p ON p.id = w.province_id
-		WHERE w.province_id = ?
+		WHERE w.deleted_at IS NULL
+		  AND w.province_id = ?
 		  AND (6371 * acos(cos(radians(?)) * cos(radians(w.lat)) * 
 		       cos(radians(w.lng) - radians(?)) + sin(radians(?)) * 
 		       sin(radians(w.lat)))) < ?
@@ -187,7 +309,7 @@ func (r *locationRepo) GetNearestWard(ctx context.Context, lat, lng float64, pro
 		return nil, 0, fmt.Errorf("query nearest ward: %w", err)
 	}
 
-	if ward.ID == "" {
+	if ward.ID == 0 { // Changed from "" to 0
 		return nil, 0, nil
 	}
 
@@ -195,15 +317,16 @@ func (r *locationRepo) GetNearestWard(ctx context.Context, lat, lng float64, pro
 	return &ward, distance, nil
 }
 
-func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID string, limit int) ([]*domain.Ward, error) {
+func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID uint64, limit int) ([]*domain.Ward, error) {
 	var wards []*domain.Ward
 	searchPattern := "%" + strings.ToLower(query) + "%"
 
-	db := r.db.WithContext(ctx).
+	db := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
 		Where("LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ?",
 			searchPattern, searchPattern)
 
-	if provinceID != "" {
+	if provinceID != 0 { // Changed from "" to 0
 		db = db.Where("province_id = ?", provinceID)
 	}
 
@@ -223,13 +346,12 @@ func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID
 	return wards, err
 }
 
-func (r *locationRepo) ListWardsByProvince(ctx context.Context, provinceID string, page, pageSize int) ([]*domain.Ward, int64, error) {
+func (r *locationRepo) ListWardsByProvince(ctx context.Context, provinceID uint64, page, pageSize int) ([]*domain.Ward, int64, error) {
 	var wards []*domain.Ward
 	var total int64
 
 	// Count total
-	err := r.db.WithContext(ctx).
-		Model(&domain.Ward{}).
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
 		Where("province_id = ?", provinceID).
 		Count(&total).Error
 	if err != nil {
@@ -238,7 +360,8 @@ func (r *locationRepo) ListWardsByProvince(ctx context.Context, provinceID strin
 
 	// Get paginated data
 	offset := (page - 1) * pageSize
-	err = r.db.WithContext(ctx).
+	err = r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
 		Where("province_id = ?", provinceID).
 		Order("full_name").
 		Offset(offset).
@@ -252,15 +375,14 @@ func (r *locationRepo) AdminListWards(ctx context.Context, req *dto.AdminListWar
 	var wards []*domain.Ward
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&domain.Ward{})
-	if req.ProvinceID != "" {
+	query := r.active(r.db.WithContext(ctx).Model(&domain.Ward{}))
+	if req.ProvinceID != 0 {
 		query = query.Where("province_id = ?", req.ProvinceID)
 	}
-	if req.Search != "" {
-		searchPattern := "%" + strings.ToLower(req.Search) + "%"
+	if p := locationLikePattern(req.Search); p != "" {
 		query = query.Where(
-			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ?",
-			searchPattern, searchPattern, searchPattern,
+			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
+			p, p, p, p,
 		)
 	}
 
@@ -269,7 +391,8 @@ func (r *locationRepo) AdminListWards(ctx context.Context, req *dto.AdminListWar
 	}
 
 	err := query.
-		Order(adminLocationOrder(req.Sort, "full_name ASC")).
+		Select(wardSelectSQL("", false)).
+		Order(adminLocationOrder(req.Sort, "updated_at DESC")).
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
 		Find(&wards).Error
@@ -286,13 +409,11 @@ func (r *locationRepo) GetLocationByParcelID(ctx context.Context, parcelID uint6
 
 	var ward domain.Ward
 	wardByParcelQuery := `
-		SELECT w.id, w.full_name, w.short_name, w.lat, w.lng, w.code,
-		       w.province_id, COALESCE(p.code, '') AS province_code,
-		       COALESCE(w.description, '') AS description
+		SELECT ` + wardSelectSQL("w", false) + `
 		FROM ward_v2 w
-		LEFT JOIN province_v2 p ON p.id = w.province_id
 		JOIN parcels par ON par.id = ?
 		WHERE par.deleted_at IS NULL
+		  AND w.deleted_at IS NULL
 		  AND par.geometry IS NOT NULL
 		  AND w.geometry IS NOT NULL
 		  AND ST_Contains(w.geometry, par.geometry)
@@ -303,7 +424,7 @@ func (r *locationRepo) GetLocationByParcelID(ctx context.Context, parcelID uint6
 		return nil, nil, fmt.Errorf("query ward by parcel geometry: %w", err)
 	}
 
-	if ward.ID == "" {
+	if ward.ID == 0 { // Changed from "" to 0
 		return nil, nil, nil
 	}
 
@@ -364,6 +485,8 @@ func (r *locationRepo) GetNearestLocations(ctx context.Context, coordinates []*d
 func (r *locationRepo) SearchTxtClient(ctx context.Context, query string, limit int) ([]*domain.SearchItem, error) {
 	var searchItems []*domain.SearchItem
 	err := r.db.WithContext(ctx).
+		Model(&domain.SearchItem{}).
+		Select("title, address, geom, search_text, poi_id, parcel_id, created_at, updated_at").
 		Where("search_text LIKE ?", "%"+strings.ToLower(query)+"%").
 		Limit(limit).
 		Find(&searchItems).Error
@@ -477,19 +600,19 @@ func adminLocationOrder(sort, fallback string) string {
 	}
 }
 
-func parseAdministrativeUnitIdentity(identity string) (unitType string, sourceID string, err error) {
-	identity = strings.TrimSpace(identity)
-	prefix, rawID, ok := strings.Cut(identity, ":")
-	if !ok {
-		return "", "", errors.New("identity phải có dạng province:<id> hoặc ward:<id>")
-	}
-	unitType = strings.ToLower(strings.TrimSpace(prefix))
-	sourceID = strings.TrimSpace(rawID)
-	if (unitType != "province" && unitType != "ward") || sourceID == "" {
-		return "", "", errors.New("identity phải có dạng province:<id> hoặc ward:<id>")
-	}
-	return unitType, sourceID, nil
-}
+// func parseAdministrativeUnitIdentity(identity string) (unitType string, sourceID string, err error) { // REMOVED
+// 	identity = strings.TrimSpace(identity)
+// 	prefix, rawID, ok := strings.Cut(identity, ":")
+// 	if !ok {
+// 		return "", "", errors.New("identity phải có dạng province:<id> hoặc ward:<id>")
+// 	}
+// 	unitType = strings.ToLower(strings.TrimSpace(prefix))
+// 	sourceID = strings.TrimSpace(rawID)
+// 	if (unitType != "province" && unitType != "ward") || sourceID == "" {
+// 		return "", "", errors.New("identity phải có dạng province:<id> hoặc ward:<id>")
+// 	}
+// 	return unitType, sourceID, nil
+// }
 
 func locationSeoSlug(name, code string) string {
 	nameSlug := locationSlugify(name)
@@ -537,63 +660,65 @@ func locationSlugify(value string) string {
 	return strings.Trim(b.String(), "-")
 }
 
-func (r *locationRepo) buildAdministrativeUnitSeoSource(unitType, sourceID, name, code string, seoID *uint64) *dto.AdministrativeUnitSeoSource {
+// buildAdministrativeUnitSeoSource updated parameters to uint64
+func (r *locationRepo) buildAdministrativeUnitSeoSource(unitType uint32, sourceID uint64, name, code string, seoID *uint64) *dto.AdministrativeUnitSeoSource {
 	slug := locationSeoSlug(name, code)
-	identity := unitType + ":" + sourceID
+	// Use _utils.EncodeLocationID to generate Identity
+	identity, err := _utils.EncodeLocationID(sourceID, unitType)
+	if err != nil {
+		return nil
+	}
 	return &dto.AdministrativeUnitSeoSource{
 		Identity:           identity,
 		UnitType:           unitType,
 		SourceID:           sourceID,
 		Name:               name,
 		Slug:               slug,
-		CanonicalPath:      "/dia-ban/" + slug,
 		AdministrativeCode: code,
-		SeoID:              seoID,
+		CompositeID:        identity,
 	}
 }
 
-func (r *locationRepo) GetAdministrativeUnitSeoSource(ctx context.Context, identity string) (*dto.AdministrativeUnitSeoSource, error) {
-	unitType, sourceID, err := parseAdministrativeUnitIdentity(identity)
+// GetAdministrativeUnitSeoSource updated parameter to uint64
+func (r *locationRepo) GetAdministrativeUnitSeoSource(ctx context.Context, identity uint64) (*dto.AdministrativeUnitSeoSource, error) {
+	sourceID, unitType, err := _utils.DecodeLocationID(identity) // Use _utils.DecodeLocationID
 	if err != nil {
 		return nil, err
 	}
 
 	switch unitType {
-	case "province":
-		province, err := r.GetProvinceByID(ctx, sourceID)
+	case _utils.LocationIDKindProvince:
+		province, err := r.GetProvinceByID(ctx, sourceID) // sourceID is uint64
 		if err != nil {
 			return nil, err
 		}
 		if province == nil {
 			return nil, nil
 		}
-		return r.buildAdministrativeUnitSeoSource("province", province.ID, province.FullName, province.Code, province.SeoID), nil
-	case "ward":
-		ward, err := r.GetWardByID(ctx, sourceID)
+		return r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindProvince, province.ID, province.FullName, province.Code, province.SeoID), nil
+	case _utils.LocationIDKindWard:
+		ward, err := r.GetWardByID(ctx, sourceID) // sourceID is uint64
 		if err != nil {
 			return nil, err
 		}
 		if ward == nil {
 			return nil, nil
 		}
-		return r.buildAdministrativeUnitSeoSource("ward", ward.ID, ward.FullName, ward.Code, ward.SeoID), nil
+		return r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindWard, ward.ID, ward.FullName, ward.Code, ward.SeoID), nil
 	default:
 		return nil, errors.New("unitType không hợp lệ")
 	}
 }
 
-func (r *locationRepo) GetAdministrativeUnitSeoSourcesByIdentities(ctx context.Context, identities []string) ([]dto.AdministrativeUnitSeoSource, error) {
+func (r *locationRepo) GetAdministrativeUnitSeoSourcesByIdentities(ctx context.Context, identities []uint64) ([]dto.AdministrativeUnitSeoSource, error) {
 	if len(identities) == 0 {
 		return nil, nil
 	}
 
 	sources := make([]dto.AdministrativeUnitSeoSource, 0, len(identities))
-	seen := make(map[string]struct{}, len(identities))
+	seen := make(map[uint64]struct{}, len(identities)) // Changed key type to uint64
 	for _, identity := range identities {
-		identity = strings.TrimSpace(identity)
-		if identity == "" {
-			continue
-		}
+		// No need to trim string or check for empty string as identity is uint64
 		if _, ok := seen[identity]; ok {
 			continue
 		}
@@ -611,27 +736,343 @@ func (r *locationRepo) GetAdministrativeUnitSeoSourcesByIdentities(ctx context.C
 	return sources, nil
 }
 
-func (r *locationRepo) UpdateAdministrativeUnitSeoID(ctx context.Context, identity string, seoID uint64) error {
+// UpdateAdministrativeUnitSeoID updated parameter to uint64
+func (r *locationRepo) UpdateAdministrativeUnitSeoID(ctx context.Context, identity uint64, seoID uint64) error {
 	if seoID == 0 {
 		return errors.New("seo_id là bắt buộc")
 	}
-	unitType, sourceID, err := parseAdministrativeUnitIdentity(identity)
+	sourceID, unitType, err := _utils.DecodeLocationID(identity) // Use _utils.DecodeLocationID
 	if err != nil {
 		return err
 	}
 
 	switch unitType {
-	case "province":
+	case _utils.LocationIDKindProvince: // Use constant
 		return r.db.WithContext(ctx).
 			Model(&domain.Province{}).
-			Where("id = ?", sourceID).
+			Where("id = ? AND deleted_at IS NULL", sourceID).
 			Update("seo_id", seoID).Error
-	case "ward":
+	case _utils.LocationIDKindWard: // Use constant
 		return r.db.WithContext(ctx).
 			Model(&domain.Ward{}).
-			Where("id = ?", sourceID).
+			Where("id = ? AND deleted_at IS NULL", sourceID).
 			Update("seo_id", seoID).Error
 	default:
 		return errors.New("unitType không hợp lệ")
 	}
+}
+
+func (r *locationRepo) CreateProvince(ctx context.Context, province *domain.Province) error {
+	return r.db.WithContext(ctx).Omit("Geometry").Create(province).Error
+}
+
+func (r *locationRepo) UpdateProvince(ctx context.Context, province *domain.Province) error {
+	if err := r.db.WithContext(ctx).
+		Model(&domain.Province{}).
+		Where("id = ? AND deleted_at IS NULL", province.ID).
+		Updates(adminProvinceUpdates(province)).Error; err != nil {
+		return err
+	}
+	if province.Code != "" {
+		_ = r.db.WithContext(ctx).
+			Model(&domain.Ward{}).
+			Where("province_id = ? AND deleted_at IS NULL", province.ID).
+			Update("province_code", province.Code).Error
+	}
+	return nil
+}
+
+func (r *locationRepo) SoftDeleteProvince(ctx context.Context, id uint64) error {
+	now := time.Now()
+	result := r.db.WithContext(ctx).
+		Model(&domain.Province{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("deleted_at", now)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *locationRepo) ExistsProvinceCode(ctx context.Context, code string, excludeID uint64) (bool, error) {
+	if strings.TrimSpace(code) == "" {
+		return false, nil
+	}
+	query := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).Where("code = ?", code)
+	if excludeID != 0 { // Changed from "" to 0
+		query = query.Where("id <> ?", excludeID)
+	}
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *locationRepo) CreateWard(ctx context.Context, ward *domain.Ward) error {
+	if err := r.db.WithContext(ctx).Omit("Geometry", "Province").Create(ward).Error; err != nil {
+		return err
+	}
+	return r.recalcProvinceWardCount(ctx, ward.ProvinceID)
+}
+
+func (r *locationRepo) UpdateWard(ctx context.Context, ward *domain.Ward) error {
+	current, err := r.GetWardByID(ctx, ward.ID)
+	if err != nil {
+		return err
+	}
+	if current == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	if err := r.db.WithContext(ctx).
+		Model(&domain.Ward{}).
+		Where("id = ? AND deleted_at IS NULL", ward.ID).
+		Updates(adminWardUpdates(ward)).Error; err != nil {
+		return err
+	}
+	if current.ProvinceID != ward.ProvinceID {
+		if err := r.recalcProvinceWardCount(ctx, current.ProvinceID); err != nil {
+			return err
+		}
+	}
+	return r.recalcProvinceWardCount(ctx, ward.ProvinceID)
+}
+
+func (r *locationRepo) SoftDeleteWard(ctx context.Context, id uint64) error {
+	ward, err := r.GetWardByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if ward == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	now := time.Now()
+	result := r.db.WithContext(ctx).
+		Model(&domain.Ward{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("deleted_at", now)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return r.recalcProvinceWardCount(ctx, ward.ProvinceID)
+}
+
+func (r *locationRepo) SoftDeleteWardsByProvinceID(ctx context.Context, provinceID uint64) error {
+	now := time.Now()
+	return r.db.WithContext(ctx).
+		Model(&domain.Ward{}).
+		Where("province_id = ? AND deleted_at IS NULL", provinceID).
+		Update("deleted_at", now).Error
+}
+
+func (r *locationRepo) ExistsWardCode(ctx context.Context, code string, excludeID uint64) (bool, error) {
+	if strings.TrimSpace(code) == "" {
+		return false, nil
+	}
+	query := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).Where("code = ?", code)
+	if excludeID != 0 { // Changed from "" to 0
+		query = query.Where("id <> ?", excludeID)
+	}
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *locationRepo) recalcProvinceWardCount(ctx context.Context, provinceID uint64) error {
+	if provinceID == 0 {
+		return nil
+	}
+
+	// Single-query update: set ward_count to the count of non-deleted wards for the province.
+	// This avoids an extra round-trip to fetch the count first.
+	query := `
+		UPDATE province_v2
+		SET ward_count = (
+			SELECT COUNT(*) FROM ward_v2 WHERE province_id = ? AND deleted_at IS NULL
+		)
+		WHERE id = ? AND deleted_at IS NULL
+	`
+	if err := r.db.WithContext(ctx).Exec(query, provinceID, provinceID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func adminProvinceUpdates(p *domain.Province) map[string]interface{} {
+	return map[string]interface{}{
+		"full_name":               p.FullName,
+		"short_name":              p.ShortName,
+		"lat":                     p.Lat,
+		"lng":                     p.Lng,
+		"code":                    p.Code,
+		"description":             p.Description,
+		"official_name":           p.OfficialName,
+		"division_type":           p.DivisionType,
+		"official_operation_date": p.OfficialOperationDate,
+		"natural_area_km2":        p.NaturalAreaKm2,
+		"population":              p.Population,
+		"population_density":      p.PopulationDensity,
+		"unit_type":               p.UnitType,
+		"data_source":             p.DataSource,
+		"plan_doc_id":             p.PlanDocID,
+		"official_role":           p.OfficialRole,
+		"official_address":        p.OfficialAddress,
+		"updated_at":              time.Now(),
+	}
+}
+
+func adminWardUpdates(w *domain.Ward) map[string]interface{} {
+	return map[string]interface{}{
+		"full_name":               w.FullName,
+		"short_name":              w.ShortName,
+		"lat":                     w.Lat,
+		"lng":                     w.Lng,
+		"code":                    w.Code,
+		"unit_type":               w.UnitType,
+		"data_source":             w.DataSource,
+		"official_role":           w.OfficialRole,
+		"official_address":        w.OfficialAddress,
+		"province_id":             w.ProvinceID,
+		"province_code":           w.ProvinceCode,
+		"description":             w.Description,
+		"official_name":           w.OfficialName,
+		"division_type":           w.DivisionType,
+		"official_operation_date": w.OfficialOperationDate,
+		"natural_area_km2":        w.NaturalAreaKm2,
+		"population":              w.Population,
+		"population_density":      w.PopulationDensity,
+		"updated_at":              time.Now(),
+	}
+}
+
+// CreateWardNeighbor tạo mối quan hệ hàng xóm giữa hai ward.
+func (r *locationRepo) CreateWardNeighbor(ctx context.Context, wardID uint64, neighborWardID uint64) error {
+	if wardID == 0 || neighborWardID == 0 {
+		return fmt.Errorf("ward id and neighbor id are required")
+	}
+	if wardID == neighborWardID {
+		return fmt.Errorf("ward cannot be neighbor to itself")
+	}
+
+	query := `
+		INSERT INTO ward_neighbors (ward_id, neighbor_ward_id, created_at, updated_at)
+		VALUES (?, ?, NOW(), NOW())
+		ON CONFLICT (ward_id, neighbor_ward_id)
+		DO UPDATE SET deleted_at = NULL, updated_at = NOW()
+	`
+	return r.db.WithContext(ctx).Exec(query, wardID, neighborWardID).Error
+}
+
+// DeleteWardNeighbor soft-deletes a ward neighbor relation.
+func (r *locationRepo) DeleteWardNeighbor(ctx context.Context, wardID uint64, neighborWardID uint64) error {
+	if wardID == 0 || neighborWardID == 0 {
+		return fmt.Errorf("ward id and neighbor id are required")
+	}
+	now := time.Now()
+	result := r.db.WithContext(ctx).
+		Model(nil).
+		Exec(`UPDATE ward_neighbors SET deleted_at = ? WHERE ward_id = ? AND neighbor_ward_id = ? AND deleted_at IS NULL`, now, wardID, neighborWardID)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+// GetWardNeighbors returns list of neighboring wards for a given ward id.
+// It returns wards that are recorded as neighbors in either direction.
+func (r *locationRepo) GetWardNeighbors(ctx context.Context, wardID uint64) ([]*domain.Ward, error) {
+	if wardID == 0 {
+		return nil, fmt.Errorf("ward id is required")
+	}
+	var wards []*domain.Ward
+
+	query := `
+		SELECT ` + wardSelectSQL("w", false) + `
+		FROM ward_neighbors wn
+		JOIN ward_v2 w ON (
+			(wn.ward_id = ? AND wn.neighbor_ward_id = w.id) OR
+			(wn.neighbor_ward_id = ? AND wn.ward_id = w.id)
+		)
+		WHERE wn.deleted_at IS NULL
+		  AND w.deleted_at IS NULL
+		ORDER BY w.full_name
+	`
+	if err := r.db.WithContext(ctx).Raw(query, wardID, wardID).Scan(&wards).Error; err != nil {
+		return nil, fmt.Errorf("query ward neighbors: %w", err)
+	}
+	return wards, nil
+}
+
+// SyncProvinceAreaFromGeometry cập nhật natural_area_km2 của province từ geometry.
+// Trả về true nếu province có geometry và được cập nhật thành công.
+func (r *locationRepo) SyncProvinceAreaFromGeometry(ctx context.Context, provinceID uint64) (bool, error) {
+	result := r.db.WithContext(ctx).Exec(`
+		UPDATE province_v2
+		SET natural_area_km2 = ROUND((ST_Area(geography(geometry)) / 1000000.0)::numeric, 4),
+		    updated_at = NOW()
+		WHERE id = ? AND deleted_at IS NULL
+		  AND geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
+	`, provinceID)
+	if result.Error != nil {
+		return false, fmt.Errorf("sync province area: %w", result.Error)
+	}
+	return result.RowsAffected > 0, nil
+}
+
+// SyncWardAreaFromGeometry cập nhật natural_area_km2 của ward từ geometry.
+// Trả về true nếu ward có geometry và được cập nhật thành công.
+func (r *locationRepo) SyncWardAreaFromGeometry(ctx context.Context, wardID uint64) (bool, error) {
+	result := r.db.WithContext(ctx).Exec(`
+		UPDATE ward_v2
+		SET natural_area_km2 = ROUND((ST_Area(geography(geometry)) / 1000000.0)::numeric, 4),
+		    updated_at = NOW()
+		WHERE id = ? AND deleted_at IS NULL
+		  AND geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
+	`, wardID)
+	if result.Error != nil {
+		return false, fmt.Errorf("sync ward area: %w", result.Error)
+	}
+	return result.RowsAffected > 0, nil
+}
+
+// SyncAllProvincesAreaFromGeometry cập nhật natural_area_km2 cho tất cả province có geometry.
+// Trả về số lượng bản ghi được cập nhật.
+func (r *locationRepo) SyncAllProvincesAreaFromGeometry(ctx context.Context) (int64, error) {
+	result := r.db.WithContext(ctx).Exec(`
+		UPDATE province_v2
+		SET natural_area_km2 = ROUND((ST_Area(geography(geometry)) / 1000000.0)::numeric, 4),
+		    updated_at = NOW()
+		WHERE deleted_at IS NULL
+		  AND geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
+	`)
+	if result.Error != nil {
+		return 0, fmt.Errorf("sync all provinces area: %w", result.Error)
+	}
+	return result.RowsAffected, nil
+}
+
+// SyncAllWardsAreaFromGeometry cập nhật natural_area_km2 cho tất cả ward có geometry.
+// Trả về số lượng bản ghi được cập nhật.
+func (r *locationRepo) SyncAllWardsAreaFromGeometry(ctx context.Context) (int64, error) {
+	result := r.db.WithContext(ctx).Exec(`
+		UPDATE ward_v2
+		SET natural_area_km2 = ROUND((ST_Area(geography(geometry)) / 1000000.0)::numeric, 4),
+		    updated_at = NOW()
+		WHERE deleted_at IS NULL
+		  AND geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
+	`)
+	if result.Error != nil {
+		return 0, fmt.Errorf("sync all wards area: %w", result.Error)
+	}
+	return result.RowsAffected, nil
 }

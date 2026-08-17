@@ -89,7 +89,7 @@ func (c *TqdClient) GetAdministrativeUnitProjection(
 	if strings.TrimSpace(projection.EntityID) == "" ||
 		strings.TrimSpace(projection.Name) == "" ||
 		strings.TrimSpace(projection.AdministrativeCode) == "" ||
-		!strings.HasPrefix(strings.TrimSpace(projection.CanonicalPath), "/dia-ban/") {
+		!strings.HasPrefix(strings.TrimSpace(projection.CanonicalPath), "/tin-tuc/dia-ban/") {
 		return nil, errors.New("tqd administrative unit projection is missing stable identity fields")
 	}
 	if projection.SchemaVersion != dto.TqdAdministrativeUnitProjectionSchemaVersion {
@@ -230,17 +230,16 @@ func (c *TqdClient) UpdatePlanningProjectSeoID(ctx context.Context, planningProj
 	return err
 }
 
-func (c *TqdClient) GetAdministrativeUnitSeoSource(ctx context.Context, identity string) (*dto.AdministrativeUnitSeoSource, error) {
+func (c *TqdClient) GetAdministrativeUnitSeoSource(ctx context.Context, compositeID uint64) (*dto.AdministrativeUnitSeoSource, error) {
 	if c == nil || c.LocationClient == nil {
 		return nil, errors.New("tqd location client not available")
 	}
-	identity = strings.TrimSpace(identity)
-	if identity == "" {
-		return nil, errors.New("identity is required")
+	if compositeID == 0 {
+		return nil, errors.New("compositeId is required")
 	}
 
 	resp, err := c.LocationClient.GetAdministrativeUnitSeoSource(ctx, &tqdpb.GetAdministrativeUnitSeoSourceRequest{
-		Identity: identity,
+		Identity: compositeID,
 	})
 	if err != nil {
 		return nil, err
@@ -248,17 +247,16 @@ func (c *TqdClient) GetAdministrativeUnitSeoSource(ctx context.Context, identity
 	return administrativeUnitSeoSourceFromProto(resp), nil
 }
 
-func (c *TqdClient) UpdateAdministrativeUnitSeoID(ctx context.Context, identity string, seoID uint64) error {
+func (c *TqdClient) UpdateAdministrativeUnitSeoID(ctx context.Context, compositeID uint64, seoID uint64) error {
 	if c == nil || c.LocationClient == nil {
 		return errors.New("tqd location client not available")
 	}
-	identity = strings.TrimSpace(identity)
-	if identity == "" || seoID == 0 {
-		return errors.New("identity and seoId are required")
+	if compositeID == 0 || seoID == 0 {
+		return errors.New("compositeId and seoId are required")
 	}
 
 	_, err := c.LocationClient.UpdateAdministrativeUnitSeoID(ctx, &tqdpb.UpdateAdministrativeUnitSeoIDRequest{
-		Identity: identity,
+		Identity: compositeID,
 		SeoId:    seoID,
 	})
 	return err
@@ -311,17 +309,25 @@ func planningProjectSeoSourceFromProto(resp *tqdpb.PlanningProjectSeoSourceRespo
 }
 
 func administrativeUnitSeoSourceFromProto(resp *tqdpb.AdministrativeUnitSeoSourceResponse) *dto.AdministrativeUnitSeoSource {
-	if resp == nil || strings.TrimSpace(resp.Identity) == "" {
+	if resp == nil {
+		return nil
+	}
+	compositeID := resp.CompositeId
+	if compositeID == 0 {
+		compositeID = resp.Identity
+	}
+	if compositeID == 0 {
 		return nil
 	}
 	source := &dto.AdministrativeUnitSeoSource{
-		Identity:           resp.Identity,
+		Identity:           compositeID,
 		UnitType:           resp.UnitType,
 		SourceID:           resp.SourceId,
 		Name:               resp.Name,
 		Slug:               resp.Slug,
 		CanonicalPath:      resp.CanonicalPath,
 		AdministrativeCode: resp.AdministrativeCode,
+		CompositeID:        compositeID,
 	}
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId

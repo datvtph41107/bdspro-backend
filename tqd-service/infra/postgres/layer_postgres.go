@@ -109,6 +109,8 @@ func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) er
 		"family_id":      layer.FamilyID,
 		"publish_scopes": layer.PublishScopes,
 		"legal_doc":      layer.LegalDoc,
+		"province_id":    layer.ProvinceID,
+		"ward_id":        layer.WardID,
 	}
 
 	return r.db.WithContext(ctx).
@@ -188,16 +190,23 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 
 	orderBy := "display_order"
 	if filter.OrderBy != "" {
-		allowed := map[string]bool{
-			"updated_at": true, "created_at": true, "name": true, "id": true,
+		allowed := map[string]string{
+			"display_order": "display_order",
+			"displayOrder":  "display_order",
+			"updated_at":    "updated_at",
+			"updatedAt":     "updated_at",
+			"created_at":    "created_at",
+			"createdAt":     "created_at",
+			"name":          "name",
+			"id":            "id",
 		}
-		if allowed[filter.OrderBy] {
-			orderBy = filter.OrderBy
+		if col, ok := allowed[filter.OrderBy]; ok {
+			orderBy = col
 		}
 	}
-	orderDir := "DESC"
-	if strings.ToUpper(filter.OrderDir) == "ASC" {
-		orderDir = "ASC"
+	orderDir := "ASC"
+	if strings.EqualFold(filter.OrderDir, "DESC") {
+		orderDir = "DESC"
 	}
 
 	log.Println("Creating layer:", filter.Size)

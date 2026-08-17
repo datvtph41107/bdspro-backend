@@ -303,6 +303,29 @@ func (m *SeoDomainMapper) SeoRelativeListToPb(items []seo_domain.SeoRelative) []
 	return responses
 }
 
+func (m *SeoDomainMapper) SeoRefToPb(item *seo_domain.SeoRef) *crmpb.SeoRefResponse {
+	if item == nil {
+		return nil
+	}
+	return &crmpb.SeoRefResponse{
+		Id:          item.ID,
+		SeoDomainId: item.SeoID,
+		RefType:     uint32(item.RefType),
+		RefId:       item.RefID,
+		SeoDomain:   m.SeoDomainBriefToPb(item.SeoDomain),
+		CreatedAt:   formatTime(item.CreatedAt),
+		UpdatedAt:   formatTime(item.UpdatedAt),
+	}
+}
+
+func (m *SeoDomainMapper) SeoRefListToPb(items []seo_domain.SeoRef) []*crmpb.SeoRefResponse {
+	responses := make([]*crmpb.SeoRefResponse, 0, len(items))
+	for i := range items {
+		responses = append(responses, m.SeoRefToPb(&items[i]))
+	}
+	return responses
+}
+
 func jsonToString(value datatypes.JSON) string {
 	if len(value) == 0 {
 		return ""

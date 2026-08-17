@@ -114,6 +114,8 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 	if len(req.PublishScopes) > 0 {
 		layer.PublishScopes = pq.Int32Array(req.PublishScopes)
 	}
+	layer.ProvinceID = mapper.NormalizeLocationID("province", req.GetProvinceId())
+	layer.WardID = mapper.NormalizeLocationID("ward", req.GetWardId())
 
 	// Set status if provided
 	if req.Status != nil {
@@ -214,6 +216,12 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	}
 	if req.LegalDoc != nil {
 		existing.LegalDoc = *req.LegalDoc
+	}
+	if req.ProvinceId != nil {
+		existing.ProvinceID = mapper.NormalizeLocationID("province", *req.ProvinceId)
+	}
+	if req.WardId != nil {
+		existing.WardID = mapper.NormalizeLocationID("ward", *req.WardId)
 	}
 
 	updated, err := h.layerUsecase.Update(ctx, req.Id, existing, userID)
@@ -334,6 +342,9 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 
 	if req.OrderBy != nil {
 		filter.OrderBy = *req.OrderBy
+	}
+	if req.OrderDir != nil {
+		filter.OrderDir = *req.OrderDir
 	}
 
 	layers, total, err := h.layerUsecase.List(ctx, filter)

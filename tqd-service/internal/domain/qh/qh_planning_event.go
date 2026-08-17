@@ -16,7 +16,7 @@ type QHPlanningEvent struct {
 	EventType         string               `gorm:"type:varchar(80)" json:"eventType"`
 	EventName         string               `gorm:"type:varchar(255);not null" json:"eventName"`
 	Description       string               `gorm:"type:text" json:"description"`
-	EventDate         *time.Time           `json:"eventDate"`
+	EventDate         *time.Time           `gorm:"column:event_date" json:"eventDate"`
 	DocumentID        *uint64              `json:"documentId"`
 	SourceURL         string               `gorm:"type:text" json:"sourceUrl"`
 	Metadata          json.RawMessage      `gorm:"type:jsonb;not null;default:'{}'" json:"metadata"`

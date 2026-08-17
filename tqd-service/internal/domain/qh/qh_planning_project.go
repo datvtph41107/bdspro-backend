@@ -43,6 +43,9 @@ type QHPlanningProject struct {
 
 	SeoID *uint64 `gorm:"column:seo_id;index" json:"seoId,omitempty"`
 
+	// ClientView=false ẩn đồ án khỏi toàn bộ API client; mặc định true.
+	ClientView bool `gorm:"column:client_view;type:boolean;not null;default:true" json:"clientView"`
+
 	Layers    []*QHLayer        `gorm:"foreignKey:PlanningProjectID" json:"layers"`
 	Provinces []domain.Province `gorm:"many2many:qh_planning_project_provinces;joinForeignKey:PlanningProjectID;joinReferences:ID" json:"provinces,omitempty"`
 	// EntityTags []domain.Tag   `gorm:"many2many:qh_planning_project_tags;joinForeignKey:PlanningProjectID;joinReferences:TagID" json:"entityTags,omitempty"`

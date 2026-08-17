@@ -23,6 +23,11 @@ service QHPlanningService {
       get: "/v2/tqd/admin/planning-projects/{id}"
     };
   }
+  rpc CountPlanningProject(IdRequest) returns (PlanningProjectCountResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-projects/{id}/count"
+    };
+  }
   rpc UpdatePlanningProject(PlanningProject) returns (PlanningProject) {
     option (google.api.http) = {
       put: "/v2/tqd/admin/planning-projects/{id}"
@@ -37,6 +42,45 @@ service QHPlanningService {
   rpc ListPlanningProjects(ListPlanningProjectsRequest) returns (ListPlanningProjectsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/admin/planning-projects"
+    };
+  }
+  rpc ListPlanningProjectLayers(ListPlanningProjectLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-projects/{planningId}/layers"
+    };
+  }
+  // Assign provinces to planning project
+  rpc AdminAssignProvinces(AdminAssignProvincesRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{planningId}/provinces"
+      body: "*"
+    };
+  }
+  // Unassign provinces (delete relations)
+  rpc AdminUnassignProvinces(AdminUnassignProvincesRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{planningId}/provinces:remove"
+      body: "*"
+    };
+  }
+  // Assign wards to planning project
+  rpc AdminAssignWards(AdminAssignWardsRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{planningId}/wards"
+      body: "*"
+    };
+  }
+  // Unassign wards (delete relations)
+  rpc AdminUnassignWards(AdminUnassignWardsRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{planningId}/wards:remove"
+      body: "*"
+    };
+  }
+  // UnassignPlanningProjectLayer gỡ layer khỏi đồ án: chỉ xóa layer_plan_doc_relation, không xóa layer.
+  rpc UnassignPlanningProjectLayer(UnassignPlanningProjectLayerRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-projects/{planningId}/layers/{layerId}"
     };
   }
   // CreatePlanningProjectFromFolder tạo đồ án + toàn bộ tài liệu từ 1 folder admin chọn.
@@ -132,17 +176,97 @@ service QHPlanningService {
       post: "/v2/tqd/admin/planning-documents/{id}/retry"
     };
   }
+  // AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer (layer_plan_doc_relation).
+  rpc AssignPlanningDocumentsToLayer(AssignPlanningDocumentsToLayerRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/assign-layer"
+      body: "*"
+    };
+  }
+
+  // QHPlanningEvent APIs — lịch sử pháp lý / timeline đồ án.
+  rpc CreatePlanningEvent(PlanningEvent) returns (PlanningEvent) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-events"
+      body: "*"
+    };
+  }
+  rpc GetPlanningEvent(IdRequest) returns (PlanningEvent) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-events/{id}"
+    };
+  }
+  rpc UpdatePlanningEvent(PlanningEvent) returns (PlanningEvent) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-events/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningEvent(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-events/{id}"
+    };
+  }
+  rpc ListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-events"
+    };
+  }
+
+  // QHPlanningRelation APIs — quan hệ đồ án (parent/child/peer).
+  rpc CreatePlanningRelation(PlanningRelation) returns (PlanningRelation) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-relations"
+      body: "*"
+    };
+  }
+  rpc GetPlanningRelation(IdRequest) returns (PlanningRelation) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-relations/{id}"
+    };
+  }
+  rpc UpdatePlanningRelation(PlanningRelation) returns (PlanningRelation) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-relations/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningRelation(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-relations/{id}"
+    };
+  }
+  rpc ListPlanningRelations(ListPlanningEventsRequest) returns (ListPlanningRelationsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-relations"
+    };
+  }
 
   // Client APIs
   // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
   rpc ClientGetPlanningProject(IdRequest) returns (PlanningProject);
   // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
   rpc ClientGetPlanningDocument(IdRequest) returns (PlanningDocument);
-  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
-  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse);
+  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/timeline"
+    };
+  }
   rpc ClientListPlanningRelations(ListPlanningEventsRequest) returns (ListPlanningRelationsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/relations"
+    };
+  }
+  rpc ClientCountPlanningProject(PlanningProjectIdRequest) returns (PlanningProjectCountResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/count"
+    };
+  }
+  // List planning projects filtered by administrative unit (admId = compositeId)
+  // admId is the composite ID ({sourceId}{1=tỉnh|2=phường})
+  rpc ClientListPlanningProjects(ClientListPlanningProjectsRequest) returns (ListPlanningProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects"
     };
   }
 }
@@ -182,6 +306,8 @@ message PlanningProject {
   string researchScope = 27; // Phạm vi nghiên cứu hiển thị trên hồ sơ đồ án công khai.
   string indicators = 28; // JSON array chỉ tiêu quy hoạch hiển thị trên hồ sơ đồ án công khai.
   optional uint64 seoId = 29;
+  // clientView=false ẩn đồ án khỏi API client. Không truyền khi tạo = mặc định true.
+  optional bool clientView = 30;
 }
 
 message PlanningProjectSeoSourceResponse {
@@ -221,6 +347,52 @@ message AdminGenPlanningProjectSeoResponse {
 message ListPlanningProjectsResponse {
   repeated PlanningProject data = 1;
   int64 total = 2;
+}
+
+message AdminAssignProvincesRequest {
+  uint64 planningId = 1;
+  repeated uint64 provinceIds = 2; // stored as string composite ids
+}
+
+message AdminUnassignProvincesRequest {
+  uint64 planningId = 1;
+  repeated uint64 provinceIds = 2;
+}
+
+message AdminAssignWardsRequest {
+  uint64 planningId = 1;
+  repeated uint64 wardIds = 2;
+}
+
+message AdminUnassignWardsRequest {
+  uint64 planningId = 1;
+  repeated uint64 wardIds = 2;
+}
+
+message ClientListPlanningProjectsRequest {
+  uint64 admId = 1; // compositeId: {sourceId}{1=tỉnh|2=phường}
+  uint32 page = 2;
+  uint32 size = 3;
+  string search = 4;
+}
+
+message PlanningProjectCountResponse {
+  int64 timeline = 1;
+  int64 tin = 2;
+  int64 relation = 3;
+  int64 doc = 4;
+  int64 layer = 5;
+}
+
+message ListPlanningProjectLayersRequest {
+  uint64 planningId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message UnassignPlanningProjectLayerRequest {
+  uint64 planningId = 1;
+  uint64 layerId = 2;
 }
 
 message PlanningDocument {
@@ -309,6 +481,11 @@ message ListPlanningDocumentsResponse {
   int64 total = 2;
 }
 
+message AssignPlanningDocumentsToLayerRequest {
+  uint64 layerId = 1;
+  repeated uint64 docIds = 2;
+}
+
 message PlanningEvent {
   uint64 id = 1;
   uint64 planningProjectId = 2;
@@ -322,6 +499,7 @@ message PlanningEvent {
   string verNo = 10;
   uint32 legalStatus = 11;
   string legalStatusName = 12;
+  string eventType = 13;
 }
 
 message ListPlanningEventsResponse {
@@ -347,4 +525,11 @@ message PlanningRelation {
   PlanningProject parent = 1;
   PlanningProject child = 2;
   PlanningProject peer = 3;
+  uint64 id = 4;
+  uint64 fromId = 5;
+  uint64 toId = 6;
+  bool isPeer = 7;
+  string relationType = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
 }

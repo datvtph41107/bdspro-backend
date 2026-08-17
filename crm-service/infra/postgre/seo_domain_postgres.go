@@ -7,6 +7,7 @@ import (
 	"crm/internal/dto"
 	"crm/internal/repo"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -149,11 +150,16 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	query := r.db.WithContext(ctx).Model(&seo_domain.SeoDomain{})
 
 	if req.Keyword != nil && strings.TrimSpace(*req.Keyword) != "" {
-		keyword := "%" + strings.TrimSpace(*req.Keyword) + "%"
-		query = query.Where(
-			"slug ILIKE ? OR origin_url ILIKE ? OR canonical_url ILIKE ? OR title ILIKE ? OR description ILIKE ? OR note ILIKE ? OR ref_label ILIKE ?",
-			keyword, keyword, keyword, keyword, keyword, keyword, keyword,
-		)
+		keyword := strings.ToLower(strings.TrimSpace(*req.Keyword))
+		keyword = strings.ReplaceAll(keyword, "+", " ")
+		parts := strings.Fields(keyword)
+		if len(parts) > 0 {
+			keyword = "%" + strings.Join(parts, "%") + "%"
+			query = query.Where(
+				"LOWER(slug) LIKE ? OR LOWER(origin_url) LIKE ? OR LOWER(canonical_url) LIKE ? OR LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(note) LIKE ? OR LOWER(ref_label) LIKE ?",
+				keyword, keyword, keyword, keyword, keyword, keyword, keyword,
+			)
+		}
 	}
 	if req.RefType != nil {
 		query = query.Where("ref_type = ?", *req.RefType)
@@ -222,6 +228,25 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	return items, total, nil
 }
 
+func (r *SeoDomainPostgres) linkedRefQuery(ctx context.Context, req *dto.GetSeoRefsRequest) *gorm.DB {
+	if req == nil {
+		req = &dto.GetSeoRefsRequest{}
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Where("seo_domain.published = ?", true).
+		Where("(seo_domain.scope = ? OR seo_domain.scope = '')", seo_domain.SeoScopePublic).
+		Where(`(
+			(seo_domain.ref_type = ? AND seo_domain.ref_id = ?)
+			OR EXISTS (
+				SELECT 1 FROM seo_refs sr
+				WHERE sr.seo_domain_id = seo_domain.id
+				  AND sr.ref_type = ?
+				  AND sr.ref_id = ?
+			)
+		)`, req.RefType, req.RefID, req.RefType, req.RefID)
+}
+
 func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error) {
 	var items []seo_domain.SeoDomain
 	var total int64
@@ -231,23 +256,13 @@ func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.Get
 	}
 	req.Normalize()
 
-	buildQuery := func(db *gorm.DB) *gorm.DB {
-		return db.WithContext(ctx).
-			Model(&seo_domain.SeoDomain{}).
-			Joins("INNER JOIN seo_refs sr ON sr.seo_domain_id = seo_domain.id").
-			Where("sr.ref_type = ? AND sr.ref_id = ?", req.RefType, req.RefID).
-			Where("seo_domain.published = ?", true).
-			Where("(seo_domain.scope = ? OR seo_domain.scope = '')", seo_domain.SeoScopePublic)
-	}
+	db := r.linkedRefQuery(ctx, req)
 
-	db := impl.GetDB(ctx, r.db)
-
-	if err := buildQuery(db).Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err := buildQuery(db).
-		Select("seo_domain.*").
+	err := r.linkedRefQuery(ctx, req).
 		Order("seo_domain.published_at DESC NULLS LAST, seo_domain.created_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
@@ -261,6 +276,18 @@ func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.Get
 	}
 
 	return items, total, nil
+}
+
+func (r *SeoDomainPostgres) CountByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error) {
+	if req == nil {
+		req = &dto.GetSeoRefsRequest{}
+	}
+
+	var total int64
+	if err := r.linkedRefQuery(ctx, req).Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {
@@ -586,6 +613,147 @@ func (r *SeoRelativePostgres) Exist(ctx context.Context, parentSeoID uint64, chi
 		Model(&seo_domain.SeoRelative{}).
 		Where("parent_seo_id = ? AND child_seo_id = ? AND relation_type = ?", parentSeoID, childSeoID, relationType).
 		Count(&count).Error
+	return count > 0, err
+}
+
+// -----------------------------------------------------------------------------
+// SEO refs (entity <-> SEO page links)
+// -----------------------------------------------------------------------------
+
+type SeoRefPostgres struct {
+	db *gorm.DB
+}
+
+func NewSeoRefPostgres(db *gorm.DB) repo.SeoRefRepo {
+	return &SeoRefPostgres{db: db}
+}
+
+func (r *SeoRefPostgres) Create(ctx context.Context, item *seo_domain.SeoRef) (*seo_domain.SeoRef, error) {
+	if err := impl.GetDB(ctx, r.db).Create(item).Error; err != nil {
+		return nil, err
+	}
+	return r.GetByID(ctx, item.ID)
+}
+
+func (r *SeoRefPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain.SeoRef, error) {
+	var item seo_domain.SeoRef
+	err := r.db.WithContext(ctx).
+		Preload("SeoDomain").
+		First(&item, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (r *SeoRefPostgres) GetList(ctx context.Context, req *dto.SeoRefListRequest) ([]seo_domain.SeoRef, int64, error) {
+	if req == nil {
+		req = &dto.SeoRefListRequest{}
+	}
+	req.Normalize()
+
+	db := impl.GetDB(ctx, r.db)
+
+	refQuery := db.Model(&seo_domain.SeoRef{}).
+		Where("seo_refs.ref_type = ? AND seo_refs.ref_id = ?", req.RefType, req.RefID)
+	domainQuery := db.Model(&seo_domain.SeoDomain{}).
+		Where("seo_domain.ref_type = ? AND seo_domain.ref_id = ?", req.RefType, req.RefID)
+	if req.SeoDomainID != nil && *req.SeoDomainID > 0 {
+		refQuery = refQuery.Where("seo_refs.seo_domain_id = ?", *req.SeoDomainID)
+		domainQuery = domainQuery.Where("seo_domain.id = ?", *req.SeoDomainID)
+	}
+
+	var refs []seo_domain.SeoRef
+	if err := refQuery.Preload("SeoDomain").Find(&refs).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var domains []seo_domain.SeoDomain
+	if err := domainQuery.Find(&domains).Error; err != nil {
+		return nil, 0, err
+	}
+
+	linked := make(map[uint64]struct{}, len(refs))
+	items := make([]seo_domain.SeoRef, 0, len(refs)+len(domains))
+	items = append(items, refs...)
+	for i := range refs {
+		linked[refs[i].SeoID] = struct{}{}
+		if items[i].SeoDomain != nil {
+			items[i].SeoDomain.NormalizeLifecycle()
+		}
+	}
+
+	for i := range domains {
+		domain := domains[i]
+		if _, exists := linked[domain.ID]; exists {
+			continue
+		}
+		domain.NormalizeLifecycle()
+		domainCopy := domain
+		items = append(items, seo_domain.SeoRef{
+			ID:        0,
+			SeoID:     domain.ID,
+			RefID:     req.RefID,
+			RefType:   req.RefType,
+			SeoDomain: &domainCopy,
+			CreatedAt: domain.CreatedAt,
+			UpdatedAt: domain.UpdatedAt,
+		})
+	}
+
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].CreatedAt.Equal(items[j].CreatedAt) {
+			return items[i].SeoID > items[j].SeoID
+		}
+		return items[i].CreatedAt.After(items[j].CreatedAt)
+	})
+
+	total := int64(len(items))
+	start := req.GetOffset()
+	if start >= len(items) {
+		return []seo_domain.SeoRef{}, total, nil
+	}
+	end := start + req.GetLimit()
+	if end > len(items) {
+		end = len(items)
+	}
+	return items[start:end], total, nil
+}
+
+func (r *SeoRefPostgres) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoRef{}).
+		Where("id = ?", id).
+		Updates(updates).Error
+}
+
+func (r *SeoRefPostgres) Delete(ctx context.Context, id uint64) error {
+	return impl.GetDB(ctx, r.db).Unscoped().Delete(&seo_domain.SeoRef{}, id).Error
+}
+
+func (r *SeoRefPostgres) DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error {
+	return impl.GetDB(ctx, r.db).
+		Unscoped().
+		Where("seo_domain_id = ?", seoDomainID).
+		Delete(&seo_domain.SeoRef{}).Error
+}
+
+func (r *SeoRefPostgres) Exist(ctx context.Context, seoDomainID uint64, refType uint32, refID uint64, ignoreID *uint64) (bool, error) {
+	var count int64
+	query := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoRef{}).
+		Where("seo_domain_id = ? AND ref_type = ? AND ref_id = ?", seoDomainID, refType, refID)
+	if ignoreID != nil {
+		query = query.Where("id <> ?", *ignoreID)
+	}
+	err := query.Count(&count).Error
 	return count > 0, err
 }
 

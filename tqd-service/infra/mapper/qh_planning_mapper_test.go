@@ -32,6 +32,27 @@ func TestProjectDetailFieldsRoundTripThroughAdminContract(t *testing.T) {
 	}
 }
 
+func TestProjectClientViewDefaultsTrueAndRoundTrips(t *testing.T) {
+	t.Parallel()
+	mapper := NewQHPlanningMapper()
+
+	domain := mapper.ToProjectDomain(&tqdpb.PlanningProject{})
+	if !domain.ClientView {
+		t.Fatal("clientView must default to true when omitted")
+	}
+
+	hidden := false
+	domain = mapper.ToProjectDomain(&tqdpb.PlanningProject{ClientView: &hidden})
+	if domain.ClientView {
+		t.Fatal("explicit clientView=false must be preserved")
+	}
+
+	proto := mapper.ToProjectProto(&qh_domain.QHPlanningProject{ClientView: false})
+	if proto.GetClientView() {
+		t.Fatal("hidden project must serialize clientView=false")
+	}
+}
+
 func TestProjectIndicatorsDefaultToJSONArray(t *testing.T) {
 	t.Parallel()
 	domain := NewQHPlanningMapper().ToProjectDomain(&tqdpb.PlanningProject{})

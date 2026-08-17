@@ -17,6 +17,7 @@ type SeoDomainRepo interface {
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error)
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)
 	GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error)
+	CountByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error)
 	GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error
@@ -74,4 +75,14 @@ type SeoRelativeRepo interface {
 type SeoTrendRepo interface {
 	GetDailySummary(ctx context.Context, from time.Time, to time.Time) ([]dto.SeoOperationTrendPoint, error)
 	GetTopPages(ctx context.Context, from time.Time, to time.Time, limit uint32) ([]dto.SeoOperationTopQuery, error)
+}
+
+type SeoRefRepo interface {
+	Create(ctx context.Context, item *seo_domain.SeoRef) (*seo_domain.SeoRef, error)
+	GetByID(ctx context.Context, id uint64) (*seo_domain.SeoRef, error)
+	GetList(ctx context.Context, req *dto.SeoRefListRequest) ([]seo_domain.SeoRef, int64, error)
+	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
+	Delete(ctx context.Context, id uint64) error
+	DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error
+	Exist(ctx context.Context, seoDomainID uint64, refType uint32, refID uint64, ignoreID *uint64) (bool, error)
 }

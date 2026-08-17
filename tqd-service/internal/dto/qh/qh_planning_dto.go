@@ -11,6 +11,14 @@ type ListPlanningProjectsRequest struct {
 	PlanningLevel  string `json:"planningLevel"`
 	ValidityStatus string `json:"validityStatus"`
 	ProcessStatus  string `json:"processStatus"`
+	ClientViewOnly bool   `json:"clientViewOnly"`
+	// AdmID is the administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
+	AdmID uint64 `json:"admId,omitempty"`
+}
+
+type ListPlanningProjectLayersRequest struct {
+	_dto.Pagable
+	PlanningID uint64 `json:"planningId"`
 }
 
 type ListProAIJobsRequest struct {
@@ -26,6 +34,17 @@ type ListPlanningDocumentsRequest struct {
 	DocumentType      string `json:"documentType"`
 	ValidityStatus    string `json:"validityStatus"`
 	ProcessStatus     string `json:"processStatus"`
+	LayerID           uint64 `json:"layerId"`
+}
+
+type AssignPlanningDocumentsToLayerRequest struct {
+	LayerID uint64   `json:"layerId"`
+	DocIDs  []uint64 `json:"docIds"`
+}
+
+type UnassignPlanningProjectLayerRequest struct {
+	PlanningID uint64 `json:"planningId"`
+	LayerID    uint64 `json:"layerId"`
 }
 
 type ListPlanningEventsRequest struct {
@@ -64,4 +83,12 @@ type AdminGenPlanningProjectSeoResult struct {
 	Skipped int64                            `json:"skipped"`
 	Failed  int64                            `json:"failed"`
 	Errors  []string                         `json:"errors"`
+}
+
+type PlanningProjectCount struct {
+	Timeline int64 `json:"timeline"`
+	Tin      int64 `json:"tin"`
+	Relation int64 `json:"relation"`
+	Doc      int64 `json:"doc"`
+	Layer    int64 `json:"layer"`
 }

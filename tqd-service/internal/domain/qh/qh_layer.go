@@ -72,6 +72,11 @@ type QHLayer struct {
 	Parent   *QHLayer       `gorm:"foreignKey:ParentID;references:ID"`
 
 	SeoID *uint64 `gorm:"column:seo_id;index" json:"seoId,omitempty"`
+
+	ProvinceID *string `gorm:"column:province_id;type:varchar(50);index" json:"provinceId,omitempty"`
+	WardID     *string `gorm:"column:ward_id;type:varchar(50);index" json:"wardId,omitempty"`
+
+	Docs []QHPlanningDocument `gorm:"-" json:"docs,omitempty"`
 }
 
 func (QHLayer) TableName() string {

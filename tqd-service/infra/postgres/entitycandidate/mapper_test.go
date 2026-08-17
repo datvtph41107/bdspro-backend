@@ -18,8 +18,8 @@ func TestBuildKeepsCanonicalLinksAndCapabilitiesConsistent(t *testing.T) {
 			name:          "planning project",
 			kind:          discoverydomain.EntityKindPlanningProject,
 			row:           Row{ID: "12", Title: "Đồ án mẫu"},
-			wantDetail:    "/do-an-quy-hoach/12",
-			wantCanonical: "/do-an-quy-hoach/12",
+			wantDetail:    "/tin-tuc/do-an-quy-hoach/12",
+			wantCanonical: "/tin-tuc/do-an-quy-hoach/12",
 		},
 		{
 			name:          "planning region",
@@ -32,8 +32,8 @@ func TestBuildKeepsCanonicalLinksAndCapabilitiesConsistent(t *testing.T) {
 			name:          "administrative ward",
 			kind:          discoverydomain.EntityKindAdministrativeUnit,
 			row:           Row{ID: "ward:9", Title: "Phường Mẫu", WardCode: "00009"},
-			wantDetail:    "/dia-ban/phuong-mau-00009",
-			wantCanonical: "/dia-ban/phuong-mau-00009",
+			wantDetail:    "/tin-tuc/dia-ban/phuong-mau-00009",
+			wantCanonical: "/tin-tuc/dia-ban/phuong-mau-00009",
 		},
 	}
 

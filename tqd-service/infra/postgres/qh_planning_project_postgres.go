@@ -7,9 +7,15 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
+	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
+	tqdutils "tqd/internal/utils"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type QHPlanningProjectRepo struct {
@@ -26,7 +32,12 @@ func (r *QHPlanningProjectRepo) Create(ctx context.Context, entity *qh_domain.QH
 }
 
 func (r *QHPlanningProjectRepo) Update(ctx context.Context, id uint64, entity *qh_domain.QHPlanningProject) error {
-	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("id = ?", id).Updates(entity).Error
+	tx := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("id = ?", id)
+	if err := tx.Updates(entity).Error; err != nil {
+		return err
+	}
+	// Updates() bỏ qua bool zero-value — ghi riêng để admin ẩn đồ án (clientView=false).
+	return tx.Update("client_view", entity.ClientView).Error
 }
 
 func (r *QHPlanningProjectRepo) Delete(ctx context.Context, id uint64) error {
@@ -62,9 +73,13 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 
 	db := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("deleted_at IS NULL")
 
-	if req.Search != "" {
-		searchTerm := "%" + strings.ToLower(req.Search) + "%"
-		db = db.Where("LOWER(name) LIKE ? OR LOWER(code) LIKE ?", searchTerm, searchTerm)
+	if search := strings.ToLower(strings.TrimSpace(req.Search)); search != "" {
+		searchTerm := "%" + search + "%"
+		db = db.Where(`(
+			LOWER(unaccent(COALESCE(name,''))) LIKE LOWER(unaccent(?)) OR
+			LOWER(unaccent(COALESCE(code,''))) LIKE LOWER(unaccent(?)) OR
+			REPLACE(LOWER(unaccent(COALESCE(slug,''))), '-', ' ') LIKE REPLACE(LOWER(unaccent(?)), '-', ' ')
+		)`, searchTerm, searchTerm, searchTerm)
 	}
 	if req.PlanningType != "" {
 		db = db.Where("planning_type = ?", req.PlanningType)
@@ -74,6 +89,9 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 	}
 	if req.ValidityStatus != "" {
 		db = db.Where("validity_status = ?", req.ValidityStatus)
+	}
+	if req.ClientViewOnly {
+		db = db.Where("client_view = ?", true)
 	}
 	if req.ProcessStatus != "" {
 		statuses := strings.Split(req.ProcessStatus, ",")
@@ -91,6 +109,10 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		}
 	}
 
+	if clause, arg, ok := tqdutils.PlanningProjectAdmJoinClause(req.AdmID, "qh_planning_projects.id"); ok {
+		db = db.Where(clause, arg)
+	}
+
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -100,11 +122,112 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		Preload("Layers").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
-		Order("created_at DESC").
+		Order("updated_at DESC NULLS LAST, id DESC").
 		Find(&projects).Error
 
 	log.Printf("projects: %+v", len(projects))
 	return projects, total, err
+}
+
+func (r *QHPlanningProjectRepo) matchedLayersQuery(ctx context.Context, planningID uint64) *gorm.DB {
+	return r.db.GetDB(ctx).Table("qh_layers").
+		Select("qh_layers.id").
+		Joins("LEFT JOIN layer_plan_doc_relation rel ON rel.layer_id = qh_layers.id AND rel.deleted_at IS NULL").
+		Joins("LEFT JOIN qh_planning_documents d ON d.id = rel.planning_document_id AND d.deleted_at IS NULL").
+		Where("qh_layers.deleted_at IS NULL").
+		Where("qh_layers.planning_project_id = ? OR d.planning_project_id = ?", planningID, planningID).
+		Group("qh_layers.id")
+}
+
+func (r *QHPlanningProjectRepo) ListLayers(ctx context.Context, req *qh_dto.ListPlanningProjectLayersRequest) ([]qh_domain.QHLayer, int64, error) {
+	var layers []qh_domain.QHLayer
+	var total int64
+
+	matched := r.matchedLayersQuery(ctx, req.PlanningID)
+
+	if err := r.db.GetDB(ctx).Table("(?) AS matched_layers", matched).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := r.db.GetDB(ctx).Model(&qh_domain.QHLayer{}).
+		Where("id IN (?)", matched).
+		Order("display_order ASC, id ASC").
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Find(&layers).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := r.attachLayerDocs(ctx, req.PlanningID, layers); err != nil {
+		return nil, 0, err
+	}
+	return layers, total, nil
+}
+
+func (r *QHPlanningProjectRepo) CountLayersByProject(ctx context.Context, projectID uint64) (int64, error) {
+	var total int64
+	matched := r.matchedLayersQuery(ctx, projectID)
+	if err := r.db.GetDB(ctx).Table("(?) AS matched_layers", matched).Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+type planningLayerDocRow struct {
+	LayerID      uint64 `gorm:"column:layer_id"`
+	ID           uint64 `gorm:"column:id"`
+	Title        string `gorm:"column:title"`
+	Filepath     string `gorm:"column:filepath"`
+	Thumbnail    string `gorm:"column:thumbnail"`
+	Ext          string `gorm:"column:ext"`
+	RelativePath string `gorm:"column:relative_path"`
+	Code         string `gorm:"column:code"`
+	DocumentType uint32 `gorm:"column:document_type"`
+}
+
+func (r *QHPlanningProjectRepo) attachLayerDocs(ctx context.Context, planningID uint64, layers []qh_domain.QHLayer) error {
+	if len(layers) == 0 {
+		return nil
+	}
+
+	layerIDs := make([]uint64, 0, len(layers))
+	indexByID := make(map[uint64]int, len(layers))
+	for i := range layers {
+		layerIDs = append(layerIDs, layers[i].ID)
+		indexByID[layers[i].ID] = i
+		layers[i].Docs = []qh_domain.QHPlanningDocument{}
+	}
+
+	var rows []planningLayerDocRow
+	err := r.db.GetDB(ctx).Table("layer_plan_doc_relation rel").
+		Select(`rel.layer_id,
+			d.id, d.title, d.filepath, d.thumbnail, d.ext, d.relative_path, d.code, d.document_type`).
+		Joins("JOIN qh_planning_documents d ON d.id = rel.planning_document_id AND d.deleted_at IS NULL").
+		Where("rel.deleted_at IS NULL AND rel.layer_id IN ? AND d.planning_project_id = ?", layerIDs, planningID).
+		Order("rel.sort_order ASC, rel.id ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		idx, ok := indexByID[row.LayerID]
+		if !ok {
+			continue
+		}
+		doc := qh_domain.QHPlanningDocument{
+			Title:        row.Title,
+			Filepath:     row.Filepath,
+			Thumbnail:    row.Thumbnail,
+			Ext:          row.Ext,
+			RelativePath: row.RelativePath,
+			Code:         row.Code,
+			DocumentType: enums.PlanningDocumentType(row.DocumentType),
+		}
+		doc.ID = row.ID
+		layers[idx].Docs = append(layers[idx].Docs, doc)
+	}
+	return nil
 }
 
 // UpdateProcessStatus cập nhật riêng cột process_status, dùng cho job classify.
@@ -168,6 +291,74 @@ func (r *QHPlanningProjectRepo) UpdatePlanningProjectSeoID(ctx context.Context, 
 		Model(&qh_domain.QHPlanningProject{}).
 		Where("id = ? AND deleted_at IS NULL", planningProjectID).
 		Update("seo_id", seoID).Error
+}
+
+// AssignProvinces inserts relation rows (ignore conflicts)
+func (r *QHPlanningProjectRepo) AssignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error {
+	if planningProjectID == 0 || len(provinceIDs) == 0 {
+		return nil
+	}
+	rows := make([]map[string]any, 0, len(provinceIDs))
+	now := time.Now()
+	for _, pid := range provinceIDs {
+		rows = append(rows, map[string]any{
+			"planning_project_id": planningProjectID,
+			"province_id":         pid,
+			"created_at":          now,
+			"updated_at":          now,
+			"deleted_at":          nil,
+		})
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	return r.db.GetDB(ctx).Table("qh_planning_project_provinces").
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(rows).Error
+}
+
+// UnassignProvinces deletes matching rows
+func (r *QHPlanningProjectRepo) UnassignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error {
+	if planningProjectID == 0 || len(provinceIDs) == 0 {
+		return nil
+	}
+	return r.db.GetDB(ctx).Table("qh_planning_project_provinces").
+		Where("planning_project_id = ? AND province_id IN ?", planningProjectID, provinceIDs).
+		Delete(nil).Error
+}
+
+// AssignWards inserts relation rows (ignore conflicts)
+func (r *QHPlanningProjectRepo) AssignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error {
+	if planningProjectID == 0 || len(wardIDs) == 0 {
+		return nil
+	}
+	rows := make([]map[string]any, 0, len(wardIDs))
+	now := time.Now()
+	for _, wid := range wardIDs {
+		rows = append(rows, map[string]any{
+			"planning_project_id": planningProjectID,
+			"ward_id":             wid,
+			"created_at":          now,
+			"updated_at":          now,
+			"deleted_at":          nil,
+		})
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	return r.db.GetDB(ctx).Table("qh_planning_project_wards").
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(rows).Error
+}
+
+// UnassignWards deletes matching rows
+func (r *QHPlanningProjectRepo) UnassignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error {
+	if planningProjectID == 0 || len(wardIDs) == 0 {
+		return nil
+	}
+	return r.db.GetDB(ctx).Table("qh_planning_project_wards").
+		Where("planning_project_id = ? AND ward_id IN ?", planningProjectID, wardIDs).
+		Delete(nil).Error
 }
 
 func dedupePlanningProjectIDs(ids []uint64) []uint64 {

@@ -207,18 +207,19 @@ type GenerateSeoFromPlanningProjectsResult struct {
 }
 
 type AdministrativeUnitSeoSource struct {
-	Identity           string  `json:"identity"`
-	UnitType           string  `json:"unitType"`
-	SourceID           string  `json:"sourceId"`
+	Identity           uint64  `json:"identity"`
+	UnitType           uint32  `json:"unitType"`
+	SourceID           uint64  `json:"sourceId"`
 	Name               string  `json:"name"`
 	Slug               string  `json:"slug"`
 	CanonicalPath      string  `json:"canonicalPath"`
 	AdministrativeCode string  `json:"administrativeCode"`
 	SeoID              *uint64 `json:"seoId"`
+	CompositeID        uint64  `json:"compositeId"`
 }
 
 type GenerateSeoFromAdministrativeUnitsRequest struct {
-	Identities []string `json:"identities"`
+	CompositeIDs []uint64 `json:"compositeIds"`
 }
 
 type GenerateSeoFromAdministrativeUnitsResult struct {

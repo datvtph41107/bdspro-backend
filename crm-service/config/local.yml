@@ -41,8 +41,8 @@ seo:
   timezone: "Asia/Ho_Chi_Minh"
   parcelUrlTemplate: /tin-tuc/thua-dat/{id}-{slug}
   layerUrlTemplate: /quy-hoach/lop/{id}-{slug}
-  planningProjectUrlTemplate: /do-an-quy-hoach/{slug}
-  administrativeUnitUrlTemplate: /dia-ban/{slug}
+  planningProjectUrlTemplate: /tin-tuc/do-an-quy-hoach/{slug}
+  administrativeUnitUrlTemplate: /tin-tuc/dia-ban/{slug}
 
   sitemap:
     default_change_freq: "daily"

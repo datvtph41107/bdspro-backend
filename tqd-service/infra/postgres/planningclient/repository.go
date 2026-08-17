@@ -68,20 +68,48 @@ func parseUintCSV(value string) []uint64 {
 	return result
 }
 
-func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *gorm.DB {
-	if value := strings.TrimSpace(filter.Search); value != "" {
-		pattern := "%" + strings.ToLower(value) + "%"
-		db = db.Where(`(
-			LOWER(COALESCE(p.name,'')) LIKE ? OR
-			LOWER(COALESCE(p.code,'')) LIKE ? OR
-			LOWER(COALESCE(p.decision_number,'')) LIKE ? OR
-			EXISTS (
-				SELECT 1 FROM qh_planning_documents d
-				WHERE d.planning_project_id = p.id AND d.deleted_at IS NULL
-				  AND (LOWER(COALESCE(d.title,'')) LIKE ? OR LOWER(COALESCE(d.code,'')) LIKE ?)
-			)
-		)`, pattern, pattern, pattern, pattern, pattern)
+func lowerSearchPattern(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return ""
 	}
+	return "%" + value + "%"
+}
+
+func unaccentLike(column string) string {
+	return "LOWER(unaccent(COALESCE(" + column + ",''))) LIKE LOWER(unaccent(?))"
+}
+
+func slugSearchLike() string {
+	return "REPLACE(LOWER(unaccent(COALESCE(p.slug,''))), '-', ' ') LIKE REPLACE(LOWER(unaccent(?)), '-', ' ')"
+}
+
+func applyProjectSearch(db *gorm.DB, search string, includeDocuments bool) *gorm.DB {
+	pattern := lowerSearchPattern(search)
+	if pattern == "" {
+		return db
+	}
+	clause := "(" +
+		unaccentLike("p.name") + " OR " +
+		unaccentLike("p.code") + " OR " +
+		unaccentLike("p.decision_number") + " OR " +
+		slugSearchLike() + " OR " +
+		unaccentLike("j.name")
+	args := []any{pattern, pattern, pattern, pattern, pattern}
+	if includeDocuments {
+		clause += ` OR EXISTS (
+			SELECT 1 FROM qh_planning_documents d
+			WHERE d.planning_project_id = p.id AND d.deleted_at IS NULL
+			  AND (` + unaccentLike("d.title") + ` OR ` + unaccentLike("d.code") + `)
+		)`
+		args = append(args, pattern, pattern)
+	}
+	clause += ")"
+	return db.Where(clause, args...)
+}
+
+func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *gorm.DB {
+	db = applyProjectSearch(db, filter.Search, true)
 	if value := strings.TrimSpace(filter.Decision); value != "" {
 		pattern := "%" + strings.ToLower(value) + "%"
 		db = db.Where(`(
@@ -151,6 +179,9 @@ func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *
 			  AND ppp.province_id IN ?
 		)`, values)
 	}
+	if clause, arg, ok := tqdutils.PlanningProjectAdmJoinClause(filter.AdmID, "p.id"); ok {
+		db = db.Where(clause, arg)
+	}
 	return db
 }
 
@@ -214,7 +245,7 @@ func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.Pro
 	base := r.db.WithContext(ctx).
 		Table("qh_planning_projects p").
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL").
-		Where("p.deleted_at IS NULL")
+		Where("p.deleted_at IS NULL AND p.client_view = ?", true)
 	base = applyProjectFilters(base, filter)
 
 	var total int64
@@ -244,7 +275,7 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 	err := r.db.WithContext(ctx).
 		Table("qh_planning_projects p").
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL").
-		Where("p.deleted_at IS NULL AND p.id = ?", id).
+		Where("p.deleted_at IS NULL AND p.client_view = ? AND p.id = ?", true, id).
 		Select(projectSelect).
 		Take(&item).Error
 	if err != nil {
@@ -401,7 +432,10 @@ func documentStatusName(status uint32) string {
 
 func (r *Repository) ListDocuments(ctx context.Context, projectID uint64, page, size int, keyword, documentType, status string) (*planningdomain.Page[planningdomain.Document], error) {
 	page, size = normalizePage(page, size)
-	base := r.db.WithContext(ctx).Table("qh_planning_documents d").Where("d.deleted_at IS NULL AND d.planning_project_id = ?", projectID)
+	base := r.db.WithContext(ctx).
+		Table("qh_planning_documents d").
+		Joins("JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
+		Where("d.deleted_at IS NULL AND d.planning_project_id = ?", projectID)
 	if value := strings.TrimSpace(keyword); value != "" {
 		pattern := "%" + strings.ToLower(value) + "%"
 		base = base.Where(`LOWER(COALESCE(d.title,'')) LIKE ? OR LOWER(COALESCE(d.code,'')) LIKE ? OR LOWER(COALESCE(d.description,'')) LIKE ?`, pattern, pattern, pattern)
@@ -485,6 +519,7 @@ func (r *Repository) ListDocumentsByParcelRelation(ctx context.Context, parcelID
 		SELECT %s
 		FROM ranked rr
 		JOIN qh_planning_documents d ON d.id = rr.planning_document_id AND d.deleted_at IS NULL
+		JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
 	`
 	args := []any{parcelID}
 	if len(docTypes) > 0 {
@@ -519,6 +554,7 @@ func (r *Repository) ListDocumentsByParcelRelation(ctx context.Context, parcelID
 func (r *Repository) GetDocument(ctx context.Context, documentID uint64) (*planningdomain.Document, error) {
 	var item planningdomain.Document
 	err := r.db.WithContext(ctx).Table("qh_planning_documents d").
+		Joins("JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Where("d.id = ? AND d.deleted_at IS NULL", documentID).
 		Select(documentSelect).
 		Take(&item).Error
@@ -531,7 +567,10 @@ func (r *Repository) GetDocument(ctx context.Context, documentID uint64) (*plann
 
 func (r *Repository) ListEvents(ctx context.Context, projectID uint64, page, size int) (*planningdomain.Page[planningdomain.Event], error) {
 	page, size = normalizePage(page, size)
-	base := r.db.WithContext(ctx).Table("qh_planning_events e").Where("e.deleted_at IS NULL AND e.planning_project_id = ?", projectID)
+	base := r.db.WithContext(ctx).
+		Table("qh_planning_events e").
+		Joins("JOIN qh_planning_projects p ON p.id = e.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
+		Where("e.deleted_at IS NULL AND e.planning_project_id = ?", projectID)
 	var total int64
 	if err := base.Count(&total).Error; err != nil {
 		return nil, err
@@ -573,7 +612,7 @@ func (r *Repository) Follow(ctx context.Context, userID, projectID uint64, note 
 		return nil, errors.New("userID and planningProjectID are required")
 	}
 	var exists int64
-	if err := r.db.WithContext(ctx).Table("qh_planning_projects").Where("id=? AND deleted_at IS NULL", projectID).Count(&exists).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("qh_planning_projects").Where("id=? AND deleted_at IS NULL AND client_view = ?", projectID, true).Count(&exists).Error; err != nil {
 		return nil, err
 	}
 	if exists == 0 {
@@ -619,13 +658,10 @@ func (r *Repository) Unfollow(ctx context.Context, userID, projectID uint64) err
 func (r *Repository) ListFollowed(ctx context.Context, userID uint64, page, size int, search string) (*planningdomain.Page[planningdomain.FollowedProject], error) {
 	page, size = normalizePage(page, size)
 	base := r.db.WithContext(ctx).Table("user_followed_planning_projects f").
-		Joins("JOIN qh_planning_projects p ON p.id=f.planning_project_id AND p.deleted_at IS NULL").
+		Joins("JOIN qh_planning_projects p ON p.id=f.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id=p.jurisdiction_id AND j.deleted_at IS NULL").
 		Where("f.user_id=? AND f.deleted_at IS NULL", userID)
-	if value := strings.TrimSpace(search); value != "" {
-		pattern := "%" + strings.ToLower(value) + "%"
-		base = base.Where("LOWER(COALESCE(p.name,'')) LIKE ? OR LOWER(COALESCE(p.code,'')) LIKE ? OR LOWER(COALESCE(p.decision_number,'')) LIKE ?", pattern, pattern, pattern)
-	}
+	base = applyProjectSearch(base, search, false)
 	var total int64
 	if err := base.Count(&total).Error; err != nil {
 		return nil, err
@@ -700,7 +736,7 @@ func (r *Repository) ListProjectsByParcelRelation(ctx context.Context, parcelID 
 		)
 		SELECT %s
 		FROM ranked rr
-		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL
+		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
 		LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL
 	`
 
@@ -734,6 +770,15 @@ func (r *Repository) ListProjectLayers(ctx context.Context, projectID uint64) ([
 	if projectID == 0 {
 		return nil, errors.New("planning project id is required")
 	}
+	var exists int64
+	if err := r.db.WithContext(ctx).Table("qh_planning_projects").
+		Where("id = ? AND deleted_at IS NULL AND client_view = ?", projectID, true).
+		Count(&exists).Error; err != nil {
+		return nil, err
+	}
+	if exists == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 	items := make([]planningdomain.ProjectLayer, 0)
 	err := r.db.WithContext(ctx).Table("qh_layers l").
 		Select(`l.id, l.planning_project_id, COALESCE(l.name,'') AS name,
@@ -765,12 +810,13 @@ func (r *Repository) ListProvinces(ctx context.Context, filter planningdomain.Pr
 	if filter.Scope == planningdomain.ProvinceScopeQH {
 		db = db.Where("qh_order > 0")
 	}
-	if value := strings.TrimSpace(filter.Search); value != "" {
-		pattern := "%" + strings.ToLower(value) + "%"
-		db = db.Where(
-			"LOWER(COALESCE(full_name,'')) LIKE ? OR LOWER(COALESCE(short_name,'')) LIKE ? OR code = ?",
-			pattern, pattern, value,
-		)
+	if pattern := lowerSearchPattern(filter.Search); pattern != "" {
+		code := strings.ToLower(strings.TrimSpace(filter.Search))
+		db = db.Where(`(
+			`+unaccentLike("full_name")+` OR
+			`+unaccentLike("short_name")+` OR
+			LOWER(COALESCE(code,'')) = ?
+		)`, pattern, pattern, code)
 	}
 
 	items := []planningdomain.ProvinceItem{}
@@ -781,7 +827,11 @@ func (r *Repository) ListProvinces(ctx context.Context, filter planningdomain.Pr
 		COALESCE(lat,0) AS lat,
 		COALESCE(lng,0) AS lng,
 		COALESCE(qh_order,0) AS qh_order,
-		COALESCE(zoom,10) AS zoom`).
+		COALESCE(zoom,10) AS zoom,
+		COALESCE(description,'') AS description,
+		COALESCE(unit_type,0) AS unit_type,
+		COALESCE(data_source,0) AS data_source,
+		plan_doc_id`).
 		Order("qh_order DESC, full_name ASC, id ASC").
 		Scan(&items).Error
 	if err != nil {

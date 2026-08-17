@@ -29,6 +29,8 @@ type ProjectListFilter struct {
 	UpdatedTo      *time.Time
 	TagIDs         string
 	ProvinceIDs    string
+	// AdmID is administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
+	AdmID          uint64
 }
 
 type ProjectOverview struct {
@@ -45,38 +47,38 @@ type ProjectOverview struct {
 }
 
 type Project struct {
-	ID                uint64           `json:"id"`
-	Slug              string           `json:"slug,omitempty"`
-	Code              string           `json:"code,omitempty"`
-	Name              string           `json:"name"`
-	PlanningType      uint32           `json:"planningType"`
-	PlanningTypeName  string           `json:"planningTypeName,omitempty"`
-	PlanningLevel     uint32           `json:"planningLevel"`
-	PlanningLevelName string           `json:"planningLevelName,omitempty"`
-	TotalArea         float64          `json:"totalArea,omitempty"`
-	JurisdictionID    *uint64          `json:"jurisdictionId,omitempty"`
-	JurisdictionName  string           `json:"jurisdictionName,omitempty"`
-	LegalStatus       uint32           `json:"legalStatus"`
-	LegalStatusName   string           `json:"legalStatusName,omitempty"`
-	ValidityStatus    string           `json:"validityStatus,omitempty"`
-	Authority         string           `json:"authority,omitempty"`
-	DecisionNumber    string           `json:"decisionNumber,omitempty"`
-	Summary           string           `json:"summary,omitempty"`
-	ResearchScope     string           `json:"researchScope,omitempty"`
-	Indicators        json.RawMessage  `json:"indicators"`
-	ApprovalDate      *time.Time       `json:"approvalDate,omitempty"`
-	EffectiveDate     *time.Time       `json:"effectiveDate,omitempty"`
-	ExpiryDate        *time.Time       `json:"expiryDate,omitempty"`
-	CurrentVersion    string           `json:"currentVersion,omitempty"`
-	Metadata          json.RawMessage  `json:"metadata"`
-	ProcessStatus     uint32           `json:"processStatus"`
-	CreatedAt         *time.Time       `json:"createdAt,omitempty"`
-	UpdatedAt         *time.Time       `json:"updatedAt,omitempty"`
-	HasLayer          bool             `json:"hasLayer"`
-	LayerCount        int64            `json:"layerCount"`
-	Overview          *ProjectOverview `json:"overview,omitempty" gorm:"-"`
-	Tags              []ProjectTag     `json:"tags,omitempty" gorm:"-"`
-	ProjectTags       []Tag            `json:"projectTags,omitempty" gorm:"-"`
+	ID                uint64            `json:"id"`
+	Slug              string            `json:"slug,omitempty"`
+	Code              string            `json:"code,omitempty"`
+	Name              string            `json:"name"`
+	PlanningType      uint32            `json:"planningType"`
+	PlanningTypeName  string            `json:"planningTypeName,omitempty"`
+	PlanningLevel     uint32            `json:"planningLevel"`
+	PlanningLevelName string            `json:"planningLevelName,omitempty"`
+	TotalArea         float64           `json:"totalArea,omitempty"`
+	JurisdictionID    *uint64           `json:"jurisdictionId,omitempty"`
+	JurisdictionName  string            `json:"jurisdictionName,omitempty"`
+	LegalStatus       uint32            `json:"legalStatus"`
+	LegalStatusName   string            `json:"legalStatusName,omitempty"`
+	ValidityStatus    string            `json:"validityStatus,omitempty"`
+	Authority         string            `json:"authority,omitempty"`
+	DecisionNumber    string            `json:"decisionNumber,omitempty"`
+	Summary           string            `json:"summary,omitempty"`
+	ResearchScope     string            `json:"researchScope,omitempty"`
+	Indicators        json.RawMessage   `json:"indicators"`
+	ApprovalDate      *time.Time        `json:"approvalDate,omitempty"`
+	EffectiveDate     *time.Time        `json:"effectiveDate,omitempty"`
+	ExpiryDate        *time.Time        `json:"expiryDate,omitempty"`
+	CurrentVersion    string            `json:"currentVersion,omitempty"`
+	Metadata          json.RawMessage   `json:"metadata"`
+	ProcessStatus     uint32            `json:"processStatus"`
+	CreatedAt         *time.Time        `json:"createdAt,omitempty"`
+	UpdatedAt         *time.Time        `json:"updatedAt,omitempty"`
+	HasLayer          bool              `json:"hasLayer"`
+	LayerCount        int64             `json:"layerCount"`
+	Overview          *ProjectOverview  `json:"overview,omitempty" gorm:"-"`
+	Tags              []ProjectTag      `json:"tags,omitempty" gorm:"-"`
+	ProjectTags       []Tag             `json:"projectTags,omitempty" gorm:"-"`
 	Provinces         []ProjectProvince `json:"provinces,omitempty" gorm:"-"`
 }
 
@@ -197,13 +199,19 @@ type ProvinceListFilter struct {
 const ProvinceScopeQH uint32 = 10
 
 type ProvinceItem struct {
-	ID        string  `json:"id" gorm:"column:id"`
-	FullName  string  `json:"fullName" gorm:"column:full_name"`
-	ShortName string  `json:"shortName,omitempty" gorm:"column:short_name"`
-	Code      string  `json:"code,omitempty" gorm:"column:code"`
-	Lat       float64 `json:"lat,omitempty" gorm:"column:lat"`
-	Lng       float64 `json:"lng,omitempty" gorm:"column:lng"`
-	WardCount int32   `json:"wardCount" gorm:"column:ward_count"`
-	QHOrder   int32   `json:"qhOrder" gorm:"column:qh_order"`
-	Zoom      uint32  `json:"zoom" gorm:"column:zoom"`
+	ID             string  `json:"id" gorm:"column:id"`
+	FullName       string  `json:"fullName" gorm:"column:full_name"`
+	ShortName      string  `json:"shortName,omitempty" gorm:"column:short_name"`
+	Code           string  `json:"code,omitempty" gorm:"column:code"`
+	Lat            float64 `json:"lat,omitempty" gorm:"column:lat"`
+	Lng            float64 `json:"lng,omitempty" gorm:"column:lng"`
+	WardCount      int32   `json:"wardCount" gorm:"column:ward_count"`
+	QHOrder        int32   `json:"qhOrder" gorm:"column:qh_order"`
+	Zoom           uint32  `json:"zoom" gorm:"column:zoom"`
+	Description    string  `json:"description,omitempty" gorm:"column:description"`
+	UnitType       uint32  `json:"unitType" gorm:"column:unit_type"`
+	UnitTypeName   string  `json:"unitTypeName,omitempty" gorm:"-"`
+	DataSource     uint32  `json:"dataSource" gorm:"column:data_source"`
+	DataSourceName string  `json:"dataSourceName,omitempty" gorm:"-"`
+	PlanDocID      *uint64 `json:"planDocId,omitempty" gorm:"column:plan_doc_id"`
 }

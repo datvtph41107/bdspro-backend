@@ -6,8 +6,10 @@ import (
 	"errors"
 	"log"
 	tqdpb "pb/types/tqd"
+	"strings"
 	"tqd/infra/mapper"
 	"tqd/infra/validator"
+	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	qh_usecase "tqd/internal/usecase/qh"
 
@@ -84,11 +86,42 @@ func (h *QHPlanningGrpcHandler) GetPlanningProject(ctx context.Context, req *tqd
 	return h.mapper.ToProjectProto(result), nil
 }
 
+// CountPlanningProject @Summary Đếm timeline, tin, relation, tài liệu, layer của đồ án
+// @Description Đếm số sự kiện (timeline), tin SEO, quan hệ đồ án, tài liệu và layer liên quan thuộc planning project. Số tin gọi CRM CountSeoRefs.
+// @Tags Planning Project Admin
+// @Produce json
+// @Param id path int true "Planning project ID"
+// @Success 200 {object} tqdpb.PlanningProjectCountResponse
+// @Router /v2/tqd/admin/planning-projects/{id}/count [get]
+func (h *QHPlanningGrpcHandler) CountPlanningProject(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningProjectCountResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.projectUsecase.Count(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return &tqdpb.PlanningProjectCountResponse{
+		Timeline: result.Timeline,
+		Tin:      result.Tin,
+		Relation: result.Relation,
+		Doc:      result.Doc,
+		Layer:    result.Layer,
+	}, nil
+}
+
 func (h *QHPlanningGrpcHandler) UpdatePlanningProject(ctx context.Context, req *tqdpb.PlanningProject) (*tqdpb.PlanningProject, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	project := h.mapper.ToProjectDomain(req)
+	if req.ClientView == nil {
+		existing, err := h.projectUsecase.GetByID(ctx, req.Id)
+		if err != nil {
+			return nil, planningProjectStatusError(err)
+		}
+		project.ClientView = existing.ClientView
+	}
 	if err := h.validator.ValidateProject(project); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -115,11 +148,12 @@ func (h *QHPlanningGrpcHandler) DeletePlanningProject(ctx context.Context, req *
 
 func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *tqdpb.ListPlanningProjectsRequest) (*tqdpb.ListPlanningProjectsResponse, error) {
 	listReq := &qh_dto.ListPlanningProjectsRequest{
-		Search:         req.Search,
+		Search:         strings.ToLower(strings.TrimSpace(req.Search)),
 		PlanningType:   req.PlanningType,
 		PlanningLevel:  req.PlanningLevel,
 		ValidityStatus: req.ValidityStatus,
 		ProcessStatus:  req.ProcessStatus,
+		AdmID:          req.AdmId,
 	}
 	listReq.Page = uint32(req.Page)
 	listReq.Size = uint32(req.Size)
@@ -132,6 +166,73 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 	return &tqdpb.ListPlanningProjectsResponse{
 		Data:  h.mapper.ToProjectProtoList(results),
 		Total: total,
+	}, nil
+}
+
+// ListPlanningProjectLayers danh sách layer thuộc đồ án quy hoạch.
+// @Summary Danh sách layer theo đồ án
+// @Description Lấy danh sách layer theo planningId (qh_layers.planning_project_id hoặc gán qua layer_plan_doc_relation).
+// @Tags Planning Project Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningId path int true "Planning project ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.ListLayersResponse
+// @Router /v2/tqd/admin/planning-projects/{planningId}/layers [get]
+func (h *QHPlanningGrpcHandler) ListPlanningProjectLayers(ctx context.Context, req *tqdpb.ListPlanningProjectLayersRequest) (*tqdpb.ListLayersResponse, error) {
+	if req == nil || req.PlanningId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningId is required")
+	}
+
+	listReq := &qh_dto.ListPlanningProjectLayersRequest{
+		PlanningID: req.PlanningId,
+	}
+	listReq.Page = req.Page
+	listReq.Size = req.Size
+
+	layers, total, err := h.projectUsecase.ListLayers(ctx, listReq)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+
+	return &tqdpb.ListLayersResponse{
+		Data:     h.mapper.ToLayerProtoList(layers),
+		Total:    total,
+		Page:     req.Page,
+		PageSize: req.Size,
+	}, nil
+}
+
+// UnassignPlanningProjectLayer gỡ layer khỏi đồ án — chỉ xóa layer_plan_doc_relation.
+// @Summary Gỡ layer khỏi đồ án
+// @Description Xóa toàn bộ layer_plan_doc_relation của layer với tài liệu thuộc đồ án. Không xóa layer.
+// @Tags Planning Project Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningId path int true "Planning project ID"
+// @Param layerId path int true "Layer ID"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/planning-projects/{planningId}/layers/{layerId} [delete]
+func (h *QHPlanningGrpcHandler) UnassignPlanningProjectLayer(ctx context.Context, req *tqdpb.UnassignPlanningProjectLayerRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	if err := h.validator.ValidateUnassignLayer(req.PlanningId, req.LayerId); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	err := h.documentUsecase.UnassignLayer(ctx, &qh_dto.UnassignPlanningProjectLayerRequest{
+		PlanningID: req.PlanningId,
+		LayerID:    req.LayerId,
+	})
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+
+	return &tqdpb.SubmitResponse{
+		Success: true,
+		Message: "Layer unassigned successfully",
 	}, nil
 }
 
@@ -158,6 +259,50 @@ func (h *QHPlanningGrpcHandler) CreatePlanningProjectFromFolder(ctx context.Cont
 		Documents: h.mapper.ToDocumentProtoList(resultDocuments),
 		AiJob:     h.mapper.ToProAIJobProto(aiJob),
 	}, nil
+}
+
+// AdminAssignProvinces gán provinces cho planning project
+func (h *QHPlanningGrpcHandler) AdminAssignProvinces(ctx context.Context, req *tqdpb.AdminAssignProvincesRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningId is required")
+	}
+	if err := h.projectUsecase.AssignProvinces(ctx, req.PlanningId, req.ProvinceIds); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &tqdpb.SubmitResponse{Success: true, Message: "provinces assigned"}, nil
+}
+
+// AdminUnassignProvinces gỡ provinces khỏi planning project (xóa bản ghi)
+func (h *QHPlanningGrpcHandler) AdminUnassignProvinces(ctx context.Context, req *tqdpb.AdminUnassignProvincesRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningId is required")
+	}
+	if err := h.projectUsecase.UnassignProvinces(ctx, req.PlanningId, req.ProvinceIds); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &tqdpb.SubmitResponse{Success: true, Message: "provinces unassigned"}, nil
+}
+
+// AdminAssignWards gán wards cho planning project
+func (h *QHPlanningGrpcHandler) AdminAssignWards(ctx context.Context, req *tqdpb.AdminAssignWardsRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningId is required")
+	}
+	if err := h.projectUsecase.AssignWards(ctx, req.PlanningId, req.WardIds); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &tqdpb.SubmitResponse{Success: true, Message: "wards assigned"}, nil
+}
+
+// AdminUnassignWards gỡ wards khỏi planning project (xóa bản ghi)
+func (h *QHPlanningGrpcHandler) AdminUnassignWards(ctx context.Context, req *tqdpb.AdminUnassignWardsRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningId is required")
+	}
+	if err := h.projectUsecase.UnassignWards(ctx, req.PlanningId, req.WardIds); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &tqdpb.SubmitResponse{Success: true, Message: "wards unassigned"}, nil
 }
 
 func (h *QHPlanningGrpcHandler) ListProAIJobs(ctx context.Context, req *tqdpb.ListProAIJobsRequest) (*tqdpb.ListProAIJobsResponse, error) {
@@ -256,11 +401,35 @@ func (h *QHPlanningGrpcHandler) DeletePlanningDocument(ctx context.Context, req 
 	}, nil
 }
 
+// ListPlanningDocuments danh sách tài liệu quy hoạch.
+// @Summary Danh sách tài liệu quy hoạch
+// @Tags Planning Document Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningProjectId query int false "ID đồ án"
+// @Param layerId query int false "Lọc theo layer (layer_plan_doc_relation)"
+// @Param documentType query string false "Loại tài liệu"
+// @Param status query string false "Trạng thái hiệu lực"
+// @Param page query int false "Trang"
+// @Param size query int false "Số bản ghi"
+// @Success 200 {object} tqdpb.ListPlanningDocumentsResponse
+// @Router /v2/tqd/admin/planning-documents [get]
 func (h *QHPlanningGrpcHandler) ListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*tqdpb.ListPlanningDocumentsResponse, error) {
-	listReq := &qh_dto.ListPlanningDocumentsRequest{
-		PlanningProjectID: req.ProjectId,
-		DocumentType:      req.DocumentType,
+	if req == nil {
+		req = &tqdpb.ListPlanningDocumentsRequest{}
 	}
+	planningProjectID := req.PlanningProjectId
+	if planningProjectID == 0 {
+		planningProjectID = req.ProjectId
+	}
+
+	listReq := &qh_dto.ListPlanningDocumentsRequest{
+		PlanningProjectID: planningProjectID,
+		DocumentType:      req.DocumentType,
+		ValidityStatus:    req.Status,
+		LayerID:           req.LayerId,
+	}
+	log.Printf("[ListPlanningDocuments] planningProjectID=%v, documentType=%v, validityStatus=%v, layerId=%v", planningProjectID, req.DocumentType, req.Status, req.LayerId)
 	listReq.Page = uint32(req.Page)
 	listReq.Size = uint32(req.Size)
 
@@ -297,6 +466,38 @@ func (h *QHPlanningGrpcHandler) RetryPlanningDocument(ctx context.Context, req *
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return h.mapper.ToDocumentProto(result), nil
+}
+
+// AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer.
+// @Summary Gán tài liệu vào layer
+// @Description Tạo bản ghi layer_plan_doc_relation từ layerId và danh sách docIds.
+// @Tags Planning Document Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AssignPlanningDocumentsToLayerRequest true "layerId và docIds"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/planning-documents/assign-layer [post]
+func (h *QHPlanningGrpcHandler) AssignPlanningDocumentsToLayer(ctx context.Context, req *tqdpb.AssignPlanningDocumentsToLayerRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	if err := h.validator.ValidateAssignLayer(req.LayerId, req.DocIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	err := h.documentUsecase.AssignToLayer(ctx, &qh_dto.AssignPlanningDocumentsToLayerRequest{
+		LayerID: req.LayerId,
+		DocIDs:  req.DocIds,
+	})
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+
+	return &tqdpb.SubmitResponse{
+		Success: true,
+		Message: "Documents assigned to layer successfully",
+	}, nil
 }
 
 // RetryFailedPlanningDocuments đưa tất cả tài liệu Failed của đồ án về Pending.
@@ -400,25 +601,348 @@ func planningProjectSeoSourceToProto(source *qh_dto.PlanningProjectSeoSource) *t
 	return resp
 }
 
+// QHPlanningEvent APIs
+
+// CreatePlanningEvent tạo mốc lịch sử pháp lý cho đồ án.
+// @Summary Tạo sự kiện timeline đồ án
+// @Description Tạo sự kiện lịch sử pháp lý gắn với planningProjectId.
+// @Tags Planning Event Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.PlanningEvent true "Sự kiện timeline"
+// @Success 200 {object} tqdpb.PlanningEvent
+// @Router /v2/tqd/admin/planning-events [post]
+func (h *QHPlanningGrpcHandler) CreatePlanningEvent(ctx context.Context, req *tqdpb.PlanningEvent) (*tqdpb.PlanningEvent, error) {
+	event := h.mapper.ToEventDomain(req)
+	if err := h.validator.ValidateEvent(event); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	result, err := h.eventUsecase.Create(ctx, event)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToEventProto(result), nil
+}
+
+// GetPlanningEvent lấy chi tiết 1 sự kiện timeline.
+// @Summary Chi tiết sự kiện timeline
+// @Tags Planning Event Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Event ID"
+// @Success 200 {object} tqdpb.PlanningEvent
+// @Router /v2/tqd/admin/planning-events/{id} [get]
+func (h *QHPlanningGrpcHandler) GetPlanningEvent(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningEvent, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.eventUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToEventProto(result), nil
+}
+
+// UpdatePlanningEvent cập nhật sự kiện timeline.
+// @Summary Cập nhật sự kiện timeline
+// @Tags Planning Event Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Event ID"
+// @Param request body tqdpb.PlanningEvent true "Sự kiện timeline"
+// @Success 200 {object} tqdpb.PlanningEvent
+// @Router /v2/tqd/admin/planning-events/{id} [put]
+func (h *QHPlanningGrpcHandler) UpdatePlanningEvent(ctx context.Context, req *tqdpb.PlanningEvent) (*tqdpb.PlanningEvent, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	event := h.mapper.ToEventDomain(req)
+	if err := h.validator.ValidateEvent(event); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	result, err := h.eventUsecase.Update(ctx, req.Id, event)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToEventProto(result), nil
+}
+
+// DeletePlanningEvent xóa cứng sự kiện timeline (DELETE SQL, không soft delete).
+// @Summary Xóa sự kiện timeline
+// @Description Xóa bản ghi qh_planning_events bằng DELETE, không đánh dấu deleted_at.
+// @Tags Planning Event Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Event ID"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/planning-events/{id} [delete]
+func (h *QHPlanningGrpcHandler) DeletePlanningEvent(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	success, err := h.eventUsecase.Delete(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return &tqdpb.SubmitResponse{
+		Success: success,
+		Message: "Event deleted successfully",
+	}, nil
+}
+
+// ListPlanningEvents danh sách sự kiện timeline cho admin.
+// @Summary Danh sách sự kiện timeline
+// @Tags Planning Event Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningProjectId query int false "Planning project ID"
+// @Param projectId query int false "Alias project ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.ListPlanningEventsResponse
+// @Router /v2/tqd/admin/planning-events [get]
+func (h *QHPlanningGrpcHandler) ListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningEventsResponse, error) {
+	if req == nil {
+		req = &tqdpb.ListPlanningEventsRequest{}
+	}
+	planningProjectID := req.PlanningProjectId
+	if planningProjectID == 0 {
+		planningProjectID = req.ProjectId
+	}
+
+	listReq := &qh_dto.ListPlanningEventsRequest{
+		PlanningProjectID: planningProjectID,
+	}
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
+
+	results, total, err := h.eventUsecase.GetList(ctx, listReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.ListPlanningEventsResponse{
+		Data:  h.mapper.ToEventProtoList(results),
+		Total: total,
+	}, nil
+}
+
+// QHPlanningRelation APIs
+
+// CreatePlanningRelation tạo quan hệ parent/child/peer giữa hai đồ án.
+// @Summary Tạo quan hệ đồ án
+// @Description fromId là đồ án nguồn (parent nếu không phải peer), toId là đồ án đích (child hoặc peer).
+// @Tags Planning Relation Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.PlanningRelation true "Quan hệ đồ án"
+// @Success 200 {object} tqdpb.PlanningRelation
+// @Router /v2/tqd/admin/planning-relations [post]
+func (h *QHPlanningGrpcHandler) CreatePlanningRelation(ctx context.Context, req *tqdpb.PlanningRelation) (*tqdpb.PlanningRelation, error) {
+	relation := h.mapper.ToRelationDomain(req)
+	if err := h.validator.ValidateRelation(relation); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	result, err := h.eventUsecase.CreateRelation(ctx, relation)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToRelationAdminProto(result), nil
+}
+
+// GetPlanningRelation lấy chi tiết 1 quan hệ đồ án.
+// @Summary Chi tiết quan hệ đồ án
+// @Tags Planning Relation Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Relation ID"
+// @Success 200 {object} tqdpb.PlanningRelation
+// @Router /v2/tqd/admin/planning-relations/{id} [get]
+func (h *QHPlanningGrpcHandler) GetPlanningRelation(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningRelation, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.eventUsecase.GetRelationByID(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToRelationAdminProto(result), nil
+}
+
+// UpdatePlanningRelation cập nhật quan hệ đồ án.
+// @Summary Cập nhật quan hệ đồ án
+// @Tags Planning Relation Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Relation ID"
+// @Param request body tqdpb.PlanningRelation true "Quan hệ đồ án"
+// @Success 200 {object} tqdpb.PlanningRelation
+// @Router /v2/tqd/admin/planning-relations/{id} [put]
+func (h *QHPlanningGrpcHandler) UpdatePlanningRelation(ctx context.Context, req *tqdpb.PlanningRelation) (*tqdpb.PlanningRelation, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	relation := h.mapper.ToRelationDomain(req)
+	if err := h.validator.ValidateRelation(relation); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	result, err := h.eventUsecase.UpdateRelation(ctx, req.Id, relation)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToRelationAdminProto(result), nil
+}
+
+// DeletePlanningRelation xóa cứng quan hệ đồ án (DELETE SQL, không soft delete).
+// @Summary Xóa quan hệ đồ án
+// @Description Xóa bản ghi qh_planning_relations bằng DELETE, không đánh dấu deleted_at.
+// @Tags Planning Relation Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Relation ID"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/planning-relations/{id} [delete]
+func (h *QHPlanningGrpcHandler) DeletePlanningRelation(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	success, err := h.eventUsecase.DeleteRelation(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return &tqdpb.SubmitResponse{
+		Success: success,
+		Message: "Relation deleted successfully",
+	}, nil
+}
+
+// ListPlanningRelations danh sách quan hệ đồ án cho admin.
+// @Summary Danh sách quan hệ đồ án
+// @Tags Planning Relation Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningProjectId query int false "Planning project ID"
+// @Param projectId query int false "Alias project ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.ListPlanningRelationsResponse
+// @Router /v2/tqd/admin/planning-relations [get]
+func (h *QHPlanningGrpcHandler) ListPlanningRelations(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningRelationsResponse, error) {
+	if req == nil {
+		req = &tqdpb.ListPlanningEventsRequest{}
+	}
+	planningProjectID := req.PlanningProjectId
+	if planningProjectID == 0 {
+		planningProjectID = req.ProjectId
+	}
+
+	listReq := &qh_dto.ListPlanningEventsRequest{
+		PlanningProjectID: planningProjectID,
+	}
+	listReq.Page = uint32(req.Page)
+	listReq.Size = uint32(req.Size)
+
+	results, total, err := h.eventUsecase.GetRelations(ctx, listReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.ListPlanningRelationsResponse{
+		Data:  h.mapper.ToRelationAdminProtoList(results),
+		Total: total,
+	}, nil
+}
+
 // Client APIs
 
 func (h *QHPlanningGrpcHandler) ClientGetPlanningProject(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningProject, error) {
-	return h.GetPlanningProject(ctx, req)
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.projectUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	if !result.ClientView {
+		return nil, status.Error(codes.NotFound, "Không tìm thấy dữ liệu")
+	}
+	return h.mapper.ToProjectProto(result), nil
 }
 
-func (h *QHPlanningGrpcHandler) ClientListPlanningProjects(ctx context.Context, req *tqdpb.ListPlanningProjectsRequest) (*tqdpb.ListPlanningProjectsResponse, error) {
-	return h.ListPlanningProjects(ctx, req)
+func (h *QHPlanningGrpcHandler) ClientListPlanningProjects(ctx context.Context, req *tqdpb.ClientListPlanningProjectsRequest) (*tqdpb.ListPlanningProjectsResponse, error) {
+	if req == nil {
+		req = &tqdpb.ClientListPlanningProjectsRequest{}
+	}
+	listReq := &qh_dto.ListPlanningProjectsRequest{
+		Search:         strings.ToLower(strings.TrimSpace(req.GetSearch())),
+		ClientViewOnly: true,
+		AdmID:          req.GetAdmId(),
+	}
+	listReq.Page = uint32(req.GetPage())
+	listReq.Size = uint32(req.GetSize())
+
+	results, total, err := h.projectUsecase.GetList(ctx, listReq)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.ListPlanningProjectsResponse{
+		Data:  h.mapper.ToProjectProtoList(results),
+		Total: total,
+	}, nil
 }
 
 func (h *QHPlanningGrpcHandler) ClientGetPlanningDocument(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningDocument, error) {
-	return h.GetPlanningDocument(ctx, req)
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.documentUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+	if err := h.requireClientVisibleProject(ctx, result.PlanningProjectID); err != nil {
+		return nil, err
+	}
+	return h.mapper.ToDocumentProto(result), nil
 }
 
 func (h *QHPlanningGrpcHandler) ClientListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*tqdpb.ListPlanningDocumentsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	planningProjectID := req.PlanningProjectId
+	if planningProjectID == 0 {
+		planningProjectID = req.ProjectId
+	}
+	if err := h.requireClientVisibleProject(ctx, planningProjectID); err != nil {
+		return nil, err
+	}
 	return h.ListPlanningDocuments(ctx, req)
 }
 
+// ClientListPlanningEvents trả lịch sử pháp lý của đồ án theo timeline.
+// @Summary Lịch sử đồ án quy hoạch
+// @Description Danh sách sự kiện pháp lý của đồ án, sắp xếp theo ngày sự kiện giảm dần. Dùng để hiển thị timeline.
+// @Tags Planning Project Client
+// @Accept json
+// @Produce json
+// @Param project_id path int true "Planning project ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.ListPlanningEventsResponse
+// @Router /v2/tqd/client/planning-projects/{project_id}/timeline [get]
 func (h *QHPlanningGrpcHandler) ClientListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningEventsResponse, error) {
+	if req == nil || req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	if err := h.requireClientVisibleProject(ctx, req.ProjectId); err != nil {
+		return nil, err
+	}
+
 	listReq := &qh_dto.ListPlanningEventsRequest{
 		PlanningProjectID: req.ProjectId,
 	}
@@ -437,19 +961,77 @@ func (h *QHPlanningGrpcHandler) ClientListPlanningEvents(ctx context.Context, re
 }
 
 func (h *QHPlanningGrpcHandler) ClientListPlanningRelations(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*tqdpb.ListPlanningRelationsResponse, error) {
+	if req == nil || req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	if err := h.requireClientVisibleProject(ctx, req.ProjectId); err != nil {
+		return nil, err
+	}
+
 	listReq := &qh_dto.ListPlanningEventsRequest{
 		PlanningProjectID: req.ProjectId,
 	}
 	listReq.Page = uint32(req.Page)
 	listReq.Size = uint32(req.Size)
 
-	results, total, err := h.eventUsecase.GetRelations(ctx, listReq)
+	results, _, err := h.eventUsecase.GetRelations(ctx, listReq)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	visible := make([]qh_domain.QHPlanningRelationItem, 0, len(results))
+	for i := range results {
+		if clientVisibleRelation(&results[i], req.ProjectId) {
+			visible = append(visible, results[i])
+		}
+	}
+
 	return &tqdpb.ListPlanningRelationsResponse{
-		Data:  h.mapper.ToRelationProtoList(results, req.ProjectId),
-		Total: total,
+		Data:  h.mapper.ToRelationProtoList(visible, req.ProjectId),
+		Total: int64(len(visible)),
 	}, nil
+}
+
+// ClientCountPlanningProject @Summary Đếm timeline, tin, relation, tài liệu, layer của đồ án (client)
+// @Description Đếm số sự kiện (timeline), tin SEO, quan hệ đồ án, tài liệu và layer liên quan thuộc planning project.
+// @Tags Planning Project Client
+// @Produce json
+// @Param project_id path int true "Planning project ID"
+// @Success 200 {object} tqdpb.PlanningProjectCountResponse
+// @Router /v2/tqd/client/planning-projects/{project_id}/count [get]
+func (h *QHPlanningGrpcHandler) ClientCountPlanningProject(ctx context.Context, req *tqdpb.PlanningProjectIdRequest) (*tqdpb.PlanningProjectCountResponse, error) {
+	if req == nil || req.ProjectId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "project_id is required")
+	}
+	if err := h.requireClientVisibleProject(ctx, req.ProjectId); err != nil {
+		return nil, err
+	}
+	return h.CountPlanningProject(ctx, &tqdpb.IdRequest{Id: req.ProjectId})
+}
+
+func (h *QHPlanningGrpcHandler) requireClientVisibleProject(ctx context.Context, id uint64) error {
+	project, err := h.projectUsecase.GetByID(ctx, id)
+	if err != nil {
+		return planningProjectStatusError(err)
+	}
+	if !project.ClientView {
+		return status.Error(codes.NotFound, "Không tìm thấy dữ liệu")
+	}
+	return nil
+}
+
+func clientVisibleRelation(item *qh_domain.QHPlanningRelationItem, projectID uint64) bool {
+	if item == nil {
+		return false
+	}
+	related := []*qh_domain.QHPlanningProject{item.Parent, item.Child, item.Peer}
+	for _, project := range related {
+		if project == nil || project.ID == projectID {
+			continue
+		}
+		if !project.ClientView {
+			return false
+		}
+	}
+	return true
 }

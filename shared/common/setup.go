@@ -176,8 +176,8 @@ func LoadYMLConfigFile(runtimeEnv string) {
 	viper.SetDefault("seo.generation_job.batch_size", 200)
 	viper.SetDefault("seo.parcelUrlTemplate", "/tin-tuc/thua-dat/{id}-{slug}")
 	viper.SetDefault("seo.layerUrlTemplate", "/quy-hoach/lop/{id}-{slug}")
-	viper.SetDefault("seo.planningProjectUrlTemplate", "/do-an-quy-hoach/{slug}")
-	viper.SetDefault("seo.administrativeUnitUrlTemplate", "/dia-ban/{slug}")
+	viper.SetDefault("seo.planningProjectUrlTemplate", "/tin-tuc/do-an-quy-hoach/{slug}")
+	viper.SetDefault("seo.administrativeUnitUrlTemplate", "/tin-tuc/dia-ban/{slug}")
 
 	env := "local"
 	if runtimeEnv != "" {

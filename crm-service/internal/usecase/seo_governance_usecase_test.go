@@ -13,7 +13,7 @@ func TestBuildSeoGovernanceDocumentPreservesBackendDecisions(t *testing.T) {
 	page := &seo_domain.SeoDomain{
 		ID:              42,
 		Slug:            "phuong-ben-nghe-26734",
-		CanonicalURL:    "/dia-ban/phuong-ben-nghe-26734",
+		CanonicalURL:    "/tin-tuc/dia-ban/phuong-ben-nghe-26734",
 		PageStatus:      seo_domain.SeoPageStatusPublished,
 		Published:       true,
 		Scope:           seo_domain.SeoScopePublic,

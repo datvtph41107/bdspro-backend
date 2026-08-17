@@ -15,7 +15,10 @@ const (
 
 func (e ESEORefType) Validate() bool {
 	switch e {
-	case ESEORefTypeAdmUnit, ESEORefTypeParcel, ESEORefTypeRegion, ESEORefTypeProject, ESEORefTypeDocument, ESEORefTypeMap, ESEORefTypeReport, ESEORefTypeLegacy:
+	case ESEORefTypeAdmUnit, ESEORefTypeParcel,
+		ESEORefTypeRegion, ESEORefTypeProject,
+		ESEORefTypeDocument, ESEORefTypeMap, ESEORefTypeReport,
+		ESEORefTypeLegacy:
 		return true
 	default:
 		return false

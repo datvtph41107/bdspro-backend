@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	_utils "common/utils"
@@ -62,6 +63,8 @@ func ToLayerDomainFromCreate(req *tqdpb.CreateLayerRequest) (*qh_domain.QHLayer,
 		fid := *req.FamilyId
 		out.FamilyID = &fid
 	}
+	out.ProvinceID = NormalizeLocationID("province", req.GetProvinceId())
+	out.WardID = NormalizeLocationID("ward", req.GetWardId())
 	return out, nil
 }
 
@@ -106,6 +109,8 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		PublishScopes:   layer.PublishScopes,
 		LegalDoc:        layer.LegalDoc,
 		DefaultVisible:  layer.DefaultVisible,
+		ProvinceId:      layer.ProvinceID,
+		WardId:          layer.WardID,
 	}
 	if layer.SeoID != nil && *layer.SeoID > 0 {
 		seoID := *layer.SeoID
@@ -180,4 +185,20 @@ func ToProtoQHLayerFamilyClient(f *qh_domain.QHLayerFamily, minZoom, maxZoom uin
 	resp.SourceType = "vector"
 	resp.SourceCode = sourceCode
 	return resp
+}
+
+func NormalizeLocationID(unitType, id string) *string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return nil
+	}
+	prefix := unitType + ":"
+	if strings.HasPrefix(id, prefix) {
+		id = strings.TrimPrefix(id, prefix)
+	}
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return nil
+	}
+	return &id
 }

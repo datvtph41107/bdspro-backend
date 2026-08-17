@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -312,9 +311,17 @@ func normalizePage(page, size int) (int, int) {
 	return page, size
 }
 
-func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
-	log.Println("filter2", filter)
+func likeKeyword(keyword string) string {
+	keyword = strings.ToLower(strings.TrimSpace(keyword))
+	keyword = strings.ReplaceAll(keyword, "+", " ")
+	parts := strings.Fields(keyword)
+	if len(parts) == 0 {
+		return ""
+	}
+	return "%" + strings.Join(parts, "%") + "%"
+}
 
+func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
 	filter.Page, filter.Size = normalizePage(filter.Page, filter.Size)
 
 	base := ` FROM seo_domain sd
@@ -322,18 +329,16 @@ func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.Plannin
       LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL
       WHERE ` + planningNewsWhere
 	args := []any{}
-	if v := strings.TrimSpace(strings.ToLower(filter.Keyword)); v != "" {
-		base += " AND (LOWER(COALESCE(sd.title,'')) LIKE ? OR LOWER(COALESCE(sd.description,'')) LIKE ? OR LOWER(COALESCE(sd.summary,'')) LIKE ? OR LOWER(COALESCE(sd.content,'')) LIKE ?)"
-		p := "%" + v + "%"
-		args = append(args, p, p, p, p)
+	if p := likeKeyword(filter.Keyword); p != "" {
+		base += " AND (LOWER(COALESCE(sd.title,'')) LIKE ? OR LOWER(COALESCE(sd.description,'')) LIKE ? OR LOWER(COALESCE(sd.summary,'')) LIKE ? OR LOWER(COALESCE(sd.content,'')) LIKE ? OR LOWER(COALESCE(sd.slug,'')) LIKE ?)"
+		args = append(args, p, p, p, p, p)
 	}
 	if v := strings.TrimSpace(filter.Topic); v != "" {
 		base += " AND (c.code=? OR c.slug=? OR LOWER(c.name)=LOWER(?))"
 		args = append(args, v, v, v)
 	}
-	if v := strings.TrimSpace(strings.ToLower(filter.Location)); v != "" {
+	if p := likeKeyword(filter.Location); p != "" {
 		base += " AND (LOWER(COALESCE(sd.ref_label,'')) LIKE ? OR LOWER(COALESCE(sd.metadata->>'location','')) LIKE ? OR LOWER(COALESCE(sd.ref_snapshot_json->>'location','')) LIKE ?)"
-		p := "%" + v + "%"
 		args = append(args, p, p, p)
 	}
 	if len(filter.VisibleOns) > 0 {
@@ -676,14 +681,14 @@ func contentKind(canonicalURL string) (string, string) {
 }
 
 func (r *Repository) SearchPublishedContent(ctx context.Context, query string, kinds []string, limit int) (*domain.ContentSearchResult, error) {
-	query = strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(query))), " ")
-	if query == "" {
+	pattern := likeKeyword(query)
+	if pattern == "" {
 		return &domain.ContentSearchResult{Groups: []domain.SearchGroup{}}, nil
 	}
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
-	pattern := "%" + query + "%"
+	query = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(query, "+", " ")))
 	rows := []contentSearchRow{}
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT sd.id, sd.slug, COALESCE(sd.title,'') AS title,

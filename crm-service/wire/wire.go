@@ -186,6 +186,7 @@ var wireSet = wire.NewSet(
 	crm_infra_postgre.NewSeoQueryEvidencePostgres,
 	crm_internal_usecase.NewSeoQueryEvidenceUsecase,
 	crm_infra_postgre.NewSeoRelativePostgres,
+	crm_infra_postgre.NewSeoRefPostgres,
 	crm_internal_usecase.NewSeoRenderUsecase,
 	crm_infra_postgre.NewSeoRuntimeEventPostgres,
 	crm_internal_usecase.NewSeoRuntimeEventUsecase,

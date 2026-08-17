@@ -97,6 +97,12 @@ service SeoDomainService {
     };
   }
 
+  rpc CountSeoRefs(CountSeoRefsRequest) returns (CountSeoRefsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/internal/seos/{refType}/{refId}/count"
+    };
+  }
+
   rpc GetSeoDomain(sharepb.IdRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       get: "/v2/crm/admin/seo-domains/{id}"
@@ -313,6 +319,44 @@ service SeoDomainService {
   rpc DeleteSeoRelative(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       delete: "/v2/crm/admin/seo-domains/relatives/{id}"
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // SEO refs: liên kết bài SEO với entity (project/parcel/adm_unit/...).
+  // Public list /v2/crm/public/seos/{refType}/{refId}/list đọc bảng này.
+  // Delete là hard delete, không soft-delete.
+  // ---------------------------------------------------------------------------
+
+  rpc CreateSeoRef(CreateSeoRefRequest) returns (SeoRefResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/refs"
+      body: "*"
+    };
+  }
+
+  rpc GetSeoRef(sharepb.IdRequest) returns (SeoRefResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo-domains/refs/{id}"
+    };
+  }
+
+  rpc GetSeoRefList(GetSeoRefListRequest) returns (GetSeoRefListResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/seo-domains/refs"
+    };
+  }
+
+  rpc UpdateSeoRef(UpdateSeoRefRequest) returns (UpdateSeoRefResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo-domains/refs/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteSeoRef(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/seo-domains/refs/{id}"
     };
   }
 
@@ -1095,8 +1139,8 @@ message GenerateSeoFromPlanningProjectsResponse {
 }
 
 message GenerateSeoFromAdministrativeUnitsRequest {
-  // Typed identities: province:<id> | ward:<id>
-  repeated string identities = 1;
+  // Public IDs: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422
+  repeated uint64 compositeIds = 1;
 }
 
 message GenerateSeoFromAdministrativeUnitsResponse {
@@ -1547,4 +1591,57 @@ message GetSeoRefsRequest {
   uint64 refId = 2;
   uint32 page = 3;
   uint32 size = 4;
+}
+
+message CountSeoRefsRequest {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message CountSeoRefsResponse {
+  int64 total = 1;
+}
+
+// -----------------------------------------------------------------------------
+// SEO refs (entity <-> SEO page links).
+// -----------------------------------------------------------------------------
+
+message CreateSeoRefRequest {
+  uint64 seoDomainId = 1;
+  uint32 refType = 2;
+  uint64 refId = 3;
+}
+
+message UpdateSeoRefRequest {
+  uint64 id = 1;
+  optional uint64 seoDomainId = 2;
+  optional uint32 refType = 3;
+  optional uint64 refId = 4;
+}
+
+message GetSeoRefListRequest {
+  optional uint64 seoDomainId = 1;
+  uint32 refType = 2;
+  uint64 refId = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+}
+
+message GetSeoRefListResponse {
+  repeated SeoRefResponse data = 1;
+  int64 total = 2;
+}
+
+message UpdateSeoRefResponse {
+  SeoRefResponse seoRef = 1;
+}
+
+message SeoRefResponse {
+  uint64 id = 1;
+  uint64 seoDomainId = 2;
+  uint32 refType = 3;
+  uint64 refId = 4;
+  optional SeoDomainBriefResponse seoDomain = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
 }

@@ -35,6 +35,13 @@ service TqdPublicService {
       get: "/v2/tqd/qh/public/font/{fontstack}/{range}"
     };
   }
+
+  rpc CreateDefaultSeoByRef(CreateDefaultSeoByRefRequest) returns (CreateDefaultSeoByRefResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/public/seos/default"
+      body: "*"
+    };
+  }
 }
 
 message GetPublicMapsResponse {
@@ -59,4 +66,23 @@ message GetQhConfigAppResponse {
 message GetFontRequest {
   string fontstack = 1;
   string range = 2;
+}
+
+message CreateDefaultSeoByRefRequest {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message CreateDefaultSeoByRefResponse {
+  bool created = 1;
+  uint64 seoId = 2;
+  uint32 refType = 3;
+  uint64 refId = 4;
+  string slug = 5;
+  string originUrl = 6;
+  string canonicalUrl = 7;
+  string title = 8;
+  string description = 9;
+  string pageStatus = 10;
+  string renderStatus = 11;
 }

@@ -1,6 +1,7 @@
 package _utils
 
 import (
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -34,18 +35,32 @@ func FormatTimeToString(t *time.Time) string {
 	return ""
 }
 
-// Parse RFC3339 string -> time.Time
+// Parse RFC3339 / RFC3339Nano / YYYY-MM-DD string -> time.Time.
+// Empty or unrecognized value returns nil (GORM Updates will skip the field).
 func ParseStringToTime(value string) *time.Time {
+	value = strings.TrimSpace(value)
 	if value == "" {
 		return nil
 	}
 
-	t, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		return nil
+	layouts := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		RFC3339Milli,
+		"2006-01-02T15:04:05.000+00:00",
+		"2006-01-02T15:04:05.000",
+		"2006-01-02T15:04:05",
+		TimeFormat,
+		"2006-01-02",
+	}
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, value)
+		if err == nil {
+			return &t
+		}
 	}
 
-	return &t
+	return nil
 }
 
 // --- ADDITIONAL FUNCTIONS FOR INVESTMENT MODULE ---

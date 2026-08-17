@@ -188,7 +188,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			UniquePerRef:     true,
 			SupportsTemplate: false,
 			DefaultPageType:  "entity",
-			PublicURLPattern: "/dia-ban/{slug}",
+			PublicURLPattern: "/tin-tuc/dia-ban/{slug}",
 			Status:           SeoSourceStatusComingSoon,
 			Resolvable:       false,
 			DisabledReason:   "Generic numeric refId cannot preserve typed province/ward identity; dedicated canonical provisioning is required",
@@ -284,7 +284,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			UniquePerRef:     true,
 			SupportsTemplate: true,
 			DefaultPageType:  "entity",
-			PublicURLPattern: "/do-an-quy-hoach/{slug}",
+			PublicURLPattern: "/tin-tuc/do-an-quy-hoach/{slug}",
 			Status:           SeoSourceStatusReady,
 			Resolvable:       true,
 			Capabilities: readyCapabilities(

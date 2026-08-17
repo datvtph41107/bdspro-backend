@@ -28,6 +28,7 @@ type administrativeUnitRow struct {
 	ParentCode     string
 	Latitude       float64
 	Longitude      float64
+	Description    string
 	UpdatedAt      *time.Time
 }
 
@@ -113,6 +114,7 @@ func (r *Repository) queryAdministrativeUnits(
 			       COALESCE(p.code::text, '') AS parent_code,
 			       COALESCE(w.lat, 0)::float8 AS latitude,
 			       COALESCE(w.lng, 0)::float8 AS longitude,
+			       COALESCE(w.description, '') AS description,
 			       NULL::timestamptz AS updated_at
 			FROM ward_v2 w
 			LEFT JOIN province_v2 p ON p.id = w.province_id
@@ -141,6 +143,7 @@ func (r *Repository) queryAdministrativeUnits(
 			       '' AS parent_code,
 			       COALESCE(p.lat, 0)::float8 AS latitude,
 			       COALESCE(p.lng, 0)::float8 AS longitude,
+			       COALESCE(p.description, '') AS description,
 			       p.updated_at
 			FROM province_v2 p
 			WHERE p.id::text = ?
@@ -240,6 +243,7 @@ func (r *Repository) administrativePlanningProjectCount(
 		LEFT JOIN qh_planning_projects pp
 		  ON pp.jurisdiction_id = j.id
 		 AND pp.deleted_at IS NULL
+		 AND pp.client_view = true
 		WHERE j.deleted_at IS NULL
 		  AND (
 		    LOWER(TRIM(j.name)) = LOWER(TRIM(?))
@@ -288,6 +292,7 @@ func (r *Repository) administrativePlanningProjects(
 			FROM qh_planning_projects pp
 			JOIN unique_jurisdiction uj ON uj.id = pp.jurisdiction_id
 			WHERE pp.deleted_at IS NULL
+			  AND pp.client_view = true
 			ORDER BY pp.updated_at DESC NULLS LAST, pp.id DESC
 			LIMIT 12
 		)
@@ -320,7 +325,7 @@ func (r *Repository) administrativePlanningProjects(
 			Code:       strings.TrimSpace(row.Code),
 			Name:       name,
 			Summary:    strings.TrimSpace(row.Summary),
-			PublicPath: "/do-an-quy-hoach/" + slug,
+			PublicPath: "/tin-tuc/do-an-quy-hoach/" + slug,
 			MapPath:    "/ban-do?focus=" + url.QueryEscape(entityID),
 		})
 	}
@@ -368,7 +373,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 		)
 	}
 
-	canonicalPath := "/dia-ban/" + slug
+	canonicalPath := "/tin-tuc/dia-ban/" + slug
 	canonicalKey := "administrative_unit:" +
 		row.UnitType +
 		":" +
@@ -455,7 +460,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 			)
 
 		if parentSlugErr == nil {
-			parentPath := "/dia-ban/" + parentSlug
+			parentPath := "/tin-tuc/dia-ban/" + parentSlug
 
 			parent = &domain.AdministrativeUnitParent{
 				EntityID:           "province:" + row.ParentID,
@@ -511,6 +516,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 		UnitTypeName:       administrativeUnitTypeName(row.UnitType, row.FullName),
 		Name:               row.FullName,
 		DisplayName:        row.FullName,
+		Description:        strings.TrimSpace(row.Description),
 		AdministrativeCode: row.Code,
 		Parent:             parent,
 		Hierarchy:          hierarchy,

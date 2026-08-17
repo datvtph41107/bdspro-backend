@@ -3,11 +3,15 @@ package postgres
 import (
 	_db "common/db"
 	"context"
+	"time"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 	tqdutils "tqd/internal/utils"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type QHPlanningDocumentRepo struct {
@@ -63,28 +67,49 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 	var documents []qh_domain.QHPlanningDocument
 	var total int64
 
-	db := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("deleted_at IS NULL")
+	db := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("qh_planning_documents.deleted_at IS NULL")
 
 	if req.PlanningProjectID != 0 {
-		db = db.Where("planning_project_id = ?", req.PlanningProjectID)
+		db = db.Where("qh_planning_documents.planning_project_id = ?", req.PlanningProjectID)
 	}
 	if req.DocumentType != "" {
-		db = db.Where("document_type = ?", req.DocumentType)
+		db = db.Where("qh_planning_documents.document_type = ?", req.DocumentType)
 	}
 	if req.ValidityStatus != "" {
-		db = db.Where("validity_status = ?", req.ValidityStatus)
+		db = db.Where("qh_planning_documents.validity_status = ?", req.ValidityStatus)
+	}
+	if req.LayerID != 0 {
+		db = db.Joins("JOIN layer_plan_doc_relation rel ON rel.planning_document_id = qh_planning_documents.id AND rel.deleted_at IS NULL").
+			Where("rel.layer_id = ?", req.LayerID)
 	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
+	order := "qh_planning_documents.created_at DESC"
+	if req.LayerID != 0 {
+		order = "rel.sort_order ASC, qh_planning_documents.id ASC"
+	}
+
 	err := db.Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
-		Order("created_at DESC").
+		Order(order).
 		Find(&documents).Error
 
 	return documents, total, err
+}
+
+func (r *QHPlanningDocumentRepo) CountByProject(ctx context.Context, projectID uint64) (int64, error) {
+	var total int64
+	q := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("deleted_at IS NULL")
+	if projectID != 0 {
+		q = q.Where("planning_project_id = ?", projectID)
+	}
+	if err := q.Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 // ListByProcessStatus lấy các tài liệu ở 1 trạng thái xử lý, dùng cho job classify quét theo batch.
@@ -133,4 +158,38 @@ func (r *QHPlanningDocumentRepo) ResetFailedClassifyByProject(ctx context.Contex
 			"classify_error": "",
 		})
 	return tx.RowsAffected, tx.Error
+}
+
+func (r *QHPlanningDocumentRepo) AssignToLayer(ctx context.Context, layerID uint64, docIDs []uint64) error {
+	now := time.Now()
+	rows := make([]map[string]any, 0, len(docIDs))
+	for i, docID := range docIDs {
+		rows = append(rows, map[string]any{
+			"layer_id":             layerID,
+			"planning_document_id": docID,
+			"sort_order":           i,
+			"created_at":           now,
+			"updated_at":           now,
+			"deleted_at":           nil,
+		})
+	}
+	return r.db.GetDB(ctx).Table("layer_plan_doc_relation").
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "layer_id"}, {Name: "planning_document_id"}},
+			DoUpdates: clause.Assignments(map[string]any{
+				"sort_order": gorm.Expr("EXCLUDED.sort_order"),
+				"updated_at": now,
+				"deleted_at": nil,
+			}),
+		}).Create(&rows).Error
+}
+
+func (r *QHPlanningDocumentRepo) UnassignLayer(ctx context.Context, planningID, layerID uint64) error {
+	return r.db.GetDB(ctx).
+		Where("layer_id = ? AND deleted_at IS NULL AND planning_document_id IN (?)", layerID,
+			r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).
+				Select("id").
+				Where("planning_project_id = ? AND deleted_at IS NULL", planningID),
+		).
+		Delete(&qh_domain.LayerPlanDocRelation{}).Error
 }

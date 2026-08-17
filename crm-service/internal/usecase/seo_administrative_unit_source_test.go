@@ -13,15 +13,15 @@ func administrativeUnitProjectionFixture(updatedAt *time.Time) *dto.TqdAdministr
 		EntityID:           "ward:42",
 		CanonicalKey:       "administrative_unit:ward:00123",
 		Slug:               "phuong-ngo-quyen-00123",
-		CanonicalPath:      "/dia-ban/phuong-ngo-quyen-00123",
+		CanonicalPath:      "/tin-tuc/dia-ban/phuong-ngo-quyen-00123",
 		UnitType:           "ward",
 		UnitTypeName:       "Phường",
 		Name:               "Phường Ngô Quyền",
 		DisplayName:        "Phường Ngô Quyền",
 		AdministrativeCode: "00123",
 		Hierarchy: []dto.TqdAdministrativeUnitHierarchyItem{
-			{EntityID: "province:1", UnitType: "province", Name: "Thành phố Hà Nội", AdministrativeCode: "01", CanonicalPath: "/dia-ban/thanh-pho-ha-noi-01"},
-			{EntityID: "ward:42", UnitType: "ward", Name: "Phường Ngô Quyền", AdministrativeCode: "00123", CanonicalPath: "/dia-ban/phuong-ngo-quyen-00123"},
+			{EntityID: "province:1", UnitType: "province", Name: "Thành phố Hà Nội", AdministrativeCode: "01", CanonicalPath: "/tin-tuc/dia-ban/thanh-pho-ha-noi-01"},
+			{EntityID: "ward:42", UnitType: "ward", Name: "Phường Ngô Quyền", AdministrativeCode: "00123", CanonicalPath: "/tin-tuc/dia-ban/phuong-ngo-quyen-00123"},
 		},
 		GeometrySummary: dto.TqdPlanningPreview{
 			Centroid:     &dto.TqdPlanningPoint{Latitude: 21.03, Longitude: 105.84},
@@ -37,7 +37,7 @@ func administrativeUnitProjectionFixture(updatedAt *time.Time) *dto.TqdAdministr
 					Slug:       "do-an-quy-hoach-mau",
 					Name:       "Đồ án quy hoạch mẫu",
 					Summary:    "Đồ án được liên kết với địa bàn.",
-					PublicPath: "/do-an-quy-hoach/do-an-quy-hoach-mau",
+					PublicPath: "/tin-tuc/do-an-quy-hoach/do-an-quy-hoach-mau",
 					MapPath:    "/ban-do?focus=planning_project%3A7",
 				},
 			},
@@ -81,7 +81,7 @@ func TestAdministrativeUnitDocumentUsesBackendOwnedEligibility(t *testing.T) {
 	if document.MapTarget == nil || document.MapTarget.Path != "/ban-do?focus=administrative_unit%3Award%3A42" {
 		t.Fatalf("administrative unit map target must use canonical focus contract: %#v", document.MapTarget)
 	}
-	if len(document.RelatedEntities) != 1 || document.RelatedEntities[0].PublicPath != "/do-an-quy-hoach/do-an-quy-hoach-mau" {
+	if len(document.RelatedEntities) != 1 || document.RelatedEntities[0].PublicPath != "/tin-tuc/do-an-quy-hoach/do-an-quy-hoach-mau" {
 		t.Fatalf("related planning project handoff is missing: %#v", document.RelatedEntities)
 	}
 }

@@ -275,7 +275,8 @@ func inferSeoSnapshotIndexable(item *dto.SeoRefSnapshotResponse) bool {
 	return inferSeoSnapshotVisibility(item) == "public"
 }
 
-// GetSeoRefs trả danh sách SEO page public được liên kết qua bảng seo_refs.
+// GetSeoRefs trả danh sách SEO page public theo refType/refId:
+// page gắn trực tiếp trên seo_domain, cộng page liên kết qua bảng seo_refs.
 func (u *SeoDomainUsecase) GetSeoRefs(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error) {
 	if req == nil {
 		req = &dto.GetSeoRefsRequest{}
@@ -292,4 +293,148 @@ func (u *SeoDomainUsecase) GetSeoRefs(ctx context.Context, req *dto.GetSeoRefsRe
 	req.Normalize()
 
 	return u.seoDomainRepo.GetListByLinkedRef(ctx, req)
+}
+
+// CountSeoRefs đếm số bài SEO public theo refType/refId, cùng điều kiện với GetSeoRefs.
+func (u *SeoDomainUsecase) CountSeoRefs(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error) {
+	if req == nil {
+		req = &dto.GetSeoRefsRequest{}
+	}
+
+	if !req.RefType.Validate() {
+		return 0, _errors.ReturnError(400, "refType không hợp lệ")
+	}
+	if req.RefID == 0 {
+		return 0, _errors.ReturnError(400, "refId không hợp lệ")
+	}
+
+	return u.seoDomainRepo.CountByLinkedRef(ctx, req)
+}
+
+func (u *SeoDomainUsecase) CreateSeoRef(ctx context.Context, req *dto.SeoRefCreateRequest) (*seo_domain.SeoRef, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	seoDomainID, refType, refID, err := u.prepareSeoRef(ctx, req.SeoDomainID, req.RefType, req.RefID)
+	if err != nil {
+		return nil, err
+	}
+
+	exist, err := u.seoRefRepo.Exist(ctx, seoDomainID, uint32(refType), refID, nil)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return nil, _errors.ReturnError(409, "seo ref đã tồn tại")
+	}
+
+	return u.seoRefRepo.Create(ctx, &seo_domain.SeoRef{
+		SeoID:   seoDomainID,
+		RefType: refType,
+		RefID:   refID,
+	})
+}
+
+func (u *SeoDomainUsecase) GetSeoRef(ctx context.Context, id uint64) (*seo_domain.SeoRef, error) {
+	if id == 0 {
+		return nil, _errors.ReturnError(400, "id không hợp lệ")
+	}
+	item, err := u.seoRefRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if item == nil {
+		return nil, _errors.ReturnError(404, "seo ref không tồn tại")
+	}
+	return item, nil
+}
+
+func (u *SeoDomainUsecase) GetSeoRefList(ctx context.Context, req *dto.SeoRefListRequest) ([]seo_domain.SeoRef, int64, error) {
+	if req == nil {
+		req = &dto.SeoRefListRequest{}
+	}
+	if !req.RefType.Validate() {
+		return nil, 0, _errors.ReturnError(400, "refType không hợp lệ")
+	}
+	if req.RefID == 0 {
+		return nil, 0, _errors.ReturnError(400, "refId không hợp lệ")
+	}
+	req.Normalize()
+	return u.seoRefRepo.GetList(ctx, req)
+}
+
+func (u *SeoDomainUsecase) UpdateSeoRef(ctx context.Context, id uint64, req *dto.SeoRefUpdateRequest) (*seo_domain.SeoRef, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	existing, err := u.GetSeoRef(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	seoDomainID := existing.SeoID
+	refType := existing.RefType
+	refID := existing.RefID
+	if req.SeoDomainID != nil {
+		seoDomainID = *req.SeoDomainID
+	}
+	if req.RefType != nil {
+		refType = *req.RefType
+	}
+	if req.RefID != nil {
+		refID = *req.RefID
+	}
+
+	seoDomainID, refType, refID, err = u.prepareSeoRef(ctx, seoDomainID, refType, refID)
+	if err != nil {
+		return nil, err
+	}
+
+	exist, err := u.seoRefRepo.Exist(ctx, seoDomainID, uint32(refType), refID, &id)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return nil, _errors.ReturnError(409, "seo ref đã tồn tại")
+	}
+
+	if err := u.seoRefRepo.Update(ctx, id, map[string]interface{}{
+		"seo_domain_id": seoDomainID,
+		"ref_type":      refType,
+		"ref_id":        refID,
+	}); err != nil {
+		return nil, err
+	}
+	return u.GetSeoRef(ctx, id)
+}
+
+func (u *SeoDomainUsecase) DeleteSeoRef(ctx context.Context, id uint64) error {
+	if _, err := u.GetSeoRef(ctx, id); err != nil {
+		return err
+	}
+	return u.seoRefRepo.Delete(ctx, id)
+}
+
+func (u *SeoDomainUsecase) prepareSeoRef(ctx context.Context, seoDomainID uint64, refType enums.ESEORefType, refID uint64) (uint64, enums.ESEORefType, uint64, error) {
+	if seoDomainID == 0 {
+		return 0, 0, 0, _errors.ReturnError(400, "seoDomainId không hợp lệ")
+	}
+	if !refType.Validate() {
+		return 0, 0, 0, _errors.ReturnError(400, "refType không hợp lệ")
+	}
+	if refID == 0 {
+		return 0, 0, 0, _errors.ReturnError(400, "refId không hợp lệ")
+	}
+
+	seo, err := u.GetSeoDomain(ctx, seoDomainID)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	if seo == nil {
+		return 0, 0, 0, _errors.ReturnError(404, "seo domain không tồn tại")
+	}
+
+	return seo.ID, refType, refID, nil
 }

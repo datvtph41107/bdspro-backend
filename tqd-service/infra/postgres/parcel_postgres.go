@@ -1829,6 +1829,87 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 	return result, nil
 }
 
+// GetAdministrativeUnitQuickInfo — tìm giao geometry tỉnh/phường với qh_regions, trả về LayerInfo
+// giống GetParcelQuickInfo nhưng join với province_v2 hoặc ward_v2.
+func (p *ParcelPostgres) GetAdministrativeUnitQuickInfo(ctx context.Context, sourceID uint64, kind uint32) ([]dto.ParcelLayerInfo, error) {
+	tableName := "ward_v2"
+	switch kind {
+	case _utils.LocationIDKindProvince:
+		tableName = "province_v2"
+	case _utils.LocationIDKindWard:
+		tableName = "ward_v2"
+	default:
+		return nil, fmt.Errorf("unsupported administrative unit kind: %d", kind)
+	}
+
+	var result []dto.ParcelLayerInfo
+	query := fmt.Sprintf(`
+        SELECT
+            r.id,
+            w.id          AS parcel_id,
+            l.id          AS layer_id,
+            l.avatar      AS layer_avatar,
+            l.display_name AS layer_name,
+            l.name        AS layer_display_name,
+            l.type        AS layer_type,
+            l.legal_status AS layer_legal_status,
+
+            lu.id         AS land_use_id,
+            lu.name       AS land_use_name,
+            lu.warn_level AS warn_level,
+            lu.color      AS land_use_color,
+            lu.can_build  AS can_build,
+
+            l.analyse_order AS layer_order,
+            l.updated_at    AS layer_updated_at,
+            l.planning_project_id AS planning_project_id,
+
+            ST_Area(
+                ST_Intersection(r.geometry, w.geometry)::geography
+            ) AS intersect_area_sqm,
+
+            ROUND(
+                (
+                    ST_Area(
+                        ST_Intersection(r.geometry, w.geometry)::geography
+                    )
+                    /
+                    NULLIF(ST_Area(w.geometry::geography), 0)
+                )::numeric * 100,
+                2
+            ) AS percent,
+
+            CASE
+                WHEN ST_Contains(r.geometry, w.geometry) THEN 'contains'
+                ELSE 'intersects'
+            END AS relation_type
+
+        FROM %s w
+        JOIN qh_regions r
+            ON r.geometry && w.geometry
+           AND ST_Intersects(r.geometry, w.geometry)
+        JOIN qh_layers l
+            ON l.id = r.layer_id
+        LEFT JOIN qh_land_use lu
+            ON lu.id = r.land_use_id
+
+        WHERE w.id = ?
+          AND w.deleted_at IS NULL
+          AND r.status = 10
+          AND r.deleted_at IS NULL
+          AND l.deleted_at IS NULL
+          AND l.status = 10
+          AND lu.id IS NOT NULL
+        ORDER BY l.analyse_order DESC
+    `, tableName)
+
+	err := p.DB.WithContext(ctx).Raw(query, sourceID).Scan(&result).Error
+	if err != nil {
+		return nil, fmt.Errorf("get administrative unit quick info failed: %w", err)
+	}
+	return result, nil
+}
+
 // ============================================================
 // PARCEL LAYER ROWS V2 (UNIFIED)
 // ============================================================

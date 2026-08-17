@@ -18,6 +18,7 @@ type IQHPlanningProjectUsecase interface {
 	Delete(ctx context.Context, id uint64) (bool, error)
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error)
 	GetList(ctx context.Context, req *qh_dto.ListPlanningProjectsRequest) ([]qh_domain.QHPlanningProject, int64, error)
+	ListLayers(ctx context.Context, req *qh_dto.ListPlanningProjectLayersRequest) ([]qh_domain.QHLayer, int64, error)
 	// Approve phê duyệt đồ án (chỉ khi đã Classified) và phê duyệt luôn các tài liệu đã Classified thuộc đồ án.
 	Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error)
 	// RetryFailedDocuments đưa tất cả tài liệu Failed của đồ án về Pending.
@@ -26,11 +27,18 @@ type IQHPlanningProjectUsecase interface {
 	GetPlanningProjectSeoSource(ctx context.Context, planningProjectID uint64) (*qh_dto.PlanningProjectSeoSource, error)
 	UpdatePlanningProjectSeoID(ctx context.Context, planningProjectID uint64, seoID uint64) error
 	AdminGenPlanningProjectSeo(ctx context.Context, planningProjectIDs []uint64) (*qh_dto.AdminGenPlanningProjectSeoResult, error)
+	Count(ctx context.Context, planningProjectID uint64) (*qh_dto.PlanningProjectCount, error)
+	// Assign/unassign provinces and wards
+	AssignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error
+	UnassignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error
+	AssignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error
+	UnassignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error
 }
 
 type qhPlanningProjectUsecase struct {
 	repo           repo.IQHPlanningProjectRepo
 	documentRepo   repo.IQHPlanningDocumentRepo
+	eventRepo      repo.IQHPlanningEventRepo
 	aiJobRepo      repo.IProAIJobRepo
 	crmSeoProvider provider.CrmSeoProvider
 }
@@ -39,12 +47,14 @@ type qhPlanningProjectUsecase struct {
 func NewQHPlanningProjectUsecase(
 	repo repo.IQHPlanningProjectRepo,
 	documentRepo repo.IQHPlanningDocumentRepo,
+	eventRepo repo.IQHPlanningEventRepo,
 	aiJobRepo repo.IProAIJobRepo,
 	crmSeoProvider provider.CrmSeoProvider,
 ) IQHPlanningProjectUsecase {
 	return &qhPlanningProjectUsecase{
 		repo:           repo,
 		documentRepo:   documentRepo,
+		eventRepo:      eventRepo,
 		aiJobRepo:      aiJobRepo,
 		crmSeoProvider: crmSeoProvider,
 	}
@@ -105,6 +115,23 @@ func (u *qhPlanningProjectUsecase) GetList(ctx context.Context, req *qh_dto.List
 		}
 	}
 	return entities, total, nil
+}
+
+func (u *qhPlanningProjectUsecase) ListLayers(ctx context.Context, req *qh_dto.ListPlanningProjectLayersRequest) ([]qh_domain.QHLayer, int64, error) {
+	if req == nil || req.PlanningID == 0 {
+		return nil, 0, &_err.ErrorDTO{
+			Code:    400,
+			Message: "planningId is required",
+		}
+	}
+	layers, total, err := u.repo.ListLayers(ctx, req)
+	if err != nil {
+		return nil, 0, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	return layers, total, nil
 }
 
 func (u *qhPlanningProjectUsecase) Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningProject, error) {
@@ -188,6 +215,34 @@ func (u *qhPlanningProjectUsecase) UpdatePlanningProjectSeoID(ctx context.Contex
 		return fmt.Errorf("planning_project_id và seo_id là bắt buộc")
 	}
 	return u.repo.UpdatePlanningProjectSeoID(ctx, planningProjectID, seoID)
+}
+
+func (u *qhPlanningProjectUsecase) AssignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error {
+	if planningProjectID == 0 {
+		return fmt.Errorf("planning_project_id is required")
+	}
+	return u.repo.AssignProvinces(ctx, planningProjectID, provinceIDs)
+}
+
+func (u *qhPlanningProjectUsecase) UnassignProvinces(ctx context.Context, planningProjectID uint64, provinceIDs []uint64) error {
+	if planningProjectID == 0 {
+		return fmt.Errorf("planning_project_id is required")
+	}
+	return u.repo.UnassignProvinces(ctx, planningProjectID, provinceIDs)
+}
+
+func (u *qhPlanningProjectUsecase) AssignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error {
+	if planningProjectID == 0 {
+		return fmt.Errorf("planning_project_id is required")
+	}
+	return u.repo.AssignWards(ctx, planningProjectID, wardIDs)
+}
+
+func (u *qhPlanningProjectUsecase) UnassignWards(ctx context.Context, planningProjectID uint64, wardIDs []uint64) error {
+	if planningProjectID == 0 {
+		return fmt.Errorf("planning_project_id is required")
+	}
+	return u.repo.UnassignWards(ctx, planningProjectID, wardIDs)
 }
 
 func (u *qhPlanningProjectUsecase) AdminGenPlanningProjectSeo(ctx context.Context, planningProjectIDs []uint64) (*qh_dto.AdminGenPlanningProjectSeoResult, error) {
@@ -283,4 +338,63 @@ func (u *qhPlanningProjectUsecase) AdminGenPlanningProjectSeo(ctx context.Contex
 	}
 
 	return result, nil
+}
+
+func (u *qhPlanningProjectUsecase) Count(ctx context.Context, planningProjectID uint64) (*qh_dto.PlanningProjectCount, error) {
+	if planningProjectID == 0 {
+		return nil, &_err.ErrorDTO{
+			Code:    400,
+			Message: "id is required",
+		}
+	}
+	if _, err := u.repo.GetByID(ctx, planningProjectID); err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy dữ liệu",
+		}
+	}
+
+	type tinResult struct {
+		total int64
+		err   error
+	}
+	tinCh := make(chan tinResult, 1)
+	go func() {
+		if u.crmSeoProvider == nil {
+			tinCh <- tinResult{err: fmt.Errorf("crm seo provider chưa được cấu hình")}
+			return
+		}
+		total, err := u.crmSeoProvider.CountSeoByPlanningProject(ctx, planningProjectID)
+		tinCh <- tinResult{total: total, err: err}
+	}()
+
+	timeline, err := u.eventRepo.CountByProject(ctx, planningProjectID)
+	if err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: err.Error()}
+	}
+	relation, err := u.eventRepo.CountRelationsByProject(ctx, planningProjectID)
+	if err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: err.Error()}
+	}
+	doc, err := u.documentRepo.CountByProject(ctx, planningProjectID)
+	if err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: err.Error()}
+	}
+	layer, err := u.repo.CountLayersByProject(ctx, planningProjectID)
+	if err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: err.Error()}
+	}
+
+	tin := <-tinCh
+	if tin.err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: tin.err.Error()}
+	}
+
+	return &qh_dto.PlanningProjectCount{
+		Timeline: timeline,
+		Tin:      tin.total,
+		Relation: relation,
+		Doc:      doc,
+		Layer:    layer,
+	}, nil
 }

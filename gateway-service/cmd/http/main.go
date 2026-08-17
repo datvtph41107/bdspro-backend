@@ -169,6 +169,7 @@ var publicRoutes = []string{
 	"/v2/tqd/client/planning-documents",
 	"/v2/tqd/client/provinces",
 	"/v2/crm/public",
+	"/v2/tqd/client/administrative-units",
 }
 
 var tempRoutes = []string{

@@ -207,7 +207,7 @@ func DetailURL(kind discoverydomain.EntityKind, row Row) string {
 	case discoverydomain.EntityKindPlanningRegion:
 		return "/vung-quy-hoach/" + id
 	case discoverydomain.EntityKindPlanningProject:
-		return "/do-an-quy-hoach/" + id
+		return "/tin-tuc/do-an-quy-hoach/" + id
 	case discoverydomain.EntityKindAdministrativeUnit:
 		return administrativeDetailURL(row)
 	case discoverydomain.EntityKindPOI:
@@ -218,8 +218,10 @@ func DetailURL(kind discoverydomain.EntityKind, row Row) string {
 }
 
 func IsPublicCanonicalPath(path string) bool {
-	return strings.HasPrefix(path, "/dia-ban/") ||
+	return strings.HasPrefix(path, "/tin-tuc/dia-ban/") ||
+		strings.HasPrefix(path, "/dia-ban/") ||
 		strings.HasPrefix(path, "/do-an-quy-hoach/") ||
+		strings.HasPrefix(path, "/tin-tuc/do-an-quy-hoach/") ||
 		strings.HasPrefix(path, "/vung-quy-hoach/")
 }
 
@@ -256,5 +258,5 @@ func administrativeDetailURL(row Row) string {
 	if nameSlug == "" || codeSlug == "" {
 		return ""
 	}
-	return "/dia-ban/" + nameSlug + "-" + codeSlug
+	return "/tin-tuc/dia-ban/" + nameSlug + "-" + codeSlug
 }

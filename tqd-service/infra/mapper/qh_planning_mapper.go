@@ -6,6 +6,9 @@ import (
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
+	"time"
+
+	"github.com/lib/pq"
 )
 
 type QHPlanningMapper struct{}
@@ -57,6 +60,8 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		ProcessStatus:     uint32(project.ProcessStatus),
 		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(project.ProcessStatus)),
 	}
+	clientView := project.ClientView
+	result.ClientView = &clientView
 	if project.SeoID != nil && *project.SeoID > 0 {
 		seoID := *project.SeoID
 		result.SeoId = &seoID
@@ -86,6 +91,36 @@ func (m *QHPlanningMapper) ToProjectProtoList(projects []qh_domain.QHPlanningPro
 	result := make([]*tqdpb.PlanningProject, len(projects))
 	for i, project := range projects {
 		result[i] = m.ToProjectProto(&project)
+	}
+	return result
+}
+
+func (m *QHPlanningMapper) ToLayerProtoList(layers []qh_domain.QHLayer) []*tqdpb.LayerResponse {
+	result := make([]*tqdpb.LayerResponse, 0, len(layers))
+	for i := range layers {
+		proto, err := ToProtoLayer(&layers[i])
+		if err != nil || proto == nil {
+			continue
+		}
+		proto.Docs = m.toLayerAttachedDocs(layers[i].Docs)
+		result = append(result, proto)
+	}
+	return result
+}
+
+func (m *QHPlanningMapper) toLayerAttachedDocs(docs []qh_domain.QHPlanningDocument) []*tqdpb.LayerAttachedDoc {
+	result := make([]*tqdpb.LayerAttachedDoc, 0, len(docs))
+	for _, doc := range docs {
+		result = append(result, &tqdpb.LayerAttachedDoc{
+			Id:           doc.ID,
+			Title:        doc.Title,
+			Filepath:     doc.Filepath,
+			Thumbnail:    doc.Thumbnail,
+			Ext:          doc.Ext,
+			RelativePath: doc.RelativePath,
+			Code:         doc.Code,
+			DocumentType: enums.GetPlanningDocumentTypeLabel(uint32(doc.DocumentType)),
+		})
 	}
 	return result
 }
@@ -137,13 +172,14 @@ func (m *QHPlanningMapper) ToEventProto(event *qh_domain.QHPlanningEvent) *tqdpb
 		PlanningProjectId: event.PlanningProjectID,
 		DocIds:            toEventDocIDs(event.DocIDs),
 		EventName:         event.EventName,
-		EventDate:         _utils.FormatTimeToString(event.EventDate),
+		EventType:         event.EventType,
+		EventDate:         formatPlanningTime(event.EventDate),
 		Description:       event.Description,
 		VerNo:             event.VerNo,
 		LegalStatus:       uint32(event.LegalStatus),
 		LegalStatusName:   enums.LegalStatusMap[event.LegalStatus],
-		CreatedAt:         _utils.FormatTimeToString(event.CreatedAt),
-		UpdatedAt:         _utils.FormatTimeToString(event.UpdatedAt),
+		CreatedAt:         formatPlanningTime(event.CreatedAt),
+		UpdatedAt:         formatPlanningTime(event.UpdatedAt),
 	}
 
 	if len(event.Docs) > 0 {
@@ -172,6 +208,40 @@ func (m *QHPlanningMapper) ToEventProtoList(events []qh_domain.QHPlanningEvent) 
 	return result
 }
 
+func (m *QHPlanningMapper) ToEventDomain(proto *tqdpb.PlanningEvent) *qh_domain.QHPlanningEvent {
+	if proto == nil {
+		return nil
+	}
+
+	legalStatus := enums.LegalStatus(proto.LegalStatus)
+	if legalStatus == 0 {
+		legalStatus = enums.LegalStatusUnknown
+	}
+
+	return &qh_domain.QHPlanningEvent{
+		PlanningProjectID: proto.PlanningProjectId,
+		EventType:         proto.EventType,
+		EventName:         proto.EventName,
+		Description:       proto.Description,
+		EventDate:         _utils.ParseStringToTime(proto.EventDate),
+		VerNo:             proto.VerNo,
+		LegalStatus:       legalStatus,
+		DocIDs:            toEventDocIDArray(proto.DocIds),
+		Metadata:          []byte("{}"),
+	}
+}
+
+func toEventDocIDArray(ids []uint64) pq.Int64Array {
+	if len(ids) == 0 {
+		return nil
+	}
+	result := make(pq.Int64Array, len(ids))
+	for i, id := range ids {
+		result[i] = int64(id)
+	}
+	return result
+}
+
 func (m *QHPlanningMapper) ToRelationProto(item *qh_domain.QHPlanningRelationItem, planningProjectId uint64) *tqdpb.PlanningRelation {
 	if item == nil {
 		return nil
@@ -181,6 +251,15 @@ func (m *QHPlanningMapper) ToRelationProto(item *qh_domain.QHPlanningRelationIte
 		Parent: m.ToProjectProto(item.Parent),
 		Child:  m.ToProjectProto(item.Child),
 		Peer:   m.ToProjectProto(item.Peer),
+	}
+	if item.Relation != nil {
+		result.Id = item.Relation.ID
+		result.FromId = item.Relation.FromID
+		result.ToId = item.Relation.ToID
+		result.IsPeer = item.Relation.IsPeer
+		result.RelationType = item.Relation.RelationType
+		result.CreatedAt = _utils.FormatTimeToString(item.Relation.CreatedAt)
+		result.UpdatedAt = _utils.FormatTimeToString(item.Relation.UpdatedAt)
 	}
 
 	if item.Parent != nil && item.Parent.ID == planningProjectId {
@@ -196,6 +275,44 @@ func (m *QHPlanningMapper) ToRelationProto(item *qh_domain.QHPlanningRelationIte
 	}
 
 	return result
+}
+
+func (m *QHPlanningMapper) ToRelationAdminProto(item *qh_domain.QHPlanningRelationItem) *tqdpb.PlanningRelation {
+	if item == nil {
+		return nil
+	}
+	return m.ToRelationProto(item, 0)
+}
+
+func (m *QHPlanningMapper) ToRelationAdminProtoList(items []qh_domain.QHPlanningRelationItem) []*tqdpb.PlanningRelation {
+	result := make([]*tqdpb.PlanningRelation, len(items))
+	for i, item := range items {
+		result[i] = m.ToRelationAdminProto(&item)
+	}
+	return result
+}
+
+func (m *QHPlanningMapper) ToRelationDomain(proto *tqdpb.PlanningRelation) *qh_domain.QHPlanningRelation {
+	if proto == nil {
+		return nil
+	}
+	relationType := proto.RelationType
+	if relationType == "" {
+		if proto.IsPeer {
+			relationType = "peer"
+		} else {
+			relationType = "related"
+		}
+	}
+	return &qh_domain.QHPlanningRelation{
+		FromID:                   proto.FromId,
+		ToID:                     proto.ToId,
+		IsPeer:                   proto.IsPeer,
+		RelationType:             relationType,
+		PlanningProjectID:        proto.FromId,
+		RelatedPlanningProjectID: proto.ToId,
+		Metadata:                 []byte("{}"),
+	}
 }
 
 func (m *QHPlanningMapper) ToRelationProtoList(items []qh_domain.QHPlanningRelationItem, planningProjectId uint64) []*tqdpb.PlanningRelation {
@@ -241,7 +358,15 @@ func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_dom
 		Metadata:       metadata,
 		ResearchScope:  proto.ResearchScope,
 		Indicators:     indicators,
+		ClientView:     planningProjectClientView(proto),
 	}
+}
+
+func planningProjectClientView(proto *tqdpb.PlanningProject) bool {
+	if proto == nil || proto.ClientView == nil {
+		return true
+	}
+	return *proto.ClientView
 }
 
 func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_domain.QHPlanningDocument {
@@ -293,6 +418,7 @@ func (m *QHPlanningMapper) ToProjectDomainFromFolderRequest(req *tqdpb.CreatePla
 		Summary:        req.Summary,
 		ValidityStatus: req.ValidityStatus,
 		Metadata:       "{}",
+		ClientView:     true,
 	}
 }
 
@@ -344,4 +470,14 @@ func (m *QHPlanningMapper) ToProAIJobProtoList(jobs []qh_domain.ProAIJob) []*tqd
 		result[i] = m.ToProAIJobProto(&jobs[i])
 	}
 	return result
+}
+
+func formatPlanningTime(t *time.Time) string {
+	if t == nil || t.IsZero() {
+		return ""
+	}
+	if formatted := _utils.FormatTimeToString(t); formatted != "" {
+		return formatted
+	}
+	return t.UTC().Format(time.RFC3339)
 }

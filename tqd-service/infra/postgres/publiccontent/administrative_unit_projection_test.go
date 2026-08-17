@@ -19,7 +19,7 @@ func TestAdministrativeUnitSlugFailsWithoutStableCode(t *testing.T) {
 }
 
 func TestNormalizeAdministrativeIdentityAcceptsCanonicalAndTypedIdentity(t *testing.T) {
-	unitType, identity := normalizeAdministrativeIdentity("https://qhpro.vn/dia-ban/phuong-ngo-quyen-00123?utm=test")
+	unitType, identity := normalizeAdministrativeIdentity("https://qhpro.vn/tin-tuc/dia-ban/phuong-ngo-quyen-00123?utm=test")
 	if unitType != "" || identity != "phuong-ngo-quyen-00123" {
 		t.Fatalf("unexpected canonical identity: unitType=%q identity=%q", unitType, identity)
 	}

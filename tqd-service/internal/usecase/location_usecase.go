@@ -3,22 +3,28 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	_utils "common/utils"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
+	"tqd/internal/enums"
 	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
 )
 
 var (
-	ErrProvinceNotFound  = errors.New("province not found")
-	ErrWardNotFound      = errors.New("ward not found")
-	ErrNoProvinceFound   = errors.New("no province found within search radius")
-	ErrInvalidCoordinate = errors.New("invalid coordinate")
+	ErrProvinceNotFound   = errors.New("province not found")
+	ErrWardNotFound       = errors.New("ward not found")
+	ErrNoProvinceFound    = errors.New("no province found within search radius")
+	ErrInvalidCoordinate  = errors.New("invalid coordinate")
+	ErrLocationCodeExists = errors.New("code already exists")
+	ErrLocationIDExists   = errors.New("id already exists")
 )
 
 type LocationUsecase struct {
@@ -53,7 +59,8 @@ func (u *LocationUsecase) GetNearestLocation(ctx context.Context, req *dto.GetNe
 	}
 
 	// Tìm ward gần nhất trong province
-	ward, wardDist, _ := u.repo.GetNearestWard(ctx, req.Latitude, req.Longitude, province.ID, maxDistance)
+	sourceID, _, _ := _utils.DecodeLocationID(province.ID)
+	ward, wardDist, _ := u.repo.GetNearestWard(ctx, req.Latitude, req.Longitude, sourceID, maxDistance)
 
 	// Build response
 	return u.buildLocationResponse(province, ward, provDist, wardDist, startTime), nil
@@ -122,9 +129,10 @@ func (u *LocationUsecase) SearchLocations(ctx context.Context, req *dto.SearchLo
 
 	// Tìm trong wards
 	if searchType == "all" || searchType == "ward" {
-		provinceID := ""
-		if req.ProvinceID != nil {
-			provinceID = *req.ProvinceID
+		provinceID := uint64(0)
+		if req.ProvinceID != nil && *req.ProvinceID != 0 {
+			sourceID, _, _ := _utils.DecodeLocationID(*req.ProvinceID)
+			provinceID = sourceID
 		}
 
 		wardResults, err := u.searchWards(ctx, req.Query, provinceID, limit)
@@ -151,8 +159,9 @@ func (u *LocationUsecase) GetProvince(ctx context.Context, req *dto.GetProvinceR
 	var err error
 
 	switch {
-	case req.ID != nil && *req.ID != "":
-		province, err = u.repo.GetProvinceByID(ctx, *req.ID)
+	case req.ID != nil && *req.ID != 0:
+		sourceID, _, _ := _utils.DecodeLocationID(*req.ID)
+		province, err = u.repo.GetProvinceByID(ctx, sourceID)
 	case req.Code != nil && *req.Code != "":
 		province, err = u.repo.GetProvinceByCode(ctx, *req.Code)
 	default:
@@ -175,8 +184,12 @@ func (u *LocationUsecase) GetWard(ctx context.Context, req *dto.GetWardRequest) 
 	var err error
 
 	switch {
-	case req.ID != nil && *req.ID != "":
-		ward, err = u.repo.GetWardByID(ctx, *req.ID)
+	case req.ID != nil && *req.ID != 0:
+		sourceID, _, err := _utils.DecodeLocationID(*req.ID)
+		if err != nil {
+			return nil, err
+		}
+		ward, err = u.repo.GetWardByID(ctx, sourceID)
 	case req.Code != nil && *req.Code != "":
 		ward, err = u.repo.GetWardByCode(ctx, *req.Code)
 	default:
@@ -205,7 +218,11 @@ func (u *LocationUsecase) ListWardsByProvince(ctx context.Context, req *dto.List
 		pageSize = int(*req.PageSize)
 	}
 
-	wards, total, err := u.repo.ListWardsByProvince(ctx, req.ProvinceID, page, pageSize)
+	sourceIDProvince, _, err := _utils.DecodeLocationID(req.ProvinceID)
+	if err != nil {
+		return nil, err
+	}
+	wards, total, err := u.repo.ListWardsByProvince(ctx, sourceIDProvince, page, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("list wards by province: %w", err)
 	}
@@ -238,6 +255,88 @@ func (u *LocationUsecase) AdminListProvinces(ctx context.Context, req *dto.Admin
 	}, nil
 }
 
+func (u *LocationUsecase) AdminGetProvinceByCompositeId(ctx context.Context, compositeId uint64) (*dto.ProvinceDTO, error) {
+	if compositeId == 0 {
+		return nil, fmt.Errorf("compositeId is required")
+	}
+	sourceID, kind, err := _utils.DecodeLocationID(compositeId)
+	if err != nil {
+		return nil, fmt.Errorf("decode compositeId: %w", err)
+	}
+	if kind != _utils.LocationIDKindProvince {
+		return nil, fmt.Errorf("invalid compositeId kind, expected province but got %d", kind)
+	}
+
+	province, err := u.repo.GetProvinceByID(ctx, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("get province by sourceID: %w", err)
+	}
+	if province == nil {
+		return nil, ErrProvinceNotFound
+	}
+	return u.toProvinceDTO(province), nil
+}
+
+func (u *LocationUsecase) AdminGetAdministrativeUnitByCompositeId(ctx context.Context, compositeId uint64) (*dto.ProvinceDTO, *dto.WardDTO, error) {
+	if compositeId == 0 {
+		return nil, nil, fmt.Errorf("compositeId is required")
+	}
+	sourceID, kind, err := _utils.DecodeLocationID(compositeId)
+	if err != nil {
+		return nil, nil, fmt.Errorf("decode compositeId: %w", err)
+	}
+
+	switch kind {
+	case _utils.LocationIDKindProvince:
+		province, err := u.repo.GetProvinceDetail(ctx, sourceID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("get province by sourceID: %w", err)
+		}
+		if province == nil {
+			return nil, nil, ErrProvinceNotFound
+		}
+		return u.toProvinceDTO(province), nil, nil
+	case _utils.LocationIDKindWard:
+		ward, err := u.repo.GetWardDetail(ctx, sourceID)
+		if err != nil {
+			return nil, nil, fmt.Errorf("get ward by sourceID: %w", err)
+		}
+		if ward == nil {
+			return nil, nil, ErrWardNotFound
+		}
+		return nil, u.toWardDTO(ward), nil
+	default:
+		return nil, nil, fmt.Errorf("invalid compositeId kind: %d", kind)
+	}
+}
+
+func (u *LocationUsecase) ClientGetAdministrativeUnitByCompositeId(ctx context.Context, compositeId uint64) (*dto.ProvinceDTO, *dto.WardDTO, error) {
+	province, ward, err := u.AdminGetAdministrativeUnitByCompositeId(ctx, compositeId)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ward == nil || ward.ProvinceID == 0 {
+		return province, ward, nil
+	}
+
+	parent, err := u.repo.GetProvinceByID(ctx, ward.ProvinceID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get parent province: %w", err)
+	}
+	if parent == nil {
+		return province, ward, nil
+	}
+	return &dto.ProvinceDTO{
+		ID:             parent.ID,
+		FullName:       parent.FullName,
+		CompositeID:    encodeLocationCompositeID(parent.ID, _utils.LocationIDKindProvince),
+		UnitType:       uint32(parent.UnitType),
+		UnitTypeName:   parent.UnitType.String(),
+		DataSource:     uint32(parent.DataSource),
+		DataSourceName: parent.DataSource.String(),
+	}, ward, nil
+}
+
 // AdminListWards - Admin danh sách phường/xã
 func (u *LocationUsecase) AdminListWards(ctx context.Context, req *dto.AdminListWardsRequest) (*dto.AdminListWardsResponse, error) {
 	if req == nil {
@@ -254,6 +353,333 @@ func (u *LocationUsecase) AdminListWards(ctx context.Context, req *dto.AdminList
 		Data:  u.toWardDTOs(wards),
 		Total: total,
 	}, nil
+}
+
+func (u *LocationUsecase) AdminCreateProvince(ctx context.Context, req *dto.ProvinceDTO) (*dto.ProvinceDTO, error) {
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+
+	fullName, officialName := fillOfficialNames(req.FullName, req.OfficialName)
+	entity := &domain.Province{
+		ID:                    generateSourceID(req.ID),
+		Code:                  strings.TrimSpace(req.Code),
+		FullName:              fullName,
+		ShortName:             strings.TrimSpace(req.ShortName),
+		Lat:                   req.Lat,
+		Lng:                   req.Lng,
+		DivisionType:          strings.TrimSpace(req.DivisionType),
+		OfficialName:          officialName,
+		OfficialOperationDate: req.OfficialOperationDate,
+		NaturalAreaKm2:        req.NaturalAreaKm2,
+		Population:            req.Population,
+		PopulationDensity:     fillPopulationDensity(req.NaturalAreaKm2, req.Population, req.PopulationDensity),
+		Description:           strings.TrimSpace(req.Description),
+		UnitType:              enums.LocationUnitType(req.UnitType),
+		DataSource:            enums.LocationDataSource(req.DataSource),
+		PlanDocID:             optionalPositiveUint64(req.PlanDocID),
+		OfficialRole:          strings.TrimSpace(req.OfficialRole),
+		OfficialAddress:       strings.TrimSpace(req.OfficialAddress),
+	}
+	if entity.ShortName == "" {
+		entity.ShortName = officialName
+	}
+
+	if existing, err := u.repo.GetProvinceByID(ctx, entity.ID); err != nil {
+		return nil, fmt.Errorf("check province id: %w", err)
+	} else if existing != nil && existing.ID != 0 {
+		return nil, ErrLocationIDExists
+	}
+	sourceID, _, _ := _utils.DecodeLocationID(entity.ID)
+	exists, err := u.repo.ExistsProvinceCode(ctx, entity.Code, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("check province code: %w", err)
+	}
+	if exists {
+		return nil, ErrLocationCodeExists
+	}
+
+	if err := u.repo.CreateProvince(ctx, entity); err != nil {
+		return nil, fmt.Errorf("create province: %w", err)
+	}
+	created, err := u.repo.GetProvinceByID(ctx, entity.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get created province: %w", err)
+	}
+	if created == nil {
+		return u.toProvinceDTO(entity), nil
+	}
+	return u.toProvinceDTO(created), nil
+}
+
+func (u *LocationUsecase) AdminUpdateProvince(ctx context.Context, req *dto.ProvinceDTO) (*dto.ProvinceDTO, error) {
+	if req == nil || req.ID == 0 {
+		return nil, fmt.Errorf("id is required")
+	}
+	sourceID, _, err := _utils.DecodeLocationID(req.ID)
+	if err != nil {
+		return nil, err
+	}
+	existing, err := u.repo.GetProvinceByID(ctx, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("get province: %w", err)
+	}
+	if existing == nil {
+		return nil, ErrProvinceNotFound
+	}
+	mergeProvinceUpdate(existing, req)
+	exists, err := u.repo.ExistsProvinceCode(ctx, existing.Code, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("check province code: %w", err)
+	}
+	if exists {
+		return nil, ErrLocationCodeExists
+	}
+	if err := u.repo.UpdateProvince(ctx, existing); err != nil {
+		return nil, fmt.Errorf("update province: %w", err)
+	}
+	updated, err := u.repo.GetProvinceByID(ctx, existing.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get updated province: %w", err)
+	}
+	if updated == nil {
+		return u.toProvinceDTO(existing), nil
+	}
+	return u.toProvinceDTO(updated), nil
+}
+
+func (u *LocationUsecase) AdminDeleteProvince(ctx context.Context, id uint64) error {
+	sourceID, _, err := _utils.DecodeLocationID(id)
+	if err != nil || sourceID == 0 {
+		return fmt.Errorf("id is required")
+	}
+	existing, err := u.repo.GetProvinceByID(ctx, sourceID)
+	if err != nil {
+		return fmt.Errorf("get province: %w", err)
+	}
+	if existing == nil {
+		return ErrProvinceNotFound
+	}
+	if err := u.repo.SoftDeleteWardsByProvinceID(ctx, sourceID); err != nil {
+		return fmt.Errorf("soft delete wards: %w", err)
+	}
+	if err := u.repo.SoftDeleteProvince(ctx, sourceID); err != nil {
+		return fmt.Errorf("soft delete province: %w", err)
+	}
+	return nil
+}
+
+func (u *LocationUsecase) AdminCreateWard(ctx context.Context, req *dto.WardDTO) (*dto.WardDTO, error) {
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+
+	sourceIDProvince, _, err := _utils.DecodeLocationID(req.ProvinceID)
+	if err != nil {
+		return nil, err
+	}
+	province, err := u.repo.GetProvinceByID(ctx, sourceIDProvince)
+	if err != nil {
+		return nil, fmt.Errorf("get province: %w", err)
+	}
+	if province == nil {
+		return nil, ErrProvinceNotFound
+	}
+
+	fullName, officialName := fillOfficialNames(req.FullName, req.OfficialName)
+	entity := &domain.Ward{
+		ID:                    generateSourceID(req.ID),
+		Code:                  strings.TrimSpace(req.Code),
+		FullName:              fullName,
+		ShortName:             strings.TrimSpace(req.ShortName),
+		Lat:                   req.Lat,
+		Lng:                   req.Lng,
+		DivisionType:          strings.TrimSpace(req.DivisionType),
+		ProvinceID:            province.ID,
+		ProvinceCode:          firstNonEmpty(strings.TrimSpace(req.ProvinceCode), province.Code),
+		OfficialName:          officialName,
+		OfficialOperationDate: req.OfficialOperationDate,
+		NaturalAreaKm2:        req.NaturalAreaKm2,
+		Population:            req.Population,
+		PopulationDensity:     fillPopulationDensity(req.NaturalAreaKm2, req.Population, req.PopulationDensity),
+		UnitType:              enums.LocationUnitType(req.UnitType),
+		DataSource:            enums.LocationDataSource(req.DataSource),
+		OfficialRole:          strings.TrimSpace(req.OfficialRole),
+		OfficialAddress:       strings.TrimSpace(req.OfficialAddress),
+	}
+	if entity.ShortName == "" {
+		entity.ShortName = officialName
+	}
+
+	if existing, err := u.repo.GetWardByID(ctx, entity.ID); err != nil {
+		return nil, fmt.Errorf("check ward id: %w", err)
+	} else if existing != nil && existing.ID != 0 {
+		return nil, ErrLocationIDExists
+	}
+	sourceID, _, _ := _utils.DecodeLocationID(entity.ID)
+	exists, err := u.repo.ExistsWardCode(ctx, entity.Code, sourceID)
+	if err != nil {
+		return nil, fmt.Errorf("check ward code: %w", err)
+	}
+	if exists {
+		return nil, ErrLocationCodeExists
+	}
+
+	if err := u.repo.CreateWard(ctx, entity); err != nil {
+		return nil, fmt.Errorf("create ward: %w", err)
+	}
+	created, err := u.repo.GetWardByID(ctx, entity.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get created ward: %w", err)
+	}
+	if created == nil {
+		return u.toWardDTO(entity), nil
+	}
+	return u.toWardDTO(created), nil
+}
+
+func (u *LocationUsecase) AdminUpdateWard(ctx context.Context, req *dto.WardDTO) (*dto.WardDTO, error) {
+	if req == nil || req.ID == 0 {
+		return nil, fmt.Errorf("id is required")
+	}
+
+	// Note: req.ID is the real source ID (not a composite ID)
+	wardID := req.ID
+
+	// Load existing ward
+	existing, err := u.repo.GetWardByID(ctx, wardID)
+	if err != nil {
+		return nil, fmt.Errorf("get ward: %w", err)
+	}
+	if existing == nil {
+		return nil, ErrWardNotFound
+	}
+
+	// If a different province ID is provided, validate it and update reference
+	if req.ProvinceID != 0 && req.ProvinceID != existing.ProvinceID {
+		province, err := u.repo.GetProvinceByID(ctx, req.ProvinceID)
+		if err != nil {
+			return nil, fmt.Errorf("get province: %w", err)
+		}
+		if province == nil {
+			return nil, ErrProvinceNotFound
+		}
+		existing.ProvinceID = province.ID
+		existing.ProvinceCode = province.Code
+	}
+
+	// Apply incoming changes to the existing entity
+	mergeWardUpdate(existing, req)
+
+	// Ensure ward code is unique (excluding current ward)
+	exists, err := u.repo.ExistsWardCode(ctx, existing.Code, existing.ID)
+	if err != nil {
+		return nil, fmt.Errorf("check ward code: %w", err)
+	}
+	if exists {
+		return nil, ErrLocationCodeExists
+	}
+
+	// Persist update
+	if err := u.repo.UpdateWard(ctx, existing); err != nil {
+		return nil, fmt.Errorf("update ward: %w", err)
+	}
+
+	// Reload updated ward for a canonical DTO
+	updated, err := u.repo.GetWardByID(ctx, existing.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get updated ward: %w", err)
+	}
+	if updated == nil {
+		// Should not happen, but return the merged DTO as a fallback
+		return u.toWardDTO(existing), nil
+	}
+	return u.toWardDTO(updated), nil
+}
+
+func (u *LocationUsecase) AdminDeleteWard(ctx context.Context, id uint64) error {
+	sourceID, _, err := _utils.DecodeLocationID(id)
+	if err != nil || sourceID == 0 {
+		return fmt.Errorf("id is required")
+	}
+	existing, err := u.repo.GetWardByID(ctx, sourceID)
+	if err != nil {
+		return fmt.Errorf("get ward: %w", err)
+	}
+	if existing == nil {
+		return ErrWardNotFound
+	}
+	if err := u.repo.SoftDeleteWard(ctx, sourceID); err != nil {
+		return fmt.Errorf("soft delete ward: %w", err)
+	}
+	return nil
+}
+
+// AdminCreateWardNeighbor - tạo mối quan hệ hàng xóm giữa hai ward
+func (u *LocationUsecase) AdminCreateWardNeighbor(ctx context.Context, wardID uint64, neighborWardID uint64) error {
+	if wardID == 0 || neighborWardID == 0 {
+		return fmt.Errorf("ward id and neighbor id are required")
+	}
+	ward, err := u.repo.GetWardByID(ctx, wardID)
+	if err != nil {
+		return fmt.Errorf("get ward: %w", err)
+	}
+	if ward == nil {
+		return ErrWardNotFound
+	}
+	neighbor, err := u.repo.GetWardByID(ctx, neighborWardID)
+	if err != nil {
+		return fmt.Errorf("get neighbor ward: %w", err)
+	}
+	if neighbor == nil {
+		return ErrWardNotFound
+	}
+	if err := u.repo.CreateWardNeighbor(ctx, wardID, neighborWardID); err != nil {
+		return fmt.Errorf("create ward neighbor: %w", err)
+	}
+	return nil
+}
+
+// AdminDeleteWardNeighbor - xóa mối quan hệ hàng xóm giữa hai ward (soft delete)
+func (u *LocationUsecase) AdminDeleteWardNeighbor(ctx context.Context, wardID uint64, neighborWardID uint64) error {
+	if wardID == 0 || neighborWardID == 0 {
+		return fmt.Errorf("ward id and neighbor id are required")
+	}
+	if err := u.repo.DeleteWardNeighbor(ctx, wardID, neighborWardID); err != nil {
+		return fmt.Errorf("delete ward neighbor: %w", err)
+	}
+	return nil
+}
+
+// AdminListWardNeighbors - trả về danh sách phường lân cận cho một ward
+func (u *LocationUsecase) AdminListWardNeighbors(ctx context.Context, wardID uint64) (*dto.AdminListWardsResponse, error) {
+	if wardID == 0 {
+		return nil, fmt.Errorf("ward id is required")
+	}
+	wards, err := u.repo.GetWardNeighbors(ctx, wardID)
+	if err != nil {
+		return nil, fmt.Errorf("get ward neighbors: %w", err)
+	}
+	dtoWards := u.toWardDTOs(wards)
+	return &dto.AdminListWardsResponse{
+		Data:  dtoWards,
+		Total: int64(len(dtoWards)),
+	}, nil
+}
+
+// ClientListAdministrativeUnitNeighbors - client lấy danh sách địa bàn lân cận theo compositeId
+func (u *LocationUsecase) ClientListAdministrativeUnitNeighbors(ctx context.Context, compositeId uint64) (*dto.AdminListWardsResponse, error) {
+	if compositeId == 0 {
+		return nil, fmt.Errorf("compositeId is required")
+	}
+	sourceID, kind, err := _utils.DecodeLocationID(compositeId)
+	if err != nil {
+		return nil, fmt.Errorf("decode compositeId: %w", err)
+	}
+	if kind != _utils.LocationIDKindWard {
+		return nil, ErrWardNotFound
+	}
+	return u.AdminListWardNeighbors(ctx, sourceID)
 }
 
 // ==================== PRIVATE HELPERS ====================
@@ -320,12 +746,13 @@ func (u *LocationUsecase) searchProvinces(ctx context.Context, query string, lim
 			Province:       u.toProvinceDTO(p),
 			FullAddress:    p.FullName,
 			RelevanceScore: u.calculateRelevance(query, p.FullName, p.ShortName),
+			CompositeID:    encodeLocationCompositeID(p.ID, _utils.LocationIDKindProvince),
 		}
 	}
 	return results, nil
 }
 
-func (u *LocationUsecase) searchWards(ctx context.Context, query, provinceID string, limit int) ([]*dto.SearchResult, error) {
+func (u *LocationUsecase) searchWards(ctx context.Context, query string, provinceID uint64, limit int) ([]*dto.SearchResult, error) {
 	wards, err := u.repo.SearchWards(ctx, query, provinceID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("search wards: %w", err)
@@ -347,6 +774,7 @@ func (u *LocationUsecase) searchWards(ctx context.Context, query, provinceID str
 			Province:       u.toProvinceDTO(province),
 			FullAddress:    fullAddress,
 			RelevanceScore: u.calculateRelevance(query, w.FullName, w.ShortName),
+			CompositeID:    encodeLocationCompositeID(w.ID, _utils.LocationIDKindWard),
 		})
 	}
 	return results, nil
@@ -375,16 +803,32 @@ func (u *LocationUsecase) toProvinceDTO(p *domain.Province) *dto.ProvinceDTO {
 		return nil
 	}
 	return &dto.ProvinceDTO{
-		ID:        p.ID,
-		Code:      p.Code,
-		FullName:  p.FullName,
-		ShortName: p.ShortName,
-		Lat:       p.Lat,
-		Lng:       p.Lng,
-		WardCount: p.WardCount,
-		SeoID:     p.SeoID,
-		CreatedAt: &p.CreatedAt,
-		UpdatedAt: &p.UpdatedAt,
+		ID:                    p.ID,
+		Code:                  p.Code,
+		FullName:              p.FullName,
+		ShortName:             p.ShortName,
+		Lat:                   p.Lat,
+		Lng:                   p.Lng,
+		DivisionType:          p.DivisionType,
+		WardCount:             p.WardCount,
+		OfficialName:          p.OfficialName,
+		OfficialOperationDate: p.OfficialOperationDate,
+		NaturalAreaKm2:        p.NaturalAreaKm2,
+		Population:            p.Population,
+		PopulationDensity:     p.PopulationDensity,
+		Description:           p.Description,
+		UnitType:              uint32(p.UnitType),
+		UnitTypeName:          p.UnitType.String(),
+		DataSource:            uint32(p.DataSource),
+		DataSourceName:        p.DataSource.String(),
+		OfficialRole:          p.OfficialRole,
+		OfficialAddress:       p.OfficialAddress,
+		PlanDocID:             optionalPositiveUint64(p.PlanDocID),
+		CompositeID:           encodeLocationCompositeID(p.ID, _utils.LocationIDKindProvince),
+		SeoID:                 p.SeoID,
+		CreatedAt:             &p.CreatedAt,
+		UpdatedAt:             &p.UpdatedAt,
+		Geometry:              string(p.Geometry.Raw),
 	}
 }
 
@@ -392,18 +836,37 @@ func (u *LocationUsecase) toWardDTO(w *domain.Ward) *dto.WardDTO {
 	if w == nil {
 		return nil
 	}
+	unitType := wardUnitType(w)
+	if w.UnitType != 0 {
+		unitType = w.UnitType
+	}
 	return &dto.WardDTO{
-		ID:           w.ID,
-		Code:         w.Code,
-		FullName:     w.FullName,
-		ShortName:    w.ShortName,
-		Lat:          w.Lat,
-		Lng:          w.Lng,
-		ProvinceID:   w.ProvinceID,
-		ProvinceCode: w.ProvinceCode,
-		SeoID:        w.SeoID,
-		CreatedAt:    &w.CreatedAt,
-		UpdatedAt:    &w.UpdatedAt,
+		ID:                    w.ID,
+		Code:                  w.Code,
+		FullName:              w.FullName,
+		ShortName:             w.ShortName,
+		Lat:                   w.Lat,
+		Lng:                   w.Lng,
+		DivisionType:          w.DivisionType,
+		ProvinceID:            w.ProvinceID,
+		ProvinceCode:          w.ProvinceCode,
+		OfficialName:          w.OfficialName,
+		OfficialOperationDate: w.OfficialOperationDate,
+		NaturalAreaKm2:        w.NaturalAreaKm2,
+		Population:            w.Population,
+		PopulationDensity:     w.PopulationDensity,
+		Description:           w.Description,
+		CompositeID:           encodeLocationCompositeID(w.ID, _utils.LocationIDKindWard),
+		UnitType:              uint32(unitType),
+		UnitTypeName:          unitType.String(),
+		DataSource:            uint32(w.DataSource),
+		DataSourceName:        w.DataSource.String(),
+		OfficialRole:          w.OfficialRole,
+		OfficialAddress:       w.OfficialAddress,
+		SeoID:                 w.SeoID,
+		CreatedAt:             &w.CreatedAt,
+		UpdatedAt:             &w.UpdatedAt,
+		Geometry:              string(w.Geometry.Raw),
 	}
 }
 
@@ -476,45 +939,39 @@ func (u *LocationUsecase) clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (u *LocationUsecase) GetAdministrativeUnitSeoSource(ctx context.Context, identity string) (*dto.AdministrativeUnitSeoSource, error) {
-	identity = strings.TrimSpace(identity)
-	if identity == "" {
-		return nil, fmt.Errorf("identity là bắt buộc")
-	}
+func (u *LocationUsecase) GetAdministrativeUnitSeoSource(ctx context.Context, identity uint64) (*dto.AdministrativeUnitSeoSource, error) {
 	return u.repo.GetAdministrativeUnitSeoSource(ctx, identity)
 }
 
-func (u *LocationUsecase) UpdateAdministrativeUnitSeoID(ctx context.Context, identity string, seoID uint64) error {
-	identity = strings.TrimSpace(identity)
-	if identity == "" || seoID == 0 {
+func (u *LocationUsecase) UpdateAdministrativeUnitSeoID(ctx context.Context, identity uint64, seoID uint64) error {
+	if identity == 0 || seoID == 0 {
 		return fmt.Errorf("identity và seo_id là bắt buộc")
 	}
 	return u.repo.UpdateAdministrativeUnitSeoID(ctx, identity, seoID)
 }
 
-func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, identities []string) (*dto.AdminGenAdministrativeUnitSeoResult, error) {
-	if len(identities) == 0 {
-		return nil, fmt.Errorf("identities không được để trống")
+func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, compositeIDs []uint64) (*dto.AdminGenAdministrativeUnitSeoResult, error) {
+	if len(compositeIDs) == 0 {
+		return nil, fmt.Errorf("compositeIds không được để trống")
 	}
 	if u.crmSeoProvider == nil {
 		return nil, fmt.Errorf("crm seo provider chưa được cấu hình")
 	}
 
-	uniqueIdentities := make([]string, 0, len(identities))
-	seen := make(map[string]struct{}, len(identities))
-	for _, identity := range identities {
-		identity = strings.TrimSpace(identity)
-		if identity == "" {
+	uniqueIdentities := make([]uint64, 0, len(compositeIDs))
+	seen := make(map[uint64]struct{}, len(compositeIDs))
+	for _, compositeID := range compositeIDs {
+		if _, _, err := _utils.DecodeLocationID(compositeID); err != nil {
+			return nil, err
+		}
+		if _, ok := seen[compositeID]; ok {
 			continue
 		}
-		if _, ok := seen[identity]; ok {
-			continue
-		}
-		seen[identity] = struct{}{}
-		uniqueIdentities = append(uniqueIdentities, identity)
+		seen[compositeID] = struct{}{}
+		uniqueIdentities = append(uniqueIdentities, compositeID)
 	}
 	if len(uniqueIdentities) == 0 {
-		return nil, fmt.Errorf("identities không hợp lệ")
+		return nil, fmt.Errorf("compositeIds không hợp lệ")
 	}
 
 	sources, err := u.repo.GetAdministrativeUnitSeoSourcesByIdentities(ctx, uniqueIdentities)
@@ -525,8 +982,8 @@ func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, ide
 		return nil, fmt.Errorf("không tìm thấy đơn vị hành chính hợp lệ")
 	}
 
-	foundIdentities := make([]string, 0, len(sources))
-	prevSeoIDByIdentity := make(map[string]uint64, len(sources))
+	foundIdentities := make([]uint64, 0, len(sources))
+	prevSeoIDByIdentity := make(map[uint64]uint64, len(sources))
 	for _, source := range sources {
 		foundIdentities = append(foundIdentities, source.Identity)
 		if source.SeoID != nil && *source.SeoID > 0 {
@@ -544,7 +1001,8 @@ func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, ide
 
 	for i := range result.Items {
 		item := &result.Items[i]
-		if strings.TrimSpace(item.Identity) == "" || item.SeoID == 0 {
+		item.CompositeID = item.Identity
+		if item.Identity == 0 || item.SeoID == 0 {
 			continue
 		}
 
@@ -564,12 +1022,12 @@ func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, ide
 		if err := u.repo.UpdateAdministrativeUnitSeoID(ctx, item.Identity, item.SeoID); err != nil {
 			item.Message = fmt.Sprintf("cập nhật seo_id thất bại: %v", err)
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", item.Identity, err))
+			result.Errors = append(result.Errors, fmt.Sprintf("%d: %v", item.Identity, err))
 		}
 	}
 
 	if len(foundIdentities) < len(uniqueIdentities) {
-		foundSet := make(map[string]struct{}, len(foundIdentities))
+		foundSet := make(map[uint64]struct{}, len(foundIdentities))
 		for _, identity := range foundIdentities {
 			foundSet[identity] = struct{}{}
 		}
@@ -578,10 +1036,231 @@ func (u *LocationUsecase) AdminGenAdministrativeUnitSeo(ctx context.Context, ide
 				continue
 			}
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("%s: đơn vị hành chính không tồn tại", identity))
+			result.Errors = append(result.Errors, fmt.Sprintf("%d: đơn vị hành chính không tồn tại", identity))
 		}
 		if result.Total < int64(len(uniqueIdentities)) {
 			result.Total = int64(len(uniqueIdentities))
+		}
+	}
+
+	return result, nil
+}
+
+func generateSourceID(id uint64) uint64 {
+	if id != 0 {
+		return id // This is now the source ID, not encoded.
+	}
+	// Generate a new source ID if not provided
+	b := make([]byte, 8) // Use 8 bytes for uint64
+	if _, err := rand.Read(b); err != nil {
+		// Fallback to time-based ID if crypto/rand fails
+		return uint64(time.Now().UnixNano())
+	}
+	return binary.BigEndian.Uint64(b)
+}
+
+func fillOfficialNames(fullName, officialName string) (string, string) {
+	fullName = strings.TrimSpace(fullName)
+	officialName = strings.TrimSpace(officialName)
+	if officialName == "" {
+		officialName = fullName
+	}
+	if fullName == "" {
+		fullName = officialName
+	}
+	return fullName, officialName
+}
+
+func fillPopulationDensity(area float64, population uint64, density float64) float64 {
+	if density > 0 {
+		return density
+	}
+	if area > 0 && population > 0 {
+		return float64(population) / area
+	}
+	return density
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func encodeLocationCompositeID(sourceID uint64, kind uint32) uint64 {
+	id, _ := _utils.EncodeLocationID(sourceID, kind)
+	return id
+}
+
+func wardUnitType(w *domain.Ward) enums.LocationUnitType {
+	if w == nil {
+		return enums.LocationUnitTypeCity
+	}
+	name := strings.ToLower(strings.TrimSpace(w.DivisionType + " " + w.FullName + " " + w.OfficialName))
+	if strings.Contains(name, "đặc khu") || strings.Contains(name, "dac khu") {
+		return enums.LocationUnitTypeSpecialZone
+	}
+	return enums.LocationUnitTypeCity
+}
+
+func optionalPositiveUint64(value *uint64) *uint64 {
+	if value == nil || *value == 0 {
+		return nil
+	}
+	return value
+}
+
+func mergeProvinceUpdate(existing *domain.Province, in *dto.ProvinceDTO) {
+	fullName, officialName := fillOfficialNames(
+		firstNonEmpty(in.FullName, existing.FullName),
+		firstNonEmpty(in.OfficialName, existing.OfficialName),
+	)
+	existing.FullName = fullName
+	existing.OfficialName = officialName
+	if v := strings.TrimSpace(in.ShortName); v != "" {
+		existing.ShortName = v
+	}
+	if v := strings.TrimSpace(in.Code); v != "" {
+		existing.Code = v
+	}
+	if v := strings.TrimSpace(in.DivisionType); v != "" {
+		existing.DivisionType = v
+	}
+	if in.Lat != 0 || in.Lng != 0 {
+		existing.Lat = in.Lat
+		existing.Lng = in.Lng
+	}
+	if in.OfficialOperationDate != nil {
+		existing.OfficialOperationDate = in.OfficialOperationDate
+	}
+	if in.NaturalAreaKm2 != 0 || in.Population != 0 || in.PopulationDensity != 0 {
+		existing.NaturalAreaKm2 = in.NaturalAreaKm2
+		existing.Population = in.Population
+		existing.PopulationDensity = fillPopulationDensity(in.NaturalAreaKm2, in.Population, in.PopulationDensity)
+	}
+	if v := strings.TrimSpace(in.Description); v != "" {
+		existing.Description = v
+	}
+	if in.UnitType != 0 {
+		existing.UnitType = enums.LocationUnitType(in.UnitType)
+	}
+	if in.DataSource != 0 {
+		existing.DataSource = enums.LocationDataSource(in.DataSource)
+	}
+	if in.PlanDocID != nil {
+		existing.PlanDocID = optionalPositiveUint64(in.PlanDocID)
+	}
+	if v := strings.TrimSpace(in.OfficialRole); v != "" {
+		existing.OfficialRole = v
+	}
+	if v := strings.TrimSpace(in.OfficialAddress); v != "" {
+		existing.OfficialAddress = v
+	}
+}
+
+func mergeWardUpdate(existing *domain.Ward, in *dto.WardDTO) {
+	fullName, officialName := fillOfficialNames(
+		firstNonEmpty(in.FullName, existing.FullName),
+		firstNonEmpty(in.OfficialName, existing.OfficialName),
+	)
+	existing.FullName = fullName
+	existing.OfficialName = officialName
+	if v := strings.TrimSpace(in.ShortName); v != "" {
+		existing.ShortName = v
+	}
+	if v := strings.TrimSpace(in.Code); v != "" {
+		existing.Code = v
+	}
+	if v := strings.TrimSpace(in.DivisionType); v != "" {
+		existing.DivisionType = v
+	}
+	if v := strings.TrimSpace(in.ProvinceCode); v != "" {
+		existing.ProvinceCode = v
+	}
+	if in.Lat != 0 || in.Lng != 0 {
+		existing.Lat = in.Lat
+		existing.Lng = in.Lng
+	}
+	if in.OfficialOperationDate != nil {
+		existing.OfficialOperationDate = in.OfficialOperationDate
+	}
+	if in.NaturalAreaKm2 != 0 || in.Population != 0 || in.PopulationDensity != 0 {
+		existing.NaturalAreaKm2 = in.NaturalAreaKm2
+		existing.Population = in.Population
+		existing.PopulationDensity = fillPopulationDensity(in.NaturalAreaKm2, in.Population, in.PopulationDensity)
+	}
+	if v := strings.TrimSpace(in.Description); v != "" {
+		existing.Description = v
+	}
+	if in.UnitType != 0 {
+		existing.UnitType = enums.LocationUnitType(in.UnitType)
+	}
+	if in.DataSource != 0 {
+		existing.DataSource = enums.LocationDataSource(in.DataSource)
+	}
+	if v := strings.TrimSpace(in.OfficialRole); v != "" {
+		existing.OfficialRole = v
+	}
+	if v := strings.TrimSpace(in.OfficialAddress); v != "" {
+		existing.OfficialAddress = v
+	}
+}
+
+// AdminSyncAreaFromGeometry đồng bộ diện tích tự nhiên từ geometry cho các compositeId được cung cấp.
+// Nếu compositeIds rỗng, đồng bộ toàn bộ tỉnh/phường có geometry.
+// Với từng ID cụ thể: nếu không có geometry, thêm vào danh sách lỗi.
+func (u *LocationUsecase) AdminSyncAreaFromGeometry(ctx context.Context, compositeIDs []uint64) (*dto.SyncAreaFromGeometryResult, error) {
+	result := &dto.SyncAreaFromGeometryResult{
+		Errors: []string{},
+	}
+
+	if len(compositeIDs) == 0 {
+		provinceUpdated, err := u.repo.SyncAllProvincesAreaFromGeometry(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("sync all provinces: %w", err)
+		}
+		wardUpdated, err := u.repo.SyncAllWardsAreaFromGeometry(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("sync all wards: %w", err)
+		}
+		result.Updated = provinceUpdated + wardUpdated
+		return result, nil
+	}
+
+	for _, compositeID := range compositeIDs {
+		sourceID, kind, err := _utils.DecodeLocationID(compositeID)
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("compositeId %d: %v", compositeID, err))
+			result.Skipped++
+			continue
+		}
+
+		var synced bool
+		switch kind {
+		case _utils.LocationIDKindProvince:
+			synced, err = u.repo.SyncProvinceAreaFromGeometry(ctx, sourceID)
+		case _utils.LocationIDKindWard:
+			synced, err = u.repo.SyncWardAreaFromGeometry(ctx, sourceID)
+		default:
+			result.Errors = append(result.Errors, fmt.Sprintf("compositeId %d: loại đơn vị hành chính không hợp lệ", compositeID))
+			result.Skipped++
+			continue
+		}
+
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("compositeId %d: %v", compositeID, err))
+			result.Skipped++
+			continue
+		}
+
+		if !synced {
+			result.Errors = append(result.Errors, fmt.Sprintf("compositeId %d: không tìm thấy hoặc không có geometry", compositeID))
+			result.Skipped++
+		} else {
+			result.Updated++
 		}
 	}
 

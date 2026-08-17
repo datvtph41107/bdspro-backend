@@ -2,6 +2,7 @@ package usecase
 
 import (
 	_errors "common/errors"
+	_utils "common/utils"
 	"context"
 	"crm/config"
 	seo_domain "crm/internal/domain/seo"
@@ -32,6 +33,7 @@ type SeoDomainUsecase struct {
 	seoInternalRepo repo.SeoInternalLinkRepo
 	seoRelativeRepo repo.SeoRelativeRepo
 	seoTrendRepo    repo.SeoTrendRepo
+	seoRefRepo      repo.SeoRefRepo
 	tqdProvider     provider.TqdProvider
 	transaction     provider.ITransaction
 	bdsproProvider  provider.BdsproProvider
@@ -42,6 +44,7 @@ func NewSeoDomainUsecase(
 	seoInternalRepo repo.SeoInternalLinkRepo,
 	seoRelativeRepo repo.SeoRelativeRepo,
 	seoTrendRepo repo.SeoTrendRepo,
+	seoRefRepo repo.SeoRefRepo,
 	tqdProvider provider.TqdProvider,
 	transaction provider.ITransaction,
 	bdsproProvider provider.BdsproProvider,
@@ -51,6 +54,7 @@ func NewSeoDomainUsecase(
 		seoInternalRepo: seoInternalRepo,
 		seoRelativeRepo: seoRelativeRepo,
 		seoTrendRepo:    seoTrendRepo,
+		seoRefRepo:      seoRefRepo,
 		tqdProvider:     tqdProvider,
 		transaction:     transaction,
 		bdsproProvider:  bdsproProvider,
@@ -340,28 +344,28 @@ func (u *SeoDomainUsecase) GenerateSeoFromAdministrativeUnits(ctx context.Contex
 		return nil, nil, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
 	}
 
-	identities := []string(nil)
+	compositeIDs := []uint64(nil)
 	if req != nil {
-		identities = req.Identities
+		compositeIDs = req.CompositeIDs
 	}
-	if len(identities) == 0 {
-		return nil, nil, _errors.ReturnError(400, "identities không được để trống")
+	if len(compositeIDs) == 0 {
+		return nil, nil, _errors.ReturnError(400, "compositeIds không được để trống")
 	}
 
-	log.Printf("[SEO_GENERATE_ADM_UNIT] start generate seo from identities total=%d", len(identities))
-	sources := make([]dto.AdministrativeUnitSeoSource, 0, len(identities))
-	for _, identity := range identities {
-		identity = strings.TrimSpace(identity)
-		if identity == "" {
-			continue
+	log.Printf("[SEO_GENERATE_ADM_UNIT] start generate seo from compositeIds total=%d", len(compositeIDs))
+	sources := make([]dto.AdministrativeUnitSeoSource, 0, len(compositeIDs))
+	for _, compositeID := range compositeIDs {
+		if _, _, err := _utils.DecodeLocationID(compositeID); err != nil {
+			log.Printf("[SEO_GENERATE_ADM_UNIT] invalid compositeId=%d error=%v", compositeID, err)
+			return nil, nil, _errors.ReturnError(400, "compositeId không hợp lệ")
 		}
-		source, sourceErr := u.tqdProvider.GetAdministrativeUnitSeoSource(ctx, identity)
+		source, sourceErr := u.tqdProvider.GetAdministrativeUnitSeoSource(ctx, compositeID)
 		if sourceErr != nil {
-			log.Printf("[SEO_GENERATE_ADM_UNIT] get seo source failed identity=%s error=%v", identity, sourceErr)
+			log.Printf("[SEO_GENERATE_ADM_UNIT] get seo source failed compositeId=%d error=%v", compositeID, sourceErr)
 			return nil, nil, sourceErr
 		}
 		if source == nil {
-			log.Printf("[SEO_GENERATE_ADM_UNIT] seo source not found identity=%s", identity)
+			log.Printf("[SEO_GENERATE_ADM_UNIT] seo source not found compositeId=%d", compositeID)
 			continue
 		}
 		sources = append(sources, *source)
@@ -377,7 +381,7 @@ func (u *SeoDomainUsecase) GenerateSeoFromAdministrativeUnits(ctx context.Contex
 		seoDomain, created, err := u.createSeoFromAdministrativeUnitSource(ctx, sources[i])
 		if err != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", sources[i].Identity, err))
+			result.Errors = append(result.Errors, fmt.Sprintf("%d: %v", sources[i].CompositeID, err))
 			continue
 		}
 		if seoDomain == nil {
@@ -587,33 +591,33 @@ func (u *SeoDomainUsecase) createSeoFromLayerSource(ctx context.Context, source 
 	refID := source.LayerID
 
 	layerUpdates := map[string]interface{}{
-		"slug":               resolveLayerSeoSlug(source.DisplayName, source.LayerID),
-		"origin_url":         layerURL,
-		"canonical_url":      layerURL,
-		"ref_type":           uint32(enums.ESEORefTypeMap),
-		"ref_id":             refID,
-		"ref_source":         seo_domain.SeoRefSourceTqdLayer,
-		"ref_label":          firstNonEmpty(source.DisplayName, fmt.Sprintf("Lớp quy hoạch #%d", source.LayerID)),
-		"ref_url":            layerURL,
-		"source_status":      seo_domain.SeoSourceStatusLinked,
-		"ref_missing":        false,
-		"ref_snapshot_json":  datatypes.JSON(metadataBytes),
-		"ref_hash":           hashString(string(metadataBytes)),
-		"ref_last_synced_at": now,
-		"scope":              seo_domain.SeoScopePublic,
-		"classify":           uint32(enums.ESeoClassifyA),
-		"title":              buildLayerSeoTitle(source.DisplayName, source.LayerID),
-		"description":        buildLayerSeoDescription(source.DisplayName, source.LayerID),
-		"published":          true,
-		"published_at":       now,
-		"is_site_map":        true,
-		"is_index":           true,
-		"site_map_lasted_at": now,
-		"sitemap_priority":   0.7,
+		"slug":                resolveLayerSeoSlug(source.DisplayName, source.LayerID),
+		"origin_url":          layerURL,
+		"canonical_url":       layerURL,
+		"ref_type":            uint32(enums.ESEORefTypeMap),
+		"ref_id":              refID,
+		"ref_source":          seo_domain.SeoRefSourceTqdLayer,
+		"ref_label":           firstNonEmpty(source.DisplayName, fmt.Sprintf("Lớp quy hoạch #%d", source.LayerID)),
+		"ref_url":             layerURL,
+		"source_status":       seo_domain.SeoSourceStatusLinked,
+		"ref_missing":         false,
+		"ref_snapshot_json":   datatypes.JSON(metadataBytes),
+		"ref_hash":            hashString(string(metadataBytes)),
+		"ref_last_synced_at":  now,
+		"scope":               seo_domain.SeoScopePublic,
+		"classify":            uint32(enums.ESeoClassifyA),
+		"title":               buildLayerSeoTitle(source.DisplayName, source.LayerID),
+		"description":         buildLayerSeoDescription(source.DisplayName, source.LayerID),
+		"published":           true,
+		"published_at":        now,
+		"is_site_map":         true,
+		"is_index":            true,
+		"site_map_lasted_at":  now,
+		"sitemap_priority":    0.7,
 		"sitemap_change_freq": seo_domain.SeoChangeFreqWeekly,
-		"need_generate":      true,
-		"source_updated_at":  now,
-		"metadata":           datatypes.JSON(metadataBytes),
+		"need_generate":       true,
+		"source_updated_at":   now,
+		"metadata":            datatypes.JSON(metadataBytes),
 	}
 
 	// Nếu layer đã có seoId, update lại bản ghi đó.
@@ -713,30 +717,9 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 		return nil, false, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
 	}
 
-	if source.SeoID != nil && *source.SeoID > 0 {
-		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
-		if err != nil {
-			return nil, false, err
-		}
-		if existing != nil {
-			return existing, false, nil
-		}
-	}
-
 	projectURL, err := buildPlanningProjectSeoURL(source.PlanningProjectID, source.Slug, source.Name)
 	if err != nil {
 		return nil, false, err
-	}
-
-	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, projectURL)
-	if err != nil {
-		return nil, false, err
-	}
-	if existingByURL != nil {
-		if err := u.tqdProvider.UpdatePlanningProjectSeoID(ctx, source.PlanningProjectID, existingByURL.ID); err != nil {
-			return nil, false, err
-		}
-		return existingByURL, false, nil
 	}
 
 	metadataBytes, err := json.Marshal(map[string]interface{}{
@@ -752,6 +735,76 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 
 	now := time.Now()
 	refID := source.PlanningProjectID
+	projectUpdates := map[string]interface{}{
+		"slug":                resolvePlanningProjectSeoSlug(source.Slug, source.Name, source.PlanningProjectID),
+		"origin_url":          projectURL,
+		"canonical_url":       projectURL,
+		"ref_type":            uint32(enums.ESEORefTypeProject),
+		"ref_id":              refID,
+		"ref_source":          seo_domain.SeoRefSourceTqdPlanningProject,
+		"ref_label":           firstNonEmpty(source.Name, fmt.Sprintf("Đồ án quy hoạch #%d", source.PlanningProjectID)),
+		"ref_url":             projectURL,
+		"source_status":       seo_domain.SeoSourceStatusLinked,
+		"ref_missing":         false,
+		"ref_snapshot_json":   datatypes.JSON(metadataBytes),
+		"ref_hash":            hashString(string(metadataBytes)),
+		"ref_last_synced_at":  now,
+		"scope":               seo_domain.SeoScopePublic,
+		"classify":            uint32(enums.ESeoClassifyA),
+		"title":               buildPlanningProjectSeoTitle(source.Name, source.PlanningProjectID),
+		"description":         buildPlanningProjectSeoDescription(source.Name, source.PlanningProjectID),
+		"published":           true,
+		"published_at":        now,
+		"is_site_map":         true,
+		"is_index":            true,
+		"site_map_lasted_at":  now,
+		"sitemap_priority":    0.75,
+		"sitemap_change_freq": seo_domain.SeoChangeFreqWeekly,
+		"need_generate":       true,
+		"source_updated_at":   now,
+		"metadata":            datatypes.JSON(metadataBytes),
+	}
+
+	if source.SeoID != nil && *source.SeoID > 0 {
+		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
+		if err != nil {
+			return nil, false, err
+		}
+		if existing != nil {
+			if err := u.seoDomainRepo.Update(ctx, existing.ID, projectUpdates); err != nil {
+				return nil, false, err
+			}
+			if err := u.tqdProvider.UpdatePlanningProjectSeoID(ctx, source.PlanningProjectID, existing.ID); err != nil {
+				return nil, false, err
+			}
+			updated, err := u.seoDomainRepo.GetByID(ctx, existing.ID)
+			if err != nil {
+				return nil, false, err
+			}
+			log.Printf("[SEO_GENERATE_PLANNING_PROJECT] updated existing by seoId planningProjectId=%d seoId=%d canonicalUrl=%s", source.PlanningProjectID, existing.ID, updated.CanonicalURL)
+			return updated, false, nil
+		}
+	}
+
+	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, projectURL)
+	if err != nil {
+		return nil, false, err
+	}
+	if existingByURL != nil {
+		if err := u.seoDomainRepo.Update(ctx, existingByURL.ID, projectUpdates); err != nil {
+			return nil, false, err
+		}
+		if err := u.tqdProvider.UpdatePlanningProjectSeoID(ctx, source.PlanningProjectID, existingByURL.ID); err != nil {
+			return nil, false, err
+		}
+		updated, err := u.seoDomainRepo.GetByID(ctx, existingByURL.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		log.Printf("[SEO_GENERATE_PLANNING_PROJECT] updated existing by canonical planningProjectId=%d seoId=%d canonicalUrl=%s", source.PlanningProjectID, existingByURL.ID, updated.CanonicalURL)
+		return updated, false, nil
+	}
+
 	seoDomain := &seo_domain.SeoDomain{
 		Slug:              resolvePlanningProjectSeoSlug(source.Slug, source.Name, source.PlanningProjectID),
 		OriginURL:         projectURL,
@@ -804,23 +857,41 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 	return created, true, nil
 }
 
+func administrativeUnitCompositeID(source dto.AdministrativeUnitSeoSource) (uint64, uint32, error) {
+	compositeID := source.CompositeID
+	if compositeID == 0 {
+		compositeID = source.Identity
+	}
+	_, kind, err := _utils.DecodeLocationID(compositeID)
+	if err != nil {
+		return 0, 0, _errors.ReturnError(400, "compositeId không hợp lệ")
+	}
+	return compositeID, kind, nil
+}
+
+func administrativeUnitSeoRefType(kind uint32) enums.ESEORefType {
+	return enums.ESEORefTypeAdmUnit
+}
+
 func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Context, source dto.AdministrativeUnitSeoSource) (*seo_domain.SeoDomain, bool, error) {
 	if u.tqdProvider == nil {
 		return nil, false, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
 	}
 
+	compositeID, kind, err := administrativeUnitCompositeID(source)
+	if err != nil {
+		return nil, false, err
+	}
+	refID := compositeID
+	refType := administrativeUnitSeoRefType(kind)
+	identityLabel := strconv.FormatUint(compositeID, 10)
+
 	canonicalPath := strings.TrimSpace(source.CanonicalPath)
 	if canonicalPath == "" {
-		var err error
 		canonicalPath, err = buildAdministrativeUnitSeoURL(source.Slug, source.Name, source.AdministrativeCode)
 		if err != nil {
 			return nil, false, err
 		}
-	}
-
-	refID, err := strconv.ParseUint(strings.TrimSpace(source.AdministrativeCode), 10, 64)
-	if err != nil || refID == 0 {
-		return nil, false, _errors.ReturnError(400, "administrativeCode không hợp lệ")
 	}
 
 	slug := strings.Trim(strings.TrimSpace(source.Slug), "/")
@@ -829,8 +900,9 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 	}
 
 	metadataBytes, err := json.Marshal(map[string]interface{}{
-		"identity":           source.Identity,
-		"unitType":           source.UnitType,
+		"identity":           compositeID,
+		"compositeId":        compositeID,
+		"unitType":           kind,
 		"sourceId":           source.SourceID,
 		"name":               source.Name,
 		"slug":               slug,
@@ -847,11 +919,11 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		"slug":                slug,
 		"origin_url":          canonicalPath,
 		"canonical_url":       canonicalPath,
-		"ref_type":            uint32(enums.ESEORefTypeAdmUnit),
+		"ref_type":            uint32(refType),
 		"ref_id":              refID,
 		"ref_source":          seo_domain.SeoRefSourceTqdAdministrativeUnit,
-		"ref_label":           firstNonEmpty(source.Name, source.Identity),
-		"ref_url":             source.Identity,
+		"ref_label":           firstNonEmpty(source.Name, identityLabel),
+		"ref_url":             identityLabel,
 		"source_status":       seo_domain.SeoSourceStatusLinked,
 		"ref_missing":         false,
 		"ref_snapshot_json":   datatypes.JSON(metadataBytes),
@@ -859,8 +931,8 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		"ref_last_synced_at":  now,
 		"scope":               seo_domain.SeoScopePublic,
 		"classify":            uint32(enums.ESeoClassifyA),
-		"title":               buildAdministrativeUnitSeoTitle(source.Name, source.Identity),
-		"description":         buildAdministrativeUnitSeoDescription(source.Name, source.Identity),
+		"title":               buildAdministrativeUnitSeoTitle(source.Name, identityLabel),
+		"description":         buildAdministrativeUnitSeoDescription(source.Name, identityLabel),
 		"published":           true,
 		"published_at":        now,
 		"is_site_map":         true,
@@ -874,6 +946,10 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		"metadata":            datatypes.JSON(metadataBytes),
 	}
 
+	persistSeoID := func(ctx context.Context, seoID uint64) error {
+		return u.tqdProvider.UpdateAdministrativeUnitSeoID(ctx, compositeID, seoID)
+	}
+
 	if source.SeoID != nil && *source.SeoID > 0 {
 		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
 		if err != nil {
@@ -883,7 +959,7 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 			if err := u.seoDomainRepo.Update(ctx, existing.ID, updates); err != nil {
 				return nil, false, err
 			}
-			if err := u.tqdProvider.UpdateAdministrativeUnitSeoID(ctx, source.Identity, existing.ID); err != nil {
+			if err := persistSeoID(ctx, existing.ID); err != nil {
 				return nil, false, err
 			}
 			updated, err := u.seoDomainRepo.GetByID(ctx, existing.ID)
@@ -894,6 +970,24 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		}
 	}
 
+	existingByRef, err := u.seoDomainRepo.GetByRefSource(ctx, uint32(refType), seo_domain.SeoRefSourceTqdAdministrativeUnit, refID)
+	if err != nil {
+		return nil, false, err
+	}
+	if existingByRef != nil {
+		if err := u.seoDomainRepo.Update(ctx, existingByRef.ID, updates); err != nil {
+			return nil, false, err
+		}
+		if err := persistSeoID(ctx, existingByRef.ID); err != nil {
+			return nil, false, err
+		}
+		updated, err := u.seoDomainRepo.GetByID(ctx, existingByRef.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		return updated, false, nil
+	}
+
 	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, canonicalPath)
 	if err != nil {
 		return nil, false, err
@@ -902,7 +996,7 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		if err := u.seoDomainRepo.Update(ctx, existingByURL.ID, updates); err != nil {
 			return nil, false, err
 		}
-		if err := u.tqdProvider.UpdateAdministrativeUnitSeoID(ctx, source.Identity, existingByURL.ID); err != nil {
+		if err := persistSeoID(ctx, existingByURL.ID); err != nil {
 			return nil, false, err
 		}
 		updated, err := u.seoDomainRepo.GetByID(ctx, existingByURL.ID)
@@ -916,11 +1010,11 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		Slug:              slug,
 		OriginURL:         canonicalPath,
 		CanonicalURL:      canonicalPath,
-		RefType:           enums.ESEORefTypeAdmUnit,
+		RefType:           refType,
 		RefID:             &refID,
 		RefSource:         seo_domain.SeoRefSourceTqdAdministrativeUnit,
-		RefLabel:          firstNonEmpty(source.Name, source.Identity),
-		RefURL:            source.Identity,
+		RefLabel:          firstNonEmpty(source.Name, identityLabel),
+		RefURL:            identityLabel,
 		SourceStatus:      seo_domain.SeoSourceStatusLinked,
 		RefMissing:        false,
 		RefSnapshotJSON:   datatypes.JSON(metadataBytes),
@@ -928,8 +1022,8 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		RefLastSyncedAt:   &now,
 		Scope:             seo_domain.SeoScopePublic,
 		Classify:          enums.ESeoClassifyA,
-		Title:             buildAdministrativeUnitSeoTitle(source.Name, source.Identity),
-		Description:       buildAdministrativeUnitSeoDescription(source.Name, source.Identity),
+		Title:             buildAdministrativeUnitSeoTitle(source.Name, identityLabel),
+		Description:       buildAdministrativeUnitSeoDescription(source.Name, identityLabel),
 		Published:         true,
 		PublishedAt:       &now,
 		IsSiteMap:         true,
@@ -952,7 +1046,7 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		if createdSeo == nil || createdSeo.ID == 0 {
 			return _errors.ReturnError(500, "tạo seo domain thất bại")
 		}
-		if err := u.tqdProvider.UpdateAdministrativeUnitSeoID(txCtx, source.Identity, createdSeo.ID); err != nil {
+		if err := persistSeoID(txCtx, createdSeo.ID); err != nil {
 			return err
 		}
 		created = createdSeo
@@ -1095,6 +1189,9 @@ func (u *SeoDomainUsecase) DeleteSeoDomain(ctx context.Context, id uint64) error
 			return err
 		}
 		if err := u.seoRelativeRepo.DeleteBySeoDomainID(ctx, id); err != nil {
+			return err
+		}
+		if err := u.seoRefRepo.DeleteBySeoDomainID(ctx, id); err != nil {
 			return err
 		}
 		return u.seoDomainRepo.Delete(ctx, id)
@@ -2435,11 +2532,15 @@ func buildLayerSeoDescription(displayName string, layerID uint64) string {
 	return fmt.Sprintf("Thông tin lớp quy hoạch %s", title)
 }
 
-func buildPlanningProjectSeoURL(planningProjectID uint64, slug, name string) (string, error) {
-	template := strings.TrimSpace(viper.GetString("seo.planningProjectUrlTemplate"))
-	if template == "" {
-		return "", _errors.ReturnError(500, "seo.planningProjectUrlTemplate chưa được cấu hình")
+func planningProjectSeoURLTemplate() string {
+	if template := strings.TrimSpace(viper.GetString("seo.planningProjectUrlTemplate")); template != "" {
+		return template
 	}
+	return "/tin-tuc/do-an-quy-hoach/{slug}"
+}
+
+func buildPlanningProjectSeoURL(planningProjectID uint64, slug, name string) (string, error) {
+	template := planningProjectSeoURLTemplate()
 
 	resolvedSlug := strings.Trim(strings.TrimSpace(slug), "/")
 	if resolvedSlug == "" {
@@ -2482,7 +2583,7 @@ func administrativeUnitSeoURLTemplate() string {
 	if template := strings.TrimSpace(viper.GetString("seo.administrativeUnitUrlTemplate")); template != "" {
 		return template
 	}
-	return "/dia-ban/{slug}"
+	return "/tin-tuc/dia-ban/{slug}"
 }
 
 func buildAdministrativeUnitSeoURL(slug, name, administrativeCode string) (string, error) {

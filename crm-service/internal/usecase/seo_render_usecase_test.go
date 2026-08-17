@@ -24,8 +24,8 @@ func planningProjectMetadata(t *testing.T) datatypes.JSON {
 		},
 		"breadcrumbs": []map[string]any{
 			{"label": "Trang chủ", "path": "/"},
-			{"label": "Đồ án quy hoạch", "path": "/do-an-quy-hoach"},
-			{"label": "Quy hoạch phân khu đô thị H2-1", "path": "/do-an-quy-hoach/qh2"},
+			{"label": "Đồ án quy hoạch", "path": "/tin-tuc/do-an-quy-hoach"},
+			{"label": "Quy hoạch phân khu đô thị H2-1", "path": "/tin-tuc/do-an-quy-hoach/qh2"},
 		},
 		"facts": []map[string]any{
 			{"id": "planning-type", "label": "Loại quy hoạch", "value": "Quy hoạch phân khu đô thị"},
@@ -83,8 +83,8 @@ func planningProjectPage(t *testing.T) *seo_domain.SeoDomain {
 	publishedAt := time.Date(2026, 7, 23, 2, 38, 48, 0, time.UTC)
 	return &seo_domain.SeoDomain{
 		ID:              68,
-		Slug:            "/do-an-quy-hoach/qh2",
-		CanonicalURL:    "https://qhpro.vn/do-an-quy-hoach/qh2",
+		Slug:            "/tin-tuc/do-an-quy-hoach/qh2",
+		CanonicalURL:    "https://qhpro.vn/tin-tuc/do-an-quy-hoach/qh2",
 		RefID:           &refID,
 		RefSource:       "tqd",
 		RefLabel:        "Quy hoạch phân khu đô thị H2-1",
@@ -169,7 +169,7 @@ func TestComposePlanningProjectDocumentReady(t *testing.T) {
 	if !document.SEO.Indexable {
 		t.Fatal("expected trusted answer-ready document to remain indexable")
 	}
-	if document.Identity.CanonicalPath != "/do-an-quy-hoach/qh2" {
+	if document.Identity.CanonicalPath != "/tin-tuc/do-an-quy-hoach/qh2" {
 		t.Fatalf("unexpected canonical path: %s", document.Identity.CanonicalPath)
 	}
 	if len(document.Sections) != 4 {
@@ -380,7 +380,7 @@ func TestBuildPlanningProjectPublicDocumentPartialKeepsVisibleTimelineButNoindex
 	projection := &dto.TqdPlanningProjectProjection{
 		ID:                2,
 		Slug:              "qh2",
-		CanonicalPath:     "/do-an-quy-hoach/qh2",
+		CanonicalPath:     "/tin-tuc/do-an-quy-hoach/qh2",
 		Name:              "Quy hoạch H2-1",
 		PlanningTypeName:  "QH sử dụng đất",
 		LegalStatusName:   "Dự thảo",
@@ -429,7 +429,7 @@ func TestBuildPlanningProjectPublicDocumentCompleteBecomesReady(t *testing.T) {
 	projection := &dto.TqdPlanningProjectProjection{
 		ID:               2,
 		Slug:             "qh2",
-		CanonicalPath:    "/do-an-quy-hoach/qh2",
+		CanonicalPath:    "/tin-tuc/do-an-quy-hoach/qh2",
 		Name:             "Quy hoạch H2-1",
 		PlanningTypeName: "Quy hoạch phân khu",
 		LegalStatusName:  "Đã phê duyệt",

@@ -1070,65 +1070,101 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsRespo
 	}
 }
 
+// landUseKey is the composite key for deduplication within a layer.
+type landUseKey struct {
+	layerID    uint64
+	landUseID  uint64
+}
+
 func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *tqdpb.LayerQuickInfoResponse {
-	layerMap := make(map[uint64]*tqdpb.LayerQuickInfo)
-	layers := make([]*tqdpb.LayerQuickInfo, 0)
-	warnings := make([]string, 0)
+	type layerEntry struct {
+		proto      *tqdpb.LayerQuickInfo
+		// landUseID -> index trong LandUses slice
+		landUseIdx map[uint64]int
+	}
+
+	layerMap := make(map[uint64]*layerEntry)
+	layerOrder := make([]uint64, 0) // duy trì thứ tự xuất hiện
+	warnSet := make(map[landUseKey]bool)
 
 	for _, q := range rows {
-		layer, exists := layerMap[q.LayerID]
+		entry, exists := layerMap[q.LayerID]
 		if !exists {
-			layer = &tqdpb.LayerQuickInfo{
-				ParcelId:         q.ParcelID,
-				LayerId:          q.LayerID,
-				LayerName:        q.LayerName,
-				LayerDisplayName: q.LayerDisplayName,
-				LayerType:        q.LayerType,
-				LegalStatus:      uint32(q.LayerLegalStatus),
-				LayerOrder:       q.LayerOrder,
-				LegalStatusName:  enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
-				LayerAvatar:      q.LayerAvatar,
-				RelationType:     q.RelationType,
-				UpdatedAt:        _utils.FormatTimeToString(&q.LayerUpdatedAt),
-				LandUses:         make([]*tqdpb.LandUseQuickInfo, 0),
-
-				PlanningProjectId: q.PlanningProjectID,
+			entry = &layerEntry{
+				proto: &tqdpb.LayerQuickInfo{
+					ParcelId:          q.ParcelID,
+					LayerId:           q.LayerID,
+					LayerName:         q.LayerName,
+					LayerDisplayName:  q.LayerDisplayName,
+					LayerType:         q.LayerType,
+					LegalStatus:       uint32(q.LayerLegalStatus),
+					LayerOrder:        q.LayerOrder,
+					LegalStatusName:   enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
+					LayerAvatar:       q.LayerAvatar,
+					LayerImage:        q.LayerAvatar,
+					RelationType:      q.RelationType,
+					UpdatedAt:         _utils.FormatTimeToString(&q.LayerUpdatedAt),
+					LandUses:          make([]*tqdpb.LandUseQuickInfo, 0),
+					PlanningProjectId: q.PlanningProjectID,
+				},
+				landUseIdx: make(map[uint64]int),
 			}
-
-			layerMap[q.LayerID] = layer
-			layers = append(layers, layer)
+			layerMap[q.LayerID] = entry
+			layerOrder = append(layerOrder, q.LayerID)
 		}
 
-		layer.LandUses = append(layer.LandUses, &tqdpb.LandUseQuickInfo{
-			LandUseId:        q.LandUseID,
-			LandUseName:      q.LandUseName,
-			LandUseColor:     q.LandUseColor,
-			WarnLevel:        uint32(q.WarnLevel),
-			IntersectAreaSqm: q.IntersectAreaSqm,
-			Percent:          q.Percent,
-			CanBuild:         q.CanBuild,
-		})
+		// Gộp cùng loại đất trong cùng 1 layer: cộng dồn area + percent
+		if idx, seen := entry.landUseIdx[q.LandUseID]; seen {
+			lu := entry.proto.LandUses[idx]
+			lu.IntersectAreaSqm += q.IntersectAreaSqm
+			lu.Percent += q.Percent
+			// Giữ warn level cao nhất
+			if uint32(q.WarnLevel) > lu.WarnLevel {
+				lu.WarnLevel = uint32(q.WarnLevel)
+			}
+		} else {
+			entry.landUseIdx[q.LandUseID] = len(entry.proto.LandUses)
+			entry.proto.LandUses = append(entry.proto.LandUses, &tqdpb.LandUseQuickInfo{
+				LandUseId:        q.LandUseID,
+				LandUseName:      q.LandUseName,
+				LandUseColor:     q.LandUseColor,
+				WarnLevel:        uint32(q.WarnLevel),
+				IntersectAreaSqm: q.IntersectAreaSqm,
+				Percent:          q.Percent,
+				CanBuild:         q.CanBuild,
+			})
+		}
 
+		// Cảnh báo: mỗi (layer, land use) chỉ generate 1 lần (sau khi gộp)
 		if q.WarnLevel > 0 {
-			warnings = append(
-				warnings,
-				fmt.Sprintf(
-					"%.2f%% diện tích thuộc '%s' trong '%s'.",
-					q.Percent,
-					q.LandUseName,
-					q.LayerName,
-				),
-			)
+			warnSet[landUseKey{q.LayerID, q.LandUseID}] = true
 		}
+	}
+
+	// Build final slice theo thứ tự xuất hiện ban đầu
+	layers := make([]*tqdpb.LayerQuickInfo, 0, len(layerOrder))
+	for _, lid := range layerOrder {
+		layers = append(layers, layerMap[lid].proto)
 	}
 
 	sort.SliceStable(layers, func(i, j int) bool {
 		return layers[i].LayerOrder > layers[j].LayerOrder
 	})
 
-	// if len(warnings) == 0 {
-	// 	warnings = append(warnings, "Không có cảnh báo nào.")
-	// }
+	// Build warnings từ trạng thái đã gộp (dùng percent tổng)
+	warnings := make([]string, 0, len(warnSet))
+	for _, layer := range layers {
+		for _, lu := range layer.LandUses {
+			if lu.WarnLevel > 0 {
+				warnings = append(warnings, fmt.Sprintf(
+					"%.2f%% diện tích thuộc '%s' trong '%s'.",
+					lu.Percent,
+					lu.LandUseName,
+					layer.LayerName,
+				))
+			}
+		}
+	}
 
 	return &tqdpb.LayerQuickInfoResponse{
 		Layers:   layers,

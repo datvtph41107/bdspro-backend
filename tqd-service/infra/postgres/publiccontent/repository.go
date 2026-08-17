@@ -381,6 +381,7 @@ func (r *Repository) GetParcelQuickView(
 		JOIN qh_planning_projects pp
 		  ON pp.id = l.planning_project_id
 		 AND pp.deleted_at IS NULL
+		 AND pp.client_view = true
 		WHERE p.id = ?
 		ORDER BY intersect_area_sqm DESC, pp.id DESC
 		LIMIT 12`, parcelID).Scan(&projectRows).Error; err != nil {
@@ -416,7 +417,7 @@ func buildRelatedPlanningProject(project relatedProjectRow, slug string, ratio f
 		IntersectAreaSqm:  project.IntersectAreaSqm,
 		IntersectionRatio: ratio,
 		UpdatedAt:         project.UpdatedAt,
-		PublicPath:        "/do-an-quy-hoach/" + slug,
+		PublicPath:        "/tin-tuc/do-an-quy-hoach/" + slug,
 		DossierPath:       "/ban-do/do-an/" + id,
 		MapPath:           "/ban-do?projectId=" + id,
 	}
@@ -506,6 +507,7 @@ func (r *Repository) getPlanningProjectRow(
 			  ON j.id = pp.jurisdiction_id
 			 AND j.deleted_at IS NULL
 			WHERE pp.deleted_at IS NULL
+			  AND pp.client_view = true
 			  AND (
 			    pp.id::text = ?
 			    OR LOWER(COALESCE(pp.code,'')) = LOWER(?)
@@ -755,6 +757,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		JOIN qh_planning_projects related
 		  ON related.id = relation.related_planning_project_id
 		 AND related.deleted_at IS NULL
+		 AND related.client_view = true
 		WHERE relation.planning_project_id = ?
 		  AND relation.deleted_at IS NULL
 		ORDER BY related.name`, row.ID).Scan(&relationRows).Error; err != nil {
@@ -769,7 +772,7 @@ func (r *Repository) GetPlanningProjectProjection(
 			Slug:       relatedSlug,
 			Code:       item.Code,
 			Name:       item.Name,
-			PublicPath: "/do-an-quy-hoach/" + relatedSlug,
+			PublicPath: "/tin-tuc/do-an-quy-hoach/" + relatedSlug,
 			MapPath:    "/ban-do?projectId=" + strconv.FormatUint(item.ID, 10),
 		})
 	}
@@ -801,7 +804,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		ID:                row.ID,
 		CanonicalKey:      "planning_project:" + strconv.FormatUint(row.ID, 10),
 		Slug:              slug,
-		CanonicalPath:     "/do-an-quy-hoach/" + slug,
+		CanonicalPath:     "/tin-tuc/do-an-quy-hoach/" + slug,
 		Code:              row.Code,
 		Name:              row.Name,
 		PlanningType:      row.PlanningType,

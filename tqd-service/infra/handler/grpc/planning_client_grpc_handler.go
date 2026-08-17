@@ -137,7 +137,7 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 	filter := planningdomain.ProjectListFilter{
 		Page:           int(req.GetPage()),
 		Size:           positiveOr(req.GetSize(), 20),
-		Search:         strings.TrimSpace(req.GetSearch()),
+		Search:         strings.ToLower(strings.TrimSpace(req.GetSearch())),
 		PlanningType:   strings.TrimSpace(req.GetPlanningType()),
 		PlanningLevel:  strings.TrimSpace(req.GetPlanningLevel()),
 		ValidityStatus: strings.TrimSpace(req.GetValidityStatus()),
@@ -153,6 +153,7 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 		UpdatedTo:      updatedTo,
 		TagIDs:         strings.TrimSpace(req.GetTagIds()),
 		ProvinceIDs:    strings.TrimSpace(req.GetProvinceIds()),
+		AdmID:          req.GetAdmId(),
 	}
 	result, err := h.service.ListProjects(ctx, filter)
 	if err != nil {
@@ -303,7 +304,7 @@ func (h *PlanningClientGrpcHandler) ListFollowedPlanningProjects(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	result, err := h.service.ListFollowed(ctx, userID, int(req.GetPage()), positiveOr(req.GetSize(), 20), strings.TrimSpace(req.GetSearch()))
+	result, err := h.service.ListFollowed(ctx, userID, int(req.GetPage()), positiveOr(req.GetSize(), 20), strings.ToLower(strings.TrimSpace(req.GetSearch())))
 	if err != nil {
 		return nil, repositoryError(err)
 	}
@@ -393,7 +394,7 @@ func (h *PlanningClientGrpcHandler) ListProvinces(ctx context.Context, req *tqdp
 
 	filter := planningdomain.ProvinceListFilter{
 		Scope:  req.GetScope(),
-		Search: strings.TrimSpace(req.GetSearch()),
+		Search: strings.ToLower(strings.TrimSpace(req.GetSearch())),
 	}
 	result, err := h.service.ListProvinces(ctx, filter)
 	if err != nil {

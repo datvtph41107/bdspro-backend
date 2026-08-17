@@ -2,16 +2,13 @@ package db
 
 import (
 	_db "common/db"
+	seo_domain "crm/internal/domain/seo"
 	"log"
 )
 
 func AutoMigrate() {
 	_db.DB.AutoMigrate(
-	// &domain.SupportTicket{},
-	// &domain.SupportTicketNote{},
-	// &domain.SupportTicketEvent{},
-	// &domain.AdminOpportunityEvent{},
-	// &seo_domain.SeoRef{},
+		&seo_domain.SeoRef{},
 	)
 
 	log.Println("Migrate success")

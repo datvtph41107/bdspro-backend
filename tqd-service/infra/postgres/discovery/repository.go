@@ -674,6 +674,7 @@ func (r *Repository) SearchPlanningProjects(ctx context.Context, req domain.Sear
 		    AND l.status = 10
 		) extent ON true
 		WHERE pp.deleted_at IS NULL
+		  AND pp.client_view = true
 		  AND (
 		    LOWER(COALESCE(pp.code,'')) LIKE ?
 		    OR LOWER(COALESCE(pp.name,'')) LIKE ?
@@ -704,7 +705,7 @@ func (r *Repository) SearchPlanningProjects(ctx context.Context, req domain.Sear
 	out := make([]domain.EntityCandidate, 0, len(rows))
 	for _, row := range rows {
 		item := candidate(domain.EntityKindPlanningProject, row, "full_text")
-		item.Links.CanonicalURL = "/do-an-quy-hoach/" + row.ID
+		item.Links.CanonicalURL = "/tin-tuc/do-an-quy-hoach/" + row.ID
 		item.Links.DetailURL = item.Links.CanonicalURL
 		item.Capabilities.CanCreateReport = true
 		item.Capabilities.CanCompare = true
@@ -1002,7 +1003,7 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			  JOIN qh_regions r ON r.layer_id = l.id AND r.deleted_at IS NULL AND r.status = 10 AND r.is_latest = true
 			  WHERE l.planning_project_id = pp.id AND l.deleted_at IS NULL AND l.status = 10
 			) extent ON true
-			WHERE pp.id = ? AND pp.deleted_at IS NULL
+			WHERE pp.id = ? AND pp.deleted_at IS NULL AND pp.client_view = true
 			LIMIT 1`, numericID).Scan(&row).Error
 	case domain.EntityKindPOI:
 		err = r.db.WithContext(ctx).Raw(`

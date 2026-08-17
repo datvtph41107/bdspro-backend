@@ -14,6 +14,7 @@ import (
 	"time"
 	"tqd/config"
 	"tqd/internal/enums"
+	"tqd/internal/interface/provider"
 	atlasflowcatalog "tqd/internal/modules/atlasflow/catalog"
 
 	"google.golang.org/grpc/codes"
@@ -27,12 +28,14 @@ type TqdPublicService struct {
 	StartUpTime      int64
 	processedConfigs map[string]bool
 	mu               sync.RWMutex
+	crmSeoProvider   provider.CrmSeoProvider
 }
 
-func NewBdsproPublicService() *TqdPublicService {
+func NewBdsproPublicService(crmSeoProvider provider.CrmSeoProvider) *TqdPublicService {
 	return &TqdPublicService{
 		StartUpTime:      time.Now().UnixMilli(),
 		processedConfigs: make(map[string]bool),
+		crmSeoProvider:   crmSeoProvider,
 	}
 }
 
@@ -45,6 +48,9 @@ var enumProviders = map[string][]*sharepb.EnumItem{
 	"planning_document_type": _utils.EnumMapToList(enums.PlanningDocumentTypeLabelMap),
 	"planning_type":          _utils.EnumMapToList(enums.PlanningTypeMap),
 	"planning_level":         _utils.EnumMapToList(enums.PlanningLevelMap),
+
+	"location_unit_type":   _utils.EnumMapToList(enums.LocationUnitTypeMap),
+	"location_data_source": _utils.EnumMapToList(enums.LocationDataSourceMap),
 }
 
 func (s *TqdPublicService) GetEnums(ctx context.Context, req *sharepb.SyncRequest) (*sharepb.GetEnumsResponse, error) {
@@ -211,5 +217,33 @@ func (s *TqdPublicService) GetPublicMaps(ctx context.Context, _ *emptypb.Empty) 
 				Type:   "raster",
 			},
 		},
+	}, nil
+}
+
+func (s *TqdPublicService) CreateDefaultSeoByRef(ctx context.Context, req *tqdpb.CreateDefaultSeoByRefRequest) (*tqdpb.CreateDefaultSeoByRefResponse, error) {
+	if req == nil || req.RefType == 0 || req.RefId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "refType và refId là bắt buộc")
+	}
+	if s.crmSeoProvider == nil {
+		return nil, status.Error(codes.Internal, "crm seo provider chưa sẵn sàng")
+	}
+
+	result, err := s.crmSeoProvider.CreateOrGetDefaultSeoByRef(ctx, req.RefType, req.RefId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "tạo seo mặc định thất bại: %v", err)
+	}
+
+	return &tqdpb.CreateDefaultSeoByRefResponse{
+		Created:      result.Created,
+		SeoId:        result.SeoID,
+		RefType:      result.RefType,
+		RefId:        result.RefID,
+		Slug:         result.Slug,
+		OriginUrl:    result.OriginURL,
+		CanonicalUrl: result.CanonicalURL,
+		Title:        result.Title,
+		Description:  result.Description,
+		PageStatus:   result.PageStatus,
+		RenderStatus: result.RenderStatus,
 	}, nil
 }

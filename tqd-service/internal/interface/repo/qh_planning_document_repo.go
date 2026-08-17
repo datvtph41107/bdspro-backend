@@ -12,6 +12,7 @@ type IQHPlanningDocumentRepo interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 	GetList(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error)
+	CountByProject(ctx context.Context, projectID uint64) (int64, error)
 	GetAll(ctx context.Context) ([]qh_domain.QHPlanningDocument, error)
 	GetDetail(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 
@@ -25,4 +26,8 @@ type IQHPlanningDocumentRepo interface {
 	ResetClassifyForRetry(ctx context.Context, id uint64) error
 	// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending; trả về số bản ghi cập nhật.
 	ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error)
+	// AssignToLayer tạo/khôi phục bản ghi layer_plan_doc_relation cho layerId và danh sách document.
+	AssignToLayer(ctx context.Context, layerID uint64, docIDs []uint64) error
+	// UnassignLayer xóa toàn bộ layer_plan_doc_relation của layer với tài liệu thuộc đồ án.
+	UnassignLayer(ctx context.Context, planningID, layerID uint64) error
 }

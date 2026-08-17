@@ -1076,6 +1076,33 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 	return h.mapper.BuildLayerQuickInfoFromRows(quickInfo), nil
 }
 
+// GetWardQuickLayers — GET /v2/tqd/client/administrative-units/{compositeId}/quick-layers
+// @Summary Lấy quick-layers theo geometry đơn vị hành chính
+// @Description Tìm giao geometry tỉnh/phường với qh_regions, trả về danh sách layer và land use info.
+// @Tags Administrative Unit Client
+// @Produce json
+// @Param compositeId path int true "Composite ID ({sourceId}{1=tỉnh|2=phường})"
+// @Success 200 {object} tqdpb.LayerQuickInfoResponse
+// @Router /v2/tqd/client/administrative-units/{compositeId}/quick-layers [get]
+func (h *ParcelGrpcHandler) GetWardQuickLayers(
+	ctx context.Context,
+	req *tqdpb.GetWardQuickLayersRequest,
+) (*tqdpb.LayerQuickInfoResponse, error) {
+	if req == nil || req.CompositeId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "compositeId is required")
+	}
+
+	quickInfo, err := h.usecase.GetAdministrativeUnitQuickInfo(ctx, req.CompositeId)
+	if err != nil {
+		if strings.Contains(err.Error(), "decode compositeId") || strings.Contains(err.Error(), "invalid compositeId kind") {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.mapper.BuildLayerQuickInfoFromRows(quickInfo), nil
+}
+
 func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
 	log.Printf("[GetParcelDetail] ParcelID: %d", req.ParcelId)
 

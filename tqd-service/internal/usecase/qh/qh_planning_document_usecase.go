@@ -19,6 +19,8 @@ type IQHPlanningDocumentUsecase interface {
 	Approve(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 	// Retry đưa tài liệu Failed về Pending để job classify chạy lại.
 	Retry(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
+	AssignToLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error
+	UnassignLayer(ctx context.Context, req *qh_dto.UnassignPlanningProjectLayerRequest) error
 }
 
 type qhPlanningDocumentUsecase struct {
@@ -148,4 +150,67 @@ func (u *qhPlanningDocumentUsecase) Retry(ctx context.Context, id uint64) (*qh_d
 	}
 
 	return u.repo.GetByID(ctx, id)
+}
+
+func (u *qhPlanningDocumentUsecase) AssignToLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error {
+	if req == nil || req.LayerID == 0 {
+		return &_err.ErrorDTO{
+			Code:    400,
+			Message: "layerId is required",
+		}
+	}
+
+	docIDs := uniquePositiveIDs(req.DocIDs)
+	if len(docIDs) == 0 {
+		return &_err.ErrorDTO{
+			Code:    400,
+			Message: "docIds is required",
+		}
+	}
+
+	if err := u.repo.AssignToLayer(ctx, req.LayerID, docIDs); err != nil {
+		return &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể gán tài liệu vào layer: " + err.Error(),
+		}
+	}
+	return nil
+}
+
+func (u *qhPlanningDocumentUsecase) UnassignLayer(ctx context.Context, req *qh_dto.UnassignPlanningProjectLayerRequest) error {
+	if req == nil || req.PlanningID == 0 {
+		return &_err.ErrorDTO{
+			Code:    400,
+			Message: "planningId is required",
+		}
+	}
+	if req.LayerID == 0 {
+		return &_err.ErrorDTO{
+			Code:    400,
+			Message: "layerId is required",
+		}
+	}
+	if err := u.repo.UnassignLayer(ctx, req.PlanningID, req.LayerID); err != nil {
+		return &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể gỡ layer: " + err.Error(),
+		}
+	}
+	return nil
+}
+
+func uniquePositiveIDs(ids []uint64) []uint64 {
+	seen := make(map[uint64]struct{}, len(ids))
+	result := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	return result
 }
