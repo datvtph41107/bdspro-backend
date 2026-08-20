@@ -135,6 +135,7 @@ func (r *layerRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLa
 	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).
 		Preload("Family").
+		Preload("PlanningProject").
 		Where("deleted_at IS NULL").
 		First(&layer, id).Error
 	if err != nil {
@@ -183,12 +184,16 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 			searchTerm, searchTerm,
 		)
 	}
+	if filter.PlanningProjectID != nil && *filter.PlanningProjectID > 0 {
+		query = query.Where("planning_project_id = ?", *filter.PlanningProjectID)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	orderBy := "display_order"
+	orderBy := "updated_at"
+	orderDir := "DESC"
 	if filter.OrderBy != "" {
 		allowed := map[string]string{
 			"display_order": "display_order",
@@ -204,15 +209,16 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 			orderBy = col
 		}
 	}
-	orderDir := "ASC"
-	if strings.EqualFold(filter.OrderDir, "DESC") {
-		orderDir = "DESC"
+	if filter.OrderDir != "" {
+		if strings.EqualFold(filter.OrderDir, "ASC") {
+			orderDir = "ASC"
+		} else if strings.EqualFold(filter.OrderDir, "DESC") {
+			orderDir = "DESC"
+		}
 	}
 
-	log.Println("Creating layer:", filter.Size)
-
 	err := query.
-		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
+		Order(fmt.Sprintf("%s %s NULLS LAST, id DESC", orderBy, orderDir)).
 		Offset(filter.GetOffset()).
 		Limit(filter.GetLimitAdmin()).
 		Find(&layers).Error
@@ -241,12 +247,21 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 			searchTerm, searchTerm,
 		)
 	}
+	if filter.DocID > 0 {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			WHERE rel.layer_id = qh_layers.id
+			  AND rel.planning_document_id = ?
+			  AND rel.deleted_at IS NULL
+		)`, filter.DocID)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	err := query.
+		Preload("PlanningProject").
 		Order("display_order ASC, id ASC").
 		Offset(filter.GetOffset()).
 		Limit(1000).

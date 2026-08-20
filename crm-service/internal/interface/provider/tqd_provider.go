@@ -15,6 +15,8 @@ type TqdProvider interface {
 	UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error
 	GetPlanningProjectSeoSource(ctx context.Context, planningProjectID uint64) (*dto.PlanningProjectSeoSource, error)
 	UpdatePlanningProjectSeoID(ctx context.Context, planningProjectID uint64, seoID uint64) error
+	GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*dto.PlanningDocumentSeoSource, error)
+	UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error
 	GetAdministrativeUnitSeoSource(ctx context.Context, compositeID uint64) (*dto.AdministrativeUnitSeoSource, error)
 	UpdateAdministrativeUnitSeoID(ctx context.Context, compositeID uint64, seoID uint64) error
 }

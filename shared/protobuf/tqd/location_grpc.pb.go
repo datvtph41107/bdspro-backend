@@ -29,6 +29,7 @@ const (
 	LocationService_GetWard_FullMethodName                                        = "/tqdpb.LocationService/GetWard"
 	LocationService_ListWardsByProvince_FullMethodName                            = "/tqdpb.LocationService/ListWardsByProvince"
 	LocationService_AdminGetAdministrativeUnitDetailByCompositeId_FullMethodName  = "/tqdpb.LocationService/AdminGetAdministrativeUnitDetailByCompositeId"
+	LocationService_AdminListAdministrativeUnits_FullMethodName                   = "/tqdpb.LocationService/AdminListAdministrativeUnits"
 	LocationService_AdminListProvinces_FullMethodName                             = "/tqdpb.LocationService/AdminListProvinces"
 	LocationService_AdminGetProvinceDetailByCompositeId_FullMethodName            = "/tqdpb.LocationService/AdminGetProvinceDetailByCompositeId"
 	LocationService_AdminListWards_FullMethodName                                 = "/tqdpb.LocationService/AdminListWards"
@@ -46,6 +47,9 @@ const (
 	LocationService_UpdateAdministrativeUnitSeoID_FullMethodName                  = "/tqdpb.LocationService/UpdateAdministrativeUnitSeoID"
 	LocationService_AdminGenAdministrativeUnitSeo_FullMethodName                  = "/tqdpb.LocationService/AdminGenAdministrativeUnitSeo"
 	LocationService_ClientGetAdministrativeUnitDetailByCompositeId_FullMethodName = "/tqdpb.LocationService/ClientGetAdministrativeUnitDetailByCompositeId"
+	LocationService_ClientListAdministrativeUnits_FullMethodName                  = "/tqdpb.LocationService/ClientListAdministrativeUnits"
+	LocationService_ClientListAdministrativeUnitNeighbors_FullMethodName          = "/tqdpb.LocationService/ClientListAdministrativeUnitNeighbors"
+	LocationService_AdminSyncAreaFromGeometry_FullMethodName                      = "/tqdpb.LocationService/AdminSyncAreaFromGeometry"
 )
 
 // LocationServiceClient is the client API for LocationService service.
@@ -66,6 +70,8 @@ type LocationServiceClient interface {
 	ListWardsByProvince(ctx context.Context, in *ListWardsByProvinceRequest, opts ...grpc.CallOption) (*ListWardsResponse, error)
 	// Admin: danh sách tỉnh/thành
 	AdminGetAdministrativeUnitDetailByCompositeId(ctx context.Context, in *AdminGetAdministrativeUnitDetailByCompositeIdRequest, opts ...grpc.CallOption) (*AdminGetAdministrativeUnitDetailByCompositeIdResponse, error)
+	// Admin: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+	AdminListAdministrativeUnits(ctx context.Context, in *AdminListAdministrativeUnitsRequest, opts ...grpc.CallOption) (*ListAdministrativeUnitsResponse, error)
 	AdminListProvinces(ctx context.Context, in *AdminListProvincesRequest, opts ...grpc.CallOption) (*AdminListProvincesResponse, error)
 	AdminGetProvinceDetailByCompositeId(ctx context.Context, in *AdminGetProvinceDetailByCompositeIdRequest, opts ...grpc.CallOption) (*Province, error)
 	// Admin: danh sách phường/xã
@@ -87,6 +93,12 @@ type LocationServiceClient interface {
 	UpdateAdministrativeUnitSeoID(ctx context.Context, in *UpdateAdministrativeUnitSeoIDRequest, opts ...grpc.CallOption) (*shared.SubmitResponse, error)
 	AdminGenAdministrativeUnitSeo(ctx context.Context, in *AdminGenAdministrativeUnitSeoRequest, opts ...grpc.CallOption) (*AdminGenAdministrativeUnitSeoResponse, error)
 	ClientGetAdministrativeUnitDetailByCompositeId(ctx context.Context, in *ClientGetAdministrativeUnitDetailByCompositeIdRequest, opts ...grpc.CallOption) (*ClientGetAdministrativeUnitDetailByCompositeIdResponse, error)
+	// Client: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+	ClientListAdministrativeUnits(ctx context.Context, in *ClientListAdministrativeUnitsRequest, opts ...grpc.CallOption) (*ListAdministrativeUnitsResponse, error)
+	// Client: danh sách địa bàn lân cận (phường/xã) theo compositeId
+	ClientListAdministrativeUnitNeighbors(ctx context.Context, in *ClientListAdministrativeUnitNeighborsRequest, opts ...grpc.CallOption) (*ClientListAdministrativeUnitNeighborsResponse, error)
+	// Admin: đồng bộ diện tích tự nhiên từ geometry
+	AdminSyncAreaFromGeometry(ctx context.Context, in *AdminSyncAreaFromGeometryRequest, opts ...grpc.CallOption) (*AdminSyncAreaFromGeometryResponse, error)
 }
 
 type locationServiceClient struct {
@@ -154,6 +166,15 @@ func (c *locationServiceClient) ListWardsByProvince(ctx context.Context, in *Lis
 func (c *locationServiceClient) AdminGetAdministrativeUnitDetailByCompositeId(ctx context.Context, in *AdminGetAdministrativeUnitDetailByCompositeIdRequest, opts ...grpc.CallOption) (*AdminGetAdministrativeUnitDetailByCompositeIdResponse, error) {
 	out := new(AdminGetAdministrativeUnitDetailByCompositeIdResponse)
 	err := c.cc.Invoke(ctx, LocationService_AdminGetAdministrativeUnitDetailByCompositeId_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *locationServiceClient) AdminListAdministrativeUnits(ctx context.Context, in *AdminListAdministrativeUnitsRequest, opts ...grpc.CallOption) (*ListAdministrativeUnitsResponse, error) {
+	out := new(ListAdministrativeUnitsResponse)
+	err := c.cc.Invoke(ctx, LocationService_AdminListAdministrativeUnits_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -313,6 +334,33 @@ func (c *locationServiceClient) ClientGetAdministrativeUnitDetailByCompositeId(c
 	return out, nil
 }
 
+func (c *locationServiceClient) ClientListAdministrativeUnits(ctx context.Context, in *ClientListAdministrativeUnitsRequest, opts ...grpc.CallOption) (*ListAdministrativeUnitsResponse, error) {
+	out := new(ListAdministrativeUnitsResponse)
+	err := c.cc.Invoke(ctx, LocationService_ClientListAdministrativeUnits_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *locationServiceClient) ClientListAdministrativeUnitNeighbors(ctx context.Context, in *ClientListAdministrativeUnitNeighborsRequest, opts ...grpc.CallOption) (*ClientListAdministrativeUnitNeighborsResponse, error) {
+	out := new(ClientListAdministrativeUnitNeighborsResponse)
+	err := c.cc.Invoke(ctx, LocationService_ClientListAdministrativeUnitNeighbors_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *locationServiceClient) AdminSyncAreaFromGeometry(ctx context.Context, in *AdminSyncAreaFromGeometryRequest, opts ...grpc.CallOption) (*AdminSyncAreaFromGeometryResponse, error) {
+	out := new(AdminSyncAreaFromGeometryResponse)
+	err := c.cc.Invoke(ctx, LocationService_AdminSyncAreaFromGeometry_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LocationServiceServer is the server API for LocationService service.
 // All implementations must embed UnimplementedLocationServiceServer
 // for forward compatibility
@@ -331,6 +379,8 @@ type LocationServiceServer interface {
 	ListWardsByProvince(context.Context, *ListWardsByProvinceRequest) (*ListWardsResponse, error)
 	// Admin: danh sách tỉnh/thành
 	AdminGetAdministrativeUnitDetailByCompositeId(context.Context, *AdminGetAdministrativeUnitDetailByCompositeIdRequest) (*AdminGetAdministrativeUnitDetailByCompositeIdResponse, error)
+	// Admin: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+	AdminListAdministrativeUnits(context.Context, *AdminListAdministrativeUnitsRequest) (*ListAdministrativeUnitsResponse, error)
 	AdminListProvinces(context.Context, *AdminListProvincesRequest) (*AdminListProvincesResponse, error)
 	AdminGetProvinceDetailByCompositeId(context.Context, *AdminGetProvinceDetailByCompositeIdRequest) (*Province, error)
 	// Admin: danh sách phường/xã
@@ -352,6 +402,12 @@ type LocationServiceServer interface {
 	UpdateAdministrativeUnitSeoID(context.Context, *UpdateAdministrativeUnitSeoIDRequest) (*shared.SubmitResponse, error)
 	AdminGenAdministrativeUnitSeo(context.Context, *AdminGenAdministrativeUnitSeoRequest) (*AdminGenAdministrativeUnitSeoResponse, error)
 	ClientGetAdministrativeUnitDetailByCompositeId(context.Context, *ClientGetAdministrativeUnitDetailByCompositeIdRequest) (*ClientGetAdministrativeUnitDetailByCompositeIdResponse, error)
+	// Client: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+	ClientListAdministrativeUnits(context.Context, *ClientListAdministrativeUnitsRequest) (*ListAdministrativeUnitsResponse, error)
+	// Client: danh sách địa bàn lân cận (phường/xã) theo compositeId
+	ClientListAdministrativeUnitNeighbors(context.Context, *ClientListAdministrativeUnitNeighborsRequest) (*ClientListAdministrativeUnitNeighborsResponse, error)
+	// Admin: đồng bộ diện tích tự nhiên từ geometry
+	AdminSyncAreaFromGeometry(context.Context, *AdminSyncAreaFromGeometryRequest) (*AdminSyncAreaFromGeometryResponse, error)
 	mustEmbedUnimplementedLocationServiceServer()
 }
 
@@ -379,6 +435,9 @@ func (UnimplementedLocationServiceServer) ListWardsByProvince(context.Context, *
 }
 func (UnimplementedLocationServiceServer) AdminGetAdministrativeUnitDetailByCompositeId(context.Context, *AdminGetAdministrativeUnitDetailByCompositeIdRequest) (*AdminGetAdministrativeUnitDetailByCompositeIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminGetAdministrativeUnitDetailByCompositeId not implemented")
+}
+func (UnimplementedLocationServiceServer) AdminListAdministrativeUnits(context.Context, *AdminListAdministrativeUnitsRequest) (*ListAdministrativeUnitsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminListAdministrativeUnits not implemented")
 }
 func (UnimplementedLocationServiceServer) AdminListProvinces(context.Context, *AdminListProvincesRequest) (*AdminListProvincesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminListProvinces not implemented")
@@ -430,6 +489,15 @@ func (UnimplementedLocationServiceServer) AdminGenAdministrativeUnitSeo(context.
 }
 func (UnimplementedLocationServiceServer) ClientGetAdministrativeUnitDetailByCompositeId(context.Context, *ClientGetAdministrativeUnitDetailByCompositeIdRequest) (*ClientGetAdministrativeUnitDetailByCompositeIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClientGetAdministrativeUnitDetailByCompositeId not implemented")
+}
+func (UnimplementedLocationServiceServer) ClientListAdministrativeUnits(context.Context, *ClientListAdministrativeUnitsRequest) (*ListAdministrativeUnitsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientListAdministrativeUnits not implemented")
+}
+func (UnimplementedLocationServiceServer) ClientListAdministrativeUnitNeighbors(context.Context, *ClientListAdministrativeUnitNeighborsRequest) (*ClientListAdministrativeUnitNeighborsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientListAdministrativeUnitNeighbors not implemented")
+}
+func (UnimplementedLocationServiceServer) AdminSyncAreaFromGeometry(context.Context, *AdminSyncAreaFromGeometryRequest) (*AdminSyncAreaFromGeometryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminSyncAreaFromGeometry not implemented")
 }
 func (UnimplementedLocationServiceServer) mustEmbedUnimplementedLocationServiceServer() {}
 
@@ -566,6 +634,24 @@ func _LocationService_AdminGetAdministrativeUnitDetailByCompositeId_Handler(srv 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LocationServiceServer).AdminGetAdministrativeUnitDetailByCompositeId(ctx, req.(*AdminGetAdministrativeUnitDetailByCompositeIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LocationService_AdminListAdministrativeUnits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminListAdministrativeUnitsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocationServiceServer).AdminListAdministrativeUnits(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LocationService_AdminListAdministrativeUnits_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocationServiceServer).AdminListAdministrativeUnits(ctx, req.(*AdminListAdministrativeUnitsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -876,6 +962,60 @@ func _LocationService_ClientGetAdministrativeUnitDetailByCompositeId_Handler(srv
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LocationService_ClientListAdministrativeUnits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientListAdministrativeUnitsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocationServiceServer).ClientListAdministrativeUnits(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LocationService_ClientListAdministrativeUnits_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocationServiceServer).ClientListAdministrativeUnits(ctx, req.(*ClientListAdministrativeUnitsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LocationService_ClientListAdministrativeUnitNeighbors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientListAdministrativeUnitNeighborsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocationServiceServer).ClientListAdministrativeUnitNeighbors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LocationService_ClientListAdministrativeUnitNeighbors_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocationServiceServer).ClientListAdministrativeUnitNeighbors(ctx, req.(*ClientListAdministrativeUnitNeighborsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LocationService_AdminSyncAreaFromGeometry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminSyncAreaFromGeometryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocationServiceServer).AdminSyncAreaFromGeometry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LocationService_AdminSyncAreaFromGeometry_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocationServiceServer).AdminSyncAreaFromGeometry(ctx, req.(*AdminSyncAreaFromGeometryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LocationService_ServiceDesc is the grpc.ServiceDesc for LocationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -910,6 +1050,10 @@ var LocationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminGetAdministrativeUnitDetailByCompositeId",
 			Handler:    _LocationService_AdminGetAdministrativeUnitDetailByCompositeId_Handler,
+		},
+		{
+			MethodName: "AdminListAdministrativeUnits",
+			Handler:    _LocationService_AdminListAdministrativeUnits_Handler,
 		},
 		{
 			MethodName: "AdminListProvinces",
@@ -978,6 +1122,18 @@ var LocationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClientGetAdministrativeUnitDetailByCompositeId",
 			Handler:    _LocationService_ClientGetAdministrativeUnitDetailByCompositeId_Handler,
+		},
+		{
+			MethodName: "ClientListAdministrativeUnits",
+			Handler:    _LocationService_ClientListAdministrativeUnits_Handler,
+		},
+		{
+			MethodName: "ClientListAdministrativeUnitNeighbors",
+			Handler:    _LocationService_ClientListAdministrativeUnitNeighbors_Handler,
+		},
+		{
+			MethodName: "AdminSyncAreaFromGeometry",
+			Handler:    _LocationService_AdminSyncAreaFromGeometry_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -369,9 +369,7 @@ func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.Plannin
 	COALESCE(sd.content,'') content,
 	COALESCE(sd.rendered_html,'') rendered_html,
 	sd.canonical_url,
-	CASE WHEN sd.canonical_url LIKE 'http%' 
-		THEN sd.canonical_url 
-		ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,
+	sd.canonical_url AS public_url,
 	COALESCE(sd.deep_link,'') deep_link,
 	COALESCE(sd.ref_source,'') ref_source,
 	COALESCE(sd.ref_label,'') ref_label,
@@ -398,7 +396,7 @@ func (r *Repository) GetPlanningNews(ctx context.Context, slug string) (*domain.
 		slug = parts[len(parts)-1]
 	}
 	row := planningNewsRow{}
-	query := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,COALESCE(sd.content,'') content,COALESCE(sd.rendered_html,'') rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id
+	query := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,COALESCE(sd.content,'') content,COALESCE(sd.rendered_html,'') rendered_html,sd.canonical_url,sd.canonical_url AS public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id
       FROM seo_domain sd LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL WHERE ` + planningNewsWhere + ` AND (sd.slug=? OR sd.id::text=?) LIMIT 1`
 	if err := r.db.WithContext(ctx).Raw(query, slug, slug).Scan(&row).Error; err != nil {
 		return nil, fmt.Errorf("get planning news: %w", err)
@@ -407,7 +405,7 @@ func (r *Repository) GetPlanningNews(ctx context.Context, slug string) (*domain.
 		return nil, gorm.ErrRecordNotFound
 	}
 	relatedRows := []planningNewsRow{}
-	relQuery := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id
+	relQuery := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,sd.canonical_url AS public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id
       FROM seo_domain sd LEFT JOIN seo_content_category_assignment a ON a.seo_domain_id=sd.id AND a.deleted_at IS NULL AND a.is_primary=TRUE LEFT JOIN seo_category c ON c.id=a.category_id AND c.deleted_at IS NULL WHERE ` + planningNewsWhere + ` AND sd.id<>? AND (?='' OR c.code=?) ORDER BY sd.published_at DESC NULLS LAST LIMIT 8`
 	if err := r.db.WithContext(ctx).Raw(relQuery, row.ID, row.CategoryCode, row.CategoryCode).Scan(&relatedRows).Error; err != nil {
 		return nil, fmt.Errorf("list related planning news: %w", err)
@@ -437,7 +435,7 @@ func (r *Repository) ListSavedPlanningNews(ctx context.Context, userID uint64, f
 	}
 
 	rows := []planningNewsRow{}
-	selectSQL := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,saved.updated_at AS saved_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id` + base + ` ORDER BY saved.updated_at DESC,saved.id DESC LIMIT ? OFFSET ?`
+	selectSQL := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,sd.canonical_url AS public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,COALESCE(sd.quality_score,0) quality_score,sd.visible_on,sd.published_at,sd.updated_at,saved.updated_at AS saved_at,COALESCE(c.code,'') category_code,COALESCE(c.name,'') category_name,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw,COALESCE(sd.ref_type,0) ref_type,sd.ref_id` + base + ` ORDER BY saved.updated_at DESC,saved.id DESC LIMIT ? OFFSET ?`
 	if err := r.db.WithContext(ctx).Raw(selectSQL, userID, filter.Size, (filter.Page-1)*filter.Size).Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("list saved planning news: %w", err)
 	}
@@ -671,10 +669,12 @@ func contentKind(canonicalURL string) (string, string) {
 		return "analysis_report", "Báo cáo và phân tích"
 	case strings.HasPrefix(path, "/tin-tuc/do-an-quy-hoach/"):
 		return "planning_project", "Đồ án quy hoạch"
-	case strings.HasPrefix(path, "/tin-tuc/van-ban/"):
+	case strings.HasPrefix(path, "/tin-tuc/van-ban/"), strings.HasPrefix(path, "/tin-tuc/tai-lieu/"):
 		return "legal_document", "Văn bản pháp lý"
 	case strings.HasPrefix(path, "/tin-tuc/vung-quy-hoach/"):
 		return "planning_region", "Vùng quy hoạch"
+	case strings.HasPrefix(path, "/tin-tuc/lop/"):
+		return "planning_layer", "Lớp quy hoạch"
 	default:
 		return "news_article", "Nội dung quy hoạch"
 	}

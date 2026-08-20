@@ -235,6 +235,125 @@ func (r *locationRepo) AdminListProvinces(ctx context.Context, req *dto.AdminLis
 	return provinces, total, err
 }
 
+func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) ([]dto.AdministrativeUnitRef, int64, error) {
+	if req == nil {
+		req = &dto.ListAdministrativeUnitsRequest{}
+	}
+
+	provinceSQL := `
+		SELECT
+			1 AS unit_type,
+			p.id AS province_id,
+			NULL::bigint AS ward_id,
+			p.full_name,
+			p.short_name,
+			p.code,
+			COALESCE(p.official_name, '') AS official_name,
+			p.created_at,
+			p.updated_at
+		FROM province_v2 p
+		WHERE p.deleted_at IS NULL
+	`
+	wardSQL := `
+		SELECT
+			2 AS unit_type,
+			NULL::bigint AS province_id,
+			w.id AS ward_id,
+			w.full_name,
+			w.short_name,
+			w.code,
+			COALESCE(w.official_name, '') AS official_name,
+			w.created_at,
+			w.updated_at
+		FROM ward_v2 w
+		WHERE w.deleted_at IS NULL
+	`
+
+	argsProvince := make([]interface{}, 0, 8)
+	argsWard := make([]interface{}, 0, 8)
+
+	if req.PlanningProjectID != 0 {
+		provinceSQL += `
+			AND EXISTS (
+				SELECT 1 FROM qh_planning_project_provinces ppp
+				WHERE ppp.deleted_at IS NULL
+				  AND ppp.planning_project_id = ?
+				  AND ppp.province_id = p.id
+			)
+		`
+		wardSQL += `
+			AND EXISTS (
+				SELECT 1 FROM qh_planning_project_wards ppw
+				WHERE ppw.deleted_at IS NULL
+				  AND ppw.planning_project_id = ?
+				  AND ppw.ward_id = w.id
+			)
+		`
+		argsProvince = append(argsProvince, req.PlanningProjectID)
+		argsWard = append(argsWard, req.PlanningProjectID)
+	}
+
+	if p := locationLikePattern(req.Search); p != "" {
+		provinceSQL += `
+			AND (
+				LOWER(p.full_name) LIKE ?
+				OR LOWER(p.short_name) LIKE ?
+				OR LOWER(p.code) LIKE ?
+				OR LOWER(COALESCE(p.official_name, '')) LIKE ?
+			)
+		`
+		wardSQL += `
+			AND (
+				LOWER(w.full_name) LIKE ?
+				OR LOWER(w.short_name) LIKE ?
+				OR LOWER(w.code) LIKE ?
+				OR LOWER(COALESCE(w.official_name, '')) LIKE ?
+			)
+		`
+		argsProvince = append(argsProvince, p, p, p, p)
+		argsWard = append(argsWard, p, p, p, p)
+	}
+
+	unionSQL := "(" + provinceSQL + ") UNION ALL (" + wardSQL + ")"
+	countSQL := "SELECT COUNT(*) FROM (" + unionSQL + ") u"
+	countArgs := append(append([]interface{}{}, argsProvince...), argsWard...)
+
+	var total int64
+	if err := r.db.WithContext(ctx).Raw(countSQL, countArgs...).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count administrative units: %w", err)
+	}
+
+	listSQL := "SELECT unit_type, province_id, ward_id FROM (" + unionSQL + ") u ORDER BY " +
+		adminAdministrativeUnitOrder(req.Sort, "updated_at DESC") +
+		" OFFSET ? LIMIT ?"
+	listArgs := append(append([]interface{}{}, countArgs...), req.GetOffset(), req.GetLimit())
+
+	type row struct {
+		UnitType   uint32  `gorm:"column:unit_type"`
+		ProvinceID *uint64 `gorm:"column:province_id"`
+		WardID     *uint64 `gorm:"column:ward_id"`
+	}
+	rows := make([]row, 0)
+	if err := r.db.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("list administrative units: %w", err)
+	}
+
+	refs := make([]dto.AdministrativeUnitRef, 0, len(rows))
+	for _, item := range rows {
+		ref := dto.AdministrativeUnitRef{
+			UnitType: item.UnitType,
+		}
+		if item.ProvinceID != nil {
+			ref.ProvinceID = *item.ProvinceID
+		}
+		if item.WardID != nil {
+			ref.WardID = *item.WardID
+		}
+		refs = append(refs, ref)
+	}
+	return refs, total, nil
+}
+
 // ==================== WARD OPERATIONS ====================
 
 func (r *locationRepo) GetWardByID(ctx context.Context, id uint64) (*domain.Ward, error) {
@@ -572,6 +691,35 @@ func (r *locationRepo) clamp(value, min, max float64) float64 {
 }
 
 func adminLocationOrder(sort, fallback string) string {
+	sort = strings.TrimSpace(sort)
+	if sort == "" {
+		return fallback
+	}
+
+	parts := strings.Split(sort, ",")
+	field := strings.TrimSpace(parts[0])
+	dir := "ASC"
+	if len(parts) > 1 && strings.EqualFold(strings.TrimSpace(parts[1]), "desc") {
+		dir = "DESC"
+	}
+
+	switch strings.ToLower(field) {
+	case "fullname", "full_name":
+		return "full_name " + dir
+	case "shortname", "short_name":
+		return "short_name " + dir
+	case "code":
+		return "code " + dir
+	case "createdat", "created_at":
+		return "created_at " + dir
+	case "updatedat", "updated_at":
+		return "updated_at " + dir
+	default:
+		return fallback
+	}
+}
+
+func adminAdministrativeUnitOrder(sort, fallback string) string {
 	sort = strings.TrimSpace(sort)
 	if sort == "" {
 		return fallback

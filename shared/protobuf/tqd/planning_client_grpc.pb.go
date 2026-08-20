@@ -35,6 +35,8 @@ const (
 	PlanningClientService_GetPlanningProjectProjection_FullMethodName   = "/tqdpb.PlanningClientService/GetPlanningProjectProjection"
 	PlanningClientService_ListPlanningProjectLayers_FullMethodName      = "/tqdpb.PlanningClientService/ListPlanningProjectLayers"
 	PlanningClientService_ListProvinces_FullMethodName                  = "/tqdpb.PlanningClientService/ListProvinces"
+	PlanningClientService_ListNearbyAreas_FullMethodName                = "/tqdpb.PlanningClientService/ListNearbyAreas"
+	PlanningClientService_ListPlanningDocumentsByAdm_FullMethodName     = "/tqdpb.PlanningClientService/ListPlanningDocumentsByAdm"
 )
 
 // PlanningClientServiceClient is the client API for PlanningClientService service.
@@ -60,6 +62,10 @@ type PlanningClientServiceClient interface {
 	GetPlanningProjectProjection(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
 	ListPlanningProjectLayers(ctx context.Context, in *PlanningProjectIdRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
 	ListProvinces(ctx context.Context, in *ListProvincesRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
+	// Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).
+	ListNearbyAreas(ctx context.Context, in *ListNearbyAreasRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
+	// Danh sách tài liệu đồ án quy hoạch theo đơn vị hành chính (cross-project).
+	ListPlanningDocumentsByAdm(ctx context.Context, in *ListPlanningDocumentsByAdmRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error)
 }
 
 type planningClientServiceClient struct {
@@ -205,6 +211,24 @@ func (c *planningClientServiceClient) ListProvinces(ctx context.Context, in *Lis
 	return out, nil
 }
 
+func (c *planningClientServiceClient) ListNearbyAreas(ctx context.Context, in *ListNearbyAreasRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error) {
+	out := new(wrapperspb.BytesValue)
+	err := c.cc.Invoke(ctx, PlanningClientService_ListNearbyAreas_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planningClientServiceClient) ListPlanningDocumentsByAdm(ctx context.Context, in *ListPlanningDocumentsByAdmRequest, opts ...grpc.CallOption) (*wrapperspb.BytesValue, error) {
+	out := new(wrapperspb.BytesValue)
+	err := c.cc.Invoke(ctx, PlanningClientService_ListPlanningDocumentsByAdm_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlanningClientServiceServer is the server API for PlanningClientService service.
 // All implementations must embed UnimplementedPlanningClientServiceServer
 // for forward compatibility
@@ -228,6 +252,10 @@ type PlanningClientServiceServer interface {
 	GetPlanningProjectProjection(context.Context, *wrapperspb.StringValue) (*wrapperspb.BytesValue, error)
 	ListPlanningProjectLayers(context.Context, *PlanningProjectIdRequest) (*wrapperspb.BytesValue, error)
 	ListProvinces(context.Context, *ListProvincesRequest) (*wrapperspb.BytesValue, error)
+	// Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).
+	ListNearbyAreas(context.Context, *ListNearbyAreasRequest) (*wrapperspb.BytesValue, error)
+	// Danh sách tài liệu đồ án quy hoạch theo đơn vị hành chính (cross-project).
+	ListPlanningDocumentsByAdm(context.Context, *ListPlanningDocumentsByAdmRequest) (*wrapperspb.BytesValue, error)
 	mustEmbedUnimplementedPlanningClientServiceServer()
 }
 
@@ -279,6 +307,12 @@ func (UnimplementedPlanningClientServiceServer) ListPlanningProjectLayers(contex
 }
 func (UnimplementedPlanningClientServiceServer) ListProvinces(context.Context, *ListProvincesRequest) (*wrapperspb.BytesValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProvinces not implemented")
+}
+func (UnimplementedPlanningClientServiceServer) ListNearbyAreas(context.Context, *ListNearbyAreasRequest) (*wrapperspb.BytesValue, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNearbyAreas not implemented")
+}
+func (UnimplementedPlanningClientServiceServer) ListPlanningDocumentsByAdm(context.Context, *ListPlanningDocumentsByAdmRequest) (*wrapperspb.BytesValue, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlanningDocumentsByAdm not implemented")
 }
 func (UnimplementedPlanningClientServiceServer) mustEmbedUnimplementedPlanningClientServiceServer() {}
 
@@ -563,6 +597,42 @@ func _PlanningClientService_ListProvinces_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlanningClientService_ListNearbyAreas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListNearbyAreasRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanningClientServiceServer).ListNearbyAreas(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanningClientService_ListNearbyAreas_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanningClientServiceServer).ListNearbyAreas(ctx, req.(*ListNearbyAreasRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanningClientService_ListPlanningDocumentsByAdm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanningDocumentsByAdmRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanningClientServiceServer).ListPlanningDocumentsByAdm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanningClientService_ListPlanningDocumentsByAdm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanningClientServiceServer).ListPlanningDocumentsByAdm(ctx, req.(*ListPlanningDocumentsByAdmRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlanningClientService_ServiceDesc is the grpc.ServiceDesc for PlanningClientService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -629,6 +699,14 @@ var PlanningClientService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProvinces",
 			Handler:    _PlanningClientService_ListProvinces_Handler,
+		},
+		{
+			MethodName: "ListNearbyAreas",
+			Handler:    _PlanningClientService_ListNearbyAreas_Handler,
+		},
+		{
+			MethodName: "ListPlanningDocumentsByAdm",
+			Handler:    _PlanningClientService_ListPlanningDocumentsByAdm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

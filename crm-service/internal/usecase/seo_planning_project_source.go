@@ -225,7 +225,7 @@ func buildPlanningProjectPublicDocument(
 
 	relatedLinks := []dto.SeoRelatedLink{
 		{ID: "planning-map", Label: "Tra cứu trên bản đồ quy hoạch", Path: "/ban-do", Description: "Mở không gian bản đồ QHPro."},
-		{ID: "planning-documents", Label: "Tài liệu quy hoạch", Path: "/quy-hoach/tai-lieu", Description: "Tra cứu tài liệu và hồ sơ công khai."},
+		{ID: "planning-documents", Label: "Tài liệu quy hoạch", Path: "/tin-tuc/tai-lieu", Description: "Tra cứu tài liệu và hồ sơ công khai."},
 	}
 	relatedEntities := make([]dto.SeoRelatedEntity, 0, len(projection.RelatedProjects))
 	for _, related := range projection.RelatedProjects {

@@ -167,7 +167,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	iqhPlanningEventRepo := postgres.NewQHPlanningEventRepo(transactionRepo)
 	iProAIJobRepo := postgres.NewProAIJobRepo(transactionRepo)
 	iqhPlanningProjectUsecase := qh_usecase.NewQHPlanningProjectUsecase(iqhPlanningProjectRepo, iqhPlanningDocumentRepo, iqhPlanningEventRepo, iProAIJobRepo, crmSeoProvider)
-	iqhPlanningDocumentUsecase := qh_usecase.NewQHPlanningDocumentUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo)
+	iqhPlanningDocumentUsecase := qh_usecase.NewQHPlanningDocumentUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, crmSeoProvider)
 	iqhPlanningEventUsecase := qh_usecase.NewQHPlanningEventUsecase(iqhPlanningEventRepo)
 	fileProvider := client.NewFileClient()
 	iqhPlanningFolderUsecase := qh_usecase.NewQHPlanningFolderUsecase(iqhPlanningProjectRepo, iqhPlanningDocumentRepo, iProAIJobRepo, fileProvider, transactionRepo)

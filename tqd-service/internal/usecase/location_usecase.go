@@ -255,6 +255,10 @@ func (u *LocationUsecase) AdminListProvinces(ctx context.Context, req *dto.Admin
 	}, nil
 }
 
+func (u *LocationUsecase) AdminListAdministrativeUnits(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) (*dto.ListAdministrativeUnitsResponse, error) {
+	return u.listAdministrativeUnits(ctx, req)
+}
+
 func (u *LocationUsecase) AdminGetProvinceByCompositeId(ctx context.Context, compositeId uint64) (*dto.ProvinceDTO, error) {
 	if compositeId == 0 {
 		return nil, fmt.Errorf("compositeId is required")
@@ -353,6 +357,10 @@ func (u *LocationUsecase) AdminListWards(ctx context.Context, req *dto.AdminList
 		Data:  u.toWardDTOs(wards),
 		Total: total,
 	}, nil
+}
+
+func (u *LocationUsecase) ClientListAdministrativeUnits(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) (*dto.ListAdministrativeUnitsResponse, error) {
+	return u.listAdministrativeUnits(ctx, req)
 }
 
 func (u *LocationUsecase) AdminCreateProvince(ctx context.Context, req *dto.ProvinceDTO) (*dto.ProvinceDTO, error) {
@@ -796,6 +804,57 @@ func (u *LocationUsecase) toDomainCoordinates(coords []*dto.Coordinate) []*dto.C
 		}
 	}
 	return coordinates
+}
+
+func (u *LocationUsecase) listAdministrativeUnits(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) (*dto.ListAdministrativeUnitsResponse, error) {
+	if req == nil {
+		req = &dto.ListAdministrativeUnitsRequest{}
+	}
+	req.Pagable.Normalize()
+
+	refs, total, err := u.repo.ListAdministrativeUnitRefs(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("list administrative units: %w", err)
+	}
+
+	items := make([]*dto.AdministrativeUnitListItem, 0, len(refs))
+	for _, ref := range refs {
+		switch ref.UnitType {
+		case _utils.LocationIDKindProvince:
+			if ref.ProvinceID == 0 {
+				continue
+			}
+			p, getErr := u.repo.GetProvinceByID(ctx, ref.ProvinceID)
+			if getErr != nil {
+				return nil, fmt.Errorf("get province %d: %w", ref.ProvinceID, getErr)
+			}
+			if p == nil {
+				continue
+			}
+			items = append(items, &dto.AdministrativeUnitListItem{
+				Province: u.toProvinceDTO(p),
+			})
+		case _utils.LocationIDKindWard:
+			if ref.WardID == 0 {
+				continue
+			}
+			w, getErr := u.repo.GetWardByID(ctx, ref.WardID)
+			if getErr != nil {
+				return nil, fmt.Errorf("get ward %d: %w", ref.WardID, getErr)
+			}
+			if w == nil {
+				continue
+			}
+			items = append(items, &dto.AdministrativeUnitListItem{
+				Ward: u.toWardDTO(w),
+			})
+		}
+	}
+
+	return &dto.ListAdministrativeUnitsResponse{
+		Data:  items,
+		Total: total,
+	}, nil
 }
 
 func (u *LocationUsecase) toProvinceDTO(p *domain.Province) *dto.ProvinceDTO {

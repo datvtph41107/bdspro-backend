@@ -73,9 +73,31 @@ func (v *QHPlanningValidator) ValidateDocument(req *qh_domain.QHPlanningDocument
 	return nil
 }
 
-func (v *QHPlanningValidator) ValidateAssignLayer(layerID uint64, docIDs []uint64) error {
-	if layerID == 0 {
-		return _errors.ReturnError(400, "layerId is required")
+func (v *QHPlanningValidator) ValidateDocumentHistory(req *qh_domain.QHPlanningDocumentEvent) error {
+	if req == nil {
+		return _errors.ReturnError(400, "history is required")
+	}
+	if req.PlanningDocumentID == 0 {
+		return _errors.ReturnError(400, "planningDocumentId is required")
+	}
+	if strings.TrimSpace(req.EventName) == "" {
+		return _errors.ReturnError(400, "eventName is required")
+	}
+	return nil
+}
+
+func (v *QHPlanningValidator) ValidateAssignLayer(layerID uint64, layerIDs, docIDs []uint64) error {
+	hasLayer := layerID > 0
+	if !hasLayer {
+		for _, id := range layerIDs {
+			if id > 0 {
+				hasLayer = true
+				break
+			}
+		}
+	}
+	if !hasLayer {
+		return _errors.ReturnError(400, "layerIds is required")
 	}
 	for _, docID := range docIDs {
 		if docID > 0 {

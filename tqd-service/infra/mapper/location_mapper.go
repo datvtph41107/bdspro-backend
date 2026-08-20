@@ -208,6 +208,26 @@ func (m *LocationMapper) ToProtoAdminListWardsResponse(dto *dto.AdminListWardsRe
 	}
 }
 
+func (m *LocationMapper) ToProtoListAdministrativeUnitsResponse(dto *dto.ListAdministrativeUnitsResponse) *tqdpb.ListAdministrativeUnitsResponse {
+	if dto == nil {
+		return nil
+	}
+	data := make([]*tqdpb.AdministrativeUnitListItem, 0, len(dto.Data))
+	for _, item := range dto.Data {
+		if item == nil {
+			continue
+		}
+		data = append(data, &tqdpb.AdministrativeUnitListItem{
+			Province: m.ToProtoProvince(item.Province),
+			Ward:     m.ToProtoWard(item.Ward),
+		})
+	}
+	return &tqdpb.ListAdministrativeUnitsResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
 func (m *LocationMapper) FromProtoAdminListProvincesRequest(req *tqdpb.AdminListProvincesRequest) *dto.AdminListProvincesRequest {
 	if req == nil {
 		return &dto.AdminListProvincesRequest{}
@@ -234,6 +254,36 @@ func (m *LocationMapper) FromProtoAdminListWardsRequest(req *tqdpb.AdminListWard
 		},
 		Search:     req.Search,
 		ProvinceID: req.ProvinceId,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListAdministrativeUnitsRequest(req *tqdpb.AdminListAdministrativeUnitsRequest) *dto.ListAdministrativeUnitsRequest {
+	if req == nil {
+		return &dto.ListAdministrativeUnitsRequest{}
+	}
+	return &dto.ListAdministrativeUnitsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:            req.Search,
+		PlanningProjectID: req.PlanningProjectId,
+	}
+}
+
+func (m *LocationMapper) FromProtoClientListAdministrativeUnitsRequest(req *tqdpb.ClientListAdministrativeUnitsRequest) *dto.ListAdministrativeUnitsRequest {
+	if req == nil {
+		return &dto.ListAdministrativeUnitsRequest{}
+	}
+	return &dto.ListAdministrativeUnitsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:            req.Search,
+		PlanningProjectID: req.PlanningProjectId,
 	}
 }
 

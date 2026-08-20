@@ -230,6 +230,32 @@ func (c *TqdClient) UpdatePlanningProjectSeoID(ctx context.Context, planningProj
 	return err
 }
 
+func (c *TqdClient) GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*dto.PlanningDocumentSeoSource, error) {
+	if c == nil || c.PlanningClient == nil {
+		return nil, errors.New("tqd planning client not available")
+	}
+
+	resp, err := c.PlanningClient.GetPlanningDocumentSeoSource(ctx, &tqdpb.IdRequest{
+		Id: documentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return planningDocumentSeoSourceFromProto(resp), nil
+}
+
+func (c *TqdClient) UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error {
+	if c == nil || c.PlanningClient == nil {
+		return errors.New("tqd planning client not available")
+	}
+
+	_, err := c.PlanningClient.UpdatePlanningDocumentSeoID(ctx, &tqdpb.UpdatePlanningDocumentSeoIDRequest{
+		PlanningDocumentId: documentID,
+		SeoId:              seoID,
+	})
+	return err
+}
+
 func (c *TqdClient) GetAdministrativeUnitSeoSource(ctx context.Context, compositeID uint64) (*dto.AdministrativeUnitSeoSource, error) {
 	if c == nil || c.LocationClient == nil {
 		return nil, errors.New("tqd location client not available")
@@ -300,6 +326,22 @@ func planningProjectSeoSourceFromProto(resp *tqdpb.PlanningProjectSeoSourceRespo
 		PlanningProjectID: resp.PlanningProjectId,
 		Name:              resp.Name,
 		Slug:              resp.Slug,
+	}
+	if resp.SeoId > 0 {
+		seoID := resp.SeoId
+		source.SeoID = &seoID
+	}
+	return source
+}
+
+func planningDocumentSeoSourceFromProto(resp *tqdpb.PlanningDocumentSeoSourceResponse) *dto.PlanningDocumentSeoSource {
+	if resp == nil || resp.PlanningDocumentId == 0 {
+		return nil
+	}
+	source := &dto.PlanningDocumentSeoSource{
+		PlanningDocumentID: resp.PlanningDocumentId,
+		Title:              resp.Title,
+		Slug:               resp.Slug,
 	}
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId

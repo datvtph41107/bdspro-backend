@@ -346,6 +346,10 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 	if req.OrderDir != nil {
 		filter.OrderDir = *req.OrderDir
 	}
+	if req.PlanningProjectId != nil && *req.PlanningProjectId > 0 {
+		pid := *req.PlanningProjectId
+		filter.PlanningProjectID = &pid
+	}
 
 	layers, total, err := h.layerUsecase.List(ctx, filter)
 	if err != nil {
@@ -405,6 +409,9 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	if req.Type != nil {
 		t := enums.LayerType(*req.Type)
 		layerFilter.Type = &t
+	}
+	if req.GetDocId() > 0 {
+		layerFilter.DocID = req.GetDocId()
 	}
 
 	layers, total, err := h.layerUsecase.ListClient(ctx, &layerFilter)

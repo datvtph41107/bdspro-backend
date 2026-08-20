@@ -2512,3 +2512,142 @@ func (p *ParcelPostgres) AdminListParcels(ctx context.Context, search string, pa
 	}
 	return rows, total, nil
 }
+
+func (p *ParcelPostgres) AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+
+	query := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(pi.district_code, '') AS district_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(pi.is_seo, false) AS is_seo,
+			COALESCE(fc.follower_count, 0) AS follower_count,
+			COALESCE(pu.name, '') AS land_use_name,
+			COALESCE(p.created_at, NOW()) AS created_at,
+			COALESCE(pi.updated_at, p.updated_at, NOW()) AS updated_at,
+			ST_AsGeoJSON(p.geometry) AS geometry
+		FROM parcels p
+		LEFT JOIN LATERAL (
+			SELECT *
+			FROM qh_parcel_info
+			WHERE parcel_id = p.id
+			ORDER BY id DESC
+			LIMIT 1
+		) pi ON true
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN (
+			SELECT target_id, COUNT(*) AS follower_count
+			FROM user_subscriptions
+			WHERE target_type = 'parcel'
+			  AND deleted_at IS NULL
+			  AND status = 10
+			GROUP BY target_id
+		) fc ON fc.target_id = p.id
+		WHERE p.id = ?
+		  AND p.deleted_at IS NULL
+		LIMIT 1`
+
+	var row dto.AdminParcelDetail
+	if err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&row).Error; err != nil {
+		return nil, fmt.Errorf("admin get parcel failed: %w", err)
+	}
+	if row.ParcelID == 0 {
+		return nil, nil
+	}
+	row.Geometry = decodePostgresGeometry(row.Geometry)
+	return &row, nil
+}
+
+func (p *ParcelPostgres) AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) error {
+	if req == nil || req.ParcelID == 0 {
+		return fmt.Errorf("parcelId is required")
+	}
+
+	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var exists int64
+		if err := tx.Table("parcels").
+			Where("id = ? AND deleted_at IS NULL", req.ParcelID).
+			Count(&exists).Error; err != nil {
+			return fmt.Errorf("get parcel failed: %w", err)
+		}
+		if exists == 0 {
+			return fmt.Errorf("parcel %d not found", req.ParcelID)
+		}
+
+		if err := tx.Table("parcels").
+			Where("id = ? AND deleted_at IS NULL", req.ParcelID).
+			Updates(map[string]any{
+				"lat": req.Lat,
+				"lon": req.Lon,
+			}).Error; err != nil {
+			return fmt.Errorf("update parcel failed: %w", err)
+		}
+
+		infoUpdates := map[string]any{
+			"address_text":   req.Address,
+			"adr_search":     _utils.CleanSearchText(req.Address),
+			"map_number":     req.MapNumber,
+			"land_number":    req.LandNumber,
+			"property_code":  req.PropertyCode,
+			"province_code":  req.ProvinceCode,
+			"ward_code":      req.WardCode,
+			"total_area_sqm": req.AreaSqm,
+			"lat":            req.Lat,
+			"lon":            req.Lon,
+			"is_seo":         req.IsSeo,
+			"updated_at":     time.Now(),
+		}
+
+		var infoID uint64
+		if err := tx.Table("qh_parcel_info").
+			Select("id").
+			Where("parcel_id = ?", req.ParcelID).
+			Order("id DESC").
+			Limit(1).
+			Scan(&infoID).Error; err != nil {
+			return fmt.Errorf("get parcel info failed: %w", err)
+		}
+
+		if infoID == 0 {
+			info := qh_domain.QHParcelInfo{
+				ParcelID:     req.ParcelID,
+				AddressText:  req.Address,
+				MapNumber:    req.MapNumber,
+				LandNumber:   req.LandNumber,
+				PropertyCode: req.PropertyCode,
+				ProvinceCode: req.ProvinceCode,
+				WardCode:     req.WardCode,
+				TotalAreaSqm: req.AreaSqm,
+				Latitude:     req.Lat,
+				Longitude:    req.Lon,
+				IsSeo:        req.IsSeo,
+			}
+			if err := tx.Omit("Geometry", "DirectionsRaw", "ShapeName").Create(&info).Error; err != nil {
+				return fmt.Errorf("create parcel info failed: %w", err)
+			}
+			return nil
+		}
+
+		if err := tx.Table("qh_parcel_info").
+			Where("id = ?", infoID).
+			Updates(infoUpdates).Error; err != nil {
+			return fmt.Errorf("update parcel info failed: %w", err)
+		}
+		return nil
+	})
+}

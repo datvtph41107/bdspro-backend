@@ -12,6 +12,7 @@ import (
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	qh_usecase "tqd/internal/usecase/qh"
+	tqdutils "tqd/internal/utils"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -147,6 +148,9 @@ func (h *QHPlanningGrpcHandler) DeletePlanningProject(ctx context.Context, req *
 }
 
 func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *tqdpb.ListPlanningProjectsRequest) (*tqdpb.ListPlanningProjectsResponse, error) {
+	if req == nil {
+		req = &tqdpb.ListPlanningProjectsRequest{}
+	}
 	listReq := &qh_dto.ListPlanningProjectsRequest{
 		Search:         strings.ToLower(strings.TrimSpace(req.Search)),
 		PlanningType:   req.PlanningType,
@@ -154,6 +158,7 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 		ValidityStatus: req.ValidityStatus,
 		ProcessStatus:  req.ProcessStatus,
 		AdmID:          req.AdmId,
+		LayerIDs:       tqdutils.MergePositiveUint64(req.GetLayerId(), tqdutils.ParseUintCSV(req.GetLayerIds())),
 	}
 	listReq.Page = uint32(req.Page)
 	listReq.Size = uint32(req.Size)
@@ -372,6 +377,16 @@ func (h *QHPlanningGrpcHandler) GetPlanningDocument(ctx context.Context, req *tq
 	return h.mapper.ToDocumentProto(result), nil
 }
 
+// UpdatePlanningDocument cập nhật toàn bộ thông tin tài liệu quy hoạch.
+// @Summary Cập nhật tài liệu quy hoạch
+// @Tags Planning Document Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "ID tài liệu"
+// @Param body body tqdpb.PlanningDocument true "Thông tin tài liệu"
+// @Success 200 {object} tqdpb.PlanningDocument
+// @Router /v2/tqd/admin/planning-documents/{id} [put]
 func (h *QHPlanningGrpcHandler) UpdatePlanningDocument(ctx context.Context, req *tqdpb.PlanningDocument) (*tqdpb.PlanningDocument, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
@@ -382,7 +397,7 @@ func (h *QHPlanningGrpcHandler) UpdatePlanningDocument(ctx context.Context, req 
 	}
 	result, err := h.documentUsecase.Update(ctx, req.Id, document)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, planningProjectStatusError(err)
 	}
 	return h.mapper.ToDocumentProto(result), nil
 }
@@ -401,13 +416,91 @@ func (h *QHPlanningGrpcHandler) DeletePlanningDocument(ctx context.Context, req 
 	}, nil
 }
 
+// CreatePlanningDocumentHistory tạo lịch sử pháp lý cho 1 tài liệu quy hoạch.
+// @Summary Tạo lịch sử tài liệu quy hoạch
+// @Tags Planning Document Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param planningDocumentId path int true "Planning document ID"
+// @Param request body tqdpb.PlanningDocumentHistory true "Lịch sử tài liệu"
+// @Success 200 {object} tqdpb.PlanningDocumentHistory
+// @Router /v2/tqd/admin/planning-documents/{planningDocumentId}/histories [post]
+func (h *QHPlanningGrpcHandler) CreatePlanningDocumentHistory(ctx context.Context, req *tqdpb.PlanningDocumentHistory) (*tqdpb.PlanningDocumentHistory, error) {
+	history := h.mapper.ToDocumentHistoryDomain(req)
+	if err := h.validator.ValidateDocumentHistory(history); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	result, err := h.documentUsecase.CreateHistory(ctx, history)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return h.mapper.ToDocumentHistoryProto(result), nil
+}
+
+// DeletePlanningDocumentHistory xóa cứng lịch sử tài liệu.
+// @Summary Xóa lịch sử tài liệu quy hoạch
+// @Tags Planning Document Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningDocumentId path int true "Planning document ID"
+// @Param id path int true "History ID"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/planning-documents/{planningDocumentId}/histories/{id} [delete]
+func (h *QHPlanningGrpcHandler) DeletePlanningDocumentHistory(ctx context.Context, req *tqdpb.DeletePlanningDocumentHistoryRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.Id == 0 || req.PlanningDocumentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningDocumentId and id are required")
+	}
+	success, err := h.documentUsecase.DeleteHistory(ctx, req.PlanningDocumentId, req.Id)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return &tqdpb.SubmitResponse{
+		Success: success,
+		Message: "Document history deleted successfully",
+	}, nil
+}
+
+// ListPlanningDocumentHistories danh sách lịch sử tài liệu quy hoạch.
+// @Summary Danh sách lịch sử tài liệu quy hoạch
+// @Description Danh sách lịch sử theo docId, sắp xếp theo eventDate giảm dần.
+// @Tags Planning Document Admin
+// @Produce json
+// @Security BearerAuth
+// @Param planningDocumentId path int true "Planning document ID"
+// @Param page query int false "Trang"
+// @Param size query int false "Số bản ghi"
+// @Success 200 {object} tqdpb.ListPlanningDocumentHistoriesResponse
+// @Router /v2/tqd/admin/planning-documents/{planningDocumentId}/histories [get]
+func (h *QHPlanningGrpcHandler) ListPlanningDocumentHistories(ctx context.Context, req *tqdpb.ListPlanningDocumentHistoriesRequest) (*tqdpb.ListPlanningDocumentHistoriesResponse, error) {
+	if req == nil || req.PlanningDocumentId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningDocumentId is required")
+	}
+	listReq := &qh_dto.ListPlanningDocumentHistoriesRequest{
+		PlanningDocumentID: req.PlanningDocumentId,
+	}
+	listReq.Page = req.Page
+	listReq.Size = req.Size
+	results, total, err := h.documentUsecase.ListHistories(ctx, listReq)
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+	return &tqdpb.ListPlanningDocumentHistoriesResponse{
+		Data:  h.mapper.ToDocumentHistoryProtoList(results),
+		Total: total,
+	}, nil
+}
+
 // ListPlanningDocuments danh sách tài liệu quy hoạch.
 // @Summary Danh sách tài liệu quy hoạch
 // @Tags Planning Document Admin
 // @Produce json
 // @Security BearerAuth
 // @Param planningProjectId query int false "ID đồ án"
-// @Param layerId query int false "Lọc theo layer (layer_plan_doc_relation)"
+// @Param keyword query string false "Tìm theo title/code/description"
+// @Param layerId query int false "Lọc theo 1 layer"
+// @Param layerIds query string false "CSV layer id, lọc tài liệu gắn layer qua layer_plan_doc_relation (vd. 1279,1278)"
+// @Param parcelId query int false "Lọc theo thửa (parcel → regions → layers)"
 // @Param documentType query string false "Loại tài liệu"
 // @Param status query string false "Trạng thái hiệu lực"
 // @Param page query int false "Trang"
@@ -427,9 +520,12 @@ func (h *QHPlanningGrpcHandler) ListPlanningDocuments(ctx context.Context, req *
 		PlanningProjectID: planningProjectID,
 		DocumentType:      req.DocumentType,
 		ValidityStatus:    req.Status,
+		Keyword:           strings.TrimSpace(req.GetKeyword()),
 		LayerID:           req.LayerId,
+		LayerIDs:          tqdutils.MergePositiveUint64(req.LayerId, tqdutils.ParseUintCSV(req.GetLayerIds())),
+		ParcelID:          req.GetParcelId(),
 	}
-	log.Printf("[ListPlanningDocuments] planningProjectID=%v, documentType=%v, validityStatus=%v, layerId=%v", planningProjectID, req.DocumentType, req.Status, req.LayerId)
+	log.Printf("[ListPlanningDocuments] planningProjectID=%v, parcelId=%v, layerIds=%v, keyword=%v, documentType=%v, validityStatus=%v", planningProjectID, req.GetParcelId(), req.GetLayerIds(), listReq.Keyword, req.DocumentType, req.Status)
 	listReq.Page = uint32(req.Page)
 	listReq.Size = uint32(req.Size)
 
@@ -468,27 +564,28 @@ func (h *QHPlanningGrpcHandler) RetryPlanningDocument(ctx context.Context, req *
 	return h.mapper.ToDocumentProto(result), nil
 }
 
-// AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer.
+// AssignPlanningDocumentsToLayer gán tài liệu vào layer.
 // @Summary Gán tài liệu vào layer
-// @Description Tạo bản ghi layer_plan_doc_relation từ layerId và danh sách docIds.
-// @Tags Planning Document Admin
+// @Description Tạo bản ghi layer_plan_doc_relation từ layerIds và docIds (cartesian product).
+// @Tags Layer Doc Admin
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param request body tqdpb.AssignPlanningDocumentsToLayerRequest true "layerId và docIds"
+// @Param request body tqdpb.AssignPlanningDocumentsToLayerRequest true "layerIds và docIds"
 // @Success 200 {object} tqdpb.SubmitResponse
-// @Router /v2/tqd/admin/planning-documents/assign-layer [post]
+// @Router /v2/tqd/admin/layer-docs [post]
 func (h *QHPlanningGrpcHandler) AssignPlanningDocumentsToLayer(ctx context.Context, req *tqdpb.AssignPlanningDocumentsToLayerRequest) (*tqdpb.SubmitResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
-	if err := h.validator.ValidateAssignLayer(req.LayerId, req.DocIds); err != nil {
+	if err := h.validator.ValidateAssignLayer(req.LayerId, req.LayerIds, req.DocIds); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	err := h.documentUsecase.AssignToLayer(ctx, &qh_dto.AssignPlanningDocumentsToLayerRequest{
-		LayerID: req.LayerId,
-		DocIDs:  req.DocIds,
+		LayerID:  req.LayerId,
+		LayerIDs: req.LayerIds,
+		DocIDs:   req.DocIds,
 	})
 	if err != nil {
 		return nil, planningProjectStatusError(err)
@@ -497,6 +594,39 @@ func (h *QHPlanningGrpcHandler) AssignPlanningDocumentsToLayer(ctx context.Conte
 	return &tqdpb.SubmitResponse{
 		Success: true,
 		Message: "Documents assigned to layer successfully",
+	}, nil
+}
+
+// UnassignPlanningDocumentsFromLayer gỡ tài liệu khỏi layer.
+// @Summary Gỡ tài liệu khỏi layer
+// @Description Xóa cứng bản ghi layer_plan_doc_relation theo layerIds và docIds.
+// @Tags Layer Doc Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AssignPlanningDocumentsToLayerRequest true "layerIds và docIds"
+// @Success 200 {object} tqdpb.SubmitResponse
+// @Router /v2/tqd/admin/layer-docs [delete]
+func (h *QHPlanningGrpcHandler) UnassignPlanningDocumentsFromLayer(ctx context.Context, req *tqdpb.AssignPlanningDocumentsToLayerRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	if err := h.validator.ValidateAssignLayer(req.LayerId, req.LayerIds, req.DocIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	err := h.documentUsecase.UnassignFromLayer(ctx, &qh_dto.AssignPlanningDocumentsToLayerRequest{
+		LayerID:  req.LayerId,
+		LayerIDs: req.LayerIds,
+		DocIDs:   req.DocIds,
+	})
+	if err != nil {
+		return nil, planningProjectStatusError(err)
+	}
+
+	return &tqdpb.SubmitResponse{
+		Success: true,
+		Message: "Documents unassigned from layer successfully",
 	}, nil
 }
 
@@ -536,6 +666,80 @@ func (h *QHPlanningGrpcHandler) UpdatePlanningProjectSeoID(ctx context.Context, 
 	return &tqdpb.SubmitResponse{
 		Success: true,
 		Message: "planning project seo_id updated successfully",
+	}, nil
+}
+
+func (h *QHPlanningGrpcHandler) GetPlanningDocumentSeoSource(ctx context.Context, req *tqdpb.IdRequest) (*tqdpb.PlanningDocumentSeoSourceResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	source, err := h.documentUsecase.GetPlanningDocumentSeoSource(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return planningDocumentSeoSourceToProto(source), nil
+}
+
+func (h *QHPlanningGrpcHandler) UpdatePlanningDocumentSeoID(ctx context.Context, req *tqdpb.UpdatePlanningDocumentSeoIDRequest) (*tqdpb.SubmitResponse, error) {
+	if req == nil || req.PlanningDocumentId == 0 || req.SeoId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "planningDocumentId và seoId là bắt buộc")
+	}
+
+	if err := h.documentUsecase.UpdatePlanningDocumentSeoID(ctx, req.PlanningDocumentId, req.SeoId); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.SubmitResponse{
+		Success: true,
+		Message: "planning document seo_id updated successfully",
+	}, nil
+}
+
+// AdminGenPlanningDocumentSeo tạo seo_domain trên CRM cho danh sách tài liệu quy hoạch.
+// @Summary Admin tạo SEO domain từ planning document
+// @Description Nhận danh sách docIds, gọi CRM sinh bản ghi seo_domain tương ứng.
+// @Tags Planning Document Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.AdminGenPlanningDocumentSeoRequest true "Danh sách docIds"
+// @Router /v2/tqd/admin/planning-documents/gen-seo [post]
+func (h *QHPlanningGrpcHandler) AdminGenPlanningDocumentSeo(ctx context.Context, req *tqdpb.AdminGenPlanningDocumentSeoRequest) (*tqdpb.AdminGenPlanningDocumentSeoResponse, error) {
+	if req == nil || len(req.DocIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "docIds is required")
+	}
+
+	log.Printf("[AdminGenPlanningDocumentSeo] docIds=%v", req.DocIds)
+
+	result, err := h.documentUsecase.AdminGenPlanningDocumentSeo(ctx, req.DocIds)
+	if err != nil {
+		log.Printf("[AdminGenPlanningDocumentSeo] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if result == nil {
+		return &tqdpb.AdminGenPlanningDocumentSeoResponse{}, nil
+	}
+
+	items := make([]*tqdpb.AdminGenPlanningDocumentSeoItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, &tqdpb.AdminGenPlanningDocumentSeoItem{
+			PlanningDocumentId: item.PlanningDocumentID,
+			SeoId:              item.SeoID,
+			CanonicalUrl:       item.CanonicalURL,
+			Slug:               item.Slug,
+			Created:            item.Created,
+			Message:            item.Message,
+		})
+	}
+
+	return &tqdpb.AdminGenPlanningDocumentSeoResponse{
+		Data:    items,
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
 	}, nil
 }
 
@@ -594,6 +798,21 @@ func planningProjectSeoSourceToProto(source *qh_dto.PlanningProjectSeoSource) *t
 		PlanningProjectId: source.PlanningProjectID,
 		Name:              source.Name,
 		Slug:              source.Slug,
+	}
+	if source.SeoID != nil && *source.SeoID > 0 {
+		resp.SeoId = *source.SeoID
+	}
+	return resp
+}
+
+func planningDocumentSeoSourceToProto(source *qh_dto.PlanningDocumentSeoSource) *tqdpb.PlanningDocumentSeoSourceResponse {
+	if source == nil || source.PlanningDocumentID == 0 {
+		return nil
+	}
+	resp := &tqdpb.PlanningDocumentSeoSourceResponse{
+		PlanningDocumentId: source.PlanningDocumentID,
+		Title:              source.Title,
+		Slug:               source.Slug,
 	}
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID

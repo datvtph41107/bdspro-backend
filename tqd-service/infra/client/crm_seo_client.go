@@ -182,6 +182,50 @@ func (c *CrmSeoClient) GenerateSeoFromPlanningProjectIDs(ctx context.Context, pl
 	return result, nil
 }
 
+func (c *CrmSeoClient) GenerateSeoFromPlanningDocumentIDs(ctx context.Context, documentIDs []uint64) (*qh_dto.AdminGenPlanningDocumentSeoResult, error) {
+	if c == nil || c.client == nil {
+		return nil, errors.New("crm seo client chưa sẵn sàng")
+	}
+	if len(documentIDs) == 0 {
+		return nil, errors.New("docIds không được để trống")
+	}
+
+	resp, err := c.client.GenerateSeoFromPlanningDocuments(ctx, &crmpb.GenerateSeoFromPlanningDocumentsRequest{
+		DocIds: documentIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return &qh_dto.AdminGenPlanningDocumentSeoResult{}, nil
+	}
+
+	result := &qh_dto.AdminGenPlanningDocumentSeoResult{
+		Total:   resp.Total,
+		Created: resp.Created,
+		Skipped: resp.Skipped,
+		Failed:  resp.Failed,
+		Errors:  resp.Errors,
+		Items:   make([]qh_dto.AdminGenPlanningDocumentSeoItem, 0, len(resp.Data)),
+	}
+	for _, item := range resp.Data {
+		if item == nil {
+			continue
+		}
+		var refID uint64
+		if item.RefId != nil {
+			refID = *item.RefId
+		}
+		result.Items = append(result.Items, qh_dto.AdminGenPlanningDocumentSeoItem{
+			PlanningDocumentID: refID,
+			SeoID:              item.Id,
+			CanonicalURL:       item.CanonicalUrl,
+			Slug:               item.Slug,
+		})
+	}
+	return result, nil
+}
+
 func (c *CrmSeoClient) GenerateSeoFromAdministrativeUnitIdentities(ctx context.Context, compositeIDs []uint64) (*dto.AdminGenAdministrativeUnitSeoResult, error) {
 	if c == nil || c.client == nil {
 		return nil, errors.New("crm seo client chưa sẵn sàng")

@@ -468,10 +468,17 @@ const documentSelect = `d.id,d.planning_project_id,d.document_type,COALESCE(d.st
 		COALESCE(d.ext,'') AS ext,
 		COALESCE(d.thumbnail,'') AS thumbnail,
 		COALESCE(d.version_no,'') AS version_no,COALESCE(d.validity_status,'') AS validity_status,
-		d.issue_date,d.effective_date,COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`
+		d.issue_date,d.effective_date,
+		COALESCE(d.indicators,'[]'::jsonb) AS indicators,
+		COALESCE(d.authority,'') AS authority,
+		COALESCE(d.sector,'') AS sector,
+		COALESCE(d.field,'') AS field,
+		COALESCE(d.signer,'') AS signer,
+		COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`
 
 func (r *Repository) decorateDocument(item *planningdomain.Document) {
 	item.Metadata = normalizeJSON(item.Metadata, "{}")
+	item.Indicators = normalizeJSON(item.Indicators, "[]")
 	item.DocumentTypeName = enums.GetPlanningDocumentTypeLabel(item.DocumentType)
 	item.StatusName = documentStatusName(item.Status)
 	if strings.TrimSpace(item.Ext) == "" {
@@ -552,17 +559,31 @@ func (r *Repository) ListDocumentsByParcelRelation(ctx context.Context, parcelID
 }
 
 func (r *Repository) GetDocument(ctx context.Context, documentID uint64) (*planningdomain.Document, error) {
-	var item planningdomain.Document
+	var row struct {
+		planningdomain.Document
+		ProjectRefID   uint64 `gorm:"column:project_ref_id"`
+		ProjectRefName string `gorm:"column:project_ref_name"`
+	}
 	err := r.db.WithContext(ctx).Table("qh_planning_documents d").
-		Joins("JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
+		Joins("LEFT JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Where("d.id = ? AND d.deleted_at IS NULL", documentID).
-		Select(documentSelect).
-		Take(&item).Error
+		Select(documentSelect+`, p.id AS project_ref_id, COALESCE(p.name, '') AS project_ref_name`).
+		Take(&row).Error
 	if err != nil {
 		return nil, err
 	}
-	r.decorateDocument(&item)
-	return &item, nil
+	r.decorateDocument(&row.Document)
+	if row.ProjectRefID > 0 {
+		row.Document.PlanningProject = &planningdomain.DocumentPlanningProject{
+			ID:   row.ProjectRefID,
+			Name: row.ProjectRefName,
+		}
+	} else if row.Document.PlanningProjectID > 0 {
+		row.Document.PlanningProject = &planningdomain.DocumentPlanningProject{
+			ID: row.Document.PlanningProjectID,
+		}
+	}
+	return &row.Document, nil
 }
 
 func (r *Repository) ListEvents(ctx context.Context, projectID uint64, page, size int) (*planningdomain.Page[planningdomain.Event], error) {
@@ -698,13 +719,45 @@ func (r *Repository) ListFollowed(ctx context.Context, userID uint64, page, size
 	return &planningdomain.Page[planningdomain.FollowedProject]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
+func (r *Repository) ListProjectsByLayerRelation(ctx context.Context, layerIDs []uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	if len(layerIDs) == 0 {
+		return nil, errors.New("layer ids is required")
+	}
+	page, size = normalizePage(page, size)
+
+	baseSQL := `
+		WITH ranked AS (
+			SELECT
+				d.planning_project_id,
+				MIN(rel.sort_order) AS sort_order,
+				MIN(rel.id) AS rel_id
+			FROM layer_plan_doc_relation rel
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			JOIN qh_layers l
+			  ON l.id = rel.layer_id
+			 AND l.deleted_at IS NULL
+			 AND l.status = 10
+			WHERE rel.deleted_at IS NULL
+			  AND rel.layer_id IN ?
+			GROUP BY d.planning_project_id
+		)
+		SELECT %s
+		FROM ranked rr
+		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
+		LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL
+	`
+	return r.scanPlanningProjectsPage(ctx, baseSQL, []any{layerIDs}, page, size)
+}
+
 func (r *Repository) ListProjectsByParcelRelation(ctx context.Context, parcelID uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
 	if parcelID == 0 {
 		return nil, errors.New("parcel id is required")
 	}
 	page, size = normalizePage(page, size)
 
-	// parcel → regions (intersects) → layers → layer_planning_relation → planning-projects
+	// parcel → regions (intersects) → layers → layer_plan_doc_relation → documents → planning-projects
 	baseSQL := `
 		WITH parcel_layers AS (
 			SELECT DISTINCT r.layer_id
@@ -726,24 +779,30 @@ func (r *Repository) ListProjectsByParcelRelation(ctx context.Context, parcelID 
 		),
 		ranked AS (
 			SELECT
-				rel.planning_project_id,
+				d.planning_project_id,
 				MIN(rel.sort_order) AS sort_order,
 				MIN(rel.id) AS rel_id
-			FROM layer_planning_relation rel
+			FROM layer_plan_doc_relation rel
 			JOIN parcel_layers pl ON pl.layer_id = rel.layer_id
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
 			WHERE rel.deleted_at IS NULL
-			GROUP BY rel.planning_project_id
+			GROUP BY d.planning_project_id
 		)
 		SELECT %s
 		FROM ranked rr
 		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
 		LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL
 	`
+	return r.scanPlanningProjectsPage(ctx, baseSQL, []any{parcelID}, page, size)
+}
 
+func (r *Repository) scanPlanningProjectsPage(ctx context.Context, baseSQL string, args []any, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
 	countSQL := fmt.Sprintf(baseSQL, "COUNT(*)")
 	var total int64
-	if err := r.db.WithContext(ctx).Raw(countSQL, parcelID).Scan(&total).Error; err != nil {
-		return nil, fmt.Errorf("count layer planning relations for parcel: %w", err)
+	if err := r.db.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, err
 	}
 	if total == 0 {
 		return &planningdomain.Page[planningdomain.Project]{Data: []planningdomain.Project{}, Total: 0, Page: page, Size: size}, nil
@@ -753,9 +812,10 @@ func (r *Repository) ListProjectsByParcelRelation(ctx context.Context, parcelID 
 		ORDER BY rr.sort_order ASC, rr.rel_id ASC
 		OFFSET ? LIMIT ?
 	`
+	listArgs := append(append([]any{}, args...), page*size, size)
 	items := []planningdomain.Project{}
-	if err := r.db.WithContext(ctx).Raw(listSQL, parcelID, page*size, size).Scan(&items).Error; err != nil {
-		return nil, fmt.Errorf("list layer planning relations for parcel: %w", err)
+	if err := r.db.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&items).Error; err != nil {
+		return nil, err
 	}
 	for i := range items {
 		r.decorateProject(&items[i])

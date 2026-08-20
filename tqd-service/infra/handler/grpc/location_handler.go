@@ -269,6 +269,29 @@ func (h *LocationHandler) AdminGetAdministrativeUnitDetailByCompositeId(ctx cont
 	return resp, nil
 }
 
+// AdminListAdministrativeUnits — GET /v2/tqd/admin/administrative-units
+// @Summary Admin danh sách đơn vị hành chính dùng chung
+// @Description Trả danh sách province + ward theo cùng một format, hỗ trợ lọc theo planningProjectId
+// @Tags Location Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param search query string false "Search keyword"
+// @Param planningProjectId query int false "Planning project ID"
+// @Param sort query string false "Sort, e.g. updatedAt,desc"
+// @Success 200 {object} tqdpb.ListAdministrativeUnitsResponse
+// @Router /v2/tqd/admin/administrative-units [get]
+func (h *LocationHandler) AdminListAdministrativeUnits(ctx context.Context, req *tqdpb.AdminListAdministrativeUnitsRequest) (*tqdpb.ListAdministrativeUnitsResponse, error) {
+	dtoReq := h.mapper.FromProtoAdminListAdministrativeUnitsRequest(req)
+	resp, err := h.locationUsecase.AdminListAdministrativeUnits(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	return h.mapper.ToProtoListAdministrativeUnitsResponse(resp), nil
+}
+
 // AdminListWards — GET /v2/tqd/admin/wards
 // @Summary Admin danh sách phường/xã
 // @Description Trả danh sách ward có phân trang + search, lọc theo provinceId
@@ -735,6 +758,28 @@ func (h *LocationHandler) ClientGetAdministrativeUnitDetailByCompositeId(ctx con
 		return nil, status.Error(codes.NotFound, "administrative unit not found")
 	}
 	return resp, nil
+}
+
+// ClientListAdministrativeUnits — GET /v2/tqd/client/administrative-units
+// @Summary Client danh sách đơn vị hành chính dùng chung
+// @Description Trả danh sách province + ward theo cùng format với admin, hỗ trợ lọc theo planningProjectId
+// @Tags Location Client
+// @Accept json
+// @Produce json
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param search query string false "Search keyword"
+// @Param planningProjectId query int false "Planning project ID"
+// @Param sort query string false "Sort, e.g. updatedAt,desc"
+// @Success 200 {object} tqdpb.ListAdministrativeUnitsResponse
+// @Router /v2/tqd/client/administrative-units [get]
+func (h *LocationHandler) ClientListAdministrativeUnits(ctx context.Context, req *tqdpb.ClientListAdministrativeUnitsRequest) (*tqdpb.ListAdministrativeUnitsResponse, error) {
+	dtoReq := h.mapper.FromProtoClientListAdministrativeUnitsRequest(req)
+	resp, err := h.locationUsecase.ClientListAdministrativeUnits(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	return h.mapper.ToProtoListAdministrativeUnitsResponse(resp), nil
 }
 
 // ClientListAdministrativeUnitNeighbors — GET /v2/tqd/client/administrative-units/{compositeId}/neighbors

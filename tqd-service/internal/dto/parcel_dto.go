@@ -233,6 +233,45 @@ type AdminParcelListItem struct {
 	CreatedAt     time.Time `gorm:"column:created_at"`
 }
 
+// AdminParcelDetail — chi tiết thửa đất cho admin.
+type AdminParcelDetail struct {
+	ParcelID      uint64    `gorm:"column:parcel_id"`
+	Lat           float64   `gorm:"column:lat"`
+	Lon           float64   `gorm:"column:lon"`
+	AreaSqm       float64   `gorm:"column:area_sqm"`
+	AddressText   string    `gorm:"column:address_text"`
+	MapNumber     string    `gorm:"column:map_number"`
+	LandNumber    string    `gorm:"column:land_number"`
+	PropertyCode  string    `gorm:"column:property_code"`
+	PropertyUUID  string    `gorm:"column:property_uuid"`
+	Province      string    `gorm:"column:province"`
+	ProvinceCode  string    `gorm:"column:province_code"`
+	WardCode      string    `gorm:"column:ward_code"`
+	DistrictCode  string    `gorm:"column:district_code"`
+	SeoID         uint64    `gorm:"column:seo_id"`
+	IsSeo         bool      `gorm:"column:is_seo"`
+	FollowerCount int64     `gorm:"column:follower_count"`
+	LandUseName   string    `gorm:"column:land_use_name"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
+	Geometry      []byte    `gorm:"column:geometry"`
+}
+
+// AdminUpdateParcelRequest — payload sửa thửa đất cho admin.
+type AdminUpdateParcelRequest struct {
+	ParcelID     uint64
+	Lat          float64
+	Lon          float64
+	AreaSqm      float64
+	Address      string
+	MapNumber    string
+	LandNumber   string
+	PropertyCode string
+	ProvinceCode string
+	WardCode     string
+	IsSeo        bool
+}
+
 // API 2: layers/impact - data chính để vẽ map + đánh giá rủi ro.
 type ParcelLayersResponse struct {
 	ParcelID      uint64

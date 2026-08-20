@@ -28,6 +28,12 @@ message ListPlanningProjectsRequest {
   string provinceIds = 18;
   // admId: administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
   uint64 admId = 19;
+  // parcelId: lọc đồ án liên quan thửa (parcel → regions → layers → layer_plan_doc_relation → documents).
+  uint64 parcelId = 20;
+  // layerIds: CSV layer id, lọc OR qua layer_plan_doc_relation (vd. "1,2,3").
+  string layerIds = 21;
+  // layerId: lọc theo 1 layer; gộp vào layerIds. Đồ án qua tài liệu (layer_plan_doc_relation).
+  uint64 layerId = 22;
 }
 
 message PlanningProjectIdRequest {
@@ -45,6 +51,10 @@ message ListPlanningDocumentsRequest {
   uint64 planning_project_id = 7;
   // Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.
   uint64 layerId = 8;
+  // parcelId: lọc tài liệu liên quan thửa (parcel → regions → layers → layer_plan_doc_relation).
+  uint64 parcelId = 9;
+  // layerIds: CSV layer id, lọc OR (vd. "1,2,3"). Gộp với layerId nếu có.
+  string layerIds = 10;
 }
 
 message PlanningDocumentIdRequest {
@@ -125,9 +135,6 @@ service PlanningClientService {
   rpc ListPlanningDocuments(ListPlanningDocumentsRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/documents"
-      additional_bindings {
-        get: "/v2/tqd/client/planning-projects/{project_id}/planning-documents"
-      }
     };
   }
   // Danh sách tài liệu QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation.
@@ -138,7 +145,7 @@ service PlanningClientService {
   }
   rpc GetPlanningDocument(PlanningDocumentIdRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
-      get: "/v2/tqd/client/planning-documents/{document_id}"
+      get: "/v2/tqd/client/planning-documents/view/{document_id}"
     };
   }
   rpc ListPlanningEvents(ListPlanningEventsRequest) returns (google.protobuf.BytesValue) {
@@ -167,7 +174,7 @@ service PlanningClientService {
       get: "/v2/tqd/client/planning-projects/followed"
     };
   }
-  // Danh sách đồ án QH liên quan thửa: parcel → regions → layers → layer_planning_relation.
+  // Danh sách đồ án QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation → documents.
   rpc ListParcelPlanningRelations(ListParcelPlanningRelationRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/relation-parcel"

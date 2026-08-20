@@ -51,6 +51,8 @@ type IParcelRepo interface {
 
 	// AdminListParcels — danh sách thửa đất cho admin
 	AdminListParcels(ctx context.Context, search string, pagable _dto.Pagable) ([]dto.AdminParcelListItem, int64, error)
+	AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error)
+	AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) error
 }
 
 type Point struct {

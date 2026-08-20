@@ -48,6 +48,9 @@ const (
 	ParcelService_UpdateParcelSeoID_FullMethodName               = "/tqdpb.ParcelService/UpdateParcelSeoID"
 	ParcelService_AdminGenParcelSeo_FullMethodName               = "/tqdpb.ParcelService/AdminGenParcelSeo"
 	ParcelService_AdminListParcels_FullMethodName                = "/tqdpb.ParcelService/AdminListParcels"
+	ParcelService_AdminGetParcel_FullMethodName                  = "/tqdpb.ParcelService/AdminGetParcel"
+	ParcelService_AdminGetParcelNeighbors_FullMethodName         = "/tqdpb.ParcelService/AdminGetParcelNeighbors"
+	ParcelService_AdminUpdateParcel_FullMethodName               = "/tqdpb.ParcelService/AdminUpdateParcel"
 )
 
 // ParcelServiceClient is the client API for ParcelService service.
@@ -91,7 +94,7 @@ type ParcelServiceClient interface {
 	// GetParcelPlanningEval — tạm thời: mức kiểm tra + đánh giá chính + gợi ý kiểm tra.
 	GetParcelPlanningEval(ctx context.Context, in *GetParcelDetailRequest, opts ...grpc.CallOption) (*ParcelPlanningEvalResponse, error)
 	GetParcelQuickLayers(ctx context.Context, in *GetParcelPlanningRequest, opts ...grpc.CallOption) (*LayerQuickInfoResponse, error)
-	// GetWardQuickLayers — tìm giao geometry ward với qh_regions → trả quick-layers
+	// GetWardQuickLayers — tìm giao geometry đơn vị hành chính (tỉnh/phường) với qh_regions → trả quick-layers
 	GetWardQuickLayers(ctx context.Context, in *GetWardQuickLayersRequest, opts ...grpc.CallOption) (*LayerQuickInfoResponse, error)
 	GetParcelTimeline(ctx context.Context, in *GetParcelDetailRequest, opts ...grpc.CallOption) (*ParcelTimelineResponse, error)
 	// Lịch sử thửa đất — shape giống ListPlanningEvents (Đồ án quy hoạch).
@@ -104,6 +107,12 @@ type ParcelServiceClient interface {
 	AdminGenParcelSeo(ctx context.Context, in *AdminGenParcelSeoRequest, opts ...grpc.CallOption) (*AdminGenParcelSeoResponse, error)
 	// AdminListParcels — danh sách thửa đất cho admin (phân trang + followerCount).
 	AdminListParcels(ctx context.Context, in *AdminListParcelsRequest, opts ...grpc.CallOption) (*AdminListParcelsResponse, error)
+	// AdminGetParcel — chi tiết thửa đất cho admin.
+	AdminGetParcel(ctx context.Context, in *AdminGetParcelRequest, opts ...grpc.CallOption) (*AdminParcelDetail, error)
+	// AdminGetParcelNeighbors — thửa lân cận theo geometry (tạm thời, tối đa 10).
+	AdminGetParcelNeighbors(ctx context.Context, in *AdminGetParcelNeighborsRequest, opts ...grpc.CallOption) (*AdminGetParcelNeighborsResponse, error)
+	// AdminUpdateParcel — sửa thông tin thửa đất cho admin.
+	AdminUpdateParcel(ctx context.Context, in *AdminUpdateParcelRequest, opts ...grpc.CallOption) (*AdminParcelDetail, error)
 }
 
 type parcelServiceClient struct {
@@ -366,6 +375,33 @@ func (c *parcelServiceClient) AdminListParcels(ctx context.Context, in *AdminLis
 	return out, nil
 }
 
+func (c *parcelServiceClient) AdminGetParcel(ctx context.Context, in *AdminGetParcelRequest, opts ...grpc.CallOption) (*AdminParcelDetail, error) {
+	out := new(AdminParcelDetail)
+	err := c.cc.Invoke(ctx, ParcelService_AdminGetParcel_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *parcelServiceClient) AdminGetParcelNeighbors(ctx context.Context, in *AdminGetParcelNeighborsRequest, opts ...grpc.CallOption) (*AdminGetParcelNeighborsResponse, error) {
+	out := new(AdminGetParcelNeighborsResponse)
+	err := c.cc.Invoke(ctx, ParcelService_AdminGetParcelNeighbors_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *parcelServiceClient) AdminUpdateParcel(ctx context.Context, in *AdminUpdateParcelRequest, opts ...grpc.CallOption) (*AdminParcelDetail, error) {
+	out := new(AdminParcelDetail)
+	err := c.cc.Invoke(ctx, ParcelService_AdminUpdateParcel_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ParcelServiceServer is the server API for ParcelService service.
 // All implementations must embed UnimplementedParcelServiceServer
 // for forward compatibility
@@ -407,7 +443,7 @@ type ParcelServiceServer interface {
 	// GetParcelPlanningEval — tạm thời: mức kiểm tra + đánh giá chính + gợi ý kiểm tra.
 	GetParcelPlanningEval(context.Context, *GetParcelDetailRequest) (*ParcelPlanningEvalResponse, error)
 	GetParcelQuickLayers(context.Context, *GetParcelPlanningRequest) (*LayerQuickInfoResponse, error)
-	// GetWardQuickLayers — tìm giao geometry ward với qh_regions → trả quick-layers
+	// GetWardQuickLayers — tìm giao geometry đơn vị hành chính (tỉnh/phường) với qh_regions → trả quick-layers
 	GetWardQuickLayers(context.Context, *GetWardQuickLayersRequest) (*LayerQuickInfoResponse, error)
 	GetParcelTimeline(context.Context, *GetParcelDetailRequest) (*ParcelTimelineResponse, error)
 	// Lịch sử thửa đất — shape giống ListPlanningEvents (Đồ án quy hoạch).
@@ -420,6 +456,12 @@ type ParcelServiceServer interface {
 	AdminGenParcelSeo(context.Context, *AdminGenParcelSeoRequest) (*AdminGenParcelSeoResponse, error)
 	// AdminListParcels — danh sách thửa đất cho admin (phân trang + followerCount).
 	AdminListParcels(context.Context, *AdminListParcelsRequest) (*AdminListParcelsResponse, error)
+	// AdminGetParcel — chi tiết thửa đất cho admin.
+	AdminGetParcel(context.Context, *AdminGetParcelRequest) (*AdminParcelDetail, error)
+	// AdminGetParcelNeighbors — thửa lân cận theo geometry (tạm thời, tối đa 10).
+	AdminGetParcelNeighbors(context.Context, *AdminGetParcelNeighborsRequest) (*AdminGetParcelNeighborsResponse, error)
+	// AdminUpdateParcel — sửa thông tin thửa đất cho admin.
+	AdminUpdateParcel(context.Context, *AdminUpdateParcelRequest) (*AdminParcelDetail, error)
 	mustEmbedUnimplementedParcelServiceServer()
 }
 
@@ -510,6 +552,15 @@ func (UnimplementedParcelServiceServer) AdminGenParcelSeo(context.Context, *Admi
 }
 func (UnimplementedParcelServiceServer) AdminListParcels(context.Context, *AdminListParcelsRequest) (*AdminListParcelsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminListParcels not implemented")
+}
+func (UnimplementedParcelServiceServer) AdminGetParcel(context.Context, *AdminGetParcelRequest) (*AdminParcelDetail, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminGetParcel not implemented")
+}
+func (UnimplementedParcelServiceServer) AdminGetParcelNeighbors(context.Context, *AdminGetParcelNeighborsRequest) (*AdminGetParcelNeighborsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminGetParcelNeighbors not implemented")
+}
+func (UnimplementedParcelServiceServer) AdminUpdateParcel(context.Context, *AdminUpdateParcelRequest) (*AdminParcelDetail, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminUpdateParcel not implemented")
 }
 func (UnimplementedParcelServiceServer) mustEmbedUnimplementedParcelServiceServer() {}
 
@@ -1028,6 +1079,60 @@ func _ParcelService_AdminListParcels_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ParcelService_AdminGetParcel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGetParcelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ParcelServiceServer).AdminGetParcel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ParcelService_AdminGetParcel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ParcelServiceServer).AdminGetParcel(ctx, req.(*AdminGetParcelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ParcelService_AdminGetParcelNeighbors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGetParcelNeighborsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ParcelServiceServer).AdminGetParcelNeighbors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ParcelService_AdminGetParcelNeighbors_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ParcelServiceServer).AdminGetParcelNeighbors(ctx, req.(*AdminGetParcelNeighborsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ParcelService_AdminUpdateParcel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminUpdateParcelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ParcelServiceServer).AdminUpdateParcel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ParcelService_AdminUpdateParcel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ParcelServiceServer).AdminUpdateParcel(ctx, req.(*AdminUpdateParcelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ParcelService_ServiceDesc is the grpc.ServiceDesc for ParcelService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1146,6 +1251,18 @@ var ParcelService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminListParcels",
 			Handler:    _ParcelService_AdminListParcels_Handler,
+		},
+		{
+			MethodName: "AdminGetParcel",
+			Handler:    _ParcelService_AdminGetParcel_Handler,
+		},
+		{
+			MethodName: "AdminGetParcelNeighbors",
+			Handler:    _ParcelService_AdminGetParcelNeighbors_Handler,
+		},
+		{
+			MethodName: "AdminUpdateParcel",
+			Handler:    _ParcelService_AdminUpdateParcel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

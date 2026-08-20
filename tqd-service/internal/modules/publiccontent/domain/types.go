@@ -88,6 +88,11 @@ type PlanningDocument struct {
 	ValidityStatus   string     `json:"validityStatus,omitempty"`
 	IssueDate        *time.Time `json:"issueDate,omitempty"`
 	EffectiveDate    *time.Time `json:"effectiveDate,omitempty"`
+	Indicators       string     `json:"indicators,omitempty"`
+	Authority        string     `json:"authority,omitempty"`
+	Sector           string     `json:"sector,omitempty"`
+	Field            string     `json:"field,omitempty"`
+	Signer           string     `json:"signer,omitempty"`
 }
 
 type PlanningIndicator struct {

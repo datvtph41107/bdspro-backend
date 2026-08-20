@@ -197,12 +197,82 @@ func ensurePlanningProjectClientView() {
 	}
 }
 
+func ensurePlanningDocumentSeoID() {
+	statements := []string{
+		`ALTER TABLE qh_planning_documents
+			ADD COLUMN IF NOT EXISTS seo_id BIGINT`,
+		`CREATE INDEX IF NOT EXISTS idx_qh_planning_documents_seo_id
+			ON qh_planning_documents(seo_id)
+			WHERE seo_id IS NOT NULL AND seo_id > 0`,
+	}
+	for _, stmt := range statements {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  ensurePlanningDocumentSeoID: %v", err)
+		}
+	}
+}
+
+func ensurePlanningDocumentLegalMetadata() {
+	if err := _db.DB.Exec(`
+		ALTER TABLE qh_planning_documents
+			ADD COLUMN IF NOT EXISTS indicators JSONB NOT NULL DEFAULT '[]'::jsonb,
+			ADD COLUMN IF NOT EXISTS authority VARCHAR(255) NOT NULL DEFAULT '',
+			ADD COLUMN IF NOT EXISTS sector VARCHAR(255) NOT NULL DEFAULT '',
+			ADD COLUMN IF NOT EXISTS field VARCHAR(255) NOT NULL DEFAULT '',
+			ADD COLUMN IF NOT EXISTS signer VARCHAR(255) NOT NULL DEFAULT ''
+	`).Error; err != nil {
+		log.Printf("⚠️  ensurePlanningDocumentLegalMetadata: %v", err)
+	}
+}
+
+func ensurePlanningDocumentEvents() {
+	statements := []string{
+		`CREATE TABLE IF NOT EXISTS qh_planning_document_events (
+			id BIGSERIAL PRIMARY KEY,
+			planning_document_id BIGINT NOT NULL REFERENCES qh_planning_documents(id) ON DELETE CASCADE,
+			event_type VARCHAR(80),
+			event_name VARCHAR(255) NOT NULL,
+			description TEXT,
+			event_date TIMESTAMPTZ,
+			metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			deleted_at TIMESTAMPTZ NULL,
+			created_by BIGINT,
+			updated_by BIGINT
+		)`,
+		`ALTER TABLE qh_planning_document_events
+			ADD COLUMN IF NOT EXISTS planning_document_id BIGINT,
+			ADD COLUMN IF NOT EXISTS event_type VARCHAR(80),
+			ADD COLUMN IF NOT EXISTS event_name VARCHAR(255),
+			ADD COLUMN IF NOT EXISTS description TEXT,
+			ADD COLUMN IF NOT EXISTS event_date TIMESTAMPTZ,
+			ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+			ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ NULL,
+			ADD COLUMN IF NOT EXISTS created_by BIGINT,
+			ADD COLUMN IF NOT EXISTS updated_by BIGINT`,
+		`CREATE INDEX IF NOT EXISTS idx_qh_planning_document_events_doc_timeline
+			ON qh_planning_document_events(planning_document_id, event_date DESC, id DESC)
+			WHERE deleted_at IS NULL AND planning_document_id IS NOT NULL`,
+	}
+	for _, stmt := range statements {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  ensurePlanningDocumentEvents: %v", err)
+		}
+	}
+}
+
 func AutoMigrate() {
-	EnsurePostGIS()
+	// EnsurePostGIS()
 	ensureProvinceV2Columns()
 	ensureWardV2Columns()
 	ensurePoisGeom()
 	ensurePlanningProjectClientView()
+	ensurePlanningDocumentSeoID()
+	ensurePlanningDocumentLegalMetadata()
+	ensurePlanningDocumentEvents()
 	ensureDiscoveryParcelSearchIndexes()
 	// province_v2 / ward_v2 là bảng legacy — chỉ cập nhật schema qua ensure*() ở trên,
 	// không dùng GORM AutoMigrate (GORM cố DROP uni_*_code không tồn tại).

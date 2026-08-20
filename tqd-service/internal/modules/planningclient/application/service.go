@@ -23,6 +23,7 @@ type PlanningRepository interface {
 	Unfollow(context.Context, uint64, uint64) error
 	ListFollowed(context.Context, uint64, int, int, string) (*planningdomain.Page[planningdomain.FollowedProject], error)
 	ListProjectsByParcelRelation(context.Context, uint64, int, int) (*planningdomain.Page[planningdomain.Project], error)
+	ListProjectsByLayerRelation(context.Context, []uint64, int, int) (*planningdomain.Page[planningdomain.Project], error)
 	ListProjectLayers(context.Context, uint64) ([]planningdomain.ProjectLayer, error)
 	ListProvinces(context.Context, planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error)
 }
@@ -75,6 +76,9 @@ func (s *Service) ListFollowed(ctx context.Context, userID uint64, page, size in
 }
 func (s *Service) ListProjectsByParcelRelation(ctx context.Context, parcelID uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
 	return s.planning.ListProjectsByParcelRelation(ctx, parcelID, page, size)
+}
+func (s *Service) ListProjectsByLayerRelation(ctx context.Context, layerIDs []uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	return s.planning.ListProjectsByLayerRelation(ctx, layerIDs, page, size)
 }
 func (s *Service) ListProjectLayers(ctx context.Context, projectID uint64) ([]planningdomain.ProjectLayer, error) {
 	return s.planning.ListProjectLayers(ctx, projectID)

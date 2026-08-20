@@ -62,6 +62,12 @@ type AdminListWardsRequest struct {
 	ProvinceID uint64 `json:"provinceId"`
 }
 
+type ListAdministrativeUnitsRequest struct {
+	_dto.Pagable
+	Search            string `json:"search"`
+	PlanningProjectID uint64 `json:"planningProjectId"`
+}
+
 type AdminListProvincesResponse struct {
 	Data  []*ProvinceDTO `json:"data"`
 	Total int64          `json:"total"`
@@ -70,6 +76,22 @@ type AdminListProvincesResponse struct {
 type AdminListWardsResponse struct {
 	Data  []*WardDTO `json:"data"`
 	Total int64      `json:"total"`
+}
+
+type AdministrativeUnitListItem struct {
+	Province *ProvinceDTO `json:"province,omitempty"`
+	Ward     *WardDTO     `json:"ward,omitempty"`
+}
+
+type ListAdministrativeUnitsResponse struct {
+	Data  []*AdministrativeUnitListItem `json:"data"`
+	Total int64                         `json:"total"`
+}
+
+type AdministrativeUnitRef struct {
+	UnitType   uint32 `json:"unitType"`
+	ProvinceID uint64 `json:"provinceId"`
+	WardID     uint64 `json:"wardId"`
 }
 
 // ==================== RESPONSE DTOs ====================

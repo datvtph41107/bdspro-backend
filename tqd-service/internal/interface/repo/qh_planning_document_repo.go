@@ -26,8 +26,17 @@ type IQHPlanningDocumentRepo interface {
 	ResetClassifyForRetry(ctx context.Context, id uint64) error
 	// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending; trả về số bản ghi cập nhật.
 	ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error)
-	// AssignToLayer tạo/khôi phục bản ghi layer_plan_doc_relation cho layerId và danh sách document.
-	AssignToLayer(ctx context.Context, layerID uint64, docIDs []uint64) error
+	// AssignToLayers tạo/khôi phục bản ghi layer_plan_doc_relation cho từng cặp layerIds × docIds.
+	AssignToLayers(ctx context.Context, layerIDs, docIDs []uint64) error
+	// UnassignFromLayers xóa cứng bản ghi layer_plan_doc_relation theo layerIds × docIds.
+	UnassignFromLayers(ctx context.Context, layerIDs, docIDs []uint64) error
 	// UnassignLayer xóa toàn bộ layer_plan_doc_relation của layer với tài liệu thuộc đồ án.
 	UnassignLayer(ctx context.Context, planningID, layerID uint64) error
+	GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*qh_dto.PlanningDocumentSeoSource, error)
+	GetPlanningDocumentSeoSourcesByIDs(ctx context.Context, documentIDs []uint64) ([]qh_dto.PlanningDocumentSeoSource, error)
+	UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error
+	CreateHistory(ctx context.Context, entity *qh_domain.QHPlanningDocumentEvent) error
+	DeleteHistory(ctx context.Context, id uint64) error
+	GetHistoryByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocumentEvent, error)
+	ListHistories(ctx context.Context, req *qh_dto.ListPlanningDocumentHistoriesRequest) ([]qh_domain.QHPlanningDocumentEvent, int64, error)
 }

@@ -51,6 +51,7 @@ type UserProperties struct {
 		ParcelUrlTemplate             string `mapstructure:"parcelUrlTemplate"`
 		LayerUrlTemplate              string `mapstructure:"layerUrlTemplate"`
 		PlanningProjectUrlTemplate    string `mapstructure:"planningProjectUrlTemplate"`
+		PlanningDocumentUrlTemplate   string `mapstructure:"planningDocumentUrlTemplate"`
 		AdministrativeUnitUrlTemplate string `mapstructure:"administrativeUnitUrlTemplate"`
 	} `mapstructure:"seo"`
 }

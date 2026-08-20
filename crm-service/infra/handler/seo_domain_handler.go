@@ -739,6 +739,33 @@ func (h *SeoDomainHandler) GenerateSeoFromPlanningProjects(ctx context.Context, 
 	}, nil
 }
 
+// GenerateSeoFromPlanningDocuments tự động tạo SEO domain cho các tài liệu quy hoạch.
+// @Summary Tự động tạo SEO từ planning document
+// @Description Nhận danh sách docIds, sinh URL theo seo.planningDocumentUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromPlanningDocumentsRequest true "Danh sách docIds"
+// @Router /v2/crm/admin/seo-domains/planning-documents/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromPlanningDocuments(ctx context.Context, req *crmpb.GenerateSeoFromPlanningDocumentsRequest) (*crmpb.GenerateSeoFromPlanningDocumentsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromPlanningDocuments(ctx, &dto.GenerateSeoFromPlanningDocumentsRequest{
+		DocIDs: req.DocIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromPlanningDocumentsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
 // GenerateSeoFromAdministrativeUnits tự động tạo SEO domain cho province/ward.
 // @Summary Tự động tạo SEO từ đơn vị hành chính
 // @Description Nhận danh sách compositeIds ({sourceId}{1=tỉnh|2=phường}), lấy bản ghi province/ward tương ứng rồi tạo SEO. refId lưu theo compositeId.

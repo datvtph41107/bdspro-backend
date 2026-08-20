@@ -208,6 +208,28 @@ service ParcelService {
       get: "/v2/tqd/admin/parcels"
     };
   }
+
+  // AdminGetParcel — chi tiết thửa đất cho admin.
+  rpc AdminGetParcel(AdminGetParcelRequest) returns (AdminParcelDetail) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/parcels/{parcelId}"
+    };
+  }
+
+  // AdminGetParcelNeighbors — thửa lân cận theo geometry (tạm thời, tối đa 10).
+  rpc AdminGetParcelNeighbors(AdminGetParcelNeighborsRequest) returns (AdminGetParcelNeighborsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/parcels/{parcelId}/neighbors"
+    };
+  }
+
+  // AdminUpdateParcel — sửa thông tin thửa đất cho admin.
+  rpc AdminUpdateParcel(AdminUpdateParcelRequest) returns (AdminParcelDetail) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/parcels/{parcelId}"
+      body: "*"
+    };
+  }
 }
 
 // ============================================================
@@ -1328,4 +1350,66 @@ message AdminParcelListItem {
 message AdminListParcelsResponse {
   repeated AdminParcelListItem data = 1;
   int64 total = 2;
+}
+
+message AdminGetParcelRequest {
+  uint64 parcelId = 1;
+}
+
+message AdminGetParcelNeighborsRequest {
+  uint64 parcelId = 1;
+}
+
+message AdminParcelNeighbor {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  string mapNumber = 6;
+  string landNumber = 7;
+  double distanceMeters = 8;
+  string geometry = 9; // GeoJSON
+}
+
+message AdminGetParcelNeighborsResponse {
+  repeated AdminParcelNeighbor data = 1;
+  int64 total = 2;
+}
+
+message AdminParcelDetail {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  string mapNumber = 6;
+  string landNumber = 7;
+  string propertyCode = 8;
+  string province = 9;
+  string provinceCode = 10;
+  string wardCode = 11;
+  uint64 seoId = 12;
+  bool isSeo = 13;
+  int64 followerCount = 14;
+  string createdAt = 15;
+  string updatedAt = 16;
+  string landUseName = 17;
+  string propertyUuid = 18;
+  string districtCode = 19;
+  string geometry = 20; // GeoJSON geometry
+}
+
+message AdminUpdateParcelRequest {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  string mapNumber = 6;
+  string landNumber = 7;
+  string propertyCode = 8;
+  string provinceCode = 9;
+  string wardCode = 10;
+  bool isSeo = 11;
 }

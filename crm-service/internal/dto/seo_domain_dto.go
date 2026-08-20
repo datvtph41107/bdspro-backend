@@ -206,6 +206,25 @@ type GenerateSeoFromPlanningProjectsResult struct {
 	Errors  []string `json:"errors"`
 }
 
+type PlanningDocumentSeoSource struct {
+	PlanningDocumentID uint64  `json:"planningDocumentId" gorm:"column:planning_document_id"`
+	Title              string  `json:"title" gorm:"column:title"`
+	Slug               string  `json:"slug" gorm:"column:slug"`
+	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type GenerateSeoFromPlanningDocumentsRequest struct {
+	DocIDs []uint64 `json:"docIds"`
+}
+
+type GenerateSeoFromPlanningDocumentsResult struct {
+	Total   int64    `json:"total"`
+	Created int64    `json:"created"`
+	Skipped int64    `json:"skipped"`
+	Failed  int64    `json:"failed"`
+	Errors  []string `json:"errors"`
+}
+
 type AdministrativeUnitSeoSource struct {
 	Identity           uint64  `json:"identity"`
 	UnitType           uint32  `json:"unitType"`

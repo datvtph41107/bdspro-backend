@@ -1757,3 +1757,71 @@ func (m *ParcelMapper) ToProtoAdminParcelListItems(rows []dto.AdminParcelListIte
 	}
 	return out
 }
+
+func (m *ParcelMapper) ToProtoAdminParcelDetail(row *dto.AdminParcelDetail) *tqdpb.AdminParcelDetail {
+	if row == nil {
+		return nil
+	}
+	createdAt := row.CreatedAt
+	updatedAt := row.UpdatedAt
+	return &tqdpb.AdminParcelDetail{
+		ParcelId:      row.ParcelID,
+		Lat:           row.Lat,
+		Lon:           row.Lon,
+		AreaSqm:       row.AreaSqm,
+		Address:       row.AddressText,
+		MapNumber:     row.MapNumber,
+		LandNumber:    row.LandNumber,
+		PropertyCode:  row.PropertyCode,
+		Province:      row.Province,
+		ProvinceCode:  row.ProvinceCode,
+		WardCode:      row.WardCode,
+		SeoId:         row.SeoID,
+		IsSeo:         row.IsSeo,
+		FollowerCount: row.FollowerCount,
+		CreatedAt:     _utils.FormatTimeToString(&createdAt),
+		UpdatedAt:     _utils.FormatTimeToString(&updatedAt),
+		LandUseName:   row.LandUseName,
+		PropertyUuid:  row.PropertyUUID,
+		DistrictCode:  row.DistrictCode,
+		Geometry:      string(row.Geometry),
+	}
+}
+
+func (m *ParcelMapper) ToProtoAdminParcelNeighbors(rows []dto.NearbyParcelItem) []*tqdpb.AdminParcelNeighbor {
+	out := make([]*tqdpb.AdminParcelNeighbor, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		out = append(out, &tqdpb.AdminParcelNeighbor{
+			ParcelId:       row.ParcelID,
+			Lat:            row.Lat,
+			Lon:            row.Lon,
+			AreaSqm:        row.AreaSqm,
+			Address:        row.AddressText,
+			MapNumber:      row.MapNumber,
+			LandNumber:     row.LandNumber,
+			DistanceMeters: row.DistanceMeters,
+			Geometry:       string(row.Geometry),
+		})
+	}
+	return out
+}
+
+func (m *ParcelMapper) ToAdminUpdateParcelDTO(req *tqdpb.AdminUpdateParcelRequest) *dto.AdminUpdateParcelRequest {
+	if req == nil {
+		return nil
+	}
+	return &dto.AdminUpdateParcelRequest{
+		ParcelID:     req.GetParcelId(),
+		Lat:          req.GetLat(),
+		Lon:          req.GetLon(),
+		AreaSqm:      req.GetAreaSqm(),
+		Address:      strings.TrimSpace(req.GetAddress()),
+		MapNumber:    strings.TrimSpace(req.GetMapNumber()),
+		LandNumber:   strings.TrimSpace(req.GetLandNumber()),
+		PropertyCode: strings.TrimSpace(req.GetPropertyCode()),
+		ProvinceCode: strings.TrimSpace(req.GetProvinceCode()),
+		WardCode:     strings.TrimSpace(req.GetWardCode()),
+		IsSeo:        req.GetIsSeo(),
+	}
+}

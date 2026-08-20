@@ -60,6 +60,13 @@ service LocationService {
         };
     }
 
+    // Admin: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+    rpc AdminListAdministrativeUnits(AdminListAdministrativeUnitsRequest) returns (ListAdministrativeUnitsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/administrative-units"
+        };
+    }
+
     rpc AdminListProvinces(AdminListProvincesRequest) returns (AdminListProvincesResponse) {
         option (google.api.http) = {
             get: "/v2/tqd/admin/provinces"
@@ -169,6 +176,13 @@ service LocationService {
     rpc ClientGetAdministrativeUnitDetailByCompositeId(ClientGetAdministrativeUnitDetailByCompositeIdRequest) returns (ClientGetAdministrativeUnitDetailByCompositeIdResponse) {
         option (google.api.http) = {
             get: "/v2/tqd/client/administrative-units/{compositeId}"
+        };
+    }
+
+    // Client: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+    rpc ClientListAdministrativeUnits(ClientListAdministrativeUnitsRequest) returns (ListAdministrativeUnitsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/administrative-units"
         };
     }
     
@@ -313,6 +327,16 @@ message AdminGetAdministrativeUnitDetailByCompositeIdResponse {
     optional Ward ward = 2;
 }
 
+message AdministrativeUnitListItem {
+    optional Province province = 1;
+    optional Ward ward = 2;
+}
+
+message ListAdministrativeUnitsResponse {
+    repeated AdministrativeUnitListItem data = 1;
+    int64 total = 2;
+}
+
 message AdminGetProvinceDetailByCompositeIdRequest {
     uint64 compositeId = 1;
 }
@@ -340,6 +364,22 @@ message AdminListWardsRequest {
 message AdminListWardsResponse {
     repeated Ward data = 1;
     int64 total = 2;
+}
+
+message AdminListAdministrativeUnitsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    uint64 planningProjectId = 4;
+    string sort = 5;
+}
+
+message ClientListAdministrativeUnitsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    uint64 planningProjectId = 4;
+    string sort = 5;
 }
 
 message AdminDeleteProvinceRequest {

@@ -8,24 +8,25 @@ import (
 
 type LocationRepository interface {
 	// Province operations
-    GetProvinceByID(ctx context.Context, id uint64) (*domain.Province, error)
-    GetProvinceDetail(ctx context.Context, id uint64) (*domain.Province, error)
-    GetProvinceByCode(ctx context.Context, code string) (*domain.Province, error)
-    GetProvinceByCompositeId(ctx context.Context, compositeId string) (*domain.Province, error)
+	GetProvinceByID(ctx context.Context, id uint64) (*domain.Province, error)
+	GetProvinceDetail(ctx context.Context, id uint64) (*domain.Province, error)
+	GetProvinceByCode(ctx context.Context, code string) (*domain.Province, error)
+	GetProvinceByCompositeId(ctx context.Context, compositeId string) (*domain.Province, error)
 	GetNearestProvince(ctx context.Context, lat, lng float64, maxDistanceKm float64) (*domain.Province, float64, error)
 	SearchProvinces(ctx context.Context, query string, limit int) ([]*domain.Province, error)
 	ListAllProvinces(ctx context.Context) ([]*domain.Province, error)
 	AdminListProvinces(ctx context.Context, req *dto.AdminListProvincesRequest) ([]*domain.Province, int64, error)
+	ListAdministrativeUnitRefs(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) ([]dto.AdministrativeUnitRef, int64, error)
 	CreateProvince(ctx context.Context, province *domain.Province) error
 	UpdateProvince(ctx context.Context, province *domain.Province) error
 	SoftDeleteProvince(ctx context.Context, id uint64) error
 	ExistsProvinceCode(ctx context.Context, code string, excludeID uint64) (bool, error)
 
 	// Ward operations
-    GetWardByID(ctx context.Context, id uint64) (*domain.Ward, error)
-    GetWardDetail(ctx context.Context, id uint64) (*domain.Ward, error)
-    GetWardByCode(ctx context.Context, code string) (*domain.Ward, error)
-    GetWardByCompositeId(ctx context.Context, compositeId string) (*domain.Ward, error)
+	GetWardByID(ctx context.Context, id uint64) (*domain.Ward, error)
+	GetWardDetail(ctx context.Context, id uint64) (*domain.Ward, error)
+	GetWardByCode(ctx context.Context, code string) (*domain.Ward, error)
+	GetWardByCompositeId(ctx context.Context, compositeId string) (*domain.Ward, error)
 	GetNearestWard(ctx context.Context, lat, lng float64, provinceID uint64, maxDistanceKm float64) (*domain.Ward, float64, error)
 	SearchWards(ctx context.Context, query string, provinceID uint64, limit int) ([]*domain.Ward, error)
 	ListWardsByProvince(ctx context.Context, provinceID uint64, page, pageSize int) ([]*domain.Ward, int64, error)

@@ -148,6 +148,7 @@ service QHPlanningService {
       get: "/v2/tqd/admin/planning-documents/{id}"
     };
   }
+  // UpdatePlanningDocument cập nhật toàn bộ thông tin tài liệu (loại, số liệu, ngày, cơ quan, ngành, lĩnh vực, người ký, ...).
   rpc UpdatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
     option (google.api.http) = {
       put: "/v2/tqd/admin/planning-documents/{id}"
@@ -176,11 +177,52 @@ service QHPlanningService {
       post: "/v2/tqd/admin/planning-documents/{id}/retry"
     };
   }
-  // AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer (layer_plan_doc_relation).
+  rpc GetPlanningDocumentSeoSource(IdRequest) returns (PlanningDocumentSeoSourceResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/internal/planning-documents/{id}/seo-source"
+    };
+  }
+  rpc UpdatePlanningDocumentSeoID(UpdatePlanningDocumentSeoIDRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/internal/planning-documents/{planningDocumentId}/seo-id"
+      body: "*"
+    };
+  }
+  rpc AdminGenPlanningDocumentSeo(AdminGenPlanningDocumentSeoRequest) returns (AdminGenPlanningDocumentSeoResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/gen-seo"
+      body: "*"
+    };
+  }
+  // AssignPlanningDocumentsToLayer gán tài liệu vào layer (cartesian layerIds × docIds trên layer_plan_doc_relation).
   rpc AssignPlanningDocumentsToLayer(AssignPlanningDocumentsToLayerRequest) returns (SubmitResponse) {
     option (google.api.http) = {
-      post: "/v2/tqd/admin/planning-documents/assign-layer"
+      post: "/v2/tqd/admin/layer-docs/assign"
       body: "*"
+    };
+  }
+  // UnassignPlanningDocumentsFromLayer gỡ tài liệu khỏi layer: xóa cứng bản ghi layer_plan_doc_relation.
+  rpc UnassignPlanningDocumentsFromLayer(AssignPlanningDocumentsToLayerRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/layer-docs/unassign"
+      body: "*"
+    };
+  }
+  // Planning document legal histories.
+  rpc CreatePlanningDocumentHistory(PlanningDocumentHistory) returns (PlanningDocumentHistory) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/{planningDocumentId}/histories"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningDocumentHistory(DeletePlanningDocumentHistoryRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-documents/{planningDocumentId}/histories/{id}"
+    };
+  }
+  rpc ListPlanningDocumentHistories(ListPlanningDocumentHistoriesRequest) returns (ListPlanningDocumentHistoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/{planningDocumentId}/histories"
     };
   }
 
@@ -344,6 +386,40 @@ message AdminGenPlanningProjectSeoResponse {
   repeated string errors = 6;
 }
 
+message PlanningDocumentSeoSourceResponse {
+  uint64 planningDocumentId = 1;
+  string title = 2;
+  string slug = 3;
+  uint64 seoId = 4;
+}
+
+message UpdatePlanningDocumentSeoIDRequest {
+  uint64 planningDocumentId = 1;
+  uint64 seoId = 2;
+}
+
+message AdminGenPlanningDocumentSeoRequest {
+  repeated uint64 docIds = 1;
+}
+
+message AdminGenPlanningDocumentSeoItem {
+  uint64 planningDocumentId = 1;
+  uint64 seoId = 2;
+  string canonicalUrl = 3;
+  string slug = 4;
+  bool created = 5;
+  string message = 6;
+}
+
+message AdminGenPlanningDocumentSeoResponse {
+  repeated AdminGenPlanningDocumentSeoItem data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
 message ListPlanningProjectsResponse {
   repeated PlanningProject data = 1;
   int64 total = 2;
@@ -398,15 +474,16 @@ message UnassignPlanningProjectLayerRequest {
 message PlanningDocument {
   uint64 id = 1;
   uint64 planningProjectId = 2;
-  string documentType = 3;
+  string documentType = 3; // Loại tài liệu (ví dụ: Bản đồ, Pháp lý, Thuyết minh).
   string code = 4;
   string title = 5;
   string description = 6;
   string filepath = 7;
   string versionNo = 8;
-  string validityStatus = 9;
-  string issueDate = 10;
-  string effectiveDate = 11;
+  string validityStatus = 9; // Tình trạng hiệu lực (còn hiệu lực / hết hiệu lực / ...).
+  string issueDate = 10; // Ngày ban hành.
+  string issuedDate = 29; // Alias JSON issuedDate (cùng nghĩa issueDate).
+  string effectiveDate = 11; // Ngày hiệu lực.
   string metadata = 12; // JSON string
   string createdAt = 13;
   string updatedAt = 14;
@@ -416,6 +493,14 @@ message PlanningDocument {
   string processStatusName = 18;
   string classifyError = 19;
   string ext = 20;
+  optional uint64 seoId = 21;
+  string indicators = 22; // Số liệu / chỉ tiêu của tài liệu, JSON array.
+  string authority = 23; // Cơ quan ban hành.
+  string sector = 24; // Ngành (phân loại chuyên môn của tài liệu).
+  string field = 25; // Lĩnh vực (phân loại nội dung của tài liệu).
+  string signer = 26; // Người ký.
+  uint32 status = 27; // 10=Thường, 20=Quan trọng.
+  string statusName = 28;
 }
 
 // FolderFileEntry — 1 file trong folder admin chọn để tạo đồ án.
@@ -482,8 +567,36 @@ message ListPlanningDocumentsResponse {
 }
 
 message AssignPlanningDocumentsToLayerRequest {
-  uint64 layerId = 1;
+  uint64 layerId = 1; // vẫn nhận 1 layer; gộp vào layerIds
   repeated uint64 docIds = 2;
+  repeated uint64 layerIds = 3;
+}
+
+message PlanningDocumentHistory {
+  uint64 id = 1;
+  uint64 planningDocumentId = 2;
+  string eventType = 3;
+  string eventName = 4;
+  string description = 5;
+  string eventDate = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message DeletePlanningDocumentHistoryRequest {
+  uint64 planningDocumentId = 1;
+  uint64 id = 2;
+}
+
+message ListPlanningDocumentHistoriesRequest {
+  uint64 planningDocumentId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message ListPlanningDocumentHistoriesResponse {
+  repeated PlanningDocumentHistory data = 1;
+  int64 total = 2;
 }
 
 message PlanningEvent {

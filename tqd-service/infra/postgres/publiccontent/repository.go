@@ -117,6 +117,11 @@ type documentRow struct {
 	ValidityStatus string
 	IssueDate      *time.Time
 	EffectiveDate  *time.Time
+	Indicators     string
+	Authority      string
+	Sector         string
+	Field          string
+	Signer         string
 }
 
 type relationRow struct {
@@ -672,7 +677,12 @@ func (r *Repository) GetPlanningProjectProjection(
 		       COALESCE(version_no,'') AS version_no,
 		       COALESCE(validity_status,'') AS validity_status,
 		       issue_date,
-		       effective_date
+		       effective_date,
+		       COALESCE(indicators::text,'[]') AS indicators,
+		       COALESCE(authority,'') AS authority,
+		       COALESCE(sector,'') AS sector,
+		       COALESCE(field,'') AS field,
+		       COALESCE(signer,'') AS signer
 		FROM qh_planning_documents
 		WHERE planning_project_id = ?
 		  AND deleted_at IS NULL
@@ -697,6 +707,11 @@ func (r *Repository) GetPlanningProjectProjection(
 			ValidityStatus:   item.ValidityStatus,
 			IssueDate:        item.IssueDate,
 			EffectiveDate:    item.EffectiveDate,
+			Indicators:       item.Indicators,
+			Authority:        item.Authority,
+			Sector:           item.Sector,
+			Field:            item.Field,
+			Signer:           item.Signer,
 		})
 	}
 

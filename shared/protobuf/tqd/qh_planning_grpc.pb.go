@@ -21,50 +21,57 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	QHPlanningService_CreatePlanningProject_FullMethodName           = "/tqdpb.QHPlanningService/CreatePlanningProject"
-	QHPlanningService_GetPlanningProject_FullMethodName              = "/tqdpb.QHPlanningService/GetPlanningProject"
-	QHPlanningService_CountPlanningProject_FullMethodName            = "/tqdpb.QHPlanningService/CountPlanningProject"
-	QHPlanningService_UpdatePlanningProject_FullMethodName           = "/tqdpb.QHPlanningService/UpdatePlanningProject"
-	QHPlanningService_DeletePlanningProject_FullMethodName           = "/tqdpb.QHPlanningService/DeletePlanningProject"
-	QHPlanningService_ListPlanningProjects_FullMethodName            = "/tqdpb.QHPlanningService/ListPlanningProjects"
-	QHPlanningService_ListPlanningProjectLayers_FullMethodName       = "/tqdpb.QHPlanningService/ListPlanningProjectLayers"
-	QHPlanningService_AdminAssignProvinces_FullMethodName            = "/tqdpb.QHPlanningService/AdminAssignProvinces"
-	QHPlanningService_AdminUnassignProvinces_FullMethodName          = "/tqdpb.QHPlanningService/AdminUnassignProvinces"
-	QHPlanningService_AdminAssignWards_FullMethodName                = "/tqdpb.QHPlanningService/AdminAssignWards"
-	QHPlanningService_AdminUnassignWards_FullMethodName              = "/tqdpb.QHPlanningService/AdminUnassignWards"
-	QHPlanningService_UnassignPlanningProjectLayer_FullMethodName    = "/tqdpb.QHPlanningService/UnassignPlanningProjectLayer"
-	QHPlanningService_CreatePlanningProjectFromFolder_FullMethodName = "/tqdpb.QHPlanningService/CreatePlanningProjectFromFolder"
-	QHPlanningService_ApprovePlanningProject_FullMethodName          = "/tqdpb.QHPlanningService/ApprovePlanningProject"
-	QHPlanningService_RetryFailedPlanningDocuments_FullMethodName    = "/tqdpb.QHPlanningService/RetryFailedPlanningDocuments"
-	QHPlanningService_GetPlanningProjectSeoSource_FullMethodName     = "/tqdpb.QHPlanningService/GetPlanningProjectSeoSource"
-	QHPlanningService_UpdatePlanningProjectSeoID_FullMethodName      = "/tqdpb.QHPlanningService/UpdatePlanningProjectSeoID"
-	QHPlanningService_AdminGenPlanningProjectSeo_FullMethodName      = "/tqdpb.QHPlanningService/AdminGenPlanningProjectSeo"
-	QHPlanningService_ListProAIJobs_FullMethodName                   = "/tqdpb.QHPlanningService/ListProAIJobs"
-	QHPlanningService_GetProAIJob_FullMethodName                     = "/tqdpb.QHPlanningService/GetProAIJob"
-	QHPlanningService_CreatePlanningDocument_FullMethodName          = "/tqdpb.QHPlanningService/CreatePlanningDocument"
-	QHPlanningService_GetPlanningDocument_FullMethodName             = "/tqdpb.QHPlanningService/GetPlanningDocument"
-	QHPlanningService_UpdatePlanningDocument_FullMethodName          = "/tqdpb.QHPlanningService/UpdatePlanningDocument"
-	QHPlanningService_DeletePlanningDocument_FullMethodName          = "/tqdpb.QHPlanningService/DeletePlanningDocument"
-	QHPlanningService_ListPlanningDocuments_FullMethodName           = "/tqdpb.QHPlanningService/ListPlanningDocuments"
-	QHPlanningService_ApprovePlanningDocument_FullMethodName         = "/tqdpb.QHPlanningService/ApprovePlanningDocument"
-	QHPlanningService_RetryPlanningDocument_FullMethodName           = "/tqdpb.QHPlanningService/RetryPlanningDocument"
-	QHPlanningService_AssignPlanningDocumentsToLayer_FullMethodName  = "/tqdpb.QHPlanningService/AssignPlanningDocumentsToLayer"
-	QHPlanningService_CreatePlanningEvent_FullMethodName             = "/tqdpb.QHPlanningService/CreatePlanningEvent"
-	QHPlanningService_GetPlanningEvent_FullMethodName                = "/tqdpb.QHPlanningService/GetPlanningEvent"
-	QHPlanningService_UpdatePlanningEvent_FullMethodName             = "/tqdpb.QHPlanningService/UpdatePlanningEvent"
-	QHPlanningService_DeletePlanningEvent_FullMethodName             = "/tqdpb.QHPlanningService/DeletePlanningEvent"
-	QHPlanningService_ListPlanningEvents_FullMethodName              = "/tqdpb.QHPlanningService/ListPlanningEvents"
-	QHPlanningService_CreatePlanningRelation_FullMethodName          = "/tqdpb.QHPlanningService/CreatePlanningRelation"
-	QHPlanningService_GetPlanningRelation_FullMethodName             = "/tqdpb.QHPlanningService/GetPlanningRelation"
-	QHPlanningService_UpdatePlanningRelation_FullMethodName          = "/tqdpb.QHPlanningService/UpdatePlanningRelation"
-	QHPlanningService_DeletePlanningRelation_FullMethodName          = "/tqdpb.QHPlanningService/DeletePlanningRelation"
-	QHPlanningService_ListPlanningRelations_FullMethodName           = "/tqdpb.QHPlanningService/ListPlanningRelations"
-	QHPlanningService_ClientGetPlanningProject_FullMethodName        = "/tqdpb.QHPlanningService/ClientGetPlanningProject"
-	QHPlanningService_ClientGetPlanningDocument_FullMethodName       = "/tqdpb.QHPlanningService/ClientGetPlanningDocument"
-	QHPlanningService_ClientListPlanningEvents_FullMethodName        = "/tqdpb.QHPlanningService/ClientListPlanningEvents"
-	QHPlanningService_ClientListPlanningRelations_FullMethodName     = "/tqdpb.QHPlanningService/ClientListPlanningRelations"
-	QHPlanningService_ClientCountPlanningProject_FullMethodName      = "/tqdpb.QHPlanningService/ClientCountPlanningProject"
-	QHPlanningService_ClientListPlanningProjects_FullMethodName      = "/tqdpb.QHPlanningService/ClientListPlanningProjects"
+	QHPlanningService_CreatePlanningProject_FullMethodName              = "/tqdpb.QHPlanningService/CreatePlanningProject"
+	QHPlanningService_GetPlanningProject_FullMethodName                 = "/tqdpb.QHPlanningService/GetPlanningProject"
+	QHPlanningService_CountPlanningProject_FullMethodName               = "/tqdpb.QHPlanningService/CountPlanningProject"
+	QHPlanningService_UpdatePlanningProject_FullMethodName              = "/tqdpb.QHPlanningService/UpdatePlanningProject"
+	QHPlanningService_DeletePlanningProject_FullMethodName              = "/tqdpb.QHPlanningService/DeletePlanningProject"
+	QHPlanningService_ListPlanningProjects_FullMethodName               = "/tqdpb.QHPlanningService/ListPlanningProjects"
+	QHPlanningService_ListPlanningProjectLayers_FullMethodName          = "/tqdpb.QHPlanningService/ListPlanningProjectLayers"
+	QHPlanningService_AdminAssignProvinces_FullMethodName               = "/tqdpb.QHPlanningService/AdminAssignProvinces"
+	QHPlanningService_AdminUnassignProvinces_FullMethodName             = "/tqdpb.QHPlanningService/AdminUnassignProvinces"
+	QHPlanningService_AdminAssignWards_FullMethodName                   = "/tqdpb.QHPlanningService/AdminAssignWards"
+	QHPlanningService_AdminUnassignWards_FullMethodName                 = "/tqdpb.QHPlanningService/AdminUnassignWards"
+	QHPlanningService_UnassignPlanningProjectLayer_FullMethodName       = "/tqdpb.QHPlanningService/UnassignPlanningProjectLayer"
+	QHPlanningService_CreatePlanningProjectFromFolder_FullMethodName    = "/tqdpb.QHPlanningService/CreatePlanningProjectFromFolder"
+	QHPlanningService_ApprovePlanningProject_FullMethodName             = "/tqdpb.QHPlanningService/ApprovePlanningProject"
+	QHPlanningService_RetryFailedPlanningDocuments_FullMethodName       = "/tqdpb.QHPlanningService/RetryFailedPlanningDocuments"
+	QHPlanningService_GetPlanningProjectSeoSource_FullMethodName        = "/tqdpb.QHPlanningService/GetPlanningProjectSeoSource"
+	QHPlanningService_UpdatePlanningProjectSeoID_FullMethodName         = "/tqdpb.QHPlanningService/UpdatePlanningProjectSeoID"
+	QHPlanningService_AdminGenPlanningProjectSeo_FullMethodName         = "/tqdpb.QHPlanningService/AdminGenPlanningProjectSeo"
+	QHPlanningService_ListProAIJobs_FullMethodName                      = "/tqdpb.QHPlanningService/ListProAIJobs"
+	QHPlanningService_GetProAIJob_FullMethodName                        = "/tqdpb.QHPlanningService/GetProAIJob"
+	QHPlanningService_CreatePlanningDocument_FullMethodName             = "/tqdpb.QHPlanningService/CreatePlanningDocument"
+	QHPlanningService_GetPlanningDocument_FullMethodName                = "/tqdpb.QHPlanningService/GetPlanningDocument"
+	QHPlanningService_UpdatePlanningDocument_FullMethodName             = "/tqdpb.QHPlanningService/UpdatePlanningDocument"
+	QHPlanningService_DeletePlanningDocument_FullMethodName             = "/tqdpb.QHPlanningService/DeletePlanningDocument"
+	QHPlanningService_ListPlanningDocuments_FullMethodName              = "/tqdpb.QHPlanningService/ListPlanningDocuments"
+	QHPlanningService_ApprovePlanningDocument_FullMethodName            = "/tqdpb.QHPlanningService/ApprovePlanningDocument"
+	QHPlanningService_RetryPlanningDocument_FullMethodName              = "/tqdpb.QHPlanningService/RetryPlanningDocument"
+	QHPlanningService_GetPlanningDocumentSeoSource_FullMethodName       = "/tqdpb.QHPlanningService/GetPlanningDocumentSeoSource"
+	QHPlanningService_UpdatePlanningDocumentSeoID_FullMethodName        = "/tqdpb.QHPlanningService/UpdatePlanningDocumentSeoID"
+	QHPlanningService_AdminGenPlanningDocumentSeo_FullMethodName        = "/tqdpb.QHPlanningService/AdminGenPlanningDocumentSeo"
+	QHPlanningService_AssignPlanningDocumentsToLayer_FullMethodName     = "/tqdpb.QHPlanningService/AssignPlanningDocumentsToLayer"
+	QHPlanningService_UnassignPlanningDocumentsFromLayer_FullMethodName = "/tqdpb.QHPlanningService/UnassignPlanningDocumentsFromLayer"
+	QHPlanningService_CreatePlanningDocumentHistory_FullMethodName      = "/tqdpb.QHPlanningService/CreatePlanningDocumentHistory"
+	QHPlanningService_DeletePlanningDocumentHistory_FullMethodName      = "/tqdpb.QHPlanningService/DeletePlanningDocumentHistory"
+	QHPlanningService_ListPlanningDocumentHistories_FullMethodName      = "/tqdpb.QHPlanningService/ListPlanningDocumentHistories"
+	QHPlanningService_CreatePlanningEvent_FullMethodName                = "/tqdpb.QHPlanningService/CreatePlanningEvent"
+	QHPlanningService_GetPlanningEvent_FullMethodName                   = "/tqdpb.QHPlanningService/GetPlanningEvent"
+	QHPlanningService_UpdatePlanningEvent_FullMethodName                = "/tqdpb.QHPlanningService/UpdatePlanningEvent"
+	QHPlanningService_DeletePlanningEvent_FullMethodName                = "/tqdpb.QHPlanningService/DeletePlanningEvent"
+	QHPlanningService_ListPlanningEvents_FullMethodName                 = "/tqdpb.QHPlanningService/ListPlanningEvents"
+	QHPlanningService_CreatePlanningRelation_FullMethodName             = "/tqdpb.QHPlanningService/CreatePlanningRelation"
+	QHPlanningService_GetPlanningRelation_FullMethodName                = "/tqdpb.QHPlanningService/GetPlanningRelation"
+	QHPlanningService_UpdatePlanningRelation_FullMethodName             = "/tqdpb.QHPlanningService/UpdatePlanningRelation"
+	QHPlanningService_DeletePlanningRelation_FullMethodName             = "/tqdpb.QHPlanningService/DeletePlanningRelation"
+	QHPlanningService_ListPlanningRelations_FullMethodName              = "/tqdpb.QHPlanningService/ListPlanningRelations"
+	QHPlanningService_ClientGetPlanningProject_FullMethodName           = "/tqdpb.QHPlanningService/ClientGetPlanningProject"
+	QHPlanningService_ClientGetPlanningDocument_FullMethodName          = "/tqdpb.QHPlanningService/ClientGetPlanningDocument"
+	QHPlanningService_ClientListPlanningEvents_FullMethodName           = "/tqdpb.QHPlanningService/ClientListPlanningEvents"
+	QHPlanningService_ClientListPlanningRelations_FullMethodName        = "/tqdpb.QHPlanningService/ClientListPlanningRelations"
+	QHPlanningService_ClientCountPlanningProject_FullMethodName         = "/tqdpb.QHPlanningService/ClientCountPlanningProject"
+	QHPlanningService_ClientListPlanningProjects_FullMethodName         = "/tqdpb.QHPlanningService/ClientListPlanningProjects"
 )
 
 // QHPlanningServiceClient is the client API for QHPlanningService service.
@@ -105,6 +112,7 @@ type QHPlanningServiceClient interface {
 	// QHPlanningDocument APIs
 	CreatePlanningDocument(ctx context.Context, in *PlanningDocument, opts ...grpc.CallOption) (*PlanningDocument, error)
 	GetPlanningDocument(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningDocument, error)
+	// UpdatePlanningDocument cập nhật toàn bộ thông tin tài liệu (loại, số liệu, ngày, cơ quan, ngành, lĩnh vực, người ký, ...).
 	UpdatePlanningDocument(ctx context.Context, in *PlanningDocument, opts ...grpc.CallOption) (*PlanningDocument, error)
 	DeletePlanningDocument(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*SubmitResponse, error)
 	ListPlanningDocuments(ctx context.Context, in *ListPlanningDocumentsRequest, opts ...grpc.CallOption) (*ListPlanningDocumentsResponse, error)
@@ -112,8 +120,17 @@ type QHPlanningServiceClient interface {
 	ApprovePlanningDocument(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningDocument, error)
 	// RetryPlanningDocument đưa 1 tài liệu Failed về Pending để job classify chạy lại.
 	RetryPlanningDocument(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningDocument, error)
-	// AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer (layer_plan_doc_relation).
+	GetPlanningDocumentSeoSource(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningDocumentSeoSourceResponse, error)
+	UpdatePlanningDocumentSeoID(ctx context.Context, in *UpdatePlanningDocumentSeoIDRequest, opts ...grpc.CallOption) (*SubmitResponse, error)
+	AdminGenPlanningDocumentSeo(ctx context.Context, in *AdminGenPlanningDocumentSeoRequest, opts ...grpc.CallOption) (*AdminGenPlanningDocumentSeoResponse, error)
+	// AssignPlanningDocumentsToLayer gán tài liệu vào layer (cartesian layerIds × docIds trên layer_plan_doc_relation).
 	AssignPlanningDocumentsToLayer(ctx context.Context, in *AssignPlanningDocumentsToLayerRequest, opts ...grpc.CallOption) (*SubmitResponse, error)
+	// UnassignPlanningDocumentsFromLayer gỡ tài liệu khỏi layer: xóa cứng bản ghi layer_plan_doc_relation.
+	UnassignPlanningDocumentsFromLayer(ctx context.Context, in *AssignPlanningDocumentsToLayerRequest, opts ...grpc.CallOption) (*SubmitResponse, error)
+	// Planning document legal histories.
+	CreatePlanningDocumentHistory(ctx context.Context, in *PlanningDocumentHistory, opts ...grpc.CallOption) (*PlanningDocumentHistory, error)
+	DeletePlanningDocumentHistory(ctx context.Context, in *DeletePlanningDocumentHistoryRequest, opts ...grpc.CallOption) (*SubmitResponse, error)
+	ListPlanningDocumentHistories(ctx context.Context, in *ListPlanningDocumentHistoriesRequest, opts ...grpc.CallOption) (*ListPlanningDocumentHistoriesResponse, error)
 	// QHPlanningEvent APIs — lịch sử pháp lý / timeline đồ án.
 	CreatePlanningEvent(ctx context.Context, in *PlanningEvent, opts ...grpc.CallOption) (*PlanningEvent, error)
 	GetPlanningEvent(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningEvent, error)
@@ -390,9 +407,72 @@ func (c *qHPlanningServiceClient) RetryPlanningDocument(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *qHPlanningServiceClient) GetPlanningDocumentSeoSource(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*PlanningDocumentSeoSourceResponse, error) {
+	out := new(PlanningDocumentSeoSourceResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_GetPlanningDocumentSeoSource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) UpdatePlanningDocumentSeoID(ctx context.Context, in *UpdatePlanningDocumentSeoIDRequest, opts ...grpc.CallOption) (*SubmitResponse, error) {
+	out := new(SubmitResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_UpdatePlanningDocumentSeoID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) AdminGenPlanningDocumentSeo(ctx context.Context, in *AdminGenPlanningDocumentSeoRequest, opts ...grpc.CallOption) (*AdminGenPlanningDocumentSeoResponse, error) {
+	out := new(AdminGenPlanningDocumentSeoResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_AdminGenPlanningDocumentSeo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *qHPlanningServiceClient) AssignPlanningDocumentsToLayer(ctx context.Context, in *AssignPlanningDocumentsToLayerRequest, opts ...grpc.CallOption) (*SubmitResponse, error) {
 	out := new(SubmitResponse)
 	err := c.cc.Invoke(ctx, QHPlanningService_AssignPlanningDocumentsToLayer_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) UnassignPlanningDocumentsFromLayer(ctx context.Context, in *AssignPlanningDocumentsToLayerRequest, opts ...grpc.CallOption) (*SubmitResponse, error) {
+	out := new(SubmitResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_UnassignPlanningDocumentsFromLayer_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) CreatePlanningDocumentHistory(ctx context.Context, in *PlanningDocumentHistory, opts ...grpc.CallOption) (*PlanningDocumentHistory, error) {
+	out := new(PlanningDocumentHistory)
+	err := c.cc.Invoke(ctx, QHPlanningService_CreatePlanningDocumentHistory_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) DeletePlanningDocumentHistory(ctx context.Context, in *DeletePlanningDocumentHistoryRequest, opts ...grpc.CallOption) (*SubmitResponse, error) {
+	out := new(SubmitResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_DeletePlanningDocumentHistory_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *qHPlanningServiceClient) ListPlanningDocumentHistories(ctx context.Context, in *ListPlanningDocumentHistoriesRequest, opts ...grpc.CallOption) (*ListPlanningDocumentHistoriesResponse, error) {
+	out := new(ListPlanningDocumentHistoriesResponse)
+	err := c.cc.Invoke(ctx, QHPlanningService_ListPlanningDocumentHistories_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -581,6 +661,7 @@ type QHPlanningServiceServer interface {
 	// QHPlanningDocument APIs
 	CreatePlanningDocument(context.Context, *PlanningDocument) (*PlanningDocument, error)
 	GetPlanningDocument(context.Context, *IdRequest) (*PlanningDocument, error)
+	// UpdatePlanningDocument cập nhật toàn bộ thông tin tài liệu (loại, số liệu, ngày, cơ quan, ngành, lĩnh vực, người ký, ...).
 	UpdatePlanningDocument(context.Context, *PlanningDocument) (*PlanningDocument, error)
 	DeletePlanningDocument(context.Context, *IdRequest) (*SubmitResponse, error)
 	ListPlanningDocuments(context.Context, *ListPlanningDocumentsRequest) (*ListPlanningDocumentsResponse, error)
@@ -588,8 +669,17 @@ type QHPlanningServiceServer interface {
 	ApprovePlanningDocument(context.Context, *IdRequest) (*PlanningDocument, error)
 	// RetryPlanningDocument đưa 1 tài liệu Failed về Pending để job classify chạy lại.
 	RetryPlanningDocument(context.Context, *IdRequest) (*PlanningDocument, error)
-	// AssignPlanningDocumentsToLayer gán danh sách tài liệu vào 1 layer (layer_plan_doc_relation).
+	GetPlanningDocumentSeoSource(context.Context, *IdRequest) (*PlanningDocumentSeoSourceResponse, error)
+	UpdatePlanningDocumentSeoID(context.Context, *UpdatePlanningDocumentSeoIDRequest) (*SubmitResponse, error)
+	AdminGenPlanningDocumentSeo(context.Context, *AdminGenPlanningDocumentSeoRequest) (*AdminGenPlanningDocumentSeoResponse, error)
+	// AssignPlanningDocumentsToLayer gán tài liệu vào layer (cartesian layerIds × docIds trên layer_plan_doc_relation).
 	AssignPlanningDocumentsToLayer(context.Context, *AssignPlanningDocumentsToLayerRequest) (*SubmitResponse, error)
+	// UnassignPlanningDocumentsFromLayer gỡ tài liệu khỏi layer: xóa cứng bản ghi layer_plan_doc_relation.
+	UnassignPlanningDocumentsFromLayer(context.Context, *AssignPlanningDocumentsToLayerRequest) (*SubmitResponse, error)
+	// Planning document legal histories.
+	CreatePlanningDocumentHistory(context.Context, *PlanningDocumentHistory) (*PlanningDocumentHistory, error)
+	DeletePlanningDocumentHistory(context.Context, *DeletePlanningDocumentHistoryRequest) (*SubmitResponse, error)
+	ListPlanningDocumentHistories(context.Context, *ListPlanningDocumentHistoriesRequest) (*ListPlanningDocumentHistoriesResponse, error)
 	// QHPlanningEvent APIs — lịch sử pháp lý / timeline đồ án.
 	CreatePlanningEvent(context.Context, *PlanningEvent) (*PlanningEvent, error)
 	GetPlanningEvent(context.Context, *IdRequest) (*PlanningEvent, error)
@@ -701,8 +791,29 @@ func (UnimplementedQHPlanningServiceServer) ApprovePlanningDocument(context.Cont
 func (UnimplementedQHPlanningServiceServer) RetryPlanningDocument(context.Context, *IdRequest) (*PlanningDocument, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RetryPlanningDocument not implemented")
 }
+func (UnimplementedQHPlanningServiceServer) GetPlanningDocumentSeoSource(context.Context, *IdRequest) (*PlanningDocumentSeoSourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlanningDocumentSeoSource not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) UpdatePlanningDocumentSeoID(context.Context, *UpdatePlanningDocumentSeoIDRequest) (*SubmitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePlanningDocumentSeoID not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) AdminGenPlanningDocumentSeo(context.Context, *AdminGenPlanningDocumentSeoRequest) (*AdminGenPlanningDocumentSeoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminGenPlanningDocumentSeo not implemented")
+}
 func (UnimplementedQHPlanningServiceServer) AssignPlanningDocumentsToLayer(context.Context, *AssignPlanningDocumentsToLayerRequest) (*SubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AssignPlanningDocumentsToLayer not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) UnassignPlanningDocumentsFromLayer(context.Context, *AssignPlanningDocumentsToLayerRequest) (*SubmitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnassignPlanningDocumentsFromLayer not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) CreatePlanningDocumentHistory(context.Context, *PlanningDocumentHistory) (*PlanningDocumentHistory, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePlanningDocumentHistory not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) DeletePlanningDocumentHistory(context.Context, *DeletePlanningDocumentHistoryRequest) (*SubmitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePlanningDocumentHistory not implemented")
+}
+func (UnimplementedQHPlanningServiceServer) ListPlanningDocumentHistories(context.Context, *ListPlanningDocumentHistoriesRequest) (*ListPlanningDocumentHistoriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPlanningDocumentHistories not implemented")
 }
 func (UnimplementedQHPlanningServiceServer) CreatePlanningEvent(context.Context, *PlanningEvent) (*PlanningEvent, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePlanningEvent not implemented")
@@ -1251,6 +1362,60 @@ func _QHPlanningService_RetryPlanningDocument_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _QHPlanningService_GetPlanningDocumentSeoSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).GetPlanningDocumentSeoSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_GetPlanningDocumentSeoSource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).GetPlanningDocumentSeoSource(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_UpdatePlanningDocumentSeoID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePlanningDocumentSeoIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).UpdatePlanningDocumentSeoID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_UpdatePlanningDocumentSeoID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).UpdatePlanningDocumentSeoID(ctx, req.(*UpdatePlanningDocumentSeoIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_AdminGenPlanningDocumentSeo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGenPlanningDocumentSeoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).AdminGenPlanningDocumentSeo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_AdminGenPlanningDocumentSeo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).AdminGenPlanningDocumentSeo(ctx, req.(*AdminGenPlanningDocumentSeoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _QHPlanningService_AssignPlanningDocumentsToLayer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AssignPlanningDocumentsToLayerRequest)
 	if err := dec(in); err != nil {
@@ -1265,6 +1430,78 @@ func _QHPlanningService_AssignPlanningDocumentsToLayer_Handler(srv interface{}, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QHPlanningServiceServer).AssignPlanningDocumentsToLayer(ctx, req.(*AssignPlanningDocumentsToLayerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_UnassignPlanningDocumentsFromLayer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignPlanningDocumentsToLayerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).UnassignPlanningDocumentsFromLayer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_UnassignPlanningDocumentsFromLayer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).UnassignPlanningDocumentsFromLayer(ctx, req.(*AssignPlanningDocumentsToLayerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_CreatePlanningDocumentHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PlanningDocumentHistory)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).CreatePlanningDocumentHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_CreatePlanningDocumentHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).CreatePlanningDocumentHistory(ctx, req.(*PlanningDocumentHistory))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_DeletePlanningDocumentHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePlanningDocumentHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).DeletePlanningDocumentHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_DeletePlanningDocumentHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).DeletePlanningDocumentHistory(ctx, req.(*DeletePlanningDocumentHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _QHPlanningService_ListPlanningDocumentHistories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanningDocumentHistoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QHPlanningServiceServer).ListPlanningDocumentHistories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QHPlanningService_ListPlanningDocumentHistories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QHPlanningServiceServer).ListPlanningDocumentHistories(ctx, req.(*ListPlanningDocumentHistoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1673,8 +1910,36 @@ var QHPlanningService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _QHPlanningService_RetryPlanningDocument_Handler,
 		},
 		{
+			MethodName: "GetPlanningDocumentSeoSource",
+			Handler:    _QHPlanningService_GetPlanningDocumentSeoSource_Handler,
+		},
+		{
+			MethodName: "UpdatePlanningDocumentSeoID",
+			Handler:    _QHPlanningService_UpdatePlanningDocumentSeoID_Handler,
+		},
+		{
+			MethodName: "AdminGenPlanningDocumentSeo",
+			Handler:    _QHPlanningService_AdminGenPlanningDocumentSeo_Handler,
+		},
+		{
 			MethodName: "AssignPlanningDocumentsToLayer",
 			Handler:    _QHPlanningService_AssignPlanningDocumentsToLayer_Handler,
+		},
+		{
+			MethodName: "UnassignPlanningDocumentsFromLayer",
+			Handler:    _QHPlanningService_UnassignPlanningDocumentsFromLayer_Handler,
+		},
+		{
+			MethodName: "CreatePlanningDocumentHistory",
+			Handler:    _QHPlanningService_CreatePlanningDocumentHistory_Handler,
+		},
+		{
+			MethodName: "DeletePlanningDocumentHistory",
+			Handler:    _QHPlanningService_DeletePlanningDocumentHistory_Handler,
+		},
+		{
+			MethodName: "ListPlanningDocumentHistories",
+			Handler:    _QHPlanningService_ListPlanningDocumentHistories_Handler,
 		},
 		{
 			MethodName: "CreatePlanningEvent",

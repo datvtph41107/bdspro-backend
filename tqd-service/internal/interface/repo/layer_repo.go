@@ -36,13 +36,13 @@ type LayerRepository interface {
 // LayerFilter - Filter cho admin list
 type LayerFilter struct {
 	_dto.Pagable
-	Status   *enums.LayerStatus
-	Type     *enums.LayerType
-	Visible  *int32
-	Search   *string
-	OrderBy  string
-	OrderDir string
-	// Pagable  *_dto.Pagable
+	Status            *enums.LayerStatus
+	Type              *enums.LayerType
+	Visible           *int32
+	Search            *string
+	OrderBy           string
+	OrderDir          string
+	PlanningProjectID *uint64
 }
 
 // ClientLayerFilter - Filter cho client list
@@ -50,6 +50,7 @@ type ClientLayerFilter struct {
 	_dto.Pagable
 	Type   *enums.LayerType
 	Search *string
+	DocID  uint64
 	// Page   int
 	// Limit  int
 }

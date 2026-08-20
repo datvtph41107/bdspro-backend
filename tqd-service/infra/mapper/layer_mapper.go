@@ -116,6 +116,18 @@ func ToProtoLayer(layer *qh_domain.QHLayer) (*tqdpb.LayerResponse, error) {
 		seoID := *layer.SeoID
 		resp.SeoId = &seoID
 	}
+	if layer.PlanningProjectID != nil && *layer.PlanningProjectID > 0 {
+		pid := *layer.PlanningProjectID
+		resp.PlanningProjectId = &pid
+	}
+	if layer.PlanningProject != nil && layer.PlanningProject.ID > 0 {
+		pid := layer.PlanningProject.ID
+		resp.PlanningProjectId = &pid
+		resp.PlanningProject = &tqdpb.LayerPlanningProject{
+			Id:   layer.PlanningProject.ID,
+			Name: layer.PlanningProject.Name,
+		}
+	}
 	if layer.ReplacedByID != nil {
 		rid := *layer.ReplacedByID
 		resp.ReplacedByLayerId = &rid

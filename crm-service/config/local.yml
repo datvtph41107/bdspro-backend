@@ -40,8 +40,9 @@ seo:
   internal_secret_key: "local-seo-secret"
   timezone: "Asia/Ho_Chi_Minh"
   parcelUrlTemplate: /tin-tuc/thua-dat/{id}-{slug}
-  layerUrlTemplate: /quy-hoach/lop/{id}-{slug}
+  layerUrlTemplate: /tin-tuc/lop/{id}-{slug}
   planningProjectUrlTemplate: /tin-tuc/do-an-quy-hoach/{slug}
+  planningDocumentUrlTemplate: /tin-tuc/tai-lieu/{id}-{slug}
   administrativeUnitUrlTemplate: /tin-tuc/dia-ban/{slug}
 
   sitemap:

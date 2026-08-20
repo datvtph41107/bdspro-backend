@@ -191,76 +191,6 @@ func local_request_PlanningClientService_ListPlanningDocuments_0(ctx context.Con
 }
 
 var (
-	filter_PlanningClientService_ListPlanningDocuments_1 = &utilities.DoubleArray{Encoding: map[string]int{"project_id": 0, "projectId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
-)
-
-func request_PlanningClientService_ListPlanningDocuments_1(ctx context.Context, marshaler runtime.Marshaler, client PlanningClientServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPlanningDocumentsRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["project_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "project_id")
-	}
-
-	protoReq.ProjectId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "project_id", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListPlanningDocuments_1); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.ListPlanningDocuments(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_PlanningClientService_ListPlanningDocuments_1(ctx context.Context, marshaler runtime.Marshaler, server PlanningClientServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListPlanningDocumentsRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["project_id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "project_id")
-	}
-
-	protoReq.ProjectId, err = runtime.Uint64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "project_id", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListPlanningDocuments_1); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.ListPlanningDocuments(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
-var (
 	filter_PlanningClientService_ListLayerPlanDocRelations_0 = &utilities.DoubleArray{Encoding: map[string]int{"parcel_id": 0, "parcelId": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
 )
 
@@ -870,6 +800,78 @@ func local_request_PlanningClientService_ListProvinces_0(ctx context.Context, ma
 
 }
 
+var (
+	filter_PlanningClientService_ListNearbyAreas_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_PlanningClientService_ListNearbyAreas_0(ctx context.Context, marshaler runtime.Marshaler, client PlanningClientServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListNearbyAreasRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListNearbyAreas_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListNearbyAreas(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_PlanningClientService_ListNearbyAreas_0(ctx context.Context, marshaler runtime.Marshaler, server PlanningClientServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListNearbyAreasRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListNearbyAreas_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListNearbyAreas(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_PlanningClientService_ListPlanningDocumentsByAdm_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_PlanningClientService_ListPlanningDocumentsByAdm_0(ctx context.Context, marshaler runtime.Marshaler, client PlanningClientServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListPlanningDocumentsByAdmRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListPlanningDocumentsByAdm_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListPlanningDocumentsByAdm(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_PlanningClientService_ListPlanningDocumentsByAdm_0(ctx context.Context, marshaler runtime.Marshaler, server PlanningClientServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListPlanningDocumentsByAdmRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PlanningClientService_ListPlanningDocumentsByAdm_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListPlanningDocumentsByAdm(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterPlanningClientServiceHandlerServer registers the http handlers for service PlanningClientService to "mux".
 // UnaryRPC     :call PlanningClientServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -951,31 +953,6 @@ func RegisterPlanningClientServiceHandlerServer(ctx context.Context, mux *runtim
 
 	})
 
-	mux.Handle("GET", pattern_PlanningClientService_ListPlanningDocuments_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListPlanningDocuments", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-projects/{project_id}/planning-documents"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_PlanningClientService_ListPlanningDocuments_1(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_PlanningClientService_ListPlanningDocuments_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("GET", pattern_PlanningClientService_ListLayerPlanDocRelations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1009,7 +986,7 @@ func RegisterPlanningClientServiceHandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.PlanningClientService/GetPlanningDocument", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/{document_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.PlanningClientService/GetPlanningDocument", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/view/{document_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1276,6 +1253,56 @@ func RegisterPlanningClientServiceHandlerServer(ctx context.Context, mux *runtim
 
 	})
 
+	mux.Handle("GET", pattern_PlanningClientService_ListNearbyAreas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListNearbyAreas", runtime.WithHTTPPathPattern("/v2/tqd/client/nearby-areas"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PlanningClientService_ListNearbyAreas_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PlanningClientService_ListNearbyAreas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_PlanningClientService_ListPlanningDocumentsByAdm_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListPlanningDocumentsByAdm", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/by-adm"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PlanningClientService_ListPlanningDocumentsByAdm_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PlanningClientService_ListPlanningDocumentsByAdm_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -1383,28 +1410,6 @@ func RegisterPlanningClientServiceHandlerClient(ctx context.Context, mux *runtim
 
 	})
 
-	mux.Handle("GET", pattern_PlanningClientService_ListPlanningDocuments_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListPlanningDocuments", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-projects/{project_id}/planning-documents"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_PlanningClientService_ListPlanningDocuments_1(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_PlanningClientService_ListPlanningDocuments_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("GET", pattern_PlanningClientService_ListLayerPlanDocRelations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1433,7 +1438,7 @@ func RegisterPlanningClientServiceHandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.PlanningClientService/GetPlanningDocument", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/{document_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.PlanningClientService/GetPlanningDocument", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/view/{document_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1669,6 +1674,50 @@ func RegisterPlanningClientServiceHandlerClient(ctx context.Context, mux *runtim
 
 	})
 
+	mux.Handle("GET", pattern_PlanningClientService_ListNearbyAreas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListNearbyAreas", runtime.WithHTTPPathPattern("/v2/tqd/client/nearby-areas"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PlanningClientService_ListNearbyAreas_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PlanningClientService_ListNearbyAreas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_PlanningClientService_ListPlanningDocumentsByAdm_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.PlanningClientService/ListPlanningDocumentsByAdm", runtime.WithHTTPPathPattern("/v2/tqd/client/planning-documents/by-adm"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PlanningClientService_ListPlanningDocumentsByAdm_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PlanningClientService_ListPlanningDocumentsByAdm_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -1679,11 +1728,9 @@ var (
 
 	pattern_PlanningClientService_ListPlanningDocuments_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "planning-projects", "project_id", "documents"}, ""))
 
-	pattern_PlanningClientService_ListPlanningDocuments_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "planning-projects", "project_id", "planning-documents"}, ""))
-
 	pattern_PlanningClientService_ListLayerPlanDocRelations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "tqd", "client", "planning-documents", "relation-layer", "parcel_id"}, ""))
 
-	pattern_PlanningClientService_GetPlanningDocument_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "tqd", "client", "planning-documents", "document_id"}, ""))
+	pattern_PlanningClientService_GetPlanningDocument_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "tqd", "client", "planning-documents", "view", "document_id"}, ""))
 
 	pattern_PlanningClientService_ListPlanningEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "planning-projects", "project_id", "events"}, ""))
 
@@ -1704,6 +1751,10 @@ var (
 	pattern_PlanningClientService_ListPlanningProjectLayers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "planning-projects", "project_id", "layers"}, ""))
 
 	pattern_PlanningClientService_ListProvinces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "tqd", "client", "provinces"}, ""))
+
+	pattern_PlanningClientService_ListNearbyAreas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "tqd", "client", "nearby-areas"}, ""))
+
+	pattern_PlanningClientService_ListPlanningDocumentsByAdm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"v2", "tqd", "client", "planning-documents", "by-adm"}, ""))
 )
 
 var (
@@ -1712,8 +1763,6 @@ var (
 	forward_PlanningClientService_GetPlanningProject_0 = runtime.ForwardResponseMessage
 
 	forward_PlanningClientService_ListPlanningDocuments_0 = runtime.ForwardResponseMessage
-
-	forward_PlanningClientService_ListPlanningDocuments_1 = runtime.ForwardResponseMessage
 
 	forward_PlanningClientService_ListLayerPlanDocRelations_0 = runtime.ForwardResponseMessage
 
@@ -1738,4 +1787,8 @@ var (
 	forward_PlanningClientService_ListPlanningProjectLayers_0 = runtime.ForwardResponseMessage
 
 	forward_PlanningClientService_ListProvinces_0 = runtime.ForwardResponseMessage
+
+	forward_PlanningClientService_ListNearbyAreas_0 = runtime.ForwardResponseMessage
+
+	forward_PlanningClientService_ListPlanningDocumentsByAdm_0 = runtime.ForwardResponseMessage
 )

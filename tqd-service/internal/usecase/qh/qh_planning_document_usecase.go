@@ -3,10 +3,15 @@ package qh_usecase
 import (
 	_err "common/domain/err"
 	"context"
+	"errors"
+	"fmt"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
+	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
+
+	"gorm.io/gorm"
 )
 
 type IQHPlanningDocumentUsecase interface {
@@ -20,13 +25,21 @@ type IQHPlanningDocumentUsecase interface {
 	// Retry đưa tài liệu Failed về Pending để job classify chạy lại.
 	Retry(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 	AssignToLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error
+	UnassignFromLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error
 	UnassignLayer(ctx context.Context, req *qh_dto.UnassignPlanningProjectLayerRequest) error
+	CreateHistory(ctx context.Context, entity *qh_domain.QHPlanningDocumentEvent) (*qh_domain.QHPlanningDocumentEvent, error)
+	DeleteHistory(ctx context.Context, documentID uint64, historyID uint64) (bool, error)
+	ListHistories(ctx context.Context, req *qh_dto.ListPlanningDocumentHistoriesRequest) ([]qh_domain.QHPlanningDocumentEvent, int64, error)
+	GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*qh_dto.PlanningDocumentSeoSource, error)
+	UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error
+	AdminGenPlanningDocumentSeo(ctx context.Context, documentIDs []uint64) (*qh_dto.AdminGenPlanningDocumentSeoResult, error)
 }
 
 type qhPlanningDocumentUsecase struct {
-	repo        repo.IQHPlanningDocumentRepo
-	projectRepo repo.IQHPlanningProjectRepo
-	aiJobRepo   repo.IProAIJobRepo
+	repo           repo.IQHPlanningDocumentRepo
+	projectRepo    repo.IQHPlanningProjectRepo
+	aiJobRepo      repo.IProAIJobRepo
+	crmSeoProvider provider.CrmSeoProvider
 }
 
 // NewQHPlanningDocumentUsecase @bind: internal/usecase/qh.IQHPlanningDocumentUsecase
@@ -34,11 +47,13 @@ func NewQHPlanningDocumentUsecase(
 	repo repo.IQHPlanningDocumentRepo,
 	projectRepo repo.IQHPlanningProjectRepo,
 	aiJobRepo repo.IProAIJobRepo,
+	crmSeoProvider provider.CrmSeoProvider,
 ) IQHPlanningDocumentUsecase {
 	return &qhPlanningDocumentUsecase{
-		repo:        repo,
-		projectRepo: projectRepo,
-		aiJobRepo:   aiJobRepo,
+		repo:           repo,
+		projectRepo:    projectRepo,
+		aiJobRepo:      aiJobRepo,
+		crmSeoProvider: crmSeoProvider,
 	}
 }
 
@@ -53,13 +68,19 @@ func (u *qhPlanningDocumentUsecase) Create(ctx context.Context, entity *qh_domai
 }
 
 func (u *qhPlanningDocumentUsecase) Update(ctx context.Context, id uint64, entity *qh_domain.QHPlanningDocument) (*qh_domain.QHPlanningDocument, error) {
+	if _, err := u.repo.GetByID(ctx, id); err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy dữ liệu",
+		}
+	}
 	if err := u.repo.Update(ctx, id, entity); err != nil {
 		return nil, &_err.ErrorDTO{
 			Code:    500,
-			Message: "Không thể cập nhật dữ liệu",
+			Message: "Không thể cập nhật dữ liệu: " + err.Error(),
 		}
 	}
-	return entity, nil
+	return u.GetByID(ctx, id)
 }
 
 func (u *qhPlanningDocumentUsecase) Delete(ctx context.Context, id uint64) (bool, error) {
@@ -153,25 +174,28 @@ func (u *qhPlanningDocumentUsecase) Retry(ctx context.Context, id uint64) (*qh_d
 }
 
 func (u *qhPlanningDocumentUsecase) AssignToLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error {
-	if req == nil || req.LayerID == 0 {
-		return &_err.ErrorDTO{
-			Code:    400,
-			Message: "layerId is required",
-		}
+	layerIDs, docIDs, err := normalizeLayerDocIDs(req)
+	if err != nil {
+		return err
 	}
-
-	docIDs := uniquePositiveIDs(req.DocIDs)
-	if len(docIDs) == 0 {
-		return &_err.ErrorDTO{
-			Code:    400,
-			Message: "docIds is required",
-		}
-	}
-
-	if err := u.repo.AssignToLayer(ctx, req.LayerID, docIDs); err != nil {
+	if err := u.repo.AssignToLayers(ctx, layerIDs, docIDs); err != nil {
 		return &_err.ErrorDTO{
 			Code:    500,
 			Message: "Không thể gán tài liệu vào layer: " + err.Error(),
+		}
+	}
+	return nil
+}
+
+func (u *qhPlanningDocumentUsecase) UnassignFromLayer(ctx context.Context, req *qh_dto.AssignPlanningDocumentsToLayerRequest) error {
+	layerIDs, docIDs, err := normalizeLayerDocIDs(req)
+	if err != nil {
+		return err
+	}
+	if err := u.repo.UnassignFromLayers(ctx, layerIDs, docIDs); err != nil {
+		return &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể gỡ tài liệu khỏi layer: " + err.Error(),
 		}
 	}
 	return nil
@@ -199,6 +223,200 @@ func (u *qhPlanningDocumentUsecase) UnassignLayer(ctx context.Context, req *qh_d
 	return nil
 }
 
+func (u *qhPlanningDocumentUsecase) CreateHistory(ctx context.Context, entity *qh_domain.QHPlanningDocumentEvent) (*qh_domain.QHPlanningDocumentEvent, error) {
+	if entity == nil || entity.PlanningDocumentID == 0 {
+		return nil, &_err.ErrorDTO{
+			Code:    400,
+			Message: "planningDocumentId is required",
+		}
+	}
+	if _, err := u.repo.GetByID(ctx, entity.PlanningDocumentID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, &_err.ErrorDTO{
+				Code:    404,
+				Message: "Không tìm thấy tài liệu",
+			}
+		}
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	if err := u.repo.CreateHistory(ctx, entity); err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	created, err := u.repo.GetHistoryByID(ctx, entity.ID)
+	if err != nil {
+		return entity, nil
+	}
+	return created, nil
+}
+
+func (u *qhPlanningDocumentUsecase) DeleteHistory(ctx context.Context, documentID uint64, historyID uint64) (bool, error) {
+	if historyID == 0 {
+		return false, &_err.ErrorDTO{
+			Code:    400,
+			Message: "id is required",
+		}
+	}
+	history, err := u.repo.GetHistoryByID(ctx, historyID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &_err.ErrorDTO{
+				Code:    404,
+				Message: "Không tìm thấy lịch sử tài liệu",
+			}
+		}
+		return false, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	if documentID > 0 && history.PlanningDocumentID != documentID {
+		return false, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy lịch sử tài liệu",
+		}
+	}
+	if err := u.repo.DeleteHistory(ctx, historyID); err != nil {
+		return false, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể xóa dữ liệu",
+		}
+	}
+	return true, nil
+}
+
+func (u *qhPlanningDocumentUsecase) ListHistories(ctx context.Context, req *qh_dto.ListPlanningDocumentHistoriesRequest) ([]qh_domain.QHPlanningDocumentEvent, int64, error) {
+	if req == nil || req.PlanningDocumentID == 0 {
+		return nil, 0, &_err.ErrorDTO{
+			Code:    400,
+			Message: "planningDocumentId is required",
+		}
+	}
+	if _, err := u.repo.GetByID(ctx, req.PlanningDocumentID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, &_err.ErrorDTO{
+				Code:    404,
+				Message: "Không tìm thấy tài liệu",
+			}
+		}
+		return nil, 0, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	entities, total, err := u.repo.ListHistories(ctx, req)
+	if err != nil {
+		return nil, 0, &_err.ErrorDTO{
+			Code:    500,
+			Message: err.Error(),
+		}
+	}
+	return entities, total, nil
+}
+
+func (u *qhPlanningDocumentUsecase) GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*qh_dto.PlanningDocumentSeoSource, error) {
+	if documentID == 0 {
+		return nil, fmt.Errorf("planning_document_id is required")
+	}
+	return u.repo.GetPlanningDocumentSeoSource(ctx, documentID)
+}
+
+func (u *qhPlanningDocumentUsecase) UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error {
+	if documentID == 0 || seoID == 0 {
+		return fmt.Errorf("planning_document_id và seo_id là bắt buộc")
+	}
+	return u.repo.UpdatePlanningDocumentSeoID(ctx, documentID, seoID)
+}
+
+func (u *qhPlanningDocumentUsecase) AdminGenPlanningDocumentSeo(ctx context.Context, documentIDs []uint64) (*qh_dto.AdminGenPlanningDocumentSeoResult, error) {
+	if len(documentIDs) == 0 {
+		return nil, fmt.Errorf("docIds không được để trống")
+	}
+	if u.crmSeoProvider == nil {
+		return nil, fmt.Errorf("crm seo provider chưa được cấu hình")
+	}
+
+	uniqueIDs := uniquePositiveIDs(documentIDs)
+	if len(uniqueIDs) == 0 {
+		return nil, fmt.Errorf("docIds không hợp lệ")
+	}
+
+	sources, err := u.repo.GetPlanningDocumentSeoSourcesByIDs(ctx, uniqueIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get planning document seo sources failed: %w", err)
+	}
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("không tìm thấy tài liệu hợp lệ")
+	}
+
+	foundIDs := make([]uint64, 0, len(sources))
+	prevSeoIDByDoc := make(map[uint64]uint64, len(sources))
+	for _, source := range sources {
+		foundIDs = append(foundIDs, source.PlanningDocumentID)
+		if source.SeoID != nil && *source.SeoID > 0 {
+			prevSeoIDByDoc[source.PlanningDocumentID] = *source.SeoID
+		}
+	}
+
+	result, err := u.crmSeoProvider.GenerateSeoFromPlanningDocumentIDs(ctx, foundIDs)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		result = &qh_dto.AdminGenPlanningDocumentSeoResult{}
+	}
+
+	for i := range result.Items {
+		item := &result.Items[i]
+		if item.PlanningDocumentID == 0 || item.SeoID == 0 {
+			continue
+		}
+
+		prevSeoID := prevSeoIDByDoc[item.PlanningDocumentID]
+		switch {
+		case prevSeoID == 0:
+			item.Created = true
+			item.Message = "created"
+		case prevSeoID == item.SeoID:
+			item.Created = false
+			item.Message = "skipped"
+		default:
+			item.Created = true
+			item.Message = "linked"
+		}
+
+		if err := u.repo.UpdatePlanningDocumentSeoID(ctx, item.PlanningDocumentID, item.SeoID); err != nil {
+			item.Message = fmt.Sprintf("cập nhật seo_id thất bại: %v", err)
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("docId=%d: %v", item.PlanningDocumentID, err))
+		}
+	}
+
+	if len(foundIDs) < len(uniqueIDs) {
+		foundSet := make(map[uint64]struct{}, len(foundIDs))
+		for _, id := range foundIDs {
+			foundSet[id] = struct{}{}
+		}
+		for _, id := range uniqueIDs {
+			if _, ok := foundSet[id]; ok {
+				continue
+			}
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("docId=%d: tài liệu không tồn tại", id))
+		}
+		if result.Total < int64(len(uniqueIDs)) {
+			result.Total = int64(len(uniqueIDs))
+		}
+	}
+
+	return result, nil
+}
+
 func uniquePositiveIDs(ids []uint64) []uint64 {
 	seen := make(map[uint64]struct{}, len(ids))
 	result := make([]uint64, 0, len(ids))
@@ -213,4 +431,28 @@ func uniquePositiveIDs(ids []uint64) []uint64 {
 		result = append(result, id)
 	}
 	return result
+}
+
+func mergeLayerIDs(layerID uint64, layerIDs []uint64) []uint64 {
+	ids := make([]uint64, 0, len(layerIDs)+1)
+	if layerID > 0 {
+		ids = append(ids, layerID)
+	}
+	ids = append(ids, layerIDs...)
+	return uniquePositiveIDs(ids)
+}
+
+func normalizeLayerDocIDs(req *qh_dto.AssignPlanningDocumentsToLayerRequest) ([]uint64, []uint64, error) {
+	if req == nil {
+		return nil, nil, &_err.ErrorDTO{Code: 400, Message: "request is required"}
+	}
+	layerIDs := mergeLayerIDs(req.LayerID, req.LayerIDs)
+	if len(layerIDs) == 0 {
+		return nil, nil, &_err.ErrorDTO{Code: 400, Message: "layerIds is required"}
+	}
+	docIDs := uniquePositiveIDs(req.DocIDs)
+	if len(docIDs) == 0 {
+		return nil, nil, &_err.ErrorDTO{Code: 400, Message: "docIds is required"}
+	}
+	return layerIDs, docIDs, nil
 }

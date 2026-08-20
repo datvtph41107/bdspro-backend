@@ -64,7 +64,7 @@ func planningProjectMetadata(t *testing.T) datatypes.JSON {
 			"environment": "production",
 			"authority":   "official",
 			"sourceName":  "Cơ sở dữ liệu quy hoạch QHPro",
-			"sourceUrl":   "https://qhpro.vn/quy-hoach/tai-lieu",
+			"sourceUrl":   "https://qhpro.vn/tin-tuc/tai-lieu",
 			"quality":     "complete",
 			"updatedAt":   "2026-07-23T09:38:48+07:00",
 			"limitations": []string{"Thông tin có giá trị tham khảo; hồ sơ pháp lý gốc là căn cứ cuối cùng."},

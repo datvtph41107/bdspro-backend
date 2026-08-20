@@ -21,10 +21,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TqdPublicService_GetQhConfigApp_FullMethodName = "/tqdpb.TqdPublicService/GetQhConfigApp"
-	TqdPublicService_GetEnums_FullMethodName       = "/tqdpb.TqdPublicService/GetEnums"
-	TqdPublicService_GetPublicMaps_FullMethodName  = "/tqdpb.TqdPublicService/GetPublicMaps"
-	TqdPublicService_GetFont_FullMethodName        = "/tqdpb.TqdPublicService/GetFont"
+	TqdPublicService_GetQhConfigApp_FullMethodName        = "/tqdpb.TqdPublicService/GetQhConfigApp"
+	TqdPublicService_GetEnums_FullMethodName              = "/tqdpb.TqdPublicService/GetEnums"
+	TqdPublicService_GetPublicMaps_FullMethodName         = "/tqdpb.TqdPublicService/GetPublicMaps"
+	TqdPublicService_GetFont_FullMethodName               = "/tqdpb.TqdPublicService/GetFont"
+	TqdPublicService_CreateDefaultSeoByRef_FullMethodName = "/tqdpb.TqdPublicService/CreateDefaultSeoByRef"
 )
 
 // TqdPublicServiceClient is the client API for TqdPublicService service.
@@ -36,6 +37,7 @@ type TqdPublicServiceClient interface {
 	GetEnums(ctx context.Context, in *shared.SyncRequest, opts ...grpc.CallOption) (*shared.GetEnumsResponse, error)
 	GetPublicMaps(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetPublicMapsResponse, error)
 	GetFont(ctx context.Context, in *GetFontRequest, opts ...grpc.CallOption) (*shared.CommonResponse, error)
+	CreateDefaultSeoByRef(ctx context.Context, in *CreateDefaultSeoByRefRequest, opts ...grpc.CallOption) (*CreateDefaultSeoByRefResponse, error)
 }
 
 type tqdPublicServiceClient struct {
@@ -82,6 +84,15 @@ func (c *tqdPublicServiceClient) GetFont(ctx context.Context, in *GetFontRequest
 	return out, nil
 }
 
+func (c *tqdPublicServiceClient) CreateDefaultSeoByRef(ctx context.Context, in *CreateDefaultSeoByRefRequest, opts ...grpc.CallOption) (*CreateDefaultSeoByRefResponse, error) {
+	out := new(CreateDefaultSeoByRefResponse)
+	err := c.cc.Invoke(ctx, TqdPublicService_CreateDefaultSeoByRef_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TqdPublicServiceServer is the server API for TqdPublicService service.
 // All implementations must embed UnimplementedTqdPublicServiceServer
 // for forward compatibility
@@ -91,6 +102,7 @@ type TqdPublicServiceServer interface {
 	GetEnums(context.Context, *shared.SyncRequest) (*shared.GetEnumsResponse, error)
 	GetPublicMaps(context.Context, *emptypb.Empty) (*GetPublicMapsResponse, error)
 	GetFont(context.Context, *GetFontRequest) (*shared.CommonResponse, error)
+	CreateDefaultSeoByRef(context.Context, *CreateDefaultSeoByRefRequest) (*CreateDefaultSeoByRefResponse, error)
 	mustEmbedUnimplementedTqdPublicServiceServer()
 }
 
@@ -109,6 +121,9 @@ func (UnimplementedTqdPublicServiceServer) GetPublicMaps(context.Context, *empty
 }
 func (UnimplementedTqdPublicServiceServer) GetFont(context.Context, *GetFontRequest) (*shared.CommonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFont not implemented")
+}
+func (UnimplementedTqdPublicServiceServer) CreateDefaultSeoByRef(context.Context, *CreateDefaultSeoByRefRequest) (*CreateDefaultSeoByRefResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDefaultSeoByRef not implemented")
 }
 func (UnimplementedTqdPublicServiceServer) mustEmbedUnimplementedTqdPublicServiceServer() {}
 
@@ -195,6 +210,24 @@ func _TqdPublicService_GetFont_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TqdPublicService_CreateDefaultSeoByRef_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDefaultSeoByRefRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TqdPublicServiceServer).CreateDefaultSeoByRef(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TqdPublicService_CreateDefaultSeoByRef_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TqdPublicServiceServer).CreateDefaultSeoByRef(ctx, req.(*CreateDefaultSeoByRefRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TqdPublicService_ServiceDesc is the grpc.ServiceDesc for TqdPublicService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -217,6 +250,10 @@ var TqdPublicService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFont",
 			Handler:    _TqdPublicService_GetFont_Handler,
+		},
+		{
+			MethodName: "CreateDefaultSeoByRef",
+			Handler:    _TqdPublicService_CreateDefaultSeoByRef_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

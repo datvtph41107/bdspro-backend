@@ -47,6 +47,9 @@ type ParcelUsecase interface {
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
 	AdminGenParcelSeo(ctx context.Context, parcelIDs []uint64) (*dto.AdminGenParcelSeoResult, error)
 	AdminListParcels(ctx context.Context, search string, page, limit int) ([]dto.AdminParcelListItem, int64, error)
+	AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error)
+	AdminGetParcelNeighbors(ctx context.Context, parcelID uint64) ([]dto.NearbyParcelItem, error)
+	AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) (*dto.AdminParcelDetail, error)
 
 	GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_dto.ParcelDetailResponseDTO, error)
 	GetParcelLayers(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]*dto.LayerImpact, int64, error)
@@ -1855,6 +1858,43 @@ func (u *parcelUsecase) AdminListParcels(ctx context.Context, search string, pag
 		return nil, 0, fmt.Errorf("admin list parcels failed: %w", err)
 	}
 	return rows, total, nil
+}
+
+func (u *parcelUsecase) AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	detail, err := u.parcelRepo.AdminGetParcel(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("admin get parcel failed: %w", err)
+	}
+	if detail == nil {
+		return nil, fmt.Errorf("parcel %d not found", parcelID)
+	}
+	return detail, nil
+}
+
+const adminParcelNeighborLimit = 10
+
+func (u *parcelUsecase) AdminGetParcelNeighbors(ctx context.Context, parcelID uint64) ([]dto.NearbyParcelItem, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	rows, err := u.parcelRepo.FindParcelsAround(ctx, parcelID, adminParcelNeighborLimit)
+	if err != nil {
+		return nil, fmt.Errorf("admin get parcel neighbors failed: %w", err)
+	}
+	return rows, nil
+}
+
+func (u *parcelUsecase) AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) (*dto.AdminParcelDetail, error) {
+	if req == nil || req.ParcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	if err := u.parcelRepo.AdminUpdateParcel(ctx, req); err != nil {
+		return nil, err
+	}
+	return u.AdminGetParcel(ctx, req.ParcelID)
 }
 
 // GetParcelDetail — Lấy tổng quan thửa đất

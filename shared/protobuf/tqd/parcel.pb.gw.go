@@ -1129,14 +1129,14 @@ func request_ParcelService_GetWardQuickLayers_0(ctx context.Context, marshaler r
 		_   = err
 	)
 
-	val, ok = pathParams["wardId"]
+	val, ok = pathParams["compositeId"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wardId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "compositeId")
 	}
 
-	protoReq.WardId, err = runtime.Uint64(val)
+	protoReq.CompositeId, err = runtime.Uint64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wardId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "compositeId", err)
 	}
 
 	msg, err := client.GetWardQuickLayers(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1155,14 +1155,14 @@ func local_request_ParcelService_GetWardQuickLayers_0(ctx context.Context, marsh
 		_   = err
 	)
 
-	val, ok = pathParams["wardId"]
+	val, ok = pathParams["compositeId"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "wardId")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "compositeId")
 	}
 
-	protoReq.WardId, err = runtime.Uint64(val)
+	protoReq.CompositeId, err = runtime.Uint64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "wardId", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "compositeId", err)
 	}
 
 	msg, err := server.GetWardQuickLayers(ctx, &protoReq)
@@ -1600,6 +1600,178 @@ func local_request_ParcelService_AdminListParcels_0(ctx context.Context, marshal
 	}
 
 	msg, err := server.AdminListParcels(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_ParcelService_AdminGetParcel_0(ctx context.Context, marshaler runtime.Marshaler, client ParcelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminGetParcelRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := client.AdminGetParcel(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_ParcelService_AdminGetParcel_0(ctx context.Context, marshaler runtime.Marshaler, server ParcelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminGetParcelRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := server.AdminGetParcel(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_ParcelService_AdminGetParcelNeighbors_0(ctx context.Context, marshaler runtime.Marshaler, client ParcelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminGetParcelNeighborsRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := client.AdminGetParcelNeighbors(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_ParcelService_AdminGetParcelNeighbors_0(ctx context.Context, marshaler runtime.Marshaler, server ParcelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminGetParcelNeighborsRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := server.AdminGetParcelNeighbors(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_ParcelService_AdminUpdateParcel_0(ctx context.Context, marshaler runtime.Marshaler, client ParcelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminUpdateParcelRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := client.AdminUpdateParcel(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_ParcelService_AdminUpdateParcel_0(ctx context.Context, marshaler runtime.Marshaler, server ParcelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AdminUpdateParcelRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["parcelId"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parcelId")
+	}
+
+	protoReq.ParcelId, err = runtime.Uint64(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parcelId", err)
+	}
+
+	msg, err := server.AdminUpdateParcel(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -2093,7 +2265,7 @@ func RegisterParcelServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.ParcelService/GetWardQuickLayers", runtime.WithHTTPPathPattern("/v2/tqd/client/wards/{wardId}/quick-layers"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.ParcelService/GetWardQuickLayers", runtime.WithHTTPPathPattern("/v2/tqd/client/administrative-units/{compositeId}/quick-layers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2307,6 +2479,81 @@ func RegisterParcelServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 
 		forward_ParcelService_AdminListParcels_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_ParcelService_AdminGetParcel_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.ParcelService/AdminGetParcel", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ParcelService_AdminGetParcel_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminGetParcel_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_ParcelService_AdminGetParcelNeighbors_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.ParcelService/AdminGetParcelNeighbors", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}/neighbors"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ParcelService_AdminGetParcelNeighbors_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminGetParcelNeighbors_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("PUT", pattern_ParcelService_AdminUpdateParcel_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/tqdpb.ParcelService/AdminUpdateParcel", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ParcelService_AdminUpdateParcel_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminUpdateParcel_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2775,7 +3022,7 @@ func RegisterParcelServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.ParcelService/GetWardQuickLayers", runtime.WithHTTPPathPattern("/v2/tqd/client/wards/{wardId}/quick-layers"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.ParcelService/GetWardQuickLayers", runtime.WithHTTPPathPattern("/v2/tqd/client/administrative-units/{compositeId}/quick-layers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2967,6 +3214,72 @@ func RegisterParcelServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
+	mux.Handle("GET", pattern_ParcelService_AdminGetParcel_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.ParcelService/AdminGetParcel", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_ParcelService_AdminGetParcel_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminGetParcel_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_ParcelService_AdminGetParcelNeighbors_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.ParcelService/AdminGetParcelNeighbors", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}/neighbors"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_ParcelService_AdminGetParcelNeighbors_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminGetParcelNeighbors_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("PUT", pattern_ParcelService_AdminUpdateParcel_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/tqdpb.ParcelService/AdminUpdateParcel", runtime.WithHTTPPathPattern("/v2/tqd/admin/parcels/{parcelId}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_ParcelService_AdminUpdateParcel_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ParcelService_AdminUpdateParcel_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -3009,7 +3322,7 @@ var (
 
 	pattern_ParcelService_GetParcelQuickLayers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"v2", "tqd", "qh", "public", "parcels", "parcelId", "quick-layers"}, ""))
 
-	pattern_ParcelService_GetWardQuickLayers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "wards", "wardId", "quick-layers"}, ""))
+	pattern_ParcelService_GetWardQuickLayers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "client", "administrative-units", "compositeId", "quick-layers"}, ""))
 
 	pattern_ParcelService_GetParcelTimeline_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v2", "tqd", "parcels", "parcelId", "timeline"}, ""))
 
@@ -3026,6 +3339,12 @@ var (
 	pattern_ParcelService_AdminGenParcelSeo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"v2", "tqd", "admin", "parcels", "gen-seo"}, ""))
 
 	pattern_ParcelService_AdminListParcels_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "tqd", "admin", "parcels"}, ""))
+
+	pattern_ParcelService_AdminGetParcel_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "tqd", "admin", "parcels", "parcelId"}, ""))
+
+	pattern_ParcelService_AdminGetParcelNeighbors_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v2", "tqd", "admin", "parcels", "parcelId", "neighbors"}, ""))
+
+	pattern_ParcelService_AdminUpdateParcel_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "tqd", "admin", "parcels", "parcelId"}, ""))
 )
 
 var (
@@ -3084,4 +3403,10 @@ var (
 	forward_ParcelService_AdminGenParcelSeo_0 = runtime.ForwardResponseMessage
 
 	forward_ParcelService_AdminListParcels_0 = runtime.ForwardResponseMessage
+
+	forward_ParcelService_AdminGetParcel_0 = runtime.ForwardResponseMessage
+
+	forward_ParcelService_AdminGetParcelNeighbors_0 = runtime.ForwardResponseMessage
+
+	forward_ParcelService_AdminUpdateParcel_0 = runtime.ForwardResponseMessage
 )

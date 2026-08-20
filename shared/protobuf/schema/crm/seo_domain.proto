@@ -242,6 +242,13 @@ service SeoDomainService {
     };
   }
 
+  rpc GenerateSeoFromPlanningDocuments(GenerateSeoFromPlanningDocumentsRequest) returns (GenerateSeoFromPlanningDocumentsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/planning-documents/generate"
+      body: "*"
+    };
+  }
+
   rpc TouchSeoDomainByRef(TouchSeoDomainByRefRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/touch-by-ref"
@@ -1144,6 +1151,19 @@ message GenerateSeoFromAdministrativeUnitsRequest {
 }
 
 message GenerateSeoFromAdministrativeUnitsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromPlanningDocumentsRequest {
+  repeated uint64 docIds = 1;
+}
+
+message GenerateSeoFromPlanningDocumentsResponse {
   repeated SeoDomainResponse data = 1;
   int64 total = 2;
   int64 created = 3;

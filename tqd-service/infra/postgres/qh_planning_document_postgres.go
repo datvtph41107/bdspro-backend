@@ -1,9 +1,14 @@
 package postgres
 
 import (
-	_db "common/db"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
+
+	_db "common/db"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
@@ -30,7 +35,33 @@ func (r *QHPlanningDocumentRepo) Create(ctx context.Context, entity *qh_domain.Q
 
 func (r *QHPlanningDocumentRepo) Update(ctx context.Context, id uint64, entity *qh_domain.QHPlanningDocument) error {
 	normalizePlanningDocumentExt(entity)
-	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("id = ?", id).Updates(entity).Error
+	status := entity.Status
+	if status == 0 {
+		status = enums.PlanningDocumentStatusNormal
+	}
+	updates := map[string]interface{}{
+		"planning_project_id": entity.PlanningProjectID,
+		"document_type":       entity.DocumentType,
+		"status":              status,
+		"code":                entity.Code,
+		"title":               entity.Title,
+		"description":         entity.Description,
+		"filepath":            entity.Filepath,
+		"ext":                 entity.Ext,
+		"thumbnail":           entity.Thumbnail,
+		"version_no":          entity.VersionNo,
+		"validity_status":     entity.ValidityStatus,
+		"issue_date":          entity.IssueDate,
+		"effective_date":      entity.EffectiveDate,
+		"metadata":            postgresJSONValue(entity.Metadata, "{}"),
+		"indicators":          postgresJSONValue(entity.Indicators, "[]"),
+		"authority":           entity.Authority,
+		"sector":              entity.Sector,
+		"field":               entity.Field,
+		"signer":              entity.Signer,
+		"relative_path":       entity.RelativePath,
+	}
+	return r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocument{}).Where("id = ? AND deleted_at IS NULL", id).Updates(updates).Error
 }
 
 func normalizePlanningDocumentExt(entity *qh_domain.QHPlanningDocument) {
@@ -38,6 +69,14 @@ func normalizePlanningDocumentExt(entity *qh_domain.QHPlanningDocument) {
 		return
 	}
 	entity.Ext = tqdutils.ResolveDocumentExt(entity.RelativePath, entity.Filepath)
+}
+
+func postgresJSONValue(raw, fallback string) clause.Expr {
+	value := strings.TrimSpace(raw)
+	if value == "" || !json.Valid([]byte(value)) {
+		value = fallback
+	}
+	return gorm.Expr("?::jsonb", value)
 }
 
 func (r *QHPlanningDocumentRepo) Delete(ctx context.Context, id uint64) error {
@@ -64,6 +103,13 @@ func (r *QHPlanningDocumentRepo) GetAll(ctx context.Context) ([]qh_domain.QHPlan
 }
 
 func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error) {
+	if req == nil {
+		req = &qh_dto.ListPlanningDocumentsRequest{}
+	}
+	if req.ParcelID > 0 {
+		return r.getListByParcelRelation(ctx, req)
+	}
+
 	var documents []qh_domain.QHPlanningDocument
 	var total int64
 
@@ -78,19 +124,30 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 	if req.ValidityStatus != "" {
 		db = db.Where("qh_planning_documents.validity_status = ?", req.ValidityStatus)
 	}
-	if req.LayerID != 0 {
-		db = db.Joins("JOIN layer_plan_doc_relation rel ON rel.planning_document_id = qh_planning_documents.id AND rel.deleted_at IS NULL").
-			Where("rel.layer_id = ?", req.LayerID)
+	if keyword := strings.ToLower(strings.TrimSpace(req.Keyword)); keyword != "" {
+		pattern := "%" + keyword + "%"
+		db = db.Where(`(
+			LOWER(unaccent(COALESCE(qh_planning_documents.title,''))) LIKE LOWER(unaccent(?)) OR
+			LOWER(unaccent(COALESCE(qh_planning_documents.code,''))) LIKE LOWER(unaccent(?)) OR
+			LOWER(unaccent(COALESCE(qh_planning_documents.description,''))) LIKE LOWER(unaccent(?))
+		)`, pattern, pattern, pattern)
+	}
+	layerIDs := tqdutils.MergePositiveUint64(req.LayerID, req.LayerIDs)
+	if len(layerIDs) > 0 {
+		// Lọc tài liệu gắn trực tiếp với layer qua layer_plan_doc_relation.
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			WHERE rel.planning_document_id = qh_planning_documents.id
+			  AND rel.deleted_at IS NULL
+			  AND rel.layer_id IN ?
+		)`, layerIDs)
 	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	order := "qh_planning_documents.created_at DESC"
-	if req.LayerID != 0 {
-		order = "rel.sort_order ASC, qh_planning_documents.id ASC"
-	}
+	order := "qh_planning_documents.updated_at DESC NULLS LAST, qh_planning_documents.id DESC"
 
 	err := db.Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
@@ -98,6 +155,102 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 		Find(&documents).Error
 
 	return documents, total, err
+}
+
+func (r *QHPlanningDocumentRepo) getListByParcelRelation(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error) {
+	page := int(req.GetPage())
+	size := int(req.GetLimit())
+	if page < 0 {
+		page = 0
+	}
+	if size <= 0 {
+		size = 20
+	}
+
+	layerIDs := tqdutils.MergePositiveUint64(req.LayerID, req.LayerIDs)
+
+	baseSQL := `
+		WITH parcel_layers AS (
+			SELECT DISTINCT r.layer_id
+			FROM parcels p
+			JOIN qh_regions r
+			  ON r.geometry && p.geometry
+			 AND ST_Intersects(r.geometry, p.geometry)
+			JOIN qh_layers l
+			  ON l.id = r.layer_id
+			 AND l.deleted_at IS NULL
+			 AND l.status = 10
+			WHERE p.id = ?
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			  AND r.deleted_at IS NULL
+			  AND r.status = 10
+			  AND r.is_latest = true
+			  AND r.geometry IS NOT NULL
+	`
+	args := []any{req.ParcelID}
+	if len(layerIDs) > 0 {
+		baseSQL += ` AND r.layer_id IN ?`
+		args = append(args, layerIDs)
+	}
+	baseSQL += `
+		),
+		ranked AS (
+			SELECT
+				rel.planning_document_id,
+				MIN(rel.sort_order) AS sort_order,
+				MIN(rel.id) AS rel_id
+			FROM layer_plan_doc_relation rel
+			JOIN parcel_layers pl ON pl.layer_id = rel.layer_id
+			WHERE rel.deleted_at IS NULL
+			GROUP BY rel.planning_document_id
+		)
+		SELECT %s
+		FROM ranked rr
+		JOIN qh_planning_documents d ON d.id = rr.planning_document_id AND d.deleted_at IS NULL
+		WHERE 1=1
+	`
+	if req.PlanningProjectID != 0 {
+		baseSQL += ` AND d.planning_project_id = ?`
+		args = append(args, req.PlanningProjectID)
+	}
+	if req.DocumentType != "" {
+		baseSQL += ` AND d.document_type = ?`
+		args = append(args, req.DocumentType)
+	}
+	if req.ValidityStatus != "" {
+		baseSQL += ` AND d.validity_status = ?`
+		args = append(args, req.ValidityStatus)
+	}
+	if keyword := strings.ToLower(strings.TrimSpace(req.Keyword)); keyword != "" {
+		pattern := "%" + keyword + "%"
+		baseSQL += ` AND (
+			LOWER(unaccent(COALESCE(d.title,''))) LIKE LOWER(unaccent(?)) OR
+			LOWER(unaccent(COALESCE(d.code,''))) LIKE LOWER(unaccent(?)) OR
+			LOWER(unaccent(COALESCE(d.description,''))) LIKE LOWER(unaccent(?))
+		)`
+		args = append(args, pattern, pattern, pattern)
+	}
+
+	countSQL := fmt.Sprintf(baseSQL, "COUNT(*)")
+	var total int64
+	if err := r.db.GetDB(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count planning documents by parcel failed: %w", err)
+	}
+	if total == 0 {
+		return []qh_domain.QHPlanningDocument{}, 0, nil
+	}
+
+	listSQL := fmt.Sprintf(baseSQL, "d.*") + `
+		ORDER BY rr.sort_order ASC, rr.rel_id ASC
+		OFFSET ? LIMIT ?
+	`
+	listArgs := append(append([]any{}, args...), page*size, size)
+	var documents []qh_domain.QHPlanningDocument
+	if err := r.db.GetDB(ctx).Raw(listSQL, listArgs...).Scan(&documents).Error; err != nil {
+		return nil, 0, fmt.Errorf("list planning documents by parcel failed: %w", err)
+	}
+	return documents, total, nil
 }
 
 func (r *QHPlanningDocumentRepo) CountByProject(ctx context.Context, projectID uint64) (int64, error) {
@@ -160,18 +313,20 @@ func (r *QHPlanningDocumentRepo) ResetFailedClassifyByProject(ctx context.Contex
 	return tx.RowsAffected, tx.Error
 }
 
-func (r *QHPlanningDocumentRepo) AssignToLayer(ctx context.Context, layerID uint64, docIDs []uint64) error {
+func (r *QHPlanningDocumentRepo) AssignToLayers(ctx context.Context, layerIDs, docIDs []uint64) error {
 	now := time.Now()
-	rows := make([]map[string]any, 0, len(docIDs))
-	for i, docID := range docIDs {
-		rows = append(rows, map[string]any{
-			"layer_id":             layerID,
-			"planning_document_id": docID,
-			"sort_order":           i,
-			"created_at":           now,
-			"updated_at":           now,
-			"deleted_at":           nil,
-		})
+	rows := make([]map[string]any, 0, len(layerIDs)*len(docIDs))
+	for _, layerID := range layerIDs {
+		for i, docID := range docIDs {
+			rows = append(rows, map[string]any{
+				"layer_id":             layerID,
+				"planning_document_id": docID,
+				"sort_order":           i,
+				"created_at":           now,
+				"updated_at":           now,
+				"deleted_at":           nil,
+			})
+		}
 	}
 	return r.db.GetDB(ctx).Table("layer_plan_doc_relation").
 		Clauses(clause.OnConflict{
@@ -184,6 +339,13 @@ func (r *QHPlanningDocumentRepo) AssignToLayer(ctx context.Context, layerID uint
 		}).Create(&rows).Error
 }
 
+func (r *QHPlanningDocumentRepo) UnassignFromLayers(ctx context.Context, layerIDs, docIDs []uint64) error {
+	return r.db.GetDB(ctx).
+		Unscoped().
+		Where("layer_id IN ? AND planning_document_id IN ?", layerIDs, docIDs).
+		Delete(&qh_domain.LayerPlanDocRelation{}).Error
+}
+
 func (r *QHPlanningDocumentRepo) UnassignLayer(ctx context.Context, planningID, layerID uint64) error {
 	return r.db.GetDB(ctx).
 		Where("layer_id = ? AND deleted_at IS NULL AND planning_document_id IN (?)", layerID,
@@ -192,4 +354,115 @@ func (r *QHPlanningDocumentRepo) UnassignLayer(ctx context.Context, planningID, 
 				Where("planning_project_id = ? AND deleted_at IS NULL", planningID),
 		).
 		Delete(&qh_domain.LayerPlanDocRelation{}).Error
+}
+
+func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*qh_dto.PlanningDocumentSeoSource, error) {
+	var source qh_dto.PlanningDocumentSeoSource
+	err := r.db.GetDB(ctx).
+		Raw(`
+			SELECT
+				id AS planning_document_id,
+				COALESCE(NULLIF(title, ''), '') AS title,
+				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
+				seo_id AS seo_id
+			FROM qh_planning_documents
+			WHERE id = ? AND deleted_at IS NULL
+			LIMIT 1
+		`, documentID).
+		Scan(&source).Error
+	if err != nil {
+		return nil, fmt.Errorf("get planning document seo source failed: %w", err)
+	}
+	if source.PlanningDocumentID == 0 {
+		return nil, nil
+	}
+	return &source, nil
+}
+
+func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSourcesByIDs(ctx context.Context, documentIDs []uint64) ([]qh_dto.PlanningDocumentSeoSource, error) {
+	ids := dedupeNonZeroUint64(documentIDs)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	var sources []qh_dto.PlanningDocumentSeoSource
+	err := r.db.GetDB(ctx).
+		Raw(`
+			SELECT
+				id AS planning_document_id,
+				COALESCE(NULLIF(title, ''), '') AS title,
+				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
+				seo_id AS seo_id
+			FROM qh_planning_documents
+			WHERE id IN ? AND deleted_at IS NULL
+		`, ids).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get planning document seo sources failed: %w", err)
+	}
+	return sources, nil
+}
+
+func (r *QHPlanningDocumentRepo) UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error {
+	if documentID == 0 || seoID == 0 {
+		return errors.New("planning_document_id và seo_id là bắt buộc")
+	}
+	return r.db.GetDB(ctx).
+		Model(&qh_domain.QHPlanningDocument{}).
+		Where("id = ? AND deleted_at IS NULL", documentID).
+		Update("seo_id", seoID).Error
+}
+
+func (r *QHPlanningDocumentRepo) CreateHistory(ctx context.Context, entity *qh_domain.QHPlanningDocumentEvent) error {
+	normalizePlanningDocumentHistory(entity)
+	return r.db.GetDB(ctx).Create(entity).Error
+}
+
+func (r *QHPlanningDocumentRepo) DeleteHistory(ctx context.Context, id uint64) error {
+	return r.db.GetDB(ctx).Unscoped().Where("id = ?", id).Delete(&qh_domain.QHPlanningDocumentEvent{}).Error
+}
+
+func (r *QHPlanningDocumentRepo) GetHistoryByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocumentEvent, error) {
+	var entity qh_domain.QHPlanningDocumentEvent
+	err := r.db.GetDB(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *QHPlanningDocumentRepo) ListHistories(ctx context.Context, req *qh_dto.ListPlanningDocumentHistoriesRequest) ([]qh_domain.QHPlanningDocumentEvent, int64, error) {
+	if req == nil {
+		req = &qh_dto.ListPlanningDocumentHistoriesRequest{}
+	}
+
+	var entities []qh_domain.QHPlanningDocumentEvent
+	var total int64
+
+	db := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningDocumentEvent{}).Where("deleted_at IS NULL")
+	if req.PlanningDocumentID != 0 {
+		db = db.Where("planning_document_id = ?", req.PlanningDocumentID)
+	}
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := db.
+		Offset(req.GetOffset()).
+		Limit(req.GetLimit()).
+		Order("event_date DESC NULLS LAST, created_at DESC").
+		Find(&entities).Error; err != nil {
+		return nil, 0, err
+	}
+	return entities, total, nil
+}
+
+func normalizePlanningDocumentHistory(entity *qh_domain.QHPlanningDocumentEvent) {
+	if entity == nil {
+		return
+	}
+	if len(entity.Metadata) == 0 {
+		entity.Metadata = []byte("{}")
+	}
 }

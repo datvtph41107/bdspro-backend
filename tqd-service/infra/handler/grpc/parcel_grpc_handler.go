@@ -13,6 +13,7 @@ import (
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/infra/validator"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 	"tqd/internal/usecase"
@@ -1043,6 +1044,90 @@ func (h *ParcelGrpcHandler) AdminListParcels(ctx context.Context, req *tqdpb.Adm
 		Data:  h.mapper.ToProtoAdminParcelListItems(rows),
 		Total: total,
 	}, nil
+}
+
+// AdminGetParcel — chi tiết thửa đất cho admin.
+// @Summary Admin chi tiết thửa đất
+// @Description Trả thông tin chi tiết thửa đất cho màn admin
+// @Tags Parcel Admin
+// @Produce json
+// @Security BearerAuth
+// @Param parcelId path int true "Parcel ID"
+// @Success 200 {object} tqdpb.AdminParcelDetail
+// @Router /v2/tqd/admin/parcels/{parcelId} [get]
+// @bind: internal/usecase.ParcelUsecase
+func (h *ParcelGrpcHandler) AdminGetParcel(ctx context.Context, req *tqdpb.AdminGetParcelRequest) (*tqdpb.AdminParcelDetail, error) {
+	if req == nil || req.GetParcelId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
+	}
+
+	detail, err := h.usecase.AdminGetParcel(ctx, req.GetParcelId())
+	if err != nil {
+		log.Printf("[AdminGetParcel] Error: %v", err)
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.mapper.ToProtoAdminParcelDetail(detail), nil
+}
+
+// AdminGetParcelNeighbors — thửa lân cận theo geometry.
+// @Summary Admin thửa lân cận
+// @Description Quét geometry quanh thửa hiện tại, trả tối đa 10 thửa (ưu tiên tiếp giáp, rồi gần nhất)
+// @Tags Parcel Admin
+// @Produce json
+// @Security BearerAuth
+// @Param parcelId path int true "Parcel ID"
+// @Success 200 {object} tqdpb.AdminGetParcelNeighborsResponse
+// @Router /v2/tqd/admin/parcels/{parcelId}/neighbors [get]
+// @bind: internal/usecase.ParcelUsecase
+func (h *ParcelGrpcHandler) AdminGetParcelNeighbors(ctx context.Context, req *tqdpb.AdminGetParcelNeighborsRequest) (*tqdpb.AdminGetParcelNeighborsResponse, error) {
+	if req == nil || req.GetParcelId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
+	}
+
+	rows, err := h.usecase.AdminGetParcelNeighbors(ctx, req.GetParcelId())
+	if err != nil {
+		log.Printf("[AdminGetParcelNeighbors] Error: %v", err)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &tqdpb.AdminGetParcelNeighborsResponse{
+		Data:  h.mapper.ToProtoAdminParcelNeighbors(rows),
+		Total: int64(len(rows)),
+	}, nil
+}
+
+// AdminUpdateParcel — sửa thông tin thửa đất cho admin.
+// @Summary Admin sửa thửa đất
+// @Description Cập nhật thông tin metadata thửa đất (địa chỉ, tờ/thửa, tọa độ, diện tích)
+// @Tags Parcel Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param parcelId path int true "Parcel ID"
+// @Param body body tqdpb.AdminUpdateParcelRequest true "AdminUpdateParcelRequest"
+// @Success 200 {object} tqdpb.AdminParcelDetail
+// @Router /v2/tqd/admin/parcels/{parcelId} [put]
+// @bind: internal/usecase.ParcelUsecase
+func (h *ParcelGrpcHandler) AdminUpdateParcel(ctx context.Context, req *tqdpb.AdminUpdateParcelRequest) (*tqdpb.AdminParcelDetail, error) {
+	dtoReq := h.mapper.ToAdminUpdateParcelDTO(req)
+	if err := validator.NewParcelValidator().ValidateAdminUpdate(dtoReq); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	detail, err := h.usecase.AdminUpdateParcel(ctx, dtoReq)
+	if err != nil {
+		log.Printf("[AdminUpdateParcel] Error: %v", err)
+		if strings.Contains(err.Error(), "not found") {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return h.mapper.ToProtoAdminParcelDetail(detail), nil
 }
 
 func parcelSeoSourceToProto(source *dto.ParcelSeoSource) *tqdpb.ParcelSeoSourceResponse {

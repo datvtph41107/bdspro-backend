@@ -339,6 +339,66 @@ func (u *SeoDomainUsecase) GenerateSeoFromPlanningProjects(ctx context.Context, 
 	return processedItems, result, nil
 }
 
+func (u *SeoDomainUsecase) GenerateSeoFromPlanningDocuments(ctx context.Context, req *dto.GenerateSeoFromPlanningDocumentsRequest) ([]seo_domain.SeoDomain, *dto.GenerateSeoFromPlanningDocumentsResult, error) {
+	if u.tqdProvider == nil {
+		return nil, nil, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
+	}
+
+	docIDs := []uint64(nil)
+	if req != nil {
+		docIDs = req.DocIDs
+	}
+	if len(docIDs) == 0 {
+		return nil, nil, _errors.ReturnError(400, "docIds không được để trống")
+	}
+
+	log.Printf("[SEO_GENERATE_PLANNING_DOCUMENT] start generate seo from explicit docIds total=%d", len(docIDs))
+	sources := make([]dto.PlanningDocumentSeoSource, 0, len(docIDs))
+	for _, documentID := range docIDs {
+		if documentID == 0 {
+			continue
+		}
+		source, sourceErr := u.tqdProvider.GetPlanningDocumentSeoSource(ctx, documentID)
+		if sourceErr != nil {
+			log.Printf("[SEO_GENERATE_PLANNING_DOCUMENT] get planning document seo source failed docId=%d error=%v", documentID, sourceErr)
+			return nil, nil, sourceErr
+		}
+		if source == nil {
+			log.Printf("[SEO_GENERATE_PLANNING_DOCUMENT] planning document seo source not found docId=%d", documentID)
+			continue
+		}
+		sources = append(sources, *source)
+	}
+	log.Printf("[SEO_GENERATE_PLANNING_DOCUMENT] received planning document seo sources total=%d", len(sources))
+
+	result := &dto.GenerateSeoFromPlanningDocumentsResult{
+		Total: int64(len(sources)),
+	}
+	processedItems := make([]seo_domain.SeoDomain, 0, len(sources))
+
+	for i := range sources {
+		seoDomain, created, err := u.createSeoFromPlanningDocumentSource(ctx, sources[i])
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("docId=%d: %v", sources[i].PlanningDocumentID, err))
+			continue
+		}
+		if seoDomain == nil {
+			result.Skipped++
+			continue
+		}
+		if created {
+			result.Created++
+		} else {
+			result.Skipped++
+		}
+		processedItems = append(processedItems, *seoDomain)
+	}
+
+	log.Printf("[SEO_GENERATE_PLANNING_DOCUMENT] done total=%d created=%d skipped=%d failed=%d", result.Total, result.Created, result.Skipped, result.Failed)
+	return processedItems, result, nil
+}
+
 func (u *SeoDomainUsecase) GenerateSeoFromAdministrativeUnits(ctx context.Context, req *dto.GenerateSeoFromAdministrativeUnitsRequest) ([]seo_domain.SeoDomain, *dto.GenerateSeoFromAdministrativeUnitsResult, error) {
 	if u.tqdProvider == nil {
 		return nil, nil, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
@@ -845,6 +905,149 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 			return _errors.ReturnError(500, "tạo seo domain thất bại")
 		}
 		if err := u.tqdProvider.UpdatePlanningProjectSeoID(txCtx, source.PlanningProjectID, createdSeo.ID); err != nil {
+			return err
+		}
+		created = createdSeo
+		return nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	return created, true, nil
+}
+
+func (u *SeoDomainUsecase) createSeoFromPlanningDocumentSource(ctx context.Context, source dto.PlanningDocumentSeoSource) (*seo_domain.SeoDomain, bool, error) {
+	if u.tqdProvider == nil {
+		return nil, false, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
+	}
+
+	documentURL, err := buildPlanningDocumentSeoURL(source.PlanningDocumentID, source.Slug, source.Title)
+	if err != nil {
+		return nil, false, err
+	}
+
+	metadataBytes, err := json.Marshal(map[string]interface{}{
+		"planningDocumentId": source.PlanningDocumentID,
+		"title":              source.Title,
+		"slug":               source.Slug,
+		"source":             seo_domain.SeoRefSourceTqdDocument,
+		"sourceKey":          "document",
+	})
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	refID := source.PlanningDocumentID
+	documentUpdates := map[string]interface{}{
+		"slug":                resolvePlanningDocumentSeoSlug(source.Slug, source.Title, source.PlanningDocumentID),
+		"origin_url":          documentURL,
+		"canonical_url":       documentURL,
+		"ref_type":            uint32(enums.ESEORefTypeDocument),
+		"ref_id":              refID,
+		"ref_source":          seo_domain.SeoRefSourceTqdDocument,
+		"ref_label":           firstNonEmpty(source.Title, fmt.Sprintf("Tài liệu quy hoạch #%d", source.PlanningDocumentID)),
+		"ref_url":             documentURL,
+		"source_status":       seo_domain.SeoSourceStatusLinked,
+		"ref_missing":         false,
+		"ref_snapshot_json":   datatypes.JSON(metadataBytes),
+		"ref_hash":            hashString(string(metadataBytes)),
+		"ref_last_synced_at":  now,
+		"scope":               seo_domain.SeoScopePublic,
+		"classify":            uint32(enums.ESeoClassifyA),
+		"title":               buildPlanningDocumentSeoTitle(source.Title, source.PlanningDocumentID),
+		"description":         buildPlanningDocumentSeoDescription(source.Title, source.PlanningDocumentID),
+		"published":           true,
+		"published_at":        now,
+		"is_site_map":         true,
+		"is_index":            true,
+		"site_map_lasted_at":  now,
+		"sitemap_priority":    0.7,
+		"sitemap_change_freq": seo_domain.SeoChangeFreqWeekly,
+		"need_generate":       true,
+		"source_updated_at":   now,
+		"metadata":            datatypes.JSON(metadataBytes),
+	}
+
+	if source.SeoID != nil && *source.SeoID > 0 {
+		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
+		if err != nil {
+			return nil, false, err
+		}
+		if existing != nil {
+			if err := u.seoDomainRepo.Update(ctx, existing.ID, documentUpdates); err != nil {
+				return nil, false, err
+			}
+			if err := u.tqdProvider.UpdatePlanningDocumentSeoID(ctx, source.PlanningDocumentID, existing.ID); err != nil {
+				return nil, false, err
+			}
+			updated, err := u.seoDomainRepo.GetByID(ctx, existing.ID)
+			if err != nil {
+				return nil, false, err
+			}
+			return updated, false, nil
+		}
+	}
+
+	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, documentURL)
+	if err != nil {
+		return nil, false, err
+	}
+	if existingByURL != nil {
+		if err := u.seoDomainRepo.Update(ctx, existingByURL.ID, documentUpdates); err != nil {
+			return nil, false, err
+		}
+		if err := u.tqdProvider.UpdatePlanningDocumentSeoID(ctx, source.PlanningDocumentID, existingByURL.ID); err != nil {
+			return nil, false, err
+		}
+		updated, err := u.seoDomainRepo.GetByID(ctx, existingByURL.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		return updated, false, nil
+	}
+
+	seoDomain := &seo_domain.SeoDomain{
+		Slug:              resolvePlanningDocumentSeoSlug(source.Slug, source.Title, source.PlanningDocumentID),
+		OriginURL:         documentURL,
+		CanonicalURL:      documentURL,
+		RefType:           enums.ESEORefTypeDocument,
+		RefID:             &refID,
+		RefSource:         seo_domain.SeoRefSourceTqdDocument,
+		RefLabel:          firstNonEmpty(source.Title, fmt.Sprintf("Tài liệu quy hoạch #%d", source.PlanningDocumentID)),
+		RefURL:            documentURL,
+		SourceStatus:      seo_domain.SeoSourceStatusLinked,
+		RefMissing:        false,
+		RefSnapshotJSON:   datatypes.JSON(metadataBytes),
+		RefHash:           hashString(string(metadataBytes)),
+		RefLastSyncedAt:   &now,
+		Scope:             seo_domain.SeoScopePublic,
+		Classify:          enums.ESeoClassifyA,
+		Title:             buildPlanningDocumentSeoTitle(source.Title, source.PlanningDocumentID),
+		Description:       buildPlanningDocumentSeoDescription(source.Title, source.PlanningDocumentID),
+		Published:         true,
+		PublishedAt:       &now,
+		IsSiteMap:         true,
+		IsIndex:           true,
+		SiteMapLastedAt:   &now,
+		SitemapPriority:   0.7,
+		SitemapChangeFreq: seo_domain.SeoChangeFreqWeekly,
+		NeedGenerate:      true,
+		SourceUpdatedAt:   &now,
+		Metadata:          datatypes.JSON(metadataBytes),
+	}
+
+	var created *seo_domain.SeoDomain
+	err = u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		createdSeo, err := u.seoDomainRepo.Create(txCtx, seoDomain)
+		if err != nil {
+			return err
+		}
+		if createdSeo == nil || createdSeo.ID == 0 {
+			return _errors.ReturnError(500, "tạo seo domain thất bại")
+		}
+		if err := u.tqdProvider.UpdatePlanningDocumentSeoID(txCtx, source.PlanningDocumentID, createdSeo.ID); err != nil {
 			return err
 		}
 		created = createdSeo
@@ -2420,6 +2623,7 @@ var nonSlugChars = regexp.MustCompile(`[^a-z0-9/_-]+`)
 
 // removeVietnameseDiacritics chuyển chuỗi Unicode sang ASCII bằng NFD decomposition rồi loại bỏ combining marks.
 func removeVietnameseDiacritics(s string) string {
+	s = strings.NewReplacer("đ", "d", "Đ", "D").Replace(s)
 	t := transform.Chain(norm.NFD, transform.RemoveFunc(func(r rune) bool {
 		return unicode.Is(unicode.Mn, r)
 	}), norm.NFC)
@@ -2479,7 +2683,7 @@ func layerSeoURLTemplate() string {
 	if template := strings.TrimSpace(viper.GetString("seo.layerUrlTemplate")); template != "" {
 		return template
 	}
-	return "/quy-hoach/lop/{id}-{slug}"
+	return "/tin-tuc/lop/{id}-{slug}"
 }
 
 func buildParcelSeoURL(parcelID uint64, adrSearch string) (string, error) {
@@ -2541,14 +2745,7 @@ func planningProjectSeoURLTemplate() string {
 
 func buildPlanningProjectSeoURL(planningProjectID uint64, slug, name string) (string, error) {
 	template := planningProjectSeoURLTemplate()
-
-	resolvedSlug := strings.Trim(strings.TrimSpace(slug), "/")
-	if resolvedSlug == "" {
-		resolvedSlug = slugify(name)
-	}
-	if resolvedSlug == "" || resolvedSlug == "seo-page" {
-		resolvedSlug = fmt.Sprintf("%d", planningProjectID)
-	}
+	resolvedSlug := resolvePlanningProjectSeoSlug(slug, name, planningProjectID)
 
 	return strings.NewReplacer(
 		"{id}", fmt.Sprintf("%d", planningProjectID),
@@ -2557,13 +2754,11 @@ func buildPlanningProjectSeoURL(planningProjectID uint64, slug, name string) (st
 }
 
 func resolvePlanningProjectSeoSlug(slug, name string, planningProjectID uint64) string {
-	if s := strings.Trim(strings.TrimSpace(slug), "/"); s != "" {
-		return s
+	label := strings.Trim(strings.TrimSpace(slug), "/")
+	if label == "" {
+		label = strings.TrimSpace(name)
 	}
-	if n := strings.TrimSpace(name); n != "" {
-		return n
-	}
-	return fmt.Sprintf("%d", planningProjectID)
+	return seoSlugSegment(label, planningProjectID)
 }
 
 func buildPlanningProjectSeoTitle(name string, planningProjectID uint64) string {
@@ -2577,6 +2772,43 @@ func buildPlanningProjectSeoTitle(name string, planningProjectID uint64) string 
 func buildPlanningProjectSeoDescription(name string, planningProjectID uint64) string {
 	title := buildPlanningProjectSeoTitle(name, planningProjectID)
 	return fmt.Sprintf("Thông tin đồ án quy hoạch %s", title)
+}
+
+func planningDocumentSeoURLTemplate() string {
+	if template := strings.TrimSpace(viper.GetString("seo.planningDocumentUrlTemplate")); template != "" {
+		return template
+	}
+	return "/tin-tuc/tai-lieu/{id}-{slug}"
+}
+
+func buildPlanningDocumentSeoURL(documentID uint64, slug, title string) (string, error) {
+	template := planningDocumentSeoURLTemplate()
+	resolvedSlug := resolvePlanningDocumentSeoSlug(slug, title, documentID)
+	return strings.NewReplacer(
+		"{id}", fmt.Sprintf("%d", documentID),
+		"{slug}", resolvedSlug,
+	).Replace(template), nil
+}
+
+func resolvePlanningDocumentSeoSlug(slug, title string, documentID uint64) string {
+	label := strings.Trim(strings.TrimSpace(slug), "/")
+	if label == "" {
+		label = strings.TrimSpace(title)
+	}
+	return seoSlugSegment(label, documentID)
+}
+
+func buildPlanningDocumentSeoTitle(title string, documentID uint64) string {
+	name := strings.TrimSpace(title)
+	if name == "" {
+		return fmt.Sprintf("Tài liệu quy hoạch %d", documentID)
+	}
+	return name
+}
+
+func buildPlanningDocumentSeoDescription(title string, documentID uint64) string {
+	name := buildPlanningDocumentSeoTitle(title, documentID)
+	return fmt.Sprintf("Thông tin tài liệu quy hoạch %s", name)
 }
 
 func administrativeUnitSeoURLTemplate() string {

@@ -31,6 +31,10 @@ type ProjectListFilter struct {
 	ProvinceIDs    string
 	// AdmID is administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
 	AdmID          uint64
+	// ParcelID lọc đồ án liên quan thửa.
+	ParcelID       uint64
+	// LayerIDs lọc theo nhiều layer (OR) trong phạm vi parcel.
+	LayerIDs       []uint64
 }
 
 type ProjectOverview struct {
@@ -107,9 +111,15 @@ type ProjectTag struct {
 	Value string `json:"value"`
 }
 
+type DocumentPlanningProject struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
 type Document struct {
-	ID                uint64          `json:"id"`
-	PlanningProjectID uint64          `json:"planningProjectId"`
+	ID                uint64                   `json:"id"`
+	PlanningProjectID uint64                   `json:"planningProjectId"`
+	PlanningProject   *DocumentPlanningProject `json:"planningProject,omitempty" gorm:"-"`
 	DocumentType      uint32          `json:"documentType"`
 	DocumentTypeName  string          `json:"documentTypeName,omitempty"`
 	Status            uint32          `json:"status"`
@@ -125,6 +135,11 @@ type Document struct {
 	ValidityStatus    string          `json:"validityStatus,omitempty"`
 	IssueDate         *time.Time      `json:"issueDate,omitempty"`
 	EffectiveDate     *time.Time      `json:"effectiveDate,omitempty"`
+	Indicators        json.RawMessage `json:"indicators"`
+	Authority         string          `json:"authority,omitempty"`
+	Sector            string          `json:"sector,omitempty"`
+	Field             string          `json:"field,omitempty"`
+	Signer            string          `json:"signer,omitempty"`
 	Metadata          json.RawMessage `json:"metadata"`
 	CreatedAt         *time.Time      `json:"createdAt,omitempty"`
 	UpdatedAt         *time.Time      `json:"updatedAt,omitempty"`

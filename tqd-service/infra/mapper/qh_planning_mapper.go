@@ -1,12 +1,15 @@
 package mapper
 
 import (
+	"encoding/json"
+	"strings"
+	"time"
+
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
-	"time"
 
 	"github.com/lib/pq"
 )
@@ -142,8 +145,14 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 		VersionNo:         document.VersionNo,
 		ValidityStatus:    document.ValidityStatus,
 		IssueDate:         _utils.FormatTimeToString(document.IssueDate),
+		IssuedDate:        _utils.FormatTimeToString(document.IssueDate),
 		EffectiveDate:     _utils.FormatTimeToString(document.EffectiveDate),
 		Metadata:          document.Metadata,
+		Indicators:        document.Indicators,
+		Authority:         document.Authority,
+		Sector:            document.Sector,
+		Field:             document.Field,
+		Signer:            document.Signer,
 		CreatedAt:         _utils.FormatTimeToString(document.CreatedAt),
 		UpdatedAt:         _utils.FormatTimeToString(document.UpdatedAt),
 		RelativePath:      document.RelativePath,
@@ -151,6 +160,9 @@ func (m *QHPlanningMapper) ToDocumentProto(document *qh_domain.QHPlanningDocumen
 		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(document.ProcessStatus)),
 		ClassifyError:     document.ClassifyError,
 		Ext:               document.Ext,
+		SeoId:             document.SeoID,
+		Status:            document.Status,
+		StatusName:        enums.GetPlanningDocumentStatusLabel(document.Status),
 	}
 }
 
@@ -206,6 +218,44 @@ func (m *QHPlanningMapper) ToEventProtoList(events []qh_domain.QHPlanningEvent) 
 		result[i] = m.ToEventProto(&event)
 	}
 	return result
+}
+
+func (m *QHPlanningMapper) ToDocumentHistoryProto(event *qh_domain.QHPlanningDocumentEvent) *tqdpb.PlanningDocumentHistory {
+	if event == nil {
+		return nil
+	}
+	return &tqdpb.PlanningDocumentHistory{
+		Id:                 event.ID,
+		PlanningDocumentId: event.PlanningDocumentID,
+		EventType:          event.EventType,
+		EventName:          event.EventName,
+		Description:        event.Description,
+		EventDate:          formatPlanningTime(event.EventDate),
+		CreatedAt:          formatPlanningTime(event.CreatedAt),
+		UpdatedAt:          formatPlanningTime(event.UpdatedAt),
+	}
+}
+
+func (m *QHPlanningMapper) ToDocumentHistoryProtoList(events []qh_domain.QHPlanningDocumentEvent) []*tqdpb.PlanningDocumentHistory {
+	result := make([]*tqdpb.PlanningDocumentHistory, len(events))
+	for i, event := range events {
+		result[i] = m.ToDocumentHistoryProto(&event)
+	}
+	return result
+}
+
+func (m *QHPlanningMapper) ToDocumentHistoryDomain(proto *tqdpb.PlanningDocumentHistory) *qh_domain.QHPlanningDocumentEvent {
+	if proto == nil {
+		return nil
+	}
+	return &qh_domain.QHPlanningDocumentEvent{
+		PlanningDocumentID: proto.PlanningDocumentId,
+		EventType:          proto.EventType,
+		EventName:          proto.EventName,
+		Description:        proto.Description,
+		EventDate:          _utils.ParseStringToTime(proto.EventDate),
+		Metadata:           []byte("{}"),
+	}
 }
 
 func (m *QHPlanningMapper) ToEventDomain(proto *tqdpb.PlanningEvent) *qh_domain.QHPlanningEvent {
@@ -378,10 +428,34 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 	if metadata == "" {
 		metadata = "{}"
 	}
+	indicators := proto.Indicators
+	if indicators == "" {
+		indicators = "[]"
+	}
+
+	status := proto.Status
+	if status == 0 {
+		status = enums.PlanningDocumentStatusNormal
+	}
+
+	issueDate := firstNonEmpty(
+		proto.IssueDate,
+		proto.IssuedDate,
+		jsonMetaString(metadata, "issuedDate", "issueDate"),
+	)
+	effectiveDate := firstNonEmpty(
+		proto.EffectiveDate,
+		jsonMetaString(metadata, "effectiveDate"),
+	)
+	validityStatus := firstNonEmpty(
+		proto.ValidityStatus,
+		jsonMetaString(metadata, "validityStatus"),
+	)
 
 	return &qh_domain.QHPlanningDocument{
 		PlanningProjectID: proto.PlanningProjectId,
 		DocumentType:      enums.PlanningDocumentType(enums.GetPlanningDocumentTypeValue(proto.DocumentType)),
+		Status:            status,
 		Code:              proto.Code,
 		Title:             proto.Title,
 		Description:       proto.Description,
@@ -389,10 +463,16 @@ func (m *QHPlanningMapper) ToDocumentDomain(proto *tqdpb.PlanningDocument) *qh_d
 		Ext:               proto.Ext,
 		Thumbnail:         proto.Thumbnail,
 		VersionNo:         proto.VersionNo,
-		ValidityStatus:    proto.ValidityStatus,
-		IssueDate:         _utils.ParseStringToTime(proto.IssueDate),
-		EffectiveDate:     _utils.ParseStringToTime(proto.EffectiveDate),
+		ValidityStatus:    validityStatus,
+		IssueDate:         _utils.ParseStringToTime(issueDate),
+		EffectiveDate:     _utils.ParseStringToTime(effectiveDate),
 		Metadata:          metadata,
+		Indicators:        indicators,
+		Authority:         proto.Authority,
+		Sector:            proto.Sector,
+		Field:             proto.Field,
+		Signer:            proto.Signer,
+		RelativePath:      proto.RelativePath,
 	}
 }
 
@@ -480,4 +560,28 @@ func formatPlanningTime(t *time.Time) string {
 		return formatted
 	}
 	return t.UTC().Format(time.RFC3339)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
+}
+
+func jsonMetaString(raw string, keys ...string) string {
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+		return ""
+	}
+	for _, key := range keys {
+		if value, ok := payload[key].(string); ok {
+			if trimmed := strings.TrimSpace(value); trimmed != "" {
+				return trimmed
+			}
+		}
+	}
+	return ""
 }

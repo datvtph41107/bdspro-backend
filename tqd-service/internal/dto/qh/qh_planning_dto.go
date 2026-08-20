@@ -14,6 +14,8 @@ type ListPlanningProjectsRequest struct {
 	ClientViewOnly bool   `json:"clientViewOnly"`
 	// AdmID is the administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
 	AdmID uint64 `json:"admId,omitempty"`
+	// LayerIDs lọc đồ án có tài liệu gắn layer qua layer_plan_doc_relation.
+	LayerIDs []uint64 `json:"layerIds,omitempty"`
 }
 
 type ListPlanningProjectLayersRequest struct {
@@ -30,16 +32,20 @@ type ListProAIJobsRequest struct {
 
 type ListPlanningDocumentsRequest struct {
 	_dto.Pagable
-	PlanningProjectID uint64 `json:"planningProjectId"`
-	DocumentType      string `json:"documentType"`
-	ValidityStatus    string `json:"validityStatus"`
-	ProcessStatus     string `json:"processStatus"`
-	LayerID           uint64 `json:"layerId"`
+	PlanningProjectID uint64   `json:"planningProjectId"`
+	DocumentType      string   `json:"documentType"`
+	ValidityStatus    string   `json:"validityStatus"`
+	ProcessStatus     string   `json:"processStatus"`
+	Keyword           string   `json:"keyword"`
+	LayerID           uint64   `json:"layerId"`
+	LayerIDs          []uint64 `json:"layerIds"`
+	ParcelID          uint64   `json:"parcelId"`
 }
 
 type AssignPlanningDocumentsToLayerRequest struct {
-	LayerID uint64   `json:"layerId"`
-	DocIDs  []uint64 `json:"docIds"`
+	LayerID  uint64   `json:"layerId"`
+	LayerIDs []uint64 `json:"layerIds"`
+	DocIDs   []uint64 `json:"docIds"`
 }
 
 type UnassignPlanningProjectLayerRequest struct {
@@ -51,6 +57,11 @@ type ListPlanningEventsRequest struct {
 	_dto.Pagable
 	PlanningProjectID uint64 `json:"planningProjectId"`
 	Ver               bool   `json:"ver"`
+}
+
+type ListPlanningDocumentHistoriesRequest struct {
+	_dto.Pagable
+	PlanningDocumentID uint64 `json:"planningDocumentId"`
 }
 
 // FolderFileInput — 1 file trong folder đồ án admin upload.
@@ -83,6 +94,31 @@ type AdminGenPlanningProjectSeoResult struct {
 	Skipped int64                            `json:"skipped"`
 	Failed  int64                            `json:"failed"`
 	Errors  []string                         `json:"errors"`
+}
+
+type PlanningDocumentSeoSource struct {
+	PlanningDocumentID uint64  `json:"planningDocumentId" gorm:"column:planning_document_id"`
+	Title              string  `json:"title" gorm:"column:title"`
+	Slug               string  `json:"slug" gorm:"column:slug"`
+	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+}
+
+type AdminGenPlanningDocumentSeoItem struct {
+	PlanningDocumentID uint64 `json:"planningDocumentId"`
+	SeoID              uint64 `json:"seoId"`
+	CanonicalURL       string `json:"canonicalUrl"`
+	Slug               string `json:"slug"`
+	Created            bool   `json:"created"`
+	Message            string `json:"message"`
+}
+
+type AdminGenPlanningDocumentSeoResult struct {
+	Items   []AdminGenPlanningDocumentSeoItem `json:"items"`
+	Total   int64                             `json:"total"`
+	Created int64                             `json:"created"`
+	Skipped int64                             `json:"skipped"`
+	Failed  int64                             `json:"failed"`
+	Errors  []string                          `json:"errors"`
 }
 
 type PlanningProjectCount struct {

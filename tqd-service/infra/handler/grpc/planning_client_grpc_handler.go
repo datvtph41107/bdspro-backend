@@ -11,6 +11,7 @@ import (
 	_middleware "common/middleware"
 	planningapp "tqd/internal/modules/planningclient/application"
 	planningdomain "tqd/internal/modules/planningclient/domain"
+	tqdutils "tqd/internal/utils"
 
 	tqdpb "pb/types/tqd"
 
@@ -113,6 +114,31 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 	if req == nil {
 		req = &tqdpb.ListPlanningProjectsRequest{}
 	}
+	layerIDs := tqdutils.MergePositiveUint64(0, tqdutils.ParseUintCSV(req.GetLayerIds()))
+	page := int(req.GetPage())
+	size := positiveOr(req.GetSize(), 20)
+	if len(layerIDs) > 0 {
+		result, err := h.service.ListProjectsByLayerRelation(ctx, layerIDs, page, size)
+		if err != nil {
+			return nil, repositoryError(err)
+		}
+		setPlanningHTTPMetadata(ctx, 200, "public, max-age=15, stale-while-revalidate=60")
+		return bytesResponse(result)
+	}
+	if req.GetParcelId() > 0 {
+		result, err := h.service.ListProjectsByParcelRelation(
+			ctx,
+			req.GetParcelId(),
+			page,
+			size,
+		)
+		if err != nil {
+			return nil, repositoryError(err)
+		}
+		setPlanningHTTPMetadata(ctx, 200, "public, max-age=15, stale-while-revalidate=60")
+		return bytesResponse(result)
+	}
+
 	updatedFrom, err := parseOptionalPlanningTime(req.GetUpdatedFrom(), "updatedFrom", false)
 	if err != nil {
 		return nil, err
@@ -229,7 +255,7 @@ func (h *PlanningClientGrpcHandler) GetPlanningDocument(ctx context.Context, req
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
-	return bytesResponse(result)
+	return successResponse(result)
 }
 
 func (h *PlanningClientGrpcHandler) ListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*wrapperspb.BytesValue, error) {
@@ -313,7 +339,7 @@ func (h *PlanningClientGrpcHandler) ListFollowedPlanningProjects(ctx context.Con
 }
 
 // @Summary Danh sách đồ án liên quan thửa đất
-// @Description parcel → regions (intersects) → layers → layer_planning_relation → planning-projects
+// @Description parcel → regions (intersects) → layers → layer_plan_doc_relation → documents → planning-projects
 // @Tags PlanningClient
 // @Accept json
 // @Produce json

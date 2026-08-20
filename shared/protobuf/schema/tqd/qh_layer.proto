@@ -233,6 +233,7 @@ message ListLayersRequest {
   optional string orderBy = 7;         // displayOrder, createdAt, name
   optional string orderDir = 8;        // asc, desc
   int64 timestamp = 9;
+  optional uint64 planningProjectId = 10;
 }
 
 message ListClientLayersRequest {
@@ -241,6 +242,8 @@ message ListClientLayersRequest {
   uint32 page = 3;
   uint32 size = 4;
   int64 timestamp = 5;
+  // docId: lọc layer liên quan tài liệu quy hoạch (layer_plan_doc_relation).
+  uint64 docId = 6;
 }
 
 message BuildPMTilesRequest {
@@ -295,6 +298,13 @@ message LayerResponse {
   repeated LayerAttachedDoc docs = 36;
   optional string provinceId = 37;
   optional string wardId = 38;
+  optional uint64 planningProjectId = 39;
+  optional LayerPlanningProject planningProject = 40;
+}
+
+message LayerPlanningProject {
+  uint64 id = 1;
+  string name = 2;
 }
 
 message LayerAttachedDoc {

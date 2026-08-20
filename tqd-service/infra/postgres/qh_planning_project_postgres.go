@@ -112,6 +112,18 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 	if clause, arg, ok := tqdutils.PlanningProjectAdmJoinClause(req.AdmID, "qh_planning_projects.id"); ok {
 		db = db.Where(clause, arg)
 	}
+	if layerIDs := tqdutils.MergePositiveUint64(0, req.LayerIDs); len(layerIDs) > 0 {
+		// Lọc đồ án có tài liệu gắn layer qua layer_plan_doc_relation.
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			WHERE rel.deleted_at IS NULL
+			  AND d.planning_project_id = qh_planning_projects.id
+			  AND rel.layer_id IN ?
+		)`, layerIDs)
+	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
