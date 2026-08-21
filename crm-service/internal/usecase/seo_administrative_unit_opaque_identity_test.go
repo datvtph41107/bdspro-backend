@@ -50,8 +50,8 @@ func TestValidateAdministrativeUnitProvisioningProjectionAcceptsOpaqueTypedIdent
 	projection := &dto.TqdAdministrativeUnitProjection{
 		SchemaVersion:      dto.TqdAdministrativeUnitProjectionSchemaVersion,
 		EntityID:           "ward:D_26740",
-		Slug:               "phuong-sai-gon-26740",
-		CanonicalPath:      "/tin-tuc/dia-ban/phuong-sai-gon-26740",
+		Slug:               "267402/phuong-sai-gon",
+		CanonicalPath:      "/tin-tuc/dia-ban/267402/phuong-sai-gon",
 		UnitType:           "ward",
 		Name:               "Phường Sài Gòn",
 		AdministrativeCode: "26740",
@@ -68,8 +68,8 @@ func TestValidateAdministrativeUnitProvisioningProjectionRejectsUnitTypeMismatch
 	projection := &dto.TqdAdministrativeUnitProjection{
 		SchemaVersion:      dto.TqdAdministrativeUnitProjectionSchemaVersion,
 		EntityID:           "ward:D_26740",
-		Slug:               "phuong-sai-gon-26740",
-		CanonicalPath:      "/tin-tuc/dia-ban/phuong-sai-gon-26740",
+		Slug:               "267402/phuong-sai-gon",
+		CanonicalPath:      "/tin-tuc/dia-ban/267402/phuong-sai-gon",
 		UnitType:           "province",
 		Name:               "Phường Sài Gòn",
 		AdministrativeCode: "26740",

@@ -152,7 +152,7 @@ func (h *QHPlanningGrpcHandler) ListPlanningProjects(ctx context.Context, req *t
 		req = &tqdpb.ListPlanningProjectsRequest{}
 	}
 	listReq := &qh_dto.ListPlanningProjectsRequest{
-		Search:         strings.ToLower(strings.TrimSpace(req.Search)),
+		Search:         strings.TrimSpace(req.Search),
 		PlanningType:   req.PlanningType,
 		PlanningLevel:  req.PlanningLevel,
 		ValidityStatus: req.ValidityStatus,
@@ -813,6 +813,9 @@ func planningDocumentSeoSourceToProto(source *qh_dto.PlanningDocumentSeoSource) 
 		PlanningDocumentId: source.PlanningDocumentID,
 		Title:              source.Title,
 		Slug:               source.Slug,
+		Filepath:           source.Filepath,
+		Thumbnail:          source.Thumbnail,
+		Ext:                source.Ext,
 	}
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID
@@ -1097,7 +1100,7 @@ func (h *QHPlanningGrpcHandler) ClientListPlanningProjects(ctx context.Context, 
 		req = &tqdpb.ClientListPlanningProjectsRequest{}
 	}
 	listReq := &qh_dto.ListPlanningProjectsRequest{
-		Search:         strings.ToLower(strings.TrimSpace(req.GetSearch())),
+		Search:         strings.TrimSpace(req.GetSearch()),
 		ClientViewOnly: true,
 		AdmID:          req.GetAdmId(),
 	}

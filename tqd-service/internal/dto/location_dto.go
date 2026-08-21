@@ -176,6 +176,7 @@ type WardDTO struct {
 	NaturalAreaKm2        float64    `json:"naturalAreaKm2"`
 	Population            uint64     `json:"population"`
 	PopulationDensity     float64    `json:"populationDensity"`
+	Summary               string     `json:"summary"`
 	Description           string     `json:"description"`
 	CompositeID           uint64     `json:"compositeId"`
 	UnitType              uint32     `json:"unitType"`

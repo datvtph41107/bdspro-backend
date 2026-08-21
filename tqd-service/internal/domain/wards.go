@@ -21,7 +21,8 @@ type Ward struct {
 	Geometry RawGeometry `gorm:"column:geometry;type:geometry(MultiPolygon,4326)"`
 
 	// thông tin địa bàn lấy ở đây
-	Description string `json:"description" gorm:"column:description;size:255"`
+	Summary     string `json:"summary" gorm:"column:summary;size:200"`
+	Description string `json:"description" gorm:"column:description;size:2000"`
 
 	OfficialName          string     `json:"officialName" gorm:"column:official_name;size:255"`
 	DivisionType          string     `json:"divisionType" gorm:"column:division_type;size:100"`

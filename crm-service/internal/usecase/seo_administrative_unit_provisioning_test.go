@@ -69,8 +69,8 @@ func TestProvisionAdministrativeUnitCreatesTypedDraft(t *testing.T) {
 		SchemaVersion:      dto.TqdAdministrativeUnitProjectionSchemaVersion,
 		EntityID:           "ward:26734",
 		CanonicalKey:       "ward:26734",
-		Slug:               "phuong-ben-nghe-26734",
-		CanonicalPath:      "/tin-tuc/dia-ban/phuong-ben-nghe-26734",
+		Slug:               "267342/phuong-ben-nghe",
+		CanonicalPath:      "/tin-tuc/dia-ban/267342/phuong-ben-nghe",
 		UnitType:           "ward",
 		UnitTypeName:       "Phường",
 		Name:               "Phường Bến Nghé",
@@ -81,7 +81,7 @@ func TestProvisionAdministrativeUnitCreatesTypedDraft(t *testing.T) {
 			UnitType:           "ward",
 			Name:               "Phường Bến Nghé",
 			AdministrativeCode: "26734",
-			CanonicalPath:      "/tin-tuc/dia-ban/phuong-ben-nghe-26734",
+			CanonicalPath:      "/tin-tuc/dia-ban/267342/phuong-ben-nghe",
 		}},
 		PlanningContext: dto.TqdAdministrativePlanningContext{
 			Summary:              "Địa bàn có dữ liệu quy hoạch công khai để tra cứu.",
@@ -112,7 +112,7 @@ func TestProvisionAdministrativeUnitCreatesTypedDraft(t *testing.T) {
 	if repository.lookupRefIdentity != "ward:26734" {
 		t.Fatalf("expected typed identity lookup, got %q", repository.lookupRefIdentity)
 	}
-	if response.CanonicalSlug != "phuong-ben-nghe-26734" || response.CanonicalURL != "/tin-tuc/dia-ban/phuong-ben-nghe-26734" {
+	if response.CanonicalSlug != "267342/phuong-ben-nghe" || response.CanonicalURL != "/tin-tuc/dia-ban/267342/phuong-ben-nghe" {
 		t.Fatalf("canonical mismatch: %#v", response)
 	}
 	if response.AnswerReadiness == nil || !response.AnswerReadiness.Ready {

@@ -618,8 +618,11 @@ func layerSeoSourceToProto(source *dto.LayerSeoSource) *tqdpb.LayerSeoSourceResp
 		return nil
 	}
 	resp := &tqdpb.LayerSeoSourceResponse{
-		LayerId:     source.LayerID,
-		DisplayName: source.DisplayName,
+		LayerId:      source.LayerID,
+		DisplayName:  source.DisplayName,
+		ThumbnailUrl: source.ThumbnailURL,
+		ImageUrl:     source.ImageURL,
+		Avatar:       source.Avatar,
 	}
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID

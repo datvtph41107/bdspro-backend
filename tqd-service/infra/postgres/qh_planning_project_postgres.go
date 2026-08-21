@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 	qh_domain "tqd/internal/domain/qh"
@@ -73,12 +74,14 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 
 	db := r.db.GetDB(ctx).Model(&qh_domain.QHPlanningProject{}).Where("deleted_at IS NULL")
 
-	if search := strings.ToLower(strings.TrimSpace(req.Search)); search != "" {
+	if search := strings.TrimSpace(req.Search); search != "" {
 		searchTerm := "%" + search + "%"
+		// unaccent('Đ')→'D' nhưng unaccent('đ') giữ nguyên → sau ToLower phía Go sẽ lệch.
+		// Chuẩn hóa thêm đ→d ở SQL để search không phân biệt hoa/thường + dấu.
 		db = db.Where(`(
-			LOWER(unaccent(COALESCE(name,''))) LIKE LOWER(unaccent(?)) OR
-			LOWER(unaccent(COALESCE(code,''))) LIKE LOWER(unaccent(?)) OR
-			REPLACE(LOWER(unaccent(COALESCE(slug,''))), '-', ' ') LIKE REPLACE(LOWER(unaccent(?)), '-', ' ')
+			REPLACE(LOWER(unaccent(COALESCE(name,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(LOWER(unaccent(COALESCE(code,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(REPLACE(LOWER(unaccent(COALESCE(slug,''))), '-', ' '), 'đ', 'd') LIKE REPLACE(REPLACE(LOWER(unaccent(?)), '-', ' '), 'đ', 'd')
 		)`, searchTerm, searchTerm, searchTerm)
 	}
 	if req.PlanningType != "" {
@@ -313,9 +316,13 @@ func (r *QHPlanningProjectRepo) AssignProvinces(ctx context.Context, planningPro
 	rows := make([]map[string]any, 0, len(provinceIDs))
 	now := time.Now()
 	for _, pid := range provinceIDs {
+		if pid == 0 {
+			continue
+		}
+		// Cột province_id là VARCHAR — lưu text của bigint id.
 		rows = append(rows, map[string]any{
 			"planning_project_id": planningProjectID,
-			"province_id":         pid,
+			"province_id":         strconv.FormatUint(pid, 10),
 			"created_at":          now,
 			"updated_at":          now,
 			"deleted_at":          nil,
@@ -334,8 +341,18 @@ func (r *QHPlanningProjectRepo) UnassignProvinces(ctx context.Context, planningP
 	if planningProjectID == 0 || len(provinceIDs) == 0 {
 		return nil
 	}
+	ids := make([]string, 0, len(provinceIDs))
+	for _, pid := range provinceIDs {
+		if pid == 0 {
+			continue
+		}
+		ids = append(ids, strconv.FormatUint(pid, 10))
+	}
+	if len(ids) == 0 {
+		return nil
+	}
 	return r.db.GetDB(ctx).Table("qh_planning_project_provinces").
-		Where("planning_project_id = ? AND province_id IN ?", planningProjectID, provinceIDs).
+		Where("planning_project_id = ? AND province_id IN ?", planningProjectID, ids).
 		Delete(nil).Error
 }
 
@@ -347,9 +364,12 @@ func (r *QHPlanningProjectRepo) AssignWards(ctx context.Context, planningProject
 	rows := make([]map[string]any, 0, len(wardIDs))
 	now := time.Now()
 	for _, wid := range wardIDs {
+		if wid == 0 {
+			continue
+		}
 		rows = append(rows, map[string]any{
 			"planning_project_id": planningProjectID,
-			"ward_id":             wid,
+			"ward_id":             strconv.FormatUint(wid, 10),
 			"created_at":          now,
 			"updated_at":          now,
 			"deleted_at":          nil,
@@ -368,8 +388,18 @@ func (r *QHPlanningProjectRepo) UnassignWards(ctx context.Context, planningProje
 	if planningProjectID == 0 || len(wardIDs) == 0 {
 		return nil
 	}
+	ids := make([]string, 0, len(wardIDs))
+	for _, wid := range wardIDs {
+		if wid == 0 {
+			continue
+		}
+		ids = append(ids, strconv.FormatUint(wid, 10))
+	}
+	if len(ids) == 0 {
+		return nil
+	}
 	return r.db.GetDB(ctx).Table("qh_planning_project_wards").
-		Where("planning_project_id = ? AND ward_id IN ?", planningProjectID, wardIDs).
+		Where("planning_project_id = ? AND ward_id IN ?", planningProjectID, ids).
 		Delete(nil).Error
 }
 

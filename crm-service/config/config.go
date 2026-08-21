@@ -53,6 +53,8 @@ type UserProperties struct {
 		PlanningProjectUrlTemplate    string `mapstructure:"planningProjectUrlTemplate"`
 		PlanningDocumentUrlTemplate   string `mapstructure:"planningDocumentUrlTemplate"`
 		AdministrativeUnitUrlTemplate string `mapstructure:"administrativeUnitUrlTemplate"`
+		PlanningRegionUrlTemplate     string `mapstructure:"planningRegionUrlTemplate"`
+		PlanningReportUrlTemplate     string `mapstructure:"planningReportUrlTemplate"`
 	} `mapstructure:"seo"`
 }
 

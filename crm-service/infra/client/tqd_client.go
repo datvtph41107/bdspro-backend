@@ -308,8 +308,11 @@ func layerSeoSourceFromProto(resp *tqdpb.LayerSeoSourceResponse) *dto.LayerSeoSo
 		return nil
 	}
 	source := &dto.LayerSeoSource{
-		LayerID:     resp.LayerId,
-		DisplayName: resp.DisplayName,
+		LayerID:      resp.LayerId,
+		DisplayName:  resp.DisplayName,
+		ThumbnailURL: resp.ThumbnailUrl,
+		ImageURL:     resp.ImageUrl,
+		Avatar:       resp.Avatar,
 	}
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId
@@ -342,6 +345,9 @@ func planningDocumentSeoSourceFromProto(resp *tqdpb.PlanningDocumentSeoSourceRes
 		PlanningDocumentID: resp.PlanningDocumentId,
 		Title:              resp.Title,
 		Slug:               resp.Slug,
+		Filepath:           resp.Filepath,
+		Thumbnail:          resp.Thumbnail,
+		Ext:                resp.Ext,
 	}
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId

@@ -195,6 +195,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		StaticHtmlPath:    req.StaticHtmlPath,
 		StaticHtmlHash:    req.StaticHtmlHash,
 		DeepLink:          req.DeepLink,
+		ImageURL:          req.ImageUrl,
 		Metadata:          req.Metadata,
 		Note:              req.Note,
 		PageStatus:        req.PageStatus,
@@ -203,6 +204,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		LastRenderError:   req.LastRenderError,
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
+		CategoryID:        req.CategoryId,
 	}
 
 	created, err := h.seoDomainUsecase.CreateSeoDomain(ctx, seoReq)
@@ -261,6 +263,35 @@ func (h *SeoDomainHandler) CountSeoRefs(ctx context.Context, req *crmpb.CountSeo
 	}
 
 	return &crmpb.CountSeoRefsResponse{Total: total}, nil
+}
+
+// CountRecentSeoByRefType @Summary Đếm SEO theo 8 refType (updatedAt gần đây)
+// @Description Trả count theo từng refType cho SEO có updatedAt trong N ngày gần nhất (mặc định 5 ngày)
+func (h *SeoDomainHandler) CountRecentSeoByRefType(ctx context.Context, req *crmpb.CountRecentSeoByRefTypeRequest) (*crmpb.CountRecentSeoByRefTypeResponse, error) {
+	if req == nil {
+		req = &crmpb.CountRecentSeoByRefTypeRequest{}
+	}
+
+	items, days, err := h.seoDomainUsecase.CountRecentSeoByRefType(ctx, &dto.CountRecentSeoByRefTypeRequest{
+		Days: req.GetDays(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]*crmpb.SeoRefTypeCountItem, 0, len(items))
+	for _, item := range items {
+		data = append(data, &crmpb.SeoRefTypeCountItem{
+			RefType:     uint32(item.RefType),
+			RefTypeName: item.RefTypeName,
+			Total:       item.Total,
+		})
+	}
+
+	return &crmpb.CountRecentSeoByRefTypeResponse{
+		Data: data,
+		Days: days,
+	}, nil
 }
 
 func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetSeoDomainListRequest) (*crmpb.GetSeoDomainListResponse, error) {
@@ -339,6 +370,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		StaticHtmlPath:    req.StaticHtmlPath,
 		StaticHtmlHash:    req.StaticHtmlHash,
 		DeepLink:          req.DeepLink,
+		ImageURL:          req.ImageUrl,
 		Metadata:          req.Metadata,
 		Note:              req.Note,
 		PageStatus:        req.PageStatus,
@@ -347,6 +379,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		LastRenderError:   req.LastRenderError,
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
+		CategoryID:        req.CategoryId,
 	}
 
 	updated, err := h.seoDomainUsecase.UpdateSeoDomain(ctx, req.Id, updateReq)
@@ -640,7 +673,7 @@ func (h *SeoDomainHandler) GetSitemap(ctx context.Context, req *crmpb.GetSitemap
 
 // CreateSeoFromParcel tạo SEO domain từ parcel.
 // @Summary Tạo SEO từ parcel
-// @Description Sinh URL từ cấu hình seo.parcelUrlTemplate, replace {id} theo parcelId và {slug} theo adr_search.
+// @Description Sinh URL từ cấu hình seo.parcelUrlTemplate, replace {id} theo parcelId và {slug} theo adr_search (mặc định /tin-tuc/thua-dat/{id}/{slug}).
 // @Tags SEO Domain
 // @Accept json
 // @Produce json

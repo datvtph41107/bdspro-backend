@@ -103,6 +103,13 @@ service SeoDomainService {
     };
   }
 
+  // Đếm số SEO theo từng refType (8 type), chỉ lấy bản ghi updatedAt trong N ngày gần nhất (mặc định 5).
+  rpc CountRecentSeoByRefType(CountRecentSeoByRefTypeRequest) returns (CountRecentSeoByRefTypeResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo-domains/count"
+    };
+  }
+
   rpc GetSeoDomain(sharepb.IdRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       get: "/v2/crm/admin/seo-domains/{id}"
@@ -830,6 +837,8 @@ message CreateSeoDomainRequest {
   string lastRenderError = 40;
   string templateKey = 41;
   string templateVersion = 42;
+  optional uint64 categoryId = 43;
+  string imageUrl = 44;
 }
 
 message UpdateSeoDomainRequest {
@@ -878,6 +887,8 @@ message UpdateSeoDomainRequest {
   optional string lastRenderError = 41;
   optional string templateKey = 42;
   optional string templateVersion = 43;
+  optional uint64 categoryId = 44;
+  optional string imageUrl = 45;
 }
 
 message GetSeoDomainListRequest {
@@ -963,6 +974,16 @@ message SeoDomainResponse {
   string templateKey = 46;
   string templateVersion = 47;
   sharepb.EnumItem visibleOn = 48;
+  int64 clickCount = 49;
+  string clickUpdatedAt = 50;
+  optional uint64 categoryId = 51;
+  string imageUrl = 52;
+  SeoCategoryBrief category = 53;
+}
+
+message SeoCategoryBrief {
+  uint64 id = 1;
+  string name = 2;
 }
 
 message SeoDomainBriefResponse {
@@ -983,6 +1004,7 @@ message SeoDomainBriefResponse {
   string pageStatus = 13;
   string renderStatus = 14;
   bool needGenerate = 15;
+  string imageUrl = 16;
 }
 
 // -----------------------------------------------------------------------------
@@ -1620,6 +1642,22 @@ message CountSeoRefsRequest {
 
 message CountSeoRefsResponse {
   int64 total = 1;
+}
+
+message CountRecentSeoByRefTypeRequest {
+  // Số ngày gần nhất theo updatedAt; mặc định 5 nếu bỏ trống hoặc = 0.
+  uint32 days = 1;
+}
+
+message SeoRefTypeCountItem {
+  uint32 refType = 1;
+  string refTypeName = 2;
+  int64 total = 3;
+}
+
+message CountRecentSeoByRefTypeResponse {
+  repeated SeoRefTypeCountItem data = 1;
+  uint32 days = 2;
 }
 
 // -----------------------------------------------------------------------------

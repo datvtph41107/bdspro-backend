@@ -12,16 +12,16 @@ func administrativeUnitProjectionFixture(updatedAt *time.Time) *dto.TqdAdministr
 		SchemaVersion:      dto.TqdAdministrativeUnitProjectionSchemaVersion,
 		EntityID:           "ward:42",
 		CanonicalKey:       "administrative_unit:ward:00123",
-		Slug:               "phuong-ngo-quyen-00123",
-		CanonicalPath:      "/tin-tuc/dia-ban/phuong-ngo-quyen-00123",
+		Slug:               "001232/phuong-ngo-quyen",
+		CanonicalPath:      "/tin-tuc/dia-ban/001232/phuong-ngo-quyen",
 		UnitType:           "ward",
 		UnitTypeName:       "Phường",
 		Name:               "Phường Ngô Quyền",
 		DisplayName:        "Phường Ngô Quyền",
 		AdministrativeCode: "00123",
 		Hierarchy: []dto.TqdAdministrativeUnitHierarchyItem{
-			{EntityID: "province:1", UnitType: "province", Name: "Thành phố Hà Nội", AdministrativeCode: "01", CanonicalPath: "/tin-tuc/dia-ban/thanh-pho-ha-noi-01"},
-			{EntityID: "ward:42", UnitType: "ward", Name: "Phường Ngô Quyền", AdministrativeCode: "00123", CanonicalPath: "/tin-tuc/dia-ban/phuong-ngo-quyen-00123"},
+			{EntityID: "province:1", UnitType: "province", Name: "Thành phố Hà Nội", AdministrativeCode: "01", CanonicalPath: "/tin-tuc/dia-ban/011/thanh-pho-ha-noi"},
+			{EntityID: "ward:42", UnitType: "ward", Name: "Phường Ngô Quyền", AdministrativeCode: "00123", CanonicalPath: "/tin-tuc/dia-ban/001232/phuong-ngo-quyen"},
 		},
 		GeometrySummary: dto.TqdPlanningPreview{
 			Centroid:     &dto.TqdPlanningPoint{Latitude: 21.03, Longitude: 105.84},
@@ -117,14 +117,17 @@ func TestUnknownSeoModuleFailsClosed(t *testing.T) {
 }
 
 func TestNormalizePublicSeoSlugFailsClosed(t *testing.T) {
-	invalid := []string{"", "undefined", "null", "[object Object]", "ward/42", `ward\42`, "../ward", "ward?x=1", "ward#section"}
+	invalid := []string{"", "undefined", "null", "[object Object]", `ward\42`, "../ward", "ward?x=1", "ward#section", "ward//42"}
 	for _, value := range invalid {
 		if normalized, err := normalizePublicSeoSlug(value); err == nil {
 			t.Fatalf("unsafe slug %q was accepted as %q", value, normalized)
 		}
 	}
-	if normalized, err := normalizePublicSeoSlug("phuong-ngo-quyen-00123"); err != nil || normalized != "phuong-ngo-quyen-00123" {
+	if normalized, err := normalizePublicSeoSlug("001232/phuong-ngo-quyen"); err != nil || normalized != "001232/phuong-ngo-quyen" {
 		t.Fatalf("valid canonical slug was rejected: slug=%q err=%v", normalized, err)
+	}
+	if normalized, err := normalizePublicSeoSlug("ward/42"); err != nil || normalized != "ward/42" {
+		t.Fatalf("valid compound slug was rejected: slug=%q err=%v", normalized, err)
 	}
 }
 

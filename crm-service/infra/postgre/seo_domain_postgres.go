@@ -5,6 +5,7 @@ import (
 	"crm/infra/impl"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/repo"
 	"fmt"
 	"sort"
@@ -51,7 +52,22 @@ func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain
 		return nil, err
 	}
 	seo.NormalizeLifecycle()
+	r.fillCategoryName(ctx, &seo)
 	return &seo, nil
+}
+
+func (r *SeoDomainPostgres) fillCategoryName(ctx context.Context, seo *seo_domain.SeoDomain) {
+	if seo == nil || seo.CategoryID == nil || *seo.CategoryID == 0 {
+		return
+	}
+	var name string
+	_ = impl.GetDB(ctx, r.db).WithContext(ctx).
+		Table("seo_category").
+		Select("name").
+		Where("id = ? AND deleted_at IS NULL", *seo.CategoryID).
+		Limit(1).
+		Scan(&name).Error
+	seo.CategoryName = name
 }
 
 func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error) {
@@ -147,7 +163,11 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 	req.Normalize()
 
-	query := r.db.WithContext(ctx).Model(&seo_domain.SeoDomain{})
+	query := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Select("seo_domain.*, COALESCE(sc.count, 0) AS click_count, sc.updated_at AS click_updated_at, COALESCE(cat.name, '') AS category_name").
+		Joins("LEFT JOIN seo_count sc ON sc.seo_id = seo_domain.id").
+		Joins("LEFT JOIN seo_category cat ON cat.id = seo_domain.category_id AND cat.deleted_at IS NULL")
 
 	if req.Keyword != nil && strings.TrimSpace(*req.Keyword) != "" {
 		keyword := strings.ToLower(strings.TrimSpace(*req.Keyword))
@@ -156,57 +176,57 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 		if len(parts) > 0 {
 			keyword = "%" + strings.Join(parts, "%") + "%"
 			query = query.Where(
-				"LOWER(slug) LIKE ? OR LOWER(origin_url) LIKE ? OR LOWER(canonical_url) LIKE ? OR LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(note) LIKE ? OR LOWER(ref_label) LIKE ?",
+				"LOWER(seo_domain.slug) LIKE ? OR LOWER(seo_domain.origin_url) LIKE ? OR LOWER(seo_domain.canonical_url) LIKE ? OR LOWER(seo_domain.title) LIKE ? OR LOWER(seo_domain.description) LIKE ? OR LOWER(seo_domain.note) LIKE ? OR LOWER(seo_domain.ref_label) LIKE ?",
 				keyword, keyword, keyword, keyword, keyword, keyword, keyword,
 			)
 		}
 	}
 	if req.RefType != nil {
-		query = query.Where("ref_type = ?", *req.RefType)
+		query = query.Where("seo_domain.ref_type = ?", *req.RefType)
 	}
 	if req.RefID != nil {
-		query = query.Where("ref_id = ?", *req.RefID)
+		query = query.Where("seo_domain.ref_id = ?", *req.RefID)
 	}
 	if req.RefSource != nil && strings.TrimSpace(*req.RefSource) != "" {
-		query = query.Where("ref_source = ?", strings.TrimSpace(*req.RefSource))
+		query = query.Where("seo_domain.ref_source = ?", strings.TrimSpace(*req.RefSource))
 	}
 	if req.SourceStatus != nil && strings.TrimSpace(*req.SourceStatus) != "" {
-		query = query.Where("source_status = ?", strings.TrimSpace(*req.SourceStatus))
+		query = query.Where("seo_domain.source_status = ?", strings.TrimSpace(*req.SourceStatus))
 	}
 	if req.RefMissing != nil {
-		query = query.Where("ref_missing = ?", *req.RefMissing)
+		query = query.Where("seo_domain.ref_missing = ?", *req.RefMissing)
 	}
 	if req.Scope != nil && strings.TrimSpace(*req.Scope) != "" {
-		query = query.Where("scope = ?", strings.TrimSpace(*req.Scope))
+		query = query.Where("seo_domain.scope = ?", strings.TrimSpace(*req.Scope))
 	}
 	if req.Classify != nil {
-		query = query.Where("classify = ?", *req.Classify)
+		query = query.Where("seo_domain.classify = ?", *req.Classify)
 	}
 	if req.Published != nil {
-		query = query.Where("published = ?", *req.Published)
+		query = query.Where("seo_domain.published = ?", *req.Published)
 	}
 	if req.IsSiteMap != nil {
-		query = query.Where("is_site_map = ?", *req.IsSiteMap)
+		query = query.Where("seo_domain.is_site_map = ?", *req.IsSiteMap)
 	}
 	if req.IsIndex != nil {
-		query = query.Where("is_index = ?", *req.IsIndex)
+		query = query.Where("seo_domain.is_index = ?", *req.IsIndex)
 	}
 	if req.IsRobot != nil {
-		query = query.Where("is_robot = ?", *req.IsRobot)
+		query = query.Where("seo_domain.is_robot = ?", *req.IsRobot)
 	}
 	if req.NeedGenerate != nil {
-		query = query.Where("need_generate = ?", *req.NeedGenerate)
+		query = query.Where("seo_domain.need_generate = ?", *req.NeedGenerate)
 	}
 
 	// V2 lifecycle/render filters.
 	if req.PageStatus != nil && strings.TrimSpace(*req.PageStatus) != "" {
-		query = query.Where("page_status = ?", strings.TrimSpace(*req.PageStatus))
+		query = query.Where("seo_domain.page_status = ?", strings.TrimSpace(*req.PageStatus))
 	}
 	if req.RenderStatus != nil && strings.TrimSpace(*req.RenderStatus) != "" {
-		query = query.Where("render_status = ?", strings.TrimSpace(*req.RenderStatus))
+		query = query.Where("seo_domain.render_status = ?", strings.TrimSpace(*req.RenderStatus))
 	}
 	if req.TemplateKey != nil && strings.TrimSpace(*req.TemplateKey) != "" {
-		query = query.Where("template_key = ?", strings.TrimSpace(*req.TemplateKey))
+		query = query.Where("seo_domain.template_key = ?", strings.TrimSpace(*req.TemplateKey))
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -214,7 +234,7 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 
 	if err := query.
-		Order("updated_at DESC").
+		Order("seo_domain.updated_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimitAdmin()).
 		Find(&items).Error; err != nil {
@@ -288,6 +308,49 @@ func (r *SeoDomainPostgres) CountByLinkedRef(ctx context.Context, req *dto.GetSe
 		return 0, err
 	}
 	return total, nil
+}
+
+func (r *SeoDomainPostgres) CountRecentByRefType(ctx context.Context, days uint32) ([]dto.SeoRefTypeCountItem, error) {
+	if days == 0 {
+		days = 5
+	}
+
+	type row struct {
+		RefType uint32 `gorm:"column:ref_type"`
+		Total   int64  `gorm:"column:total"`
+	}
+
+	since := time.Now().AddDate(0, 0, -int(days))
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Select("ref_type, COUNT(*) AS total").
+		Where("updated_at >= ?", since).
+		Group("ref_type").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	totals := make(map[uint32]int64, len(rows))
+	for _, item := range rows {
+		totals[item.RefType] = item.Total
+	}
+
+	allTypes := enums.AllSEORefTypes()
+	result := make([]dto.SeoRefTypeCountItem, 0, len(allTypes))
+	for _, refType := range allTypes {
+		total := totals[uint32(refType)]
+		if total == 0 {
+			continue
+		}
+		result = append(result, dto.SeoRefTypeCountItem{
+			RefType:     refType,
+			RefTypeName: refType.Name(),
+			Total:       total,
+		})
+	}
+	return result, nil
 }
 
 func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {

@@ -61,6 +61,10 @@ ALTER TABLE seo_links
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL;
 
+ALTER TABLE seo_links DROP CONSTRAINT IF EXISTS chk_seo_links_not_self;
+ALTER TABLE seo_links DROP CONSTRAINT IF EXISTS chk_seo_links_link_type;
+ALTER TABLE seo_links DROP CONSTRAINT IF EXISTS chk_seo_links_priority;
+
 ALTER TABLE seo_links
     ADD CONSTRAINT chk_seo_links_not_self
     CHECK (parent_seo_id <> child_seo_id) NOT VALID;

@@ -16,7 +16,7 @@ func TestAdministrativeUnitSourceRegistryUsesTQDAndFailsClosedUntilTypedProvisio
 	if cfg.SourceService != "tqd" || cfg.ResolverKey != SeoRefSourceTqdAdministrativeUnit {
 		t.Fatalf("administrative unit source owner must be TQD: %#v", cfg)
 	}
-	if cfg.PublicURLPattern != "/tin-tuc/dia-ban/{slug}" {
+	if cfg.PublicURLPattern != "/tin-tuc/dia-ban/{id}/{slug}" {
 		t.Fatalf("administrative unit canonical pattern mismatch: %q", cfg.PublicURLPattern)
 	}
 	if cfg.Status != SeoSourceStatusComingSoon || cfg.Capabilities.Resolvable || cfg.Capabilities.Searchable {

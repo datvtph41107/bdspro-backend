@@ -407,6 +407,9 @@ func validateAdministrativeUnitProvisioningProjection(projection *dto.TqdAdminis
 		return _errors.ReturnError(503, "Administrative Unit projection thiếu identity bắt buộc")
 	}
 	expectedCanonical := "/tin-tuc/dia-ban/" + strings.TrimSpace(projection.Slug)
+	if !strings.Contains(strings.TrimSpace(projection.Slug), "/") {
+		return _errors.ReturnError(503, "Administrative Unit projection slug phải dạng {code}/{name}")
+	}
 	if strings.TrimSpace(projection.CanonicalPath) != expectedCanonical {
 		return _errors.ReturnError(503, "Administrative Unit projection canonical không hợp lệ")
 	}

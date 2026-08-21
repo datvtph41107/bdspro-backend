@@ -151,7 +151,7 @@ func buildPlanningProjectPublicDocument(
 
 	canonicalPath := firstNonEmptyRender(
 		projection.CanonicalPath,
-		"/tin-tuc/do-an-quy-hoach/"+firstNonEmptyRender(projection.Slug, projection.CanonicalKey, strconv.FormatUint(projection.ID, 10)),
+		"/tin-tuc/do-an-quy-hoach/"+strconv.FormatUint(projection.ID, 10)+"/"+firstNonEmptyRender(projection.Slug, projection.CanonicalKey, strconv.FormatUint(projection.ID, 10)),
 	)
 	updatedAt := "Chưa cập nhật"
 	if projection.Source.UpdatedAt != nil {

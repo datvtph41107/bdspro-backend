@@ -70,6 +70,7 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		StaticHtmlPath:    seo.StaticHtmlPath,
 		StaticHtmlHash:    seo.StaticHtmlHash,
 		DeepLink:          seo.DeepLink,
+		ImageUrl:          seo.ImageURL,
 		Metadata:          jsonToOptionalString(seo.Metadata),
 		Note:              seo.Note,
 		InternalLinks:     links,
@@ -85,6 +86,20 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		TemplateKey:     seo.TemplateKey,
 		TemplateVersion: seo.TemplateVersion,
 		VisibleOn:       planningNewsVisibleOnToPb(seo.VisibleOn),
+		ClickCount:      seo.ClickCount,
+		ClickUpdatedAt:  formatTimePtr(seo.ClickUpdatedAt),
+		CategoryId:      seo.CategoryID,
+		Category:        seoCategoryBriefToPb(seo),
+	}
+}
+
+func seoCategoryBriefToPb(seo *seo_domain.SeoDomain) *crmpb.SeoCategoryBrief {
+	if seo == nil || seo.CategoryID == nil || *seo.CategoryID == 0 {
+		return nil
+	}
+	return &crmpb.SeoCategoryBrief{
+		Id:   *seo.CategoryID,
+		Name: seo.CategoryName,
 	}
 }
 
@@ -110,6 +125,7 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 		PageStatus:   seoPageStatusToPb(seo),
 		RenderStatus: seoRenderStatusToPb(seo),
 		NeedGenerate: seo.NeedGenerate,
+		ImageUrl:     seo.ImageURL,
 	}
 }
 

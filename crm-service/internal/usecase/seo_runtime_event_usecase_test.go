@@ -31,8 +31,8 @@ func TestSeoRuntimeEventUsecasePersistsSanitizedEvent(t *testing.T) {
 		Source:        "nextjs",
 		Event:         "seo_page_view",
 		SessionID:     "session-1",
-		CanonicalURL:  "https://qhpro.vn/dia-ban/phuong-ben-nghe-26734",
-		CanonicalPath: "/dia-ban/phuong-ben-nghe-26734",
+		CanonicalURL:  "https://qhpro.vn/dia-ban/267342/phuong-ben-nghe",
+		CanonicalPath: "/dia-ban/267342/phuong-ben-nghe",
 		ModuleID:      "administrative-unit",
 		Environment:   "production",
 		Indexable:     &indexable,
@@ -47,7 +47,7 @@ func TestSeoRuntimeEventUsecasePersistsSanitizedEvent(t *testing.T) {
 	if response == nil || !response.Accepted || !response.Persisted || response.Idempotent || len(response.EventKey) != 64 {
 		t.Fatalf("unexpected response: %#v", response)
 	}
-	if repository.event == nil || repository.event.ModuleID != "administrative-unit" || repository.event.CanonicalPath != "/dia-ban/phuong-ben-nghe-26734" {
+	if repository.event == nil || repository.event.ModuleID != "administrative-unit" || repository.event.CanonicalPath != "/dia-ban/267342/phuong-ben-nghe" {
 		t.Fatalf("unexpected persisted event: %#v", repository.event)
 	}
 }

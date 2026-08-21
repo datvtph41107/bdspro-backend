@@ -42,6 +42,18 @@ func locationDescriptionSQL(alias string, includeDescription bool) string {
 	return fmt.Sprintf("COALESCE(%sdescription, '') AS description", p)
 }
 
+func wardDetailTextSQL(alias string, includeDescription bool) string {
+	p := ""
+	if alias != "" {
+		p = alias + "."
+	}
+	summarySQL := fmt.Sprintf("COALESCE(%ssummary, '') AS summary", p)
+	if !includeDescription {
+		return "'' AS description, " + summarySQL
+	}
+	return fmt.Sprintf("COALESCE(%[1]sdescription, '') AS description, %[2]s", p, summarySQL)
+}
+
 func provinceSelectSQL(alias string, includeDescription bool) string {
 	p := ""
 	if alias != "" {
@@ -82,7 +94,7 @@ func wardSelectSQL(alias string, includeDescription bool) string {
 		COALESCE(%[1]sdata_source, 0) AS data_source,
 		COALESCE(%[1]sofficial_role, '') AS official_role,
 		COALESCE(%[1]sofficial_address, '') AS official_address,
-		%[1]sseo_id, %[1]screated_at, %[1]supdated_at`, p, locationDescriptionSQL(alias, includeDescription))
+		%[1]sseo_id, %[1]screated_at, %[1]supdated_at`, p, wardDetailTextSQL(alias, includeDescription))
 }
 
 // ==================== PROVINCE OPERATIONS ====================
@@ -273,12 +285,13 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 	argsWard := make([]interface{}, 0, 8)
 
 	if req.PlanningProjectID != 0 {
+		// Join-table *id vẫn VARCHAR; province_v2/ward_v2.id là bigint.
 		provinceSQL += `
 			AND EXISTS (
 				SELECT 1 FROM qh_planning_project_provinces ppp
 				WHERE ppp.deleted_at IS NULL
 				  AND ppp.planning_project_id = ?
-				  AND ppp.province_id = p.id
+				  AND ppp.province_id = p.id::text
 			)
 		`
 		wardSQL += `
@@ -286,7 +299,7 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 				SELECT 1 FROM qh_planning_project_wards ppw
 				WHERE ppw.deleted_at IS NULL
 				  AND ppw.planning_project_id = ?
-				  AND ppw.ward_id = w.id
+				  AND ppw.ward_id = w.id::text
 			)
 		`
 		argsProvince = append(argsProvince, req.PlanningProjectID)
@@ -762,7 +775,7 @@ func adminAdministrativeUnitOrder(sort, fallback string) string {
 // 	return unitType, sourceID, nil
 // }
 
-func locationSeoSlug(name, code string) string {
+func locationSeoSlug(name, code string, unitType uint32) string {
 	nameSlug := locationSlugify(name)
 	codeSlug := locationSlugify(code)
 	if nameSlug == "" {
@@ -771,7 +784,11 @@ func locationSeoSlug(name, code string) string {
 	if codeSlug == "" {
 		return nameSlug
 	}
-	return nameSlug + "-" + codeSlug
+	kind := "1"
+	if unitType == _utils.LocationIDKindWard {
+		kind = "2"
+	}
+	return codeSlug + kind + "/" + nameSlug
 }
 
 func locationSlugify(value string) string {
@@ -810,21 +827,26 @@ func locationSlugify(value string) string {
 
 // buildAdministrativeUnitSeoSource updated parameters to uint64
 func (r *locationRepo) buildAdministrativeUnitSeoSource(unitType uint32, sourceID uint64, name, code string, seoID *uint64) *dto.AdministrativeUnitSeoSource {
-	slug := locationSeoSlug(name, code)
+	slug := locationSeoSlug(name, code, unitType)
 	// Use _utils.EncodeLocationID to generate Identity
 	identity, err := _utils.EncodeLocationID(sourceID, unitType)
 	if err != nil {
 		return nil
 	}
-	return &dto.AdministrativeUnitSeoSource{
+	source := &dto.AdministrativeUnitSeoSource{
 		Identity:           identity,
 		UnitType:           unitType,
 		SourceID:           sourceID,
 		Name:               name,
 		Slug:               slug,
+		CanonicalPath:      "/tin-tuc/dia-ban/" + slug,
 		AdministrativeCode: code,
 		CompositeID:        identity,
 	}
+	if seoID != nil && *seoID > 0 {
+		source.SeoID = seoID
+	}
+	return source
 }
 
 // GetAdministrativeUnitSeoSource updated parameter to uint64
@@ -1092,6 +1114,7 @@ func adminWardUpdates(w *domain.Ward) map[string]interface{} {
 		"official_address":        w.OfficialAddress,
 		"province_id":             w.ProvinceID,
 		"province_code":           w.ProvinceCode,
+		"summary":                 w.Summary,
 		"description":             w.Description,
 		"official_name":           w.OfficialName,
 		"division_type":           w.DivisionType,

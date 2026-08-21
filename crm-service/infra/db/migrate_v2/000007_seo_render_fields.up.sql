@@ -54,6 +54,9 @@ ALTER TABLE seo_domain
     ALTER COLUMN render_status SET DEFAULT 'none',
     ALTER COLUMN render_status SET NOT NULL;
 
+ALTER TABLE seo_domain DROP CONSTRAINT IF EXISTS chk_seo_domain_page_status;
+ALTER TABLE seo_domain DROP CONSTRAINT IF EXISTS chk_seo_domain_render_status;
+
 ALTER TABLE seo_domain
     ADD CONSTRAINT chk_seo_domain_page_status
     CHECK (page_status IN ('draft', 'published', 'archived')) NOT VALID;

@@ -44,6 +44,10 @@ ALTER TABLE seo_relative
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL;
 
+ALTER TABLE seo_relative DROP CONSTRAINT IF EXISTS chk_seo_relative_not_self;
+ALTER TABLE seo_relative DROP CONSTRAINT IF EXISTS chk_seo_relative_type;
+ALTER TABLE seo_relative DROP CONSTRAINT IF EXISTS chk_seo_relative_priority;
+
 ALTER TABLE seo_relative
     ADD CONSTRAINT chk_seo_relative_not_self
     CHECK (parent_seo_id <> child_seo_id) NOT VALID;

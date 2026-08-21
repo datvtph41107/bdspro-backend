@@ -77,11 +77,11 @@ func lowerSearchPattern(value string) string {
 }
 
 func unaccentLike(column string) string {
-	return "LOWER(unaccent(COALESCE(" + column + ",''))) LIKE LOWER(unaccent(?))"
+	return "REPLACE(LOWER(unaccent(COALESCE(" + column + ",''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd')"
 }
 
 func slugSearchLike() string {
-	return "REPLACE(LOWER(unaccent(COALESCE(p.slug,''))), '-', ' ') LIKE REPLACE(LOWER(unaccent(?)), '-', ' ')"
+	return "REPLACE(REPLACE(LOWER(unaccent(COALESCE(p.slug,''))), '-', ' '), 'đ', 'd') LIKE REPLACE(REPLACE(LOWER(unaccent(?)), '-', ' '), 'đ', 'd')"
 }
 
 func applyProjectSearch(db *gorm.DB, search string, includeDocuments bool) *gorm.DB {
@@ -368,12 +368,14 @@ func (r *Repository) attachProjectProvinces(ctx context.Context, items []plannin
 		Lng               float64
 	}
 	rows := []projectProvinceRow{}
+	// province_v2.id là bigint; qh_planning_project_provinces.province_id vẫn VARCHAR(50)
+	// (lưu dạng text của id). Cast để tránh SQLSTATE 42883 bigint = character varying.
 	err := r.db.WithContext(ctx).
 		Table("qh_planning_project_provinces ppp").
-		Joins("JOIN province_v2 pv ON pv.id = ppp.province_id").
+		Joins("JOIN province_v2 pv ON pv.id::text = ppp.province_id").
 		Where("ppp.deleted_at IS NULL AND ppp.planning_project_id IN ?", projectIDs).
 		Select(`ppp.planning_project_id,
-			pv.id,
+			pv.id::text AS id,
 			pv.full_name,
 			COALESCE(pv.short_name,'') AS short_name,
 			COALESCE(pv.code,'') AS code,

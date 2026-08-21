@@ -101,6 +101,9 @@ type PlanningDocumentSeoSource struct {
 	Title              string  `json:"title" gorm:"column:title"`
 	Slug               string  `json:"slug" gorm:"column:slug"`
 	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+	Filepath           string  `json:"filepath" gorm:"column:filepath"`
+	Thumbnail          string  `json:"thumbnail" gorm:"column:thumbnail"`
+	Ext                string  `json:"ext" gorm:"column:ext"`
 }
 
 type AdminGenPlanningDocumentSeoItem struct {

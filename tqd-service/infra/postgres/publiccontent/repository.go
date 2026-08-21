@@ -422,7 +422,7 @@ func buildRelatedPlanningProject(project relatedProjectRow, slug string, ratio f
 		IntersectAreaSqm:  project.IntersectAreaSqm,
 		IntersectionRatio: ratio,
 		UpdatedAt:         project.UpdatedAt,
-		PublicPath:        "/tin-tuc/do-an-quy-hoach/" + slug,
+		PublicPath:        "/tin-tuc/do-an-quy-hoach/" + id + "/" + slug,
 		DossierPath:       "/ban-do/do-an/" + id,
 		MapPath:           "/ban-do?projectId=" + id,
 	}
@@ -787,7 +787,7 @@ func (r *Repository) GetPlanningProjectProjection(
 			Slug:       relatedSlug,
 			Code:       item.Code,
 			Name:       item.Name,
-			PublicPath: "/tin-tuc/do-an-quy-hoach/" + relatedSlug,
+			PublicPath: "/tin-tuc/do-an-quy-hoach/" + strconv.FormatUint(item.ID, 10) + "/" + relatedSlug,
 			MapPath:    "/ban-do?projectId=" + strconv.FormatUint(item.ID, 10),
 		})
 	}
@@ -819,7 +819,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		ID:                row.ID,
 		CanonicalKey:      "planning_project:" + strconv.FormatUint(row.ID, 10),
 		Slug:              slug,
-		CanonicalPath:     "/tin-tuc/do-an-quy-hoach/" + slug,
+		CanonicalPath:     "/tin-tuc/do-an-quy-hoach/" + strconv.FormatUint(row.ID, 10) + "/" + slug,
 		Code:              row.Code,
 		Name:              row.Name,
 		PlanningType:      row.PlanningType,

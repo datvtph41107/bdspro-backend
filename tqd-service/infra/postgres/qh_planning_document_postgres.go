@@ -124,12 +124,12 @@ func (r *QHPlanningDocumentRepo) GetList(ctx context.Context, req *qh_dto.ListPl
 	if req.ValidityStatus != "" {
 		db = db.Where("qh_planning_documents.validity_status = ?", req.ValidityStatus)
 	}
-	if keyword := strings.ToLower(strings.TrimSpace(req.Keyword)); keyword != "" {
+	if keyword := strings.TrimSpace(req.Keyword); keyword != "" {
 		pattern := "%" + keyword + "%"
 		db = db.Where(`(
-			LOWER(unaccent(COALESCE(qh_planning_documents.title,''))) LIKE LOWER(unaccent(?)) OR
-			LOWER(unaccent(COALESCE(qh_planning_documents.code,''))) LIKE LOWER(unaccent(?)) OR
-			LOWER(unaccent(COALESCE(qh_planning_documents.description,''))) LIKE LOWER(unaccent(?))
+			REPLACE(LOWER(unaccent(COALESCE(qh_planning_documents.title,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(LOWER(unaccent(COALESCE(qh_planning_documents.code,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(LOWER(unaccent(COALESCE(qh_planning_documents.description,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd')
 		)`, pattern, pattern, pattern)
 	}
 	layerIDs := tqdutils.MergePositiveUint64(req.LayerID, req.LayerIDs)
@@ -222,12 +222,12 @@ func (r *QHPlanningDocumentRepo) getListByParcelRelation(ctx context.Context, re
 		baseSQL += ` AND d.validity_status = ?`
 		args = append(args, req.ValidityStatus)
 	}
-	if keyword := strings.ToLower(strings.TrimSpace(req.Keyword)); keyword != "" {
+	if keyword := strings.TrimSpace(req.Keyword); keyword != "" {
 		pattern := "%" + keyword + "%"
 		baseSQL += ` AND (
-			LOWER(unaccent(COALESCE(d.title,''))) LIKE LOWER(unaccent(?)) OR
-			LOWER(unaccent(COALESCE(d.code,''))) LIKE LOWER(unaccent(?)) OR
-			LOWER(unaccent(COALESCE(d.description,''))) LIKE LOWER(unaccent(?))
+			REPLACE(LOWER(unaccent(COALESCE(d.title,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(LOWER(unaccent(COALESCE(d.code,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd') OR
+			REPLACE(LOWER(unaccent(COALESCE(d.description,''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd')
 		)`
 		args = append(args, pattern, pattern, pattern)
 	}
@@ -364,7 +364,10 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSource(ctx context.Contex
 				id AS planning_document_id,
 				COALESCE(NULLIF(title, ''), '') AS title,
 				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
-				seo_id AS seo_id
+				seo_id AS seo_id,
+				COALESCE(filepath, '') AS filepath,
+				COALESCE(thumbnail, '') AS thumbnail,
+				COALESCE(ext, '') AS ext
 			FROM qh_planning_documents
 			WHERE id = ? AND deleted_at IS NULL
 			LIMIT 1
@@ -392,7 +395,10 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSourcesByIDs(ctx context.
 				id AS planning_document_id,
 				COALESCE(NULLIF(title, ''), '') AS title,
 				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
-				seo_id AS seo_id
+				seo_id AS seo_id,
+				COALESCE(filepath, '') AS filepath,
+				COALESCE(thumbnail, '') AS thumbnail,
+				COALESCE(ext, '') AS ext
 			FROM qh_planning_documents
 			WHERE id IN ? AND deleted_at IS NULL
 		`, ids).

@@ -391,6 +391,9 @@ message PlanningDocumentSeoSourceResponse {
   string title = 2;
   string slug = 3;
   uint64 seoId = 4;
+  string filepath = 5;
+  string thumbnail = 6;
+  string ext = 7;
 }
 
 message UpdatePlanningDocumentSeoIDRequest {

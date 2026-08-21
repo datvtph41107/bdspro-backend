@@ -1,6 +1,9 @@
 package dto
 
-import _dto "common/domain/dto"
+import (
+	_dto "common/domain/dto"
+	"crm/internal/enums"
+)
 
 type SeoDomainCreateRequest struct {
 	Slug              string  `json:"slug"`
@@ -37,6 +40,7 @@ type SeoDomainCreateRequest struct {
 	StaticHtmlPath    string  `json:"staticHtmlPath"`
 	StaticHtmlHash    string  `json:"staticHtmlHash"`
 	DeepLink          string  `json:"deepLink"`
+	ImageURL          string  `json:"imageUrl"`
 	Metadata          *string `json:"metadata"`
 	Note              string  `json:"note"`
 
@@ -47,6 +51,7 @@ type SeoDomainCreateRequest struct {
 	LastRenderError string `json:"lastRenderError"`
 	TemplateKey     string `json:"templateKey"`
 	TemplateVersion string `json:"templateVersion"`
+	CategoryID      *uint64 `json:"categoryId"`
 }
 
 type SeoDomainUpdateRequest struct {
@@ -84,6 +89,7 @@ type SeoDomainUpdateRequest struct {
 	StaticHtmlPath    *string  `json:"staticHtmlPath"`
 	StaticHtmlHash    *string  `json:"staticHtmlHash"`
 	DeepLink          *string  `json:"deepLink"`
+	ImageURL          *string  `json:"imageUrl"`
 	Metadata          *string  `json:"metadata"`
 	Note              *string  `json:"note"`
 
@@ -94,6 +100,7 @@ type SeoDomainUpdateRequest struct {
 	LastRenderError *string `json:"lastRenderError"`
 	TemplateKey     *string `json:"templateKey"`
 	TemplateVersion *string `json:"templateVersion"`
+	CategoryID      *uint64 `json:"categoryId"`
 }
 
 type SeoDomainListRequest struct {
@@ -116,6 +123,26 @@ type SeoDomainListRequest struct {
 	PageStatus   *string `json:"pageStatus" form:"pageStatus"`
 	RenderStatus *string `json:"renderStatus" form:"renderStatus"`
 	TemplateKey  *string `json:"templateKey" form:"templateKey"`
+}
+
+// CountRecentSeoByRefTypeRequest đếm SEO theo từng refType với updatedAt trong N ngày gần nhất.
+type CountRecentSeoByRefTypeRequest struct {
+	Days uint32 `json:"days" form:"days"`
+}
+
+func (r *CountRecentSeoByRefTypeRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	if r.Days == 0 {
+		r.Days = 5
+	}
+}
+
+type SeoRefTypeCountItem struct {
+	RefType     enums.ESEORefType `json:"refType"`
+	RefTypeName string            `json:"refTypeName"`
+	Total       int64             `json:"total"`
 }
 
 type SeoSitemapItem struct {
@@ -170,9 +197,12 @@ type ParcelSeoSource struct {
 }
 
 type LayerSeoSource struct {
-	LayerID     uint64  `json:"layerId" gorm:"column:layer_id"`
-	DisplayName string  `json:"displayName" gorm:"column:display_name"`
-	SeoID       *uint64 `json:"seoId" gorm:"column:seo_id"`
+	LayerID      uint64  `json:"layerId" gorm:"column:layer_id"`
+	DisplayName  string  `json:"displayName" gorm:"column:display_name"`
+	SeoID        *uint64 `json:"seoId" gorm:"column:seo_id"`
+	ThumbnailURL string  `json:"thumbnailUrl" gorm:"column:thumbnail_url"`
+	ImageURL     string  `json:"imageUrl" gorm:"column:image_url"`
+	Avatar       string  `json:"avatar" gorm:"column:avatar"`
 }
 
 type GenerateSeoFromLayersRequest struct {
@@ -211,6 +241,9 @@ type PlanningDocumentSeoSource struct {
 	Title              string  `json:"title" gorm:"column:title"`
 	Slug               string  `json:"slug" gorm:"column:slug"`
 	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
+	Filepath           string  `json:"filepath" gorm:"column:filepath"`
+	Thumbnail          string  `json:"thumbnail" gorm:"column:thumbnail"`
+	Ext                string  `json:"ext" gorm:"column:ext"`
 }
 
 type GenerateSeoFromPlanningDocumentsRequest struct {

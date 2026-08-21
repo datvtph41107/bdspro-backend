@@ -99,6 +99,9 @@ type SeoDomain struct {
 	// 10 featured, 20 attention, 30 latest, 40 most_read, 50 breaking.
 	VisibleOn uint32 `gorm:"column:visible_on;type:smallint;not null;default:30;index"`
 
+	// Primary chủ đề (seo_category) denormalized for list/filter.
+	CategoryID *uint64 `gorm:"column:category_id;type:bigint;index"`
+
 	// Publish lifecycle: page đã đủ điều kiện ra ngoài hay chưa.
 	Published   bool       `gorm:"default:false;index"`
 	PublishedAt *time.Time `gorm:"column:published_at;index"`
@@ -131,6 +134,9 @@ type SeoDomain struct {
 	// Mobile app deeplink.
 	DeepLink string `gorm:"column:deep_link;type:text"`
 
+	// Cover/thumbnail image for list + detail.
+	ImageURL string `gorm:"column:image_url;type:text"`
+
 	// Metadata chỉ giữ phần mở rộng: schema JSON-LD, breadcrumb, og, robots, custom.
 	Metadata datatypes.JSON `gorm:"type:jsonb;default:'{}'::jsonb"`
 
@@ -142,6 +148,13 @@ type SeoDomain struct {
 	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+
+	// Click aggregate from seo_count (list/join only; not a DB column on seo_domain).
+	ClickCount     int64      `gorm:"column:click_count;->"`
+	ClickUpdatedAt *time.Time `gorm:"column:click_updated_at;->"`
+
+	// Category name from seo_category join (list/detail only).
+	CategoryName string `gorm:"column:category_name;->"`
 }
 
 func (SeoDomain) TableName() string {

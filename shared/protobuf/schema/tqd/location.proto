@@ -467,6 +467,7 @@ message Ward {
     string dataSourceName = 24;
     string officialRole = 25;    // Vai trò chính thức (ví dụ: Đảng ủy phường, UBND phường...)
     string officialAddress = 26; // Địa chỉ cơ quan chính quyền
+    string summary = 27;         // Tóm tắt ngắn (ward_v2.summary)
 }
 
 message GetAdministrativeUnitSeoSourceRequest {

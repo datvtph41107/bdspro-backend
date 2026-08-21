@@ -322,6 +322,9 @@ message LayerSeoSourceResponse {
   uint64 layerId = 1;
   string displayName = 2;
   uint64 seoId = 3;
+  string thumbnailUrl = 4;
+  string imageUrl = 5;
+  string avatar = 6;
 }
 
 message UpdateLayerSeoIDRequest {

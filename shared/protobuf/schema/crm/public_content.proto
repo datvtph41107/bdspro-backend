@@ -53,7 +53,8 @@ message PlanningNewsQueryRequest {
   string keyword = 4;
   string q = 5;
   optional uint32 visible_on = 6;
-  string category = 7;
+  // deprecated: không dùng để lọc; dùng categoryId
+  string category = 7 [deprecated = true];
   string topic = 8;
   string domain = 9;
   string location = 10;
@@ -62,6 +63,12 @@ message PlanningNewsQueryRequest {
   string sort_order = 13;
   // Danh sách visible_on cách nhau bởi dấu phẩy, ví dụ: "10,20"
   string visibleOns = 14;
+  // Filter theo primary seo_category.id (thay cho categoryCode)
+  uint64 categoryId = 15;
+  // Sort dạng gộp, ví dụ: updated_desc | published_desc | updated_asc | published_asc
+  string sort = 16;
+  // Lọc theo seo_domain.ref_type (100/200/300/400/500/600/700/800)
+  uint32 refType = 17;
 }
 
 message PlanningNewsSlugRequest {
@@ -77,39 +84,80 @@ message PlanningNewsSaveRequest {
   uint64 id = 1;
 }
 
+message FollowedSeoCategoryQueryRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message SeoCategoryFollowRequest {
+  uint64 id = 1;
+}
+
 message UpdatePlanningNewsVisibilityRequest {
   uint64 id = 1;
   uint32 visible_on = 2;}
 
 message AssignPlanningNewsCategoryRequest {
   uint64 id = 1;
-  string category = 2;
+  uint64 categoryId = 2;
 }
 
 message SetPlanningNewsTopRequest {
   uint64 id = 1;
 }
 
+message CreateSeoCategoryRequest {
+  uint64 domainId = 1;
+  string domain = 2;
+  string code = 3;
+  string slug = 4;
+  string name = 5;
+  string description = 6;
+  string status = 7;
+  int32 sortOrder = 8;
+}
+
+message UpdateSeoCategoryRequest {
+  uint64 id = 1;
+  optional uint64 domainId = 2;
+  optional string domain = 3;
+  optional string code = 4;
+  optional string slug = 5;
+  optional string name = 6;
+  optional string description = 7;
+  optional string status = 8;
+  optional int32 sortOrder = 9;
+}
+
+message DeleteSeoCategoryRequest {
+  uint64 id = 1;
+}
+
+message TrackSeoClickRequest {
+  uint64 refId = 1;
+  uint32 refType = 2;
+}
+
 // Canonical CRM public content and SEO contract. Gateway registers generated HTTP handlers; CRM exposes gRPC only.
 service CRMPublicContentService {
   rpc GetPublicSeoDocument(SeoDocumentRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
-      get: "/v2/crm/public/seo/documents/{module}/{slug}"
+      get: "/v2/crm/public/seo/documents/{module}/{slug=**}"
       additional_bindings {
         custom {
           kind: "HEAD"
-          path: "/v2/crm/public/seo/documents/{module}/{slug}"
+          path: "/v2/crm/public/seo/documents/{module}/{slug=**}"
         }
       }
     };
   }
   rpc GetGovernanceSeoDocument(SeoDocumentRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
-      get: "/v2/crm/admin/seo-governance/documents/{module}/{slug}"
+      get: "/v2/crm/admin/seo-governance/documents/{module}/{slug=**}"
       additional_bindings {
         custom {
           kind: "HEAD"
-          path: "/v2/crm/admin/seo-governance/documents/{module}/{slug}"
+          path: "/v2/crm/admin/seo-governance/documents/{module}/{slug=**}"
         }
       }
     };
@@ -201,6 +249,21 @@ service CRMPublicContentService {
       delete: "/v2/crm/client/content/planning-news/{id}/saved"
     };
   }
+  rpc ListFollowedSeoCategories(FollowedSeoCategoryQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/client/content/categories/followed"
+    };
+  }
+  rpc FollowSeoCategory(SeoCategoryFollowRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/client/content/categories/{id}/followed"
+    };
+  }
+  rpc UnfollowSeoCategory(SeoCategoryFollowRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      delete: "/v2/crm/client/content/categories/{id}/followed"
+    };
+  }
   rpc UpdatePlanningNewsVisibility(UpdatePlanningNewsVisibilityRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       patch: "/v2/crm/admin/content/planning-news/{id}/visibility"
@@ -219,6 +282,23 @@ service CRMPublicContentService {
       body: "*"
     };
   }
+  rpc CreateSeoCategory(CreateSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/content/categories"
+      body: "*"
+    };
+  }
+  rpc UpdateSeoCategory(UpdateSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/content/categories/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteSeoCategory(DeleteSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/content/categories/{id}"
+    };
+  }
   rpc ProvisionAdministrativeUnit(google.protobuf.Struct) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-governance/administrative-units/provision"
@@ -228,6 +308,12 @@ service CRMPublicContentService {
   rpc IngestRuntimeEvent(google.protobuf.Struct) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       post: "/v2/crm/internal/seo/measurement/events"
+      body: "*"
+    };
+  }
+  rpc TrackSeoClick(TrackSeoClickRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/public/seo/click"
       body: "*"
     };
   }

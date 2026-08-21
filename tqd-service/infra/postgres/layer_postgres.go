@@ -351,7 +351,10 @@ func (r *layerRepoImpl) GetLayerSeoSource(ctx context.Context, layerID uint64) (
 			SELECT
 				id AS layer_id,
 				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
-				seo_id AS seo_id
+				seo_id AS seo_id,
+				COALESCE(thumbnail_url, '') AS thumbnail_url,
+				COALESCE(image_url, '') AS image_url,
+				COALESCE(avatar, '') AS avatar
 			FROM qh_layers
 			WHERE id = ? AND deleted_at IS NULL
 			LIMIT 1
@@ -378,7 +381,10 @@ func (r *layerRepoImpl) GetLayerSeoSourcesByIDs(ctx context.Context, layerIDs []
 			SELECT
 				id AS layer_id,
 				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
-				seo_id AS seo_id
+				seo_id AS seo_id,
+				COALESCE(thumbnail_url, '') AS thumbnail_url,
+				COALESCE(image_url, '') AS image_url,
+				COALESCE(avatar, '') AS avatar
 			FROM qh_layers
 			WHERE id IN ? AND deleted_at IS NULL
 		`, layerIDs).

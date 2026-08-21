@@ -12,8 +12,8 @@ func TestBuildSeoGovernanceDocumentPreservesBackendDecisions(t *testing.T) {
 	now := time.Date(2026, time.July, 24, 9, 30, 0, 0, time.UTC)
 	page := &seo_domain.SeoDomain{
 		ID:              42,
-		Slug:            "phuong-ben-nghe-26734",
-		CanonicalURL:    "/tin-tuc/dia-ban/phuong-ben-nghe-26734",
+		Slug:            "267342/phuong-ben-nghe",
+		CanonicalURL:    "/tin-tuc/dia-ban/267342/phuong-ben-nghe",
 		PageStatus:      seo_domain.SeoPageStatusPublished,
 		Published:       true,
 		Scope:           seo_domain.SeoScopePublic,

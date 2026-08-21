@@ -189,16 +189,21 @@ func (u *SeoPublicUsecase) resolvePublicDocumentPage(
 }
 
 func normalizePublicSeoSlug(value string) (string, error) {
-	slug := strings.TrimSpace(value)
+	slug := strings.Trim(strings.TrimSpace(value), "/")
 	lower := strings.ToLower(slug)
 	if slug == "" ||
-		strings.ContainsAny(slug, `/\`) ||
+		strings.Contains(slug, `\`) ||
 		strings.Contains(slug, "..") ||
 		strings.ContainsAny(slug, "?#") ||
 		lower == "undefined" ||
 		lower == "null" ||
 		strings.Contains(lower, "[object object]") {
 		return "", _errors.ReturnError(400, "slug không hợp lệ")
+	}
+	for _, part := range strings.Split(slug, "/") {
+		if strings.TrimSpace(part) == "" {
+			return "", _errors.ReturnError(400, "slug không hợp lệ")
+		}
 	}
 	return slug, nil
 }

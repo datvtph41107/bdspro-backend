@@ -18,6 +18,7 @@ type SeoDomainRepo interface {
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)
 	GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error)
 	CountByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error)
+	CountRecentByRefType(ctx context.Context, days uint32) ([]dto.SeoRefTypeCountItem, error)
 	GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error

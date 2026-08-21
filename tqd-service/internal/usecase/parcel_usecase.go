@@ -1655,8 +1655,8 @@ func (u *parcelUsecase) GetAdministrativeUnitQuickInfo(ctx context.Context, comp
 	if err != nil {
 		return nil, fmt.Errorf("decode compositeId: %w", err)
 	}
-	if kind != _utils.LocationIDKindProvince && kind != _utils.LocationIDKindWard {
-		return nil, fmt.Errorf("invalid compositeId kind: %d", kind)
+	if kind != _utils.LocationIDKindWard {
+		return []dto.ParcelLayerInfo{}, nil
 	}
 	quickInfo, err := u.parcelRepo.GetAdministrativeUnitQuickInfo(ctx, sourceID, kind)
 	if err != nil {

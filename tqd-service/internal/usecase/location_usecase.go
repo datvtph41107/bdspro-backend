@@ -914,6 +914,7 @@ func (u *LocationUsecase) toWardDTO(w *domain.Ward) *dto.WardDTO {
 		NaturalAreaKm2:        w.NaturalAreaKm2,
 		Population:            w.Population,
 		PopulationDensity:     w.PopulationDensity,
+		Summary:               w.Summary,
 		Description:           w.Description,
 		CompositeID:           encodeLocationCompositeID(w.ID, _utils.LocationIDKindWard),
 		UnitType:              uint32(unitType),
@@ -1250,6 +1251,9 @@ func mergeWardUpdate(existing *domain.Ward, in *dto.WardDTO) {
 		existing.NaturalAreaKm2 = in.NaturalAreaKm2
 		existing.Population = in.Population
 		existing.PopulationDensity = fillPopulationDensity(in.NaturalAreaKm2, in.Population, in.PopulationDensity)
+	}
+	if v := strings.TrimSpace(in.Summary); v != "" {
+		existing.Summary = v
 	}
 	if v := strings.TrimSpace(in.Description); v != "" {
 		existing.Description = v

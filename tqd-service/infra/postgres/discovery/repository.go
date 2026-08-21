@@ -705,7 +705,7 @@ func (r *Repository) SearchPlanningProjects(ctx context.Context, req domain.Sear
 	out := make([]domain.EntityCandidate, 0, len(rows))
 	for _, row := range rows {
 		item := candidate(domain.EntityKindPlanningProject, row, "full_text")
-		item.Links.CanonicalURL = "/tin-tuc/do-an-quy-hoach/" + row.ID
+		item.Links.CanonicalURL = entitycandidate.DetailURL(domain.EntityKindPlanningProject, row)
 		item.Links.DetailURL = item.Links.CanonicalURL
 		item.Capabilities.CanCreateReport = true
 		item.Capabilities.CanCompare = true

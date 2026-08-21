@@ -18,22 +18,22 @@ func TestBuildKeepsCanonicalLinksAndCapabilitiesConsistent(t *testing.T) {
 			name:          "planning project",
 			kind:          discoverydomain.EntityKindPlanningProject,
 			row:           Row{ID: "12", Title: "Đồ án mẫu"},
-			wantDetail:    "/tin-tuc/do-an-quy-hoach/12",
-			wantCanonical: "/tin-tuc/do-an-quy-hoach/12",
+			wantDetail:    "/tin-tuc/do-an-quy-hoach/12/do-an-mau",
+			wantCanonical: "/tin-tuc/do-an-quy-hoach/12/do-an-mau",
 		},
 		{
 			name:          "planning region",
 			kind:          discoverydomain.EntityKindPlanningRegion,
 			row:           Row{ID: "34", Title: "Vùng mẫu"},
-			wantDetail:    "/vung-quy-hoach/34",
-			wantCanonical: "/vung-quy-hoach/34",
+			wantDetail:    "/tin-tuc/vung-quy-hoach/34/vung-mau",
+			wantCanonical: "/tin-tuc/vung-quy-hoach/34/vung-mau",
 		},
 		{
 			name:          "administrative ward",
 			kind:          discoverydomain.EntityKindAdministrativeUnit,
 			row:           Row{ID: "ward:9", Title: "Phường Mẫu", WardCode: "00009"},
-			wantDetail:    "/tin-tuc/dia-ban/phuong-mau-00009",
-			wantCanonical: "/tin-tuc/dia-ban/phuong-mau-00009",
+			wantDetail:    "/tin-tuc/dia-ban/000092/phuong-mau",
+			wantCanonical: "/tin-tuc/dia-ban/000092/phuong-mau",
 		},
 	}
 

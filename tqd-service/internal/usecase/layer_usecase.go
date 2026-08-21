@@ -345,9 +345,9 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 	if layer == nil {
 		return nil, fmt.Errorf("layer not found")
 	}
-	if !layer.IsClientVisible() {
-		return nil, fmt.Errorf("layer not available")
-	}
+	// if !layer.IsClientVisible() {
+	// 	return nil, fmt.Errorf("layer not available")
+	// }
 	return layer, nil
 }
 

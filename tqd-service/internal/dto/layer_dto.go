@@ -1,9 +1,12 @@
 package dto
 
 type LayerSeoSource struct {
-	LayerID     uint64  `json:"layerId" gorm:"column:layer_id"`
-	DisplayName string  `json:"displayName" gorm:"column:display_name"`
-	SeoID       *uint64 `json:"seoId" gorm:"column:seo_id"`
+	LayerID      uint64  `json:"layerId" gorm:"column:layer_id"`
+	DisplayName  string  `json:"displayName" gorm:"column:display_name"`
+	SeoID        *uint64 `json:"seoId" gorm:"column:seo_id"`
+	ThumbnailURL string  `json:"thumbnailUrl" gorm:"column:thumbnail_url"`
+	ImageURL     string  `json:"imageUrl" gorm:"column:image_url"`
+	Avatar       string  `json:"avatar" gorm:"column:avatar"`
 }
 
 type AdminGenLayerSeoItem struct {
