@@ -14,7 +14,6 @@ import (
 )
 
 // @bind: assistant/internal/interface/provider.FileProvider
-
 type FileClient struct {
 	baseURL        string
 	serviceAuthKey string

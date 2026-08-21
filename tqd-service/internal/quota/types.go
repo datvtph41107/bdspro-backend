@@ -2,7 +2,8 @@ package quota
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	commonmetering "common/metering"
+	"common/operation"
 	"time"
 )
 
@@ -25,7 +26,8 @@ type Reservation struct {
 
 	ID             string
 	Subject        commonaccess.Subject
-	Operation      businessoperation.Code
+	Operation      operation.Code
+	MeterCode      commonmetering.Code
 	OperationID    string
 	IdempotencyKey string
 	CommandKey     string
@@ -45,7 +47,7 @@ type Reservation struct {
 }
 
 /**
- * Usage cho biết runtime usage hiện tại của một subject + operation + period.
+ * Usage cho biết runtime usage hiện tại của một subject + meter + period.
  */
 type Usage struct {
 	Used     int64

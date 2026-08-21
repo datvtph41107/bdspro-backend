@@ -1,97 +1,83 @@
-# TQD Service Makefile
+SHELL := /usr/bin/env bash
+ROOT_DIR := ..
+SHARED_CODE := $(ROOT_DIR)/shared/code
+PORT ?= 0
+HOST ?=
 
-.PHONY: build run-http run-grpc run-both clean help test lint deps
+.PHONY: help build run-grpc run-pmtiles migrate migrate-up migrate-down clean bootstrap \
+        generate verify-generated test test-race vet lint check run-http run-both
 
-# Build the main binary
+help:
+	@printf '%s\n' \
+	  'build            Build TQD binary' \
+	  'run-grpc         Build and run canonical TQD gRPC process' \
+	  'run-pmtiles      Build and run PMTiles process' \
+	  'migrate          Build and run application migration command' \
+	  'migrate-up       Run v3 SQL migrations up with migrate CLI' \
+	  'migrate-down     Run one v3 SQL migration down with migrate CLI' \
+	  'bootstrap        Restore module dependencies; may update go.sum if toolchain requires it' \
+	  'generate         Mutating: Buf TQD contracts, then generated Wire graph' \
+	  'verify-generated Read-only current tree; regenerate in disposable Git worktree' \
+	  'test             Run TQD tests' \
+	  'test-race        Run TQD tests with race detector' \
+	  'vet              Run go vet' \
+	  'lint             Run golangci-lint' \
+	  'check            Read-only architecture checks + test + vet' \
+	  'clean            Remove documented TQD build artifacts'
+
 build:
-	@echo "Building TQD Service..."
+	@mkdir -p bin
 	@go build -o bin/tqd-service .
 
-# Run HTTP server
-run-http: build
-	@echo "Starting HTTP server..."
-	@./bin/tqd-service http
-
-# Run gRPC server
 run-grpc: build
-	@echo "Starting gRPC server..."
-	@./bin/tqd-service grpc
+	@./bin/tqd-service -server=grpc $(if $(filter-out 0,$(PORT)),-port=$(PORT),) $(if $(HOST),-host=$(HOST),)
 
-# Run both servers
-run-both: build
-	@echo "Starting both HTTP and gRPC servers..."
-	@./bin/tqd-service both
+run-pmtiles: build
+	@./bin/tqd-service -server=pmtiles $(if $(filter-out 0,$(PORT)),-port=$(PORT),)
 
-# Run HTTP server in background
-run-http-bg: build
-	@echo "Starting HTTP server in background..."
-	@./bin/tqd-service http &
+migrate: build
+	@./bin/tqd-service -server=migrate
 
-# Run gRPC server in background
-run-grpc-bg: build
-	@echo "Starting gRPC server in background..."
-	@./bin/tqd-service grpc &
+# Application HTTP is intentionally disabled. The public application boundary is Gateway HTTP -> TQD gRPC.
+run-http run-both:
+	@echo 'TQD application HTTP is disabled; use gateway-service HTTP -> TQD gRPC.' >&2
+	@exit 2
 
-# Run both servers in background
-run-all-bg: build
-	@echo "Starting both servers in background..."
-	@./bin/tqd-service both &
-
-# Run HTTP server on custom port
-run-http-port: build
-	@echo "Starting HTTP server on custom port..."
-	@./bin/tqd-service http --port $(PORT)
-
-# Run gRPC server on custom port
-run-grpc-port: build
-	@echo "Starting gRPC server on custom port..."
-	@./bin/tqd-service grpc --port $(PORT)
-
-# Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf bin/
-
-# Install dependencies
-deps:
-	@echo "Installing dependencies..."
-	@go mod tidy
+bootstrap:
 	@go mod download
 
-# Run tests
-test:
-	@echo "Running tests..."
-	@go test ./...
+# Generation order is architectural: protobuf symbols must exist before Wire scans constructors.
+generate:
+	@$(MAKE) -C $(SHARED_CODE) buf-tqd
+	@$(MAKE) -C $(SHARED_CODE) wire tqd
 
-# Run linting
+verify-generated:
+	@bash $(ROOT_DIR)/scripts/architecture/verify-tqd-generated.sh $(ROOT_DIR)
+
+test:
+	@go test -count=1 ./...
+
+test-race:
+	@go test -count=1 -race ./...
+
+vet:
+	@go vet ./...
+
 lint:
-	@echo "Running linter..."
 	@golangci-lint run
 
-# Show help
-help:
-	@echo "Available commands:"
-	@echo "  build          Build the main binary"
-	@echo "  run-http       Build and run HTTP server"
-	@echo "  run-grpc       Build and run gRPC server"
-	@echo "  run-both       Build and run both servers"
-	@echo "  run-http-bg    Run HTTP server in background"
-	@echo "  run-grpc-bg    Run gRPC server in background"
-	@echo "  run-all-bg     Run both servers in background"
-	@echo "  run-http-port  Run HTTP server on custom port (set PORT=xxxx)"
-	@echo "  run-grpc-port  Run gRPC server on custom port (set PORT=xxxx)"
-	@echo "  clean          Clean build artifacts"
-	@echo "  deps           Install dependencies"
-	@echo "  test           Run tests"
-	@echo "  lint           Run linter"
-	@echo "  help           Show this help"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make run-http-port PORT=8080"
-	@echo "  make run-grpc-port PORT=9090"
+check:
+	@bash $(ROOT_DIR)/scripts/architecture/verify-engineering-operating-model.sh $(ROOT_DIR)
+	@$(MAKE) test
+	@$(MAKE) vet
 
-migrateup:
-	migrate -path infra/db/migrations/v3 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable" -verbose up
+clean:
+	@rm -rf bin/
 
-migratedown:
-	migrate -path infra/db/migrations/v3 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable" -verbose down
+migrate-up:
+	@test -n "$(TQD_DATABASE_URL)" || (echo 'TQD_DATABASE_URL is required' >&2; exit 2)
+	@migrate -path infra/db/migrations/v3 -database "$(TQD_DATABASE_URL)" -verbose up
+
+migrate-down:
+	@test -n "$(TQD_DATABASE_URL)" || (echo 'TQD_DATABASE_URL is required' >&2; exit 2)
+	@migrate -path infra/db/migrations/v3 -database "$(TQD_DATABASE_URL)" -verbose down 1

@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"organization/env"
 	"organization/internal/custom_error"
 	"organization/internal/dto"
 	"pb/clients"
@@ -16,11 +15,8 @@ type AuthClient struct {
 	userClient *clients.UserGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
-	return &AuthClient{
-		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
-		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewAuthClient(authClient *clients.AuthGrpcClient, userClient *clients.UserGrpcClient) *AuthClient {
+	return &AuthClient{AuthGrpcClient: authClient, userClient: userClient}
 }
 
 func (c *AuthClient) MapRoleToGroups(ctx context.Context, groups []*dto.GroupWithDetails) {

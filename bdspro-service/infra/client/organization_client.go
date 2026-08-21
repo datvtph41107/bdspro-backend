@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bdspro/env"
 	"bdspro/internal/enums"
 	"context"
 	"pb/clients"
@@ -12,9 +11,11 @@ type OrganizationClient struct {
 	*clients.OrganizationClient
 }
 
-func NewOrganizationClient() *OrganizationClient {
+func NewOrganizationClient(
+	rpcClient *clients.OrganizationClient,
+) *OrganizationClient {
 	return &OrganizationClient{
-		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
+		OrganizationClient: rpcClient,
 	}
 }
 

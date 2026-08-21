@@ -2,22 +2,19 @@ package client
 
 import (
 	_enum "common/domain/enum"
-	provider_grpc "common/provider/grpc"
 	"context"
-	"hub/env"
+	"pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 )
 
 // @bind: hub/internal/interface.INotificationClient
 type NotificationClient struct {
-	*provider_grpc.NotificationGrpcClient
+	*clients.NotificationClient
 }
 
-func NewNotificationClient() *NotificationClient {
-	return &NotificationClient{
-		NotificationGrpcClient: provider_grpc.MakeNotificationGrpcClient(env.ENV_RUNTIME),
-	}
+func NewNotificationClient(rpcClient *clients.NotificationClient) *NotificationClient {
+	return &NotificationClient{NotificationClient: rpcClient}
 }
 
 func (c *NotificationClient) CreateToOwner(

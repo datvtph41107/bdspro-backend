@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"time"
-	useraccess "user/internal/access"
 	"user/internal/models"
+	useraccess "user/internal/modules/entitlement/evaluate"
 
 	"gorm.io/gorm"
 )

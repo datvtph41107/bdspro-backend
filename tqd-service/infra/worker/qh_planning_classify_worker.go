@@ -24,8 +24,16 @@ func NewQHPlanningClassifyWorker(usecase qh_usecase.IQHPlanningClassifyUsecase) 
 	return &QHPlanningClassifyWorker{usecase: usecase}
 }
 
-// Start chạy vòng lặp classify đến khi ctx bị cancel. Non-blocking (spawn goroutine).
-func (w *QHPlanningClassifyWorker) Start(ctx context.Context) {
+// Run chạy vòng lặp classify đến khi ctx bị cancel. Run là blocking:
+// composition root sở hữu goroutine và quyết định khi nào phải Wait.
+func (w *QHPlanningClassifyWorker) Close() error {
+	if w == nil || w.usecase == nil {
+		return nil
+	}
+	return w.usecase.Close()
+}
+
+func (w *QHPlanningClassifyWorker) Run(ctx context.Context) {
 	if w == nil || w.usecase == nil {
 		log.Println("[QHPlanningClassifyWorker] skip: usecase nil")
 		return
@@ -48,24 +56,22 @@ func (w *QHPlanningClassifyWorker) Start(ctx context.Context) {
 		return
 	}
 
-	go func() {
-		log.Printf("[QHPlanningClassifyWorker] started interval=%s batch=%d", interval, batchSize)
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
+	log.Printf("[QHPlanningClassifyWorker] started interval=%s batch=%d", interval, batchSize)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 
-		// Chạy ngay 1 lần khi start, không chờ tick đầu.
-		w.runOnce(ctx, batchSize)
+	// Chạy ngay 1 lần khi start, không chờ tick đầu.
+	w.runOnce(ctx, batchSize)
 
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("[QHPlanningClassifyWorker] stopped")
-				return
-			case <-ticker.C:
-				w.runOnce(ctx, batchSize)
-			}
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("[QHPlanningClassifyWorker] stopped")
+			return
+		case <-ticker.C:
+			w.runOnce(ctx, batchSize)
 		}
-	}()
+	}
 }
 
 func (w *QHPlanningClassifyWorker) runOnce(ctx context.Context, batchSize int) {

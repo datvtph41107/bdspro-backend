@@ -2,6 +2,7 @@ package config
 
 import (
 	_ "embed"
+	"fmt"
 	"sync"
 	"tqd/internal/modules/resolver/layer_resolver/types"
 
@@ -12,25 +13,26 @@ import (
 var configYAML []byte
 
 var (
-	instance *Config
-	once     sync.Once
+	instance    *Config
+	instanceErr error
+	once        sync.Once
 )
 
 // Config - Cấu trúc config từ YAML
 type Config struct {
-	Weights         *WeightsConfig             `yaml:"weights"`
-	LegalScores     map[uint32]float64         `yaml:"legal_scores"`
-	ConflictMatrix  map[string]map[string]bool `yaml:"conflict_matrix"`
-	GroupPriority   map[string]int             `yaml:"group_priority"`
-	Thresholds      *ThresholdsConfig          `yaml:"thresholds"`
+	Weights         *WeightsConfig               `yaml:"weights"`
+	LegalScores     map[uint32]float64           `yaml:"legal_scores"`
+	ConflictMatrix  map[string]map[string]bool   `yaml:"conflict_matrix"`
+	GroupPriority   map[string]int               `yaml:"group_priority"`
+	Thresholds      *ThresholdsConfig            `yaml:"thresholds"`
 	RiskWeights     map[string]*RiskWeightConfig `yaml:"risk_weights"`
-	RiskThresholds  []*RiskThresholdConfig      `yaml:"risk_thresholds"`
-	ConflictLabels  *ConflictLabelsConfig       `yaml:"conflict_labels"`
-	WarningMessages *WarningMessagesConfig      `yaml:"warning_messages"`
-	AssessMessages  *AssessMessagesConfig       `yaml:"assess_messages"`
-	StatusLabels    *StatusLabelsConfig         `yaml:"status_labels"`
-	LandTypeNames   map[uint64]string           `yaml:"land_type_names"`
-	SummaryLabels   *SummaryLabelsConfig        `yaml:"summary_labels"`
+	RiskThresholds  []*RiskThresholdConfig       `yaml:"risk_thresholds"`
+	ConflictLabels  *ConflictLabelsConfig        `yaml:"conflict_labels"`
+	WarningMessages *WarningMessagesConfig       `yaml:"warning_messages"`
+	AssessMessages  *AssessMessagesConfig        `yaml:"assess_messages"`
+	StatusLabels    *StatusLabelsConfig          `yaml:"status_labels"`
+	LandTypeNames   map[uint64]string            `yaml:"land_type_names"`
+	SummaryLabels   *SummaryLabelsConfig         `yaml:"summary_labels"`
 }
 
 type WeightsConfig struct {
@@ -77,25 +79,32 @@ type AssessMessagesConfig struct {
 }
 
 type StatusLabelsConfig struct {
-	Prohibited      string `yaml:"prohibited"`
-	Conditional     string `yaml:"conditional"`
-	Allowed         string `yaml:"allowed"`
-	ConflictSuffix  string `yaml:"conflict_suffix"`
+	Prohibited     string `yaml:"prohibited"`
+	Conditional    string `yaml:"conditional"`
+	Allowed        string `yaml:"allowed"`
+	ConflictSuffix string `yaml:"conflict_suffix"`
 }
 
 type SummaryLabelsConfig struct {
 	ConflictSuffix string `yaml:"conflict_suffix"`
 }
 
-// GetConfig - Singleton, load config từ YAML
-func GetConfig() *Config {
+func parseConfig(data []byte) (*Config, error) {
+	cfg := &Config{}
+	if err := yaml.Unmarshal(data, cfg); err != nil {
+		return nil, fmt.Errorf("decode embedded layer resolver config: %w", err)
+	}
+	return cfg, nil
+}
+
+// GetConfig loads the embedded resolver defaults once and preserves any decode
+// error so callers can fail or degrade explicitly instead of panicking in a
+// request path.
+func GetConfig() (*Config, error) {
 	once.Do(func() {
-		instance = &Config{}
-		if err := yaml.Unmarshal(configYAML, instance); err != nil {
-			panic("failed to load layer resolver config: " + err.Error())
-		}
+		instance, instanceErr = parseConfig(configYAML)
 	})
-	return instance
+	return instance, instanceErr
 }
 
 // ToTypesConfig - Chuyển đổi sang types.Config (dùng cho resolver engine)

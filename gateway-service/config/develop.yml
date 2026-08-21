@@ -1,6 +1,5 @@
 server:
     port: 8000
-    tcp_port: 8800
 
 service:
     domain: localhost
@@ -22,13 +21,33 @@ service:
         transaction: 8215
         auth: 8201
         feedback: 8217
+        assistant: 8218
         hub: 8280
         tqd: 8219
+
 jwt:
     key-generate: key-generate-jwt-token-authentication
-    tokenPrefix: Bearer
-    tokenExpirationAfterDays: 14
-    accessExpAfterMinutes: 15 # access token hết hạn 5 phút
-    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
-    listPermit:
-    authorizationHeader: Authorization
+
+http:
+    allowed_origins:
+        - "http://localhost:3000"
+        - "http://127.0.0.1:3000"
+        - "http://127.0.0.1:3001"
+        - "http://14.225.210.29:3108"
+        - "http://localhost:3001"
+        - "http://localhost:8000"
+        - "http://localhost:5173"
+        - "http://localhost:5174"
+        - "http://14.225.210.29:8000"
+        - "http://14.225.205.222:8000"
+        - "http://14.225.205.222:3107"
+        - "http://14.225.205.222:3108"
+        - "http://14.225.210.29:3110"
+        - "http://103.145.63.185:3107"
+        - "http://103.172.239.89:3108"
+        - "https://admin.bdspro.com"
+        - "https://bdspro.com"
+        - "https://app.bdspro.com"
+        - "https://map.qhpro.vn"
+        - "https://qhpro.vn"
+        - "https://test.qhpro.vn"

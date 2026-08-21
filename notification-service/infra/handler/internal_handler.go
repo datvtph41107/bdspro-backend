@@ -359,7 +359,7 @@ func (s *InternalHandler) BatchPersonConfig(ctx context.Context, req *notificati
 // GetPersonConfigs trả về danh sách cấu hình cá nhân theo userId
 func (s *InternalHandler) GetPersonConfigs(ctx context.Context, req *notificationpb.GetPersonConfigsRequest) (*notificationpb.GetPersonConfigsResponse, error) {
 	if req == nil || req.UserId == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "userId là bắt buộc")
+		return nil, status.Error(codes.InvalidArgument, "userId là bắt buộc")
 	}
 
 	if s.PersonConfigUsecase == nil {
@@ -406,7 +406,7 @@ func (s *InternalHandler) CreatePropertyHistoryActivity(
 
 	property, err := s.PropertyHistoryUsecase.Create(ctx, args)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &notificationpb.CreatePropertyHistoryResponse{

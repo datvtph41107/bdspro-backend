@@ -36,6 +36,7 @@ type APIKeyVerifier interface {
 
 type authConfig struct {
 	apiKeyVerifier APIKeyVerifier
+	tokenVerifier  TokenVerifier
 }
 
 /**
@@ -49,6 +50,14 @@ type AuthOption func(*authConfig)
 func WithAPIKeyVerifier(verifier APIKeyVerifier) AuthOption {
 	return func(cfg *authConfig) {
 		cfg.apiKeyVerifier = verifier
+	}
+}
+
+// WithTokenVerifier installs an explicit JWT verification dependency.
+// Gateway uses this to avoid process-global Viper configuration.
+func WithTokenVerifier(verifier TokenVerifier) AuthOption {
+	return func(cfg *authConfig) {
+		cfg.tokenVerifier = verifier
 	}
 }
 

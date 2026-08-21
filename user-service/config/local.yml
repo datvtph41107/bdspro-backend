@@ -1,3 +1,23 @@
+rpc:
+  user:
+    address: "localhost:8201"
+  auth:
+    address: "localhost:8216"
+  organization:
+    address: "localhost:8207"
+  hub:
+    address: "localhost:8280"
+  bdspro:
+    address: "localhost:8202"
+  notification:
+    address: "localhost:8204"
+  payment:
+    address: "localhost:8205"
+  chat:
+    address: "localhost:8208"
+  crm:
+    address: "localhost:8206"
+
 server:
     name: user-service
     port: 8001
@@ -8,23 +28,23 @@ database:
   port: 5432
   name: user_service
   user: postgres
-  password: password
-  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+  password: "CHANGE_ME"
+  dsn: "CHANGE_ME_LOCAL_DSN"
 
 redis:
-    host: 14.225.210.29:6379
-    pass: protected_redis_secure_password
+    host: localhost:6379
+    pass: "CHANGE_ME"
 
 
 oauth:
   google:
     client_id: 768102211675-0d4sd4dpormuo2n2gn1vgvs3h8ag5kr9.apps.googleusercontent.com
-    client_secret: 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
+    client_secret: "CHANGE_ME"
     redirect_uri: http://localhost:3000/oauth-callback
   
   facebook:
     client_id: 2029655954220379
-    client_secret: a00ffdf676394cb22b4af98bfe1dac3b
+    client_secret: "CHANGE_ME"
     redirect_uri: http://localhost:3000/oauth-callback
   
   zalo:
@@ -49,15 +69,15 @@ sms:
   endpoint: "https://api.yoursales.vn/api/public/sms/send"
   provider: "twilio"  # or other SMS providers
   account_sid: "your_twilio_account_sid"
-  auth_token: "OTRjNGFlMzUtMTUzMC00OTdjLWE2ZjgtZDVjZTAxZWM2MjQ2OjBmMTI4ZGMzLTIyYmYtNDAyMC1hYzNhLWE2YzlkZjJiODExNg=="
+  auth_token: "CHANGE_ME"
   from_number: "+1234567890"
   template: "Mã xác thực của bạn là {OTP}. Vui lòng không chia sẻ OTP cho bất kỳ ai."
 
 zns:
   template_id: 497058
   otp_template_id: 497058  # Template ID riêng cho OTP
-  access_token: "RRoFMY3vhLDil81HA_QkKcQuZLyXwlfKFCw90d7zvWrsnAq0FktTRnF4W3yUxCXf4ToX1ZgDqmahjxf5BBZ_Cp29hMeinjG23ENzNZ3OjYK_mlLQ3_IPDpJZuNeArueNHlEW64w_pt1dzPaXRhdFSKlnfI9i-zSlUUcWL7xmprasxu007_h_0oxyg7OhvkGb1g-EJXITuKHUq8yjJV_nNNllsWPDzxG4UEIOQc7SkYbjbC958z-eDHINo7TPaQS_TAdxTbIzaYzRYznpPPw01dAKgdv2qPqyTi7rK46FX28CXErh7ysH8WJZsaWNpuue2TAaFp_qyc8E_uGADR3JGWkEdX83YjDb4goOSXwJtI0arvTv5-NwDHpNk4rIm-H0O_6E04MW-7DJkQzyJQRN0LgvZ5Dqj-K4Gtzy6ZecxgTO"
-  refresh_token: "3AIiBOb4LqKDfACcWajKH0UWhYY8Lo4mIDUi1iXKE2r6t9SEoNKSR0tMdLRPJZP5MlQGKTKPQp8livqDpLau7Yd7c2FQNmqxEEg90knw4smBbhWFw1ev6mwfio_UFoa74CkFA_Tq0HSPrV8M-7Lf82B0sHVqQIWJSFpPVerrO4jOoDfytrPBSJBUnndrJdmo9ARL1VaAN1eRjAuivGaLEGMFkGNJ92W13x6gAE4P3Hm_jQaMuWeYDH-7fIRGPZn8Bu-cHjSyCtWEiQ1eu0yiGsE0btpaDWTBQjUMMB9c0qurowH2qMChR5Rqtd2MUon1UvAPAFy_A5uzgDezpY8i1H6kh1JbHGO14VUE8l5nUHGXtUyMu7nA56ULlX-8EpGtJBEaEu8E1IfJWO54XJiTJ7kCvcQQRKuBURVPmrkFKrrE"
+  access_token: "CHANGE_ME"
+  refresh_token: "CHANGE_ME"
 
 otp:
   max-times-resend: 5
@@ -85,7 +105,7 @@ grpc:
 
 admin:
   username: admin
-  password: admin123
+  password: "CHANGE_ME"
   email: admin@example.com
   full_name: Administrator
 

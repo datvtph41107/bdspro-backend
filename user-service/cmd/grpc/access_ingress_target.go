@@ -11,7 +11,7 @@ import (
 )
 
 /**
- * accessIngress dùng request identity + trusted Actor/Caller mới cho GetAccess.
+ * accessIngress dùng request identity + trusted Actor/Caller cho các RPC cắt lát mới.
  * Các RPC user-service khác vẫn dùng parser cũ trong giai đoạn migration.
  */
 func accessIngress(trust transporttrust.Config) grpc.UnaryServerInterceptor {
@@ -24,7 +24,7 @@ func accessIngress(trust transporttrust.Config) grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if info == nil || !internalAccessMethod(info.FullMethod) {
+		if info == nil || !trustedIdentityMethod(info.FullMethod) {
 			return _middleware.ParseGrpcMetadataContextMiddleware(ctx, req, info, handler)
 		}
 		return requestIdentity(ctx, req, info, func(requestCtx context.Context, request interface{}) (interface{}, error) {

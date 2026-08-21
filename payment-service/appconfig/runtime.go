@@ -50,14 +50,16 @@ func ReadConfig() {
 	if Port = cfg.GetString("port"); Port == "" {
 		Port = "50055"
 	}
-	if DB_URL = cfg.GetString("database.url"); DB_URL == "" {
-		DB_URL = "host=localhost user=postgres password=postgres dbname=payment port=5432 sslmode=disable"
+	DB_URL = os.Getenv("PAYMENT_DATABASE_DSN")
+	if DB_URL == "" {
+		DB_URL = cfg.GetString("database.url")
 	}
 	if Whitelist = cfg.GetStringSlice("whitelist"); Whitelist == nil {
 		Whitelist = []string{}
 	}
-	if SepayAPIKey = cfg.GetString("sepay.api_key"); SepayAPIKey == "" {
-		SepayAPIKey = "APi cuc xin"
+	SepayAPIKey = os.Getenv("SEPAY_API_KEY")
+	if SepayAPIKey == "" {
+		SepayAPIKey = cfg.GetString("sepay.api_key")
 	}
 	if NOTIFICATION_SERVICE_HOST = cfg.GetString("notification.host"); NOTIFICATION_SERVICE_HOST == "" {
 		NOTIFICATION_SERVICE_HOST = "localhost"

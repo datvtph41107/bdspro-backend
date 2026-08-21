@@ -1,5 +1,5 @@
 migrateup:
-	migrate -path infra/db/migrations -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_hub?sslmode=disable" -verbose up
+	migrate -path infra/db/migrations -database "${HUB_DATABASE_URL}" -verbose up
 
 migratedown:
-	migrate -path infra/db/migrations -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_hub?sslmode=disable" -verbose down
+	migrate -path infra/db/migrations -database "${HUB_DATABASE_URL}" -verbose down

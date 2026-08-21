@@ -16,8 +16,10 @@ import (
 	notification_infra_handler "notification/infra/handler"
 	notification_infra_mapper "notification/infra/mapper"
 	notification_infra_postgres "notification/infra/postgres"
+	notification_infra_rpc "notification/infra/rpc"
 	notification_initial "notification/initial"
 	notification_internal_dto "notification/internal/dto"
+	notification_internal_integrations_paymentcompleted "notification/internal/integrations/paymentcompleted"
 	notification_internal_provider "notification/internal/provider"
 	notification_internal_repo "notification/internal/repo"
 	notification_internal_usecase "notification/internal/usecase"
@@ -33,17 +35,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notification_internal_repo.AccountWarningRepository), new(*notification_infra_postgres.AccountWarningPostgresRepo)),
 	wire.Bind(new(notification_internal_repo.HistoryAuthRepo), new(*notification_infra_postgres.HistoryAuthPostgres)),
 	wire.Bind(new(notification_internal_repo.PersonConfigRepo), new(*notification_infra_postgres.PersonConfigPostgres)),
-	common_injection.NewAuthClient,
-	common_injection.NewBDSProClient,
-	common_injection.NewCRMClient,
-	common_injection.NewChatClient,
-	common_injection.NewHubClient,
-	common_injection.NewNotification,
-	common_injection.NewOrganizationClient,
-	common_injection.NewPaymentClient,
-	common_injection.NewTQClient,
-	common_injection.NewTransactionClient,
-	common_injection.NewUserClient,
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	notification_infra_postgres.NewAccountWarningPostgresRepo,
@@ -53,6 +44,7 @@ var wireSet = wire.NewSet(
 	notification_infra_postgres.NewAdminHistoryPostgres,
 	notification_internal_usecase.NewAdminHistoryUsecase,
 	notification_infra_client.NewAuthClient,
+	notification_internal_integrations_paymentcompleted.NewConsumer,
 	notification_infra_handler.NewDealHistoryHandler,
 	notification_infra_postgres.NewDealHistoryPostgres,
 	notification_internal_usecase.NewDealHistoryUsecase,
@@ -79,10 +71,12 @@ var wireSet = wire.NewSet(
 	notification_internal_usecase.NewPropertyHistoryUseCase,
 	notification_infra_cache.NewRedisClient,
 	notification_internal_dto.NewSendNotiResponse,
+	notification_internal_integrations_paymentcompleted.NewStore,
 	notification_infra_client.NewUserClient,
+	notification_infra_rpc.NewUserRPCClient,
 )
 
-func InitializeApp() (*notification_initial.InitialApp, error) {
+func InitializeApp() (*notification_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
-	return nil, nil
+	return nil, nil, nil
 }

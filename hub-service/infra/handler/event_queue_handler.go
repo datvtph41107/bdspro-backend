@@ -84,7 +84,7 @@ func (s *EventQueueService) List(ctx context.Context, req *hubpb.EventQueueListR
 
 	events, total, err := s.UC.Search(ctx, searchDTO)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	eventsPb := s.Mapper.ListEntityToPb(events)
@@ -106,7 +106,7 @@ func (s *EventQueueService) List(ctx context.Context, req *hubpb.EventQueueListR
 func (s *EventQueueService) Detail(ctx context.Context, req *sharepb.IdRequest) (*hubpb.EventQueueDTO, error) {
 	event, err := s.UC.Detail(ctx, req.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	return s.Mapper.EntityToPb(event), nil
@@ -157,7 +157,7 @@ func (s *EventQueueService) Create(ctx context.Context, req *hubpb.EventQueueSav
 
 	event, err := s.UC.Create(ctx, saveDTO)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	return s.Mapper.EntityToPb(event), nil
@@ -213,7 +213,7 @@ func (s *EventQueueService) Update(ctx context.Context, req *hubpb.EventQueueSav
 
 	event, err := s.UC.Update(ctx, req.Id, saveDTO)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	return s.Mapper.EntityToPb(event), nil
@@ -230,7 +230,7 @@ func (s *EventQueueService) Update(ctx context.Context, req *hubpb.EventQueueSav
 func (s *EventQueueService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	return &sharepb.SubmitResponse{
@@ -259,7 +259,7 @@ func (s *EventQueueService) UpdateStatus(ctx context.Context, req *hubpb.EventQu
 
 	event, err := s.UC.UpdateStatus(ctx, statusDTO)
 	if err != nil {
-		return nil, status.Errorf(codes.Code(err.Code), err.Message)
+		return nil, status.Error(codes.Code(err.Code), err.Message)
 	}
 
 	return s.Mapper.EntityToPb(event), nil

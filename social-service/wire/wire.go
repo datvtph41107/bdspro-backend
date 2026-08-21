@@ -1,16 +1,19 @@
 //go:build wireinject
 // +build wireinject
-	
+
 package wire
 
 import (
-	"github.com/google/wire"
 	_db "common/db"
-	"social/initial"
+	common_injection "common/injection"
+	_provider "common/provider"
+	common_utils "common/utils"
+	"github.com/google/wire"
 	social_infra_client "social/infra/client"
 	social_infra_impl "social/infra/impl"
 	social_infra_mapper "social/infra/mapper"
 	social_infra_postgre "social/infra/postgre"
+	social_infra_rpc "social/infra/rpc"
 	social_infra_service "social/infra/service"
 	social_initial "social/initial"
 	social_internal_interface "social/internal/interface"
@@ -22,22 +25,26 @@ import (
 var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(social_internal_interface.BdsproClient), new(*social_infra_client.BdsproClient)),
 	wire.Bind(new(social_internal_interface.ChatClient), new(*social_infra_client.ChatClient)),
+	wire.Bind(new(social_internal_interface.ITransaction), new(*social_infra_postgre.PostgreTransaction)),
 	wire.Bind(new(social_internal_interface.NotiClient), new(*social_infra_client.NotificationClient)),
-	wire.Bind(new(social_internal_interface.UserClient), new(*social_infra_client.UserClient)),
 	wire.Bind(new(social_internal_interface.PermissionUsecase), new(*social_infra_impl.PermissionImpl)),
+	wire.Bind(new(social_internal_interface.UserClient), new(*social_infra_client.UserClient)),
 	wire.Bind(new(social_internal_repo.CommentRepo), new(*social_infra_postgre.PostgreComment)),
 	wire.Bind(new(social_internal_repo.FriendTagRepo), new(*social_infra_postgre.PostgreFriendTag)),
 	wire.Bind(new(social_internal_repo.LikeRepo), new(*social_infra_postgre.PostgreLike)),
 	wire.Bind(new(social_internal_repo.NewsFeedMediaRepo), new(*social_infra_postgre.PostgreNewsFeedMedia)),
 	wire.Bind(new(social_internal_repo.NewsFeedRepo), new(*social_infra_postgre.PostgreNewsFeed)),
 	wire.Bind(new(social_internal_repo.NewsFeedShareRepo), new(*social_infra_postgre.PostgreNewsFeedShare)),
-	wire.Bind(new(social_internal_repo.ReportRepo), new(*social_infra_postgre.PostgreReport)),
 	wire.Bind(new(social_internal_repo.ReportReasonRepo), new(*social_infra_postgre.PostgreReportReason)),
-	wire.Bind(new(social_internal_interface.ITransaction), new(*social_infra_postgre.PostgreTransaction)),
+	wire.Bind(new(social_internal_repo.ReportRepo), new(*social_infra_postgre.PostgreReport)),
+	common_injection.NewHttpClient,
+	common_utils.NewSyncUtil,
 	social_initial.NewApp,
 	social_infra_client.NewBdsproClient,
+	social_infra_rpc.NewBdsproRPCClient,
 	social_infra_client.NewChatClient,
 	social_infra_service.NewCommentService,
 	social_internal_usecase.NewCommentUsecase,
@@ -52,6 +59,7 @@ var wireSet = wire.NewSet(
 	social_internal_usecase.NewNewsFeedShareUsecase,
 	social_internal_usecase.NewNewsFeedUsecase,
 	social_infra_client.NewNotificationClient,
+	social_infra_rpc.NewNotificationRPCClient,
 	social_internal_usecase.NewNumberUpdateUsecase,
 	social_infra_impl.NewPermissionImpl,
 	social_infra_postgre.NewPostgreComment,
@@ -67,9 +75,11 @@ var wireSet = wire.NewSet(
 	social_infra_service.NewReportService,
 	social_internal_usecase.NewReportUsecase,
 	social_infra_client.NewUserClient,
+	social_infra_rpc.NewUserRPCClient,
 	social_internal_usecase.NewUserUsecase,
 )
-func InitializeApp() (*initial.InitialApp, error) {
+
+func InitializeApp() (*social_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
-	return nil, nil
+	return nil, nil, nil
 }

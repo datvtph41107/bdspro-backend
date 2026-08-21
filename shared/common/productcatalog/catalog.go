@@ -176,6 +176,9 @@ func validateProduct(product Product) error {
 		if err := validatePlan(plan); err != nil {
 			return err
 		}
+		if err := validateCommercialCompleteness(plan); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -203,6 +206,9 @@ func validatePlan(plan PlanVersion) error {
 			plan.SubjectScope,
 		)
 	}
+	if plan.SubscriptionTermDays < 0 {
+		return fmt.Errorf("plan %q subscription term must not be negative", plan.PlanCode)
+	}
 	if plan.Status != StatusDraft && plan.EffectiveFrom.IsZero() {
 		return fmt.Errorf("plan %q requires effective_from", plan.PlanCode)
 	}
@@ -212,8 +218,78 @@ func validatePlan(plan PlanVersion) error {
 	if err := validateEntitlements(plan); err != nil {
 		return err
 	}
+	if err := validateOperationPolicies(plan); err != nil {
+		return err
+	}
 	if err := validatePrices(plan); err != nil {
 		return err
+	}
+	return nil
+}
+
+// validateCommercialCompleteness is intentionally stricter than checksum
+// validation so legacy published rows can still verify their historical hash
+// while every newly active contract must carry explicit commercial terms.
+func validateCommercialCompleteness(plan PlanVersion) error {
+	if plan.Status != StatusDraft && plan.SubscriptionTermDays <= 0 {
+		return fmt.Errorf("plan %q requires subscription_term_days", plan.PlanCode)
+	}
+	return nil
+}
+
+func validateOperationPolicies(plan PlanVersion) error {
+	features := make(map[string]struct{}, len(plan.Entitlements))
+	usageMeters := make(map[string]struct{}, len(plan.Entitlements))
+	for _, entitlement := range plan.Entitlements {
+		switch entitlement.Kind {
+		case EntitlementFeatureAccess:
+			features[entitlement.FeatureCode] = struct{}{}
+		case EntitlementUsageAllowance:
+			usageMeters[entitlement.MeterCode] = struct{}{}
+		}
+	}
+
+	codes := make(map[string]struct{}, len(plan.Operations))
+	for _, policy := range plan.Operations {
+		if !isStableCode(policy.Code) {
+			return fmt.Errorf("invalid operation code %q", policy.Code)
+		}
+		if _, exists := codes[policy.Code]; exists {
+			return fmt.Errorf("duplicate operation policy %q", policy.Code)
+		}
+		codes[policy.Code] = struct{}{}
+		if !isStableCode(policy.FeatureCode) {
+			return fmt.Errorf("operation %q requires feature_code", policy.Code)
+		}
+		if _, exists := features[policy.FeatureCode]; !exists {
+			return fmt.Errorf(
+				"operation %q feature %q is not granted by this plan",
+				policy.Code,
+				policy.FeatureCode,
+			)
+		}
+		if policy.MeterCode == "" {
+			if policy.UnitsPerAction != 0 {
+				return fmt.Errorf(
+					"unmetered operation %q must have zero units_per_action",
+					policy.Code,
+				)
+			}
+			continue
+		}
+		if !isStableCode(policy.MeterCode) {
+			return fmt.Errorf("operation %q has invalid meter_code", policy.Code)
+		}
+		if policy.UnitsPerAction <= 0 {
+			return fmt.Errorf("operation %q units_per_action must be positive", policy.Code)
+		}
+		if _, exists := usageMeters[policy.MeterCode]; !exists {
+			return fmt.Errorf(
+				"operation %q meter %q has no usage allowance",
+				policy.Code,
+				policy.MeterCode,
+			)
+		}
 	}
 	return nil
 }
@@ -403,6 +479,7 @@ func validateEffectiveWindows(planCode string, versions map[string]PlanVersion) 
 func copyPlan(plan PlanVersion) PlanVersion {
 	copyValue := plan
 	copyValue.Entitlements = append([]Entitlement(nil), plan.Entitlements...)
+	copyValue.Operations = append([]OperationPolicy(nil), plan.Operations...)
 	copyValue.Prices = append([]PriceItem(nil), plan.Prices...)
 	if plan.EffectiveUntil != nil {
 		until := *plan.EffectiveUntil

@@ -9,6 +9,7 @@ import (
 	"payment/internal/infrastructure/database"
 	payment_infrastructure_repository "payment/internal/infrastructure/repository"
 	"payment/internal/infrastructure/repository/postgres"
+	payment_rpc "payment/internal/infrastructure/rpc"
 	"payment/internal/interface/handler"
 	"payment/internal/job"
 	"payment/internal/server/grpc"
@@ -33,6 +34,7 @@ var repositorySet = wire.NewSet(
 )
 
 var clientSet = wire.NewSet(
+	payment_rpc.ProvideNotificationRPCClient,
 	client.NewNotificationClient,
 )
 
@@ -53,7 +55,7 @@ var handlerSet = wire.NewSet(
 	handler.NewInternalHandler,
 )
 
-func InitializeGRPCServer() *grpc.GRPCServer {
+func InitializeGRPCServer() (*grpc.GRPCServer, func(), error) {
 	wire.Build(
 		databaseSet,
 		repositorySet,
@@ -63,5 +65,5 @@ func InitializeGRPCServer() *grpc.GRPCServer {
 		handlerSet,
 		grpc.NewGRPCServer,
 	)
-	return &grpc.GRPCServer{}
+	return nil, nil, nil
 }

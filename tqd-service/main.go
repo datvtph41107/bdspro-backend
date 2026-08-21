@@ -30,19 +30,23 @@ func main() {
 			cmd.GrpcHost = *host
 		}
 		if err := cmd.RunGRPCServer(); err != nil {
-			log.Fatalf("Failed to start gRPC server: %v", err)
+			log.Printf("Failed to start gRPC server: %v", err)
+			os.Exit(1)
 		}
 	case "http":
-		log.Fatal("TQD application HTTP mode is disabled; use gateway-service HTTP -> TQD gRPC")
+		log.Printf("TQD application HTTP mode is disabled; use gateway-service HTTP -> TQD gRPC")
+		os.Exit(1)
 	case "pmtiles":
 		log.Println("Starting TQD PMTiles Server...")
 		if err := cmd.RunTileServer(*port); err != nil {
-			log.Fatalf("Failed to start PMTiles server: %v", err)
+			log.Printf("Failed to start PMTiles server: %v", err)
+			os.Exit(1)
 		}
 	case "migrate":
 		log.Println("Running database migration...")
 		if err := cmd.RunMigrate(); err != nil {
-			log.Fatalf("Failed to run migration: %v", err)
+			log.Printf("Failed to run migration: %v", err)
+			os.Exit(1)
 		}
 	default:
 		fmt.Printf("Invalid server type: %s. Use 'grpc', 'pmtiles', or 'migrate'\n", *serverType)

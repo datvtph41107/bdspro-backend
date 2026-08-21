@@ -2,7 +2,6 @@ package client
 
 import (
 	_enum "common/domain/enum"
-	provider_grpc "common/provider/grpc"
 	"context"
 	"errors"
 	"log"
@@ -10,7 +9,6 @@ import (
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 	"time"
-	"user/env"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 
@@ -18,15 +16,14 @@ import (
 )
 
 type NotificationClient struct {
-	*provider_grpc.NotificationGrpcClient
 	*clients.NotificationClient
 }
 
-func NewNotificationClient() providers.NotificationProvider {
-	notificationClient := clients.MakeNotificationClient(env.ENV_RUNTIME)
+func NewNotificationClient(
+	rpcClient *clients.NotificationClient,
+) providers.NotificationProvider {
 	return &NotificationClient{
-		NotificationClient:     notificationClient,
-		NotificationGrpcClient: provider_grpc.MakeNotificationGrpcClient(env.ENV_RUNTIME),
+		NotificationClient: rpcClient,
 	}
 }
 
@@ -122,7 +119,7 @@ func (c *NotificationClient) CreateNotification(
 		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		err := c.NotificationGrpcClient.CreateNotification(contextTimeout, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
+		err := c.NotificationClient.CreateNotification(contextTimeout, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
 		if err != nil {
 			log.Printf("Failed to send notification: %v", err)
 		} else {
@@ -137,14 +134,14 @@ func (c *NotificationClient) GetPersonConfigs(ctx context.Context, userID uint64
 		return []*dto.PersonConfigDTO{}, nil
 	}
 
-	if c.NotificationGrpcClient == nil || c.NotificationGrpcClient.Client == nil {
+	if c.NotificationClient == nil || c.NotificationClient.Client == nil {
 		return nil, errors.New("notification grpc client chưa được khởi tạo")
 	}
 
 	var configs []*sharepb.PersonConfigV3Proto
 	var err error
 
-	if configs, err = c.NotificationGrpcClient.GetPersonConfigs(ctx, userID); err != nil {
+	if configs, err = c.NotificationClient.GetPersonConfigs(ctx, userID); err != nil {
 		return nil, err
 	}
 

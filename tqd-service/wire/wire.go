@@ -10,6 +10,7 @@ import (
 	common_utils "common/utils"
 	"github.com/google/wire"
 	tqd_config "tqd/config"
+	tqd_experiments_postgresquota_postgres "tqd/experiments/postgresquota/postgres"
 	tqd_infra_client "tqd/infra/client"
 	tqd_infra_handler_grpc "tqd/infra/handler/grpc"
 	tqd_infra_handler_http "tqd/infra/handler/http"
@@ -22,6 +23,7 @@ import (
 	tqd_infra_postgres_publiccontent "tqd/infra/postgres/publiccontent"
 	tqd_infra_postgres_relatedentity "tqd/infra/postgres/relatedentity"
 	tqd_infra_providers "tqd/infra/providers"
+	tqd_infra_rpc "tqd/infra/rpc"
 	tqd_infra_validator "tqd/infra/validator"
 	tqd_infra_worker "tqd/infra/worker"
 	tqd_initial "tqd/initial"
@@ -36,8 +38,27 @@ import (
 	tqd_internal_modules_resolver_layer_resolver_engine "tqd/internal/modules/resolver/layer_resolver/engine"
 	tqd_internal_modules_resolver_layer_resolver_engine_parcel_engine "tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	tqd_internal_modules_resolver_layer_resolver_rule "tqd/internal/modules/resolver/layer_resolver/rule"
+	tqd_internal_quota "tqd/internal/quota"
+	tqd_internal_quota_memory "tqd/internal/quota/memory"
+	tqd_internal_quota_reconciliation_reservationcleanup "tqd/internal/quota/reconciliation/reservationcleanup"
+	tqd_internal_quota_reconciliation_usageprojection "tqd/internal/quota/reconciliation/usageprojection"
+	tqd_internal_quota_redis "tqd/internal/quota/redis"
+	tqd_internal_usage "tqd/internal/usage"
+	tqd_internal_usage_memory "tqd/internal/usage/memory"
+	tqd_internal_usage_postgres "tqd/internal/usage/postgres"
 	tqd_internal_usecase "tqd/internal/usecase"
 	tqd_internal_usecase_qh "tqd/internal/usecase/qh"
+	tqd_internal_workspace_report_adapters_generator "tqd/internal/workspace/report/adapters/generator"
+	tqd_internal_workspace_report_adapters_grpc "tqd/internal/workspace/report/adapters/grpc"
+	tqd_internal_workspace_report_adapters_memoryjob "tqd/internal/workspace/report/adapters/memoryjob"
+	tqd_internal_workspace_report_adapters_postgresjob "tqd/internal/workspace/report/adapters/postgresjob"
+	tqd_internal_workspace_report_adapters_postgresrender "tqd/internal/workspace/report/adapters/postgresrender"
+	tqd_internal_workspace_report_adapters_postgresreport "tqd/internal/workspace/report/adapters/postgresreport"
+	tqd_internal_workspace_report_adapters_useraccess "tqd/internal/workspace/report/adapters/useraccess"
+	tqd_internal_workspace_report_adapters_weasyprintpdf "tqd/internal/workspace/report/adapters/weasyprintpdf"
+	tqd_internal_workspace_report_application "tqd/internal/workspace/report/application"
+	tqd_internal_workspace_report_processing "tqd/internal/workspace/report/processing"
+	tqd_internal_workspace_report_rendering "tqd/internal/workspace/report/rendering"
 	tqd_map "tqd/map"
 )
 
@@ -46,19 +67,10 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
-	common_injection.NewAuthClient,
-	common_injection.NewBDSProClient,
-	common_injection.NewCRMClient,
-	common_injection.NewChatClient,
-	common_injection.NewHubClient,
-	common_injection.NewNotification,
-	common_injection.NewOrganizationClient,
-	common_injection.NewPaymentClient,
-	common_injection.NewTQClient,
-	common_injection.NewTransactionClient,
-	common_injection.NewUserClient,
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
+	tqd_internal_workspace_report_adapters_weasyprintpdf.New,
+	tqd_internal_workspace_report_adapters_grpc.NewAdapter,
 	tqd_infra_handler_grpc.NewAmenityGrpcHandlerImpl,
 	tqd_infra_handler_http.NewAmenityHandler,
 	tqd_infra_mapper.NewAmenityMapper,
@@ -68,10 +80,12 @@ var wireSet = wire.NewSet(
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAssessEngine,
 	tqd_infra_client.NewAssistantClient,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewAuditEngine,
+	tqd_infra_rpc.NewAuthRPCClient,
 	tqd_internal_usecase.NewBaseUsecase,
 	tqd_infra_handler_grpc.NewBdsproPublicService,
 	tqd_infra_providers.NewCacheProvider,
 	tqd_internal_modules_resolver_layer_resolver_builder.NewCandidateBuilder,
+	tqd_internal_workspace_report_adapters_useraccess.NewClient,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewCompareEngine,
 	tqd_internal_modules_resolver_layer_resolver_db.NewConfigLoader,
 	tqd_internal_modules_resolver_layer_resolver_db.NewConfigPostgres,
@@ -105,6 +119,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres_discovery.NewDiscoveryRepository,
 	tqd_infra_postgres_relatedentity.NewEntityReader,
 	tqd_internal_modules_discovery_domain.NewEntityRef,
+	tqd_internal_usage.NewEvent,
 	tqd_infra_handler_grpc.NewFeatureGrpcHandler,
 	tqd_infra_postgres.NewFeatureRepository,
 	tqd_internal_usecase.NewFeatureUsecase,
@@ -141,6 +156,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewMapWorkspacePostgres,
 	tqd_internal_usecase.NewMapWorkspaceUsecase,
 	tqd_infra_client.NewNotificationClient,
+	tqd_infra_rpc.NewNotificationRPCClient,
 	tqd_infra_postgres.NewNotificationRepository,
 	tqd_internal_usecase.NewNotificationUsecase,
 	tqd_infra_handler_grpc.NewOneHouseGrpcHandler,
@@ -212,6 +228,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_handler_grpc.NewRelatedEntityGrpcHandler,
 	tqd_infra_handler_grpc.NewReportGrpcHandler,
 	tqd_infra_postgres.NewReportRepository,
+	tqd_internal_workspace_report_adapters_postgresreport.NewReportStore,
 	tqd_internal_usecase.NewReportUsecase,
 	tqd_infra_postgres_planningclient.NewRepository,
 	tqd_infra_postgres_publiccontent.NewRepository,
@@ -220,20 +237,40 @@ var wireSet = wire.NewSet(
 	tqd_internal_modules_resolver_layer_resolver.NewResolver,
 	tqd_internal_modules_resolver_layer_resolver_engine.NewResolverEngine,
 	tqd_internal_modules_resolver_layer_resolver.NewResolverWithDB,
+	tqd_internal_quota_reconciliation_reservationcleanup.NewRunner,
+	tqd_internal_quota_reconciliation_usageprojection.NewRunner,
+	tqd_internal_workspace_report_processing.NewRunner,
 	tqd_infra_handler_grpc.NewSeoProjectionGrpcHandler,
 	tqd_internal_modules_discovery_application.NewService,
 	tqd_internal_modules_planningclient_application.NewService,
 	tqd_internal_modules_relatedentity_application.NewService,
+	tqd_internal_quota.NewService,
+	tqd_internal_quota_reconciliation_reservationcleanup.NewService,
+	tqd_internal_quota_reconciliation_usageprojection.NewService,
+	tqd_internal_workspace_report_application.NewService,
+	tqd_internal_workspace_report_rendering.NewService,
+	tqd_internal_workspace_report_adapters_generator.NewSmokeGenerator,
+	tqd_internal_workspace_report_adapters_postgresrender.NewSource,
+	tqd_internal_workspace_report_adapters_postgresreport.NewSourceStore,
+	tqd_internal_quota_memory.NewStore,
+	tqd_internal_quota_redis.NewStore,
+	tqd_internal_usage_memory.NewStore,
+	tqd_internal_usage_postgres.NewStore,
+	tqd_internal_workspace_report_adapters_memoryjob.NewStore,
+	tqd_internal_workspace_report_adapters_postgresjob.NewStore,
 	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
 	tqd_infra_postgres.NewSubscriptionRepository,
 	tqd_internal_usecase.NewSubscriptionUsecase,
 	tqd_internal_modules_resolver_layer_resolver_rule.NewTimelineEngine,
 	tqd_infra_providers.NewTransactionProvider,
 	tqd_infra_client.NewUserClient,
+	tqd_infra_rpc.NewUserRPCClient,
+	tqd_internal_workspace_report_processing.NewWorker,
 	tqd_infra_mapper.NewWorkspaceMapper,
+	tqd_experiments_postgresquota_postgres.NewWriter,
 )
 
-func InitializeApp() (*tqd_initial.InitialApp, error) {
+func InitializeApp() (*tqd_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
-	return nil, nil
+	return nil, nil, nil
 }

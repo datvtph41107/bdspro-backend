@@ -1,14 +1,31 @@
+.PHONY: help run test race vet check smoke
 
-wire:
-	cd script && go run gen_wire.go && cd ../cmd/http && wire
+help:
+	@printf '%s\n' \
+	  'run          Run the canonical HTTP Gateway' \
+	  'test         Run Gateway tests' \
+	  'race         Run Gateway tests with race detector' \
+	  'vet          Run go vet' \
+	  'check        Run architecture guards + tests + vet' \
+	  'smoke        Run focused Gateway architecture tests'
 
-http:
-	go run main.go http
+run:
+	go run . http
 
-grpc:
-	go run main.go grpc
-	
-swag:
-	cd cmd/http && swag init --parseDependency 
+test:
+	go test -count=1 ./...
 
-	
+race:
+	go test -count=1 -race ./...
+
+vet:
+	go vet ./...
+
+check:
+	cd .. && bash scripts/architecture/verify-foundation-gateway.sh .
+	cd .. && bash scripts/architecture/verify-foundation-gateway-runtime.sh .
+	$(MAKE) test
+	$(MAKE) vet
+
+smoke:
+	go test -count=1 ./config ./internal/authroutes ./internal/grpcgateway ./internal/grpcmetadata ./internal/httpauth ./internal/httperror ./internal/httpmiddleware ./internal/httpresponse ./internal/tqdmultipart ./internal/upstream ./internal/v1proxy ./cmd/http

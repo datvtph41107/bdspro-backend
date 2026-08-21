@@ -15,17 +15,23 @@ import (
 	"user/infra/client"
 	"user/infra/cookie"
 	"user/infra/handler"
+	"user/infra/handler/accessgrpc"
+	"user/infra/handler/cataloggrpc"
 	"user/infra/mapper"
 	"user/infra/oauth"
 	"user/infra/postgres"
+	"user/infra/postgres/access"
+	"user/infra/postgres/commercial"
+	"user/infra/postgres/iampermission"
+	"user/infra/postgres/subscription"
 	"user/infra/properties"
 	"user/infra/provider"
 	"user/infra/redis"
+	"user/infra/rpc"
 	"user/infra/scheduler"
 	"user/infra/sms"
 	"user/infra/zns"
 	"user/initial"
-	"user/internal/catalogshadow"
 	"user/internal/domain"
 	"user/internal/dto"
 	"user/internal/interface"
@@ -34,8 +40,16 @@ import (
 	"user/internal/interface/repo"
 	"user/internal/job"
 	"user/internal/models"
-	"user/internal/subscriptionread"
-	"user/internal/subscriptionshadow"
+	"user/internal/modules/catalog/admin"
+	"user/internal/modules/catalog/publication"
+	"user/internal/modules/catalog/shadow"
+	"user/internal/modules/commercial/checkout"
+	"user/internal/modules/entitlement/evaluate"
+	"user/internal/modules/subscription/backfill"
+	"user/internal/modules/subscription/cutover"
+	"user/internal/modules/subscription/read"
+	"user/internal/modules/subscription/settlement"
+	shadow2 "user/internal/modules/subscription/shadow"
 	"user/internal/usecase"
 	"user/internal/usecases"
 	"user/validator"
@@ -43,13 +57,29 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*initial.InitialApp, error) {
+func InitializeApp() (*initial.InitialApp, func(), error) {
 	db, err := _db.NewDB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	profilePostgres := postgres.NewProfilePostgres(db)
-	authProvider := client.NewAuthClient()
+	hubGrpcClient, cleanup, err := rpc.NewHubRPCClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	hubClient := client.NewHubClient(hubGrpcClient)
+	profilePostgres := postgres.NewProfilePostgres(db, hubClient)
+	userGrpcClient, cleanup2, err := rpc.NewUserRPCClient()
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	authGrpcClient, cleanup3, err := rpc.NewAuthRPCClient(userGrpcClient)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	authProvider := client.NewAuthClient(authGrpcClient, userGrpcClient)
 	transactionRepo := _db.NewTransactionRepo(db)
 	roleRepository := postgres.NewRoleRepo(transactionRepo)
 	iAdminRepo := postgres.NewAdminPostgres(db, authProvider, roleRepository)
@@ -60,17 +90,48 @@ func InitializeApp() (*initial.InitialApp, error) {
 	iPurposeUseRepo := postgres.NewPurposeUseRepo(transactionRepo)
 	iMainAreaRepo := postgres.NewMainAreaPostgres(transactionRepo)
 	iTagRepo := postgres.NewTagPostgres(transactionRepo)
-	crmProvider := injection.NewCRMClient()
+	crmProvider, cleanup4, err := rpc.NewCRMRPCClient()
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	followPostgres := postgres.NewFollowPostgres(db)
-	notificationProvider := client.NewNotificationClient()
+	notificationClient, cleanup5, err := rpc.NewNotificationRPCClient()
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	notificationProvider := client.NewNotificationClient(notificationClient)
 	ikycRepo := postgres.NewKYCRepo(transactionRepo)
 	profileUsecase := usecases.NewProfileUsecase(profilePostgres, iProfessionRepo, iCertificationRepo, iProfileMediaRepo, iPurposeUseRepo, iMainAreaRepo, iTagRepo, crmProvider, followPostgres, authProvider, notificationProvider, ikycRepo)
 	ikycUsecase := usecases.NewKYCUsecase(ikycRepo)
-	organizationClient := injection.NewOrganizationClient()
+	organizationClient, cleanup6, err := rpc.NewOrganizationRPCClient()
+	if err != nil {
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	profileMapper := mapper.NewProfileMapper()
 	kycMapper := mapper.NewKYCMapper()
-	hubClient := client.NewHubClient()
-	bdsproClient := client.NewBdsproClient()
+	bdsproGrpcClient, cleanup7, err := rpc.NewBdsproRPCClient()
+	if err != nil {
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	bdsproClient := client.NewBdsproClient(bdsproGrpcClient)
 	userUsecase := usecases.NewUserUsecase(profilePostgres)
 	userDashboardStatsJob := job.NewUserDashboardStatsJob(userUsecase, db)
 	redisService := _provider.NewRedisService()
@@ -84,14 +145,25 @@ func InitializeApp() (*initial.InitialApp, error) {
 	bookmarkUserHandler := handler.NewBookmarkUserHandler(bookmarkUserUsecase)
 	iMembershipRepo := postgres.NewMembershipRepo(transactionRepo)
 	iPlanRepo := postgres.NewPlanRepo(transactionRepo)
+	paymentClient, cleanup8, err := rpc.NewPaymentRPCClient()
+	if err != nil {
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	iPaymentProvider := client.NewPaymentClient(paymentClient)
 	catalogRepo := postgres.NewCatalogRepo(transactionRepo)
-	subscriptionShadowReader := subscriptionread.NewRouter(catalogRepo)
-	iPaymentProvider := client.NewPaymentClient()
-	iMembershipUsecase := usecases.NewMembershipUsecase(iMembershipRepo, iPlanRepo, iPaymentProvider, subscriptionShadowReader)
+	router := read.NewRouter(catalogRepo)
+	iMembershipUsecase := usecases.NewMembershipUsecase(iMembershipRepo, iPlanRepo, iPaymentProvider, router)
 	membershipMapper := mapper.NewMembershipMapper()
 	membershipHandler := handler.NewMembershipHandler(iMembershipUsecase, membershipMapper)
-	catalogShadowReader := catalogshadow.NewReader(catalogRepo)
-	iPlanUsecase := usecases.NewPlanUsecase(iPlanRepo, catalogShadowReader)
+	reader := shadow.NewReader(catalogRepo)
+	iPlanUsecase := usecases.NewPlanUsecase(iPlanRepo, reader)
 	planMapper := mapper.NewPlanMapper()
 	planHandler := handler.NewPlanHandler(iPlanUsecase, planMapper)
 	cacheProvider := redis.NewRedisProvider()
@@ -99,7 +171,7 @@ func InitializeApp() (*initial.InitialApp, error) {
 	authMethodMapper := mapper.NewAuthMethodMapper()
 	authMethodRepository := postgres.NewAuthRepository(transactionRepo)
 	profileProvider := provider.NewProfileProvider(profilePostgres)
-	organizationProviderClient := client.NewOrganizationProviderClient()
+	organizationProviderClient := client.NewOrganizationProviderClient(organizationClient)
 	authAdminUsecase := usecase.NewAdminUsecase(authMethodRepository, iAdminRepo, profileProvider, organizationProviderClient)
 	userInfoRepository := postgres.NewUserInfoRepository(transactionRepo)
 	authUserProfileUsecase := usecase.NewUserInfoUsecase(userInfoRepository)
@@ -136,7 +208,18 @@ func InitializeApp() (*initial.InitialApp, error) {
 	deviceUsecase := usecase.NewDeviceUsecase(devicePostgresRepo)
 	runtimeProperties := properties.NewRuntimeProperties()
 	otpUsecase := usecase.NewOtpUsecase(otpPostgres, statusPostgres, runtimeProperties, notificationProvider)
-	chatProvider := injection.NewChatClient()
+	chatProvider, cleanup9, err := rpc.NewChatRPCClient()
+	if err != nil {
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	iZnsProvider := zns.NewZnsProvider(authConfigPostgres)
 	iSmsProvider := sms.NewSMSProvider()
 	authUsecase := usecase.NewAuthService(cookieProvider, cacheProvider, profileProvider, authMethodRepository, userInfoRepository, sessionPostgres, otpPostgres, statusPostgres, authConfigPostgres, devicePostgresRepo, deviceUsecase, otpUsecase, organizationProviderClient, iPaymentProvider, notificationProvider, chatProvider, iZnsProvider, iSmsProvider, runtimeProperties, crmProvider)
@@ -166,10 +249,20 @@ func InitializeApp() (*initial.InitialApp, error) {
 	authUserProfileHandler := handler.NewUserInfoHandler(authUserProfileUsecase)
 	znsScheduler := scheduler.NewZnsScheduler(iZnsProvider)
 	initialApp := initial.NewInitialApp(grpcProfileService, adminHandler, adminUserProfileHandler, bookmarkUserHandler, crmProvider, membershipHandler, planHandler, internalHandler, mainAreaHandler, purposeUseHandler, professionHandler, tagHandler, kycHandler, priceTableHandler, userDashboardStatsJob, authInternalHandler, authHandler, oAuthHandler, permissionHandler, roleGroupHandler, roleHandler, authUserProfileHandler, moduleService, znsScheduler)
-	return initialApp, nil
+	return initialApp, func() {
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(providers.BdsproProvider), new(*client.BdsproClient)), wire.Bind(new(providers.HubProvider), new(*client.HubClient)), wire.Bind(new(providers.OrganizationProvider), new(*client.OrganizationProviderClient)), wire.Bind(new(providers.ProfileProvider), new(*provider.ProfileProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgres.AdminAccessPostgresRepo)), wire.Bind(new(repo.DeviceRepository), new(*postgres.DevicePostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgres.AuthConfigPostgres)), wire.Bind(new(repo.IBlockRepo), new(*postgres.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*postgres.ContactPostgres)), wire.Bind(new(repo.IFollowRepo), new(*postgres.FollowPostgres)), wire.Bind(new(repo.IProfileDeletedRepo), new(*postgres.ProfileDeletedPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.OTPRepository), new(*postgres.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgres.PINPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgres.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgres.StatusPostgres)), wire.Bind(new(catalogshadow.Repository), new(*postgres.CatalogRepo)), wire.Bind(new(catalogshadow.Observer), new(*catalogshadow.Reader)), wire.Bind(new(subscriptionshadow.Repository), new(*postgres.CatalogRepo)), wire.Bind(new(subscriptionshadow.Observer), new(*subscriptionread.Router)), injection.NewAuthClient, injection.NewBDSProClient, injection.NewCRMClient, injection.NewChatClient, injection.NewHubClient, injection.NewNotification, injection.NewOrganizationClient, injection.NewPaymentClient, injection.NewTQClient, injection.NewTransactionClient, injection.NewUserClient, injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewAdminAccessPostgresRepo, usecase.NewAdminAccessUsecase, handler.NewAdminHandler, usecases.NewAdminKYCUsecase, usecases.NewAdminMainAreaUsecase, mapper.NewAdminMapper, postgres.NewAdminPostgres, usecases.NewAdminPurposeUseUsecase, usecase.NewAdminUsecase, usecases.NewAdminUsecase, handler.NewAdminUserProfileHandler, postgres.NewAttachPostgres, client.NewAuthClient, postgres.NewAuthConfigRepository, handler.NewAuthHandler, handler.NewAuthInternalHandler, mapper.NewAuthMethodMapper, postgres.NewAuthRepository, mapper.NewAuthSecurityMapper, usecase.NewAuthSecurityUsecase, usecase.NewAuthService, client.NewBdsproClient, postgres.NewBlockPostgres, usecases.NewBlockUsecase, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, postgres.NewCatalogRepo, catalogshadow.NewReader, subscriptionread.NewRouter, postgres.NewCertificationPostgres, usecases.NewCertificationUsecase, postgres.NewContactPostgres, cookie.NewCookieProvider, mapper.NewDeviceMapper, postgres.NewDevicePostgresRepo, usecase.NewDeviceUsecase, oauth.NewFacebookAuthService, postgres.NewFollowPostgres, usecases.NewFollowUsecase, postgres.NewFriendPostgres, usecases.NewFriendUsecase, oauth.NewGoogleAuthService, postgres.NewGroupPostgres, handler.NewGrpcProfileService, client.NewHubClient, initial.NewInitialApp, handler.NewInternalHandler, handler.NewKYCHandler, mapper.NewKYCMapper, postgres.NewKYCRepo, usecases.NewKYCUsecase, handler.NewMainAreaHandler, mapper.NewMainAreaMapper, postgres.NewMainAreaPostgres, handler.NewMembershipHandler, mapper.NewMembershipMapper, postgres.NewMembershipRepo, usecases.NewMembershipUsecase, postgres.NewModuleRepo, usecase.NewModuleService, usecase.NewModuleUsecase, client.NewNotificationClient, handler.NewOAuthRouter, usecase.NewOAuthUsecase, postgres.NewOTPRepository, client.NewOrganizationProviderClient, usecase.NewOtpUsecase, postgres.NewPINRepository, usecase.NewPINUsecase, client.NewPaymentClient, handler.NewPermissionHandler, postgres.NewPermissionRepo, usecase.NewPermissionUsecase, handler.NewPlanHandler, mapper.NewPlanMapper, postgres.NewPlanRepo, usecases.NewPlanUsecase, handler.NewPriceTableHandler, mapper.NewPriceTableMapper, postgres.NewPriceTableRepo, usecases.NewPriceTableUsecase, handler.NewProfessionHandler, mapper.NewProfessionMapper, postgres.NewProfessionPostgres, usecases.NewProfessionUsecase, models.NewProfileDeleted, postgres.NewProfileDeletedPostgres, mapper.NewProfileMapper, postgres.NewProfileMediaPostgres, postgres.NewProfilePostgres, provider.NewProfileProvider, usecases.NewProfileUsecase, handler.NewPurposeUseHandler, mapper.NewPurposeUseMapper, postgres.NewPurposeUseRepo, redis.NewRedisProvider, dto.NewRefreshResponse, handler.NewRoleGroupHandler, mapper.NewRoleGroupMapper, postgres.NewRoleGroupRepo, usecase.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper.NewRoleMapper, postgres.NewRoleRepo, usecase.NewRoleUsecase, properties.NewRuntimeProperties, sms.NewSMSProvider, mapper.NewSessionMapper, postgres.NewSessionRepository, postgres.NewStatusRepository, handler.NewTagHandler, mapper.NewTagMapper, postgres.NewTagPostgres, usecases.NewTagUsecase, postgres.NewTransactionGorm, job.NewUserDashboardStatsJob, handler.NewUserInfoHandler, mapper.NewUserInfoMapper, postgres.NewUserInfoRepository, usecase.NewUserInfoUsecase, domain.NewUserOTPRepository, models.NewUserProfileEntityWithRequest, usecases.NewUserUsecase, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(iusecase.ITransaction), new(*postgres.TransactionGorm)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(providers.BdsproProvider), new(*client.BdsproClient)), wire.Bind(new(providers.HubProvider), new(*client.HubClient)), wire.Bind(new(providers.OrganizationProvider), new(*client.OrganizationProviderClient)), wire.Bind(new(providers.ProfileProvider), new(*provider.ProfileProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgres.AdminAccessPostgresRepo)), wire.Bind(new(repo.DeviceRepository), new(*postgres.DevicePostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgres.AuthConfigPostgres)), wire.Bind(new(repo.IBlockRepo), new(*postgres.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*postgres.ContactPostgres)), wire.Bind(new(repo.IFollowRepo), new(*postgres.FollowPostgres)), wire.Bind(new(repo.IProfileDeletedRepo), new(*postgres.ProfileDeletedPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.OTPRepository), new(*postgres.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgres.PINPostgres)), wire.Bind(new(repo.SessionRepository), new(*postgres.SessionPostgres)), wire.Bind(new(repo.StatusRepository), new(*postgres.StatusPostgres)), wire.Bind(new(shadow.Observer), new(*shadow.Reader)), wire.Bind(new(shadow.Repository), new(*postgres.CatalogRepo)), wire.Bind(new(shadow2.Observer), new(*read.Router)), wire.Bind(new(shadow2.Repository), new(*postgres.CatalogRepo)), injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewAdminAccessPostgresRepo, usecase.NewAdminAccessUsecase, handler.NewAdminHandler, usecases.NewAdminKYCUsecase, usecases.NewAdminMainAreaUsecase, mapper.NewAdminMapper, postgres.NewAdminPostgres, usecases.NewAdminPurposeUseUsecase, usecase.NewAdminUsecase, usecases.NewAdminUsecase, handler.NewAdminUserProfileHandler, postgres.NewAttachPostgres, backfill.NewAuditor, client.NewAuthClient, postgres.NewAuthConfigRepository, handler.NewAuthHandler, handler.NewAuthInternalHandler, mapper.NewAuthMethodMapper, rpc.NewAuthRPCClient, postgres.NewAuthRepository, mapper.NewAuthSecurityMapper, usecase.NewAuthSecurityUsecase, usecase.NewAuthService, client.NewBdsproClient, rpc.NewBdsproRPCClient, postgres.NewBlockPostgres, usecases.NewBlockUsecase, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, usecases.NewBookmarkUserUsecase, rpc.NewCRMRPCClient, postgres.NewCatalogRepo, postgres.NewCertificationPostgres, usecases.NewCertificationUsecase, rpc.NewChatRPCClient, iampermission.NewChecker, commercialpostgres.NewCheckoutStore, postgres.NewContactPostgres, cookie.NewCookieProvider, mapper.NewDeviceMapper, postgres.NewDevicePostgresRepo, usecase.NewDeviceUsecase, oauth.NewFacebookAuthService, postgres.NewFollowPostgres, usecases.NewFollowUsecase, postgres.NewFriendPostgres, usecases.NewFriendUsecase, oauth.NewGoogleAuthService, postgres.NewGroupPostgres, handler.NewGrpcProfileService, accessgrpc.NewHandler, cataloggrpc.NewHandler, client.NewHubClient, rpc.NewHubRPCClient, initial.NewInitialApp, handler.NewInternalHandler, handler.NewKYCHandler, mapper.NewKYCMapper, postgres.NewKYCRepo, usecases.NewKYCUsecase, handler.NewMainAreaHandler, mapper.NewMainAreaMapper, postgres.NewMainAreaPostgres, handler.NewMembershipHandler, mapper.NewMembershipMapper, postgres.NewMembershipRepo, usecases.NewMembershipUsecase, postgres.NewModuleRepo, usecase.NewModuleService, usecase.NewModuleUsecase, client.NewNotificationClient, rpc.NewNotificationRPCClient, handler.NewOAuthRouter, usecase.NewOAuthUsecase, postgres.NewOTPRepository, client.NewOrganizationProviderClient, rpc.NewOrganizationRPCClient, usecase.NewOtpUsecase, postgres.NewPINRepository, usecase.NewPINUsecase, client.NewPaymentClient, rpc.NewPaymentRPCClient, handler.NewPermissionHandler, postgres.NewPermissionRepo, usecase.NewPermissionUsecase, accesspostgres.NewPlanAccessStore, handler.NewPlanHandler, mapper.NewPlanMapper, postgres.NewPlanRepo, usecases.NewPlanUsecase, handler.NewPriceTableHandler, mapper.NewPriceTableMapper, postgres.NewPriceTableRepo, usecases.NewPriceTableUsecase, handler.NewProfessionHandler, mapper.NewProfessionMapper, postgres.NewProfessionPostgres, usecases.NewProfessionUsecase, models.NewProfileDeleted, postgres.NewProfileDeletedPostgres, mapper.NewProfileMapper, postgres.NewProfileMediaPostgres, postgres.NewProfilePostgres, provider.NewProfileProvider, usecases.NewProfileUsecase, handler.NewPurposeUseHandler, mapper.NewPurposeUseMapper, postgres.NewPurposeUseRepo, shadow.NewReader, shadow2.NewReader, redis.NewRedisProvider, dto.NewRefreshResponse, handler.NewRoleGroupHandler, mapper.NewRoleGroupMapper, postgres.NewRoleGroupRepo, usecase.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper.NewRoleMapper, postgres.NewRoleRepo, usecase.NewRoleUsecase, read.NewRouter, properties.NewRuntimeProperties, sms.NewSMSProvider, admin.NewService, publication.NewService, checkout.NewService, evaluate.NewService, backfill.NewService, cutover.NewService, settlement.NewService, mapper.NewSessionMapper, postgres.NewSessionRepository, subscriptionpostgres.NewSettlementStore, postgres.NewStatusRepository, accesspostgres.NewSubscriptionStore, handler.NewTagHandler, mapper.NewTagMapper, postgres.NewTagPostgres, usecases.NewTagUsecase, postgres.NewTransactionGorm, job.NewUserDashboardStatsJob, handler.NewUserInfoHandler, mapper.NewUserInfoMapper, postgres.NewUserInfoRepository, usecase.NewUserInfoUsecase, domain.NewUserOTPRepository, models.NewUserProfileEntityWithRequest, rpc.NewUserRPCClient, usecases.NewUserUsecase, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler)

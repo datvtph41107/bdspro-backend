@@ -19,8 +19,10 @@ import (
 	"notification/infra/handler"
 	"notification/infra/mapper"
 	"notification/infra/postgres"
+	"notification/infra/rpc"
 	"notification/initial"
 	"notification/internal/dto"
+	"notification/internal/integrations/paymentcompleted"
 	"notification/internal/provider"
 	"notification/internal/repo"
 	"notification/internal/usecase"
@@ -28,23 +30,28 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*initial.InitialApp, error) {
+func InitializeApp() (*initial.InitialApp, func(), error) {
 	db, err := _db.NewDB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	notificationRepo := postgres.NewPostgreNotification(db)
 	redisClient := cache.NewRedisClient()
-	authClient := client.NewAuthClient()
+	userGrpcClient, cleanup, err := rpc.NewUserRPCClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	authClient := client.NewAuthClient(userGrpcClient)
 	firebaseConfig, err := config.NewFirebaseConfig()
 	if err != nil {
-		return nil, err
+		cleanup()
+		return nil, nil, err
 	}
 	firebaseProvider := firebase.NewFirebaseService(firebaseConfig)
 	notificationUsecase := usecase.NewNotificationService(notificationRepo, redisClient, authClient, firebaseProvider)
 	notificationMapper := mapper.NewNotificationMapper()
 	adminHistoryRepo := postgres.NewAdminHistoryPostgres(db)
-	iUserProvider := client.NewUserClient()
+	iUserProvider := client.NewUserClient(userGrpcClient)
 	adminHistoryUsecase := usecase.NewAdminHistoryUsecase(adminHistoryRepo, iUserProvider)
 	adminHistoryMapper := mapper.NewAdminHistoryMapper()
 	dealHistoryRepository := postgres.NewDealHistoryPostgres(db)
@@ -69,10 +76,12 @@ func InitializeApp() (*initial.InitialApp, error) {
 	dealHistoryHandler := handler.NewDealHistoryHandler(dealHistoryUsecase)
 	propertyHistoryHandler := handler.NewPropertyHistoryHandler(propertyHistoryUseCase, syncUtil)
 	initialApp := initial.NewInitialApp(internalHandler, notificationHandler, historyHandler, dealHistoryHandler, propertyHistoryHandler)
-	return initialApp, nil
+	return initialApp, func() {
+		cleanup()
+	}, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(provider.IAuthClient), new(*client.AuthClient)), wire.Bind(new(provider.IFirebaseProvider), new(*firebase.FirebaseProvider)), wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo.HistoryAuthRepo), new(*postgres.HistoryAuthPostgres)), wire.Bind(new(repo.PersonConfigRepo), new(*postgres.PersonConfigPostgres)), injection.NewAuthClient, injection.NewBDSProClient, injection.NewCRMClient, injection.NewChatClient, injection.NewHubClient, injection.NewNotification, injection.NewOrganizationClient, injection.NewPaymentClient, injection.NewTQClient, injection.NewTransactionClient, injection.NewUserClient, injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, postgres.NewActivityHistoryPostgres, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, client.NewAuthClient, handler.NewDealHistoryHandler, postgres.NewDealHistoryPostgres, usecase.NewDealHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, mapper.NewHistoryAuthMapper, postgres.NewHistoryAuthPostgres, usecase.NewHistoryAuthUsecase, handler.NewHistoryHandler, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, usecase.NewHistoryUsecase, initial.NewInitialApp, handler.NewInternalHandler, handler.NewNotificationHandler, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPersonConfigPostgres, usecase.NewPersonConfigUsecase, postgres.NewPostgreNotification, handler.NewPropertyHistoryHandler, mapper.NewPropertyHistoryMapper, usecase.NewPropertyHistoryUseCase, cache.NewRedisClient, dto.NewSendNotiResponse, client.NewUserClient)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(provider.IAuthClient), new(*client.AuthClient)), wire.Bind(new(provider.IFirebaseProvider), new(*firebase.FirebaseProvider)), wire.Bind(new(repo.AccountWarningRepository), new(*postgres.AccountWarningPostgresRepo)), wire.Bind(new(repo.HistoryAuthRepo), new(*postgres.HistoryAuthPostgres)), wire.Bind(new(repo.PersonConfigRepo), new(*postgres.PersonConfigPostgres)), injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewAccountWarningPostgresRepo, usecase.NewAccountWarningUsecase, postgres.NewActivityHistoryPostgres, mapper.NewAdminHistoryMapper, postgres.NewAdminHistoryPostgres, usecase.NewAdminHistoryUsecase, client.NewAuthClient, paymentcompleted.NewConsumer, handler.NewDealHistoryHandler, postgres.NewDealHistoryPostgres, usecase.NewDealHistoryUsecase, config.NewFirebaseConfig, firebase.NewFirebaseService, mapper.NewHistoryAuthMapper, postgres.NewHistoryAuthPostgres, usecase.NewHistoryAuthUsecase, handler.NewHistoryHandler, mapper.NewHistoryMapper, postgres.NewHistoryRepo, postgres.NewHistoryRepository, usecase.NewHistoryUsecase, initial.NewInitialApp, handler.NewInternalHandler, handler.NewNotificationHandler, mapper.NewNotificationMapper, usecase.NewNotificationService, postgres.NewPersonConfigPostgres, usecase.NewPersonConfigUsecase, postgres.NewPostgreNotification, handler.NewPropertyHistoryHandler, mapper.NewPropertyHistoryMapper, usecase.NewPropertyHistoryUseCase, cache.NewRedisClient, dto.NewSendNotiResponse, paymentcompleted.NewStore, client.NewUserClient, rpc.NewUserRPCClient)

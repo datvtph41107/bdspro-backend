@@ -1,49 +1,67 @@
+rpc:
+    user:
+        address: "user:8201"
+    auth:
+        address: "auth:8216"
+    payment:
+        address: "payment:8205"
+    tqd:
+        address: "tqd:8219"
+    bdspro:
+        address: "bdspro:8202"
+    notification:
+        address: "notification:8204"
+  organization:
+    address: "organization:8207"
+  chat:
+    address: "chat:8208"
+
 server:
-  port: 8006
-  tcp_port: 8206
-  name: crm-service
+    port: 8006
+    tcp_port: 8206
+    name: crm-service
 
 database:
-  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_crm port=5432 sslmode=disable
+    dsn: "CHANGE_ME_LOCAL_DSN"
 
 key:
-  jwt: key-generate-jwt-token-authentication
+    jwt: key-generate-jwt-token-authentication
 
 jwt:
-  key-generate: key-generate-jwt-token-authentication
-  tokenPrefix: Bearer
-  tokenExpirationAfterDays: 14
-  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
-  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
-  listPermit:
-  authorizationHeader: Authorization
+    key-generate: key-generate-jwt-token-authentication
+    tokenPrefix: Bearer
+    tokenExpirationAfterDays: 14
+    accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+    listPermit:
+    authorizationHeader: Authorization
 
 redis:
-  host: redis:6379
-  pass: protected_redis_secure_password
+    host: redis:6379
+    pass: "CHANGE_ME"
 
 email:
-  host: smtp.gmail.com
-  port: 587
-  username: tuandq2112@gmail.com
-  password: tuandq2112
-  from: tuandq2112@gmail.com
-  name: Tuấn Đặng
+    host: smtp.gmail.com
+    port: 587
+    username: tuandq2112@gmail.com
+    password: "CHANGE_ME"
+    from: tuandq2112@gmail.com
+    name: Tuấn Đặng
 
 seo:
-  public_base_url: "https://dev.bdspro.vn"
-  runtime_event_ingest_key: ""
-  internal_secret_key: ""
-  timezone: "Asia/Ho_Chi_Minh"
-  parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
+    public_base_url: "https://dev.bdspro.vn"
+    runtime_event_ingest_key: ""
+    internal_secret_key: ""
+    timezone: "Asia/Ho_Chi_Minh"
+    parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
 
-  sitemap:
-    default_change_freq: "daily"
-    default_priority: 0.5
+    sitemap:
+        default_change_freq: "daily"
+        default_priority: 0.5
 
-  generation_job:
-    enabled: true
-    cron: "0 0 * * *"
-    batch_size: 200
+    generation_job:
+        enabled: true
+        cron: "0 0 * * *"
+        batch_size: 200
 
 # export SEO_INTERNAL_SECRET_KEY='real-secret-from-server'

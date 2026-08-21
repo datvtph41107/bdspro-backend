@@ -8,11 +8,15 @@ package wire
 
 import (
 	"common/db"
+	"common/injection"
+	"common/provider"
+	"common/utils"
 	"github.com/google/wire"
 	"social/infra/client"
 	"social/infra/impl"
 	"social/infra/mapper"
 	"social/infra/postgre"
+	"social/infra/rpc"
 	"social/infra/service"
 	"social/initial"
 	"social/internal/interface"
@@ -22,10 +26,10 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*initial.InitialApp, error) {
+func InitializeApp() (*initial.InitialApp, func(), error) {
 	db, err := _db.NewDB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	postgreNewsFeed := postgre.NewPostgreNewsFeed(db)
 	postgreLike := postgre.NewLikeRepo(db)
@@ -34,15 +38,30 @@ func InitializeApp() (*initial.InitialApp, error) {
 	postgreNewsFeedMedia := postgre.NewPostgreNewsFeedMedia(db)
 	newsFeedOfUserRepo := postgre.NewNewsFeedOfUserPostgres(db)
 	newsFeedOfGroupRepo := postgre.NewNewsFeedOfGroupPostgres(db)
-	bdsproClient := client.NewBdsproClient()
-	userClient := client.NewUserClient()
+	bdsproGrpcClient, cleanup, err := rpc.NewBdsproRPCClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	bdsproClient := client.NewBdsproClient(bdsproGrpcClient)
+	userGrpcClient, cleanup2, err := rpc.NewUserRPCClient()
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	userClient := client.NewUserClient(userGrpcClient)
 	postgreTransaction := postgre.NewPostgreTransaction(db)
 	newsFeedUsecase := usecase.NewNewsFeedUsecase(postgreNewsFeed, postgreLike, permissionImpl, postgreFriendTag, postgreNewsFeedMedia, newsFeedOfUserRepo, newsFeedOfGroupRepo, bdsproClient, userClient, postgreTransaction)
 	postgreNewsFeedShare := postgre.NewPostgreNewsFeedShare(db)
 	chatClient := client.NewChatClient()
-	notificationClient := client.NewNotificationClient()
+	notificationClient, cleanup3, err := rpc.NewNotificationRPCClient()
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	clientNotificationClient := client.NewNotificationClient(notificationClient)
 	userUsecase := usecase.NewUserUsecase(userClient)
-	newsFeedShareUsecase := usecase.NewNewsFeedShareUsecase(newsFeedUsecase, postgreNewsFeedShare, postgreNewsFeed, chatClient, notificationClient, userClient, userUsecase)
+	newsFeedShareUsecase := usecase.NewNewsFeedShareUsecase(newsFeedUsecase, postgreNewsFeedShare, postgreNewsFeed, chatClient, clientNotificationClient, userClient, userUsecase)
 	newsFeedMapper := mapper.NewNewsFeedMapper()
 	newsFeedService := service.NewNewsFeedService(newsFeedUsecase, newsFeedShareUsecase, bdsproClient, userClient, newsFeedMapper)
 	postgreReportReason := postgre.NewPostgreReportReason(db)
@@ -51,16 +70,20 @@ func InitializeApp() (*initial.InitialApp, error) {
 	reportUsecase := usecase.NewReportUsecase(postgreReport, postgreReportReason, postgreNewsFeed)
 	reportService := service.NewReportService(reportReasonUsecase, reportUsecase)
 	postgreComment := postgre.NewPostgreComment(db)
-	numberUpdateUsecase := usecase.NewNumberUpdateUsecase(postgreNewsFeed, postgreLike, postgreComment, userClient, notificationClient, userUsecase)
-	commentUsecase := usecase.NewCommentUsecase(postgreComment, permissionImpl, postgreNewsFeed, postgreLike, numberUpdateUsecase, userClient, notificationClient)
+	numberUpdateUsecase := usecase.NewNumberUpdateUsecase(postgreNewsFeed, postgreLike, postgreComment, userClient, clientNotificationClient, userUsecase)
+	commentUsecase := usecase.NewCommentUsecase(postgreComment, permissionImpl, postgreNewsFeed, postgreLike, numberUpdateUsecase, userClient, clientNotificationClient)
 	commentService := service.NewCommentService(commentUsecase, userClient)
-	likeUsecase := usecase.NewLikeUsecase(postgreLike, postgreComment, postgreNewsFeed, numberUpdateUsecase, userClient, notificationClient)
+	likeUsecase := usecase.NewLikeUsecase(postgreLike, postgreComment, postgreNewsFeed, numberUpdateUsecase, userClient, clientNotificationClient)
 	likeService := service.NewLikeService(likeUsecase)
 	initialApp := initial.NewApp(newsFeedService, reportService, commentService, likeService, newsFeedUsecase)
-	return initialApp, nil
+	return initialApp, func() {
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, wire.Bind(new(iusecase.BdsproClient), new(*client.BdsproClient)), wire.Bind(new(iusecase.ChatClient), new(*client.ChatClient)), wire.Bind(new(iusecase.NotiClient), new(*client.NotificationClient)), wire.Bind(new(iusecase.UserClient), new(*client.UserClient)), wire.Bind(new(iusecase.PermissionUsecase), new(*impl.PermissionImpl)), wire.Bind(new(repo.CommentRepo), new(*postgre.PostgreComment)), wire.Bind(new(repo.FriendTagRepo), new(*postgre.PostgreFriendTag)), wire.Bind(new(repo.LikeRepo), new(*postgre.PostgreLike)), wire.Bind(new(repo.NewsFeedMediaRepo), new(*postgre.PostgreNewsFeedMedia)), wire.Bind(new(repo.NewsFeedRepo), new(*postgre.PostgreNewsFeed)), wire.Bind(new(repo.NewsFeedShareRepo), new(*postgre.PostgreNewsFeedShare)), wire.Bind(new(repo.ReportRepo), new(*postgre.PostgreReport)), wire.Bind(new(repo.ReportReasonRepo), new(*postgre.PostgreReportReason)), wire.Bind(new(iusecase.ITransaction), new(*postgre.PostgreTransaction)), initial.NewApp, client.NewBdsproClient, client.NewChatClient, service.NewCommentService, usecase.NewCommentUsecase, usecase.NewFriendTagUsecase, postgre.NewLikeRepo, service.NewLikeService, usecase.NewLikeUsecase, mapper.NewNewsFeedMapper, postgre.NewNewsFeedOfGroupPostgres, postgre.NewNewsFeedOfUserPostgres, service.NewNewsFeedService, usecase.NewNewsFeedShareUsecase, usecase.NewNewsFeedUsecase, client.NewNotificationClient, usecase.NewNumberUpdateUsecase, impl.NewPermissionImpl, postgre.NewPostgreComment, postgre.NewPostgreFriendTag, postgre.NewPostgreNewsFeed, postgre.NewPostgreNewsFeedMedia, postgre.NewPostgreNewsFeedShare, postgre.NewPostgreReport, postgre.NewPostgreReportReason, postgre.NewPostgreTransaction, mapper.NewReportMapper, usecase.NewReportReasonUsecase, service.NewReportService, usecase.NewReportUsecase, client.NewUserClient, usecase.NewUserUsecase)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(iusecase.BdsproClient), new(*client.BdsproClient)), wire.Bind(new(iusecase.ChatClient), new(*client.ChatClient)), wire.Bind(new(iusecase.ITransaction), new(*postgre.PostgreTransaction)), wire.Bind(new(iusecase.NotiClient), new(*client.NotificationClient)), wire.Bind(new(iusecase.PermissionUsecase), new(*impl.PermissionImpl)), wire.Bind(new(iusecase.UserClient), new(*client.UserClient)), wire.Bind(new(repo.CommentRepo), new(*postgre.PostgreComment)), wire.Bind(new(repo.FriendTagRepo), new(*postgre.PostgreFriendTag)), wire.Bind(new(repo.LikeRepo), new(*postgre.PostgreLike)), wire.Bind(new(repo.NewsFeedMediaRepo), new(*postgre.PostgreNewsFeedMedia)), wire.Bind(new(repo.NewsFeedRepo), new(*postgre.PostgreNewsFeed)), wire.Bind(new(repo.NewsFeedShareRepo), new(*postgre.PostgreNewsFeedShare)), wire.Bind(new(repo.ReportReasonRepo), new(*postgre.PostgreReportReason)), wire.Bind(new(repo.ReportRepo), new(*postgre.PostgreReport)), injection.NewHttpClient, _utils.NewSyncUtil, initial.NewApp, client.NewBdsproClient, rpc.NewBdsproRPCClient, client.NewChatClient, service.NewCommentService, usecase.NewCommentUsecase, usecase.NewFriendTagUsecase, postgre.NewLikeRepo, service.NewLikeService, usecase.NewLikeUsecase, mapper.NewNewsFeedMapper, postgre.NewNewsFeedOfGroupPostgres, postgre.NewNewsFeedOfUserPostgres, service.NewNewsFeedService, usecase.NewNewsFeedShareUsecase, usecase.NewNewsFeedUsecase, client.NewNotificationClient, rpc.NewNotificationRPCClient, usecase.NewNumberUpdateUsecase, impl.NewPermissionImpl, postgre.NewPostgreComment, postgre.NewPostgreFriendTag, postgre.NewPostgreNewsFeed, postgre.NewPostgreNewsFeedMedia, postgre.NewPostgreNewsFeedShare, postgre.NewPostgreReport, postgre.NewPostgreReportReason, postgre.NewPostgreTransaction, mapper.NewReportMapper, usecase.NewReportReasonUsecase, service.NewReportService, usecase.NewReportUsecase, client.NewUserClient, rpc.NewUserRPCClient, usecase.NewUserUsecase)

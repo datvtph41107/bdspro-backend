@@ -26,7 +26,7 @@ func NewPostgreProject(db *gorm.DB) *PostgreProject {
 
 // Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
 func (r *PostgreProject) GetByID(c *gin.Context, id uint64) (*domain.Project, error) {
-	log.Printf("LOAD_DETAIL", id)
+	log.Printf("LOAD_DETAIL id=%d", id)
 	var entity *domain.Project
 	err := _db.DB.
 		Preload("Builds").

@@ -1,7 +1,6 @@
 package httpmiddleware
 
 import (
-	_requestcontext "common/requestcontext"
 	"strings"
 
 	"github.com/gin-contrib/cors"
@@ -13,13 +12,13 @@ func WithRequestIDCORS(
 	config.AllowHeaders =
 		appendUniqueHeader(
 			config.AllowHeaders,
-			_requestcontext.RequestIDHeader,
+			RequestIDHeader,
 		)
 
 	config.ExposeHeaders =
 		appendUniqueHeader(
 			config.ExposeHeaders,
-			_requestcontext.RequestIDHeader,
+			RequestIDHeader,
 		)
 
 	return config
@@ -35,13 +34,13 @@ func WithOperationIDCORS(
 	config.AllowHeaders =
 		appendUniqueHeader(
 			config.AllowHeaders,
-			_requestcontext.OperationIDHeader,
+			OperationIDHeader,
 		)
 
 	config.ExposeHeaders =
 		appendUniqueHeader(
 			config.ExposeHeaders,
-			_requestcontext.OperationIDHeader,
+			OperationIDHeader,
 		)
 
 	return config
@@ -55,7 +54,7 @@ func WithIdempotencyKeyCORS(
 	config.AllowHeaders =
 		appendUniqueHeader(
 			config.AllowHeaders,
-			_requestcontext.IdempotencyKeyHeader,
+			IdempotencyKeyHeader,
 		)
 
 	return config

@@ -11,7 +11,6 @@ import (
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
-	"tqd/env"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -38,10 +37,13 @@ type GisReportAdminGrpcHandler struct {
 	authClient *clients.AuthGrpcClient
 }
 
-func NewGisReportAdminGrpcHandler(reportUsecase usecase.ReportUsecase) *GisReportAdminGrpcHandler {
+func NewGisReportAdminGrpcHandler(
+	reportUsecase usecase.ReportUsecase,
+	authClient *clients.AuthGrpcClient,
+) *GisReportAdminGrpcHandler {
 	return &GisReportAdminGrpcHandler{
 		usecase:    reportUsecase,
-		authClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		authClient: authClient,
 	}
 }
 

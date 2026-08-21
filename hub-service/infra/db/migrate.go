@@ -2,11 +2,12 @@ package db
 
 import (
 	_db "common/db"
+	"fmt"
 	"hub/internal/domain"
 	"log"
 )
 
-func AutoMigrate() {
+func AutoMigrate() error {
 	db := _db.DB
 
 	err := db.AutoMigrate(
@@ -27,8 +28,9 @@ func AutoMigrate() {
 	)
 
 	if err != nil {
-		log.Fatalf("Auto migrate error: %v", err)
+		return fmt.Errorf("auto migrate hub schema: %w", err)
 	}
 
 	log.Println("Auto migrate success")
+	return nil
 }

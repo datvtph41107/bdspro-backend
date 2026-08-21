@@ -2,10 +2,10 @@ package client
 
 import (
 	"common"
-	_middleware "common/middleware"
+	qhprorpc "common/rpc"
+	"common/transporttrust"
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	assistantpb "pb/types/assistant"
@@ -13,53 +13,78 @@ import (
 	"tqd/internal/interface/provider"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-// assistantGrpcPort — port gRPC cố định của assistant-service (config app.port.grpc).
+// assistantGrpcPort is the configured gRPC port exposed by assistant-service.
 const assistantGrpcPort = "8218"
 
-// assistantGrpcMaxMsgBytes — đủ cho ClassifyDocument gửi file inline tới ~15MB (+ overhead).
+// assistantGrpcMaxMsgBytes allows document classification to send inline files
+// up to roughly 15 MiB plus protobuf overhead.
 const assistantGrpcMaxMsgBytes = 32 << 20
 
-// AssistantClient gọi sang assistant-service để sinh nội dung AI (Gemini), dùng cho job
-// phân loại tài liệu quy hoạch trong QHPlanningClassifyUsecase.
+// AssistantClient owns the gRPC channel used by the classify worker.
+// Construction is synchronous and does not spawn connection/monitor goroutines;
+// the process closes the channel only after the classify actor has stopped.
 type AssistantClient struct {
-	client assistantpb.AssistantServiceClient
+	conn    *grpc.ClientConn
+	client  assistantpb.AssistantServiceClient
+	initErr error
 }
 
-// NewAssistantClient trả về provider.AssistantProvider trực tiếp nên không cần wire.Bind.
+// NewAssistantClient returns provider.AssistantProvider directly so Wire does
+// not need an additional bind. The constructor preserves the existing Wire
+// signature while using the canonical Foundation RPC transport.
 func NewAssistantClient() provider.AssistantProvider {
-	assistantClient := &AssistantClient{}
-	go func() {
-		name := "assistant"
-		url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", url, assistantGrpcPort),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-			grpc.WithDefaultCallOptions(
-				grpc.MaxCallRecvMsgSize(assistantGrpcMaxMsgBytes),
-				grpc.MaxCallSendMsgSize(assistantGrpcMaxMsgBytes),
-			),
-		)
-		if err != nil {
-			log.Printf("[AssistantClient] không dial được assistant-service: %v", err)
-			return
-		}
-
-		go _middleware.MonitorConnection(context.Background(), name, conn)
-
-		assistantClient.client = assistantpb.NewAssistantServiceClient(conn)
-	}()
-	return assistantClient
+	target := fmt.Sprintf("%s:%s", common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "assistant"), assistantGrpcPort)
+	conn, err := qhprorpc.NewClient(qhprorpc.ClientConfig{
+		Target:          target,
+		BackoffMaxDelay: 5 * time.Second,
+		Credentials:     insecure.NewCredentials(),
+		Transport:       qhprorpc.TransportConfig{Trust: transporttrust.ConfigFromEnv()},
+		DefaultCallOptions: []grpc.CallOption{
+			grpc.MaxCallRecvMsgSize(assistantGrpcMaxMsgBytes),
+			grpc.MaxCallSendMsgSize(assistantGrpcMaxMsgBytes),
+		},
+	})
+	if err != nil {
+		return &AssistantClient{initErr: fmt.Errorf("create assistant gRPC client: %w", err)}
+	}
+	return &AssistantClient{
+		conn:   conn,
+		client: assistantpb.NewAssistantServiceClient(conn),
+	}
 }
 
-// GenerateContent gọi GenerateContentWithGemini bên assistant-service với 1 prompt tự do (không template).
-func (c *AssistantClient) GenerateContent(ctx context.Context, prompt string, maxTokens int, temperature float32) (string, string, error) {
+// Close releases the channel owned by this client. It is safe to call when
+// construction failed or after a previous successful Close.
+func (c *AssistantClient) Close() error {
+	if c == nil || c.conn == nil {
+		return nil
+	}
+	err := c.conn.Close()
+	c.conn = nil
+	c.client = nil
+	return err
+}
+
+func (c *AssistantClient) ready() error {
+	if c == nil {
+		return fmt.Errorf("assistant client is nil")
+	}
+	if c.initErr != nil {
+		return c.initErr
+	}
 	if c.client == nil {
-		return "", "", fmt.Errorf("assistant client chưa kết nối tới assistant-service")
+		return fmt.Errorf("assistant client is closed or unavailable")
+	}
+	return nil
+}
+
+// GenerateContent calls GenerateContentWithGemini with a free-form prompt.
+func (c *AssistantClient) GenerateContent(ctx context.Context, prompt string, maxTokens int, temperature float32) (string, string, error) {
+	if err := c.ready(); err != nil {
+		return "", "", err
 	}
 
 	resp, err := c.client.GenerateContentWithGemini(ctx, &assistantpb.GenerateRequest{
@@ -78,10 +103,10 @@ func (c *AssistantClient) GenerateContent(ctx context.Context, prompt string, ma
 	return resp.Content, model, nil
 }
 
-// ClassifyDocument gọi ClassifyDocumentWithGemini (multimodal) bên assistant-service.
+// ClassifyDocument calls the assistant multimodal classification RPC.
 func (c *AssistantClient) ClassifyDocument(ctx context.Context, prompt string, fileContent []byte, mimeType string) (string, string, error) {
-	if c.client == nil {
-		return "", "", fmt.Errorf("assistant client chưa kết nối tới assistant-service")
+	if err := c.ready(); err != nil {
+		return "", "", err
 	}
 
 	resp, err := c.client.ClassifyDocumentWithGemini(ctx, &assistantpb.ClassifyDocumentRequest{

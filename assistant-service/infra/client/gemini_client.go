@@ -18,7 +18,6 @@ import (
 )
 
 // @bind: assistant/internal/interface/provider.GeminiProvider
-
 type GeminiClient struct {
 	apiKey     string
 	baseURL    string

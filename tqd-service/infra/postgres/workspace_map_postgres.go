@@ -782,22 +782,22 @@ func (p *MapWorkspacePostgres) GetGeneratedReport(ctx context.Context, userID, r
 	return &row, nil
 }
 
-func (p *MapWorkspacePostgres) GetGeneratedReportByClientRequestID(ctx context.Context, userID uint64, clientRequestID string) (*qh_domain.QHUserReported, error) {
-	if clientRequestID == "" {
+func (p *MapWorkspacePostgres) GetGeneratedReportByCommandKey(ctx context.Context, userID uint64, commandKey string) (*qh_domain.QHUserReported, error) {
+	if commandKey == "" {
 		return nil, nil
 	}
 
 	var row qh_domain.QHUserReported
 
 	err := p.DB.WithContext(ctx).
-		Where("user_id = ? AND client_request_id = ? AND deleted_at IS NULL", userID, clientRequestID).
+		Where("user_id = ? AND command_key = ? AND deleted_at IS NULL", userID, commandKey).
 		First(&row).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("get generated report by client request failed: %w", err)
+		return nil, fmt.Errorf("get generated report by command key failed: %w", err)
 	}
 
 	return &row, nil

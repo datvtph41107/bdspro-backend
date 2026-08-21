@@ -3,12 +3,10 @@ package client
 import (
 	"context"
 	"errors"
+	"pb/clients"
 	sharepb "pb/types/shared"
 	pb_social "pb/types/social"
-	"social/env"
 	"social/internal/dto"
-
-	"pb/clients"
 )
 
 // @bind: social/internal/interface.UserClient
@@ -16,8 +14,8 @@ type UserClient struct {
 	client *clients.UserGrpcClient
 }
 
-func NewUserClient() *UserClient {
-	return &UserClient{client: clients.MakeUserGrpcClient(env.ENV_RUNTIME)}
+func NewUserClient(rpcClient *clients.UserGrpcClient) *UserClient {
+	return &UserClient{client: rpcClient}
 }
 
 func (c *UserClient) IsFriends(ctx context.Context, profileID uint64, friendIDs []uint64) (bool, error) {

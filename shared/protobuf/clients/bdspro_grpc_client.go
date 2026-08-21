@@ -1,52 +1,35 @@
 package clients
 
 import (
-	"common"
 	_dto "common/domain/dto"
-	_middleware "common/middleware"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"time"
 
 	"google.golang.org/grpc"
 )
 
 type BdsproGrpcClient struct {
-	Client         bdspropb.ProductServiceClient
-	InternalClient bdspropb.BdsproInternalServiceClient
+	Client                bdspropb.ProductServiceClient
+	InternalClient        bdspropb.BdsproInternalServiceClient
+	PostClient            bdspropb.PostServiceClient
+	AdminProjectClient    bdspropb.AdminProjectServiceClient
+	AdminRegionClient     bdspropb.AdminRegionServiceClient
+	AdminAreaRegionClient bdspropb.AdminAreaRegionServiceClient
 }
 
-func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
-	bdsproClient := &BdsproGrpcClient{Client: nil, InternalClient: nil}
-	go func() {
-		name := "bdspro"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := bdspropb.NewProductServiceClient(conn)
-		internalClient := bdspropb.NewBdsproInternalServiceClient(conn)
-		bdsproClient.Client = client
-		bdsproClient.InternalClient = internalClient
-	}()
-	return bdsproClient
+func BindBdsproGrpcClient(conn grpc.ClientConnInterface) *BdsproGrpcClient {
+	return &BdsproGrpcClient{
+		Client:                bdspropb.NewProductServiceClient(conn),
+		InternalClient:        bdspropb.NewBdsproInternalServiceClient(conn),
+		PostClient:            bdspropb.NewPostServiceClient(conn),
+		AdminProjectClient:    bdspropb.NewAdminProjectServiceClient(conn),
+		AdminRegionClient:     bdspropb.NewAdminRegionServiceClient(conn),
+		AdminAreaRegionClient: bdspropb.NewAdminAreaRegionServiceClient(conn),
+	}
 }
 
 func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*bdspropb.ProductInternalResponse, error) {

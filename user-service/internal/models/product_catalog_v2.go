@@ -29,6 +29,7 @@ type CatalogPlan struct {
 	ID        uint64                `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	ProductID uint64                `gorm:"column:product_id;not null;index" json:"productId"`
 	Code      string                `gorm:"column:code;type:varchar(128);not null;uniqueIndex" json:"code"`
+	TierRank  *int32                `gorm:"column:tier_rank" json:"tierRank,omitempty"`
 	Status    productcatalog.Status `gorm:"column:status;type:varchar(20);not null" json:"status"`
 	CreatedBy *uint64               `gorm:"column:created_by" json:"createdBy,omitempty"`
 	UpdatedBy *uint64               `gorm:"column:updated_by" json:"updatedBy,omitempty"`
@@ -43,22 +44,23 @@ func (CatalogPlan) TableName() string {
 
 /** CatalogPlanVersion stores immutable commercial terms. */
 type CatalogPlanVersion struct {
-	ID             uint64                      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	PlanID         uint64                      `gorm:"column:plan_id;not null;index" json:"planId"`
-	Version        string                      `gorm:"column:version;type:varchar(32);not null" json:"version"`
-	DisplayName    string                      `gorm:"column:display_name;type:varchar(255);not null" json:"displayName"`
-	Status         productcatalog.Status       `gorm:"column:status;type:varchar(20);not null" json:"status"`
-	SubjectScope   productcatalog.SubjectScope `gorm:"column:subject_scope;type:varchar(32);not null" json:"subjectScope"`
-	EffectiveFrom  *time.Time                  `gorm:"column:effective_from;type:timestamptz" json:"effectiveFrom,omitempty"`
-	EffectiveUntil *time.Time                  `gorm:"column:effective_until;type:timestamptz" json:"effectiveUntil,omitempty"`
-	PublishedAt    *time.Time                  `gorm:"column:published_at;type:timestamptz" json:"publishedAt,omitempty"`
-	Source         CatalogSource               `gorm:"column:source;type:varchar(32);not null" json:"source"`
-	TermsChecksum  string                      `gorm:"column:terms_checksum;type:char(64);not null" json:"termsChecksum"`
-	CreatedBy      *uint64                     `gorm:"column:created_by" json:"createdBy,omitempty"`
-	UpdatedBy      *uint64                     `gorm:"column:updated_by" json:"updatedBy,omitempty"`
-	PublishedBy    *uint64                     `gorm:"column:published_by" json:"publishedBy,omitempty"`
-	CreatedAt      time.Time                   `gorm:"column:created_at;not null;autoCreateTime" json:"createdAt"`
-	UpdatedAt      time.Time                   `gorm:"column:updated_at;not null;autoUpdateTime" json:"updatedAt"`
+	ID                   uint64                      `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	PlanID               uint64                      `gorm:"column:plan_id;not null;index" json:"planId"`
+	Version              string                      `gorm:"column:version;type:varchar(32);not null" json:"version"`
+	DisplayName          string                      `gorm:"column:display_name;type:varchar(255);not null" json:"displayName"`
+	Status               productcatalog.Status       `gorm:"column:status;type:varchar(20);not null" json:"status"`
+	SubjectScope         productcatalog.SubjectScope `gorm:"column:subject_scope;type:varchar(32);not null" json:"subjectScope"`
+	SubscriptionTermDays *int32                      `gorm:"column:subscription_term_days" json:"subscriptionTermDays,omitempty"`
+	EffectiveFrom        *time.Time                  `gorm:"column:effective_from;type:timestamptz" json:"effectiveFrom,omitempty"`
+	EffectiveUntil       *time.Time                  `gorm:"column:effective_until;type:timestamptz" json:"effectiveUntil,omitempty"`
+	PublishedAt          *time.Time                  `gorm:"column:published_at;type:timestamptz" json:"publishedAt,omitempty"`
+	Source               CatalogSource               `gorm:"column:source;type:varchar(32);not null" json:"source"`
+	TermsChecksum        string                      `gorm:"column:terms_checksum;type:char(64);not null" json:"termsChecksum"`
+	CreatedBy            *uint64                     `gorm:"column:created_by" json:"createdBy,omitempty"`
+	UpdatedBy            *uint64                     `gorm:"column:updated_by" json:"updatedBy,omitempty"`
+	PublishedBy          *uint64                     `gorm:"column:published_by" json:"publishedBy,omitempty"`
+	CreatedAt            time.Time                   `gorm:"column:created_at;not null;autoCreateTime" json:"createdAt"`
+	UpdatedAt            time.Time                   `gorm:"column:updated_at;not null;autoUpdateTime" json:"updatedAt"`
 }
 
 /** TableName returns the durable plan-version table. */
@@ -84,6 +86,23 @@ type CatalogPlanEntitlement struct {
 /** TableName returns the durable entitlement table. */
 func (CatalogPlanEntitlement) TableName() string {
 	return "catalog_plan_entitlements"
+}
+
+/** CatalogPlanOperationPolicy stores the data-driven operation-to-meter binding. */
+type CatalogPlanOperationPolicy struct {
+	ID             uint64    `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	PlanVersionID  uint64    `gorm:"column:plan_version_id;not null;index" json:"planVersionId"`
+	OperationCode  string    `gorm:"column:operation_code;type:varchar(128);not null" json:"operationCode"`
+	FeatureCode    string    `gorm:"column:feature_code;type:varchar(128);not null" json:"featureCode"`
+	MeterCode      *string   `gorm:"column:meter_code;type:varchar(128)" json:"meterCode,omitempty"`
+	UnitsPerAction int64     `gorm:"column:units_per_action;not null;default:0" json:"unitsPerAction"`
+	CreatedBy      *uint64   `gorm:"column:created_by" json:"createdBy,omitempty"`
+	CreatedAt      time.Time `gorm:"column:created_at;not null;autoCreateTime" json:"createdAt"`
+}
+
+/** TableName returns the versioned operation-policy table. */
+func (CatalogPlanOperationPolicy) TableName() string {
+	return "catalog_plan_operation_policies"
 }
 
 /** CatalogPriceItem stores one versioned commercial price. */
@@ -133,25 +152,27 @@ const (
 
 /** CatalogSubscription binds one subject to one plan version. */
 type CatalogSubscription struct {
-	ID                 uint64                  `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	SubscriptionKey    string                  `gorm:"column:subscription_key;type:varchar(128);not null;uniqueIndex" json:"subscriptionKey"`
-	SubjectKind        SubscriptionSubjectKind `gorm:"column:subject_kind;type:varchar(32);not null;index:idx_catalog_subscription_subject" json:"subjectKind"`
-	SubjectID          string                  `gorm:"column:subject_id;type:varchar(128);not null;index:idx_catalog_subscription_subject" json:"subjectId"`
-	ProductID          uint64                  `gorm:"column:product_id;not null;index" json:"productId"`
-	PlanVersionID      uint64                  `gorm:"column:plan_version_id;not null;index" json:"planVersionId"`
-	Status             SubscriptionStatus      `gorm:"column:status;type:varchar(20);not null" json:"status"`
-	StartedAt          time.Time               `gorm:"column:started_at;type:timestamptz;not null" json:"startedAt"`
-	CurrentPeriodStart time.Time               `gorm:"column:current_period_start;type:timestamptz;not null" json:"currentPeriodStart"`
-	CurrentPeriodEnd   time.Time               `gorm:"column:current_period_end;type:timestamptz;not null" json:"currentPeriodEnd"`
-	AccessUntil        *time.Time              `gorm:"column:access_until;type:timestamptz" json:"accessUntil,omitempty"`
-	AutoRenew          bool                    `gorm:"column:auto_renew;not null;default:false" json:"autoRenew"`
-	OrderReference     string                  `gorm:"column:order_reference;type:varchar(128)" json:"orderReference,omitempty"`
-	CanceledAt         *time.Time              `gorm:"column:canceled_at;type:timestamptz" json:"canceledAt,omitempty"`
-	EndedAt            *time.Time              `gorm:"column:ended_at;type:timestamptz" json:"endedAt,omitempty"`
-	CreatedBy          *uint64                 `gorm:"column:created_by" json:"createdBy,omitempty"`
-	UpdatedBy          *uint64                 `gorm:"column:updated_by" json:"updatedBy,omitempty"`
-	CreatedAt          time.Time               `gorm:"column:created_at;not null;autoCreateTime" json:"createdAt"`
-	UpdatedAt          time.Time               `gorm:"column:updated_at;not null;autoUpdateTime" json:"updatedAt"`
+	ID                   uint64                  `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	SubscriptionKey      string                  `gorm:"column:subscription_key;type:varchar(128);not null;uniqueIndex" json:"subscriptionKey"`
+	SubjectKind          SubscriptionSubjectKind `gorm:"column:subject_kind;type:varchar(32);not null;index:idx_catalog_subscription_subject" json:"subjectKind"`
+	SubjectID            string                  `gorm:"column:subject_id;type:varchar(128);not null;index:idx_catalog_subscription_subject" json:"subjectId"`
+	ProductID            uint64                  `gorm:"column:product_id;not null;index" json:"productId"`
+	PlanVersionID        uint64                  `gorm:"column:plan_version_id;not null;index" json:"planVersionId"`
+	Status               SubscriptionStatus      `gorm:"column:status;type:varchar(20);not null" json:"status"`
+	StartedAt            time.Time               `gorm:"column:started_at;type:timestamptz;not null" json:"startedAt"`
+	CurrentPeriodStart   time.Time               `gorm:"column:current_period_start;type:timestamptz;not null" json:"currentPeriodStart"`
+	CurrentPeriodEnd     time.Time               `gorm:"column:current_period_end;type:timestamptz;not null" json:"currentPeriodEnd"`
+	AccessUntil          *time.Time              `gorm:"column:access_until;type:timestamptz" json:"accessUntil,omitempty"`
+	AutoRenew            bool                    `gorm:"column:auto_renew;not null;default:false" json:"autoRenew"`
+	OrderReference       string                  `gorm:"column:order_reference;type:varchar(128)" json:"orderReference,omitempty"`
+	PendingPlanVersionID *uint64                 `gorm:"column:pending_plan_version_id" json:"pendingPlanVersionId,omitempty"`
+	PendingEffectiveAt   *time.Time              `gorm:"column:pending_effective_at;type:timestamptz" json:"pendingEffectiveAt,omitempty"`
+	CanceledAt           *time.Time              `gorm:"column:canceled_at;type:timestamptz" json:"canceledAt,omitempty"`
+	EndedAt              *time.Time              `gorm:"column:ended_at;type:timestamptz" json:"endedAt,omitempty"`
+	CreatedBy            *uint64                 `gorm:"column:created_by" json:"createdBy,omitempty"`
+	UpdatedBy            *uint64                 `gorm:"column:updated_by" json:"updatedBy,omitempty"`
+	CreatedAt            time.Time               `gorm:"column:created_at;not null;autoCreateTime" json:"createdAt"`
+	UpdatedAt            time.Time               `gorm:"column:updated_at;not null;autoUpdateTime" json:"updatedAt"`
 }
 
 /** TableName returns the durable subscription table. */

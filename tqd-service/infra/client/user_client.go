@@ -4,7 +4,6 @@ import (
 	_utils "common/utils"
 	"context"
 	clients "pb/clients"
-	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/interface/provider"
 )
@@ -15,10 +14,8 @@ type UserClient struct {
 }
 
 // @bind: tqd/internal/interface/provider.UserProvider
-func NewUserClient() provider.UserProvider {
-	return &UserClient{
-		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewUserClient(rpcClient *clients.UserGrpcClient) provider.UserProvider {
+	return &UserClient{UserGrpcClient: rpcClient}
 }
 
 func (c *UserClient) GetProfileByID(ctx context.Context, userID uint64) (*dto.UserProfileDTO, error) {

@@ -59,6 +59,7 @@ func (s *Service) ReserveQuota(ctx context.Context, input ReserveInput) (Reserva
 			Required:  false,
 			Subject:   input.Access.Subject,
 			Operation: input.Access.Operation,
+			MeterCode: input.Access.Metering.MeterCode,
 		}, nil
 	}
 	if input.Amount <= 0 {
@@ -93,6 +94,7 @@ func (s *Service) ReserveQuota(ctx context.Context, input ReserveInput) (Reserva
 		ReservationID:  uuid.NewString(),
 		Subject:        input.Access.Subject,
 		Operation:      input.Access.Operation,
+		MeterCode:      input.Access.Metering.MeterCode,
 		OperationID:    operationID,
 		IdempotencyKey: idempotencyKey,
 		CommandKey:     commandKey,

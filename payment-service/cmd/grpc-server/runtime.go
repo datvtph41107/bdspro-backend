@@ -9,9 +9,14 @@ import (
 var GrpcServerCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Start the gRPC server",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		appconfig.InitConfig()
-		grpcServer := InitializeGRPCServer()
+		grpcServer, cleanup, err := InitializeGRPCServer()
+		if err != nil {
+			return err
+		}
+		defer cleanup()
 		grpcServer.Start()
+		return nil
 	},
 }

@@ -1,0 +1,46 @@
+package rpc
+
+import (
+	"time"
+
+	"common/configloader"
+	qhprorpc "common/rpc"
+	"common/transporttrust"
+	"pb/clients"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+func bindDependency[T any](key string, bind func(grpc.ClientConnInterface) T) (T, func(), error) {
+	target, err := configloader.RequiredString(key)
+	if err != nil {
+		var zero T
+		return zero, nil, err
+	}
+	return qhprorpc.NewBoundClient(qhprorpc.ClientConfig{
+		Target:          target,
+		BackoffMaxDelay: 5 * time.Second,
+		Credentials:     insecure.NewCredentials(),
+		Transport: qhprorpc.TransportConfig{
+			Trust: transporttrust.ConfigFromEnv(),
+		},
+	}, bind)
+}
+
+func NewUserRPCClient() (*clients.UserGrpcClient, func(), error) {
+	return bindDependency("rpc.user.address", clients.BindUserGrpcClient)
+}
+
+func NewAuthRPCClient() (*clients.AuthGrpcClient, func(), error) {
+	return bindDependency(
+		"rpc.auth.address",
+		func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
+			return clients.BindAuthGrpcClient(conn, nil)
+		},
+	)
+}
+
+func NewNotificationRPCClient() (*clients.NotificationClient, func(), error) {
+	return bindDependency("rpc.notification.address", clients.BindNotificationClient)
+}

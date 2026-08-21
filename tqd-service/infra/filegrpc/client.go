@@ -23,7 +23,7 @@ type Client struct {
 	client filepb.InternalFileServiceClient
 }
 
-func NewClient(client filepb.InternalFileServiceClient) provider.FileProvider {
+func BuildClient(client filepb.InternalFileServiceClient) provider.FileProvider {
 	return &Client{client: client}
 }
 

@@ -23,9 +23,9 @@ func NewPostDashboardStatsJob(
 	dashboardJob := dashboard.NewDashboardStatsJob(
 		db,
 		"post_stats", // table name
-		func() int64 {
+		func(ctx context.Context) int64 {
 			// Lấy count từ post repo
-			count, err := postRepo.CountCurrent(context.Background())
+			count, err := postRepo.CountCurrent(ctx)
 			if err != nil {
 				return 0
 			}

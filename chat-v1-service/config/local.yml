@@ -1,3 +1,11 @@
+rpc:
+  user:
+    address: "localhost:8201"
+  bdspro:
+    address: "localhost:8202"
+  crm:
+    address: "localhost:8206"
+
 server:
   port: 8007
   tcp_port: 8208
@@ -27,12 +35,3 @@ worker:
   number: 10
 
 max_participant: 10
-
-services:
-  user:
-    host: "localhost"
-    port: "8205"
-  bdspro:
-    host: "localhost"
-    port: "8204"
-

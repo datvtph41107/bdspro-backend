@@ -2,10 +2,13 @@ package services
 
 import (
 	_db "common/db"
+	_identitycontext "common/identitycontext"
 	_jwt "common/jwt"
 	_utils "common/utils"
 	"errors"
 	"file/dto"
+	"file/internal/fileauthorization"
+	"file/internal/serviceauth"
 	"file/models"
 	"file/repositories"
 	"file/utils"
@@ -20,7 +23,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -33,8 +35,9 @@ type FileService struct {
 	Document         string
 	SignatureKey     string
 	XorCryptKey      string
-	SignatureExpire  int    // minutes
-	ServiceAuthKey   string // Key để xác thực request từ service nội bộ
+	SignatureExpire  time.Duration
+	serviceAuth      serviceauth.Verifier
+	permissionAuth   fileauthorization.Authorizer
 	FileRepository   *repositories.FileRepository
 	Storage          *StorageService
 	AccessRepository *repositories.AccessRepository
@@ -42,33 +45,32 @@ type FileService struct {
 	Mutex            sync.Mutex
 }
 
-func NewFileService(fileRepo *repositories.FileRepository, accessRepo *repositories.AccessRepository, storage *StorageService) *FileService {
-	serviceAuthKey := viper.GetString("service.auth_key")
+type FileSecurityConfig struct {
+	SignatureKey    string
+	XorCryptKey     string
+	SignatureExpire time.Duration
+	ServiceAuth     serviceauth.Verifier
+	PermissionAuth  fileauthorization.Authorizer
+}
 
-	fs := &FileService{
+func NewFileService(
+	fileRepo *repositories.FileRepository,
+	accessRepo *repositories.AccessRepository,
+	storage *StorageService,
+	security FileSecurityConfig,
+) *FileService {
+	return &FileService{
 		RootPath:         "files",
 		Document:         "documents",
-		SignatureKey:     "key-signature",
-		XorCryptKey:      "key-encode-decode",
-		SignatureExpire:  5,
-		ServiceAuthKey:   serviceAuthKey,
+		SignatureKey:     security.SignatureKey,
+		XorCryptKey:      security.XorCryptKey,
+		SignatureExpire:  security.SignatureExpire,
+		serviceAuth:      security.ServiceAuth,
+		permissionAuth:   permissionAuthorizerOrUnavailable(security.PermissionAuth),
 		Queue:            make(chan func(), MaxQueueSize),
 		FileRepository:   fileRepo,
 		AccessRepository: accessRepo,
 		Storage:          storage,
-	}
-
-	// Start processing queue in a goroutine
-	for i := 0; i < MaxConcurrentRequests; i++ {
-		go fs.processQueue()
-	}
-
-	return fs
-}
-
-func (fs *FileService) processQueue() {
-	for job := range fs.Queue {
-		job()
 	}
 }
 
@@ -384,35 +386,31 @@ func (fs *FileService) GetFile(c *gin.Context) {
 		return
 	}
 
-	// Kiểm tra nếu user có role ADMIN thì cho phép truy cập
-	if fs.isAdminRole(c) {
-		// Bypass permission check cho ADMIN
-		LoadFileAndResponse(c, decodedPath, ext, s)
-		return
-	}
-
-	// Thực hiện kiểm tra giới hạn request đồng thời
+	// Ordinary signed file access remains independent from Auth availability.
+	// The global capability is only a fallback when per-file access does not
+	// authorize this request.
 	semaphore <- struct{}{}        // Chặn khi số lượng request đạt tối đa
 	defer func() { <-semaphore }() // Giải phóng khi hoàn thành
 
-	signature, err := signDecode(fs.XorCryptKey, s)
-	if err != nil || !fs.validSignature(signature) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Quyền truy cập đã hết hạn, Vui lòng làm mới lại"})
-		return
+	permissionAuthority := fs.permissionAuth
+	if actor, ok := _identitycontext.FromContext(c.Request.Context()); !ok || actor.ProfileID == 0 {
+		permissionAuthority = fileauthorization.DeniedAuthorizer{}
 	}
-
-	fileID := getFileIdFromPath(decodedPath)
-	exists, err := fs.AccessRepository.ExistsAccess(fileID, signature.ProfileID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-	if !exists {
+	authorizationErr := fileauthorization.AuthorizePrivateRead(
+		c.Request.Context(),
+		func() (bool, error) { return fs.hasOrdinaryPrivateRead(decodedPath, s) },
+		permissionAuthority,
+	)
+	switch {
+	case authorizationErr == nil:
+		LoadFileAndResponse(c, decodedPath, ext, s)
+	case errors.Is(authorizationErr, fileauthorization.ErrUnavailable):
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Permission authority unavailable"})
+	case errors.Is(authorizationErr, fileauthorization.ErrDenied):
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Bạn không có quyền truy cập file"})
-		return
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể kiểm tra quyền truy cập file"})
 	}
-
-	LoadFileAndResponse(c, decodedPath, ext, s)
 	// Load file dưới dạng byte
 
 	// if isStream {
@@ -536,7 +534,7 @@ type SignatureResponse struct {
 // @Router /signature [put]
 func (s *FileService) GenerateSignature(c *gin.Context) {
 	profileId := int64(_jwt.GetProfileId(c))
-	expiredTime := time.Now().Add(time.Duration(s.SignatureExpire) * time.Minute).Unix()
+	expiredTime := time.Now().Add(s.SignatureExpire).Unix()
 	signature := _utils.GenerateSignedUrl("info", profileId, s.SignatureKey, expiredTime)
 	signCipher := utils.SignEncode(s.XorCryptKey, profileId, expiredTime, signature)
 
@@ -554,75 +552,47 @@ func (s *FileService) GenerateSignature(c *gin.Context) {
 }
 
 func (fs *FileService) validSignature(sig *SignatureDecode) bool {
+	if sig == nil {
+		return false
+	}
 	if time.Now().Unix() > sig.ExpiredTime {
 		return false
 	}
 	return true
 }
 
-// isServiceInternalRequest kiểm tra xem request có phải từ service nội bộ không
-// bằng cách verify header X-Service-Auth với HMAC signature
-// Format: timestamp:signature (ví dụ: "1703123456:abc123...")
+// isServiceInternalRequest verifies the timestamped internal-call envelope.
+// Caller name is explicit signed material; raw shared secrets are never accepted
+// as wire credentials and credential material is never logged.
 func (fs *FileService) isServiceInternalRequest(c *gin.Context) bool {
-	serviceAuthHeader := c.GetHeader("X-Service-Auth")
-	fmt.Printf("\nFileService: isServiceInternalRequest: %s", serviceAuthHeader)
-	if serviceAuthHeader == "" {
-		return false
-	}
-
-	// Parse timestamp và signature
-	parts := strings.Split(serviceAuthHeader, ":")
-	if len(parts) != 2 {
-		// Fallback: nếu không đúng format, kiểm tra key trực tiếp (backward compatibility)
-		return serviceAuthHeader == fs.ServiceAuthKey
-	}
-
-	timestampStr := parts[0]
-	signature := parts[1]
-
-	// Parse timestamp
-	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	// Kiểm tra timestamp không quá cũ (chống replay attack)
-	// Cho phép timestamp trong vòng 5 phút (300 giây)
-	now := time.Now().Unix()
-	if now-timestamp > 300 || timestamp > now+60 {
-		// Timestamp quá cũ hoặc quá mới (có thể là replay attack)
-		return false
-	}
-
-	// Lấy service name từ header (nếu có), fallback về "assistant-service"
-	serviceName := c.GetHeader("X-Service-Name")
-	if serviceName == "" {
-		serviceName = "assistant-service"
-	}
-
-	// Tạo signature để so sánh
-	// Signature = HMAC-SHA256(timestamp:service_name, secret_key)
-	data := timestampStr + ":" + serviceName
-	expectedSignature := _utils.GenerateHmacSHA256(data, fs.ServiceAuthKey)
-
-	fmt.Printf("\nFileService: serviceName: %s", serviceName)
-	fmt.Printf("\nFileService: timestamp: %s", timestampStr)
-	fmt.Printf("\nFileService: signature: %s", signature)
-	fmt.Printf("\nFileService: expectedSignature: %s", expectedSignature)
-
-	// So sánh signature (constant-time comparison để chống timing attack)
-	return signature == expectedSignature
+	return fs.serviceAuth.Verify(
+		c.GetHeader("X-Service-Auth"),
+		c.GetHeader("X-Service-Name"),
+		time.Now(),
+	)
 }
 
-// isAdminRole kiểm tra xem user có role ADMIN không
-func (fs *FileService) isAdminRole(c *gin.Context) bool {
-	principal := _jwt.GetPrincipal(c)
-	if principal == nil {
-		return false
+func permissionAuthorizerOrUnavailable(authorizer fileauthorization.Authorizer) fileauthorization.Authorizer {
+	if authorizer == nil {
+		return fileauthorization.UnavailableAuthorizer{}
 	}
+	return authorizer
+}
 
-	// Kiểm tra role có phải ROLE_ADMIN không
-	return principal.Role == "ROLE_ADMIN"
+// hasOrdinaryPrivateRead evaluates the durable per-file access path without
+// depending on the global IAM authority. A malformed/expired signature is a
+// normal denial, while repository failure is returned separately.
+func (fs *FileService) hasOrdinaryPrivateRead(decodedPath, encodedSignature string) (bool, error) {
+	signature, err := signDecode(fs.XorCryptKey, encodedSignature)
+	if err != nil || !fs.validSignature(signature) {
+		return false, nil
+	}
+	fileID := getFileIdFromPath(decodedPath)
+	exists, err := fs.AccessRepository.ExistsAccess(fileID, signature.ProfileID)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func signDecode(key string, signEncode string) (*SignatureDecode, error) {

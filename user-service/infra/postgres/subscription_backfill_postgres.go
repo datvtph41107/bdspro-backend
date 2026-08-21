@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"user/internal/catalogmigration"
 	"user/internal/models"
-	"user/internal/subscriptionbackfill"
-	"user/internal/subscriptiondomain"
+	"user/internal/modules/catalog/migration"
+	"user/internal/modules/subscription/backfill"
+	"user/internal/modules/subscription/domain"
 )
 
 var (
-	_ subscriptionbackfill.Repository             = (*CatalogRepo)(nil)
-	_ subscriptionbackfill.LegacyMembershipSource = (*CatalogRepo)(nil)
-	_ subscriptionbackfill.EventEvidence          = (*CatalogRepo)(nil)
+	_ backfill.Repository             = (*CatalogRepo)(nil)
+	_ backfill.LegacyMembershipSource = (*CatalogRepo)(nil)
+	_ backfill.EventEvidence          = (*CatalogRepo)(nil)
 )
 
 /** WithTransaction executes one atomic subscription migration. */
@@ -35,14 +35,14 @@ func (r *CatalogRepo) LoadCandidate(
 	ctx context.Context,
 	legacyMembershipID uint64,
 	forUpdate bool,
-) (subscriptionbackfill.Candidate, error) {
+) (backfill.Candidate, error) {
 	if r == nil || r.transactionRepo == nil {
-		return subscriptionbackfill.Candidate{}, fmt.Errorf(
+		return backfill.Candidate{}, fmt.Errorf(
 			"catalog repository is not configured",
 		)
 	}
 	if legacyMembershipID == 0 {
-		return subscriptionbackfill.Candidate{}, fmt.Errorf(
+		return backfill.Candidate{}, fmt.Errorf(
 			"legacy membership id is required",
 		)
 	}
@@ -55,9 +55,9 @@ func (r *CatalogRepo) LoadCandidate(
 	var membership models.Membership
 	if err := membershipQuery.First(&membership).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return subscriptionbackfill.Candidate{}, subscriptionbackfill.ErrNotFound
+			return backfill.Candidate{}, backfill.ErrNotFound
 		}
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 
 	mapping := models.LegacyMembershipSubscriptionMapping{
@@ -72,7 +72,7 @@ func (r *CatalogRepo) LoadCandidate(
 	}
 	if err := mappingQuery.First(&mapping).Error; err != nil &&
 		!errors.Is(err, gorm.ErrRecordNotFound) {
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 
 	planMappingQuery := db.Model(&models.LegacyPlanCatalogMapping{}).
@@ -83,37 +83,37 @@ func (r *CatalogRepo) LoadCandidate(
 	var planMapping models.LegacyPlanCatalogMapping
 	if err := planMappingQuery.First(&planMapping).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return subscriptionbackfill.Candidate{}, fmt.Errorf(
+			return backfill.Candidate{}, fmt.Errorf(
 				"%w: approved legacy plan mapping not found",
-				subscriptionbackfill.ErrCandidateBlocked,
+				backfill.ErrCandidateBlocked,
 			)
 		}
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 	if planMapping.PlanVersionID == nil || *planMapping.PlanVersionID == 0 {
-		return subscriptionbackfill.Candidate{}, fmt.Errorf(
+		return backfill.Candidate{}, fmt.Errorf(
 			"%w: approved legacy plan mapping is incomplete",
-			subscriptionbackfill.ErrCandidateBlocked,
+			backfill.ErrCandidateBlocked,
 		)
 	}
 
 	var version models.CatalogPlanVersion
 	if err := db.First(&version, *planMapping.PlanVersionID).Error; err != nil {
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 	var plan models.CatalogPlan
 	if err := db.First(&plan, version.PlanID).Error; err != nil {
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 	var product models.CatalogProduct
 	if err := db.First(&product, plan.ProductID).Error; err != nil {
-		return subscriptionbackfill.Candidate{}, err
+		return backfill.Candidate{}, err
 	}
 
-	candidate := subscriptionbackfill.Candidate{
+	candidate := backfill.Candidate{
 		Membership: membership,
 		Mapping:    toBackfillMapping(mapping),
-		Target: subscriptionbackfill.PlanTarget{
+		Target: backfill.PlanTarget{
 			LegacyPlanID:      membership.PlanID,
 			ProductID:         product.ID,
 			ProductCode:       product.Code,
@@ -132,7 +132,7 @@ func (r *CatalogRepo) LoadCandidate(
 	if mapping.SubscriptionID != nil && *mapping.SubscriptionID > 0 {
 		subscription, err := r.GetSubscription(ctx, *mapping.SubscriptionID)
 		if err != nil {
-			return subscriptionbackfill.Candidate{}, err
+			return backfill.Candidate{}, err
 		}
 		candidate.ExistingSubscription = &subscription
 	}
@@ -142,7 +142,7 @@ func (r *CatalogRepo) LoadCandidate(
 /** SaveReview persists an explicit membership interpretation. */
 func (r *CatalogRepo) SaveReview(
 	ctx context.Context,
-	request subscriptionbackfill.ReviewRequest,
+	request backfill.ReviewRequest,
 	checksum string,
 	decision json.RawMessage,
 ) error {
@@ -196,7 +196,7 @@ func (r *CatalogRepo) SaveReview(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return subscriptionbackfill.ErrConcurrentChange
+		return backfill.ErrConcurrentChange
 	}
 	return nil
 }
@@ -231,9 +231,9 @@ func (r *CatalogRepo) ListReviewedMembershipIDs(
 func (r *CatalogRepo) FindSubscriptionByKey(
 	ctx context.Context,
 	key string,
-) (subscriptiondomain.Aggregate, error) {
+) (domain.Aggregate, error) {
 	if r == nil || r.transactionRepo == nil {
-		return subscriptiondomain.Aggregate{}, fmt.Errorf(
+		return domain.Aggregate{}, fmt.Errorf(
 			"catalog repository is not configured",
 		)
 	}
@@ -242,10 +242,10 @@ func (r *CatalogRepo) FindSubscriptionByKey(
 		Where("subscription_key = ?", key).
 		First(&entity).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return subscriptiondomain.Aggregate{}, subscriptionbackfill.ErrNotFound
+		return domain.Aggregate{}, backfill.ErrNotFound
 	}
 	if err != nil {
-		return subscriptiondomain.Aggregate{}, err
+		return domain.Aggregate{}, err
 	}
 	return r.GetSubscription(ctx, entity.ID)
 }
@@ -256,9 +256,9 @@ func (r *CatalogRepo) FindLiveSubscription(
 	subjectKind models.SubscriptionSubjectKind,
 	subjectID string,
 	productID uint64,
-) (subscriptiondomain.Aggregate, error) {
+) (domain.Aggregate, error) {
 	if r == nil || r.transactionRepo == nil {
-		return subscriptiondomain.Aggregate{}, fmt.Errorf(
+		return domain.Aggregate{}, fmt.Errorf(
 			"catalog repository is not configured",
 		)
 	}
@@ -277,10 +277,10 @@ func (r *CatalogRepo) FindLiveSubscription(
 		).
 		First(&entity).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return subscriptiondomain.Aggregate{}, subscriptionbackfill.ErrNotFound
+		return domain.Aggregate{}, backfill.ErrNotFound
 	}
 	if err != nil {
-		return subscriptiondomain.Aggregate{}, err
+		return domain.Aggregate{}, err
 	}
 	return r.GetSubscription(ctx, entity.ID)
 }
@@ -288,10 +288,10 @@ func (r *CatalogRepo) FindLiveSubscription(
 /** CreateSubscription inserts one reviewed legacy subscription. */
 func (r *CatalogRepo) CreateSubscription(
 	ctx context.Context,
-	draft catalogmigration.SubscriptionDraft,
-	target subscriptionbackfill.PlanTarget,
-	decision subscriptionbackfill.ReviewDecision,
-	run subscriptionbackfill.Run,
+	draft migration.SubscriptionDraft,
+	target backfill.PlanTarget,
+	decision backfill.ReviewDecision,
+	run backfill.Run,
 ) (uint64, error) {
 	if r == nil || r.transactionRepo == nil {
 		return 0, fmt.Errorf("catalog repository is not configured")
@@ -327,14 +327,14 @@ func (r *CatalogRepo) CreateSubscription(
 /** EnsureMigrationEvent inserts one idempotent append-only proof. */
 func (r *CatalogRepo) EnsureMigrationEvent(
 	ctx context.Context,
-	event subscriptionbackfill.Event,
+	event backfill.Event,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
 	}
 	entity := models.CatalogSubscriptionEvent{
 		SubscriptionID:  event.SubscriptionID,
-		EventType:       subscriptionbackfill.EventTypeLegacyMembershipBackfilled,
+		EventType:       backfill.EventTypeLegacyMembershipBackfilled,
 		ToPlanVersionID: copyUint64(&event.PlanVersionID),
 		EffectiveAt:     event.EffectiveAt,
 		Reason:          "Legacy membership backfilled after explicit review",
@@ -353,12 +353,12 @@ func (r *CatalogRepo) EnsureMigrationEvent(
 	if err := db.Where(
 		"subscription_id = ? AND event_type = ?",
 		event.SubscriptionID,
-		subscriptionbackfill.EventTypeLegacyMembershipBackfilled,
+		backfill.EventTypeLegacyMembershipBackfilled,
 	).First(&stored).Error; err != nil {
 		return err
 	}
 	if !sameLegacyBackfillEvent(stored, entity) {
-		return subscriptionbackfill.ErrConflictingTarget
+		return backfill.ErrConflictingTarget
 	}
 	return nil
 }
@@ -368,7 +368,7 @@ func (r *CatalogRepo) MarkShadowRead(
 	ctx context.Context,
 	legacyMembershipID uint64,
 	subscriptionID uint64,
-	run subscriptionbackfill.Run,
+	run backfill.Run,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
@@ -393,7 +393,7 @@ func (r *CatalogRepo) MarkShadowRead(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return subscriptionbackfill.ErrConcurrentChange
+		return backfill.ErrConcurrentChange
 	}
 	return nil
 }
@@ -402,7 +402,7 @@ func (r *CatalogRepo) MarkShadowRead(
 func (r *CatalogRepo) MarkBlocked(
 	ctx context.Context,
 	legacyMembershipID uint64,
-	run subscriptionbackfill.Run,
+	run backfill.Run,
 	reason string,
 ) error {
 	if r == nil || r.transactionRepo == nil {
@@ -431,7 +431,7 @@ func (r *CatalogRepo) MarkBlocked(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return subscriptionbackfill.ErrConcurrentChange
+		return backfill.ErrConcurrentChange
 	}
 	return nil
 }
@@ -475,7 +475,7 @@ func (r *CatalogRepo) HasLegacyBackfillEvent(
 				"AND metadata ->> 'legacyMembershipId' = ? "+
 				"AND metadata ->> 'sourceChecksum' = ?",
 			subscriptionID,
-			subscriptionbackfill.EventTypeLegacyMembershipBackfilled,
+			backfill.EventTypeLegacyMembershipBackfilled,
 			fmt.Sprintf("%d", legacyMembershipID),
 			sourceChecksum,
 		).
@@ -515,8 +515,8 @@ func sameLegacyBackfillEvent(
 
 func toBackfillMapping(
 	entity models.LegacyMembershipSubscriptionMapping,
-) subscriptionbackfill.Mapping {
-	return subscriptionbackfill.Mapping{
+) backfill.Mapping {
+	return backfill.Mapping{
 		LegacyMembershipID:       entity.LegacyMembershipID,
 		SubscriptionID:           copyUint64(entity.SubscriptionID),
 		SourceChecksum:           entity.SourceChecksum,

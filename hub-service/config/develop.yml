@@ -7,13 +7,21 @@ server:
   http_port: 8030
   tcp_port: 8280
 
+rpc:
+  bdspro:
+    address: "bdspro:8202"
+  notification:
+    address: "notification:8204"
+  user:
+    address: "user:8201"
+
 database:
   host: localhost
   port: 5432
   name: hub_service
   user: postgres
-  password: password
-  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_hub port=5432 sslmode=disable
+  password: "CHANGE_ME"
+  dsn: "CHANGE_ME_LOCAL_DSN"
 
 jwt:
   key-generate: "your-secret-key-here"
@@ -27,13 +35,13 @@ jwt:
     - "/v2/hub/event-queue/detail"
 
 security:
-  api_key: "develop-hub-api-key"
+  api_key: "CHANGE_ME"
   protected_methods:
     - "/hubpb.VersionService/CreateVersionFromDev"
 
 redis:
   host: redis:6379
-  pass: protected_redis_secure_password
+  pass: "CHANGE_ME"
 
 config-app:
   qhpro:

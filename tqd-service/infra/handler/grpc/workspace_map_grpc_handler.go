@@ -12,8 +12,8 @@ import (
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/infra/reportgrpc"
 	"tqd/internal/dto"
+	"tqd/internal/workspace/report/adapters/grpc"
 	"tqd/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -27,7 +27,7 @@ type MapWorkspaceGrpcHandler struct {
 	usecase      usecase.MapWorkspaceUsecase
 	mapper       *mapper.WorkspaceMapper
 	SyncProvider *_utils.SyncUtil
-	createReport *reportgrpc.Adapter
+	createReport *grpcadapter.Adapter
 }
 
 func NewMapWorkspaceGrpcHandler(
@@ -42,12 +42,9 @@ func NewMapWorkspaceGrpcHandler(
 	}
 }
 
-/**
- * UseCreateReportAdapter chuyển riêng CreateGeneratedReport sang flow mới.
- *
- * Các RPC workspace khác vẫn chạy code cũ cho tới khi được migrate từng phần.
- */
-func (h *MapWorkspaceGrpcHandler) UseCreateReportAdapter(adapter *reportgrpc.Adapter) {
+// UseCreateReportAdapter attaches the only production owner of
+// CreateGeneratedReport. Absence means capability unavailable, not fallback.
+func (h *MapWorkspaceGrpcHandler) UseCreateReportAdapter(adapter *grpcadapter.Adapter) {
 	h.createReport = adapter
 }
 
@@ -695,60 +692,13 @@ func (h *MapWorkspaceGrpcHandler) CreateGeneratedReport(
 	ctx context.Context,
 	req *tqdpb.CreateGeneratedReportRequest,
 ) (*tqdpb.CreateGeneratedReportResponse, error) {
-	if h.createReport != nil {
-		return h.createReport.CreateGeneratedReport(ctx, req)
+	if h.createReport == nil {
+		return nil, status.Error(
+			codes.Unavailable,
+			"generated report runtime is unavailable",
+		)
 	}
-
-	// Migration fallback: bỏ nhánh này sau khi flow mới được cutover hoàn toàn.
-	userID, err := h.currentUserID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if req.GetReportType() == 0 {
-		return nil, status.Error(codes.InvalidArgument, "reportType is required")
-	}
-
-	log.Printf(
-		"[CreateGeneratedReport] UserID: %d, ReportType: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d",
-		userID,
-		req.GetReportType(),
-		req.GetEntityType(),
-		req.GetEntityId(),
-		req.GetParcelId(),
-		req.GetRegionId(),
-	)
-
-	item, err := h.usecase.CreateGeneratedReport(ctx, dto.CreateGeneratedReportRequestDTO{
-		UserID:          userID,
-		ReportType:      req.GetReportType(),
-		EntityType:      req.GetEntityType(),
-		EntityID:        req.GetEntityId(),
-		ParcelID:        req.GetParcelId(),
-		RegionID:        req.GetRegionId(),
-		Title:           req.GetTitle(),
-		Subtitle:        req.GetSubtitle(),
-		Location:        workspaceLocationFromProto(req.GetLocation()),
-		Spatial:         reportSpatialFromProto(req.GetSpatial()),
-		Comparison:      reportComparisonFromProto(req.GetComparison()),
-		ClientRequestID: req.GetClientRequestId(),
-		MetadataJSON:    req.GetMetadataJson(),
-	})
-	if err != nil {
-		log.Printf("[CreateGeneratedReport] Error: %v", err)
-		return nil, workspaceStatusError(err)
-	}
-
-	resp := &tqdpb.CreateGeneratedReportResponse{
-		Success: true,
-		Message: "report generation started",
-	}
-
-	if item != nil {
-		resp.Item = reportDTOToProto(*item)
-	}
-
-	return resp, nil
+	return h.createReport.CreateGeneratedReport(ctx, req)
 }
 
 func (h *MapWorkspaceGrpcHandler) GetGeneratedReport(

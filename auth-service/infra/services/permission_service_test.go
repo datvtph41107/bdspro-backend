@@ -4,22 +4,25 @@ import (
 	"testing"
 	"time"
 
-	_algorithm "common/algorithm"
-	_enum "common/domain/enum"
+	"auth/internal/permissioncatalog"
 )
 
 func testPermissionService() *PermissionService {
-	roleOne := _algorithm.NewBitCache(_enum.PermissionIDMax)
-	roleOne.Set(10, true)
-	roleTwo := _algorithm.NewBitCache(_enum.PermissionIDMax)
-	roleTwo.Set(20, true)
-	return &PermissionService{
-		snapshot: permissionSnapshot{
-			rolePermissions:  map[uint64]*_algorithm.BitCache{1: roleOne, 2: roleTwo},
-			permissionByCode: map[string]uint32{"PERM_A": 10, "PERM_B": 20},
-			version:          "v1",
-			loadedAt:         time.Now(),
+	catalog, err := permissioncatalog.Build(
+		[]permissioncatalog.RolePermissions{
+			{RoleID: 1, PermissionIDs: []uint64{10}},
+			{RoleID: 2, PermissionIDs: []uint64{20}},
 		},
+		[]permissioncatalog.Permission{
+			{ID: 10, Code: "PERM_A"},
+			{ID: 20, Code: "PERM_B"},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	return &PermissionService{
+		snapshot:     permissionSnapshot{catalog: catalog, loadedAt: time.Now()},
 		maxStaleness: time.Minute,
 	}
 }
@@ -62,5 +65,12 @@ func TestNormalizeRoleIDs(t *testing.T) {
 	got := normalizeRoleIDs([]uint64{3, 0, 2, 3})
 	if len(got) != 2 || got[0] != 2 || got[1] != 3 {
 		t.Fatalf("roles = %v", got)
+	}
+}
+
+func TestResolvePermissionIDMustExistInSnapshot(t *testing.T) {
+	svc := testPermissionService()
+	if _, err := svc.resolvePermissionIDs([]uint32{999}, nil); err == nil {
+		t.Fatal("unknown numeric permission ID must fail closed")
 	}
 }

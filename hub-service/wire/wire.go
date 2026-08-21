@@ -16,6 +16,7 @@ import (
 	hub_infra_postgre "hub/infra/postgre"
 	hub_infra_provider "hub/infra/provider"
 	hub_infra_redis "hub/infra/redis"
+	hub_infra_rpc "hub/infra/rpc"
 	hub_infra_setting "hub/infra/setting"
 	hub_initial "hub/initial"
 	hub_internal_interface "hub/internal/interface"
@@ -32,20 +33,10 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
 	wire.Bind(new(hub_internal_repo.IUpdateDataRepo), new(*hub_infra_postgre.UpdateDataRepo)),
-	common_injection.NewAuthClient,
-	common_injection.NewBDSProClient,
-	common_injection.NewCRMClient,
-	common_injection.NewChatClient,
-	common_injection.NewHubClient,
-	common_injection.NewNotification,
-	common_injection.NewOrganizationClient,
-	common_injection.NewPaymentClient,
-	common_injection.NewTQClient,
-	common_injection.NewTransactionClient,
-	common_injection.NewUserClient,
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
+	hub_infra_rpc.NewAdminUserProfileClient,
 	hub_infra_handler.NewApiKeyHandler,
 	hub_infra_mapper.NewApiKeyMapper,
 	hub_infra_postgre.NewApiKeyRepo,
@@ -54,6 +45,7 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewApplinkPostgre,
 	hub_internal_usecase.NewApplinkUsecase,
 	hub_infra_client.NewBDSProClient,
+	hub_infra_rpc.NewBdsproRPCClient,
 	hub_infra_postgre.NewDistrictRepo,
 	hub_infra_handler.NewErrorLogHandler,
 	hub_infra_mapper.NewErrorLogMapper,
@@ -80,6 +72,7 @@ var wireSet = wire.NewSet(
 	hub_infra_mapper.NewLocationV2Mapper,
 	hub_internal_usecase.NewLocationV2Usecase,
 	hub_infra_client.NewNotificationClient,
+	hub_infra_rpc.NewNotificationRPCClient,
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
 	hub_infra_redis.NewRedisProvider,
@@ -105,7 +98,7 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewWardV2Repo,
 )
 
-func InitializeApp() (*hub_initial.InitialApp, error) {
+func InitializeApp() (*hub_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
-	return nil, nil
+	return nil, nil, nil
 }

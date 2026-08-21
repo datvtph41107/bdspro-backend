@@ -1,18 +1,12 @@
 package clients
 
 import (
-	"common"
 	_dto "common/domain/dto"
 	"context"
 	"errors"
-	"fmt"
-	"log"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"time"
-
-	_middleware "common/middleware"
 
 	"google.golang.org/grpc"
 )
@@ -20,39 +14,21 @@ import (
 type UserGrpcClient struct {
 	Client           userpb.ProfileServiceClient
 	InternalClient   userpb.InternalUserServiceClient
+	AdminClient      userpb.AdminUserProfileServiceClient
 	PermissionClient authpb.PermissionServiceClient
+	RoleClient       authpb.RoleServiceClient
 }
 
-func MakeUserGrpcClient(env_runtime string) *UserGrpcClient {
-	userClient := &UserGrpcClient{Client: nil, InternalClient: nil}
-	go func() {
-		name := "user"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		userClient.Client = userpb.NewProfileServiceClient(conn)
-		userClient.InternalClient = userpb.NewInternalUserServiceClient(conn)
-		userClient.PermissionClient = authpb.NewPermissionServiceClient(conn)
-	}()
-	return userClient
+func BindUserGrpcClient(conn grpc.ClientConnInterface) *UserGrpcClient {
+	return &UserGrpcClient{
+		Client:           userpb.NewProfileServiceClient(conn),
+		InternalClient:   userpb.NewInternalUserServiceClient(conn),
+		AdminClient:      userpb.NewAdminUserProfileServiceClient(conn),
+		PermissionClient: authpb.NewPermissionServiceClient(conn),
+		RoleClient:       authpb.NewRoleServiceClient(conn),
+	}
 }
 
-/**
- * GetAllPermissions returns the durable permission-code catalog.
- */
 func (c *UserGrpcClient) GetAllPermissions(ctx context.Context) ([]*sharepb.Permission, error) {
 	if c.PermissionClient == nil {
 		return nil, errors.New("user permission client not available")

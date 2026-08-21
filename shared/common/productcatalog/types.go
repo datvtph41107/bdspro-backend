@@ -59,16 +59,18 @@ type Product struct {
 
 /** PlanVersion freezes commercial terms for one effective period. */
 type PlanVersion struct {
-	ProductCode    string
-	PlanCode       string
-	Version        string
-	DisplayName    string
-	Status         Status
-	SubjectScope   SubjectScope
-	EffectiveFrom  time.Time
-	EffectiveUntil *time.Time
-	Entitlements   []Entitlement
-	Prices         []PriceItem
+	ProductCode          string
+	PlanCode             string
+	Version              string
+	DisplayName          string
+	Status               Status
+	SubjectScope         SubjectScope
+	SubscriptionTermDays int32
+	EffectiveFrom        time.Time
+	EffectiveUntil       *time.Time
+	Entitlements         []Entitlement
+	Operations           []OperationPolicy
+	Prices               []PriceItem
 }
 
 /** Entitlement grants access, allowance, or capacity. */
@@ -80,6 +82,14 @@ type Entitlement struct {
 	Amount      int64
 	Unlimited   bool
 	Period      PeriodKind
+}
+
+/** OperationPolicy binds one business operation to this version's commercial terms. */
+type OperationPolicy struct {
+	Code           string
+	FeatureCode    string
+	MeterCode      string
+	UnitsPerAction int64
 }
 
 /** PriceItem describes a recurring, add-on, or overage price. */

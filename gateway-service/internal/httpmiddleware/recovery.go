@@ -1,7 +1,7 @@
 package httpmiddleware
 
 import (
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -24,7 +24,7 @@ func Recovery(
 			recovered any,
 		) {
 			requestID, _ :=
-				_requestcontext.FromContext(
+				_request.RequestIDFromContext(
 					ctx.Request.Context(),
 				)
 
@@ -49,7 +49,7 @@ func Recovery(
 			}
 
 			if operationID, ok :=
-				_requestcontext.OperationIDFromContext(
+				_request.OperationIDFromContext(
 					ctx.Request.Context(),
 				); ok {
 

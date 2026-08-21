@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"pb/clients"
-	"user/env"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 )
@@ -12,13 +11,11 @@ type PaymentClient struct {
 	*clients.PaymentClient
 }
 
-func NewPaymentClient() providers.IPaymentProvider {
-	paymentClient := clients.MakePaymentClient(env.ENV_RUNTIME)
+func NewPaymentClient(
+	rpcClient *clients.PaymentClient,
+) providers.IPaymentProvider {
 	return &PaymentClient{
-		PaymentClient: paymentClient,
-		// client:        resty.New(),
-		// url:           viper.GetString("payment.url"),
-		// path:          viper.GetString("payment.path"),
+		PaymentClient: rpcClient,
 	}
 }
 

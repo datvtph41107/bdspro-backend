@@ -11,7 +11,7 @@ import (
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 	"user/internal/models"
-	"user/internal/subscriptionshadow"
+	"user/internal/modules/subscription/shadow"
 
 	"github.com/spf13/viper"
 )
@@ -25,7 +25,7 @@ type MembershipUsecase struct {
 	planRepo        repo.IPlanRepo
 	paymentProvider providers.IPaymentProvider
 	secretKey       string
-	shadowObserver  subscriptionshadow.Observer
+	shadowObserver  shadow.Observer
 }
 
 type IMembershipUsecase interface {
@@ -38,7 +38,7 @@ func NewMembershipUsecase(
 	membershipRepo repo.IMembershipRepo,
 	planRepo repo.IPlanRepo,
 	paymentProvider providers.IPaymentProvider,
-	shadowObserver subscriptionshadow.Observer,
+	shadowObserver shadow.Observer,
 ) IMembershipUsecase {
 	return &MembershipUsecase{
 		membershipRepo:  membershipRepo,

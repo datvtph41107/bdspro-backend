@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-
 	clients "pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -17,12 +16,8 @@ type notificationClient struct {
 	client *clients.NotificationClient
 }
 
-func NewNotificationClient() NotificationClient {
-	result := &notificationClient{
-		client: clients.MakeNotificationClient("release"),
-	}
-
-	return result
+func NewNotificationClient(rpcClient *clients.NotificationClient) NotificationClient {
+	return &notificationClient{client: rpcClient}
 }
 
 func (c *notificationClient) Create(ctx context.Context, req *sharepb.NotificationRequest) (*notificationpb.NotificationDTO, error) {

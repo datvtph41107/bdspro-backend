@@ -5,6 +5,7 @@ import (
 	"chat/infra/db"
 	"chat/infra/handler"
 	"chat/infra/postgre"
+	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
 	"context"
@@ -32,10 +33,11 @@ func parseTimeout(timeoutStr string) time.Duration {
 var logger = flogging.MustGetLogger("http_server")
 
 type HTTPServer struct {
-	server *http.Server
+	server  *http.Server
+	cleanup func()
 }
 
-func NewHTTPServer(port string) *HTTPServer {
+func NewHTTPServer(port string) (*HTTPServer, error) {
 	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
 
@@ -61,9 +63,25 @@ func NewHTTPServer(port string) *HTTPServer {
 	messageReactionRepo := postgre.NewMessageReactionRepo(transactionRepo)
 	backgroundRepo := postgre.NewBackgroundRepo(transactionRepo)
 
-	// Initialize clients
-	userClient := handler.NewUserClient()
-	bdsproClient := handler.NewBdsproClient()
+	// Process-owned outbound RPC dependencies.
+	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("configure chat user RPC: %w", err)
+	}
+
+	bdsproRPC, bdsproCleanup, err := chatrpc.NewBdsproRPCClient()
+	if err != nil {
+		userCleanup()
+		return nil, fmt.Errorf("configure chat bdspro RPC: %w", err)
+	}
+
+	cleanup := func() {
+		bdsproCleanup()
+		userCleanup()
+	}
+
+	userClient := handler.NewUserClient(userRPC)
+	bdsproClient := handler.NewBdsproClient(bdsproRPC)
 
 	// Initialize usecases
 	conversationUsecase := usecases.NewConversationUsecases(conversationRepo, participantRepo, userClient)
@@ -99,7 +117,8 @@ func NewHTTPServer(port string) *HTTPServer {
 	// Register HTTP handlers
 	err = handler.RegisterHTTPServer(ctx, mux, chatHandler, backgroundHandler)
 	if err != nil {
-		logger.Fatalf("Failed to register HTTP handlers: %v", err)
+		cleanup()
+		return nil, fmt.Errorf("register chat HTTP handlers: %w", err)
 	}
 
 	// Apply middlewares
@@ -117,10 +136,16 @@ func NewHTTPServer(port string) *HTTPServer {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	return &HTTPServer{server: server}
+	return &HTTPServer{
+		server:  server,
+		cleanup: cleanup,
+	}, nil
 }
 
 func (s *HTTPServer) Start() error {
+	if s.cleanup != nil {
+		defer s.cleanup()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

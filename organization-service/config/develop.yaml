@@ -1,3 +1,19 @@
+rpc:
+  user:
+    address: "user:8201"
+  bdspro:
+    address: "bdspro:8202"
+  notification:
+    address: "notification:8204"
+  payment:
+    address: "payment:8205"
+  chat:
+    address: "chat:8208"
+  transaction:
+    address: "transaction:8215"
+  auth:
+    address: "auth:8216"
+
 GRPC:
   PORT: 8207
   CHAT_SERVICE_HOST: ws-server

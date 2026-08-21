@@ -2,16 +2,19 @@ package main
 
 import (
 	"auth/config"
-	"auth/env"
 	"auth/infra/handler"
+	authrpc "auth/infra/rpc"
 	"auth/infra/services"
 	_middleware "common/middleware"
 	_ "common/models"
+	"common/processlifecycle"
+	"context"
 	"fmt"
 	"log"
 	"net"
-	_ "net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	authpb "pb/types/auth"
@@ -34,18 +37,36 @@ import (
 // nếu public -> đi luôn vào service con
 // nếu private -> đi vào auth -> auth điều hướng tới service con
 func main() {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	config.LoadProperties()
-	permissionService := services.NewPermissionService(env.ENV_RUNTIME)
+	if err := run(); err != nil {
+		log.Printf("auth service failed: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	if err := config.LoadProperties(); err != nil {
+		return fmt.Errorf("load auth config: %w", err)
+	}
+
+	userRPC, userCleanup, err := authrpc.NewUserRPCClient()
+	if err != nil {
+		return fmt.Errorf("configure auth user RPC: %w", err)
+	}
+	defer userCleanup()
+
+	permissionService := services.NewPermissionService(userRPC)
 	authInternalHandler := handler.NewAuthInternalHandler(permissionService)
-	os.Setenv("TZ", "Europe/London")
+	if err := os.Setenv("TZ", "Europe/London"); err != nil {
+		return fmt.Errorf("set auth timezone: %w", err)
+	}
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return fmt.Errorf("listen auth gRPC on %s: %w", port, err)
 	}
+	defer func() { _ = lis.Close() }()
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -58,7 +79,17 @@ func main() {
 	authpb.RegisterAuthInternalServiceServer(s, authInternalHandler)
 
 	log.Printf("Listen: %v", port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopSignals()
+	processCtx, processCancel := context.WithCancel(signalCtx)
+	defer processCancel()
+
+	return processlifecycle.Run(
+		processCtx,
+		processCancel,
+		s,
+		lis,
+		[]processlifecycle.Actor{processlifecycle.ActorFunc(permissionService.Run)},
+		processlifecycle.Config{GracefulStopTimeout: 10 * time.Second},
+	)
 }

@@ -2,8 +2,8 @@ package requestlog
 
 import (
 	"bytes"
-	"common/businessoperation"
 	"common/identitycontext"
+	"common/operation"
 	"common/requestcontext"
 	"context"
 	"log/slog"
@@ -28,7 +28,7 @@ func TestFromContextAddsTraceFieldsWithoutLoggingIdempotencyKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, err = businessoperation.Bind(ctx, businessoperation.WorkspaceReportGenerate)
+	ctx, err = operation.Bind(ctx, operation.Code("workspace.report.generate"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,5 +51,20 @@ func TestFromContextAddsTraceFieldsWithoutLoggingIdempotencyKey(t *testing.T) {
 	}
 	if strings.Contains(output, "idem_secret_123") {
 		t.Fatalf("log output leaked idempotency key: %q", output)
+	}
+}
+
+func TestFromContextOmitsOperationFieldWhenCanonicalOperationIsAbsent(t *testing.T) {
+	t.Parallel()
+
+	var buffer bytes.Buffer
+	base := slog.New(slog.NewTextHandler(&buffer, nil))
+	FromContext(context.Background(), base).Info("request without operation")
+
+	if strings.Contains(buffer.String(), "business_operation=") {
+		t.Fatalf(
+			"log output %q contains an operation without canonical context",
+			buffer.String(),
+		)
 	}
 }

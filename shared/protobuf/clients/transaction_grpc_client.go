@@ -1,12 +1,7 @@
 package clients
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
-	"fmt"
-	"log"
-	"time"
 
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
@@ -18,31 +13,8 @@ type TransactionGrpcClient struct {
 	client transactionpb.InternalTransactionServiceClient
 }
 
-func NewTransactionGrpcClient(env_runtime string) *TransactionGrpcClient {
-	transactionClient := &TransactionGrpcClient{}
-	go func() {
-		name := "transaction"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8215", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := transactionpb.NewInternalTransactionServiceClient(conn)
-		transactionClient.client = client
-	}()
-	return transactionClient
+func BindTransactionClient(conn grpc.ClientConnInterface) *TransactionGrpcClient {
+	return &TransactionGrpcClient{client: transactionpb.NewInternalTransactionServiceClient(conn)}
 }
 
 func (c *TransactionGrpcClient) GetTransactionDetail(ctx context.Context, req *sharepb.IdRequest) (*transactionpb.TransactionResponse, error) {

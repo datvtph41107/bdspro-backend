@@ -1,20 +1,15 @@
 package clients
 
 import (
-	"common"
 	_dto "common/domain/dto"
-	_provider "common/domain/provider"
 	_errors "common/errors"
-	_middleware "common/middleware"
 	_utils "common/utils"
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"time"
 
 	"google.golang.org/grpc"
 )
@@ -24,34 +19,11 @@ type CrmGrpcClient struct {
 	FriendServiceClient crmpb.FriendServiceClient
 }
 
-func MakeCrmGrpcClient(env_runtime string) _provider.CrmProvider {
-	crmClient := &CrmGrpcClient{}
-	go func() {
-		name := "crm"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8206", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := crmpb.NewCrmInternalServiceClient(conn)
-		friendClient := crmpb.NewFriendServiceClient(conn)
-		crmClient.CrmInternalServiceClient = client
-		crmClient.FriendServiceClient = friendClient
-	}()
-	return crmClient
+func BindCrmGrpcClient(conn grpc.ClientConnInterface) *CrmGrpcClient {
+	return &CrmGrpcClient{
+		CrmInternalServiceClient: crmpb.NewCrmInternalServiceClient(conn),
+		FriendServiceClient:      crmpb.NewFriendServiceClient(conn),
+	}
 }
 
 func (c *CrmGrpcClient) GetMapFriendStatusByProfileIds(ctx context.Context, profileIds map[uint64]struct{}) (map[uint64]*sharepb.FriendItem, error) {

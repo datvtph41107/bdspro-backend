@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 )
 
@@ -26,18 +26,18 @@ func NewHTTPRecorder(
 
 func (recorder *HTTPRecorder) RecordRequestIDDecision(
 	ctx context.Context,
-	decision _requestcontext.RequestIDDecision,
+	decision _request.RequestIDDecision,
 ) {
-	if decision.Reason == _requestcontext.RequestIDReasonValid {
+	if decision.Reason == _request.RequestIDReasonValid {
 		return
 	}
 
 	level := slog.LevelDebug
 
 	if decision.Reason ==
-		_requestcontext.RequestIDReasonInvalid ||
+		_request.RequestIDReasonInvalid ||
 		decision.Reason ==
-			_requestcontext.RequestIDReasonMultiple {
+			_request.RequestIDReasonMultiple {
 		level = slog.LevelWarn
 	}
 

@@ -15,7 +15,6 @@ import (
 )
 
 // @bind: assistant/internal/interface/provider.OpenAIProvider
-
 type OpenAIClient struct {
 	apiKey     string
 	baseURL    string

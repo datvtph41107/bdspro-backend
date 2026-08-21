@@ -1,14 +1,11 @@
 package clients
 
 import (
-	"common"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -21,33 +18,11 @@ type NotificationClient struct {
 	historyClient notificationpb.HistoryServiceClient
 }
 
-func MakeNotificationClient(env_runtime string) *NotificationClient {
-	notificationClient := &NotificationClient{}
-	go func() {
-		name := "notification"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8204", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := notificationpb.NewInternalNotificationServiceClient(conn)
-		historyClient := notificationpb.NewHistoryServiceClient(conn)
-		notificationClient.Client = client
-		notificationClient.historyClient = historyClient
-	}()
-	return notificationClient
+func BindNotificationClient(conn grpc.ClientConnInterface) *NotificationClient {
+	return &NotificationClient{
+		Client:        notificationpb.NewInternalNotificationServiceClient(conn),
+		historyClient: notificationpb.NewHistoryServiceClient(conn),
+	}
 }
 
 func (s *NotificationClient) NotifyToUser(
@@ -284,4 +259,28 @@ func (s *NotificationClient) CreatePropertyHistoryActivity(
 		ActorId:     actorId,
 	})
 	return err
+}
+
+func (s *NotificationClient) GetPersonConfigs(
+	ctx context.Context,
+	userID uint64,
+) ([]*sharepb.PersonConfigV3Proto, error) {
+	if userID == 0 {
+		return []*sharepb.PersonConfigV3Proto{}, nil
+	}
+	if s == nil || s.Client == nil {
+		return nil, fmt.Errorf("notification grpc client chưa được khởi tạo")
+	}
+
+	resp, err := s.Client.GetPersonConfigs(
+		ctx,
+		&notificationpb.GetPersonConfigsRequest{
+			UserId: userID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetData(), nil
 }

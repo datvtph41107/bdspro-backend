@@ -6,6 +6,7 @@ import (
 	"chat/infra/handler"
 	"chat/infra/impl"
 	"chat/infra/postgre"
+	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
 	_middleware "common/middleware"
@@ -26,12 +27,13 @@ import (
 var grpcLogger = flogging.MustGetLogger("grpc_server")
 
 type GRPCServer struct {
-	server *grpc.Server
-	port   string
+	server  *grpc.Server
+	port    string
+	cleanup func()
 	// wsHandler  *wshandler.WebSocketHandler
 }
 
-func NewGRPCServer(port string) *GRPCServer {
+func NewGRPCServer(port string) (*GRPCServer, error) {
 	grpcLogger.Info("Initializing gRPC server...")
 
 	config.LoadConfig()
@@ -57,9 +59,25 @@ func NewGRPCServer(port string) *GRPCServer {
 	messageReactionRepo := postgre.NewMessageReactionRepo(transactionRepo)
 	backgroundRepo := postgre.NewBackgroundRepo(transactionRepo)
 
-	// Initialize clients
-	userClient := handler.NewUserClient()
-	bdsproClient := handler.NewBdsproClient()
+	// Process-owned outbound RPC dependencies.
+	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("configure chat user RPC: %w", err)
+	}
+
+	bdsproRPC, bdsproCleanup, err := chatrpc.NewBdsproRPCClient()
+	if err != nil {
+		userCleanup()
+		return nil, fmt.Errorf("configure chat bdspro RPC: %w", err)
+	}
+
+	cleanup := func() {
+		bdsproCleanup()
+		userCleanup()
+	}
+
+	userClient := handler.NewUserClient(userRPC)
+	bdsproClient := handler.NewBdsproClient(bdsproRPC)
 
 	// Initialize usecases
 	conversationUsecase := usecases.NewConversationUsecases(conversationRepo, participantRepo, userClient)
@@ -104,12 +122,16 @@ func NewGRPCServer(port string) *GRPCServer {
 	handler.RegisterGRPCServer(server, chatHandler, backgroundHandler)
 
 	return &GRPCServer{
-		server: server,
-		port:   port,
-	}
+		server:  server,
+		port:    port,
+		cleanup: cleanup,
+	}, nil
 }
 
 func (s *GRPCServer) Start() error {
+	if s.cleanup != nil {
+		defer s.cleanup()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

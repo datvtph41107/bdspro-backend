@@ -56,10 +56,10 @@ func HandleWebSocket(c *gin.Context) {
 
 	clients[userId] = conn
 	groupIds, _ := models.GetGroupIDsByMemberID(userId)
-	log.Printf("groupIds", groupIds)
+	log.Println("groupIds", groupIds)
 	for _, groupId := range groupIds {
 		members, _ := models.GetMemberIDsByGroupID(groupId)
-		log.Printf("member", groupId, members)
+		log.Println("member", groupId, members)
 		groups[groupId] = members
 	}
 

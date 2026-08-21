@@ -2,6 +2,7 @@ package cmd
 
 import (
 	_db "common/db"
+	"fmt"
 	"log"
 	"tqd/config"
 	"tqd/infra/db"
@@ -28,7 +29,9 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 
 	// Load configuration
 	log.Println("Loading configuration...")
-	config.LoadConfig()
+	if _, err := config.LoadConfig(); err != nil {
+		return fmt.Errorf("load TQD migration config: %w", err)
+	}
 
 	// Initialize database connection
 	log.Println("Initializing database connection...")

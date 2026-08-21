@@ -5,6 +5,7 @@ package types.tqd;
 option go_package = "pb/types/tqd;tqdpb";
 
 import "google/api/annotations.proto";
+import "operation/operation.proto";
 
 service MapWorkspaceService {
   rpc ListFollowedParcels(WorkspacePageRequest) returns (ListFollowedParcelsResponse) {
@@ -65,6 +66,9 @@ service MapWorkspaceService {
     option (google.api.http) = {
       post: "/v2/tqd/map-workspace/reports"
       body: "*"
+    };
+    option (types.operation.operation) = {
+      code: "workspace.report.generate"
     };
   }
 
@@ -409,7 +413,10 @@ message CreateGeneratedReportRequest {
   ReportSpatialPreview spatial = 9;
   ReportComparison comparison = 10;
 
-  string clientRequestId = 11;
+  // Durable identity for workspace.report.generate. Field number 11 is kept
+  // for protobuf wire compatibility; legacy HTTP JSON keeps clientRequestId
+  // until all old clients are retired. Canonical clients send Idempotency-Key.
+  string commandKey = 11 [json_name = "clientRequestId"];
   string timestamp = 12;
   string metadataJson = 13;
 }

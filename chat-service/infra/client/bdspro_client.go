@@ -1,7 +1,6 @@
 package client
 
 import (
-	"chat/env"
 	"chat/internal/domain"
 	"context"
 	"pb/clients"
@@ -13,10 +12,8 @@ type BdsproClient struct {
 	Client *clients.BdsproGrpcClient
 }
 
-func NewBdsproClient() *BdsproClient {
-	return &BdsproClient{
-		Client: clients.MakeBdsproGrpcClient(env.ENV_RUNTIME),
-	}
+func NewBdsproClient(rpcClient *clients.BdsproGrpcClient) *BdsproClient {
+	return &BdsproClient{Client: rpcClient}
 }
 
 func (c *BdsproClient) MapProductPbByIds(ctx context.Context, message []*chatpb.Message) {

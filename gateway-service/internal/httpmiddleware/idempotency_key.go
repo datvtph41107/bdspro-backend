@@ -1,8 +1,7 @@
 package httpmiddleware
 
 import (
-	_requestcontext "common/requestcontext"
-
+	_request "common/request"
 	"errors"
 	"net/http"
 
@@ -14,24 +13,29 @@ const (
 	idempotencyKeyUnavailableMessage = "idempotency identity unavailable"
 )
 
-// IdempotencyKey accepts an optional caller-owned command identity.
-// It validates and binds a supplied key, but never originates one.
 func IdempotencyKey() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		_, _, err := _requestcontext.PrepareHTTPIdempotencyKey(ctx.Request)
-		if err == nil {
+		key, ok, err := _request.ParseIdempotencyKey(ctx.Request.Header.Values(IdempotencyKeyHeader))
+		if err == nil && !ok {
 			ctx.Next()
 			return
 		}
-
+		if err == nil {
+			bound, bindErr := _request.BindIdempotencyKey(ctx.Request.Context(), key)
+			if bindErr == nil {
+				ctx.Request.Header.Set(IdempotencyKeyHeader, key)
+				ctx.Request = ctx.Request.WithContext(bound)
+				ctx.Next()
+				return
+			}
+			err = bindErr
+		}
 		statusCode := http.StatusInternalServerError
 		message := idempotencyKeyUnavailableMessage
-		if errors.Is(err, _requestcontext.ErrInvalidIdempotencyKey) ||
-			errors.Is(err, _requestcontext.ErrMultipleIdempotencyKeys) {
+		if errors.Is(err, _request.ErrInvalidIdempotencyKey) || errors.Is(err, _request.ErrMultipleIdempotencyKeys) {
 			statusCode = http.StatusBadRequest
 			message = invalidIdempotencyKeyMessage
 		}
-
 		ctx.AbortWithStatusJSON(statusCode, gin.H{"error": message})
 	}
 }

@@ -1,16 +1,8 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
-	"fmt"
-	"hub/env"
-	"log"
 	userpb "pb/types/user"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 // @bind: hub/internal/interface.IUserClient
@@ -18,30 +10,12 @@ type UserClient struct {
 	AdminClient userpb.AdminUserProfileServiceClient
 }
 
-func NewUserClient() *UserClient {
-	client := &UserClient{AdminClient: nil}
-	go func() {
-		name := "user"
-		url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8201", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client.AdminClient = userpb.NewAdminUserProfileServiceClient(conn)
-	}()
-	return client
+func NewUserClient(
+	adminClient userpb.AdminUserProfileServiceClient,
+) *UserClient {
+	return &UserClient{
+		AdminClient: adminClient,
+	}
 }
 
 // ListAllUsers lấy danh sách tất cả user với phân trang

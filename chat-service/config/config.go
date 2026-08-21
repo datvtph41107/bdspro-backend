@@ -50,17 +50,6 @@ type ChatProperties struct {
 
 	MaxParticipant       int `mapstructure:"max_participant"`
 	RequiredParticipants int `mapstructure:"required_participants"`
-
-	Services struct {
-		User struct {
-			Host string `mapstructure:"host"`
-			Port string `mapstructure:"port"`
-		} `mapstructure:"user"`
-		Bdspro struct {
-			Host string `mapstructure:"host"`
-			Port string `mapstructure:"port"`
-		} `mapstructure:"bdspro"`
-	} `mapstructure:"services"`
 }
 
 var AppProperties ChatProperties

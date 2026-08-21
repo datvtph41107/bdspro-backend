@@ -18,26 +18,33 @@ import (
 var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Khởi chạy gRPC server",
-	Run: func(cmd *cobra.Command, args []string) {
-		startGRPCServer()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return startGRPCServer()
 	},
 }
 
-func startGRPCServer() {
-	config.LoadConfig()
+func startGRPCServer() error {
+	if err := config.LoadConfig(); err != nil {
+		return fmt.Errorf("load notification config: %w", err)
+	}
 	// Start gRPC server
 	port := fmt.Sprintf(":%d", config.AppProperties.Server.TCPPort)
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		return fmt.Errorf("listen notification gRPC on %s: %w", port, err)
 	}
+	defer func() { _ = lis.Close() }()
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
 		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 
-	app, _ := wire.InitializeApp()
+	app, cleanup, err := wire.InitializeApp()
+	if err != nil {
+		return fmt.Errorf("initialize notification app: %w", err)
+	}
+	defer cleanup()
 
 	db.AutoMigrate()
 
@@ -49,6 +56,8 @@ func startGRPCServer() {
 
 	log.Printf("gRPC server listening on %s", port)
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		return fmt.Errorf("serve notification gRPC: %w", err)
 	}
+
+	return nil
 }

@@ -2,6 +2,26 @@ server:
     port: 8102
     tcp_port: 8202
 
+rpc:
+    user:
+        address: "localhost:8201"
+    auth:
+        address: "localhost:8216"
+    notification:
+        address: "localhost:8204"
+    organization:
+        address: "localhost:8207"
+    payment:
+        address: "localhost:8205"
+    hub:
+        address: "localhost:8280"
+    chat:
+        address: "localhost:8208"
+    tqd:
+        address: "localhost:8219"
+    crm:
+        address: "localhost:8206"
+
 database:
     dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_bdspro port=5432 sslmode=disable
 

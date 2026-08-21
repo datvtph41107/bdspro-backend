@@ -36,7 +36,8 @@ wire:
 	@test -n "$(SERVICE)" || (echo "Usage: make wire <service>" >&2; exit 2)
 	./script.sh wire $(SERVICE)
 proto:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path $(word 2, $(MAKECMDGOALS))
+	@test -n "$(SERVICE)" || (echo "Usage: make proto <service>" >&2; exit 2)
+	@$(MAKE) buf-$(SERVICE)
 run:
 	$(CD_ROOT) && cd $(word 2, $(MAKECMDGOALS))-service && go run main.go $(word 3, $(MAKECMDGOALS))
 
@@ -81,7 +82,9 @@ buf-auth:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth	
 buf-feedback:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
-buf-tqd:
+buf-operation:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path operation
+buf-tqd: buf-operation
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path tqd
 buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	

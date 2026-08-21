@@ -2,12 +2,12 @@ package accesspostgres
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	"common/operation"
 	"common/productcatalog"
 	"context"
 	"errors"
-	useraccess "user/internal/access"
 	"user/internal/models"
+	useraccess "user/internal/modules/entitlement/evaluate"
 
 	"gorm.io/gorm"
 )
@@ -26,22 +26,28 @@ func NewPlanAccessStore(db *gorm.DB) *PlanAccessStore {
 func (s *PlanAccessStore) FindPlanAccess(
 	ctx context.Context,
 	planVersionID uint64,
-	operation businessoperation.Code,
+	operationCode operation.Code,
 ) (useraccess.PlanAccess, bool, error) {
 	if s == nil || s.db == nil {
 		return useraccess.PlanAccess{}, false, errors.New("plan access database is not configured")
 	}
 
-	codes, ok := catalogCodesForOperation(operation)
-	if !ok {
-		return useraccess.PlanAccess{}, false, nil
-	}
-
-	var feature models.CatalogPlanEntitlement
+	var policy models.CatalogPlanOperationPolicy
 	err := s.db.WithContext(ctx).
 		Where("plan_version_id = ?", planVersionID).
+		Where("operation_code = ?", string(operationCode)).
+		First(&policy).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return useraccess.PlanAccess{}, false, nil
+	}
+	if err != nil {
+		return useraccess.PlanAccess{}, false, err
+	}
+	var feature models.CatalogPlanEntitlement
+	err = s.db.WithContext(ctx).
+		Where("plan_version_id = ?", planVersionID).
 		Where("kind = ?", productcatalog.EntitlementFeatureAccess).
-		Where("feature_code = ?", codes.FeatureCode).
+		Where("feature_code = ?", policy.FeatureCode).
 		First(&feature).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return useraccess.PlanAccess{}, false, nil
@@ -51,19 +57,26 @@ func (s *PlanAccessStore) FindPlanAccess(
 	}
 
 	result := useraccess.PlanAccess{
-		Allowed: true,
-		Period:  commonaccess.PeriodNone,
+		Allowed:     true,
+		FeatureCode: policy.FeatureCode,
+		Period:      commonaccess.PeriodNone,
 	}
 
-	if codes.UsageCode == "" {
+	if policy.MeterCode == nil || *policy.MeterCode == "" {
+		if policy.UnitsPerAction != 0 {
+			return useraccess.PlanAccess{}, false, errors.New("unmetered operation policy must have zero units per action")
+		}
 		return result, true, nil
+	}
+	if policy.UnitsPerAction <= 0 {
+		return useraccess.PlanAccess{}, false, errors.New("metered operation policy must have positive units per action")
 	}
 
 	var usage models.CatalogPlanEntitlement
 	err = s.db.WithContext(ctx).
 		Where("plan_version_id = ?", planVersionID).
 		Where("kind = ?", productcatalog.EntitlementUsageAllowance).
-		Where("meter_code = ?", codes.UsageCode).
+		Where("meter_code = ?", *policy.MeterCode).
 		First(&usage).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return useraccess.PlanAccess{}, false, errors.New("usage limit is missing for this operation")
@@ -83,6 +96,8 @@ func (s *PlanAccessStore) FindPlanAccess(
 	}
 
 	result.Unlimited = usage.Unlimited
+	result.MeterCode = *policy.MeterCode
+	result.UnitsPerAction = policy.UnitsPerAction
 	result.Limit = usage.Amount
 	result.Period = commonaccess.Period(usage.Period)
 

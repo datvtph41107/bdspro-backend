@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"user/internal/subscriptionbackfill"
+	"user/internal/modules/subscription/backfill"
 )
 
 func TestParseOptionalIDsDeduplicates(t *testing.T) {
@@ -43,7 +43,7 @@ func TestWriteJSONUsesRequestedPath(t *testing.T) {
 func TestRunRejectsExecuteWithoutExplicitGuard(t *testing.T) {
 	t.Setenv("QHPRO_ALLOW_SUBSCRIPTION_BACKFILL_EXECUTE", "")
 	err := run(context.Background(), options{action: "execute"})
-	if !errors.Is(err, subscriptionbackfill.ErrExecutionForbidden) {
+	if !errors.Is(err, backfill.ErrExecutionForbidden) {
 		t.Fatalf("err = %v", err)
 	}
 }

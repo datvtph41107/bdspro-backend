@@ -15,6 +15,7 @@ func TestNewBuildsImmutableCatalog(t *testing.T) {
 	}
 
 	catalog.Products[0].Plans[0].Entitlements[0].FeatureCode = "mutated.feature"
+	catalog.Products[0].Plans[0].Operations[0].UnitsPerAction = 999
 	catalog.Products[0].Plans[0].Prices[0].AmountMinor = 999
 
 	plan, ok := registry.Plan("qhpro.pro", "1.0.0")
@@ -27,11 +28,18 @@ func TestNewBuildsImmutableCatalog(t *testing.T) {
 	if plan.Prices[0].AmountMinor != 9900000 {
 		t.Fatalf("price mutated: %d", plan.Prices[0].AmountMinor)
 	}
+	if plan.Operations[0].UnitsPerAction != 1 {
+		t.Fatalf("operation policy mutated: %d", plan.Operations[0].UnitsPerAction)
+	}
 
 	plan.Entitlements[0].FeatureCode = "caller.mutation"
+	plan.Operations[0].UnitsPerAction = 99
 	again, _ := registry.Plan("qhpro.pro", "1.0.0")
 	if again.Entitlements[0].FeatureCode != "workspace.report.generate" {
 		t.Fatal("Plan() did not return a defensive copy")
+	}
+	if again.Operations[0].UnitsPerAction != 1 {
+		t.Fatal("Plan() leaked an operation-policy mutation")
 	}
 }
 
@@ -60,13 +68,14 @@ func TestNewRejectsOverlappingActiveVersions(t *testing.T) {
 	catalog.Products[0].Plans = append(
 		catalog.Products[0].Plans,
 		PlanVersion{
-			ProductCode:   "qhpro",
-			PlanCode:      "qhpro.pro",
-			Version:       "2.0.0",
-			DisplayName:   "Pro V2",
-			Status:        StatusActive,
-			SubjectScope:  SubjectScopeProfile,
-			EffectiveFrom: start.AddDate(0, 0, 10),
+			ProductCode:          "qhpro",
+			PlanCode:             "qhpro.pro",
+			Version:              "2.0.0",
+			DisplayName:          "Pro V2",
+			Status:               StatusActive,
+			SubjectScope:         SubjectScopeProfile,
+			SubscriptionTermDays: 30,
+			EffectiveFrom:        start.AddDate(0, 0, 10),
 		},
 	)
 
@@ -171,6 +180,49 @@ func TestNewValidatesPriceShapes(t *testing.T) {
 	}
 }
 
+func TestNewValidatesOperationPolicyBindings(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name   string
+		policy OperationPolicy
+	}{
+		{
+			name: "feature is not granted",
+			policy: OperationPolicy{
+				Code:        "workspace.report.generate",
+				FeatureCode: "workspace.report.export",
+			},
+		},
+		{
+			name: "meter has no usage allowance",
+			policy: OperationPolicy{
+				Code:           "workspace.report.generate",
+				FeatureCode:    "workspace.report.generate",
+				MeterCode:      "workspace.report_generation.rendered",
+				UnitsPerAction: 1,
+			},
+		},
+		{
+			name: "unmetered operation has units",
+			policy: OperationPolicy{
+				Code:           "workspace.report.generate",
+				FeatureCode:    "workspace.report.generate",
+				UnitsPerAction: 1,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			catalog := sampleCatalog(start)
+			catalog.Products[0].Plans[0].Operations = []OperationPolicy{test.policy}
+			if _, err := New(catalog); err == nil {
+				t.Fatal("New() accepted an invalid operation policy")
+			}
+		})
+	}
+}
+
 func sampleCatalog(start time.Time) Catalog {
 	return Catalog{
 		Version: "1.0.0",
@@ -180,13 +232,14 @@ func sampleCatalog(start time.Time) Catalog {
 				DisplayName: "QHPRO",
 				Plans: []PlanVersion{
 					{
-						ProductCode:   "qhpro",
-						PlanCode:      "qhpro.pro",
-						Version:       "1.0.0",
-						DisplayName:   "QHPRO Pro",
-						Status:        StatusActive,
-						SubjectScope:  SubjectScopeProfile,
-						EffectiveFrom: start,
+						ProductCode:          "qhpro",
+						PlanCode:             "qhpro.pro",
+						Version:              "1.0.0",
+						DisplayName:          "QHPRO Pro",
+						Status:               StatusActive,
+						SubjectScope:         SubjectScopeProfile,
+						SubscriptionTermDays: 30,
+						EffectiveFrom:        start,
 						Entitlements: []Entitlement{
 							{
 								Code:        "workspace.report.feature",
@@ -200,6 +253,14 @@ func sampleCatalog(start time.Time) Catalog {
 								MeterCode: "workspace.report_generation.accepted",
 								Amount:    100,
 								Period:    PeriodSubscriptionCycle,
+							},
+						},
+						Operations: []OperationPolicy{
+							{
+								Code:           "workspace.report.generate",
+								FeatureCode:    "workspace.report.generate",
+								MeterCode:      "workspace.report_generation.accepted",
+								UnitsPerAction: 1,
 							},
 						},
 						Prices: []PriceItem{
@@ -216,5 +277,14 @@ func sampleCatalog(start time.Time) Catalog {
 				},
 			},
 		},
+	}
+}
+
+func TestNewRejectsActivePlanWithoutSubscriptionTerm(t *testing.T) {
+	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	catalog := sampleCatalog(start)
+	catalog.Products[0].Plans[0].SubscriptionTermDays = 0
+	if _, err := New(catalog); err == nil {
+		t.Fatal("New() accepted active plan without subscription_term_days")
 	}
 }

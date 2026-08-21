@@ -1,8 +1,8 @@
 package callercontext
 
 import (
+	"common/identity"
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,82 +16,36 @@ const (
 	APIKeyAppMetadataKey  = "x-qhpro-api-key-app"
 )
 
-type Kind string
+// Deprecated: use identity.CallerKind.
+type Kind = identity.CallerKind
 
 const (
-	KindAnonymous       Kind = "anonymous"
-	KindUser            Kind = "user"
-	KindAPIKey          Kind = "api_key"
-	KindInternalService Kind = "internal_service"
+	KindAnonymous       = identity.CallerAnonymous
+	KindUser            = identity.CallerUser
+	KindAPIKey          = identity.CallerAPIKey
+	KindInternalService = identity.CallerInternalService
 )
 
-/**
- * Caller classifies the logical request source.
- */
-type Caller struct {
-	Kind      Kind
-	APIKeyID  uint64
-	APIKeyApp string
-}
-
-type callerContextKey struct{}
+// Deprecated: use identity.Caller. This alias remains while callers migrate.
+type Caller = identity.Caller
 
 var (
-	ErrInvalidCaller         = errors.New("caller classification is invalid")
-	ErrCallerContextConflict = errors.New("caller classification conflicts with the existing context")
+	ErrInvalidCaller         = identity.ErrInvalidCaller
+	ErrCallerContextConflict = identity.ErrCallerContextConflict
 )
 
-/**
- * IsValid reports whether the caller classification is internally consistent.
- */
-func (c Caller) IsValid() bool {
-	switch c.Kind {
-	case KindAnonymous, KindInternalService:
-		return c.APIKeyID == 0 && strings.TrimSpace(c.APIKeyApp) == ""
-	case KindUser:
-		return (c.APIKeyID == 0 && strings.TrimSpace(c.APIKeyApp) == "") ||
-			(c.APIKeyID > 0 && validText(c.APIKeyApp))
-	case KindAPIKey:
-		return c.APIKeyID > 0 && validText(c.APIKeyApp)
-	default:
-		return false
-	}
-}
-
-/**
- * BindCaller validates and immutably binds one logical caller.
- */
+// Deprecated: use identity.BindCaller.
 func BindCaller(ctx context.Context, caller Caller) (context.Context, error) {
-	if ctx == nil {
-		return nil, errors.New("context is nil")
-	}
-	if !caller.IsValid() {
-		return ctx, ErrInvalidCaller
-	}
-	caller.APIKeyApp = strings.TrimSpace(caller.APIKeyApp)
-	if existing, ok := FromContext(ctx); ok {
-		if existing == caller {
-			return ctx, nil
-		}
-		return ctx, ErrCallerContextConflict
-	}
-	return context.WithValue(ctx, callerContextKey{}, caller), nil
+	return identity.BindCaller(ctx, caller)
 }
 
-/**
- * FromContext returns the caller classification.
- */
+// Deprecated: use identity.CallerFromContext.
 func FromContext(ctx context.Context) (Caller, bool) {
-	if ctx == nil {
-		return Caller{}, false
-	}
-	caller, ok := ctx.Value(callerContextKey{}).(Caller)
-	return caller, ok && caller.IsValid()
+	return identity.CallerFromContext(ctx)
 }
 
-/**
- * AppendMetadata writes the caller classification to outgoing metadata.
- */
+// AppendMetadata is a transport compatibility helper. It remains here until
+// identitygrpc/caller metadata is absorbed by the canonical rpc package.
 func AppendMetadata(md metadata.MD, caller Caller) {
 	if md == nil || !caller.IsValid() {
 		return
@@ -106,9 +60,8 @@ func AppendMetadata(md metadata.MD, caller Caller) {
 	}
 }
 
-/**
- * FromMetadata parses one signed caller classification.
- */
+// FromMetadata parses one signed caller classification. It remains a transport
+// compatibility helper until the canonical rpc package owns gRPC metadata.
 func FromMetadata(md metadata.MD) (Caller, bool, error) {
 	if md == nil {
 		return Caller{}, false, nil
@@ -168,16 +121,4 @@ func singleOptional(md metadata.MD, key string) (string, bool, error) {
 		return "", false, fmt.Errorf("invalid %s metadata", key)
 	}
 	return value, true, nil
-}
-
-func validText(value string) bool {
-	if value == "" || strings.TrimSpace(value) != value || len(value) > 128 {
-		return false
-	}
-	for _, r := range value {
-		if r < 0x20 || r == 0x7f {
-			return false
-		}
-	}
-	return true
 }

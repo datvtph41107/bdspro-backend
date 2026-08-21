@@ -112,14 +112,6 @@ func (s *StorageService) resolve(secure bool, relativePaths ...string) string {
 	return location
 }
 
-// validatePath kiểm tra xem đường dẫn có hợp lệ không
-func validatePath(path, parent string) {
-	rel, err := filepath.Rel(parent, path)
-	if err != nil || strings.Contains(rel, "..") {
-		panic("path không hợp lệ")
-	}
-}
-
 // computeFileHash tạo hash SHA-256 của file
 func computeFileHash(filePath string) (string, error) {
 	file, err := os.Open(filePath)
@@ -168,7 +160,9 @@ func (s *StorageService) BuildFilePath(fileName string, accessID *uint64, fileID
 	if withExt {
 		filePath = fmt.Sprintf("%s%s", filePath, ext)
 	}
-	validatePath(filePath, s.RootLocation)
+	if err := validatePath(filePath, s.RootLocation); err != nil {
+		return "", ext, err
+	}
 
 	return filePath, ext, nil
 }

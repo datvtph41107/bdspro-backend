@@ -1,8 +1,8 @@
 package config
 
 import (
-	"common"
-	"log"
+	"common/configloader"
+	"fmt"
 	"notification/env"
 	"os"
 
@@ -46,11 +46,15 @@ type UserProperties struct {
 var AppProperties UserProperties
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() {
+func LoadConfig() error {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+	if err := configloader.LoadYMLFile(env.ENV_RUNTIME); err != nil {
+		return err
+	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		return fmt.Errorf("unmarshal notification config: %w", err)
 	}
+
+	return nil
 }

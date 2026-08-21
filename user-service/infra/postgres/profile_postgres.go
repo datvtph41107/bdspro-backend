@@ -24,10 +24,13 @@ type ProfilePostgres struct {
 	HubClient *client.HubClient
 }
 
-func NewProfilePostgres(db *gorm.DB) *ProfilePostgres {
+func NewProfilePostgres(
+	db *gorm.DB,
+	hubClient *client.HubClient,
+) *ProfilePostgres {
 	return &ProfilePostgres{
 		DB:        db,
-		HubClient: client.NewHubClient(),
+		HubClient: hubClient,
 	}
 }
 
@@ -644,11 +647,11 @@ func (r *ProfilePostgres) parseListUsersSort(req *dto.ListUsersRequest) string {
 	}
 
 	fieldMap := map[string]string{
-		"createdAt":  "up.created_at",
-		"updatedAt":  "up.updated_at",
-		"fullName":   "up.full_name",
-		"email":      "up.email",
-		"lastLogin":  "session_agg.last_login_at",
+		"createdAt":   "up.created_at",
+		"updatedAt":   "up.updated_at",
+		"fullName":    "up.full_name",
+		"email":       "up.email",
+		"lastLogin":   "session_agg.last_login_at",
 		"lastLoginAt": "session_agg.last_login_at",
 	}
 

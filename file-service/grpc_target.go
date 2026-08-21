@@ -5,14 +5,15 @@ import (
 	"common/requestgrpc"
 	"common/transporttrust"
 	"context"
+	"errors"
 	filegrpc "file/infra/handler/filegrpc"
 	"file/internal/filecontent"
+	"file/internal/processlifecycle"
 	"file/services"
 	"fmt"
 	"net"
-	"os"
 	filepb "pb/types/file"
-	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -56,21 +57,22 @@ func serveFileGRPCTarget(
 	)
 	filepb.RegisterInternalFileServiceServer(server, filegrpc.NewHandler(files))
 
+	stopDone := make(chan struct{})
 	go func() {
+		defer close(stopDone)
 		<-ctx.Done()
-		server.GracefulStop()
+		processlifecycle.StopGracefully(server, 10*time.Second)
 	}()
-	return server.Serve(listener)
-}
 
-func fileGRPCTargetEnabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_FILE_GRPC_ENABLED")))
-	return value == "1" || value == "true" || value == "yes"
-}
-
-func fileGRPCTargetPort() string {
-	if port := strings.TrimSpace(os.Getenv("QHPRO_FILE_GRPC_PORT")); port != "" {
-		return port
+	err = server.Serve(listener)
+	if ctx.Err() != nil && errors.Is(err, grpc.ErrServerStopped) {
+		err = nil
 	}
-	return "8203"
+	if ctx.Err() != nil {
+		select {
+		case <-stopDone:
+		case <-time.After(10 * time.Second):
+		}
+	}
+	return err
 }

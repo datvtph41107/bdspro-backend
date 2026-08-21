@@ -1,74 +1,33 @@
 package grpcmetadata
 
 import (
-	"common/identitygrpc"
-	"common/requestgrpc"
+	_rpc "common/rpc"
 	"context"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
 )
 
-const createGeneratedReportPath = "/v2/tqd/map-workspace/reports"
-
-type HTTPMetadataAdapter func(context.Context, *http.Request) metadata.MD
-
-// DuringReportMigration keeps every non-target request on the legacy metadata
-// bridge. The target bridge is intentionally narrow because it omits legacy
-// plan/quota fields and raw credentials.
-func DuringReportMigration(
-	targetEnabled bool,
-	legacy HTTPMetadataAdapter,
-) HTTPMetadataAdapter {
-	return func(ctx context.Context, r *http.Request) metadata.MD {
-		// chia ra các loại metadata
-		if targetEnabled && isCreateGeneratedReportRequest(r) {
-			return FromHTTPRequest(ctx, r)
-		}
-		if legacy != nil {
-			return legacy(ctx, r)
-		}
-		return metadata.MD{}
-	}
-}
-
-func ReportTargetEnabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_REPORT_TARGET_ENABLED")))
-	return value == "1" || value == "true" || value == "yes"
-}
-
-func isCreateGeneratedReportRequest(r *http.Request) bool {
-	if r == nil || r.URL == nil || r.Method != http.MethodPost {
-		return false
-	}
-	return strings.TrimSuffix(r.URL.Path, "/") == createGeneratedReportPath
-}
-
-/**
- * FromHTTPRequest chuyển canonical request context sang gRPC metadata.
- *
- * Gateway không đọc lại JWT để dựng Actor tại đây. Actor/Caller phải được
- * auth middleware bind trước đó.
- */
+// FromHTTPRequest serializes the Gateway-owned canonical context into the
+// outgoing gRPC metadata envelope. The canonical RPC client interceptor later
+// replaces protected identity fields and signs the envelope.
 func FromHTTPRequest(_ context.Context, r *http.Request) metadata.MD {
 	md := metadata.MD{}
 	if r == nil {
 		return md
 	}
-
 	ctx := r.Context()
-	md = requestgrpc.AppendFromContext(ctx, md)
-	md = identitygrpc.AppendFromContext(ctx, md)
+	md = _rpc.AppendRequestFromContext(ctx, md)
+	md = _rpc.AppendIdentityFromContext(ctx, md)
 
 	appendText(md, "client-ip", clientIP(r))
 	appendText(md, "user-agent", r.UserAgent())
 	appendText(md, "device-id", r.Header.Get("device-id"))
 	appendText(md, "if-none-match", r.Header.Get("If-None-Match"))
 	appendText(md, "x-qhpro-telemetry-key", r.Header.Get("X-QHPro-Telemetry-Key"))
-
+	appendText(md, "method", r.Method)
 	return md
 }
 

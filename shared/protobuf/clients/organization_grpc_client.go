@@ -1,13 +1,8 @@
 package clients
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
 	"errors"
-	"fmt"
-	"log"
-	"time"
 
 	organizationpb "pb/types/organization"
 
@@ -15,34 +10,15 @@ import (
 )
 
 type OrganizationClient struct {
-	Client organizationpb.InternalOrganizationServiceClient
+	Client     organizationpb.InternalOrganizationServiceClient
+	RoleClient organizationpb.OrganizationRoleServiceClient
 }
 
-func MakeOrganizationClient(env_runtime string) *OrganizationClient {
-	organizationClient := &OrganizationClient{}
-	go func() {
-		name := "organization"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8207", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := organizationpb.NewInternalOrganizationServiceClient(conn)
-		organizationClient.Client = client
-	}()
-	return organizationClient
+func BindOrganizationClient(conn grpc.ClientConnInterface) *OrganizationClient {
+	return &OrganizationClient{
+		Client:     organizationpb.NewInternalOrganizationServiceClient(conn),
+		RoleClient: organizationpb.NewOrganizationRoleServiceClient(conn),
+	}
 }
 
 func (c *OrganizationClient) GetOrganizationMapByIDs(ctx context.Context, organizationIDSet map[uint64]struct{}) (map[uint64]*organizationpb.OrganizationItem, error) {

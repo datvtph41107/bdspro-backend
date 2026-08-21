@@ -4,7 +4,6 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	clients "pb/clients"
-	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/interface/provider"
 )
@@ -15,10 +14,8 @@ type NotificationClient struct {
 }
 
 // @bind: tqd/internal/interface/provider.NotificationProvider
-func NewNotificationClient() provider.NotificationProvider {
-	return &NotificationClient{
-		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
-	}
+func NewNotificationClient(rpcClient *clients.NotificationClient) provider.NotificationProvider {
+	return &NotificationClient{NotificationClient: rpcClient}
 }
 
 func (c *NotificationClient) SendNotification(ctx context.Context, notification *dto.NotificationDTO) error {

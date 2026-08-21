@@ -1,5 +1,0 @@
-# Override cho local development (không commit)
-server:
-    port: 9000
-gateway:
-    global_rate_limit: 9999

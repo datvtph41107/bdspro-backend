@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	_requestcontext "common/requestcontext"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_observability "gateway/internal/observability"
 
@@ -115,7 +114,7 @@ func runBoundaryBenchmark(
 			)
 
 		request.Header.Set(
-			_requestcontext.RequestIDHeader,
+			_httpmiddleware.RequestIDHeader,
 			benchmarkRequestID,
 		)
 

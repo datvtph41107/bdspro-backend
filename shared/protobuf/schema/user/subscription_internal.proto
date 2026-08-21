@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package userpb;
+option go_package = "pb/types/user;userpb";
+
+import "google/protobuf/timestamp.proto";
+
+// InternalSubscriptionService is the command boundary used by Payment to apply
+// one durable, already-verified settlement effect to User-owned Subscription.
+service InternalSubscriptionService {
+  rpc ApplySettlement(ApplySettlementRequest) returns (ApplySettlementResponse);
+}
+
+message ApplySettlementRequest {
+  string effectKey = 1;
+  uint64 orderId = 2;
+  string subjectKind = 3;
+  string subjectId = 4;
+  string productCode = 5;
+  string planCode = 6;
+  uint64 planVersionId = 7;
+  string planVersion = 8;
+  int32 tierRank = 9;
+  int32 subscriptionTermDays = 10;
+  string termsChecksum = 11;
+  google.protobuf.Timestamp occurredAt = 12;
+}
+
+message ApplySettlementResponse {
+  uint64 subscriptionId = 1;
+  string action = 2;
+  bool replayed = 3;
+}

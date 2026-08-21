@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_observability "gateway/internal/observability"
 
@@ -136,11 +136,10 @@ func TestRequestIDRecorderWriteFailureDoesNotBlockHandler(
 	requestID :=
 		response.Header().
 			Get(
-				_requestcontext.
-					RequestIDHeader,
+				_httpmiddleware.RequestIDHeader,
 			)
 
-	if !_requestcontext.
+	if !_request.
 		IsValidRequestID(
 			requestID,
 		) {
@@ -203,7 +202,7 @@ func TestLifecycleRecorderWriteFailureDoesNotChangeResponse(
 		)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		requestID,
 	)
 
@@ -228,8 +227,7 @@ func TestLifecycleRecorderWriteFailureDoesNotChangeResponse(
 	if got :=
 		response.Header().
 			Get(
-				_requestcontext.
-					RequestIDHeader,
+				_httpmiddleware.RequestIDHeader,
 			); got != requestID {
 
 		t.Fatalf(
@@ -303,7 +301,7 @@ func TestRecoveryLogWriteFailureStillReturns500(
 		)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		requestID,
 	)
 
@@ -328,7 +326,7 @@ func TestRecoveryLogWriteFailureStillReturns500(
 	if got :=
 		response.Header().
 			Get(
-				_requestcontext.
+				_httpmiddleware.
 					RequestIDHeader,
 			); got != requestID {
 
@@ -406,7 +404,7 @@ func TestLifecycleSurvivesPartialMultiWriterFailure(
 		)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		requestID,
 	)
 

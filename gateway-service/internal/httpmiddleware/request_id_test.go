@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 )
 
 func TestGatewayResponsesRetainRequestID(
@@ -83,7 +83,7 @@ func TestGatewayResponsesRetainRequestID(
 			)
 
 			request.Header.Set(
-				_requestcontext.RequestIDHeader,
+				RequestIDHeader,
 				testCase.requestID,
 			)
 
@@ -103,7 +103,7 @@ func TestGatewayResponsesRetainRequestID(
 			}
 
 			responseRequestID := response.Header().Get(
-				_requestcontext.RequestIDHeader,
+				RequestIDHeader,
 			)
 
 			if responseRequestID != testCase.requestID {
@@ -147,25 +147,25 @@ func TestGatewayRecordsRequestIDDecision(
 	testCases := []struct {
 		name       string
 		values     []string
-		wantSource _requestcontext.RequestIDSource
-		wantReason _requestcontext.RequestIDReason
+		wantSource _request.RequestIDSource
+		wantReason _request.RequestIDReason
 	}{
 		{
 			name:       "missing",
-			wantSource: _requestcontext.RequestIDSourceGenerated,
-			wantReason: _requestcontext.RequestIDReasonMissing,
+			wantSource: _request.RequestIDSourceGenerated,
+			wantReason: _request.RequestIDReasonMissing,
 		},
 		{
 			name:       "valid",
 			values:     []string{"client-request-123"},
-			wantSource: _requestcontext.RequestIDSourceClient,
-			wantReason: _requestcontext.RequestIDReasonValid,
+			wantSource: _request.RequestIDSourceClient,
+			wantReason: _request.RequestIDReasonValid,
 		},
 		{
 			name:       "invalid",
 			values:     []string{"unsafe request id"},
-			wantSource: _requestcontext.RequestIDSourceGenerated,
-			wantReason: _requestcontext.RequestIDReasonInvalid,
+			wantSource: _request.RequestIDSourceGenerated,
+			wantReason: _request.RequestIDReasonInvalid,
 		},
 		{
 			name: "multiple",
@@ -173,8 +173,8 @@ func TestGatewayRecordsRequestIDDecision(
 				"request-a",
 				"request-b",
 			},
-			wantSource: _requestcontext.RequestIDSourceGenerated,
-			wantReason: _requestcontext.RequestIDReasonMultiple,
+			wantSource: _request.RequestIDSourceGenerated,
+			wantReason: _request.RequestIDReasonMultiple,
 		},
 	}
 
@@ -193,7 +193,7 @@ func TestGatewayRecordsRequestIDDecision(
 
 			for _, value := range testCase.values {
 				request.Header.Add(
-					_requestcontext.RequestIDHeader,
+					RequestIDHeader,
 					value,
 				)
 			}

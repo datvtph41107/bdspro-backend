@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"notification/env"
 	"notification/internal/provider"
 	clients "pb/clients"
 	sharepb "pb/types/shared"
@@ -13,10 +12,8 @@ type UserClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewUserClient() provider.IUserProvider {
-	return &UserClient{
-		Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewUserClient(rpcClient *clients.UserGrpcClient) provider.IUserProvider {
+	return &UserClient{Client: rpcClient}
 }
 
 func (c *UserClient) GetProfileByIds(ctx context.Context, in *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {

@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bdspro/env"
 	"context"
 	"pb/clients"
 	sharepb "pb/types/shared"
@@ -12,10 +11,13 @@ type AuthClient struct {
 	userClient *clients.UserGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
+func NewAuthClient(
+	authClient *clients.AuthGrpcClient,
+	userClient *clients.UserGrpcClient,
+) *AuthClient {
 	return &AuthClient{
-		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
-		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+		AuthGrpcClient: authClient,
+		userClient:     userClient,
 	}
 }
 

@@ -14,8 +14,12 @@ type commercialTerms struct {
 	Version      string
 	DisplayName  string
 	SubjectScope SubjectScope
-	Entitlements []Entitlement
-	Prices       []PriceItem
+	// omitempty preserves the exact pre-term checksum payload for legacy rows.
+	// New publication still requires a positive term through Catalog validation.
+	SubscriptionTermDays int32 `json:",omitempty"`
+	Entitlements         []Entitlement
+	Operations           []OperationPolicy
+	Prices               []PriceItem
 }
 
 /** TermsChecksum fingerprints commercial terms without lifecycle state. */
@@ -25,6 +29,7 @@ func TermsChecksum(plan PlanVersion) (string, error) {
 	}
 
 	entitlements := append([]Entitlement(nil), plan.Entitlements...)
+	operations := append([]OperationPolicy(nil), plan.Operations...)
 	prices := append([]PriceItem(nil), plan.Prices...)
 	sort.Slice(entitlements, func(i, j int) bool {
 		return entitlements[i].Code < entitlements[j].Code
@@ -32,15 +37,20 @@ func TermsChecksum(plan PlanVersion) (string, error) {
 	sort.Slice(prices, func(i, j int) bool {
 		return prices[i].Code < prices[j].Code
 	})
+	sort.Slice(operations, func(i, j int) bool {
+		return operations[i].Code < operations[j].Code
+	})
 
 	payload, err := json.Marshal(commercialTerms{
-		ProductCode:  plan.ProductCode,
-		PlanCode:     plan.PlanCode,
-		Version:      plan.Version,
-		DisplayName:  plan.DisplayName,
-		SubjectScope: plan.SubjectScope,
-		Entitlements: entitlements,
-		Prices:       prices,
+		ProductCode:          plan.ProductCode,
+		PlanCode:             plan.PlanCode,
+		Version:              plan.Version,
+		DisplayName:          plan.DisplayName,
+		SubjectScope:         plan.SubjectScope,
+		SubscriptionTermDays: plan.SubscriptionTermDays,
+		Entitlements:         entitlements,
+		Operations:           operations,
+		Prices:               prices,
 	})
 	if err != nil {
 		return "", fmt.Errorf("marshal commercial terms: %w", err)

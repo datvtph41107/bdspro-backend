@@ -1,8 +1,8 @@
 package requestlog
 
 import (
-	"common/businessoperation"
 	"common/identitycontext"
+	"common/operation"
 	"common/requestcontext"
 	"context"
 	"log/slog"
@@ -36,8 +36,14 @@ func FromContext(ctx context.Context, base *slog.Logger) *slog.Logger {
 			fields = append(fields, "auth_id", actor.AuthID)
 		}
 	}
-	if operation, ok := businessoperation.FromContext(ctx); ok {
-		fields = append(fields, "business_operation", string(operation))
+	if currentOperation, ok := operation.FromContext(ctx); ok {
+		// Keep the existing log key until its external consumers are inventoried.
+		// Only the value authority changes here: common/operation is canonical.
+		fields = append(
+			fields,
+			"business_operation",
+			string(currentOperation),
+		)
 	}
 
 	return base.With(fields...)

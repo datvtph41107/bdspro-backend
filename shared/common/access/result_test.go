@@ -1,7 +1,7 @@
 package access
 
 import (
-	"common/businessoperation"
+	"common/operation"
 	"testing"
 	"time"
 )
@@ -11,9 +11,15 @@ func TestResultUsesQuota(t *testing.T) {
 	end := start.AddDate(0, 1, 0)
 
 	result := Result{
-		Subject:     Subject{Type: SubjectProfile, ID: "42"},
-		Operation:   businessoperation.WorkspaceReportGenerate,
-		Allowed:     true,
+		Subject:   Subject{Type: SubjectProfile, ID: "42"},
+		Operation: operation.Code("workspace.report.generate"),
+		Allowed:   true,
+		Metering: Metering{
+			FeatureCode:    "workspace.report.generate",
+			MeterCode:      "workspace.report_generation.accepted",
+			UnitsPerAction: 1,
+			PolicyVersion:  "1.0.0",
+		},
 		Limit:       100,
 		Period:      PeriodSubscriptionCycle,
 		PeriodStart: start,

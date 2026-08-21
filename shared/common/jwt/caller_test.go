@@ -1,7 +1,7 @@
 package _jwt
 
 import (
-	_callercontext "common/callercontext"
+	"common/identity"
 
 	"context"
 	"errors"
@@ -17,22 +17,22 @@ func TestClassifyCallerMatrix(t *testing.T) {
 	cases := []struct {
 		name  string
 		input CallerClassificationInput
-		want  _callercontext.Caller
+		want  identity.Caller
 	}{
 		{
 			name:  "anonymous public route",
 			input: CallerClassificationInput{AllowAnonymous: true},
-			want:  _callercontext.Caller{Kind: _callercontext.KindAnonymous},
+			want:  identity.Caller{Kind: identity.CallerAnonymous},
 		},
 		{
 			name:  "api key only",
 			input: CallerClassificationInput{APIKey: apiKey},
-			want:  _callercontext.Caller{Kind: _callercontext.KindAPIKey, APIKeyID: 7, APIKeyApp: "partner-app"},
+			want:  identity.Caller{Kind: identity.CallerAPIKey, APIKeyID: 7, APIKeyApp: "partner-app"},
 		},
 		{
 			name:  "jwt user",
 			input: CallerClassificationInput{Principal: &Principal{ProfileId: 42}},
-			want:  _callercontext.Caller{Kind: _callercontext.KindUser},
+			want:  identity.Caller{Kind: identity.CallerUser},
 		},
 		{
 			name: "jwt user through verified api client",
@@ -40,7 +40,7 @@ func TestClassifyCallerMatrix(t *testing.T) {
 				Principal: &Principal{ProfileId: 42},
 				APIKey:    apiKey,
 			},
-			want: _callercontext.Caller{Kind: _callercontext.KindUser, APIKeyID: 7, APIKeyApp: "partner-app"},
+			want: identity.Caller{Kind: identity.CallerUser, APIKeyID: 7, APIKeyApp: "partner-app"},
 		},
 	}
 
@@ -115,7 +115,7 @@ func TestResolveHTTPCallerCanonicalizesLegacyAPIKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ResolveHTTPCaller() error = %v", err)
 	}
-	if resolution.Caller.Kind != _callercontext.KindAPIKey || resolution.Caller.APIKeyID != 9 {
+	if resolution.Caller.Kind != identity.CallerAPIKey || resolution.Caller.APIKeyID != 9 {
 		t.Fatalf("caller = %#v", resolution.Caller)
 	}
 	if got := req.Header.Get(APIKeyHeader); got != "0123456789abcdef" {
@@ -138,7 +138,7 @@ func TestResolveHTTPCallerDoesNotCallVerifierWithoutAPIKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ResolveHTTPCaller() error = %v", err)
 	}
-	if resolution.Caller.Kind != _callercontext.KindAnonymous || verifier.calls != 0 {
+	if resolution.Caller.Kind != identity.CallerAnonymous || verifier.calls != 0 {
 		t.Fatalf("resolution = %#v, calls = %d", resolution, verifier.calls)
 	}
 }

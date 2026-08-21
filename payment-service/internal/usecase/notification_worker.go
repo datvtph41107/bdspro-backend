@@ -17,29 +17,47 @@ type NotificationDTO struct {
 	Message     string
 }
 
-type notificationWorker struct {
+type NotificationWorker struct {
 	notificationClient client.NotificationClient
 	channel            chan *NotificationDTO
 }
 
-func NewNotificationWorker(notificationClient client.NotificationClient) *notificationWorker {
-	return &notificationWorker{channel: make(chan *NotificationDTO), notificationClient: notificationClient}
+func NewNotificationWorker(notificationClient client.NotificationClient) *NotificationWorker {
+	return &NotificationWorker{channel: make(chan *NotificationDTO), notificationClient: notificationClient}
 }
 
-func (w *notificationWorker) Start() {
-	go func() {
-		for notification := range w.channel {
-			w.sendToNotificationService(context.Background(), notification.Transaction, notification.Message)
+func (w *NotificationWorker) Run(ctx context.Context) error {
+	if w == nil || w.notificationClient == nil {
+		return fmt.Errorf("notification worker is not configured")
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case notification := <-w.channel:
+			if notification == nil || notification.Transaction == nil {
+				continue
+			}
+			// Notification is post-commit background responsibility. Process context,
+			// not the completed request context, owns its cancellation.
+			_ = w.sendToNotificationService(ctx, notification.Transaction, notification.Message)
 		}
-	}()
+	}
 }
 
-func (w *notificationWorker) PushToQueue(ctx context.Context, transaction *entity.WalletTransaction, message string) error {
-	w.channel <- &NotificationDTO{Transaction: transaction, Message: message}
-	return nil
+func (w *NotificationWorker) PushToQueue(ctx context.Context, transaction *entity.WalletTransaction, message string) error {
+	if w == nil || transaction == nil {
+		return fmt.Errorf("notification worker is not configured")
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case w.channel <- &NotificationDTO{Transaction: transaction, Message: message}:
+		return nil
+	}
 }
 
-func (w *notificationWorker) sendToNotificationService(ctx context.Context, transaction *entity.WalletTransaction, message string) error {
+func (w *NotificationWorker) sendToNotificationService(ctx context.Context, transaction *entity.WalletTransaction, message string) error {
 	var notificationType int32
 	if transaction.Type == entity.TransactionTypeDeposit {
 		notificationType = int32(enums.NotificationTypeDeposit)

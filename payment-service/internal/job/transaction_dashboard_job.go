@@ -23,7 +23,7 @@ func NewTransactionDashboardJob(
 	}
 }
 func (j *TransactionDashboardJob) Run(ctx context.Context) error {
-	j.cronJob.AddFunc("0 0 * * *", func() {
+	_, err := j.cronJob.AddFunc("0 0 * * *", func() {
 		processingCount, err := j.paymentUsecase.CountProcessingTransactions(ctx)
 		if err != nil {
 			return
@@ -41,6 +41,12 @@ func (j *TransactionDashboardJob) Run(ctx context.Context) error {
 			return
 		}
 	})
+	if err != nil {
+		return err
+	}
 	j.cronJob.Start()
+	<-ctx.Done()
+	stopCtx := j.cronJob.Stop()
+	<-stopCtx.Done()
 	return nil
 }

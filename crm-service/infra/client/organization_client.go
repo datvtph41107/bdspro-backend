@@ -7,18 +7,14 @@ import (
 	crmpb "pb/types/crm"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
-
-	"crm/env"
 )
 
 type OrganizationClient struct {
 	Client *clients.OrganizationClient
 }
 
-func NewOrganizationClient() *OrganizationClient {
-	return &OrganizationClient{
-		Client: clients.MakeOrganizationClient(env.ENV_RUNTIME),
-	}
+func NewOrganizationClient(rpcClient *clients.OrganizationClient) *OrganizationClient {
+	return &OrganizationClient{Client: rpcClient}
 }
 
 func (c *OrganizationClient) CheckUsersInOrganization(ctx context.Context, organizationID uint32, userIds []uint64) ([]*organizationpb.CheckUserInOrganization, error) {

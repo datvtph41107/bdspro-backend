@@ -1,7 +1,7 @@
 package _jwt
 
 import (
-	_callercontext "common/callercontext"
+	"common/identity"
 
 	"context"
 	"encoding/json"
@@ -77,7 +77,7 @@ func TestCallerResolutionOverHTTP(t *testing.T) {
 
 	t.Run("anonymous", func(t *testing.T) {
 		resp := requestCallerHTTP(t, server.URL+"?public=1", nil)
-		if resp.Kind != string(_callercontext.KindAnonymous) || resp.APIKeyID != 0 || resp.HasActor {
+		if resp.Kind != string(identity.CallerAnonymous) || resp.APIKeyID != 0 || resp.HasActor {
 			t.Fatalf("response = %#v", resp)
 		}
 	})
@@ -85,7 +85,7 @@ func TestCallerResolutionOverHTTP(t *testing.T) {
 	t.Run("api key", func(t *testing.T) {
 		headers := http.Header{LegacyAPIKeyHeader: []string{"0123456789abcdef"}}
 		resp := requestCallerHTTP(t, server.URL, headers)
-		if resp.Kind != string(_callercontext.KindAPIKey) || resp.APIKeyID != 7 || resp.Canonical == "" || resp.HasActor {
+		if resp.Kind != string(identity.CallerAPIKey) || resp.APIKeyID != 7 || resp.Canonical == "" || resp.HasActor {
 			t.Fatalf("response = %#v", resp)
 		}
 	})
@@ -93,7 +93,7 @@ func TestCallerResolutionOverHTTP(t *testing.T) {
 	t.Run("user", func(t *testing.T) {
 		headers := http.Header{"X-Test-Verified-Profile": []string{"42"}}
 		resp := requestCallerHTTP(t, server.URL, headers)
-		if resp.Kind != string(_callercontext.KindUser) || !resp.HasActor || resp.APIKeyID != 0 {
+		if resp.Kind != string(identity.CallerUser) || !resp.HasActor || resp.APIKeyID != 0 {
 			t.Fatalf("response = %#v", resp)
 		}
 	})
@@ -104,7 +104,7 @@ func TestCallerResolutionOverHTTP(t *testing.T) {
 			APIKeyHeader:              []string{"0123456789abcdef"},
 		}
 		resp := requestCallerHTTP(t, server.URL, headers)
-		if resp.Kind != string(_callercontext.KindUser) || !resp.HasActor || resp.APIKeyID != 7 {
+		if resp.Kind != string(identity.CallerUser) || !resp.HasActor || resp.APIKeyID != 7 {
 			t.Fatalf("response = %#v", resp)
 		}
 	})

@@ -3,28 +3,40 @@ package main
 import (
 	_db "common/db"
 	_jwt "common/jwt"
+	qhprorpc "common/rpc"
+	"common/transporttrust"
 	"context"
 	"file/config"
 	_ "file/docs/file"
+	"file/internal/fileauthorization/authgrpc"
+	"file/internal/process/filequeue"
+	"file/internal/processlifecycle"
+	"file/internal/serviceauth"
+	versionhubgrpc "file/internal/versionauth/hubgrpc"
 	"file/models"
 	"file/repositories"
 	"file/services"
+	"fmt"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"google.golang.org/grpc/credentials/insecure"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
+	authpb "pb/types/auth"
+	hubpb "pb/types/hub"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/gorm"
 )
 
 // RegisterDocs registers the Swagger documentation.
@@ -81,16 +93,63 @@ func NewConfigApp(db *gorm.DB, fileService *services.FileService, versionService
 // @in header
 // @name Authorization
 func main() {
+	if err := run(); err != nil {
+		log.Printf("File-service stopped with error: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	r := gin.Default()
 
 	// Tắt redirect tự động của Gin để tránh redirect 301
 	r.RedirectTrailingSlash = false
 	r.RedirectFixedPath = false
 
-	config.LoadConfig()
+	if err := config.LoadConfig(); err != nil {
+		return fmt.Errorf("load file config: %w", err)
+	}
+	runtimeCfg, err := config.CurrentRuntimeConfig()
+	if err != nil {
+		return fmt.Errorf("load file runtime config: %w", err)
+	}
+	serviceAuth, ok := serviceauth.NewVerifier(runtimeCfg.FileService.ServiceAuthKey)
+	if !ok {
+		return fmt.Errorf("load file runtime config: service.auth_key is required")
+	}
+	authConn, err := qhprorpc.NewClient(qhprorpc.ClientConfig{
+		Target:          runtimeCfg.Auth.GRPCAddress,
+		BackoffMaxDelay: 5 * time.Second,
+		Credentials:     insecure.NewCredentials(),
+		Transport:       qhprorpc.TransportConfig{Trust: transporttrust.ConfigFromEnv()},
+	})
+	if err != nil {
+		return fmt.Errorf("configure auth permission client: %w", err)
+	}
+	defer authConn.Close()
+	permissionAuthorizer := authgrpc.New(
+		authpb.NewAuthInternalServiceClient(authConn),
+		runtimeCfg.Auth.Timeout,
+	)
+
+	hubConn, err := qhprorpc.NewClient(qhprorpc.ClientConfig{
+		Target:          runtimeCfg.Hub.GRPCAddress,
+		BackoffMaxDelay: 5 * time.Second,
+		Credentials:     insecure.NewCredentials(),
+		Transport:       qhprorpc.TransportConfig{Trust: transporttrust.ConfigFromEnv()},
+	})
+	if err != nil {
+		return fmt.Errorf("configure hub API-key client: %w", err)
+	}
+	defer hubConn.Close()
+	apiKeyVerifier := versionhubgrpc.New(
+		hubpb.NewApiKeyServiceClient(hubConn),
+		runtimeCfg.Hub.Timeout,
+	)
+
 	db, err := _db.NewDB()
 	if err != nil {
-		return
+		return fmt.Errorf("open file database: %w", err)
 	}
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
@@ -100,22 +159,20 @@ func main() {
 	fileRepository := repositories.NewFileRepository(db)
 	accessRepository := repositories.NewFileAccessRepository(db)
 	storageService := services.NewStorageService()
-	fileService := services.NewFileService(fileRepository, accessRepository, storageService)
-	versionService := services.NewVersionService(fileService, storageService)
+	fileService := services.NewFileService(
+		fileRepository,
+		accessRepository,
+		storageService,
+		services.FileSecurityConfig{
+			SignatureKey:    runtimeCfg.FileService.SignatureKey,
+			XorCryptKey:     runtimeCfg.FileService.XorCryptKey,
+			SignatureExpire: runtimeCfg.FileService.SignatureExpire,
+			ServiceAuth:     serviceAuth,
+			PermissionAuth:  permissionAuthorizer,
+		},
+	)
+	versionService := services.NewVersionService(fileService, storageService, apiKeyVerifier)
 	RootApp := NewConfigApp(db, fileService, versionService)
-	// RootApp.
-	grpcCtx, stopGRPC := context.WithCancel(context.Background())
-	defer stopGRPC()
-	if fileGRPCTargetEnabled() {
-		grpcPort := fileGRPCTargetPort()
-		go func() {
-			log.Printf("Internal file gRPC server listening on :%s", grpcPort)
-			if err := serveFileGRPCTarget(grpcCtx, grpcPort, fileService); err != nil {
-				log.Fatalf("Internal file gRPC server failed: %v", err)
-			}
-		}()
-	}
-
 	layerAllowedRe := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
 	r.Use(cors.New(cors.Config{
@@ -577,7 +634,33 @@ func main() {
 		c.JSON(http.StatusNotFound, gin.H{"error": "tile not found"})
 	})
 
-	r.Run(":8002")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	httpServer := &http.Server{
+		Addr:              ":" + runtimeCfg.HTTPPort,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	var internalServer processlifecycle.InternalServerFunc
+	if runtimeCfg.InternalGRPC.Enabled {
+		grpcPort := runtimeCfg.InternalGRPC.Port
+		internalServer = func(ctx context.Context) error {
+			log.Printf("Internal file gRPC server listening on :%s", grpcPort)
+			return serveFileGRPCTarget(ctx, grpcPort, fileService)
+		}
+	}
+
+	queueRunner := filequeue.New(fileService.Queue, services.MaxConcurrentRequests)
+	return processlifecycle.Run(
+		ctx,
+		stop,
+		httpServer,
+		internalServer,
+		[]processlifecycle.Actor{queueRunner},
+		processlifecycle.Config{ShutdownTimeout: 10 * time.Second},
+	)
 }
 
 func pathJoinURL(parts ...string) string {

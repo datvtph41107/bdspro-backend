@@ -18,6 +18,7 @@ import (
 
 // ++@bind: assistant/internal/interface/provider.DeepseekProvider
 
+// @bind: assistant/internal/interface/provider.DeepseekProvider
 type DeepseekClient struct {
 	apiKey     string
 	baseURL    string

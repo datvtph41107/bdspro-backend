@@ -4,8 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"user/infra/handler/accessgrpc"
+	"user/infra/handler/cataloggrpc"
+	"user/infra/postgres"
 	accesspostgres "user/infra/postgres/access"
-	useraccess "user/internal/access"
+	"user/infra/postgres/iampermission"
+	"user/internal/modules/catalog/admin"
+	"user/internal/modules/catalog/publication"
+	useraccess "user/internal/modules/entitlement/evaluate"
 
 	_db "common/db"
 	userpb "pb/types/user"
@@ -14,11 +19,11 @@ import (
 )
 
 /**
- * registerAccessService lắp access flow mới vào gRPC server hiện tại.
+ * registerTargetServices lắp các capability theo trusted identity vào gRPC server.
  *
  * Hàm dùng cùng PostgreSQL connection của user-service và không mở HTTP route.
  */
-func registerAccessService(server *grpc.Server) error {
+func registerTargetServices(server *grpc.Server) error {
 	if server == nil {
 		return errors.New("grpc server is nil")
 	}
@@ -32,18 +37,39 @@ func registerAccessService(server *grpc.Server) error {
 	handler := accessgrpc.NewHandler(service)
 
 	userpb.RegisterInternalAccessServiceServer(server, handler)
+	registerAdminCatalogService(server)
 	return nil
 }
 
-/**
- * internalAccessMethod trả true cho gRPC method chỉ dùng để đọc access.
- *
- * Legacy quota interceptor phải bỏ qua method này vì đây không phải user business action.
- */
-func internalAccessMethod(fullMethod string) bool {
-	return fullMethod == "/userpb.InternalAccessService/GetAccess"
+/** registerAdminCatalogService installs the versioned catalog control plane. */
+func registerAdminCatalogService(server *grpc.Server) {
+	repository := postgres.NewCatalogRepo(_db.NewTransactionRepo(_db.DB))
+	publisher := publication.NewService(
+		_db.NewTransactionRepo(_db.DB),
+		repository,
+	)
+	authorizer := iampermission.NewChecker(_db.DB)
+	handler := cataloggrpc.NewHandler(admin.NewService(repository, publisher), authorizer)
+	userpb.RegisterAdminCatalogServiceServer(server, handler)
 }
 
-func accessRegistrationError(err error) error {
-	return fmt.Errorf("register internal access service: %w", err)
+/**
+ * trustedIdentityMethod trả true cho RPC cần canonical identity đã được ký.
+ *
+ * Legacy quota interceptor phải bỏ qua các method này: chúng không phải user business action.
+ */
+func trustedIdentityMethod(fullMethod string) bool {
+	switch fullMethod {
+	case "/userpb.InternalAccessService/GetAccess",
+		"/userpb.AdminCatalogService/ListPlanVersions",
+		"/userpb.AdminCatalogService/GetPlanVersion",
+		"/userpb.AdminCatalogService/PublishPlanVersion":
+		return true
+	default:
+		return false
+	}
+}
+
+func targetRegistrationError(err error) error {
+	return fmt.Errorf("register trusted target services: %w", err)
 }

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,12 +8,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	_db "common/db"
 	_utils "common/utils"
+	"file/internal/versionauth"
 	"file/models"
-	clients "pb/clients"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,18 +21,16 @@ import (
 const maxVersionChunkSize = int64(10 * 1024 * 1024)
 
 type VersionService struct {
-	fileService *FileService
-	storage     *StorageService
-	xorCryptKey string
-	hubClient   *clients.HubGrpcClient
+	storage        *StorageService
+	xorCryptKey    string
+	apiKeyVerifier versionauth.Verifier
 }
 
-func NewVersionService(fileService *FileService, storage *StorageService) *VersionService {
+func NewVersionService(fileService *FileService, storage *StorageService, apiKeyVerifier versionauth.Verifier) *VersionService {
 	return &VersionService{
-		fileService: fileService,
-		storage:     storage,
-		xorCryptKey: fileService.XorCryptKey,
-		hubClient:   clients.MakeHubGrpcClient(os.Getenv("ENV_RUNTIME")),
+		storage:        storage,
+		xorCryptKey:    fileService.XorCryptKey,
+		apiKeyVerifier: apiKeyVerifier,
 	}
 }
 
@@ -227,25 +223,8 @@ func detectMimeType(path string) string {
 }
 
 func (s *VersionService) verifyApiKey(c *gin.Context, apiKey string) error {
-	if s.hubClient == nil {
-		return errors.New("hub client not initialized")
+	if s.apiKeyVerifier == nil {
+		return errors.New("hub API key verifier not initialized")
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
-	defer cancel()
-
-	resp, err := s.hubClient.VerifyApiKey(ctx, apiKey)
-	if err != nil {
-		return err
-	}
-
-	if resp == nil || !resp.GetValid() {
-		msg := "API key không hợp lệ"
-		if resp != nil && strings.TrimSpace(resp.GetMessage()) != "" {
-			msg = resp.GetMessage()
-		}
-		return errors.New(msg)
-	}
-
-	return nil
+	return s.apiKeyVerifier.Verify(c.Request.Context(), apiKey)
 }

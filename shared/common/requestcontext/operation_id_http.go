@@ -2,6 +2,35 @@ package requestcontext
 
 import "net/http"
 
+type operationIDGenerator func() (string, error)
+
+// resolveOperationID is a temporary HTTP-compatibility seam.
+// Non-missing input delegates to the canonical request package through
+// ResolveOperationID. The injected generator is retained only so legacy HTTP
+// atomicity tests can force generation failure until Gateway owns this boundary.
+func resolveOperationID(
+	values []string,
+	generate operationIDGenerator,
+) (OperationIDDecision, error) {
+	if len(values) != 0 {
+		return ResolveOperationID(values)
+	}
+
+	operationID, err := generate()
+	if err != nil {
+		return OperationIDDecision{}, err
+	}
+	if !IsValidOperationID(operationID) {
+		return OperationIDDecision{}, ErrOperationIDGeneration
+	}
+
+	return OperationIDDecision{
+		ID:     operationID,
+		Source: OperationIDSourceGeneratedFallback,
+		Reason: OperationIDReasonMissing,
+	}, nil
+}
+
 /**
  * PrepareHTTPOperationID resolves and atomically binds the canonical
  * logical-operation identity at the HTTP ingress boundary.

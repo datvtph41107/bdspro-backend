@@ -1,82 +1,103 @@
 package cmd
 
 import (
-	"common/businessoperation"
+	"common/operation"
 	"context"
 	"testing"
 
+	tqdpb "pb/types/tqd"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func TestUsesTargetQuotaRequiresFeatureFlag(t *testing.T) {
-	if usesTargetQuota(false, createGeneratedReportMethod) {
-		t.Fatal("target quota must stay disabled when feature flag is off")
+func TestUsesReportTargetRuntimeOwnsGeneratedReportOnly(t *testing.T) {
+	t.Parallel()
+
+	method := tqdpb.MapWorkspaceService_CreateGeneratedReport_FullMethodName
+	if !usesReportTargetRuntime(method) {
+		t.Fatal("canonical Generated Report RPC must always use target runtime")
 	}
-	if !usesTargetQuota(true, createGeneratedReportMethod) {
-		t.Fatal("target quota must handle migrated method when feature flag is on")
-	}
-	if usesTargetQuota(true, "/types.tqd.ParcelService/GetParcel") {
-		t.Fatal("non-target RPC must keep legacy quota")
+	if usesReportTargetRuntime(tqdpb.MapWorkspaceService_ListFollowedParcels_FullMethodName) {
+		t.Fatal("non-target RPC must stay outside the Report target runtime")
 	}
 }
 
-func TestSkipTargetOperationRuntimeKeepsLegacyWhenFlagDisabled(t *testing.T) {
-	legacyCalls := 0
-	legacy := func(
-		ctx context.Context,
-		req interface{},
-		_ *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		legacyCalls++
-		return handler(ctx, req)
-	}
-	handler := func(context.Context, interface{}) (interface{}, error) {
-		return "ok", nil
-	}
-	info := &grpc.UnaryServerInfo{FullMethod: createGeneratedReportMethod}
+func TestReportTargetOperationInterceptorBindsCanonicalSelection(t *testing.T) {
+	t.Parallel()
 
-	if _, err := skipTargetOperationRuntime(legacy, false)(context.Background(), nil, info, handler); err != nil {
-		t.Fatal(err)
-	}
-	if legacyCalls != 1 {
-		t.Fatalf("legacy calls with flag off = %d, want 1", legacyCalls)
-	}
-
-	if _, err := skipTargetOperationRuntime(legacy, true)(context.Background(), nil, info, handler); err != nil {
-		t.Fatal(err)
-	}
-	if legacyCalls != 1 {
-		t.Fatalf("legacy calls with flag on = %d, want unchanged", legacyCalls)
+	_, err := buildReportTargetOperationInterceptor()(
+		context.Background(),
+		nil,
+		&grpc.UnaryServerInfo{
+			FullMethod: tqdpb.MapWorkspaceService_CreateGeneratedReport_FullMethodName,
+		},
+		func(ctx context.Context, _ interface{}) (interface{}, error) {
+			selected, ok := operation.FromContext(ctx)
+			if !ok {
+				t.Fatal("canonical operation is missing")
+			}
+			if selected != operation.Code("workspace.report.generate") {
+				t.Fatalf("canonical operation = %q", selected)
+			}
+			return "ok", nil
+		},
+	)
+	if err != nil {
+		t.Fatalf("report target operation interceptor error = %v", err)
 	}
 }
 
-func TestBusinessOperationInterceptorFollowsFeatureFlag(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
-			interceptor, err := newBusinessOperationInterceptor(enabled)
-			if err != nil {
-				t.Fatal(err)
-			}
+func TestReportTargetOperationInterceptorLeavesOtherRPCsUntouched(t *testing.T) {
+	t.Parallel()
 
-			_, err = interceptor(
-				context.Background(),
-				nil,
-				&grpc.UnaryServerInfo{FullMethod: createGeneratedReportMethod},
-				func(ctx context.Context, _ interface{}) (interface{}, error) {
-					operation, ok := businessoperation.FromContext(ctx)
-					if enabled && (!ok || operation != businessoperation.WorkspaceReportGenerate) {
-						t.Fatalf("operation = %q, %v", operation, ok)
-					}
-					if !enabled && ok {
-						t.Fatalf("operation must not be bound with flag off: %q", operation)
-					}
-					return nil, nil
-				},
-			)
-			if err != nil {
-				t.Fatal(err)
+	_, err := buildReportTargetOperationInterceptor()(
+		context.Background(),
+		nil,
+		&grpc.UnaryServerInfo{
+			FullMethod: tqdpb.MapWorkspaceService_ListFollowedParcels_FullMethodName,
+		},
+		func(ctx context.Context, _ interface{}) (interface{}, error) {
+			if code, ok := operation.FromContext(ctx); ok {
+				t.Fatalf("unexpected canonical operation = %q", code)
 			}
-		})
+			return nil, nil
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestReportTargetOperationInterceptorRejectsCanonicalContextConflict(t *testing.T) {
+	t.Parallel()
+
+	ctx, err := operation.Bind(
+		context.Background(),
+		operation.Code("workspace.report.delete"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	called := false
+	_, err = buildReportTargetOperationInterceptor()(
+		ctx,
+		nil,
+		&grpc.UnaryServerInfo{
+			FullMethod: tqdpb.MapWorkspaceService_CreateGeneratedReport_FullMethodName,
+		},
+		func(context.Context, interface{}) (interface{}, error) {
+			called = true
+			return nil, nil
+		},
+	)
+
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("status code = %v, want Internal; error = %v", status.Code(err), err)
+	}
+	if called {
+		t.Fatal("handler must not run after canonical operation conflict")
 	}
 }

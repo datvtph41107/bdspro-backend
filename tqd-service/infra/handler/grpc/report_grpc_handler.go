@@ -10,7 +10,6 @@ import (
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
-	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/usecase"
@@ -25,11 +24,15 @@ type ReportGrpcHandler struct {
 	authClient    *clients.AuthGrpcClient
 }
 
-func NewReportGrpcHandler(reportUsecase usecase.ReportUsecase, syncProvider *_utils.SyncUtil) *ReportGrpcHandler {
+func NewReportGrpcHandler(
+	reportUsecase usecase.ReportUsecase,
+	syncProvider *_utils.SyncUtil,
+	authClient *clients.AuthGrpcClient,
+) *ReportGrpcHandler {
 	return &ReportGrpcHandler{
 		reportUsecase: reportUsecase,
 		SyncProvider:  syncProvider,
-		authClient:    clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		authClient:    authClient,
 	}
 }
 

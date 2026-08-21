@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"notification/env"
 	clients "pb/clients"
 )
 
@@ -11,10 +10,8 @@ type AuthClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
-	return &AuthClient{
-		Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewAuthClient(rpcClient *clients.UserGrpcClient) *AuthClient {
+	return &AuthClient{Client: rpcClient}
 }
 
 func (c *AuthClient) GetPushTokensByProfileId(ctx context.Context, profileID uint64) ([]string, error) {

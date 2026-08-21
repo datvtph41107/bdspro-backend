@@ -10,21 +10,25 @@ import (
 	"common/productcatalog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"user/internal/catalogdomain"
-	"user/internal/catalogpublication"
-	"user/internal/catalogshadow"
 	"user/internal/models"
-	"user/internal/subscriptiondomain"
-	"user/internal/subscriptionshadow"
+	"user/internal/modules/catalog/admin"
+	catalogdomain "user/internal/modules/catalog/domain"
+	"user/internal/modules/catalog/publication"
+	catalogshadow "user/internal/modules/catalog/shadow"
+	subscriptiondomain "user/internal/modules/subscription/domain"
+	subscriptionshadow "user/internal/modules/subscription/shadow"
 )
 
 /** CatalogRepo persists catalog v2 aggregates. */
+// @bind: user/internal/modules/catalog/shadow.Repository
+// @bind: user/internal/modules/subscription/shadow.Repository
 type CatalogRepo struct {
 	transactionRepo *_db.TransactionRepo
 }
 
 var (
-	_ catalogpublication.Repository = (*CatalogRepo)(nil)
+	_ publication.Repository        = (*CatalogRepo)(nil)
+	_ admin.Repository              = (*CatalogRepo)(nil)
 	_ catalogshadow.Repository      = (*CatalogRepo)(nil)
 	_ subscriptionshadow.Repository = (*CatalogRepo)(nil)
 )
@@ -58,16 +62,65 @@ func (r *CatalogRepo) GetPlanVersion(
 		)
 	}
 	aggregate, err := r.loadPlanVersion(ctx, planVersionID, false)
-	if errors.Is(err, catalogpublication.ErrPlanVersionNotFound) {
+	if errors.Is(err, publication.ErrPlanVersionNotFound) {
 		return catalogdomain.PlanVersionAggregate{}, catalogshadow.ErrNotFound
 	}
 	return aggregate, err
 }
 
+/** ListPlanVersions returns a bounded page for the Admin control plane. */
+func (r *CatalogRepo) ListPlanVersions(
+	ctx context.Context,
+	query admin.Query,
+) (admin.Page, error) {
+	if r == nil || r.transactionRepo == nil {
+		return admin.Page{}, fmt.Errorf("catalog repository is not configured")
+	}
+	db := r.transactionRepo.GetDB(ctx)
+	base := db.Model(&models.CatalogPlanVersion{}).
+		Joins("JOIN catalog_plans ON catalog_plans.id = catalog_plan_versions.plan_id").
+		Joins("JOIN catalog_products ON catalog_products.id = catalog_plans.product_id")
+	if query.ProductCode != "" {
+		base = base.Where("catalog_products.code = ?", query.ProductCode)
+	}
+	if query.PlanCode != "" {
+		base = base.Where("catalog_plans.code = ?", query.PlanCode)
+	}
+	if query.Status != "" {
+		base = base.Where("catalog_plan_versions.status = ?", query.Status)
+	}
+
+	var total int64
+	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return admin.Page{}, err
+	}
+	offset := int((query.Page - 1) * query.PageSize)
+	var versions []models.CatalogPlanVersion
+	if err := base.
+		Order("catalog_plan_versions.created_at DESC, catalog_plan_versions.id DESC").
+		Offset(offset).
+		Limit(int(query.PageSize)).
+		Find(&versions).Error; err != nil {
+		return admin.Page{}, err
+	}
+	page := admin.Page{
+		PlanVersions: make([]catalogdomain.PlanVersionAggregate, 0, len(versions)),
+		Total:        uint64(total),
+	}
+	for _, version := range versions {
+		aggregate, err := r.loadPlanVersion(ctx, version.ID, false)
+		if err != nil {
+			return admin.Page{}, err
+		}
+		page.PlanVersions = append(page.PlanVersions, aggregate)
+	}
+	return page, nil
+}
+
 /** MarkPlanVersionPublished performs a guarded draft-to-active update. */
 func (r *CatalogRepo) MarkPlanVersionPublished(
 	ctx context.Context,
-	input catalogpublication.PublishRecord,
+	input publication.PublishRecord,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
@@ -88,7 +141,7 @@ func (r *CatalogRepo) MarkPlanVersionPublished(
 		return productResult.Error
 	}
 	if productResult.RowsAffected != 1 {
-		return catalogpublication.ErrConcurrentPublish
+		return publication.ErrConcurrentPublish
 	}
 	planResult := db.Model(&models.CatalogPlan{}).
 		Where("id = ? AND product_id = ? AND status IN ?", input.PlanID, input.ProductID, []productcatalog.Status{
@@ -100,7 +153,7 @@ func (r *CatalogRepo) MarkPlanVersionPublished(
 		return planResult.Error
 	}
 	if planResult.RowsAffected != 1 {
-		return catalogpublication.ErrConcurrentPublish
+		return publication.ErrConcurrentPublish
 	}
 
 	updates := map[string]any{
@@ -125,7 +178,7 @@ func (r *CatalogRepo) MarkPlanVersionPublished(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return catalogpublication.ErrConcurrentPublish
+		return publication.ErrConcurrentPublish
 	}
 	return nil
 }
@@ -258,7 +311,7 @@ func (r *CatalogRepo) loadPlanVersion(
 	if err := query.First(&version, planVersionID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return catalogdomain.PlanVersionAggregate{},
-				catalogpublication.ErrPlanVersionNotFound
+				publication.ErrPlanVersionNotFound
 		}
 		return catalogdomain.PlanVersionAggregate{}, err
 	}
@@ -286,6 +339,12 @@ func (r *CatalogRepo) loadPlanVersion(
 		Find(&entitlements).Error; err != nil {
 		return catalogdomain.PlanVersionAggregate{}, err
 	}
+	var operations []models.CatalogPlanOperationPolicy
+	if err := db.Where("plan_version_id = ?", version.ID).
+		Order("operation_code ASC").
+		Find(&operations).Error; err != nil {
+		return catalogdomain.PlanVersionAggregate{}, err
+	}
 	var prices []models.CatalogPriceItem
 	if err := db.Where("plan_version_id = ?", version.ID).
 		Order("code ASC").
@@ -293,7 +352,7 @@ func (r *CatalogRepo) loadPlanVersion(
 		return catalogdomain.PlanVersionAggregate{}, err
 	}
 
-	return toPlanVersionAggregate(product, plan, version, entitlements, prices), nil
+	return toPlanVersionAggregate(product, plan, version, entitlements, operations, prices), nil
 }
 
 func toPlanVersionAggregate(
@@ -301,27 +360,31 @@ func toPlanVersionAggregate(
 	plan models.CatalogPlan,
 	version models.CatalogPlanVersion,
 	entitlements []models.CatalogPlanEntitlement,
+	operations []models.CatalogPlanOperationPolicy,
 	prices []models.CatalogPriceItem,
 ) catalogdomain.PlanVersionAggregate {
 	aggregate := catalogdomain.PlanVersionAggregate{
-		ID:                 version.ID,
-		ProductID:          product.ID,
-		PlanID:             plan.ID,
-		ProductCode:        product.Code,
-		ProductDisplayName: product.DisplayName,
-		ProductStatus:      product.Status,
-		PlanCode:           plan.Code,
-		PlanStatus:         plan.Status,
-		Version:            version.Version,
-		DisplayName:        version.DisplayName,
-		Status:             version.Status,
-		SubjectScope:       version.SubjectScope,
-		EffectiveFrom:      copyTime(version.EffectiveFrom),
-		EffectiveUntil:     copyTime(version.EffectiveUntil),
-		PublishedAt:        copyTime(version.PublishedAt),
-		TermsChecksum:      version.TermsChecksum,
-		Entitlements:       make([]productcatalog.Entitlement, 0, len(entitlements)),
-		Prices:             make([]productcatalog.PriceItem, 0, len(prices)),
+		ID:                   version.ID,
+		ProductID:            product.ID,
+		PlanID:               plan.ID,
+		ProductCode:          product.Code,
+		ProductDisplayName:   product.DisplayName,
+		ProductStatus:        product.Status,
+		PlanCode:             plan.Code,
+		TierRank:             int32Value(plan.TierRank),
+		PlanStatus:           plan.Status,
+		Version:              version.Version,
+		DisplayName:          version.DisplayName,
+		Status:               version.Status,
+		SubjectScope:         version.SubjectScope,
+		SubscriptionTermDays: int32Value(version.SubscriptionTermDays),
+		EffectiveFrom:        copyTime(version.EffectiveFrom),
+		EffectiveUntil:       copyTime(version.EffectiveUntil),
+		PublishedAt:          copyTime(version.PublishedAt),
+		TermsChecksum:        version.TermsChecksum,
+		Entitlements:         make([]productcatalog.Entitlement, 0, len(entitlements)),
+		Operations:           make([]productcatalog.OperationPolicy, 0, len(operations)),
+		Prices:               make([]productcatalog.PriceItem, 0, len(prices)),
 	}
 	for _, entity := range entitlements {
 		aggregate.Entitlements = append(
@@ -334,6 +397,17 @@ func toPlanVersionAggregate(
 				Amount:      entity.Amount,
 				Unlimited:   entity.Unlimited,
 				Period:      entity.Period,
+			},
+		)
+	}
+	for _, entity := range operations {
+		aggregate.Operations = append(
+			aggregate.Operations,
+			productcatalog.OperationPolicy{
+				Code:           entity.OperationCode,
+				FeatureCode:    entity.FeatureCode,
+				MeterCode:      valueOrEmpty(entity.MeterCode),
+				UnitsPerAction: entity.UnitsPerAction,
 			},
 		)
 	}
@@ -352,6 +426,13 @@ func toPlanVersionAggregate(
 		)
 	}
 	return aggregate
+}
+
+func int32Value(value *int32) int32 {
+	if value == nil {
+		return 0
+	}
+	return *value
 }
 
 func valueOrEmpty(value *string) string {

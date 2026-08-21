@@ -2,18 +2,20 @@ package quota
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	commonmetering "common/metering"
+	commonoperation "common/operation"
 	"context"
 	"time"
 )
 
-/**
- * StoreReserveInput là dữ liệu tối thiểu để storage giữ quota atomically.
- */
+// StoreReserveInput là dữ liệu tối thiểu mà
+// runtime quota store cần để Reserve atomically.
 type StoreReserveInput struct {
 	ReservationID string
-	Subject       commonaccess.Subject
-	Operation     businessoperation.Code
+
+	Subject   commonaccess.Subject
+	Operation commonoperation.Code
+	MeterCode commonmetering.Code
 
 	OperationID    string
 	IdempotencyKey string
@@ -27,32 +29,27 @@ type StoreReserveInput struct {
 	ExpiresAt   time.Time
 }
 
-/**
- * Store giữ usage và reservation runtime.
- *
- * Business code không cần biết implementation bên dưới là Redis hay memory.
- */
+// Store là dependency tối thiểu của quota fast path.
+//
+// Nó KHÔNG phải "mọi thứ Redis quota store làm được".
+//
+// Repair packages sở hữu interface riêng cho:
+//   - expired reservation lookup
+//   - usage projection
+//   - compare-and-set repair
 type Store interface {
-	ReserveQuota(ctx context.Context, input StoreReserveInput) (Reservation, error)
-	CommitQuota(ctx context.Context, reservationID string) (Reservation, error)
-	CancelQuota(ctx context.Context, reservationID string) (Reservation, error)
-
-	GetUsage(
+	ReserveQuota(
 		ctx context.Context,
-		subject commonaccess.Subject,
-		operation businessoperation.Code,
-		periodStart time.Time,
-		periodEnd time.Time,
-	) (Usage, error)
+		input StoreReserveInput,
+	) (Reservation, error)
 
-	SetUsed(
+	CommitQuota(
 		ctx context.Context,
-		subject commonaccess.Subject,
-		operation businessoperation.Code,
-		periodStart time.Time,
-		periodEnd time.Time,
-		used int64,
-	) error
+		reservationID string,
+	) (Reservation, error)
 
-	FindExpiredReservations(ctx context.Context, before time.Time, limit int) ([]Reservation, error)
+	CancelQuota(
+		ctx context.Context,
+		reservationID string,
+	) (Reservation, error)
 }

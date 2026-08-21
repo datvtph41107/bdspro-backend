@@ -1,11 +1,10 @@
 package config
 
 import (
-	"common"
+	"common/configloader"
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"tqd/env"
@@ -173,16 +172,17 @@ var AppConfig *Properties
 var LayerResolverInstance *LayerResolver
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() *Properties {
+func LoadConfig() (*Properties, error) {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+	if err := configloader.LoadYMLFile(env.ENV_RUNTIME); err != nil {
+		return nil, err
+	}
 
 	AppConfig = &Properties{}
-	err := viper.Unmarshal(AppConfig)
-	if err != nil {
-		log.Fatalf("Error unmarshaling config: %v", err)
+	if err := viper.Unmarshal(AppConfig); err != nil {
+		return nil, fmt.Errorf("unmarshal tqd config: %w", err)
 	}
 
 	LayerResolverInstance = NewLayerResolver()
-	return AppConfig
+	return AppConfig, nil
 }

@@ -2,50 +2,66 @@ package usage
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	"common/operation"
 	"testing"
 	"time"
 )
 
-func TestEventValidityRequiresReservationAndPeriodEvidence(t *testing.T) {
+func validEventInput() NewEventInput {
 	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
-	end := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
-	event := NewEvent(
-		commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
-		businessoperation.WorkspaceReportGenerate,
-		"op_usage_1",
-		"idem_usage_1",
-		"idem_usage_1",
-		"reservation_1",
-		1,
-		start,
-		end,
-		start.Add(time.Hour),
-	)
-	if !event.IsValid() {
-		t.Fatal("complete durable usage evidence must be valid")
+	return NewEventInput{
+		Subject:        commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
+		Operation:      operation.Code("workspace.report.generate"),
+		MeterCode:      "workspace.report_generation.accepted",
+		OperationID:    "op_usage_1",
+		IdempotencyKey: "idem_usage_1",
+		CommandKey:     "idem_usage_1",
+		ReservationID:  "reservation_1",
+		Amount:         1,
+		PeriodStart:    start,
+		PeriodEnd:      start.AddDate(0, 1, 0),
+		CreatedAt:      start.Add(time.Hour),
+		Commercial: CommercialEvidence{
+			SubscriptionID: 77,
+			PlanCode:       "qhpro.pro",
+			PlanVersion:    "2.0.0",
+			PolicyVersion:  "2.0.0",
+			LimitSnapshot:  200,
+		},
 	}
+}
 
-	event.ReservationID = ""
-	if event.IsValid() {
-		t.Fatal("usage without reservation evidence must be invalid")
+func TestEventValidityDoesNotRequireReservation(t *testing.T) {
+	input := validEventInput()
+	input.ReservationID = ""
+
+	event := NewEvent(input)
+	if !event.IsValid() {
+		t.Fatal("durable usage must be valid without Redis reservation evidence")
+	}
+}
+
+func TestEventValidityAcceptsLegacyCommercialEvidenceBridge(t *testing.T) {
+	input := validEventInput()
+	input.Commercial = CommercialEvidence{}
+
+	event := NewEvent(input)
+	if !event.IsValid() {
+		t.Fatal("legacy usage without catalog evidence must remain readable during migration")
+	}
+}
+
+func TestEventValidityRejectsPartialCommercialEvidence(t *testing.T) {
+	input := validEventInput()
+	input.Commercial = CommercialEvidence{SubscriptionID: 77, PlanCode: "qhpro.pro"}
+
+	if NewEvent(input).IsValid() {
+		t.Fatal("partially populated commercial evidence must be rejected")
 	}
 }
 
 func TestEventValidityRejectsTamperedUsageKey(t *testing.T) {
-	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
-	event := NewEvent(
-		commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
-		businessoperation.WorkspaceReportGenerate,
-		"op_usage_2",
-		"",
-		"op_usage_2",
-		"reservation_2",
-		1,
-		start,
-		start.AddDate(0, 1, 0),
-		start.Add(time.Hour),
-	)
+	event := NewEvent(validEventInput())
 	event.UsageKey = "wrong"
 	if event.IsValid() {
 		t.Fatal("tampered usage key must be invalid")

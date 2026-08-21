@@ -1,20 +1,12 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
-	"fmt"
-	"log"
 	"pb/clients"
 	organizationpb "pb/types/organization"
-	"user/env"
 	"user/internal/dto"
 
-	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -24,21 +16,12 @@ type OrganizationProviderClient struct {
 	roleClient organizationpb.OrganizationRoleServiceClient
 }
 
-func NewOrganizationProviderClient() *OrganizationProviderClient {
-	url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "organization")
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-	)
-	if err != nil {
-		log.Fatalf("Failed to connect to organization role service: %v", err)
-	}
-
+func NewOrganizationProviderClient(
+	rpcClient *clients.OrganizationClient,
+) *OrganizationProviderClient {
 	return &OrganizationProviderClient{
-		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
-		roleClient:         organizationpb.NewOrganizationRoleServiceClient(conn),
+		OrganizationClient: rpcClient,
+		roleClient:         rpcClient.RoleClient,
 	}
 }
 

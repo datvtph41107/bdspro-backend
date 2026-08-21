@@ -5,7 +5,6 @@ import (
 	_enums "common/domain/enum"
 	_identitycontext "common/identitycontext"
 	_jwt "common/jwt"
-	_operationcontext "common/operationcontext"
 	_quotasubject "common/quotasubject"
 	_requestcontext "common/requestcontext"
 	_transporttrust "common/transporttrust"
@@ -202,20 +201,6 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 		ctx = bound
 	}
 
-	operation, hasOperation, err := _operationcontext.FromMetadata(md)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, err.Error())
-	}
-	if hasOperation {
-		if !trustAssessment.CanPromotePrivilegedContext() {
-			return nil, status.Error(codes.Unauthenticated, "verified operation assertion required")
-		}
-		ctx, err = _operationcontext.Bind(ctx, operation)
-		if err != nil {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-	}
-
 	if hasActor {
 		if trustAssessment.CanPromotePrivilegedContext() {
 			bound, bindErr := _identitycontext.BindActor(ctx, actor)
@@ -355,9 +340,6 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 
 	if subject, ok := _quotasubject.FromContext(ctx); ok {
 		_quotasubject.AppendMetadata(md, subject)
-	}
-	if operation, ok := _operationcontext.FromContext(ctx); ok {
-		_operationcontext.AppendMetadata(md, operation)
 	}
 
 	if allowLegacyPrivilegedPropagation {

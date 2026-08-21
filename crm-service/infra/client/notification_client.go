@@ -3,7 +3,6 @@ package client
 import (
 	_dto "common/domain/dto"
 	"context"
-	"crm/env"
 	"crm/internal/interface/provider"
 	"pb/clients"
 )
@@ -12,11 +11,8 @@ type NotificationClient struct {
 	*clients.NotificationClient
 }
 
-func NewNotificationClient() provider.NotificationProvider {
-	notificationClient := clients.MakeNotificationClient(env.ENV_RUNTIME)
-	return &NotificationClient{
-		NotificationClient: notificationClient,
-	}
+func NewNotificationClient(rpcClient *clients.NotificationClient) provider.NotificationProvider {
+	return &NotificationClient{NotificationClient: rpcClient}
 }
 
 // func (c *NotificationClient) CreateNotification(

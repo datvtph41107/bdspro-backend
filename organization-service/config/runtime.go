@@ -2,11 +2,13 @@ package config
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"organization/env"
 	"organization/infrastructure/server/grpc"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
@@ -126,4 +128,16 @@ func readConfig() error {
 	}
 
 	return nil
+}
+
+func RPCAddress(service string) (string, error) {
+	if cfg == nil {
+		return "", fmt.Errorf("organization config is not initialized")
+	}
+	key := "rpc." + strings.TrimSpace(service) + ".address"
+	value := strings.TrimSpace(cfg.GetString(key))
+	if value == "" {
+		return "", fmt.Errorf("config %s is required", key)
+	}
+	return value, nil
 }

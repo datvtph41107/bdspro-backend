@@ -76,6 +76,7 @@ type classifyResult struct {
 // để phân loại DocumentType, cập nhật trạng thái tài liệu/đồ án. Được gọi lặp lại bởi 1 worker định kỳ.
 type IQHPlanningClassifyUsecase interface {
 	RunOnce(ctx context.Context, batchSize int) (int, error)
+	Close() error
 }
 
 type qhPlanningClassifyUsecase struct {
@@ -101,6 +102,13 @@ func NewQHPlanningClassifyUsecase(
 		assistant:    assistant,
 		fileProvider: fileProvider,
 	}
+}
+
+func (u *qhPlanningClassifyUsecase) Close() error {
+	if u == nil || u.assistant == nil {
+		return nil
+	}
+	return u.assistant.Close()
 }
 
 func (u *qhPlanningClassifyUsecase) RunOnce(ctx context.Context, batchSize int) (int, error) {

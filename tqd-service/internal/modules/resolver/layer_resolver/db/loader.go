@@ -32,7 +32,7 @@ func (l *ConfigLoader) LoadConfig(ctx context.Context) (*types.Config, error) {
 	l.mu.RLock()
 	if time.Since(l.lastLoad) < l.ttl && len(l.cache) > 0 {
 		defer l.mu.RUnlock()
-		return l.buildConfig(), nil
+		return l.buildConfig()
 	}
 	l.mu.RUnlock()
 
@@ -41,8 +41,13 @@ func (l *ConfigLoader) LoadConfig(ctx context.Context) (*types.Config, error) {
 
 	dbConfigs, err := l.configRepo.GetAll(ctx)
 	if err != nil {
-		// Fallback to YAML config
-		return config.GetConfig().ToTypesConfig(), nil
+		// DB override failure falls back to the embedded defaults, but invalid
+		// embedded configuration is surfaced rather than panicking.
+		yamlConfig, configErr := config.GetConfig()
+		if configErr != nil {
+			return nil, configErr
+		}
+		return yamlConfig.ToTypesConfig(), nil
 	}
 
 	for k, v := range dbConfigs {
@@ -50,11 +55,14 @@ func (l *ConfigLoader) LoadConfig(ctx context.Context) (*types.Config, error) {
 	}
 	l.lastLoad = time.Now()
 
-	return l.buildConfig(), nil
+	return l.buildConfig()
 }
 
-func (l *ConfigLoader) buildConfig() *types.Config {
-	yamlConfig := config.GetConfig()
+func (l *ConfigLoader) buildConfig() (*types.Config, error) {
+	yamlConfig, err := config.GetConfig()
+	if err != nil {
+		return nil, err
+	}
 	cfg := yamlConfig.ToTypesConfig()
 
 	// Override with DB configs
@@ -212,7 +220,7 @@ func (l *ConfigLoader) buildConfig() *types.Config {
 		}
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 func (l *ConfigLoader) Reload(ctx context.Context) error {

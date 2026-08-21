@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	paymentpb "pb/types/payment"
 
@@ -15,6 +16,7 @@ import (
 	"payment/internal/interface/handler"
 	"payment/internal/job"
 	"payment/internal/server/grpc/interceptors"
+	"payment/internal/usecase"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/oklog/run"
@@ -27,6 +29,7 @@ type GRPCServer struct {
 	internalHandler          *handler.InternalHandler
 	paymentDashboardStatsJob *job.PaymentDashboardStatsJob
 	TransactionDashboardJob  *job.TransactionDashboardJob
+	notificationWorker       *usecase.NotificationWorker
 	logger                   *flogging.FabricLogger
 }
 
@@ -36,6 +39,7 @@ func NewGRPCServer(
 	internalHandler *handler.InternalHandler,
 	paymentDashboardStatsJob *job.PaymentDashboardStatsJob,
 	TransactionDashboardJob *job.TransactionDashboardJob,
+	notificationWorker *usecase.NotificationWorker,
 ) *GRPCServer {
 	return &GRPCServer{
 		paymentHandler:           paymentHandler,
@@ -43,6 +47,7 @@ func NewGRPCServer(
 		internalHandler:          internalHandler,
 		paymentDashboardStatsJob: paymentDashboardStatsJob,
 		TransactionDashboardJob:  TransactionDashboardJob,
+		notificationWorker:       notificationWorker,
 		logger:                   flogging.MustGetLogger(appconfig.SERVICE_NAME),
 	}
 }
@@ -61,10 +66,22 @@ func (s *GRPCServer) Start() {
 	signalStart, signalStop := buildSignalHandler(s.logger)
 	g.Add(signalStart, signalStop)
 
-	// Start dashboard stats job (runs daily at midnight)
-	ctx := context.Background()
-	go s.paymentDashboardStatsJob.RunDailyAtMidnight(ctx)
-	go s.TransactionDashboardJob.Run(ctx)
+	// The process root owns cancellation for every long-lived actor. No job may
+	// self-spawn from a constructor or detach via its own Background context.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	g.Add(func() error {
+		s.paymentDashboardStatsJob.RunDailyAtMidnight(ctx)
+		return nil
+	}, func(error) { cancel() })
+	g.Add(func() error {
+		return s.TransactionDashboardJob.Run(ctx)
+	}, func(error) { cancel() })
+	g.Add(func() error {
+		return s.notificationWorker.Run(ctx)
+	}, func(error) { cancel() })
+
 	if err := g.Run(); err != nil {
 		s.logger.Errorf("Server exited: %v", err)
 	}
@@ -111,6 +128,7 @@ func buildSignalHandler(logger *flogging.FabricLogger) (func() error, func(error
 			sig := <-sigs
 			return fmt.Errorf("signal received: %v", sig)
 		}, func(err error) {
+			signal.Stop(sigs)
 			close(sigs)
 		}
 }
@@ -149,7 +167,17 @@ func BuildGRPCServer(
 	}
 
 	stop = func(err error) {
-		server.GracefulStop()
+		done := make(chan struct{})
+		go func() {
+			server.GracefulStop()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			server.Stop()
+			<-done
+		}
 	}
 
 	return server, start, stop, nil

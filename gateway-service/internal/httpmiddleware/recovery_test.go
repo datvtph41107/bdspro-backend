@@ -2,7 +2,6 @@ package httpmiddleware
 
 import (
 	"bytes"
-	_requestcontext "common/requestcontext"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -164,12 +163,12 @@ func TestRecoveryRecordsStructuredPanicEvidence(
 		)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		RequestIDHeader,
 		"request-panic-evidence-123",
 	)
 
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 		"operation-panic-evidence-456",
 	)
 
@@ -506,7 +505,7 @@ func TestRecoveryClassifiesTransportInterruptions(
 				)
 
 				request.Header.Set(
-					_requestcontext.RequestIDHeader,
+					RequestIDHeader,
 					"request-transport-interrupt",
 				)
 

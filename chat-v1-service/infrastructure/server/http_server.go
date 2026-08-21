@@ -1,6 +1,7 @@
 package server
 
 import (
+	chatrpc "chat/infrastructure/rpc"
 	_redis "common/redis"
 	"context"
 	"fmt"
@@ -35,10 +36,11 @@ func parseTimeout(timeoutStr string) time.Duration {
 var logger = flogging.MustGetLogger("http_server")
 
 type HTTPServer struct {
-	server *http.Server
+	server  *http.Server
+	cleanup func()
 }
 
-func NewHTTPServer(port string) *HTTPServer {
+func NewHTTPServer(port string) (*HTTPServer, error) {
 	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
 
@@ -49,9 +51,25 @@ func NewHTTPServer(port string) *HTTPServer {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
 	pRepository := repository.NewRepository(db)
-	userClient := client.NewUserClient()
-	crmClient := client.NewCrmClient()
-	bdsproClient := client.NewBdsproClient()
+	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("configure chat-v1 user RPC: %w", err)
+	}
+	bdsproRPC, bdsproCleanup, err := chatrpc.NewBdsproRPCClient()
+	if err != nil {
+		userCleanup()
+		return nil, fmt.Errorf("configure chat-v1 bdspro RPC: %w", err)
+	}
+	crmRPC, crmCleanup, err := chatrpc.NewCrmRPCClient()
+	if err != nil {
+		bdsproCleanup()
+		userCleanup()
+		return nil, fmt.Errorf("configure chat-v1 crm RPC: %w", err)
+	}
+	cleanup := func() { crmCleanup(); bdsproCleanup(); userCleanup() }
+	userClient := client.NewUserClient(userRPC)
+	crmClient := client.NewCrmClient(crmRPC)
+	bdsproClient := client.NewBdsproClient(bdsproRPC)
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	redisClient := _redis.NewRedisService()
 	syncProvider := impl.NewSyncProvider(redisClient)
@@ -99,10 +117,13 @@ func NewHTTPServer(port string) *HTTPServer {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	return &HTTPServer{server: server}
+	return &HTTPServer{server: server, cleanup: cleanup}, nil
 }
 
-func (s *HTTPServer) Start() {
+func (s *HTTPServer) Start() error {
+	if s.cleanup != nil {
+		defer s.cleanup()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
@@ -122,4 +143,5 @@ func (s *HTTPServer) Start() {
 	if err := s.server.Shutdown(ctx); err != nil {
 		logger.Errorf("HTTP server shutdown error: %v", err)
 	}
+	return nil
 }

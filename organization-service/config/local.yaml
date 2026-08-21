@@ -1,3 +1,19 @@
+rpc:
+  user:
+    address: "localhost:8201"
+  bdspro:
+    address: "localhost:8202"
+  notification:
+    address: "localhost:8204"
+  payment:
+    address: "localhost:8205"
+  chat:
+    address: "localhost:8208"
+  transaction:
+    address: "localhost:8215"
+  auth:
+    address: "localhost:8216"
+
 GRPC:
   PORT: 8207
   CHAT_SERVICE_HOST: localhost

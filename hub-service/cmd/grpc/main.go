@@ -2,6 +2,7 @@ package cmd_grpc
 
 import (
 	_middleware "common/middleware"
+	"common/processlifecycle"
 	"context"
 	"fmt"
 	"hub/config"
@@ -11,7 +12,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	hubpb "pb/types/hub"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -22,21 +25,35 @@ import (
 var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Run the GRPC server",
-	Run: func(cmd *cobra.Command, args []string) {
-		config.LoadConfig()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := config.LoadConfig(); err != nil {
+			return fmt.Errorf("load hub config: %w", err)
+		}
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, _ := wire.InitializeApp()
-		db.AutoMigrate()
+		app, cleanup, err := wire.InitializeApp()
+		if err != nil {
+			return fmt.Errorf("initialize hub app: %w", err)
+		}
+		defer cleanup()
+		if err := db.AutoMigrate(); err != nil {
+			return err
+		}
+
+		signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer stopSignals()
+		processCtx, processCancel := context.WithCancel(signalCtx)
+		defer processCancel()
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+			return fmt.Errorf("listen hub gRPC on %s: %w", port, err)
 		}
+		defer func() { _ = lis.Close() }()
 		interceptors := grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
 			hubMiddleware.NewAPIKeyUnaryServerInterceptor(app.ApiKeyUsecase),
@@ -45,7 +62,7 @@ var GrpcCmd = &cobra.Command{
 
 		// Load system config vào memory khi startup
 		if app.SystemConfigUsecase != nil {
-			if err := app.SystemConfigUsecase.InitializeSystemConfig(context.Background()); err != nil {
+			if err := app.SystemConfigUsecase.InitializeSystemConfig(processCtx); err != nil {
 				log.Printf("Warning: Failed to initialize system config: %v", err)
 			}
 		}
@@ -72,8 +89,9 @@ var GrpcCmd = &cobra.Command{
 
 		log.Printf("Listen: %v", port)
 
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("gRPC server error: %v", err)
-		}
+		return processlifecycle.Run(
+			processCtx, processCancel, s, lis, nil,
+			processlifecycle.Config{GracefulStopTimeout: 10 * time.Second},
+		)
 	},
 }

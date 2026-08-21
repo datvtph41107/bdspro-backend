@@ -11,4 +11,7 @@ type AssistantProvider interface {
 	// ClassifyDocument gửi prompt kèm nội dung file (multimodal) tới ClassifyDocumentWithGemini.
 	// fileContent rỗng => assistant fallback text-only.
 	ClassifyDocument(ctx context.Context, prompt string, fileContent []byte, mimeType string) (content string, model string, err error)
+
+	// Close releases the provider-owned outbound resource after the worker has stopped.
+	Close() error
 }

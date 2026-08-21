@@ -11,8 +11,8 @@ import (
 
 	_db "common/db"
 	userpostgres "user/infra/postgres"
-	"user/internal/subscriptionbackfill"
-	"user/internal/subscriptioncutover"
+	"user/internal/modules/subscription/backfill"
+	"user/internal/modules/subscription/cutover"
 
 	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -55,7 +55,7 @@ func parseFlags() options {
 	flag.StringVar(&value.operationID, "operation-id", "", "operation correlation ID")
 	flag.StringVar(&value.reason, "reason", "", "approved change or rollback reason")
 	flag.StringVar(&value.executedAt, "executed-at", "", "RFC3339 execution time; defaults to now")
-	flag.IntVar(&value.batchSize, "batch-size", subscriptioncutover.DefaultBatchEntries, "prepare batch size; max 1000")
+	flag.IntVar(&value.batchSize, "batch-size", cutover.DefaultBatchEntries, "prepare batch size; max 1000")
 	flag.IntVar(&value.batchIndex, "batch-index", 1, "one-based batch index for activate or rollback-plan")
 	flag.Parse()
 	return value
@@ -73,7 +73,7 @@ func run(ctx context.Context, value options) error {
 		}
 	case "activate":
 		if os.Getenv("QHPRO_ALLOW_SUBSCRIPTION_READ_CUTOVER") != "1" {
-			return subscriptioncutover.ErrActivationDenied
+			return cutover.ErrActivationDenied
 		}
 	case "rollback-plan":
 		if strings.TrimSpace(value.reason) == "" {
@@ -81,7 +81,7 @@ func run(ctx context.Context, value options) error {
 		}
 	case "rollback":
 		if os.Getenv("QHPRO_ALLOW_SUBSCRIPTION_READ_ROLLBACK") != "1" {
-			return subscriptioncutover.ErrRollbackDenied
+			return cutover.ErrRollbackDenied
 		}
 		if os.Getenv("QHPRO_CONFIRM_SUBSCRIPTION_READ_MODE_LEGACY") != "1" {
 			return fmt.Errorf("confirm deployed read mode is legacy before database rollback")
@@ -99,11 +99,11 @@ func run(ctx context.Context, value options) error {
 		return fmt.Errorf("connect database: %w", err)
 	}
 	repository := userpostgres.NewCatalogRepo(_db.NewTransactionRepo(db))
-	service := subscriptioncutover.NewService(repository)
+	service := cutover.NewService(repository)
 
 	switch value.action {
 	case "prepare":
-		var readiness subscriptionbackfill.ReadinessResult
+		var readiness backfill.ReadinessResult
 		if err := readJSON(value.readiness, &readiness); err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func run(ctx context.Context, value options) error {
 		}
 		return writeJSON(value.output, plan)
 	case "activate":
-		var plan subscriptioncutover.Plan
+		var plan cutover.Plan
 		if err := readJSON(value.manifest, &plan); err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ func run(ctx context.Context, value options) error {
 			"entries": len(manifest.Entries), "executedAt": executedAt,
 		})
 	case "rollback-plan":
-		var plan subscriptioncutover.Plan
+		var plan cutover.Plan
 		if err := readJSON(value.manifest, &plan); err != nil {
 			return err
 		}
@@ -139,13 +139,13 @@ func run(ctx context.Context, value options) error {
 		if err != nil {
 			return err
 		}
-		rollback, err := subscriptioncutover.BuildRollbackManifest(manifest, value.reason, executedAt)
+		rollback, err := cutover.BuildRollbackManifest(manifest, value.reason, executedAt)
 		if err != nil {
 			return err
 		}
 		return writeJSON(value.output, rollback)
 	case "rollback":
-		var manifest subscriptioncutover.RollbackManifest
+		var manifest cutover.RollbackManifest
 		if err := readJSON(value.manifest, &manifest); err != nil {
 			return err
 		}
@@ -161,8 +161,8 @@ func run(ctx context.Context, value options) error {
 	}
 }
 
-func operationalRun(value options, executedAt time.Time) subscriptioncutover.Run {
-	return subscriptioncutover.Run{
+func operationalRun(value options, executedAt time.Time) cutover.Run {
+	return cutover.Run{
 		RunID: value.runID, ActorID: value.actorID,
 		RequestID: value.requestID, OperationID: value.operationID,
 		ExecutedAt: executedAt, Reason: value.reason,

@@ -1,47 +1,18 @@
 package client
 
 import (
-	_middleware "common/middleware"
 	"context"
-	"fmt"
-	"log"
+	"pb/clients"
 	chatpb "pb/types/chat"
 	sharepb "pb/types/shared"
-	"relay/config"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 type ChatClient struct {
 	Client chatpb.ChatServiceClient
 }
 
-func NewChatClient() *ChatClient {
-	chatClient := &ChatClient{Client: nil}
-	go func() {
-		name := "chat"
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.AppProperties.Services.Chat.Host, config.AppProperties.Services.Chat.Port),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := chatpb.NewChatServiceClient(conn)
-		chatClient.Client = client
-	}()
-	return chatClient
+func NewChatClient(rpcClient *clients.ChatGrpcClient) *ChatClient {
+	return &ChatClient{Client: rpcClient.Client}
 }
 
 func (c *ChatClient) ValidateConversationAndCurrentUser(ctx context.Context, conversationId uint64) error {

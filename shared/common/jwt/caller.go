@@ -1,7 +1,7 @@
 package _jwt
 
 import (
-	_callercontext "common/callercontext"
+	"common/identity"
 
 	"context"
 	"errors"
@@ -29,7 +29,7 @@ type CallerClassificationInput struct {
  * CallerResolution contains the non-secret identity produced at the HTTP edge.
  */
 type CallerResolution struct {
-	Caller    _callercontext.Caller
+	Caller    identity.Caller
 	APIKey    VerifiedAPIKey
 	HasAPIKey bool
 }
@@ -88,26 +88,26 @@ func ResolveHTTPCaller(
 /**
  * ClassifyCaller projects verified edge evidence into a non-secret caller identity.
  */
-func ClassifyCaller(input CallerClassificationInput) (_callercontext.Caller, error) {
+func ClassifyCaller(input CallerClassificationInput) (identity.Caller, error) {
 	if input.Principal != nil && !ActorFromPrincipal(input.Principal).IsValid() {
-		return _callercontext.Caller{}, ErrCallerClassification
+		return identity.Caller{}, ErrCallerClassification
 	}
 
 	verifiedAPIKey, hasAPIKey, err := normalizeVerifiedAPIKey(input.APIKey)
 	if err != nil {
-		return _callercontext.Caller{}, err
+		return identity.Caller{}, err
 	}
 
-	caller := _callercontext.Caller{}
+	caller := identity.Caller{}
 	switch {
 	case input.Principal != nil:
-		caller.Kind = _callercontext.KindUser
+		caller.Kind = identity.CallerUser
 	case hasAPIKey:
-		caller.Kind = _callercontext.KindAPIKey
+		caller.Kind = identity.CallerAPIKey
 	case input.AllowAnonymous:
-		caller.Kind = _callercontext.KindAnonymous
+		caller.Kind = identity.CallerAnonymous
 	default:
-		return _callercontext.Caller{}, ErrAuthenticationRequired
+		return identity.Caller{}, ErrAuthenticationRequired
 	}
 
 	if hasAPIKey {
@@ -115,7 +115,7 @@ func ClassifyCaller(input CallerClassificationInput) (_callercontext.Caller, err
 		caller.APIKeyApp = verifiedAPIKey.AppName
 	}
 	if !caller.IsValid() {
-		return _callercontext.Caller{}, ErrCallerClassification
+		return identity.Caller{}, ErrCallerClassification
 	}
 	return caller, nil
 }

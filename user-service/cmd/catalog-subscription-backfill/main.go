@@ -15,8 +15,8 @@ import (
 
 	_db "common/db"
 	userpostgres "user/infra/postgres"
-	"user/internal/subscriptionbackfill"
-	"user/internal/subscriptionshadow"
+	"user/internal/modules/subscription/backfill"
+	"user/internal/modules/subscription/shadow"
 
 	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -87,7 +87,7 @@ func run(ctx context.Context, value options) error {
 		}
 	case "execute":
 		if os.Getenv("QHPRO_ALLOW_SUBSCRIPTION_BACKFILL_EXECUTE") != "1" {
-			return subscriptionbackfill.ErrExecutionForbidden
+			return backfill.ErrExecutionForbidden
 		}
 	case "plan", "report", "readiness":
 	default:
@@ -110,17 +110,17 @@ func run(ctx context.Context, value options) error {
 		return fmt.Errorf("connect database: %w", err)
 	}
 	repository := userpostgres.NewCatalogRepo(_db.NewTransactionRepo(db))
-	service := subscriptionbackfill.NewService(repository)
-	shadowReader := subscriptionshadow.NewReaderWithConfig(
+	service := backfill.NewService(repository)
+	shadowReader := shadow.BuildReaderWithConfig(
 		repository,
-		subscriptionshadow.Config{
-			Mode:    subscriptionshadow.ModeLog,
+		shadow.Config{
+			Mode:    shadow.ModeLog,
 			Timeout: 5 * time.Second,
 			Now:     func() time.Time { return asOf },
 			Logger:  log.New(io.Discard, "", 0),
 		},
 	)
-	auditor := subscriptionbackfill.NewAuditor(repository, shadowReader, repository)
+	auditor := backfill.NewAuditor(repository, shadowReader, repository)
 
 	switch value.action {
 	case "review":
@@ -140,9 +140,9 @@ func run(ctx context.Context, value options) error {
 		if err != nil {
 			return err
 		}
-		result, err := subscriptionbackfill.EvaluateReadiness(
+		result, err := backfill.EvaluateReadiness(
 			report,
-			subscriptionbackfill.ReadinessPolicy{
+			backfill.ReadinessPolicy{
 				MinimumEligible:             value.minimumEligible,
 				MaximumLegacyIncomplete:     value.maximumIncomplete,
 				MinimumCoverageRate:         value.minimumCoverage,
@@ -169,7 +169,7 @@ func run(ctx context.Context, value options) error {
 
 func review(
 	ctx context.Context,
-	service *subscriptionbackfill.Service,
+	service *backfill.Service,
 	value options,
 	asOf time.Time,
 ) error {
@@ -181,13 +181,13 @@ func review(
 		return fmt.Errorf("reviewed-by and review-reason are required")
 	}
 	for _, id := range ids {
-		if err := service.Review(ctx, subscriptionbackfill.ReviewRequest{
+		if err := service.Review(ctx, backfill.ReviewRequest{
 			LegacyMembershipID: id,
 			ReviewedBy:         value.reviewedBy,
 			ReviewedAt:         asOf,
-			Decision: subscriptionbackfill.ReviewDecision{
-				PeriodHandling:          subscriptionbackfill.PeriodPaidAtToFinishedDate,
-				SubscriptionKeyStrategy: subscriptionbackfill.KeyStrategyLegacyMembershipID,
+			Decision: backfill.ReviewDecision{
+				PeriodHandling:          backfill.PeriodPaidAtToFinishedDate,
+				SubscriptionKeyStrategy: backfill.KeyStrategyLegacyMembershipID,
 				AutoRenew:               false,
 				Reason:                  value.reviewReason,
 			},
@@ -202,7 +202,7 @@ func review(
 
 func plan(
 	ctx context.Context,
-	service *subscriptionbackfill.Service,
+	service *backfill.Service,
 	value options,
 	asOf time.Time,
 ) error {
@@ -210,7 +210,7 @@ func plan(
 	if err != nil {
 		return err
 	}
-	results := make([]subscriptionbackfill.Result, 0, len(ids))
+	results := make([]backfill.Result, 0, len(ids))
 	for _, id := range ids {
 		result, err := service.Plan(ctx, id, asOf)
 		if err != nil {
@@ -223,8 +223,8 @@ func plan(
 
 func execute(
 	ctx context.Context,
-	service *subscriptionbackfill.Service,
-	repository subscriptionbackfill.Repository,
+	service *backfill.Service,
+	repository backfill.Repository,
 	value options,
 	asOf time.Time,
 ) error {
@@ -241,12 +241,12 @@ func execute(
 			return err
 		}
 	}
-	run := subscriptionbackfill.Run{
+	run := backfill.Run{
 		RunID: value.runID, ActorID: value.actorID,
 		RequestID: value.requestID, OperationID: value.operationID,
 		AsOf: asOf, ExecutedAt: time.Now().UTC(),
 	}
-	results := make([]subscriptionbackfill.Result, 0, len(ids))
+	results := make([]backfill.Result, 0, len(ids))
 	var executionErrors []error
 	for _, id := range ids {
 		result, err := service.Execute(ctx, id, run)
@@ -263,7 +263,7 @@ func execute(
 
 func listAllReviewed(
 	ctx context.Context,
-	repository subscriptionbackfill.Repository,
+	repository backfill.Repository,
 	batchSize int,
 ) ([]uint64, error) {
 	var all []uint64

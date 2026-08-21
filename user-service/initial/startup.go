@@ -115,32 +115,19 @@ func NewInitialApp(
 	}
 	app.Logger = flogging.MustGetLogger(loggerName)
 
-	app.LoadModulesOnStartup()
-
-	app.StartZnsScheduler()
-
 	return app
 }
 
-// StartZnsScheduler khởi động ZNS scheduler để refresh token tự động
-func (app *InitialApp) StartZnsScheduler() {
-	if app.ZnsScheduler != nil {
-		app.ZnsScheduler.Start()
-		app.Logger.Infof("ZNS Token Refresh Scheduler started successfully")
-	} else {
-		app.Logger.Warnf("ZNS Scheduler is nil, skipping scheduler start")
+// LoadModulesOnStartup performs the one-shot cache warmup under the process context.
+// Failure preserves the historical degraded-start behavior; the process root decides
+// whether to log/alert rather than constructors hiding background work.
+func (app *InitialApp) LoadModulesOnStartup(ctx context.Context) error {
+	if app == nil || app.ModuleService == nil {
+		return nil
 	}
-}
-
-// LoadModulesOnStartup load tất cả modules từ database khi khởi động service
-func (app *InitialApp) LoadModulesOnStartup() {
-	ctx := context.Background()
-
-	err := app.ModuleService.LoadModules(ctx)
-	if err != nil {
-		app.Logger.Errorf("Failed to load modules on startup: %v", err)
-		return
+	if err := app.ModuleService.LoadModules(ctx); err != nil {
+		return err
 	}
-
 	app.Logger.Infof("Successfully loaded modules on startup")
+	return nil
 }

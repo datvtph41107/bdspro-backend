@@ -36,7 +36,8 @@ func NewDB() (*gorm.DB, error) {
 		Logger: newLogger,
 	})
 
-	fmt.Printf("🔗 Kết nối tới: %s\n", dsn)
+	// Never log the DSN: it commonly contains database credentials.
+	fmt.Println("🔗 Kết nối PostgreSQL từ runtime configuration")
 
 	if err != nil {
 		fmt.Println("❌ Không thể kết nối với cơ sở dữ liệu:", err)
@@ -46,7 +47,7 @@ func NewDB() (*gorm.DB, error) {
 	// Lấy *sql.DB để cấu hình pool
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatalf("❌ failed to get db from gorm: %v", err)
+		return nil, fmt.Errorf("get sql db from gorm: %w", err)
 	}
 
 	// Cấu hình pool

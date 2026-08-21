@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	_requestcontext "common/requestcontext"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_observability "gateway/internal/observability"
 
@@ -65,7 +64,7 @@ func addSensitiveRequestMaterial(
 	)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		"request-sensitive-log-test",
 	)
 }

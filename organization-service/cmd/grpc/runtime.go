@@ -16,11 +16,12 @@ var GrpcServerCmd = &cobra.Command{
 	Short: "Start the gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		config.InitConfig()
-		app, err := wire.InitializeApp()
+		app, cleanup, err := wire.InitializeApp()
 		repository.AutoMigrate()
 		if err != nil {
 			log.Fatalf("Failed to initialize app: %v", err)
 		}
+		defer cleanup()
 		app.GRPCServer.Start()
 	},
 }

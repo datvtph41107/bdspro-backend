@@ -1,15 +1,24 @@
 package config
 
 import (
-	"common"
+	"common/configloader"
+	"fmt"
 	"hub/env"
-	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 const C_SESSION_ID = "C_SESSION_ID"
+
+type UserRPCProperties struct {
+	Address string `mapstructure:"address"`
+}
+
+type RPCProperties struct {
+	User UserRPCProperties `mapstructure:"user"`
+}
 
 type HubProperties struct {
 	Applink struct {
@@ -28,16 +37,32 @@ type HubProperties struct {
 		APIKey           string   `mapstructure:"api_key"`
 		ProtectedMethods []string `mapstructure:"protected_methods"`
 	} `mapstructure:"security"`
+	RPC RPCProperties `mapstructure:"rpc"`
 }
 
 var AppProperties HubProperties
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() {
+func LoadConfig() error {
 	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+	if err := configloader.LoadYMLFile(env.ENV_RUNTIME); err != nil {
+		return err
+	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		return fmt.Errorf("unmarshal hub config: %w", err)
 	}
+
+	if err := AppProperties.Validate(); err != nil {
+		return fmt.Errorf("validate hub config: %w", err)
+	}
+
+	return nil
+}
+
+func (c HubProperties) Validate() error {
+	if strings.TrimSpace(c.RPC.User.Address) == "" {
+		return fmt.Errorf("rpc.user.address is required")
+	}
+	return nil
 }

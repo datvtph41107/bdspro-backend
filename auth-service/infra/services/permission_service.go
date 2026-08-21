@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -13,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	_algorithm "common/algorithm"
-	_enum "common/domain/enum"
+	"auth/internal/permissioncatalog"
+
 	_errors "common/errors"
 	_identitycontext "common/identitycontext"
 	_utils "common/utils"
@@ -48,10 +46,8 @@ type SnapshotStatus struct {
 }
 
 type permissionSnapshot struct {
-	rolePermissions  map[uint64]*_algorithm.BitCache
-	permissionByCode map[string]uint32
-	version          string
-	loadedAt         time.Time
+	catalog  permissioncatalog.Snapshot
+	loadedAt time.Time
 }
 
 type roleCacheEntry struct {
@@ -75,23 +71,21 @@ type PermissionService struct {
 	maxStaleness    time.Duration
 	roleCacheTTL    time.Duration
 	requestTimeout  time.Duration
-	stopCh          chan struct{}
 }
 
 /**
- * NewPermissionService starts a bounded refresh lifecycle.
+ * NewPermissionService constructs permission authority state without starting
+ * process work. The Auth process root owns Run(ctx).
  */
-func NewPermissionService(envRuntime string) *PermissionService {
+func NewPermissionService(userClient *clients.UserGrpcClient) *PermissionService {
 	svc := &PermissionService{
-		userClient:      clients.MakeUserGrpcClient(envRuntime),
+		userClient:      userClient,
 		roleCache:       make(map[uint64]roleCacheEntry),
 		refreshInterval: durationFromEnv("QHPRO_PERMISSION_REFRESH_INTERVAL", 30*time.Second),
 		maxStaleness:    durationFromEnv("QHPRO_PERMISSION_MAX_STALENESS", 2*time.Minute),
 		roleCacheTTL:    durationFromEnv("QHPRO_PERMISSION_ROLE_CACHE_TTL", 15*time.Second),
 		requestTimeout:  durationFromEnv("QHPRO_PERMISSION_REQUEST_TIMEOUT", 2*time.Second),
-		stopCh:          make(chan struct{}),
 	}
-	go svc.runRefreshLoop()
 	return svc
 }
 
@@ -108,20 +102,28 @@ func durationFromEnv(key string, fallback time.Duration) time.Duration {
 	return parsed
 }
 
-func (s *PermissionService) runRefreshLoop() {
+func (s *PermissionService) Run(ctx context.Context) {
 	retryDelay := 500 * time.Millisecond
 	for {
-		ctx, cancel := context.WithTimeout(context.Background(), s.requestTimeout)
-		err := s.refresh(ctx)
+		refreshCtx, cancel := context.WithTimeout(ctx, s.requestTimeout)
+		err := s.refresh(refreshCtx)
 		cancel()
 		if err == nil {
 			break
 		}
 		s.setLastError(err)
 		log.Printf("[PermissionService] initial refresh failed: %v", err)
+
+		timer := time.NewTimer(retryDelay)
 		select {
-		case <-time.After(retryDelay):
-		case <-s.stopCh:
+		case <-timer.C:
+		case <-ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
 			return
 		}
 		if retryDelay < 10*time.Second {
@@ -134,31 +136,16 @@ func (s *PermissionService) runRefreshLoop() {
 	for {
 		select {
 		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), s.requestTimeout)
-			err := s.refresh(ctx)
+			refreshCtx, cancel := context.WithTimeout(ctx, s.requestTimeout)
+			err := s.refresh(refreshCtx)
 			cancel()
 			if err != nil {
 				s.setLastError(err)
 				log.Printf("[PermissionService] refresh failed: %v", err)
 			}
-		case <-s.stopCh:
+		case <-ctx.Done():
 			return
 		}
-	}
-}
-
-/**
- * Close stops the refresh worker.
- */
-func (s *PermissionService) Close() {
-	if s == nil {
-		return
-	}
-	select {
-	case <-s.stopCh:
-		return
-	default:
-		close(s.stopCh)
 	}
 }
 
@@ -187,9 +174,9 @@ func (s *PermissionService) refresh(ctx context.Context) error {
 	s.mu.Unlock()
 	log.Printf(
 		"[PermissionService] snapshot=%s roles=%d codes=%d",
-		next.version,
-		len(next.rolePermissions),
-		len(next.permissionByCode),
+		next.catalog.Version(),
+		next.catalog.RoleCount(),
+		next.catalog.CodeCount(),
 	)
 	return nil
 }
@@ -198,52 +185,33 @@ func buildPermissionSnapshot(
 	items []*userpb.RolePermissionItem,
 	permissions []*sharepb.Permission,
 ) (permissionSnapshot, error) {
-	rolePermissions := make(map[uint64]*_algorithm.BitCache, len(items))
-	lines := make([]string, 0, len(items)+len(permissions))
-	for _, item := range items {
-		if item == nil || item.Role == nil || item.Role.Id == 0 {
-			continue
-		}
-		ids := append([]uint64(nil), item.PermissionIds...)
-		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-		bitmap := _algorithm.NewBitCache(_enum.PermissionIDMax)
-		for _, permissionID := range ids {
-			if permissionID == 0 || permissionID > uint64(_enum.PermissionIDMax) {
-				return permissionSnapshot{}, fmt.Errorf("permission %d exceeds bitmap contract", permissionID)
-			}
-			bitmap.Set(int(permissionID), true)
-		}
-		rolePermissions[item.Role.Id] = bitmap
-		lines = append(lines, fmt.Sprintf("role:%d:%v", item.Role.Id, ids))
-	}
-
-	permissionByCode := make(map[string]uint32, len(permissions))
+	catalogPermissions := make([]permissioncatalog.Permission, 0, len(permissions))
 	for _, permission := range permissions {
 		if permission == nil || permission.Id == 0 {
 			continue
 		}
-		code := strings.TrimSpace(permission.Key)
-		if code == "" {
-			return permissionSnapshot{}, fmt.Errorf("permission %d has empty code", permission.Id)
-		}
-		if permission.Id > uint64(_enum.PermissionIDMax) {
-			return permissionSnapshot{}, fmt.Errorf("permission %d exceeds bitmap contract", permission.Id)
-		}
-		if previous, exists := permissionByCode[code]; exists && previous != uint32(permission.Id) {
-			return permissionSnapshot{}, fmt.Errorf("permission code %s maps to multiple IDs", code)
-		}
-		permissionByCode[code] = uint32(permission.Id)
-		lines = append(lines, fmt.Sprintf("permission:%s:%d", code, permission.Id))
+		catalogPermissions = append(catalogPermissions, permissioncatalog.Permission{
+			ID:   permission.Id,
+			Code: permission.Key,
+		})
 	}
 
-	sort.Strings(lines)
-	hash := sha256.Sum256([]byte(strings.Join(lines, "\n")))
-	return permissionSnapshot{
-		rolePermissions:  rolePermissions,
-		permissionByCode: permissionByCode,
-		version:          hex.EncodeToString(hash[:]),
-		loadedAt:         time.Now().UTC(),
-	}, nil
+	rolePermissions := make([]permissioncatalog.RolePermissions, 0, len(items))
+	for _, item := range items {
+		if item == nil || item.Role == nil || item.Role.Id == 0 {
+			continue
+		}
+		rolePermissions = append(rolePermissions, permissioncatalog.RolePermissions{
+			RoleID:        item.Role.Id,
+			PermissionIDs: append([]uint64(nil), item.PermissionIds...),
+		})
+	}
+
+	catalog, err := permissioncatalog.Build(rolePermissions, catalogPermissions)
+	if err != nil {
+		return permissionSnapshot{}, fmt.Errorf("build permission catalog: %w", err)
+	}
+	return permissionSnapshot{catalog: catalog, loadedAt: time.Now().UTC()}, nil
 }
 
 func (s *PermissionService) setLastError(err error) {
@@ -264,10 +232,10 @@ func (s *PermissionService) Status(now time.Time) SnapshotStatus {
 	lastErr := s.lastErr
 	s.mu.RUnlock()
 	status := SnapshotStatus{
-		Version:    snapshot.version,
+		Version:    snapshot.catalog.Version(),
 		LoadedAt:   snapshot.loadedAt,
-		RoleCount:  len(snapshot.rolePermissions),
-		CodeCount:  len(snapshot.permissionByCode),
+		RoleCount:  snapshot.catalog.RoleCount(),
+		CodeCount:  snapshot.catalog.CodeCount(),
 		Ready:      !snapshot.loadedAt.IsZero(),
 		MaxStaleAt: snapshot.loadedAt.Add(s.maxStaleness),
 	}
@@ -291,8 +259,8 @@ func (s *PermissionService) resolvePermissionIDs(
 
 	set := make(map[uint32]struct{}, len(permissionIDs)+len(permissionCodes))
 	for _, permissionID := range permissionIDs {
-		if permissionID == 0 || permissionID > uint32(_enum.PermissionIDMax) {
-			return nil, _errors.ReturnError(400, "permissionId không hợp lệ")
+		if permissionID == 0 || !snapshot.catalog.ContainsID(permissionID) {
+			return nil, _errors.ReturnError(400, "permissionId không tồn tại trong snapshot")
 		}
 		set[permissionID] = struct{}{}
 	}
@@ -301,7 +269,7 @@ func (s *PermissionService) resolvePermissionIDs(
 		if code == "" {
 			return nil, _errors.ReturnError(400, "permission code không hợp lệ")
 		}
-		permissionID, ok := snapshot.permissionByCode[code]
+		permissionID, ok := snapshot.catalog.ResolveCode(code)
 		if !ok {
 			return nil, _errors.ReturnError(403, "permission code không tồn tại trong snapshot")
 		}
@@ -438,9 +406,9 @@ func (s *PermissionService) hasAnyPermission(roleIDs []uint64, permissionIDs []u
 
 func (s *PermissionService) roleHasPermission(roleID uint64, permissionID uint32) bool {
 	s.mu.RLock()
-	bitmap := s.snapshot.rolePermissions[roleID]
+	snapshot := s.snapshot
 	s.mu.RUnlock()
-	return bitmap != nil && bitmap.Get(int(permissionID))
+	return snapshot.catalog.RoleHas(roleID, permissionID)
 }
 
 /**

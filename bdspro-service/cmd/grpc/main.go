@@ -30,10 +30,12 @@ var GrpcCmd = &cobra.Command{
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, err := wire.InitializeApp()
+		app, cleanup, err := wire.InitializeApp()
 		if err != nil {
 			log.Fatalf("failed to initialize app: %v", err)
 		}
+		defer cleanup()
+
 		if app == nil {
 			log.Fatal("app is nil after InitializeApp")
 		}

@@ -19,9 +19,10 @@ import (
 )
 
 type NewFunc struct {
-	FullPackage string
-	Alias       string
-	Func        string
+	FullPackage    string
+	Alias          string
+	Func           string
+	ReturnsCleanup bool
 }
 
 type BindEntry struct {
@@ -34,7 +35,8 @@ type BindEntry struct {
 }
 
 type InjectionConfig struct {
-	Packages []InjectionPackage `yaml:"packages"`
+	Packages []InjectionPackage  `yaml:"packages"`
+	Exclude  map[string][]string `yaml:"exclude"`
 }
 
 type InjectionPackage struct {
@@ -55,7 +57,7 @@ func main() {
 	}
 
 	wireFile := filepath.Join("wire", "wire.go")
-	injections, err := loadInjectionConfig()
+	injections, err := loadInjectionConfig(rootPackage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "load injection config:", err)
 		os.Exit(1)
@@ -65,12 +67,21 @@ func main() {
 		fmt.Fprintln(os.Stderr, "scan constructors:", err)
 		os.Exit(1)
 	}
+
+	cleanupEnabled := false
+	for _, constructor := range constructors {
+		if constructor.ReturnsCleanup {
+			cleanupEnabled = true
+			break
+		}
+	}
+
 	binds, err := findBinds(".", rootPackage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan binds:", err)
 		os.Exit(1)
 	}
-	if err := writeWireFile(constructors, binds, injections, wireFile, moduleName); err != nil {
+	if err := writeWireFile(constructors, binds, injections, wireFile, moduleName, cleanupEnabled); err != nil {
 		fmt.Fprintln(os.Stderr, "write wire.go:", err)
 		os.Exit(1)
 	}
@@ -102,6 +113,15 @@ func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
 			if name == ".git" || name == "vendor" || name == "node_modules" {
 				return filepath.SkipDir
 			}
+
+			relative, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			if filepath.ToSlash(relative) == "wire" {
+				return filepath.SkipDir
+			}
+
 			return nil
 		}
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
@@ -123,9 +143,10 @@ func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
 				continue
 			}
 			item := NewFunc{
-				FullPackage: fullPackage,
-				Alias:       generateAlias(fullPackage),
-				Func:        function.Name.Name,
+				FullPackage:    fullPackage,
+				Alias:          generateAlias(fullPackage),
+				Func:           function.Name.Name,
+				ReturnsCleanup: hasWireCleanupResult(function),
 			}
 			functions[item.FullPackage+"\x00"+item.Func] = item
 		}
@@ -146,6 +167,41 @@ func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
 		return result[i].Func < result[j].Func
 	})
 	return result, nil
+}
+
+func hasWireCleanupResult(function *ast.FuncDecl) bool {
+	if function == nil || function.Type.Results == nil {
+		return false
+	}
+
+	resultTypes := make([]ast.Expr, 0, len(function.Type.Results.List))
+	for _, field := range function.Type.Results.List {
+		count := len(field.Names)
+		if count == 0 {
+			count = 1
+		}
+		for i := 0; i < count; i++ {
+			resultTypes = append(resultTypes, field.Type)
+		}
+	}
+
+	if len(resultTypes) != 3 {
+		return false
+	}
+
+	cleanup, ok := resultTypes[1].(*ast.FuncType)
+	if !ok {
+		return false
+	}
+	if cleanup.Params != nil && len(cleanup.Params.List) != 0 {
+		return false
+	}
+	if cleanup.Results != nil && len(cleanup.Results.List) != 0 {
+		return false
+	}
+
+	errType, ok := resultTypes[2].(*ast.Ident)
+	return ok && errType.Name == "error"
 }
 
 func findBinds(root, rootPackage string) ([]BindEntry, error) {
@@ -190,31 +246,33 @@ func findBinds(root, rootPackage string) ([]BindEntry, error) {
 				}
 
 				comment := commentText(gen.Doc) + "\n" + commentText(typeSpec.Doc)
-				matches := bindPattern.FindStringSubmatch(comment)
-				if len(matches) != 2 {
-					continue
-				}
-				target := strings.TrimSuffix(strings.TrimSpace(matches[1]), ".go")
-				separator := strings.LastIndex(target, ".")
-				if separator <= 0 || separator == len(target)-1 {
-					return fmt.Errorf("%s: invalid @bind target %q", path, target)
-				}
-				interfacePath := target[:separator]
-				interfaceName := target[separator+1:]
-				if !ast.IsExported(typeSpec.Name.Name) {
-					return fmt.Errorf("%s: @bind concrete struct %s must be exported", path, typeSpec.Name.Name)
-				}
+				matches := bindPattern.FindAllStringSubmatch(comment, -1)
+				for _, match := range matches {
+					if len(match) != 2 {
+						continue
+					}
+					target := strings.TrimSuffix(strings.TrimSpace(match[1]), ".go")
+					separator := strings.LastIndex(target, ".")
+					if separator <= 0 || separator == len(target)-1 {
+						return fmt.Errorf("%s: invalid @bind target %q", path, target)
+					}
+					interfacePath := target[:separator]
+					interfaceName := target[separator+1:]
+					if !ast.IsExported(typeSpec.Name.Name) {
+						return fmt.Errorf("%s: @bind concrete struct %s must be exported", path, typeSpec.Name.Name)
+					}
 
-				item := BindEntry{
-					InterfaceAlias: generateAlias(interfacePath),
-					InterfacePath:  interfacePath,
-					InterfaceName:  interfaceName,
-					StructAlias:    structAlias,
-					StructPackage:  structPackage,
-					StructName:     typeSpec.Name.Name,
+					item := BindEntry{
+						InterfaceAlias: generateAlias(interfacePath),
+						InterfacePath:  interfacePath,
+						InterfaceName:  interfaceName,
+						StructAlias:    structAlias,
+						StructPackage:  structPackage,
+						StructName:     typeSpec.Name.Name,
+					}
+					key := item.InterfacePath + "." + item.InterfaceName + "\x00" + item.StructPackage + "." + item.StructName
+					binds[key] = item
 				}
-				key := item.InterfacePath + "." + item.InterfaceName + "\x00" + item.StructPackage + "." + item.StructName
-				binds[key] = item
 			}
 		}
 		return nil
@@ -275,7 +333,7 @@ func scriptDir() string {
 	return filepath.Dir(filename)
 }
 
-func loadInjectionConfig() ([]InjectionPackage, error) {
+func loadInjectionConfig(service string) ([]InjectionPackage, error) {
 	configPath := filepath.Join(scriptDir(), "injection_clients.yml")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
@@ -289,10 +347,62 @@ func loadInjectionConfig() ([]InjectionPackage, error) {
 	if err := yaml.Unmarshal(content, &config); err != nil {
 		return nil, fmt.Errorf("parse %s: %w", configPath, err)
 	}
-	return config.Packages, nil
+
+	return filterInjectionPackages(
+		config.Packages,
+		config.Exclude[strings.TrimSpace(service)],
+	), nil
 }
 
-func writeWireFile(functions []NewFunc, binds []BindEntry, injections []InjectionPackage, wireFile, moduleName string) error {
+func filterInjectionPackages(
+	packages []InjectionPackage,
+	excluded []string,
+) []InjectionPackage {
+	if len(excluded) == 0 {
+		return packages
+	}
+
+	excludedSet := make(map[string]struct{}, len(excluded))
+	for _, item := range excluded {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			excludedSet[item] = struct{}{}
+		}
+	}
+
+	filtered := make([]InjectionPackage, 0, len(packages))
+	for _, injection := range packages {
+		packagePath := strings.TrimSpace(injection.Import)
+		constructors := make([]string, 0, len(injection.Constructors))
+
+		for _, constructor := range injection.Constructors {
+			constructor = strings.TrimSpace(constructor)
+			if constructor == "" {
+				continue
+			}
+
+			key := packagePath + "." + constructor
+			if _, skip := excludedSet[key]; skip {
+				continue
+			}
+
+			constructors = append(constructors, constructor)
+		}
+
+		if len(constructors) == 0 {
+			continue
+		}
+
+		filtered = append(filtered, InjectionPackage{
+			Import:       packagePath,
+			Constructors: constructors,
+		})
+	}
+
+	return filtered
+}
+
+func writeWireFile(functions []NewFunc, binds []BindEntry, injections []InjectionPackage, wireFile, moduleName string, cleanupEnabled bool) error {
 	if err := os.MkdirAll(filepath.Dir(wireFile), 0o755); err != nil {
 		return err
 	}
@@ -377,13 +487,24 @@ import (
 			return err
 		}
 	}
-	if _, err := fmt.Fprintf(writer, `)
+	injectorTemplate := `)
 
 func InitializeApp() (*%s.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }
-`, initialAlias); err != nil {
+`
+	if cleanupEnabled {
+		injectorTemplate = `)
+
+func InitializeApp() (*%s.InitialApp, func(), error) {
+	wire.Build(wireSet)
+	return nil, nil, nil
+}
+`
+	}
+
+	if _, err := fmt.Fprintf(writer, injectorTemplate, initialAlias); err != nil {
 		return err
 	}
 	if err := writer.Flush(); err != nil {

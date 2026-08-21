@@ -2,24 +2,30 @@ package quota_test
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	"common/operation"
 	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
-	"tqd/infra/memoryquota"
 	"tqd/internal/quota"
+	"tqd/internal/quota/memory"
 )
 
 func quotaAccess(limit int64) commonaccess.Result {
 	start := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
 	return commonaccess.Result{
-		Subject:     commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
-		Operation:   businessoperation.WorkspaceReportGenerate,
-		Allowed:     true,
+		Subject:   commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
+		Operation: operation.Code("workspace.report.generate"),
+		Allowed:   true,
+		Metering: commonaccess.Metering{
+			FeatureCode:    "workspace.report.generate",
+			MeterCode:      "workspace.report_generation.accepted",
+			UnitsPerAction: 1,
+			PolicyVersion:  "1.0.0",
+		},
 		Limit:       limit,
 		Period:      commonaccess.PeriodSubscriptionCycle,
 		PeriodStart: start,
@@ -74,7 +80,7 @@ func TestConcurrentLastQuotaOnlyAllowsOneReservation(t *testing.T) {
 	if err := store.SetUsed(
 		ctx,
 		access.Subject,
-		access.Operation,
+		access.Metering.MeterCode,
 		access.PeriodStart,
 		access.PeriodEnd,
 		99,
@@ -110,6 +116,41 @@ func TestConcurrentLastQuotaOnlyAllowsOneReservation(t *testing.T) {
 
 	if allowed != 1 || exceeded != 1 {
 		t.Fatalf("allowed=%d exceeded=%d, want 1/1", allowed, exceeded)
+	}
+}
+
+func TestOperationsSharingMeterCompeteForOneAllowance(t *testing.T) {
+	t.Parallel()
+
+	store := memoryquota.NewStore()
+	service := quota.NewService(store)
+	firstAccess := quotaAccess(1)
+	secondAccess := quotaAccess(1)
+	secondAccess.Operation = operation.Code("parcel.analysis.run")
+	secondAccess.Metering.FeatureCode = "parcel.analysis.run"
+
+	first, err := service.ReserveQuota(context.Background(), quota.ReserveInput{
+		Access:      firstAccess,
+		OperationID: "op_report_shared_meter",
+		Amount:      1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.MeterCode != firstAccess.Metering.MeterCode {
+		t.Fatalf("reservation meter = %q, want %q", first.MeterCode, firstAccess.Metering.MeterCode)
+	}
+	if _, err := service.CommitQuota(context.Background(), first); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = service.ReserveQuota(context.Background(), quota.ReserveInput{
+		Access:      secondAccess,
+		OperationID: "op_analysis_shared_meter",
+		Amount:      1,
+	})
+	if !errors.Is(err, quota.ErrQuotaExceeded) {
+		t.Fatalf("second operation error = %v, want ErrQuotaExceeded", err)
 	}
 }
 
@@ -180,9 +221,13 @@ func TestAllowedOperationWithoutQuotaDoesNotCreateReservation(t *testing.T) {
 	result, err := service.ReserveQuota(context.Background(), quota.ReserveInput{
 		Access: commonaccess.Result{
 			Subject:   commonaccess.Subject{Type: commonaccess.SubjectProfile, ID: "42"},
-			Operation: businessoperation.Code("parcel.view"),
+			Operation: operation.Code("parcel.view"),
 			Allowed:   true,
-			Period:    commonaccess.PeriodNone,
+			Metering: commonaccess.Metering{
+				FeatureCode:   "parcel.view",
+				PolicyVersion: "1.0.0",
+			},
+			Period: commonaccess.PeriodNone,
 		},
 		OperationID: "op_parcel_view_1",
 	})

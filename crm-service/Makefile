@@ -1,8 +1,8 @@
 migrateup:
-	migrate -path infra/db/migrate_v2 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_crm?sslmode=disable" -verbose up
+	migrate -path infra/db/migrate_v2 -database "${CRM_DATABASE_URL}" -verbose up
 
 migratedown:
-	migrate -path infra/db/migrate_v2 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5432/db_crm?sslmode=disable" -verbose down
+	migrate -path infra/db/migrate_v2 -database "${CRM_DATABASE_URL}" -verbose down
 
 .PHONY: migrateup migratedown
 

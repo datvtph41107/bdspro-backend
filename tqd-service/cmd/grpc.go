@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	process "common/process"
 	"tqd/config"
 	"tqd/infra/db"
 	handler_grpc "tqd/infra/handler/grpc"
@@ -19,8 +21,8 @@ import (
 	"tqd/wire"
 
 	_db "common/db"
+	quota "common/legacyquota"
 	_middleware "common/middleware"
-	"common/quota"
 	_redis "common/redis"
 	"common/transporttrust"
 
@@ -61,11 +63,12 @@ func RunGRPCServer() error {
 
 func runGRPCServer() error {
 	log.Println("Starting TQD gRPC Server...")
-	targetReportEnabled := reportTargetEnabled()
-	log.Printf("[REPORT-TARGET] enabled=%t", targetReportEnabled)
 
 	// Load configuration
-	cfg := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("load TQD config: %w", err)
+	}
 	if GrpcPort > 0 {
 		cfg.Server.GrpcPort = GrpcPort
 	}
@@ -73,12 +76,13 @@ func runGRPCServer() error {
 	os.Setenv("TZ", "Europe/London")
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-	app, err := wire.InitializeApp()
+	app, cleanup, err := wire.InitializeApp()
 	if err != nil {
 		return fmt.Errorf("failed to initialize app: %v", err)
 	}
+	defer cleanup()
 	if app == nil {
-		log.Fatal("app is nil after InitializeApp")
+		return errors.New("TQD app is nil after InitializeApp")
 	}
 
 	// The SEO projection service uses the same authoritative public-content
@@ -89,6 +93,15 @@ func runGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("initialize SEO projection database: %w", err)
 	}
+	projectionSQLDB, err := projectionDB.DB()
+	if err != nil {
+		return fmt.Errorf("access SEO projection database pool: %w", err)
+	}
+	defer func() {
+		if closeErr := projectionSQLDB.Close(); closeErr != nil {
+			log.Printf("close TQD projection database: %v", closeErr)
+		}
+	}()
 	seoProjectionRepository := publiccontent_postgres.NewRepository(projectionDB)
 	seoProjectionGrpcHandler := handler_grpc.NewSeoProjectionGrpcHandler(seoProjectionRepository)
 	planningClientRepository := planningclient_postgres.NewRepository(projectionDB)
@@ -105,6 +118,14 @@ func runGRPCServer() error {
 
 	// =================== QUOTA INTERCEPTOR INIT ===================
 	var quotaInterceptor grpc.UnaryServerInterceptor
+	var legacyQuotaRedis *_redis.RedisService
+	defer func() {
+		if legacyQuotaRedis != nil && legacyQuotaRedis.Client != nil {
+			if closeErr := legacyQuotaRedis.Client.Close(); closeErr != nil {
+				log.Printf("close legacy TQD quota Redis client: %v", closeErr)
+			}
+		}
+	}()
 
 	// Khởi tạo quota logger
 	if err := quota.InitQuotaLogger("./app/logs/quota", true); err != nil {
@@ -116,6 +137,7 @@ func runGRPCServer() error {
 		log.Println("[QUOTA] Initializing quota interceptor...")
 
 		redisService := _redis.NewRedisService()
+		legacyQuotaRedis = redisService
 		storage := quota.NewRedisQuotaStorage(redisService)
 		policy, err := quota.NewDefaultPolicyEngine(quotaCfg.PolicyFile)
 		if err != nil {
@@ -154,31 +176,22 @@ func runGRPCServer() error {
 
 	legacyQuotaInterceptor := quotaInterceptor
 	quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if info != nil && usesTargetQuota(targetReportEnabled, info.FullMethod) {
+		if info != nil && usesReportTargetRuntime(info.FullMethod) {
 			return handler(ctx, req)
 		}
 		return legacyQuotaInterceptor(ctx, req, info, handler)
 	}
 
-	businessOperationInterceptor, err := newBusinessOperationInterceptor(targetReportEnabled)
-	if err != nil {
-		return err
-	}
-
-	operationRuntime, err := newTQDOperationRuntime()
-	if err != nil {
-		return err
-	}
-	legacyOperationInterceptor := skipTargetOperationRuntime(operationRuntime.UnaryServerInterceptor, targetReportEnabled)
+	reportTargetOperationInterceptor :=
+		buildReportTargetOperationInterceptor()
 	trustConfig := transporttrust.ConfigFromEnv()
 
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
 		grpc.ChainUnaryInterceptor(
-			targetIngress(trustConfig, targetReportEnabled),
-			businessOperationInterceptor,
-			legacyOperationInterceptor,
+			targetIngress(trustConfig),
+			reportTargetOperationInterceptor,
 			quotaInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
@@ -222,38 +235,60 @@ func runGRPCServer() error {
 
 	reflection.Register(s)
 
-	workerCtx, workerCancel := context.WithCancel(context.Background())
-	closeReportTarget, err := startReportTarget(
-		workerCtx,
+	// Signals and Serve failure share one process cancellation domain.
+	signalCtx, stopSignals := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stopSignals()
+	processCtx, processCancel := context.WithCancel(signalCtx)
+	defer processCancel()
+
+	closeReportTarget := func() {}
+	if closeTarget, targetErr := startReportTarget(
+		processCtx,
 		projectionDB,
 		app.WorkspaceMapGrpcHandler,
 		nil,
-		targetReportEnabled,
-	)
-	if err != nil {
-		workerCancel()
-		return fmt.Errorf("start generated report target: %w", err)
+	); targetErr != nil {
+		// Generated Report is one TQD capability. A dependency failure here
+		// must not remove unrelated planning/GIS/discovery capabilities.
+		log.Printf("[REPORT-TARGET] capability unavailable: %v", targetErr)
+	} else {
+		closeReportTarget = closeTarget
 	}
-	defer closeReportTarget()
 
+	actors := make([]process.Actor, 0, 1)
 	if app.QHPlanningClassifyWorker != nil {
-		app.QHPlanningClassifyWorker.Start(workerCtx)
+		actors = append(actors, process.ActorFunc(
+			app.QHPlanningClassifyWorker.Run,
+		))
 	}
 
-	go func() {
-		log.Printf("gRPC Server listening on %s", addr)
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve gRPC: %v", err)
-		}
-	}()
+	log.Printf("gRPC Server listening on %s", addr)
+	lifecycleErr := process.Run(
+		processCtx,
+		processCancel,
+		s,
+		lis,
+		actors,
+		process.Config{GracefulStopTimeout: 10 * time.Second},
+	)
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down gRPC server...")
-	workerCancel()
-	s.GracefulStop()
+	// process.Run has cancelled the process and waited for its actors. Only now
+	// may actor-owned outbound resources be released.
+	if app.QHPlanningClassifyWorker != nil {
+		if closeErr := app.QHPlanningClassifyWorker.Close(); closeErr != nil {
+			log.Printf("close TQD classify assistant client: %v", closeErr)
+		}
+	}
+	// Report cleanup then waits for Report-owned runners before dependency close.
+	closeReportTarget()
 	log.Println("gRPC server exited")
 
+	if lifecycleErr != nil {
+		return fmt.Errorf("gRPC server lifecycle: %w", lifecycleErr)
+	}
 	return nil
 }

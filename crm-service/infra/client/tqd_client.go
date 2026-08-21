@@ -1,20 +1,15 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
-	"crm/env"
 	"crm/internal/dto"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"pb/clients"
 	tqdpb "pb/types/tqd"
 	"strings"
-	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -24,33 +19,11 @@ type TqdClient struct {
 	SeoProjectionClient tqdpb.TqdSeoProjectionServiceClient
 }
 
-func NewTqdClient() *TqdClient {
-	client := &TqdClient{}
-	name := "tqd"
-	serviceURL := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
-
-	// grpc.Dial is non-blocking unless WithBlock is supplied, so constructing
-	// both stubs synchronously removes the old nil-client race without delaying
-	// CRM startup while the connection is still becoming READY.
-	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:8219", serviceURL),
-		grpc.WithInsecure(),
-		grpc.WithBackoffMaxDelay(5*time.Second),
-		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-	)
-	if err != nil {
-		log.Printf("failed to dial tqd service: %v", err)
-		return client
+func NewTqdClient(rpcClient *clients.TQDGrpcClient) *TqdClient {
+	return &TqdClient{
+		Client:              rpcClient.ParcelClient,
+		SeoProjectionClient: rpcClient.SeoProjectionClient,
 	}
-
-	monitorCtx, cancel := context.WithCancel(context.Background())
-	_ = cancel // connection lifetime follows the CRM process.
-	go _middleware.MonitorConnection(monitorCtx, name, conn)
-
-	client.Client = tqdpb.NewParcelServiceClient(conn)
-	client.SeoProjectionClient = tqdpb.NewTqdSeoProjectionServiceClient(conn)
-	return client
 }
 
 func (c *TqdClient) GetAdministrativeUnitProjection(

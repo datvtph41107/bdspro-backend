@@ -9,7 +9,6 @@ import (
 	"payment/appconfig"
 	"payment/internal/domain/entity"
 	"payment/internal/domain/repository"
-	"payment/internal/infrastructure/client"
 	"payment/pkg/utils"
 
 	"gorm.io/gorm"
@@ -50,7 +49,7 @@ type paymentUsecase struct {
 	walletTransactionRepository repository.WalletTransactionsRepository
 	walletAuditLogRepository    repository.WalletAuditLogRepository
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository
-	notificationWorker          *notificationWorker
+	notificationWorker          *NotificationWorker
 	dashboardMetricRepository   repository.DashboardMetricRepository
 }
 
@@ -60,11 +59,9 @@ func NewPaymentUsecase(
 	walletTransactionRepository repository.WalletTransactionsRepository,
 	walletAuditLogRepository repository.WalletAuditLogRepository,
 	withdrawalRequestRepository repository.WithdrawalRequestsRepository,
-	notificationClient client.NotificationClient,
+	notificationWorker *NotificationWorker,
 	dashboardMetricRepository repository.DashboardMetricRepository,
 ) PaymentUsecase {
-	notificationWorker := NewNotificationWorker(notificationClient)
-	notificationWorker.Start()
 	return &paymentUsecase{
 		paymentRepository:           paymentRepository,
 		walletRepository:            walletRepository,

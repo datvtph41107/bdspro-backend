@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +22,7 @@ func (
 	panickingRequestIDRecorder,
 ) RecordRequestIDDecision(
 	context.Context,
-	_requestcontext.RequestIDDecision,
+	_request.RequestIDDecision,
 ) {
 	panic(observabilityPanic)
 }

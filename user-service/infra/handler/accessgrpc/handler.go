@@ -2,13 +2,14 @@ package accessgrpc
 
 import (
 	"common/access"
-	"common/businessoperation"
 	"common/identitycontext"
+	"common/operation"
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
-	internalaccess "user/internal/access"
+	internalaccess "user/internal/modules/entitlement/evaluate"
 
 	userpb "pb/types/user"
 
@@ -56,7 +57,7 @@ func (h *Handler) GetAccess(
 		return nil, status.Error(codes.Unauthenticated, "profile identity is required")
 	}
 
-	operation, err := businessoperation.ParseCode(req.GetOperation())
+	operationCode, err := operation.Parse(strings.TrimSpace(req.GetOperation()))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "operation is invalid")
 	}
@@ -66,7 +67,7 @@ func (h *Handler) GetAccess(
 		ID:   strconv.FormatUint(actor.ProfileID, 10),
 	}
 
-	result, err := h.service.GetAccess(ctx, subject, operation, h.now())
+	result, err := h.service.GetAccess(ctx, subject, operationCode, h.now())
 	if err != nil {
 		switch {
 		case errors.Is(err, internalaccess.ErrInvalidSubject),
@@ -85,6 +86,10 @@ func toProto(result access.Result) *userpb.GetAccessResponse {
 		SubjectType:    string(result.Subject.Type),
 		SubjectId:      result.Subject.ID,
 		Operation:      string(result.Operation),
+		FeatureCode:    result.Metering.FeatureCode,
+		MeterCode:      string(result.Metering.MeterCode),
+		UnitsPerAction: result.Metering.UnitsPerAction,
+		PolicyVersion:  result.Metering.PolicyVersion,
 		Allowed:        result.Allowed,
 		Unlimited:      result.Unlimited,
 		Limit:          result.Limit,

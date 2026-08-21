@@ -8,7 +8,7 @@ import (
 // ==================== KEY PATTERNS ====================
 
 func UserSyncTimeKey(profileID uint64) string {
-	return fmt.Sprintf("%s:sync:user:%d:time", profileID)
+	return fmt.Sprintf("sync:user:%d:time", profileID)
 }
 
 func UserSyncProductsKey(profileID uint64) string {
@@ -21,15 +21,15 @@ func UserProductsChangeKey(profileID uint64) string {
 
 // 🔥 tombstone (nếu tách riêng)
 func UserRemovedKey(profileID uint64) string {
-	return fmt.Sprintf("%s:sync:user:%d:removed", profileID)
+	return fmt.Sprintf("sync:user:%d:removed", profileID)
 }
 
 func ProductKey(productID uint64) string {
-	return fmt.Sprintf("%s:product:%d", productID)
+	return fmt.Sprintf("product:%d", productID)
 }
 
 func ProductUpdatedKey(productID uint64) string {
-	return fmt.Sprintf("%s:product:%d:updated", productID)
+	return fmt.Sprintf("product:%d:updated", productID)
 }
 
 // ==================== TTL CONSTANTS ====================

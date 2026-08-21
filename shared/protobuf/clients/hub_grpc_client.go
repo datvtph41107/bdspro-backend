@@ -1,17 +1,14 @@
 package clients
 
 import (
-	"common"
 	"context"
 	"fmt"
-	"log"
 	hubpb "pb/types/hub"
 	sharepb "pb/types/shared"
 	"time"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_middleware "common/middleware"
 
 	"google.golang.org/grpc"
 )
@@ -24,34 +21,14 @@ type HubGrpcClient struct {
 	UserGuideClient  hubpb.UserGuideServiceClient
 }
 
-func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
-	hubClient := &HubGrpcClient{Client: nil, InternalClient: nil}
-	go func() {
-		name := "hub"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8280", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial hub service: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Monitor connection status
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		hubClient.Client = hubpb.NewLocationServiceClient(conn)
-		hubClient.InternalClient = hubpb.NewHubInternalServiceClient(conn)
-		hubClient.LocationV2Client = hubpb.NewLocationV2ServiceClient(conn)
-		hubClient.ApiKeyClient = hubpb.NewApiKeyServiceClient(conn)
-		hubClient.UserGuideClient = hubpb.NewUserGuideServiceClient(conn)
-	}()
-	return hubClient
+func BindHubGrpcClient(conn grpc.ClientConnInterface) *HubGrpcClient {
+	return &HubGrpcClient{
+		Client:           hubpb.NewLocationServiceClient(conn),
+		InternalClient:   hubpb.NewHubInternalServiceClient(conn),
+		LocationV2Client: hubpb.NewLocationV2ServiceClient(conn),
+		ApiKeyClient:     hubpb.NewApiKeyServiceClient(conn),
+		UserGuideClient:  hubpb.NewUserGuideServiceClient(conn),
+	}
 }
 
 func (c *HubGrpcClient) GetByIDs(ctx context.Context, req *hubpb.GetRegionsRequest) (*hubpb.GetRegionsResponse, error) {

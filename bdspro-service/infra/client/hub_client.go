@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bdspro/env"
 	"context"
 	"pb/clients"
 	hubpb "pb/types/hub"
@@ -15,9 +14,12 @@ type HubClient struct {
 	areaRegionUsecase *admin_usecases.AreaRegionUsecase
 }
 
-func NewHubClient(areaRegionUsecase *admin_usecases.AreaRegionUsecase) *HubClient {
+func NewHubClient(
+	rpcClient *clients.HubGrpcClient,
+	areaRegionUsecase *admin_usecases.AreaRegionUsecase,
+) *HubClient {
 	return &HubClient{
-		HubGrpcClient:     clients.MakeHubGrpcClient(env.ENV_RUNTIME),
+		HubGrpcClient:     rpcClient,
 		areaRegionUsecase: areaRegionUsecase,
 	}
 }

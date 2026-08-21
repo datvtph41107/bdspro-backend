@@ -4,15 +4,15 @@ import (
 	_crud "common/domain/crud"
 	_err "common/domain/err"
 	"context"
-	"user/internal/catalogshadow"
 	"user/internal/interface/repo"
 	"user/internal/models"
+	"user/internal/modules/catalog/shadow"
 )
 
 type PlanUsecase struct {
 	_crud.BaseUsecase[models.Plan, repo.IPlanRepo]
 	planRepo       repo.IPlanRepo
-	shadowObserver catalogshadow.Observer
+	shadowObserver shadow.Observer
 }
 
 type IPlanUsecase interface {
@@ -22,7 +22,7 @@ type IPlanUsecase interface {
 
 func NewPlanUsecase(
 	planRepo repo.IPlanRepo,
-	shadowObserver catalogshadow.Observer,
+	shadowObserver shadow.Observer,
 ) IPlanUsecase {
 	return &PlanUsecase{
 		BaseUsecase: _crud.BaseUsecase[models.Plan, repo.IPlanRepo]{

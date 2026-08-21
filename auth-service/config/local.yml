@@ -1,3 +1,7 @@
+rpc:
+  user:
+    address: "localhost:8201"
+
 server:
   name: auth-service
   tcp_port: 8216
@@ -14,8 +18,8 @@ service:
   feature: "Enabled only for Service Auth"
 
 redis:
-  host: 14.225.210.29:6379
-  pass: protected_redis_secure_password
+  host: localhost:6379
+  pass: "CHANGE_ME"
 
 key:
   jwt: key-generate-jwt-token-authentication

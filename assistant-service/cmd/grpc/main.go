@@ -36,10 +36,11 @@ func RunGRPCServer() {
 	}
 
 	// Initialize dependencies
-	assistantHandler, err := wire.InitializeApp()
+	assistantHandler, cleanup, err := wire.InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize dependencies: %v", err)
 	}
+	defer cleanup()
 
 	// Create gRPC server — max msg đủ cho ClassifyDocumentWithGemini (file inline ~15MB).
 	const grpcMaxMsgBytes = 32 << 20

@@ -2,7 +2,7 @@ package usage
 
 import (
 	commonaccess "common/access"
-	"common/businessoperation"
+	commonmetering "common/metering"
 	"context"
 	"time"
 )
@@ -16,7 +16,7 @@ type Store interface {
 	SumUsage(
 		ctx context.Context,
 		subject commonaccess.Subject,
-		operation businessoperation.Code,
+		meterCode commonmetering.Code,
 		periodStart time.Time,
 		periodEnd time.Time,
 	) (int64, error)

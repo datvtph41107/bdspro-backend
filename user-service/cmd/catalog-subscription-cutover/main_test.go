@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"user/internal/subscriptioncutover"
+	"user/internal/modules/subscription/cutover"
 )
 
 func TestActivateRequiresExplicitGuard(t *testing.T) {
 	t.Setenv("QHPRO_ALLOW_SUBSCRIPTION_READ_CUTOVER", "")
 	err := run(context.Background(), options{action: "activate"})
-	if !errors.Is(err, subscriptioncutover.ErrActivationDenied) {
+	if !errors.Is(err, cutover.ErrActivationDenied) {
 		t.Fatalf("err = %v", err)
 	}
 }

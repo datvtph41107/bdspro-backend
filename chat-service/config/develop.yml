@@ -2,6 +2,12 @@ server:
     port: 8007
     tcp_port: 8208
 
+rpc:
+    user:
+        address: "user:8201"
+    bdspro:
+        address: "bdspro:8202"
+
 eureka:
     url: localhost
     port: 8761
@@ -28,10 +34,3 @@ worker:
 
 max_participant: 10
 requiredParticipants: 3
-services:
-    user:
-        host: "user"
-        port: "8205"
-    bdspro:
-        host: "bdspro"
-        port: "8204"

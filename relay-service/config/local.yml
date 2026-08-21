@@ -1,3 +1,11 @@
+rpc:
+    user:
+        address: "localhost:8201"
+    chat:
+        address: "localhost:8208"
+    notification:
+        address: "localhost:8204"
+
 server:
     port: 8308
     tcp_port: 8309
@@ -27,8 +35,3 @@ worker:
     number: 10
 
 max_participant: 10
-
-services:
-    chat:
-        host: "localhost"
-        port: "8208"

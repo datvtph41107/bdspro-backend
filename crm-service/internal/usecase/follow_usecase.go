@@ -208,7 +208,7 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 
 		currentUser, err := s.userClient.GetProfileById(asyncCtx, profileId)
 		if err != nil || currentUser == nil {
-			fmt.Errorf("failed to get current user for notification", "error", err)
+			fmt.Errorf("failed to get current user for notification: %w", err)
 			return
 		}
 
@@ -224,7 +224,7 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 			[]string{strconv.FormatUint(followId, 10)},
 		)
 		if err != nil {
-			fmt.Errorf("failed to create notification", "error", err)
+			fmt.Errorf("failed to create notification: %w", err)
 		}
 	}()
 }

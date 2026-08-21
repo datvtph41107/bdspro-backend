@@ -1,3 +1,11 @@
+rpc:
+  user:
+    address: "user:8201"
+  notification:
+    address: "notification:8204"
+  bdspro:
+    address: "bdspro:8202"
+
 server:
   port: 8006
   tcp_port: 8209

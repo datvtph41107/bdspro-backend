@@ -913,8 +913,8 @@ func (u *mapWorkspaceUsecase) CreateGeneratedReport(ctx context.Context, req dto
 		return nil, fmt.Errorf("report type does not support entity type")
 	}
 
-	if req.ClientRequestID != "" {
-		existing, err := u.repo.GetGeneratedReportByClientRequestID(ctx, req.UserID, req.ClientRequestID)
+	if req.CommandKey != "" {
+		existing, err := u.repo.GetGeneratedReportByCommandKey(ctx, req.UserID, req.CommandKey)
 		if err != nil {
 			return nil, err
 		}
@@ -1034,27 +1034,27 @@ func (u *mapWorkspaceUsecase) CreateGeneratedReport(ctx context.Context, req dto
 	}
 
 	row := qh_domain.QHUserReported{
-		UserID:          req.UserID,
-		ReportType:      reportType,
-		Status:          enums.GeneratedReportStatusProcessing,
-		Title:           title,
-		Subtitle:        subtitle,
-		Address:         location.Address,
-		Province:        location.Province,
-		ProvinceCode:    location.ProvinceCode,
-		WardCode:        location.WardCode,
-		ParcelID:        parcelID,
-		RegionID:        regionID,
-		MinLon:          spatial.Bounds.MinLon,
-		MinLat:          spatial.Bounds.MinLat,
-		MaxLon:          spatial.Bounds.MaxLon,
-		MaxLat:          spatial.Bounds.MaxLat,
-		CenterLat:       spatial.Centroid.Lat,
-		CenterLon:       spatial.Centroid.Lon,
-		Format:          reportType.DefaultFormat(),
-		Comparison:      datatypes.JSON(comparisonJSON),
-		Metadata:        metadata,
-		ClientRequestID: req.ClientRequestID,
+		UserID:       req.UserID,
+		ReportType:   reportType,
+		Status:       enums.GeneratedReportStatusProcessing,
+		Title:        title,
+		Subtitle:     subtitle,
+		Address:      location.Address,
+		Province:     location.Province,
+		ProvinceCode: location.ProvinceCode,
+		WardCode:     location.WardCode,
+		ParcelID:     parcelID,
+		RegionID:     regionID,
+		MinLon:       spatial.Bounds.MinLon,
+		MinLat:       spatial.Bounds.MinLat,
+		MaxLon:       spatial.Bounds.MaxLon,
+		MaxLat:       spatial.Bounds.MaxLat,
+		CenterLat:    spatial.Centroid.Lat,
+		CenterLon:    spatial.Centroid.Lon,
+		Format:       reportType.DefaultFormat(),
+		Comparison:   datatypes.JSON(comparisonJSON),
+		Metadata:     metadata,
+		CommandKey:   req.CommandKey,
 	}
 
 	created, err := u.repo.CreateGeneratedReport(ctx, row)

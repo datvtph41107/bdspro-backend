@@ -123,6 +123,11 @@ func (f FieldMask) Intersect(allowed []string) FieldMask {
 			result = append(result, a)
 		}
 	}
+	// FromPaths([]) intentionally means AllowAll for backwards compatibility.
+	// An intersection with no common path is instead a strict deny-all mask.
+	if len(result) == 0 {
+		return FieldMask{paths: map[string]struct{}{}}
+	}
 	return FromPaths(result)
 }
 

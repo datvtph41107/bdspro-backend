@@ -9,15 +9,15 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"user/internal/models"
-	"user/internal/subscriptioncutover"
+	"user/internal/modules/subscription/cutover"
 )
 
-var _ subscriptioncutover.Repository = (*CatalogRepo)(nil)
+var _ cutover.Repository = (*CatalogRepo)(nil)
 
 /** EnsureCutoverEvent inserts one idempotent activation proof. */
 func (r *CatalogRepo) EnsureCutoverEvent(
 	ctx context.Context,
-	event subscriptioncutover.Event,
+	event cutover.Event,
 ) error {
 	return r.ensureSubscriptionOperationalEvent(ctx, event)
 }
@@ -25,14 +25,14 @@ func (r *CatalogRepo) EnsureCutoverEvent(
 /** EnsureRollbackEvent inserts one idempotent rollback proof. */
 func (r *CatalogRepo) EnsureRollbackEvent(
 	ctx context.Context,
-	event subscriptioncutover.Event,
+	event cutover.Event,
 ) error {
 	return r.ensureSubscriptionOperationalEvent(ctx, event)
 }
 
 func (r *CatalogRepo) ensureSubscriptionOperationalEvent(
 	ctx context.Context,
-	event subscriptioncutover.Event,
+	event cutover.Event,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
@@ -66,7 +66,7 @@ func (r *CatalogRepo) ensureSubscriptionOperationalEvent(
 		return err
 	}
 	if !sameOperationalEvent(stored, entity) {
-		return subscriptioncutover.ErrConcurrentChange
+		return cutover.ErrConcurrentChange
 	}
 	return nil
 }
@@ -74,9 +74,9 @@ func (r *CatalogRepo) ensureSubscriptionOperationalEvent(
 /** MarkCutover activates catalog reads for one manifest row. */
 func (r *CatalogRepo) MarkCutover(
 	ctx context.Context,
-	entry subscriptioncutover.Entry,
+	entry cutover.Entry,
 	evidenceChecksum string,
-	run subscriptioncutover.Run,
+	run cutover.Run,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
@@ -104,7 +104,7 @@ func (r *CatalogRepo) MarkCutover(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return subscriptioncutover.ErrConcurrentChange
+		return cutover.ErrConcurrentChange
 	}
 	return nil
 }
@@ -112,9 +112,9 @@ func (r *CatalogRepo) MarkCutover(
 /** MarkRolledBack makes a cutover mapping terminal after rollback. */
 func (r *CatalogRepo) MarkRolledBack(
 	ctx context.Context,
-	entry subscriptioncutover.Entry,
+	entry cutover.Entry,
 	evidenceChecksum string,
-	run subscriptioncutover.Run,
+	run cutover.Run,
 ) error {
 	if r == nil || r.transactionRepo == nil {
 		return fmt.Errorf("catalog repository is not configured")
@@ -142,7 +142,7 @@ func (r *CatalogRepo) MarkRolledBack(
 		return result.Error
 	}
 	if result.RowsAffected != 1 {
-		return subscriptioncutover.ErrConcurrentChange
+		return cutover.ErrConcurrentChange
 	}
 	return nil
 }
@@ -184,7 +184,7 @@ func (r *CatalogRepo) GetCutoverEvent(
 		eventType,
 	).First(&entity).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return models.CatalogSubscriptionEvent{}, subscriptioncutover.ErrEvidenceInvalid
+		return models.CatalogSubscriptionEvent{}, cutover.ErrEvidenceInvalid
 	}
 	return entity, err
 }
