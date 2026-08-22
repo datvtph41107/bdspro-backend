@@ -70,6 +70,13 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		seoID := *project.SeoID
 		result.SeoId = &seoID
 	}
+	if project.LegalBasisID != nil && *project.LegalBasisID > 0 {
+		legalBasisID := *project.LegalBasisID
+		result.LegalBasisId = &legalBasisID
+	}
+	if project.LegalBasis != nil {
+		result.LegalBasis = m.ToDocumentProto(project.LegalBasis)
+	}
 
 	if project.Jurisdiction != nil {
 		result.Jurisdiction = &tqdpb.Jurisdiction{
@@ -384,6 +391,12 @@ func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_dom
 		jurisdictionId = &proto.JurisdictionId
 	}
 
+	var legalBasisId *uint64
+	if proto.LegalBasisId != nil && *proto.LegalBasisId > 0 {
+		id := *proto.LegalBasisId
+		legalBasisId = &id
+	}
+
 	metadata := proto.Metadata
 	if metadata == "" {
 		metadata = "{}"
@@ -400,6 +413,7 @@ func (m *QHPlanningMapper) ToProjectDomain(proto *tqdpb.PlanningProject) *qh_dom
 		PlanningLevel:  proto.PlanningLevel,
 		Authority:      proto.Authority,
 		JurisdictionID: jurisdictionId,
+		LegalBasisID:   legalBasisId,
 		Summary:        proto.Summary,
 		ApprovalDate:   _utils.ParseStringToTime(proto.ApprovalDate),
 		EffectiveDate:  _utils.ParseStringToTime(proto.EffectiveDate),

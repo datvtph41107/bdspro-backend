@@ -352,6 +352,10 @@ message PlanningProject {
   optional bool clientView = 30;
   // Số hồ sơ (qh_planning_documents) chưa xóa của đồ án.
   int64 documentCount = 31;
+  // legalBasisId — id plan_doc (qh_planning_documents) làm căn cứ pháp lý.
+  optional uint64 legalBasisId = 32;
+  // legalBasis — chi tiết plan_doc (preload ở API chi tiết).
+  PlanningDocument legalBasis = 33;
 }
 
 message PlanningProjectSeoSourceResponse {

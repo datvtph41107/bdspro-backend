@@ -339,6 +339,21 @@ func ensurePlanningProjectSeoID() {
 	}
 }
 
+func ensurePlanningProjectLegalBasisID() {
+	statements := []string{
+		`ALTER TABLE qh_planning_projects
+			ADD COLUMN IF NOT EXISTS legal_basis_id BIGINT`,
+		`CREATE INDEX IF NOT EXISTS idx_qh_planning_projects_legal_basis_id
+			ON qh_planning_projects(legal_basis_id)
+			WHERE legal_basis_id IS NOT NULL AND legal_basis_id > 0`,
+	}
+	for _, stmt := range statements {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  ensurePlanningProjectLegalBasisID: %v", err)
+		}
+	}
+}
+
 func ensurePlanningDocumentSeoID() {
 	statements := []string{
 		`ALTER TABLE qh_planning_documents
@@ -596,6 +611,7 @@ func AutoMigrate() {
 	ensurePoisGeom()
 	ensurePlanningProjectClientView()
 	ensurePlanningProjectSeoID()
+	ensurePlanningProjectLegalBasisID()
 	ensurePlanningDocumentSeoID()
 	ensureLayerColumns()
 	ensurePlanningDocumentExt()

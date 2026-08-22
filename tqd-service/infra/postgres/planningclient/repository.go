@@ -13,6 +13,7 @@ import (
 	planningdomain "tqd/internal/modules/planningclient/domain"
 	tqdutils "tqd/internal/utils"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -239,7 +240,8 @@ const projectSelect = `
 	p.updated_at,
 	EXISTS(SELECT 1 FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS has_layer,
 	(SELECT COUNT(*) FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS layer_count,
-	(SELECT COUNT(*) FROM qh_planning_documents d WHERE d.planning_project_id=p.id AND d.deleted_at IS NULL) AS document_count`
+	(SELECT COUNT(*) FROM qh_planning_documents d WHERE d.planning_project_id=p.id AND d.deleted_at IS NULL) AS document_count,
+	p.legal_basis_id`
 
 func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.ProjectListFilter) (*planningdomain.Page[planningdomain.Project], error) {
 	page, size := normalizePage(filter.Page, filter.Size)
@@ -304,6 +306,9 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 	}
 
 	r.decorateProject(&item)
+	if err := r.attachLegalBasis(ctx, &item); err != nil {
+		return nil, err
+	}
 	item.Overview = &planningdomain.ProjectOverview{
 		Description:            item.Summary,
 		TotalArea:              item.TotalArea,
@@ -330,6 +335,9 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 	item.PlanningTypeName = enums.GetPlanningTypeLabel(item.PlanningType)
 	item.PlanningLevelName = enums.GetPlanningLevelLabel(item.PlanningLevel)
 	item.LegalStatusName = enums.LegalStatus(item.LegalStatus).DisplayName()
+	if item.LegalBasisID != nil && *item.LegalBasisID == 0 {
+		item.LegalBasisID = nil
+	}
 	item.Tags = []planningdomain.ProjectTag{
 		{Key: "planningType", Label: "Loại quy hoạch", Value: item.PlanningTypeName},
 		{Key: "totalArea", Label: "Diện tích", Value: formatArea(item.TotalArea)},
@@ -338,6 +346,21 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 		{Key: "approvalDate", Label: "Ngày phê duyệt", Value: formatDate(item.ApprovalDate)},
 		{Key: "updatedAt", Label: "Ngày cập nhật", Value: formatDate(item.UpdatedAt)},
 	}
+}
+
+func (r *Repository) attachLegalBasis(ctx context.Context, item *planningdomain.Project) error {
+	if item == nil || item.LegalBasisID == nil || *item.LegalBasisID == 0 {
+		return nil
+	}
+	docMap, err := r.loadDocumentsByIDs(ctx, map[uint64]struct{}{*item.LegalBasisID: {}})
+	if err != nil {
+		return fmt.Errorf("load legal basis: %w", err)
+	}
+	if doc, ok := docMap[*item.LegalBasisID]; ok {
+		copied := doc
+		item.LegalBasis = &copied
+	}
+	return nil
 }
 
 func (r *Repository) attachProjectProvinces(ctx context.Context, items []planningdomain.Project) error {
@@ -701,28 +724,128 @@ func (r *Repository) ListEvents(ctx context.Context, projectID uint64, page, siz
 	if err := base.Count(&total).Error; err != nil {
 		return nil, err
 	}
-	items := []planningdomain.Event{}
+
+	type eventRow struct {
+		ID                uint64
+		PlanningProjectID uint64
+		EventType         string
+		EventName         string
+		Description       string
+		EventDate         *time.Time
+		DocumentID        *uint64
+		SourceURL         string
+		Metadata          json.RawMessage
+		DocIDs            pq.Int64Array `gorm:"column:doc_ids"`
+		LegalStatus       uint32
+		CreatedAt         *time.Time
+		UpdatedAt         *time.Time
+	}
+
+	rows := []eventRow{}
 	if err := base.Select(`e.id,e.planning_project_id,COALESCE(e.event_type,'') AS event_type,e.event_name,
 		COALESCE(e.description,'') AS description,e.event_date,e.document_id,COALESCE(e.source_url,'') AS source_url,
-		COALESCE(e.metadata,'{}'::jsonb) AS metadata,e.created_at,e.updated_at`).
-		Order("e.event_date DESC NULLS LAST, e.id DESC").Offset(page * size).Limit(size).Scan(&items).Error; err != nil {
+		COALESCE(e.metadata,'{}'::jsonb) AS metadata,COALESCE(e.doc_ids,'{}'::bigint[]) AS doc_ids,
+		COALESCE(e.legal_status,600) AS legal_status,e.created_at,e.updated_at`).
+		Order("e.event_date DESC NULLS LAST, e.id DESC").Offset(page * size).Limit(size).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	items := make([]planningdomain.Event, len(rows))
+	docIDSet := make(map[uint64]struct{})
+	for i, row := range rows {
+		docIDs := make([]uint64, 0, len(row.DocIDs)+1)
+		seen := make(map[uint64]struct{}, len(row.DocIDs)+1)
+		for _, id := range row.DocIDs {
+			if id <= 0 {
+				continue
+			}
+			uid := uint64(id)
+			if _, ok := seen[uid]; ok {
+				continue
+			}
+			seen[uid] = struct{}{}
+			docIDs = append(docIDs, uid)
+			docIDSet[uid] = struct{}{}
+		}
+		if row.DocumentID != nil && *row.DocumentID > 0 {
+			if _, ok := seen[*row.DocumentID]; !ok {
+				docIDs = append(docIDs, *row.DocumentID)
+				docIDSet[*row.DocumentID] = struct{}{}
+			}
+		}
+		legalStatus := enums.LegalStatus(row.LegalStatus)
+		legalStatusName := enums.LegalStatusMap[legalStatus]
+		if legalStatusName == "" {
+			legalStatusName = legalStatus.DisplayName()
+		}
+		items[i] = planningdomain.Event{
+			ID:                row.ID,
+			PlanningProjectID: row.PlanningProjectID,
+			EventType:         row.EventType,
+			EventName:         row.EventName,
+			Description:       row.Description,
+			EventDate:         row.EventDate,
+			DocumentID:        row.DocumentID,
+			SourceURL:         row.SourceURL,
+			Metadata:          normalizeJSON(row.Metadata, "{}"),
+			DocIDs:            docIDs,
+			Docs:              []planningdomain.Document{},
+			LegalStatus: planningdomain.NamedUint32{
+				Value: uint32(legalStatus),
+				Name:  legalStatusName,
+			},
+			CreatedAt: row.CreatedAt,
+			UpdatedAt: row.UpdatedAt,
+		}
+	}
+
+	docMap, err := r.loadDocumentsByIDs(ctx, docIDSet)
+	if err != nil {
 		return nil, err
 	}
 	for i := range items {
-		items[i].Metadata = normalizeJSON(items[i].Metadata, "{}")
+		if len(items[i].DocIDs) == 0 {
+			continue
+		}
+		docs := make([]planningdomain.Document, 0, len(items[i].DocIDs))
+		for _, id := range items[i].DocIDs {
+			if doc, ok := docMap[id]; ok {
+				docs = append(docs, doc)
+			}
+		}
+		items[i].Docs = docs
 		if items[i].DocumentID != nil {
-			var doc planningdomain.Document
-			err := r.db.WithContext(ctx).Table("qh_planning_documents d").
-				Where("d.id=? AND d.deleted_at IS NULL", *items[i].DocumentID).
-				Select(documentSelect).
-				Take(&doc).Error
-			if err == nil {
-				r.decorateDocument(&doc)
-				items[i].Document = &doc
+			if doc, ok := docMap[*items[i].DocumentID]; ok {
+				copied := doc
+				items[i].Document = &copied
 			}
 		}
 	}
+
 	return &planningdomain.Page[planningdomain.Event]{Data: items, Total: total, Page: page, Size: size}, nil
+}
+
+func (r *Repository) loadDocumentsByIDs(ctx context.Context, docIDSet map[uint64]struct{}) (map[uint64]planningdomain.Document, error) {
+	result := make(map[uint64]planningdomain.Document, len(docIDSet))
+	if len(docIDSet) == 0 {
+		return result, nil
+	}
+	docIDs := make([]uint64, 0, len(docIDSet))
+	for id := range docIDSet {
+		docIDs = append(docIDs, id)
+	}
+	var docs []planningdomain.Document
+	if err := r.db.WithContext(ctx).Table("qh_planning_documents d").
+		Where("d.id IN ? AND d.deleted_at IS NULL", docIDs).
+		Select(documentSelect).
+		Find(&docs).Error; err != nil {
+		return nil, err
+	}
+	for i := range docs {
+		r.decorateDocument(&docs[i])
+		result[docs[i].ID] = docs[i]
+	}
+	return result, nil
 }
 
 type followRow struct {

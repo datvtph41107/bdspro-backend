@@ -86,6 +86,10 @@ type Project struct {
 	ProjectTags       []Tag             `json:"projectTags,omitempty" gorm:"-"`
 	Provinces         []ProjectProvince `json:"provinces,omitempty" gorm:"-"`
 	Wards             []ProjectWard     `json:"wards,omitempty" gorm:"-"`
+	// LegalBasisID — id tài liệu quy hoạch (plan_doc) làm căn cứ pháp lý.
+	LegalBasisID *uint64 `json:"legalBasisId,omitempty"`
+	// LegalBasis — chi tiết plan_doc (preload ở API chi tiết).
+	LegalBasis *Document `json:"legalBasis,omitempty" gorm:"-"`
 }
 
 type ProjectProvince struct {
@@ -170,8 +174,20 @@ type Event struct {
 	SourceURL         string          `json:"sourceUrl,omitempty"`
 	Metadata          json.RawMessage `json:"metadata"`
 	Document          *Document       `json:"document,omitempty"`
-	CreatedAt         *time.Time      `json:"createdAt,omitempty"`
-	UpdatedAt         *time.Time      `json:"updatedAt,omitempty"`
+	// DocIDs — id tài liệu gắn sự kiện (qh_planning_events.doc_ids).
+	DocIDs []uint64 `json:"docIds,omitempty"`
+	// Docs — chi tiết tài liệu theo DocIDs (và documentId nếu có).
+	Docs []Document `json:"docs"`
+	// LegalStatus — trạng thái pháp lý của sự kiện {value, name}.
+	LegalStatus NamedUint32 `json:"legalStatus"`
+	CreatedAt   *time.Time  `json:"createdAt,omitempty"`
+	UpdatedAt   *time.Time  `json:"updatedAt,omitempty"`
+}
+
+// NamedUint32 — cặp value/name cho enum số (vd. legalStatus).
+type NamedUint32 struct {
+	Value uint32 `json:"value"`
+	Name  string `json:"name"`
 }
 
 type Follow struct {

@@ -43,6 +43,10 @@ type QHPlanningProject struct {
 
 	SeoID *uint64 `gorm:"column:seo_id;index" json:"seoId,omitempty"`
 
+	// LegalBasisID — id tài liệu quy hoạch (plan_doc / qh_planning_documents) làm căn cứ pháp lý của đồ án.
+	LegalBasisID *uint64             `gorm:"column:legal_basis_id;index" json:"legalBasisId,omitempty"`
+	LegalBasis   *QHPlanningDocument `gorm:"foreignKey:LegalBasisID" json:"legalBasis,omitempty"`
+
 	// ClientView=false ẩn đồ án khỏi toàn bộ API client; mặc định true.
 	ClientView bool `gorm:"column:client_view;type:boolean;not null;default:true" json:"clientView"`
 

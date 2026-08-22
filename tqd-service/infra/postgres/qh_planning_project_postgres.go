@@ -50,6 +50,7 @@ func (r *QHPlanningProjectRepo) GetByID(ctx context.Context, id uint64) (*qh_dom
 	err := r.db.GetDB(ctx).
 		Preload("Jurisdiction").
 		Preload("Layers").
+		Preload("LegalBasis").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&entity).Error
 	if err != nil {
