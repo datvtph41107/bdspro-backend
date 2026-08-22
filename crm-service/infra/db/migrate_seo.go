@@ -36,6 +36,7 @@ var seoMigrationFiles = []string{
 	"000026_seo_count.up.sql",
 	"000027_seo_count_aggregate.up.sql",
 	"000028_seo_domain_image_url.up.sql",
+	"000029_seo_domain_province_id.up.sql",
 }
 
 func ensureSEOMigrations() {

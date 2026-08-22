@@ -69,6 +69,8 @@ message PlanningNewsQueryRequest {
   string sort = 16;
   // Lọc theo seo_domain.ref_type (100/200/300/400/500/600/700/800)
   uint32 refType = 17;
+  // Lọc theo seo_domain.province_id (province_v2.id)
+  uint64 provinceId = 18;
 }
 
 message PlanningNewsSlugRequest {

@@ -124,6 +124,7 @@ type PlanningNewsListFilter struct {
 	Size       int
 	Keyword    string
 	CategoryID uint64
+	ProvinceID uint64
 	Location   string
 	Range      string
 	VisibleOn  uint32

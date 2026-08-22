@@ -102,6 +102,9 @@ type SeoDomain struct {
 	// Primary chủ đề (seo_category) denormalized for list/filter.
 	CategoryID *uint64 `gorm:"column:category_id;type:bigint;index"`
 
+	// Province (province_v2.id) denormalized from source for list/filter.
+	ProvinceID *uint64 `gorm:"column:province_id;type:bigint;index"`
+
 	// Publish lifecycle: page đã đủ điều kiện ra ngoài hay chưa.
 	Published   bool       `gorm:"default:false;index"`
 	PublishedAt *time.Time `gorm:"column:published_at;index"`

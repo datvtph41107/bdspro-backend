@@ -822,6 +822,9 @@ func (u *SeoDomainUsecase) createSeoFromLayerSource(ctx context.Context, source 
 		"image_url":           imageURL,
 		"metadata":            datatypes.JSON(metadataBytes),
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		layerUpdates["province_id"] = *source.ProvinceID
+	}
 
 	// Nếu layer đã có seoId, update lại bản ghi đó.
 	if source.SeoID != nil && *source.SeoID > 0 {
@@ -892,6 +895,9 @@ func (u *SeoDomainUsecase) createSeoFromLayerSource(ctx context.Context, source 
 		SourceUpdatedAt:   &now,
 		ImageURL:          imageURL,
 		Metadata:          datatypes.JSON(metadataBytes),
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		seoDomain.ProvinceID = source.ProvinceID
 	}
 
 	var created *seo_domain.SeoDomain
@@ -968,6 +974,9 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 		"source_updated_at":   now,
 		"metadata":            datatypes.JSON(metadataBytes),
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		projectUpdates["province_id"] = *source.ProvinceID
+	}
 
 	if source.SeoID != nil && *source.SeoID > 0 {
 		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
@@ -1037,6 +1046,9 @@ func (u *SeoDomainUsecase) createSeoFromPlanningProjectSource(ctx context.Contex
 		NeedGenerate:      true,
 		SourceUpdatedAt:   &now,
 		Metadata:          datatypes.JSON(metadataBytes),
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		seoDomain.ProvinceID = source.ProvinceID
 	}
 
 	var created *seo_domain.SeoDomain
@@ -1115,6 +1127,9 @@ func (u *SeoDomainUsecase) createSeoFromPlanningDocumentSource(ctx context.Conte
 		"image_url":           imageURL,
 		"metadata":            datatypes.JSON(metadataBytes),
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		documentUpdates["province_id"] = *source.ProvinceID
+	}
 
 	if source.SeoID != nil && *source.SeoID > 0 {
 		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
@@ -1183,6 +1198,9 @@ func (u *SeoDomainUsecase) createSeoFromPlanningDocumentSource(ctx context.Conte
 		SourceUpdatedAt:   &now,
 		ImageURL:          imageURL,
 		Metadata:          datatypes.JSON(metadataBytes),
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		seoDomain.ProvinceID = source.ProvinceID
 	}
 
 	var created *seo_domain.SeoDomain
@@ -1291,6 +1309,9 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		"template_key":        "administrative-unit",
 		"metadata":            datatypes.JSON(metadataBytes),
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		updates["province_id"] = *source.ProvinceID
+	}
 
 	persistSeoID := func(ctx context.Context, seoID uint64) error {
 		return u.tqdProvider.UpdateAdministrativeUnitSeoID(ctx, compositeID, seoID)
@@ -1381,6 +1402,9 @@ func (u *SeoDomainUsecase) createSeoFromAdministrativeUnitSource(ctx context.Con
 		SourceUpdatedAt:   &now,
 		TemplateKey:       "administrative-unit",
 		Metadata:          datatypes.JSON(metadataBytes),
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		seoDomain.ProvinceID = source.ProvinceID
 	}
 
 	var created *seo_domain.SeoDomain

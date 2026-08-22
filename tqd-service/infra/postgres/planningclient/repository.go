@@ -238,7 +238,8 @@ const projectSelect = `
 	p.created_at,
 	p.updated_at,
 	EXISTS(SELECT 1 FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS has_layer,
-	(SELECT COUNT(*) FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS layer_count`
+	(SELECT COUNT(*) FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS layer_count,
+	(SELECT COUNT(*) FROM qh_planning_documents d WHERE d.planning_project_id=p.id AND d.deleted_at IS NULL) AS document_count`
 
 func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.ProjectListFilter) (*planningdomain.Page[planningdomain.Project], error) {
 	page, size := normalizePage(filter.Page, filter.Size)
@@ -316,7 +317,7 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 		HasLayer:               item.HasLayer,
 	}
 	projects := []planningdomain.Project{item}
-	if err := r.attachProjectRelations(ctx, projects); err != nil {
+	if err := r.attachProjectRelationsDetail(ctx, projects); err != nil {
 		return nil, err
 	}
 	item = projects[0]
@@ -340,6 +341,10 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 }
 
 func (r *Repository) attachProjectProvinces(ctx context.Context, items []planningdomain.Project) error {
+	return r.attachProjectProvincesOpt(ctx, items, false)
+}
+
+func (r *Repository) attachProjectProvincesOpt(ctx context.Context, items []planningdomain.Project, withGeometry bool) error {
 	if len(items) == 0 {
 		return nil
 	}
@@ -366,6 +371,11 @@ func (r *Repository) attachProjectProvinces(ctx context.Context, items []plannin
 		Zoom              uint32
 		Lat               float64
 		Lng               float64
+		Geometry          []byte
+	}
+	geometrySelect := "NULL::text AS geometry"
+	if withGeometry {
+		geometrySelect = "CASE WHEN pv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(pv.geometry, 6) END AS geometry"
 	}
 	rows := []projectProvinceRow{}
 	// province_v2.id là bigint; qh_planning_project_provinces.province_id vẫn VARCHAR(50)
@@ -374,7 +384,7 @@ func (r *Repository) attachProjectProvinces(ctx context.Context, items []plannin
 		Table("qh_planning_project_provinces ppp").
 		Joins("JOIN province_v2 pv ON pv.id::text = ppp.province_id").
 		Where("ppp.deleted_at IS NULL AND ppp.planning_project_id IN ?", projectIDs).
-		Select(`ppp.planning_project_id,
+		Select(fmt.Sprintf(`ppp.planning_project_id,
 			pv.id::text AS id,
 			pv.full_name,
 			COALESCE(pv.short_name,'') AS short_name,
@@ -382,7 +392,8 @@ func (r *Repository) attachProjectProvinces(ctx context.Context, items []plannin
 			COALESCE(pv.qh_order,0) AS qh_order,
 			COALESCE(pv.zoom,10) AS zoom,
 			COALESCE(pv.lat,0) AS lat,
-			COALESCE(pv.lng,0) AS lng`).
+			COALESCE(pv.lng,0) AS lng,
+			%s`, geometrySelect)).
 		Order("pv.qh_order DESC, pv.full_name ASC, pv.id ASC").
 		Scan(&rows).Error
 	if err != nil {
@@ -402,13 +413,105 @@ func (r *Repository) attachProjectProvinces(ctx context.Context, items []plannin
 			Zoom:      row.Zoom,
 			Lat:       row.Lat,
 			Lng:       row.Lng,
+			Geometry:  normalizeGeoJSON(row.Geometry),
 		})
 	}
 	return nil
 }
 
+func (r *Repository) attachProjectWardsOpt(ctx context.Context, items []planningdomain.Project, withGeometry bool) error {
+	if len(items) == 0 {
+		return nil
+	}
+	projectIDs := make([]uint64, 0, len(items))
+	indexByID := make(map[uint64]int, len(items))
+	for i := range items {
+		if items[i].ID == 0 {
+			continue
+		}
+		indexByID[items[i].ID] = i
+		projectIDs = append(projectIDs, items[i].ID)
+	}
+	if len(projectIDs) == 0 {
+		return nil
+	}
+
+	type projectWardRow struct {
+		PlanningProjectID uint64
+		ID                string
+		FullName          string
+		ShortName         string
+		Code              string
+		ProvinceID        string
+		Lat               float64
+		Lng               float64
+		Geometry          []byte
+	}
+	geometrySelect := "NULL::text AS geometry"
+	if withGeometry {
+		geometrySelect = "CASE WHEN wv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(wv.geometry, 6) END AS geometry"
+	}
+	rows := []projectWardRow{}
+	err := r.db.WithContext(ctx).
+		Table("qh_planning_project_wards ppw").
+		Joins("JOIN ward_v2 wv ON wv.id::text = ppw.ward_id").
+		Where("ppw.deleted_at IS NULL AND ppw.planning_project_id IN ?", projectIDs).
+		Select(fmt.Sprintf(`ppw.planning_project_id,
+			wv.id::text AS id,
+			wv.full_name,
+			COALESCE(wv.short_name,'') AS short_name,
+			COALESCE(wv.code,'') AS code,
+			COALESCE(wv.province_id::text,'') AS province_id,
+			COALESCE(wv.lat,0) AS lat,
+			COALESCE(wv.lng,0) AS lng,
+			%s`, geometrySelect)).
+		Order("wv.full_name ASC, wv.id ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return fmt.Errorf("load planning project wards: %w", err)
+	}
+	for _, row := range rows {
+		index, ok := indexByID[row.PlanningProjectID]
+		if !ok {
+			continue
+		}
+		items[index].Wards = append(items[index].Wards, planningdomain.ProjectWard{
+			ID:         row.ID,
+			FullName:   row.FullName,
+			ShortName:  row.ShortName,
+			Code:       row.Code,
+			ProvinceID: row.ProvinceID,
+			Lat:        row.Lat,
+			Lng:        row.Lng,
+			Geometry:   normalizeGeoJSON(row.Geometry),
+		})
+	}
+	return nil
+}
+
+func normalizeGeoJSON(raw []byte) json.RawMessage {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" {
+		return nil
+	}
+	if !json.Valid([]byte(s)) {
+		return nil
+	}
+	return json.RawMessage(s)
+}
+
 func (r *Repository) attachProjectRelations(ctx context.Context, items []planningdomain.Project) error {
-	return r.attachProjectProvinces(ctx, items)
+	if err := r.attachProjectProvincesOpt(ctx, items, false); err != nil {
+		return err
+	}
+	return r.attachProjectWardsOpt(ctx, items, false)
+}
+
+func (r *Repository) attachProjectRelationsDetail(ctx context.Context, items []planningdomain.Project) error {
+	if err := r.attachProjectProvincesOpt(ctx, items, true); err != nil {
+		return err
+	}
+	return r.attachProjectWardsOpt(ctx, items, true)
 }
 
 func formatArea(value float64) string {

@@ -865,7 +865,12 @@ func (r *locationRepo) GetAdministrativeUnitSeoSource(ctx context.Context, ident
 		if province == nil {
 			return nil, nil
 		}
-		return r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindProvince, province.ID, province.FullName, province.Code, province.SeoID), nil
+		source := r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindProvince, province.ID, province.FullName, province.Code, province.SeoID)
+		if source != nil {
+			pid := province.ID
+			source.ProvinceID = &pid
+		}
+		return source, nil
 	case _utils.LocationIDKindWard:
 		ward, err := r.GetWardByID(ctx, sourceID) // sourceID is uint64
 		if err != nil {
@@ -874,7 +879,12 @@ func (r *locationRepo) GetAdministrativeUnitSeoSource(ctx context.Context, ident
 		if ward == nil {
 			return nil, nil
 		}
-		return r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindWard, ward.ID, ward.FullName, ward.Code, ward.SeoID), nil
+		source := r.buildAdministrativeUnitSeoSource(_utils.LocationIDKindWard, ward.ID, ward.FullName, ward.Code, ward.SeoID)
+		if source != nil && ward.ProvinceID > 0 {
+			pid := ward.ProvinceID
+			source.ProvinceID = &pid
+		}
+		return source, nil
 	default:
 		return nil, errors.New("unitType không hợp lệ")
 	}

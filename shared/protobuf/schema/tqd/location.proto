@@ -484,6 +484,7 @@ message AdministrativeUnitSeoSourceResponse {
     string administrativeCode = 7;
     uint64 seoId = 8;
     uint64 compositeId = 9; // Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB
+    uint64 provinceId = 10; // province_v2.id (tỉnh = sourceId; phường = ward.province_id)
 }
 
 message UpdateAdministrativeUnitSeoIDRequest {

@@ -203,6 +203,7 @@ type LayerSeoSource struct {
 	ThumbnailURL string  `json:"thumbnailUrl" gorm:"column:thumbnail_url"`
 	ImageURL     string  `json:"imageUrl" gorm:"column:image_url"`
 	Avatar       string  `json:"avatar" gorm:"column:avatar"`
+	ProvinceID   *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type GenerateSeoFromLayersRequest struct {
@@ -222,6 +223,7 @@ type PlanningProjectSeoSource struct {
 	Name              string  `json:"name" gorm:"column:name"`
 	Slug              string  `json:"slug" gorm:"column:slug"`
 	SeoID             *uint64 `json:"seoId" gorm:"column:seo_id"`
+	ProvinceID        *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type GenerateSeoFromPlanningProjectsRequest struct {
@@ -244,6 +246,7 @@ type PlanningDocumentSeoSource struct {
 	Filepath           string  `json:"filepath" gorm:"column:filepath"`
 	Thumbnail          string  `json:"thumbnail" gorm:"column:thumbnail"`
 	Ext                string  `json:"ext" gorm:"column:ext"`
+	ProvinceID         *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type GenerateSeoFromPlanningDocumentsRequest struct {
@@ -268,6 +271,7 @@ type AdministrativeUnitSeoSource struct {
 	AdministrativeCode string  `json:"administrativeCode"`
 	SeoID              *uint64 `json:"seoId"`
 	CompositeID        uint64  `json:"compositeId"`
+	ProvinceID         *uint64 `json:"provinceId,omitempty"`
 }
 
 type GenerateSeoFromAdministrativeUnitsRequest struct {

@@ -733,6 +733,9 @@ func administrativeUnitSeoSourceToProto(source *dto.AdministrativeUnitSeoSource)
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		resp.ProvinceId = *source.ProvinceID
+	}
 	return resp
 }
 

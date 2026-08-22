@@ -350,6 +350,8 @@ message PlanningProject {
   optional uint64 seoId = 29;
   // clientView=false ẩn đồ án khỏi API client. Không truyền khi tạo = mặc định true.
   optional bool clientView = 30;
+  // Số hồ sơ (qh_planning_documents) chưa xóa của đồ án.
+  int64 documentCount = 31;
 }
 
 message PlanningProjectSeoSourceResponse {
@@ -357,6 +359,7 @@ message PlanningProjectSeoSourceResponse {
   string name = 2;
   string slug = 3;
   uint64 seoId = 4;
+  uint64 provinceId = 5;
 }
 
 message UpdatePlanningProjectSeoIDRequest {
@@ -394,6 +397,7 @@ message PlanningDocumentSeoSourceResponse {
   string filepath = 5;
   string thumbnail = 6;
   string ext = 7;
+  uint64 provinceId = 8;
 }
 
 message UpdatePlanningDocumentSeoIDRequest {

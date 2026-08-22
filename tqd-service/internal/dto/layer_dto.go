@@ -7,6 +7,7 @@ type LayerSeoSource struct {
 	ThumbnailURL string  `json:"thumbnailUrl" gorm:"column:thumbnail_url"`
 	ImageURL     string  `json:"imageUrl" gorm:"column:image_url"`
 	Avatar       string  `json:"avatar" gorm:"column:avatar"`
+	ProvinceID   *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type AdminGenLayerSeoItem struct {

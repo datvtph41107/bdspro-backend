@@ -413,6 +413,9 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	if req.GetDocId() > 0 {
 		layerFilter.DocID = req.GetDocId()
 	}
+	if req.GetPlanningProjectId() > 0 {
+		layerFilter.PlanningProjectID = req.GetPlanningProjectId()
+	}
 
 	layers, total, err := h.layerUsecase.ListClient(ctx, &layerFilter)
 	if err != nil {
@@ -626,6 +629,9 @@ func layerSeoSourceToProto(source *dto.LayerSeoSource) *tqdpb.LayerSeoSourceResp
 	}
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		resp.ProvinceId = *source.ProvinceID
 	}
 	return resp
 }

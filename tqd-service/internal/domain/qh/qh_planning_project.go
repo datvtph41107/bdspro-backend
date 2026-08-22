@@ -48,6 +48,8 @@ type QHPlanningProject struct {
 
 	Layers    []*QHLayer        `gorm:"foreignKey:PlanningProjectID" json:"layers"`
 	Provinces []domain.Province `gorm:"many2many:qh_planning_project_provinces;joinForeignKey:PlanningProjectID;joinReferences:ID" json:"provinces,omitempty"`
+	// DocumentCount — số hồ sơ (qh_planning_documents) chưa xóa; không lưu DB.
+	DocumentCount int64 `gorm:"-" json:"documentCount"`
 	// EntityTags []domain.Tag   `gorm:"many2many:qh_planning_project_tags;joinForeignKey:PlanningProjectID;joinReferences:TagID" json:"entityTags,omitempty"`
 }
 

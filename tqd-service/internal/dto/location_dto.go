@@ -201,6 +201,7 @@ type AdministrativeUnitSeoSource struct {
 	AdministrativeCode string  `json:"administrativeCode" gorm:"column:administrative_code"`
 	SeoID              *uint64 `json:"seoId" gorm:"column:seo_id"`
 	CompositeID        uint64  `json:"compositeId"`
+	ProvinceID         *uint64 `json:"provinceId,omitempty"`
 }
 
 type AdminGenAdministrativeUnitSeoItem struct {

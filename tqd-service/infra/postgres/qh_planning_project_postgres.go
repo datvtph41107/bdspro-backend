@@ -55,6 +55,14 @@ func (r *QHPlanningProjectRepo) GetByID(ctx context.Context, id uint64) (*qh_dom
 	if err != nil {
 		return nil, err
 	}
+	var count int64
+	if err := r.db.GetDB(ctx).
+		Table("qh_planning_documents").
+		Where("planning_project_id = ? AND deleted_at IS NULL", id).
+		Count(&count).Error; err != nil {
+		return nil, err
+	}
+	entity.DocumentCount = count
 	return &entity, nil
 }
 
@@ -139,9 +147,46 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		Limit(req.GetLimit()).
 		Order("updated_at DESC NULLS LAST, id DESC").
 		Find(&projects).Error
+	if err != nil {
+		return projects, total, err
+	}
+	if err := r.attachDocumentCounts(ctx, projects); err != nil {
+		return nil, 0, err
+	}
 
 	log.Printf("projects: %+v", len(projects))
-	return projects, total, err
+	return projects, total, nil
+}
+
+func (r *QHPlanningProjectRepo) attachDocumentCounts(ctx context.Context, projects []qh_domain.QHPlanningProject) error {
+	if len(projects) == 0 {
+		return nil
+	}
+	ids := make([]uint64, 0, len(projects))
+	indexByID := make(map[uint64]int, len(projects))
+	for i := range projects {
+		ids = append(ids, projects[i].ID)
+		indexByID[projects[i].ID] = i
+	}
+	type row struct {
+		PlanningProjectID uint64 `gorm:"column:planning_project_id"`
+		DocumentCount     int64  `gorm:"column:document_count"`
+	}
+	var rows []row
+	if err := r.db.GetDB(ctx).
+		Table("qh_planning_documents").
+		Select("planning_project_id, COUNT(*) AS document_count").
+		Where("planning_project_id IN ? AND deleted_at IS NULL", ids).
+		Group("planning_project_id").
+		Scan(&rows).Error; err != nil {
+		return err
+	}
+	for _, item := range rows {
+		if idx, ok := indexByID[item.PlanningProjectID]; ok {
+			projects[idx].DocumentCount = item.DocumentCount
+		}
+	}
+	return nil
 }
 
 func (r *QHPlanningProjectRepo) matchedLayersQuery(ctx context.Context, planningID uint64) *gorm.DB {
@@ -256,12 +301,21 @@ func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSource(ctx context.Context,
 	err := r.db.GetDB(ctx).
 		Raw(`
 			SELECT
-				id AS planning_project_id,
-				COALESCE(NULLIF(name, ''), '') AS name,
-				COALESCE(NULLIF(slug, ''), NULLIF(name, ''), '') AS slug,
-				seo_id AS seo_id
-			FROM qh_planning_projects
-			WHERE id = ? AND deleted_at IS NULL
+				p.id AS planning_project_id,
+				COALESCE(NULLIF(p.name, ''), '') AS name,
+				COALESCE(NULLIF(p.slug, ''), NULLIF(p.name, ''), '') AS slug,
+				p.seo_id AS seo_id,
+				(
+					SELECT NULLIF(pp.province_id, '')::bigint
+					FROM qh_planning_project_provinces pp
+					WHERE pp.planning_project_id = p.id
+					  AND pp.deleted_at IS NULL
+					  AND pp.province_id ~ '^[0-9]+$'
+					ORDER BY pp.id ASC
+					LIMIT 1
+				) AS province_id
+			FROM qh_planning_projects p
+			WHERE p.id = ? AND p.deleted_at IS NULL
 			LIMIT 1
 		`, planningProjectID).
 		Scan(&source).Error
@@ -284,12 +338,21 @@ func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSourcesByIDs(ctx context.Co
 	err := r.db.GetDB(ctx).
 		Raw(`
 			SELECT
-				id AS planning_project_id,
-				COALESCE(NULLIF(name, ''), '') AS name,
-				COALESCE(NULLIF(slug, ''), NULLIF(name, ''), '') AS slug,
-				seo_id AS seo_id
-			FROM qh_planning_projects
-			WHERE id IN ? AND deleted_at IS NULL
+				p.id AS planning_project_id,
+				COALESCE(NULLIF(p.name, ''), '') AS name,
+				COALESCE(NULLIF(p.slug, ''), NULLIF(p.name, ''), '') AS slug,
+				p.seo_id AS seo_id,
+				(
+					SELECT NULLIF(pp.province_id, '')::bigint
+					FROM qh_planning_project_provinces pp
+					WHERE pp.planning_project_id = p.id
+					  AND pp.deleted_at IS NULL
+					  AND pp.province_id ~ '^[0-9]+$'
+					ORDER BY pp.id ASC
+					LIMIT 1
+				) AS province_id
+			FROM qh_planning_projects p
+			WHERE p.id IN ? AND p.deleted_at IS NULL
 		`, ids).
 		Scan(&sources).Error
 	if err != nil {

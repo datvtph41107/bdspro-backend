@@ -318,6 +318,10 @@ func layerSeoSourceFromProto(resp *tqdpb.LayerSeoSourceResponse) *dto.LayerSeoSo
 		seoID := resp.SeoId
 		source.SeoID = &seoID
 	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
+	}
 	return source
 }
 
@@ -333,6 +337,10 @@ func planningProjectSeoSourceFromProto(resp *tqdpb.PlanningProjectSeoSourceRespo
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId
 		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
 	}
 	return source
 }
@@ -352,6 +360,10 @@ func planningDocumentSeoSourceFromProto(resp *tqdpb.PlanningDocumentSeoSourceRes
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId
 		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
 	}
 	return source
 }
@@ -380,6 +392,10 @@ func administrativeUnitSeoSourceFromProto(resp *tqdpb.AdministrativeUnitSeoSourc
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId
 		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
 	}
 	return source
 }

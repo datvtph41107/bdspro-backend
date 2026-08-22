@@ -76,6 +76,7 @@ type PlanningProjectSeoSource struct {
 	Name              string  `json:"name" gorm:"column:name"`
 	Slug              string  `json:"slug" gorm:"column:slug"`
 	SeoID             *uint64 `json:"seoId" gorm:"column:seo_id"`
+	ProvinceID        *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type AdminGenPlanningProjectSeoItem struct {
@@ -104,6 +105,7 @@ type PlanningDocumentSeoSource struct {
 	Filepath           string  `json:"filepath" gorm:"column:filepath"`
 	Thumbnail          string  `json:"thumbnail" gorm:"column:thumbnail"`
 	Ext                string  `json:"ext" gorm:"column:ext"`
+	ProvinceID         *uint64 `json:"provinceId" gorm:"column:province_id"`
 }
 
 type AdminGenPlanningDocumentSeoItem struct {

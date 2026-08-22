@@ -415,6 +415,7 @@ func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *cr
 		Size:       intValue(m, "size", 20),
 		Keyword:    stringValue(m, "keyword", "q", "search"),
 		CategoryID: req.GetCategoryId(),
+		ProvinceID: req.GetProvinceId(),
 		Location:   stringValue(m, "location"),
 		Range:      stringValue(m, "range"),
 		VisibleOns: visibleOns,
@@ -444,6 +445,13 @@ func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *cr
 			filter.CategoryID = id
 		} else if id := uint64Value(m, "category_id"); id > 0 {
 			filter.CategoryID = id
+		}
+	}
+	if filter.ProvinceID == 0 {
+		if id := uint64Value(m, "provinceId"); id > 0 {
+			filter.ProvinceID = id
+		} else if id := uint64Value(m, "province_id"); id > 0 {
+			filter.ProvinceID = id
 		}
 	}
 	if len(filter.VisibleOns) == 1 {

@@ -244,6 +244,8 @@ message ListClientLayersRequest {
   int64 timestamp = 5;
   // docId: lọc layer liên quan tài liệu quy hoạch (layer_plan_doc_relation).
   uint64 docId = 6;
+  // planningProjectId: lọc layer gắn đồ án qua layer_plan_doc_relation → qh_planning_documents.
+  uint64 planningProjectId = 7;
 }
 
 message BuildPMTilesRequest {
@@ -325,6 +327,7 @@ message LayerSeoSourceResponse {
   string thumbnailUrl = 4;
   string imageUrl = 5;
   string avatar = 6;
+  uint64 provinceId = 7;
 }
 
 message UpdateLayerSeoIDRequest {

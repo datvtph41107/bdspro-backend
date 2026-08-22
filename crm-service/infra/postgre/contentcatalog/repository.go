@@ -690,6 +690,10 @@ func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.Plannin
 		base += " AND COALESCE(sd.category_id, a.category_id)=?"
 		args = append(args, filter.CategoryID)
 	}
+	if filter.ProvinceID > 0 {
+		base += " AND sd.province_id=?"
+		args = append(args, filter.ProvinceID)
+	}
 	if filter.RefType > 0 {
 		base += " AND sd.ref_type=?"
 		args = append(args, filter.RefType)

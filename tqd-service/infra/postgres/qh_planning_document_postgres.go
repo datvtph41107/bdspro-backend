@@ -361,15 +361,24 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSource(ctx context.Contex
 	err := r.db.GetDB(ctx).
 		Raw(`
 			SELECT
-				id AS planning_document_id,
-				COALESCE(NULLIF(title, ''), '') AS title,
-				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
-				seo_id AS seo_id,
-				COALESCE(filepath, '') AS filepath,
-				COALESCE(thumbnail, '') AS thumbnail,
-				COALESCE(ext, '') AS ext
-			FROM qh_planning_documents
-			WHERE id = ? AND deleted_at IS NULL
+				d.id AS planning_document_id,
+				COALESCE(NULLIF(d.title, ''), '') AS title,
+				COALESCE(NULLIF(d.code, ''), NULLIF(d.title, ''), '') AS slug,
+				d.seo_id AS seo_id,
+				COALESCE(d.filepath, '') AS filepath,
+				COALESCE(d.thumbnail, '') AS thumbnail,
+				COALESCE(d.ext, '') AS ext,
+				(
+					SELECT NULLIF(pp.province_id, '')::bigint
+					FROM qh_planning_project_provinces pp
+					WHERE pp.planning_project_id = d.planning_project_id
+					  AND pp.deleted_at IS NULL
+					  AND pp.province_id ~ '^[0-9]+$'
+					ORDER BY pp.id ASC
+					LIMIT 1
+				) AS province_id
+			FROM qh_planning_documents d
+			WHERE d.id = ? AND d.deleted_at IS NULL
 			LIMIT 1
 		`, documentID).
 		Scan(&source).Error
@@ -392,15 +401,24 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSourcesByIDs(ctx context.
 	err := r.db.GetDB(ctx).
 		Raw(`
 			SELECT
-				id AS planning_document_id,
-				COALESCE(NULLIF(title, ''), '') AS title,
-				COALESCE(NULLIF(code, ''), NULLIF(title, ''), '') AS slug,
-				seo_id AS seo_id,
-				COALESCE(filepath, '') AS filepath,
-				COALESCE(thumbnail, '') AS thumbnail,
-				COALESCE(ext, '') AS ext
-			FROM qh_planning_documents
-			WHERE id IN ? AND deleted_at IS NULL
+				d.id AS planning_document_id,
+				COALESCE(NULLIF(d.title, ''), '') AS title,
+				COALESCE(NULLIF(d.code, ''), NULLIF(d.title, ''), '') AS slug,
+				d.seo_id AS seo_id,
+				COALESCE(d.filepath, '') AS filepath,
+				COALESCE(d.thumbnail, '') AS thumbnail,
+				COALESCE(d.ext, '') AS ext,
+				(
+					SELECT NULLIF(pp.province_id, '')::bigint
+					FROM qh_planning_project_provinces pp
+					WHERE pp.planning_project_id = d.planning_project_id
+					  AND pp.deleted_at IS NULL
+					  AND pp.province_id ~ '^[0-9]+$'
+					ORDER BY pp.id ASC
+					LIMIT 1
+				) AS province_id
+			FROM qh_planning_documents d
+			WHERE d.id IN ? AND d.deleted_at IS NULL
 		`, ids).
 		Scan(&sources).Error
 	if err != nil {

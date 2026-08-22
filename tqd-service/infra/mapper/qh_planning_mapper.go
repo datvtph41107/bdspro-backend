@@ -62,6 +62,7 @@ func (m *QHPlanningMapper) ToProjectProto(project *qh_domain.QHPlanningProject) 
 		SourceFolderPath:  project.SourceFolderPath,
 		ProcessStatus:     uint32(project.ProcessStatus),
 		ProcessStatusName: enums.GetPlanningProcessStatusLabel(uint32(project.ProcessStatus)),
+		DocumentCount:     project.DocumentCount,
 	}
 	clientView := project.ClientView
 	result.ClientView = &clientView

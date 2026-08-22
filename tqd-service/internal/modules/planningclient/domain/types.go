@@ -80,21 +80,35 @@ type Project struct {
 	UpdatedAt         *time.Time        `json:"updatedAt,omitempty"`
 	HasLayer          bool              `json:"hasLayer"`
 	LayerCount        int64             `json:"layerCount"`
+	DocumentCount     int64             `json:"documentCount"`
 	Overview          *ProjectOverview  `json:"overview,omitempty" gorm:"-"`
 	Tags              []ProjectTag      `json:"tags,omitempty" gorm:"-"`
 	ProjectTags       []Tag             `json:"projectTags,omitempty" gorm:"-"`
 	Provinces         []ProjectProvince `json:"provinces,omitempty" gorm:"-"`
+	Wards             []ProjectWard     `json:"wards,omitempty" gorm:"-"`
 }
 
 type ProjectProvince struct {
-	ID        string  `json:"id"`
-	FullName  string  `json:"fullName"`
-	ShortName string  `json:"shortName,omitempty"`
-	Code      string  `json:"code,omitempty"`
-	QHOrder   int32   `json:"qhOrder"`
-	Zoom      uint32  `json:"zoom"`
-	Lat       float64 `json:"lat,omitempty"`
-	Lng       float64 `json:"lng,omitempty"`
+	ID        string          `json:"id"`
+	FullName  string          `json:"fullName"`
+	ShortName string          `json:"shortName,omitempty"`
+	Code      string          `json:"code,omitempty"`
+	QHOrder   int32           `json:"qhOrder"`
+	Zoom      uint32          `json:"zoom"`
+	Lat       float64         `json:"lat,omitempty"`
+	Lng       float64         `json:"lng,omitempty"`
+	Geometry  json.RawMessage `json:"geometry,omitempty"`
+}
+
+type ProjectWard struct {
+	ID         string          `json:"id"`
+	FullName   string          `json:"fullName"`
+	ShortName  string          `json:"shortName,omitempty"`
+	Code       string          `json:"code,omitempty"`
+	ProvinceID string          `json:"provinceId,omitempty"`
+	Lat        float64         `json:"lat,omitempty"`
+	Lng        float64         `json:"lng,omitempty"`
+	Geometry   json.RawMessage `json:"geometry,omitempty"`
 }
 
 type Tag struct {

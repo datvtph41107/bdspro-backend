@@ -802,6 +802,9 @@ func planningProjectSeoSourceToProto(source *qh_dto.PlanningProjectSeoSource) *t
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID
 	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		resp.ProvinceId = *source.ProvinceID
+	}
 	return resp
 }
 
@@ -819,6 +822,9 @@ func planningDocumentSeoSourceToProto(source *qh_dto.PlanningDocumentSeoSource) 
 	}
 	if source.SeoID != nil && *source.SeoID > 0 {
 		resp.SeoId = *source.SeoID
+	}
+	if source.ProvinceID != nil && *source.ProvinceID > 0 {
+		resp.ProvinceId = *source.ProvinceID
 	}
 	return resp
 }

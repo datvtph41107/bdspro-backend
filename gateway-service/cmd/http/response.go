@@ -185,6 +185,9 @@ func (c *CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 		}
 
 		sizeField := val.FieldByName("Size")
+		if !sizeField.IsValid() {
+			sizeField = val.FieldByName("PageSize")
+		}
 		if sizeField.IsValid() && sizeField.CanInterface() {
 			switch s := sizeField.Interface().(type) {
 			case int32:
@@ -306,7 +309,7 @@ func hasProtoSiblingPayload(val reflect.Value) bool {
 		return false
 	}
 	skip := map[string]struct{}{
-		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "TotalPages": {}, "Pagination": {},
+		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "PageSize": {}, "TotalPages": {}, "Pagination": {},
 		"Code": {}, "Message": {}, "state": {}, "sizeCache": {}, "unknownFields": {},
 	}
 	typ := val.Type()

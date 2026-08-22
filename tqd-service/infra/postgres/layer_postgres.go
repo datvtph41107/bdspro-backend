@@ -255,6 +255,17 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 			  AND rel.deleted_at IS NULL
 		)`, filter.DocID)
 	}
+	if filter.PlanningProjectID > 0 {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			WHERE rel.layer_id = qh_layers.id
+			  AND rel.deleted_at IS NULL
+			  AND d.planning_project_id = ?
+		)`, filter.PlanningProjectID)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -354,7 +365,11 @@ func (r *layerRepoImpl) GetLayerSeoSource(ctx context.Context, layerID uint64) (
 				seo_id AS seo_id,
 				COALESCE(thumbnail_url, '') AS thumbnail_url,
 				COALESCE(image_url, '') AS image_url,
-				COALESCE(avatar, '') AS avatar
+				COALESCE(avatar, '') AS avatar,
+				CASE
+					WHEN province_id ~ '^[0-9]+$' THEN NULLIF(province_id, '')::bigint
+					ELSE NULL
+				END AS province_id
 			FROM qh_layers
 			WHERE id = ? AND deleted_at IS NULL
 			LIMIT 1
@@ -384,7 +399,11 @@ func (r *layerRepoImpl) GetLayerSeoSourcesByIDs(ctx context.Context, layerIDs []
 				seo_id AS seo_id,
 				COALESCE(thumbnail_url, '') AS thumbnail_url,
 				COALESCE(image_url, '') AS image_url,
-				COALESCE(avatar, '') AS avatar
+				COALESCE(avatar, '') AS avatar,
+				CASE
+					WHEN province_id ~ '^[0-9]+$' THEN NULLIF(province_id, '')::bigint
+					ELSE NULL
+				END AS province_id
 			FROM qh_layers
 			WHERE id IN ? AND deleted_at IS NULL
 		`, layerIDs).
