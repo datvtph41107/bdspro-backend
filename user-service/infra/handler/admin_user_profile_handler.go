@@ -368,12 +368,13 @@ func (s *AdminUserProfileHandler) GetUserStats(ctx context.Context, req *sharepb
 	}, nil
 }
 
-// @Summary Dashboard thống kê user mới và user hoạt động theo ngày
-// @Description Số user mới (created_at) và user hoạt động (updated_at) theo từng ngày trong lastDates ngày gần nhất (mặc định 3, giới hạn 1-30)
+// @Summary Dashboard thống kê user mới và user hoạt động theo gap
+// @Description Số user mới (created_at) và user hoạt động (login/refresh-token, 1 user/slot) theo gap=dates hoặc gap=hours
 // @Tags Admin
 // @Accept json
 // @Produce json
 // @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Param gap query string false "Khoảng gom: dates (mặc định) hoặc hours"
 // @Security BearerAuth
 // @Success 200 {object} userpb.GetUserGrowthDailyStatsResponse
 // @Router /v2/user/admin/users/dashboard/daily [get]
@@ -387,6 +388,7 @@ func (s *AdminUserProfileHandler) GetUserGrowthDailyStats(
 
 	resp, err := s.AdminUsecase.GetUserGrowthDailyStats(ctx, &dto.GetUserGrowthDailyStatsRequest{
 		LastDates: req.GetLastDates(),
+		Gap:       req.GetGap(),
 	})
 	if err != nil {
 		return nil, err
@@ -404,6 +406,7 @@ func (s *AdminUserProfileHandler) GetUserGrowthDailyStats(
 	return &userpb.GetUserGrowthDailyStatsResponse{
 		Data:      data,
 		LastDates: resp.LastDates,
+		Gap:       resp.Gap,
 	}, nil
 }
 

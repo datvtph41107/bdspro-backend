@@ -57,7 +57,7 @@ service AdminUserProfileService {
         };
     }
 
-    // Dashboard thống kê user mới (created_at) và user hoạt động (updated_at) theo từng ngày
+    // Dashboard thống kê user mới (created_at) và user hoạt động (login/refresh) theo gap
     rpc GetUserGrowthDailyStats(GetUserGrowthDailyStatsRequest) returns (GetUserGrowthDailyStatsResponse) {
         option (google.api.http) = {
             get: "/v2/user/admin/users/dashboard/daily"
@@ -282,22 +282,26 @@ message GetUserDetailResponse {
 message GetUserGrowthDailyStatsRequest {
     // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
     uint32 lastDates = 1;
+    // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định) hoặc "hours" (theo khung giờ).
+    string gap = 2;
 }
 
 message UserGrowthDailyItem {
-    // YYYY-MM-DD (Asia/Ho_Chi_Minh)
+    // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00 (Asia/Ho_Chi_Minh)
     string date = 1;
-    // Số user mới trong ngày (theo created_at)
+    // Số user mới trong slot (theo created_at)
     uint64 newUsers = 2;
-    // Số user hoạt động trong ngày (theo updated_at)
+    // Số user hoạt động trong slot (login + refresh-token, unique theo user/slot)
     uint64 activeUsers = 3;
 }
 
 message GetUserGrowthDailyStatsResponse {
-    // Danh sách theo ngày, sắp xếp tăng dần theo date (đủ lastDates ngày, ngày không có data thì count = 0)
+    // Danh sách theo gap, sắp xếp tăng dần theo date (slot trống thì count = 0)
     repeated UserGrowthDailyItem data = 1;
     // Số ngày đã áp dụng sau normalize (1-30, mặc định 3)
     uint32 lastDates = 2;
+    // Gap đã áp dụng sau normalize: dates | hours
+    string gap = 3;
 }
 
 // ============= Enums =============

@@ -611,7 +611,7 @@ func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dt
 	}, nil
 }
 
-// GetUserGrowthDailyStats thống kê user mới (created_at) và user hoạt động (updated_at) theo từng ngày.
+// GetUserGrowthDailyStats thống kê user mới (created_at) và user hoạt động (login/refresh) theo gap dates|hours.
 func (u *AdminUsecase) GetUserGrowthDailyStats(ctx context.Context, req *dto.GetUserGrowthDailyStatsRequest) (*dto.GetUserGrowthDailyStatsResponse, error) {
 	if req == nil {
 		req = &dto.GetUserGrowthDailyStatsRequest{}
@@ -620,19 +620,39 @@ func (u *AdminUsecase) GetUserGrowthDailyStats(ctx context.Context, req *dto.Get
 
 	fromTime := userGrowthFromTime(req.LastDates)
 
-	newRows, err := u.profileRepo.GetNewUsersDailyStats(ctx, fromTime)
-	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user mới: "+err.Error())
-	}
+	var (
+		newRows    []dto.UserGrowthDailyItem
+		activeRows []dto.UserGrowthDailyItem
+		err        error
+		data       []dto.UserGrowthDailyItem
+	)
 
-	activeRows, err := u.profileRepo.GetActiveUsersDailyStats(ctx, fromTime)
-	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user hoạt động: "+err.Error())
+	if req.Gap == dto.UserGrowthGapHours {
+		newRows, err = u.profileRepo.GetNewUsersHourlyStats(ctx, fromTime)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user mới theo giờ: "+err.Error())
+		}
+		activeRows, err = u.profileRepo.GetActiveUsersHourlyStats(ctx, fromTime)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user hoạt động theo giờ: "+err.Error())
+		}
+		data = buildUserGrowthHourlySeries(fromTime, newRows, activeRows)
+	} else {
+		newRows, err = u.profileRepo.GetNewUsersDailyStats(ctx, fromTime)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user mới: "+err.Error())
+		}
+		activeRows, err = u.profileRepo.GetActiveUsersDailyStats(ctx, fromTime)
+		if err != nil {
+			return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user hoạt động: "+err.Error())
+		}
+		data = buildUserGrowthDailySeries(fromTime, req.LastDates, newRows, activeRows)
 	}
 
 	return &dto.GetUserGrowthDailyStatsResponse{
-		Data:      buildUserGrowthDailySeries(fromTime, req.LastDates, newRows, activeRows),
+		Data:      data,
 		LastDates: req.LastDates,
+		Gap:       req.Gap,
 	}, nil
 }
 
@@ -670,6 +690,43 @@ func buildUserGrowthDailySeries(
 			Date:        date,
 			NewUsers:    newByDate[date],
 			ActiveUsers: activeByDate[date],
+		})
+	}
+	return data
+}
+
+func buildUserGrowthHourlySeries(
+	fromTime time.Time,
+	newRows []dto.UserGrowthDailyItem,
+	activeRows []dto.UserGrowthDailyItem,
+) []dto.UserGrowthDailyItem {
+	newByHour := make(map[string]uint64, len(newRows))
+	for _, row := range newRows {
+		newByHour[row.Date] = row.NewUsers
+	}
+
+	activeByHour := make(map[string]uint64, len(activeRows))
+	for _, row := range activeRows {
+		activeByHour[row.Date] = row.ActiveUsers
+	}
+
+	loc := fromTime.Location()
+	now := time.Now().In(loc)
+	endHour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, loc)
+	startHour := time.Date(fromTime.Year(), fromTime.Month(), fromTime.Day(), 0, 0, 0, 0, loc)
+
+	hours := int(endHour.Sub(startHour).Hours()) + 1
+	if hours < 1 {
+		hours = 1
+	}
+
+	data := make([]dto.UserGrowthDailyItem, 0, hours)
+	for cursor := startHour; !cursor.After(endHour); cursor = cursor.Add(time.Hour) {
+		key := cursor.Format("2006-01-02 15:00")
+		data = append(data, dto.UserGrowthDailyItem{
+			Date:        key,
+			NewUsers:    newByHour[key],
+			ActiveUsers: activeByHour[key],
 		})
 	}
 	return data

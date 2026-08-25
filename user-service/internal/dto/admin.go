@@ -3,6 +3,7 @@ package dto
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	"strings"
 	"time"
 )
 
@@ -188,6 +189,21 @@ func NormalizeLastDates(lastDates uint32) uint32 {
 
 type GetUserGrowthDailyStatsRequest struct {
 	LastDates uint32 `json:"lastDates" form:"lastDates"`
+	Gap       string `json:"gap" form:"gap"`
+}
+
+const (
+	UserGrowthGapDates = "dates"
+	UserGrowthGapHours = "hours"
+)
+
+func NormalizeUserGrowthGap(gap string) string {
+	switch strings.ToLower(strings.TrimSpace(gap)) {
+	case UserGrowthGapHours, "hour", "h":
+		return UserGrowthGapHours
+	default:
+		return UserGrowthGapDates
+	}
 }
 
 func (r *GetUserGrowthDailyStatsRequest) Normalize() {
@@ -195,6 +211,7 @@ func (r *GetUserGrowthDailyStatsRequest) Normalize() {
 		return
 	}
 	r.LastDates = NormalizeLastDates(r.LastDates)
+	r.Gap = NormalizeUserGrowthGap(r.Gap)
 }
 
 type UserGrowthDailyItem struct {
@@ -206,4 +223,5 @@ type UserGrowthDailyItem struct {
 type GetUserGrowthDailyStatsResponse struct {
 	Data      []UserGrowthDailyItem `json:"data"`
 	LastDates uint32                `json:"lastDates"`
+	Gap       string                `json:"gap"`
 }

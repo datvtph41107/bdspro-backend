@@ -32,6 +32,10 @@ type IProfileRepo interface {
 
 	// Thống kê user mới theo ngày (created_at) từ fromTime
 	GetNewUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
-	// Thống kê user hoạt động theo ngày (updated_at) từ fromTime
+	// Thống kê user hoạt động theo ngày (login/refresh activity) từ fromTime
 	GetActiveUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
+	// Thống kê user mới theo giờ (created_at) từ fromTime
+	GetNewUsersHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
+	// Thống kê user hoạt động theo giờ (login/refresh activity) từ fromTime
+	GetActiveUsersHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
 }
