@@ -14,4 +14,4 @@ gateway:
 
 request_stats:
     spec_urls:
-        - /v2/crm/public/content/sitemap.xml
+        - /v2/crm/sitemap.xml

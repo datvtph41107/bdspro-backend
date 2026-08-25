@@ -14,7 +14,7 @@ import (
 	"hub/internal/repo"
 )
 
-const requestStatsFlushDelay = 20 * time.Second
+const requestStatsFlushDelay = 10 * time.Second
 const requestStatsTopPathLimit = 30
 const userInteractionTopLimit = 30
 
@@ -31,7 +31,7 @@ type userInteractionKey struct {
 }
 
 // RequestStatsUsecase buffers gateway request increments in-process and flushes
-// to DB every 20s (same pattern as seo_count). When profileId > 0 (JWT), also
+// to DB every 10s (same pattern as seo_count). When profileId > 0 (JWT), also
 // buffers user interaction counts. Spec URLs (is_spec_audit) are stored as
 // individual audit rows without count aggregation.
 type RequestStatsUsecase struct {
@@ -91,7 +91,7 @@ func (u *RequestStatsUsecase) TrackRequest(_ context.Context, req *dto.TrackRequ
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	// Spec URLs: ghi từng lần gọi (audit), không gộp count.
+	// Spec URLs: ghi từng lần gọi (audit), không gộp count; flush sau ~10s.
 	if req.IsSpecAudit {
 		u.audits = append(u.audits, &domain.RequestAuditLog{
 			Method:     method,

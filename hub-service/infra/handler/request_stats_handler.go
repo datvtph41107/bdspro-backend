@@ -29,7 +29,7 @@ func NewRequestStatsHandler(
 }
 
 // @Summary Track request stats
-// @Description Gateway fire-and-forget mỗi HTTP request để đếm traffic (buffer ~20s rồi flush DB)
+// @Description Gateway fire-and-forget mỗi HTTP request để đếm traffic (buffer ~10s rồi flush DB)
 // @Tags RequestStats
 // @Accept json
 // @Produce json

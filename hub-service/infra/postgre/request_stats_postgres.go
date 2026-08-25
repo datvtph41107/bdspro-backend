@@ -344,8 +344,12 @@ func (r *RequestStatsPostgres) GetAuditLogs(ctx context.Context, path string, of
 	}
 
 	result := make([]dto.RequestAuditLogItem, 0, len(rows))
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		loc = time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60)
+	}
 	for _, item := range rows {
-		ts := item.Timestamp
+		ts := item.Timestamp.In(loc)
 		result = append(result, dto.RequestAuditLogItem{
 			ID:         item.ID,
 			Method:     item.Method,
@@ -353,7 +357,7 @@ func (r *RequestStatsPostgres) GetAuditLogs(ctx context.Context, path string, of
 			Service:    item.Service,
 			StatusCode: item.StatusCode,
 			DurationMs: item.DurationMs,
-			Timestamp:  _utils.FormatTimeToString(&ts),
+			Timestamp:  ts.Format(_utils.RFC3339Milli),
 		})
 	}
 	return result, total, nil
