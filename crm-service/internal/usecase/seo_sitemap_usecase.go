@@ -47,10 +47,10 @@ func (u *SeoSitemapUsecase) BuildSitemapXML(ctx context.Context, baseURL string)
 	for i := range items {
 		page := &items[i]
 
-		decision := seo_domain.CanIncludeInSitemap(page)
-		if !decision.Allowed {
-			continue
-		}
+		// decision := seo_domain.CanIncludeInSitemap(page)
+		// if !decision.Allowed {
+		// 	continue
+		// }
 
 		loc := buildSeoSitemapLoc(page.CanonicalURL, baseURL)
 		if strings.TrimSpace(loc) == "" {

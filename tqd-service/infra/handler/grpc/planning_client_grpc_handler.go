@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"common/injection"
 	_middleware "common/middleware"
+	"pb/clients"
 	planningapp "tqd/internal/modules/planningclient/application"
 	planningdomain "tqd/internal/modules/planningclient/domain"
 	tqdutils "tqd/internal/utils"
@@ -30,12 +32,14 @@ type PlanningClientGrpcHandler struct {
 	tqdpb.UnimplementedPlanningClientServiceServer
 	service                    *planningapp.Service
 	provinceScopeListStartTime int64
+	hubClient                  *clients.HubGrpcClient
 }
 
 func NewPlanningClientGrpcHandler(service *planningapp.Service) *PlanningClientGrpcHandler {
 	return &PlanningClientGrpcHandler{
 		service:                    service,
 		provinceScopeListStartTime: time.Now().UnixMilli(),
+		hubClient:                  injection.NewHubClient(),
 	}
 }
 
@@ -114,6 +118,15 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 	if req == nil {
 		req = &tqdpb.ListPlanningProjectsRequest{}
 	}
+
+	search := strings.TrimSpace(req.GetKeyword())
+	if search == "" {
+		search = strings.TrimSpace(req.GetSearch())
+	}
+	if search != "" && h.hubClient != nil {
+		h.hubClient.TrackKeywordSearch(ctx, search, "tqd")
+	}
+
 	layerIDs := tqdutils.MergePositiveUint64(0, tqdutils.ParseUintCSV(req.GetLayerIds()))
 	page := int(req.GetPage())
 	size := positiveOr(req.GetSize(), 20)
@@ -163,7 +176,7 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 	filter := planningdomain.ProjectListFilter{
 		Page:           int(req.GetPage()),
 		Size:           positiveOr(req.GetSize(), 20),
-		Search:         strings.ToLower(strings.TrimSpace(req.GetSearch())),
+		Search:         strings.ToLower(search),
 		PlanningType:   strings.TrimSpace(req.GetPlanningType()),
 		PlanningLevel:  strings.TrimSpace(req.GetPlanningLevel()),
 		ValidityStatus: strings.TrimSpace(req.GetValidityStatus()),

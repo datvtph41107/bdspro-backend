@@ -586,8 +586,8 @@ func (r *SeoDomainPostgres) GetNeedGenerateList(ctx context.Context, limit int) 
 	}
 	err := r.db.WithContext(ctx).
 		Where("need_generate = ? AND published = ?", true, true).
-		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
-		Where("render_status IN ?", []string{seo_domain.SeoRenderStatusPending, seo_domain.SeoRenderStatusFailed}).
+		// Where("page_status = ?", seo_domain.SeoPageStatusPublished).
+		// Where("render_status IN ?", []string{seo_domain.SeoRenderStatusPending, seo_domain.SeoRenderStatusFailed}).
 		Order("source_updated_at ASC NULLS FIRST, updated_at ASC").
 		Limit(limit).
 		Find(&items).Error

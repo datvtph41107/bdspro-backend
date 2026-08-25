@@ -8,12 +8,14 @@ import (
 	"strconv"
 	"strings"
 
+	"common/injection"
 	_middleware "common/middleware"
 	"crm/config"
 	"crm/internal/dto"
 	catalogapp "crm/internal/modules/contentcatalog/application"
 	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	"crm/internal/usecase"
+	"pb/clients"
 
 	crmpb "pb/types/crm"
 
@@ -41,10 +43,20 @@ type PublicContentGrpcHandler struct {
 	runtimeEvents         *usecase.SeoRuntimeEventUsecase
 	seoCount              *usecase.SeoCountUsecase
 	runtimeEventIngestKey string
+	hubClient             *clients.HubGrpcClient
 }
 
 func NewPublicContentGrpcHandler(seoPublic *usecase.SeoPublicUsecase, sitemap *usecase.SeoSitemapUsecase, provisioning *usecase.SeoAdministrativeUnitProvisioningUsecase, catalog *catalogapp.Service, runtimeEvents *usecase.SeoRuntimeEventUsecase, seoCount *usecase.SeoCountUsecase, runtimeEventIngestKey string) *PublicContentGrpcHandler {
-	return &PublicContentGrpcHandler{seoPublic: seoPublic, sitemap: sitemap, provisioning: provisioning, catalog: catalog, runtimeEvents: runtimeEvents, seoCount: seoCount, runtimeEventIngestKey: strings.TrimSpace(runtimeEventIngestKey)}
+	return &PublicContentGrpcHandler{
+		seoPublic:             seoPublic,
+		sitemap:               sitemap,
+		provisioning:          provisioning,
+		catalog:               catalog,
+		runtimeEvents:         runtimeEvents,
+		seoCount:              seoCount,
+		runtimeEventIngestKey: strings.TrimSpace(runtimeEventIngestKey),
+		hubClient:             injection.NewHubClient(),
+	}
 }
 
 func jsonBytes(value any) (*wrapperspb.BytesValue, error) {
@@ -423,6 +435,9 @@ func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *cr
 		SortBy:     stringValue(m, "sort_by", "sortBy"),
 		SortOrder:  stringValue(m, "sort_order", "sortOrder"),
 		RefType:    req.GetRefType(),
+	}
+	if keyword := strings.TrimSpace(filter.Keyword); keyword != "" && h.hubClient != nil {
+		h.hubClient.TrackKeywordSearch(ctx, keyword, "crm")
 	}
 	if filter.Sort == "" {
 		filter.Sort = req.GetSort()

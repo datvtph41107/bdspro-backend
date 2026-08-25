@@ -7,6 +7,7 @@ import (
 	"log"
 	hubpb "pb/types/hub"
 	sharepb "pb/types/shared"
+	"strings"
 	"time"
 
 	_dto "common/domain/dto"
@@ -117,4 +118,27 @@ func (c *HubGrpcClient) PutUpdate(ctx context.Context, resource string, resource
 
 func (c *HubGrpcClient) DelUpdate(ctx context.Context, resource string, id uint64, ownerId uint64) error {
 	return nil
+}
+
+// TrackKeywordSearch fire-and-forget đếm từ khóa tìm kiếm sang hub (CRM/TQD/...).
+func (c *HubGrpcClient) TrackKeywordSearch(ctx context.Context, keyword, source string) {
+	if c == nil || c.InternalClient == nil {
+		return
+	}
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return
+	}
+	go func() {
+		trackCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, err := c.InternalClient.TrackKeywordSearch(trackCtx, &hubpb.TrackKeywordSearchRequest{
+			Keyword: keyword,
+			Source:  source,
+			Count:   1,
+		})
+		if err != nil {
+			log.Printf("hub TrackKeywordSearch error: %v", err)
+		}
+	}()
 }

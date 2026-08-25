@@ -111,7 +111,8 @@ func RequestStatsMiddleware(tracker *RequestStatsTracker) gin.HandlerFunc {
 var requestStatsIgnorePrefixes = []string{
 	"/swagger",
 	"/swagger-doc",
-	"/v2/hub/request-stats", // không đếm chính API thống kê request (tránh nhiễu + vòng lặp track)
+	"/v2/hub/request-stats",       // không đếm chính API thống kê request
+	"/v2/hub/keyword-search-stats", // không đếm API thống kê từ khóa
 }
 
 func shouldSkipRequestStats(path string) bool {

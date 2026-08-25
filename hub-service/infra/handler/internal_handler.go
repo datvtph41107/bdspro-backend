@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"hub/infra/mapper"
+	"hub/internal/dto"
 	"hub/internal/repo"
 	_usecase "hub/internal/usecase"
 	hubpb "pb/types/hub"
@@ -18,6 +19,7 @@ type InternalHandler struct {
 	locationMapper       *mapper.LocationMapper
 	InteractiveEventRepo repo.IInteractiveEventRepo
 	UpdateUsecase        _usecase.IUpdateDataUsecase
+	KeywordSearchUsecase _usecase.IKeywordSearchUsecase
 }
 
 func NewInternalHandler(
@@ -25,12 +27,14 @@ func NewInternalHandler(
 	locationMapper *mapper.LocationMapper,
 	interactiveEventRepo repo.IInteractiveEventRepo,
 	UpdateUsecase _usecase.IUpdateDataUsecase,
+	keywordSearchUsecase _usecase.IKeywordSearchUsecase,
 ) *InternalHandler {
 	return &InternalHandler{
 		locationUsecase:      locationUsecase,
 		locationMapper:       locationMapper,
 		InteractiveEventRepo: interactiveEventRepo,
 		UpdateUsecase:        UpdateUsecase,
+		KeywordSearchUsecase: keywordSearchUsecase,
 	}
 }
 
@@ -158,4 +162,22 @@ func (h *InternalHandler) PutUpdate(ctx context.Context, pb *hubpb.PutUpdateRequ
 
 func (h *InternalHandler) DelUpdate(ctx context.Context, pb *hubpb.DelUpdateRequest) (*hubpb.DelUpdateResponse, error) {
 	return nil, nil
+}
+
+// TrackKeywordSearch nhận từ khóa từ service con (CRM/TQD/...), buffer rồi flush DB.
+func (h *InternalHandler) TrackKeywordSearch(
+	ctx context.Context,
+	req *hubpb.TrackKeywordSearchRequest,
+) (*hubpb.TrackKeywordSearchResponse, error) {
+	if h.KeywordSearchUsecase == nil {
+		return &hubpb.TrackKeywordSearchResponse{Success: true}, nil
+	}
+	if errDTO := h.KeywordSearchUsecase.TrackKeywordSearch(ctx, &dto.TrackKeywordSearchRequest{
+		Keyword: req.GetKeyword(),
+		Source:  req.GetSource(),
+		Count:   req.GetCount(),
+	}); errDTO != nil {
+		return nil, status.Errorf(codes.Internal, errDTO.Message)
+	}
+	return &hubpb.TrackKeywordSearchResponse{Success: true}, nil
 }

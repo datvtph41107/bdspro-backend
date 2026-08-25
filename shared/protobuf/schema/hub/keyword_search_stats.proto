@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+// Thống kê từ khóa tìm kiếm (CRM seo/news keyword, TQD discovery q, ...).
+service KeywordSearchStatsService {
+  // Top từ khóa theo lượt tìm, sắp xếp count giảm dần, theo lastDates ngày gần nhất.
+  rpc GetKeywordSearchStats(GetKeywordSearchStatsRequest) returns (GetKeywordSearchStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/keyword-search-stats"
+    };
+  };
+}
+
+message GetKeywordSearchStatsRequest {
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+  // Giới hạn số từ khóa trả về; mặc định 50, tối đa 100.
+  uint32 limit = 2;
+  // Lọc theo source: crm | tqd | ...; bỏ trống = tất cả.
+  string source = 3;
+}
+
+message KeywordSearchItem {
+  string keyword = 1;
+  string source = 2;
+  uint64 count = 3;
+}
+
+message GetKeywordSearchStatsResponse {
+  // Danh sách từ khóa sắp xếp count giảm dần
+  repeated KeywordSearchItem data = 1;
+  // Tổng lượt tìm trong khoảng lastDates (sau filter source nếu có)
+  uint64 totalSearches = 2;
+  uint32 lastDates = 3;
+  uint32 limit = 4;
+}

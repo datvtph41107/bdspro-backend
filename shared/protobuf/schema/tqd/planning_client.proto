@@ -34,6 +34,8 @@ message ListPlanningProjectsRequest {
   string layerIds = 21;
   // layerId: lọc theo 1 layer; gộp vào layerIds. Đồ án qua tài liệu (layer_plan_doc_relation).
   uint64 layerId = 22;
+  // keyword: alias của search (query ?keyword=...)
+  string keyword = 23;
 }
 
 message PlanningProjectIdRequest {

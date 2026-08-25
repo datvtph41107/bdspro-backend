@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"common/injection"
+	"pb/clients"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
 	"tqd/internal/modules/discovery/application"
@@ -25,8 +27,9 @@ import (
 type DiscoveryGrpcHandler struct {
 	tqdpb.UnimplementedDiscoveryServiceServer
 
-	service *application.Service
-	mapper  *mapper.DiscoveryMapper
+	service   *application.Service
+	mapper    *mapper.DiscoveryMapper
+	hubClient *clients.HubGrpcClient
 }
 
 // NewDiscoveryGrpcHandler khởi tạo Discovery gRPC handler.
@@ -35,8 +38,9 @@ func NewDiscoveryGrpcHandler(
 	discoveryMapper *mapper.DiscoveryMapper,
 ) *DiscoveryGrpcHandler {
 	return &DiscoveryGrpcHandler{
-		service: service,
-		mapper:  discoveryMapper,
+		service:   service,
+		mapper:    discoveryMapper,
+		hubClient: injection.NewHubClient(),
 	}
 }
 
@@ -92,6 +96,10 @@ func (h *DiscoveryGrpcHandler) SearchDiscovery(
 	}
 
 	request := h.mapper.FromProtoSearchRequest(input)
+
+	if q := strings.TrimSpace(request.Query); q != "" && h.hubClient != nil {
+		h.hubClient.TrackKeywordSearch(ctx, q, "tqd")
+	}
 
 	response, err := h.service.Search(ctx, request)
 	if err != nil {

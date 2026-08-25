@@ -27,6 +27,7 @@ func AutoMigrate() {
 		&domain.UpdateData{},
 		&domain.RequestStatsLog{},
 		&domain.UserInteractionLog{},
+		&domain.KeywordSearchLog{},
 		// &domain.UserGuideGroupEntity{},
 	}
 

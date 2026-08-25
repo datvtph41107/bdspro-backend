@@ -96,6 +96,20 @@ message DelUpdateResponse {
   string message = 2;
 }
 
+// TrackKeywordSearch - Internal: CRM/TQD/... gọi fire-and-forget để đếm từ khóa tìm kiếm
+message TrackKeywordSearchRequest {
+  // Từ khóa thô (hub sẽ normalize: trim + lower)
+  string keyword = 1;
+  // Nguồn gọi: crm | tqd | ...
+  string source = 2;
+  // Tăng bao nhiêu lượt; mặc định 1 nếu = 0
+  int64 count = 3;
+}
+
+message TrackKeywordSearchResponse {
+  bool success = 1;
+}
+
 message GetRegionsRequest {
   repeated uint64 ids = 1;
 }
@@ -139,5 +153,8 @@ service HubInternalService {
 
   // DelUpdate - Internal: Service khác gọi để xóa khỏi sync tracking
   rpc DelUpdate (DelUpdateRequest) returns (DelUpdateResponse);
+
+  // TrackKeywordSearch - Internal: đếm từ khóa tìm kiếm từ CRM/TQD/...
+  rpc TrackKeywordSearch (TrackKeywordSearchRequest) returns (TrackKeywordSearchResponse);
 }
 
