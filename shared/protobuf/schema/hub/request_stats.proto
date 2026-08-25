@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+service RequestStatsService {
+  // Gateway fire-and-forget mỗi HTTP request để đếm traffic hệ thống.
+  // Nếu có JWT (profileId) thì đồng thời đếm tương tác người dùng.
+  rpc TrackRequest(TrackRequestRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/hub/request-stats/track"
+      body: "*"
+    };
+  };
+
+  // Tổng request + top path + theo service (phục vụ bản đồ traffic), theo lastDates ngày gần nhất.
+  rpc GetRequestStatsDashboard(GetRequestStatsDashboardRequest) returns (GetRequestStatsDashboardResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/request-stats/dashboard"
+    };
+  };
+
+  // Tổng request theo từng ngày (phục vụ biểu đồ), theo lastDates ngày gần nhất.
+  rpc GetRequestDailyStats(GetRequestDailyStatsRequest) returns (GetRequestDailyStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/request-stats/daily"
+    };
+  };
+
+  // Thống kê người dùng tương tác (chỉ request có JWT), theo lastDates ngày gần nhất.
+  rpc GetUserInteractionDashboard(GetUserInteractionDashboardRequest) returns (GetUserInteractionDashboardResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/request-stats/users/dashboard"
+    };
+  };
+
+  // Active users / lượt tương tác theo từng ngày.
+  rpc GetUserInteractionDailyStats(GetUserInteractionDailyStatsRequest) returns (GetUserInteractionDailyStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/request-stats/users/daily"
+    };
+  };
+}
+
+message TrackRequestRequest {
+  string method = 1;
+  string path = 2;
+  string service = 3;
+  int32 status_code = 4;
+  int64 duration_ms = 5;
+  // Có JWT thì gateway set profileId (>0) để đếm tương tác user
+  uint64 profile_id = 6;
+  uint64 organization_id = 7;
+}
+
+message GetRequestStatsDashboardRequest {
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+}
+
+message RequestTopPathItem {
+  string method = 1;
+  string path = 2;
+  string service = 3;
+  uint64 count = 4;
+}
+
+message RequestServiceCountItem {
+  string service = 1;
+  uint64 count = 2;
+}
+
+message GetRequestStatsDashboardResponse {
+  // Tổng lượt request trong khoảng lastDates ngày gần nhất
+  uint64 totalRequests = 1;
+  // Top path có traffic nhiều nhất (tối đa 30), sắp xếp giảm dần
+  repeated RequestTopPathItem data = 2;
+  // Phân bổ theo service
+  repeated RequestServiceCountItem byService = 3;
+  // Số ngày đã áp dụng sau normalize (1-30, mặc định 3)
+  uint32 lastDates = 4;
+}
+
+message GetRequestDailyStatsRequest {
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định) hoặc "hours" (theo khung giờ).
+  string gap = 2;
+}
+
+message RequestDailyItem {
+  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00
+  string date = 1;
+  uint64 count = 2;
+}
+
+message GetRequestDailyStatsResponse {
+  // Danh sách request theo gap, sắp xếp tăng dần theo date (slot trống thì count = 0)
+  repeated RequestDailyItem data = 1;
+  uint32 lastDates = 2;
+  // Gap đã áp dụng sau normalize: dates | hours
+  string gap = 3;
+}
+
+message GetUserInteractionDashboardRequest {
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+}
+
+message UserInteractionTopItem {
+  uint64 profileId = 1;
+  uint64 organizationId = 2;
+  uint64 count = 3;
+  string fullName = 4;
+  string avatar = 5;
+  string phone = 6;
+  bool tickVerified = 7;
+}
+
+message GetUserInteractionDashboardResponse {
+  // Tổng lượt tương tác (request có JWT) trong khoảng lastDates
+  uint64 totalInteractions = 1;
+  // Số user distinct đã tương tác
+  uint64 activeUsers = 2;
+  // Top user tương tác nhiều nhất (tối đa 30)
+  repeated UserInteractionTopItem data = 3;
+  uint32 lastDates = 4;
+}
+
+message GetUserInteractionDailyStatsRequest {
+  uint32 lastDates = 1;
+  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định) hoặc "hours" (theo khung giờ).
+  string gap = 2;
+}
+
+message UserInteractionDailyItem {
+  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00
+  string date = 1;
+  // Tổng lượt tương tác trong slot
+  uint64 interactions = 2;
+  // Số user distinct trong slot
+  uint64 activeUsers = 3;
+}
+
+message GetUserInteractionDailyStatsResponse {
+  repeated UserInteractionDailyItem data = 1;
+  uint32 lastDates = 2;
+  // Gap đã áp dụng sau normalize: dates | hours
+  string gap = 3;
+}

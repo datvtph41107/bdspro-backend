@@ -353,11 +353,21 @@ var HttpCmd = &cobra.Command{
 		if apiKeyVerifier != nil {
 			defer apiKeyVerifier.Close()
 		}
+
+		requestStatsTracker, trackerErr := service.NewRequestStatsTracker(env, opts)
+		if trackerErr != nil {
+			log.Printf("Gateway request stats tracker unavailable: %v", trackerErr)
+		}
+		if requestStatsTracker != nil {
+			defer requestStatsTracker.Close()
+		}
+
 		authMiddleware := _jwt.JWTAuthMiddleware(
 			publicRoutes,
 			tempRoutes,
 			_jwt.WithAPIKeyVerifier(apiKeyVerifier),
 		)
+		requestStatsMiddleware := service.RequestStatsMiddleware(requestStatsTracker)
 
 		// Đăng ký các gRPC services
 		service.RegisterNotificationService(ctx, mux, env, opts)
@@ -376,7 +386,7 @@ var HttpCmd = &cobra.Command{
 		service.RegisterTqdService(ctx, mux, env, opts)
 
 		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
-		v2Import := r.Group("/form", authMiddleware)
+		v2Import := r.Group("/form", authMiddleware, requestStatsMiddleware)
 		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
 		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
 
@@ -417,9 +427,9 @@ var HttpCmd = &cobra.Command{
 		// 	authMiddleware,
 		// 	v2Fallback,
 		// )
-		r.Any("/v2/*any", authMiddleware, gin.WrapH(mux))
-		r.Any("/v2.1/*any", authMiddleware, gin.WrapH(mux))
-		r.Any("/v3/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v2/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
+		r.Any("/v2.1/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
+		r.Any("/v3/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")
@@ -441,7 +451,7 @@ var HttpCmd = &cobra.Command{
 
 		// v1 API routes (legacy proxy)
 		forwarding := pkg.ForwardingRequest(gateway, env)
-		r.Any("/v1/:service/*path", authMiddleware, forwarding)
+		r.Any("/v1/:service/*path", authMiddleware, requestStatsMiddleware, forwarding)
 
 		log.Printf("Gateway server starting on port: %s", port)
 		if err := r.Run(":" + port); err != nil {

@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
+	"time"
 	"user/enums"
 	"user/internal/dto"
 	"user/internal/models"
@@ -28,4 +29,9 @@ type IProfileRepo interface {
 	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 	UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error
 	UpdateLastSeen(ctx context.Context, profileID uint64) error
+
+	// Thống kê user mới theo ngày (created_at) từ fromTime
+	GetNewUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
+	// Thống kê user hoạt động theo ngày (updated_at) từ fromTime
+	GetActiveUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error)
 }

@@ -28,4 +28,5 @@ func RegisterHubService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = hubpb.RegisterErrorLogServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterUpdateDataServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterApplinkServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = hubpb.RegisterRequestStatsServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

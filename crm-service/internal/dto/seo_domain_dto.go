@@ -103,6 +103,12 @@ type SeoDomainUpdateRequest struct {
 	CategoryID      *uint64 `json:"categoryId"`
 }
 
+type BatchUpdateSeoDomainRequest struct {
+	IDs       []uint64 `json:"ids"`
+	Fields    []string `json:"fields"`
+	IsSiteMap *bool    `json:"isSiteMap"`
+}
+
 type SeoDomainListRequest struct {
 	_dto.Pagable
 	Keyword      *string `json:"keyword" form:"keyword"`
@@ -143,6 +149,66 @@ type SeoRefTypeCountItem struct {
 	RefType     enums.ESEORefType `json:"refType"`
 	RefTypeName string            `json:"refTypeName"`
 	Total       int64             `json:"total"`
+}
+
+type SeoClickSource struct {
+	RefType uint32 `json:"refType"`
+	RefID   uint64 `json:"refId"`
+}
+
+type SeoTopClickedItem struct {
+	ID         uint64         `json:"id"`
+	Name       string         `json:"name"`
+	Source     SeoClickSource `json:"source"`
+	ClickCount uint64         `json:"clickCount"`
+}
+
+type GetSeoTopClickedRequest struct {
+	LastDates uint32 `json:"lastDates" form:"lastDates"`
+}
+
+func NormalizeLastDates(lastDates uint32) uint32 {
+	if lastDates == 0 {
+		return 3
+	}
+	if lastDates > 30 {
+		return 30
+	}
+	return lastDates
+}
+
+func (r *GetSeoTopClickedRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	r.LastDates = NormalizeLastDates(r.LastDates)
+}
+
+type GetSeoTopClickedResponse struct {
+	TotalClicks uint64              `json:"totalClicks"`
+	Data        []SeoTopClickedItem `json:"data"`
+	LastDates   uint32              `json:"lastDates"`
+}
+
+type GetSeoClickDailyStatsRequest struct {
+	LastDates uint32 `json:"lastDates" form:"lastDates"`
+}
+
+func (r *GetSeoClickDailyStatsRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	r.LastDates = NormalizeLastDates(r.LastDates)
+}
+
+type SeoClickDailyItem struct {
+	Date  string `json:"date"`
+	Count uint64 `json:"count"`
+}
+
+type GetSeoClickDailyStatsResponse struct {
+	Data      []SeoClickDailyItem `json:"data"`
+	LastDates uint32              `json:"lastDates"`
 }
 
 type SeoSitemapItem struct {

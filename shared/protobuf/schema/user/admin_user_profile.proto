@@ -56,6 +56,13 @@ service AdminUserProfileService {
             get: "/v2/user/stats"
         };
     }
+
+    // Dashboard thống kê user mới (created_at) và user hoạt động (updated_at) theo từng ngày
+    rpc GetUserGrowthDailyStats(GetUserGrowthDailyStatsRequest) returns (GetUserGrowthDailyStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/users/dashboard/daily"
+        };
+    }
     
     // Tạo user mới (Admin only)
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
@@ -268,6 +275,29 @@ message GetUserDetailResponse {
     string youtube = 26;
     string introduction = 27;
     optional authpb.Role role = 28;
+}
+
+// ============= User growth dashboard =============
+
+message GetUserGrowthDailyStatsRequest {
+    // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+    uint32 lastDates = 1;
+}
+
+message UserGrowthDailyItem {
+    // YYYY-MM-DD (Asia/Ho_Chi_Minh)
+    string date = 1;
+    // Số user mới trong ngày (theo created_at)
+    uint64 newUsers = 2;
+    // Số user hoạt động trong ngày (theo updated_at)
+    uint64 activeUsers = 3;
+}
+
+message GetUserGrowthDailyStatsResponse {
+    // Danh sách theo ngày, sắp xếp tăng dần theo date (đủ lastDates ngày, ngày không có data thì count = 0)
+    repeated UserGrowthDailyItem data = 1;
+    // Số ngày đã áp dụng sau normalize (1-30, mặc định 3)
+    uint32 lastDates = 2;
 }
 
 // ============= Enums =============

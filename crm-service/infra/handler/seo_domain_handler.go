@@ -294,6 +294,88 @@ func (h *SeoDomainHandler) CountRecentSeoByRefType(ctx context.Context, req *crm
 	}, nil
 }
 
+// GetSeoTopClicked @Summary Thống kê click SEO
+// @Description Tổng lượt click website và top trang click nhiều nhất theo lastDates ngày gần nhất (mặc định 3, giới hạn 1-30; tối đa 15 trang)
+// @Tags SEO Domain
+// @Produce json
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Success 200 {object} crmpb.GetSeoTopClickedResponse
+// @Router /v2/crm/public/seo-domains/top-clicks [get]
+func (h *SeoDomainHandler) GetSeoTopClicked(ctx context.Context, req *crmpb.GetSeoTopClickedRequest) (*crmpb.GetSeoTopClickedResponse, error) {
+	if req == nil {
+		req = &crmpb.GetSeoTopClickedRequest{}
+	}
+
+	resp, err := h.seoDomainUsecase.GetSeoTopClicked(ctx, &dto.GetSeoTopClickedRequest{
+		LastDates: req.GetLastDates(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return &crmpb.GetSeoTopClickedResponse{
+			Data: []*crmpb.SeoTopClickedItem{},
+		}, nil
+	}
+
+	data := make([]*crmpb.SeoTopClickedItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &crmpb.SeoTopClickedItem{
+			Id:   item.ID,
+			Name: item.Name,
+			Source: &crmpb.SeoClickSource{
+				RefType: item.Source.RefType,
+				RefId:   item.Source.RefID,
+			},
+			ClickCount: item.ClickCount,
+		})
+	}
+
+	return &crmpb.GetSeoTopClickedResponse{
+		TotalClicks: resp.TotalClicks,
+		Data:        data,
+		LastDates:   resp.LastDates,
+	}, nil
+}
+
+// GetSeoClickDailyStats @Summary Thống kê click SEO theo ngày
+// @Description Tổng lượt click theo từng ngày (YYYY-MM-DD) trong lastDates ngày gần nhất để vẽ biểu đồ
+// @Tags SEO Domain
+// @Produce json
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Success 200 {object} crmpb.GetSeoClickDailyStatsResponse
+// @Router /v2/crm/public/seo-domains/click-daily [get]
+func (h *SeoDomainHandler) GetSeoClickDailyStats(ctx context.Context, req *crmpb.GetSeoClickDailyStatsRequest) (*crmpb.GetSeoClickDailyStatsResponse, error) {
+	if req == nil {
+		req = &crmpb.GetSeoClickDailyStatsRequest{}
+	}
+
+	resp, err := h.seoDomainUsecase.GetSeoClickDailyStats(ctx, &dto.GetSeoClickDailyStatsRequest{
+		LastDates: req.GetLastDates(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return &crmpb.GetSeoClickDailyStatsResponse{
+			Data: []*crmpb.SeoClickDailyItem{},
+		}, nil
+	}
+
+	data := make([]*crmpb.SeoClickDailyItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &crmpb.SeoClickDailyItem{
+			Date:  item.Date,
+			Count: item.Count,
+		})
+	}
+
+	return &crmpb.GetSeoClickDailyStatsResponse{
+		Data:      data,
+		LastDates: resp.LastDates,
+	}, nil
+}
+
 func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetSeoDomainListRequest) (*crmpb.GetSeoDomainListResponse, error) {
 	if req == nil {
 		req = &crmpb.GetSeoDomainListRequest{}
@@ -388,6 +470,34 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 	}
 	return &crmpb.UpdateSeoDomainResponse{
 		SeoDomain: h.seoDomainMapper.SeoDomainToPb(updated),
+	}, nil
+}
+
+// BatchUpdateSeoDomain cập nhật hàng loạt theo fields + ids.
+// @Summary Batch update SEO domain
+// @Description Cập nhật các field khai báo trong fields cho nhiều SEO domain theo ids.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.BatchUpdateSeoDomainRequest true "ids, fields và giá trị tương ứng"
+// @Router /v2/crm/admin/seo-domains/batch [put]
+func (h *SeoDomainHandler) BatchUpdateSeoDomain(ctx context.Context, req *crmpb.BatchUpdateSeoDomainRequest) (*sharepb.SubmitResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	if err := h.seoDomainUsecase.BatchUpdateSeoDomain(ctx, &dto.BatchUpdateSeoDomainRequest{
+		IDs:       req.Ids,
+		Fields:    req.Fields,
+		IsSiteMap: req.IsSiteMap,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &sharepb.SubmitResponse{
+		Ids:     req.Ids,
+		Message: "Batch update SEO domain thành công",
 	}, nil
 }
 

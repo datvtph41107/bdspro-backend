@@ -368,6 +368,45 @@ func (s *AdminUserProfileHandler) GetUserStats(ctx context.Context, req *sharepb
 	}, nil
 }
 
+// @Summary Dashboard thống kê user mới và user hoạt động theo ngày
+// @Description Số user mới (created_at) và user hoạt động (updated_at) theo từng ngày trong lastDates ngày gần nhất (mặc định 3, giới hạn 1-30)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Security BearerAuth
+// @Success 200 {object} userpb.GetUserGrowthDailyStatsResponse
+// @Router /v2/user/admin/users/dashboard/daily [get]
+func (s *AdminUserProfileHandler) GetUserGrowthDailyStats(
+	ctx context.Context,
+	req *userpb.GetUserGrowthDailyStatsRequest,
+) (*userpb.GetUserGrowthDailyStatsResponse, error) {
+	if req == nil {
+		req = &userpb.GetUserGrowthDailyStatsRequest{}
+	}
+
+	resp, err := s.AdminUsecase.GetUserGrowthDailyStats(ctx, &dto.GetUserGrowthDailyStatsRequest{
+		LastDates: req.GetLastDates(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]*userpb.UserGrowthDailyItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &userpb.UserGrowthDailyItem{
+			Date:        item.Date,
+			NewUsers:    item.NewUsers,
+			ActiveUsers: item.ActiveUsers,
+		})
+	}
+
+	return &userpb.GetUserGrowthDailyStatsResponse{
+		Data:      data,
+		LastDates: resp.LastDates,
+	}, nil
+}
+
 // @Summary Tạo user mới (Admin only)
 // @Description Tạo user mới giống với tài khoản admin (chỉ dành cho admin)
 // @Tags Admin

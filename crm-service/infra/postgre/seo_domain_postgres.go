@@ -353,6 +353,106 @@ func (r *SeoDomainPostgres) CountRecentByRefType(ctx context.Context, days uint3
 	return result, nil
 }
 
+func (r *SeoDomainPostgres) GetTopClicked(ctx context.Context, fromTime time.Time, limit int) ([]dto.SeoTopClickedItem, error) {
+	if limit <= 0 {
+		limit = 15
+	}
+
+	type row struct {
+		ID         uint64  `gorm:"column:id"`
+		Name       string  `gorm:"column:name"`
+		RefType    uint32  `gorm:"column:ref_type"`
+		RefID      *uint64 `gorm:"column:ref_id"`
+		ClickCount uint64  `gorm:"column:click_count"`
+	}
+
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT
+				sd.id,
+				COALESCE(NULLIF(TRIM(sd.title), ''), COALESCE(sd.ref_label, '')) AS name,
+				sd.ref_type,
+				sd.ref_id,
+				SUM(scl.clicked)::bigint AS click_count
+			FROM seo_count_log scl
+			INNER JOIN seo_domain sd ON sd.id = scl.seo_id AND sd.deleted_at IS NULL
+			WHERE scl."timestamp" >= ?
+			GROUP BY sd.id, sd.title, sd.ref_label, sd.ref_type, sd.ref_id
+			ORDER BY click_count DESC, sd.id DESC
+			LIMIT ?
+		`, fromTime, limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.SeoTopClickedItem, 0, len(rows))
+	for _, item := range rows {
+		var refID uint64
+		if item.RefID != nil {
+			refID = *item.RefID
+		}
+		result = append(result, dto.SeoTopClickedItem{
+			ID:   item.ID,
+			Name: item.Name,
+			Source: dto.SeoClickSource{
+				RefType: item.RefType,
+				RefID:   refID,
+			},
+			ClickCount: item.ClickCount,
+		})
+	}
+	return result, nil
+}
+
+func (r *SeoDomainPostgres) CountClicksFromTime(ctx context.Context, fromTime time.Time) (uint64, error) {
+	var total int64
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT COALESCE(SUM(clicked), 0)
+			FROM seo_count_log
+			WHERE "timestamp" >= ?
+		`, fromTime).
+		Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint64(total), nil
+}
+
+func (r *SeoDomainPostgres) GetClickDailyStats(ctx context.Context, fromTime time.Time) ([]dto.SeoClickDailyItem, error) {
+	type row struct {
+		Date  string `gorm:"column:date"`
+		Count uint64 `gorm:"column:count"`
+	}
+
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char(("timestamp" AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS date,
+				COALESCE(SUM(clicked), 0)::bigint AS count
+			FROM seo_count_log
+			WHERE "timestamp" >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.SeoClickDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.SeoClickDailyItem{
+			Date:  item.Date,
+			Count: item.Count,
+		})
+	}
+	return result, nil
+}
+
 func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {
 	var items []seo_domain.SeoDomain
 
@@ -382,6 +482,17 @@ func (r *SeoDomainPostgres) Update(ctx context.Context, id uint64, updates map[s
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoDomain{}).
 		Where("id = ?", id).
+		Updates(updates).Error
+}
+
+func (r *SeoDomainPostgres) UpdateByIDs(ctx context.Context, ids []uint64, updates map[string]interface{}) error {
+	if len(ids) == 0 || len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoDomain{}).
+		Where("id IN ? AND deleted_at IS NULL", ids).
 		Updates(updates).Error
 }
 

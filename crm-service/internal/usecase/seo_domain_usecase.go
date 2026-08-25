@@ -243,6 +243,85 @@ func (u *SeoDomainUsecase) CountRecentSeoByRefType(ctx context.Context, req *dto
 	return items, req.Days, nil
 }
 
+const seoTopClickedLimit = 15
+
+func seoClickStatsFromTime(lastDates uint32) time.Time {
+	now := time.Now()
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		loc = now.Location()
+	}
+	today := time.Date(now.In(loc).Year(), now.In(loc).Month(), now.In(loc).Day(), 0, 0, 0, 0, loc)
+	// Inclusive window: lastDates days ending today.
+	return today.AddDate(0, 0, -int(lastDates)+1)
+}
+
+func buildSeoClickDailySeries(fromTime time.Time, lastDates uint32, rows []dto.SeoClickDailyItem) []dto.SeoClickDailyItem {
+	byDate := make(map[string]uint64, len(rows))
+	for _, row := range rows {
+		byDate[row.Date] = row.Count
+	}
+
+	data := make([]dto.SeoClickDailyItem, 0, lastDates)
+	for i := 0; i < int(lastDates); i++ {
+		day := fromTime.AddDate(0, 0, i)
+		date := day.Format("2006-01-02")
+		data = append(data, dto.SeoClickDailyItem{
+			Date:  date,
+			Count: byDate[date],
+		})
+	}
+	return data
+}
+
+// GetSeoTopClicked thống kê tổng click và top trang click nhiều nhất từ seo_count_log theo lastDates ngày.
+func (u *SeoDomainUsecase) GetSeoTopClicked(ctx context.Context, req *dto.GetSeoTopClickedRequest) (*dto.GetSeoTopClickedResponse, error) {
+	if req == nil {
+		req = &dto.GetSeoTopClickedRequest{}
+	}
+	req.Normalize()
+
+	fromTime := seoClickStatsFromTime(req.LastDates)
+
+	totalClicks, err := u.seoDomainRepo.CountClicksFromTime(ctx, fromTime)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := u.seoDomainRepo.GetTopClicked(ctx, fromTime, seoTopClickedLimit)
+	if err != nil {
+		return nil, err
+	}
+	if items == nil {
+		items = []dto.SeoTopClickedItem{}
+	}
+
+	return &dto.GetSeoTopClickedResponse{
+		TotalClicks: totalClicks,
+		Data:        items,
+		LastDates:   req.LastDates,
+	}, nil
+}
+
+// GetSeoClickDailyStats trả về tổng click theo từng ngày để vẽ biểu đồ.
+func (u *SeoDomainUsecase) GetSeoClickDailyStats(ctx context.Context, req *dto.GetSeoClickDailyStatsRequest) (*dto.GetSeoClickDailyStatsResponse, error) {
+	if req == nil {
+		req = &dto.GetSeoClickDailyStatsRequest{}
+	}
+	req.Normalize()
+
+	fromTime := seoClickStatsFromTime(req.LastDates)
+	rows, err := u.seoDomainRepo.GetClickDailyStats(ctx, fromTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.GetSeoClickDailyStatsResponse{
+		Data:      buildSeoClickDailySeries(fromTime, req.LastDates, rows),
+		LastDates: req.LastDates,
+	}, nil
+}
+
 func (u *SeoDomainUsecase) GetSitemapXML(ctx context.Context, req *dto.SitemapRequest) ([]byte, error) {
 	baseURL := strings.TrimSpace(config.AppProperties.Seo.PublicBaseURL)
 	if req != nil && req.BaseURL != nil && strings.TrimSpace(*req.BaseURL) != "" {
@@ -1451,6 +1530,60 @@ func (u *SeoDomainUsecase) UpdateSeoDomain(ctx context.Context, id uint64, req *
 		return nil, err
 	}
 	return u.GetSeoDomain(ctx, id)
+}
+
+func (u *SeoDomainUsecase) BatchUpdateSeoDomain(ctx context.Context, req *dto.BatchUpdateSeoDomainRequest) error {
+	if req == nil || len(req.IDs) == 0 {
+		return _errors.ReturnError(400, "ids là bắt buộc")
+	}
+	if len(req.Fields) == 0 {
+		return _errors.ReturnError(400, "fields là bắt buộc")
+	}
+
+	ids := make([]uint64, 0, len(req.IDs))
+	seen := make(map[uint64]struct{}, len(req.IDs))
+	for _, id := range req.IDs {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return _errors.ReturnError(400, "ids không hợp lệ")
+	}
+
+	updates := map[string]interface{}{}
+	fieldSeen := make(map[string]struct{}, len(req.Fields))
+	for _, raw := range req.Fields {
+		field := strings.TrimSpace(raw)
+		if field == "" {
+			continue
+		}
+		key := strings.ToLower(field)
+		if _, ok := fieldSeen[key]; ok {
+			continue
+		}
+		fieldSeen[key] = struct{}{}
+
+		switch key {
+		case "issitemap", "is_site_map":
+			if req.IsSiteMap == nil {
+				return _errors.ReturnError(400, "isSiteMap là bắt buộc khi fields chứa isSiteMap")
+			}
+			updates["is_site_map"] = *req.IsSiteMap
+		default:
+			return _errors.ReturnError(400, fmt.Sprintf("field không được hỗ trợ: %s", field))
+		}
+	}
+	if len(updates) == 0 {
+		return _errors.ReturnError(400, "fields không hợp lệ")
+	}
+
+	return u.seoDomainRepo.UpdateByIDs(ctx, ids, updates)
 }
 
 func (u *SeoDomainUsecase) PublishSeoPage(ctx context.Context, id uint64) (*seo_domain.SeoDomain, error) {

@@ -70,6 +70,7 @@ var GrpcCmd = &cobra.Command{
 		hubpb.RegisterErrorLogServiceServer(s, app.ErrorLogHandler)
 		hubpb.RegisterUpdateDataServiceServer(s, app.UpdateDataHandler)
 		hubpb.RegisterApplinkServiceServer(s, app.ApplinkHandler)
+		hubpb.RegisterRequestStatsServiceServer(s, app.RequestStatsHandler)
 
 		log.Printf("Listen: %v", port)
 

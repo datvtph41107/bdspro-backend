@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"time"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -608,4 +609,68 @@ func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dt
 		RoleColor:       roleColor,
 		RoleBgColor:     roleBgColor,
 	}, nil
+}
+
+// GetUserGrowthDailyStats thống kê user mới (created_at) và user hoạt động (updated_at) theo từng ngày.
+func (u *AdminUsecase) GetUserGrowthDailyStats(ctx context.Context, req *dto.GetUserGrowthDailyStatsRequest) (*dto.GetUserGrowthDailyStatsResponse, error) {
+	if req == nil {
+		req = &dto.GetUserGrowthDailyStatsRequest{}
+	}
+	req.Normalize()
+
+	fromTime := userGrowthFromTime(req.LastDates)
+
+	newRows, err := u.profileRepo.GetNewUsersDailyStats(ctx, fromTime)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user mới: "+err.Error())
+	}
+
+	activeRows, err := u.profileRepo.GetActiveUsersDailyStats(ctx, fromTime)
+	if err != nil {
+		return nil, _errors.ReturnError(int32(500), "Lỗi khi thống kê user hoạt động: "+err.Error())
+	}
+
+	return &dto.GetUserGrowthDailyStatsResponse{
+		Data:      buildUserGrowthDailySeries(fromTime, req.LastDates, newRows, activeRows),
+		LastDates: req.LastDates,
+	}, nil
+}
+
+func userGrowthFromTime(lastDates uint32) time.Time {
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		loc = time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60)
+	}
+	now := time.Now().In(loc)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	return today.AddDate(0, 0, -int(lastDates)+1)
+}
+
+func buildUserGrowthDailySeries(
+	fromTime time.Time,
+	lastDates uint32,
+	newRows []dto.UserGrowthDailyItem,
+	activeRows []dto.UserGrowthDailyItem,
+) []dto.UserGrowthDailyItem {
+	newByDate := make(map[string]uint64, len(newRows))
+	for _, row := range newRows {
+		newByDate[row.Date] = row.NewUsers
+	}
+
+	activeByDate := make(map[string]uint64, len(activeRows))
+	for _, row := range activeRows {
+		activeByDate[row.Date] = row.ActiveUsers
+	}
+
+	data := make([]dto.UserGrowthDailyItem, 0, lastDates)
+	for i := 0; i < int(lastDates); i++ {
+		day := fromTime.AddDate(0, 0, i)
+		date := day.Format("2006-01-02")
+		data = append(data, dto.UserGrowthDailyItem{
+			Date:        date,
+			NewUsers:    newByDate[date],
+			ActiveUsers: activeByDate[date],
+		})
+	}
+	return data
 }

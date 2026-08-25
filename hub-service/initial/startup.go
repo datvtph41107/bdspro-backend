@@ -26,6 +26,7 @@ type InitialApp struct {
 	ClickURLHandler         *handler.ClickURLHandler
 	ErrorLogHandler         *handler.ErrorLogHandler
 	ApplinkHandler          *handler.ApplinkHandler
+	RequestStatsHandler     *handler.RequestStatsHandler
 }
 
 func NewInitialApp(
@@ -45,6 +46,7 @@ func NewInitialApp(
 	clickURLHandler *handler.ClickURLHandler,
 	errorLogHandler *handler.ErrorLogHandler,
 	appLinkHandler *handler.ApplinkHandler,
+	requestStatsHandler *handler.RequestStatsHandler,
 ) *InitialApp {
 	return &InitialApp{
 		EventQueueService:       eventQueueService,
@@ -64,5 +66,6 @@ func NewInitialApp(
 		ClickURLHandler:         clickURLHandler,
 		ErrorLogHandler:         errorLogHandler,
 		ApplinkHandler:          appLinkHandler,
+		RequestStatsHandler:     requestStatsHandler,
 	}
 }

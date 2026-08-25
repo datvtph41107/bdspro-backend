@@ -173,3 +173,37 @@ type GetUserDetailResponse struct {
 	RoleColor       string            `json:"roleColor"`
 	RoleBgColor     string            `json:"roleBgColor"`
 }
+
+// User growth dashboard (new users by created_at, active users by updated_at)
+
+func NormalizeLastDates(lastDates uint32) uint32 {
+	if lastDates == 0 {
+		return 3
+	}
+	if lastDates > 30 {
+		return 30
+	}
+	return lastDates
+}
+
+type GetUserGrowthDailyStatsRequest struct {
+	LastDates uint32 `json:"lastDates" form:"lastDates"`
+}
+
+func (r *GetUserGrowthDailyStatsRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	r.LastDates = NormalizeLastDates(r.LastDates)
+}
+
+type UserGrowthDailyItem struct {
+	Date        string `json:"date"`
+	NewUsers    uint64 `json:"newUsers"`
+	ActiveUsers uint64 `json:"activeUsers"`
+}
+
+type GetUserGrowthDailyStatsResponse struct {
+	Data      []UserGrowthDailyItem `json:"data"`
+	LastDates uint32                `json:"lastDates"`
+}
