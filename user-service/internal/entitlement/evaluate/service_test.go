@@ -15,10 +15,11 @@ type fakeSubscriptionStore struct {
 	err          error
 }
 
-func (f fakeSubscriptionStore) FindActiveSubscription(
+func (f fakeSubscriptionStore) FindSubscriptionForOperation(
 	ctx context.Context,
 	subjectType string,
 	subjectID string,
+	operationCode operation.Code,
 	now time.Time,
 ) (Subscription, bool, error) {
 	return f.subscription, f.found, f.err

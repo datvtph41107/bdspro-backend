@@ -2,11 +2,12 @@ package accesspostgres
 
 import (
 	commonaccess "common/access"
+	"common/operation"
 	"context"
 	"errors"
 	"time"
+	useraccess "user/internal/entitlement/evaluate"
 	"user/internal/models"
-	useraccess "user/internal/modules/entitlement/evaluate"
 
 	"gorm.io/gorm"
 )
@@ -36,17 +37,25 @@ func NewSubscriptionStore(db *gorm.DB) *SubscriptionStore {
 	return &SubscriptionStore{db: db}
 }
 
-func (s *SubscriptionStore) FindActiveSubscription(
+func (s *SubscriptionStore) FindSubscriptionForOperation(
 	ctx context.Context,
 	subjectType string,
 	subjectID string,
+	operationCode operation.Code,
 	now time.Time,
 ) (useraccess.Subscription, bool, error) {
 	if s == nil || s.db == nil {
 		return useraccess.Subscription{}, false, errors.New("subscription database is not configured")
 	}
 
-	var row subscriptionRow
+	// Operation is the consumer-visible business question. Product ownership stays
+	// inside the catalog: a subject may have multiple current products, so picking
+	// the newest subscription before considering the operation is not authoritative.
+	//
+	// Limit(2) is deliberate. Zero means no current subscription grants the
+	// operation, one is the canonical authority, and more than one is ambiguous
+	// until the business defines an explicit composition/precedence rule.
+	var rows []subscriptionRow
 	err := s.db.WithContext(ctx).
 		Table("catalog_subscriptions AS s").
 		Select(`
@@ -64,6 +73,10 @@ func (s *SubscriptionStore) FindActiveSubscription(
 		`).
 		Joins("JOIN catalog_plan_versions pv ON pv.id = s.plan_version_id").
 		Joins("JOIN catalog_plans p ON p.id = pv.plan_id").
+		Joins(
+			"JOIN catalog_plan_operation_policies op ON op.plan_version_id = s.plan_version_id AND op.operation_code = ?",
+			string(operationCode),
+		).
 		Where("s.subject_kind = ? AND s.subject_id = ?", subjectType, subjectID).
 		Where("s.started_at <= ?", now).
 		Where(
@@ -74,15 +87,20 @@ func (s *SubscriptionStore) FindActiveSubscription(
 			[]models.SubscriptionStatus{models.SubscriptionPastDue, models.SubscriptionCanceled},
 			now,
 		).
-		Order("s.started_at DESC, s.id DESC").
-		First(&row).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return useraccess.Subscription{}, false, nil
-	}
+		Order("s.id ASC").
+		Limit(2).
+		Find(&rows).Error
 	if err != nil {
 		return useraccess.Subscription{}, false, err
 	}
+	if len(rows) == 0 {
+		return useraccess.Subscription{}, false, nil
+	}
+	if len(rows) > 1 {
+		return useraccess.Subscription{}, false, useraccess.ErrAmbiguousSubscription
+	}
 
+	row := rows[0]
 	subject := commonaccess.Subject{
 		Type: commonaccess.SubjectType(row.SubjectKind),
 		ID:   row.SubjectID,

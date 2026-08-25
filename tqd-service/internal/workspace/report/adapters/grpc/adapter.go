@@ -256,6 +256,16 @@ func toStatus(err error) error {
 		return status.Error(codes.PermissionDenied, err.Error())
 	case errors.Is(err, quota.ErrQuotaExceeded):
 		return status.Error(codes.ResourceExhausted, err.Error())
+	case errors.Is(err, application.ErrAcceptanceUnavailable):
+		return status.Error(
+			codes.Unavailable,
+			application.ErrAcceptanceUnavailable.Error(),
+		)
+	case errors.Is(err, application.ErrAccessUnavailable):
+		return status.Error(
+			codes.Unavailable,
+			application.ErrAccessUnavailable.Error(),
+		)
 	case errors.Is(err, application.ErrProcessingUnavailable):
 		return status.Error(codes.Unavailable, err.Error())
 	default:

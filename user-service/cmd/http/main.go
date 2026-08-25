@@ -40,7 +40,6 @@ var HttpCmd = &cobra.Command{
 		// 	config.LoadProperties()
 
 		// 	app, _ := wire.InitializeApp()
-		// 	db.AutoMigrate()
 
 		// 	r.Use(_jwt.JWTAuthMiddleware(publicRoutes))
 		// 	routes.ProfileRoutes(r, app.ProfileRouter)

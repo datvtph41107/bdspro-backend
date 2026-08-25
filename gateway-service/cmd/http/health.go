@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type readinessState struct{ ready atomic.Bool }
+type readinessState struct {
+	ready atomic.Bool
+}
 
 func newReadinessState() *readinessState {
 	state := &readinessState{}
@@ -21,7 +23,9 @@ func (s *readinessState) beginDrain() {
 	}
 }
 
-func (s *readinessState) isReady() bool { return s != nil && s.ready.Load() }
+func (s *readinessState) isReady() bool {
+	return s != nil && s.ready.Load()
+}
 
 // registerOperationalHealth keeps liveness process-local and makes readiness
 // reflect whether the Gateway is still accepting work. It intentionally does

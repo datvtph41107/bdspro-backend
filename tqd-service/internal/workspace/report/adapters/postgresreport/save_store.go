@@ -146,13 +146,50 @@ func (s *ReportStore) AcceptReport(
 		job.UserID = row.UserID
 
 		jobStore := postgresjob.NewStore(tx)
-		if _, err := jobStore.SaveJob(ctx, job); err != nil {
-			return fmt.Errorf("save generated report job: %w", err)
+
+		// A new acceptance creates its Job in this transaction.
+		// A concurrent replay validates the Job owned by the durable winner.
+		// OperationID belongs to the winning durable lineage, not to the
+		// transport attempt that happened to observe the winner.
+		var durableJob processing.Job
+
+		if created {
+			jobCreated, err := jobStore.SaveJob(ctx, job)
+			if err != nil {
+				return fmt.Errorf("save generated report job: %w", err)
+			}
+			if !jobCreated {
+				return errors.New("new report did not create its processing job")
+			}
+			durableJob = job
+		} else {
+			existingJob, found, err := jobStore.FindJobByReportID(ctx, row.ID)
+			if err != nil {
+				return fmt.Errorf("load existing report processing job: %w", err)
+			}
+			if !found {
+				return errors.New("existing accepted report has no processing job")
+			}
+
+			if !sameAcceptedJobOwner(existingJob, job) {
+				return errors.New("existing report processing job does not match accepted command")
+			}
+
+			// Usage and Job are both durable winner facts. When metering
+			// evidence exists, their lineage must agree with each other.
+			if accepted.DurableUsage != nil &&
+				existingJob.OperationID != accepted.DurableUsage.OperationID {
+				return errors.New(
+					"existing report processing job does not match durable usage lineage",
+				)
+			}
+
+			durableJob = existingJob
 		}
 
 		saved := fromRow(row)
 		saved.Operation = reportInput.Operation
-		saved.OperationID = reportInput.OperationID
+		saved.OperationID = durableJob.OperationID
 		accepted.Report = saved
 		accepted.Created = created
 		return nil
@@ -162,6 +199,20 @@ func (s *ReportStore) AcceptReport(
 	}
 
 	return accepted, nil
+}
+
+// sameAcceptedJobOwner validates the stable ownership of a Report Job.
+//
+// OperationID is intentionally not compared here. Concurrent attempts for one
+// CommandKey may carry different transport Operation-IDs after they all miss
+// the initial durable precheck. The winner's durable Operation-ID is validated
+// against durable Usage evidence when metering is present.
+func sameAcceptedJobOwner(actual, expected processing.Job) bool {
+	return actual.ID == expected.ID &&
+		actual.ReportID == expected.ReportID &&
+		actual.UserID == expected.UserID &&
+		actual.Operation == expected.Operation &&
+		actual.CommandKey == expected.CommandKey
 }
 
 func findByCommand(

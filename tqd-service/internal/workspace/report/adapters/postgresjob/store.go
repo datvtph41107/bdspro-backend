@@ -42,6 +42,41 @@ func (s *Store) SaveJob(ctx context.Context, job processing.Job) (bool, error) {
 	return result.RowsAffected == 1, nil
 }
 
+// FindJobByReportID returns the durable processing job owned by one report.
+//
+// report_id is unique in report_jobs, so this lookup is used by Report
+// acceptance to prove that an already accepted report has its execution job.
+func (s *Store) FindJobByReportID(
+	ctx context.Context,
+	reportID uint64,
+) (processing.Job, bool, error) {
+	if s == nil || s.db == nil {
+		return processing.Job{}, false, errors.New(
+			"report job database is not configured",
+		)
+	}
+	if reportID == 0 {
+		return processing.Job{}, false, errors.New(
+			"report ID is required",
+		)
+	}
+
+	var row model
+	result := s.db.WithContext(ctx).
+		Where("report_id = ?", reportID).
+		Limit(1).
+		Find(&row)
+
+	if result.Error != nil {
+		return processing.Job{}, false, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return processing.Job{}, false, nil
+	}
+
+	return fromModel(row), true, nil
+}
+
 /**
  * ClaimNextJob lấy một pending job bằng row lock.
  *
@@ -60,17 +95,23 @@ func (s *Store) ClaimNextJob(
 	found := false
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var row model
-		err := tx.
+
+		// An empty queue is normal worker state, not a database error.
+		// Find + RowsAffected keeps idle polling silent while preserving
+		// real PostgreSQL failures and the single-query SKIP LOCKED claim.
+		result := tx.
 			Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
 			Where("status = ?", processing.StatusPending).
 			Where("available_at <= ?", now).
 			Order("available_at ASC, created_at ASC").
-			First(&row).Error
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
+			Limit(1).
+			Find(&row)
+
+		if result.Error != nil {
+			return result.Error
 		}
-		if err != nil {
-			return err
+		if result.RowsAffected == 0 {
+			return nil
 		}
 
 		row.Status = string(processing.StatusRunning)

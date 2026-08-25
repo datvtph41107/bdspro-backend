@@ -14,7 +14,6 @@ import (
 	authpb "pb/types/auth"
 	userpb "pb/types/user"
 	"user/config"
-	"user/db"
 	"user/env"
 	"user/wire"
 
@@ -44,13 +43,24 @@ func runGRPC() error {
 	if err := config.LoadProperties(); err != nil {
 		return fmt.Errorf("load User config: %w", err)
 	}
+
+	runtimePolicy, err := loadRuntimePolicy()
+	if err != nil {
+		return fmt.Errorf("load User runtime policy: %w", err)
+	}
+
+	log.Printf(
+		"User runtime policy: module_warmup=%t dashboard_stats=%t zns_scheduler=%t",
+		runtimePolicy.ModuleWarmup,
+		runtimePolicy.DashboardStats,
+		runtimePolicy.ZNSScheduler,
+	)
 	os.Setenv("TZ", "Europe/London")
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
 	if _, err := _db.NewDB(); err != nil {
 		return fmt.Errorf("connect User database: %w", err)
 	}
-	db.AutoMigrate()
 
 	app, cleanup, err := wire.InitializeApp()
 	if err != nil {
@@ -151,16 +161,31 @@ func runGRPC() error {
 	processCtx, processCancel := context.WithCancel(signalCtx)
 	defer processCancel()
 
-	if err := app.LoadModulesOnStartup(processCtx); err != nil {
-		log.Printf("User module cache warmup failed; starting degraded: %v", err)
+	if runtimePolicy.ModuleWarmup {
+		if err := app.LoadModulesOnStartup(processCtx); err != nil {
+			log.Printf(
+				"User module cache warmup failed; starting degraded: %v",
+				err,
+			)
+		}
 	}
 
 	actors := make([]processlifecycle.Actor, 0, 2)
-	if app.UserDashboardStatsJob != nil {
-		actors = append(actors, processlifecycle.ActorFunc(app.UserDashboardStatsJob.RunDailyAtMidnight))
+	if runtimePolicy.DashboardStats &&
+		app.UserDashboardStatsJob != nil {
+		actors = append(
+			actors,
+			processlifecycle.ActorFunc(
+				app.UserDashboardStatsJob.RunDailyAtMidnight,
+			),
+		)
 	}
-	if app.ZnsScheduler != nil {
-		actors = append(actors, processlifecycle.ActorFunc(app.ZnsScheduler.Run))
+	if runtimePolicy.ZNSScheduler &&
+		app.ZnsScheduler != nil {
+		actors = append(
+			actors,
+			processlifecycle.ActorFunc(app.ZnsScheduler.Run),
+		)
 	}
 
 	return processlifecycle.Run(

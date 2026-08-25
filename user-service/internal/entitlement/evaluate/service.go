@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	ErrInvalidSubject   = errors.New("subject is invalid")
-	ErrInvalidOperation = errors.New("operation is invalid")
-	ErrUsagePeriod      = errors.New("usage period boundary is not defined")
+	ErrInvalidSubject        = errors.New("subject is invalid")
+	ErrInvalidOperation      = errors.New("operation is invalid")
+	ErrAmbiguousSubscription = errors.New("multiple current subscriptions grant operation")
+	ErrUsagePeriod           = errors.New("usage period boundary is not defined")
 )
 
 /**
@@ -55,10 +56,11 @@ func (s *Service) GetAccess(
 		Allowed:   false,
 	}
 
-	subscription, found, err := s.subscriptions.FindActiveSubscription(
+	subscription, found, err := s.subscriptions.FindSubscriptionForOperation(
 		ctx,
 		string(subject.Type),
 		subject.ID,
+		operationCode,
 		now,
 	)
 	if err != nil {

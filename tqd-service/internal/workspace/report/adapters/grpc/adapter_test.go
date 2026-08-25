@@ -3,6 +3,7 @@ package grpcadapter
 import (
 	"common/requestcontext"
 	"context"
+	"errors"
 	"testing"
 	"tqd/internal/workspace/report/application"
 
@@ -51,6 +52,27 @@ func TestToStatusTreatsMissingOperationAsServerFailure(t *testing.T) {
 			"missing operation status = %v, want Internal; error = %v",
 			status.Code(err),
 			err,
+		)
+	}
+}
+
+func TestToStatusHidesAccessProviderDetails(t *testing.T) {
+	providerErr := errors.New("provider internal detail")
+
+	err := toStatus(errors.Join(
+		application.ErrAccessUnavailable,
+		providerErr,
+	))
+
+	if status.Code(err) != codes.Unavailable {
+		t.Fatalf("status = %v, want Unavailable", status.Code(err))
+	}
+
+	if status.Convert(err).Message() != application.ErrAccessUnavailable.Error() {
+		t.Fatalf(
+			"message = %q, want %q",
+			status.Convert(err).Message(),
+			application.ErrAccessUnavailable.Error(),
 		)
 	}
 }

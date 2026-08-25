@@ -3,14 +3,14 @@ package cmd_grpc
 import (
 	"errors"
 	"fmt"
-	"user/infra/handler/accessgrpc"
 	"user/infra/handler/cataloggrpc"
 	"user/infra/postgres"
-	accesspostgres "user/infra/postgres/access"
 	"user/infra/postgres/iampermission"
+	useraccess "user/internal/entitlement/evaluate"
+	"user/internal/entitlement/grpc"
+	accesspostgres "user/internal/entitlement/postgres"
 	"user/internal/modules/catalog/admin"
 	"user/internal/modules/catalog/publication"
-	useraccess "user/internal/modules/entitlement/evaluate"
 
 	_db "common/db"
 	userpb "pb/types/user"

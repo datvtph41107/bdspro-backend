@@ -110,6 +110,8 @@ func (r *Runner) runOnce(ctx context.Context) error {
 				"subject_type", string(scope.Subject.Type),
 				"subject_id", scope.Subject.ID,
 				"meter_code", string(scope.MeterCode),
+				"period_start", scope.PeriodStart.UTC().Format(time.RFC3339),
+				"period_end", scope.PeriodEnd.UTC().Format(time.RFC3339),
 				"saved_used", result.SavedUsed,
 				"runtime_used", result.RuntimeUsed,
 				"reserved", result.Reserved,

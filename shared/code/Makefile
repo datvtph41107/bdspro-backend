@@ -82,6 +82,9 @@ buf-auth:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth	
 buf-feedback:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
+buf-file:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path file
+
 buf-operation:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path operation
 buf-tqd: buf-operation

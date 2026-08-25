@@ -39,6 +39,7 @@ func Open(cfg gatewayconfig.Runtime) (*Connections, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		conn, err := rpc.NewClient(rpc.ClientConfig{
 			Target:             target,
 			BackoffMaxDelay:    backoffMaxDelay,
@@ -49,6 +50,7 @@ func Open(cfg gatewayconfig.Runtime) (*Connections, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open %s gRPC connection: %w", name, err)
 		}
+
 		opened = append(opened, conn)
 		return conn, nil
 	}
@@ -108,13 +110,15 @@ func Open(cfg gatewayconfig.Runtime) (*Connections, error) {
 	return connections, nil
 }
 
+// LIFO — Last In, First Out. Reverse order khả năng phụ thuộc vào resource được tạo trước.
 func (c *Connections) Close() error {
 	if c == nil {
 		return nil
 	}
 	return errors.Join(
-		closeConn(c.TQD), closeConn(c.Hub), closeConn(c.Assistant), closeConn(c.Auth),
-		closeConn(c.Chat), closeConn(c.User), closeConn(c.Social), closeConn(c.Organization), closeConn(c.CRM),
+		closeConn(c.TQD), closeConn(c.Hub), closeConn(c.Assistant),
+		closeConn(c.Auth), closeConn(c.Chat), closeConn(c.User),
+		closeConn(c.Social), closeConn(c.Organization), closeConn(c.CRM),
 		closeConn(c.BDSPro), closeConn(c.Payment), closeConn(c.Notification),
 	)
 }

@@ -6,8 +6,8 @@ import (
 	"common/productcatalog"
 	"context"
 	"errors"
+	useraccess "user/internal/entitlement/evaluate"
 	"user/internal/models"
-	useraccess "user/internal/modules/entitlement/evaluate"
 
 	"gorm.io/gorm"
 )

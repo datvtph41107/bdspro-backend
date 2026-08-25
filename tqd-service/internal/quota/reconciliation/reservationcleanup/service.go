@@ -26,10 +26,17 @@ type UsageStore interface {
 /**
  * Result cho biết batch vừa xử lý bao nhiêu reservation.
  */
+type Action struct {
+	ReservationID     string
+	Outcome           string
+	DurableUsageFound bool
+}
+
 type Result struct {
 	Committed int
 	Canceled  int
 	Skipped   int
+	Actions   []Action
 }
 
 /**
@@ -80,6 +87,11 @@ func (s *Service) RunOnce(
 			switch {
 			case err == nil:
 				result.Committed++
+				result.Actions = append(result.Actions, Action{
+					ReservationID:     reservation.ID,
+					Outcome:           "committed",
+					DurableUsageFound: true,
+				})
 			case errors.Is(err, quota.ErrReservationNotFound),
 				errors.Is(err, quota.ErrReservationCanceled):
 				result.Skipped++
@@ -93,6 +105,11 @@ func (s *Service) RunOnce(
 		switch {
 		case err == nil:
 			result.Canceled++
+			result.Actions = append(result.Actions, Action{
+				ReservationID:     reservation.ID,
+				Outcome:           "canceled",
+				DurableUsageFound: false,
+			})
 		case errors.Is(err, quota.ErrReservationNotFound),
 			errors.Is(err, quota.ErrReservationCommitted):
 			result.Skipped++

@@ -10,10 +10,11 @@ import (
  * SubscriptionStore đọc subscription đang dùng của một subject.
  */
 type SubscriptionStore interface {
-	FindActiveSubscription(
+	FindSubscriptionForOperation(
 		ctx context.Context,
 		subjectType string,
 		subjectID string,
+		operationCode operation.Code,
 		now time.Time,
 	) (Subscription, bool, error)
 }

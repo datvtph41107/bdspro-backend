@@ -16,6 +16,8 @@ import (
 	"tqd/internal/workspace/report/processing"
 )
 
+const acceptanceLeaseSafetyGap = 5 * time.Second
+
 // Service sở hữu create-report flow.
 //
 // Service điều phối business capability, nhưng không sở hữu:
@@ -67,14 +69,20 @@ func NewService(
 //
 // Failure semantics:
 //
-//	BEFORE Acceptance commit:
-//	    command có thể fail và reservation phải được release.
+// BEFORE quota reservation:
 //
-//	AFTER Acceptance commit:
-//	    Report + UsageEvent + Job đã là durable truth.
-//	    Redis quota chỉ là runtime projection.
-//	    Commit/Cancel failure sau checkpoint này không được
-//	    đảo ngược accepted business outcome.
+//	Failure leaves no quota or durable acceptance side effect.
+//
+// AFTER Reserve but BEFORE durable acceptance:
+//
+//	A request failure does not prove that the logical command is dead.
+//	The reservation remains leased; reconciliation owns Commit vs Cancel.
+//
+// AFTER durable acceptance:
+//
+//	Report + UsageEvent + Job are durable truth.
+//	Redis finalization is runtime projection repair and cannot reverse
+//	the accepted business outcome.
 func (s *Service) CreateGeneratedReport(
 	ctx context.Context,
 	input Input,
@@ -113,6 +121,7 @@ func (s *Service) CreateGeneratedReport(
 		return Result{}, ErrCommandKeyMissing
 	}
 	commandKey := idempotencyKey
+	logger = logger.With("command_ref", commandRef(commandKey))
 
 	requestHash, err := BuildRequestHash(input)
 	if err != nil {
@@ -132,7 +141,7 @@ func (s *Service) CreateGeneratedReport(
 			"get report access failed",
 			"error", err,
 		)
-		return Result{}, err
+		return Result{}, errors.Join(ErrAccessUnavailable, err)
 	}
 	if accessResult.Operation != currentOperation {
 		return Result{}, fmt.Errorf(
@@ -309,28 +318,44 @@ func (s *Service) CreateGeneratedReport(
 	//
 	// PostgreSQL adapter arbitrate command và persist các facts này.
 	// Nó không quyết Redis reservation lifecycle.
-	accepted, err := s.acceptance.AcceptReport(ctx, acceptance)
+	acceptanceCtx, cancelAcceptance, err :=
+		acceptanceLeaseContext(ctx, reservation, s.now())
+	if err != nil {
+		logger.Warn(
+			"report acceptance lease unavailable",
+			"reservation_id", reservation.ID,
+			"reservation_expires_at", reservation.ExpiresAt,
+		)
+		return Result{}, err
+	}
+
+	accepted, err :=
+		s.acceptance.AcceptReport(
+			acceptanceCtx,
+			acceptance,
+		)
+
+	acceptanceDeadlineExceeded :=
+		errors.Is(acceptanceCtx.Err(), context.DeadlineExceeded)
+
+	cancelAcceptance()
+
+	if err != nil && acceptanceDeadlineExceeded {
+		return Result{}, errors.Join(
+			ErrAcceptanceUnavailable,
+			err,
+		)
+	}
 
 	if err != nil {
-		// FAILURE BEFORE ACCEPTANCE.
-		//
-		// Business state chưa commit.
-		// Reservation phải được release.
-		cancelErr :=
-			s.cancelReservation(
-				ctx,
-				reservation,
-				logger,
-			)
-
-		if cancelErr != nil {
-			return Result{},
-				errors.Join(
-					err,
-					cancelErr,
-				)
-		}
-
+		// Request failure does not prove that the logical command is dead.
+		// Keep the command-scoped lease until reconciliation can decide
+		// from durable Usage evidence whether to Commit or Cancel it.
+		logger.Warn(
+			"report acceptance failed; quota reservation retained for reconciliation",
+			"reservation_id", reservation.ID,
+			"error", err,
+		)
 		return Result{}, err
 	}
 
@@ -510,4 +535,26 @@ func usageKey(
 	}
 
 	return event.UsageKey
+}
+
+// acceptanceLeaseContext fences durable acceptance before quota lease expiry.
+func acceptanceLeaseContext(
+	ctx context.Context,
+	reservation quota.Reservation,
+	now time.Time,
+) (context.Context, context.CancelFunc, error) {
+	if !reservation.Required {
+		return ctx, func() {}, nil
+	}
+	if reservation.ExpiresAt.IsZero() {
+		return nil, nil, ErrAcceptanceUnavailable
+	}
+
+	deadline := reservation.ExpiresAt.Add(-acceptanceLeaseSafetyGap)
+	if !now.Before(deadline) {
+		return nil, nil, ErrAcceptanceUnavailable
+	}
+
+	bounded, cancel := context.WithDeadline(ctx, deadline)
+	return bounded, cancel, nil
 }

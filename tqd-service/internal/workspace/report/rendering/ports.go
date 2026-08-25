@@ -18,5 +18,12 @@ type PDFEngine interface {
 
 // Uploader is the narrow File-service capability required after rendering.
 type Uploader interface {
-	UploadFile(ctx context.Context, file io.Reader, filename string, contentType string) (string, error)
+	PutOwnedFile(
+		ctx context.Context,
+		ownerNamespace string,
+		ownerKey string,
+		file io.Reader,
+		filename string,
+		contentType string,
+	) (string, error)
 }

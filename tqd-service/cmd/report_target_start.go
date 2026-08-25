@@ -9,13 +9,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	filepb "pb/types/file"
 	userpb "pb/types/user"
 	"strings"
 	"time"
 	"tqd/env"
-	"tqd/infra/filegrpc"
 	handler_grpc "tqd/infra/handler/grpc"
+	reportfilehttp "tqd/internal/workspace/report/adapters/filehttp"
 	"tqd/internal/workspace/report/adapters/generator"
 	"tqd/internal/workspace/report/adapters/postgresrender"
 	"tqd/internal/workspace/report/adapters/weasyprintpdf"
@@ -100,77 +99,207 @@ func reportGeneratorFromEnv(
 	ctx context.Context,
 	database *gorm.DB,
 ) (processing.Generator, func(), error) {
-	mode := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_REPORT_GENERATOR_MODE")))
-	if mode == "" || mode == "disabled" || mode == "none" {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	mode := strings.ToLower(
+		strings.TrimSpace(
+			os.Getenv("QHPRO_REPORT_GENERATOR_MODE"),
+		),
+	)
+
+	if mode == "" ||
+		mode == "disabled" ||
+		mode == "none" {
 		return nil, func() {}, nil
 	}
-	if mode != "production" && mode != "smoke" {
-		return nil, nil, fmt.Errorf("unsupported report generator mode %q", mode)
-	}
-	if mode == "production" && database == nil {
-		return nil, nil, fmt.Errorf("production report renderer database is missing")
+
+	if mode != "production" &&
+		mode != "smoke" {
+		return nil, nil, fmt.Errorf(
+			"unsupported report generator mode %q",
+			mode,
+		)
 	}
 
-	addr := strings.TrimSpace(os.Getenv("QHPRO_FILE_GRPC_ADDR"))
-	if addr == "" {
-		addr = "127.0.0.1:8203"
+	if mode == "production" &&
+		database == nil {
+		return nil, nil, fmt.Errorf(
+			"production report renderer database is missing",
+		)
 	}
-	publicURL := strings.TrimSpace(os.Getenv("QHPRO_FILE_PUBLIC_BASE_URL"))
+
+	fileBaseURL := strings.TrimRight(
+		strings.TrimSpace(
+			os.Getenv(
+				"QHPRO_FILE_HTTP_BASE_URL",
+			),
+		),
+		"/",
+	)
+
+	if fileBaseURL == "" {
+		fileBaseURL =
+			"http://127.0.0.1:8002"
+	}
+
+	publicURL := strings.TrimRight(
+		strings.TrimSpace(
+			os.Getenv(
+				"QHPRO_FILE_PUBLIC_BASE_URL",
+			),
+		),
+		"/",
+	)
+
 	if publicURL == "" {
-		publicURL = "http://127.0.0.1:8002"
+		publicURL = fileBaseURL
 	}
 
-	trust := transporttrust.ConfigFromEnv()
-	conn, err := qhprorpc.NewClient(qhprorpc.ClientConfig{
-		Target:          addr,
-		BackoffMaxDelay: 5 * time.Second,
-		Credentials:     insecure.NewCredentials(),
-		Transport:       qhprorpc.TransportConfig{Trust: trust},
-	})
+	serviceAuthKey := strings.TrimSpace(
+		os.Getenv(
+			"QHPRO_FILE_HTTP_SERVICE_AUTH_KEY",
+		),
+	)
+
+	if serviceAuthKey == "" {
+		return nil, nil, fmt.Errorf(
+			"QHPRO_FILE_HTTP_SERVICE_AUTH_KEY is required",
+		)
+	}
+
+	serviceName := strings.TrimSpace(
+		os.Getenv("QHPRO_SERVICE_ID"),
+	)
+
+	if serviceName == "" {
+		serviceName = "tqd-service"
+	}
+
+	uploadTimeout := 30 * time.Second
+
+	if raw := strings.TrimSpace(
+		os.Getenv("QHPRO_FILE_HTTP_TIMEOUT"),
+	); raw != "" {
+		parsed, err :=
+			time.ParseDuration(raw)
+
+		if err != nil ||
+			parsed <= 0 {
+			return nil, nil, fmt.Errorf(
+				"invalid QHPRO_FILE_HTTP_TIMEOUT %q",
+				raw,
+			)
+		}
+
+		uploadTimeout = parsed
+	}
+
+	uploader, err :=
+		reportfilehttp.New(
+			reportfilehttp.Config{
+				BaseURL: fileBaseURL,
+
+				ServiceName: serviceName,
+
+				ServiceAuthKey: serviceAuthKey,
+
+				Timeout: uploadTimeout,
+			},
+		)
 	if err != nil {
-		return nil, nil, fmt.Errorf("dial file service for report renderer: %w", err)
+		return nil, nil, fmt.Errorf(
+			"configure Report File HTTP client: %w",
+			err,
+		)
 	}
 
-	uploader := filegrpc.BuildClient(filepb.NewInternalFileServiceClient(conn))
+	closeUploader := func() {
+		uploader.Close()
+	}
+
 	if mode == "smoke" {
-		smokeGenerator, err := generator.NewSmokeGenerator(uploader, publicURL)
+		smokeGenerator, err :=
+			generator.NewSmokeGenerator(
+				uploader,
+				publicURL,
+			)
 		if err != nil {
-			_ = conn.Close()
+			closeUploader()
 			return nil, nil, err
 		}
-		return smokeGenerator, func() { _ = conn.Close() }, nil
+
+		return smokeGenerator,
+			closeUploader,
+			nil
 	}
 
-	binary := strings.TrimSpace(os.Getenv("QHPRO_REPORT_WEASYPRINT_BINARY"))
+	binary := strings.TrimSpace(
+		os.Getenv(
+			"QHPRO_REPORT_WEASYPRINT_BINARY",
+		),
+	)
+
 	if binary == "" {
 		binary = "weasyprint"
 	}
-	renderTimeout := 45 * time.Second
-	if raw := strings.TrimSpace(os.Getenv("QHPRO_REPORT_RENDER_TIMEOUT")); raw != "" {
-		parsed, parseErr := time.ParseDuration(raw)
-		if parseErr != nil || parsed <= 0 {
-			_ = conn.Close()
-			return nil, nil, fmt.Errorf("invalid QHPRO_REPORT_RENDER_TIMEOUT %q", raw)
+
+	renderTimeout :=
+		45 * time.Second
+
+	if raw := strings.TrimSpace(
+		os.Getenv(
+			"QHPRO_REPORT_RENDER_TIMEOUT",
+		),
+	); raw != "" {
+		parsed, err :=
+			time.ParseDuration(raw)
+
+		if err != nil ||
+			parsed <= 0 {
+			closeUploader()
+
+			return nil, nil, fmt.Errorf(
+				"invalid QHPRO_REPORT_RENDER_TIMEOUT %q",
+				raw,
+			)
 		}
+
 		renderTimeout = parsed
 	}
-	engine, err := weasyprintpdf.New(binary, renderTimeout)
+
+	engine, err :=
+		weasyprintpdf.New(
+			binary,
+			renderTimeout,
+		)
 	if err != nil {
-		_ = conn.Close()
-		return nil, nil, fmt.Errorf("configure production report PDF engine: %w", err)
+		closeUploader()
+
+		return nil, nil, fmt.Errorf(
+			"configure production report PDF engine: %w",
+			err,
+		)
 	}
 
-	productionRenderer, err := rendering.NewService(
-		postgresrender.NewSource(database),
-		engine,
-		uploader,
-		publicURL,
-	)
+	productionRenderer, err :=
+		rendering.NewService(
+			postgresrender.NewSource(
+				database,
+			),
+			engine,
+			uploader,
+			publicURL,
+		)
 	if err != nil {
-		_ = conn.Close()
+		closeUploader()
 		return nil, nil, err
 	}
-	return productionRenderer, func() { _ = conn.Close() }, nil
+
+	return productionRenderer,
+		closeUploader,
+		nil
 }
 
 func dialAccessService(

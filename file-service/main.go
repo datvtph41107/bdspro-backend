@@ -8,7 +8,9 @@ import (
 	"context"
 	"file/config"
 	_ "file/docs/file"
+	filehttp "file/infra/handler/filehttp"
 	"file/internal/fileauthorization/authgrpc"
+	"file/internal/filecontent"
 	"file/internal/process/filequeue"
 	"file/internal/processlifecycle"
 	"file/internal/serviceauth"
@@ -159,6 +161,17 @@ func run() error {
 	fileRepository := repositories.NewFileRepository(db)
 	accessRepository := repositories.NewFileAccessRepository(db)
 	storageService := services.NewStorageService()
+
+	ownedFileContent := filecontent.NewService(
+		fileRepository,
+		accessRepository,
+		storageService,
+		runtimeCfg.FileService.XorCryptKey,
+	)
+	ownedFileHTTP := filehttp.NewHandler(
+		ownedFileContent,
+		serviceAuth,
+	)
 	fileService := services.NewFileService(
 		fileRepository,
 		accessRepository,
@@ -207,6 +220,14 @@ func run() error {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+	// Internal File effect ingress is authenticated with the File service
+	// HMAC envelope, not a user JWT. Register it before user JWT middleware;
+	// this endpoint is internal, not public.
+	r.POST(
+		"/internal/v1/file/owned",
+		ownedFileHTTP.PutOwnedFile,
+	)
+
 	r.Use(_jwt.JWTAuthMiddleware(publicRoutes, []string{}))
 
 	models.AutoMigrate()

@@ -27,6 +27,14 @@ var (
 		"idempotency key is required",
 	)
 
+	ErrAccessUnavailable = errors.New(
+		"entitlement access is unavailable",
+	)
+
+	ErrAcceptanceUnavailable = errors.New(
+		"report acceptance lease is unavailable",
+	)
+
 	ErrProcessingUnavailable = errors.New(
 		"generated report processing is unavailable",
 	)

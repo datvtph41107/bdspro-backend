@@ -35,14 +35,25 @@ func (e *fakeEngine) RenderPDF(ctx context.Context, html []byte) ([]byte, error)
 }
 
 type fakeUploader struct {
-	path        string
-	err         error
-	filename    string
-	contentType string
-	content     []byte
+	path           string
+	err            error
+	ownerNamespace string
+	ownerKey       string
+	filename       string
+	contentType    string
+	content        []byte
 }
 
-func (u *fakeUploader) UploadFile(_ context.Context, file io.Reader, filename, contentType string) (string, error) {
+func (u *fakeUploader) PutOwnedFile(
+	_ context.Context,
+	ownerNamespace string,
+	ownerKey string,
+	file io.Reader,
+	filename string,
+	contentType string,
+) (string, error) {
+	u.ownerNamespace = ownerNamespace
+	u.ownerKey = ownerKey
 	u.filename = filename
 	u.contentType = contentType
 	u.content, _ = io.ReadAll(file)
@@ -107,6 +118,19 @@ func TestServiceGeneratesAndUploadsProductionPDF(t *testing.T) {
 	output, err := service.GenerateReport(context.Background(), processing.Job{ID: "report_job_12", ReportID: 12, UserID: 42})
 	if err != nil {
 		t.Fatalf("GenerateReport() error = %v", err)
+	}
+	if uploader.ownerNamespace != processing.FileOwnerNamespace {
+		t.Fatalf(
+			"owner namespace = %q, want %q",
+			uploader.ownerNamespace,
+			processing.FileOwnerNamespace,
+		)
+	}
+	if uploader.ownerKey != "report_job_12" {
+		t.Fatalf(
+			"owner key = %q, want report_job_12",
+			uploader.ownerKey,
+		)
 	}
 	if uploader.filename != "qhpro-report-12.pdf" || uploader.contentType != "application/pdf" {
 		t.Fatalf("upload metadata = %q %q", uploader.filename, uploader.contentType)

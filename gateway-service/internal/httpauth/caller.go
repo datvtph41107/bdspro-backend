@@ -20,7 +20,13 @@ type CallerResolution struct {
 	HasAPIKey bool
 }
 
-func ResolveHTTPCaller(ctx context.Context, r *http.Request, principal *jwtverify.Principal, allowAnonymous bool, verifier APIKeyVerifier) (CallerResolution, error) {
+func ResolveHTTPCaller(
+	ctx context.Context,
+	r *http.Request,
+	principal *jwtverify.Principal,
+	allowAnonymous bool,
+	verifier APIKeyVerifier,
+) (CallerResolution, error) {
 	raw, hasKey, err := APIKeyFromRequest(r)
 	if err != nil {
 		return CallerResolution{}, err
@@ -36,11 +42,17 @@ func ResolveHTTPCaller(ctx context.Context, r *http.Request, principal *jwtverif
 		}
 		verified = &value
 	}
+
 	caller, err := ClassifyCaller(CallerInput{Principal: principal, APIKey: verified, AllowAnonymous: allowAnonymous})
 	if err != nil {
 		return CallerResolution{}, err
 	}
-	result := CallerResolution{Caller: caller, HasAPIKey: hasKey}
+
+	result := CallerResolution{
+		Caller:    caller,
+		HasAPIKey: hasKey,
+	}
+
 	if verified != nil {
 		result.APIKey = VerifiedAPIKey{ID: verified.ID, AppName: strings.TrimSpace(verified.AppName)}
 		if r != nil {
@@ -48,6 +60,7 @@ func ResolveHTTPCaller(ctx context.Context, r *http.Request, principal *jwtverif
 			r.Header.Set(APIKeyHeader, raw)
 		}
 	}
+
 	return result, nil
 }
 
@@ -62,11 +75,13 @@ func ClassifyCaller(input CallerInput) (identity.Caller, error) {
 			return identity.Caller{}, ErrCallerClassification
 		}
 	}
+
 	verified, hasKey, err := normalizeVerifiedAPIKey(input.APIKey)
 	if err != nil {
 		return identity.Caller{}, err
 	}
 	caller := identity.Caller{}
+
 	switch {
 	case input.Principal != nil:
 		caller.Kind = identity.CallerUser
@@ -77,6 +92,7 @@ func ClassifyCaller(input CallerInput) (identity.Caller, error) {
 	default:
 		return identity.Caller{}, ErrAuthenticationRequired
 	}
+
 	if hasKey {
 		caller.APIKeyID = verified.ID
 		caller.APIKeyApp = verified.AppName
@@ -84,6 +100,7 @@ func ClassifyCaller(input CallerInput) (identity.Caller, error) {
 	if !caller.IsValid() {
 		return identity.Caller{}, ErrCallerClassification
 	}
+
 	return caller, nil
 }
 

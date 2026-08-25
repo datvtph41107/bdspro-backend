@@ -12,12 +12,10 @@ import (
 	user_infra_client "user/infra/client"
 	user_infra_cookie "user/infra/cookie"
 	user_infra_handler "user/infra/handler"
-	user_infra_handler_accessgrpc "user/infra/handler/accessgrpc"
 	user_infra_handler_cataloggrpc "user/infra/handler/cataloggrpc"
 	user_infra_mapper "user/infra/mapper"
 	user_infra_oauth "user/infra/oauth"
 	user_infra_postgres "user/infra/postgres"
-	user_infra_postgres_access "user/infra/postgres/access"
 	user_infra_postgres_commercial "user/infra/postgres/commercial"
 	user_infra_postgres_iampermission "user/infra/postgres/iampermission"
 	user_infra_postgres_subscription "user/infra/postgres/subscription"
@@ -31,6 +29,9 @@ import (
 	user_initial "user/initial"
 	user_internal_domain "user/internal/domain"
 	user_internal_dto "user/internal/dto"
+	user_internal_entitlement_evaluate "user/internal/entitlement/evaluate"
+	user_internal_entitlement_grpc "user/internal/entitlement/grpc"
+	user_internal_entitlement_postgres "user/internal/entitlement/postgres"
 	user_internal_interface "user/internal/interface"
 	user_internal_interface_factory "user/internal/interface/factory"
 	user_internal_interface_providers "user/internal/interface/providers"
@@ -41,7 +42,6 @@ import (
 	user_internal_modules_catalog_publication "user/internal/modules/catalog/publication"
 	user_internal_modules_catalog_shadow "user/internal/modules/catalog/shadow"
 	user_internal_modules_commercial_checkout "user/internal/modules/commercial/checkout"
-	user_internal_modules_entitlement_evaluate "user/internal/modules/entitlement/evaluate"
 	user_internal_modules_subscription_backfill "user/internal/modules/subscription/backfill"
 	user_internal_modules_subscription_cutover "user/internal/modules/subscription/cutover"
 	user_internal_modules_subscription_read "user/internal/modules/subscription/read"
@@ -131,8 +131,8 @@ var wireSet = wire.NewSet(
 	user_infra_oauth.NewGoogleAuthService,
 	user_infra_postgres.NewGroupPostgres,
 	user_infra_handler.NewGrpcProfileService,
-	user_infra_handler_accessgrpc.NewHandler,
 	user_infra_handler_cataloggrpc.NewHandler,
+	user_internal_entitlement_grpc.NewHandler,
 	user_infra_client.NewHubClient,
 	user_infra_rpc.NewHubRPCClient,
 	user_initial.NewInitialApp,
@@ -166,7 +166,7 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewPermissionHandler,
 	user_infra_postgres.NewPermissionRepo,
 	user_internal_usecase.NewPermissionUsecase,
-	user_infra_postgres_access.NewPlanAccessStore,
+	user_internal_entitlement_postgres.NewPlanAccessStore,
 	user_infra_handler.NewPlanHandler,
 	user_infra_mapper.NewPlanMapper,
 	user_infra_postgres.NewPlanRepo,
@@ -205,10 +205,10 @@ var wireSet = wire.NewSet(
 	user_internal_modules_subscription_read.NewRouter,
 	user_infra_properties.NewRuntimeProperties,
 	user_infra_sms.NewSMSProvider,
+	user_internal_entitlement_evaluate.NewService,
 	user_internal_modules_catalog_admin.NewService,
 	user_internal_modules_catalog_publication.NewService,
 	user_internal_modules_commercial_checkout.NewService,
-	user_internal_modules_entitlement_evaluate.NewService,
 	user_internal_modules_subscription_backfill.NewService,
 	user_internal_modules_subscription_cutover.NewService,
 	user_internal_modules_subscription_settlement.NewService,
@@ -216,7 +216,7 @@ var wireSet = wire.NewSet(
 	user_infra_postgres.NewSessionRepository,
 	user_infra_postgres_subscription.NewSettlementStore,
 	user_infra_postgres.NewStatusRepository,
-	user_infra_postgres_access.NewSubscriptionStore,
+	user_internal_entitlement_postgres.NewSubscriptionStore,
 	user_infra_handler.NewTagHandler,
 	user_infra_mapper.NewTagMapper,
 	user_infra_postgres.NewTagPostgres,

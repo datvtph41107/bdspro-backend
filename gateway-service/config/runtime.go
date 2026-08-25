@@ -94,6 +94,7 @@ func (c Runtime) Validate() error {
 			return fmt.Errorf("gateway HTTP allowed_origins[%d] is empty", index)
 		}
 	}
+
 	return nil
 }
 
@@ -102,10 +103,12 @@ func (c Runtime) Endpoint(name string) (string, error) {
 	if name == "" {
 		return "", fmt.Errorf("service name is required")
 	}
+
 	port := c.Service.Port[name]
 	if port <= 0 {
 		return "", fmt.Errorf("gateway service port %q is required", name)
 	}
+
 	host := strings.TrimSpace(c.Service.Domain)
 	if c.UseServiceDNS {
 		host = name
@@ -113,6 +116,7 @@ func (c Runtime) Endpoint(name string) (string, error) {
 	if host == "" {
 		host = "localhost"
 	}
+
 	return host + ":" + strconv.Itoa(port), nil
 }
 
@@ -121,6 +125,12 @@ func loadTrustConfig() trust.Config {
 	if mode != trust.ModeEnforce {
 		mode = trust.ModeAudit
 	}
+
+	// 	QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS='{
+	//   "auth-service":"auth-inbound-secret",
+	//   "user-service":"user-inbound-secret",
+	//   "tqd-service":"tqd-inbound-secret"
+	// }'
 	verificationSecrets, configured := verificationSecretsFromEnv("QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS")
 	return trust.Config{
 		ServiceID:                  firstNonEmpty(os.Getenv("QHPRO_SERVICE_ID"), os.Getenv("SERVICE_NAME"), "gateway-service"),
@@ -138,10 +148,12 @@ func durationFromEnv(key string, fallback time.Duration) time.Duration {
 	if value == "" {
 		return fallback
 	}
+
 	parsed, err := time.ParseDuration(value)
 	if err != nil || parsed <= 0 {
 		return fallback
 	}
+
 	return parsed
 }
 
@@ -159,10 +171,12 @@ func verificationSecretsFromEnv(key string) (map[string]string, bool) {
 	if raw == "" {
 		return nil, false
 	}
+
 	var values map[string]string
 	if err := json.Unmarshal([]byte(raw), &values); err != nil {
 		return nil, true
 	}
+
 	result := make(map[string]string, len(values))
 	for serviceID, secret := range values {
 		serviceID = strings.TrimSpace(serviceID)
@@ -174,5 +188,6 @@ func verificationSecretsFromEnv(key string) (map[string]string, bool) {
 	if len(result) == 0 {
 		return nil, true
 	}
+
 	return result, true
 }

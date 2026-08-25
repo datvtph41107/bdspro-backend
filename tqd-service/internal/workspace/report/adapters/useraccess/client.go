@@ -10,9 +10,6 @@ import (
 	"time"
 
 	userpb "pb/types/user"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var ErrAccessUnavailable = errors.New("entitlement access is unavailable")
@@ -48,9 +45,11 @@ func (c *Client) GetAccess(
 		Operation: string(operationCode),
 	})
 	if err != nil {
-		if status.Code(err) == codes.PermissionDenied || status.Code(err) == codes.Unauthenticated {
-			return access.Result{}, err
-		}
+		// Provider transport status is not Report business semantics.
+		//
+		// Business denial is represented by a valid Access Result with Allowed=false.
+		// Any RPC failure means this consumer could not obtain an authoritative
+		// entitlement decision.
 		return access.Result{}, errors.Join(ErrAccessUnavailable, err)
 	}
 

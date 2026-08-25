@@ -64,22 +64,6 @@ type RemoveGeneratedReportRequestDTO struct {
 	ReportID uint64
 }
 
-type CreateGeneratedReportRequestDTO struct {
-	UserID       uint64
-	ReportType   uint32
-	EntityType   uint32
-	EntityID     uint64
-	ParcelID     uint64
-	RegionID     uint64
-	Title        string
-	Subtitle     string
-	Location     WorkspaceLocationDTO
-	Spatial      ReportSpatialPreviewDTO
-	Comparison   ReportComparisonDTO
-	CommandKey   string
-	MetadataJSON string
-}
-
 type ShareReportResultDTO struct {
 	Success  bool
 	ShareURL string

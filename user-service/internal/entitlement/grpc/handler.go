@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	internalaccess "user/internal/modules/entitlement/evaluate"
+	internalaccess "user/internal/entitlement/evaluate"
 
 	userpb "pb/types/user"
 

@@ -2,21 +2,32 @@ package postgresreport
 
 import (
 	"context"
-	legacy "tqd/infra/postgres"
+
+	"tqd/internal/dto"
 	"tqd/internal/workspace/report/application"
 )
 
-/**
- * SourceStore dùng lại các query parcel/region hiện có trong giai đoạn target source.
- *
- * Việc bọc lại ở đây giúp internal/report không phụ thuộc package postgres cũ.
- * Khi migrate thật, các query có thể chuyển dần vào package này mà không đổi report service.
- */
-type SourceStore struct {
-	workspace *legacy.MapWorkspacePostgres
+// workspaceReader is the exact Workspace read capability consumed by Report.
+//
+// Workspace owns parcel/region preview queries. Report owns the translation
+// from those read facts into its application language.
+type workspaceReader interface {
+	GetParcelWorkspacePreview(
+		ctx context.Context,
+		parcelID uint64,
+	) (*dto.ParcelWorkspacePreviewRow, error)
+
+	GetRegionWorkspacePreview(
+		ctx context.Context,
+		regionID uint64,
+	) (*dto.RegionWorkspacePreviewRow, error)
 }
 
-func NewSourceStore(workspace *legacy.MapWorkspacePostgres) *SourceStore {
+type SourceStore struct {
+	workspace workspaceReader
+}
+
+func NewSourceStore(workspace workspaceReader) *SourceStore {
 	return &SourceStore{workspace: workspace}
 }
 

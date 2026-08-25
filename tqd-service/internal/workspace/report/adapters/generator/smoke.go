@@ -14,7 +14,14 @@ import (
 
 // Uploader is the smallest file-service contract needed by the smoke renderer.
 type Uploader interface {
-	UploadFile(ctx context.Context, file io.Reader, filename string, contentType string) (string, error)
+	PutOwnedFile(
+		ctx context.Context,
+		ownerNamespace string,
+		ownerKey string,
+		file io.Reader,
+		filename string,
+		contentType string,
+	) (string, error)
 }
 
 // SmokeGenerator creates a deterministic, minimal PDF for local end-to-end tests.
@@ -54,7 +61,14 @@ func (g *SmokeGenerator) GenerateReport(ctx context.Context, job processing.Job)
 		"Job ID: " + job.ID,
 	})
 	filename := fmt.Sprintf("qhpro-report-%d.pdf", job.ReportID)
-	path, err := g.uploader.UploadFile(ctx, bytes.NewReader(content), filename, "application/pdf")
+	path, err := g.uploader.PutOwnedFile(
+		ctx,
+		processing.FileOwnerNamespace,
+		job.ID,
+		bytes.NewReader(content),
+		filename,
+		"application/pdf",
+	)
 	if err != nil {
 		return processing.Output{}, fmt.Errorf("upload smoke report: %w", err)
 	}

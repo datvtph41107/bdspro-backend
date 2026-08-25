@@ -89,6 +89,7 @@ func WithOutgoingContext(
 	if ctx == nil {
 		return nil, status.Error(codes.Internal, "context is nil")
 	}
+
 	md := metadata.MD{}
 	if existing, ok := metadata.FromOutgoingContext(ctx); ok {
 		md = existing.Copy()

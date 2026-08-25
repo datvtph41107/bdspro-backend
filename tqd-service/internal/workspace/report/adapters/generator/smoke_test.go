@@ -11,18 +11,24 @@ import (
 )
 
 type recordingUploader struct {
-	contentType string
-	filename    string
-	content     []byte
-	path        string
+	ownerNamespace string
+	ownerKey       string
+	contentType    string
+	filename       string
+	content        []byte
+	path           string
 }
 
-func (u *recordingUploader) UploadFile(
+func (u *recordingUploader) PutOwnedFile(
 	_ context.Context,
+	ownerNamespace string,
+	ownerKey string,
 	file io.Reader,
 	filename string,
 	contentType string,
 ) (string, error) {
+	u.ownerNamespace = ownerNamespace
+	u.ownerKey = ownerKey
 	u.filename = filename
 	u.contentType = contentType
 	u.content, _ = io.ReadAll(file)
@@ -45,6 +51,19 @@ func TestSmokeGeneratorCreatesDownloadablePDFOutput(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("GenerateReport() error = %v", err)
+	}
+	if uploader.ownerNamespace != processing.FileOwnerNamespace {
+		t.Fatalf(
+			"owner namespace = %q, want %q",
+			uploader.ownerNamespace,
+			processing.FileOwnerNamespace,
+		)
+	}
+	if uploader.ownerKey != "report_job_test" {
+		t.Fatalf(
+			"owner key = %q, want report_job_test",
+			uploader.ownerKey,
+		)
 	}
 	if uploader.filename != "qhpro-report-12.pdf" || uploader.contentType != "application/pdf" {
 		t.Fatalf("upload metadata = %q, %q", uploader.filename, uploader.contentType)

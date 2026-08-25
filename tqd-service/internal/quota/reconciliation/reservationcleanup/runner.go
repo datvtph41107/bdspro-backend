@@ -47,6 +47,15 @@ func (r *Runner) Run(ctx context.Context) {
 				r.logger.Error("quota cleanup failed", "error", err)
 				continue
 			}
+			for _, action := range result.Actions {
+				r.logger.Info(
+					"quota reservation repaired",
+					"reservation_id", action.ReservationID,
+					"action", action.Outcome,
+					"durable_usage_found", action.DurableUsageFound,
+				)
+			}
+
 			if result.Committed+result.Canceled+result.Skipped > 0 {
 				r.logger.Info(
 					"quota cleanup completed",

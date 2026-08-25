@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/grpc"
 	hubpb "pb/types/hub"
+
+	"google.golang.org/grpc"
 )
 
 type HubAPIKeyVerifier struct {
@@ -27,12 +28,15 @@ func (v *HubAPIKeyVerifier) VerifyAPIKey(ctx context.Context, raw string) (Verif
 	if ctx == nil || v == nil || v.client == nil {
 		return VerifiedAPIKey{}, ErrAPIKeyUnavailable
 	}
+
 	timeout := v.timeout
 	if timeout <= 0 {
 		timeout = 2 * time.Second
 	}
+
 	callCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
 	resp, err := v.client.VerifyApiKey(callCtx, &hubpb.VerifyApiKeyRequest{ApiKey: raw})
 	if err != nil {
 		switch {
@@ -47,10 +51,12 @@ func (v *HubAPIKeyVerifier) VerifyAPIKey(ctx context.Context, raw string) (Verif
 	if resp == nil || !resp.GetValid() || resp.GetData() == nil {
 		return VerifiedAPIKey{}, ErrAPIKeyInvalid
 	}
+
 	data := resp.GetData()
 	app := strings.TrimSpace(data.GetAppName())
 	if data.GetId() == 0 || app == "" {
 		return VerifiedAPIKey{}, ErrAPIKeyInvalid
 	}
+
 	return VerifiedAPIKey{ID: data.GetId(), AppName: app}, nil
 }

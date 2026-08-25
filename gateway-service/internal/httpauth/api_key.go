@@ -39,7 +39,10 @@ type config struct {
 
 type Option func(*config)
 
-func WithAPIKeyVerifier(v APIKeyVerifier) Option { return func(c *config) { c.apiKeyVerifier = v } }
+func WithAPIKeyVerifier(v APIKeyVerifier) Option {
+	return func(c *config) { c.apiKeyVerifier = v }
+}
+
 func WithTokenVerifier(v jwtverify.Verifier) Option {
 	return func(c *config) { c.tokenVerifier = v }
 }
@@ -48,6 +51,7 @@ func APIKeyFromRequest(r *http.Request) (string, bool, error) {
 	if r == nil {
 		return "", false, nil
 	}
+
 	values := make([]string, 0, 2)
 	present := false
 	for _, header := range []string{APIKeyHeader, LegacyAPIKeyHeader} {
@@ -70,6 +74,7 @@ func APIKeyFromRequest(r *http.Request) (string, bool, error) {
 	if len(values) != 1 || !validAPIKey(values[0]) {
 		return "", false, ErrAPIKeyHeaderInvalid
 	}
+
 	return values[0], true, nil
 }
 

@@ -782,35 +782,6 @@ func (p *MapWorkspacePostgres) GetGeneratedReport(ctx context.Context, userID, r
 	return &row, nil
 }
 
-func (p *MapWorkspacePostgres) GetGeneratedReportByCommandKey(ctx context.Context, userID uint64, commandKey string) (*qh_domain.QHUserReported, error) {
-	if commandKey == "" {
-		return nil, nil
-	}
-
-	var row qh_domain.QHUserReported
-
-	err := p.DB.WithContext(ctx).
-		Where("user_id = ? AND command_key = ? AND deleted_at IS NULL", userID, commandKey).
-		First(&row).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("get generated report by command key failed: %w", err)
-	}
-
-	return &row, nil
-}
-
-func (p *MapWorkspacePostgres) CreateGeneratedReport(ctx context.Context, row qh_domain.QHUserReported) (*qh_domain.QHUserReported, error) {
-	if err := p.DB.WithContext(ctx).Create(&row).Error; err != nil {
-		return nil, fmt.Errorf("create generated report failed: %w", err)
-	}
-
-	return &row, nil
-}
-
 func (p *MapWorkspacePostgres) RemoveGeneratedReport(ctx context.Context, userID, reportID uint64) error {
 	if reportID == 0 {
 		return fmt.Errorf("report_id is required")

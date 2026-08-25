@@ -239,6 +239,7 @@ var HttpCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		defer func() {
 			if closeErr := connections.Close(); closeErr != nil {
 				logger.Error("close Gateway upstream connections", "error", closeErr)
@@ -380,11 +381,20 @@ var HttpCmd = &cobra.Command{
 			Handler:           r,
 			ReadHeaderTimeout: 10 * time.Second,
 		}
+
 		listener, err := net.Listen("tcp", server.Addr)
 		if err != nil {
 			return fmt.Errorf("listen gateway HTTP on %s: %w", server.Addr, err)
 		}
+
 		log.Printf("Gateway server starting on port: %s", port)
-		return serveHTTP(processCtx, server, listener, 15*time.Second, readiness)
+
+		return serveHTTP(
+			processCtx,
+			server,
+			listener,
+			15*time.Second,
+			readiness,
+		)
 	},
 }

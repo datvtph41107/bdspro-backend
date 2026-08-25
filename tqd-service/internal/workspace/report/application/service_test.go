@@ -558,7 +558,7 @@ func TestCreateGeneratedReportRejectsReusedKeyWithDifferentInput(t *testing.T) {
 	}
 }
 
-func TestCreateGeneratedReportCancelsQuotaWhenDatabaseFails(t *testing.T) {
+func TestCreateGeneratedReportRetainsQuotaLeaseWhenDatabaseFails(t *testing.T) {
 	t.Parallel()
 
 	periodStart := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
@@ -605,8 +605,8 @@ func TestCreateGeneratedReportCancelsQuotaWhenDatabaseFails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetUsage() error = %v", err)
 	}
-	if current.Used != 0 || current.Reserved != 0 {
-		t.Fatalf("usage = %+v, want zero after database failure", current)
+	if current.Used != 0 || current.Reserved != 1 {
+		t.Fatalf("usage = %+v, want reservation retained for reconciliation", current)
 	}
 }
 
@@ -766,4 +766,30 @@ func testContext(t *testing.T, operationID, idempotencyKey string) context.Conte
 		t.Fatal(err)
 	}
 	return ctx
+}
+
+func TestCreateGeneratedReportNormalizesAccessDependencyFailure(t *testing.T) {
+	providerErr := errors.New("user access dependency failed")
+
+	service := NewService(
+		fakeSourceStore{},
+		newFakeSaveStore(),
+		fakeAccessClient{err: providerErr},
+		quota.NewService(memoryquota.NewStore()),
+		true,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	_, err := service.CreateGeneratedReport(
+		testContext(t, "op_access_failure", "idem_access_failure"),
+		Input{ReportType: 1, EntityType: 1, ParcelID: 99},
+	)
+
+	if !errors.Is(err, ErrAccessUnavailable) {
+		t.Fatalf("error = %v, want ErrAccessUnavailable", err)
+	}
+
+	if !errors.Is(err, providerErr) {
+		t.Fatalf("provider cause was lost: %v", err)
+	}
 }

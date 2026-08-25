@@ -66,7 +66,14 @@ func (s *Service) GenerateReport(ctx context.Context, job processing.Job) (proce
 	}
 
 	filename := fmt.Sprintf("qhpro-report-%d.pdf", job.ReportID)
-	path, err := s.uploader.UploadFile(ctx, bytes.NewReader(pdf), filename, "application/pdf")
+	path, err := s.uploader.PutOwnedFile(
+		ctx,
+		processing.FileOwnerNamespace,
+		job.ID,
+		bytes.NewReader(pdf),
+		filename,
+		"application/pdf",
+	)
 	if err != nil {
 		return processing.Output{}, fmt.Errorf("upload generated report PDF: %w", err)
 	}
