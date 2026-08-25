@@ -32,7 +32,6 @@ email:
 
 seo:
   public_base_url: "https://dev.bdspro.vn"
-  runtime_event_ingest_key: ""
   internal_secret_key: ""
   timezone: "Asia/Ho_Chi_Minh"
   parcelUrlTemplate: /tin-tuc/thua-dat/{id}/{slug}
@@ -52,4 +51,12 @@ seo:
     cron: "0 0 * * *"
     batch_size: 200
 
+trusted_metadata:
+  service_id: crm-service
+  secret: qhpro-local-transport-trust-only
+  mode: audit
+  max_age: 30s
+  clock_skew: 5s
+
 # export SEO_INTERNAL_SECRET_KEY='real-secret-from-server'
+# export QHPRO_INTERNAL_METADATA_SECRET='<override-secret>'

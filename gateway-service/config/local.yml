@@ -61,3 +61,11 @@ gateway:
 request_stats:
     spec_urls:
         - /v2/crm/sitemap.xml
+
+# gRPC internal metadata signing (env QHPRO_* vẫn ưu tiên hơn khi set)
+trusted_metadata:
+    service_id: gateway-service
+    secret: qhpro-local-transport-trust-only
+    mode: audit
+    max_age: 30s
+    clock_skew: 5s

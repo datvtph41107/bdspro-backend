@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	seo_domain "crm/internal/domain/seo"
+	"strconv"
 	"strings"
 	"time"
 
@@ -401,10 +401,19 @@ func seoRenderStatusToPb(seo *seo_domain.SeoDomain) string {
 }
 
 func planningNewsVisibleOnToPb(value uint32) *sharepb.EnumItem {
-	visibleOn := catalogdomain.PlanningNewsVisibleOn(value)
-
+	labels := map[uint32]string{
+		10: "Hiển thị lên đầu",
+		20: "Tin đáng chú ý",
+		30: "Tin mới nhất",
+		40: "Tin đọc nhiều",
+		50: "Tin nhanh",
+	}
+	name := labels[value]
+	if name == "" {
+		name = strconv.FormatUint(uint64(value), 10)
+	}
 	return &sharepb.EnumItem{
 		Value: value,
-		Name:  visibleOn.Label(),
+		Name:  name,
 	}
 }

@@ -75,6 +75,11 @@ message PlanningNewsSaveRequest {
   uint64 id = 1;
 }
 
+message TrackSeoClickRequest {
+  uint64 refId = 1;
+  uint32 refType = 2;
+}
+
 // CRMPublicContentService là hợp đồng công khai duy nhất cho nội dung SEO từ CRM.
 // Gateway cung cấp HTTP; CRM chỉ triển khai gRPC.
 service CRMPublicContentService {

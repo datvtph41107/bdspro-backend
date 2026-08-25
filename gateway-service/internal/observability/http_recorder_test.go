@@ -112,7 +112,9 @@ func TestHTTPRecorderDoesNotOriginateMissingOperationID(
 	logger := slog.New(
 		slog.NewJSONHandler(
 			&output,
-			nil,
+			&slog.HandlerOptions{
+				Level: slog.LevelDebug,
+			},
 		),
 	)
 

@@ -36,14 +36,15 @@ email:
 
 seo:
   public_base_url: "http://localhost:3000"
-  runtime_event_ingest_key: "local-runtime-event-ingest-key-change-me"
   internal_secret_key: "local-seo-secret"
   timezone: "Asia/Ho_Chi_Minh"
-  parcelUrlTemplate: /tin-tuc/thua-dat/{id}-{slug}
-  layerUrlTemplate: /tin-tuc/lop/{id}-{slug}
-  planningProjectUrlTemplate: /tin-tuc/do-an-quy-hoach/{slug}
-  planningDocumentUrlTemplate: /tin-tuc/tai-lieu/{id}-{slug}
-  administrativeUnitUrlTemplate: /tin-tuc/dia-ban/{slug}
+  parcelUrlTemplate: /tin-tuc/thua-dat/{id}/{slug}
+  layerUrlTemplate: /tin-tuc/lop/{id}/{slug}
+  planningProjectUrlTemplate: /tin-tuc/do-an-quy-hoach/{id}/{slug}
+  planningDocumentUrlTemplate: /tin-tuc/tai-lieu/{id}/{slug}
+  administrativeUnitUrlTemplate: /tin-tuc/dia-ban/{id}/{slug}
+  planningRegionUrlTemplate: /tin-tuc/vung-quy-hoach/{id}/{slug}
+  planningReportUrlTemplate: /tin-tuc/bao-cao/{id}/{slug}
 
   sitemap:
     default_change_freq: "daily"
@@ -54,7 +55,16 @@ seo:
     cron: "0 0 * * *"
     batch_size: 100
 
+# gRPC internal metadata signing (env QHPRO_* vẫn ưu tiên hơn khi set)
+trusted_metadata:
+  service_id: crm-service
+  secret: qhpro-local-transport-trust-only
+  mode: audit
+  max_age: 30s
+  clock_skew: 5s
+
 # env thiết lập server
 # export ENV_RUNTIME=develop
 # export SEO_PUBLIC_BASE_URL=https://dev.bdspro.vn
 # export SEO_INTERNAL_SECRET_KEY='<secret>'
+# export QHPRO_INTERNAL_METADATA_SECRET='<secret>'

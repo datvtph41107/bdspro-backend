@@ -31,6 +31,13 @@ security:
   protected_methods:
     - "/hubpb.VersionService/CreateVersionFromDev"
 
+trusted_metadata:
+  service_id: hub-service
+  secret: qhpro-local-transport-trust-only
+  mode: audit
+  max_age: 30s
+  clock_skew: 5s
+
 redis:
   host: redis:6379
   pass: protected_redis_secure_password

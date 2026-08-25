@@ -161,7 +161,13 @@ func levelForResult(
 		return slog.LevelWarn
 	}
 
-	return levelForStatus(
+	statusLevel := levelForStatus(
 		result.StatusCode,
 	)
+	// Successful requests stay at Debug so local consoles are not flooded;
+	// use gin.Logger for human-readable access lines instead.
+	if statusLevel == slog.LevelInfo {
+		return slog.LevelDebug
+	}
+	return statusLevel
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -193,5 +194,52 @@ func TestInvalidVerificationKeyringDoesNotFallBackToSharedSecret(t *testing.T) {
 	_, err := secretForCaller(cfg, "gateway-service")
 	if !errors.Is(err, ErrInvalidAssertion) {
 		t.Fatalf("secretForCaller() error = %v, want ErrInvalidAssertion", err)
+	}
+}
+
+func TestConfigFromEnvFallsBackToViperYAML(t *testing.T) {
+	t.Setenv("QHPRO_SERVICE_ID", "")
+	t.Setenv("SERVICE_NAME", "")
+	t.Setenv("QHPRO_INTERNAL_METADATA_SECRET", "")
+	t.Setenv("QHPRO_TRUSTED_METADATA_MODE", "")
+
+	viper.Reset()
+	viper.Set("trusted_metadata.service_id", "crm-service")
+	viper.Set("trusted_metadata.secret", "yml-secret")
+	viper.Set("trusted_metadata.mode", "audit")
+	viper.Set("trusted_metadata.max_age", "45s")
+	viper.Set("trusted_metadata.clock_skew", "3s")
+	t.Cleanup(viper.Reset)
+
+	cfg := ConfigFromEnv()
+	if cfg.ServiceID != "crm-service" {
+		t.Fatalf("ServiceID = %q, want crm-service", cfg.ServiceID)
+	}
+	if cfg.Secret != "yml-secret" {
+		t.Fatalf("Secret = %q, want yml-secret", cfg.Secret)
+	}
+	if cfg.Mode != ModeAudit {
+		t.Fatalf("Mode = %q, want audit", cfg.Mode)
+	}
+	if cfg.MaxAge != 45*time.Second {
+		t.Fatalf("MaxAge = %v, want 45s", cfg.MaxAge)
+	}
+	if cfg.ClockSkew != 3*time.Second {
+		t.Fatalf("ClockSkew = %v, want 3s", cfg.ClockSkew)
+	}
+}
+
+func TestConfigFromEnvPrefersEnvOverViper(t *testing.T) {
+	t.Setenv("QHPRO_SERVICE_ID", "from-env")
+	t.Setenv("QHPRO_INTERNAL_METADATA_SECRET", "env-secret")
+
+	viper.Reset()
+	viper.Set("trusted_metadata.service_id", "from-yml")
+	viper.Set("trusted_metadata.secret", "yml-secret")
+	t.Cleanup(viper.Reset)
+
+	cfg := ConfigFromEnv()
+	if cfg.ServiceID != "from-env" || cfg.Secret != "env-secret" {
+		t.Fatalf("cfg = %+v, want env values to win", cfg)
 	}
 }

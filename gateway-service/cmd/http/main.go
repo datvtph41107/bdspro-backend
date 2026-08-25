@@ -266,6 +266,7 @@ var HttpCmd = &cobra.Command{
 				)
 
 		r := gin.New() // custom logging, recovery with req_identity
+		r.Use(gin.LoggerWithWriter(logOutput))
 
 		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
 		r.RedirectTrailingSlash = false

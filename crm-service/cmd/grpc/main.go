@@ -63,11 +63,14 @@ var GrpcCmd = &cobra.Command{
 		seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
 		catalogRepository := catalog_postgres.NewRepository(publicDB)
 		catalogService := catalog_application.NewService(catalogRepository)
-		runtimeEventRepository := postgre.NewSeoRuntimeEventPostgres(publicDB)
-		runtimeEventUsecase := usecase.NewSeoRuntimeEventUsecase(runtimeEventRepository)
 		seoCountRepository := postgre.NewSeoCountPostgres(publicDB)
 		seoCountUsecase := usecase.NewSeoCountUsecase(seoCountRepository, seoDomainRepository)
-		publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(seoPublicUsecase, seoSitemapUsecase, seoProvisioningUsecase, catalogService, runtimeEventUsecase, seoCountUsecase, config.AppProperties.Seo.RuntimeEventIngestKey)
+		publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(
+			seoPublicUsecase,
+			seoSitemapUsecase,
+			catalogService,
+			seoCountUsecase,
+		)
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)

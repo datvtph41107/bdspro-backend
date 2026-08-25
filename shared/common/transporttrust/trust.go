@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -77,10 +78,22 @@ type Caller struct {
 type callerContextKey struct{}
 
 /**
- * ConfigFromEnv loads non-secret policy and secret material from environment.
+ * ConfigFromEnv loads trust config from environment, then YAML (viper) fallback.
+ * Env always wins so production can inject secrets without committing them.
+ *
+ * YAML keys (after common.LoadYMLConfigFile):
+ *   trusted_metadata.service_id
+ *   trusted_metadata.secret
+ *   trusted_metadata.mode
+ *   trusted_metadata.max_age
+ *   trusted_metadata.clock_skew
+ * Service ID also falls back to server.name when unset.
  */
 func ConfigFromEnv() Config {
-	mode := Mode(strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_TRUSTED_METADATA_MODE"))))
+	mode := Mode(strings.ToLower(strings.TrimSpace(firstNonEmpty(
+		os.Getenv("QHPRO_TRUSTED_METADATA_MODE"),
+		viper.GetString("trusted_metadata.mode"),
+	))))
 	if mode != ModeEnforce {
 		mode = ModeAudit
 	}
@@ -93,13 +106,26 @@ func ConfigFromEnv() Config {
 		ServiceID: firstNonEmpty(
 			os.Getenv("QHPRO_SERVICE_ID"),
 			os.Getenv("SERVICE_NAME"),
+			viper.GetString("trusted_metadata.service_id"),
+			viper.GetString("server.name"),
 		),
-		Secret:                     strings.TrimSpace(os.Getenv("QHPRO_INTERNAL_METADATA_SECRET")),
+		Secret: firstNonEmpty(
+			os.Getenv("QHPRO_INTERNAL_METADATA_SECRET"),
+			viper.GetString("trusted_metadata.secret"),
+		),
 		VerificationSecrets:        verificationSecrets,
 		VerificationKeysConfigured: verificationKeysConfigured,
 		Mode:                       mode,
-		MaxAge:                     durationFromEnv("QHPRO_INTERNAL_METADATA_MAX_AGE", 30*time.Second),
-		ClockSkew:                  durationFromEnv("QHPRO_INTERNAL_METADATA_CLOCK_SKEW", 5*time.Second),
+		MaxAge: durationFromEnvOrViper(
+			"QHPRO_INTERNAL_METADATA_MAX_AGE",
+			"trusted_metadata.max_age",
+			30*time.Second,
+		),
+		ClockSkew: durationFromEnvOrViper(
+			"QHPRO_INTERNAL_METADATA_CLOCK_SKEW",
+			"trusted_metadata.clock_skew",
+			5*time.Second,
+		),
 	}
 }
 
@@ -370,6 +396,22 @@ func durationFromEnv(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return parsed
+}
+
+func durationFromEnvOrViper(envKey, viperKey string, fallback time.Duration) time.Duration {
+	if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
+		parsed, err := time.ParseDuration(value)
+		if err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	if value := strings.TrimSpace(viper.GetString(viperKey)); value != "" {
+		parsed, err := time.ParseDuration(value)
+		if err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	return fallback
 }
 
 func firstNonEmpty(values ...string) string {

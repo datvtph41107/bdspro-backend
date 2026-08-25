@@ -241,7 +241,7 @@ func (h *SeoDomainHandler) CountSeoRefs(ctx context.Context, req *crmpb.CountSeo
 		req = &crmpb.CountSeoRefsRequest{}
 	}
 
-	total, err := h.seoDomainUsecase.CountSeoRefs(ctx, &dto.GetSeoRefsRequest{
+	_, total, err := h.seoDomainUsecase.GetSeoRefs(ctx, &dto.GetSeoRefsRequest{
 		RefType: enums.ESEORefType(req.GetRefType()),
 		RefID:   req.GetRefId(),
 	})
@@ -1056,99 +1056,6 @@ func (h *SeoDomainHandler) DeleteSeoRelative(ctx context.Context, req *sharepb.I
 		return nil, err
 	}
 	return &sharepb.SubmitResponse{Id: req.Id, Message: "Seo relative deleted successfully"}, nil
-}
-
-// -----------------------------------------------------------------------------
-// SEO refs (entity <-> SEO page links).
-// -----------------------------------------------------------------------------
-
-// CreateSeoRef @Summary Thêm liên kết SEO ref
-// @Description Gắn bài SEO vào entity (project/parcel/adm_unit/...) để hiện trên /v2/crm/public/seos/{refType}/{refId}/list
-func (h *SeoDomainHandler) CreateSeoRef(ctx context.Context, req *crmpb.CreateSeoRefRequest) (*crmpb.SeoRefResponse, error) {
-	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
-	}
-	created, err := h.seoDomainUsecase.CreateSeoRef(ctx, &dto.SeoRefCreateRequest{
-		SeoDomainID: req.GetSeoDomainId(),
-		RefType:     enums.ESEORefType(req.GetRefType()),
-		RefID:       req.GetRefId(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return h.seoDomainMapper.SeoRefToPb(created), nil
-}
-
-// GetSeoRef @Summary Chi tiết liên kết SEO ref
-func (h *SeoDomainHandler) GetSeoRef(ctx context.Context, req *sharepb.IdRequest) (*crmpb.SeoRefResponse, error) {
-	item, err := h.seoDomainUsecase.GetSeoRef(ctx, req.GetId())
-	if err != nil {
-		return nil, err
-	}
-	return h.seoDomainMapper.SeoRefToPb(item), nil
-}
-
-// GetSeoRefList @Summary Danh sách liên kết SEO ref
-// @Description Lấy bản ghi từ seo_refs và seo_domain có cùng refType/refId. Bản ghi lấy từ seo_domain (không có dòng seo_refs) trả id=0.
-func (h *SeoDomainHandler) GetSeoRefList(ctx context.Context, req *crmpb.GetSeoRefListRequest) (*crmpb.GetSeoRefListResponse, error) {
-	if req == nil {
-		req = &crmpb.GetSeoRefListRequest{}
-	}
-
-	listReq := &dto.SeoRefListRequest{
-		Pagable: _dto.Pagable{
-			Page: req.GetPage(),
-			Size: req.GetSize(),
-		},
-		RefType: enums.ESEORefType(req.GetRefType()),
-		RefID:   req.GetRefId(),
-	}
-	if req.SeoDomainId != nil {
-		listReq.SeoDomainID = req.SeoDomainId
-	}
-
-	items, total, err := h.seoDomainUsecase.GetSeoRefList(ctx, listReq)
-	if err != nil {
-		return nil, err
-	}
-	return &crmpb.GetSeoRefListResponse{
-		Data:  h.seoDomainMapper.SeoRefListToPb(items),
-		Total: total,
-	}, nil
-}
-
-// UpdateSeoRef @Summary Sửa liên kết SEO ref
-func (h *SeoDomainHandler) UpdateSeoRef(ctx context.Context, req *crmpb.UpdateSeoRefRequest) (*crmpb.UpdateSeoRefResponse, error) {
-	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
-	}
-
-	updateReq := &dto.SeoRefUpdateRequest{}
-	if req.SeoDomainId != nil {
-		updateReq.SeoDomainID = req.SeoDomainId
-	}
-	if req.RefType != nil {
-		refType := enums.ESEORefType(req.GetRefType())
-		updateReq.RefType = &refType
-	}
-	if req.RefId != nil {
-		updateReq.RefID = req.RefId
-	}
-
-	updated, err := h.seoDomainUsecase.UpdateSeoRef(ctx, req.GetId(), updateReq)
-	if err != nil {
-		return nil, err
-	}
-	return &crmpb.UpdateSeoRefResponse{SeoRef: h.seoDomainMapper.SeoRefToPb(updated)}, nil
-}
-
-// DeleteSeoRef @Summary Xóa liên kết SEO ref
-// @Description Hard delete bản ghi seo_refs, không soft-delete
-func (h *SeoDomainHandler) DeleteSeoRef(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
-	if err := h.seoDomainUsecase.DeleteSeoRef(ctx, req.GetId()); err != nil {
-		return nil, err
-	}
-	return &sharepb.SubmitResponse{Id: req.GetId(), Message: "Seo ref deleted successfully"}, nil
 }
 
 // -----------------------------------------------------------------------------

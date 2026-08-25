@@ -31,7 +31,7 @@ var seoMigrationFiles = []string{
 	"000016_seo_typed_source_identity.up.sql",
 	"000019_planning_news_visibility_compatibility.up.sql",
 	"000023_user_saved_planning_news.up.sql",
-	"000024_user_followed_seo_category.up.sql",
+	"000024_simplify_seo_to_pages.up.sql",
 	"000025_seo_domain_category_id.up.sql",
 	"000026_seo_count.up.sql",
 	"000027_seo_count_aggregate.up.sql",
