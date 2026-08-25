@@ -23,5 +23,6 @@ func (m *RequestStatsMapper) MapTrackRequest(req *hubpb.TrackRequestRequest) *dt
 		DurationMs:     req.GetDurationMs(),
 		ProfileID:      req.GetProfileId(),
 		OrganizationID: req.GetOrganizationId(),
+		IsSpecAudit:    req.GetIsSpecAudit(),
 	}
 }

@@ -44,6 +44,13 @@ service RequestStatsService {
       get: "/v2/hub/request-stats/users/daily"
     };
   };
+
+  // Danh sách audit từng lần gọi các URL đặc biệt (spec_urls), không gộp count.
+  rpc GetRequestAuditLogs(GetRequestAuditLogsRequest) returns (GetRequestAuditLogsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/request-stats/audit"
+    };
+  };
 }
 
 message TrackRequestRequest {
@@ -55,6 +62,8 @@ message TrackRequestRequest {
   // Có JWT thì gateway set profileId (>0) để đếm tương tác user
   uint64 profile_id = 6;
   uint64 organization_id = 7;
+  // true = URL thuộc spec_urls: ghi audit từng request, không gộp count
+  bool is_spec_audit = 8;
 }
 
 message GetRequestStatsDashboardRequest {
@@ -151,4 +160,29 @@ message GetUserInteractionDailyStatsResponse {
   uint32 lastDates = 2;
   // Gap đã áp dụng sau normalize: dates | hours
   string gap = 3;
+}
+
+message GetRequestAuditLogsRequest {
+  // Lọc theo path (vd: /v2/crm/sitemap.xml). Bỏ trống = tất cả spec audit.
+  string path = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message RequestAuditLogItem {
+  uint64 id = 1;
+  string method = 2;
+  string path = 3;
+  string service = 4;
+  int32 statusCode = 5;
+  int64 durationMs = 6;
+  // Thời điểm request được gọi (RFC3339)
+  string timestamp = 7;
+}
+
+message GetRequestAuditLogsResponse {
+  repeated RequestAuditLogItem data = 1;
+  int64 total = 2;
+  uint32 page = 3;
+  uint32 size = 4;
 }

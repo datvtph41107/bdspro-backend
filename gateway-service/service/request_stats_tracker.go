@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	_jwt "common/jwt"
@@ -21,6 +22,9 @@ import (
 var (
 	numericPathSegment = regexp.MustCompile(`^[0-9]+$`)
 	uuidPathSegment    = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+	specURLsOnce sync.Once
+	specURLSet   map[string]struct{}
 )
 
 // RequestStatsTracker gửi thống kê request sang hub (fire-and-forget).
@@ -78,6 +82,7 @@ func RequestStatsMiddleware(tracker *RequestStatsTracker) gin.HandlerFunc {
 		durationMs := time.Since(start).Milliseconds()
 		normalizedPath := normalizeRequestPath(path)
 		serviceName := extractServiceFromPath(normalizedPath)
+		isSpecAudit := isSpecURL(path) || isSpecURL(normalizedPath)
 
 		var profileID uint64
 		var organizationID uint64
@@ -99,6 +104,7 @@ func RequestStatsMiddleware(tracker *RequestStatsTracker) gin.HandlerFunc {
 				DurationMs:     durationMs,
 				ProfileId:      profileID,
 				OrganizationId: organizationID,
+				IsSpecAudit:    isSpecAudit,
 			})
 			if err != nil {
 				log.Printf("request_stats track error: %v", err)
@@ -111,7 +117,7 @@ func RequestStatsMiddleware(tracker *RequestStatsTracker) gin.HandlerFunc {
 var requestStatsIgnorePrefixes = []string{
 	"/swagger",
 	"/swagger-doc",
-	"/v2/hub/request-stats",       // không đếm chính API thống kê request
+	"/v2/hub/request-stats",        // không đếm chính API thống kê request
 	"/v2/hub/keyword-search-stats", // không đếm API thống kê từ khóa
 }
 
@@ -125,6 +131,30 @@ func shouldSkipRequestStats(path string) bool {
 		}
 	}
 	return false
+}
+
+func loadSpecURLs() map[string]struct{} {
+	specURLsOnce.Do(func() {
+		specURLSet = make(map[string]struct{})
+		for _, raw := range viper.GetStringSlice("request_stats.spec_urls") {
+			path := strings.TrimSpace(raw)
+			if path == "" {
+				continue
+			}
+			specURLSet[path] = struct{}{}
+		}
+	})
+	return specURLSet
+}
+
+// isSpecURL kiểm tra path có nằm trong request_stats.spec_urls không.
+func isSpecURL(path string) bool {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return false
+	}
+	_, ok := loadSpecURLs()[path]
+	return ok
 }
 
 // normalizeRequestPath thay segment số/uuid bằng :id để gom cardinality.

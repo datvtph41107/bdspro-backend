@@ -5,6 +5,7 @@ import (
 	"time"
 
 	_db "common/db"
+	_utils "common/utils"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/repo"
@@ -27,6 +28,13 @@ func (r *RequestStatsPostgres) FlushCounts(ctx context.Context, logs []*domain.R
 }
 
 func (r *RequestStatsPostgres) FlushUserInteractions(ctx context.Context, logs []*domain.UserInteractionLog) error {
+	if len(logs) == 0 {
+		return nil
+	}
+	return r.db.GetDB(ctx).WithContext(ctx).CreateInBatches(logs, 100).Error
+}
+
+func (r *RequestStatsPostgres) FlushAuditLogs(ctx context.Context, logs []*domain.RequestAuditLog) error {
 	if len(logs) == 0 {
 		return nil
 	}
@@ -317,4 +325,36 @@ func (r *RequestStatsPostgres) GetUserHourlyStats(ctx context.Context, fromTime 
 		})
 	}
 	return result, nil
+}
+
+func (r *RequestStatsPostgres) GetAuditLogs(ctx context.Context, path string, offset, limit int) ([]dto.RequestAuditLogItem, int64, error) {
+	db := r.db.GetDB(ctx).WithContext(ctx).Model(&domain.RequestAuditLog{})
+	if path != "" {
+		db = db.Where("path = ?", path)
+	}
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var rows []domain.RequestAuditLog
+	if err := db.Order(`"timestamp" DESC`).Offset(offset).Limit(limit).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]dto.RequestAuditLogItem, 0, len(rows))
+	for _, item := range rows {
+		ts := item.Timestamp
+		result = append(result, dto.RequestAuditLogItem{
+			ID:         item.ID,
+			Method:     item.Method,
+			Path:       item.Path,
+			Service:    item.Service,
+			StatusCode: item.StatusCode,
+			DurationMs: item.DurationMs,
+			Timestamp:  _utils.FormatTimeToString(&ts),
+		})
+	}
+	return result, total, nil
 }

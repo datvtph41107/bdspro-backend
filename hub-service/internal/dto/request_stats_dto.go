@@ -1,6 +1,10 @@
 package dto
 
-import "strings"
+import (
+	"strings"
+
+	_dto "common/domain/dto"
+)
 
 type TrackRequestRequest struct {
 	Method         string `json:"method"`
@@ -10,6 +14,7 @@ type TrackRequestRequest struct {
 	DurationMs     int64  `json:"durationMs"`
 	ProfileID      uint64 `json:"profileId"`
 	OrganizationID uint64 `json:"organizationId"`
+	IsSpecAudit    bool   `json:"isSpecAudit"`
 }
 
 func NormalizeLastDates(lastDates uint32) uint32 {
@@ -141,4 +146,34 @@ type GetUserInteractionDailyStatsResponse struct {
 	Data      []UserInteractionDailyItem `json:"data"`
 	LastDates uint32                     `json:"lastDates"`
 	Gap       string                     `json:"gap"`
+}
+
+type GetRequestAuditLogsRequest struct {
+	_dto.Pagable
+	Path string `json:"path" form:"path"`
+}
+
+func (r *GetRequestAuditLogsRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	r.Pagable.Normalize()
+	r.Path = strings.TrimSpace(r.Path)
+}
+
+type RequestAuditLogItem struct {
+	ID         uint64 `json:"id"`
+	Method     string `json:"method"`
+	Path       string `json:"path"`
+	Service    string `json:"service"`
+	StatusCode int32  `json:"statusCode"`
+	DurationMs int64  `json:"durationMs"`
+	Timestamp  string `json:"timestamp"`
+}
+
+type GetRequestAuditLogsResponse struct {
+	Data  []RequestAuditLogItem `json:"data"`
+	Total int64                 `json:"total"`
+	Page  uint32                `json:"page"`
+	Size  uint32                `json:"size"`
 }

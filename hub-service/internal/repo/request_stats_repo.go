@@ -11,6 +11,7 @@ import (
 type IRequestStatsRepo interface {
 	FlushCounts(ctx context.Context, logs []*domain.RequestStatsLog) error
 	FlushUserInteractions(ctx context.Context, logs []*domain.UserInteractionLog) error
+	FlushAuditLogs(ctx context.Context, logs []*domain.RequestAuditLog) error
 	CountFromTime(ctx context.Context, fromTime time.Time) (uint64, error)
 	GetTopPaths(ctx context.Context, fromTime time.Time, limit int) ([]dto.RequestTopPathItem, error)
 	GetByService(ctx context.Context, fromTime time.Time) ([]dto.RequestServiceCountItem, error)
@@ -21,4 +22,5 @@ type IRequestStatsRepo interface {
 	GetTopUsers(ctx context.Context, fromTime time.Time, limit int) ([]dto.UserInteractionTopItem, error)
 	GetUserDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error)
 	GetUserHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error)
+	GetAuditLogs(ctx context.Context, path string, offset, limit int) ([]dto.RequestAuditLogItem, int64, error)
 }

@@ -32,7 +32,8 @@ type userInteractionKey struct {
 
 // RequestStatsUsecase buffers gateway request increments in-process and flushes
 // to DB every 20s (same pattern as seo_count). When profileId > 0 (JWT), also
-// buffers user interaction counts.
+// buffers user interaction counts. Spec URLs (is_spec_audit) are stored as
+// individual audit rows without count aggregation.
 type RequestStatsUsecase struct {
 	repo       repo.IRequestStatsRepo
 	userClient iprovider.IUserClient
@@ -40,6 +41,7 @@ type RequestStatsUsecase struct {
 	mu         sync.Mutex
 	counts     map[requestStatsKey]int64
 	userCounts map[userInteractionKey]int64
+	audits     []*domain.RequestAuditLog
 	jobPending bool
 
 	flushDelay time.Duration
@@ -53,6 +55,7 @@ type IRequestStatsUsecase interface {
 	GetDailyStats(ctx context.Context, req *dto.GetRequestDailyStatsRequest) (*dto.GetRequestDailyStatsResponse, *_err.ErrorDTO)
 	GetUserInteractionDashboard(ctx context.Context, req *dto.GetUserInteractionDashboardRequest) (*dto.GetUserInteractionDashboardResponse, *_err.ErrorDTO)
 	GetUserInteractionDailyStats(ctx context.Context, req *dto.GetUserInteractionDailyStatsRequest) (*dto.GetUserInteractionDailyStatsResponse, *_err.ErrorDTO)
+	GetAuditLogs(ctx context.Context, req *dto.GetRequestAuditLogsRequest) (*dto.GetRequestAuditLogsResponse, *_err.ErrorDTO)
 }
 
 // @bind: internal/usecase/IRequestStatsUsecase
@@ -62,6 +65,7 @@ func NewRequestStatsUsecase(repository repo.IRequestStatsRepo, userClient iprovi
 		userClient: userClient,
 		counts:     make(map[requestStatsKey]int64),
 		userCounts: make(map[userInteractionKey]int64),
+		audits:     make([]*domain.RequestAuditLog, 0),
 		flushDelay: requestStatsFlushDelay,
 		now:        time.Now,
 		afterFunc:  time.AfterFunc,
@@ -84,23 +88,35 @@ func (u *RequestStatsUsecase) TrackRequest(_ context.Context, req *dto.TrackRequ
 		service = "unknown"
 	}
 
-	key := requestStatsKey{
-		Method:     method,
-		Path:       path,
-		Service:    service,
-		StatusCode: req.StatusCode,
-	}
-
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	u.counts[key]++
-	if req.ProfileID > 0 {
-		u.userCounts[userInteractionKey{
-			ProfileID:      req.ProfileID,
-			OrganizationID: req.OrganizationID,
-		}]++
+	// Spec URLs: ghi từng lần gọi (audit), không gộp count.
+	if req.IsSpecAudit {
+		u.audits = append(u.audits, &domain.RequestAuditLog{
+			Method:     method,
+			Path:       path,
+			Service:    service,
+			StatusCode: req.StatusCode,
+			DurationMs: req.DurationMs,
+			Timestamp:  u.now().UTC(),
+		})
+	} else {
+		key := requestStatsKey{
+			Method:     method,
+			Path:       path,
+			Service:    service,
+			StatusCode: req.StatusCode,
+		}
+		u.counts[key]++
+		if req.ProfileID > 0 {
+			u.userCounts[userInteractionKey{
+				ProfileID:      req.ProfileID,
+				OrganizationID: req.OrganizationID,
+			}]++
+		}
 	}
+
 	if !u.jobPending {
 		u.jobPending = true
 		u.afterFunc(u.flushDelay, u.flush)
@@ -114,6 +130,8 @@ func (u *RequestStatsUsecase) flush() {
 	u.counts = make(map[requestStatsKey]int64)
 	userSnapshot := u.userCounts
 	u.userCounts = make(map[userInteractionKey]int64)
+	auditSnapshot := u.audits
+	u.audits = make([]*domain.RequestAuditLog, 0, len(auditSnapshot))
 	u.mu.Unlock()
 
 	now := u.now().UTC()
@@ -173,9 +191,19 @@ func (u *RequestStatsUsecase) flush() {
 		}
 	}
 
+	if len(auditSnapshot) > 0 && u.repo != nil {
+		if err := u.repo.FlushAuditLogs(context.Background(), auditSnapshot); err != nil {
+			log.Printf("request_audit flush error: %v", err)
+			flushFailed = true
+			u.mu.Lock()
+			u.audits = append(auditSnapshot, u.audits...)
+			u.mu.Unlock()
+		}
+	}
+
 	u.mu.Lock()
 	u.jobPending = false
-	if flushFailed || len(u.counts) > 0 || len(u.userCounts) > 0 {
+	if flushFailed || len(u.counts) > 0 || len(u.userCounts) > 0 || len(u.audits) > 0 {
 		u.jobPending = true
 		u.afterFunc(u.flushDelay, u.flush)
 	}
@@ -322,6 +350,28 @@ func (u *RequestStatsUsecase) GetUserInteractionDailyStats(ctx context.Context, 
 		Data:      data,
 		LastDates: req.LastDates,
 		Gap:       req.Gap,
+	}, nil
+}
+
+func (u *RequestStatsUsecase) GetAuditLogs(ctx context.Context, req *dto.GetRequestAuditLogsRequest) (*dto.GetRequestAuditLogsResponse, *_err.ErrorDTO) {
+	if req == nil {
+		req = &dto.GetRequestAuditLogsRequest{}
+	}
+	req.Normalize()
+
+	data, total, err := u.repo.GetAuditLogs(ctx, req.Path, req.GetOffset(), req.GetLimit())
+	if err != nil {
+		return nil, &_err.ErrorDTO{Code: 500, Message: "Lỗi khi lấy audit log: " + err.Error()}
+	}
+	if data == nil {
+		data = []dto.RequestAuditLogItem{}
+	}
+
+	return &dto.GetRequestAuditLogsResponse{
+		Data:  data,
+		Total: total,
+		Page:  req.GetPage(),
+		Size:  uint32(req.GetLimit()),
 	}, nil
 }
 

@@ -56,3 +56,8 @@ gateway:
         - "http://127.0.0.1:3001"
         - "http://localhost:3000"
         - "http://localhost:3001"
+
+# URL đặc biệt: ghi audit từng request (không gộp count) trong hub request_audit_log
+request_stats:
+    spec_urls:
+        - /v2/crm/public/content/sitemap.xml

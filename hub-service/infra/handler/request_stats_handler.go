@@ -239,3 +239,57 @@ func (h *RequestStatsHandler) GetUserInteractionDailyStats(
 		Gap:       resp.Gap,
 	}, nil
 }
+
+// @Summary Danh sách audit log request đặc biệt (spec_urls)
+// @Description Trả từng lần gọi theo timestamp (không gộp count). Lọc path ví dụ /v2/crm/public/content/sitemap.xml
+// @Tags RequestStats
+// @Produce json
+// @Param path query string false "Lọc theo path (vd: /v2/crm/public/content/sitemap.xml)"
+// @Param page query int false "Trang (0-based, mặc định 0)"
+// @Param size query int false "Số bản ghi mỗi trang (mặc định 20, tối đa 100)"
+// @Success 200 {object} hubpb.GetRequestAuditLogsResponse
+// @Router /v2/hub/request-stats/audit [get]
+func (h *RequestStatsHandler) GetRequestAuditLogs(
+	ctx context.Context,
+	req *hubpb.GetRequestAuditLogsRequest,
+) (*hubpb.GetRequestAuditLogsResponse, error) {
+	if req == nil {
+		req = &hubpb.GetRequestAuditLogsRequest{}
+	}
+
+	dtoReq := &dto.GetRequestAuditLogsRequest{
+		Path: req.GetPath(),
+	}
+	dtoReq.Page = req.GetPage()
+	dtoReq.Size = req.GetSize()
+
+	resp, errDTO := h.RequestStatsUsecase.GetAuditLogs(ctx, dtoReq)
+	if errDTO != nil {
+		return nil, _errors.ReturnError(int32(errDTO.Code), errDTO.Message)
+	}
+	if resp == nil {
+		return &hubpb.GetRequestAuditLogsResponse{
+			Data: []*hubpb.RequestAuditLogItem{},
+		}, nil
+	}
+
+	data := make([]*hubpb.RequestAuditLogItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &hubpb.RequestAuditLogItem{
+			Id:         item.ID,
+			Method:     item.Method,
+			Path:       item.Path,
+			Service:    item.Service,
+			StatusCode: item.StatusCode,
+			DurationMs: item.DurationMs,
+			Timestamp:  item.Timestamp,
+		})
+	}
+
+	return &hubpb.GetRequestAuditLogsResponse{
+		Data:  data,
+		Total: resp.Total,
+		Page:  resp.Page,
+		Size:  resp.Size,
+	}, nil
+}
