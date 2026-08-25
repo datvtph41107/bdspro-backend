@@ -85,6 +85,8 @@ func (g *OAuthGoogle) getAccessToken(code string) (string, error) {
 	data.Set("redirect_uri", config.Properties.OAuth.Google.RedirectURI)
 	data.Set("grant_type", "authorization_code")
 
+	fmt.Println("data", data)
+
 	resp, err := g.HttpClient.PostForm("https://oauth2.googleapis.com/token", data)
 	if err != nil {
 		return "", err

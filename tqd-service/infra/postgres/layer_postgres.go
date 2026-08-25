@@ -9,6 +9,7 @@ import (
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/interface/repo"
 
@@ -108,6 +109,8 @@ func (r *layerRepoImpl) Update(ctx context.Context, layer *qh_domain.QHLayer) er
 		"family_id":      layer.FamilyID,
 		"publish_scopes": layer.PublishScopes,
 		"legal_doc":      layer.LegalDoc,
+		"province_id":    layer.ProvinceID,
+		"ward_id":        layer.WardID,
 	}
 
 	return r.db.WithContext(ctx).
@@ -132,6 +135,7 @@ func (r *layerRepoImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLa
 	var layer qh_domain.QHLayer
 	err := r.db.WithContext(ctx).
 		Preload("Family").
+		Preload("PlanningProject").
 		Where("deleted_at IS NULL").
 		First(&layer, id).Error
 	if err != nil {
@@ -180,29 +184,41 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 			searchTerm, searchTerm,
 		)
 	}
+	if filter.PlanningProjectID != nil && *filter.PlanningProjectID > 0 {
+		query = query.Where("planning_project_id = ?", *filter.PlanningProjectID)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	orderBy := "display_order"
-	if filter.OrderBy != "" {
-		allowed := map[string]bool{
-			"updated_at": true, "created_at": true, "name": true, "id": true,
-		}
-		if allowed[filter.OrderBy] {
-			orderBy = filter.OrderBy
-		}
-	}
+	orderBy := "updated_at"
 	orderDir := "DESC"
-	if strings.ToUpper(filter.OrderDir) == "ASC" {
-		orderDir = "ASC"
+	if filter.OrderBy != "" {
+		allowed := map[string]string{
+			"display_order": "display_order",
+			"displayOrder":  "display_order",
+			"updated_at":    "updated_at",
+			"updatedAt":     "updated_at",
+			"created_at":    "created_at",
+			"createdAt":     "created_at",
+			"name":          "name",
+			"id":            "id",
+		}
+		if col, ok := allowed[filter.OrderBy]; ok {
+			orderBy = col
+		}
 	}
-
-	log.Println("Creating layer:", filter.Size)
+	if filter.OrderDir != "" {
+		if strings.EqualFold(filter.OrderDir, "ASC") {
+			orderDir = "ASC"
+		} else if strings.EqualFold(filter.OrderDir, "DESC") {
+			orderDir = "DESC"
+		}
+	}
 
 	err := query.
-		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).
+		Order(fmt.Sprintf("%s %s NULLS LAST, id DESC", orderBy, orderDir)).
 		Offset(filter.GetOffset()).
 		Limit(filter.GetLimitAdmin()).
 		Find(&layers).Error
@@ -231,12 +247,32 @@ func (r *layerRepoImpl) ListClient(ctx context.Context, filter *repo.ClientLayer
 			searchTerm, searchTerm,
 		)
 	}
+	if filter.DocID > 0 {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			WHERE rel.layer_id = qh_layers.id
+			  AND rel.planning_document_id = ?
+			  AND rel.deleted_at IS NULL
+		)`, filter.DocID)
+	}
+	if filter.PlanningProjectID > 0 {
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM layer_plan_doc_relation rel
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			WHERE rel.layer_id = qh_layers.id
+			  AND rel.deleted_at IS NULL
+			  AND d.planning_project_id = ?
+		)`, filter.PlanningProjectID)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	err := query.
+		Preload("PlanningProject").
 		Order("display_order ASC, id ASC").
 		Offset(filter.GetOffset()).
 		Limit(1000).
@@ -317,4 +353,73 @@ func (r *layerRepoImpl) GetZoomRangeByFamilyID(ctx context.Context, familyID uin
 		result.MaxZoom = 16
 	}
 	return result.MinZoom, result.MaxZoom, nil
+}
+
+func (r *layerRepoImpl) GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error) {
+	var source dto.LayerSeoSource
+	err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT
+				id AS layer_id,
+				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
+				seo_id AS seo_id,
+				COALESCE(thumbnail_url, '') AS thumbnail_url,
+				COALESCE(image_url, '') AS image_url,
+				COALESCE(avatar, '') AS avatar,
+				CASE
+					WHEN province_id ~ '^[0-9]+$' THEN NULLIF(province_id, '')::bigint
+					ELSE NULL
+				END AS province_id
+			FROM qh_layers
+			WHERE id = ? AND deleted_at IS NULL
+			LIMIT 1
+		`, layerID).
+		Scan(&source).Error
+	if err != nil {
+		return nil, fmt.Errorf("get layer seo source failed: %w", err)
+	}
+	if source.LayerID == 0 {
+		return nil, nil
+	}
+	return &source, nil
+}
+
+func (r *layerRepoImpl) GetLayerSeoSourcesByIDs(ctx context.Context, layerIDs []uint64) ([]dto.LayerSeoSource, error) {
+	layerIDs = dedupeNonZeroUint64(layerIDs)
+	if len(layerIDs) == 0 {
+		return nil, nil
+	}
+
+	var sources []dto.LayerSeoSource
+	err := r.db.WithContext(ctx).
+		Raw(`
+			SELECT
+				id AS layer_id,
+				COALESCE(NULLIF(display_name, ''), NULLIF(name, ''), '') AS display_name,
+				seo_id AS seo_id,
+				COALESCE(thumbnail_url, '') AS thumbnail_url,
+				COALESCE(image_url, '') AS image_url,
+				COALESCE(avatar, '') AS avatar,
+				CASE
+					WHEN province_id ~ '^[0-9]+$' THEN NULLIF(province_id, '')::bigint
+					ELSE NULL
+				END AS province_id
+			FROM qh_layers
+			WHERE id IN ? AND deleted_at IS NULL
+		`, layerIDs).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get layer seo sources failed: %w", err)
+	}
+	return sources, nil
+}
+
+func (r *layerRepoImpl) UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error {
+	if layerID == 0 || seoID == 0 {
+		return errors.New("layer_id và seo_id là bắt buộc")
+	}
+	return r.db.WithContext(ctx).
+		Model(&qh_domain.QHLayer{}).
+		Where("id = ? AND deleted_at IS NULL", layerID).
+		Update("seo_id", seoID).Error
 }

@@ -32,3 +32,7 @@ jwt:
     refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
     listPermit:
     authorizationHeader: Authorization
+
+request_stats:
+    spec_urls:
+        - /v2/crm/sitemap.xml

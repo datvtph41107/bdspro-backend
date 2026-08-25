@@ -192,14 +192,7 @@ func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI
 	}
 
 	// Apply sorting
-	switch filter.SortBy {
-	case "rating":
-		query = query.Order("rating DESC, review_count DESC")
-	case "newest":
-		query = query.Order("created_at DESC")
-	default:
-		query = query.Order("created_at DESC")
-	}
+	query = query.Order(poiListOrder(filter))
 
 	// Apply pagination
 	err := query.
@@ -356,6 +349,38 @@ func calculateDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
 	return earthRadius * c
+}
+
+func poiListOrder(filter *dto.PoiFilter) string {
+	if sort := strings.TrimSpace(filter.Sort); sort != "" {
+		parts := strings.Split(sort, ",")
+		field := strings.TrimSpace(parts[0])
+		dir := "DESC"
+		if len(parts) > 1 && strings.EqualFold(strings.TrimSpace(parts[1]), "asc") {
+			dir = "ASC"
+		}
+		switch strings.ToLower(field) {
+		case "createdat", "created_at":
+			return "created_at " + dir
+		case "updatedat", "updated_at":
+			return "updated_at " + dir
+		case "rating":
+			return "rating " + dir + ", review_count DESC"
+		case "name":
+			return "name " + dir
+		default:
+			return "created_at DESC"
+		}
+	}
+
+	switch filter.SortBy {
+	case "rating":
+		return "rating DESC, review_count DESC"
+	case "newest":
+		return "created_at DESC"
+	default:
+		return "created_at DESC"
+	}
 }
 
 func (r *POIRepo) GetListInterface(ctx context.Context, req *repo.ListPOIsRequest) (*repo.ListPOIsResponse, error) {

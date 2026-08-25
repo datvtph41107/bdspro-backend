@@ -1,5 +1,10 @@
 package enums
 
+import (
+	"strconv"
+	"strings"
+)
+
 type PlanningType uint32
 type PlanningLevel uint32
 type PlanningDocumentType uint32
@@ -25,6 +30,9 @@ const (
 	PlanningDocumentTypeGIS         uint32 = 50
 	PlanningDocumentTypeAppendix    uint32 = 60
 	PlanningDocumentTypeOther       uint32 = 70
+
+	PlanningDocumentStatusNormal    uint32 = 10
+	PlanningDocumentStatusImportant uint32 = 20
 
 	// PlanningProcessStatus — trạng thái xử lý của đồ án/tài liệu sau khi upload folder.
 	PlanningProcessStatusPending    uint32 = 10 // vừa upload, chưa quét
@@ -72,11 +80,33 @@ func GetPlanningProcessStatusLabel(status uint32) string {
 	return PlanningProcessStatusMap[status]
 }
 
+var PlanningDocumentStatusLabelMap = map[uint32]string{
+	PlanningDocumentStatusNormal:    "Thường",
+	PlanningDocumentStatusImportant: "Quan trọng",
+}
+
+func GetPlanningDocumentStatusLabel(status uint32) string {
+	if label, ok := PlanningDocumentStatusLabelMap[status]; ok {
+		return label
+	}
+	return PlanningDocumentStatusLabelMap[PlanningDocumentStatusNormal]
+}
+
 func GetPlanningDocumentTypeLabel(planningDocumentType uint32) string {
 	return PlanningDocumentTypeLabelMap[planningDocumentType]
 }
 
 func GetPlanningDocumentTypeValue(label string) uint32 {
+	label = strings.TrimSpace(label)
+	if label == "" {
+		return 0
+	}
+	if n, err := strconv.ParseUint(label, 10, 32); err == nil {
+		value := uint32(n)
+		if _, ok := PlanningDocumentTypeLabelMap[value]; ok {
+			return value
+		}
+	}
 	for key, value := range PlanningDocumentTypeLabelMap {
 		if value == label {
 			return key

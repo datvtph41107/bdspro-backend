@@ -3,6 +3,7 @@ package handler_grpc
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	_dto "common/domain/dto"
@@ -12,6 +13,7 @@ import (
 	"tqd/infra/mapper"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
+	"tqd/internal/interface/provider"
 	"tqd/internal/usecase"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -23,6 +25,7 @@ type SubscriptionGrpcHandler struct {
 	notifUsecase  usecase.NotificationUsecase
 	regionUsecase usecase.RegionUsecase
 	parcelUsecase usecase.ParcelUsecase
+	userProvider  provider.UserProvider
 	parcelMapper  *mapper.ParcelMapper
 	SyncProvider  *_utils.SyncUtil
 }
@@ -32,6 +35,7 @@ func NewSubscriptionGrpcHandler(
 	notifUsecase usecase.NotificationUsecase,
 	regionUsecase usecase.RegionUsecase,
 	parcelUsecase usecase.ParcelUsecase,
+	userProvider provider.UserProvider,
 	syncProvider *_utils.SyncUtil,
 ) *SubscriptionGrpcHandler {
 	return &SubscriptionGrpcHandler{
@@ -39,6 +43,7 @@ func NewSubscriptionGrpcHandler(
 		notifUsecase:  notifUsecase,
 		regionUsecase: regionUsecase,
 		parcelUsecase: parcelUsecase,
+		userProvider:  userProvider,
 		parcelMapper:  mapper.NewParcelMapper(),
 		SyncProvider:  syncProvider,
 	}
@@ -501,6 +506,140 @@ func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	}
 
 	return &tqdpb.ListSubscriptionsAdminResponse{
+		Data:  items,
+		Total: total,
+		Page:  int32(pagable.GetPage()),
+		Size:  int32(pagable.GetSize()),
+	}, nil
+}
+
+// AdminListParcelSubscriptions - Admin: danh sách thửa đất đang được theo dõi (subscription)
+func (h *SubscriptionGrpcHandler) AdminListParcelSubscriptions(
+	ctx context.Context,
+	req *tqdpb.AdminListParcelSubscriptionsRequest,
+) (*tqdpb.AdminListParcelSubscriptionsResponse, error) {
+	adminUserID := _utils.GetProfileIdWithContext(ctx)
+	log.Printf("[AdminListParcelSubscriptions] AdminUserID: %d", adminUserID)
+
+	pagable := _dto.NewPagableFromGrpc(req.Page, req.Size, nil)
+	page := int(pagable.GetPage())
+	limit := pagable.GetLimit()
+
+	subs, total, err := h.subUsecase.AdminListParcelSubscriptions(ctx, req.UserId, req.Status, page, limit)
+	if err != nil {
+		log.Printf("[AdminListParcelSubscriptions] Error: %v", err)
+		return nil, _errors.ReturnError(500, err.Error())
+	}
+
+	if len(subs) == 0 {
+		return &tqdpb.AdminListParcelSubscriptionsResponse{
+			Data:  []*tqdpb.AdminParcelSubscriptionItem{},
+			Total: 0,
+			Page:  int32(pagable.GetPage()),
+			Size:  int32(pagable.GetSize()),
+		}, nil
+	}
+
+	parcelIDs := make([]uint64, 0, len(subs))
+	for _, sub := range subs {
+		parcelIDs = append(parcelIDs, sub.TargetID)
+	}
+
+	parcels, err := h.parcelUsecase.GetByIDs(ctx, parcelIDs)
+	if err != nil {
+		parcels = []qh_domain.Parcel{}
+	}
+	parcelMap := make(map[uint64]qh_domain.Parcel, len(parcels))
+	for _, p := range parcels {
+		parcelMap[p.ID] = p
+	}
+
+	parcelInfoMap := make(map[uint64]*dto.ParcelInfoResponse, len(parcelIDs))
+	for _, parcelID := range parcelIDs {
+		info, infoErr := h.parcelUsecase.GetParcelInfo(ctx, parcelID)
+		if infoErr == nil && info != nil && info.ParcelID > 0 {
+			parcelInfoMap[parcelID] = info
+		}
+	}
+
+	activeStatus := uint32(10)
+	followerCounts, err := h.subUsecase.CountParcelFollowers(ctx, parcelIDs, &activeStatus)
+	if err != nil {
+		log.Printf("[AdminListParcelSubscriptions] CountFollowers error: %v", err)
+		followerCounts = map[uint64]int64{}
+	}
+
+	userIDs := make([]uint64, 0, len(subs))
+	seenUserIDs := make(map[uint64]struct{}, len(subs))
+	for _, sub := range subs {
+		if sub.UserID == 0 {
+			continue
+		}
+		if _, ok := seenUserIDs[sub.UserID]; ok {
+			continue
+		}
+		seenUserIDs[sub.UserID] = struct{}{}
+		userIDs = append(userIDs, sub.UserID)
+	}
+
+	profileMap := map[uint64]*dto.UserProfileDTO{}
+	if h.userProvider != nil && len(userIDs) > 0 {
+		if profiles, profileErr := h.userProvider.GetProfilesByIDs(ctx, userIDs); profileErr == nil {
+			profileMap = profiles
+		} else {
+			log.Printf("[AdminListParcelSubscriptions] GetProfilesByIDs error: %v", profileErr)
+		}
+	}
+
+	items := make([]*tqdpb.AdminParcelSubscriptionItem, 0, len(subs))
+	for _, sub := range subs {
+		scope, _ := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
+		item := &tqdpb.AdminParcelSubscriptionItem{
+			SubscriptionId:    sub.ID,
+			UserId:            sub.UserID,
+			ParcelId:          sub.TargetID,
+			SubscriptionScope: scope,
+			Status:            uint32(sub.Status),
+			CreatedAt:         sub.CreatedAt.Format(time.RFC3339),
+			FollowerCount:     followerCounts[sub.TargetID],
+		}
+
+		if parcel, ok := parcelMap[sub.TargetID]; ok {
+			parcelProto := h.parcelMapper.DomainToProto(&parcel)
+			item.Geometry = parcelProto.Geometry
+			lat := parcel.Lat
+			lng := parcel.Lng
+			item.Lat = &lat
+			item.Lng = &lng
+			if parcel.SeoID != nil && *parcel.SeoID > 0 {
+				seoID := *parcel.SeoID
+				item.SeoId = &seoID
+			}
+		}
+		if info, ok := parcelInfoMap[sub.TargetID]; ok {
+			if info.AddressText != "" {
+				addr := info.AddressText
+				item.Address = &addr
+			}
+			if info.MapNumber != "" || info.LandNumber != "" {
+				name := info.MapNumber + "/" + info.LandNumber
+				item.ParcelName = &name
+			}
+		}
+
+		if profile := profileMap[sub.UserID]; profile != nil {
+			if fn := strings.TrimSpace(profile.FullName); fn != "" {
+				item.UserName = &fn
+			}
+			if av := strings.TrimSpace(profile.Avatar); av != "" {
+				item.UserAvatar = &av
+			}
+		}
+
+		items = append(items, item)
+	}
+
+	return &tqdpb.AdminListParcelSubscriptionsResponse{
 		Data:  items,
 		Total: total,
 		Page:  int32(pagable.GetPage()),

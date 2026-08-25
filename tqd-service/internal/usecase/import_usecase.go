@@ -18,6 +18,7 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
@@ -525,7 +526,7 @@ func (u *importUsecaseImpl) buildRegion(ctx context.Context, batchID string, ind
 	region := &qh_domain.QHRegion{
 		LayerID:            req.LayerID,
 		LabelID:            &labelID,
-		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
+		Geometry:           domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            area,
 		AreaHa:             area / 10000,
@@ -972,7 +973,7 @@ func (u *importUsecaseImpl) regionFromRetrySnapshot(ctx context.Context, snap *q
 	region := &qh_domain.QHRegion{
 		LayerID:            snap.LayerID,
 		LabelID:            &labelID,
-		Geometry:           qh_domain.RawGeometry{Raw: geomBytes},
+		Geometry:           domain.RawGeometry{Raw: geomBytes},
 		OriginalProperties: propsBytes,
 		AreaSqm:            area,
 		AreaHa:             area / 10000,

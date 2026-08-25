@@ -83,6 +83,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewContactLabelPostgresRepo,
 	tqd_internal_usecase.NewContactLabelUsecase,
 	tqd_infra_validator.NewContactLabelValidator,
+	tqd_infra_client.NewCrmSeoClient,
 	tqd_infra_handler_grpc.NewDirectoryCategoryGrpcHandler,
 	tqd_infra_handler_http.NewDirectoryCategoryHandler,
 	tqd_infra_mapper.NewDirectoryCategoryMapper,

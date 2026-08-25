@@ -11,7 +11,9 @@ import (
 
 	"tqd/internal/enums"
 	planningdomain "tqd/internal/modules/planningclient/domain"
+	tqdutils "tqd/internal/utils"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -67,20 +69,48 @@ func parseUintCSV(value string) []uint64 {
 	return result
 }
 
-func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *gorm.DB {
-	if value := strings.TrimSpace(filter.Search); value != "" {
-		pattern := "%" + strings.ToLower(value) + "%"
-		db = db.Where(`(
-			LOWER(COALESCE(p.name,'')) LIKE ? OR
-			LOWER(COALESCE(p.code,'')) LIKE ? OR
-			LOWER(COALESCE(p.decision_number,'')) LIKE ? OR
-			EXISTS (
-				SELECT 1 FROM qh_planning_documents d
-				WHERE d.planning_project_id = p.id AND d.deleted_at IS NULL
-				  AND (LOWER(COALESCE(d.title,'')) LIKE ? OR LOWER(COALESCE(d.code,'')) LIKE ?)
-			)
-		)`, pattern, pattern, pattern, pattern, pattern)
+func lowerSearchPattern(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return ""
 	}
+	return "%" + value + "%"
+}
+
+func unaccentLike(column string) string {
+	return "REPLACE(LOWER(unaccent(COALESCE(" + column + ",''))), 'đ', 'd') LIKE REPLACE(LOWER(unaccent(?)), 'đ', 'd')"
+}
+
+func slugSearchLike() string {
+	return "REPLACE(REPLACE(LOWER(unaccent(COALESCE(p.slug,''))), '-', ' '), 'đ', 'd') LIKE REPLACE(REPLACE(LOWER(unaccent(?)), '-', ' '), 'đ', 'd')"
+}
+
+func applyProjectSearch(db *gorm.DB, search string, includeDocuments bool) *gorm.DB {
+	pattern := lowerSearchPattern(search)
+	if pattern == "" {
+		return db
+	}
+	clause := "(" +
+		unaccentLike("p.name") + " OR " +
+		unaccentLike("p.code") + " OR " +
+		unaccentLike("p.decision_number") + " OR " +
+		slugSearchLike() + " OR " +
+		unaccentLike("j.name")
+	args := []any{pattern, pattern, pattern, pattern, pattern}
+	if includeDocuments {
+		clause += ` OR EXISTS (
+			SELECT 1 FROM qh_planning_documents d
+			WHERE d.planning_project_id = p.id AND d.deleted_at IS NULL
+			  AND (` + unaccentLike("d.title") + ` OR ` + unaccentLike("d.code") + `)
+		)`
+		args = append(args, pattern, pattern)
+	}
+	clause += ")"
+	return db.Where(clause, args...)
+}
+
+func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *gorm.DB {
+	db = applyProjectSearch(db, filter.Search, true)
 	if value := strings.TrimSpace(filter.Decision); value != "" {
 		pattern := "%" + strings.ToLower(value) + "%"
 		db = db.Where(`(
@@ -133,6 +163,25 @@ func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *
 	}
 	if filter.UpdatedTo != nil {
 		db = db.Where("p.updated_at <= ?", *filter.UpdatedTo)
+	}
+	if values := parseUintCSV(filter.TagIDs); len(values) > 0 {
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM qh_planning_project_tags ppt
+			WHERE ppt.planning_project_id = p.id
+			  AND ppt.deleted_at IS NULL
+			  AND ppt.tag_id IN ?
+		)`, values)
+	}
+	if values := parseCSV(filter.ProvinceIDs); len(values) > 0 {
+		db = db.Where(`EXISTS (
+			SELECT 1 FROM qh_planning_project_provinces ppp
+			WHERE ppp.planning_project_id = p.id
+			  AND ppp.deleted_at IS NULL
+			  AND ppp.province_id IN ?
+		)`, values)
+	}
+	if clause, arg, ok := tqdutils.PlanningProjectAdmJoinClause(filter.AdmID, "p.id"); ok {
+		db = db.Where(clause, arg)
 	}
 	return db
 }
@@ -190,14 +239,16 @@ const projectSelect = `
 	p.created_at,
 	p.updated_at,
 	EXISTS(SELECT 1 FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS has_layer,
-	(SELECT COUNT(*) FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS layer_count`
+	(SELECT COUNT(*) FROM qh_layers l WHERE l.planning_project_id=p.id AND l.deleted_at IS NULL) AS layer_count,
+	(SELECT COUNT(*) FROM qh_planning_documents d WHERE d.planning_project_id=p.id AND d.deleted_at IS NULL) AS document_count,
+	p.legal_basis_id`
 
 func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.ProjectListFilter) (*planningdomain.Page[planningdomain.Project], error) {
 	page, size := normalizePage(filter.Page, filter.Size)
 	base := r.db.WithContext(ctx).
 		Table("qh_planning_projects p").
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL").
-		Where("p.deleted_at IS NULL")
+		Where("p.deleted_at IS NULL AND p.client_view = ?", true)
 	base = applyProjectFilters(base, filter)
 
 	var total int64
@@ -216,6 +267,9 @@ func (r *Repository) ListProjects(ctx context.Context, filter planningdomain.Pro
 	for i := range items {
 		r.decorateProject(&items[i])
 	}
+	if err := r.attachProjectRelations(ctx, items); err != nil {
+		return nil, err
+	}
 	return &planningdomain.Page[planningdomain.Project]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
@@ -224,7 +278,7 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 	err := r.db.WithContext(ctx).
 		Table("qh_planning_projects p").
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL").
-		Where("p.deleted_at IS NULL AND p.id = ?", id).
+		Where("p.deleted_at IS NULL AND p.client_view = ? AND p.id = ?", true, id).
 		Select(projectSelect).
 		Take(&item).Error
 	if err != nil {
@@ -252,6 +306,9 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 	}
 
 	r.decorateProject(&item)
+	if err := r.attachLegalBasis(ctx, &item); err != nil {
+		return nil, err
+	}
 	item.Overview = &planningdomain.ProjectOverview{
 		Description:            item.Summary,
 		TotalArea:              item.TotalArea,
@@ -264,6 +321,11 @@ func (r *Repository) GetProject(ctx context.Context, id uint64) (*planningdomain
 		LatestUpdatedAt:        stats.LatestUpdatedAt,
 		HasLayer:               item.HasLayer,
 	}
+	projects := []planningdomain.Project{item}
+	if err := r.attachProjectRelationsDetail(ctx, projects); err != nil {
+		return nil, err
+	}
+	item = projects[0]
 	return &item, nil
 }
 
@@ -273,6 +335,9 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 	item.PlanningTypeName = enums.GetPlanningTypeLabel(item.PlanningType)
 	item.PlanningLevelName = enums.GetPlanningLevelLabel(item.PlanningLevel)
 	item.LegalStatusName = enums.LegalStatus(item.LegalStatus).DisplayName()
+	if item.LegalBasisID != nil && *item.LegalBasisID == 0 {
+		item.LegalBasisID = nil
+	}
 	item.Tags = []planningdomain.ProjectTag{
 		{Key: "planningType", Label: "Loại quy hoạch", Value: item.PlanningTypeName},
 		{Key: "totalArea", Label: "Diện tích", Value: formatArea(item.TotalArea)},
@@ -281,6 +346,195 @@ func (r *Repository) decorateProject(item *planningdomain.Project) {
 		{Key: "approvalDate", Label: "Ngày phê duyệt", Value: formatDate(item.ApprovalDate)},
 		{Key: "updatedAt", Label: "Ngày cập nhật", Value: formatDate(item.UpdatedAt)},
 	}
+}
+
+func (r *Repository) attachLegalBasis(ctx context.Context, item *planningdomain.Project) error {
+	if item == nil || item.LegalBasisID == nil || *item.LegalBasisID == 0 {
+		return nil
+	}
+	docMap, err := r.loadDocumentsByIDs(ctx, map[uint64]struct{}{*item.LegalBasisID: {}})
+	if err != nil {
+		return fmt.Errorf("load legal basis: %w", err)
+	}
+	if doc, ok := docMap[*item.LegalBasisID]; ok {
+		copied := doc
+		item.LegalBasis = &copied
+	}
+	return nil
+}
+
+func (r *Repository) attachProjectProvinces(ctx context.Context, items []planningdomain.Project) error {
+	return r.attachProjectProvincesOpt(ctx, items, false)
+}
+
+func (r *Repository) attachProjectProvincesOpt(ctx context.Context, items []planningdomain.Project, withGeometry bool) error {
+	if len(items) == 0 {
+		return nil
+	}
+	projectIDs := make([]uint64, 0, len(items))
+	indexByID := make(map[uint64]int, len(items))
+	for i := range items {
+		if items[i].ID == 0 {
+			continue
+		}
+		indexByID[items[i].ID] = i
+		projectIDs = append(projectIDs, items[i].ID)
+	}
+	if len(projectIDs) == 0 {
+		return nil
+	}
+
+	type projectProvinceRow struct {
+		PlanningProjectID uint64
+		ID                string
+		FullName          string
+		ShortName         string
+		Code              string
+		QHOrder           int32
+		Zoom              uint32
+		Lat               float64
+		Lng               float64
+		Geometry          []byte
+	}
+	geometrySelect := "NULL::text AS geometry"
+	if withGeometry {
+		geometrySelect = "CASE WHEN pv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(pv.geometry, 6) END AS geometry"
+	}
+	rows := []projectProvinceRow{}
+	// province_v2.id là bigint; qh_planning_project_provinces.province_id vẫn VARCHAR(50)
+	// (lưu dạng text của id). Cast để tránh SQLSTATE 42883 bigint = character varying.
+	err := r.db.WithContext(ctx).
+		Table("qh_planning_project_provinces ppp").
+		Joins("JOIN province_v2 pv ON pv.id::text = ppp.province_id").
+		Where("ppp.deleted_at IS NULL AND ppp.planning_project_id IN ?", projectIDs).
+		Select(fmt.Sprintf(`ppp.planning_project_id,
+			pv.id::text AS id,
+			pv.full_name,
+			COALESCE(pv.short_name,'') AS short_name,
+			COALESCE(pv.code,'') AS code,
+			COALESCE(pv.qh_order,0) AS qh_order,
+			COALESCE(pv.zoom,10) AS zoom,
+			COALESCE(pv.lat,0) AS lat,
+			COALESCE(pv.lng,0) AS lng,
+			%s`, geometrySelect)).
+		Order("pv.qh_order DESC, pv.full_name ASC, pv.id ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return fmt.Errorf("load planning project provinces: %w", err)
+	}
+	for _, row := range rows {
+		index, ok := indexByID[row.PlanningProjectID]
+		if !ok {
+			continue
+		}
+		items[index].Provinces = append(items[index].Provinces, planningdomain.ProjectProvince{
+			ID:        row.ID,
+			FullName:  row.FullName,
+			ShortName: row.ShortName,
+			Code:      row.Code,
+			QHOrder:   row.QHOrder,
+			Zoom:      row.Zoom,
+			Lat:       row.Lat,
+			Lng:       row.Lng,
+			Geometry:  normalizeGeoJSON(row.Geometry),
+		})
+	}
+	return nil
+}
+
+func (r *Repository) attachProjectWardsOpt(ctx context.Context, items []planningdomain.Project, withGeometry bool) error {
+	if len(items) == 0 {
+		return nil
+	}
+	projectIDs := make([]uint64, 0, len(items))
+	indexByID := make(map[uint64]int, len(items))
+	for i := range items {
+		if items[i].ID == 0 {
+			continue
+		}
+		indexByID[items[i].ID] = i
+		projectIDs = append(projectIDs, items[i].ID)
+	}
+	if len(projectIDs) == 0 {
+		return nil
+	}
+
+	type projectWardRow struct {
+		PlanningProjectID uint64
+		ID                string
+		FullName          string
+		ShortName         string
+		Code              string
+		ProvinceID        string
+		Lat               float64
+		Lng               float64
+		Geometry          []byte
+	}
+	geometrySelect := "NULL::text AS geometry"
+	if withGeometry {
+		geometrySelect = "CASE WHEN wv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(wv.geometry, 6) END AS geometry"
+	}
+	rows := []projectWardRow{}
+	err := r.db.WithContext(ctx).
+		Table("qh_planning_project_wards ppw").
+		Joins("JOIN ward_v2 wv ON wv.id::text = ppw.ward_id").
+		Where("ppw.deleted_at IS NULL AND ppw.planning_project_id IN ?", projectIDs).
+		Select(fmt.Sprintf(`ppw.planning_project_id,
+			wv.id::text AS id,
+			wv.full_name,
+			COALESCE(wv.short_name,'') AS short_name,
+			COALESCE(wv.code,'') AS code,
+			COALESCE(wv.province_id::text,'') AS province_id,
+			COALESCE(wv.lat,0) AS lat,
+			COALESCE(wv.lng,0) AS lng,
+			%s`, geometrySelect)).
+		Order("wv.full_name ASC, wv.id ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return fmt.Errorf("load planning project wards: %w", err)
+	}
+	for _, row := range rows {
+		index, ok := indexByID[row.PlanningProjectID]
+		if !ok {
+			continue
+		}
+		items[index].Wards = append(items[index].Wards, planningdomain.ProjectWard{
+			ID:         row.ID,
+			FullName:   row.FullName,
+			ShortName:  row.ShortName,
+			Code:       row.Code,
+			ProvinceID: row.ProvinceID,
+			Lat:        row.Lat,
+			Lng:        row.Lng,
+			Geometry:   normalizeGeoJSON(row.Geometry),
+		})
+	}
+	return nil
+}
+
+func normalizeGeoJSON(raw []byte) json.RawMessage {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "null" {
+		return nil
+	}
+	if !json.Valid([]byte(s)) {
+		return nil
+	}
+	return json.RawMessage(s)
+}
+
+func (r *Repository) attachProjectRelations(ctx context.Context, items []planningdomain.Project) error {
+	if err := r.attachProjectProvincesOpt(ctx, items, false); err != nil {
+		return err
+	}
+	return r.attachProjectWardsOpt(ctx, items, false)
+}
+
+func (r *Repository) attachProjectRelationsDetail(ctx context.Context, items []planningdomain.Project) error {
+	if err := r.attachProjectProvincesOpt(ctx, items, true); err != nil {
+		return err
+	}
+	return r.attachProjectWardsOpt(ctx, items, true)
 }
 
 func formatArea(value float64) string {
@@ -306,7 +560,10 @@ func documentStatusName(status uint32) string {
 
 func (r *Repository) ListDocuments(ctx context.Context, projectID uint64, page, size int, keyword, documentType, status string) (*planningdomain.Page[planningdomain.Document], error) {
 	page, size = normalizePage(page, size)
-	base := r.db.WithContext(ctx).Table("qh_planning_documents d").Where("d.deleted_at IS NULL AND d.planning_project_id = ?", projectID)
+	base := r.db.WithContext(ctx).
+		Table("qh_planning_documents d").
+		Joins("JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
+		Where("d.deleted_at IS NULL AND d.planning_project_id = ?", projectID)
 	if value := strings.TrimSpace(keyword); value != "" {
 		pattern := "%" + strings.ToLower(value) + "%"
 		base = base.Where(`LOWER(COALESCE(d.title,'')) LIKE ? OR LOWER(COALESCE(d.code,'')) LIKE ? OR LOWER(COALESCE(d.description,'')) LIKE ?`, pattern, pattern, pattern)
@@ -322,77 +579,273 @@ func (r *Repository) ListDocuments(ctx context.Context, projectID uint64, page, 
 		return nil, err
 	}
 	items := []planningdomain.Document{}
-	if err := base.Select(`d.id,d.planning_project_id,d.document_type,COALESCE(d.status,10) AS status,
-		COALESCE(d.code,'') AS code,d.title,COALESCE(d.description,'') AS description,
-		COALESCE(d.filepath,'') AS filepath,COALESCE(d.thumbnail,'') AS thumbnail,
-		COALESCE(d.version_no,'') AS version_no,COALESCE(d.validity_status,'') AS validity_status,
-		d.issue_date,d.effective_date,COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`).
+	if err := base.Select(documentSelect).
 		Order("CASE WHEN d.status=20 THEN 0 ELSE 1 END, d.issue_date DESC NULLS LAST, d.updated_at DESC, d.id DESC").
 		Offset(page * size).Limit(size).Scan(&items).Error; err != nil {
 		return nil, err
 	}
 	for i := range items {
-		items[i].Metadata = normalizeJSON(items[i].Metadata, "{}")
-		items[i].DocumentTypeName = enums.GetPlanningDocumentTypeLabel(items[i].DocumentType)
-		items[i].StatusName = documentStatusName(items[i].Status)
+		r.decorateDocument(&items[i])
+	}
+	return &planningdomain.Page[planningdomain.Document]{Data: items, Total: total, Page: page, Size: size}, nil
+}
+
+const documentSelect = `d.id,d.planning_project_id,d.document_type,COALESCE(d.status,10) AS status,
+		COALESCE(d.code,'') AS code,d.title,COALESCE(d.description,'') AS description,
+		COALESCE(d.filepath,'') AS filepath,COALESCE(d.relative_path,'') AS relative_path,
+		COALESCE(d.ext,'') AS ext,
+		COALESCE(d.thumbnail,'') AS thumbnail,
+		COALESCE(d.version_no,'') AS version_no,COALESCE(d.validity_status,'') AS validity_status,
+		d.issue_date,d.effective_date,
+		COALESCE(d.indicators,'[]'::jsonb) AS indicators,
+		COALESCE(d.authority,'') AS authority,
+		COALESCE(d.sector,'') AS sector,
+		COALESCE(d.field,'') AS field,
+		COALESCE(d.signer,'') AS signer,
+		COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`
+
+func (r *Repository) decorateDocument(item *planningdomain.Document) {
+	item.Metadata = normalizeJSON(item.Metadata, "{}")
+	item.Indicators = normalizeJSON(item.Indicators, "[]")
+	item.DocumentTypeName = enums.GetPlanningDocumentTypeLabel(item.DocumentType)
+	item.StatusName = documentStatusName(item.Status)
+	if strings.TrimSpace(item.Ext) == "" {
+		item.Ext = tqdutils.ResolveDocumentExt(item.RelativePath, item.Filepath)
+	}
+}
+
+func (r *Repository) ListDocumentsByParcelRelation(ctx context.Context, parcelID uint64, page, size int, docType string) (*planningdomain.Page[planningdomain.Document], error) {
+	if parcelID == 0 {
+		return nil, errors.New("parcel id is required")
+	}
+	page, size = normalizePage(page, size)
+	docTypes := parseUintCSV(docType)
+
+	// parcel → regions (intersects) → layers → layer_plan_doc_relation → planning-documents
+	baseSQL := `
+		WITH parcel_layers AS (
+			SELECT DISTINCT r.layer_id
+			FROM parcels p
+			JOIN qh_regions r
+			  ON r.geometry && p.geometry
+			 AND ST_Intersects(r.geometry, p.geometry)
+			JOIN qh_layers l
+			  ON l.id = r.layer_id
+			 AND l.deleted_at IS NULL
+			 AND l.status = 10
+			WHERE p.id = ?
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			  AND r.deleted_at IS NULL
+			  AND r.status = 10
+			  AND r.is_latest = true
+			  AND r.geometry IS NOT NULL
+		),
+		ranked AS (
+			SELECT
+				rel.planning_document_id,
+				MIN(rel.sort_order) AS sort_order,
+				MIN(rel.id) AS rel_id
+			FROM layer_plan_doc_relation rel
+			JOIN parcel_layers pl ON pl.layer_id = rel.layer_id
+			WHERE rel.deleted_at IS NULL
+			GROUP BY rel.planning_document_id
+		)
+		SELECT %s
+		FROM ranked rr
+		JOIN qh_planning_documents d ON d.id = rr.planning_document_id AND d.deleted_at IS NULL
+		JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
+	`
+	args := []any{parcelID}
+	if len(docTypes) > 0 {
+		baseSQL += ` WHERE d.document_type IN ?`
+		args = append(args, docTypes)
+	}
+
+	countSQL := fmt.Sprintf(baseSQL, "COUNT(*)")
+	var total int64
+	if err := r.db.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, fmt.Errorf("count layer plan doc relations for parcel: %w", err)
+	}
+	if total == 0 {
+		return &planningdomain.Page[planningdomain.Document]{Data: []planningdomain.Document{}, Total: 0, Page: page, Size: size}, nil
+	}
+
+	listSQL := fmt.Sprintf(baseSQL, documentSelect) + `
+		ORDER BY rr.sort_order ASC, rr.rel_id ASC
+		OFFSET ? LIMIT ?
+	`
+	listArgs := append(append([]any{}, args...), page*size, size)
+	items := []planningdomain.Document{}
+	if err := r.db.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&items).Error; err != nil {
+		return nil, fmt.Errorf("list layer plan doc relations for parcel: %w", err)
+	}
+	for i := range items {
+		r.decorateDocument(&items[i])
 	}
 	return &planningdomain.Page[planningdomain.Document]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
 func (r *Repository) GetDocument(ctx context.Context, documentID uint64) (*planningdomain.Document, error) {
-	var item planningdomain.Document
+	var row struct {
+		planningdomain.Document
+		ProjectRefID   uint64 `gorm:"column:project_ref_id"`
+		ProjectRefName string `gorm:"column:project_ref_name"`
+	}
 	err := r.db.WithContext(ctx).Table("qh_planning_documents d").
+		Joins("LEFT JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Where("d.id = ? AND d.deleted_at IS NULL", documentID).
-		Select(`d.id,d.planning_project_id,d.document_type,COALESCE(d.status,10) AS status,
-			COALESCE(d.code,'') AS code,d.title,COALESCE(d.description,'') AS description,
-			COALESCE(d.filepath,'') AS filepath,COALESCE(d.thumbnail,'') AS thumbnail,
-			COALESCE(d.version_no,'') AS version_no,COALESCE(d.validity_status,'') AS validity_status,
-			d.issue_date,d.effective_date,COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`).
-		Take(&item).Error
+		Select(documentSelect+`, p.id AS project_ref_id, COALESCE(p.name, '') AS project_ref_name`).
+		Take(&row).Error
 	if err != nil {
 		return nil, err
 	}
-	item.Metadata = normalizeJSON(item.Metadata, "{}")
-	item.DocumentTypeName = enums.GetPlanningDocumentTypeLabel(item.DocumentType)
-	item.StatusName = documentStatusName(item.Status)
-	return &item, nil
+	r.decorateDocument(&row.Document)
+	if row.ProjectRefID > 0 {
+		row.Document.PlanningProject = &planningdomain.DocumentPlanningProject{
+			ID:   row.ProjectRefID,
+			Name: row.ProjectRefName,
+		}
+	} else if row.Document.PlanningProjectID > 0 {
+		row.Document.PlanningProject = &planningdomain.DocumentPlanningProject{
+			ID: row.Document.PlanningProjectID,
+		}
+	}
+	return &row.Document, nil
 }
 
 func (r *Repository) ListEvents(ctx context.Context, projectID uint64, page, size int) (*planningdomain.Page[planningdomain.Event], error) {
 	page, size = normalizePage(page, size)
-	base := r.db.WithContext(ctx).Table("qh_planning_events e").Where("e.deleted_at IS NULL AND e.planning_project_id = ?", projectID)
+	base := r.db.WithContext(ctx).
+		Table("qh_planning_events e").
+		Joins("JOIN qh_planning_projects p ON p.id = e.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
+		Where("e.deleted_at IS NULL AND e.planning_project_id = ?", projectID)
 	var total int64
 	if err := base.Count(&total).Error; err != nil {
 		return nil, err
 	}
-	items := []planningdomain.Event{}
+
+	type eventRow struct {
+		ID                uint64
+		PlanningProjectID uint64
+		EventType         string
+		EventName         string
+		Description       string
+		EventDate         *time.Time
+		DocumentID        *uint64
+		SourceURL         string
+		Metadata          json.RawMessage
+		DocIDs            pq.Int64Array `gorm:"column:doc_ids"`
+		LegalStatus       uint32
+		CreatedAt         *time.Time
+		UpdatedAt         *time.Time
+	}
+
+	rows := []eventRow{}
 	if err := base.Select(`e.id,e.planning_project_id,COALESCE(e.event_type,'') AS event_type,e.event_name,
 		COALESCE(e.description,'') AS description,e.event_date,e.document_id,COALESCE(e.source_url,'') AS source_url,
-		COALESCE(e.metadata,'{}'::jsonb) AS metadata,e.created_at,e.updated_at`).
-		Order("e.event_date DESC NULLS LAST, e.id DESC").Offset(page * size).Limit(size).Scan(&items).Error; err != nil {
+		COALESCE(e.metadata,'{}'::jsonb) AS metadata,COALESCE(e.doc_ids,'{}'::bigint[]) AS doc_ids,
+		COALESCE(e.legal_status,600) AS legal_status,e.created_at,e.updated_at`).
+		Order("e.event_date DESC NULLS LAST, e.id DESC").Offset(page * size).Limit(size).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	items := make([]planningdomain.Event, len(rows))
+	docIDSet := make(map[uint64]struct{})
+	for i, row := range rows {
+		docIDs := make([]uint64, 0, len(row.DocIDs)+1)
+		seen := make(map[uint64]struct{}, len(row.DocIDs)+1)
+		for _, id := range row.DocIDs {
+			if id <= 0 {
+				continue
+			}
+			uid := uint64(id)
+			if _, ok := seen[uid]; ok {
+				continue
+			}
+			seen[uid] = struct{}{}
+			docIDs = append(docIDs, uid)
+			docIDSet[uid] = struct{}{}
+		}
+		if row.DocumentID != nil && *row.DocumentID > 0 {
+			if _, ok := seen[*row.DocumentID]; !ok {
+				docIDs = append(docIDs, *row.DocumentID)
+				docIDSet[*row.DocumentID] = struct{}{}
+			}
+		}
+		legalStatus := enums.LegalStatus(row.LegalStatus)
+		legalStatusName := enums.LegalStatusMap[legalStatus]
+		if legalStatusName == "" {
+			legalStatusName = legalStatus.DisplayName()
+		}
+		items[i] = planningdomain.Event{
+			ID:                row.ID,
+			PlanningProjectID: row.PlanningProjectID,
+			EventType:         row.EventType,
+			EventName:         row.EventName,
+			Description:       row.Description,
+			EventDate:         row.EventDate,
+			DocumentID:        row.DocumentID,
+			SourceURL:         row.SourceURL,
+			Metadata:          normalizeJSON(row.Metadata, "{}"),
+			DocIDs:            docIDs,
+			Docs:              []planningdomain.Document{},
+			LegalStatus: planningdomain.NamedUint32{
+				Value: uint32(legalStatus),
+				Name:  legalStatusName,
+			},
+			CreatedAt: row.CreatedAt,
+			UpdatedAt: row.UpdatedAt,
+		}
+	}
+
+	docMap, err := r.loadDocumentsByIDs(ctx, docIDSet)
+	if err != nil {
 		return nil, err
 	}
 	for i := range items {
-		items[i].Metadata = normalizeJSON(items[i].Metadata, "{}")
+		if len(items[i].DocIDs) == 0 {
+			continue
+		}
+		docs := make([]planningdomain.Document, 0, len(items[i].DocIDs))
+		for _, id := range items[i].DocIDs {
+			if doc, ok := docMap[id]; ok {
+				docs = append(docs, doc)
+			}
+		}
+		items[i].Docs = docs
 		if items[i].DocumentID != nil {
-			var doc planningdomain.Document
-			err := r.db.WithContext(ctx).Table("qh_planning_documents d").
-				Where("d.id=? AND d.deleted_at IS NULL", *items[i].DocumentID).
-				Select(`d.id,d.planning_project_id,d.document_type,COALESCE(d.status,10) AS status,
-					COALESCE(d.code,'') AS code,d.title,COALESCE(d.description,'') AS description,
-					COALESCE(d.filepath,'') AS filepath,COALESCE(d.thumbnail,'') AS thumbnail,
-					COALESCE(d.version_no,'') AS version_no,COALESCE(d.validity_status,'') AS validity_status,
-					d.issue_date,d.effective_date,COALESCE(d.metadata,'{}'::jsonb) AS metadata,d.created_at,d.updated_at`).
-				Take(&doc).Error
-			if err == nil {
-				doc.Metadata = normalizeJSON(doc.Metadata, "{}")
-				doc.DocumentTypeName = enums.GetPlanningDocumentTypeLabel(doc.DocumentType)
-				doc.StatusName = documentStatusName(doc.Status)
-				items[i].Document = &doc
+			if doc, ok := docMap[*items[i].DocumentID]; ok {
+				copied := doc
+				items[i].Document = &copied
 			}
 		}
 	}
+
 	return &planningdomain.Page[planningdomain.Event]{Data: items, Total: total, Page: page, Size: size}, nil
+}
+
+func (r *Repository) loadDocumentsByIDs(ctx context.Context, docIDSet map[uint64]struct{}) (map[uint64]planningdomain.Document, error) {
+	result := make(map[uint64]planningdomain.Document, len(docIDSet))
+	if len(docIDSet) == 0 {
+		return result, nil
+	}
+	docIDs := make([]uint64, 0, len(docIDSet))
+	for id := range docIDSet {
+		docIDs = append(docIDs, id)
+	}
+	var docs []planningdomain.Document
+	if err := r.db.WithContext(ctx).Table("qh_planning_documents d").
+		Where("d.id IN ? AND d.deleted_at IS NULL", docIDs).
+		Select(documentSelect).
+		Find(&docs).Error; err != nil {
+		return nil, err
+	}
+	for i := range docs {
+		r.decorateDocument(&docs[i])
+		result[docs[i].ID] = docs[i]
+	}
+	return result, nil
 }
 
 type followRow struct {
@@ -408,7 +861,7 @@ func (r *Repository) Follow(ctx context.Context, userID, projectID uint64, note 
 		return nil, errors.New("userID and planningProjectID are required")
 	}
 	var exists int64
-	if err := r.db.WithContext(ctx).Table("qh_planning_projects").Where("id=? AND deleted_at IS NULL", projectID).Count(&exists).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("qh_planning_projects").Where("id=? AND deleted_at IS NULL AND client_view = ?", projectID, true).Count(&exists).Error; err != nil {
 		return nil, err
 	}
 	if exists == 0 {
@@ -454,13 +907,10 @@ func (r *Repository) Unfollow(ctx context.Context, userID, projectID uint64) err
 func (r *Repository) ListFollowed(ctx context.Context, userID uint64, page, size int, search string) (*planningdomain.Page[planningdomain.FollowedProject], error) {
 	page, size = normalizePage(page, size)
 	base := r.db.WithContext(ctx).Table("user_followed_planning_projects f").
-		Joins("JOIN qh_planning_projects p ON p.id=f.planning_project_id AND p.deleted_at IS NULL").
+		Joins("JOIN qh_planning_projects p ON p.id=f.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Joins("LEFT JOIN qh_jurisdictions j ON j.id=p.jurisdiction_id AND j.deleted_at IS NULL").
 		Where("f.user_id=? AND f.deleted_at IS NULL", userID)
-	if value := strings.TrimSpace(search); value != "" {
-		pattern := "%" + strings.ToLower(value) + "%"
-		base = base.Where("LOWER(COALESCE(p.name,'')) LIKE ? OR LOWER(COALESCE(p.code,'')) LIKE ? OR LOWER(COALESCE(p.decision_number,'')) LIKE ?", pattern, pattern, pattern)
-	}
+	base = applyProjectSearch(base, search, false)
 	var total int64
 	if err := base.Count(&total).Error; err != nil {
 		return nil, err
@@ -481,12 +931,141 @@ func (r *Repository) ListFollowed(ctx context.Context, userID uint64, page, size
 		r.decorateProject(&rows[i].Project)
 		items = append(items, planningdomain.FollowedProject{FollowID: rows[i].FollowID, FollowedAt: rows[i].FollowedAt, Note: rows[i].Note, Project: rows[i].Project})
 	}
+	projects := make([]planningdomain.Project, len(items))
+	for i := range items {
+		projects[i] = items[i].Project
+	}
+	// if err := r.attachProjectTags(ctx, projects); err != nil {
+	// 	return nil, err
+	// }
+	if err := r.attachProjectRelations(ctx, projects); err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].Project = projects[i]
+	}
 	return &planningdomain.Page[planningdomain.FollowedProject]{Data: items, Total: total, Page: page, Size: size}, nil
+}
+
+func (r *Repository) ListProjectsByLayerRelation(ctx context.Context, layerIDs []uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	if len(layerIDs) == 0 {
+		return nil, errors.New("layer ids is required")
+	}
+	page, size = normalizePage(page, size)
+
+	baseSQL := `
+		WITH ranked AS (
+			SELECT
+				d.planning_project_id,
+				MIN(rel.sort_order) AS sort_order,
+				MIN(rel.id) AS rel_id
+			FROM layer_plan_doc_relation rel
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			JOIN qh_layers l
+			  ON l.id = rel.layer_id
+			 AND l.deleted_at IS NULL
+			 AND l.status = 10
+			WHERE rel.deleted_at IS NULL
+			  AND rel.layer_id IN ?
+			GROUP BY d.planning_project_id
+		)
+		SELECT %s
+		FROM ranked rr
+		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
+		LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL
+	`
+	return r.scanPlanningProjectsPage(ctx, baseSQL, []any{layerIDs}, page, size)
+}
+
+func (r *Repository) ListProjectsByParcelRelation(ctx context.Context, parcelID uint64, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	if parcelID == 0 {
+		return nil, errors.New("parcel id is required")
+	}
+	page, size = normalizePage(page, size)
+
+	// parcel → regions (intersects) → layers → layer_plan_doc_relation → documents → planning-projects
+	baseSQL := `
+		WITH parcel_layers AS (
+			SELECT DISTINCT r.layer_id
+			FROM parcels p
+			JOIN qh_regions r
+			  ON r.geometry && p.geometry
+			 AND ST_Intersects(r.geometry, p.geometry)
+			JOIN qh_layers l
+			  ON l.id = r.layer_id
+			 AND l.deleted_at IS NULL
+			 AND l.status = 10
+			WHERE p.id = ?
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			  AND r.deleted_at IS NULL
+			  AND r.status = 10
+			  AND r.is_latest = true
+			  AND r.geometry IS NOT NULL
+		),
+		ranked AS (
+			SELECT
+				d.planning_project_id,
+				MIN(rel.sort_order) AS sort_order,
+				MIN(rel.id) AS rel_id
+			FROM layer_plan_doc_relation rel
+			JOIN parcel_layers pl ON pl.layer_id = rel.layer_id
+			JOIN qh_planning_documents d
+			  ON d.id = rel.planning_document_id
+			 AND d.deleted_at IS NULL
+			WHERE rel.deleted_at IS NULL
+			GROUP BY d.planning_project_id
+		)
+		SELECT %s
+		FROM ranked rr
+		JOIN qh_planning_projects p ON p.id = rr.planning_project_id AND p.deleted_at IS NULL AND p.client_view = true
+		LEFT JOIN qh_jurisdictions j ON j.id = p.jurisdiction_id AND j.deleted_at IS NULL
+	`
+	return r.scanPlanningProjectsPage(ctx, baseSQL, []any{parcelID}, page, size)
+}
+
+func (r *Repository) scanPlanningProjectsPage(ctx context.Context, baseSQL string, args []any, page, size int) (*planningdomain.Page[planningdomain.Project], error) {
+	countSQL := fmt.Sprintf(baseSQL, "COUNT(*)")
+	var total int64
+	if err := r.db.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, err
+	}
+	if total == 0 {
+		return &planningdomain.Page[planningdomain.Project]{Data: []planningdomain.Project{}, Total: 0, Page: page, Size: size}, nil
+	}
+
+	listSQL := fmt.Sprintf(baseSQL, projectSelect) + `
+		ORDER BY rr.sort_order ASC, rr.rel_id ASC
+		OFFSET ? LIMIT ?
+	`
+	listArgs := append(append([]any{}, args...), page*size, size)
+	items := []planningdomain.Project{}
+	if err := r.db.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&items).Error; err != nil {
+		return nil, err
+	}
+	for i := range items {
+		r.decorateProject(&items[i])
+	}
+	if err := r.attachProjectRelations(ctx, items); err != nil {
+		return nil, err
+	}
+	return &planningdomain.Page[planningdomain.Project]{Data: items, Total: total, Page: page, Size: size}, nil
 }
 
 func (r *Repository) ListProjectLayers(ctx context.Context, projectID uint64) ([]planningdomain.ProjectLayer, error) {
 	if projectID == 0 {
 		return nil, errors.New("planning project id is required")
+	}
+	var exists int64
+	if err := r.db.WithContext(ctx).Table("qh_planning_projects").
+		Where("id = ? AND deleted_at IS NULL AND client_view = ?", projectID, true).
+		Count(&exists).Error; err != nil {
+		return nil, err
+	}
+	if exists == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	items := make([]planningdomain.ProjectLayer, 0)
 	err := r.db.WithContext(ctx).Table("qh_layers l").
@@ -510,6 +1089,41 @@ func (r *Repository) ListProjectLayers(ctx context.Context, projectID uint64) ([
 	}
 	for i := range items {
 		items[i].StyleConfig = normalizeJSON(items[i].StyleConfig, "[]")
+	}
+	return items, nil
+}
+
+func (r *Repository) ListProvinces(ctx context.Context, filter planningdomain.ProvinceListFilter) ([]planningdomain.ProvinceItem, error) {
+	db := r.db.WithContext(ctx).Table("province_v2")
+	if filter.Scope == planningdomain.ProvinceScopeQH {
+		db = db.Where("qh_order > 0")
+	}
+	if pattern := lowerSearchPattern(filter.Search); pattern != "" {
+		code := strings.ToLower(strings.TrimSpace(filter.Search))
+		db = db.Where(`(
+			`+unaccentLike("full_name")+` OR
+			`+unaccentLike("short_name")+` OR
+			LOWER(COALESCE(code,'')) = ?
+		)`, pattern, pattern, code)
+	}
+
+	items := []planningdomain.ProvinceItem{}
+	err := db.Select(`id,
+		full_name,
+		COALESCE(short_name,'') AS short_name,
+		COALESCE(code,'') AS code,
+		COALESCE(lat,0) AS lat,
+		COALESCE(lng,0) AS lng,
+		COALESCE(qh_order,0) AS qh_order,
+		COALESCE(zoom,10) AS zoom,
+		COALESCE(description,'') AS description,
+		COALESCE(unit_type,0) AS unit_type,
+		COALESCE(data_source,0) AS data_source,
+		plan_doc_id`).
+		Order("qh_order DESC, full_name ASC, id ASC").
+		Scan(&items).Error
+	if err != nil {
+		return nil, fmt.Errorf("list provinces: %w", err)
 	}
 	return items, nil
 }

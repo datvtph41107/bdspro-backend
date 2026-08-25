@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	sharepb "pb/types/shared"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -136,6 +137,14 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 	// Nếu là lỗi gRPC bình thường
 	grpcErr, ok := status.FromError(err)
 	if !ok {
+		if message, isConn := friendlyUpstreamBusyMessage(err.Error()); isConn {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"code":    http.StatusServiceUnavailable,
+				"message": message,
+			})
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"error": "Internal Server Error",
@@ -162,11 +171,18 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 	}
 
 	httpStatus := httpStatusFromCode(grpcErr.Code())
+	message := grpcErr.Message()
+	if friendly, isConn := friendlyUpstreamBusyMessage(message); isConn {
+		message = friendly
+		httpStatus = http.StatusServiceUnavailable
+	} else if friendly, isConn := friendlyUpstreamBusyMessage(err.Error()); isConn {
+		message = friendly
+		httpStatus = http.StatusServiceUnavailable
+	}
 	w.WriteHeader(httpStatus)
-	//
 	resp := map[string]interface{}{
 		"code":    grpcErr.Code(),
-		"message": grpcErr.Message(),
+		"message": message,
 	}
 
 	for _, d := range grpcErr.Details() {
@@ -185,6 +201,40 @@ func ErrorToGatewayResponse(ctx context.Context, w http.ResponseWriter, err erro
 	}
 
 	json.NewEncoder(w).Encode(resp)
+}
+
+var (
+	dialTCPPortRe           = regexp.MustCompile(`(?i)dial tcp (?:\[[^\]]+\]|[^:\s]+):(\d{2,5})`)
+	connectionRefusedPortRe = regexp.MustCompile(`:(\d{2,5}): connect: connection refused`)
+)
+
+func isUpstreamConnectionError(msg string) bool {
+	lower := strings.ToLower(msg)
+	return strings.Contains(lower, "error while dialing") ||
+		strings.Contains(lower, "connection refused") ||
+		strings.Contains(lower, "dial tcp") ||
+		strings.Contains(lower, "all subconns are in transientfailure") ||
+		(strings.Contains(lower, "connection error") && strings.Contains(lower, "transport"))
+}
+
+func extractUpstreamPort(msg string) string {
+	if m := dialTCPPortRe.FindStringSubmatch(msg); len(m) == 2 {
+		return m[1]
+	}
+	if m := connectionRefusedPortRe.FindStringSubmatch(msg); len(m) == 2 {
+		return m[1]
+	}
+	return ""
+}
+
+func friendlyUpstreamBusyMessage(msg string) (string, bool) {
+	if !isUpstreamConnectionError(msg) {
+		return msg, false
+	}
+	if port := extractUpstreamPort(msg); port != "" {
+		return fmt.Sprintf("máy chủ đang bận vui lòng thử lại sau (%s)", port), true
+	}
+	return "máy chủ đang bận vui lòng thử lại sau", true
 }
 
 func httpStatusFromCode(code codes.Code) int {

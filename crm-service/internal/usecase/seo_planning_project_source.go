@@ -138,7 +138,7 @@ func buildPlanningProjectPublicDocument(
 
 	canonicalPath := firstNonEmptyRender(
 		projection.CanonicalPath,
-		"/do-an-quy-hoach/"+firstNonEmptyRender(projection.Slug, projection.CanonicalKey, strconv.FormatUint(projection.ID, 10)),
+		"/tin-tuc/do-an-quy-hoach/"+strconv.FormatUint(projection.ID, 10)+"/"+firstNonEmptyRender(projection.Slug, projection.CanonicalKey, strconv.FormatUint(projection.ID, 10)),
 	)
 	updatedAt := "Chưa cập nhật"
 	if projection.Source.UpdatedAt != nil {
@@ -210,7 +210,7 @@ func buildPlanningProjectPublicDocument(
 
 	relatedLinks := []dto.SeoRelatedLink{
 		{ID: "planning-map", Label: "Tra cứu trên bản đồ quy hoạch", Path: "/ban-do", Description: "Mở không gian bản đồ QHPro."},
-		{ID: "planning-documents", Label: "Tài liệu quy hoạch", Path: "/quy-hoach/tai-lieu", Description: "Tra cứu tài liệu và hồ sơ công khai."},
+		{ID: "planning-documents", Label: "Tài liệu quy hoạch", Path: "/tin-tuc/tai-lieu", Description: "Tra cứu tài liệu và hồ sơ công khai."},
 	}
 	relatedEntities := make([]dto.SeoRelatedEntity, 0, len(projection.RelatedProjects))
 	for _, related := range projection.RelatedProjects {
@@ -230,7 +230,7 @@ func buildPlanningProjectPublicDocument(
 		ResourceType:  "planning_project",
 		Identity:      dto.SeoPublicIdentity{ID: strconv.FormatUint(projection.ID, 10), Slug: projection.Slug, CanonicalPath: canonicalPath},
 		Heading:       dto.SeoPublicHeading{Eyebrow: "Đồ án quy hoạch", Title: firstNonEmptyRender(projection.Name, "Đồ án quy hoạch"), Summary: firstNonEmptyRender(projection.Summary, "Thông tin công khai về "+firstNonEmptyRender(projection.Name, "đồ án quy hoạch")+".")},
-		Breadcrumbs:   []dto.SeoBreadcrumb{{Label: "Trang chủ", Path: "/"}, {Label: "Đồ án quy hoạch", Path: "/do-an-quy-hoach"}, {Label: firstNonEmptyRender(projection.Name, "Đồ án quy hoạch"), Path: canonicalPath}},
+		Breadcrumbs:   []dto.SeoBreadcrumb{{Label: "Trang chủ", Path: "/"}, {Label: "Đồ án quy hoạch", Path: "/tin-tuc/do-an-quy-hoach"}, {Label: firstNonEmptyRender(projection.Name, "Đồ án quy hoạch"), Path: canonicalPath}},
 		Facts:         facts, Sections: sections, RelatedLinks: relatedLinks, RelatedEntities: relatedEntities,
 		FAQ: &dto.SeoFAQ{GroupKey: "planning-project-detail", Items: []dto.SeoFAQItem{
 			{ID: "information-scope", Question: "Trang đồ án này cung cấp những thông tin gì?", Answer: "Trang tổng hợp loại quy hoạch, trạng thái, địa bàn, phạm vi nghiên cứu, các mốc pháp lý, chỉ tiêu và tài liệu liên quan theo dữ liệu nguồn hiện có."},

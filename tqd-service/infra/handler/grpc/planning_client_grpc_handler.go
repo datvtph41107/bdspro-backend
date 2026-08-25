@@ -8,9 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"common/injection"
 	_middleware "common/middleware"
+	"pb/clients"
 	planningapp "tqd/internal/modules/planningclient/application"
 	planningdomain "tqd/internal/modules/planningclient/domain"
+	tqdutils "tqd/internal/utils"
+
+	tqdpb "pb/types/tqd"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -18,7 +23,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
-	tqdpb "pb/types/tqd"
 )
 
 // PlanningClientGrpcHandler owns planning-project business workflows in TQD.
@@ -26,11 +30,17 @@ import (
 // and registered only by gateway-service.
 type PlanningClientGrpcHandler struct {
 	tqdpb.UnimplementedPlanningClientServiceServer
-	service *planningapp.Service
+	service                    *planningapp.Service
+	provinceScopeListStartTime int64
+	hubClient                  *clients.HubGrpcClient
 }
 
 func NewPlanningClientGrpcHandler(service *planningapp.Service) *PlanningClientGrpcHandler {
-	return &PlanningClientGrpcHandler{service: service}
+	return &PlanningClientGrpcHandler{
+		service:                    service,
+		provinceScopeListStartTime: time.Now().UnixMilli(),
+		hubClient:                  injection.NewHubClient(),
+	}
 }
 
 func bytesResponse(value any) (*wrapperspb.BytesValue, error) {
@@ -39,6 +49,10 @@ func bytesResponse(value any) (*wrapperspb.BytesValue, error) {
 		return nil, status.Errorf(codes.Internal, "encode response: %v", err)
 	}
 	return wrapperspb.Bytes(payload), nil
+}
+
+func successResponse(data any) (*wrapperspb.BytesValue, error) {
+	return bytesResponse(map[string]any{"code": 0, "data": data})
 }
 
 func setPlanningHTTPMetadata(ctx context.Context, statusCode int, cacheControl string) {
@@ -104,6 +118,40 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 	if req == nil {
 		req = &tqdpb.ListPlanningProjectsRequest{}
 	}
+
+	search := strings.TrimSpace(req.GetKeyword())
+	if search == "" {
+		search = strings.TrimSpace(req.GetSearch())
+	}
+	if search != "" && h.hubClient != nil {
+		h.hubClient.TrackKeywordSearch(ctx, search, "tqd")
+	}
+
+	layerIDs := tqdutils.MergePositiveUint64(0, tqdutils.ParseUintCSV(req.GetLayerIds()))
+	page := int(req.GetPage())
+	size := positiveOr(req.GetSize(), 20)
+	if len(layerIDs) > 0 {
+		result, err := h.service.ListProjectsByLayerRelation(ctx, layerIDs, page, size)
+		if err != nil {
+			return nil, repositoryError(err)
+		}
+		setPlanningHTTPMetadata(ctx, 200, "public, max-age=15, stale-while-revalidate=60")
+		return bytesResponse(result)
+	}
+	if req.GetParcelId() > 0 {
+		result, err := h.service.ListProjectsByParcelRelation(
+			ctx,
+			req.GetParcelId(),
+			page,
+			size,
+		)
+		if err != nil {
+			return nil, repositoryError(err)
+		}
+		setPlanningHTTPMetadata(ctx, 200, "public, max-age=15, stale-while-revalidate=60")
+		return bytesResponse(result)
+	}
+
 	updatedFrom, err := parseOptionalPlanningTime(req.GetUpdatedFrom(), "updatedFrom", false)
 	if err != nil {
 		return nil, err
@@ -113,14 +161,22 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 		return nil, err
 	}
 	var hasLayer *bool
-	if req.GetHasLayer() != nil {
-		value := req.GetHasLayer().GetValue()
-		hasLayer = &value
+	if req.HasLayer != nil {
+		switch *req.HasLayer {
+		case 0:
+			value := false
+			hasLayer = &value
+		case 1:
+			value := true
+			hasLayer = &value
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "has_layer must be 0 or 1")
+		}
 	}
 	filter := planningdomain.ProjectListFilter{
 		Page:           int(req.GetPage()),
 		Size:           positiveOr(req.GetSize(), 20),
-		Search:         strings.TrimSpace(req.GetSearch()),
+		Search:         strings.ToLower(search),
 		PlanningType:   strings.TrimSpace(req.GetPlanningType()),
 		PlanningLevel:  strings.TrimSpace(req.GetPlanningLevel()),
 		ValidityStatus: strings.TrimSpace(req.GetValidityStatus()),
@@ -134,6 +190,9 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjects(ctx context.Context, re
 		Decision:       strings.TrimSpace(req.GetDecision()),
 		UpdatedFrom:    updatedFrom,
 		UpdatedTo:      updatedTo,
+		TagIDs:         strings.TrimSpace(req.GetTagIds()),
+		ProvinceIDs:    strings.TrimSpace(req.GetProvinceIds()),
+		AdmID:          req.GetAdmId(),
 	}
 	result, err := h.service.ListProjects(ctx, filter)
 	if err != nil {
@@ -153,7 +212,7 @@ func (h *PlanningClientGrpcHandler) GetPlanningProject(ctx context.Context, req 
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
-	return bytesResponse(result)
+	return successResponse(result)
 }
 
 func (h *PlanningClientGrpcHandler) ListPlanningDocuments(ctx context.Context, req *tqdpb.ListPlanningDocumentsRequest) (*wrapperspb.BytesValue, error) {
@@ -162,6 +221,36 @@ func (h *PlanningClientGrpcHandler) ListPlanningDocuments(ctx context.Context, r
 		return nil, err
 	}
 	result, err := h.service.ListDocuments(ctx, id, int(req.GetPage()), positiveOr(req.GetSize(), 50), strings.TrimSpace(req.GetKeyword()), strings.TrimSpace(req.GetDocumentType()), strings.TrimSpace(req.GetStatus()))
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
+	return bytesResponse(result)
+}
+
+// @Summary Danh sách tài liệu liên quan thửa đất
+// @Description parcel → regions → layers → layer_plan_doc_relation → planning-documents
+// @Tags PlanningClient
+// @Accept json
+// @Produce json
+// @Param parcel_id path int true "Parcel ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Param docType query string false "CSV document_type, lọc OR (vd. 30,50)"
+// @Success 200 {object} object
+// @Router /v2/tqd/client/planning-documents/relation-layer/{parcel_id} [get]
+func (h *PlanningClientGrpcHandler) ListLayerPlanDocRelations(ctx context.Context, req *tqdpb.ListLayerPlanDocRelationRequest) (*wrapperspb.BytesValue, error) {
+	id, err := requiredID(req.GetParcelId(), "parcel id")
+	if err != nil {
+		return nil, err
+	}
+	result, err := h.service.ListDocumentsByParcelRelation(
+		ctx,
+		id,
+		int(req.GetPage()),
+		positiveOr(req.GetSize(), 20),
+		strings.TrimSpace(req.GetDocType()),
+	)
 	if err != nil {
 		return nil, repositoryError(err)
 	}
@@ -179,7 +268,7 @@ func (h *PlanningClientGrpcHandler) GetPlanningDocument(ctx context.Context, req
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
-	return bytesResponse(result)
+	return successResponse(result)
 }
 
 func (h *PlanningClientGrpcHandler) ListPlanningEvents(ctx context.Context, req *tqdpb.ListPlanningEventsRequest) (*wrapperspb.BytesValue, error) {
@@ -254,11 +343,34 @@ func (h *PlanningClientGrpcHandler) ListFollowedPlanningProjects(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	result, err := h.service.ListFollowed(ctx, userID, int(req.GetPage()), positiveOr(req.GetSize(), 20), strings.TrimSpace(req.GetSearch()))
+	result, err := h.service.ListFollowed(ctx, userID, int(req.GetPage()), positiveOr(req.GetSize(), 20), strings.ToLower(strings.TrimSpace(req.GetSearch())))
 	if err != nil {
 		return nil, repositoryError(err)
 	}
 	setPlanningHTTPMetadata(ctx, 200, "no-store")
+	return bytesResponse(result)
+}
+
+// @Summary Danh sách đồ án liên quan thửa đất
+// @Description parcel → regions (intersects) → layers → layer_plan_doc_relation → documents → planning-projects
+// @Tags PlanningClient
+// @Accept json
+// @Produce json
+// @Param parcel_id query int true "Parcel ID"
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} object
+// @Router /v2/tqd/client/planning-projects/relation-parcel [get]
+func (h *PlanningClientGrpcHandler) ListParcelPlanningRelations(ctx context.Context, req *tqdpb.ListParcelPlanningRelationRequest) (*wrapperspb.BytesValue, error) {
+	id, err := requiredID(req.GetParcelId(), "parcel id")
+	if err != nil {
+		return nil, err
+	}
+	result, err := h.service.ListProjectsByParcelRelation(ctx, id, int(req.GetPage()), positiveOr(req.GetSize(), 20))
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return bytesResponse(result)
 }
 
@@ -300,4 +412,41 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjectLayers(ctx context.Contex
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return bytesResponse(map[string]any{"data": result, "total": len(result)})
+}
+
+func (h *PlanningClientGrpcHandler) ListProvinces(ctx context.Context, req *tqdpb.ListProvincesRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil {
+		req = &tqdpb.ListProvincesRequest{}
+	}
+	setPlanningHTTPMetadata(ctx, 200, "public, max-age=300, stale-while-revalidate=600")
+
+	if req.GetScope() > 0 {
+		if req.GetTimestamp() > 0 && req.GetTimestamp() < h.provinceScopeListStartTime {
+			return bytesResponse(map[string]any{
+				"timestamp": h.provinceScopeListStartTime,
+				"lastest":   false,
+				"data":      []any{},
+				"total":     0,
+			})
+		}
+	}
+
+	filter := planningdomain.ProvinceListFilter{
+		Scope:  req.GetScope(),
+		Search: strings.ToLower(strings.TrimSpace(req.GetSearch())),
+	}
+	result, err := h.service.ListProvinces(ctx, filter)
+	if err != nil {
+		return nil, repositoryError(err)
+	}
+
+	response := map[string]any{
+		"data":  result,
+		"total": len(result),
+	}
+	if req.GetScope() > 0 {
+		response["timestamp"] = h.provinceScopeListStartTime
+		response["lastest"] = true
+	}
+	return bytesResponse(response)
 }

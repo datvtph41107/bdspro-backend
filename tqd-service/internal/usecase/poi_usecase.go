@@ -202,18 +202,11 @@ func (u *poiUsecase) Delete(ctx context.Context, id uint64) error {
 
 // List implements PoiUsecase.List
 func (u *poiUsecase) List(ctx context.Context, filter *dto.PoiFilter) (*dto.ListPoisResponse, error) {
-	// Validate pagination
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.Size < 1 {
-		filter.Size = 10
-	}
+	filter.Pagable.Normalize()
 	if filter.Size > 100 {
 		filter.Size = 100
 	}
 
-	// Get from repository
 	pois, total, err := u.repo.List(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list POIs: %v", err)

@@ -5,6 +5,7 @@ import (
 	"crm/infra/impl"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
+	"crm/internal/enums"
 	"crm/internal/repo"
 	"strings"
 	"time"
@@ -49,7 +50,22 @@ func (r *SeoDomainPostgres) GetByID(ctx context.Context, id uint64) (*seo_domain
 		return nil, err
 	}
 	seo.NormalizeLifecycle()
+	r.fillCategoryName(ctx, &seo)
 	return &seo, nil
+}
+
+func (r *SeoDomainPostgres) fillCategoryName(ctx context.Context, seo *seo_domain.SeoDomain) {
+	if seo == nil || seo.CategoryID == nil || *seo.CategoryID == 0 {
+		return
+	}
+	var name string
+	_ = impl.GetDB(ctx, r.db).WithContext(ctx).
+		Table("seo_category").
+		Select("name").
+		Where("id = ? AND deleted_at IS NULL", *seo.CategoryID).
+		Limit(1).
+		Scan(&name).Error
+	seo.CategoryName = name
 }
 
 func (r *SeoDomainPostgres) GetByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error) {
@@ -145,58 +161,67 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 	req.Normalize()
 
-	query := r.db.WithContext(ctx).Model(&seo_domain.SeoDomain{})
+	query := r.db.WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Select("seo_domain.*, COALESCE(sc.count, 0) AS click_count, sc.updated_at AS click_updated_at, COALESCE(cat.name, '') AS category_name").
+		Joins("LEFT JOIN seo_count sc ON sc.seo_id = seo_domain.id").
+		Joins("LEFT JOIN seo_category cat ON cat.id = seo_domain.category_id AND cat.deleted_at IS NULL")
 
 	if req.Keyword != nil && strings.TrimSpace(*req.Keyword) != "" {
-		keyword := "%" + strings.TrimSpace(*req.Keyword) + "%"
-		query = query.Where(
-			"slug ILIKE ? OR origin_url ILIKE ? OR canonical_url ILIKE ? OR title ILIKE ? OR description ILIKE ? OR note ILIKE ? OR ref_label ILIKE ?",
-			keyword, keyword, keyword, keyword, keyword, keyword, keyword,
-		)
+		keyword := strings.ToLower(strings.TrimSpace(*req.Keyword))
+		keyword = strings.ReplaceAll(keyword, "+", " ")
+		parts := strings.Fields(keyword)
+		if len(parts) > 0 {
+			keyword = "%" + strings.Join(parts, "%") + "%"
+			query = query.Where(
+				"LOWER(seo_domain.slug) LIKE ? OR LOWER(seo_domain.origin_url) LIKE ? OR LOWER(seo_domain.canonical_url) LIKE ? OR LOWER(seo_domain.title) LIKE ? OR LOWER(seo_domain.description) LIKE ? OR LOWER(seo_domain.note) LIKE ? OR LOWER(seo_domain.ref_label) LIKE ?",
+				keyword, keyword, keyword, keyword, keyword, keyword, keyword,
+			)
+		}
 	}
 	if req.RefType != nil {
-		query = query.Where("ref_type = ?", *req.RefType)
+		query = query.Where("seo_domain.ref_type = ?", *req.RefType)
 	}
 	if req.RefID != nil {
-		query = query.Where("ref_id = ?", *req.RefID)
+		query = query.Where("seo_domain.ref_id = ?", *req.RefID)
 	}
 	if req.RefSource != nil && strings.TrimSpace(*req.RefSource) != "" {
-		query = query.Where("ref_source = ?", strings.TrimSpace(*req.RefSource))
+		query = query.Where("seo_domain.ref_source = ?", strings.TrimSpace(*req.RefSource))
 	}
 	if req.SourceStatus != nil && strings.TrimSpace(*req.SourceStatus) != "" {
-		query = query.Where("source_status = ?", strings.TrimSpace(*req.SourceStatus))
+		query = query.Where("seo_domain.source_status = ?", strings.TrimSpace(*req.SourceStatus))
 	}
 	if req.RefMissing != nil {
-		query = query.Where("ref_missing = ?", *req.RefMissing)
+		query = query.Where("seo_domain.ref_missing = ?", *req.RefMissing)
 	}
 	if req.Scope != nil && strings.TrimSpace(*req.Scope) != "" {
-		query = query.Where("scope = ?", strings.TrimSpace(*req.Scope))
+		query = query.Where("seo_domain.scope = ?", strings.TrimSpace(*req.Scope))
 	}
 	if req.Published != nil {
-		query = query.Where("published = ?", *req.Published)
+		query = query.Where("seo_domain.published = ?", *req.Published)
 	}
 	if req.IsSiteMap != nil {
-		query = query.Where("is_site_map = ?", *req.IsSiteMap)
+		query = query.Where("seo_domain.is_site_map = ?", *req.IsSiteMap)
 	}
 	if req.IsIndex != nil {
-		query = query.Where("is_index = ?", *req.IsIndex)
+		query = query.Where("seo_domain.is_index = ?", *req.IsIndex)
 	}
 	if req.IsRobot != nil {
-		query = query.Where("is_robot = ?", *req.IsRobot)
+		query = query.Where("seo_domain.is_robot = ?", *req.IsRobot)
 	}
 	if req.NeedGenerate != nil {
-		query = query.Where("need_generate = ?", *req.NeedGenerate)
+		query = query.Where("seo_domain.need_generate = ?", *req.NeedGenerate)
 	}
 
 	// V2 lifecycle/render filters.
 	if req.PageStatus != nil && strings.TrimSpace(*req.PageStatus) != "" {
-		query = query.Where("page_status = ?", strings.TrimSpace(*req.PageStatus))
+		query = query.Where("seo_domain.page_status = ?", strings.TrimSpace(*req.PageStatus))
 	}
 	if req.RenderStatus != nil && strings.TrimSpace(*req.RenderStatus) != "" {
-		query = query.Where("render_status = ?", strings.TrimSpace(*req.RenderStatus))
+		query = query.Where("seo_domain.render_status = ?", strings.TrimSpace(*req.RenderStatus))
 	}
 	if req.TemplateKey != nil && strings.TrimSpace(*req.TemplateKey) != "" {
-		query = query.Where("template_key = ?", strings.TrimSpace(*req.TemplateKey))
+		query = query.Where("seo_domain.template_key = ?", strings.TrimSpace(*req.TemplateKey))
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -204,7 +229,7 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 
 	if err := query.
-		Order("updated_at DESC").
+		Order("seo_domain.updated_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimitAdmin()).
 		Find(&items).Error; err != nil {
@@ -218,6 +243,25 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	return items, total, nil
 }
 
+func (r *SeoDomainPostgres) linkedRefQuery(ctx context.Context, req *dto.GetSeoRefsRequest) *gorm.DB {
+	if req == nil {
+		req = &dto.GetSeoRefsRequest{}
+	}
+	return impl.GetDB(ctx, r.db).WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Where("seo_domain.published = ?", true).
+		Where("(seo_domain.scope = ? OR seo_domain.scope = '')", seo_domain.SeoScopePublic).
+		Where(`(
+			(seo_domain.ref_type = ? AND seo_domain.ref_id = ?)
+			OR EXISTS (
+				SELECT 1 FROM seo_refs sr
+				WHERE sr.seo_domain_id = seo_domain.id
+				  AND sr.ref_type = ?
+				  AND sr.ref_id = ?
+			)
+		)`, req.RefType, req.RefID, req.RefType, req.RefID)
+}
+
 func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error) {
 	var items []seo_domain.SeoDomain
 	var total int64
@@ -227,23 +271,13 @@ func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.Get
 	}
 	req.Normalize()
 
-	buildQuery := func(db *gorm.DB) *gorm.DB {
-		return db.WithContext(ctx).
-			Model(&seo_domain.SeoDomain{}).
-			Joins("INNER JOIN seo_refs sr ON sr.seo_domain_id = seo_domain.id").
-			Where("sr.ref_type = ? AND sr.ref_id = ?", req.RefType, req.RefID).
-			Where("seo_domain.published = ?", true).
-			Where("(seo_domain.scope = ? OR seo_domain.scope = '')", seo_domain.SeoScopePublic)
-	}
+	db := r.linkedRefQuery(ctx, req)
 
-	db := impl.GetDB(ctx, r.db)
-
-	if err := buildQuery(db).Count(&total).Error; err != nil {
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err := buildQuery(db).
-		Select("seo_domain.*").
+	err := r.linkedRefQuery(ctx, req).
 		Order("seo_domain.published_at DESC NULLS LAST, seo_domain.created_at DESC").
 		Offset(req.GetOffset()).
 		Limit(req.GetLimit()).
@@ -257,6 +291,161 @@ func (r *SeoDomainPostgres) GetListByLinkedRef(ctx context.Context, req *dto.Get
 	}
 
 	return items, total, nil
+}
+
+func (r *SeoDomainPostgres) CountByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error) {
+	if req == nil {
+		req = &dto.GetSeoRefsRequest{}
+	}
+
+	var total int64
+	if err := r.linkedRefQuery(ctx, req).Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func (r *SeoDomainPostgres) CountRecentByRefType(ctx context.Context, days uint32) ([]dto.SeoRefTypeCountItem, error) {
+	if days == 0 {
+		days = 5
+	}
+
+	type row struct {
+		RefType uint32 `gorm:"column:ref_type"`
+		Total   int64  `gorm:"column:total"`
+	}
+
+	since := time.Now().AddDate(0, 0, -int(days))
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Model(&seo_domain.SeoDomain{}).
+		Select("ref_type, COUNT(*) AS total").
+		Where("updated_at >= ?", since).
+		Group("ref_type").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	totals := make(map[uint32]int64, len(rows))
+	for _, item := range rows {
+		totals[item.RefType] = item.Total
+	}
+
+	allTypes := enums.AllSEORefTypes()
+	result := make([]dto.SeoRefTypeCountItem, 0, len(allTypes))
+	for _, refType := range allTypes {
+		total := totals[uint32(refType)]
+		if total == 0 {
+			continue
+		}
+		result = append(result, dto.SeoRefTypeCountItem{
+			RefType:     refType,
+			RefTypeName: refType.Name(),
+			Total:       total,
+		})
+	}
+	return result, nil
+}
+
+func (r *SeoDomainPostgres) GetTopClicked(ctx context.Context, fromTime time.Time, limit int) ([]dto.SeoTopClickedItem, error) {
+	if limit <= 0 {
+		limit = 15
+	}
+
+	type row struct {
+		ID         uint64  `gorm:"column:id"`
+		Name       string  `gorm:"column:name"`
+		RefType    uint32  `gorm:"column:ref_type"`
+		RefID      *uint64 `gorm:"column:ref_id"`
+		ClickCount uint64  `gorm:"column:click_count"`
+	}
+
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT
+				sd.id,
+				COALESCE(NULLIF(TRIM(sd.title), ''), COALESCE(sd.ref_label, '')) AS name,
+				sd.ref_type,
+				sd.ref_id,
+				SUM(scl.clicked)::bigint AS click_count
+			FROM seo_count_log scl
+			INNER JOIN seo_domain sd ON sd.id = scl.seo_id AND sd.deleted_at IS NULL
+			WHERE scl."timestamp" >= ?
+			GROUP BY sd.id, sd.title, sd.ref_label, sd.ref_type, sd.ref_id
+			ORDER BY click_count DESC, sd.id DESC
+			LIMIT ?
+		`, fromTime, limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.SeoTopClickedItem, 0, len(rows))
+	for _, item := range rows {
+		var refID uint64
+		if item.RefID != nil {
+			refID = *item.RefID
+		}
+		result = append(result, dto.SeoTopClickedItem{
+			ID:   item.ID,
+			Name: item.Name,
+			Source: dto.SeoClickSource{
+				RefType: item.RefType,
+				RefID:   refID,
+			},
+			ClickCount: item.ClickCount,
+		})
+	}
+	return result, nil
+}
+
+func (r *SeoDomainPostgres) CountClicksFromTime(ctx context.Context, fromTime time.Time) (uint64, error) {
+	var total int64
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT COALESCE(SUM(clicked), 0)
+			FROM seo_count_log
+			WHERE "timestamp" >= ?
+		`, fromTime).
+		Scan(&total).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint64(total), nil
+}
+
+func (r *SeoDomainPostgres) GetClickDailyStats(ctx context.Context, fromTime time.Time) ([]dto.SeoClickDailyItem, error) {
+	type row struct {
+		Date  string `gorm:"column:date"`
+		Count uint64 `gorm:"column:count"`
+	}
+
+	var rows []row
+	err := impl.GetDB(ctx, r.db).WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char(("timestamp" AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS date,
+				COALESCE(SUM(clicked), 0)::bigint AS count
+			FROM seo_count_log
+			WHERE "timestamp" >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.SeoClickDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.SeoClickDailyItem{
+			Date:  item.Date,
+			Count: item.Count,
+		})
+	}
+	return result, nil
 }
 
 func (r *SeoDomainPostgres) GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error) {
@@ -288,6 +477,17 @@ func (r *SeoDomainPostgres) Update(ctx context.Context, id uint64, updates map[s
 	return impl.GetDB(ctx, r.db).
 		Model(&seo_domain.SeoDomain{}).
 		Where("id = ?", id).
+		Updates(updates).Error
+}
+
+func (r *SeoDomainPostgres) UpdateByIDs(ctx context.Context, ids []uint64, updates map[string]interface{}) error {
+	if len(ids) == 0 || len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = gorm.Expr("NOW()")
+	return impl.GetDB(ctx, r.db).
+		Model(&seo_domain.SeoDomain{}).
+		Where("id IN ? AND deleted_at IS NULL", ids).
 		Updates(updates).Error
 }
 
@@ -381,8 +581,8 @@ func (r *SeoDomainPostgres) GetNeedGenerateList(ctx context.Context, limit int) 
 	}
 	err := r.db.WithContext(ctx).
 		Where("need_generate = ? AND published = ?", true, true).
-		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
-		Where("render_status IN ?", []string{seo_domain.SeoRenderStatusPending, seo_domain.SeoRenderStatusFailed}).
+		// Where("page_status = ?", seo_domain.SeoPageStatusPublished).
+		// Where("render_status IN ?", []string{seo_domain.SeoRenderStatusPending, seo_domain.SeoRenderStatusFailed}).
 		Order("source_updated_at ASC NULLS FIRST, updated_at ASC").
 		Limit(limit).
 		Find(&items).Error

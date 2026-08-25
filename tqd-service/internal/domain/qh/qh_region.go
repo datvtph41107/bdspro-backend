@@ -3,6 +3,7 @@ package qh_domain
 import (
 	"encoding/json"
 	"time"
+	"tqd/internal/domain"
 	"tqd/internal/enums"
 )
 
@@ -26,7 +27,7 @@ type QHRegion struct {
 	LegalDoc     string `gorm:"type:text" json:"legalDoc"`
 	PlanningName string `gorm:"type:varchar(255)" json:"planningName"`
 
-	Geometry RawGeometry `gorm:"type:geometry(MultiPolygon,4326);not null" json:"geometry"`
+	Geometry domain.RawGeometry `gorm:"type:geometry(MultiPolygon,4326);not null" json:"geometry"`
 
 	Centroid   []byte  `gorm:"type:geometry(Point,4326)" json:"-"`
 	AreaSqm    float64 `gorm:"default:0" json:"areaSqm"`

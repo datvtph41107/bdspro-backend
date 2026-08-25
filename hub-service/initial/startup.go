@@ -23,8 +23,11 @@ type InitialApp struct {
 	ApiKeyUsecase           usecase.IApiKeyUsecase
 	Logger                  *flogging.FabricLogger
 	InteractiveEventHandler *handler.InteractiveEventHandler
+	ClickURLHandler         *handler.ClickURLHandler
 	ErrorLogHandler         *handler.ErrorLogHandler
 	ApplinkHandler          *handler.ApplinkHandler
+	RequestStatsHandler     *handler.RequestStatsHandler
+	KeywordSearchStatsHandler *handler.KeywordSearchStatsHandler
 }
 
 func NewInitialApp(
@@ -41,25 +44,31 @@ func NewInitialApp(
 	systemConfigUsecase *usecase.SystemConfigUsecase,
 	apiKeyUsecase usecase.IApiKeyUsecase,
 	interactiveEventHandler *handler.InteractiveEventHandler,
+	clickURLHandler *handler.ClickURLHandler,
 	errorLogHandler *handler.ErrorLogHandler,
 	appLinkHandler *handler.ApplinkHandler,
+	requestStatsHandler *handler.RequestStatsHandler,
+	keywordSearchStatsHandler *handler.KeywordSearchStatsHandler,
 ) *InitialApp {
 	return &InitialApp{
-		EventQueueService:       eventQueueService,
-		InternalHandler:         internalHandler,
-		UpdateDataHandler:       updateDataHandler,
-		LocationHandler:         locationHandler,
-		LocationV2Handler:       locationV2Handler,
-		UserGuideHandler:        userGuideHandler,
-		FAQHandler:              faqHandler,
-		SystemConfigHandler:     systemConfigHandler,
-		VersionHandler:          versionHandler,
-		ApiKeyHandler:           apiKeyHandler,
-		SystemConfigUsecase:     systemConfigUsecase,
-		ApiKeyUsecase:           apiKeyUsecase,
-		Logger:                  flogging.MustGetLogger(viper.GetString("server.name")),
-		InteractiveEventHandler: interactiveEventHandler,
-		ErrorLogHandler:         errorLogHandler,
-		ApplinkHandler:          appLinkHandler,
+		EventQueueService:         eventQueueService,
+		InternalHandler:           internalHandler,
+		UpdateDataHandler:         updateDataHandler,
+		LocationHandler:           locationHandler,
+		LocationV2Handler:         locationV2Handler,
+		UserGuideHandler:          userGuideHandler,
+		FAQHandler:                faqHandler,
+		SystemConfigHandler:       systemConfigHandler,
+		VersionHandler:            versionHandler,
+		ApiKeyHandler:             apiKeyHandler,
+		SystemConfigUsecase:       systemConfigUsecase,
+		ApiKeyUsecase:             apiKeyUsecase,
+		Logger:                    flogging.MustGetLogger(viper.GetString("server.name")),
+		InteractiveEventHandler:   interactiveEventHandler,
+		ClickURLHandler:           clickURLHandler,
+		ErrorLogHandler:           errorLogHandler,
+		ApplinkHandler:            appLinkHandler,
+		RequestStatsHandler:       requestStatsHandler,
+		KeywordSearchStatsHandler: keywordSearchStatsHandler,
 	}
 }

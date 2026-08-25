@@ -117,6 +117,11 @@ type documentRow struct {
 	ValidityStatus string
 	IssueDate      *time.Time
 	EffectiveDate  *time.Time
+	Indicators     string
+	Authority      string
+	Sector         string
+	Field          string
+	Signer         string
 }
 
 type relationRow struct {
@@ -325,11 +330,11 @@ func (r *Repository) GetParcelQuickView(
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT p.id AS parcel_id,
 		       (pi.parcel_id IS NOT NULL) AS has_parcel_info,
-		       COALESCE(NULLIF(pi.map_number,''),NULLIF(p.map_number,''),'') AS map_number,
-		       COALESCE(NULLIF(pi.land_number,''),NULLIF(p.land_number,''),'') AS land_number,
+		       COALESCE(pi.map_number,'') AS map_number,
+		       COALESCE(pi.land_number,'') AS land_number,
 		       COALESCE(pi.property_code,'') AS property_code,
-		       COALESCE(NULLIF(pi.address_text,''),NULLIF(p.address_text,''),'') AS address,
-		       COALESCE(NULLIF(pi.total_area_sqm,0),p.total_area_sqm,0) AS total_area_sqm,
+		       COALESCE(pi.address_text,'') AS address,
+		       COALESCE(NULLIF(pi.total_area_sqm,0), ST_Area(p.geometry::geography), 0) AS total_area_sqm,
 		       COALESCE(pi.province_code,'') AS province_code,
 		       COALESCE(pi.ward_code,'') AS ward_code,
 		       COALESCE(pi.is_verified,false) AS is_verified,
@@ -381,6 +386,7 @@ func (r *Repository) GetParcelQuickView(
 		JOIN qh_planning_projects pp
 		  ON pp.id = l.planning_project_id
 		 AND pp.deleted_at IS NULL
+		 AND pp.client_view = true
 		WHERE p.id = ?
 		ORDER BY intersect_area_sqm DESC, pp.id DESC
 		LIMIT 12`, parcelID).Scan(&projectRows).Error; err != nil {
@@ -416,7 +422,7 @@ func buildRelatedPlanningProject(project relatedProjectRow, slug string, ratio f
 		IntersectAreaSqm:  project.IntersectAreaSqm,
 		IntersectionRatio: ratio,
 		UpdatedAt:         project.UpdatedAt,
-		PublicPath:        "/do-an-quy-hoach/" + slug,
+		PublicPath:        "/tin-tuc/do-an-quy-hoach/" + id + "/" + slug,
 		DossierPath:       "/ban-do/do-an/" + id,
 		MapPath:           "/ban-do?projectId=" + id,
 	}
@@ -506,6 +512,7 @@ func (r *Repository) getPlanningProjectRow(
 			  ON j.id = pp.jurisdiction_id
 			 AND j.deleted_at IS NULL
 			WHERE pp.deleted_at IS NULL
+			  AND pp.client_view = true
 			  AND (
 			    pp.id::text = ?
 			    OR LOWER(COALESCE(pp.code,'')) = LOWER(?)
@@ -670,7 +677,12 @@ func (r *Repository) GetPlanningProjectProjection(
 		       COALESCE(version_no,'') AS version_no,
 		       COALESCE(validity_status,'') AS validity_status,
 		       issue_date,
-		       effective_date
+		       effective_date,
+		       COALESCE(indicators::text,'[]') AS indicators,
+		       COALESCE(authority,'') AS authority,
+		       COALESCE(sector,'') AS sector,
+		       COALESCE(field,'') AS field,
+		       COALESCE(signer,'') AS signer
 		FROM qh_planning_documents
 		WHERE planning_project_id = ?
 		  AND deleted_at IS NULL
@@ -695,6 +707,11 @@ func (r *Repository) GetPlanningProjectProjection(
 			ValidityStatus:   item.ValidityStatus,
 			IssueDate:        item.IssueDate,
 			EffectiveDate:    item.EffectiveDate,
+			Indicators:       item.Indicators,
+			Authority:        item.Authority,
+			Sector:           item.Sector,
+			Field:            item.Field,
+			Signer:           item.Signer,
 		})
 	}
 
@@ -755,6 +772,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		JOIN qh_planning_projects related
 		  ON related.id = relation.related_planning_project_id
 		 AND related.deleted_at IS NULL
+		 AND related.client_view = true
 		WHERE relation.planning_project_id = ?
 		  AND relation.deleted_at IS NULL
 		ORDER BY related.name`, row.ID).Scan(&relationRows).Error; err != nil {
@@ -769,7 +787,7 @@ func (r *Repository) GetPlanningProjectProjection(
 			Slug:       relatedSlug,
 			Code:       item.Code,
 			Name:       item.Name,
-			PublicPath: "/do-an-quy-hoach/" + relatedSlug,
+			PublicPath: "/tin-tuc/do-an-quy-hoach/" + strconv.FormatUint(item.ID, 10) + "/" + relatedSlug,
 			MapPath:    "/ban-do?projectId=" + strconv.FormatUint(item.ID, 10),
 		})
 	}
@@ -801,7 +819,7 @@ func (r *Repository) GetPlanningProjectProjection(
 		ID:                row.ID,
 		CanonicalKey:      "planning_project:" + strconv.FormatUint(row.ID, 10),
 		Slug:              slug,
-		CanonicalPath:     "/do-an-quy-hoach/" + slug,
+		CanonicalPath:     "/tin-tuc/do-an-quy-hoach/" + strconv.FormatUint(row.ID, 10) + "/" + slug,
 		Code:              row.Code,
 		Name:              row.Name,
 		PlanningType:      row.PlanningType,

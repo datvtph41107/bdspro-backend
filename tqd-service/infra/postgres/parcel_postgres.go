@@ -138,9 +138,9 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 	query := `
         SELECT 
             p.id,
-            COALESCE(p.address_text, '') as address_text,
-            COALESCE(p.map_number, '0') as map_number,
-            COALESCE(p.land_number, '0') as land_number,
+            COALESCE(pi.address_text, '') as address_text,
+            COALESCE(pi.map_number, '0') as map_number,
+            COALESCE(pi.land_number, '0') as land_number,
             p.lat,
             p.lon,
             
@@ -155,20 +155,20 @@ func (p *ParcelPostgres) GetParcelPreview(ctx context.Context, parcelID uint64) 
 			) as directions,
 
             COALESCE(sh.name, '') as shape_name,
-            p.shape_id,
-            COALESCE(p.facade, 0) as facade,
-            COALESCE(p.total_area_sqm, 0) as total_area_sqm,
-            p.land_type_id,
-            COALESCE(p.is_seo, false) AS is_seo,
+            pi.shape_id,
+            COALESCE(pi.facade, 0) as facade,
+            COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) as total_area_sqm,
+            pi.land_type_id,
+            COALESCE(pi.is_seo, false) AS is_seo,
             ST_AsGeoJSON(p.geometry)::bytea as geometry
         FROM parcels p
-        LEFT JOIN qh_shape sh ON sh.id = p.shape_id
-
-		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = p.id
+        LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+        LEFT JOIN qh_shape sh ON sh.id = pi.shape_id
+		LEFT JOIN qh_parcel_direction pd ON pd.qh_parcel_info_id = pi.id
 		LEFT JOIN qh_direction d ON d.id = pd.qh_direction_id
-
         WHERE p.id = $1 AND p.deleted_at IS NULL
-		GROUP BY p.id, sh.id
+		GROUP BY p.id, pi.id, sh.id, pi.address_text, pi.map_number, pi.land_number, p.lat, p.lon,
+		         pi.shape_id, sh.name, pi.facade, pi.total_area_sqm, pi.land_type_id, pi.is_seo, p.geometry
     `
 
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
@@ -213,21 +213,20 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 
 	if mapNumber != "" || landNumber != "" {
 		if mapNumber != "" {
-			where = append(where, "COALESCE(NULLIF(info.map_number, ''), parcel.map_number) = ?")
+			where = append(where, "NULLIF(info.map_number, '') = ?")
 			args = append(args, mapNumber)
 		}
 		if landNumber != "" {
-			where = append(where, "COALESCE(NULLIF(info.land_number, ''), parcel.land_number) = ?")
+			where = append(where, "NULLIF(info.land_number, '') = ?")
 			args = append(args, landNumber)
 		}
 	} else {
 		searchTerm := "%" + strings.ToLower(strings.TrimSpace(keyword)) + "%"
-		// Ưu tiên adr_search (đã bỏ dấu); fallback address_text khi adr_search trống.
 		where = append(where, `(
-			LOWER(COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '')) LIKE ?
+			LOWER(COALESCE(NULLIF(info.adr_search, ''), '')) LIKE ?
 			OR (
-				COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') = ''
-				AND LOWER(COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '')) LIKE ?
+				COALESCE(NULLIF(info.adr_search, ''), '') = ''
+				AND LOWER(COALESCE(NULLIF(info.address_text, ''), '')) LIKE ?
 			)
 		)`)
 		args = append(args, searchTerm, searchTerm)
@@ -239,23 +238,23 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 		SELECT
 			info.id,
 			info.parcel_id,
-			COALESCE(NULLIF(info.property_code, ''), parcel.property_code) AS property_code,
+			COALESCE(info.property_code, '') AS property_code,
 			info.property_uuid,
-			COALESCE(NULLIF(info.map_number, ''), parcel.map_number) AS map_number,
-			COALESCE(NULLIF(info.land_number, ''), parcel.land_number) AS land_number,
-			COALESCE(info.total_area_sqm, parcel.total_area_sqm, 0) AS total_area_sqm,
+			COALESCE(info.map_number, '') AS map_number,
+			COALESCE(info.land_number, '') AS land_number,
+			COALESCE(info.total_area_sqm, 0) AS total_area_sqm,
 			parcel.lat,
 			parcel.lon,
-			COALESCE(NULLIF(info.province_code, ''), parcel.province_code) AS province_code,
-			COALESCE(NULLIF(info.district_code, ''), parcel.district_code) AS district_code,
-			COALESCE(NULLIF(info.ward_code, ''), parcel.ward_code) AS ward_code,
-			COALESCE(NULLIF(info.address_text, ''), parcel.address_text, '') AS address_text,
-			COALESCE(NULLIF(info.adr_search, ''), parcel.adr_search, '') AS adr_search,
-			COALESCE(info.is_seo, parcel.is_seo, false) AS is_seo,
-			COALESCE(info.shape_id, parcel.shape_id) AS shape_id,
+			COALESCE(info.province_code, '') AS province_code,
+			COALESCE(info.district_code, '') AS district_code,
+			COALESCE(info.ward_code, '') AS ward_code,
+			COALESCE(info.address_text, '') AS address_text,
+			COALESCE(info.adr_search, '') AS adr_search,
+			COALESCE(info.is_seo, false) AS is_seo,
+			info.shape_id AS shape_id,
 			sh.name AS shape_name,
-			COALESCE(info.facade, parcel.facade, 0) AS facade,
-			COALESCE(info.land_type_id, parcel.land_type_id) AS land_type_id,
+			COALESCE(info.facade, 0) AS facade,
+			info.land_type_id AS land_type_id,
 			info.source_type,
 			info.is_verified,
 			info.verified_at,
@@ -263,7 +262,7 @@ func (p *ParcelPostgres) SearchByAddress(ctx context.Context, keyword string, ma
 			info.updated_at
 		FROM qh_parcel_info info
 		INNER JOIN parcels parcel ON parcel.id = info.parcel_id
-		LEFT JOIN qh_shape sh ON sh.id = COALESCE(info.shape_id, parcel.shape_id)
+		LEFT JOIN qh_shape sh ON sh.id = info.shape_id
 		WHERE ` + whereSQL + `
 		ORDER BY parcel.id DESC
 		LIMIT ? OFFSET ?`
@@ -349,7 +348,7 @@ func (p *ParcelPostgres) GetByIDs(ctx context.Context, ids []uint64) ([]qh_domai
 	}
 
 	query := fmt.Sprintf(`
-        SELECT id, ST_AsGeoJSON(geometry) as geometry, lat, lon, ref_id, ref_type, created_at, updated_at
+        SELECT id, ST_AsGeoJSON(geometry) as geometry, lat, lon, ref_id, ref_type, seo_id, created_at, updated_at
         FROM parcels WHERE id IN (%s) AND deleted_at IS NULL`, strings.Join(placeholders, ","))
 
 	err := p.DB.WithContext(ctx).Raw(query, args...).Scan(&parcels).Error
@@ -374,6 +373,34 @@ func (p *ParcelPostgres) FindByLocation(ctx context.Context, lat, lng float64) (
 		return nil, nil
 	}
 	return &parcel, nil
+}
+
+// GetPOIMapPoint lấy tọa độ focus của POI từ geom (fallback latitude/longitude).
+func (p *ParcelPostgres) GetPOIMapPoint(ctx context.Context, poiID uint64) (lat, lng float64, err error) {
+	if poiID == 0 {
+		return 0, 0, fmt.Errorf("poi id is required")
+	}
+
+	var row struct {
+		Lat float64 `gorm:"column:lat"`
+		Lng float64 `gorm:"column:lng"`
+	}
+	err = p.DB.WithContext(ctx).Raw(`
+		SELECT
+			COALESCE(ST_Y(geom), latitude, 0)::float8 AS lat,
+			COALESCE(ST_X(geom), longitude, 0)::float8 AS lng
+		FROM pois
+		WHERE id = ?
+		  AND deleted_at IS NULL
+		  AND is_active = true
+		LIMIT 1`, poiID).Scan(&row).Error
+	if err != nil {
+		return 0, 0, fmt.Errorf("get poi map point failed: %w", err)
+	}
+	if row.Lat == 0 && row.Lng == 0 {
+		return 0, 0, fmt.Errorf("poi not found or missing coordinates")
+	}
+	return row.Lat, row.Lng, nil
 }
 
 func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Parcel) error {
@@ -1448,25 +1475,26 @@ func (p *ParcelPostgres) ResolveParcelOverviewByLocation(
 			p.id AS parcel_id,
 			COALESCE(NULLIF(p.lat, 0), ST_Y(ST_PointOnSurface(p.geometry)), 0) AS lat,
 			COALESCE(NULLIF(p.lon, 0), ST_X(ST_PointOnSurface(p.geometry)), 0) AS lon,
-			COALESCE(NULLIF(p.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 			'' AS land_use_code,
 			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
 			'#CCCCCC' AS land_use_color,
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
-		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.deleted_at IS NULL
 		  AND p.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
 		  AND ST_Covers(p.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
@@ -1493,25 +1521,26 @@ func (p *ParcelPostgres) GetParcelOverview(ctx context.Context, parcelID uint64)
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(p.total_area_sqm, 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 			'' AS land_use_code,
 			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
 			'#CCCCCC' AS land_use_color,
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
-		LEFT JOIN qh_planning_land_use pu ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -1534,14 +1563,14 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			p.id AS parcel_id,
 			COALESCE(p.lat, 0) AS lat,
 			COALESCE(p.lon, 0) AS lon,
-			COALESCE(p.total_area_sqm, 0) AS area_sqm,
-			COALESCE(p.address_text, '') AS address_text,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
 			ST_AsGeoJSON(p.geometry) AS geometry,
 
-			COALESCE(p.map_number, '') AS map_number,
-			COALESCE(p.land_number, '') AS land_number,
-			COALESCE(p.property_code, '') AS property_code,
-			COALESCE(p.property_uuid::text, '') AS property_uuid,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
 			'' AS shape_type,
 			'' AS direction,
 
@@ -1550,14 +1579,15 @@ func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*d
 			'#CCCCCC' AS land_use_color,
 
 			COALESCE(prov.full_name, '') AS province,
-			COALESCE(p.province_code, '') AS province_code,
-			COALESCE(p.ward_code, '') AS ward_code,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
 			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(p.is_seo, false) AS is_seo
+			COALESCE(pi.is_seo, false) AS is_seo
 		FROM parcels p
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 		LEFT JOIN qh_planning_land_use pu
-			ON p.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON p.province_code = prov.code
+			ON pi.land_type_id = pu.id
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -1795,6 +1825,87 @@ func (p *ParcelPostgres) GetParcelQuickInfo(ctx context.Context, parcelID uint64
 	err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&result).Error
 	if err != nil {
 		return nil, fmt.Errorf("get parcel quick info failed: %w", err)
+	}
+	return result, nil
+}
+
+// GetAdministrativeUnitQuickInfo — tìm giao geometry tỉnh/phường với qh_regions, trả về LayerInfo
+// giống GetParcelQuickInfo nhưng join với province_v2 hoặc ward_v2.
+func (p *ParcelPostgres) GetAdministrativeUnitQuickInfo(ctx context.Context, sourceID uint64, kind uint32) ([]dto.ParcelLayerInfo, error) {
+	tableName := "ward_v2"
+	switch kind {
+	case _utils.LocationIDKindProvince:
+		tableName = "province_v2"
+	case _utils.LocationIDKindWard:
+		tableName = "ward_v2"
+	default:
+		return nil, fmt.Errorf("unsupported administrative unit kind: %d", kind)
+	}
+
+	var result []dto.ParcelLayerInfo
+	query := fmt.Sprintf(`
+        SELECT
+            r.id,
+            w.id          AS parcel_id,
+            l.id          AS layer_id,
+            l.avatar      AS layer_avatar,
+            l.display_name AS layer_name,
+            l.name        AS layer_display_name,
+            l.type        AS layer_type,
+            l.legal_status AS layer_legal_status,
+
+            lu.id         AS land_use_id,
+            lu.name       AS land_use_name,
+            lu.warn_level AS warn_level,
+            lu.color      AS land_use_color,
+            lu.can_build  AS can_build,
+
+            l.analyse_order AS layer_order,
+            l.updated_at    AS layer_updated_at,
+            l.planning_project_id AS planning_project_id,
+
+            ST_Area(
+                ST_Intersection(r.geometry, w.geometry)::geography
+            ) AS intersect_area_sqm,
+
+            ROUND(
+                (
+                    ST_Area(
+                        ST_Intersection(r.geometry, w.geometry)::geography
+                    )
+                    /
+                    NULLIF(ST_Area(w.geometry::geography), 0)
+                )::numeric * 100,
+                2
+            ) AS percent,
+
+            CASE
+                WHEN ST_Contains(r.geometry, w.geometry) THEN 'contains'
+                ELSE 'intersects'
+            END AS relation_type
+
+        FROM %s w
+        JOIN qh_regions r
+            ON r.geometry && w.geometry
+           AND ST_Intersects(r.geometry, w.geometry)
+        JOIN qh_layers l
+            ON l.id = r.layer_id
+        LEFT JOIN qh_land_use lu
+            ON lu.id = r.land_use_id
+
+        WHERE w.id = ?
+          AND w.deleted_at IS NULL
+          AND r.status = 10
+          AND r.deleted_at IS NULL
+          AND l.deleted_at IS NULL
+          AND l.status = 10
+          AND lu.id IS NOT NULL
+        ORDER BY l.analyse_order DESC
+    `, tableName)
+
+	err := p.DB.WithContext(ctx).Raw(query, sourceID).Scan(&result).Error
+	if err != nil {
+		return nil, fmt.Errorf("get administrative unit quick info failed: %w", err)
 	}
 	return result, nil
 }
@@ -2139,7 +2250,7 @@ func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64
 				p.id AS parcel_id,
 				`+parcelSeoAdrSearchExpr+` AS adr_search,
 				p.seo_id AS seo_id
-			FROM parcels p\
+			FROM parcels p
 			LEFT JOIN LATERAL (
 				SELECT *
 				FROM qh_parcel_info
@@ -2158,6 +2269,37 @@ func (p *ParcelPostgres) GetParcelSeoSource(ctx context.Context, parcelID uint64
 		return nil, nil
 	}
 	return &source, nil
+}
+
+func (p *ParcelPostgres) GetParcelSeoSourcesByIDs(ctx context.Context, parcelIDs []uint64) ([]dto.ParcelSeoSource, error) {
+	if len(parcelIDs) == 0 {
+		return nil, nil
+	}
+
+	var sources []dto.ParcelSeoSource
+	err := p.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				p.id AS parcel_id,
+				`+parcelSeoAdrSearchExpr+` AS adr_search,
+				p.seo_id AS seo_id
+			FROM parcels p
+			LEFT JOIN LATERAL (
+				SELECT *
+				FROM qh_parcel_info
+				WHERE parcel_id = p.id
+				ORDER BY id DESC
+				LIMIT 1
+			) pi ON true
+			WHERE p.deleted_at IS NULL
+			  AND p.id IN ?
+			ORDER BY p.id
+		`, parcelIDs).
+		Scan(&sources).Error
+	if err != nil {
+		return nil, fmt.Errorf("get parcel seo sources by ids failed: %w", err)
+	}
+	return sources, nil
 }
 
 func (p *ParcelPostgres) ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error) {
@@ -2198,4 +2340,314 @@ func (p *ParcelPostgres) UpdateParcelSeoID(ctx context.Context, parcelID uint64,
 		Table("parcels").
 		Where("id = ? AND deleted_at IS NULL", parcelID).
 		Update("seo_id", seoID).Error
+}
+
+func (p *ParcelPostgres) GetParcelHistory(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]qh_domain.ParcelHistory, int64, error) {
+	var (
+		rows  []qh_domain.ParcelHistory
+		total int64
+	)
+
+	base := p.DB.WithContext(ctx).
+		Model(&qh_domain.ParcelHistory{}).
+		Where("parcel_id = ? AND deleted_at IS NULL", parcelID)
+
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count parcel history failed: %w", err)
+	}
+	if total == 0 {
+		return []qh_domain.ParcelHistory{}, 0, nil
+	}
+
+	if err := base.
+		Order("event_date DESC NULLS LAST, id DESC").
+		Limit(pagable.GetLimit()).
+		Offset(pagable.GetOffset()).
+		Find(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("list parcel history failed: %w", err)
+	}
+
+	return rows, total, nil
+}
+
+func (p *ParcelPostgres) FindParcelsAround(ctx context.Context, parcelID uint64, limit int) ([]dto.NearbyParcelItem, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+	if limit <= 0 {
+		limit = 5
+	}
+	if limit > 20 {
+		limit = 20
+	}
+
+	const radiusMeters = 300.0
+
+	query := `
+		WITH src AS (
+			SELECT
+				p.id,
+				p.geometry,
+				p.geometry::geography AS geog
+			FROM parcels p
+			WHERE p.id = $1
+			  AND p.deleted_at IS NULL
+			  AND p.geometry IS NOT NULL
+			LIMIT 1
+		)
+		SELECT
+			n.id AS parcel_id,
+			COALESCE(n.lat, ST_Y(ST_PointOnSurface(n.geometry)), 0) AS lat,
+			COALESCE(n.lon, ST_X(ST_PointOnSurface(n.geometry)), 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(n.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			ST_AsGeoJSON(ST_SimplifyPreserveTopology(n.geometry, 0.000002)) AS geometry,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			ST_Distance(n.geometry::geography, src.geog) AS distance_meters
+		FROM parcels n
+		CROSS JOIN src
+		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = n.id
+		WHERE n.deleted_at IS NULL
+		  AND n.id <> src.id
+		  AND n.geometry IS NOT NULL
+		  AND n.geometry && ST_Expand(src.geometry, 0.003)
+		  AND (
+		    ST_Touches(n.geometry, src.geometry)
+		    OR ST_DWithin(n.geometry::geography, src.geog, $2)
+		  )
+		ORDER BY
+			CASE WHEN ST_Touches(n.geometry, src.geometry) THEN 0 ELSE 1 END,
+			ST_Distance(n.geometry::geography, src.geog) ASC,
+			n.id ASC
+		LIMIT $3
+	`
+
+	var rows []dto.NearbyParcelItem
+	if err := p.DB.WithContext(ctx).Raw(query, parcelID, radiusMeters, limit).Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("find parcels around failed: %w", err)
+	}
+	for i := range rows {
+		rows[i].Geometry = decodePostgresGeometry(rows[i].Geometry)
+	}
+	if rows == nil {
+		rows = []dto.NearbyParcelItem{}
+	}
+	return rows, nil
+}
+
+func (p *ParcelPostgres) AdminListParcels(ctx context.Context, search string, pagable _dto.Pagable) ([]dto.AdminParcelListItem, int64, error) {
+	var total int64
+
+	baseFrom := `
+		FROM parcels p
+		LEFT JOIN LATERAL (
+			SELECT *
+			FROM qh_parcel_info
+			WHERE parcel_id = p.id
+			ORDER BY id DESC
+			LIMIT 1
+		) pi ON true
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+		LEFT JOIN (
+			SELECT target_id, COUNT(*) AS follower_count
+			FROM user_subscriptions
+			WHERE target_type = 'parcel'
+			  AND deleted_at IS NULL
+			  AND status = 10
+			GROUP BY target_id
+		) fc ON fc.target_id = p.id
+		WHERE p.deleted_at IS NULL`
+
+	args := make([]any, 0, 4)
+	if strings.TrimSpace(search) != "" {
+		term := "%" + strings.ToLower(strings.TrimSpace(search)) + "%"
+		baseFrom += `
+		  AND (
+		    LOWER(COALESCE(pi.address_text, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.map_number, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.land_number, '')) LIKE ?
+		    OR LOWER(COALESCE(pi.property_code, '')) LIKE ?
+		    OR CAST(p.id AS TEXT) LIKE ?
+		  )`
+		args = append(args, term, term, term, term, term)
+	}
+
+	countSQL := `SELECT COUNT(*) ` + baseFrom
+	if err := p.DB.WithContext(ctx).Raw(countSQL, args...).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("count admin parcels failed: %w", err)
+	}
+	if total == 0 {
+		return []dto.AdminParcelListItem{}, 0, nil
+	}
+
+	listSQL := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(pi.is_seo, false) AS is_seo,
+			COALESCE(fc.follower_count, 0) AS follower_count,
+			COALESCE(p.created_at, NOW()) AS created_at
+	` + baseFrom + `
+		ORDER BY p.id DESC
+		LIMIT ? OFFSET ?`
+
+	listArgs := append(append([]any{}, args...), pagable.GetLimit(), pagable.GetOffset())
+	var rows []dto.AdminParcelListItem
+	if err := p.DB.WithContext(ctx).Raw(listSQL, listArgs...).Scan(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("list admin parcels failed: %w", err)
+	}
+	if rows == nil {
+		rows = []dto.AdminParcelListItem{}
+	}
+	return rows, total, nil
+}
+
+func (p *ParcelPostgres) AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+
+	query := `
+		SELECT
+			p.id AS parcel_id,
+			COALESCE(p.lat, 0) AS lat,
+			COALESCE(p.lon, 0) AS lon,
+			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+			COALESCE(pi.address_text, '') AS address_text,
+			COALESCE(pi.map_number, '') AS map_number,
+			COALESCE(pi.land_number, '') AS land_number,
+			COALESCE(pi.property_code, '') AS property_code,
+			COALESCE(pi.property_uuid::text, '') AS property_uuid,
+			COALESCE(prov.full_name, '') AS province,
+			COALESCE(pi.province_code, '') AS province_code,
+			COALESCE(pi.ward_code, '') AS ward_code,
+			COALESCE(pi.district_code, '') AS district_code,
+			COALESCE(p.seo_id, 0) AS seo_id,
+			COALESCE(pi.is_seo, false) AS is_seo,
+			COALESCE(fc.follower_count, 0) AS follower_count,
+			COALESCE(pu.name, '') AS land_use_name,
+			COALESCE(p.created_at, NOW()) AS created_at,
+			COALESCE(pi.updated_at, p.updated_at, NOW()) AS updated_at,
+			ST_AsGeoJSON(p.geometry) AS geometry
+		FROM parcels p
+		LEFT JOIN LATERAL (
+			SELECT *
+			FROM qh_parcel_info
+			WHERE parcel_id = p.id
+			ORDER BY id DESC
+			LIMIT 1
+		) pi ON true
+		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
+		LEFT JOIN (
+			SELECT target_id, COUNT(*) AS follower_count
+			FROM user_subscriptions
+			WHERE target_type = 'parcel'
+			  AND deleted_at IS NULL
+			  AND status = 10
+			GROUP BY target_id
+		) fc ON fc.target_id = p.id
+		WHERE p.id = ?
+		  AND p.deleted_at IS NULL
+		LIMIT 1`
+
+	var row dto.AdminParcelDetail
+	if err := p.DB.WithContext(ctx).Raw(query, parcelID).Scan(&row).Error; err != nil {
+		return nil, fmt.Errorf("admin get parcel failed: %w", err)
+	}
+	if row.ParcelID == 0 {
+		return nil, nil
+	}
+	row.Geometry = decodePostgresGeometry(row.Geometry)
+	return &row, nil
+}
+
+func (p *ParcelPostgres) AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) error {
+	if req == nil || req.ParcelID == 0 {
+		return fmt.Errorf("parcelId is required")
+	}
+
+	return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var exists int64
+		if err := tx.Table("parcels").
+			Where("id = ? AND deleted_at IS NULL", req.ParcelID).
+			Count(&exists).Error; err != nil {
+			return fmt.Errorf("get parcel failed: %w", err)
+		}
+		if exists == 0 {
+			return fmt.Errorf("parcel %d not found", req.ParcelID)
+		}
+
+		if err := tx.Table("parcels").
+			Where("id = ? AND deleted_at IS NULL", req.ParcelID).
+			Updates(map[string]any{
+				"lat": req.Lat,
+				"lon": req.Lon,
+			}).Error; err != nil {
+			return fmt.Errorf("update parcel failed: %w", err)
+		}
+
+		infoUpdates := map[string]any{
+			"address_text":   req.Address,
+			"adr_search":     _utils.CleanSearchText(req.Address),
+			"map_number":     req.MapNumber,
+			"land_number":    req.LandNumber,
+			"property_code":  req.PropertyCode,
+			"province_code":  req.ProvinceCode,
+			"ward_code":      req.WardCode,
+			"total_area_sqm": req.AreaSqm,
+			"lat":            req.Lat,
+			"lon":            req.Lon,
+			"is_seo":         req.IsSeo,
+			"updated_at":     time.Now(),
+		}
+
+		var infoID uint64
+		if err := tx.Table("qh_parcel_info").
+			Select("id").
+			Where("parcel_id = ?", req.ParcelID).
+			Order("id DESC").
+			Limit(1).
+			Scan(&infoID).Error; err != nil {
+			return fmt.Errorf("get parcel info failed: %w", err)
+		}
+
+		if infoID == 0 {
+			info := qh_domain.QHParcelInfo{
+				ParcelID:     req.ParcelID,
+				AddressText:  req.Address,
+				MapNumber:    req.MapNumber,
+				LandNumber:   req.LandNumber,
+				PropertyCode: req.PropertyCode,
+				ProvinceCode: req.ProvinceCode,
+				WardCode:     req.WardCode,
+				TotalAreaSqm: req.AreaSqm,
+				Latitude:     req.Lat,
+				Longitude:    req.Lon,
+				IsSeo:        req.IsSeo,
+			}
+			if err := tx.Omit("Geometry", "DirectionsRaw", "ShapeName").Create(&info).Error; err != nil {
+				return fmt.Errorf("create parcel info failed: %w", err)
+			}
+			return nil
+		}
+
+		if err := tx.Table("qh_parcel_info").
+			Where("id = ?", infoID).
+			Updates(infoUpdates).Error; err != nil {
+			return fmt.Errorf("update parcel info failed: %w", err)
+		}
+		return nil
+	})
 }

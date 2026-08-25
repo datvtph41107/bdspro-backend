@@ -63,6 +63,8 @@ ALTER TABLE seo_trend
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL;
 
+ALTER TABLE seo_trend DROP CONSTRAINT IF EXISTS chk_seo_trend_non_negative;
+
 ALTER TABLE seo_trend
     ADD CONSTRAINT chk_seo_trend_non_negative
     CHECK (impressions >= 0 AND clicks >= 0 AND ctr >= 0 AND avg_position >= 0) NOT VALID;

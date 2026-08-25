@@ -13,10 +13,12 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"tqd/internal/config"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
+	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
 	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
 	"tqd/internal/modules/resolver/layer_resolver/rule"
@@ -31,21 +33,30 @@ type ParcelUsecase interface {
 	CreateBatch(ctx context.Context, req *dto.ParcelList) (*dto.ParcelList, error)
 	FindByLocation(ctx context.Context, lat, lng float64) (*qh_domain.Parcel, error)
 	ResolveMapTargetByLocation(ctx context.Context, req dto.ResolveMapTargetRequestDTO) (*dto.ResolveMapTargetResponseDTO, error)
+	ResolveMapTargetByPoi(ctx context.Context, poiID uint64) (*dto.ResolveMapTargetResponseDTO, error)
 	FindParcelsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int) ([]qh_domain.Parcel, int64, error)
 	FindMapTargetsByPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32, filter *dto.PolygonTargetFilter, includeAnalysis bool) (*dto.PolygonMapTargetsResponse, error)
 	GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error)
 	GetParcelPlanning(ctx context.Context, req *dto.GetParcelPlanningRequest) (*ParcelPlanningResult, error)
 	GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error)
 	GetParcelQuickInfo(ctx context.Context, parcelID uint64) ([]dto.ParcelLayerInfo, error)
+	GetAdministrativeUnitQuickInfo(ctx context.Context, compositeID uint64) ([]dto.ParcelLayerInfo, error)
 	GetLayerHistory(ctx context.Context, layerID uint64) (*types.LayerLineage, error)
 	GetParcelSeoSource(ctx context.Context, parcelID uint64) (*dto.ParcelSeoSource, error)
 	ListParcelSeoSourcesForGenerate(ctx context.Context, limit uint32) ([]dto.ParcelSeoSource, error)
 	UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoID uint64) error
+	AdminGenParcelSeo(ctx context.Context, parcelIDs []uint64) (*dto.AdminGenParcelSeoResult, error)
+	AdminListParcels(ctx context.Context, search string, page, limit int) ([]dto.AdminParcelListItem, int64, error)
+	AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error)
+	AdminGetParcelNeighbors(ctx context.Context, parcelID uint64) ([]dto.NearbyParcelItem, error)
+	AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) (*dto.AdminParcelDetail, error)
 
 	GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_dto.ParcelDetailResponseDTO, error)
 	GetParcelLayers(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]*dto.LayerImpact, int64, error)
 	GetZoneGeometry(ctx context.Context, parcelID, layerID, zoneID uint64) (string, *ZoneGeometryProps, error)
 	GetParcelLegalDocuments(ctx context.Context, parcelID uint64, docType, status *uint32, pagable _dto.Pagable) ([]*qh_domain.QHLegalDocument, int64, error)
+	GetParcelHistory(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]qh_domain.ParcelHistory, int64, error)
+	GetParcelsAround(ctx context.Context, parcelID uint64, limit int) ([]dto.NearbyParcelItem, error)
 	CheckingPolygon(ctx context.Context, points []repo.Point, intersect bool, maxAreaKm2 float64, page, pageSize int, zoom *uint32, filter *dto.PolygonTargetFilter, includeAnalysis bool) (*dto.PolygonMapTargetsResponse, error)
 }
 
@@ -66,6 +77,8 @@ type parcelUsecase struct {
 	legalDocRepo    repo.ILegalDocumentRepo
 	auditRepo       rule.AuditRepository
 	layerRepo       rule.LayerRepository
+	locationRepo    repo.LocationRepository
+	crmSeoProvider  provider.CrmSeoProvider
 	parcelEngine    *parcel_engine.ParcelEngine
 	timelineEngine  *rule.TimelineEngine
 	lifecycleEngine *rule.LifecycleEngine
@@ -77,6 +90,8 @@ func NewParcelUsecase(
 	legalDocRepo repo.ILegalDocumentRepo,
 	auditRepo rule.AuditRepository,
 	layerRepo rule.LayerRepository,
+	locationRepo repo.LocationRepository,
+	crmSeoProvider provider.CrmSeoProvider,
 ) ParcelUsecase {
 	auditEngine := rule.NewAuditEngine(nil, auditRepo)
 	lifecycleEngine := rule.NewLifecycleEngine(nil, layerRepo)
@@ -93,6 +108,8 @@ func NewParcelUsecase(
 		legalDocRepo:    legalDocRepo,
 		auditRepo:       auditRepo,
 		layerRepo:       layerRepo,
+		locationRepo:    locationRepo,
+		crmSeoProvider:  crmSeoProvider,
 		parcelEngine:    engine,
 		timelineEngine:  timelineEngine,
 		lifecycleEngine: lifecycleEngine,
@@ -330,6 +347,25 @@ func (u *parcelUsecase) ResolveMapTargetByLocation(
 	}
 
 	return nil, fmt.Errorf("map target not found")
+}
+
+func (u *parcelUsecase) ResolveMapTargetByPoi(
+	ctx context.Context,
+	poiID uint64,
+) (*dto.ResolveMapTargetResponseDTO, error) {
+	if poiID == 0 {
+		return nil, fmt.Errorf("poi id is required")
+	}
+
+	lat, lng, err := u.parcelRepo.GetPOIMapPoint(ctx, poiID)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.ResolveMapTargetByLocation(ctx, dto.ResolveMapTargetRequestDTO{
+		Latitude:  lat,
+		Longitude: lng,
+	})
 }
 
 func (u *parcelUsecase) FindParcelsByPolygon(
@@ -1611,6 +1647,24 @@ func (u *parcelUsecase) GetParcelQuickInfo(ctx context.Context, parcelID uint64)
 	return quickInfo, nil
 }
 
+func (u *parcelUsecase) GetAdministrativeUnitQuickInfo(ctx context.Context, compositeID uint64) ([]dto.ParcelLayerInfo, error) {
+	if compositeID == 0 {
+		return nil, fmt.Errorf("compositeId is required")
+	}
+	sourceID, kind, err := _utils.DecodeLocationID(compositeID)
+	if err != nil {
+		return nil, fmt.Errorf("decode compositeId: %w", err)
+	}
+	if kind != _utils.LocationIDKindWard {
+		return []dto.ParcelLayerInfo{}, nil
+	}
+	quickInfo, err := u.parcelRepo.GetAdministrativeUnitQuickInfo(ctx, sourceID, kind)
+	if err != nil {
+		return nil, fmt.Errorf("get administrative unit quick info failed: %w", err)
+	}
+	return quickInfo, nil
+}
+
 func (u *parcelUsecase) GetParcelTimeline(ctx context.Context, parcelID uint64) (*types.ParcelTimeline, error) {
 	if parcelID == 0 {
 		return nil, fmt.Errorf("parcel_id is required")
@@ -1700,6 +1754,149 @@ func (u *parcelUsecase) UpdateParcelSeoID(ctx context.Context, parcelID uint64, 
 	return u.parcelRepo.UpdateParcelSeoID(ctx, parcelID, seoID)
 }
 
+func (u *parcelUsecase) AdminGenParcelSeo(ctx context.Context, parcelIDs []uint64) (*dto.AdminGenParcelSeoResult, error) {
+	if len(parcelIDs) == 0 {
+		return nil, fmt.Errorf("parcelIds không được để trống")
+	}
+	if u.crmSeoProvider == nil {
+		return nil, fmt.Errorf("crm seo provider chưa được cấu hình")
+	}
+
+	uniqueIDs := make([]uint64, 0, len(parcelIDs))
+	seen := make(map[uint64]struct{}, len(parcelIDs))
+	for _, id := range parcelIDs {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniqueIDs = append(uniqueIDs, id)
+	}
+	if len(uniqueIDs) == 0 {
+		return nil, fmt.Errorf("parcelIds không hợp lệ")
+	}
+
+	sources, err := u.parcelRepo.GetParcelSeoSourcesByIDs(ctx, uniqueIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get parcel seo sources failed: %w", err)
+	}
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("không tìm thấy parcel hợp lệ")
+	}
+
+	foundIDs := make([]uint64, 0, len(sources))
+	prevSeoIDByParcel := make(map[uint64]uint64, len(sources))
+	for _, source := range sources {
+		foundIDs = append(foundIDs, source.ParcelID)
+		if source.SeoID != nil && *source.SeoID > 0 {
+			prevSeoIDByParcel[source.ParcelID] = *source.SeoID
+		}
+	}
+
+	result, err := u.crmSeoProvider.GenerateSeoFromParcelIDs(ctx, foundIDs)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		result = &dto.AdminGenParcelSeoResult{}
+	}
+
+	for i := range result.Items {
+		item := &result.Items[i]
+		if item.ParcelID == 0 || item.SeoID == 0 {
+			continue
+		}
+
+		prevSeoID := prevSeoIDByParcel[item.ParcelID]
+		switch {
+		case prevSeoID == 0:
+			item.Created = true
+			item.Message = "created"
+		case prevSeoID == item.SeoID:
+			item.Created = false
+			item.Message = "updated"
+		default:
+			item.Created = true
+			item.Message = "linked"
+		}
+
+		if err := u.parcelRepo.UpdateParcelSeoID(ctx, item.ParcelID, item.SeoID); err != nil {
+			item.Message = fmt.Sprintf("cập nhật seo_id thất bại: %v", err)
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("parcelId=%d: %v", item.ParcelID, err))
+		}
+	}
+
+	if len(foundIDs) < len(uniqueIDs) {
+		foundSet := make(map[uint64]struct{}, len(foundIDs))
+		for _, id := range foundIDs {
+			foundSet[id] = struct{}{}
+		}
+		for _, id := range uniqueIDs {
+			if _, ok := foundSet[id]; ok {
+				continue
+			}
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("parcelId=%d: parcel không tồn tại", id))
+		}
+		if result.Total < int64(len(uniqueIDs)) {
+			result.Total = int64(len(uniqueIDs))
+		}
+	}
+
+	return result, nil
+}
+
+func (u *parcelUsecase) AdminListParcels(ctx context.Context, search string, page, limit int) ([]dto.AdminParcelListItem, int64, error) {
+	pagable := _dto.Pagable{Page: uint32(page), Size: uint32(limit)}
+	pagable.Normalize()
+
+	rows, total, err := u.parcelRepo.AdminListParcels(ctx, search, pagable)
+	if err != nil {
+		return nil, 0, fmt.Errorf("admin list parcels failed: %w", err)
+	}
+	return rows, total, nil
+}
+
+func (u *parcelUsecase) AdminGetParcel(ctx context.Context, parcelID uint64) (*dto.AdminParcelDetail, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	detail, err := u.parcelRepo.AdminGetParcel(ctx, parcelID)
+	if err != nil {
+		return nil, fmt.Errorf("admin get parcel failed: %w", err)
+	}
+	if detail == nil {
+		return nil, fmt.Errorf("parcel %d not found", parcelID)
+	}
+	return detail, nil
+}
+
+const adminParcelNeighborLimit = 10
+
+func (u *parcelUsecase) AdminGetParcelNeighbors(ctx context.Context, parcelID uint64) ([]dto.NearbyParcelItem, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	rows, err := u.parcelRepo.FindParcelsAround(ctx, parcelID, adminParcelNeighborLimit)
+	if err != nil {
+		return nil, fmt.Errorf("admin get parcel neighbors failed: %w", err)
+	}
+	return rows, nil
+}
+
+func (u *parcelUsecase) AdminUpdateParcel(ctx context.Context, req *dto.AdminUpdateParcelRequest) (*dto.AdminParcelDetail, error) {
+	if req == nil || req.ParcelID == 0 {
+		return nil, fmt.Errorf("parcelId is required")
+	}
+	if err := u.parcelRepo.AdminUpdateParcel(ctx, req); err != nil {
+		return nil, err
+	}
+	return u.AdminGetParcel(ctx, req.ParcelID)
+}
+
 // GetParcelDetail — Lấy tổng quan thửa đất
 func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*qh_dto.ParcelDetailResponseDTO, error) {
 	if parcelID == 0 {
@@ -1733,6 +1930,8 @@ func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*
 		unified.ParcelID = parcelID
 	}
 
+	location := u.buildParcelDetailLocation(ctx, parcelInfo)
+
 	resp := &qh_dto.ParcelDetailResponseDTO{
 		Parcel: qh_dto.ParcelIdentityDTO{
 			ID:               strconv.FormatUint(parcelInfo.ParcelID, 10),
@@ -1744,11 +1943,7 @@ func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*
 				Lat: parcelInfo.Lat,
 				Lng: parcelInfo.Lon,
 			},
-			Location: &qh_dto.LocationDTO{
-				Province:     parcelInfo.Province,
-				ProvinceCode: parcelInfo.ProvinceCode,
-				WardCode:     parcelInfo.WardCode,
-			},
+			Location: location,
 		},
 		CurrentUse: qh_dto.CurrentUseDTO{
 			Code:            parcelInfo.LandUseCode,
@@ -1900,6 +2095,29 @@ func (u *parcelUsecase) GetParcelLegalDocuments(ctx context.Context, parcelID ui
 	}
 
 	return filtered[offset:end], total, nil
+}
+
+func (u *parcelUsecase) GetParcelHistory(ctx context.Context, parcelID uint64, pagable _dto.Pagable) ([]qh_domain.ParcelHistory, int64, error) {
+	if parcelID == 0 {
+		return nil, 0, fmt.Errorf("parcel_id is required")
+	}
+
+	rows, total, err := u.parcelRepo.GetParcelHistory(ctx, parcelID, pagable)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get parcel history failed: %w", err)
+	}
+	return rows, total, nil
+}
+
+func (u *parcelUsecase) GetParcelsAround(ctx context.Context, parcelID uint64, limit int) ([]dto.NearbyParcelItem, error) {
+	if parcelID == 0 {
+		return nil, fmt.Errorf("parcel_id is required")
+	}
+	rows, err := u.parcelRepo.FindParcelsAround(ctx, parcelID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("get parcels around failed: %w", err)
+	}
+	return rows, nil
 }
 
 // getBuildStatusString — Lấy build status từ UnifiedResult
@@ -2109,4 +2327,61 @@ func (u *parcelUsecase) buildAlertMessage(unified *parcel_engine.UnifiedResult) 
 		return unified.Risk.Reasons[0]
 	}
 	return "Cần kiểm tra thêm thông tin quy hoạch"
+}
+
+func (u *parcelUsecase) buildParcelDetailLocation(ctx context.Context, parcelInfo *dto.ParcelInfoResponse) *qh_dto.LocationDTO {
+	location := &qh_dto.LocationDTO{
+		Province:     parcelInfo.Province,
+		ProvinceCode: parcelInfo.ProvinceCode,
+		WardCode:     parcelInfo.WardCode,
+	}
+
+	if len(parcelInfo.Geometry) == 0 || u.locationRepo == nil {
+		return location
+	}
+
+	province, ward, err := u.locationRepo.GetLocationByParcelID(ctx, parcelInfo.ParcelID)
+	if err != nil {
+		log.Printf("[GetParcelDetail] location by parcel geometry failed: %v", err)
+		return location
+	}
+
+	if province != nil {
+		location.Province = province.FullName
+		location.ProvinceCode = province.Code
+		location.ProvinceInfo = toAdministrativeUnitDTO(province)
+	}
+	if ward != nil {
+		location.Ward = ward.FullName
+		location.WardCode = ward.Code
+		location.WardInfo = toAdministrativeUnitDTOFromWard(ward)
+	}
+
+	return location
+}
+
+func toAdministrativeUnitDTO(province *domain.Province) *qh_dto.AdministrativeUnitDTO {
+	if province == nil {
+		return nil
+	}
+	return &qh_dto.AdministrativeUnitDTO{
+		ID:          province.ID,
+		Code:        province.Code,
+		FullName:    province.FullName,
+		ShortName:   province.ShortName,
+		Description: province.Description,
+	}
+}
+
+func toAdministrativeUnitDTOFromWard(ward *domain.Ward) *qh_dto.AdministrativeUnitDTO {
+	if ward == nil {
+		return nil
+	}
+	return &qh_dto.AdministrativeUnitDTO{
+		ID:          ward.ID,
+		Code:        ward.Code,
+		FullName:    ward.FullName,
+		ShortName:   ward.ShortName,
+		Description: ward.Description,
+	}
 }

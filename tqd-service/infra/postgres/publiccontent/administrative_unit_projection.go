@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,6 +29,7 @@ type administrativeUnitRow struct {
 	ParentCode     string
 	Latitude       float64
 	Longitude      float64
+	Description    string
 	UpdatedAt      *time.Time
 }
 
@@ -36,6 +38,21 @@ func normalizeAdministrativeIdentity(value string) (unitType string, identity st
 	value = strings.TrimPrefix(value, "/")
 	if index := strings.IndexAny(value, "?#"); index >= 0 {
 		value = value[:index]
+	}
+	lower := strings.ToLower(value)
+	for _, marker := range []string{"tin-tuc/dia-ban/", "dia-ban/"} {
+		if idx := strings.Index(lower, marker); idx >= 0 {
+			rest := strings.Trim(value[idx+len(marker):], "/")
+			parts := strings.Split(rest, "/")
+			if len(parts) >= 2 && strings.TrimSpace(parts[0]) != "" {
+				// /tin-tuc/dia-ban/{code}/{slug} → lookup by administrative code
+				return "", strings.TrimSpace(parts[0])
+			}
+			if len(parts) == 1 {
+				value = parts[0]
+			}
+			break
+		}
 	}
 	if index := strings.LastIndex(value, "/"); index >= 0 {
 		value = value[index+1:]
@@ -52,6 +69,12 @@ func normalizeAdministrativeIdentity(value string) (unitType string, identity st
 
 func administrativeCodeCandidate(identity string) string {
 	identity = strings.TrimSpace(identity)
+	if parts := strings.Split(identity, "/"); len(parts) >= 2 {
+		identity = strings.TrimSpace(parts[0])
+	}
+	if stripped := stripAdministrativeKindSuffix(identity); stripped != "" && stripped != identity {
+		return stripped
+	}
 	match := administrativeCodeSuffixPattern.FindStringSubmatch(identity)
 	if len(match) != 2 {
 		return identity
@@ -59,7 +82,28 @@ func administrativeCodeCandidate(identity string) string {
 	return strings.TrimSpace(match[1])
 }
 
-func administrativeUnitSlug(name string, code string) (string, error) {
+// stripAdministrativeKindSuffix removes trailing composite kind digit (1=province, 2=ward)
+// from URL id segment, e.g. "791" → "79", "001232" → "00123".
+func stripAdministrativeKindSuffix(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) < 2 {
+		return value
+	}
+	last := value[len(value)-1]
+	if last != '1' && last != '2' {
+		return value
+	}
+	return value[:len(value)-1]
+}
+
+func administrativeUnitKindDigit(unitType string) string {
+	if strings.EqualFold(strings.TrimSpace(unitType), "ward") {
+		return "2"
+	}
+	return "1"
+}
+
+func administrativeUnitSlug(name string, code string, unitType string) (string, error) {
 	nameSlug := slugify(name)
 	codeSlug := slugify(code)
 	if nameSlug == "" {
@@ -68,7 +112,7 @@ func administrativeUnitSlug(name string, code string) (string, error) {
 	if codeSlug == "" {
 		return "", errors.New("administrative unit code is required for a stable canonical slug")
 	}
-	return nameSlug + "-" + codeSlug, nil
+	return codeSlug + administrativeUnitKindDigit(unitType) + "/" + nameSlug, nil
 }
 
 func administrativeUnitTypeName(unitType string, fullName string) string {
@@ -113,6 +157,7 @@ func (r *Repository) queryAdministrativeUnits(
 			       COALESCE(p.code::text, '') AS parent_code,
 			       COALESCE(w.lat, 0)::float8 AS latitude,
 			       COALESCE(w.lng, 0)::float8 AS longitude,
+			       COALESCE(w.description, '') AS description,
 			       NULL::timestamptz AS updated_at
 			FROM ward_v2 w
 			LEFT JOIN province_v2 p ON p.id = w.province_id
@@ -141,6 +186,7 @@ func (r *Repository) queryAdministrativeUnits(
 			       '' AS parent_code,
 			       COALESCE(p.lat, 0)::float8 AS latitude,
 			       COALESCE(p.lng, 0)::float8 AS longitude,
+			       COALESCE(p.description, '') AS description,
 			       p.updated_at
 			FROM province_v2 p
 			WHERE p.id::text = ?
@@ -168,14 +214,16 @@ func selectAdministrativeUnitRow(
 		if unitType != "" && row.UnitType != unitType {
 			continue
 		}
-		slug, err := administrativeUnitSlug(row.FullName, row.Code)
+		slug, err := administrativeUnitSlug(row.FullName, row.Code, row.UnitType)
 		if err != nil {
 			continue
 		}
+		codeWithKind := slugify(row.Code) + administrativeUnitKindDigit(row.UnitType)
 		for _, candidate := range []string{
 			row.EntityID,
 			row.SourceID,
 			row.Code,
+			codeWithKind,
 			row.FullName,
 			row.ShortName,
 			slug,
@@ -240,6 +288,7 @@ func (r *Repository) administrativePlanningProjectCount(
 		LEFT JOIN qh_planning_projects pp
 		  ON pp.jurisdiction_id = j.id
 		 AND pp.deleted_at IS NULL
+		 AND pp.client_view = true
 		WHERE j.deleted_at IS NULL
 		  AND (
 		    LOWER(TRIM(j.name)) = LOWER(TRIM(?))
@@ -288,6 +337,7 @@ func (r *Repository) administrativePlanningProjects(
 			FROM qh_planning_projects pp
 			JOIN unique_jurisdiction uj ON uj.id = pp.jurisdiction_id
 			WHERE pp.deleted_at IS NULL
+			  AND pp.client_view = true
 			ORDER BY pp.updated_at DESC NULLS LAST, pp.id DESC
 			LIMIT 12
 		)
@@ -320,7 +370,7 @@ func (r *Repository) administrativePlanningProjects(
 			Code:       strings.TrimSpace(row.Code),
 			Name:       name,
 			Summary:    strings.TrimSpace(row.Summary),
-			PublicPath: "/do-an-quy-hoach/" + slug,
+			PublicPath: "/tin-tuc/do-an-quy-hoach/" + strconv.FormatUint(row.ID, 10) + "/" + slug,
 			MapPath:    "/ban-do?focus=" + url.QueryEscape(entityID),
 		})
 	}
@@ -360,7 +410,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 		return nil, err
 	}
 
-	slug, err := administrativeUnitSlug(row.FullName, row.Code)
+	slug, err := administrativeUnitSlug(row.FullName, row.Code, row.UnitType)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"build administrative unit canonical slug: %w",
@@ -368,7 +418,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 		)
 	}
 
-	canonicalPath := "/dia-ban/" + slug
+	canonicalPath := "/tin-tuc/dia-ban/" + slug
 	canonicalKey := "administrative_unit:" +
 		row.UnitType +
 		":" +
@@ -452,10 +502,11 @@ func (r *Repository) GetAdministrativeUnitProjection(
 			administrativeUnitSlug(
 				row.ParentFullName,
 				row.ParentCode,
+				"province",
 			)
 
 		if parentSlugErr == nil {
-			parentPath := "/dia-ban/" + parentSlug
+			parentPath := "/tin-tuc/dia-ban/" + parentSlug
 
 			parent = &domain.AdministrativeUnitParent{
 				EntityID:           "province:" + row.ParentID,
@@ -511,6 +562,7 @@ func (r *Repository) GetAdministrativeUnitProjection(
 		UnitTypeName:       administrativeUnitTypeName(row.UnitType, row.FullName),
 		Name:               row.FullName,
 		DisplayName:        row.FullName,
+		Description:        strings.TrimSpace(row.Description),
 		AdministrativeCode: row.Code,
 		Parent:             parent,
 		Hierarchy:          hierarchy,

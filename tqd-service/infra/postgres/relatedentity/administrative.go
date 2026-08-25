@@ -43,6 +43,8 @@ func (r *Repository) FindAdministrativeUnits(ctx context.Context, query relatedd
 			CROSS JOIN focus
 			WHERE ward.lat IS NOT NULL
 			  AND ward.lng IS NOT NULL
+			  AND ward.deleted_at IS NULL
+			  AND (province.id IS NULL OR province.deleted_at IS NULL)
 			  AND (
 			    (? <> '' AND ward.code = ?)
 			    OR (
@@ -83,6 +85,7 @@ func (r *Repository) FindAdministrativeUnits(ctx context.Context, query relatedd
 			CROSS JOIN focus
 			WHERE province.lat IS NOT NULL
 			  AND province.lng IS NOT NULL
+			  AND province.deleted_at IS NULL
 			  AND (
 			    (? <> '' AND province.code = ?)
 			    OR (

@@ -10,19 +10,32 @@ message ListPlanningProjectsRequest {
   int32 page = 1;
   int32 size = 2;
   string search = 3;
-  string planning_type = 4;
-  string planning_level = 5;
-  string validity_status = 6;
-  string process_status = 7;
-  uint64 jurisdiction_id = 8;
+  string planningType = 4;
+  string planningLevel = 5;
+  string validityStatus = 6;
+  string processStatus = 7;
+  uint64 jurisdictionId = 8;
   string area = 9;
-  string legal_status = 10;
-  google.protobuf.BoolValue has_layer = 11;
-  string sort_by = 12;
-  string sort_order = 13;
+  string legalStatus = 10;
+  // has_layer: 1 = có layer, 0 = không có layer. Không truyền = bỏ lọc.
+  optional int32 hasLayer = 11;
+  string sortBy = 12;
+  string sortOrder = 13;
   string decision = 14;
-  string updated_from = 15;
-  string updated_to = 16;
+  string updatedFrom = 15;
+  string updatedTo = 16;
+  string tagIds = 17;
+  string provinceIds = 18;
+  // admId: administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})
+  uint64 admId = 19;
+  // parcelId: lọc đồ án liên quan thửa (parcel → regions → layers → layer_plan_doc_relation → documents).
+  uint64 parcelId = 20;
+  // layerIds: CSV layer id, lọc OR qua layer_plan_doc_relation (vd. "1,2,3").
+  string layerIds = 21;
+  // layerId: lọc theo 1 layer; gộp vào layerIds. Đồ án qua tài liệu (layer_plan_doc_relation).
+  uint64 layerId = 22;
+  // keyword: alias của search (query ?keyword=...)
+  string keyword = 23;
 }
 
 message PlanningProjectIdRequest {
@@ -36,6 +49,14 @@ message ListPlanningDocumentsRequest {
   string keyword = 4;
   string document_type = 5;
   string status = 6;
+  // Alias cho admin list: ?planningProjectId=5 (gateway bind JSON name planningProjectId).
+  uint64 planning_project_id = 7;
+  // Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.
+  uint64 layerId = 8;
+  // parcelId: lọc tài liệu liên quan thửa (parcel → regions → layers → layer_plan_doc_relation).
+  uint64 parcelId = 9;
+  // layerIds: CSV layer id, lọc OR (vd. "1,2,3"). Gộp với layerId nếu có.
+  string layerIds = 10;
 }
 
 message PlanningDocumentIdRequest {
@@ -46,6 +67,7 @@ message ListPlanningEventsRequest {
   uint64 project_id = 1;
   int32 page = 2;
   int32 size = 3;
+  uint64 planning_project_id = 4;
 }
 
 message FollowPlanningProjectRequest {
@@ -59,8 +81,45 @@ message ListFollowedPlanningProjectsRequest {
   string search = 3;
 }
 
+message ListParcelPlanningRelationRequest {
+  uint64 parcel_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ListLayerPlanDocRelationRequest {
+  uint64 parcel_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  // docType: CSV document_type, lọc OR (vd. "30,50"). Không truyền = bỏ lọc.
+  string docType = 4;
+}
+
 message ParcelQuickViewRequest {
   uint64 parcel_id = 1;
+}
+
+message ListProvincesRequest {
+  uint32 scope = 1;
+  string search = 2;
+  int64 timestamp = 3;
+}
+
+message ListNearbyAreasRequest {
+  // admId: composite ID của đơn vị hành chính cần tìm địa bàn lân cận
+  uint64 admId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ListPlanningDocumentsByAdmRequest {
+  // admId: composite ID của đơn vị hành chính, lọc tài liệu thuộc đồ án trong khu vực
+  uint64 admId = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string documentType = 4;
+  string status = 5;
+  string keyword = 6;
 }
 
 // Canonical planning client contract. Gateway registers generated HTTP handlers; TQD exposes gRPC only.
@@ -78,14 +137,17 @@ service PlanningClientService {
   rpc ListPlanningDocuments(ListPlanningDocumentsRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/documents"
-      additional_bindings {
-        get: "/v2/tqd/client/planning-projects/{project_id}/planning-documents"
-      }
+    };
+  }
+  // Danh sách tài liệu QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation.
+  rpc ListLayerPlanDocRelations(ListLayerPlanDocRelationRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/relation-layer/{parcel_id}"
     };
   }
   rpc GetPlanningDocument(PlanningDocumentIdRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
-      get: "/v2/tqd/client/planning-documents/{document_id}"
+      get: "/v2/tqd/client/planning-documents/view/{document_id}"
     };
   }
   rpc ListPlanningEvents(ListPlanningEventsRequest) returns (google.protobuf.BytesValue) {
@@ -114,6 +176,12 @@ service PlanningClientService {
       get: "/v2/tqd/client/planning-projects/followed"
     };
   }
+  // Danh sách đồ án QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation → documents.
+  rpc ListParcelPlanningRelations(ListParcelPlanningRelationRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/relation-parcel"
+    };
+  }
   // gRPC compatibility method. Public HTTP ownership belongs to
   // TqdSeoProjectionService.GetParcelQuickViewPublic.
   rpc GetParcelQuickView(ParcelQuickViewRequest) returns (google.protobuf.BytesValue);
@@ -125,6 +193,23 @@ service PlanningClientService {
   rpc ListPlanningProjectLayers(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/layers"
+    };
+  }
+  rpc ListProvinces(ListProvincesRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/provinces"
+    };
+  }
+  // Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).
+  rpc ListNearbyAreas(ListNearbyAreasRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/nearby-areas"
+    };
+  }
+  // Danh sách tài liệu đồ án quy hoạch theo đơn vị hành chính (cross-project).
+  rpc ListPlanningDocumentsByAdm(ListPlanningDocumentsByAdmRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/by-adm"
     };
   }
 }

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
@@ -18,7 +18,7 @@ import (
 type RedisService struct {
 	Client    *redis.Client
 	Ctx       context.Context
-	logger    *flogging.FabricLogger
+	logger    *log.Logger
 	connected bool
 	mu        sync.RWMutex
 }
@@ -44,7 +44,7 @@ func NewRedisService() *RedisService {
 	svc := &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),
-		logger: flogging.MustGetLogger("redis"),
+		logger: log.New(os.Stdout, "redis: ", log.LstdFlags),
 	}
 	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
 	defer cancel()
@@ -84,7 +84,7 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 			return r.Client, nil
 		}
 		r.markDisconnected()
-		r.logger.Warnf("Redis connection lost: %v", err)
+		r.logger.Printf("WARN: Redis connection lost: %v", err)
 	}
 
 	// Thử kết nối lại (timeout ngắn — tránh treo API ~25s khi Redis down)
@@ -99,12 +99,12 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 	_, err := r.Client.Ping(pingCtx).Result()
 	cancel()
 	if err != nil {
-		r.logger.Warnf("Failed to reconnect to Redis: %v", err)
+		r.logger.Printf("WARN: Failed to reconnect to Redis: %v", err)
 		return nil, err
 	}
 
 	r.connected = true
-	r.logger.Info("Reconnected to Redis successfully")
+	r.logger.Printf("Reconnected to Redis successfully")
 	return r.Client, nil
 }
 

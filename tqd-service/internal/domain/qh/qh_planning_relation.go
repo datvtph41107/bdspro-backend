@@ -18,9 +18,10 @@ type QHPlanningRelation struct {
 }
 
 type QHPlanningRelationItem struct {
-	Parent *QHPlanningProject `json:"parent,omitempty"`
-	Child  *QHPlanningProject `json:"child,omitempty"`
-	Peer   *QHPlanningProject `json:"peer,omitempty"`
+	Relation *QHPlanningRelation `json:"relation,omitempty"`
+	Parent   *QHPlanningProject  `json:"parent,omitempty"`
+	Child    *QHPlanningProject  `json:"child,omitempty"`
+	Peer     *QHPlanningProject  `json:"peer,omitempty"`
 }
 
 func (QHPlanningRelation) TableName() string {

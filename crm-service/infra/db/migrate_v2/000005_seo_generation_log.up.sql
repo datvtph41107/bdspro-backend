@@ -61,6 +61,9 @@ ALTER TABLE seo_generation_log
     ALTER COLUMN updated_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at SET NOT NULL;
 
+ALTER TABLE seo_generation_log DROP CONSTRAINT IF EXISTS chk_seo_generation_log_status;
+ALTER TABLE seo_generation_log DROP CONSTRAINT IF EXISTS chk_seo_generation_log_duration;
+
 ALTER TABLE seo_generation_log
     ADD CONSTRAINT chk_seo_generation_log_status
     CHECK (status IN ('pending', 'processing', 'success', 'failed', 'skipped')) NOT VALID;

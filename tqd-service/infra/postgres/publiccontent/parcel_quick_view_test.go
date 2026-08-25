@@ -20,7 +20,7 @@ func TestBuildRelatedPlanningProjectKeepsUpdateAndDossierPath(t *testing.T) {
 	if project.DossierPath != "/ban-do/do-an/9" {
 		t.Fatalf("unexpected dossier path: %q", project.DossierPath)
 	}
-	if project.PublicPath != "/do-an-quy-hoach/do-an-a" {
+	if project.PublicPath != "/tin-tuc/do-an-quy-hoach/9/do-an-a" {
 		t.Fatalf("unexpected public SEO path: %q", project.PublicPath)
 	}
 	if project.UpdatedAt == nil || !project.UpdatedAt.Equal(updatedAt) {

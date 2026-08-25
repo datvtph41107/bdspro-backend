@@ -669,3 +669,133 @@ func (r *ProfilePostgres) parseListUsersSort(req *dto.ListUsersRequest) string {
 
 	return orderClause
 }
+
+func (r *ProfilePostgres) GetNewUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error) {
+	type row struct {
+		Date     string `gorm:"column:date"`
+		NewUsers uint64 `gorm:"column:new_users"`
+	}
+
+	var rows []row
+	err := r.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS date,
+				COUNT(*)::bigint AS new_users
+			FROM user_profile
+			WHERE deleted_at IS NULL
+				AND created_at >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.UserGrowthDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.UserGrowthDailyItem{
+			Date:     item.Date,
+			NewUsers: item.NewUsers,
+		})
+	}
+	return result, nil
+}
+
+func (r *ProfilePostgres) GetActiveUsersDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error) {
+	type row struct {
+		Date        string `gorm:"column:date"`
+		ActiveUsers uint64 `gorm:"column:active_users"`
+	}
+
+	var rows []row
+	err := r.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((slot_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD') AS date,
+				COUNT(DISTINCT profile_id)::bigint AS active_users
+			FROM user_activity_log
+			WHERE slot_at >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.UserGrowthDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.UserGrowthDailyItem{
+			Date:        item.Date,
+			ActiveUsers: item.ActiveUsers,
+		})
+	}
+	return result, nil
+}
+
+func (r *ProfilePostgres) GetNewUsersHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error) {
+	type row struct {
+		Date     string `gorm:"column:date"`
+		NewUsers uint64 `gorm:"column:new_users"`
+	}
+
+	var rows []row
+	err := r.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:00') AS date,
+				COUNT(*)::bigint AS new_users
+			FROM user_profile
+			WHERE deleted_at IS NULL
+				AND created_at >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.UserGrowthDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.UserGrowthDailyItem{
+			Date:     item.Date,
+			NewUsers: item.NewUsers,
+		})
+	}
+	return result, nil
+}
+
+func (r *ProfilePostgres) GetActiveUsersHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserGrowthDailyItem, error) {
+	type row struct {
+		Date        string `gorm:"column:date"`
+		ActiveUsers uint64 `gorm:"column:active_users"`
+	}
+
+	var rows []row
+	err := r.DB.WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((slot_at AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:00') AS date,
+				COUNT(DISTINCT profile_id)::bigint AS active_users
+			FROM user_activity_log
+			WHERE slot_at >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.UserGrowthDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.UserGrowthDailyItem{
+			Date:        item.Date,
+			ActiveUsers: item.ActiveUsers,
+		})
+	}
+	return result, nil
+}

@@ -69,7 +69,33 @@ service SeoDomainService {
     option (google.api.http) = {get: "/v2/crm/public/seos/{refType}/{refId}/list"};
   }
 
-  // GetSeoDomain đọc một trang SEO theo ID.
+  rpc CountSeoRefs(CountSeoRefsRequest) returns (CountSeoRefsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/internal/seos/{refType}/{refId}/count"
+    };
+  }
+
+  // Đếm số SEO theo từng refType (8 type), chỉ lấy bản ghi updatedAt trong N ngày gần nhất (mặc định 5).
+  rpc CountRecentSeoByRefType(CountRecentSeoByRefTypeRequest) returns (CountRecentSeoByRefTypeResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo-domains/count"
+    };
+  }
+
+  // Thống kê lượt click website (seo_count_log, 3 ngày gần nhất) và top trang click nhiều nhất (tối đa 15).
+  rpc GetSeoTopClicked(GetSeoTopClickedRequest) returns (GetSeoTopClickedResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo-domains/top-clicks"
+    };
+  }
+
+  // Tổng click theo từng ngày (phục vụ biểu đồ), theo lastDates ngày gần nhất.
+  rpc GetSeoClickDailyStats(GetSeoClickDailyStatsRequest) returns (GetSeoClickDailyStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo-domains/click-daily"
+    };
+  }
+
   rpc GetSeoDomain(sharepb.IdRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {get: "/v2/crm/admin/seo-domains/{id}"};
   }
@@ -87,7 +113,15 @@ service SeoDomainService {
     };
   }
 
-  // DeleteSeoDomain xóa một trang SEO.
+  // Cập nhật hàng loạt theo danh sách ids; chỉ update các field khai báo trong fields.
+  // Ví dụ: { "ids": [1,2], "fields": ["isSiteMap"], "isSiteMap": true }
+  rpc BatchUpdateSeoDomain(BatchUpdateSeoDomainRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/seo-domains/batch"
+      body: "*"
+    };
+  }
+
   rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {delete: "/v2/crm/admin/seo-domains/{id}"};
   }
@@ -192,7 +226,34 @@ service SeoDomainService {
     };
   }
 
-  // TouchSeoDomainByRef đánh dấu trang cần cập nhật theo dữ liệu nguồn.
+  rpc GenerateSeoFromLayers(GenerateSeoFromLayersRequest) returns (GenerateSeoFromLayersResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/layers/generate"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromPlanningProjects(GenerateSeoFromPlanningProjectsRequest) returns (GenerateSeoFromPlanningProjectsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/planning-projects/generate"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromAdministrativeUnits(GenerateSeoFromAdministrativeUnitsRequest) returns (GenerateSeoFromAdministrativeUnitsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/administrative-units/generate"
+      body: "*"
+    };
+  }
+
+  rpc GenerateSeoFromPlanningDocuments(GenerateSeoFromPlanningDocumentsRequest) returns (GenerateSeoFromPlanningDocumentsResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/seo-domains/planning-documents/generate"
+      body: "*"
+    };
+  }
+
   rpc TouchSeoDomainByRef(TouchSeoDomainByRefRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains/touch-by-ref"
@@ -563,6 +624,8 @@ message CreateSeoDomainRequest {
   string lastRenderError = 40;
   string templateKey = 41;
   string templateVersion = 42;
+  optional uint64 categoryId = 43;
+  string imageUrl = 44;
 }
 
 // UpdateSeoDomainRequest chỉ cập nhật các trường được truyền lên.
@@ -614,6 +677,8 @@ message UpdateSeoDomainRequest {
   optional string lastRenderError = 41;
   optional string templateKey = 42;
   optional string templateVersion = 43;
+  optional uint64 categoryId = 44;
+  optional string imageUrl = 45;
 }
 
 // GetSeoDomainListRequest chứa bộ lọc danh sách trang SEO.
@@ -652,7 +717,13 @@ message UpdateSeoDomainResponse {
   SeoDomainResponse seoDomain = 1;
 }
 
-// SeoDomainResponse là dữ liệu đầy đủ của một trang SEO.
+message BatchUpdateSeoDomainRequest {
+  repeated uint64 ids = 1;
+  // Danh sách field cần update, ví dụ: ["isSiteMap"].
+  repeated string fields = 2;
+  optional bool isSiteMap = 3;
+}
+
 message SeoDomainResponse {
   uint64 id = 1;
   string slug = 2;
@@ -705,6 +776,17 @@ message SeoDomainResponse {
   string lastRenderError = 45;
   string templateKey = 46;
   string templateVersion = 47;
+  sharepb.EnumItem visibleOn = 48;
+  int64 clickCount = 49;
+  string clickUpdatedAt = 50;
+  optional uint64 categoryId = 51;
+  string imageUrl = 52;
+  SeoCategoryBrief category = 53;
+}
+
+message SeoCategoryBrief {
+  uint64 id = 1;
+  string name = 2;
 }
 
 // SeoDomainBriefResponse là dữ liệu trang rút gọn khi lồng trong liên kết.
@@ -727,6 +809,7 @@ message SeoDomainBriefResponse {
   string pageStatus = 13;
   string renderStatus = 14;
   bool needGenerate = 15;
+  string imageUrl = 16;
 }
 
 // -----------------------------------------------------------------------------
@@ -867,6 +950,7 @@ message CreateSeoFromParcelRequest {
 // GenerateSeoFromParcelsRequest giới hạn số thửa đất xử lý.
 message GenerateSeoFromParcelsRequest {
   uint32 limit = 1;
+  repeated uint64 parcelIds = 2;
 }
 
 // GenerateSeoFromParcelsResponse tổng hợp kết quả tạo trang theo lô.
@@ -879,7 +963,59 @@ message GenerateSeoFromParcelsResponse {
   repeated string errors = 6;
 }
 
-// TouchSeoDomainByRefRequest định danh nguồn của trang cần cập nhật.
+message GenerateSeoFromLayersRequest {
+  repeated uint64 layerIds = 1;
+}
+
+message GenerateSeoFromLayersResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromPlanningProjectsRequest {
+  repeated uint64 planningProjectIds = 1;
+}
+
+message GenerateSeoFromPlanningProjectsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromAdministrativeUnitsRequest {
+  // Public IDs: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422
+  repeated uint64 compositeIds = 1;
+}
+
+message GenerateSeoFromAdministrativeUnitsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
+message GenerateSeoFromPlanningDocumentsRequest {
+  repeated uint64 docIds = 1;
+}
+
+message GenerateSeoFromPlanningDocumentsResponse {
+  repeated SeoDomainResponse data = 1;
+  int64 total = 2;
+  int64 created = 3;
+  int64 skipped = 4;
+  int64 failed = 5;
+  repeated string errors = 6;
+}
+
 message TouchSeoDomainByRefRequest {
   uint32 refType = 1;
   uint64 refId = 2;
@@ -1049,4 +1185,116 @@ message GetSeoRefsRequest {
   uint64 refId = 2;
   uint32 page = 3;
   uint32 size = 4;
+}
+
+message CountSeoRefsRequest {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message CountSeoRefsResponse {
+  int64 total = 1;
+}
+
+message CountRecentSeoByRefTypeRequest {
+  // Số ngày gần nhất theo updatedAt; mặc định 5 nếu bỏ trống hoặc = 0.
+  uint32 days = 1;
+}
+
+message SeoRefTypeCountItem {
+  uint32 refType = 1;
+  string refTypeName = 2;
+  int64 total = 3;
+}
+
+message CountRecentSeoByRefTypeResponse {
+  repeated SeoRefTypeCountItem data = 1;
+  uint32 days = 2;
+}
+
+message GetSeoTopClickedRequest {
+  // Số ngày gần nhất để thống kê click; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+}
+
+message SeoClickSource {
+  uint32 refType = 1;
+  uint64 refId = 2;
+}
+
+message SeoTopClickedItem {
+  uint64 id = 1;
+  string name = 2;
+  SeoClickSource source = 3;
+  uint64 clickCount = 4;
+}
+
+message GetSeoTopClickedResponse {
+  // Tổng lượt click website trong khoảng lastDates ngày gần nhất (không chia theo type)
+  uint64 totalClicks = 1;
+  // Top trang có lượt click nhiều nhất (tối đa 15), sắp xếp giảm dần
+  repeated SeoTopClickedItem data = 2;
+  // Số ngày đã áp dụng sau normalize (1-30, mặc định 3)
+  uint32 lastDates = 3;
+}
+
+message GetSeoClickDailyStatsRequest {
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  uint32 lastDates = 1;
+}
+
+message SeoClickDailyItem {
+  // Ngày theo format YYYY-MM-DD
+  string date = 1;
+  uint64 count = 2;
+}
+
+message GetSeoClickDailyStatsResponse {
+  // Danh sách click theo ngày, sắp xếp tăng dần theo date (đủ lastDates ngày, ngày không có data thì count = 0)
+  repeated SeoClickDailyItem data = 1;
+  uint32 lastDates = 2;
+}
+
+// -----------------------------------------------------------------------------
+// SEO refs (entity <-> SEO page links).
+// -----------------------------------------------------------------------------
+
+message CreateSeoRefRequest {
+  uint64 seoDomainId = 1;
+  uint32 refType = 2;
+  uint64 refId = 3;
+}
+
+message UpdateSeoRefRequest {
+  uint64 id = 1;
+  optional uint64 seoDomainId = 2;
+  optional uint32 refType = 3;
+  optional uint64 refId = 4;
+}
+
+message GetSeoRefListRequest {
+  optional uint64 seoDomainId = 1;
+  uint32 refType = 2;
+  uint64 refId = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+}
+
+message GetSeoRefListResponse {
+  repeated SeoRefResponse data = 1;
+  int64 total = 2;
+}
+
+message UpdateSeoRefResponse {
+  SeoRefResponse seoRef = 1;
+}
+
+message SeoRefResponse {
+  uint64 id = 1;
+  uint64 seoDomainId = 2;
+  uint32 refType = 3;
+  uint64 refId = 4;
+  optional SeoDomainBriefResponse seoDomain = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
 }

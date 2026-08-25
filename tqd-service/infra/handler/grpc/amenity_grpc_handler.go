@@ -6,7 +6,6 @@ import (
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/internal/domain"
 	"tqd/internal/dto"
 
 	"tqd/internal/usecase"
@@ -132,42 +131,27 @@ func (h *AmenityGrpcHandlerImpl) ListAmenities(ctx context.Context, req *tqdpb.L
 		size = 100
 	}
 
-	// Create filter DTO
 	filter := &dto.AmenityFilterDTO{
 		Pagable: _dto.Pagable{
 			Page: page,
 			Size: size,
 		},
-		Search:   req.Search,
-		Category: *req.Category,
+		Search: req.Search,
+	}
+	if req.Category != nil {
+		filter.Category = *req.Category
+	}
+	if req.IsActive != nil {
+		filter.IsActive = req.IsActive
 	}
 
-	// Call repo's ListAmenities method directly if needed, or enhance usecase
-	// For now, let's assume we need to get all and filter
-	results, total, err := h.amenityUsecase.GetList(ctx, &filter.Pagable)
+	results, total, err := h.amenityUsecase.ListAmenities(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list amenities: %v", err)
 	}
 
-	// Filter results based on search and category (this should ideally be done in repo)
-	var filtered []domain.Amenity
-	for _, r := range results {
-		// Apply search filter
-		if filter.Search != "" {
-			if !containsString(r.Name, filter.Search) && !containsString(r.Description, filter.Search) {
-				continue
-			}
-		}
-		// Apply category filter
-		if filter.Category != "" {
-			// You might need to add Category field to domain.Amenity
-			// For now, skip this filter
-		}
-		filtered = append(filtered, r)
-	}
-
-	amenities := make([]*tqdpb.Amenity, len(filtered))
-	for i, r := range filtered {
+	amenities := make([]*tqdpb.Amenity, len(results))
+	for i, r := range results {
 		amenities[i] = h.amenityMapper.ToProto(&r)
 	}
 
@@ -175,13 +159,4 @@ func (h *AmenityGrpcHandlerImpl) ListAmenities(ctx context.Context, req *tqdpb.L
 		Data:  amenities,
 		Total: total,
 	}, nil
-}
-
-// Helper function
-func containsString(s, substr string) bool {
-	if substr == "" {
-		return true
-	}
-	// Simple contains check - you might want case-insensitive
-	return s != "" && substr != "" && len(s) >= len(substr) && s[:len(substr)] == substr
 }

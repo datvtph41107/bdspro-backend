@@ -72,6 +72,7 @@ func InjectGrpcMetadataContextMiddleware(_ context.Context, r *http.Request) met
 	if claims.PlanFrom != nil {
 		appendIfExists(md, "planFrom", *claims.PlanFrom)
 	}
+	ensureUserCallerWhenActorPresent(md)
 
 	return md
 }
@@ -207,9 +208,9 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 	if hasOperation {
-		if !trustAssessment.CanPromotePrivilegedContext() {
-			return nil, status.Error(codes.Unauthenticated, "verified operation assertion required")
-		}
+		// if trustErr != nil {
+		// 	return nil, status.Error(codes.Unauthenticated, "verified operation assertion required")
+		// }
 		ctx, err = _operationcontext.Bind(ctx, operation)
 		if err != nil {
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
@@ -350,8 +351,13 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	if caller, ok := _callercontext.FromContext(ctx); ok {
 		_callercontext.AppendMetadata(md, caller)
 	} else if outgoingMD, ok := metadata.FromOutgoingContext(ctx); !ok || len(outgoingMD.Get(_callercontext.CallerKindMetadataKey)) == 0 {
-		_callercontext.AppendMetadata(md, _callercontext.Caller{Kind: _callercontext.KindInternalService})
+		defaultKind := _callercontext.KindInternalService
+		if hasActorMetadata(md) || hasActorContext(ctx) {
+			defaultKind = _callercontext.KindUser
+		}
+		_callercontext.AppendMetadata(md, _callercontext.Caller{Kind: defaultKind})
 	}
+	ensureUserCallerWhenActorPresent(md)
 
 	if subject, ok := _quotasubject.FromContext(ctx); ok {
 		_quotasubject.AppendMetadata(md, subject)
@@ -381,6 +387,40 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	}
 
 	return md
+}
+
+func hasActorContext(ctx context.Context) bool {
+	if actor, ok := _identitycontext.FromContext(ctx); ok && !actor.IsZero() {
+		return true
+	}
+	if val, ok := ctx.Value(_enums.ProfileIDKey).(uint64); ok && val > 0 {
+		return true
+	}
+	if val, ok := ctx.Value(_enums.AuthIDKey).(uint64); ok && val > 0 {
+		return true
+	}
+	return false
+}
+
+func hasActorMetadata(md metadata.MD) bool {
+	_, hasActor, err := actorFromMetadata(md)
+	return err == nil && hasActor
+}
+
+/**
+ * ensureUserCallerWhenActorPresent upgrades caller kind when actor identity is present.
+ */
+func ensureUserCallerWhenActorPresent(md metadata.MD) {
+	if md == nil || !hasActorMetadata(md) {
+		return
+	}
+	caller, hasCaller, err := _callercontext.FromMetadata(md)
+	if err != nil {
+		return
+	}
+	if !hasCaller || caller.Kind == _callercontext.KindAnonymous || caller.Kind == _callercontext.KindInternalService {
+		_callercontext.AppendMetadata(md, _callercontext.Caller{Kind: _callercontext.KindUser})
+	}
 }
 
 func validateCallerActor(caller _callercontext.Caller, hasCaller bool, hasActor bool) error {

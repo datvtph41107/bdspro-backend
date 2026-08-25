@@ -47,6 +47,7 @@ type AdministrativeUnitProjection struct {
 	UnitTypeName       string                            `json:"unitTypeName"`
 	Name               string                            `json:"name"`
 	DisplayName        string                            `json:"displayName"`
+	Description        string                            `json:"description,omitempty"`
 	AdministrativeCode string                            `json:"administrativeCode"`
 	Parent             *AdministrativeUnitParent         `json:"parent,omitempty"`
 	Hierarchy          []AdministrativeUnitHierarchyItem `json:"hierarchy"`

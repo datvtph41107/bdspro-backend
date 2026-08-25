@@ -2,6 +2,10 @@
 package mapper
 
 import (
+	"strings"
+	"time"
+
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/internal/dto"
@@ -19,35 +23,80 @@ func (m *LocationMapper) ToProtoProvince(dto *dto.ProvinceDTO) *tqdpb.Province {
 	if dto == nil {
 		return nil
 	}
-	return &tqdpb.Province{
-		Id:        dto.ID,
-		Code:      dto.Code,
-		FullName:  dto.FullName,
-		ShortName: dto.ShortName,
-		Latitude:  dto.Lat,
-		Longitude: dto.Lng,
-		WardCount: dto.WardCount,
-		CreatedAt: _utils.FormatTimeToString(dto.CreatedAt),
-		UpdatedAt: _utils.FormatTimeToString(dto.UpdatedAt),
+	resp := &tqdpb.Province{
+		Id:                    dto.ID,
+		Code:                  dto.Code,
+		FullName:              dto.FullName,
+		ShortName:             dto.ShortName,
+		Latitude:              dto.Lat,
+		Longitude:             dto.Lng,
+		DivisionType:          dto.DivisionType,
+		WardCount:             dto.WardCount,
+		OfficialName:          dto.OfficialName,
+		OfficialOperationDate: _utils.FormatTimeToString(dto.OfficialOperationDate),
+		NaturalAreaKm2:        dto.NaturalAreaKm2,
+		Population:            dto.Population,
+		PopulationDensity:     dto.PopulationDensity,
+		Description:           dto.Description,
+		UnitType:              dto.UnitType,
+		UnitTypeName:          dto.UnitTypeName,
+		DataSource:            dto.DataSource,
+		DataSourceName:        dto.DataSourceName,
+		OfficialRole:          dto.OfficialRole,
+		OfficialAddress:       dto.OfficialAddress,
+		CompositeId:           dto.CompositeID,
+		CreatedAt:             _utils.FormatTimeToString(dto.CreatedAt),
+		UpdatedAt:             _utils.FormatTimeToString(dto.UpdatedAt),
+		Geometry:              dto.Geometry,
 	}
+	if dto.SeoID != nil && *dto.SeoID > 0 {
+		seoID := *dto.SeoID
+		resp.SeoId = &seoID
+	}
+	if dto.PlanDocID != nil && *dto.PlanDocID > 0 {
+		planDocID := *dto.PlanDocID
+		resp.PlanDocId = &planDocID
+	}
+	return resp
 }
 
 func (m *LocationMapper) ToProtoWard(dto *dto.WardDTO) *tqdpb.Ward {
 	if dto == nil {
 		return nil
 	}
-	return &tqdpb.Ward{
-		Id:           dto.ID,
-		Code:         dto.Code,
-		FullName:     dto.FullName,
-		ShortName:    dto.ShortName,
-		Latitude:     dto.Lat,
-		Longitude:    dto.Lng,
-		ProvinceId:   dto.ProvinceID,
-		ProvinceCode: dto.ProvinceCode,
-		CreatedAt:    _utils.FormatTimeToString(dto.CreatedAt),
-		UpdatedAt:    _utils.FormatTimeToString(dto.UpdatedAt),
+	resp := &tqdpb.Ward{
+		Id:                    dto.ID,
+		Code:                  dto.Code,
+		FullName:              dto.FullName,
+		ShortName:             dto.ShortName,
+		Latitude:              dto.Lat,
+		Longitude:             dto.Lng,
+		DivisionType:          dto.DivisionType,
+		ProvinceId:            dto.ProvinceID,
+		ProvinceCode:          dto.ProvinceCode,
+		OfficialName:          dto.OfficialName,
+		OfficialOperationDate: _utils.FormatTimeToString(dto.OfficialOperationDate),
+		NaturalAreaKm2:        dto.NaturalAreaKm2,
+		Population:            dto.Population,
+		PopulationDensity:     dto.PopulationDensity,
+		Summary:               dto.Summary,
+		Description:           dto.Description,
+		CompositeId:           dto.CompositeID,
+		UnitType:              dto.UnitType,
+		UnitTypeName:          dto.UnitTypeName,
+		DataSource:            dto.DataSource,
+		DataSourceName:        dto.DataSourceName,
+		OfficialRole:          dto.OfficialRole,
+		OfficialAddress:       dto.OfficialAddress,
+		CreatedAt:             _utils.FormatTimeToString(dto.CreatedAt),
+		UpdatedAt:             _utils.FormatTimeToString(dto.UpdatedAt),
+		Geometry:              dto.Geometry,
 	}
+	if dto.SeoID != nil && *dto.SeoID > 0 {
+		seoID := *dto.SeoID
+		resp.SeoId = &seoID
+	}
+	return resp
 }
 
 func (m *LocationMapper) ToProtoLocationResponse(dto *dto.LocationResponse) *tqdpb.LocationResponse {
@@ -90,6 +139,7 @@ func (m *LocationMapper) ToProtoSearchResult(dto *dto.SearchResult) *tqdpb.Searc
 		Ward:           m.ToProtoWard(dto.Ward),
 		FullAddress:    dto.FullAddress,
 		RelevanceScore: dto.RelevanceScore,
+		CompositeId:    dto.CompositeID,
 	}
 }
 
@@ -124,6 +174,117 @@ func (m *LocationMapper) ToProtoListWardsResponse(dto *dto.ListWardsResponse) *t
 		Total:    dto.Total,
 		Page:     dto.Page,
 		PageSize: dto.PageSize,
+	}
+}
+
+func (m *LocationMapper) ToProtoAdminListProvincesResponse(dto *dto.AdminListProvincesResponse) *tqdpb.AdminListProvincesResponse {
+	if dto == nil {
+		return nil
+	}
+
+	data := make([]*tqdpb.Province, len(dto.Data))
+	for i, p := range dto.Data {
+		data[i] = m.ToProtoProvince(p)
+	}
+
+	return &tqdpb.AdminListProvincesResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
+func (m *LocationMapper) ToProtoAdminListWardsResponse(dto *dto.AdminListWardsResponse) *tqdpb.AdminListWardsResponse {
+	if dto == nil {
+		return nil
+	}
+
+	data := make([]*tqdpb.Ward, len(dto.Data))
+	for i, w := range dto.Data {
+		data[i] = m.ToProtoWard(w)
+	}
+
+	return &tqdpb.AdminListWardsResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
+func (m *LocationMapper) ToProtoListAdministrativeUnitsResponse(dto *dto.ListAdministrativeUnitsResponse) *tqdpb.ListAdministrativeUnitsResponse {
+	if dto == nil {
+		return nil
+	}
+	data := make([]*tqdpb.AdministrativeUnitListItem, 0, len(dto.Data))
+	for _, item := range dto.Data {
+		if item == nil {
+			continue
+		}
+		data = append(data, &tqdpb.AdministrativeUnitListItem{
+			Province: m.ToProtoProvince(item.Province),
+			Ward:     m.ToProtoWard(item.Ward),
+		})
+	}
+	return &tqdpb.ListAdministrativeUnitsResponse{
+		Data:  data,
+		Total: dto.Total,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListProvincesRequest(req *tqdpb.AdminListProvincesRequest) *dto.AdminListProvincesRequest {
+	if req == nil {
+		return &dto.AdminListProvincesRequest{}
+	}
+	return &dto.AdminListProvincesRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search: req.Search,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListWardsRequest(req *tqdpb.AdminListWardsRequest) *dto.AdminListWardsRequest {
+	if req == nil {
+		return &dto.AdminListWardsRequest{}
+	}
+	return &dto.AdminListWardsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:     req.Search,
+		ProvinceID: req.ProvinceId,
+	}
+}
+
+func (m *LocationMapper) FromProtoAdminListAdministrativeUnitsRequest(req *tqdpb.AdminListAdministrativeUnitsRequest) *dto.ListAdministrativeUnitsRequest {
+	if req == nil {
+		return &dto.ListAdministrativeUnitsRequest{}
+	}
+	return &dto.ListAdministrativeUnitsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:            req.Search,
+		PlanningProjectID: req.PlanningProjectId,
+	}
+}
+
+func (m *LocationMapper) FromProtoClientListAdministrativeUnitsRequest(req *tqdpb.ClientListAdministrativeUnitsRequest) *dto.ListAdministrativeUnitsRequest {
+	if req == nil {
+		return &dto.ListAdministrativeUnitsRequest{}
+	}
+	return &dto.ListAdministrativeUnitsRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+			Sort: req.Sort,
+		},
+		Search:            req.Search,
+		PlanningProjectID: req.PlanningProjectId,
 	}
 }
 
@@ -177,20 +338,28 @@ func (m *LocationMapper) FromProtoGetProvinceRequest(req *tqdpb.GetProvinceReque
 	if req == nil {
 		return nil
 	}
-	return &dto.GetProvinceRequest{
-		ID:   &req.Id,
+	out := &dto.GetProvinceRequest{
 		Code: req.Code,
 	}
+	if req.Id != 0 {
+		id := req.Id
+		out.ID = &id
+	}
+	return out
 }
 
 func (m *LocationMapper) FromProtoGetWardRequest(req *tqdpb.GetWardRequest) *dto.GetWardRequest {
 	if req == nil {
 		return nil
 	}
-	return &dto.GetWardRequest{
-		ID:   &req.Id,
+	out := &dto.GetWardRequest{
 		Code: req.Code,
 	}
+	if req.Id != 0 {
+		id := req.Id
+		out.ID = &id
+	}
+	return out
 }
 
 func (m *LocationMapper) FromProtoListWardsByProvinceRequest(req *tqdpb.ListWardsByProvinceRequest) *dto.ListWardsByProvinceRequest {
@@ -202,4 +371,84 @@ func (m *LocationMapper) FromProtoListWardsByProvinceRequest(req *tqdpb.ListWard
 		Page:       req.Page,
 		PageSize:   req.PageSize,
 	}
+}
+
+func (m *LocationMapper) FromProtoProvince(req *tqdpb.Province) *dto.ProvinceDTO {
+	if req == nil {
+		return nil
+	}
+	resp := &dto.ProvinceDTO{
+		ID:                    req.Id,
+		Code:                  req.Code,
+		FullName:              req.FullName,
+		ShortName:             req.ShortName,
+		Lat:                   req.Latitude,
+		Lng:                   req.Longitude,
+		DivisionType:          req.DivisionType,
+		WardCount:             req.WardCount,
+		OfficialName:          req.OfficialName,
+		OfficialOperationDate: parseOfficialOperationDate(req.OfficialOperationDate),
+		NaturalAreaKm2:        req.NaturalAreaKm2,
+		Population:            req.Population,
+		PopulationDensity:     req.PopulationDensity,
+		Description:           req.Description,
+		UnitType:              req.UnitType,
+		DataSource:            req.DataSource,
+		OfficialRole:          req.OfficialRole,
+		OfficialAddress:       req.OfficialAddress,
+	}
+	if req.SeoId != nil {
+		seoID := req.GetSeoId()
+		resp.SeoID = &seoID
+	}
+	if req.PlanDocId != nil {
+		planDocID := req.GetPlanDocId()
+		resp.PlanDocID = &planDocID
+	}
+	return resp
+}
+
+func (m *LocationMapper) FromProtoWard(req *tqdpb.Ward) *dto.WardDTO {
+	if req == nil {
+		return nil
+	}
+	return &dto.WardDTO{
+		ID:                    req.Id,
+		Code:                  req.Code,
+		FullName:              req.FullName,
+		ShortName:             req.ShortName,
+		Lat:                   req.Latitude,
+		Lng:                   req.Longitude,
+		DivisionType:          req.DivisionType,
+		ProvinceID:            req.ProvinceId,
+		ProvinceCode:          req.ProvinceCode,
+		OfficialName:          req.OfficialName,
+		OfficialOperationDate: parseOfficialOperationDate(req.OfficialOperationDate),
+		NaturalAreaKm2:        req.NaturalAreaKm2,
+		Population:            req.Population,
+		PopulationDensity:     req.PopulationDensity,
+		Summary:               req.Summary,
+		Description:           req.Description,
+		UnitType:              req.UnitType,
+		DataSource:            req.DataSource,
+		OfficialRole:          req.OfficialRole,
+		OfficialAddress:       req.OfficialAddress,
+	}
+}
+
+func parseOfficialOperationDate(value string) *time.Time {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	if t := _utils.ParseStringToTime(value); t != nil {
+		return t
+	}
+	for _, layout := range []string{"02/01/2006", "2/1/2006", "02-01-2006"} {
+		t, err := time.Parse(layout, value)
+		if err == nil {
+			return &t
+		}
+	}
+	return nil
 }

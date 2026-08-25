@@ -9,6 +9,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
+	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	qh_dto "tqd/internal/dto/qh"
@@ -80,10 +81,14 @@ func (m *ParcelMapper) ToProtoParcelDetail(data *qh_dto.ParcelDetailResponseDTO)
 
 	// Location
 	if data.Parcel.Location != nil {
+		loc := data.Parcel.Location
 		resp.Parcel.Location = &tqdpb.Location{
-			Province:     data.Parcel.Location.Province,
-			ProvinceCode: data.Parcel.Location.ProvinceCode,
-			WardCode:     data.Parcel.Location.WardCode,
+			Province:     loc.Province,
+			ProvinceCode: loc.ProvinceCode,
+			Ward:         loc.Ward,
+			WardCode:     loc.WardCode,
+			ProvinceInfo: m.toProtoAdministrativeUnit(loc.ProvinceInfo),
+			WardInfo:     m.toProtoAdministrativeUnit(loc.WardInfo),
 		}
 	}
 
@@ -222,6 +227,19 @@ func (m *ParcelMapper) ToProtoParcelDetail(data *qh_dto.ParcelDetailResponseDTO)
 	}
 
 	return resp
+}
+
+func (m *ParcelMapper) toProtoAdministrativeUnit(data *qh_dto.AdministrativeUnitDTO) *tqdpb.AdministrativeUnitSummary {
+	if data == nil {
+		return nil
+	}
+	return &tqdpb.AdministrativeUnitSummary{
+		Id:          data.ID,
+		Code:        data.Code,
+		FullName:    data.FullName,
+		ShortName:   data.ShortName,
+		Description: data.Description,
+	}
 }
 
 func (m *ParcelMapper) ToProtoLegalDocumentSummary(docs []*qh_domain.QHLegalDocument) *tqdpb.LegalDocumentSummary {
@@ -775,7 +793,7 @@ func (m *ParcelMapper) ProtoToDomains(req *tqdpb.ParcelListDTO) []qh_domain.Parc
 		parcels = append(parcels, qh_domain.Parcel{
 			Lat: p.Latitude,
 			Lng: p.Longitude,
-			Geometry: qh_domain.RawGeometry{
+			Geometry: domain.RawGeometry{
 				Raw: p.Geometry,
 			},
 		})
@@ -838,6 +856,25 @@ func (m *ParcelMapper) ToProtoParcelInfoDetail(resp *dto.ParcelInfoResponse) *tq
 		SeoId:        resp.SeoID,
 		IsSeo:        resp.IsSeo,
 	}
+}
+
+func (m *ParcelMapper) ToProtoNearbyParcelItems(rows []dto.NearbyParcelItem) []*tqdpb.NearbyParcelItem {
+	out := make([]*tqdpb.NearbyParcelItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		out = append(out, &tqdpb.NearbyParcelItem{
+			ParcelId:       row.ParcelID,
+			Lat:            row.Lat,
+			Lon:            row.Lon,
+			AreaSqm:        row.AreaSqm,
+			Address:        row.AddressText,
+			Geometry:       row.Geometry,
+			MapNumber:      row.MapNumber,
+			LandNumber:     row.LandNumber,
+			DistanceMeters: row.DistanceMeters,
+		})
+	}
+	return out
 }
 
 func (m *ParcelMapper) RegionInfoToProto(v *dto.RegionInfoResponse) *tqdpb.RegionInfoResponse {
@@ -1033,65 +1070,101 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsRespo
 	}
 }
 
+// landUseKey is the composite key for deduplication within a layer.
+type landUseKey struct {
+	layerID    uint64
+	landUseID  uint64
+}
+
 func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *tqdpb.LayerQuickInfoResponse {
-	layerMap := make(map[uint64]*tqdpb.LayerQuickInfo)
-	layers := make([]*tqdpb.LayerQuickInfo, 0)
-	warnings := make([]string, 0)
+	type layerEntry struct {
+		proto      *tqdpb.LayerQuickInfo
+		// landUseID -> index trong LandUses slice
+		landUseIdx map[uint64]int
+	}
+
+	layerMap := make(map[uint64]*layerEntry)
+	layerOrder := make([]uint64, 0) // duy trì thứ tự xuất hiện
+	warnSet := make(map[landUseKey]bool)
 
 	for _, q := range rows {
-		layer, exists := layerMap[q.LayerID]
+		entry, exists := layerMap[q.LayerID]
 		if !exists {
-			layer = &tqdpb.LayerQuickInfo{
-				ParcelId:         q.ParcelID,
-				LayerId:          q.LayerID,
-				LayerName:        q.LayerName,
-				LayerDisplayName: q.LayerDisplayName,
-				LayerType:        q.LayerType,
-				LegalStatus:      uint32(q.LayerLegalStatus),
-				LayerOrder:       q.LayerOrder,
-				LegalStatusName:  enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
-				LayerAvatar:      q.LayerAvatar,
-				RelationType:     q.RelationType,
-				UpdatedAt:        _utils.FormatTimeToString(&q.LayerUpdatedAt),
-				LandUses:         make([]*tqdpb.LandUseQuickInfo, 0),
-
-				PlanningProjectId: q.PlanningProjectID,
+			entry = &layerEntry{
+				proto: &tqdpb.LayerQuickInfo{
+					ParcelId:          q.ParcelID,
+					LayerId:           q.LayerID,
+					LayerName:         q.LayerName,
+					LayerDisplayName:  q.LayerDisplayName,
+					LayerType:         q.LayerType,
+					LegalStatus:       uint32(q.LayerLegalStatus),
+					LayerOrder:        q.LayerOrder,
+					LegalStatusName:   enums.LegalStatusMap[enums.LegalStatus(q.LayerLegalStatus)],
+					LayerAvatar:       q.LayerAvatar,
+					LayerImage:        q.LayerAvatar,
+					RelationType:      q.RelationType,
+					UpdatedAt:         _utils.FormatTimeToString(&q.LayerUpdatedAt),
+					LandUses:          make([]*tqdpb.LandUseQuickInfo, 0),
+					PlanningProjectId: q.PlanningProjectID,
+				},
+				landUseIdx: make(map[uint64]int),
 			}
-
-			layerMap[q.LayerID] = layer
-			layers = append(layers, layer)
+			layerMap[q.LayerID] = entry
+			layerOrder = append(layerOrder, q.LayerID)
 		}
 
-		layer.LandUses = append(layer.LandUses, &tqdpb.LandUseQuickInfo{
-			LandUseId:        q.LandUseID,
-			LandUseName:      q.LandUseName,
-			LandUseColor:     q.LandUseColor,
-			WarnLevel:        uint32(q.WarnLevel),
-			IntersectAreaSqm: q.IntersectAreaSqm,
-			Percent:          q.Percent,
-			CanBuild:         q.CanBuild,
-		})
+		// Gộp cùng loại đất trong cùng 1 layer: cộng dồn area + percent
+		if idx, seen := entry.landUseIdx[q.LandUseID]; seen {
+			lu := entry.proto.LandUses[idx]
+			lu.IntersectAreaSqm += q.IntersectAreaSqm
+			lu.Percent += q.Percent
+			// Giữ warn level cao nhất
+			if uint32(q.WarnLevel) > lu.WarnLevel {
+				lu.WarnLevel = uint32(q.WarnLevel)
+			}
+		} else {
+			entry.landUseIdx[q.LandUseID] = len(entry.proto.LandUses)
+			entry.proto.LandUses = append(entry.proto.LandUses, &tqdpb.LandUseQuickInfo{
+				LandUseId:        q.LandUseID,
+				LandUseName:      q.LandUseName,
+				LandUseColor:     q.LandUseColor,
+				WarnLevel:        uint32(q.WarnLevel),
+				IntersectAreaSqm: q.IntersectAreaSqm,
+				Percent:          q.Percent,
+				CanBuild:         q.CanBuild,
+			})
+		}
 
+		// Cảnh báo: mỗi (layer, land use) chỉ generate 1 lần (sau khi gộp)
 		if q.WarnLevel > 0 {
-			warnings = append(
-				warnings,
-				fmt.Sprintf(
-					"%.2f%% diện tích thuộc '%s' trong '%s'.",
-					q.Percent,
-					q.LandUseName,
-					q.LayerName,
-				),
-			)
+			warnSet[landUseKey{q.LayerID, q.LandUseID}] = true
 		}
+	}
+
+	// Build final slice theo thứ tự xuất hiện ban đầu
+	layers := make([]*tqdpb.LayerQuickInfo, 0, len(layerOrder))
+	for _, lid := range layerOrder {
+		layers = append(layers, layerMap[lid].proto)
 	}
 
 	sort.SliceStable(layers, func(i, j int) bool {
 		return layers[i].LayerOrder > layers[j].LayerOrder
 	})
 
-	// if len(warnings) == 0 {
-	// 	warnings = append(warnings, "Không có cảnh báo nào.")
-	// }
+	// Build warnings từ trạng thái đã gộp (dùng percent tổng)
+	warnings := make([]string, 0, len(warnSet))
+	for _, layer := range layers {
+		for _, lu := range layer.LandUses {
+			if lu.WarnLevel > 0 {
+				warnings = append(warnings, fmt.Sprintf(
+					"%.2f%% diện tích thuộc '%s' trong '%s'.",
+					lu.Percent,
+					lu.LandUseName,
+					layer.LayerName,
+				))
+			}
+		}
+	}
 
 	return &tqdpb.LayerQuickInfoResponse{
 		Layers:   layers,
@@ -1629,4 +1702,126 @@ func mapTypeLayerToLayerDetail(l *types.LayerDetail) *tqdpb.LayerDetail {
 		pl.Labels = append(pl.Labels, plb)
 	}
 	return pl
+}
+
+func (m *ParcelMapper) ToProtoParcelHistoryItems(rows []qh_domain.ParcelHistory) []*tqdpb.ParcelHistoryItem {
+	out := make([]*tqdpb.ParcelHistoryItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		metadata := "{}"
+		if len(row.Metadata) > 0 {
+			metadata = string(row.Metadata)
+		}
+		item := &tqdpb.ParcelHistoryItem{
+			Id:          row.ID,
+			ParcelId:    row.ParcelID,
+			EventType:   row.EventType,
+			EventName:   row.EventName,
+			Description: row.Description,
+			EventDate:   _utils.FormatTimeToString(row.EventDate),
+			SourceUrl:   row.SourceURL,
+			Metadata:    metadata,
+			CreatedAt:   _utils.FormatTimeToString(row.CreatedAt),
+			UpdatedAt:   _utils.FormatTimeToString(row.UpdatedAt),
+		}
+		if row.DocumentID != nil {
+			item.DocumentId = row.DocumentID
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+func (m *ParcelMapper) ToProtoAdminParcelListItems(rows []dto.AdminParcelListItem) []*tqdpb.AdminParcelListItem {
+	out := make([]*tqdpb.AdminParcelListItem, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		createdAt := row.CreatedAt
+		out = append(out, &tqdpb.AdminParcelListItem{
+			ParcelId:      row.ParcelID,
+			Lat:           row.Lat,
+			Lon:           row.Lon,
+			AreaSqm:       row.AreaSqm,
+			Address:       row.AddressText,
+			MapNumber:     row.MapNumber,
+			LandNumber:    row.LandNumber,
+			PropertyCode:  row.PropertyCode,
+			Province:      row.Province,
+			ProvinceCode:  row.ProvinceCode,
+			WardCode:      row.WardCode,
+			SeoId:         row.SeoID,
+			IsSeo:         row.IsSeo,
+			FollowerCount: row.FollowerCount,
+			CreatedAt:     _utils.FormatTimeToString(&createdAt),
+		})
+	}
+	return out
+}
+
+func (m *ParcelMapper) ToProtoAdminParcelDetail(row *dto.AdminParcelDetail) *tqdpb.AdminParcelDetail {
+	if row == nil {
+		return nil
+	}
+	createdAt := row.CreatedAt
+	updatedAt := row.UpdatedAt
+	return &tqdpb.AdminParcelDetail{
+		ParcelId:      row.ParcelID,
+		Lat:           row.Lat,
+		Lon:           row.Lon,
+		AreaSqm:       row.AreaSqm,
+		Address:       row.AddressText,
+		MapNumber:     row.MapNumber,
+		LandNumber:    row.LandNumber,
+		PropertyCode:  row.PropertyCode,
+		Province:      row.Province,
+		ProvinceCode:  row.ProvinceCode,
+		WardCode:      row.WardCode,
+		SeoId:         row.SeoID,
+		IsSeo:         row.IsSeo,
+		FollowerCount: row.FollowerCount,
+		CreatedAt:     _utils.FormatTimeToString(&createdAt),
+		UpdatedAt:     _utils.FormatTimeToString(&updatedAt),
+		LandUseName:   row.LandUseName,
+		PropertyUuid:  row.PropertyUUID,
+		DistrictCode:  row.DistrictCode,
+		Geometry:      string(row.Geometry),
+	}
+}
+
+func (m *ParcelMapper) ToProtoAdminParcelNeighbors(rows []dto.NearbyParcelItem) []*tqdpb.AdminParcelNeighbor {
+	out := make([]*tqdpb.AdminParcelNeighbor, 0, len(rows))
+	for i := range rows {
+		row := rows[i]
+		out = append(out, &tqdpb.AdminParcelNeighbor{
+			ParcelId:       row.ParcelID,
+			Lat:            row.Lat,
+			Lon:            row.Lon,
+			AreaSqm:        row.AreaSqm,
+			Address:        row.AddressText,
+			MapNumber:      row.MapNumber,
+			LandNumber:     row.LandNumber,
+			DistanceMeters: row.DistanceMeters,
+			Geometry:       string(row.Geometry),
+		})
+	}
+	return out
+}
+
+func (m *ParcelMapper) ToAdminUpdateParcelDTO(req *tqdpb.AdminUpdateParcelRequest) *dto.AdminUpdateParcelRequest {
+	if req == nil {
+		return nil
+	}
+	return &dto.AdminUpdateParcelRequest{
+		ParcelID:     req.GetParcelId(),
+		Lat:          req.GetLat(),
+		Lon:          req.GetLon(),
+		AreaSqm:      req.GetAreaSqm(),
+		Address:      strings.TrimSpace(req.GetAddress()),
+		MapNumber:    strings.TrimSpace(req.GetMapNumber()),
+		LandNumber:   strings.TrimSpace(req.GetLandNumber()),
+		PropertyCode: strings.TrimSpace(req.GetPropertyCode()),
+		ProvinceCode: strings.TrimSpace(req.GetProvinceCode()),
+		WardCode:     strings.TrimSpace(req.GetWardCode()),
+		IsSeo:        req.GetIsSeo(),
+	}
 }

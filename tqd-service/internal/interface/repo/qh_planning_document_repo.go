@@ -12,6 +12,7 @@ type IQHPlanningDocumentRepo interface {
 	Delete(ctx context.Context, id uint64) error
 	GetByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 	GetList(ctx context.Context, req *qh_dto.ListPlanningDocumentsRequest) ([]qh_domain.QHPlanningDocument, int64, error)
+	CountByProject(ctx context.Context, projectID uint64) (int64, error)
 	GetAll(ctx context.Context) ([]qh_domain.QHPlanningDocument, error)
 	GetDetail(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocument, error)
 
@@ -25,4 +26,17 @@ type IQHPlanningDocumentRepo interface {
 	ResetClassifyForRetry(ctx context.Context, id uint64) error
 	// ResetFailedClassifyByProject đưa tất cả tài liệu Failed của đồ án về Pending; trả về số bản ghi cập nhật.
 	ResetFailedClassifyByProject(ctx context.Context, projectID uint64) (int64, error)
+	// AssignToLayers tạo/khôi phục bản ghi layer_plan_doc_relation cho từng cặp layerIds × docIds.
+	AssignToLayers(ctx context.Context, layerIDs, docIDs []uint64) error
+	// UnassignFromLayers xóa cứng bản ghi layer_plan_doc_relation theo layerIds × docIds.
+	UnassignFromLayers(ctx context.Context, layerIDs, docIDs []uint64) error
+	// UnassignLayer xóa toàn bộ layer_plan_doc_relation của layer với tài liệu thuộc đồ án.
+	UnassignLayer(ctx context.Context, planningID, layerID uint64) error
+	GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*qh_dto.PlanningDocumentSeoSource, error)
+	GetPlanningDocumentSeoSourcesByIDs(ctx context.Context, documentIDs []uint64) ([]qh_dto.PlanningDocumentSeoSource, error)
+	UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error
+	CreateHistory(ctx context.Context, entity *qh_domain.QHPlanningDocumentEvent) error
+	DeleteHistory(ctx context.Context, id uint64) error
+	GetHistoryByID(ctx context.Context, id uint64) (*qh_domain.QHPlanningDocumentEvent, error)
+	ListHistories(ctx context.Context, req *qh_dto.ListPlanningDocumentHistoriesRequest) ([]qh_domain.QHPlanningDocumentEvent, int64, error)
 }

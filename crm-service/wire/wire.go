@@ -156,6 +156,8 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewRuleEventUsecase,
 	crm_infra_handler.NewRuleService,
 	crm_internal_usecase.NewRuleUsecase,
+	crm_infra_postgre.NewSeoCountPostgres,
+	crm_internal_usecase.NewSeoCountUsecase,
 	crm_infra_handler.NewSeoDomainHandler,
 	crm_infra_mapper.NewSeoDomainMapper,
 	crm_infra_postgre.NewSeoDomainPostgres,

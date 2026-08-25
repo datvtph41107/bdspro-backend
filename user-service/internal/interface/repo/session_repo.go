@@ -27,4 +27,7 @@ type SessionRepository interface {
 	// Login history
 	GetLoginHistoryByAuthID(ctx context.Context, authID uint64, page, size int32) ([]*domain.UserSessionEntity, int64, error)
 	GetSessionsByProfile(ctx context.Context, userID uint64, pagable *_dto.Pagable) ([]*domain.UserSessionEntity, int64, error)
+
+	// User activity (login/refresh) — 1 bản ghi / user / khung giờ
+	RecordUserActivity(ctx context.Context, profileID uint64, source string) error
 }

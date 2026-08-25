@@ -103,3 +103,66 @@ func (v *LocationValidator) ValidatePagination(page, pageSize *int32) error {
 
 	return nil
 }
+
+func (v *LocationValidator) ValidateAdminProvince(req *dto.ProvinceDTO, isCreate bool) error {
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+	if strings.TrimSpace(req.FullName) == "" && strings.TrimSpace(req.OfficialName) == "" {
+		return errors.New("fullName hoặc officialName là bắt buộc")
+	}
+	if req.Lat != 0 || req.Lng != 0 {
+		if err := v.ValidateCoordinate(req.Lat, req.Lng); err != nil {
+			return err
+		}
+	}
+	if req.NaturalAreaKm2 < 0 {
+		return errors.New("naturalAreaKm2 must be >= 0")
+	}
+	if req.Population < 0 {
+		return errors.New("population must be >= 0")
+	}
+	if req.PopulationDensity < 0 {
+		return errors.New("populationDensity must be >= 0")
+	}
+	if isCreate {
+		return nil
+	}
+	if req.ID == 0 {
+		return errors.New("id is required")
+	}
+	return nil
+}
+
+func (v *LocationValidator) ValidateAdminWard(req *dto.WardDTO, isCreate bool) error {
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+	if strings.TrimSpace(req.FullName) == "" && strings.TrimSpace(req.OfficialName) == "" {
+		return errors.New("fullName hoặc officialName là bắt buộc")
+	}
+	if isCreate && req.ProvinceID == 0 {
+		return errors.New("provinceId is required")
+	}
+	if req.Lat != 0 || req.Lng != 0 {
+		if err := v.ValidateCoordinate(req.Lat, req.Lng); err != nil {
+			return err
+		}
+	}
+	if req.NaturalAreaKm2 < 0 {
+		return errors.New("naturalAreaKm2 must be >= 0")
+	}
+	if req.Population < 0 {
+		return errors.New("population must be >= 0")
+	}
+	if req.PopulationDensity < 0 {
+		return errors.New("populationDensity must be >= 0")
+	}
+	if isCreate {
+		return nil
+	}
+	if req.ID == 0 {
+		return errors.New("id is required")
+	}
+	return nil
+}

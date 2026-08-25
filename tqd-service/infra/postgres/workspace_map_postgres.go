@@ -243,11 +243,11 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(
 				COALESCE(p.lat, 0) AS lat,
 				COALESCE(p.lon, 0) AS lon,
 
-				COALESCE(p.total_area_sqm, 0) AS area_sqm,
-				COALESCE(p.address_text, '') AS address,
+				COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
+				COALESCE(pi.address_text, '') AS address,
 
-				COALESCE(p.map_number, '') AS map_number,
-				COALESCE(p.land_number, '') AS land_number,
+				COALESCE(pi.map_number, '') AS map_number,
+				COALESCE(pi.land_number, '') AS land_number,
 
 				ST_Multi(
 					ST_CollectionExtract(
@@ -257,11 +257,12 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(
 				)::geometry(MultiPolygon, 4326) AS geom,
 
 				COALESCE(prov.full_name, '') AS province,
-				COALESCE(p.province_code, '') AS province_code,
-				COALESCE(p.ward_code, '') AS ward_code
+				COALESCE(pi.province_code, '') AS province_code,
+				COALESCE(pi.ward_code, '') AS ward_code
 			FROM parcels p
+			LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
 			LEFT JOIN province_v2 prov
-				ON p.province_code = prov.code
+				ON pi.province_code = prov.code
 			WHERE p.id IN ?
 			  AND p.deleted_at IS NULL
 			  AND p.geometry IS NOT NULL

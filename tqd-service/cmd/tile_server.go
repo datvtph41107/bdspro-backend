@@ -54,7 +54,10 @@ func RunTileServer(port int) error {
 
 	// ── HTTP handler ───────────────────────────────────────────
 	corsOptions := cors.Options{
-		AllowedOrigins: []string{"*"}, // Cho phép tất cả để test, có thể giới hạn lại sau
+		AllowedOrigins: []string{
+			"*",
+			"http://localhost:3001",
+		}, // Cho phép tất cả để test, có thể giới hạn lại sau
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"Origin",

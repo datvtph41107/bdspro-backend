@@ -70,6 +70,16 @@ type PermissionService struct {
 	roleMu    sync.Mutex
 	roleCache map[uint64]roleCacheEntry
 
+	// nhớ là khi trừ thì trừ trực tiếp trong bitcache luôn sau đó debounce khoảng 20s thì mới submit vào db.
+	// toàn bộ lưu db là do user quản lý không liên quan gì trong đây cả
+	// gói đó được phép gọi những hàm nào
+	packPermissions map[uint32]_algorithm.BitCache
+	// hàm đó được gọi bao nhiêu lần
+	permissionQuota map[uint16]uint8
+	// số lần gọi hàm còn lại của user theo permission
+	userRest map[uint64]map[uint16]uint8
+	// quotaCache map[uint16]
+
 	userClient      *clients.UserGrpcClient
 	refreshInterval time.Duration
 	maxStaleness    time.Duration
@@ -461,4 +471,18 @@ func ParseProfileID(value string) (uint64, error) {
 		return 0, fmt.Errorf("invalid profile ID")
 	}
 	return profileID, nil
+}
+
+func (s *PermissionService) QuotaCheck(permissionID uint16) uint8 {
+	// s.mu.RLock()
+	// quota := s.permissionQuota[permissionID]
+	// s.mu.RUnlock()
+	return 0
+}
+
+func (s *PermissionService) QuotaCommit(permissionID uint16) uint8 {
+	// s.mu.RLock()
+	// quota := s.permissionQuota[permissionID]
+	// s.mu.RUnlock()
+	return 0
 }

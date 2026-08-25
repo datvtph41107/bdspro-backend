@@ -7,7 +7,9 @@ import (
 	"time"
 
 	qh_domain "tqd/internal/domain/qh"
+	"tqd/internal/dto"
 	"tqd/internal/enums"
+	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
 )
 
@@ -28,6 +30,10 @@ type LayerUsecase interface {
 
 	// PMTiles builder
 	BuildPMTiles(ctx context.Context, layerID uint64, minZoom, maxZoom uint32, outputDir string, progressFn func(BuildProgress)) error
+
+	GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error)
+	UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error
+	AdminGenLayerSeo(ctx context.Context, layerIDs []uint64) (*dto.AdminGenLayerSeoResult, error)
 }
 
 type layerUsecaseImpl struct {
@@ -38,6 +44,7 @@ type layerUsecaseImpl struct {
 	legendRepo       repo.QHLayerLegendRepository
 	landUseGroupRepo repo.QHLandUseRepository
 	layerLegalRepo   repo.ILayerLegalRepo
+	crmSeoProvider   provider.CrmSeoProvider
 	buildTracker     *buildTracker
 }
 
@@ -49,6 +56,7 @@ func NewLayerUsecase(
 	legendRepo repo.QHLayerLegendRepository,
 	landUseGroupRepo repo.QHLandUseRepository,
 	layerLegalRepo repo.ILayerLegalRepo,
+	crmSeoProvider provider.CrmSeoProvider,
 ) LayerUsecase {
 	return &layerUsecaseImpl{
 		layerRepo:        layerRepo,
@@ -58,6 +66,7 @@ func NewLayerUsecase(
 		legendRepo:       legendRepo,
 		landUseGroupRepo: landUseGroupRepo,
 		layerLegalRepo:   layerLegalRepo,
+		crmSeoProvider:   crmSeoProvider,
 		buildTracker:     newBuildTracker(),
 	}
 }
@@ -336,9 +345,9 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 	if layer == nil {
 		return nil, fmt.Errorf("layer not found")
 	}
-	if !layer.IsClientVisible() {
-		return nil, fmt.Errorf("layer not available")
-	}
+	// if !layer.IsClientVisible() {
+	// 	return nil, fmt.Errorf("layer not available")
+	// }
 	return layer, nil
 }
 
@@ -364,4 +373,113 @@ func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, min
 	}
 
 	return BuildPMTilesFile(buildCtx, u.regionRepo, layerID, layer.MinZoom, layer.MaxZoom, outputDir, wrappedFn)
+}
+
+func (u *layerUsecaseImpl) GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error) {
+	if layerID == 0 {
+		return nil, fmt.Errorf("layer_id is required")
+	}
+	return u.layerRepo.GetLayerSeoSource(ctx, layerID)
+}
+
+func (u *layerUsecaseImpl) UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error {
+	if layerID == 0 || seoID == 0 {
+		return fmt.Errorf("layer_id và seo_id là bắt buộc")
+	}
+	return u.layerRepo.UpdateLayerSeoID(ctx, layerID, seoID)
+}
+
+func (u *layerUsecaseImpl) AdminGenLayerSeo(ctx context.Context, layerIDs []uint64) (*dto.AdminGenLayerSeoResult, error) {
+	if len(layerIDs) == 0 {
+		return nil, fmt.Errorf("layerIds không được để trống")
+	}
+	if u.crmSeoProvider == nil {
+		return nil, fmt.Errorf("crm seo provider chưa được cấu hình")
+	}
+
+	uniqueIDs := make([]uint64, 0, len(layerIDs))
+	seen := make(map[uint64]struct{}, len(layerIDs))
+	for _, id := range layerIDs {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniqueIDs = append(uniqueIDs, id)
+	}
+	if len(uniqueIDs) == 0 {
+		return nil, fmt.Errorf("layerIds không hợp lệ")
+	}
+
+	sources, err := u.layerRepo.GetLayerSeoSourcesByIDs(ctx, uniqueIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get layer seo sources failed: %w", err)
+	}
+	if len(sources) == 0 {
+		return nil, fmt.Errorf("không tìm thấy layer hợp lệ")
+	}
+
+	foundIDs := make([]uint64, 0, len(sources))
+	prevSeoIDByLayer := make(map[uint64]uint64, len(sources))
+	for _, source := range sources {
+		foundIDs = append(foundIDs, source.LayerID)
+		if source.SeoID != nil && *source.SeoID > 0 {
+			prevSeoIDByLayer[source.LayerID] = *source.SeoID
+		}
+	}
+
+	result, err := u.crmSeoProvider.GenerateSeoFromLayerIDs(ctx, foundIDs)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		result = &dto.AdminGenLayerSeoResult{}
+	}
+
+	for i := range result.Items {
+		item := &result.Items[i]
+		if item.LayerID == 0 || item.SeoID == 0 {
+			continue
+		}
+
+		prevSeoID := prevSeoIDByLayer[item.LayerID]
+		switch {
+		case prevSeoID == 0:
+			item.Created = true
+			item.Message = "created"
+		case prevSeoID == item.SeoID:
+			item.Created = false
+			item.Message = "skipped"
+		default:
+			item.Created = true
+			item.Message = "linked"
+		}
+
+		if err := u.layerRepo.UpdateLayerSeoID(ctx, item.LayerID, item.SeoID); err != nil {
+			item.Message = fmt.Sprintf("cập nhật seo_id thất bại: %v", err)
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("layerId=%d: %v", item.LayerID, err))
+		}
+	}
+
+	if len(foundIDs) < len(uniqueIDs) {
+		foundSet := make(map[uint64]struct{}, len(foundIDs))
+		for _, id := range foundIDs {
+			foundSet[id] = struct{}{}
+		}
+		for _, id := range uniqueIDs {
+			if _, ok := foundSet[id]; ok {
+				continue
+			}
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("layerId=%d: layer không tồn tại", id))
+		}
+		if result.Total < int64(len(uniqueIDs)) {
+			result.Total = int64(len(uniqueIDs))
+		}
+	}
+
+	return result, nil
 }

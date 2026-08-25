@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS ward_neighbors;
+
+COMMIT;
+

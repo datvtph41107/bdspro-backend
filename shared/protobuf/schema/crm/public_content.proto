@@ -85,7 +85,7 @@ service CRMPublicContentService {
       additional_bindings: {
         custom: {
           kind: "HEAD"
-          path: "/v2/crm/public/seo/documents/{module}/{slug}"
+          path: "/v2/crm/public/seo/documents/{module}/{slug=**}"
         }
       }
     };
@@ -144,5 +144,11 @@ service CRMPublicContentService {
   // UnsavePlanningNews bỏ một trang tin khỏi danh sách đã lưu.
   rpc UnsavePlanningNews(PlanningNewsSaveRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {delete: "/v2/crm/client/content/planning-news/{id}/saved"};
+  }
+  rpc TrackSeoClick(TrackSeoClickRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/public/seo/click"
+      body: "*"
+    };
   }
 }

@@ -182,6 +182,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		StaticHtmlPath:    req.StaticHtmlPath,
 		StaticHtmlHash:    req.StaticHtmlHash,
 		DeepLink:          req.DeepLink,
+		ImageURL:          req.ImageUrl,
 		Metadata:          req.Metadata,
 		Note:              req.Note,
 		PageStatus:        req.PageStatus,
@@ -190,6 +191,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		LastRenderError:   req.LastRenderError,
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
+		CategoryID:        req.CategoryId,
 	}
 
 	created, err := h.seoDomainUsecase.CreateSeoDomain(ctx, seoReq)
@@ -208,7 +210,7 @@ func (h *SeoDomainHandler) GetSeoDomain(ctx context.Context, req *sharepb.IdRequ
 }
 
 // GetSeoRefs @Summary Danh sách SEO liên kết theo ref
-// @Description Lấy danh sách bài SEO public liên kết tới domain (refType/refId) qua bảng seo_refs
+// @Description Lấy danh sách bài SEO public gắn trực tiếp trên seo_domain hoặc liên kết qua bảng seo_refs theo refType/refId
 func (h *SeoDomainHandler) GetSeoRefs(ctx context.Context, req *crmpb.GetSeoRefsRequest) (*crmpb.GetSeoDomainListResponse, error) {
 	if req == nil {
 		req = &crmpb.GetSeoRefsRequest{}
@@ -229,6 +231,135 @@ func (h *SeoDomainHandler) GetSeoRefs(ctx context.Context, req *crmpb.GetSeoRefs
 	return &crmpb.GetSeoDomainListResponse{
 		Data:  h.seoDomainMapper.SeoDomainListToPb(items),
 		Total: total,
+	}, nil
+}
+
+// CountSeoRefs @Summary Đếm SEO theo ref
+// @Description Đếm số bài SEO public gắn trực tiếp trên seo_domain hoặc liên kết qua seo_refs theo refType/refId
+func (h *SeoDomainHandler) CountSeoRefs(ctx context.Context, req *crmpb.CountSeoRefsRequest) (*crmpb.CountSeoRefsResponse, error) {
+	if req == nil {
+		req = &crmpb.CountSeoRefsRequest{}
+	}
+
+	total, err := h.seoDomainUsecase.CountSeoRefs(ctx, &dto.GetSeoRefsRequest{
+		RefType: enums.ESEORefType(req.GetRefType()),
+		RefID:   req.GetRefId(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.CountSeoRefsResponse{Total: total}, nil
+}
+
+// CountRecentSeoByRefType @Summary Đếm SEO theo 8 refType (updatedAt gần đây)
+// @Description Trả count theo từng refType cho SEO có updatedAt trong N ngày gần nhất (mặc định 5 ngày)
+func (h *SeoDomainHandler) CountRecentSeoByRefType(ctx context.Context, req *crmpb.CountRecentSeoByRefTypeRequest) (*crmpb.CountRecentSeoByRefTypeResponse, error) {
+	if req == nil {
+		req = &crmpb.CountRecentSeoByRefTypeRequest{}
+	}
+
+	items, days, err := h.seoDomainUsecase.CountRecentSeoByRefType(ctx, &dto.CountRecentSeoByRefTypeRequest{
+		Days: req.GetDays(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]*crmpb.SeoRefTypeCountItem, 0, len(items))
+	for _, item := range items {
+		data = append(data, &crmpb.SeoRefTypeCountItem{
+			RefType:     uint32(item.RefType),
+			RefTypeName: item.RefTypeName,
+			Total:       item.Total,
+		})
+	}
+
+	return &crmpb.CountRecentSeoByRefTypeResponse{
+		Data: data,
+		Days: days,
+	}, nil
+}
+
+// GetSeoTopClicked @Summary Thống kê click SEO
+// @Description Tổng lượt click website và top trang click nhiều nhất theo lastDates ngày gần nhất (mặc định 3, giới hạn 1-30; tối đa 15 trang)
+// @Tags SEO Domain
+// @Produce json
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Success 200 {object} crmpb.GetSeoTopClickedResponse
+// @Router /v2/crm/public/seo-domains/top-clicks [get]
+func (h *SeoDomainHandler) GetSeoTopClicked(ctx context.Context, req *crmpb.GetSeoTopClickedRequest) (*crmpb.GetSeoTopClickedResponse, error) {
+	if req == nil {
+		req = &crmpb.GetSeoTopClickedRequest{}
+	}
+
+	resp, err := h.seoDomainUsecase.GetSeoTopClicked(ctx, &dto.GetSeoTopClickedRequest{
+		LastDates: req.GetLastDates(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return &crmpb.GetSeoTopClickedResponse{
+			Data: []*crmpb.SeoTopClickedItem{},
+		}, nil
+	}
+
+	data := make([]*crmpb.SeoTopClickedItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &crmpb.SeoTopClickedItem{
+			Id:   item.ID,
+			Name: item.Name,
+			Source: &crmpb.SeoClickSource{
+				RefType: item.Source.RefType,
+				RefId:   item.Source.RefID,
+			},
+			ClickCount: item.ClickCount,
+		})
+	}
+
+	return &crmpb.GetSeoTopClickedResponse{
+		TotalClicks: resp.TotalClicks,
+		Data:        data,
+		LastDates:   resp.LastDates,
+	}, nil
+}
+
+// GetSeoClickDailyStats @Summary Thống kê click SEO theo ngày
+// @Description Tổng lượt click theo từng ngày (YYYY-MM-DD) trong lastDates ngày gần nhất để vẽ biểu đồ
+// @Tags SEO Domain
+// @Produce json
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
+// @Success 200 {object} crmpb.GetSeoClickDailyStatsResponse
+// @Router /v2/crm/public/seo-domains/click-daily [get]
+func (h *SeoDomainHandler) GetSeoClickDailyStats(ctx context.Context, req *crmpb.GetSeoClickDailyStatsRequest) (*crmpb.GetSeoClickDailyStatsResponse, error) {
+	if req == nil {
+		req = &crmpb.GetSeoClickDailyStatsRequest{}
+	}
+
+	resp, err := h.seoDomainUsecase.GetSeoClickDailyStats(ctx, &dto.GetSeoClickDailyStatsRequest{
+		LastDates: req.GetLastDates(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return &crmpb.GetSeoClickDailyStatsResponse{
+			Data: []*crmpb.SeoClickDailyItem{},
+		}, nil
+	}
+
+	data := make([]*crmpb.SeoClickDailyItem, 0, len(resp.Data))
+	for _, item := range resp.Data {
+		data = append(data, &crmpb.SeoClickDailyItem{
+			Date:  item.Date,
+			Count: item.Count,
+		})
+	}
+
+	return &crmpb.GetSeoClickDailyStatsResponse{
+		Data:      data,
+		LastDates: resp.LastDates,
 	}, nil
 }
 
@@ -305,6 +436,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		StaticHtmlPath:    req.StaticHtmlPath,
 		StaticHtmlHash:    req.StaticHtmlHash,
 		DeepLink:          req.DeepLink,
+		ImageURL:          req.ImageUrl,
 		Metadata:          req.Metadata,
 		Note:              req.Note,
 		PageStatus:        req.PageStatus,
@@ -313,6 +445,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		LastRenderError:   req.LastRenderError,
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
+		CategoryID:        req.CategoryId,
 	}
 
 	updated, err := h.seoDomainUsecase.UpdateSeoDomain(ctx, req.Id, updateReq)
@@ -321,6 +454,34 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 	}
 	return &crmpb.UpdateSeoDomainResponse{
 		SeoDomain: h.seoDomainMapper.SeoDomainToPb(updated),
+	}, nil
+}
+
+// BatchUpdateSeoDomain cập nhật hàng loạt theo fields + ids.
+// @Summary Batch update SEO domain
+// @Description Cập nhật các field khai báo trong fields cho nhiều SEO domain theo ids.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.BatchUpdateSeoDomainRequest true "ids, fields và giá trị tương ứng"
+// @Router /v2/crm/admin/seo-domains/batch [put]
+func (h *SeoDomainHandler) BatchUpdateSeoDomain(ctx context.Context, req *crmpb.BatchUpdateSeoDomainRequest) (*sharepb.SubmitResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	if err := h.seoDomainUsecase.BatchUpdateSeoDomain(ctx, &dto.BatchUpdateSeoDomainRequest{
+		IDs:       req.Ids,
+		Fields:    req.Fields,
+		IsSiteMap: req.IsSiteMap,
+	}); err != nil {
+		return nil, err
+	}
+
+	return &sharepb.SubmitResponse{
+		Ids:     req.Ids,
+		Message: "Batch update SEO domain thành công",
 	}, nil
 }
 
@@ -606,7 +767,7 @@ func (h *SeoDomainHandler) GetSitemap(ctx context.Context, req *crmpb.GetSitemap
 
 // CreateSeoFromParcel tạo SEO domain từ parcel.
 // @Summary Tạo SEO từ parcel
-// @Description Sinh URL từ cấu hình seo.parcelUrlTemplate, replace {id} theo parcelId và {slug} theo adr_search.
+// @Description Sinh URL từ cấu hình seo.parcelUrlTemplate, replace {id} theo parcelId và {slug} theo adr_search (mặc định /tin-tuc/thua-dat/{id}/{slug}).
 // @Tags SEO Domain
 // @Accept json
 // @Produce json
@@ -623,9 +784,9 @@ func (h *SeoDomainHandler) CreateSeoFromParcel(ctx context.Context, req *crmpb.C
 	return h.seoDomainMapper.SeoDomainToPb(seoDomain), nil
 }
 
-// GenerateSeoFromParcels tự động tạo SEO domain cho các parcel có bật isSeo và chưa có seoId.
+// GenerateSeoFromParcels tự động tạo/cập nhật SEO domain cho parcel.
 // @Summary Tự động tạo SEO từ parcel
-// @Description Quét parcels.is_seo = true, seo_id trống, sinh URL theo seo.parcelUrlTemplate rồi tạo seo_domain.
+// @Description Quét parcel is_seo hoặc danh sách parcelIds; nếu seo_domain đã tồn tại thì gen lại và update.
 // @Tags SEO Domain
 // @Accept json
 // @Produce json
@@ -634,13 +795,122 @@ func (h *SeoDomainHandler) CreateSeoFromParcel(ctx context.Context, req *crmpb.C
 // @Router /v2/crm/admin/seo-domains/parcels/generate [post]
 func (h *SeoDomainHandler) GenerateSeoFromParcels(ctx context.Context, req *crmpb.GenerateSeoFromParcelsRequest) (*crmpb.GenerateSeoFromParcelsResponse, error) {
 	items, result, err := h.seoDomainUsecase.GenerateSeoFromParcels(ctx, &dto.GenerateSeoFromParcelsRequest{
-		Limit: req.Limit,
+		Limit:     req.Limit,
+		ParcelIDs: req.ParcelIds,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &crmpb.GenerateSeoFromParcelsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromLayers tự động tạo SEO domain cho các layer quy hoạch.
+// @Summary Tự động tạo SEO từ layer
+// @Description Nhận danh sách layerIds, sinh URL theo seo.layerUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromLayersRequest true "Danh sách layerIds"
+// @Router /v2/crm/admin/seo-domains/layers/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromLayers(ctx context.Context, req *crmpb.GenerateSeoFromLayersRequest) (*crmpb.GenerateSeoFromLayersResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromLayers(ctx, &dto.GenerateSeoFromLayersRequest{
+		LayerIDs: req.LayerIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromLayersResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromPlanningProjects tự động tạo SEO domain cho các đồ án quy hoạch.
+// @Summary Tự động tạo SEO từ planning project
+// @Description Nhận danh sách planningProjectIds, sinh URL theo seo.planningProjectUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromPlanningProjectsRequest true "Danh sách planningProjectIds"
+// @Router /v2/crm/admin/seo-domains/planning-projects/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromPlanningProjects(ctx context.Context, req *crmpb.GenerateSeoFromPlanningProjectsRequest) (*crmpb.GenerateSeoFromPlanningProjectsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromPlanningProjects(ctx, &dto.GenerateSeoFromPlanningProjectsRequest{
+		PlanningProjectIDs: req.PlanningProjectIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromPlanningProjectsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromPlanningDocuments tự động tạo SEO domain cho các tài liệu quy hoạch.
+// @Summary Tự động tạo SEO từ planning document
+// @Description Nhận danh sách docIds, sinh URL theo seo.planningDocumentUrlTemplate rồi tạo seo_domain.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromPlanningDocumentsRequest true "Danh sách docIds"
+// @Router /v2/crm/admin/seo-domains/planning-documents/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromPlanningDocuments(ctx context.Context, req *crmpb.GenerateSeoFromPlanningDocumentsRequest) (*crmpb.GenerateSeoFromPlanningDocumentsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromPlanningDocuments(ctx, &dto.GenerateSeoFromPlanningDocumentsRequest{
+		DocIDs: req.DocIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromPlanningDocumentsResponse{
+		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
+		Total:   result.Total,
+		Created: result.Created,
+		Skipped: result.Skipped,
+		Failed:  result.Failed,
+		Errors:  result.Errors,
+	}, nil
+}
+
+// GenerateSeoFromAdministrativeUnits tự động tạo SEO domain cho province/ward.
+// @Summary Tự động tạo SEO từ đơn vị hành chính
+// @Description Nhận danh sách compositeIds ({sourceId}{1=tỉnh|2=phường}), lấy bản ghi province/ward tương ứng rồi tạo SEO. refId lưu theo compositeId.
+// @Tags SEO Domain
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.GenerateSeoFromAdministrativeUnitsRequest true "Danh sách compositeIds"
+// @Router /v2/crm/admin/seo-domains/administrative-units/generate [post]
+func (h *SeoDomainHandler) GenerateSeoFromAdministrativeUnits(ctx context.Context, req *crmpb.GenerateSeoFromAdministrativeUnitsRequest) (*crmpb.GenerateSeoFromAdministrativeUnitsResponse, error) {
+	items, result, err := h.seoDomainUsecase.GenerateSeoFromAdministrativeUnits(ctx, &dto.GenerateSeoFromAdministrativeUnitsRequest{
+		CompositeIDs: req.GetCompositeIds(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &crmpb.GenerateSeoFromAdministrativeUnitsResponse{
 		Data:    h.seoDomainMapper.SeoDomainListToPb(items),
 		Total:   result.Total,
 		Created: result.Created,
@@ -786,6 +1056,99 @@ func (h *SeoDomainHandler) DeleteSeoRelative(ctx context.Context, req *sharepb.I
 		return nil, err
 	}
 	return &sharepb.SubmitResponse{Id: req.Id, Message: "Seo relative deleted successfully"}, nil
+}
+
+// -----------------------------------------------------------------------------
+// SEO refs (entity <-> SEO page links).
+// -----------------------------------------------------------------------------
+
+// CreateSeoRef @Summary Thêm liên kết SEO ref
+// @Description Gắn bài SEO vào entity (project/parcel/adm_unit/...) để hiện trên /v2/crm/public/seos/{refType}/{refId}/list
+func (h *SeoDomainHandler) CreateSeoRef(ctx context.Context, req *crmpb.CreateSeoRefRequest) (*crmpb.SeoRefResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+	created, err := h.seoDomainUsecase.CreateSeoRef(ctx, &dto.SeoRefCreateRequest{
+		SeoDomainID: req.GetSeoDomainId(),
+		RefType:     enums.ESEORefType(req.GetRefType()),
+		RefID:       req.GetRefId(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return h.seoDomainMapper.SeoRefToPb(created), nil
+}
+
+// GetSeoRef @Summary Chi tiết liên kết SEO ref
+func (h *SeoDomainHandler) GetSeoRef(ctx context.Context, req *sharepb.IdRequest) (*crmpb.SeoRefResponse, error) {
+	item, err := h.seoDomainUsecase.GetSeoRef(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+	return h.seoDomainMapper.SeoRefToPb(item), nil
+}
+
+// GetSeoRefList @Summary Danh sách liên kết SEO ref
+// @Description Lấy bản ghi từ seo_refs và seo_domain có cùng refType/refId. Bản ghi lấy từ seo_domain (không có dòng seo_refs) trả id=0.
+func (h *SeoDomainHandler) GetSeoRefList(ctx context.Context, req *crmpb.GetSeoRefListRequest) (*crmpb.GetSeoRefListResponse, error) {
+	if req == nil {
+		req = &crmpb.GetSeoRefListRequest{}
+	}
+
+	listReq := &dto.SeoRefListRequest{
+		Pagable: _dto.Pagable{
+			Page: req.GetPage(),
+			Size: req.GetSize(),
+		},
+		RefType: enums.ESEORefType(req.GetRefType()),
+		RefID:   req.GetRefId(),
+	}
+	if req.SeoDomainId != nil {
+		listReq.SeoDomainID = req.SeoDomainId
+	}
+
+	items, total, err := h.seoDomainUsecase.GetSeoRefList(ctx, listReq)
+	if err != nil {
+		return nil, err
+	}
+	return &crmpb.GetSeoRefListResponse{
+		Data:  h.seoDomainMapper.SeoRefListToPb(items),
+		Total: total,
+	}, nil
+}
+
+// UpdateSeoRef @Summary Sửa liên kết SEO ref
+func (h *SeoDomainHandler) UpdateSeoRef(ctx context.Context, req *crmpb.UpdateSeoRefRequest) (*crmpb.UpdateSeoRefResponse, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+
+	updateReq := &dto.SeoRefUpdateRequest{}
+	if req.SeoDomainId != nil {
+		updateReq.SeoDomainID = req.SeoDomainId
+	}
+	if req.RefType != nil {
+		refType := enums.ESEORefType(req.GetRefType())
+		updateReq.RefType = &refType
+	}
+	if req.RefId != nil {
+		updateReq.RefID = req.RefId
+	}
+
+	updated, err := h.seoDomainUsecase.UpdateSeoRef(ctx, req.GetId(), updateReq)
+	if err != nil {
+		return nil, err
+	}
+	return &crmpb.UpdateSeoRefResponse{SeoRef: h.seoDomainMapper.SeoRefToPb(updated)}, nil
+}
+
+// DeleteSeoRef @Summary Xóa liên kết SEO ref
+// @Description Hard delete bản ghi seo_refs, không soft-delete
+func (h *SeoDomainHandler) DeleteSeoRef(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.seoDomainUsecase.DeleteSeoRef(ctx, req.GetId()); err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{Id: req.GetId(), Message: "Seo ref deleted successfully"}, nil
 }
 
 // -----------------------------------------------------------------------------

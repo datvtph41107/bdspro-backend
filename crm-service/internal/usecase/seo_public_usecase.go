@@ -184,10 +184,10 @@ func (u *SeoPublicUsecase) resolvePublicDocumentPage(
 }
 
 func normalizePublicSeoSlug(value string) (string, error) {
-	slug := strings.TrimSpace(value)
+	slug := strings.Trim(strings.TrimSpace(value), "/")
 	lower := strings.ToLower(slug)
 	if slug == "" ||
-		strings.ContainsAny(slug, `/\`) ||
+		strings.Contains(slug, `\`) ||
 		strings.Contains(slug, "..") ||
 		strings.ContainsAny(slug, "?#") ||
 		lower == "undefined" ||
@@ -195,17 +195,22 @@ func normalizePublicSeoSlug(value string) (string, error) {
 		strings.Contains(lower, "[object object]") {
 		return "", _errors.ReturnError(400, "slug không hợp lệ")
 	}
+	for _, part := range strings.Split(slug, "/") {
+		if strings.TrimSpace(part) == "" {
+			return "", _errors.ReturnError(400, "slug không hợp lệ")
+		}
+	}
 	return slug, nil
 }
 
 func publicCanonicalPath(moduleID string, slug string) (string, error) {
 	prefixes := map[string]string{
-		"administrative-unit": "/dia-ban",
-		"parcel":              "/thua-dat",
-		"planning-region":     "/vung-quy-hoach",
-		"planning-project":    "/do-an-quy-hoach",
-		"planning-news":       "/quy-hoach/tin-tuc",
-		"planning-report":     "/quy-hoach/bao-cao",
+		"administrative-unit": "/tin-tuc/dia-ban",
+		"parcel":              "/tin-tuc/thua-dat",
+		"planning-region":     "/tin-tuc/vung-quy-hoach",
+		"planning-project":    "/tin-tuc/do-an-quy-hoach",
+		"planning-news":       "/tin-tuc/bai-viet",
+		"planning-report":     "/tin-tuc/bao-cao",
 	}
 	prefix := prefixes[moduleID]
 	if prefix == "" {

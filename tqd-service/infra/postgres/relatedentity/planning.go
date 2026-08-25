@@ -115,6 +115,7 @@ func (r *Repository) findPlanningProjectForRegion(ctx context.Context, query rel
 			JOIN qh_planning_projects project
 			  ON project.id = selected_layer.planning_project_id
 			 AND project.deleted_at IS NULL
+			 AND project.client_view = true
 			WHERE selected_region.id::text = ?
 			  AND selected_region.deleted_at IS NULL
 			  AND selected_region.status = 10

@@ -21,6 +21,9 @@ import (
 // @bind: crm/internal/interface/provider.TqdProvider
 type TqdClient struct {
 	Client              tqdpb.ParcelServiceClient
+	LayerClient         tqdpb.LayerServiceClient
+	PlanningClient      tqdpb.QHPlanningServiceClient
+	LocationClient      tqdpb.LocationServiceClient
 	SeoProjectionClient tqdpb.TqdSeoProjectionServiceClient
 }
 
@@ -49,6 +52,9 @@ func NewTqdClient() *TqdClient {
 	go _middleware.MonitorConnection(monitorCtx, name, conn)
 
 	client.Client = tqdpb.NewParcelServiceClient(conn)
+	client.LayerClient = tqdpb.NewLayerServiceClient(conn)
+	client.PlanningClient = tqdpb.NewQHPlanningServiceClient(conn)
+	client.LocationClient = tqdpb.NewLocationServiceClient(conn)
 	client.SeoProjectionClient = tqdpb.NewTqdSeoProjectionServiceClient(conn)
 	return client
 }
@@ -83,7 +89,7 @@ func (c *TqdClient) GetAdministrativeUnitProjection(
 	if strings.TrimSpace(projection.EntityID) == "" ||
 		strings.TrimSpace(projection.Name) == "" ||
 		strings.TrimSpace(projection.AdministrativeCode) == "" ||
-		!strings.HasPrefix(strings.TrimSpace(projection.CanonicalPath), "/dia-ban/") {
+		!strings.HasPrefix(strings.TrimSpace(projection.CanonicalPath), "/tin-tuc/dia-ban/") {
 		return nil, errors.New("tqd administrative unit projection is missing stable identity fields")
 	}
 	if projection.SchemaVersion != dto.TqdAdministrativeUnitProjectionSchemaVersion {
@@ -172,6 +178,116 @@ func (c *TqdClient) UpdateParcelSeoID(ctx context.Context, parcelID uint64, seoI
 	return err
 }
 
+func (c *TqdClient) GetLayerSeoSource(ctx context.Context, layerID uint64) (*dto.LayerSeoSource, error) {
+	if c == nil || c.LayerClient == nil {
+		return nil, errors.New("tqd layer client not available")
+	}
+
+	resp, err := c.LayerClient.GetLayerSeoSource(ctx, &tqdpb.GetLayerRequest{
+		Id: layerID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return layerSeoSourceFromProto(resp), nil
+}
+
+func (c *TqdClient) UpdateLayerSeoID(ctx context.Context, layerID uint64, seoID uint64) error {
+	if c == nil || c.LayerClient == nil {
+		return errors.New("tqd layer client not available")
+	}
+
+	_, err := c.LayerClient.UpdateLayerSeoID(ctx, &tqdpb.UpdateLayerSeoIDRequest{
+		LayerId: layerID,
+		SeoId:   seoID,
+	})
+	return err
+}
+
+func (c *TqdClient) GetPlanningProjectSeoSource(ctx context.Context, planningProjectID uint64) (*dto.PlanningProjectSeoSource, error) {
+	if c == nil || c.PlanningClient == nil {
+		return nil, errors.New("tqd planning client not available")
+	}
+
+	resp, err := c.PlanningClient.GetPlanningProjectSeoSource(ctx, &tqdpb.IdRequest{
+		Id: planningProjectID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return planningProjectSeoSourceFromProto(resp), nil
+}
+
+func (c *TqdClient) UpdatePlanningProjectSeoID(ctx context.Context, planningProjectID uint64, seoID uint64) error {
+	if c == nil || c.PlanningClient == nil {
+		return errors.New("tqd planning client not available")
+	}
+
+	_, err := c.PlanningClient.UpdatePlanningProjectSeoID(ctx, &tqdpb.UpdatePlanningProjectSeoIDRequest{
+		PlanningProjectId: planningProjectID,
+		SeoId:             seoID,
+	})
+	return err
+}
+
+func (c *TqdClient) GetPlanningDocumentSeoSource(ctx context.Context, documentID uint64) (*dto.PlanningDocumentSeoSource, error) {
+	if c == nil || c.PlanningClient == nil {
+		return nil, errors.New("tqd planning client not available")
+	}
+
+	resp, err := c.PlanningClient.GetPlanningDocumentSeoSource(ctx, &tqdpb.IdRequest{
+		Id: documentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return planningDocumentSeoSourceFromProto(resp), nil
+}
+
+func (c *TqdClient) UpdatePlanningDocumentSeoID(ctx context.Context, documentID uint64, seoID uint64) error {
+	if c == nil || c.PlanningClient == nil {
+		return errors.New("tqd planning client not available")
+	}
+
+	_, err := c.PlanningClient.UpdatePlanningDocumentSeoID(ctx, &tqdpb.UpdatePlanningDocumentSeoIDRequest{
+		PlanningDocumentId: documentID,
+		SeoId:              seoID,
+	})
+	return err
+}
+
+func (c *TqdClient) GetAdministrativeUnitSeoSource(ctx context.Context, compositeID uint64) (*dto.AdministrativeUnitSeoSource, error) {
+	if c == nil || c.LocationClient == nil {
+		return nil, errors.New("tqd location client not available")
+	}
+	if compositeID == 0 {
+		return nil, errors.New("compositeId is required")
+	}
+
+	resp, err := c.LocationClient.GetAdministrativeUnitSeoSource(ctx, &tqdpb.GetAdministrativeUnitSeoSourceRequest{
+		Identity: compositeID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return administrativeUnitSeoSourceFromProto(resp), nil
+}
+
+func (c *TqdClient) UpdateAdministrativeUnitSeoID(ctx context.Context, compositeID uint64, seoID uint64) error {
+	if c == nil || c.LocationClient == nil {
+		return errors.New("tqd location client not available")
+	}
+	if compositeID == 0 || seoID == 0 {
+		return errors.New("compositeId and seoId are required")
+	}
+
+	_, err := c.LocationClient.UpdateAdministrativeUnitSeoID(ctx, &tqdpb.UpdateAdministrativeUnitSeoIDRequest{
+		Identity: compositeID,
+		SeoId:    seoID,
+	})
+	return err
+}
+
 func parcelSeoSourceFromProto(resp *tqdpb.ParcelSeoSourceResponse) *dto.ParcelSeoSource {
 	if resp == nil || resp.ParcelId == 0 {
 		return nil
@@ -183,6 +299,103 @@ func parcelSeoSourceFromProto(resp *tqdpb.ParcelSeoSourceResponse) *dto.ParcelSe
 	if resp.SeoId > 0 {
 		seoID := resp.SeoId
 		source.SeoID = &seoID
+	}
+	return source
+}
+
+func layerSeoSourceFromProto(resp *tqdpb.LayerSeoSourceResponse) *dto.LayerSeoSource {
+	if resp == nil || resp.LayerId == 0 {
+		return nil
+	}
+	source := &dto.LayerSeoSource{
+		LayerID:      resp.LayerId,
+		DisplayName:  resp.DisplayName,
+		ThumbnailURL: resp.ThumbnailUrl,
+		ImageURL:     resp.ImageUrl,
+		Avatar:       resp.Avatar,
+	}
+	if resp.SeoId > 0 {
+		seoID := resp.SeoId
+		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
+	}
+	return source
+}
+
+func planningProjectSeoSourceFromProto(resp *tqdpb.PlanningProjectSeoSourceResponse) *dto.PlanningProjectSeoSource {
+	if resp == nil || resp.PlanningProjectId == 0 {
+		return nil
+	}
+	source := &dto.PlanningProjectSeoSource{
+		PlanningProjectID: resp.PlanningProjectId,
+		Name:              resp.Name,
+		Slug:              resp.Slug,
+	}
+	if resp.SeoId > 0 {
+		seoID := resp.SeoId
+		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
+	}
+	return source
+}
+
+func planningDocumentSeoSourceFromProto(resp *tqdpb.PlanningDocumentSeoSourceResponse) *dto.PlanningDocumentSeoSource {
+	if resp == nil || resp.PlanningDocumentId == 0 {
+		return nil
+	}
+	source := &dto.PlanningDocumentSeoSource{
+		PlanningDocumentID: resp.PlanningDocumentId,
+		Title:              resp.Title,
+		Slug:               resp.Slug,
+		Filepath:           resp.Filepath,
+		Thumbnail:          resp.Thumbnail,
+		Ext:                resp.Ext,
+	}
+	if resp.SeoId > 0 {
+		seoID := resp.SeoId
+		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
+	}
+	return source
+}
+
+func administrativeUnitSeoSourceFromProto(resp *tqdpb.AdministrativeUnitSeoSourceResponse) *dto.AdministrativeUnitSeoSource {
+	if resp == nil {
+		return nil
+	}
+	compositeID := resp.CompositeId
+	if compositeID == 0 {
+		compositeID = resp.Identity
+	}
+	if compositeID == 0 {
+		return nil
+	}
+	source := &dto.AdministrativeUnitSeoSource{
+		Identity:           compositeID,
+		UnitType:           resp.UnitType,
+		SourceID:           resp.SourceId,
+		Name:               resp.Name,
+		Slug:               resp.Slug,
+		CanonicalPath:      resp.CanonicalPath,
+		AdministrativeCode: resp.AdministrativeCode,
+		CompositeID:        compositeID,
+	}
+	if resp.SeoId > 0 {
+		seoID := resp.SeoId
+		source.SeoID = &seoID
+	}
+	if resp.ProvinceId > 0 {
+		pid := resp.ProvinceId
+		source.ProvinceID = &pid
 	}
 	return source
 }

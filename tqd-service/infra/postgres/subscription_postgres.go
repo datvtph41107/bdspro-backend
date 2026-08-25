@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"tqd/internal/domain"
+	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -119,4 +120,83 @@ func (r *subscriptionRepo) AdminList(ctx context.Context, userID *uint64, target
 
 func (r *subscriptionRepo) AdminDelete(ctx context.Context, id uint64) error {
 	return r.db.WithContext(ctx).Delete(&domain.UserSubscription{}, id).Error
+}
+
+func (r *subscriptionRepo) CountFollowersByParcelIDs(ctx context.Context, parcelIDs []uint64, status *uint32) (map[uint64]int64, error) {
+	result := make(map[uint64]int64, len(parcelIDs))
+	if len(parcelIDs) == 0 {
+		return result, nil
+	}
+
+	type countRow struct {
+		TargetID uint64
+		Count    int64
+	}
+	rows := make([]countRow, 0)
+	query := r.db.WithContext(ctx).Model(&domain.UserSubscription{}).
+		Select("target_id, COUNT(*) AS count").
+		Where("target_type = ? AND deleted_at IS NULL", "parcel").
+		Where("target_id IN ?", parcelIDs)
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+	if err := query.Group("target_id").Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		result[row.TargetID] = row.Count
+	}
+	return result, nil
+}
+
+func (r *subscriptionRepo) CountSubscribersByLayerIDs(ctx context.Context, layerIDs []uint64, status *uint32) (map[uint64]int64, error) {
+	result := make(map[uint64]int64, len(layerIDs))
+	if len(layerIDs) == 0 {
+		return result, nil
+	}
+
+	layerSet := make(map[uint64]struct{}, len(layerIDs))
+	userSets := make(map[uint64]map[uint64]struct{}, len(layerIDs))
+	for _, layerID := range layerIDs {
+		if layerID == 0 {
+			continue
+		}
+		layerSet[layerID] = struct{}{}
+		userSets[layerID] = make(map[uint64]struct{})
+		result[layerID] = 0
+	}
+	if len(layerSet) == 0 {
+		return result, nil
+	}
+
+	var subs []domain.UserSubscription
+	query := r.db.WithContext(ctx).Model(&domain.UserSubscription{}).
+		Select("user_id", "subscription_scope").
+		Where("deleted_at IS NULL")
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+	if err := query.Find(&subs).Error; err != nil {
+		return nil, err
+	}
+
+	for _, sub := range subs {
+		if sub.UserID == 0 {
+			continue
+		}
+		scope, err := dto.SubscriptionScopeJSONToProto(sub.SubscriptionScope)
+		if err != nil {
+			continue
+		}
+		for layerID := range layerSet {
+			if dto.IsLayerInSubscriptionScope(scope, layerID) {
+				userSets[layerID][sub.UserID] = struct{}{}
+			}
+		}
+	}
+
+	for layerID, users := range userSets {
+		result[layerID] = int64(len(users))
+	}
+	return result, nil
 }

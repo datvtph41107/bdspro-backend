@@ -205,9 +205,17 @@ func DetailURL(kind discoverydomain.EntityKind, row Row) string {
 	case discoverydomain.EntityKindParcel:
 		return "/v2/tqd/parcels/" + id + "/detail"
 	case discoverydomain.EntityKindPlanningRegion:
-		return "/vung-quy-hoach/" + id
+		nameSlug := slugify(row.Title)
+		if nameSlug == "" {
+			return "/tin-tuc/vung-quy-hoach/" + id
+		}
+		return "/tin-tuc/vung-quy-hoach/" + id + "/" + nameSlug
 	case discoverydomain.EntityKindPlanningProject:
-		return "/do-an-quy-hoach/" + id
+		nameSlug := slugify(row.Title)
+		if nameSlug == "" {
+			return "/tin-tuc/do-an-quy-hoach/" + id
+		}
+		return "/tin-tuc/do-an-quy-hoach/" + id + "/" + nameSlug
 	case discoverydomain.EntityKindAdministrativeUnit:
 		return administrativeDetailURL(row)
 	case discoverydomain.EntityKindPOI:
@@ -218,8 +226,11 @@ func DetailURL(kind discoverydomain.EntityKind, row Row) string {
 }
 
 func IsPublicCanonicalPath(path string) bool {
-	return strings.HasPrefix(path, "/dia-ban/") ||
+	return strings.HasPrefix(path, "/tin-tuc/dia-ban/") ||
+		strings.HasPrefix(path, "/dia-ban/") ||
 		strings.HasPrefix(path, "/do-an-quy-hoach/") ||
+		strings.HasPrefix(path, "/tin-tuc/do-an-quy-hoach/") ||
+		strings.HasPrefix(path, "/tin-tuc/vung-quy-hoach/") ||
 		strings.HasPrefix(path, "/vung-quy-hoach/")
 }
 
@@ -248,13 +259,15 @@ func slugify(value string) string {
 
 func administrativeDetailURL(row Row) string {
 	code := strings.TrimSpace(row.ProvinceCode)
+	kind := "1"
 	if strings.HasPrefix(strings.TrimSpace(row.ID), "ward:") {
 		code = strings.TrimSpace(row.WardCode)
+		kind = "2"
 	}
 	nameSlug := slugify(row.Title)
 	codeSlug := slugify(code)
 	if nameSlug == "" || codeSlug == "" {
 		return ""
 	}
-	return "/dia-ban/" + nameSlug + "-" + codeSlug
+	return "/tin-tuc/dia-ban/" + codeSlug + kind + "/" + nameSlug
 }

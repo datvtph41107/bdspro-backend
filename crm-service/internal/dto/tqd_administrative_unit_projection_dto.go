@@ -47,6 +47,7 @@ type TqdAdministrativeUnitProjection struct {
 	UnitTypeName       string                               `json:"unitTypeName"`
 	Name               string                               `json:"name"`
 	DisplayName        string                               `json:"displayName"`
+	Description        string                               `json:"description,omitempty"`
 	AdministrativeCode string                               `json:"administrativeCode"`
 	Parent             *TqdAdministrativeUnitParent         `json:"parent,omitempty"`
 	Hierarchy          []TqdAdministrativeUnitHierarchyItem `json:"hierarchy"`

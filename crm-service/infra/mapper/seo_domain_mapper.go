@@ -1,11 +1,13 @@
 package mapper
 
 import (
+	catalogdomain "crm/internal/modules/contentcatalog/domain"
 	seo_domain "crm/internal/domain/seo"
 	"strings"
 	"time"
 
 	crmpb "pb/types/crm"
+	sharepb "pb/types/shared"
 
 	"gorm.io/datatypes"
 )
@@ -66,6 +68,7 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		StaticHtmlPath:    seo.StaticHtmlPath,
 		StaticHtmlHash:    seo.StaticHtmlHash,
 		DeepLink:          seo.DeepLink,
+		ImageUrl:          seo.ImageURL,
 		Metadata:          jsonToOptionalString(seo.Metadata),
 		Note:              seo.Note,
 		InternalLinks:     links,
@@ -80,6 +83,21 @@ func (m *SeoDomainMapper) SeoDomainToPb(seo *seo_domain.SeoDomain) *crmpb.SeoDom
 		LastRenderError: seo.LastRenderError,
 		TemplateKey:     seo.TemplateKey,
 		TemplateVersion: seo.TemplateVersion,
+		VisibleOn:       planningNewsVisibleOnToPb(seo.VisibleOn),
+		ClickCount:      seo.ClickCount,
+		ClickUpdatedAt:  formatTimePtr(seo.ClickUpdatedAt),
+		CategoryId:      seo.CategoryID,
+		Category:        seoCategoryBriefToPb(seo),
+	}
+}
+
+func seoCategoryBriefToPb(seo *seo_domain.SeoDomain) *crmpb.SeoCategoryBrief {
+	if seo == nil || seo.CategoryID == nil || *seo.CategoryID == 0 {
+		return nil
+	}
+	return &crmpb.SeoCategoryBrief{
+		Id:   *seo.CategoryID,
+		Name: seo.CategoryName,
 	}
 }
 
@@ -104,6 +122,7 @@ func (m *SeoDomainMapper) SeoDomainBriefToPb(seo *seo_domain.SeoDomain) *crmpb.S
 		PageStatus:   seoPageStatusToPb(seo),
 		RenderStatus: seoRenderStatusToPb(seo),
 		NeedGenerate: seo.NeedGenerate,
+		ImageUrl:     seo.ImageURL,
 	}
 }
 
@@ -276,6 +295,29 @@ func (m *SeoDomainMapper) SeoRelativeListToPb(items []seo_domain.SeoRelative) []
 	return responses
 }
 
+func (m *SeoDomainMapper) SeoRefToPb(item *seo_domain.SeoRef) *crmpb.SeoRefResponse {
+	if item == nil {
+		return nil
+	}
+	return &crmpb.SeoRefResponse{
+		Id:          item.ID,
+		SeoDomainId: item.SeoID,
+		RefType:     uint32(item.RefType),
+		RefId:       item.RefID,
+		SeoDomain:   m.SeoDomainBriefToPb(item.SeoDomain),
+		CreatedAt:   formatTime(item.CreatedAt),
+		UpdatedAt:   formatTime(item.UpdatedAt),
+	}
+}
+
+func (m *SeoDomainMapper) SeoRefListToPb(items []seo_domain.SeoRef) []*crmpb.SeoRefResponse {
+	responses := make([]*crmpb.SeoRefResponse, 0, len(items))
+	for i := range items {
+		responses = append(responses, m.SeoRefToPb(&items[i]))
+	}
+	return responses
+}
+
 func jsonToString(value datatypes.JSON) string {
 	if len(value) == 0 {
 		return ""
@@ -356,4 +398,13 @@ func seoRenderStatusToPb(seo *seo_domain.SeoDomain) string {
 		return seo_domain.SeoRenderStatusSuccess
 	}
 	return seo_domain.SeoRenderStatusNone
+}
+
+func planningNewsVisibleOnToPb(value uint32) *sharepb.EnumItem {
+	visibleOn := catalogdomain.PlanningNewsVisibleOn(value)
+
+	return &sharepb.EnumItem{
+		Value: value,
+		Name:  visibleOn.Label(),
+	}
 }

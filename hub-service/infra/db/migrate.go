@@ -4,12 +4,13 @@ import (
 	_db "common/db"
 	"hub/internal/domain"
 	"log"
+	"strings"
 )
 
 func AutoMigrate() {
 	db := _db.DB
 
-	err := db.AutoMigrate(
+	models := []interface{}{
 		&domain.Applink{},
 		&domain.EventQueueEntity{},
 		&domain.Province{},
@@ -21,14 +22,35 @@ func AutoMigrate() {
 		&domain.ApiKeyEntity{},
 		&domain.UserGuideStepEntity{},
 		&domain.InteractiveEvent{},
+		&domain.ClickURL{},
 		&domain.ErrorLog{},
 		&domain.UpdateData{},
+		&domain.RequestStatsLog{},
+		&domain.UserInteractionLog{},
+		&domain.RequestAuditLog{},
+		&domain.KeywordSearchLog{},
 		// &domain.UserGuideGroupEntity{},
-	)
+	}
 
-	if err != nil {
-		log.Fatalf("Auto migrate error: %v", err)
+	for _, model := range models {
+		if err := db.AutoMigrate(model); err != nil {
+			if isIgnorableMigrateError(err) {
+				log.Printf("Auto migrate skip (already exists): %v", err)
+				continue
+			}
+			log.Fatalf("Auto migrate error: %v", err)
+		}
 	}
 
 	log.Println("Auto migrate success")
+}
+
+func isIgnorableMigrateError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "already exists") ||
+		strings.Contains(msg, "duplicate key") ||
+		strings.Contains(msg, "42p07")
 }

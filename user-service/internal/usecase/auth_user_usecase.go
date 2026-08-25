@@ -1019,6 +1019,7 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 				Description: "Làm mới phiên",
 				Metadata:    metadata,
 			})
+			s.recordUserActivityAsync(props.ProfileID, "refresh")
 		}
 
 		return response, nil
@@ -1657,6 +1658,8 @@ func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *domain.Auth
 		}
 	}
 
+	s.recordUserActivityAsync(authEntity.UserID, "login")
+
 	// Kiểm tra xem user đã có họ tên chưa
 	requireFullname := profile.FullName == ""
 	var accessToken string
@@ -1755,6 +1758,10 @@ func (s *AuthUsecase) CreateAndSaveSession(c context.Context, e *domain.AuthMeth
 	err := s.SessionRepo.CreateSession(c, session)
 	if err != nil {
 		return session, err
+	}
+
+	if e != nil && e.UserID != 0 {
+		s.recordUserActivityAsync(e.UserID, "login")
 	}
 
 	return session, nil
@@ -2075,6 +2082,20 @@ func (s *AuthUsecase) logHistoryAuthAsync(ctx context.Context, payload *dto.Hist
 			log.Printf("failed to create auth history: %v", err)
 		}
 	}(prepared)
+}
+
+// recordUserActivityAsync ghi nhận user hoạt động (login/refresh) theo khung giờ; cùng giờ không trùng.
+func (s *AuthUsecase) recordUserActivityAsync(profileID uint64, source string) {
+	if s == nil || s.SessionRepo == nil || profileID == 0 {
+		return
+	}
+	go func() {
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := s.SessionRepo.RecordUserActivity(timeoutCtx, profileID, source); err != nil {
+			log.Printf("failed to record user activity profile=%d source=%s: %v", profileID, source, err)
+		}
+	}()
 }
 
 func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint64) (*dto.AuthLoginResponse, error) {

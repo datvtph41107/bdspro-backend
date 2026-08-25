@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	_db "common/db"
@@ -9,6 +10,7 @@ import (
 	"user/internal/domain"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // SessionPostgres implementation của Session repository
@@ -219,4 +221,37 @@ func (r *SessionPostgres) GetSessionsByProfile(ctx context.Context, userID uint6
 	}
 
 	return sessions, total, nil
+}
+
+// RecordUserActivity ghi nhận login/refresh theo khung giờ hiện tại (+7).
+// Unique (profile_id, slot_at) → cùng giờ chỉ lưu 1 lần.
+func (r *SessionPostgres) RecordUserActivity(ctx context.Context, profileID uint64, source string) error {
+	if profileID == 0 {
+		return nil
+	}
+	source = strings.TrimSpace(source)
+	if source == "" {
+		source = "login"
+	}
+
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		loc = time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60)
+	}
+	now := time.Now().In(loc)
+	slotAt := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, loc)
+
+	logEntry := &domain.UserActivityLog{
+		ProfileID: profileID,
+		SlotAt:    slotAt.UTC(),
+		Source:    source,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	return _db.DB.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "profile_id"}, {Name: "slot_at"}},
+			DoNothing: true,
+		}).
+		Create(logEntry).Error
 }

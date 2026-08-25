@@ -7,28 +7,29 @@
 package wire
 
 import (
-	"common/db"
+	_db "common/db"
 	"common/injection"
-	"common/provider"
-	"common/utils"
+	_provider "common/provider"
+	_utils "common/utils"
 	"crm/infra/client"
-	"crm/infra/email_sender"
+	emailsender "crm/infra/email_sender"
 	"crm/infra/handler"
-	"crm/infra/handler/grpc"
+	handler_grpc "crm/infra/handler/grpc"
 	"crm/infra/handler/http/seopublic"
 	"crm/infra/impl"
 	"crm/infra/job"
-	"crm/infra/job/appointment_reminder"
+	appointmentreminder "crm/infra/job/appointment_reminder"
 	"crm/infra/mapper"
 	"crm/infra/postgre"
 	"crm/infra/postgre/contentcatalog"
 	"crm/infra/validator"
 	"crm/initial"
-	"crm/internal/domain/seo"
+	seo_domain "crm/internal/domain/seo"
 	"crm/internal/interface/provider"
 	"crm/internal/modules/contentcatalog/application"
 	"crm/internal/repo"
 	"crm/internal/usecase"
+
 	"github.com/google/wire"
 )
 

@@ -79,6 +79,16 @@ func TestSearchParcelIntentRanksParcel(t *testing.T) {
 	}
 }
 
+func TestInterpretParcelSpacePattern(t *testing.T) {
+	out := interpret("160 53")
+	if out.DetectedIntents[0] != "parcel_lookup" {
+		t.Fatalf("expected parcel_lookup, got %#v", out.DetectedIntents)
+	}
+	if out.StructuredTerms["mapNumber"] != "160" || out.StructuredTerms["landNumber"] != "53" {
+		t.Fatalf("unexpected structured terms: %#v", out.StructuredTerms)
+	}
+}
+
 func TestSearchFiltersEntityKinds(t *testing.T) {
 	svc := NewService(fakeRepo{
 		parcels: []domain.EntityCandidate{item(domain.EntityKindParcel, "1")},
@@ -92,8 +102,13 @@ func TestSearchFiltersEntityKinds(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, group := range res.Groups {
-		if group.Kind != domain.EntityKindPlanningRegion {
-			t.Fatalf("unexpected group kind %s", group.Kind)
+		for _, item := range group.Items {
+			if item.Entity.Kind != domain.EntityKindPlanningRegion {
+				t.Fatalf("unexpected item kind %s", item.Entity.Kind)
+			}
+		}
+		if group.Label != "Khu vực/ Đồ án liên quan" {
+			t.Fatalf("unexpected group label %q", group.Label)
 		}
 	}
 }

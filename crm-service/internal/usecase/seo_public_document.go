@@ -426,19 +426,19 @@ func defaultBreadcrumbs(moduleID string, canonicalPath string, title string) []d
 func moduleCollection(moduleID string) (string, string) {
 	switch moduleID {
 	case "administrative-unit":
-		return "Địa bàn", "/dia-ban"
+		return "Địa bàn", "/tin-tuc/dia-ban"
 	case "parcel":
-		return "Thửa đất", "/thua-dat"
+		return "Thửa đất", "/tin-tuc/thua-dat"
 	case "planning-region":
-		return "Vùng quy hoạch", "/vung-quy-hoach"
+		return "Vùng quy hoạch", "/tin-tuc/vung-quy-hoach"
 	case "planning-project":
-		return "Đồ án quy hoạch", "/do-an-quy-hoach"
+		return "Đồ án quy hoạch", "/tin-tuc/do-an-quy-hoach"
 	case "planning-news":
-		return "Tin quy hoạch", "/quy-hoach/tin-tuc"
+		return "Tin quy hoạch", "/tin-tuc/bai-viet"
 	case "planning-report":
-		return "Báo cáo quy hoạch", "/quy-hoach/bao-cao"
+		return "Báo cáo quy hoạch", "/tin-tuc/bao-cao"
 	default:
-		return "Quy hoạch", "/quy-hoach"
+		return "Quy hoạch", "/tin-tuc"
 	}
 }
 

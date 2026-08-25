@@ -29,6 +29,31 @@ func SubscriptionScopeJSONToProto(raw datatypes.JSON) (*tqdpb.SubscriptionScopeM
 	return &pb, nil
 }
 
+// IsLayerInSubscriptionScope kiểm tra subscription có theo dõi layer hay không.
+func IsLayerInSubscriptionScope(scope *tqdpb.SubscriptionScopeMessage, layerID uint64) bool {
+	if layerID == 0 {
+		return false
+	}
+	if scope == nil || scope.Layers == nil {
+		return true
+	}
+	l := scope.Layers
+	if l.WatchAllLayers {
+		for _, excludedID := range l.ExcludedLayerIds {
+			if excludedID == layerID {
+				return false
+			}
+		}
+		return true
+	}
+	for _, includedID := range l.IncludedLayerIds {
+		if includedID == layerID {
+			return true
+		}
+	}
+	return false
+}
+
 type TriggerConfigDTO struct {
 	MinSeverity         string   `json:"minSeverity,omitempty"`
 	DebounceSeconds     int      `json:"debounceSeconds,omitempty"`

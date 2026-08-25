@@ -4,6 +4,7 @@ syntax = "proto3";
 package tqdpb;
 
 import "google/api/annotations.proto";
+import "shared/common.proto";
 import "shared/v3.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
@@ -52,11 +53,171 @@ service LocationService {
         };
     }
 
+    // Admin: danh sách tỉnh/thành
+    rpc AdminGetAdministrativeUnitDetailByCompositeId(AdminGetAdministrativeUnitDetailByCompositeIdRequest) returns (AdminGetAdministrativeUnitDetailByCompositeIdResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/administrative-units/{compositeId}"
+        };
+    }
+
+    // Admin: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+    rpc AdminListAdministrativeUnits(AdminListAdministrativeUnitsRequest) returns (ListAdministrativeUnitsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/administrative-units"
+        };
+    }
+
+    rpc AdminListProvinces(AdminListProvincesRequest) returns (AdminListProvincesResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/provinces"
+        };
+    }
+
+    rpc AdminGetProvinceDetailByCompositeId(AdminGetProvinceDetailByCompositeIdRequest) returns (Province) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/provinces/{compositeId}"
+        };
+    }
+
+    // Admin: danh sách phường/xã
+    rpc AdminListWards(AdminListWardsRequest) returns (AdminListWardsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/wards"
+        };
+    }
+
+    rpc AdminCreateProvince(Province) returns (Province) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/provinces"
+            body: "*"
+        };
+    }
+
+    rpc AdminUpdateProvince(Province) returns (Province) {
+        option (google.api.http) = {
+            put: "/v2/tqd/admin/provinces/{id}"
+            body: "*"
+        };
+    }
+
+    rpc AdminDeleteProvince(AdminDeleteProvinceRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/tqd/admin/provinces/{id}"
+        };
+    }
+
+    rpc AdminCreateWard(Ward) returns (Ward) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/wards"
+            body: "*"
+        };
+    }
+
+    rpc AdminUpdateWard(Ward) returns (Ward) {
+        option (google.api.http) = {
+            put: "/v2/tqd/admin/wards/{id}"
+            body: "*"
+        };
+    }
+
+    rpc AdminDeleteWard(AdminDeleteWardRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/tqd/admin/wards/{id}"
+        };
+    }
+
+    // Admin: create neighbor relation between wards
+    rpc AdminCreateWardNeighbor(AdminCreateWardNeighborRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/wards/{ward_id}/neighbors"
+            body: "*"
+        };
+    }
+
+    // Admin: delete neighbor relation between wards
+    rpc AdminDeleteWardNeighbor(AdminDeleteWardNeighborRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/tqd/admin/wards/{ward_id}/neighbors/{neighbor_ward_id}"
+        };
+    }
+
+    // Admin: list neighbors of a ward
+    rpc AdminListWardNeighbors(AdminListWardNeighborsRequest) returns (AdminListWardNeighborsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/admin/wards/{ward_id}/neighbors"
+        };
+    }
+
     rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
         option (google.api.http) = {
           get: "/v2/tqd/public/client/search"
         };
     }
+
+    rpc GetAdministrativeUnitSeoSource(GetAdministrativeUnitSeoSourceRequest) returns (AdministrativeUnitSeoSourceResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/internal/administrative-units/seo-source"
+        };
+    }
+
+    rpc UpdateAdministrativeUnitSeoID(UpdateAdministrativeUnitSeoIDRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/tqd/internal/administrative-units/seo-id"
+            body: "*"
+        };
+    }
+
+    rpc AdminGenAdministrativeUnitSeo(AdminGenAdministrativeUnitSeoRequest) returns (AdminGenAdministrativeUnitSeoResponse) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/administrative-units/seo/generate"
+            body: "*"
+        };
+    }
+    rpc ClientGetAdministrativeUnitDetailByCompositeId(ClientGetAdministrativeUnitDetailByCompositeIdRequest) returns (ClientGetAdministrativeUnitDetailByCompositeIdResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/administrative-units/{compositeId}"
+        };
+    }
+
+    // Client: danh sách đơn vị hành chính dùng chung (tỉnh + phường)
+    rpc ClientListAdministrativeUnits(ClientListAdministrativeUnitsRequest) returns (ListAdministrativeUnitsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/administrative-units"
+        };
+    }
+    
+    // Client: danh sách địa bàn lân cận (phường/xã) theo compositeId
+    rpc ClientListAdministrativeUnitNeighbors(ClientListAdministrativeUnitNeighborsRequest) returns (ClientListAdministrativeUnitNeighborsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/administrative-units/{compositeId}/neighbors"
+        };
+    }
+
+    // Admin: đồng bộ diện tích tự nhiên từ geometry
+    rpc AdminSyncAreaFromGeometry(AdminSyncAreaFromGeometryRequest) returns (AdminSyncAreaFromGeometryResponse) {
+        option (google.api.http) = {
+            post: "/v2/tqd/admin/administrative-units/area-sync-geometry"
+            body: "*"
+        };
+    }
+}
+
+message ClientGetAdministrativeUnitDetailByCompositeIdRequest {
+    uint64 compositeId = 1;
+}
+
+message ClientGetAdministrativeUnitDetailByCompositeIdResponse {
+    optional Province province = 1;
+    optional Ward ward = 2;
+}
+
+message ClientListAdministrativeUnitNeighborsRequest {
+    uint64 compositeId = 1; // Public ID: {sourceId}{1=tỉnh|2=phường}
+}
+
+message ClientListAdministrativeUnitNeighborsResponse {
+    repeated Ward data = 1;
+    int64 total = 2;
 }
 
 
@@ -67,6 +228,7 @@ message SearchItem {
     double longitude = 4;
     uint64 poiId = 5;
     uint64 parcelId = 6;
+    uint64 compositeId = 7; // Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB
 }
 
 message SearchResponse {
@@ -112,7 +274,7 @@ message SearchLocationsRequest {
     string query = 1;
     optional string type = 2;       // "province", "ward", "all" (mặc định "all")
     optional int32 limit = 3;       // Số lượng kết quả, mặc định 20
-    optional string provinceId = 4;  // Lọc theo province (nếu tìm ward)
+    optional uint64 provinceId = 4;  // Public ID: {sourceId}{1=tỉnh|2=phường}
     int64 timestamp = 5;
 }
 
@@ -127,22 +289,23 @@ message SearchResult {
     Ward ward = 3;
     string fullAddress = 4;
     float relevanceScore = 5;        // Điểm relevance 0-1
+    uint64 compositeId = 6;          // Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB
 }
 
 message GetProvinceRequest {
-    string id = 1;                    // ID của province
+    uint64 id = 1;                    // Public ID: {sourceId}1
     optional string code = 2;         // Hoặc tìm theo code
     int64 timestamp = 3;
 }
 
 message GetWardRequest {
-    string id = 1;
+    uint64 id = 1;                    // Public ID: {sourceId}2
     optional string code = 2;
     int64 timestamp = 3;
 }
 
 message ListWardsByProvinceRequest {
-    string provinceId = 1;
+    uint64 provinceId = 1;            // Public ID: {sourceId}1
     optional int32 page = 2;           // Phân trang, mặc định 1
     optional int32 pageSize = 3;       // Mặc định 50
     int64 timestamp = 4;
@@ -155,9 +318,100 @@ message ListWardsResponse {
     int32 pageSize = 4;
 }
 
+message AdminGetAdministrativeUnitDetailByCompositeIdRequest {
+    uint64 compositeId = 1;
+}
+
+message AdminGetAdministrativeUnitDetailByCompositeIdResponse {
+    optional Province province = 1;
+    optional Ward ward = 2;
+}
+
+message AdministrativeUnitListItem {
+    optional Province province = 1;
+    optional Ward ward = 2;
+}
+
+message ListAdministrativeUnitsResponse {
+    repeated AdministrativeUnitListItem data = 1;
+    int64 total = 2;
+}
+
+message AdminGetProvinceDetailByCompositeIdRequest {
+    uint64 compositeId = 1;
+}
+
+message AdminListProvincesRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    string sort = 4;
+}
+
+message AdminListProvincesResponse {
+    repeated Province data = 1;
+    int64 total = 2;
+}
+
+message AdminListWardsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    uint64 provinceId = 4;            // Public ID: {sourceId}1
+    string sort = 5;
+}
+
+message AdminListWardsResponse {
+    repeated Ward data = 1;
+    int64 total = 2;
+}
+
+message AdminListAdministrativeUnitsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    uint64 planningProjectId = 4;
+    string sort = 5;
+}
+
+message ClientListAdministrativeUnitsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string search = 3;
+    uint64 planningProjectId = 4;
+    string sort = 5;
+}
+
+message AdminDeleteProvinceRequest {
+    uint64 id = 1;                    // Public ID: {sourceId}1
+}
+
+message AdminDeleteWardRequest {
+    uint64 id = 1;                    // Public ID: {sourceId}2
+}
+
+message AdminCreateWardNeighborRequest {
+    uint64 ward_id = 1;           // source ward id (not composite)
+    uint64 neighbor_ward_id = 2;  // neighbor ward id (not composite)
+}
+
+message AdminDeleteWardNeighborRequest {
+    uint64 ward_id = 1;
+    uint64 neighbor_ward_id = 2;
+}
+
+message AdminListWardNeighborsRequest {
+    uint64 ward_id = 1;
+}
+
+message AdminListWardNeighborsResponse {
+    repeated Ward data = 1;
+    int64 total = 2;
+}
+
 // Data models
 message Province {
-    string id = 1;
+    uint64 id = 1; // Public ID = {sourceId}1, ví dụ 13 -> 131
     string code = 2;
     string fullName = 3;
     string shortName = 4;
@@ -168,18 +422,105 @@ message Province {
     int32 wardCount = 9;
     string createdAt = 10;  // ISO format: "2006-01-02T15:04:05Z07:00"
     string updatedAt = 11;
+    optional uint64 seoId = 12;
+    string officialName = 13;
+    string officialOperationDate = 14;
+    double naturalAreaKm2 = 15;
+    uint64 population = 16;
+    double populationDensity = 17;
+    string description = 18;
+    uint32 unitType = 19;
+    string unitTypeName = 20;
+    uint32 dataSource = 21;
+    string dataSourceName = 22;
+    optional uint64 planDocId = 23;
+    uint64 compositeId = 24; // Public ID = {sourceId}1, ví dụ 13 -> 131; không lưu DB
+    string geometry = 25;   // GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints
+    string officialRole = 26;    // Vai trò chính thức (ví dụ: Tỉnh ủy, UBND tỉnh...)
+    string officialAddress = 27; // Địa chỉ cơ quan chính quyền
 }
 
 message Ward {
-    string id = 1;
+    uint64 id = 1; // Public ID = {sourceId}2, ví dụ 142 -> 1422
     string code = 2;
     string fullName = 3;
     string shortName = 4;
     double latitude = 5;
     double longitude = 6;
     string divisionType = 7;
-    string provinceId = 8;
+    uint64 provinceId = 8; // Public ID = {sourceId}1, ví dụ 13 -> 131
     string provinceCode = 9;
     string createdAt = 10;
     string updatedAt = 11;
+    optional uint64 seoId = 12;
+    string officialName = 13;
+    string officialOperationDate = 14;
+    double naturalAreaKm2 = 15;
+    uint64 population = 16;
+    double populationDensity = 17;
+    string description = 18;
+    uint64 compositeId = 19; // Public ID = {sourceId}2, ví dụ 142 -> 1422; không lưu DB
+    string geometry = 20;   // GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints
+    uint32 unitType = 21;
+    string unitTypeName = 22;
+    uint32 dataSource = 23;
+    string dataSourceName = 24;
+    string officialRole = 25;    // Vai trò chính thức (ví dụ: Đảng ủy phường, UBND phường...)
+    string officialAddress = 26; // Địa chỉ cơ quan chính quyền
+    string summary = 27;         // Tóm tắt ngắn (ward_v2.summary)
+}
+
+message GetAdministrativeUnitSeoSourceRequest {
+    uint64 identity = 1; // Public ID: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422
+}
+
+message AdministrativeUnitSeoSourceResponse {
+    uint64 identity = 1;
+    uint32 unitType = 2;
+    uint64 sourceId = 3;
+    string name = 4;
+    string slug = 5;
+    string canonicalPath = 6;
+    string administrativeCode = 7;
+    uint64 seoId = 8;
+    uint64 compositeId = 9; // Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB
+    uint64 provinceId = 10; // province_v2.id (tỉnh = sourceId; phường = ward.province_id)
+}
+
+message UpdateAdministrativeUnitSeoIDRequest {
+    uint64 identity = 1;
+    uint64 seoId = 2;
+}
+
+message AdminGenAdministrativeUnitSeoRequest {
+    repeated uint64 compositeIds = 1; // Public ID: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422
+}
+
+message AdminGenAdministrativeUnitSeoItem {
+    uint64 identity = 1;
+    uint64 seoId = 2;
+    string canonicalUrl = 3;
+    string slug = 4;
+    bool created = 5;
+    string message = 6;
+    uint64 compositeId = 7; // Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB
+}
+
+message AdminGenAdministrativeUnitSeoResponse {
+    repeated AdminGenAdministrativeUnitSeoItem data = 1;
+    int64 total = 2;
+    int64 created = 3;
+    int64 skipped = 4;
+    int64 failed = 5;
+    repeated string errors = 6;
+}
+
+message AdminSyncAreaFromGeometryRequest {
+    repeated uint64 compositeIds = 1; // danh sách composite ID cần sync; nếu rỗng thì sync toàn bộ có geometry
+}
+
+message AdminSyncAreaFromGeometryResponse {
+    int64 updated = 1;
+    int64 skipped = 2;
+    repeated string errors = 3;
 }

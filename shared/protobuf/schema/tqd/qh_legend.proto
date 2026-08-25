@@ -4,6 +4,7 @@ package tqdpb;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "shared/common.proto";
 import "tqd/qh_land_use.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
@@ -58,6 +59,46 @@ service QHLayerLegendService {
   rpc GetAllLayerLegends(GetAllLayerLegendsRequest) returns (ListLayerLegendsResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/qh/public/layer-legends/all"
+    };
+  }
+
+  // ========== Admin CRUD /v2/tqd/admin ==========
+
+  rpc AdminCreateLayerLegend(CreateLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/legends"
+      body: "*"
+    };
+  }
+
+  rpc AdminGetLayerLegend(GetLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/legends/{id}"
+    };
+  }
+
+  rpc AdminUpdateLayerLegend(UpdateLayerLegendRequest) returns (QHLayerLegendResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/legends/{id}"
+      body: "*"
+    };
+  }
+
+  rpc AdminDeleteLayerLegend(DeleteLayerLegendRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/legends/{id}"
+    };
+  }
+
+  rpc AdminListLayerLegends(ListLayerLegendsRequest) returns (ListLayerLegendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/legends"
+    };
+  }
+
+  rpc AdminListLayerLegendsByLayer(ListClientLayerLegendsRequest) returns (ListLayerLegendsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/layers/{layerId}/legends"
     };
   }
 }

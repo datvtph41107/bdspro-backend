@@ -3,6 +3,7 @@ package qh_domain
 import (
 	_models "common/domain/entity"
 	"time"
+	"tqd/internal/domain"
 	"tqd/internal/enums"
 )
 
@@ -40,7 +41,20 @@ type QHPlanningProject struct {
 	SourceFolderPath string                      `gorm:"type:varchar(500)" json:"sourceFolderPath"`
 	ProcessStatus    enums.PlanningProcessStatus `gorm:"type:int4;default:10;index" json:"processStatus"`
 
-	Layers []*QHLayer `gorm:"foreignKey:PlanningProjectID" json:"layers"`
+	SeoID *uint64 `gorm:"column:seo_id;index" json:"seoId,omitempty"`
+
+	// LegalBasisID — id tài liệu quy hoạch (plan_doc / qh_planning_documents) làm căn cứ pháp lý của đồ án.
+	LegalBasisID *uint64             `gorm:"column:legal_basis_id;index" json:"legalBasisId,omitempty"`
+	LegalBasis   *QHPlanningDocument `gorm:"foreignKey:LegalBasisID" json:"legalBasis,omitempty"`
+
+	// ClientView=false ẩn đồ án khỏi toàn bộ API client; mặc định true.
+	ClientView bool `gorm:"column:client_view;type:boolean;not null;default:true" json:"clientView"`
+
+	Layers    []*QHLayer        `gorm:"foreignKey:PlanningProjectID" json:"layers"`
+	Provinces []domain.Province `gorm:"many2many:qh_planning_project_provinces;joinForeignKey:PlanningProjectID;joinReferences:ID" json:"provinces,omitempty"`
+	// DocumentCount — số hồ sơ (qh_planning_documents) chưa xóa; không lưu DB.
+	DocumentCount int64 `gorm:"-" json:"documentCount"`
+	// EntityTags []domain.Tag   `gorm:"many2many:qh_planning_project_tags;joinForeignKey:PlanningProjectID;joinReferences:TagID" json:"entityTags,omitempty"`
 }
 
 func (QHPlanningProject) TableName() string {

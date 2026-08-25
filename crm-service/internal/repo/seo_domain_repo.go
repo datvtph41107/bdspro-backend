@@ -17,8 +17,17 @@ type SeoDomainRepo interface {
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*seo_domain.SeoDomain, error)
 	GetList(ctx context.Context, req *dto.SeoDomainListRequest) ([]seo_domain.SeoDomain, int64, error)
 	GetListByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) ([]seo_domain.SeoDomain, int64, error)
+	CountByLinkedRef(ctx context.Context, req *dto.GetSeoRefsRequest) (int64, error)
+	CountRecentByRefType(ctx context.Context, days uint32) ([]dto.SeoRefTypeCountItem, error)
+	// GetTopClicked trả về top trang SEO theo lượt click trong khoảng fromTime (seo_count_log), giới hạn limit.
+	GetTopClicked(ctx context.Context, fromTime time.Time, limit int) ([]dto.SeoTopClickedItem, error)
+	// CountClicksFromTime đếm tổng lượt click từ fromTime (seo_count_log), không chia theo type.
+	CountClicksFromTime(ctx context.Context, fromTime time.Time) (uint64, error)
+	// GetClickDailyStats tổng click theo từng ngày từ fromTime (seo_count_log).
+	GetClickDailyStats(ctx context.Context, fromTime time.Time) ([]dto.SeoClickDailyItem, error)
 	GetSitemapList(ctx context.Context) ([]seo_domain.SeoDomain, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
+	UpdateByIDs(ctx context.Context, ids []uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error
 
 	ExistByCanonicalURL(ctx context.Context, canonicalURL string, ignoreID *uint64) (bool, error)

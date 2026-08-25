@@ -84,10 +84,11 @@ func (r *SeoDomainPostgres) GetPublishedSitemapItems(ctx context.Context) ([]seo
 	err := impl.GetDB(ctx, r.db).
 		WithContext(ctx).
 		Where("published = ?", true).
-		Where("page_status = ?", seo_domain.SeoPageStatusPublished).
+		// Where("page_status = ?", seo_domain.SeoPageStatusPublished).
 		Where("is_site_map = ?", true).
-		Where("is_index = ?", true).
-		Where("scope = ?", seo_domain.SeoScopePublic).
+		// Where("is_index = ?", true).
+		// Where("scope = ?", seo_domain.SeoScopePublic).
+		// Where("classify <> ?", enums.ESeoClassifyN).
 		Order("updated_at DESC").
 		Find(&items).Error
 	if err != nil {

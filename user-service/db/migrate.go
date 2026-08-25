@@ -7,6 +7,8 @@ import (
 )
 
 func AutoMigrate() {
+	// Bảng activity login/refresh cho dashboard active users.
+	_ = _db.DB.AutoMigrate(&domain.UserActivityLog{})
 	return
 	_db.DB.AutoMigrate(
 		// Auth entities (migrated from auth-service)

@@ -155,6 +155,24 @@ type ParcelSeoSource struct {
 	SeoID     *uint64 `json:"seoId" gorm:"column:seo_id"`
 }
 
+type AdminGenParcelSeoItem struct {
+	ParcelID     uint64 `json:"parcelId"`
+	SeoID        uint64 `json:"seoId"`
+	CanonicalURL string `json:"canonicalUrl"`
+	Slug         string `json:"slug"`
+	Created      bool   `json:"created"`
+	Message      string `json:"message"`
+}
+
+type AdminGenParcelSeoResult struct {
+	Items   []AdminGenParcelSeoItem `json:"items"`
+	Total   int64                   `json:"total"`
+	Created int64                   `json:"created"`
+	Skipped int64                   `json:"skipped"`
+	Failed  int64                   `json:"failed"`
+	Errors  []string                `json:"errors"`
+}
+
 type ParcelInfoResponse struct {
 	ParcelID uint64
 
@@ -180,6 +198,77 @@ type ParcelInfoResponse struct {
 	ProvinceCode string
 	WardCode     string
 	SeoID        uint64
+	IsSeo        bool
+}
+
+// NearbyParcelItem — thửa đất quanh thửa hiện tại.
+type NearbyParcelItem struct {
+	ParcelID       uint64
+	Lat            float64
+	Lon            float64
+	AreaSqm        float64
+	AddressText    string
+	Geometry       []byte
+	MapNumber      string
+	LandNumber     string
+	DistanceMeters float64
+}
+
+// AdminParcelListItem — thửa đất trong danh sách admin.
+type AdminParcelListItem struct {
+	ParcelID      uint64    `gorm:"column:parcel_id"`
+	Lat           float64   `gorm:"column:lat"`
+	Lon           float64   `gorm:"column:lon"`
+	AreaSqm       float64   `gorm:"column:area_sqm"`
+	AddressText   string    `gorm:"column:address_text"`
+	MapNumber     string    `gorm:"column:map_number"`
+	LandNumber    string    `gorm:"column:land_number"`
+	PropertyCode  string    `gorm:"column:property_code"`
+	Province      string    `gorm:"column:province"`
+	ProvinceCode  string    `gorm:"column:province_code"`
+	WardCode      string    `gorm:"column:ward_code"`
+	SeoID         uint64    `gorm:"column:seo_id"`
+	IsSeo         bool      `gorm:"column:is_seo"`
+	FollowerCount int64     `gorm:"column:follower_count"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+}
+
+// AdminParcelDetail — chi tiết thửa đất cho admin.
+type AdminParcelDetail struct {
+	ParcelID      uint64    `gorm:"column:parcel_id"`
+	Lat           float64   `gorm:"column:lat"`
+	Lon           float64   `gorm:"column:lon"`
+	AreaSqm       float64   `gorm:"column:area_sqm"`
+	AddressText   string    `gorm:"column:address_text"`
+	MapNumber     string    `gorm:"column:map_number"`
+	LandNumber    string    `gorm:"column:land_number"`
+	PropertyCode  string    `gorm:"column:property_code"`
+	PropertyUUID  string    `gorm:"column:property_uuid"`
+	Province      string    `gorm:"column:province"`
+	ProvinceCode  string    `gorm:"column:province_code"`
+	WardCode      string    `gorm:"column:ward_code"`
+	DistrictCode  string    `gorm:"column:district_code"`
+	SeoID         uint64    `gorm:"column:seo_id"`
+	IsSeo         bool      `gorm:"column:is_seo"`
+	FollowerCount int64     `gorm:"column:follower_count"`
+	LandUseName   string    `gorm:"column:land_use_name"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
+	Geometry      []byte    `gorm:"column:geometry"`
+}
+
+// AdminUpdateParcelRequest — payload sửa thửa đất cho admin.
+type AdminUpdateParcelRequest struct {
+	ParcelID     uint64
+	Lat          float64
+	Lon          float64
+	AreaSqm      float64
+	Address      string
+	MapNumber    string
+	LandNumber   string
+	PropertyCode string
+	ProvinceCode string
+	WardCode     string
 	IsSeo        bool
 }
 

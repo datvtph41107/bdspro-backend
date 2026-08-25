@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
@@ -240,6 +241,102 @@ func (h *QHLayerLegendGrpcHandler) ListClientLayerLegends(ctx context.Context, r
 		Page:     int32(pagable.GetPage()),
 		PageSize: int32(pagable.GetSize()),
 	}, nil
+}
+
+// AdminCreateLayerLegend tạo chú thích layer.
+// @Summary Tạo chú thích layer
+// @Tags Layer Legend Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body tqdpb.CreateLayerLegendRequest true "Chú thích layer"
+// @Success 200 {object} tqdpb.QHLayerLegendResponse
+// @Router /v2/tqd/admin/legends [post]
+func (h *QHLayerLegendGrpcHandler) AdminCreateLayerLegend(ctx context.Context, req *tqdpb.CreateLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
+	if req == nil || req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	return h.CreateLayerLegend(ctx, req)
+}
+
+// AdminGetLayerLegend lấy chi tiết chú thích.
+// @Summary Chi tiết chú thích layer
+// @Tags Layer Legend Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Legend ID"
+// @Success 200 {object} tqdpb.QHLayerLegendResponse
+// @Router /v2/tqd/admin/legends/{id} [get]
+func (h *QHLayerLegendGrpcHandler) AdminGetLayerLegend(ctx context.Context, req *tqdpb.GetLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
+	return h.GetLayerLegend(ctx, req)
+}
+
+// AdminUpdateLayerLegend cập nhật chú thích.
+// @Summary Cập nhật chú thích layer
+// @Tags Layer Legend Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Legend ID"
+// @Param request body tqdpb.UpdateLayerLegendRequest true "Chú thích layer"
+// @Success 200 {object} tqdpb.QHLayerLegendResponse
+// @Router /v2/tqd/admin/legends/{id} [put]
+func (h *QHLayerLegendGrpcHandler) AdminUpdateLayerLegend(ctx context.Context, req *tqdpb.UpdateLayerLegendRequest) (*tqdpb.QHLayerLegendResponse, error) {
+	return h.UpdateLayerLegend(ctx, req)
+}
+
+// AdminDeleteLayerLegend xóa mềm chú thích.
+// @Summary Xóa chú thích layer
+// @Tags Layer Legend Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Legend ID"
+// @Success 200 {object} sharepb.SubmitResponse
+// @Router /v2/tqd/admin/legends/{id} [delete]
+func (h *QHLayerLegendGrpcHandler) AdminDeleteLayerLegend(ctx context.Context, req *tqdpb.DeleteLayerLegendRequest) (*sharepb.SubmitResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	if err := h.uc.Delete(ctx, req.Id); err != nil {
+		return nil, mapLegendError(err)
+	}
+	return &sharepb.SubmitResponse{Message: "legend deleted successfully"}, nil
+}
+
+// AdminListLayerLegends danh sách chú thích (lọc theo layerId).
+// @Summary Danh sách chú thích layer
+// @Tags Layer Legend Admin
+// @Produce json
+// @Security BearerAuth
+// @Param layerId query int false "Layer ID"
+// @Param page query int false "Trang"
+// @Param size query int false "Số bản ghi"
+// @Success 200 {object} tqdpb.ListLayerLegendsResponse
+// @Router /v2/tqd/admin/legends [get]
+func (h *QHLayerLegendGrpcHandler) AdminListLayerLegends(ctx context.Context, req *tqdpb.ListLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {
+	return h.ListLayerLegends(ctx, req)
+}
+
+// AdminListLayerLegendsByLayer danh sách chú thích theo layer.
+// @Summary Danh sách chú thích theo layer
+// @Tags Layer Legend Admin
+// @Produce json
+// @Security BearerAuth
+// @Param layerId path int true "Layer ID"
+// @Param page query int false "Trang"
+// @Param size query int false "Số bản ghi"
+// @Success 200 {object} tqdpb.ListLayerLegendsResponse
+// @Router /v2/tqd/admin/layers/{layerId}/legends [get]
+func (h *QHLayerLegendGrpcHandler) AdminListLayerLegendsByLayer(ctx context.Context, req *tqdpb.ListClientLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {
+	if req == nil || req.LayerId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "layerId is required")
+	}
+	layerID := req.LayerId
+	return h.ListLayerLegends(ctx, &tqdpb.ListLayerLegendsRequest{
+		Page:    req.Page,
+		Size:    req.Size,
+		LayerId: &layerID,
+	})
 }
 
 func (h *QHLayerLegendGrpcHandler) GetAllLayerLegends(ctx context.Context, req *tqdpb.GetAllLayerLegendsRequest) (*tqdpb.ListLayerLegendsResponse, error) {

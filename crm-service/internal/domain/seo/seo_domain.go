@@ -109,9 +109,18 @@ type SeoDomain struct {
 	// Summary là phần tóm tắt hiển thị đầu trang.
 	Summary string `gorm:"type:text"`
 
-	// Published cho biết trang đã được phát hành hay chưa.
-	Published bool `gorm:"default:false;index"`
-	// PublishedAt là thời điểm phát hành gần nhất.
+	// Planning-news default feed classification.
+	// 10 featured, 20 attention, 30 latest, 40 most_read, 50 breaking.
+	VisibleOn uint32 `gorm:"column:visible_on;type:smallint;not null;default:30;index"`
+
+	// Primary chủ đề (seo_category) denormalized for list/filter.
+	CategoryID *uint64 `gorm:"column:category_id;type:bigint;index"`
+
+	// Province (province_v2.id) denormalized from source for list/filter.
+	ProvinceID *uint64 `gorm:"column:province_id;type:bigint;index"`
+
+	// Publish lifecycle: page đã đủ điều kiện ra ngoài hay chưa.
+	Published   bool       `gorm:"default:false;index"`
 	PublishedAt *time.Time `gorm:"column:published_at;index"`
 
 	// IsSiteMap quyết định trang có được đưa vào sitemap hay không.
@@ -154,7 +163,10 @@ type SeoDomain struct {
 	// DeepLink là đường dẫn mở đúng màn hình trong ứng dụng.
 	DeepLink string `gorm:"column:deep_link;type:text"`
 
-	// Metadata chứa JSON-LD, breadcrumb, Open Graph và cấu hình mở rộng.
+	// Cover/thumbnail image for list + detail.
+	ImageURL string `gorm:"column:image_url;type:text"`
+
+	// Metadata chỉ giữ phần mở rộng: schema JSON-LD, breadcrumb, og, robots, custom.
 	Metadata datatypes.JSON `gorm:"type:jsonb;default:'{}'::jsonb"`
 
 	// Note là ghi chú vận hành dành cho quản trị viên.
@@ -171,6 +183,13 @@ type SeoDomain struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 	// DeletedAt hỗ trợ xóa mềm bản ghi.
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+
+	// Click aggregate from seo_count (list/join only; not a DB column on seo_domain).
+	ClickCount     int64      `gorm:"column:click_count;->"`
+	ClickUpdatedAt *time.Time `gorm:"column:click_updated_at;->"`
+
+	// Category name from seo_category join (list/detail only).
+	CategoryName string `gorm:"column:category_name;->"`
 }
 
 func (SeoDomain) TableName() string {
