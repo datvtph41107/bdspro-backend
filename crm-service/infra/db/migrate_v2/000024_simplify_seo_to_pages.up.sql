@@ -18,8 +18,24 @@ DROP TABLE IF EXISTS seo_objective CASCADE;
 
 DROP TABLE IF EXISTS seo_content_placement CASCADE;
 DROP TABLE IF EXISTS seo_content_category_assignment CASCADE;
-DROP TABLE IF EXISTS seo_category CASCADE;
-DROP TABLE IF EXISTS seo_content_category CASCADE;
+
+-- Giữ seo_category (độc lập) cho seo_domain.category_id.
+-- Bỏ domain/assignment/placement + view tương thích từ 000019.
+-- Gỡ FK domain_id trước khi DROP seo_content_domain.
+DROP VIEW IF EXISTS seo_domain_category CASCADE;
+DROP VIEW IF EXISTS seo_content_category CASCADE;
+
+DO $$
+BEGIN
+    IF to_regclass('public.seo_category') IS NULL THEN
+        RETURN;
+    END IF;
+    ALTER TABLE public.seo_category
+        DROP CONSTRAINT IF EXISTS seo_content_category_domain_id_fkey;
+    ALTER TABLE public.seo_category
+        DROP CONSTRAINT IF EXISTS seo_category_domain_id_fkey;
+END $$;
+
 DROP TABLE IF EXISTS seo_content_domain CASCADE;
 
 DROP TABLE IF EXISTS seo_runtime_event CASCADE;

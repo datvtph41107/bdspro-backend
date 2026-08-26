@@ -2,6 +2,36 @@ package domain
 
 import "time"
 
+// ContentCategory là chủ đề độc lập từ bảng seo_category.
+type ContentCategory struct {
+	ID          uint64 `json:"id"`
+	Code        string `json:"code"`
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+	SortOrder   int    `json:"sortOrder"`
+	ItemCount   int64  `json:"itemCount"`
+}
+
+type CreateSeoCategoryInput struct {
+	Code        string
+	Slug        string
+	Name        string
+	Description string
+	Status      string
+	SortOrder   int
+}
+
+type UpdateSeoCategoryInput struct {
+	Code        *string
+	Slug        *string
+	Name        *string
+	Description *string
+	Status      *string
+	SortOrder   *int
+}
+
 type PlanningNewsItem struct {
 	ID              uint64         `json:"id"`
 	SEOPageID       uint64         `json:"seoDomainId"`

@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_seo_domain_visible_on_public
 COMMENT ON COLUMN seo_domain.visible_on IS
     'Surface visibility for planning news (10=web, 20=app, 30=both, ...).';
 
--- Optional denormalized category id (no taxonomy FK after SEO simplify).
+-- Denormalized primary chủ đề (seo_category.id) for list/filter.
 ALTER TABLE seo_domain
     ADD COLUMN IF NOT EXISTS category_id BIGINT NULL;
 
@@ -28,6 +28,6 @@ CREATE INDEX IF NOT EXISTS idx_seo_domain_category_id
     WHERE deleted_at IS NULL AND category_id IS NOT NULL;
 
 COMMENT ON COLUMN seo_domain.category_id IS
-    'Optional category id for filter/response on planning news (no taxonomy FK after SEO simplify).';
+    'Primary chủ đề (seo_category.id) denormalized for planning news list/filter.';
 
 COMMIT;

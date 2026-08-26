@@ -80,6 +80,34 @@ message TrackSeoClickRequest {
   uint32 refType = 2;
 }
 
+message AssignPlanningNewsCategoryRequest {
+  uint64 id = 1;
+  uint64 categoryId = 2;
+}
+
+message CreateSeoCategoryRequest {
+  string code = 1;
+  string slug = 2;
+  string name = 3;
+  string description = 4;
+  string status = 5;
+  int32 sortOrder = 6;
+}
+
+message UpdateSeoCategoryRequest {
+  uint64 id = 1;
+  optional string code = 2;
+  optional string slug = 3;
+  optional string name = 4;
+  optional string description = 5;
+  optional string status = 6;
+  optional int32 sortOrder = 7;
+}
+
+message DeleteSeoCategoryRequest {
+  uint64 id = 1;
+}
+
 // CRMPublicContentService là hợp đồng công khai duy nhất cho nội dung SEO từ CRM.
 // Gateway cung cấp HTTP; CRM chỉ triển khai gRPC.
 service CRMPublicContentService {
@@ -130,6 +158,10 @@ service CRMPublicContentService {
   rpc SearchContent(ContentQueryRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {get: "/v2/crm/public/content/search"};
   }
+  // ListContentCategories trả danh sách chủ đề từ seo_category (độc lập).
+  rpc ListContentCategories(ContentQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/public/content/categories"};
+  }
   // ListPlanningNews trả tin đã xuất bản theo thứ tự mới nhất trước.
   rpc ListPlanningNews(PlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {get: "/v2/crm/public/seo/news"};
@@ -154,6 +186,29 @@ service CRMPublicContentService {
     option (google.api.http) = {
       post: "/v2/crm/public/seo/click"
       body: "*"
+    };
+  }
+  rpc AssignPlanningNewsCategory(AssignPlanningNewsCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/content/planning-news/{id}/category"
+      body: "*"
+    };
+  }
+  rpc CreateSeoCategory(CreateSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/content/categories"
+      body: "*"
+    };
+  }
+  rpc UpdateSeoCategory(UpdateSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      put: "/v2/crm/admin/content/categories/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteSeoCategory(DeleteSeoCategoryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/content/categories/{id}"
     };
   }
 }

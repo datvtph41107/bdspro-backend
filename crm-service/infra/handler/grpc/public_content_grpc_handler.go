@@ -247,6 +247,21 @@ func (h *PublicContentGrpcHandler) SearchContent(ctx context.Context, req *crmpb
 	return jsonBytes(result)
 }
 
+// ListContentCategories @Summary Danh sách chủ đề nội dung
+// @Description Lấy danh sách chủ đề từ seo_category (không phụ thuộc domain)
+// @Tags CRM Public Content
+// @Produce json
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/public/content/categories [get]
+func (h *PublicContentGrpcHandler) ListContentCategories(ctx context.Context, _ *crmpb.ContentQueryRequest) (*wrapperspb.BytesValue, error) {
+	items, err := h.catalog.ListCategories(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list content categories: %v", err)
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "public, max-age=300", "", "")
+	return jsonBytes(map[string]any{"data": items})
+}
+
 func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *crmpb.PlanningNewsQueryRequest) (*wrapperspb.BytesValue, error) {
 	if req == nil {
 		req = &crmpb.PlanningNewsQueryRequest{}
@@ -349,4 +364,120 @@ func (h *PublicContentGrpcHandler) TrackSeoClick(ctx context.Context, req *crmpb
 		"refId":    refID,
 		"refType":  refType,
 	})
+}
+
+// AssignPlanningNewsCategory @Summary Gán chủ đề cho tin quy hoạch
+// @Tags CRM Admin Content
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "seo domain id"
+// @Param body body crmpb.AssignPlanningNewsCategoryRequest true "payload"
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/admin/content/planning-news/{id}/category [put]
+func (h *PublicContentGrpcHandler) AssignPlanningNewsCategory(ctx context.Context, req *crmpb.AssignPlanningNewsCategoryRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil || req.GetId() == 0 || req.GetCategoryId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id and categoryId are required")
+	}
+	item, err := h.catalog.AssignPlanningNewsCategory(ctx, req.GetId(), req.GetCategoryId())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "planning news or category was not found")
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"data": item})
+}
+
+// CreateSeoCategory @Summary Tạo chủ đề SEO
+// @Tags CRM Admin Content
+// @Accept json
+// @Produce json
+// @Param body body crmpb.CreateSeoCategoryRequest true "payload"
+// @Success 201 {object} map[string]any
+// @Router /v2/crm/admin/content/categories [post]
+func (h *PublicContentGrpcHandler) CreateSeoCategory(ctx context.Context, req *crmpb.CreateSeoCategoryRequest) (*wrapperspb.BytesValue, error) {
+	m := requestMap(req)
+	input := catalogdomain.CreateSeoCategoryInput{
+		Code:        stringValue(m, "code"),
+		Slug:        stringValue(m, "slug"),
+		Name:        stringValue(m, "name"),
+		Description: stringValue(m, "description"),
+		Status:      stringValue(m, "status"),
+		SortOrder:   intValue(m, "sortOrder", 0),
+	}
+	item, err := h.catalog.CreateCategory(ctx, input)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	setHTTPMetadata(ctx, 201, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"data": item})
+}
+
+// UpdateSeoCategory @Summary Cập nhật chủ đề SEO
+// @Tags CRM Admin Content
+// @Accept json
+// @Produce json
+// @Param id path uint64 true "category id"
+// @Param body body crmpb.UpdateSeoCategoryRequest true "payload"
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/admin/content/categories/{id} [put]
+func (h *PublicContentGrpcHandler) UpdateSeoCategory(ctx context.Context, req *crmpb.UpdateSeoCategoryRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "category id is required")
+	}
+	input := catalogdomain.UpdateSeoCategoryInput{}
+	if req.Code != nil {
+		value := strings.TrimSpace(req.GetCode())
+		input.Code = &value
+	}
+	if req.Slug != nil {
+		value := strings.TrimSpace(req.GetSlug())
+		input.Slug = &value
+	}
+	if req.Name != nil {
+		value := strings.TrimSpace(req.GetName())
+		input.Name = &value
+	}
+	if req.Description != nil {
+		value := strings.TrimSpace(req.GetDescription())
+		input.Description = &value
+	}
+	if req.Status != nil {
+		value := strings.TrimSpace(req.GetStatus())
+		input.Status = &value
+	}
+	if req.SortOrder != nil {
+		value := int(req.GetSortOrder())
+		input.SortOrder = &value
+	}
+	item, err := h.catalog.UpdateCategory(ctx, req.GetId(), input)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "category was not found")
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"data": item})
+}
+
+// DeleteSeoCategory @Summary Xóa chủ đề SEO
+// @Tags CRM Admin Content
+// @Produce json
+// @Param id path uint64 true "category id"
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/admin/content/categories/{id} [delete]
+func (h *PublicContentGrpcHandler) DeleteSeoCategory(ctx context.Context, req *crmpb.DeleteSeoCategoryRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "category id is required")
+	}
+	if err := h.catalog.DeleteCategory(ctx, req.GetId()); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Error(codes.NotFound, "category was not found")
+		}
+		return nil, status.Errorf(codes.Internal, "delete seo category: %v", err)
+	}
+	setHTTPMetadata(ctx, 200, "application/json; charset=utf-8", "private, no-store", "", "")
+	return jsonBytes(map[string]any{"data": map[string]any{"id": req.GetId(), "deleted": true}})
 }
