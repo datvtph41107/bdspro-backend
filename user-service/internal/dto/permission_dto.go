@@ -2,7 +2,7 @@ package dto
 
 import (
 	_utils "common/utils"
-	"user/internal/domain"
+	"user/internal/domain/access"
 )
 
 type PermissionRequest struct {
@@ -28,8 +28,8 @@ type PermissionResponse struct {
 }
 
 // MapToDomain chuyển DTO sang domain
-func (dto *PermissionRequest) MapToDomain() *domain.Permission {
-	return &domain.Permission{
+func (dto *PermissionRequest) MapToDomain() *access.Permission {
+	return &access.Permission{
 		Name:           dto.Name,
 		Key:            dto.Key,
 		Description:    dto.Description,
@@ -40,7 +40,7 @@ func (dto *PermissionRequest) MapToDomain() *domain.Permission {
 }
 
 // MapFromDomain chuyển domain sang DTO response
-func MapPermissionFromDomain(permission *domain.Permission) *PermissionResponse {
+func MapPermissionFromDomain(permission *access.Permission) *PermissionResponse {
 	if permission == nil {
 		return nil
 	}

@@ -21,7 +21,7 @@ func (DeniedAuthorizer) Require(context.Context, Capability) error { return ErrD
 // per-file durable access first, then the explicit global IAM capability.
 //
 // A global capability can intentionally bypass a broken/missing file_access row,
-// matching the old operator-bypass behavior. If global authority is unavailable,
+// preserving the established global operator fallback. If global authority is unavailable,
 // the bypass fails closed rather than falling back to a role claim.
 func AuthorizePrivateRead(
 	ctx context.Context,

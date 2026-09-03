@@ -1,0 +1,33 @@
+server:
+  port: 8002
+
+database:
+  dsn: "" # inject DATABASE_DSN from secret storage
+
+jwt:
+  key-generate: "" # inject JWT_KEY_GENERATE from secret storage
+
+file:
+  storage_root: "./files" # override with FILE_STORAGE_ROOT in deployed runtimes
+  cors_allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "http://localhost:8000"
+    - "http://localhost:5173"
+    - "http://localhost:5174"
+    - "http://192.168.100.76"
+    - "http://192.168.100.76:3000"
+  signature_key: "" # inject FILE_SIGNATURE_KEY from secret storage
+  xor_crypt_key: "" # inject FILE_XOR_CRYPT_KEY from secret storage
+  signature_expire: 5m
+
+service:
+  auth_key: "" # inject SERVICE_AUTH_KEY from secret storage
+
+auth:
+  grpc_address: "localhost:8216"
+  timeout: 2s
+
+hub:
+  grpc_address: "localhost:8280"
+  timeout: 5s

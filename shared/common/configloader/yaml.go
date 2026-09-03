@@ -6,6 +6,7 @@ import (
 	"bytes"
 	_config "common/config"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -42,7 +43,16 @@ func configureViper() {
 func LoadYMLFile(runtimeEnv string) error {
 	configureViper()
 
-	path := configFilePath(runtimeEnv)
+	// Operator/deployment có thể mount một file ngoài repository. Đây là
+	// override duy nhất cho production secrets/topology; nếu không có thì
+	// profile canonical config/<environment>.yml được dùng.
+	path := strings.TrimSpace(os.Getenv("QHPRO_CONFIG_FILE"))
+	if path == "" {
+		path = strings.TrimSpace(os.Getenv("CONFIG_FILE"))
+	}
+	if path == "" {
+		path = configFilePath(runtimeEnv)
+	}
 	configFile, err := _config.ReadFile(path)
 	if err != nil {
 		return err

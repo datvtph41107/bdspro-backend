@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// AdminCommercialService exposes User-owned commercial projections. It does
+// not aggregate Payment or TQD-owned evidence and never mutates runtime quota.
+service AdminCommercialService {
+  rpc ListSubscriptions(ListAdminSubscriptionsRequest) returns (ListAdminSubscriptionsResponse) {
+    option (google.api.http) = { get: "/v2/user/admin/commercial/subscriptions" };
+  }
+  rpc GetUserProjection(GetAdminUserCommercialProjectionRequest) returns (AdminUserCommercialProjection) {
+    option (google.api.http) = { get: "/v2/user/admin/commercial/users/{profile_id}" };
+  }
+  rpc ListUserProjections(ListAdminUserCommercialProjectionsRequest) returns (ListAdminUserCommercialProjectionsResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/admin/commercial/users:batchGet"
+      body: "*"
+    };
+  }
+}
+
+message ListAdminSubscriptionsRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  uint64 profile_id = 3;
+  string status = 4;
+  string product_code = 5;
+  string plan_code = 6;
+}
+
+message ListAdminSubscriptionsResponse {
+  repeated AdminSubscriptionProjection subscriptions = 1;
+  uint64 total = 2;
+  uint32 page = 3;
+  uint32 page_size = 4;
+}
+
+message GetAdminUserCommercialProjectionRequest { uint64 profile_id = 1; }
+message ListAdminUserCommercialProjectionsRequest { repeated uint64 profile_ids = 1; }
+message ListAdminUserCommercialProjectionsResponse { repeated AdminUserCommercialProjection projections = 1; }
+
+message AdminUserCommercialProjection {
+  uint64 profile_id = 1;
+  bool has_subscription = 2;
+  AdminSubscriptionProjection effective_subscription = 3;
+}
+
+message AdminSubscriptionProjection {
+  uint64 subscription_id = 1;
+  string subject_kind = 2;
+  string subject_id = 3;
+  string product_code = 4;
+  string product_display_name = 5;
+  string plan_code = 6;
+  string plan_display_name = 7;
+  uint64 plan_version_id = 8;
+  string plan_version = 9;
+  string status = 10;
+  google.protobuf.Timestamp started_at = 11;
+  google.protobuf.Timestamp current_period_start = 12;
+  google.protobuf.Timestamp current_period_end = 13;
+  google.protobuf.Timestamp access_until = 14;
+  uint64 pending_plan_version_id = 15;
+  google.protobuf.Timestamp pending_effective_at = 16;
+  string order_reference = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}

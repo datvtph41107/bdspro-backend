@@ -9,7 +9,9 @@ import (
 	"errors"
 	"time"
 
-	"user/internal/domain"
+	"user/internal/domain/access"
+
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
 
@@ -17,12 +19,12 @@ import (
 )
 
 type RoleRepo struct {
-	*crud.CrudRepo[domain.Role]
+	*crud.CrudRepo[access.Role]
 }
 
 func NewRoleRepo(db *_db.TransactionRepo) repo.RoleRepository {
 	x := &RoleRepo{
-		CrudRepo: &crud.CrudRepo[domain.Role]{},
+		CrudRepo: &crud.CrudRepo[access.Role]{},
 	}
 	x.CrudRepo.Init(x, db)
 	return x
@@ -54,20 +56,20 @@ func (r *RoleRepo) ExistProfileIdWithKeys(ctx context.Context, profileId uint64,
 	return exists, nil
 }
 
-func (r *RoleRepo) FindByDomain(ctx context.Context, domainType string) ([]*domain.Role, error) {
-	var roles []*domain.Role
+func (r *RoleRepo) FindByDomain(ctx context.Context, domainType string) ([]*access.Role, error) {
+	var roles []*access.Role
 	err := r.GetDB(ctx).Where("domain_type = ?", domainType).Find(&roles).Error
 	return roles, err
 }
 
-func (r *RoleRepo) FindByOrganizationId(ctx context.Context, organizationId uint64) ([]*domain.Role, error) {
-	var roles []*domain.Role
+func (r *RoleRepo) FindByOrganizationId(ctx context.Context, organizationId uint64) ([]*access.Role, error) {
+	var roles []*access.Role
 	err := r.GetDB(ctx).Where("organization_id = ?", organizationId).Find(&roles).Error
 	return roles, err
 }
 
-func (r *RoleRepo) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint64, key string) (*domain.Role, error) {
-	var role domain.Role
+func (r *RoleRepo) FindByOrganizationIdAndKey(ctx context.Context, organizationId uint64, key string) (*access.Role, error) {
+	var role access.Role
 	err := r.GetDB(ctx).Where("organization_id = ? AND key = ?", organizationId, key).First(&role).Error
 	if err != nil {
 		return nil, err
@@ -75,8 +77,8 @@ func (r *RoleRepo) FindByOrganizationIdAndKey(ctx context.Context, organizationI
 	return &role, nil
 }
 
-func (r *RoleRepo) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint64, page, size int) ([]*domain.Role, uint64, error) {
-	var roles []*domain.Role
+func (r *RoleRepo) FindByOrganizationIdWithPagination(ctx context.Context, organizationId uint64, page, size int) ([]*access.Role, uint64, error) {
+	var roles []*access.Role
 	var total int64
 
 	offset := (page - 1) * size
@@ -94,10 +96,10 @@ func (r *RoleRepo) FindByOrganizationIdWithPagination(ctx context.Context, organ
 	return roles, uint64(total), nil
 }
 
-func (r *RoleRepo) FindByRoleKeys(ctx context.Context, roleKeys []uint32) ([]domain.Role, error) {
-	var roles []domain.Role
+func (r *RoleRepo) FindByRoleKeys(ctx context.Context, roleKeys []uint32) ([]access.Role, error) {
+	var roles []access.Role
 	err := r.GetDB(ctx).
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		Preload("Color").
 		Where("role_key IN (?) AND deleted_at IS NULL", roleKeys).
 		Find(&roles).
@@ -105,18 +107,12 @@ func (r *RoleRepo) FindByRoleKeys(ctx context.Context, roleKeys []uint32) ([]dom
 	return roles, err
 }
 
-func (r *RoleRepo) AddPermissionToRole(ctx context.Context, roleID uint64, permissionID uint64) error {
-	// Implementation for adding permission to role
-	// This might involve a junction table or updating the role's permission list
-	return nil
-}
-
-func (r *RoleRepo) AfterSave(ctx context.Context, id *uint64, role *domain.Role) error {
+func (r *RoleRepo) AfterSave(ctx context.Context, id *uint64, role *access.Role) error {
 	return r.GetDB(ctx).Model(role).Association("Permissions").Replace(role.Permissions)
 }
 
-func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*domain.Role, error) {
-	var role domain.Role
+func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*access.Role, error) {
+	var role access.Role
 	err := r.GetDB(ctx).
 		Preload("Color").
 		Preload("Permissions").
@@ -130,17 +126,19 @@ func (r *RoleRepo) GetDetail(ctx context.Context, id uint64) (*domain.Role, erro
 	return &role, nil
 }
 
-func (r *RoleRepo) BeforeSave(ctx context.Context, id *uint64, role *domain.Role) error {
-	var permissions []*domain.Permission
+func (r *RoleRepo) BeforeSave(ctx context.Context, id *uint64, role *access.Role) error {
+	var permissions []*access.Permission
 	if len(role.PermissionIDs) > 0 {
 		if err := r.GetDB(ctx).
-			Where("id IN ?", role.PermissionIDs).
+			Where("id IN ? AND deleted_at IS NULL", role.PermissionIDs).
 			Find(&permissions).Error; err != nil {
 			return err
 		}
+		if len(permissions) != len(role.PermissionIDs) {
+			return errors.New("one or more permissions do not exist")
+		}
 	}
 
-	// Gán lại vào field Permissions để gorm xử lý many2many
 	role.Permissions = permissions
 	return nil
 }
@@ -150,12 +148,12 @@ func (r *RoleRepo) AddCondition(db *gorm.DB, pagable *dto.RoleSearchRequest) *go
 		db = db.Where("is_default = ?", *pagable.IsDefault)
 	}
 
-	if pagable.DomainType != 0 {
+	if pagable.DomainType != "" {
 		db = db.Where("domain_type = ?", pagable.DomainType)
 	}
 
 	if pagable.Name != "" {
-		db = db.Where("name LIKE ?", "%"+pagable.Name+"%")
+		db = db.Where("role_name LIKE ?", "%"+pagable.Name+"%")
 	}
 	if pagable.RoleGroupID != nil {
 		db = db.Where("role_group_id = ?", *pagable.RoleGroupID)
@@ -164,14 +162,14 @@ func (r *RoleRepo) AddCondition(db *gorm.DB, pagable *dto.RoleSearchRequest) *go
 	return db
 }
 
-func (r *RoleRepo) GetList(ctx context.Context, pagable _dto.IPagable) ([]domain.Role, int64, error) {
+func (r *RoleRepo) GetList(ctx context.Context, pagable _dto.IPagable) ([]access.Role, int64, error) {
 	param := pagable.(*dto.RoleSearchRequest)
 
-	var roles []domain.Role
+	var roles []access.Role
 	var total int64
 
 	query := r.GetDB(ctx).
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		Preload("RoleGroup")
 	query = r.AddCondition(query, param)
 
@@ -294,16 +292,16 @@ func (r *RoleRepo) GetPermissionKeysByUserId(ctx context.Context, userId uint64)
 	return permissionKeys, nil
 }
 
-// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
-func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*domain.Role, error) {
-	var roles []domain.Role
+// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có allow_assign = true
+func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64) (*access.Role, error) {
+	var roles []access.Role
 
-	// Query để lấy 2 role thuộc group key, ưu tiên auto_assign = true
+	// Query để lấy 2 role thuộc group key, ưu tiên allow_assign = true
 	err := r.GetDB(ctx).
 		Debug().
 		Joins("JOIN role_groups ON roles.role_group_id = role_groups.id").
 		Where("role_groups.key = ?", groupKey).
-		Order("roles.auto_assign DESC, roles.id ASC").
+		Order("roles.allow_assign DESC, roles.id ASC").
 		Limit(2).
 		Find(&roles).Error
 	if err != nil {
@@ -314,18 +312,18 @@ func (r *RoleRepo) GetAdminRoleIdByGroupKey(ctx context.Context, groupKey uint64
 		return nil, nil
 	}
 
-	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
+	// Trả về role đầu tiên (có allow_assign = true nếu có, hoặc role đầu tiên nếu không có)
 	return &roles[0], nil
 }
 
-// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có auto_assign = true
-func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]domain.Role, int64, error) {
-	var roles []domain.Role
+// GetAdminRoleIdByGroupKey lấy admin role theo group key, ưu tiên role có allow_assign = true
+func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]access.Role, int64, error) {
+	var roles []access.Role
 
-	// Query để lấy 2 role thuộc group key, ưu tiên auto_assign = true
+	// Query để lấy 2 role thuộc group key, ưu tiên allow_assign = true
 	err := r.GetDB(ctx).
 		Debug().
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		// Preload("Color").
 		Joins("JOIN role_groups ON roles.role_group_id = role_groups.id").
 		Where("role_groups.key = ? and roles.deleted_at IS NULL and roles.allow_assign = true", groupKey).
@@ -340,15 +338,15 @@ func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]do
 	// 	return nil, 0, _errors.ReturnError(404, "no roles found")
 	// }
 
-	// Trả về role đầu tiên (có auto_assign = true nếu có, hoặc role đầu tiên nếu không có)
+	// Trả về role đầu tiên (có allow_assign = true nếu có, hoặc role đầu tiên nếu không có)
 	return roles, int64(len(roles)), nil
 }
 
 // GetRolesByRoleKeysAndOrganization lấy roles theo roleKeys và organizationId
-func (r *RoleRepo) GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*domain.Role, error) {
-	var roles []*domain.Role
+func (r *RoleRepo) GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKeys []uint32, organizationId uint64) ([]*access.Role, error) {
+	var roles []*access.Role
 	err := r.GetDB(ctx).
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		Preload("Color").
 		Preload("Permissions").
 		Preload("RoleGroup").
@@ -358,10 +356,10 @@ func (r *RoleRepo) GetRolesByRoleKeysAndOrganization(ctx context.Context, roleKe
 }
 
 // GetRoleByRoleKey lấy role theo roleKey
-func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domain.Role, error) {
-	var role domain.Role
+func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*access.Role, error) {
+	var role access.Role
 	err := r.GetDB(ctx).
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		Preload("Color").
 		Preload("Permissions").
 		Preload("RoleGroup").
@@ -372,10 +370,10 @@ func (r *RoleRepo) GetRoleByRoleKey(ctx context.Context, roleKey uint32) (*domai
 
 // AssignRoleToUser gán role cho user: cập nhật auth_method.role_key + ghi role_profiles
 // (permission/me và HasPermissions đều đọc từ role_profiles theo profile_id)
-func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *domain.Role) error {
+func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *access.Role) error {
 	db := r.GetDB(ctx).WithContext(ctx)
 
-	if err := db.Model(&domain.AuthMethod{}).
+	if err := db.Model(&auth.AuthMethod{}).
 		Where("user_id = ? AND deleted_at IS NULL", userId).
 		Update("role_key", role.RoleKey).Error; err != nil {
 		return err
@@ -383,13 +381,13 @@ func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *do
 
 	// Soft-delete mapping cũ rồi gắn role mới (admin create/update chọn 1 role)
 	now := time.Now()
-	if err := db.Model(&domain.RoleProfile{}).
+	if err := db.Model(&access.RoleProfile{}).
 		Where("profile_id = ? AND deleted_at IS NULL", userId).
 		Update("deleted_at", now).Error; err != nil {
 		return err
 	}
 
-	rp := &domain.RoleProfile{
+	rp := &access.RoleProfile{
 		ProfileID: userId,
 		RoleID:    role.ID,
 	}
@@ -401,12 +399,12 @@ func (r *RoleRepo) AssignRoleToUser(ctx context.Context, userId uint64, role *do
 }
 
 // GetAuthMethodsByIds lấy thông tin AuthMethod theo danh sách user IDs
-func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*domain.AuthMethod, error) {
+func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([]*auth.AuthMethod, error) {
 	if len(userIds) == 0 {
 		return nil, nil
 	}
 
-	var authMethods []*domain.AuthMethod
+	var authMethods []*auth.AuthMethod
 	err := r.GetDB(ctx).
 		Where("user_id IN ? AND deleted_at IS NULL", userIds).
 		Find(&authMethods).Error
@@ -418,23 +416,23 @@ func (r *RoleRepo) GetAuthMethodsByIds(ctx context.Context, userIds []uint64) ([
 }
 
 // GetAuthAdminsWithRolesByIds lấy danh sách admin kèm với thông tin role (theo auth_method.user_id).
-func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64) ([]*domain.AuthAdminWithRole, error) {
+func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64) ([]*access.AuthAdminWithRole, error) {
 	if len(ids) == 0 {
-		return []*domain.AuthAdminWithRole{}, nil
+		return []*access.AuthAdminWithRole{}, nil
 	}
 	if r == nil || r.CrudRepo == nil || r.TransactionRepo == nil {
 		return nil, errors.New("role repository chưa được khởi tạo")
 	}
 
-	var authMethods []*domain.AuthMethod
+	var authMethods []*auth.AuthMethod
 	err := r.GetDB(ctx).
-		Where("user_id IN ? AND provider = ? AND deleted_at IS NULL", ids, domain.ProviderAdmin).
+		Where("user_id IN ? AND provider = ? AND deleted_at IS NULL", ids, auth.ProviderAdmin).
 		Find(&authMethods).Error
 	if err != nil {
 		return nil, err
 	}
 	if len(authMethods) == 0 {
-		return []*domain.AuthAdminWithRole{}, nil
+		return []*access.AuthAdminWithRole{}, nil
 	}
 
 	roleKeySet := make(map[uint32]struct{})
@@ -444,7 +442,7 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 		}
 	}
 
-	roleByKey := make(map[uint32]domain.Role)
+	roleByKey := make(map[uint32]access.Role)
 	if len(roleKeySet) > 0 {
 		roleKeys := make([]uint32, 0, len(roleKeySet))
 		for roleKey := range roleKeySet {
@@ -459,12 +457,12 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 		}
 	}
 
-	admins := make([]*domain.AuthAdminWithRole, 0, len(authMethods))
+	admins := make([]*access.AuthAdminWithRole, 0, len(authMethods))
 	for _, am := range authMethods {
 		if am == nil {
 			continue
 		}
-		admin := &domain.AuthAdminWithRole{
+		admin := &access.AuthAdminWithRole{
 			ID:        am.ID,
 			UserID:    am.UserID,
 			Username:  am.AuthName,
@@ -487,8 +485,8 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 	return admins, nil
 }
 
-func (r *RoleRepo) GetRolesByIds(ctx context.Context, ids []uint64) ([]*domain.Role, error) {
-	var roles []*domain.Role
+func (r *RoleRepo) GetRolesByIds(ctx context.Context, ids []uint64) ([]*access.Role, error) {
+	var roles []*access.Role
 	err := r.GetDB(ctx).
 		Preload("Color").
 		Where("id IN ? AND deleted_at IS NULL", ids).
@@ -496,10 +494,10 @@ func (r *RoleRepo) GetRolesByIds(ctx context.Context, ids []uint64) ([]*domain.R
 	return roles, err
 }
 
-func (r *RoleRepo) GetRoleByGroupId(ctx context.Context, groupId uint64) ([]domain.Role, error) {
-	var roles []domain.Role
+func (r *RoleRepo) GetRoleByGroupId(ctx context.Context, groupId uint64) ([]access.Role, error) {
+	var roles []access.Role
 	err := r.GetDB(ctx).
-		Model(&domain.Role{}).
+		Model(&access.Role{}).
 		Preload("Color").
 		Where("role_group_id = ? AND deleted_at IS NULL", groupId).
 		Find(&roles).Error

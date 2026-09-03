@@ -10,15 +10,14 @@ import (
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
-	"notification/internal/repo"
-)
+	)
 
 type AccountWarningUsecase struct {
-	AccountWarningRepo repo.AccountWarningRepository
+	AccountWarningRepo AccountWarningStore
 }
 
 func NewAccountWarningUsecase(
-	accountWarningRepo repo.AccountWarningRepository,
+	accountWarningRepo AccountWarningStore,
 ) *AccountWarningUsecase {
 	return &AccountWarningUsecase{
 		AccountWarningRepo: accountWarningRepo,

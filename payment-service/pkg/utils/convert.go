@@ -7,4 +7,4 @@ func Uint32SliceToInt32Slice(slice []uint32) []int32 {
 		result[i] = int32(v)
 	}
 	return result
-} 
+}

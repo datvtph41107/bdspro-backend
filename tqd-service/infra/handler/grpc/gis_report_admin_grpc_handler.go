@@ -47,6 +47,13 @@ func NewGisReportAdminGrpcHandler(
 	}
 }
 
+func (h *GisReportAdminGrpcHandler) HasPermissions(ctx context.Context, keys []string) error {
+	if h == nil || h.authClient == nil {
+		return _errors.ReturnError(503, "permission authority unavailable")
+	}
+	return h.authClient.HasPermissions(ctx, keys)
+}
+
 func (h *GisReportAdminGrpcHandler) requirePerm(ctx context.Context, keys []string) error {
 	if err := h.authClient.HasPermissions(ctx, keys); err != nil {
 		return _errors.ReturnError(403, err.Error())

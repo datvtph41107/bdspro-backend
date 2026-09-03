@@ -90,16 +90,21 @@ func (r *poiCategoryPostgres) Update(ctx context.Context, id uint64, entity *dom
 		return err
 	}
 
-	// If parent changed, update paths for this category and its children
-	if (existing.ParentID == nil && entity.ParentID != nil) ||
-		(existing.ParentID != nil && entity.ParentID == nil) ||
-		(existing.ParentID != nil && entity.ParentID != nil && *existing.ParentID != *entity.ParentID) {
+	// If parent changed, update paths for this category and its children.
+	if parentIDChanged(existing.ParentID, entity.ParentID) {
 		if err := r.updateCategoryPath(ctx, entity); err != nil {
 			return err
 		}
 	}
 
 	return r.AfterSave(ctx, &id, entity)
+}
+
+func parentIDChanged(before, after *uint64) bool {
+	if before == nil || after == nil {
+		return before != nil || after != nil
+	}
+	return *before != *after
 }
 
 // ==================== Custom Methods ====================

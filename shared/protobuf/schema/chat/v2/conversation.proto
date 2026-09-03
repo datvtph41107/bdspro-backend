@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/api/annotations.proto";
 
-package chatpb.v2;
+package chatpb;
 
-option go_package = "pb/types/chat/v2;chatpbv2";
+option go_package = "pb/types/chat/v2;chatpb";
 
 service ConversationService {
   rpc CreateConversationWithGroup (CreateConversationRequest) returns (CreateConversationResponse) {
@@ -28,4 +28,3 @@ message CreateConversationResponse {
   string type = 3;
   string createdAt = 4;
 }
-

@@ -35,3 +35,24 @@ func TestMiddleware_MethodScopedAnonymousRoute(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, writer.Code)
 	})
 }
+
+func TestMiddleware_ProviderAuthorizationIsNotParsedAsJWT(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	middleware := Middleware(
+		nil,
+		nil,
+		WithProviderCredentialRoutes([]Route{
+			ExactMethod(http.MethodPost, "/v2/payment/sepay/webhook"),
+		}),
+	)
+
+	writer := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(writer)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/v2/payment/sepay/webhook", nil)
+	ctx.Request.Header.Set("Authorization", "provider-local-credential")
+
+	middleware(ctx)
+
+	assert.False(t, ctx.IsAborted())
+	assert.Equal(t, "provider-local-credential", ctx.Request.Header.Get("Authorization"))
+}

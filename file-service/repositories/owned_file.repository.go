@@ -5,6 +5,7 @@ import (
 
 	"file/models"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -58,4 +59,26 @@ func (r *FileRepository) SaveWithContext(
 	file *models.FileEntity,
 ) error {
 	return r.DB.WithContext(ctx).Save(file).Error
+}
+
+// FinalizeUpload atomically publishes ordinary File metadata and its optional
+// private-access evidence. The physical artifact is already staged by the
+// caller; a DB failure is compensated by removing that artifact and the
+// allocated metadata row.
+func (r *FileRepository) FinalizeUpload(
+	ctx context.Context,
+	file *models.FileEntity,
+	access *models.AccessEntity,
+) error {
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(file).Error; err != nil {
+			return err
+		}
+		if access != nil {
+			if err := tx.Create(access).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

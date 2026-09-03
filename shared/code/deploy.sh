@@ -145,6 +145,7 @@ case "$1" in
   "file")
     service_path=file-service
     path_jar=main
+    payload_build=file
     ;;
   "map")
     service_path=map-service
@@ -287,6 +288,9 @@ if [ "$1" = "tqd" ]; then
   scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 elif [ "$1" = "pmtiles" ]; then
   scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.pmtiles
+elif [ "$1" = "file" ]; then
+  # File owns an FFmpeg-capable runtime image; the generic service image is not equivalent.
+  scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 else
   scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 fi
@@ -326,11 +330,29 @@ if [ $? -ne 0 ]; then
 fi
 
 
-ssh ${REMOTE_USER}@${REMOTE_HOST} "
+if [ "$1" = "file" ]; then
+  # File secrets/config are operator-owned on the deployment host. Source them
+  # only for Compose interpolation; they are never copied from the repository.
+  ssh ${REMOTE_USER}@${REMOTE_HOST} "
+set -e
+if [ ! -f ${REMOTE_DIR}/.env.runtime ]; then
+  echo 'Missing ${REMOTE_DIR}/.env.runtime (see file-service/.env.runtime.example)' >&2
+  exit 1
+fi
+set -a
+. ${REMOTE_DIR}/.env.runtime
+set +a
+cd ${REMOTE_PATH}
+docker compose build --no-cache file
+docker compose up -d --force-recreate file
+"
+else
+  ssh ${REMOTE_USER}@${REMOTE_HOST} "
 cd ${REMOTE_DIR}
 docker compose build --no-cache ${payload_build}
 docker compose up -d ${payload_build}
 "
+fi
 # docker compose build --no-cache ${payload_build}
 
 # # SSH vào server và chạy lệnh build (giả sử bạn có file build.sh trong thư mục remote)

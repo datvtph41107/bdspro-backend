@@ -2,12 +2,29 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	configs "chat/config"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/hyperledger/fabric/common/flogging"
 )
+
+var updateTypingScript = redis.NewScript(`
+local current = tonumber(redis.call('GET', KEYS[1]) or '0')
+if ARGV[1] == '1' then
+  current = redis.call('INCR', KEYS[1])
+  redis.call('EXPIRE', KEYS[1], ARGV[2])
+  return current
+end
+if current <= 1 then
+  redis.call('DEL', KEYS[1])
+  return 0
+end
+current = redis.call('DECR', KEYS[1])
+redis.call('EXPIRE', KEYS[1], ARGV[2])
+return current
+`)
 
 type RedisClient struct {
 	client *redis.Client
@@ -68,6 +85,15 @@ func (r *RedisClient) GetAndDeleteMessages(ctx context.Context, key string, maxR
 // Publish message to a Redis channel
 func (r *RedisClient) Publish(ctx context.Context, channel string, message string) error {
 	return r.client.Publish(ctx, channel, message).Err()
+}
+
+func (r *RedisClient) UpdateTyping(ctx context.Context, conversationID, userID uint64, typing bool) (int64, error) {
+	key := fmt.Sprintf("chat:typing:%d:%d", conversationID, userID)
+	value := "0"
+	if typing {
+		value = "1"
+	}
+	return updateTypingScript.Run(ctx, r.client, []string{key}, value, 15).Int64()
 }
 
 // Subscribe to a Redis channel

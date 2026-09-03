@@ -1,9 +1,21 @@
+SHELL := /bin/sh
+BINARY_NAME := crm-service
+RUN_ARGS := grpc
+DB_URL ?= postgres://postgres:postgres@localhost:5432/db_crm?sslmode=disable
+MIGRATION_DIR := infra/db/migrate_v2
+
+include ../tools/development/service.mk
+
+buf:
+	$(MAKE) -C ../shared/code buf-crm
+
 migrateup:
-	migrate -path infra/db/migrate_v2 -database "${CRM_DATABASE_URL}" -verbose up
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${CRM_DATABASE_URL:-$(DB_URL)}" -verbose up)
 
-migratedown:
-	migrate -path infra/db/migrate_v2 -database "${CRM_DATABASE_URL}" -verbose down
+migratedown1:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${CRM_DATABASE_URL:-$(DB_URL)}" -verbose down 1)
 
-.PHONY: migrateup migratedown
+help:
+	@printf '%s\n' 'fmt vet test test-race build server buf migrateup migratedown1 clean check'
 
-# migrate create -ext sql -dir infra/db/migrate_v2 -seq seo_domain_schema
+.PHONY: buf migrateup migratedown1 help

@@ -21,9 +21,6 @@ type DeepseekClient struct {
 
 func NewDeepseekClient() *DeepseekClient {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
-	if apiKey == "" {
-		apiKey = "sk-e55042ea5c144ac1ada1829ed11595f9" // Fallback key nếu không có trong env
-	}
 
 	return &DeepseekClient{
 		apiKey:  apiKey,

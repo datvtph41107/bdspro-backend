@@ -17,7 +17,7 @@ type OneHouseGrpcHandler struct {
 func NewOneHouseGrpcHandler(oneHouseUsecase usecase.OneHouseUsecase) *OneHouseGrpcHandler {
 	return &OneHouseGrpcHandler{
 		oneHouseUsecase: oneHouseUsecase,
-		}
+	}
 }
 
 func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouse, error) {

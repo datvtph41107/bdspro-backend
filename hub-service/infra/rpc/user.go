@@ -5,7 +5,7 @@ import (
 	"time"
 
 	qhprorpc "common/rpc"
-	"common/transporttrust"
+	"common/rpcenv"
 	hubconfig "hub/config"
 	userpb "pb/types/user"
 
@@ -23,9 +23,7 @@ func NewAdminUserProfileClient() (
 		Target:          hubconfig.AppProperties.RPC.User.Address,
 		BackoffMaxDelay: 5 * time.Second,
 		Credentials:     insecure.NewCredentials(),
-		Transport: qhprorpc.TransportConfig{
-			Trust: transporttrust.ConfigFromEnv(),
-		},
+		Transport:       rpcenv.LoadTransportConfig(),
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("create hub user gRPC connection: %w", err)

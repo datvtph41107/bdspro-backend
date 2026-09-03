@@ -12,5 +12,7 @@ func RegisterPaymentService(ctx context.Context, mux *runtime.ServeMux, conn *gr
 	return registerAll(ctx, mux, conn,
 		pb_payment.RegisterPaymentServiceHandler,
 		pb_payment.RegisterBankServiceHandler,
+		pb_payment.RegisterPaymentProfileServiceHandler,
+		pb_payment.RegisterAdminCommerceServiceHandler,
 	)
 }

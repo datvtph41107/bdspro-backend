@@ -1,0 +1,19 @@
+host: 0.0.0.0
+port: 8205
+database:
+  type: postgres
+  url: ""
+whitelist:
+  - /pb_payment.PaymentService/CreateWallet
+  - /pb_payment.PaymentService/SepayWebhook
+  - /pb_payment.PaymentService/GetWalletTransactionsByWalletId
+  - /pb_payment.PaymentService/TransferBetweenWallets
+  - /pb_payment.PaymentService/GetWalletByUserId
+  - /pb_payment.PaymentService/GetWalletByWalletId
+  - /pb_payment.BankService/GetAll
+sepay:
+  api_key: ""
+grpc:
+  notification:
+    host: localhost
+    port: 8204

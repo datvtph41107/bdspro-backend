@@ -102,7 +102,7 @@ ai-service/
 ├── requirements.txt                 # ✅ Dependencies (29 lines)
 ├── Dockerfile                       # ✅ Docker image
 ├── docker-compose.yml               # ✅ Docker compose
-├── env.example                      # ✅ Config template
+├── .env                              # ✅ Runtime config local-safe
 │
 ├── README.md                        # ✅ Full documentation (210 lines)
 ├── QUICKSTART.md                    # ✅ 5-minute setup guide (295 lines)
@@ -249,7 +249,7 @@ source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
 
 # 4. Configure environment
-cp env.example .env
+# Dùng ai-service/.env đã có sẵn; không commit API key thật.
 # Edit .env: Add your OPENAI_API_KEY=sk-...
 
 # 5. Embed context files (one-time, ~30 seconds)
@@ -913,4 +913,3 @@ curl -X POST http://localhost:8090/v2/ai/query \
 *Last updated: October 18, 2025*  
 *Version: 1.0.0*  
 *Service: BDSPro AI Service*
-

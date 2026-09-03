@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"user/config"
-	auth_model "user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
 	"user/internal/usecase"
@@ -179,7 +179,7 @@ func (s *FacebookAuthService) RegisterOrLogin(c context.Context, userInfo map[st
 
 	if existingUser == nil {
 		// User doesn't exist, create new one
-		oauthUser := &auth_model.AuthMethod{
+		oauthUser := &auth.AuthMethod{
 			Provider: "FACEBOOK",
 			AuthName: username,
 			FullName: fullName,

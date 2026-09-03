@@ -8,17 +8,15 @@ import (
 	"time"
 	"user/internal/interface/providers"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisProvider struct {
 	*_redis.RedisService
 }
 
-func NewRedisProvider() providers.CacheProvider {
-	return &RedisProvider{
-		RedisService: _redis.NewRedisService(),
-	}
+func NewRedisProvider(redisService *_redis.RedisService) providers.CacheProvider {
+	return &RedisProvider{RedisService: redisService}
 }
 
 // MGet lấy nhiều giá trị từ Redis bằng các khóa đã cho.
@@ -39,8 +37,6 @@ func (r *RedisProvider) MGet(c context.Context, keys ...string) ([]interface{}, 
 // SaveToken lưu token vào Redis với expiration
 func (r *RedisProvider) SaveToken(c context.Context, userID uint64, token string, expirationInSeconds uint64) error {
 	key := fmt.Sprintf("user_token:%d", userID)
-
-	println("SaveToken: ", key, token, expirationInSeconds)
 
 	// Lưu token với expiration
 	err := r.RedisService.Client.Set(c, key, token, time.Duration(expirationInSeconds)*time.Second).Err()
@@ -112,11 +108,6 @@ func (r *RedisProvider) DeleteToken(c context.Context, userID uint64) error {
 		}
 	}
 	return fmt.Errorf("lỗi khi xóa token từ Redis sau 3 lần thử: %v", err)
-}
-
-// Close đóng Redis connection
-func (r *RedisProvider) Close() error {
-	return r.RedisService.Client.Close()
 }
 
 // Ping kiểm tra kết nối Redis

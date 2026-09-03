@@ -14,7 +14,7 @@ import (
 	"auth/internal/permissioncatalog"
 
 	_errors "common/errors"
-	_identitycontext "common/identitycontext"
+	"common/identity"
 	_utils "common/utils"
 	"pb/clients"
 	sharepb "pb/types/shared"
@@ -285,7 +285,7 @@ func (s *PermissionService) resolvePermissionIDs(
 }
 
 func profileIDFromContext(ctx context.Context) uint64 {
-	if actor, ok := _identitycontext.FromContext(ctx); ok && actor.ProfileID != 0 {
+	if actor, ok := identity.ActorFromContext(ctx); ok && actor.ProfileID != 0 {
 		return actor.ProfileID
 	}
 	return _utils.GetProfileIdWithContext(ctx)

@@ -19,8 +19,7 @@ import (
 const defaultTimeout = 30 * time.Second
 
 var supported = map[string]struct{}{
-	"user": {}, "file": {}, "notification": {}, "payment": {}, "crm": {},
-	"search": {}, "map": {}, "bdspro": {}, "chat": {}, "tqd": {},
+	"file": {}, "search": {}, "map": {}, "bdspro": {}, "chat": {},
 }
 
 type Proxy struct {
@@ -33,22 +32,37 @@ func New(cfg config.Runtime, timeout time.Duration) (*Proxy, error) {
 		timeout = defaultTimeout
 	}
 	for service := range supported {
-		if _, err := cfg.Endpoint(service); err != nil {
+		if _, err := cfg.HTTPEndpoint(service); err != nil {
 			return nil, fmt.Errorf("v1 proxy service %q: %w", service, err)
 		}
 	}
 	return &Proxy{cfg: cfg, timeout: timeout}, nil
 }
 
-func (p *Proxy) Handler() gin.HandlerFunc {
+func upstreamPath(service, path string) string {
+	// File-service retained its explicit /v1/file HTTP namespace while the
+	// other legacy v1 services expose /<service>/... upstream paths. Keep this
+	// transport translation at the Gateway boundary rather than adding a
+	// second alias surface inside File-service.
+	if service == "file" {
+		return "/v1/file" + path
+	}
+	return "/" + service + path
+}
+
+func (p *Proxy) Handler(fallback http.Handler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		service := strings.TrimSpace(c.Param("service"))
 		if _, ok := supported[service]; !ok {
-			c.JSON(http.StatusNotFound, gin.H{"error": "service not found"})
+			if fallback == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "service not found"})
+				return
+			}
+			fallback.ServeHTTP(c.Writer, c.Request)
 			return
 		}
 
-		target, err := p.cfg.Endpoint(service)
+		target, err := p.cfg.HTTPEndpoint(service)
 		if err != nil {
 			c.JSON(http.StatusBadGateway, gin.H{"error": "upstream unavailable"})
 			return
@@ -58,7 +72,7 @@ func (p *Proxy) Handler() gin.HandlerFunc {
 		proxy := &httputil.ReverseProxy{
 			Rewrite: func(req *httputil.ProxyRequest) {
 				req.SetURL(targetURL)
-				req.Out.URL.Path = "/" + service + c.Param("path")
+				req.Out.URL.Path = upstreamPath(service, c.Param("path"))
 				req.Out.URL.RawPath = ""
 				req.Out.Host = req.In.Host
 			},

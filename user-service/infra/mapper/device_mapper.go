@@ -3,7 +3,7 @@ package mapper
 import (
 	_utils "common/utils"
 	authpb "pb/types/auth"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 )
 
@@ -48,7 +48,7 @@ func (m *DeviceMapper) MapCreateDeviceRequestPbToDTO(req *authpb.CreateDeviceReq
 }
 
 // MapDeviceToDTO chuyển Domain sang DTO response
-func (m *DeviceMapper) MapDeviceToDTO(device *domain.DeviceEntity) *dto.DeviceResponse {
+func (m *DeviceMapper) MapDeviceToDTO(device *auth.DeviceEntity) *dto.DeviceResponse {
 	if device == nil {
 		return nil
 	}
@@ -79,7 +79,7 @@ func (m *DeviceMapper) MapDeviceToDTO(device *domain.DeviceEntity) *dto.DeviceRe
 }
 
 // MapDeviceToPb chuyển domain sang protobuf
-func (m *DeviceMapper) MapDeviceToPb(device *domain.DeviceEntity) *authpb.Device {
+func (m *DeviceMapper) MapDeviceToPb(device *auth.DeviceEntity) *authpb.Device {
 	if device == nil {
 		return nil
 	}

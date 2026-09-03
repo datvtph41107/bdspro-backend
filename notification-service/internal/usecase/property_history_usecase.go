@@ -5,21 +5,19 @@ import (
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/provider"
-	"notification/internal/repo"
-	sharepb "pb/types/shared"
+			sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
 )
 
 type PropertyHistoryUseCase struct {
-	PropertyHistoryRepo repo.PropertyHistoryRepo
-	UserProvider        provider.IUserProvider
+	PropertyHistoryRepo PropertyHistoryStore
+	UserProvider        UserProfileReader
 }
 
 func NewPropertyHistoryUseCase(
-	propertyHistoryRepo repo.PropertyHistoryRepo,
-	userProvider provider.IUserProvider,
+	propertyHistoryRepo PropertyHistoryStore,
+	userProvider UserProfileReader,
 ) *PropertyHistoryUseCase {
 	return &PropertyHistoryUseCase{
 		PropertyHistoryRepo: propertyHistoryRepo,

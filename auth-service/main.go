@@ -7,7 +7,9 @@ import (
 	"auth/infra/services"
 	_middleware "common/middleware"
 	_ "common/models"
-	"common/processlifecycle"
+	process "common/process"
+	qhprorpc "common/rpc"
+	"common/rpcenv"
 	"context"
 	"fmt"
 	"log"
@@ -55,7 +57,7 @@ func run() error {
 	defer userCleanup()
 
 	permissionService := services.NewPermissionService(userRPC)
-	authInternalHandler := handler.NewAuthInternalHandler(permissionService)
+	authInternalHandler := handler.NewAuthInternalHandler(permissionService, userRPC)
 	if err := os.Setenv("TZ", "Europe/London"); err != nil {
 		return fmt.Errorf("set auth timezone: %w", err)
 	}
@@ -68,8 +70,12 @@ func run() error {
 	}
 	defer func() { _ = lis.Close() }()
 
+	// Auth Service chỉ phục vụ AuthInternal. Vì vậy mọi RPC đi vào đây phải
+	// mang service assertion đã ký; Auth không tự tin tưởng metadata từ client.
+	transport := qhprorpc.ServerTransport(rpcenv.LoadTransportConfig())
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
 		),
 		grpc.ChainStreamInterceptor(
@@ -84,12 +90,12 @@ func run() error {
 	processCtx, processCancel := context.WithCancel(signalCtx)
 	defer processCancel()
 
-	return processlifecycle.Run(
+	return process.Run(
 		processCtx,
 		processCancel,
 		s,
 		lis,
-		[]processlifecycle.Actor{processlifecycle.ActorFunc(permissionService.Run)},
-		processlifecycle.Config{GracefulStopTimeout: 10 * time.Second},
+		[]process.Actor{process.ActorFunc(permissionService.Run)},
+		process.Config{GracefulStopTimeout: 10 * time.Second},
 	)
 }

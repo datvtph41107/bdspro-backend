@@ -7,9 +7,12 @@ import (
 	sharepb "pb/types/shared"
 
 	"user/infra/mapper"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/usecase"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RoleHandler struct {
@@ -45,7 +48,7 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 		return nil, err
 	}
 
-	role := &domain.Role{
+	role := &access.Role{
 		RoleName:        req.RoleName,
 		RoleDescription: req.RoleDescription,
 		Key:             req.Key,
@@ -56,7 +59,7 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *authpb.RoleRequest) (
 		RoleGroupID:     req.RoleGroupId,
 		RoleKey:         req.RoleKey,
 		AllowAssign:     req.AllowAssign,
-		// OrganizationID: 0,
+		OrganizationID:  req.OrganizationId,
 	}
 
 	result, err := h.roleUsecase.Create(ctx, role)
@@ -81,7 +84,7 @@ func (h *RoleHandler) UpdateRole(ctx context.Context, req *authpb.RoleRequest) (
 		return nil, err
 	}
 
-	role := &domain.Role{
+	role := &access.Role{
 		RoleName:        req.RoleName,
 		RoleDescription: req.RoleDescription,
 		Key:             req.Key,
@@ -197,7 +200,7 @@ func (h *RoleHandler) AddPermissionToRole(ctx context.Context, req *authpb.AddPe
 		return nil, err
 	}
 
-	err := h.roleUsecase.AddPermissionsToRole(ctx, req.RoleId, req.PermissionIds)
+	err := h.roleUsecase.ReplacePermissions(ctx, req.RoleId, req.PermissionIds)
 	if err != nil {
 		return nil, err
 	}
@@ -222,13 +225,15 @@ func (h *RoleHandler) GetListRole(ctx context.Context, req *authpb.RoleSearchReq
 		return nil, err
 	}
 
+	if req.DomainType != 0 {
+		return nil, status.Error(codes.InvalidArgument, "domainType numeric search is retired; use an unfiltered role search")
+	}
 	roleSearchRequest := &dto.RoleSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.Page,
 			Size: req.Size,
 		},
 		Scope:       req.Scope,
-		DomainType:  req.DomainType,
 		Name:        req.Name,
 		IsDefault:   req.IsDefault,
 		RoleGroupID: req.RoleGroupId,

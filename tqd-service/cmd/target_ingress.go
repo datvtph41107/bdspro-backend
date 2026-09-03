@@ -3,7 +3,6 @@ package cmd
 import (
 	_middleware "common/middleware"
 	"common/rpc"
-	"common/transporttrust"
 	"context"
 
 	"google.golang.org/grpc"
@@ -13,8 +12,8 @@ import (
 // uses the canonical Foundation RPC transport on migrated RPCs. The selector
 // decides migration scope; transport semantics themselves are owned by
 // common/rpc.
-func targetIngress(trust transporttrust.Config) grpc.UnaryServerInterceptor {
-	canonical := rpc.UnaryServerInterceptor(rpc.TransportConfig{Trust: trust})
+func targetIngress(transportConfig rpc.TransportConfig) grpc.UnaryServerInterceptor {
+	canonical := rpc.UnaryServerInterceptor(transportConfig)
 
 	return func(
 		ctx context.Context,
@@ -22,7 +21,7 @@ func targetIngress(trust transporttrust.Config) grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if info == nil || !usesReportTargetRuntime(info.FullMethod) {
+		if info == nil || !usesCanonicalTargetRuntime(info.FullMethod) {
 			return _middleware.ParseGrpcMetadataContextMiddleware(
 				ctx,
 				req,

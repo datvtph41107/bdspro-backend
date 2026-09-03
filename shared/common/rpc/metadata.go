@@ -200,6 +200,18 @@ func restoreIdentityFromMetadata(
 	return ctx, nil
 }
 
+// AppendActorMetadata serializes one validated Actor into canonical QHPRO
+// gRPC metadata. It does not bind or originate identity.
+func AppendActorMetadata(md metadata.MD, actor identity.Actor) {
+	appendActor(md, actor)
+}
+
+// ActorFromMetadata parses one canonical Actor from QHPRO gRPC metadata
+// without binding it into context.
+func ActorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
+	return actorFromMetadata(md)
+}
+
 func appendActor(md metadata.MD, actor identity.Actor) {
 	setUint64(md, AuthIDMetadataKey, actor.AuthID)
 	setUint64(md, ProfileIDMetadataKey, actor.ProfileID)
@@ -228,7 +240,7 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 		{SessionIDMetadataKey, func(v uint64) { actor.SessionID = v }},
 	}
 	for _, item := range values {
-		value, found, err := readUint64(md, item.key)
+		value, found, err := readActorUint64(md, item.key)
 		if err != nil {
 			return identity.Actor{}, false, err
 		}
@@ -237,7 +249,7 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 			item.set(value)
 		}
 	}
-	organizationID, found, err := readUint64(md, OrganizationIDMetadataKey)
+	organizationID, found, err := readActorUint64(md, OrganizationIDMetadataKey)
 	if err != nil {
 		return identity.Actor{}, false, err
 	}
@@ -245,7 +257,7 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 		hasValue = true
 		actor.OrganizationID = &organizationID
 	}
-	role, found, err := readText(md, RoleMetadataKey)
+	role, found, err := readActorText(md, RoleMetadataKey)
 	if err != nil {
 		return identity.Actor{}, false, err
 	}
@@ -253,7 +265,7 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 		hasValue = true
 		actor.Role = role
 	}
-	tokenType, found, err := readText(md, TokenTypeMetadataKey)
+	tokenType, found, err := readActorText(md, TokenTypeMetadataKey)
 	if err != nil {
 		return identity.Actor{}, false, err
 	}
@@ -265,9 +277,21 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 		return identity.Actor{}, false, nil
 	}
 	if !actor.IsValid() {
-		return identity.Actor{}, false, errors.New("actor metadata is invalid")
+		return identity.Actor{}, false, errors.New("invalid actor identity metadata")
 	}
 	return actor, true, nil
+}
+
+// AppendCallerMetadata serializes one validated logical caller into canonical
+// QHPRO gRPC metadata. It does not bind or originate caller identity.
+func AppendCallerMetadata(md metadata.MD, caller identity.Caller) {
+	appendCaller(md, caller)
+}
+
+// CallerFromMetadata parses one canonical logical caller from QHPRO gRPC
+// metadata without binding it into context.
+func CallerFromMetadata(md metadata.MD) (identity.Caller, bool, error) {
+	return callerFromMetadata(md)
 }
 
 func appendCaller(md metadata.MD, caller identity.Caller) {
@@ -344,6 +368,46 @@ func validateCallerActor(caller identity.Caller, hasCaller, hasActor bool) error
 		return errors.New("caller type is invalid")
 	}
 	return nil
+}
+
+func readActorUint64(md metadata.MD, key string) (uint64, bool, error) {
+	values := md.Get(key)
+	if len(values) == 0 {
+		return 0, false, nil
+	}
+	if len(values) != 1 ||
+		values[0] == "" ||
+		strings.TrimSpace(values[0]) != values[0] {
+		return 0, false, fmt.Errorf("invalid %s identity metadata", key)
+	}
+
+	value, err := strconv.ParseUint(values[0], 10, 64)
+	if err != nil {
+		return 0, false, fmt.Errorf("invalid %s identity metadata", key)
+	}
+
+	return value, true, nil
+}
+
+func readActorText(md metadata.MD, key string) (string, bool, error) {
+	values := md.Get(key)
+	if len(values) == 0 {
+		return "", false, nil
+	}
+	if len(values) != 1 ||
+		values[0] == "" ||
+		len(values[0]) > identity.MaxActorTextLength ||
+		strings.TrimSpace(values[0]) != values[0] {
+		return "", false, fmt.Errorf("invalid %s identity metadata", key)
+	}
+
+	for _, value := range values[0] {
+		if value < 0x20 || value == 0x7f {
+			return "", false, fmt.Errorf("invalid %s identity metadata", key)
+		}
+	}
+
+	return values[0], true, nil
 }
 
 func readUint64(md metadata.MD, key string) (uint64, bool, error) {

@@ -1,8 +1,0 @@
-pools:
-    profile_pool:
-        default_limit: 100
-        services:
-            - user
-actions:
-    user.get_profile: 1
-    user.upload_avatar: 5

@@ -4,7 +4,6 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	"errors"
-	"log"
 	"pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -115,18 +114,12 @@ func (c *NotificationClient) CreateNotification(
 	ownerOf _enum.EOwnerOf,
 	attachData []string,
 ) error {
-	go func() {
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		err := c.NotificationClient.CreateNotification(contextTimeout, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
-		if err != nil {
-			log.Printf("Failed to send notification: %v", err)
-		} else {
-			log.Printf("Successfully sent notification to user %d", ownerId)
-		}
-	}()
-	return nil
+	if c == nil || c.NotificationClient == nil || c.NotificationClient.Client == nil {
+		return errors.New("notification grpc client chưa được khởi tạo")
+	}
+	callCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return c.NotificationClient.CreateNotification(callCtx, avatar, title, message, notificationType, targetId, ownerId, ownerOf, attachData)
 }
 
 func (c *NotificationClient) GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error) {

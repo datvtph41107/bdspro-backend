@@ -2,7 +2,11 @@ package request
 
 import "strings"
 
-const MaxRequestIDLength = 128
+const (
+	RequestIDHeader      = "X-Request-ID"
+	RequestIDMetadataKey = "x-request-id"
+	MaxRequestIDLength   = 128
+)
 
 // RequestIDSource canonical source
 type RequestIDSource string

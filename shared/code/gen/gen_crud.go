@@ -67,7 +67,7 @@ func camelToSnake(s string) string {
 
 func main() {
 	// domainName :=
-	log.Printf("GEN: ", path)
+	log.Printf("GEN: %s", path)
 	for i := 0; i < len(domains); i++ {
 		GenerateDomain(domains[i])
 	}

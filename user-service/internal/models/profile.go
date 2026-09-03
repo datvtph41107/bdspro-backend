@@ -1,7 +1,6 @@
 package models
 
 import (
-	_db "common/db"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_model "common/models"
@@ -21,7 +20,7 @@ type UserProfileSearch struct {
 
 // UserProfileEntity chứa thông tin hồ sơ người dùng
 type UserProfileEntity struct {
-	_model.BaseEntity
+	_model.BaseEntityNotId
 	ProfileID         uint64                `gorm:"primaryKey;autoIncrement;column:profile_id" copier:"-" json:"profileId"`
 	Phone             string                `gorm:"size:20" json:"phone"`
 	Phone2            string                `gorm:"size:20" json:"phone2"`
@@ -178,42 +177,4 @@ func generateReferral(authId uint64) string {
 // OtpVerifyRequest mô phỏng request object
 type OtpVerifyRequest struct {
 	FullName string
-}
-
-// GetByProfileId truy vấn UserProfileEntity theo profileId
-func ProfileGetByPhone(phone string) (*UserProfileEntity, error) {
-	var userProfile UserProfileEntity
-	if err := _db.DB.Model(&UserProfileEntity{}).
-		Where("(phone = ?) and deleted_at is null", phone).
-		First(&userProfile).Error; err != nil {
-		return nil, err
-	}
-	return &userProfile, nil
-}
-
-// GetByProfileId truy vấn UserProfileEntity theo profileId
-func ProfileSearchForChat(phone string) (*[]UserProfileEntity, error) {
-	var userProfile *[]UserProfileEntity
-
-	query := "%" + phone + "%"
-	if err := _db.DB.Debug().
-		Where("(phone ILIKE ? OR full_name ILIKE ?) AND deleted_at IS NULL", query, query).
-		// Where("(phone like '%' || ? || '%' or name like '%' || ? || '%') and deleted_at is null", phone, phone).
-		Find(&userProfile).Error; err != nil {
-		return nil, err
-	}
-	return userProfile, nil
-}
-
-// GetByProfileId truy vấn UserProfileEntity theo profileId
-func ProfileByIDs(ids []uint64) (*[]UserProfileEntity, error) {
-	var userProfile *[]UserProfileEntity
-
-	// query := "%" + phone + "%"
-	if err := _db.DB.Debug().
-		Where("profile_id in (?) AND deleted_at IS NULL", ids).
-		Find(&userProfile).Error; err != nil {
-		return nil, err
-	}
-	return userProfile, nil
 }

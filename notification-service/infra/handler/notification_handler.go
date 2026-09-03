@@ -12,7 +12,6 @@ import (
 	"notification/infra/mapper"
 	"notification/internal/dto"
 	"notification/internal/enums"
-	"notification/internal/provider"
 	"notification/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -24,7 +23,7 @@ type NotificationHandler struct {
 	AdminHistoryUsecase   *usecase.AdminHistoryUsecase
 	AdminHistoryMapper    *mapper.AdminHistoryMapper
 	AccountWarningUsecase *usecase.AccountWarningUsecase
-	UserClient            provider.IUserProvider
+	UserClient            usecase.UserProfileReader
 	Mapper                *mapper.NotificationMapper
 	SyncProvider          *_utils.SyncUtil
 	notipb.UnimplementedGatewayNotificationServiceServer
@@ -35,7 +34,7 @@ func NewNotificationHandler(
 	adminHistoryUsecase *usecase.AdminHistoryUsecase,
 	adminHistoryMapper *mapper.AdminHistoryMapper,
 	accountWarningUsecase *usecase.AccountWarningUsecase,
-	userClient provider.IUserProvider,
+	userClient usecase.UserProfileReader,
 	mapper *mapper.NotificationMapper,
 	syncProvider *_utils.SyncUtil,
 ) *NotificationHandler {

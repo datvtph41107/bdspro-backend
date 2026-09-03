@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"common/productcatalog"
 	"gorm.io/gorm"
+	catalogdomain "user/internal/domain/plan"
+	subscriptiondomain "user/internal/domain/subscription"
 	"user/internal/models"
-	subscriptiondomain "user/internal/modules/subscription/domain"
-	"user/internal/modules/subscription/settlement"
+	"user/internal/usecase/subscription/settlement"
 )
 
 type currentRow struct {
@@ -41,6 +41,19 @@ type currentRow struct {
 	TierRank             *int32
 }
 
+func (r currentRow) aggregate() subscriptiondomain.Aggregate {
+	return subscriptiondomain.Aggregate{
+		ID: r.ID, SubscriptionKey: r.SubscriptionKey,
+		SubjectKind: models.SubscriptionSubjectKind(r.SubjectKind), SubjectID: r.SubjectID,
+		ProductID: r.ProductID, ProductCode: r.ProductCode, PlanVersionID: r.PlanVersionID,
+		PlanCode: r.PlanCode, PlanVersion: r.PlanVersion, PlanTermsChecksum: r.PlanTermsChecksum,
+		PlanStatus: catalogdomain.Status(r.PlanStatus), Status: models.SubscriptionStatus(r.Status),
+		StartedAt: r.StartedAt, CurrentPeriodStart: r.CurrentPeriodStart, CurrentPeriodEnd: r.CurrentPeriodEnd,
+		AccessUntil: r.AccessUntil, AutoRenew: r.AutoRenew, OrderReference: r.OrderReference,
+		CanceledAt: r.CanceledAt, EndedAt: r.EndedAt, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt,
+	}
+}
+
 func loadCurrent(db *gorm.DB, effect settlement.Effect, productID uint64) (settlement.Current, error) {
 	var rows []currentRow
 	err := db.Raw(`SELECT s.id, s.subscription_key, s.subject_kind, s.subject_id, s.product_id,
@@ -66,14 +79,7 @@ func loadCurrent(db *gorm.DB, effect settlement.Effect, productID uint64) (settl
 		return settlement.Current{}, settlement.ErrCurrentState
 	}
 	r := rows[0]
-	agg := subscriptiondomain.Aggregate{ID: r.ID, SubscriptionKey: r.SubscriptionKey,
-		SubjectKind: models.SubscriptionSubjectKind(r.SubjectKind), SubjectID: r.SubjectID,
-		ProductID: r.ProductID, ProductCode: r.ProductCode, PlanVersionID: r.PlanVersionID,
-		PlanCode: r.PlanCode, PlanVersion: r.PlanVersion, PlanTermsChecksum: r.PlanTermsChecksum,
-		PlanStatus: productcatalog.Status(r.PlanStatus), Status: models.SubscriptionStatus(r.Status),
-		StartedAt: r.StartedAt, CurrentPeriodStart: r.CurrentPeriodStart, CurrentPeriodEnd: r.CurrentPeriodEnd,
-		AccessUntil: r.AccessUntil, AutoRenew: r.AutoRenew, OrderReference: r.OrderReference,
-		CanceledAt: r.CanceledAt, EndedAt: r.EndedAt, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
+	agg := r.aggregate()
 	return settlement.Current{Aggregate: agg, TierRank: *r.TierRank, Found: true,
 		HasPendingChange: r.PendingPlanVersionID != nil || r.PendingEffectiveAt != nil}, nil
 }

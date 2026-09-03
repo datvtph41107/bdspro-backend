@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"notification/internal/domain"
-	"notification/internal/repo"
-)
+	)
 
 type DealHistoryUsecase struct {
-	dealHistoryRepo repo.DealHistoryRepository
+	dealHistoryRepo DealHistoryStore
 }
 
-func NewDealHistoryUsecase(dealHistoryRepo repo.DealHistoryRepository) *DealHistoryUsecase {
+func NewDealHistoryUsecase(dealHistoryRepo DealHistoryStore) *DealHistoryUsecase {
 	return &DealHistoryUsecase{
 		dealHistoryRepo: dealHistoryRepo,
 	}

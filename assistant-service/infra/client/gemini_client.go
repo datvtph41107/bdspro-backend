@@ -22,6 +22,7 @@ type GeminiClient struct {
 	apiKey     string
 	baseURL    string
 	model      string
+	maxTokens  int
 	httpClient *http.Client
 }
 
@@ -110,11 +111,16 @@ func NewGeminiClient() *GeminiClient {
 	if timeoutSeconds == 0 {
 		timeoutSeconds = 60
 	}
+	maxTokens := viper.GetInt("gemini.max_tokens")
+	if maxTokens <= 0 {
+		maxTokens = 4000
+	}
 
 	return &GeminiClient{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		model:   model,
+		apiKey:    apiKey,
+		baseURL:   baseURL,
+		model:     model,
+		maxTokens: maxTokens,
 		httpClient: &http.Client{
 			Timeout: time.Duration(timeoutSeconds) * time.Second,
 		},
@@ -201,6 +207,9 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *GeminiClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
+	if err := validateProviderCall("gemini", c.apiKey); err != nil {
+		return "", err
+	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
 Bạn có kiến thức sâu rộng về bất động sản tại Việt Nam.
 Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiểu.`
@@ -242,7 +251,8 @@ Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiể
 	})
 
 	requestBody := GeminiRequest{
-		Contents: contents,
+		Contents:         contents,
+		GenerationConfig: &GeminiGenerationConfig{MaxOutputTokens: &c.maxTokens},
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -333,6 +343,12 @@ func (c *GeminiClient) sendRequest(ctx context.Context, userMessage string, maxT
 
 // sendRequestWithParts - Helper gửi request với nhiều part (text + inlineData) đến Gemini API
 func (c *GeminiClient) sendRequestWithParts(ctx context.Context, parts []GeminiPart, maxTokens int, temperature float32) (*GeminiResponse, error) {
+	if err := validateProviderCall("gemini", c.apiKey); err != nil {
+		return nil, err
+	}
+	if maxTokens <= 0 {
+		maxTokens = c.maxTokens
+	}
 	contents := []GeminiContent{
 		{
 			Parts: parts,
@@ -343,12 +359,9 @@ func (c *GeminiClient) sendRequestWithParts(ctx context.Context, parts []GeminiP
 		Contents: contents,
 	}
 
-	// Add generation config nếu có
-	if maxTokens > 0 || temperature > 0 {
-		config := &GeminiGenerationConfig{}
-		if maxTokens > 0 {
-			config.MaxOutputTokens = &maxTokens
-		}
+	// max_tokens luôn có default từ process config; temperature là optional.
+	{
+		config := &GeminiGenerationConfig{MaxOutputTokens: &maxTokens}
 		if temperature > 0 {
 			config.Temperature = &temperature
 		}

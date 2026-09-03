@@ -127,23 +127,19 @@ server:
 
 ### Development
 ```bash
-# Set environment
-export ENV_RUNTIME=develop
+# Makefile nạp ../.env rồi ./.env và chọn topology host.
+make server
 
-# Run gRPC server
-go run main.go grpc
-
-# Run HTTP server (deprecated)
-go run main.go http
+# Hoặc chạy cả process và dependency trong container.
+make compose-up
 ```
 
 ### Production
 ```bash
-# Build
-go build -o utility-service
+# Build artifact local; môi trường deploy inject biến runtime/secret riêng.
+make build
 
-# Run
-ENV_RUNTIME=product ./utility-service grpc
+QHPRO_ENVIRONMENT=production QHPRO_EXECUTION_MODE=container ./bin/hub-service grpc
 ```
 
 ### Docker
@@ -155,7 +151,8 @@ docker build -t utility-service:latest .
 docker run -d \
   -p 8030:8030 \
   -p 50030:50030 \
-  -e ENV_RUNTIME=product \
+  -e QHPRO_ENVIRONMENT=production \
+  -e QHPRO_EXECUTION_MODE=container \
   -e DB_HOST=postgres \
   -e DB_PORT=5432 \
   -e DB_USERNAME=postgres \
@@ -225,4 +222,3 @@ Service tuân theo **Clean Architecture** với các layer:
 - Sử dụng soft delete cho tất cả entities
 - Auto audit tracking (created_by, updated_by) qua GORM callbacks
 - Hỗ trợ phân trang với default size=20, max size=100
-

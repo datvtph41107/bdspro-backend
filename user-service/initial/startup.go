@@ -3,6 +3,7 @@ package initial
 import (
 	_provider "common/domain/provider"
 	"context"
+	"pb/clients"
 	"user/infra/handler"
 	"user/infra/scheduler"
 	"user/internal/job"
@@ -21,12 +22,7 @@ type InitialApp struct {
 	AdminUserProfileHandler *handler.AdminUserProfileHandler
 	BookmarkUserHandler     *handler.BookmarkUserHandler
 	CrmProvider             _provider.CrmProvider
-	// System Config
-	// Membership & Plan
-	MembershipHandler *handler.MembershipHandler
-	PlanHandler       *handler.PlanHandler
 	// Internal Service
-	AuthInternalHandler   *handler.AuthInternalHandler
 	InternalHandler       *handler.InternalHandler
 	MainAreaHandler       *handler.MainAreaHandler
 	PurposeUseHandler     *handler.PurposeUseHandler
@@ -35,6 +31,7 @@ type InitialApp struct {
 	KYCHandler            *handler.KYCHandler
 	PriceTableHandler     *handler.PriceTableHandler
 	UserDashboardStatsJob *job.UserDashboardStatsJob
+	OrganizationClient    *clients.OrganizationClient
 
 	AuthHandler     *handler.AuthHandler
 	UserInfoHandler *handler.AuthUserProfileHandler
@@ -44,8 +41,8 @@ type InitialApp struct {
 	RoleGroupHandler  *handler.RoleGroupHandler
 	RoleHandler       *handler.RoleHandler
 
-	// Module service để cache modules trong memory
-	ModuleService *usecase.ModuleService
+	// Role-group lookup used by role resolution.
+	RoleGroupRegistry *usecase.RoleGroupRegistry
 
 	// Scheduler để chạy background jobs
 	ZnsScheduler *scheduler.ZnsScheduler
@@ -59,8 +56,6 @@ func NewInitialApp(
 	adminUserProfileHandler *handler.AdminUserProfileHandler,
 	bookmarkUserHandler *handler.BookmarkUserHandler,
 	crmProvider _provider.CrmProvider,
-	membershipHandler *handler.MembershipHandler,
-	planHandler *handler.PlanHandler,
 	internalHandler *handler.InternalHandler,
 	mainAreaHandler *handler.MainAreaHandler,
 	purposeUseHandler *handler.PurposeUseHandler,
@@ -69,8 +64,8 @@ func NewInitialApp(
 	kycHandler *handler.KYCHandler,
 	priceTableHandler *handler.PriceTableHandler,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
+	organizationClient *clients.OrganizationClient,
 
-	authInternalHandler *handler.AuthInternalHandler,
 	authHandler *handler.AuthHandler,
 	oauthHandler *handler.OAuthHandler,
 	// internalHandler *handler.InternalHandler,
@@ -78,7 +73,7 @@ func NewInitialApp(
 	roleGroupHandler *handler.RoleGroupHandler,
 	roleHandler *handler.RoleHandler,
 	userInfoHandler *handler.AuthUserProfileHandler,
-	moduleService *usecase.ModuleService,
+	roleGroupRegistry *usecase.RoleGroupRegistry,
 	znsScheduler *scheduler.ZnsScheduler,
 ) *InitialApp {
 	app := &InitialApp{
@@ -87,8 +82,6 @@ func NewInitialApp(
 		AdminUserProfileHandler: adminUserProfileHandler,
 		BookmarkUserHandler:     bookmarkUserHandler,
 		CrmProvider:             crmProvider,
-		MembershipHandler:       membershipHandler,
-		PlanHandler:             planHandler,
 		InternalHandler:         internalHandler,
 		MainAreaHandler:         mainAreaHandler,
 		PurposeUseHandler:       purposeUseHandler,
@@ -97,16 +90,16 @@ func NewInitialApp(
 		KYCHandler:              kycHandler,
 		PriceTableHandler:       priceTableHandler,
 		UserDashboardStatsJob:   userDashboardStatsJob,
+		OrganizationClient:      organizationClient,
 
-		AuthInternalHandler: authInternalHandler,
-		AuthHandler:         authHandler,
-		UserInfoHandler:     userInfoHandler,
-		OAuthHandler:        oauthHandler,
-		PermissionHandler:   permissionHandler,
-		RoleGroupHandler:    roleGroupHandler,
-		RoleHandler:         roleHandler,
-		ModuleService:       moduleService,
-		ZnsScheduler:        znsScheduler,
+		AuthHandler:       authHandler,
+		UserInfoHandler:   userInfoHandler,
+		OAuthHandler:      oauthHandler,
+		PermissionHandler: permissionHandler,
+		RoleGroupHandler:  roleGroupHandler,
+		RoleHandler:       roleHandler,
+		RoleGroupRegistry: roleGroupRegistry,
+		ZnsScheduler:      znsScheduler,
 	}
 
 	loggerName := viper.GetString("server.name")
@@ -118,16 +111,16 @@ func NewInitialApp(
 	return app
 }
 
-// LoadModulesOnStartup performs the one-shot cache warmup under the process context.
+// LoadRoleGroupsOnStartup performs the one-shot role-group lookup warmup under the process context.
 // Failure preserves the historical degraded-start behavior; the process root decides
 // whether to log/alert rather than constructors hiding background work.
-func (app *InitialApp) LoadModulesOnStartup(ctx context.Context) error {
-	if app == nil || app.ModuleService == nil {
+func (app *InitialApp) LoadRoleGroupsOnStartup(ctx context.Context) error {
+	if app == nil || app.RoleGroupRegistry == nil {
 		return nil
 	}
-	if err := app.ModuleService.LoadModules(ctx); err != nil {
+	if err := app.RoleGroupRegistry.Load(ctx); err != nil {
 		return err
 	}
-	app.Logger.Infof("Successfully loaded modules on startup")
+	app.Logger.Infof("Successfully loaded role groups on startup")
 	return nil
 }

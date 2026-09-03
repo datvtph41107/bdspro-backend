@@ -6,18 +6,18 @@ import (
 	"log/slog"
 	"sync"
 	"time"
+	"tqd/infra/client/user/generatedreport"
+	"tqd/infra/handler/grpc/generatedreport"
 	legacypostgres "tqd/infra/postgres"
-	"tqd/internal/quota"
-	"tqd/internal/quota/reconciliation/reservationcleanup"
-	"tqd/internal/quota/reconciliation/usageprojection"
-	"tqd/internal/quota/redis"
-	"tqd/internal/usage/postgres"
-	"tqd/internal/workspace/report/adapters/grpc"
-	"tqd/internal/workspace/report/adapters/postgresjob"
-	"tqd/internal/workspace/report/adapters/postgresreport"
-	"tqd/internal/workspace/report/adapters/useraccess"
-	"tqd/internal/workspace/report/application"
-	"tqd/internal/workspace/report/processing"
+	"tqd/infra/postgres/generatedreport/job"
+	"tqd/infra/postgres/generatedreport/report"
+	"tqd/infra/postgres/usage"
+	"tqd/infra/redis/quota"
+	"tqd/internal/usecase/generatedreport/application"
+	"tqd/internal/usecase/generatedreport/processing"
+	"tqd/internal/usecase/quota"
+	"tqd/internal/usecase/quota/reconciliation/reservationcleanup"
+	"tqd/internal/usecase/quota/reconciliation/usageprojection"
 
 	userpb "pb/types/user"
 
@@ -61,6 +61,7 @@ func newReportTarget(
 	accessGRPC userpb.InternalAccessServiceClient,
 	generator processing.Generator,
 	logger *slog.Logger,
+	workerID string,
 ) (*reportTarget, error) {
 	if database == nil || redisClient == nil || accessGRPC == nil {
 		return nil, errors.New("generated report target dependencies are incomplete")
@@ -89,11 +90,14 @@ func newReportTarget(
 	var jobRunner *processing.Runner
 	if generator != nil {
 		jobStore := postgresjob.NewStore(database)
+		if workerID == "" {
+			workerID = "tqd-report-worker"
+		}
 		jobWorker := processing.NewWorker(
 			jobStore,
 			generator,
 			logger,
-			"tqd-report-worker",
+			workerID,
 		)
 		jobRunner = processing.NewRunner(jobWorker, time.Second, logger)
 	}

@@ -8,7 +8,7 @@ import (
 
 	_db "common/db"
 	"gorm.io/gorm"
-	"user/internal/modules/subscription/settlement"
+	"user/internal/usecase/subscription/settlement"
 )
 
 type SettlementStore struct {
@@ -32,7 +32,7 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 		if err := advisoryLock(db, "subscription-effect:"+input.Effect.EffectKey); err != nil {
 			return err
 		}
-		if existing, found, err := loadEffect(db, input.Effect.EffectKey); err != nil {
+		if existing, found, err := loadSettlementReceipt(db, input.Effect.EffectKey); err != nil {
 			return err
 		} else if found {
 			if existing.Fingerprint != input.Fingerprint {
@@ -47,7 +47,7 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 		if err := advisoryLock(db, fmt.Sprintf("subscription-order:%d", input.Effect.OrderID)); err != nil {
 			return err
 		}
-		if _, found, err := loadEffectByOrder(db, input.Effect.OrderID); err != nil {
+		if _, found, err := loadSettlementReceiptByOrder(db, input.Effect.OrderID); err != nil {
 			return err
 		} else if found {
 			return settlement.ErrEffectConflict
@@ -95,7 +95,7 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 				return err
 			}
 		}
-		if err := insertEffect(db, input, decision.Action, subscriptionID); err != nil {
+		if err := insertSettlementReceipt(db, input, decision.Action, subscriptionID); err != nil {
 			return err
 		}
 		result = settlement.Result{Action: decision.Action, SubscriptionID: subscriptionID}

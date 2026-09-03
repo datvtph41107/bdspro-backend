@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"tqd/internal/modules/publiccontent/domain"
+	"tqd/internal/domain/publiccontent/model"
 
 	"gorm.io/gorm"
 )

@@ -3,7 +3,7 @@ package cmd_grpc
 import (
 	_db "common/db"
 	_middleware "common/middleware"
-	"common/processlifecycle"
+	process "common/process"
 	"context"
 	"crm/config"
 	"crm/infra/db"
@@ -127,11 +127,11 @@ func runGRPC() error {
 	processCtx, processCancel := context.WithCancel(signalCtx)
 	defer processCancel()
 
-	actors := []processlifecycle.Actor{
-		processlifecycle.ActorFunc(func(ctx context.Context) { runRuleEventScheduler(ctx, app) }),
-		processlifecycle.ActorFunc(func(ctx context.Context) { runSeoScheduler(ctx, app) }),
+	actors := []process.Actor{
+		process.ActorFunc(func(ctx context.Context) { runRuleEventScheduler(ctx, app) }),
+		process.ActorFunc(func(ctx context.Context) { runSeoScheduler(ctx, app) }),
 	}
-	return processlifecycle.Run(processCtx, processCancel, s, lis, actors, processlifecycle.Config{GracefulStopTimeout: 10 * time.Second})
+	return process.Run(processCtx, processCancel, s, lis, actors, process.Config{GracefulStopTimeout: 10 * time.Second})
 }
 
 func runRuleEventScheduler(ctx context.Context, app *initial.InitialApp) {

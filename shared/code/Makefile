@@ -2,6 +2,12 @@ ROOT_DIR := ../..
 CD_ROOT := cd $(ROOT_DIR)
 SCHEMA := cd ../protobuf/schema
 
+# Các target generation là command, không phải file artifact; luôn thực thi
+# khi developer gọi lại để đồng bộ source contract.
+.PHONY: buf-all buf-shared buf-crm buf-bdspro buf-hub buf-chat buf-chat-v2 buf-organization \
+	buf-social buf-assistant buf-user-service buf-auth buf-user buf-payment buf-tqd \
+	buf-operation buf-notification buf-transaction buf-file wire proto
+
 AIR_EXE ?= air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
@@ -55,21 +61,32 @@ buf-social:
 buf-notification:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path notification
 buf-user:
+	@find ../protobuf/types/user -type f \
+		\( -name '*.pb.go' -o -name '*.pb.gw.go' \) \
+		-delete 2>/dev/null || true
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path user
 buf-bdspro:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path bdspro
 buf-shared:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path shared
-buf-org:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path organization
+# `buf-organization` là tên canonical; giữ `buf-org` chỉ như alias tương thích
+# để không tạo thêm một implementation thứ hai.
+buf-org: buf-organization
 buf-organization:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path organization
 buf-appointment:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path appointment
 buf-payment:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path payment
+# Chat hiện có hai thế hệ schema cùng package protobuf. `chat/v2` vẫn được
+# giữ để tương thích source cũ nhưng không được đưa vào output `pb/types/chat`
+# (nếu đưa cả cây vào sẽ trùng ChatService/CreateConversationRequest). Gateway
+# hiện tại sở hữu contract `chat/*.proto`, vì vậy chỉ generate đúng tập file đó.
 buf-chat:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path chat
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml \
+		--path chat/chat.proto \
+		--path chat/background.proto \
+		--path chat/message.proto
 buf-chat-v1:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path chat_v1
 buf-task:
@@ -79,11 +96,24 @@ buf-marketing:
 buf-transaction:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path transaction
 buf-auth:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth	
+	@find ../protobuf/types/auth -type f \
+		\( -name '*.pb.go' -o -name '*.pb.gw.go' \) \
+		-delete 2>/dev/null || true
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path auth
+
+buf-user-service: buf-auth buf-user
 buf-feedback:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path feedback	
 buf-file:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path file
+	@find ../protobuf/types/file -type f \
+		\( -name '*.pb.go' -o -name '*.pb.gw.go' \) \
+		-delete 2>/dev/null || true
+	@if [ -d ../protobuf/schema/file ] && \
+		find ../protobuf/schema/file -type f -name '*.proto' -print -quit | grep -q .; then \
+		$(SCHEMA) && buf generate --template ./buf.gen.yaml --path file; \
+	else \
+		echo "File protobuf schema absent; generated File outputs remain retired"; \
+	fi
 
 buf-operation:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path operation
@@ -93,28 +123,23 @@ buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
 buf-hub:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path hub	
+# Chỉ gọi schema directory còn tồn tại. Các target lịch sử như group/document/
+# task không còn source nên không được để fresh clone fail vì path ảo. Chat v1
+# không gọi chung vì trùng package với chat contract hiện tại.
 buf-all:
-	$(MAKE) buf-crm
-	$(MAKE) buf-group
-	$(MAKE) buf-document
-	$(MAKE) buf-social
-	$(MAKE) buf-notification
-	$(MAKE) buf-user
-	$(MAKE) buf-bdspro
 	$(MAKE) buf-shared
-	$(MAKE) buf-org
-	$(MAKE) buf-organization
-	$(MAKE) buf-appointment
-	$(MAKE) buf-payment
-	$(MAKE) buf-chat
-	$(MAKE) buf-task
-	$(MAKE) buf-marketing
-	$(MAKE) buf-transaction
-	$(MAKE) buf-auth
-	$(MAKE) buf-feedback
-	$(MAKE) buf-tqd
-	$(MAKE) buf-assistant
+	$(MAKE) buf-crm
+	$(MAKE) buf-bdspro
 	$(MAKE) buf-hub
+	$(MAKE) buf-chat
+	$(MAKE) buf-organization
+	$(MAKE) buf-social
+	$(MAKE) buf-assistant
+	$(MAKE) buf-user-service
+	$(MAKE) buf-payment
+	$(MAKE) buf-tqd
+	$(MAKE) buf-notification
+	$(MAKE) buf-transaction
 	echo "done"
 	
 init:
@@ -136,7 +161,7 @@ init:
 	$(CD_ROOT) && cd transaction-service && go mod tidy
 	
 gateway-http:
-	$(CD_ROOT) && cd gateway-service && air http
+	$(MAKE) -C ../../gateway-service dev
 
 crm:
 	@if [ "$(PRIMARY_GOAL)" = "wire" ] || [ "$(PRIMARY_GOAL)" = "swag" ] || [ "$(PRIMARY_GOAL)" = "map" ] || [ "$(PRIMARY_GOAL)" = "proto" ]; then \
@@ -148,17 +173,14 @@ crm:
 bdspro-grpc:
 	$(CD_ROOT) && cd bdspro-service && air grpc
 
-user-http:
-	$(CD_ROOT) && cd user-service && air http
-
 user-grpc:
-	$(CD_ROOT) && cd user-service && air grpc
+	$(MAKE) -C ../../user-service dev
 
 organization-grpc:
-	$(CD_ROOT) && cd organization-service && air grpc-server
+	$(MAKE) -C ../../organization-service dev
 
 notification-grpc:
-	$(CD_ROOT) && cd notification-service && air grpc
+	$(MAKE) -C ../../notification-service dev
 
 social-grpc:
 	$(CD_ROOT) && cd social-service && air grpc
@@ -176,13 +198,13 @@ relay-grpc:
 	$(CD_ROOT) && cd relay-service && air
 
 payment-grpc:
-	$(CD_ROOT) && cd payment-service && air grpc
+	$(MAKE) -C ../../payment-service dev
 
 membership-grpc:
 	$(CD_ROOT) && cd membership-service && air grpc
 
 file-http:
-	$(CD_ROOT) && cd file-service && air http
+	$(MAKE) -C ../../file-service dev
 
 marketing-grpc:
 	$(CD_ROOT) && cd marketing-service && air grpc
@@ -191,18 +213,14 @@ transaction-grpc:
 	$(CD_ROOT) && cd transaction-service && air grpc
 
 auth-grpc:
-	# .air.toml đã có args_bin=["grpc"] — chỉ cần `air` (không dùng -server=grpc; không truyền thêm grpc)
-	$(CD_ROOT) && cd auth-service && air
+	$(MAKE) -C ../../auth-service dev
 
 tqd-http:
 	@echo "TQD application HTTP is disabled. Start gateway HTTP and TQD gRPC instead." >&2
 	@exit 2
 
 tqd-grpc:
-	@export PATH=$$PATH:$$HOME/go/bin && \
-	lsof -i :$(PORT) | xargs kill -9 2>/dev/null || true
-	@export PATH=$$PATH:$$HOME/go/bin && \
-	$(CD_ROOT) && cd tqd-service && $(AIR_EXE) -- -server=grpc
+	$(MAKE) -C ../../tqd-service dev
 
 assistant-grpc:
 	@export PATH=$$PATH:$$HOME/go/bin && \
@@ -215,7 +233,6 @@ start-all:
 	$(MAKE) gateway-http &
 	$(MAKE) crm &
 	$(MAKE) bdspro-grpc &
-	$(MAKE) user-http &
 	$(MAKE) user-grpc &
 	$(MAKE) organization-grpc &
 	$(MAKE) notification-grpc &
@@ -231,10 +248,8 @@ start-all:
 	$(MAKE) transaction-grpc &
 	$(MAKE) auth-grpc &
 	$(MAKE) tqd-grpc &
-	@echo "All services started in background. Prefer: ../../scripts/run-support-gis.sh start"
-	@echo "Use 'make stop-all' to stop them."
+	@echo "All services started in background. Use 'make stop-all' to stop them."
 	@echo "To see running processes: ps aux | grep air"
-	@echo "To see logs: tail -f /tmp/bdspro-support-gis/*.log"
 
 stop-all:
 	$(CD_ROOT)
@@ -244,21 +259,5 @@ stop-all:
 	@echo "All services stopped."
 
 build-all:
-	$(CD_ROOT) && cd gateway-service && go build -o gateway-service main.go
-	$(CD_ROOT) && cd user-service && go build -o user-service main.go
-	$(CD_ROOT) && cd organization-service && go build -o organization-service main.go
-	$(CD_ROOT) && cd appointment-service && go build -o appointment-service main.go
-	$(CD_ROOT) && cd payment-service && go build -o payment-service main.go
-	$(CD_ROOT) && cd notification-service && go build -o notification-service main.go
-	$(CD_ROOT) && cd social-service && go build -o social-service main.go
-	$(CD_ROOT) && cd file-service && go build -o file-service main.go
-	$(CD_ROOT) && cd relay-service && go build -o relay-service main.go
-	$(CD_ROOT) && cd bdspro-service && go build -o bdspro-service main.go
-	$(CD_ROOT) && cd crm-service && go build -o crm-service main.go
-	$(CD_ROOT) && cd marketing-service && go build -o marketing-service main.go
-	# $(CD_ROOT) && cd membership-service && go build -o membership-service .
-	$(CD_ROOT) && cd auth-service && go build -o auth-service .
-	$(CD_ROOT) && cd transaction-service && go build -o transaction-service .
-	$(CD_ROOT) && cd feedback-service && go build -o feedback-service .
-	$(CD_ROOT) && cd tqd-service && go build -o tqd-service .
-	$(CD_ROOT) && cd assistant-service && go build -o assistant-service .
+	# Giữ target tương thích, nhưng chuyển quyền tạo artifact về Makefile từng service.
+	$(MAKE) -C $(ROOT_DIR) build-backend

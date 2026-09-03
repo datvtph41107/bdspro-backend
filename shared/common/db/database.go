@@ -1,8 +1,11 @@
 package _db
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -11,52 +14,95 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// DatabaseConfig chứa thông tin cấu hình DB
+const (
+	defaultMaxOpenConns    = 300
+	defaultMaxIdleConns    = 200
+	defaultConnMaxLifetime = 5 * time.Minute
+)
+
+// DatabaseConfig is the process-owned input required to open PostgreSQL.
+// Service-specific schema, queries, and transaction semantics do not belong here.
 type DatabaseConfig struct {
-	DSN string
+	DSN             string
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
 }
 
 var DB *gorm.DB
 
-// NewDB khởi tạo kết nối database
-func NewDB() (*gorm.DB, error) {
-	dsn := viper.GetString("database.dsn")
+// Open establishes one PostgreSQL pool from explicit process-owned config.
+// It does not mutate DB; compatibility callers decide whether to expose the
+// returned pool through the historical package-global handle.
+func Open(config DatabaseConfig) (*gorm.DB, error) {
+	dsn := strings.TrimSpace(config.DSN)
+	if dsn == "" {
+		return nil, errors.New("database DSN is required")
+	}
 
-	// Cấu hình logger của GORM (in SQL + thời gian + lỗi)
-	newLogger := logger.New(
-		log.New(log.Writer(), "\r\n", log.LstdFlags), // logger cơ bản
+	gormLogger := logger.New(
+		log.New(log.Writer(), "", log.LstdFlags),
 		logger.Config{
-			SlowThreshold: time.Second, // Log query nào chạy quá 1s
-			LogLevel:      logger.Info, // Info để hiện tất cả query
-			Colorful:      true,        // In màu đẹp hơn trong terminal
+			SlowThreshold:        time.Second,
+			LogLevel:             logger.Info,
+			Colorful:             false,
+			ParameterizedQueries: true,
 		},
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
-	})
-
-	// Never log the DSN: it commonly contains database credentials.
-	fmt.Println("🔗 Kết nối PostgreSQL từ runtime configuration")
-
+	database, err := gorm.Open(
+		postgres.Open(dsn),
+		&gorm.Config{Logger: gormLogger},
+	)
 	if err != nil {
-		fmt.Println("❌ Không thể kết nối với cơ sở dữ liệu:", err)
+		return nil, fmt.Errorf("open postgres: %w", err)
+	}
+
+	sqlDB, err := database.DB()
+	if err != nil {
+		return nil, fmt.Errorf("get postgres pool: %w", err)
+	}
+
+	maxOpen := config.MaxOpenConns
+	if maxOpen <= 0 {
+		maxOpen = defaultMaxOpenConns
+	}
+	maxIdle := config.MaxIdleConns
+	if maxIdle < 0 {
+		maxIdle = 0
+	}
+	if maxIdle == 0 {
+		maxIdle = defaultMaxIdleConns
+	}
+	if maxIdle > maxOpen {
+		maxIdle = maxOpen
+	}
+	lifetime := config.ConnMaxLifetime
+	if lifetime <= 0 {
+		lifetime = defaultConnMaxLifetime
+	}
+
+	sqlDB.SetMaxOpenConns(maxOpen)
+	sqlDB.SetMaxIdleConns(maxIdle)
+	sqlDB.SetConnMaxLifetime(lifetime)
+
+	pingCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(pingCtx); err != nil {
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("ping postgres: %w", err)
+	}
+
+	return database, nil
+}
+
+// NewDB is the compatibility constructor for services that have not moved DB
+// configuration into their process boundary.
+func NewDB() (*gorm.DB, error) {
+	database, err := Open(DatabaseConfig{DSN: viper.GetString("database.dsn")})
+	if err != nil {
 		return nil, err
 	}
-
-	// Lấy *sql.DB để cấu hình pool
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("get sql db from gorm: %w", err)
-	}
-
-	// Cấu hình pool
-	sqlDB.SetMaxOpenConns(300)                // Tối đa 300 kết nối mở
-	sqlDB.SetMaxIdleConns(200)                // Tối đa 200 kết nối nhàn rỗi
-	sqlDB.SetConnMaxLifetime(time.Minute * 5) // Mỗi kết nối tối đa sống 5 phút
-
-	DB = db.Debug() // Bật debug mode: in tất cả query ra console
-
-	fmt.Println("✅ Kết nối PostgreSQL thành công và bật chế độ debug!")
-	return db, nil
+	DB = database
+	return database, nil
 }

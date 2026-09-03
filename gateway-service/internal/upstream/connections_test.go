@@ -1,7 +1,7 @@
 package upstream
 
 import (
-	"common/trust"
+	"common/rpc"
 	gatewayconfig "gateway/config"
 	"testing"
 )
@@ -23,7 +23,11 @@ func TestOpenBuildsAndClosesExplicitGatewayTopology(t *testing.T) {
 	}
 	cfg := gatewayconfig.Runtime{
 		Service: gatewayconfig.ServiceRuntime{Domain: "127.0.0.1", Port: ports},
-		Trust:   trust.Config{ServiceID: "gateway-service", Mode: trust.ModeAudit},
+		RPCTransport: rpc.TransportConfig{
+			ServiceAssertion: rpc.ServiceAssertionConfig{
+				ServiceID: "gateway-service",
+			},
+		},
 	}
 	connections, err := Open(cfg)
 	if err != nil {

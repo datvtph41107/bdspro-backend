@@ -195,16 +195,20 @@ func (r *DictCommonPostgres) List(ctx context.Context, filter *domain.DictCommon
 // GetSummary gets summary statistics of dictionary data
 func (r *DictCommonPostgres) GetSummary(ctx context.Context) (*domain.DictCommonSummary, error) {
 	var summary domain.DictCommonSummary
+	var totalItems int64
+	var activeItems int64
 
 	// Get total items
-	if err := r.db.WithContext(ctx).Model(&domain.DictCommon{}).Count(&summary.TotalItems).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&domain.DictCommon{}).Count(&totalItems).Error; err != nil {
 		return nil, fmt.Errorf("failed to count total items: %w", err)
 	}
 
 	// Get active items
-	if err := r.db.WithContext(ctx).Model(&domain.DictCommon{}).Where("is_active = ?", true).Count(&summary.ActiveItems).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&domain.DictCommon{}).Where("is_active = ?", true).Count(&activeItems).Error; err != nil {
 		return nil, fmt.Errorf("failed to count active items: %w", err)
 	}
+	summary.TotalItems = int(totalItems)
+	summary.ActiveItems = int(activeItems)
 
 	// Get category counts
 	var categoryCounts []struct {

@@ -5,18 +5,16 @@ import (
 	"context"
 	"errors"
 
+	"gorm.io/datatypes"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
-
-	"gorm.io/datatypes"
 )
 
 type HistoryAuthUsecase struct {
-	historyAuthRepo repo.HistoryAuthRepo
+	historyAuthRepo HistoryAuthStore
 }
 
-func NewHistoryAuthUsecase(historyAuthRepo repo.HistoryAuthRepo) *HistoryAuthUsecase {
+func NewHistoryAuthUsecase(historyAuthRepo HistoryAuthStore) *HistoryAuthUsecase {
 	return &HistoryAuthUsecase{
 		historyAuthRepo: historyAuthRepo,
 	}
@@ -80,7 +78,7 @@ func (u *HistoryAuthUsecase) CreateHistoryAuth(ctx context.Context, payload *dto
 func (u *HistoryAuthUsecase) SearchHistoryAuth(ctx context.Context, payload dto.HistoryAuthSearchDTO) ([]domain.HistoryAuthEntity, int64, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 
-	searchParams := repo.HistoryAuthSearch{
+	searchParams := HistoryAuthSearch{
 		UserID:         userID,
 		OrganizationID: payload.OrganizationID,
 		ActionType:     payload.ActionType,

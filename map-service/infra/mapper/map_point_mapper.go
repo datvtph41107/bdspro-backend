@@ -27,23 +27,6 @@ func (m *MapPointMapper) ToMapPointResponse(point *domain.MapPoint) *dto.MapPoin
 	}
 }
 
-// ToMapPointWithDistanceResponse converts domain MapPointWithDistance to MapPointWithDistanceResponse DTO
-func (m *MapPointMapper) ToMapPointWithDistanceResponse(point *domain.MapPointWithDistance) *dto.MapPointWithDistanceResponse {
-	if point == nil {
-		return nil
-	}
-
-	return &dto.MapPointWithDistanceResponse{
-		MapPointResponse: dto.MapPointResponse{
-			ID:   point.ID,
-			Lat:  point.Lat,
-			Lng:  point.Lng,
-			Name: point.Name,
-		},
-		Distance: point.Distance,
-	}
-}
-
 // ToMapPointResponseList converts slice of domain MapPoint to slice of MapPointResponse DTO
 func (m *MapPointMapper) ToMapPointResponseList(points []domain.MapPoint) []dto.MapPointResponse {
 	if points == nil {
@@ -53,20 +36,6 @@ func (m *MapPointMapper) ToMapPointResponseList(points []domain.MapPoint) []dto.
 	responses := make([]dto.MapPointResponse, len(points))
 	for i, point := range points {
 		responses[i] = *m.ToMapPointResponse(&point)
-	}
-
-	return responses
-}
-
-// ToMapPointWithDistanceResponseList converts slice of domain MapPointWithDistance to slice of MapPointWithDistanceResponse DTO
-func (m *MapPointMapper) ToMapPointWithDistanceResponseList(points []domain.MapPointWithDistance) []dto.MapPointWithDistanceResponse {
-	if points == nil {
-		return nil
-	}
-
-	responses := make([]dto.MapPointWithDistanceResponse, len(points))
-	for i, point := range points {
-		responses[i] = *m.ToMapPointWithDistanceResponse(&point)
 	}
 
 	return responses

@@ -6,18 +6,18 @@ import (
 
 	dashboard "base/dashboard"
 
-	"payment/internal/usecase"
+	walletuc "payment/internal/usecase/wallet"
 
 	"gorm.io/gorm"
 )
 
 type PaymentDashboardStatsJob struct {
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase walletuc.PaymentUsecase
 	job            dashboard.DashboardStatsJob
 }
 
 func NewPaymentDashboardStatsJob(
-	paymentUsecase usecase.PaymentUsecase,
+	paymentUsecase walletuc.PaymentUsecase,
 	db *gorm.DB,
 ) *PaymentDashboardStatsJob {
 

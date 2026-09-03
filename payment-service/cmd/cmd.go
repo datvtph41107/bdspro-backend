@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	grpcserver "payment/cmd/grpc-server"
+	grpcserver "payment/cmd/grpc"
 
 	"github.com/spf13/cobra"
 )

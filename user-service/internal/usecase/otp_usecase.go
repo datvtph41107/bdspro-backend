@@ -233,12 +233,10 @@ func (s *OtpUsecase) logOtpLockHistory(ctx context.Context, param *dto.AuthParam
 		Metadata:      metadata,
 	}
 
-	go func(history dto.HistoryAuthCreateDTO) {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-		if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &history); err != nil {
-			log.Printf("failed to log OTP lock history: %v", err)
-		}
-	}(payload)
+	if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &payload); err != nil {
+		log.Printf("failed to log OTP lock history: %v", err)
+	}
 }

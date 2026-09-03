@@ -14,7 +14,7 @@ import (
 	"time"
 	"tqd/config"
 	"tqd/internal/enums"
-	atlasflowcatalog "tqd/internal/modules/atlasflow/catalog"
+	atlasflowcatalog "tqd/internal/usecase/atlasflow/catalog"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

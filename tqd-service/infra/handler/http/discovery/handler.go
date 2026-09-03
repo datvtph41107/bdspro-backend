@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"tqd/internal/modules/discovery/application"
-	"tqd/internal/modules/discovery/domain"
+	"tqd/internal/domain/discovery/model"
+	"tqd/internal/usecase/discovery/application"
 
 	"github.com/gin-gonic/gin"
 )

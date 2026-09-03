@@ -2,7 +2,7 @@ package mapper
 
 import (
 	authpb "pb/types/auth"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 )
 
 type AuthMethodMapper struct {
@@ -12,7 +12,7 @@ func NewAuthMethodMapper() *AuthMethodMapper {
 	return &AuthMethodMapper{}
 }
 
-func (m *AuthMethodMapper) MapAuthMethodPb(authMethod *domain.AuthMethod) *authpb.AuthMethod {
+func (m *AuthMethodMapper) MapAuthMethodPb(authMethod *auth.AuthMethod) *authpb.AuthMethod {
 	return &authpb.AuthMethod{
 		AuthName: authMethod.AuthName,
 		Provider: string(authMethod.Provider),
@@ -25,10 +25,10 @@ func (m *AuthMethodMapper) MapAuthMethodPb(authMethod *domain.AuthMethod) *authp
 	}
 }
 
-func (m *AuthMethodMapper) MapAuthMethodPbToDomain(authMethod *authpb.AuthMethod) *domain.AuthMethod {
-	return &domain.AuthMethod{
+func (m *AuthMethodMapper) MapAuthMethodPbToDomain(authMethod *authpb.AuthMethod) *auth.AuthMethod {
+	return &auth.AuthMethod{
 		AuthName: authMethod.AuthName,
-		Provider: domain.ProviderType(authMethod.Provider),
+		Provider: auth.ProviderType(authMethod.Provider),
 		Email:    authMethod.Email,
 		Phone:    authMethod.Phone,
 		Avatar:   authMethod.Avatar,

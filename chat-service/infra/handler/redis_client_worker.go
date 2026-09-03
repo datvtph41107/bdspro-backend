@@ -22,12 +22,12 @@ type redisClientWorker struct {
 	ctx                 context.Context
 }
 
-func NewRedisClientWorker(parent *chatHandler, redisClient *redis.RedisClient, logger *flogging.FabricLogger) *redisClientWorker {
+func NewRedisClientWorker(ctx context.Context, parent *chatHandler, redisClient *redis.RedisClient, logger *flogging.FabricLogger) *redisClientWorker {
 	return &redisClientWorker{
 		parent:              parent,
 		redisClient:         redisClient,
 		requestRedisTimeout: 2 * time.Second,
-		ctx:                 context.Background(),
+		ctx:                 ctx,
 	}
 }
 

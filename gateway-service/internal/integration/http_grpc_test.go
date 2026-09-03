@@ -3,7 +3,6 @@ package integration
 import (
 	"common/identity"
 	"common/rpc"
-	"common/trust"
 	"context"
 	grpcmetadata "gateway/internal/grpcmetadata"
 	httpmiddleware "gateway/internal/httpmiddleware"
@@ -25,25 +24,29 @@ const (
 )
 
 func gatewayTransportConfig() rpc.TransportConfig {
-	return rpc.TransportConfig{Trust: trust.Config{
-		ServiceID: integrationGatewayServiceID,
-		Secret:    integrationTrustSecret,
-		Mode:      trust.ModeEnforce,
-		MaxAge:    30 * time.Second,
-		ClockSkew: 5 * time.Second,
-	}}
+	return rpc.TransportConfig{
+		ServiceAssertion: rpc.ServiceAssertionConfig{
+			ServiceID: integrationGatewayServiceID,
+			Secret:    integrationTrustSecret,
+			MaxAge:    30 * time.Second,
+			ClockSkew: 5 * time.Second,
+		},
+		RequireServiceAssertion: true,
+	}
 }
 
 func serverTransportConfig() rpc.TransportConfig {
-	return rpc.TransportConfig{Trust: trust.Config{
-		VerificationSecrets: map[string]string{
-			integrationGatewayServiceID: integrationTrustSecret,
+	return rpc.TransportConfig{
+		ServiceAssertion: rpc.ServiceAssertionConfig{
+			VerificationSecrets: map[string]string{
+				integrationGatewayServiceID: integrationTrustSecret,
+			},
+			VerificationKeysConfigured: true,
+			MaxAge:                     30 * time.Second,
+			ClockSkew:                  5 * time.Second,
 		},
-		VerificationKeysConfigured: true,
-		Mode:                       trust.ModeEnforce,
-		MaxAge:                     30 * time.Second,
-		ClockSkew:                  5 * time.Second,
-	}}
+		RequireServiceAssertion: true,
+	}
 }
 
 func newHTTPGRPCTestRouter(

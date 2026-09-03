@@ -194,7 +194,7 @@ func (s *InternalHandler) CreateAdminHistoryBatch(c context.Context, request *no
 
 func (s *InternalHandler) CreateHistoryAuth(ctx context.Context, req *notificationpb.HistoryAuthCreateRequest) (*notificationpb.HistoryAuthDTO, error) {
 	if s.HistoryAuthUsecase == nil {
-		return nil, nil
+		return nil, status.Error(codes.FailedPrecondition, "history auth usecase is not configured")
 	}
 
 	dto := &dto.HistoryAuthCreateDTO{
@@ -226,7 +226,7 @@ func (s *InternalHandler) CreateHistoryAuth(ctx context.Context, req *notificati
 	}
 
 	if s.HistoryAuthMapper == nil {
-		return nil, nil
+		return nil, status.Error(codes.FailedPrecondition, "history auth mapper is not configured")
 	}
 
 	return s.HistoryAuthMapper.DomainToPb(entity), nil

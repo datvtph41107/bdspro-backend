@@ -89,49 +89,49 @@ func updateMinMax(stats *Stats, latency int64) {
 	}
 }
 
-func main() {
-	rand.Seed(time.Now().UnixNano())
+// func main() {
+// 	rand.Seed(time.Now().UnixNano())
 
-	n := 300 // số worker
-	m := 20  // mỗi worker chạy m lần
+// 	n := 300 // số worker
+// 	m := 20  // mỗi worker chạy m lần
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
+// 	client := &http.Client{
+// 		Timeout: 5 * time.Second,
+// 	}
 
-	stats := &Stats{}
-	wg := sync.WaitGroup{}
-	ctx := context.Background()
+// 	stats := &Stats{}
+// 	wg := sync.WaitGroup{}
+// 	ctx := context.Background()
 
-	startAll := time.Now()
+// 	startAll := time.Now()
 
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(ctx, i, m, &wg, client, stats)
-	}
+// 	for i := 0; i < n; i++ {
+// 		wg.Add(1)
+// 		go worker(ctx, i, m, &wg, client, stats)
+// 	}
 
-	wg.Wait()
+// 	wg.Wait()
 
-	totalTime := time.Since(startAll).Seconds()
+// 	totalTime := time.Since(startAll).Seconds()
 
-	totalReq := atomic.LoadInt64(&stats.totalRequests)
-	success := atomic.LoadInt64(&stats.success)
-	failed := atomic.LoadInt64(&stats.failed)
-	totalLatency := atomic.LoadInt64(&stats.totalLatency)
+// 	totalReq := atomic.LoadInt64(&stats.totalRequests)
+// 	success := atomic.LoadInt64(&stats.success)
+// 	failed := atomic.LoadInt64(&stats.failed)
+// 	totalLatency := atomic.LoadInt64(&stats.totalLatency)
 
-	avgLatency := time.Duration(totalLatency / totalReq)
-	minLatency := time.Duration(atomic.LoadInt64(&stats.minLatency))
-	maxLatency := time.Duration(atomic.LoadInt64(&stats.maxLatency))
+// 	avgLatency := time.Duration(totalLatency / totalReq)
+// 	minLatency := time.Duration(atomic.LoadInt64(&stats.minLatency))
+// 	maxLatency := time.Duration(atomic.LoadInt64(&stats.maxLatency))
 
-	qps := float64(totalReq) / totalTime
+// 	qps := float64(totalReq) / totalTime
 
-	fmt.Println("\n===== RESULT =====")
-	fmt.Println("Total Requests:", totalReq)
-	fmt.Println("Success:", success)
-	fmt.Println("Failed:", failed)
-	fmt.Println("Total Time:", totalTime, "seconds")
-	fmt.Println("QPS:", qps)
-	fmt.Println("Avg Latency:", avgLatency)
-	fmt.Println("Min Latency:", minLatency)
-	fmt.Println("Max Latency:", maxLatency)
-}
+// 	fmt.Println("\n===== RESULT =====")
+// 	fmt.Println("Total Requests:", totalReq)
+// 	fmt.Println("Success:", success)
+// 	fmt.Println("Failed:", failed)
+// 	fmt.Println("Total Time:", totalTime, "seconds")
+// 	fmt.Println("QPS:", qps)
+// 	fmt.Println("Avg Latency:", avgLatency)
+// 	fmt.Println("Min Latency:", minLatency)
+// 	fmt.Println("Max Latency:", maxLatency)
+// }

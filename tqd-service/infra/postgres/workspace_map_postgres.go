@@ -240,14 +240,14 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(
 		WITH src AS (
 			SELECT
 				p.id AS parcel_id,
-				COALESCE(p.lat, 0) AS lat,
-				COALESCE(p.lon, 0) AS lon,
+				COALESCE(info.lat, p.lat, 0) AS lat,
+				COALESCE(info.lon, p.lon, 0) AS lon,
 
-				COALESCE(p.total_area_sqm, 0) AS area_sqm,
-				COALESCE(p.address_text, '') AS address,
+				COALESCE(info.total_area_sqm, 0) AS area_sqm,
+				COALESCE(info.address_text, '') AS address,
 
-				COALESCE(p.map_number, '') AS map_number,
-				COALESCE(p.land_number, '') AS land_number,
+				COALESCE(info.map_number, '') AS map_number,
+				COALESCE(info.land_number, '') AS land_number,
 
 				ST_Multi(
 					ST_CollectionExtract(
@@ -257,11 +257,18 @@ func (p *MapWorkspacePostgres) GetParcelWorkspacePreviewsByIDs(
 				)::geometry(MultiPolygon, 4326) AS geom,
 
 				COALESCE(prov.full_name, '') AS province,
-				COALESCE(p.province_code, '') AS province_code,
-				COALESCE(p.ward_code, '') AS ward_code
+				COALESCE(info.province_code, '') AS province_code,
+				COALESCE(info.ward_code, '') AS ward_code
 			FROM parcels p
+			LEFT JOIN LATERAL (
+				SELECT parcel_info.*
+				FROM qh_parcel_info parcel_info
+				WHERE parcel_info.parcel_id = p.id
+				ORDER BY parcel_info.updated_at DESC NULLS LAST, parcel_info.id DESC
+				LIMIT 1
+			) info ON TRUE
 			LEFT JOIN province_v2 prov
-				ON p.province_code = prov.code
+				ON info.province_code = prov.code
 			WHERE p.id IN ?
 			  AND p.deleted_at IS NULL
 			  AND p.geometry IS NOT NULL

@@ -4,7 +4,7 @@ import (
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 	"time"
 
 	shared_enum "pb/enums"
@@ -16,7 +16,7 @@ type HistoryRepo struct {
 	DB *gorm.DB
 }
 
-func NewHistoryRepo(db *gorm.DB) repo.HistoryRepo {
+func NewHistoryRepo(db *gorm.DB) usecase.HistoryStore {
 	return &HistoryRepo{DB: db}
 }
 

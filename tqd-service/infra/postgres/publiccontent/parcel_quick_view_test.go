@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"tqd/internal/modules/publiccontent/domain"
+	"tqd/internal/domain/publiccontent/model"
 )
 
 func TestBuildRelatedPlanningProjectKeepsUpdateAndDossierPath(t *testing.T) {

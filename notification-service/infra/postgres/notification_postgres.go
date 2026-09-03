@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ type PostgreNotification struct {
 	DB *gorm.DB
 }
 
-func NewPostgreNotification(db *gorm.DB) repo.NotificationRepo {
+func NewPostgreNotification(db *gorm.DB) usecase.NotificationStore {
 	return &PostgreNotification{DB: db}
 }
 
@@ -50,6 +50,13 @@ func (r *PostgreNotification) Search(ctx context.Context, profileId uint64, dto 
 
 func (r *PostgreNotification) Create(ctx context.Context, notification *domain.NotificationEntity) error {
 	return r.DB.WithContext(ctx).Create(notification).Error
+}
+
+func (r *PostgreNotification) CreateBatch(ctx context.Context, notifications []domain.NotificationEntity) error {
+	if len(notifications) == 0 {
+		return nil
+	}
+	return r.DB.WithContext(ctx).Create(&notifications).Error
 }
 
 // Count: Đếm số thông báo chưa đọc của user
@@ -108,7 +115,7 @@ func (repo *PostgreNotification) Delete(ctx context.Context, profileId, id uint6
 func (repo *PostgreNotification) ListNotiWithTargetIdAndOwnerType(ctx context.Context, targetId uint64, ownerType int32, hour int) ([]domain.NotificationEntity, error) {
 	var notifications []domain.NotificationEntity
 	err := repo.DB.WithContext(ctx).
-		Where("owner_id = ? AND owner_type = ? and deleted_at is null AND created_at >= NOW() - INTERVAL '? HOURS'", targetId, ownerType, hour).
+		Where("owner_id = ? AND owner_of = ? and deleted_at is null AND created_at >= NOW() - INTERVAL '? HOURS'", targetId, ownerType, hour).
 		Find(&notifications).Error
 	return notifications, err
 }

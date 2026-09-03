@@ -53,6 +53,7 @@ ALL_MODULES=(
   "generic"
   "marketing"
   "notification"
+  "operation"
   "organization"
   "payment"
   "shared"

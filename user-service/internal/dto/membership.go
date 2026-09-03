@@ -30,4 +30,3 @@ type VerifyOrderDTO struct {
 	Signature string     `json:"signature" binding:"required"`
 	PaidAt    *time.Time `json:"paidAt" binding:"required"`
 }
-

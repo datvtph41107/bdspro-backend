@@ -1,8 +1,9 @@
 package cmd_grpc
 
 import (
+	common_db "common/db"
 	_middleware "common/middleware"
-	"common/processlifecycle"
+	process "common/process"
 	"context"
 	"fmt"
 	"hub/config"
@@ -39,8 +40,13 @@ var GrpcCmd = &cobra.Command{
 			return fmt.Errorf("initialize hub app: %w", err)
 		}
 		defer cleanup()
-		if err := db.AutoMigrate(); err != nil {
-			return err
+		schemaPolicy, err := common_db.LoadSchemaPolicy("hub")
+		if err != nil {
+			return fmt.Errorf("load Hub schema policy: %w", err)
+		}
+		log.Printf("Hub database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+		if err := common_db.ApplySchemaPolicy(common_db.DB, schemaPolicy, db.AutoMigrate); err != nil {
+			return fmt.Errorf("apply Hub schema policy: %w", err)
 		}
 
 		signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -89,9 +95,9 @@ var GrpcCmd = &cobra.Command{
 
 		log.Printf("Listen: %v", port)
 
-		return processlifecycle.Run(
+		return process.Run(
 			processCtx, processCancel, s, lis, nil,
-			processlifecycle.Config{GracefulStopTimeout: 10 * time.Second},
+			process.Config{GracefulStopTimeout: 10 * time.Second},
 		)
 	},
 }

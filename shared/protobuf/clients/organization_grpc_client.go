@@ -217,6 +217,23 @@ func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organiza
 	return resp.Data[0], nil
 }
 
+// AuthorizeOrganizationAction hỏi đúng policy owner thay vì để service gọi
+// tự diễn giải role/permission của organization.
+func (c *OrganizationClient) AuthorizeOrganizationAction(ctx context.Context, organizationID, actorProfileID uint64, action organizationpb.OrganizationAction) (bool, error) {
+	if c == nil || c.Client == nil {
+		return false, errors.New("organization client not available")
+	}
+	resp, err := c.Client.AuthorizeOrganizationAction(ctx, &organizationpb.AuthorizeOrganizationActionRequest{
+		OrganizationId: organizationID,
+		ActorProfileId: actorProfileID,
+		Action:         action,
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.GetAllowed(), nil
+}
+
 func (c *OrganizationClient) GetOrganizationsByUserId(ctx context.Context, userId uint64) ([]*organizationpb.Organization, error) {
 	if c.Client == nil {
 		return nil, errors.New("organization client not avaiable")

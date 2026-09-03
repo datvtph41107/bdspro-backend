@@ -6,7 +6,7 @@ import (
 	"common/configloader"
 	commonprovider "common/domain/provider"
 	qhprorpc "common/rpc"
-	"common/transporttrust"
+	"common/rpcenv"
 	"pb/clients"
 
 	"google.golang.org/grpc"
@@ -27,9 +27,7 @@ func bindDependency[T any](
 		Target:          target,
 		BackoffMaxDelay: 5 * time.Second,
 		Credentials:     insecure.NewCredentials(),
-		Transport: qhprorpc.TransportConfig{
-			Trust: transporttrust.ConfigFromEnv(),
-		},
+		Transport:       rpcenv.LoadTransportConfig(),
 	}, bind)
 }
 
@@ -79,13 +77,6 @@ func NewNotificationRPCClient() (*clients.NotificationClient, func(), error) {
 	return bindDependency(
 		"rpc.notification.address",
 		clients.BindNotificationClient,
-	)
-}
-
-func NewPaymentRPCClient() (*clients.PaymentClient, func(), error) {
-	return bindDependency(
-		"rpc.payment.address",
-		clients.BindPaymentClient,
 	)
 }
 

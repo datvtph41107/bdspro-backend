@@ -1,7 +1,7 @@
 package _middleware
 
 import (
-	_transporttrust "common/transporttrust"
+	_rpc "common/rpc"
 
 	"context"
 	"testing"
@@ -30,9 +30,7 @@ func TestParseGrpcMetadataIgnoresRetiredOperationHeaders(
 	called := false
 
 	_, err := parseGrpcMetadataContextMiddlewareWithTrust(
-		_transporttrust.Config{
-			Mode: _transporttrust.ModeAudit,
-		},
+		_rpc.TransportConfig{},
 		ctx,
 		nil,
 		&grpc.UnaryServerInfo{

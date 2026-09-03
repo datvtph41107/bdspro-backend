@@ -1,10 +1,8 @@
 package config
 
 import (
-	"chat/env"
-	"common"
+	"common/configloader"
 	"log"
-	"os"
 
 	"github.com/spf13/viper"
 )
@@ -56,8 +54,9 @@ var AppProperties ChatProperties
 
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
+		log.Fatalf("load Chat runtime config: %v", err)
+	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
 		log.Fatalf("Lỗi parse config: %v", err)

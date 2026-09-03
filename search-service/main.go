@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"search/config"
 	"search/handlers"
 
@@ -10,8 +12,19 @@ import (
 )
 
 func main() {
-	config.LoadConfig()
-	config.InitElastic()
+	if err := run(); err != nil {
+		log.Printf("search service failed: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	if err := config.LoadConfig(); err != nil {
+		return fmt.Errorf("load search config: %w", err)
+	}
+	if err := config.InitElastic(); err != nil {
+		return fmt.Errorf("initialize search Elasticsearch: %w", err)
+	}
 
 	r := gin.Default()
 
@@ -23,5 +36,9 @@ func main() {
 	group.DELETE("/document/:id", handlers.DeleteHandler)
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.port"))
-	r.Run(port)
+	if err := r.Run(port); err != nil {
+		return fmt.Errorf("serve search HTTP on %s: %w", port, err)
+	}
+
+	return nil
 }

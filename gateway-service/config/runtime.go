@@ -2,7 +2,8 @@ package config
 
 import (
 	_foundationconfig "common/config"
-	"common/trust"
+	"common/configloader"
+	"common/rpc"
 
 	"encoding/json"
 	"fmt"
@@ -17,11 +18,11 @@ import (
 type Runtime struct {
 	Environment   string
 	UseServiceDNS bool
-	Server        ServerRuntime  `yaml:"server"`
-	Service       ServiceRuntime `yaml:"service"`
-	JWT           JWTRuntime     `yaml:"jwt"`
-	HTTP          HTTPRuntime    `yaml:"http"`
-	Trust         trust.Config   `yaml:"-"`
+	Server        ServerRuntime       `yaml:"server"`
+	Service       ServiceRuntime      `yaml:"service"`
+	JWT           JWTRuntime          `yaml:"jwt"`
+	HTTP          HTTPRuntime         `yaml:"http"`
+	RPCTransport  rpc.TransportConfig `yaml:"-"`
 }
 
 type ServerRuntime struct {
@@ -29,8 +30,11 @@ type ServerRuntime struct {
 }
 
 type ServiceRuntime struct {
-	Domain string         `yaml:"domain"`
-	Port   map[string]int `yaml:"port"`
+	Domain   string            `yaml:"domain"`
+	Host     map[string]string `yaml:"host"`
+	Port     map[string]int    `yaml:"port"`
+	HTTPHost map[string]string `yaml:"http_host"`
+	HTTPPort map[string]int    `yaml:"http_port"`
 }
 
 // JWTRuntime contains only the JWT input owned by Gateway: signature verification.
@@ -47,20 +51,26 @@ type HTTPRuntime struct {
 // LoadRuntime loads the caller-owned typed Gateway runtime without installing
 // process configuration into a shared/global registry.
 func LoadRuntime() (Runtime, error) {
-	runtimeEnv := strings.TrimSpace(os.Getenv("ENV_RUNTIME"))
-	fileEnv := runtimeEnv
-	if fileEnv == "" {
-		fileEnv = "local"
+	selection, err := configloader.ResolveRuntimeSelection()
+	if err != nil {
+		return Runtime{}, err
 	}
-
-	path := "config/" + fileEnv + ".yml"
+	path := strings.TrimSpace(os.Getenv("QHPRO_CONFIG_FILE"))
+	if path == "" {
+		path = strings.TrimSpace(os.Getenv("CONFIG_FILE"))
+	}
+	if path == "" {
+		path = "config/runtime.yml"
+	}
 	var cfg Runtime
 	if err := _foundationconfig.LoadYAML(path, &cfg); err != nil {
 		return Runtime{}, err
 	}
-	cfg.Environment = fileEnv
-	cfg.UseServiceDNS = runtimeEnv != ""
-	cfg.Trust = loadTrustConfig()
+	cfg.Environment = selection.Environment
+	// Execution mode controls only address wiring. It never selects a second
+	// source configuration file.
+	cfg.UseServiceDNS = usesServiceDNS(selection.ExecutionMode)
+	cfg.RPCTransport = loadRPCTransportConfig()
 
 	// Preserve the historical Viper environment override for jwt.key-generate
 	// without installing Gateway configuration into a process-global registry.
@@ -72,6 +82,10 @@ func LoadRuntime() (Runtime, error) {
 		return Runtime{}, err
 	}
 	return cfg, nil
+}
+
+func usesServiceDNS(executionMode string) bool {
+	return strings.EqualFold(strings.TrimSpace(executionMode), "container")
 }
 
 func (c Runtime) Validate() error {
@@ -99,19 +113,34 @@ func (c Runtime) Validate() error {
 }
 
 func (c Runtime) Endpoint(name string) (string, error) {
+	return c.serviceEndpoint(name, c.Service.Host, c.Service.Port, "gRPC")
+}
+
+// HTTPEndpoint returns only endpoints whose serving process actually speaks
+// HTTP. It deliberately does not fall back to the gRPC port map.
+func (c Runtime) HTTPEndpoint(name string) (string, error) {
+	return c.serviceEndpoint(name, c.Service.HTTPHost, c.Service.HTTPPort, "HTTP")
+}
+
+func (c Runtime) serviceEndpoint(name string, hosts map[string]string, ports map[string]int, protocol string) (string, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return "", fmt.Errorf("service name is required")
 	}
 
-	port := c.Service.Port[name]
+	port := ports[name]
 	if port <= 0 {
-		return "", fmt.Errorf("gateway service port %q is required", name)
+		return "", fmt.Errorf("gateway service %s port %q is required", protocol, name)
 	}
 
 	host := strings.TrimSpace(c.Service.Domain)
 	if c.UseServiceDNS {
-		host = name
+		// Host alias diễn đạt đúng serving owner. Ví dụ API Auth public do User
+		// phục vụ, trong khi auth-service:8216 chỉ giữ AuthInternal.
+		host = strings.TrimSpace(hosts[name])
+		if host == "" {
+			host = name
+		}
 	}
 	if host == "" {
 		host = "localhost"
@@ -120,26 +149,37 @@ func (c Runtime) Endpoint(name string) (string, error) {
 	return host + ":" + strconv.Itoa(port), nil
 }
 
-func loadTrustConfig() trust.Config {
-	mode := trust.Mode(strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_TRUSTED_METADATA_MODE"))))
-	if mode != trust.ModeEnforce {
-		mode = trust.ModeAudit
-	}
+func loadRPCTransportConfig() rpc.TransportConfig {
+	verificationSecrets, configured :=
+		verificationSecretsFromEnv("QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS")
 
-	// 	QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS='{
-	//   "auth-service":"auth-inbound-secret",
-	//   "user-service":"user-inbound-secret",
-	//   "tqd-service":"tqd-inbound-secret"
-	// }'
-	verificationSecrets, configured := verificationSecretsFromEnv("QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS")
-	return trust.Config{
-		ServiceID:                  firstNonEmpty(os.Getenv("QHPRO_SERVICE_ID"), os.Getenv("SERVICE_NAME"), "gateway-service"),
-		Secret:                     strings.TrimSpace(os.Getenv("QHPRO_INTERNAL_METADATA_SECRET")),
-		VerificationSecrets:        verificationSecrets,
-		VerificationKeysConfigured: configured,
-		Mode:                       mode,
-		MaxAge:                     durationFromEnv("QHPRO_INTERNAL_METADATA_MAX_AGE", 30*time.Second),
-		ClockSkew:                  durationFromEnv("QHPRO_INTERNAL_METADATA_CLOCK_SKEW", 5*time.Second),
+	return rpc.TransportConfig{
+		ServiceAssertion: rpc.ServiceAssertionConfig{
+			ServiceID: firstNonEmpty(
+				os.Getenv("QHPRO_SERVICE_ID"),
+				os.Getenv("SERVICE_NAME"),
+				"gateway-service",
+			),
+			Secret: strings.TrimSpace(
+				os.Getenv("QHPRO_INTERNAL_METADATA_SECRET"),
+			),
+			VerificationSecrets:        verificationSecrets,
+			VerificationKeysConfigured: configured,
+			MaxAge: durationFromEnv(
+				"QHPRO_INTERNAL_METADATA_MAX_AGE",
+				30*time.Second,
+			),
+			ClockSkew: durationFromEnv(
+				"QHPRO_INTERNAL_METADATA_CLOCK_SKEW",
+				5*time.Second,
+			),
+		},
+		RequireServiceAssertion: strings.EqualFold(
+			strings.TrimSpace(
+				os.Getenv("QHPRO_TRUSTED_METADATA_MODE"),
+			),
+			"enforce",
+		),
 	}
 }
 

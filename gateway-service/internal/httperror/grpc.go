@@ -52,15 +52,23 @@ func WriteGRPC(w http.ResponseWriter, err error) {
 		"message": grpcErr.Message(),
 	}
 	for _, detail := range grpcErr.Details() {
-		if badRequest, ok := detail.(*errdetails.BadRequest); ok {
-			violations := make([]map[string]string, 0, len(badRequest.FieldViolations))
-			for _, violation := range badRequest.FieldViolations {
+		switch value := detail.(type) {
+		case *errdetails.BadRequest:
+			violations := make([]map[string]string, 0, len(value.FieldViolations))
+			for _, violation := range value.FieldViolations {
 				violations = append(violations, map[string]string{
 					"field": violation.Field,
 					"error": violation.Description,
 				})
 			}
 			response["errors"] = violations
+		case *errdetails.ErrorInfo:
+			// Preserve owner-provided semantic error data so HTTP clients can
+			// present business states without parsing a human message. Gateway
+			// translates transport only and does not interpret the metadata.
+			response["reason"] = value.Reason
+			response["domain"] = value.Domain
+			response["metadata"] = value.Metadata
 		}
 	}
 	_ = json.NewEncoder(w).Encode(response)
@@ -78,8 +86,16 @@ func statusFromCode(code codes.Code) int {
 		return http.StatusNotFound
 	case codes.AlreadyExists:
 		return http.StatusConflict
+	case codes.Aborted:
+		return http.StatusConflict
+	case codes.FailedPrecondition:
+		return http.StatusPreconditionFailed
 	case codes.ResourceExhausted:
 		return http.StatusTooManyRequests
+	case codes.Canceled:
+		return http.StatusRequestTimeout
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout
 	case codes.Unimplemented:
 		return http.StatusNotImplemented
 	case codes.Unavailable:

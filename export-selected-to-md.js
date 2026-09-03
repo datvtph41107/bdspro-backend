@@ -105,8 +105,8 @@ function shouldIgnore(fullPath, name) {
   if (IGNORE_FILES.has(name)) return true;
 
   // Không đưa file env thật vào prompt để tránh lộ secret.
-  // File .env.example vẫn được giữ lại.
-  if (isEnvSecretFile(name) && name !== ".env.example") return true;
+  // Các .env develop vẫn chứa key runtime nên không xuất vào tài liệu.
+  if (isEnvSecretFile(name)) return true;
 
   const ext = path.extname(name).toLowerCase();
   if (IGNORE_EXTENSIONS.has(ext)) return true;

@@ -4,7 +4,6 @@ import (
 	"common/jwtverify"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"log/slog"
 	"net"
@@ -46,46 +45,11 @@ var HttpCmd = &cobra.Command{
 			return fmt.Errorf("load gateway runtime config: %w", err)
 		}
 		port := strconv.Itoa(runtimeConfig.Server.Port)
-		env := os.Getenv("ENV_RUNTIME")
-		// Tạo thư mục nếu chưa có
-		if err :=
-			os.MkdirAll(
-				"./app/logs",
-				os.ModePerm,
-			); err != nil {
-
-			return fmt.Errorf("create gateway log directory: %w", err)
-		}
-		// Mở file log
-		f, err :=
-			os.OpenFile(
-				"./app/logs/app.log",
-				os.O_CREATE|
-					os.O_WRONLY|
-					os.O_APPEND,
-				0666,
-			)
-
-		if err != nil {
-			return fmt.Errorf("open gateway log file: %w", err)
-		}
-
-		defer func() {
-			if err :=
-				f.Close(); err != nil {
-
-				log.Printf(
-					"failed to close gateway log file: %v",
-					err,
-				)
-			}
-		}()
-
-		logOutput :=
-			io.MultiWriter(
-				f,
-				os.Stdout,
-			)
+		env := runtimeConfig.Environment
+		// Containers and native processes share one logging contract: stdout
+		// and stderr. Retention/rotation belongs to the runtime platform, never
+		// to a hidden file under the application working directory.
+		logOutput := os.Stdout
 
 		gin.DefaultWriter = logOutput
 
@@ -262,6 +226,7 @@ var HttpCmd = &cobra.Command{
 			authRoutes.TemporaryToken,
 			_httpauth.WithAPIKeyVerifier(apiKeyVerifier),
 			_httpauth.WithTokenVerifier(tokenVerifier),
+			_httpauth.WithProviderCredentialRoutes(authRoutes.ProviderCredential),
 		)
 
 		// Register generated handlers against process-owned connections.
@@ -374,7 +339,9 @@ var HttpCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("construct v1 proxy: %w", err)
 		}
-		r.Any("/v1/:service/*path", authMiddleware, v1.Handler())
+		// Only true HTTP owners are reverse-proxied. Generated v1 contracts
+		// (currently TQD location) stay on the process-owned grpc-gateway mux.
+		r.Any("/v1/:service/*path", authMiddleware, v1.Handler(mux))
 
 		server := &http.Server{
 			Addr:              ":" + port,

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "user/admin_catalog.proto";
+import "user/admin_commercial.proto";
+
+// CommercialProfileService exposes the User-owned public catalog plus the
+// authenticated caller's subscription projection. Price, PlanVersion and
+// subscription state remain server-owned; this surface contains no quota
+// counters. Gateway permits anonymous GET only for ListAvailablePlans.
+service CommercialProfileService {
+  rpc ListAvailablePlans(ListAvailablePlansRequest) returns (ListAvailablePlansResponse) {
+    option (google.api.http) = { get: "/v2/user/commercial/plans" };
+  }
+
+  rpc GetMyCommercialProfile(GetMyCommercialProfileRequest) returns (MyCommercialProfile) {
+    option (google.api.http) = { get: "/v2/user/commercial/profile" };
+  }
+}
+
+message ListAvailablePlansRequest {
+  string product_code = 1;
+  string subject_kind = 2;
+}
+
+message ListAvailablePlansResponse { repeated CatalogPlanVersion plans = 1; }
+message GetMyCommercialProfileRequest {}
+
+message MyCommercialProfile {
+  uint64 profile_id = 1;
+  bool has_subscription = 2;
+  AdminSubscriptionProjection effective_subscription = 3;
+}

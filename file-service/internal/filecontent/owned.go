@@ -171,7 +171,7 @@ func (s *Service) PutOwnedFile(
 			int64(len(input.Content)),
 			nil,
 			fileEntity.ID,
-			s.document,
+			ordinaryDocumentPath,
 			"owned",
 			namespace,
 		)
@@ -217,11 +217,14 @@ func savedOwnedFile(
 	}
 
 	return SavedFile{
-		ID:          file.ID,
-		Path:        file.Path,
-		Filename:    file.Name,
-		ContentType: file.Mine,
-		Size:        file.Size,
+		ID:            file.ID,
+		Path:          file.Path,
+		Filename:      file.Name,
+		ThumbnailPath: file.ThumbnailPath,
+		Extension:     file.Extension,
+		Size:          file.Size,
+		Hash:          file.Hash,
+		ContentType:   file.Mine,
 	}
 }
 

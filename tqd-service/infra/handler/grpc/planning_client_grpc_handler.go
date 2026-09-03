@@ -9,8 +9,8 @@ import (
 	"time"
 
 	_middleware "common/middleware"
-	planningapp "tqd/internal/modules/planningclient/application"
-	planningdomain "tqd/internal/modules/planningclient/domain"
+	planningdomain "tqd/internal/domain/planningclient/model"
+	planningapp "tqd/internal/usecase/planningclient/application"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

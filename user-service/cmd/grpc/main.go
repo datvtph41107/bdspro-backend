@@ -1,199 +1,162 @@
-package cmd_grpc
+package main
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
+	_db "common/db"
+	_middleware "common/middleware"
+	"common/process"
+	_redis "common/redis"
+	"common/rpcenv"
 	authpb "pb/types/auth"
 	userpb "pb/types/user"
 	"user/config"
-	"user/env"
+	userdb "user/db"
+	admin_middleware "user/infra/middleware"
 	"user/wire"
 
-	_db "common/db"
-	quota "common/legacyquota"
-	_middleware "common/middleware"
-	"common/processlifecycle"
-	_redis "common/redis"
-	"common/transporttrust"
-	admin_middleware "user/infra/middleware"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
-var GrpcCmd = &cobra.Command{
-	Use:   "grpc",
-	Short: "Run the GRPC server",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return runGRPC()
-	},
+func main() {
+	if err := runGRPC(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func runGRPC() error {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	if err := config.LoadProperties(); err != nil {
-		return fmt.Errorf("load User config: %w", err)
+	runtimeConfig, err := config.LoadRuntime()
+	if err != nil {
+		return fmt.Errorf("load User runtime config: %w", err)
 	}
 
 	runtimePolicy, err := loadRuntimePolicy()
 	if err != nil {
 		return fmt.Errorf("load User runtime policy: %w", err)
 	}
-
 	log.Printf(
 		"User runtime policy: module_warmup=%t dashboard_stats=%t zns_scheduler=%t",
 		runtimePolicy.ModuleWarmup,
 		runtimePolicy.DashboardStats,
 		runtimePolicy.ZNSScheduler,
 	)
-	os.Setenv("TZ", "Europe/London")
-	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-	if _, err := _db.NewDB(); err != nil {
-		return fmt.Errorf("connect User database: %w", err)
+	database, err := _db.Open(_db.DatabaseConfig{
+		DSN:             runtimeConfig.Database.DSN,
+		MaxOpenConns:    runtimeConfig.Database.MaxOpenConns,
+		MaxIdleConns:    runtimeConfig.Database.MaxIdleConns,
+		ConnMaxLifetime: runtimeConfig.Database.ConnMaxLifetime,
+	})
+	if err != nil {
+		return fmt.Errorf("open User database: %w", err)
+	}
+	sqlDB, err := database.DB()
+	if err != nil {
+		return fmt.Errorf("get User database pool: %w", err)
+	}
+	defer sqlDB.Close()
+
+	schemaPolicy, err := _db.LoadSchemaPolicy("user")
+	if err != nil {
+		return fmt.Errorf("load User schema policy: %w", err)
+	}
+	log.Printf("User database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	if err := _db.ApplySchemaPolicy(database, schemaPolicy, userdb.AutoMigrate); err != nil {
+		return fmt.Errorf("apply User schema policy: %w", err)
 	}
 
-	app, cleanup, err := wire.InitializeApp()
+	redisService, err := _redis.Open(_redis.Config{
+		Address:  runtimeConfig.Redis.Address,
+		Password: runtimeConfig.Redis.Password,
+		DB:       runtimeConfig.Redis.DB,
+	})
+	if err != nil {
+		return fmt.Errorf("open User Redis: %w", err)
+	}
+	defer redisService.Close()
+
+	app, cleanup, err := wire.InitializeApp(database, redisService)
 	if err != nil {
 		return fmt.Errorf("initialize User app: %w", err)
 	}
 	defer cleanup()
-	// Long-lived actors are started only after a process cancellation domain exists.
-	// app.CrmProvider.RegisterService remains disabled.
 
-	// === QUOTA INIT ===
-	var quotaInterceptor grpc.UnaryServerInterceptor
-	quotaCfg, err := quota.LoadQuotaConfig()
-	if err == nil && quotaCfg.Enabled {
-		redisService := _redis.NewRedisService()
-		storage := quota.NewRedisQuotaStorage(redisService)
-		policy, err := quota.NewDefaultPolicyEngine(quotaCfg.PolicyFile)
-		if err != nil {
-			log.Printf("Failed to load quota policy: %v, quota disabled", err)
-		} else {
-			qm := quota.NewQuotaManager(storage, policy)
-			extractUserID := func(ctx context.Context) string {
-				if uid := ctx.Value("user_id"); uid != nil {
-					switch v := uid.(type) {
-					case uint64:
-						return strconv.FormatUint(v, 10)
-					case string:
-						return v
-					}
-				}
-				return ""
-			}
-			quotaInterceptor = quota.UnaryServerInterceptor(qm, extractUserID)
-			log.Println("Quota interceptor enabled for user-service")
-		}
-	}
-	if quotaInterceptor == nil {
-		quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-			return handler(ctx, req)
-		}
-	}
-
-	legacyQuotaInterceptor := quotaInterceptor
-	quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if info != nil && trustedIdentityMethod(info.FullMethod) {
-			return handler(ctx, req)
-		}
-		return legacyQuotaInterceptor(ctx, req, info, handler)
-	}
-	// =========================
-
-	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", runtimeConfig.GRPCAddress)
 	if err != nil {
-		return fmt.Errorf("listen User gRPC %s: %w", port, err)
+		return fmt.Errorf("listen User gRPC %s: %w", runtimeConfig.GRPCAddress, err)
 	}
 
-	trustConfig := transporttrust.ConfigFromEnv()
-	s := grpc.NewServer(
+	transportConfig := rpcenv.LoadTransportConfig()
+	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			accessIngress(trustConfig),
+			accessIngress(transportConfig),
 			admin_middleware.AdminAuthInterceptor,
-			quotaInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,
 		),
 	)
 
-	// Register services (unchanged)
-	userpb.RegisterAdminProfileServiceServer(s, app.AdminHandler)
-	userpb.RegisterAdminUserProfileServiceServer(s, app.AdminUserProfileHandler)
-	userpb.RegisterProfileServiceServer(s, app.ProfileService)
-	userpb.RegisterBookmarkUserServiceServer(s, app.BookmarkUserHandler)
-	userpb.RegisterMembershipServiceServer(s, app.MembershipHandler)
-	userpb.RegisterPlanServiceServer(s, app.PlanHandler)
-	userpb.RegisterInternalUserServiceServer(s, app.InternalHandler)
-	if err := registerTargetServices(s); err != nil {
+	userpb.RegisterAdminProfileServiceServer(server, app.AdminHandler)
+	userpb.RegisterAdminUserProfileServiceServer(server, app.AdminUserProfileHandler)
+	userpb.RegisterProfileServiceServer(server, app.ProfileService)
+	userpb.RegisterBookmarkUserServiceServer(server, app.BookmarkUserHandler)
+	userpb.RegisterInternalUserServiceServer(server, app.InternalHandler)
+	targetCleanup, err := registerTargetServices(server, database, app.OrganizationClient)
+	if err != nil {
 		return targetRegistrationError(err)
 	}
-	userpb.RegisterMainAreaServiceServer(s, app.MainAreaHandler)
-	userpb.RegisterPurposeUseServiceServer(s, app.PurposeUseHandler)
-	userpb.RegisterProfessionServiceServer(s, app.ProfessionHandler)
-	userpb.RegisterTagServiceServer(s, app.TagHandler)
-	userpb.RegisterKYCServiceServer(s, app.KYCHandler)
-	userpb.RegisterPriceTableServiceServer(s, app.PriceTableHandler)
+	defer targetCleanup()
+	userpb.RegisterMainAreaServiceServer(server, app.MainAreaHandler)
+	userpb.RegisterPurposeUseServiceServer(server, app.PurposeUseHandler)
+	userpb.RegisterProfessionServiceServer(server, app.ProfessionHandler)
+	userpb.RegisterTagServiceServer(server, app.TagHandler)
+	userpb.RegisterKYCServiceServer(server, app.KYCHandler)
+	userpb.RegisterPriceTableServiceServer(server, app.PriceTableHandler)
 
-	authpb.RegisterAuthServiceServer(s, app.AuthHandler)
-	authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
-	// authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)
-	authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
-	authpb.RegisterRoleServiceServer(s, app.RoleHandler)
-	authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
-	authpb.RegisterUserInfoServiceServer(s, app.UserInfoHandler)
+	authpb.RegisterAuthServiceServer(server, app.AuthHandler)
+	authpb.RegisterOAuthServiceServer(server, app.OAuthHandler)
+	authpb.RegisterPermissionServiceServer(server, app.PermissionHandler)
+	authpb.RegisterRoleServiceServer(server, app.RoleHandler)
+	authpb.RegisterRoleGroupServiceServer(server, app.RoleGroupHandler)
+	authpb.RegisterUserInfoServiceServer(server, app.UserInfoHandler)
 
-	log.Printf("Listen: %v", port)
-	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	signalCtx, stopSignals := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
 	defer stopSignals()
 	processCtx, processCancel := context.WithCancel(signalCtx)
 	defer processCancel()
 
 	if runtimePolicy.ModuleWarmup {
-		if err := app.LoadModulesOnStartup(processCtx); err != nil {
-			log.Printf(
-				"User module cache warmup failed; starting degraded: %v",
-				err,
-			)
+		if err := app.LoadRoleGroupsOnStartup(processCtx); err != nil {
+			log.Printf("User module cache warmup failed; starting degraded: %v", err)
 		}
 	}
 
-	actors := make([]processlifecycle.Actor, 0, 2)
-	if runtimePolicy.DashboardStats &&
-		app.UserDashboardStatsJob != nil {
-		actors = append(
-			actors,
-			processlifecycle.ActorFunc(
-				app.UserDashboardStatsJob.RunDailyAtMidnight,
-			),
-		)
+	actors := make([]process.Actor, 0, 2)
+	if runtimePolicy.DashboardStats && app.UserDashboardStatsJob != nil {
+		actors = append(actors, process.ActorFunc(app.UserDashboardStatsJob.RunDailyAtMidnight))
 	}
-	if runtimePolicy.ZNSScheduler &&
-		app.ZnsScheduler != nil {
-		actors = append(
-			actors,
-			processlifecycle.ActorFunc(app.ZnsScheduler.Run),
-		)
+	if runtimePolicy.ZNSScheduler && app.ZnsScheduler != nil {
+		actors = append(actors, process.ActorFunc(app.ZnsScheduler.Run))
 	}
 
-	return processlifecycle.Run(
+	log.Printf("User gRPC listening on %s", runtimeConfig.GRPCAddress)
+	return process.Run(
 		processCtx,
 		processCancel,
-		s,
+		server,
 		lis,
 		actors,
-		processlifecycle.Config{GracefulStopTimeout: 10 * time.Second},
+		process.Config{GracefulStopTimeout: 10 * time.Second},
 	)
 }

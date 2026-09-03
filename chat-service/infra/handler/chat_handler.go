@@ -2,11 +2,12 @@ package handler
 
 import (
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	chatpb "pb/types/chat"
@@ -42,6 +43,11 @@ type chatHandler struct {
 	conversationMapper      *mapper.ConversationMapper
 	backgroundMapper        *mapper.BackgroundMapper
 	syncProvider            *_utils.SyncUtil
+	workerCtx               context.Context
+	cancelWorkers           context.CancelFunc
+	workerWG                sync.WaitGroup
+	startOnce               sync.Once
+	closeOnce               sync.Once
 }
 
 func NewChatHandler(
@@ -56,6 +62,7 @@ func NewChatHandler(
 	backgroundMapper *mapper.BackgroundMapper,
 	syncProvider *_utils.SyncUtil,
 ) *chatHandler {
+	workerCtx, cancelWorkers := context.WithCancel(context.Background())
 	return &chatHandler{
 		conversationUsecases:    conversationUsecases,
 		messageUsecases:         messageUsecases,
@@ -72,6 +79,8 @@ func NewChatHandler(
 		conversationMapper:      conversationMapper,
 		backgroundMapper:        backgroundMapper,
 		syncProvider:            syncProvider,
+		workerCtx:               workerCtx,
+		cancelWorkers:           cancelWorkers,
 	}
 }
 
@@ -307,17 +316,23 @@ func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypin
 		return nil, err
 	}
 
-	event := &chatpb.TypingMessage{
+	count, err := s.redisClient.UpdateTyping(ctx, req.ConversationId, userId, req.IsTyping)
+	if err != nil {
+		return nil, _errors.InternalServerException("update typing state failed")
+	}
+
+	event := &chatpb.TypingIndicator{
 		Type: constants.TYPING_MESSAGE_TYPE,
-		Data: &chatpb.TypingData{
-			RoomId:   req.ConversationId,
-			UserId:   userId,
+		Data: &chatpb.TypingIndicatorData{
+			RoomId:   strconv.FormatUint(req.ConversationId, 10),
+			UserId:   strconv.FormatUint(userId, 10),
 			IsTyping: req.IsTyping,
+			Count:    count,
 		},
 	}
 	s.eventChannel <- event
 
-	return &chatpb.StateTypingResponse{Success: true}, nil
+	return &chatpb.StateTypingResponse{Success: true, Count: count}, nil
 }
 
 // @Summary Lấy danh sách tin nhắn
@@ -334,14 +349,14 @@ func (s *chatHandler) GetMessages(ctx context.Context, req *chatpb.GetMessagesRe
 	offset := int64(0)
 	sort := "desc"
 
-	if req.Limit != nil {
-		limit = int64(*req.Limit)
+	if req.Size > 0 {
+		limit = int64(req.Size)
 	}
-	if req.Offset != nil {
-		offset = int64(*req.Offset)
+	if req.Page > 0 {
+		offset = int64(req.Page) * limit
 	}
-	if req.Sort != nil {
-		sort = *req.Sort
+	if strings.EqualFold(req.Sort, "asc") {
+		sort = "asc"
 	}
 
 	var fromDate, toDate *time.Time
@@ -560,9 +575,9 @@ func (s *chatHandler) MarkAsRead(ctx context.Context, req *chatpb.MarkAsReadRequ
 	event := &chatpb.ReadMessage{
 		Type: constants.READ_TYPE,
 		Data: &chatpb.ReadMessageData{
-			RoomId:        strconv.Itoa(int(req.ConversationId)),
-			UserId:        userIdStr,
-			LastMessageId: pos.LastMessageID,
+			RoomId:     strconv.Itoa(int(req.ConversationId)),
+			UserId:     userIdStr,
+			MessageIds: []string{strconv.FormatUint(pos.LastMessageID, 10)},
 		},
 	}
 
@@ -593,9 +608,9 @@ func (s *chatHandler) PinMessage(ctx context.Context, req *chatpb.PinMessageRequ
 
 	event := &chatpb.PinMessage{
 		Type: constants.PIN_MESSAGE_TYPE,
-		Data: &chatpb.PinMessageData{
+		Data: &chatpb.Message{
 			RoomId:    strconv.Itoa(int(req.ConversationId)),
-			MessageId: strconv.Itoa(int(req.MessageId)),
+			MessageId: req.MessageId,
 		},
 	}
 
@@ -1329,19 +1344,38 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 // @Security BearerAuth
 // @Success 200 {object} chatpb.UnreadCountResponse
 // @Router /unread-count [get]
-func (s *chatHandler) UnreadCount(ctx context.Context, req *sharepb.Empty) (*chatpb.UnreadCountResponse, error) {
+func (s *chatHandler) UnreadCount(ctx context.Context, _ *chatpb.UnreadCountRequest) (*chatpb.UnreadCountResponse, error) {
 	unreadCount, err := s.conversationUsecases.GetUnreadCount(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &chatpb.UnreadCountResponse{UnreadCount: unreadCount}, nil
+	return &chatpb.UnreadCountResponse{
+		UnreadCount: unreadCount,
+		Timestamp:   time.Now().UTC().UnixMilli(),
+	}, nil
 }
 
 func (s *chatHandler) Start() {
-	for i := 0; i < s.numberOfWorker; i++ {
-		redisClientWorker := NewRedisClientWorker(s, s.redisClient, s.logger)
-		go redisClientWorker.serve()
-	}
+	s.startOnce.Do(func() {
+		for i := 0; i < s.numberOfWorker; i++ {
+			redisClientWorker := NewRedisClientWorker(s.workerCtx, s, s.redisClient, s.logger)
+			s.workerWG.Add(1)
+			go func() {
+				defer s.workerWG.Done()
+				redisClientWorker.serve()
+			}()
+		}
+	})
+}
+
+func (s *chatHandler) Close() error {
+	var closeErr error
+	s.closeOnce.Do(func() {
+		s.cancelWorkers()
+		s.workerWG.Wait()
+		closeErr = s.redisClient.Close()
+	})
+	return closeErr
 }
 
 func (s *chatHandler) ValidConversationAndCurrentUser(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {

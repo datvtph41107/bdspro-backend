@@ -1,14 +1,16 @@
 package firebase
 
 import (
-	_db "common/db"
 	"context"
 	"fmt"
 	"log"
 
 	"notification/config"
 	"notification/internal/domain"
+	deliverydomain "notification/internal/domain/delivery"
 	"notification/internal/dto"
+
+	"gorm.io/gorm"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -17,24 +19,32 @@ import (
 )
 
 // FirebaseProvider xử lý gửi thông báo đến Firebase
-// @bind: notification/internal/provider.IFirebaseProvider
+// @bind: notification/internal/usecase.PushSender
 type FirebaseProvider struct {
 	firebaseApp *firebase.App
+	db          *gorm.DB
 }
 
 // NewFirebaseService tạo một instance mới của FirebaseService
-func NewFirebaseService(firebaseConfig *config.FirebaseConfig) *FirebaseProvider {
-	// firebaseApp.Messaging(ctx)
-	return &FirebaseProvider{
-		firebaseApp: firebaseConfig.App,
+func NewFirebaseService(firebaseConfig *config.FirebaseConfig, db *gorm.DB) *FirebaseProvider {
+	var app *firebase.App
+	if firebaseConfig != nil {
+		app = firebaseConfig.App
 	}
+	return &FirebaseProvider{firebaseApp: app, db: db}
 }
 
 // SendToTopic gửi thông báo đến một topic
 func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
+	if s == nil || s.firebaseApp == nil {
+		return nil, fmt.Errorf("firebase push delivery is not configured")
+	}
 	var entity domain.HistoryFcmEntity
 	copier.Copy(&entity, &request)
-	ctx := context.Background()
+	if c == nil || c.Request == nil {
+		return nil, fmt.Errorf("request context is required")
+	}
+	ctx := c.Request.Context()
 
 	notification := s.dtoToNotification(request)
 	messageBody := &messaging.Message{
@@ -53,15 +63,23 @@ func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequ
 		entity.Response = result
 	}
 
-	_db.SaveWithAudit(c, entity)
+	if s.db != nil {
+		_ = s.db.WithContext(ctx).Create(&entity).Error
+	}
 	return &dto.SendNotiResponse{Response: result}, nil
 }
 
 // SendToToken gửi thông báo đến một thiết bị dựa vào token
 func (s *FirebaseProvider) SendToToken(c *gin.Context, request *dto.SendNotiRequest) (*dto.SendNotiResponse, error) {
+	if s == nil || s.firebaseApp == nil {
+		return nil, fmt.Errorf("firebase push delivery is not configured")
+	}
 	var entity domain.HistoryFcmEntity
 	copier.Copy(&entity, &request)
-	ctx := context.Background()
+	if c == nil || c.Request == nil {
+		return nil, fmt.Errorf("request context is required")
+	}
+	ctx := c.Request.Context()
 
 	notification := s.dtoToNotification(request)
 	message := &messaging.Message{
@@ -81,7 +99,9 @@ func (s *FirebaseProvider) SendToToken(c *gin.Context, request *dto.SendNotiRequ
 		entity.Response = result
 	}
 
-	_db.SaveWithAudit(c, &entity)
+	if s.db != nil {
+		_ = s.db.WithContext(ctx).Create(&entity).Error
+	}
 	return &dto.SendNotiResponse{Response: result}, nil
 }
 
@@ -97,16 +117,16 @@ func (s *FirebaseProvider) dtoToNotification(request *dto.SendNotiRequest) *mess
 // SendPushNotification gửi push notification đến nhiều tokens
 func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []string, title string, message string, data map[string]string) error {
 	if len(tokens) == 0 {
-		return fmt.Errorf("no tokens provided")
+		return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailurePermanent, Err: fmt.Errorf("no tokens provided")}
 	}
 
 	if s.firebaseApp == nil {
-		return fmt.Errorf("firebase app is not initialized")
+		return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailurePermanent, Err: fmt.Errorf("firebase app is not initialized")}
 	}
 
 	client, err := s.firebaseApp.Messaging(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get messaging client: %w", err)
+		return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailureRetryable, Err: fmt.Errorf("get Firebase messaging client: %w", err)}
 	}
 
 	// Tạo notification
@@ -140,7 +160,7 @@ func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []st
 			Data:         data,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to send multicast: %w", err)
+			return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailureUnknown, Err: fmt.Errorf("Firebase multicast outcome unknown: %w", err)}
 		}
 
 		// Log kết quả
@@ -148,7 +168,7 @@ func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []st
 		if br.FailureCount > 0 {
 			for i, resp := range br.Responses {
 				if !resp.Success {
-					log.Printf("Failed to send to token %s: %v", tokens[i], resp.Error)
+					log.Printf("Firebase multicast token delivery failed at index=%d: %v", i, resp.Error)
 				}
 			}
 		}
@@ -159,9 +179,9 @@ func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []st
 	messageBody.Token = tokens[0]
 	_, err = client.Send(ctx, messageBody)
 	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
+		return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailureUnknown, Err: fmt.Errorf("Firebase send outcome unknown: %w", err)}
 	}
 
-	log.Printf("Firebase push notification sent successfully to token: %s", tokens[0])
+	log.Printf("Firebase push notification sent successfully")
 	return nil
 }

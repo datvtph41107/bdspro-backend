@@ -17,14 +17,15 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		userpb.RegisterBookmarkUserServiceHandler,
 		userpb.RegisterAdminProfileServiceHandler,
 		userpb.RegisterAdminUserProfileServiceHandler,
-		userpb.RegisterMembershipServiceHandler,
-		userpb.RegisterPlanServiceHandler,
 		userpb.RegisterAdminCatalogServiceHandler,
+		userpb.RegisterAdminCommercialServiceHandler,
+		userpb.RegisterCommercialProfileServiceHandler,
 		userpb.RegisterMainAreaServiceHandler,
 		userpb.RegisterPurposeUseServiceHandler,
 		userpb.RegisterProfessionServiceHandler,
 		userpb.RegisterTagServiceHandler,
 		userpb.RegisterKYCServiceHandler,
 		userpb.RegisterPriceTableServiceHandler,
+		userpb.RegisterCheckoutServiceHandler,
 	)
 }

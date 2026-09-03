@@ -13,7 +13,7 @@ import (
 // HTTP boundary and translates public/client HTTP routes into TQD gRPC calls.
 func main() {
 	var (
-		serverType = flag.String("server", "grpc", "Server type: grpc, pmtiles, or migrate")
+		serverType = flag.String("server", "grpc", "Server type: grpc or pmtiles")
 		port       = flag.Int("port", 0, "Server port (overrides config)")
 		host       = flag.String("host", "", "Server host (default: all interfaces)")
 	)
@@ -42,14 +42,8 @@ func main() {
 			log.Printf("Failed to start PMTiles server: %v", err)
 			os.Exit(1)
 		}
-	case "migrate":
-		log.Println("Running database migration...")
-		if err := cmd.RunMigrate(); err != nil {
-			log.Printf("Failed to run migration: %v", err)
-			os.Exit(1)
-		}
 	default:
-		fmt.Printf("Invalid server type: %s. Use 'grpc', 'pmtiles', or 'migrate'\n", *serverType)
+		fmt.Printf("Invalid server type: %s. Use 'grpc' or 'pmtiles'\n", *serverType)
 		os.Exit(1)
 	}
 }

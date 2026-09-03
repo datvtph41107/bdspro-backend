@@ -15,6 +15,7 @@ type UserGrpcClient struct {
 	Client           userpb.ProfileServiceClient
 	InternalClient   userpb.InternalUserServiceClient
 	AdminClient      userpb.AdminUserProfileServiceClient
+	AccessClient     userpb.InternalAccessServiceClient
 	PermissionClient authpb.PermissionServiceClient
 	RoleClient       authpb.RoleServiceClient
 }
@@ -24,6 +25,7 @@ func BindUserGrpcClient(conn grpc.ClientConnInterface) *UserGrpcClient {
 		Client:           userpb.NewProfileServiceClient(conn),
 		InternalClient:   userpb.NewInternalUserServiceClient(conn),
 		AdminClient:      userpb.NewAdminUserProfileServiceClient(conn),
+		AccessClient:     userpb.NewInternalAccessServiceClient(conn),
 		PermissionClient: authpb.NewPermissionServiceClient(conn),
 		RoleClient:       authpb.NewRoleServiceClient(conn),
 	}

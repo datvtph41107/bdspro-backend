@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"notification/internal/provider"
+	notification_usecase "notification/internal/usecase"
 	clients "pb/clients"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -12,7 +12,7 @@ type UserClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewUserClient(rpcClient *clients.UserGrpcClient) provider.IUserProvider {
+func NewUserClient(rpcClient *clients.UserGrpcClient) notification_usecase.UserProfileReader {
 	return &UserClient{Client: rpcClient}
 }
 

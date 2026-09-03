@@ -3,8 +3,6 @@ package config
 import (
 	"common/configloader"
 	"fmt"
-	"os"
-	"social/env"
 
 	"github.com/spf13/viper"
 )
@@ -28,8 +26,7 @@ var AppProperties UserProperties
 
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() error {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	if err := configloader.LoadYMLFile(env.ENV_RUNTIME); err != nil {
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
 		return err
 	}
 

@@ -2,6 +2,7 @@ package repo
 
 import (
 	_dto "common/domain/dto"
+	"context"
 	"time"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -9,6 +10,7 @@ import (
 )
 
 type IFriendRepo interface {
+	Create(ctx context.Context, friend *models.FriendEntity) error
 	UpdateStatusById(status enums.EFriendStatus, id uint64, respondedAt *time.Time) error
 	UpdateGroupById(isGroup bool, groupId uint64, id uint64) error
 	UpdateGroupId(id *uint64, groupId uint64) error

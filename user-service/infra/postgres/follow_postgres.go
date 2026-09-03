@@ -62,7 +62,7 @@ func (repo *FollowPostgres) FollowUser(c *gin.Context, profileId, followingID ui
 	// Kiểm tra nếu đã follow trước đó
 	err := repo.DB.Raw(`SELECT EXISTS (
 							SELECT 1 FROM follow
-							WHERE created_by = ? AND following_id = ? AND unfollowed_at IS NULL)`,
+							WHERE created_by = ? AND following_id = ? AND deleted_at IS NULL)`,
 		profileId, followingID).Scan(&exists).Error
 
 	if err != nil || exists {

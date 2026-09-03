@@ -1,24 +1,28 @@
 package config
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 func validRuntimeConfig() RuntimeConfig {
 	return RuntimeConfig{
-		HTTPPort:     "8002",
-		DatabaseDSN:  "host=db.example user=file password=runtime-secret dbname=file",
-		JWTKey:       "jwt-key-from-secret-store",
-		Auth:         AuthConfig{GRPCAddress: "auth:8216", Timeout: 2 * time.Second},
-		Hub:          HubConfig{GRPCAddress: "hub:8280", Timeout: 5 * time.Second},
-		InternalGRPC: InternalGRPCConfig{Enabled: false, Port: "8203"},
+		HTTPPort:    "8002",
+		DatabaseDSN: "host=db.example user=file password=runtime-secret dbname=file",
+		JWTKey:      "jwt-key-from-secret-store",
+		Auth:        AuthConfig{GRPCAddress: "auth:8216", Timeout: 2 * time.Second},
+		Hub:         HubConfig{GRPCAddress: "hub:8280", Timeout: 5 * time.Second},
 		FileService: FileServiceConfig{
-			SignatureKey:    "signature-secret-from-secret-store",
-			XorCryptKey:     "xor-secret-from-secret-store",
-			SignatureExpire: 5 * time.Minute,
-			ServiceAuthKey:  "service-auth-secret-from-secret-store",
+			StorageRoot:        "/var/lib/qhpro/files",
+			CORSAllowedOrigins: []string{"https://qhpro.vn"},
+			SignatureKey:       "signature-secret-from-secret-store",
+			XorCryptKey:        "xor-secret-from-secret-store",
+			SignatureExpire:    5 * time.Minute,
+			ServiceAuthKey:     "service-auth-secret-from-secret-store",
 		},
 	}
 }
@@ -40,10 +44,11 @@ func TestRuntimeConfigValidateFailsClosedForMissingOrPlaceholderSecrets(t *testi
 		{name: "missing auth timeout", mutate: func(c *RuntimeConfig) { c.Auth.Timeout = 0 }, want: "auth.timeout must be positive"},
 		{name: "missing hub address", mutate: func(c *RuntimeConfig) { c.Hub.GRPCAddress = "" }, want: "hub.grpc_address is required"},
 		{name: "missing hub timeout", mutate: func(c *RuntimeConfig) { c.Hub.Timeout = 0 }, want: "hub.timeout must be positive"},
-		{name: "enabled grpc missing port", mutate: func(c *RuntimeConfig) { c.InternalGRPC = InternalGRPCConfig{Enabled: true} }, want: "internal_grpc.port is required"},
-		{name: "invalid grpc port", mutate: func(c *RuntimeConfig) { c.InternalGRPC.Port = "70000" }, want: "between 1 and 65535"},
 		{name: "missing jwt key", mutate: func(c *RuntimeConfig) { c.JWTKey = "" }, want: "jwt.key-generate is required"},
 		{name: "legacy jwt placeholder", mutate: func(c *RuntimeConfig) { c.JWTKey = "key-generate-jwt-token-authentication" }, want: "known insecure placeholder"},
+		{name: "missing storage root", mutate: func(c *RuntimeConfig) { c.FileService.StorageRoot = "" }, want: "file.storage_root is required"},
+		{name: "missing CORS origins", mutate: func(c *RuntimeConfig) { c.FileService.CORSAllowedOrigins = nil }, want: "file.cors_allowed_origins is required"},
+		{name: "invalid CORS origin", mutate: func(c *RuntimeConfig) { c.FileService.CORSAllowedOrigins = []string{"*"} }, want: "invalid origin"},
 		{name: "missing signature", mutate: func(c *RuntimeConfig) { c.FileService.SignatureKey = "" }, want: "file.signature_key is required"},
 		{name: "legacy signature placeholder", mutate: func(c *RuntimeConfig) { c.FileService.SignatureKey = "key-signature" }, want: "known insecure placeholder"},
 		{name: "legacy xor placeholder", mutate: func(c *RuntimeConfig) { c.FileService.XorCryptKey = "key-encode-decode" }, want: "known insecure placeholder"},
@@ -63,5 +68,19 @@ func TestRuntimeConfigValidateFailsClosedForMissingOrPlaceholderSecrets(t *testi
 				t.Fatalf("Validate() error = %v, want containing %q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestConfigStringListNormalizesCommaSeparatedRuntimeOverride(t *testing.T) {
+	// Environment values are exposed to Viper as one string. The config owner
+	// normalizes that representation so deployed FILE_CORS_ALLOWED_ORIGINS can
+	// use the conventional comma-separated form.
+	viper.Set("file.cors_allowed_origins", "https://qhpro.vn, https://admin.bdspro.com,https://qhpro.vn")
+	t.Cleanup(func() { viper.Set("file.cors_allowed_origins", nil) })
+
+	got := configStringList("file.cors_allowed_origins")
+	want := []string{"https://qhpro.vn", "https://admin.bdspro.com"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("configStringList() = %#v, want %#v", got, want)
 	}
 }

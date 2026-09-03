@@ -10,13 +10,22 @@ const MaxActorTextLength = 128
 
 // Actor is the authenticated human identity carried by a request.
 type Actor struct {
-	AuthID         uint64
-	ProfileID      uint64
-	OriginID       uint64
+	// AuthID nhận diện phương thức/tài khoản đăng nhập; không dùng làm owner
+	// profile, subscription hay quota.
+	AuthID uint64
+	// ProfileID là human actor canonical dùng cho ownership và audit.
+	ProfileID uint64
+	// OriginID là identity tích hợp/CRM legacy; không dùng làm billing subject.
+	OriginID uint64
+	// OrganizationID là organization context đã được token xác thực. Việc dùng
+	// organization làm billing/quota subject vẫn cần role evidence tương ứng.
 	OrganizationID *uint64
-	SessionID      uint64
-	Role           string
-	TokenType      string
+	// SessionID nhận diện phiên đăng nhập; không phải business owner.
+	SessionID uint64
+	// Role là evidence đã xác thực tại thời điểm phát token, không phải permission
+	// catalog và không được client tự gửi để nâng quyền.
+	Role      string
+	TokenType string
 }
 
 type actorContextKey struct{}

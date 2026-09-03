@@ -20,7 +20,12 @@ const (
 	maxHTTPOverheadBytes = 1 << 20
 )
 
-type ownedFiles interface {
+type fileOperations interface {
+	UploadFile(
+		context.Context,
+		filecontent.UploadInput,
+	) (filecontent.SavedFile, error)
+
 	PutOwnedFile(
 		context.Context,
 		filecontent.PutOwnedInput,
@@ -28,12 +33,12 @@ type ownedFiles interface {
 }
 
 type Handler struct {
-	files ownedFiles
+	files fileOperations
 	auth  serviceauth.Verifier
 }
 
 func NewHandler(
-	files ownedFiles,
+	files fileOperations,
 	auth serviceauth.Verifier,
 ) *Handler {
 	return &Handler{

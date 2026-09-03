@@ -17,6 +17,13 @@ func usesReportTargetRuntime(fullMethod string) bool {
 	return fullMethod == tqdpb.MapWorkspaceService_CreateGeneratedReport_FullMethodName
 }
 
+func usesCanonicalTargetRuntime(fullMethod string) bool {
+	return usesReportTargetRuntime(fullMethod) ||
+		fullMethod == tqdpb.AdminUsageService_ListUsage_FullMethodName ||
+		fullMethod == tqdpb.AdminUsageService_ReconcileUsage_FullMethodName ||
+		fullMethod == tqdpb.ProfileUsageService_GetMyGeneratedReportUsage_FullMethodName
+}
+
 // buildReportTargetOperationInterceptor binds the contract-owned operation only
 // for the canonical Generated Report RPC. Other TQD RPCs keep their existing
 // operation behavior until migrated independently.

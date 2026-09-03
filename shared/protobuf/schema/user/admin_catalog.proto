@@ -76,6 +76,8 @@ message CatalogPlanVersion {
   repeated CatalogEntitlement entitlements = 13;
   repeated CatalogPriceItem prices = 14;
   repeated CatalogOperationPolicy operations = 15;
+  int32 tier_rank = 16;
+  int32 subscription_term_days = 17;
 }
 
 message CatalogEntitlement {

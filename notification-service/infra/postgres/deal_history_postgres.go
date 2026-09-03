@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"notification/internal/domain"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +13,7 @@ type dealHistoryPostgres struct {
 	db *gorm.DB
 }
 
-func NewDealHistoryPostgres(db *gorm.DB) repo.DealHistoryRepository {
+func NewDealHistoryPostgres(db *gorm.DB) usecase.DealHistoryStore {
 	return &dealHistoryPostgres{db: db}
 }
 

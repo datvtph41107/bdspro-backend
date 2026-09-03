@@ -379,29 +379,12 @@ func (h *AuthHandler) VerifyRecovery(ctx context.Context, req *authpb.VerifyOTPR
 		ClientPublicKey: req.ClientPublicKey,
 	}
 
-	_, err := h.AuthUsecase.VerifyRecovery(ctx, *dto)
+	result, err := h.AuthUsecase.VerifyRecovery(ctx, *dto)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert DTO response to proto response
-	// response := &authpb.AuthSuccessResponse{
-	// 	AuthId:           result.AuthID,
-	// 	ProfileId:        result.ProfileID,
-	// 	AccessToken:      result.AccessToken,
-	// 	RefreshToken:     result.RefreshToken,
-	// 	FullName:         result.Username,
-	// 	OrganizationId:   result.OrganizationID,
-	// 	Role:             result.Role,
-	// 	PasswordAuthId:   result.PasswordAuthId,
-	// 	ReferralCode:     result.ReferralCode,
-	// 	RequireFullname:  result.RequireFullname,
-	// 	TempToken:        result.TempToken,
-	// 	EncryptedAuthKey: result.EncryptedAuthKey,
-	// 	ServerPublicKey:  result.ServerPublicKey,
-	// }
-
-	return nil, nil
+	return mapAuthSuccessResponse(result), nil
 }
 
 // @Summary Gửi lại OTP

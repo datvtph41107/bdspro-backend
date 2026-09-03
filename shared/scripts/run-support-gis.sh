@@ -40,7 +40,6 @@ fi
 ALL_SVCS=(
   "auth|auth-grpc|8216"
   "user|user-grpc|8201"
-  "user-http|user-http|8001"
   "gateway|gateway-http|8000"
   "crm|crm|8206"
   "bdspro|bdspro-grpc|8202"

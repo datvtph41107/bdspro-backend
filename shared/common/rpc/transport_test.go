@@ -3,7 +3,6 @@ package rpc
 import (
 	"common/identity"
 	"common/request"
-	"common/trust"
 	"context"
 	"testing"
 	"time"
@@ -14,17 +13,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func transportTestConfig(now time.Time, mode trust.Mode) TransportConfig {
-	return TransportConfig{Trust: trust.Config{
-		ServiceID:                  "gateway-service",
-		Secret:                     "test-secret",
-		VerificationSecrets:        map[string]string{"gateway-service": "test-secret"},
-		VerificationKeysConfigured: true,
-		Mode:                       mode,
-		MaxAge:                     30 * time.Second,
-		ClockSkew:                  5 * time.Second,
-		Now:                        func() time.Time { return now },
-	}}
+func transportTestConfig(now time.Time, requireServiceAssertion bool) TransportConfig {
+	return TransportConfig{
+		ServiceAssertion: ServiceAssertionConfig{
+			ServiceID:                  "gateway-service",
+			Secret:                     "test-secret",
+			VerificationSecrets:        map[string]string{"gateway-service": "test-secret"},
+			VerificationKeysConfigured: true,
+			MaxAge:                     30 * time.Second,
+			ClockSkew:                  5 * time.Second,
+			Now:                        func() time.Time { return now },
+		},
+		RequireServiceAssertion: requireServiceAssertion,
+	}
 }
 
 func TestWithOutgoingContextPreservesExistingAndSignsCanonicalMetadata(t *testing.T) {
@@ -40,7 +41,7 @@ func TestWithOutgoingContextPreservesExistingAndSignsCanonicalMetadata(t *testin
 		t.Fatal(err)
 	}
 
-	out, err := WithOutgoingContext(ctx, "/test.Service/Call", transportTestConfig(now, trust.ModeEnforce))
+	out, err := WithOutgoingContext(ctx, "/test.Service/Call", transportTestConfig(now, true))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,20 +55,20 @@ func TestWithOutgoingContextPreservesExistingAndSignsCanonicalMetadata(t *testin
 	if got := md.Get(RequestIDMetadataKey); len(got) != 1 || got[0] != "req_123" {
 		t.Fatalf("request = %v", got)
 	}
-	if _, err := trust.Verify("/test.Service/Call", md, transportTestConfig(now, trust.ModeEnforce).Trust, QHPROMetadataContract()); err != nil {
+	if _, err := VerifyServiceAssertion("/test.Service/Call", md, transportTestConfig(now, true).ServiceAssertion); err != nil {
 		t.Fatalf("Verify() error = %v", err)
 	}
 }
 
 func TestPrepareIncomingContextVerifiedRestoresCanonicalState(t *testing.T) {
 	now := time.Unix(1_700_000_000, 0)
-	cfg := transportTestConfig(now, trust.ModeEnforce)
+	cfg := transportTestConfig(now, true)
 	md := metadata.Pairs(
 		RequestIDMetadataKey, "req_123",
 		CallerKindMetadataKey, string(identity.CallerUser),
 		ProfileIDMetadataKey, "42",
 	)
-	if err := trust.Sign("/test.Service/Call", md, cfg.Trust, QHPROMetadataContract()); err != nil {
+	if err := SignServiceAssertion("/test.Service/Call", md, cfg.ServiceAssertion); err != nil {
 		t.Fatal(err)
 	}
 	ctx := metadata.NewIncomingContext(context.Background(), md)
@@ -86,16 +87,16 @@ func TestPrepareIncomingContextVerifiedRestoresCanonicalState(t *testing.T) {
 	if !ok || caller.Kind != identity.CallerUser {
 		t.Fatalf("caller = %#v, %v", caller, ok)
 	}
-	if !trust.IsVerified(bound) {
+	if _, ok := identity.ServiceCallerFromContext(bound); !ok {
 		t.Fatal("transport caller is not verified")
 	}
 }
 
 func TestPrepareIncomingContextAuditDoesNotPromoteUnsignedIdentity(t *testing.T) {
-	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), trust.ModeAudit)
-	cfg.Trust.Secret = ""
-	cfg.Trust.VerificationSecrets = nil
-	cfg.Trust.VerificationKeysConfigured = false
+	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), false)
+	cfg.ServiceAssertion.Secret = ""
+	cfg.ServiceAssertion.VerificationSecrets = nil
+	cfg.ServiceAssertion.VerificationKeysConfigured = false
 	md := metadata.Pairs(
 		RequestIDMetadataKey, "req_123",
 		CallerKindMetadataKey, string(identity.CallerUser),
@@ -111,14 +112,13 @@ func TestPrepareIncomingContextAuditDoesNotPromoteUnsignedIdentity(t *testing.T)
 	if _, ok := identity.ActorFromContext(bound); ok {
 		t.Fatal("unsigned actor was promoted")
 	}
-	caller, ok := trust.FromContext(bound)
-	if !ok || caller.Level != trust.LevelLegacyUnverified {
-		t.Fatalf("transport caller = %#v, %v", caller, ok)
+	if caller, ok := identity.ServiceCallerFromContext(bound); ok {
+		t.Fatalf("unverified transport metadata created verified service caller: %#v", caller)
 	}
 }
 
 func TestPrepareIncomingContextEnforceRejectsUnsignedBusinessRPC(t *testing.T) {
-	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), trust.ModeEnforce)
+	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), true)
 	_, err := PrepareIncomingContext(
 		metadata.NewIncomingContext(context.Background(), metadata.MD{}),
 		"/test.Service/Call",
@@ -130,7 +130,7 @@ func TestPrepareIncomingContextEnforceRejectsUnsignedBusinessRPC(t *testing.T) {
 }
 
 func TestPrepareIncomingContextAllowsUnsignedHealthOnlyWithoutPrivilege(t *testing.T) {
-	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), trust.ModeEnforce)
+	cfg := transportTestConfig(time.Unix(1_700_000_000, 0), true)
 	if _, err := PrepareIncomingContext(
 		metadata.NewIncomingContext(context.Background(), metadata.MD{}),
 		"/grpc.health.v1.Health/Check", cfg,
@@ -153,7 +153,7 @@ func TestUnaryClientInterceptorUsesCanonicalOutgoingContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	called := false
-	err = UnaryClientInterceptor(transportTestConfig(now, trust.ModeEnforce))(
+	err = UnaryClientInterceptor(transportTestConfig(now, true))(
 		ctx, "/test.Service/Call", nil, nil, nil,
 		func(callCtx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
 			called = true
@@ -161,7 +161,7 @@ func TestUnaryClientInterceptorUsesCanonicalOutgoingContext(t *testing.T) {
 			if !ok {
 				t.Fatal("metadata missing")
 			}
-			if _, verifyErr := trust.Verify(method, md, transportTestConfig(now, trust.ModeEnforce).Trust, QHPROMetadataContract()); verifyErr != nil {
+			if _, verifyErr := VerifyServiceAssertion(method, md, transportTestConfig(now, true).ServiceAssertion); verifyErr != nil {
 				t.Fatalf("verify error = %v", verifyErr)
 			}
 			return nil
@@ -233,7 +233,7 @@ func TestStreamClientInterceptorUsesSameSignedMetadataContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	called := false
-	stream, err := StreamClientInterceptor(transportTestConfig(now, trust.ModeEnforce))(
+	stream, err := StreamClientInterceptor(transportTestConfig(now, true))(
 		ctx, &grpc.StreamDesc{}, nil, "/test.Service/Watch",
 		func(callCtx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 			called = true
@@ -241,7 +241,7 @@ func TestStreamClientInterceptorUsesSameSignedMetadataContract(t *testing.T) {
 			if !ok {
 				t.Fatal("metadata missing")
 			}
-			if _, verifyErr := trust.Verify(method, md, transportTestConfig(now, trust.ModeEnforce).Trust, QHPROMetadataContract()); verifyErr != nil {
+			if _, verifyErr := VerifyServiceAssertion(method, md, transportTestConfig(now, true).ServiceAssertion); verifyErr != nil {
 				t.Fatalf("verify error = %v", verifyErr)
 			}
 			return &testClientStream{
@@ -256,13 +256,13 @@ func TestStreamClientInterceptorUsesSameSignedMetadataContract(t *testing.T) {
 
 func TestStreamServerInterceptorRestoresSameCanonicalContext(t *testing.T) {
 	now := time.Unix(1_700_000_000, 0)
-	cfg := transportTestConfig(now, trust.ModeEnforce)
+	cfg := transportTestConfig(now, true)
 	md := metadata.Pairs(
 		RequestIDMetadataKey, "req_stream",
 		CallerKindMetadataKey, string(identity.CallerUser),
 		ProfileIDMetadataKey, "42",
 	)
-	if err := trust.Sign("/test.Service/Watch", md, cfg.Trust, QHPROMetadataContract()); err != nil {
+	if err := SignServiceAssertion("/test.Service/Watch", md, cfg.ServiceAssertion); err != nil {
 		t.Fatal(err)
 	}
 	stream := &testServerStream{

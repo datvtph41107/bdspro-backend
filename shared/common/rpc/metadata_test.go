@@ -118,3 +118,59 @@ func TestRestoreIdentityRejectsActorWithNonUserCaller(t *testing.T) {
 		t.Fatalf("code = %v, err = %v", status.Code(err), err)
 	}
 }
+
+func TestCallerMetadataCodecRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	want := identity.Caller{
+		Kind:      identity.CallerUser,
+		APIKeyID:  8,
+		APIKeyApp: "partner-app",
+	}
+
+	md := metadata.MD{}
+	AppendCallerMetadata(md, want)
+
+	got, ok, err := CallerFromMetadata(md)
+	if err != nil || !ok || got != want {
+		t.Fatalf(
+			"CallerFromMetadata() = %#v, %v, %v; want %#v, true, nil",
+			got,
+			ok,
+			err,
+			want,
+		)
+	}
+}
+
+func TestCallerMetadataCodecRejectsIncompleteAPIKeyEvidence(t *testing.T) {
+	t.Parallel()
+
+	md := metadata.Pairs(
+		CallerKindMetadataKey,
+		string(identity.CallerAnonymous),
+		APIKeyIDMetadataKey,
+		"42",
+	)
+
+	if _, _, err := CallerFromMetadata(md); err == nil {
+		t.Fatal("incomplete caller metadata was accepted")
+	}
+}
+
+func TestCallerMetadataCodecRejectsNonCanonicalText(t *testing.T) {
+	t.Parallel()
+
+	md := metadata.Pairs(
+		CallerKindMetadataKey,
+		string(identity.CallerAPIKey),
+		APIKeyIDMetadataKey,
+		"42",
+		APIKeyAppMetadataKey,
+		" partner-app ",
+	)
+
+	if _, _, err := CallerFromMetadata(md); err == nil {
+		t.Fatal("caller metadata with surrounding whitespace was accepted")
+	}
+}

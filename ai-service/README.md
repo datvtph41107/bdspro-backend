@@ -26,9 +26,8 @@ source venv/bin/activate  # Linux/Mac
 # 2. Install
 pip install -r requirements.txt
 
-# 3. Configure
-cp .env.example .env
-# Edit .env: Add OPENAI_API_KEY
+# 3. Configure service owner
+# Edit ai-service/.env: Add OPENAI_API_KEY khi cần chạy AI thật
 
 # 4. Embed context (first time only)
 python scripts/embed_context.py
@@ -91,7 +90,7 @@ ai-service/
 ├── main.py              # FastAPI app entry
 ├── config.py            # Configuration
 ├── requirements.txt     # Dependencies
-├── .env.example         # Environment template
+├── .env                 # Runtime environment của AI service
 ├── app/
 │   ├── api/
 │   │   ├── http/        # REST endpoints
@@ -135,7 +134,7 @@ docker run -d \
 ### Environment Variables
 
 ```bash
-# .env
+# ai-service/.env
 OPENAI_API_KEY=sk-your-key-here
 EMBEDDING_MODEL=text-embedding-3-small
 LLM_MODEL=gpt-4-turbo-preview
@@ -206,4 +205,3 @@ OpenAI Costs:
 - Query (GPT-4): ~$0.01/query
 - Monthly (100 queries/day): ~$30
 ```
-

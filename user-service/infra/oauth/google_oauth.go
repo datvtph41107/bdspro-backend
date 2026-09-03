@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"user/config"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/repo"
@@ -151,7 +151,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	}
 
 	if existingUser == nil {
-		oauthUser := &domain.AuthMethod{
+		oauthUser := &auth.AuthMethod{
 			Provider: "GOOGLE",
 			AuthName: oauthId,
 			FullName: fullName,

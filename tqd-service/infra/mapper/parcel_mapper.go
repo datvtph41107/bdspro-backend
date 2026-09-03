@@ -13,7 +13,7 @@ import (
 	"tqd/internal/dto"
 	qh_dto "tqd/internal/dto/qh"
 	"tqd/internal/enums"
-	"tqd/internal/modules/resolver/layer_resolver/types"
+	"tqd/internal/usecase/resolver/layer_resolver/types"
 )
 
 type ParcelMapper struct {

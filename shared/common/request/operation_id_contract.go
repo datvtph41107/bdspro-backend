@@ -5,7 +5,11 @@ import (
 	"strings"
 )
 
-const MaxOperationIDLength = 128
+const (
+	OperationIDHeader      = "X-Operation-ID"
+	OperationIDMetadataKey = "x-operation-id"
+	MaxOperationIDLength   = 128
+)
 
 type OperationIDSource string
 

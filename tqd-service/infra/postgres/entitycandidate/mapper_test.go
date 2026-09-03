@@ -3,7 +3,7 @@ package entitycandidate
 import (
 	"testing"
 
-	discoverydomain "tqd/internal/modules/discovery/domain"
+	discoverydomain "tqd/internal/domain/discovery/model"
 )
 
 func TestBuildKeepsCanonicalLinksAndCapabilitiesConsistent(t *testing.T) {

@@ -6,39 +6,31 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
-	process "common/process"
-	"tqd/config"
-	"tqd/infra/db"
-	handler_grpc "tqd/infra/handler/grpc"
-	planningclient_postgres "tqd/infra/postgres/planningclient"
-	publiccontent_postgres "tqd/infra/postgres/publiccontent"
-	planningclient_application "tqd/internal/modules/planningclient/application"
-	"tqd/wire"
 
 	_db "common/db"
-	quota "common/legacyquota"
 	_middleware "common/middleware"
+	process "common/process"
 	_redis "common/redis"
-	"common/transporttrust"
-
+	"common/rpcenv"
+	assistantpb "pb/types/assistant"
 	tqdpb "pb/types/tqd"
+	"tqd/config"
+	tqddb "tqd/infra/db"
+	infra_rpc "tqd/infra/rpc"
+	"tqd/initial"
+	"tqd/wire"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 )
 
-// grpcMaxMsgBytes — default gRPC ~4MB; ImportGeoJSON gửi file_content lớn từ gateway.
-// Đồng bộ với gateway-service/service/tqd.go (TqdGRPCMaxMsgBytes).
+// grpcMaxMsgBytes — default gRPC ~4MB; ImportGeoJSON sends large file_content
+// from gateway. Keep this aligned with gateway-service TQD client limits.
 const grpcMaxMsgBytes = 512 << 20
 
-// grpcCmd represents the grpc command
 var grpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "Start gRPC server",
@@ -57,149 +49,159 @@ func init() {
 	grpcCmd.Flags().StringVar(&GrpcHost, "host", "", "gRPC server host (default: all interfaces)")
 }
 
-func RunGRPCServer() error {
-	return runGRPCServer()
-}
+func RunGRPCServer() error { return runGRPCServer() }
 
 func runGRPCServer() error {
 	log.Println("Starting TQD gRPC Server...")
 
-	// Load configuration
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadRuntimeConfig()
 	if err != nil {
-		return fmt.Errorf("load TQD config: %w", err)
+		return fmt.Errorf("load TQD runtime config: %w", err)
+	}
+	if cfg == nil || cfg.Properties == nil {
+		return errors.New("TQD runtime config is incomplete")
 	}
 	if GrpcPort > 0 {
-		cfg.Server.GrpcPort = GrpcPort
+		cfg.Properties.Server.GrpcPort = GrpcPort
 	}
 
-	os.Setenv("TZ", "Europe/London")
-	time.Local = time.FixedZone("Europe/London", 7*60*60)
-
-	app, cleanup, err := wire.InitializeApp()
+	// Process root owns all long-lived resources. Wire composes only business
+	// adapters/usecases/handlers from these already-open resources.
+	database, err := _db.Open(_db.DatabaseConfig{DSN: cfg.DatabaseDSN})
 	if err != nil {
-		return fmt.Errorf("failed to initialize app: %v", err)
+		return fmt.Errorf("open TQD postgres: %w", err)
+	}
+	sqlDB, err := database.DB()
+	if err != nil {
+		return fmt.Errorf("access TQD postgres pool: %w", err)
+	}
+	defer sqlDB.Close()
+
+	schemaPolicy, err := _db.LoadSchemaPolicy("tqd")
+	if err != nil {
+		return fmt.Errorf("load TQD schema policy: %w", err)
+	}
+	log.Printf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	if err := _db.ApplySchemaPolicy(database, schemaPolicy, tqddb.AutoMigrate); err != nil {
+		return fmt.Errorf("apply TQD schema policy: %w", err)
+	}
+
+	redisService, err := _redis.Open(_redis.Config{
+		Address: cfg.Redis.Address, Password: cfg.Redis.Password, DB: cfg.Redis.DB,
+	})
+	if err != nil {
+		return fmt.Errorf("open TQD redis: %w", err)
+	}
+	defer redisService.Close()
+	if redisService.Client == nil {
+		return errors.New("TQD redis client is unavailable")
+	}
+
+	userRPC, closeUser, err := infra_rpc.OpenUserRPCClient(cfg.RPC.User)
+	if err != nil {
+		return fmt.Errorf("open User gRPC client: %w", err)
+	}
+	defer closeUser()
+
+	authRPC, closeAuth, err := infra_rpc.OpenAuthRPCClient(cfg.RPC.Auth)
+	if err != nil {
+		return fmt.Errorf("open Auth gRPC client: %w", err)
+	}
+	defer closeAuth()
+
+	var assistantRPC assistantpb.AssistantServiceClient
+	closeAssistant := func() {}
+	if cfg.Classify.Enabled {
+		assistantRPC, closeAssistant, err = infra_rpc.OpenAssistantRPCClient(cfg.RPC.Assistant)
+		if err != nil {
+			return fmt.Errorf("open Assistant gRPC client: %w", err)
+		}
+	}
+	defer closeAssistant()
+
+	app, cleanup, err := wire.InitializeApp(
+		database,
+		redisService,
+		userRPC,
+		authRPC,
+		assistantRPC,
+		cfg,
+	)
+	if err != nil {
+		return fmt.Errorf("initialize TQD app: %w", err)
 	}
 	defer cleanup()
 	if app == nil {
 		return errors.New("TQD app is nil after InitializeApp")
 	}
 
-	// The SEO projection service uses the same authoritative public-content
-	// repository as the TQD HTTP projection, but is registered only on the
-	// internal gRPC server. It is initialized outside the legacy Wire graph so
-	// Gate 2.2B remains additive and does not disturb existing handlers.
-	projectionDB, err := _db.NewDB()
-	if err != nil {
-		return fmt.Errorf("initialize SEO projection database: %w", err)
-	}
-	projectionSQLDB, err := projectionDB.DB()
-	if err != nil {
-		return fmt.Errorf("access SEO projection database pool: %w", err)
-	}
-	defer func() {
-		if closeErr := projectionSQLDB.Close(); closeErr != nil {
-			log.Printf("close TQD projection database: %v", closeErr)
-		}
-	}()
-	seoProjectionRepository := publiccontent_postgres.NewRepository(projectionDB)
-	seoProjectionGrpcHandler := handler_grpc.NewSeoProjectionGrpcHandler(seoProjectionRepository)
-	planningClientRepository := planningclient_postgres.NewRepository(projectionDB)
-	planningClientService := planningclient_application.NewService(planningClientRepository, seoProjectionRepository)
-	planningClientGrpcHandler := handler_grpc.NewPlanningClientGrpcHandler(planningClientService)
-
-	db.AutoMigrate()
-
-	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Server.GrpcPort)
+	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Properties.Server.GrpcPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("listen TQD gRPC on %s: %w", addr, err)
 	}
 
-	// =================== QUOTA INTERCEPTOR INIT ===================
-	var quotaInterceptor grpc.UnaryServerInterceptor
-	var legacyQuotaRedis *_redis.RedisService
-	defer func() {
-		if legacyQuotaRedis != nil && legacyQuotaRedis.Client != nil {
-			if closeErr := legacyQuotaRedis.Client.Close(); closeErr != nil {
-				log.Printf("close legacy TQD quota Redis client: %v", closeErr)
-			}
-		}
-	}()
-
-	// Khởi tạo quota logger
-	if err := quota.InitQuotaLogger("./app/logs/quota", true); err != nil {
-		log.Printf("Failed to init quota logger: %v", err)
-	}
-
-	quotaCfg, err := quota.LoadQuotaConfig()
-	if err == nil && quotaCfg != nil && quotaCfg.Enabled {
-		log.Println("[QUOTA] Initializing quota interceptor...")
-
-		redisService := _redis.NewRedisService()
-		legacyQuotaRedis = redisService
-		storage := quota.NewRedisQuotaStorage(redisService)
-		policy, err := quota.NewDefaultPolicyEngine(quotaCfg.PolicyFile)
-		if err != nil {
-			log.Printf("[QUOTA] Failed to load policy: %v, quota disabled", err)
-		} else {
-			qm := quota.NewQuotaManager(storage, policy)
-
-			extractUserID := func(ctx context.Context) string {
-				if md, ok := metadata.FromIncomingContext(ctx); ok {
-					// Ưu tiên profileId
-					if vals := md.Get("profileId"); len(vals) > 0 && vals[0] != "" {
-						return vals[0]
-					}
-					if vals := md.Get("originId"); len(vals) > 0 && vals[0] != "" {
-						return vals[0]
-					}
-					if vals := md.Get("authId"); len(vals) > 0 && vals[0] != "" {
-						return vals[0]
-					}
-				}
-				return ""
-			}
-
-			quotaInterceptor = quota.UnaryServerInterceptor(qm, extractUserID)
-			log.Println("✅ Quota interceptor enabled for tqd-service")
-		}
-	} else {
-		log.Println("[QUOTA] Quota disabled or config error")
-	}
-
-	if quotaInterceptor == nil {
-		quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-			return handler(ctx, req)
-		}
-	}
-
-	legacyQuotaInterceptor := quotaInterceptor
-	quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if info != nil && usesReportTargetRuntime(info.FullMethod) {
-			return handler(ctx, req)
-		}
-		return legacyQuotaInterceptor(ctx, req, info, handler)
-	}
-
-	reportTargetOperationInterceptor :=
-		buildReportTargetOperationInterceptor()
-	trustConfig := transporttrust.ConfigFromEnv()
-
+	reportTargetOperationInterceptor := buildReportTargetOperationInterceptor()
+	transportConfig := rpcenv.LoadTransportConfig()
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
-		grpc.ChainUnaryInterceptor(
-			targetIngress(trustConfig),
-			reportTargetOperationInterceptor,
-			quotaInterceptor,
-		),
-		grpc.ChainStreamInterceptor(
-			_middleware.ParseGrpcMetadataContextStreamMiddleware,
-		),
+		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), reportTargetOperationInterceptor),
+		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
+	)
+	registerTQDServices(s, app)
+	reflection.Register(s)
+
+	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopSignals()
+	processCtx, processCancel := context.WithCancel(signalCtx)
+	defer processCancel()
+
+	closeReportTarget := func() {}
+	if userRPC != nil && userRPC.AccessClient != nil {
+		if closeTarget, targetErr := startReportTarget(
+			processCtx,
+			database,
+			redisService.Client,
+			userRPC.AccessClient,
+			app.WorkspaceMapGrpcHandler,
+			cfg.Report,
+			nil,
+		); targetErr != nil {
+			// Generated Report is capability-local. Planning/GIS/discovery remain
+			// available while report creation fails closed.
+			log.Printf("[REPORT-TARGET] capability unavailable: %v", targetErr)
+		} else {
+			closeReportTarget = closeTarget
+		}
+	}
+
+	actors := make([]process.Actor, 0, 1)
+	if app.QHPlanningClassifyWorker != nil {
+		actors = append(actors, process.ActorFunc(app.QHPlanningClassifyWorker.Run))
+	}
+
+	log.Printf("TQD gRPC listening on %s", addr)
+	lifecycleErr := process.Run(
+		processCtx,
+		processCancel,
+		s,
+		lis,
+		actors,
+		process.Config{GracefulStopTimeout: cfg.Shutdown},
 	)
 
-	// Register services
+	// process.Run cancels and joins registered actors. Report owns additional
+	// runners and exposes its own join barrier before process resources close.
+	closeReportTarget()
+	log.Println("TQD gRPC server exited")
+	if lifecycleErr != nil {
+		return fmt.Errorf("TQD gRPC lifecycle: %w", lifecycleErr)
+	}
+	return nil
+}
+
+func registerTQDServices(s *grpc.Server, app *initial.InitialApp) {
 	tqdpb.RegisterAmenityServiceServer(s, app.AmenityGrpcHandler)
 	tqdpb.RegisterContactLabelServiceServer(s, app.ContactLabelGrpcHandler)
 	tqdpb.RegisterDirectoryCategoryServiceServer(s, app.DirectoryCategoryGrpcHandler)
@@ -223,72 +225,15 @@ func runGRPCServer() error {
 	tqdpb.RegisterImportServiceServer(s, app.ImportGrpcHandler)
 	tqdpb.RegisterReportServiceServer(s, app.ReportGrpcHandler)
 	tqdpb.RegisterGisReportAdminServiceServer(s, app.GisReportAdminGrpcHandler)
+	tqdpb.RegisterAdminUsageServiceServer(s, app.AdminUsageGrpcHandler)
+	tqdpb.RegisterProfileUsageServiceServer(s, app.ProfileUsageGrpcHandler)
 	tqdpb.RegisterSubscriptionServiceServer(s, app.SubscriptionGrpcHandler)
 	tqdpb.RegisterTqdPublicServiceServer(s, app.TqdPublicService)
-	tqdpb.RegisterTqdSeoProjectionServiceServer(s, seoProjectionGrpcHandler)
-	tqdpb.RegisterPlanningClientServiceServer(s, planningClientGrpcHandler)
+	tqdpb.RegisterTqdSeoProjectionServiceServer(s, app.SeoProjectionGrpcHandler)
+	tqdpb.RegisterPlanningClientServiceServer(s, app.PlanningClientGrpcHandler)
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)
 	tqdpb.RegisterDiscoveryServiceServer(s, app.DiscoveryGrpcHandler)
 	tqdpb.RegisterRelatedEntityServiceServer(s, app.RelatedEntityGrpcHandler)
-
-	reflection.Register(s)
-
-	// Signals and Serve failure share one process cancellation domain.
-	signalCtx, stopSignals := signal.NotifyContext(
-		context.Background(),
-		syscall.SIGINT,
-		syscall.SIGTERM,
-	)
-	defer stopSignals()
-	processCtx, processCancel := context.WithCancel(signalCtx)
-	defer processCancel()
-
-	closeReportTarget := func() {}
-	if closeTarget, targetErr := startReportTarget(
-		processCtx,
-		projectionDB,
-		app.WorkspaceMapGrpcHandler,
-		nil,
-	); targetErr != nil {
-		// Generated Report is one TQD capability. A dependency failure here
-		// must not remove unrelated planning/GIS/discovery capabilities.
-		log.Printf("[REPORT-TARGET] capability unavailable: %v", targetErr)
-	} else {
-		closeReportTarget = closeTarget
-	}
-
-	actors := make([]process.Actor, 0, 1)
-	if app.QHPlanningClassifyWorker != nil {
-		actors = append(actors, process.ActorFunc(
-			app.QHPlanningClassifyWorker.Run,
-		))
-	}
-
-	log.Printf("gRPC Server listening on %s", addr)
-	lifecycleErr := process.Run(
-		processCtx,
-		processCancel,
-		s,
-		lis,
-		actors,
-		process.Config{GracefulStopTimeout: 10 * time.Second},
-	)
-
-	// process.Run has cancelled the process and waited for its actors. Only now
-	// may actor-owned outbound resources be released.
-	if app.QHPlanningClassifyWorker != nil {
-		if closeErr := app.QHPlanningClassifyWorker.Close(); closeErr != nil {
-			log.Printf("close TQD classify assistant client: %v", closeErr)
-		}
-	}
-	// Report cleanup then waits for Report-owned runners before dependency close.
-	closeReportTarget()
-	log.Println("gRPC server exited")
-
-	if lifecycleErr != nil {
-		return fmt.Errorf("gRPC server lifecycle: %w", lifecycleErr)
-	}
-	return nil
 }

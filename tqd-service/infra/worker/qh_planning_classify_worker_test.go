@@ -17,7 +17,7 @@ func (p *classifyUsecaseProbe) Close() error {
 
 func TestQHPlanningClassifyWorkerCloseDelegatesOwnedDependency(t *testing.T) {
 	probe := &classifyUsecaseProbe{}
-	worker := NewQHPlanningClassifyWorker(probe)
+	worker := NewQHPlanningClassifyWorker(probe, ClassifyWorkerConfig{Enabled: true})
 	if err := worker.Close(); err != nil {
 		t.Fatalf("Close() error = %v", err)
 	}

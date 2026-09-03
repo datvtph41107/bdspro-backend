@@ -45,6 +45,6 @@ func InitializeApp() (*gin.Engine, error) {
 }
 
 // InitializeRuntime khởi tạo runtime
-func InitializeRuntime() {
-	initial.InitializeRuntime()
+func InitializeRuntime() error {
+	return initial.InitializeRuntime()
 }

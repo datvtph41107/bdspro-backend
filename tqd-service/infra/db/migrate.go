@@ -1,105 +1,97 @@
+// Package db owns TQD's optional GORM bootstrap registry.
+//
+// Ordered production evolution is owned exclusively by tqd-service/migrate.
+// This registry is selected only through QHPRO_TQD_DB_SCHEMA_MODE=automigrate
+// and restores the development bootstrap capability of the legacy source.
 package db
 
 import (
-	"log"
+	"fmt"
+	"tqd/infra/postgres/generatedreport/job"
+	"tqd/infra/postgres/usage"
 	"tqd/internal/domain"
-	qh_domain "tqd/internal/domain/qh"
+	qh "tqd/internal/domain/qh"
 
-	_db "common/db"
+	"gorm.io/gorm"
 )
 
-// CheckPostGIS kiểm tra PostGIS đã cài trong DB hiện tại (trả version, installed).
-func CheckPostGIS() (version string, installed bool) {
-	var extVersion string
-	err := _db.DB.Raw(
-		`SELECT extversion FROM pg_extension WHERE extname = 'postgis'`,
-	).Scan(&extVersion).Error
-	if err != nil || extVersion == "" {
-		return "", false
-	}
-	var postgisVer string
-	_ = _db.DB.Raw(`SELECT PostGIS_Version()`).Scan(&postgisVer).Error
-	if postgisVer != "" {
-		return postgisVer, true
-	}
-	return extVersion, true
-}
-
-// EnsurePostGIS bật extension PostGIS và unaccent trước khi tạo cột geometry (AutoMigrate / raw SQL).
-func EnsurePostGIS() {
-	if ver, ok := CheckPostGIS(); ok {
-		log.Printf("✅ PostGIS đã có: %s", ver)
-	} else {
-		log.Println("⚠️  PostGIS chưa bật — thử CREATE EXTENSION postgis ...")
-		if err := _db.DB.Exec(`CREATE EXTENSION IF NOT EXISTS postgis`).Error; err != nil {
-			log.Printf("❌ không bật được PostGIS: %v", err)
+func AutoMigrate(database *gorm.DB) error {
+	return database.Transaction(func(tx *gorm.DB) error {
+		// Serialize bootstrap across concurrently starting local replicas. SQL
+		// migration mode never enters this transaction.
+		if err := tx.Exec(
+			"SELECT pg_advisory_xact_lock(hashtext(?))",
+			"qhpro:tqd:gorm-schema",
+		).Error; err != nil {
+			return fmt.Errorf("acquire TQD schema lock: %w", err)
 		}
-	}
+		for _, extension := range []string{"postgis", "unaccent"} {
+			if err := tx.Exec("CREATE EXTENSION IF NOT EXISTS " + extension).Error; err != nil {
+				return fmt.Errorf("ensure TQD extension %s: %w", extension, err)
+			}
+		}
 
-	log.Println("⚠️  Thử CREATE EXTENSION IF NOT EXISTS unaccent ...")
-	if err := _db.DB.Exec(`CREATE EXTENSION IF NOT EXISTS unaccent`).Error; err != nil {
-		log.Printf("❌ không bật được unaccent: %v", err)
-	}
-}
+		if err := tx.AutoMigrate(
+			// Directory and POI state.
+			&domain.PoiCategory{},
+			&domain.POI{},
+			&domain.POIMedia{},
+			&domain.OpenHour{},
+			&domain.Amenity{},
+			&domain.ContactLabel{},
+			&domain.DirectoryCategory{},
+			&domain.DirectorySource{},
+			&domain.DirectorySupplier{},
+			&domain.Feature{},
 
-func AutoMigrate() {
-	EnsurePostGIS()
-	_db.DB.AutoMigrate(
-		// Import error log — bảng theo dõi các batch insert thất bại
-		// &qh_domain.QHRegionImportErrorLog{},
+			// Administrative and planning state.
+			&domain.Province{},
+			&domain.Ward{},
+			&qh.QHLayerFamily{},
+			&qh.QHAuthorityIssuring{},
+			&qh.QHLayer{},
+			&qh.QHJurisdiction{},
+			&qh.QHLabel{},
+			&qh.QHLandUse{},
+			&qh.QHLayerLegend{},
+			&qh.QHRegion{},
+			&qh.QHRegionExtend{},
+			&qh.QHLabelLayer{},
+			&qh.QHLayerLandUse{},
+			&qh.QHLayerLegal{},
+			&qh.QHLayerResolverConfig{},
+			&qh.QHShape{},
+			&qh.Parcel{},
+			&qh.QHPlanningUse{},
+			&qh.QHParcelInfo{},
+			&qh.QHPlanningProject{},
+			&qh.QHPlanningDocument{},
+			&qh.QHPlanningEvent{},
+			&qh.QHPlanningRelation{},
+			&qh.QHLegalDocument{},
+			&qh.ProAIJob{},
 
-		// // POI related models
-		// &domain.POI{},
-		// &domain.PoiCategory{},
-		// &domain.OpenHour{},
-		// &domain.POIMedia{},
-		// // &domain.Feature{},
-
-		// // Amenity model
-		// &domain.Amenity{},
-
-		// // Contact Label model
-		// &domain.ContactLabel{},
-		// &domain.DirectoryCategory{},
-		// &domain.DirectorySource{},
-		// &domain.DirectorySupplier{},
-		// &qh_domain.Parcel{},
-		// &qh_domain.QHParcelInfo{},
-		// &qh_domain.QHLayer{},
-		// &qh_domain.QHJurisdiction{},
-		// &qh_domain.QHPlanningProject{},
-		// &qh_domain.QHRegion{},
-		// &qh_domain.QHRegionExtend{},
-		// // &qh_domain.QHRegionLabel{},
-		// &qh_domain.QHLabel{},
-		// &qh_domain.QHLabelLayer{},
-		// &qh_domain.QHShape{},
-		// &qh_domain.QHLayerFamily{},
-		// &qh_domain.QHLayerLegend{},
-		// // &qh_domain.LandUseCode{},
-		// // &qh_domain.LandUseGroup{},
-		// &domain.Province{},
-		// &domain.Ward{},
-		// &qh_domain.QHLayerLegal{},
-		// &qh_domain.QHLandUse{},
-		// &qh_domain.QHLayerResolverConfig{},
-		// &qh_domain.QHLayerLandUse{},
-		// &qh_domain.QHAuthorityIssuring{},
-		// &qh_domain.QHLayerLegend{},
-		// &qh_domain.QHAuditEntry{},
-		// &qh_domain.QHLifecycleTransition{},
-
-		// &qh_domain.QHUserFollowedParcel{},
-		// &qh_domain.QHUserReported{},
-		// &qh_domain.QHUserViewHistory{},
-		// &qh_domain.QHUserViewEvent{},
-
-		// &qh_domain.QHPlanningProject{},
-		// &qh_domain.QHPlanningDocument{},
-		&qh_domain.QHPlanningEvent{},
-		&qh_domain.QHPlanningRelation{},
-		&domain.Report{},
-		&domain.ReportEvent{},
-	// &domain.UserSubscription{},
-	)
+			// Audit, user interaction, report, and subscription state.
+			&qh.QHAuditEntry{},
+			&qh.QHRegionImportErrorLog{},
+			&qh.QHUserFollowedParcel{},
+			&qh.QHUserFollowedPlanningProject{},
+			&qh.QHUserReported{},
+			&qh.QHUserViewHistory{},
+			&qh.QHUserViewEvent{},
+			&domain.UserNotification{},
+			&domain.Report{},
+			&domain.ReportEvent{},
+			&domain.UserSubscription{},
+		); err != nil {
+			return fmt.Errorf("migrate TQD domain models: %w", err)
+		}
+		if err := postgresjob.AutoMigrate(tx); err != nil {
+			return fmt.Errorf("migrate generated-report jobs: %w", err)
+		}
+		if err := postgresusage.AutoMigrate(tx); err != nil {
+			return fmt.Errorf("migrate quota usage: %w", err)
+		}
+		return nil
+	})
 }

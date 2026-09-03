@@ -35,8 +35,15 @@ type BindEntry struct {
 }
 
 type InjectionConfig struct {
-	Packages []InjectionPackage  `yaml:"packages"`
-	Exclude  map[string][]string `yaml:"exclude"`
+	Packages      []InjectionPackage            `yaml:"packages"`
+	Exclude       map[string][]string           `yaml:"exclude"`
+	ScanExclude   map[string][]string           `yaml:"scan_exclude"`
+	ProcessInputs map[string]ProcessInputConfig `yaml:"process_inputs"`
+}
+
+type ProcessInputConfig struct {
+	Database bool `yaml:"database"`
+	Redis    bool `yaml:"redis"`
 }
 
 type InjectionPackage struct {
@@ -57,12 +64,12 @@ func main() {
 	}
 
 	wireFile := filepath.Join("wire", "wire.go")
-	injections, err := loadInjectionConfig(rootPackage)
+	injections, scanExclude, processInputs, err := loadGenerationConfig(rootPackage)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "load injection config:", err)
+		fmt.Fprintln(os.Stderr, "load wire generation config:", err)
 		os.Exit(1)
 	}
-	constructors, err := findNewFunctions(rootPackage, ".")
+	constructors, err := findNewFunctions(rootPackage, ".", scanExclude)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan constructors:", err)
 		os.Exit(1)
@@ -76,19 +83,19 @@ func main() {
 		}
 	}
 
-	binds, err := findBinds(".", rootPackage)
+	binds, err := findBinds(".", rootPackage, scanExclude)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan binds:", err)
 		os.Exit(1)
 	}
-	if err := writeWireFile(constructors, binds, injections, wireFile, moduleName, cleanupEnabled); err != nil {
+	if err := writeWireFile(constructors, binds, injections, wireFile, moduleName, cleanupEnabled, processInputs); err != nil {
 		fmt.Fprintln(os.Stderr, "write wire.go:", err)
 		os.Exit(1)
 	}
 
 	fmt.Println("✅ wire.go updated successfully")
 
-	cmd := exec.Command("wire")
+	cmd := exec.Command("wire", "gen")
 	cmd.Dir = filepath.Dir(wireFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -100,7 +107,7 @@ func main() {
 	fmt.Println("✅ wire generate successfully")
 }
 
-func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
+func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, error) {
 	functions := make(map[string]NewFunc)
 	fset := token.NewFileSet()
 
@@ -118,7 +125,8 @@ func findNewFunctions(rootPackage, root string) ([]NewFunc, error) {
 			if err != nil {
 				return err
 			}
-			if filepath.ToSlash(relative) == "wire" {
+			relativeSlash := filepath.ToSlash(relative)
+			if relativeSlash == "wire" || isScanExcluded(relativeSlash, excluded) {
 				return filepath.SkipDir
 			}
 
@@ -204,7 +212,7 @@ func hasWireCleanupResult(function *ast.FuncDecl) bool {
 	return ok && errType.Name == "error"
 }
 
-func findBinds(root, rootPackage string) ([]BindEntry, error) {
+func findBinds(root, rootPackage string, excluded []string) ([]BindEntry, error) {
 	bindPattern := regexp.MustCompile(`@bind:\s*([A-Za-z0-9_./-]+)`)
 	binds := make(map[string]BindEntry)
 	fset := token.NewFileSet()
@@ -216,6 +224,13 @@ func findBinds(root, rootPackage string) ([]BindEntry, error) {
 		if info.IsDir() {
 			name := info.Name()
 			if name == ".git" || name == "vendor" || name == "node_modules" {
+				return filepath.SkipDir
+			}
+			relative, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			if isScanExcluded(filepath.ToSlash(relative), excluded) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -333,25 +348,57 @@ func scriptDir() string {
 	return filepath.Dir(filename)
 }
 
-func loadInjectionConfig(service string) ([]InjectionPackage, error) {
+func loadGenerationConfig(service string) ([]InjectionPackage, []string, ProcessInputConfig, error) {
 	configPath := filepath.Join(scriptDir(), "injection_clients.yml")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil, nil, ProcessInputConfig{}, nil
 		}
-		return nil, fmt.Errorf("read %s: %w", configPath, err)
+		return nil, nil, ProcessInputConfig{}, fmt.Errorf("read %s: %w", configPath, err)
 	}
 
 	var config InjectionConfig
 	if err := yaml.Unmarshal(content, &config); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", configPath, err)
+		return nil, nil, ProcessInputConfig{}, fmt.Errorf("parse %s: %w", configPath, err)
 	}
 
+	service = strings.TrimSpace(service)
 	return filterInjectionPackages(
 		config.Packages,
-		config.Exclude[strings.TrimSpace(service)],
-	), nil
+		config.Exclude[service],
+	), normalizeScanExclude(config.ScanExclude[service]), config.ProcessInputs[service], nil
+}
+
+func normalizeScanExclude(items []string) []string {
+	seen := make(map[string]struct{}, len(items))
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		item = strings.Trim(strings.TrimSpace(filepath.ToSlash(item)), "/")
+		if item == "" || item == "." {
+			continue
+		}
+		if _, exists := seen[item]; exists {
+			continue
+		}
+		seen[item] = struct{}{}
+		result = append(result, item)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func isScanExcluded(relative string, excluded []string) bool {
+	relative = strings.Trim(strings.TrimSpace(filepath.ToSlash(relative)), "/")
+	if relative == "" || relative == "." {
+		return false
+	}
+	for _, item := range excluded {
+		if relative == item || strings.HasPrefix(relative, item+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func filterInjectionPackages(
@@ -402,7 +449,7 @@ func filterInjectionPackages(
 	return filtered
 }
 
-func writeWireFile(functions []NewFunc, binds []BindEntry, injections []InjectionPackage, wireFile, moduleName string, cleanupEnabled bool) error {
+func writeWireFile(functions []NewFunc, binds []BindEntry, injections []InjectionPackage, wireFile, moduleName string, cleanupEnabled bool, processInputs ProcessInputConfig) error {
 	if err := os.MkdirAll(filepath.Dir(wireFile), 0o755); err != nil {
 		return err
 	}
@@ -426,9 +473,25 @@ package wire
 import (
 	"github.com/google/wire"
 	_db "common/db"
-	_provider "common/provider"
-	%s %q
-`, initialAlias, initialPackage); err != nil {
+`); err != nil {
+		return err
+	}
+	if !processInputs.Redis {
+		if _, err := writer.WriteString("\t_provider \"common/provider\"\n"); err != nil {
+			return err
+		}
+	}
+	if processInputs.Database {
+		if _, err := writer.WriteString("\t\"gorm.io/gorm\"\n"); err != nil {
+			return err
+		}
+	}
+	if processInputs.Redis {
+		if _, err := writer.WriteString("\t_redis \"common/redis\"\n"); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(writer, "\t%s %q\n", initialAlias, initialPackage); err != nil {
 		return err
 	}
 
@@ -461,8 +524,21 @@ import (
 			return err
 		}
 	}
-	if _, err := writer.WriteString(")\n\n// Inject dependencies\nvar wireSet = wire.NewSet(\n\t_db.NewDB,\n\t_db.NewTransactionRepo,\n\t_provider.SyncProviderSet,\n"); err != nil {
+	if _, err := writer.WriteString(")\n\n// Inject dependencies\nvar wireSet = wire.NewSet(\n"); err != nil {
 		return err
+	}
+	if !processInputs.Database {
+		if _, err := writer.WriteString("\t_db.NewDB,\n"); err != nil {
+			return err
+		}
+	}
+	if _, err := writer.WriteString("\t_db.NewTransactionRepo,\n"); err != nil {
+		return err
+	}
+	if !processInputs.Redis {
+		if _, err := writer.WriteString("\t_provider.SyncProviderSet,\n"); err != nil {
+			return err
+		}
 	}
 
 	for _, bind := range binds {
@@ -487,9 +563,18 @@ import (
 			return err
 		}
 	}
+	parameters := make([]string, 0, 2)
+	if processInputs.Database {
+		parameters = append(parameters, "database *gorm.DB")
+	}
+	if processInputs.Redis {
+		parameters = append(parameters, "redisService *_redis.RedisService")
+	}
+	parameterList := strings.Join(parameters, ", ")
+
 	injectorTemplate := `)
 
-func InitializeApp() (*%s.InitialApp, error) {
+func InitializeApp(%s) (*%s.InitialApp, error) {
 	wire.Build(wireSet)
 	return nil, nil
 }
@@ -497,14 +582,14 @@ func InitializeApp() (*%s.InitialApp, error) {
 	if cleanupEnabled {
 		injectorTemplate = `)
 
-func InitializeApp() (*%s.InitialApp, func(), error) {
+func InitializeApp(%s) (*%s.InitialApp, func(), error) {
 	wire.Build(wireSet)
 	return nil, nil, nil
 }
 `
 	}
 
-	if _, err := fmt.Fprintf(writer, injectorTemplate, initialAlias); err != nil {
+	if _, err := fmt.Fprintf(writer, injectorTemplate, parameterList, initialAlias); err != nil {
 		return err
 	}
 	if err := writer.Flush(); err != nil {

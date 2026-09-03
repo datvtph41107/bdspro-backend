@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	_db "common/db"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
@@ -18,7 +17,7 @@ import (
 	_utils "common/utils"
 	shared_enum "pb/enums"
 	"user/config"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/factory"
@@ -26,6 +25,8 @@ import (
 	"user/internal/interface/repo"
 )
 
+// AuthUsecase is User Service's access-token authority.
+// @bind: user/internal/usecase.AccessTokenIssuer
 type AuthUsecase struct {
 	CookieProvider     providers.CookieProvider
 	CacheProvider      providers.CacheProvider
@@ -36,12 +37,10 @@ type AuthUsecase struct {
 	SessionRepo        repo.SessionRepository
 	OTPRepo            repo.OTPRepository
 	StatusRepo         repo.StatusRepository
-	AuthConfigRepo     repo.IAuthConfigRepo // ✅ Thêm AuthConfigRepo
 	DeviceRepo         repo.DeviceRepository
 	DeviceUsecase      *DeviceUsecase
 	OtpUsecase         *OtpUsecase
-	OrganizationClient providers.OrganizationProvider
-	PaymentProvider    providers.IPaymentProvider
+	OrganizationClient organizationMembershipProvider
 	NotificationClient providers.NotificationProvider
 	ChatProvider       _provider.ChatProvider
 	ZnsProvider        providers.IZnsProvider
@@ -49,6 +48,15 @@ type AuthUsecase struct {
 	properties         dto.PropertiesDTO
 	CrmProvider        _provider.CrmProvider
 }
+
+// organizationMembershipProvider là dependency tối thiểu mà auth flow cần
+// từ Organization Service. User Service không tự suy diễn membership từ
+// organization_id do client gửi lên.
+type organizationMembershipProvider interface {
+	GetOrganizationMember(ctx context.Context, organizationID uint64, profileID uint64) (*dto.OrganizationMember, error)
+}
+
+const organizationMemberStatusActive uint32 = 10
 
 func NewAuthService(cookieProvider providers.CookieProvider,
 	cacheProvider providers.CacheProvider,
@@ -58,12 +66,10 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 	sessionRepo repo.SessionRepository,
 	otpRepo repo.OTPRepository,
 	statusRepo repo.StatusRepository,
-	authConfigRepo repo.IAuthConfigRepo, // ✅ Thêm AuthConfigRepo
 	deviceRepo repo.DeviceRepository,
 	deviceUsecase *DeviceUsecase,
 	otpUsecase *OtpUsecase,
 	organizationClient providers.OrganizationProvider,
-	paymentProvider providers.IPaymentProvider,
 	notificationClient providers.NotificationProvider,
 	chatProvider _provider.ChatProvider,
 	znsProvider providers.IZnsProvider,
@@ -82,12 +88,10 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 		SessionRepo:        sessionRepo,
 		OTPRepo:            otpRepo,
 		StatusRepo:         statusRepo,
-		AuthConfigRepo:     authConfigRepo, // ✅ Thêm AuthConfigRepo
 		DeviceRepo:         deviceRepo,
 		DeviceUsecase:      deviceUsecase,
 		OtpUsecase:         otpUsecase,
 		OrganizationClient: organizationClient,
-		PaymentProvider:    paymentProvider,
 		NotificationClient: notificationClient,
 		ChatProvider:       chatProvider,
 		ZnsProvider:        znsProvider,
@@ -212,7 +216,7 @@ func (s *AuthUsecase) ResendOTP(c context.Context, otp dto.OtpRequest) (*dto.Res
 			"Phone/ID không được để trống",
 		)
 	}
-	var oauth *domain.AuthMethod
+	var oauth *auth.AuthMethod
 	var err error
 	if otp.AuthId != 0 {
 		oauth, err = s.AuthMethodRepo.FindByID(c, otp.AuthId)
@@ -298,9 +302,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 		// Tạo nhóm chat mặc định "Hỗ trợ khách hàng" cho user mới
 		if s.ChatProvider != nil && len(s.properties.CSKH.TeamIDs) > 0 {
-			go func() {
+			func() {
 				// Tạo context mới cho goroutine để tránh context bị cancel
-				ctx := context.Background()
+				ctx := c
 				// Set profileId vào context để chat service có thể xác định người tạo
 				ctx = context.WithValue(ctx, _enum.ProfileIDKey, infoEntity.ProfileID)
 
@@ -366,10 +370,10 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	// }
 	// Liên kết tài khoản OAuth với hồ sơ người dùng
 	if otp.AuthID != 0 {
-		var oauthAcc *domain.AuthMethod
-		if err := _db.DB.First(&oauthAcc, otp.AuthID).Error; err == nil {
+		var oauthAcc *auth.AuthMethod
+		if oauthAcc, err = s.AuthMethodRepo.FindByID(c, otp.AuthID); err == nil {
 			if oauthAcc != nil && oauthAcc.UserID == 0 {
-				// var statusOauth *domain.UserStatusEntity
+				// var statusOauth *auth.UserStatusEntity
 				if statusOauth, err := s.StatusRepo.GetByID(c, oauthAcc.ID); err == nil {
 					statusOauth.Verified = true
 					s.StatusRepo.UpdateStatus(c, statusOauth)
@@ -391,8 +395,8 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 	// Gửi thông báo chào mừng nếu là user mới
 	if isNewUser {
-		go func() {
-			contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		func() {
+			contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 			defer cancel()
 
 			err := s.NotificationClient.CreateNotification(
@@ -433,36 +437,28 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	// Diffie-Hellman key exchange: Mã hóa auth_key nếu client gửi public key
 	if otp.ClientPublicKey != "" {
 		log.Printf("[VerifyOTP] Starting DH key exchange...")
-		log.Printf("[VerifyOTP] ClientPublicKey (base64): %s", otp.ClientPublicKey)
 
 		// Decode client public key
 		clientPublicKey, err := _utils.DecodePublicKey(otp.ClientPublicKey)
 		if err != nil {
 			log.Printf("Failed to decode client public key: %v", err)
 		} else {
-			log.Printf("[VerifyOTP] ClientPublicKey (hex): %s", clientPublicKey.Text(16))
 
 			// Decode server private key
 			serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
 			if err != nil {
 				log.Printf("Failed to decode server private key: %v", err)
 			} else {
-				log.Printf("[VerifyOTP] ServerPrivateKey (hex): %s", serverPrivateKey.Text(16))
-				log.Printf("[VerifyOTP] ServerPublicKey (base64): %s", e.PublicKey)
 
 				// Compute shared secret
 				sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
 				if err != nil {
 					log.Printf("Failed to compute shared secret: %v", err)
 				} else {
-					// Log shared secret (hex)
 					sharedSecretHex := sharedSecret.Text(16)
-					log.Printf("[VerifyOTP] SharedSecret (hex): %s", sharedSecretHex)
-					log.Printf("[VerifyOTP] AuthKey: %s", e.AuthKey)
 
 					// Encrypt auth_key with shared secret
 					encryptedAuthKey, err := _utils.EncryptAuthKeyXOR(e.AuthKey, sharedSecretHex)
-					log.Printf("[VerifyOTP] EncryptedAuthKey: %s", encryptedAuthKey)
 					if err != nil {
 						log.Printf("Failed to encrypt auth key: %v", err)
 					} else {
@@ -476,9 +472,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	}
 
 	// Ghi log admin history
-	go func() {
+	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -560,9 +556,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		deviceID := _utils.GetDeviceIdFromContext(c)
 		print("deviceID", deviceID)
 		if deviceID != "" {
-			go func() {
+			func() {
 				// Tạo context mới với authId và profileId
-				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
+				deviceCtx := context.WithValue(c, _enum.AuthIDKey, e.ID)
 				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
 				// if infoEntity.OrganizationID > 0 {
 				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
@@ -621,9 +617,9 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 		return nil, _errors.ReturnError(500, "Lỗi khi cập nhật thông tin tài khoản")
 	}
 
-	// 11. Ghi log
-	go func() {
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Audit is best-effort, but it remains request-owned and bounded.
+	if s.NotificationClient != nil {
+		auditCtx, cancel := context.WithTimeout(c, 5*time.Second)
 		defer cancel()
 
 		ipAddress := _utils.AuditIPFromContext(c)
@@ -635,7 +631,7 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 			userAgent = "Mobile-Client"
 		}
 
-		s.NotificationClient.CreateAdminHistory(contextTimeout,
+		if err := s.NotificationClient.CreateAdminHistory(auditCtx,
 			currentAuthMethod.UserID,
 			currentAuthMethod.UserID,
 			int32(shared_enum.TargetHistoryLead),
@@ -649,10 +645,15 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 			"",
 			ipAddress,
 			userAgent,
-		)
-	}()
+		); err != nil {
+			log.Printf("failed to log phone recovery audit: %v", err)
+		}
+	}
 
-	return nil, nil
+	return &dto.AuthLoginResponse{
+		AuthID:    currentAuthMethod.ID,
+		ProfileID: currentAuthMethod.UserID,
+	}, nil
 }
 
 // LoginWithKey đăng nhập bằng auth key (Diffie-Hellman)
@@ -676,16 +677,13 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		log.Printf("Failed to decode server private key: %v", err)
 		return nil, _errors.ReturnError(500, "Lỗi xác thực")
 	}
-	log.Printf("[LoginWithKey] ServerPrivateKey (hex): %s", serverPrivateKey.Text(16))
 
 	// 3. Decode client public key
-	log.Printf("[LoginWithKey] ClientPublicKey (base64): %s", req.ClientPublicKey)
 	clientPublicKey, err := _utils.DecodePublicKey(req.ClientPublicKey)
 	if err != nil {
 		log.Printf("Failed to decode client public key: %v", err)
 		return nil, _errors.ReturnError(400, "Client public key không hợp lệ")
 	}
-	log.Printf("[LoginWithKey] ClientPublicKey (hex): %s", clientPublicKey.Text(16))
 
 	// 4. Compute shared secret
 	sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
@@ -694,10 +692,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		return nil, _errors.ReturnError(500, "Lỗi xác thực")
 	}
 
-	// Log shared secret (hex)
 	sharedSecretHex := sharedSecret.Text(16)
-	log.Printf("[LoginWithKey] SharedSecret (hex): %s", sharedSecretHex)
-	log.Printf("[LoginWithKey] EncryptedAuthKey from client: %s", req.EncryptedAuthKey)
 
 	// 5. Decrypt auth key từ client gửi lên
 	decryptedAuthKey, err := _utils.DecryptAuthKeyXOR(req.EncryptedAuthKey, sharedSecretHex)
@@ -706,12 +701,8 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		return nil, _errors.ReturnError(400, "Auth key không hợp lệ")
 	}
 
-	log.Printf("[LoginWithKey] DecryptedAuthKey: %s", decryptedAuthKey)
-	log.Printf("[LoginWithKey] StoredAuthKey: %s", e.AuthKey)
-
 	// 6. So sánh với auth_key trong database
 	if decryptedAuthKey != e.AuthKey {
-		log.Printf("[LoginWithKey] Auth key mismatch! Decrypted: %s, Stored: %s", decryptedAuthKey, e.AuthKey)
 		return nil, _errors.ReturnError(401, "Auth key không đúng")
 	}
 
@@ -736,7 +727,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	if deviceID == "" {
 		deviceID = req.DeviceName
 	}
-	newSession := &domain.UserSessionEntity{
+	newSession := &auth.UserSessionEntity{
 		AuthID:     e.ID,
 		DeviceID:   deviceID,
 		Version:    req.Version,
@@ -784,29 +775,9 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	// 	response.ServerPublicKey = e.PublicKey
 	// }
 
-	if s.DeviceUsecase != nil {
-		deviceID := _utils.GetDeviceIdFromContext(c)
-		print("deviceID", deviceID)
-		if deviceID != "" {
-			go func() {
-				// Tạo context mới với authId và profileId
-				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
-				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
-				// if infoEntity.OrganizationID > 0 {
-				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
-				// }
-
-				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
-				if err != nil {
-					log.Printf("Failed to update device with auth info after verify OTP: %v", err)
-				}
-			}()
-		}
-	}
-
 	// 13. Ghi log admin history
-	go func() {
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	func() {
+		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
 		ipAddress := _utils.AuditIPFromContext(c)
@@ -873,9 +844,9 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 			deviceID = req.DeviceName
 		}
 		if deviceID != "" && e.ID > 0 && infoEntity.ProfileID > 0 {
-			go func() {
+			func() {
 				// Tạo context mới với authId và profileId
-				deviceCtx := context.WithValue(context.Background(), _enum.AuthIDKey, e.ID)
+				deviceCtx := context.WithValue(c, _enum.AuthIDKey, e.ID)
 				deviceCtx = context.WithValue(deviceCtx, _enum.ProfileIDKey, infoEntity.ProfileID)
 				// if infoEntity.OrganizationID > 0 {
 				// 	deviceCtx = context.WithValue(deviceCtx, _enum.OrganizationIDKey, infoEntity.OrganizationID)
@@ -892,7 +863,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	return response, nil
 }
 
-func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp dto.OtpVerifyRequest) *domain.UserSessionEntity {
+func (s *AuthUsecase) createSession(c context.Context, e *auth.AuthMethod, otp dto.OtpVerifyRequest) *auth.UserSessionEntity {
 	deviceID := _utils.GetDeviceIdFromContext(c)
 	if deviceID == "" {
 		deviceID = otp.DeviceID
@@ -901,7 +872,7 @@ func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp
 		deviceID = otp.DeviceName
 	}
 	now := time.Now()
-	return &domain.UserSessionEntity{
+	return &auth.UserSessionEntity{
 		AuthID:     e.ID,
 		DeviceID:   deviceID,
 		Version:    otp.Version,
@@ -918,9 +889,6 @@ func (s *AuthUsecase) createSession(c context.Context, e *domain.AuthMethod, otp
 
 func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto.RefreshResponse, error) {
 	claims := _jwt.GetPrincipalContext(c)
-	fmt.Println("claims", claims)
-
-	log.Printf("refreshToken: %s :???", refreshToken)
 	props, err := _jwt.GetProperties(refreshToken)
 	if err != nil {
 		return nil, &_routes.Except{
@@ -952,6 +920,15 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	// }
 
 	if props.Type == "REFRESH" {
+		// Organization context trong access token là snapshot có thời hạn.
+		// Khi refresh phải hỏi lại owner membership để không gia hạn
+		// quyền dùng quota sau khi thành viên đã bị vô hiệu hoá.
+		if props.OrganizationID != nil {
+			if err := s.validateOrganizationMembership(c, props.ProfileID, *props.OrganizationID); err != nil {
+				return nil, err
+			}
+		}
+
 		// if props.SessionID != 0 {
 		// 	sessionEntity, err := s.SessionRepo.GetBySessionID(c, props.SessionID)
 		// 	if err != nil {
@@ -1012,7 +989,7 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 				"authId":    props.AuthID,
 				"sessionId": props.SessionID,
 			}
-			s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+			s.logHistoryAuth(c, &dto.HistoryAuthCreateDTO{
 				UserID:      props.ProfileID,
 				ActionType:  "token",
 				ActionName:  "REFRESH_TOKEN",
@@ -1044,9 +1021,9 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 	}
 
 	now := time.Now()
-	var sessions []*domain.UserSessionEntity
+	var sessions []*auth.UserSessionEntity
 	var err error
-	var currentSession *domain.UserSessionEntity
+	var currentSession *auth.UserSessionEntity
 
 	switch logoutType {
 	case "others":
@@ -1066,7 +1043,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 			return nil, err
 		}
 		if session != nil {
-			sessions = []*domain.UserSessionEntity{session}
+			sessions = []*auth.UserSessionEntity{session}
 		}
 	default: // "session"
 		sessionID := _utils.GetSessionIdFromContext(c)
@@ -1078,7 +1055,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 			return nil, err
 		}
 		if session != nil {
-			sessions = []*domain.UserSessionEntity{session}
+			sessions = []*auth.UserSessionEntity{session}
 			currentSession = session
 		}
 	}
@@ -1087,7 +1064,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 		return &dto.LogoutResponse{Message: "Không tìm thấy phiên đăng nhập để đăng xuất"}, nil
 	}
 
-	var lastSession *domain.UserSessionEntity
+	var lastSession *auth.UserSessionEntity
 	for _, session := range sessions {
 		session.FinishedDate = &now
 		session.LogoutAt = &now
@@ -1113,7 +1090,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 		if len(sessions) > 1 {
 			metadata["sessionCount"] = len(sessions)
 		}
-		s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+		s.logHistoryAuth(c, &dto.HistoryAuthCreateDTO{
 			UserID:      profileID,
 			ActionType:  "logout",
 			ActionName:  "LOGOUT",
@@ -1135,7 +1112,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 	return &dto.LogoutResponse{Message: "Đăng xuất thành công"}, nil
 }
 
-func (s *AuthUsecase) buildLogoutDescription(logoutType string, targetSession *domain.UserSessionEntity, currentSession *domain.UserSessionEntity, affected int) string {
+func (s *AuthUsecase) buildLogoutDescription(logoutType string, targetSession *auth.UserSessionEntity, currentSession *auth.UserSessionEntity, affected int) string {
 	targetDevice := formatSessionDevice(targetSession)
 
 	switch logoutType {
@@ -1164,7 +1141,7 @@ func (s *AuthUsecase) buildLogoutDescription(logoutType string, targetSession *d
 	}
 }
 
-func formatSessionDevice(session *domain.UserSessionEntity) string {
+func formatSessionDevice(session *auth.UserSessionEntity) string {
 	if session == nil {
 		return ""
 	}
@@ -1211,7 +1188,7 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 
 	profileId := _utils.GetProfileIdWithContext(c)
 
-	e := domain.AuthMethod{
+	e := auth.AuthMethod{
 		Provider: "PHONE",
 		AuthName: query.Phone,
 		UserID:   profileId,
@@ -1236,7 +1213,7 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 
 // RestoreDeletedAccount khôi phục tài khoản đã bị soft delete
 func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDeletedAccountRequest) (*dto.RestoreDeletedAccountResponse, error) {
-	var deletedAuth *domain.AuthMethod
+	var deletedAuth *auth.AuthMethod
 	var err error
 
 	// Tìm tài khoản đã bị xóa theo phone, email hoặc username
@@ -1395,7 +1372,7 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 		"lockType":   "temporary",
 		"durationHr": 24,
 	}
-	s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+	s.logHistoryAuth(c, &dto.HistoryAuthCreateDTO{
 		UserID:         e.UserID,
 		ActionType:     "account",
 		ActionName:     "LOCK_ACCOUNT",
@@ -1410,13 +1387,13 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 		Success:     true,
 		Message:     "Khóa tài khoản thành công",
 		ProfileID:   e.UserID,
-		LockType:    domain.AccountStatus(_enum.EUserStatusPermanentlyLocked),
+		LockType:    auth.AccountStatus(_enum.EUserStatusPermanentlyLocked),
 		LockedAt:    _utils.FormatTimeToString(&lockedAt),
 		LockedUntil: _utils.FormatTimeToString(&lockedUntil),
 	}, nil
 }
 
-func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest) (*domain.AuthMethod, string, error) {
+func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest) (*auth.AuthMethod, string, error) {
 	// Generate Diffie-Hellman key pair
 	keyPair, err := _utils.GenerateDHKeyPair()
 	if err != nil {
@@ -1430,7 +1407,7 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest
 	}
 
 	// Tạo một UserAuthEntity mới với DH keys và auth_key
-	e := &domain.AuthMethod{
+	e := &auth.AuthMethod{
 		Provider:   "PHONE",
 		AuthName:   otpReq.Phone,
 		FullName:   otpReq.Fullname,
@@ -1454,7 +1431,7 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest
 	// Gửi OTP trong updateNewOTP luôn
 	_, smsChannel := s.SendNewOTP(c, param.OTP, otpReq.Phone)
 
-	s.logHistoryAuthAsync(c, &dto.HistoryAuthCreateDTO{
+	s.logHistoryAuth(c, &dto.HistoryAuthCreateDTO{
 		UserID:      createdAuth.UserID,
 		ActionType:  "register",
 		ActionName:  "REQUEST_REGISTER",
@@ -1470,10 +1447,10 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest
 
 func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam, error) {
 	// Tạo UserStatusEntity mới
-	statusEntity := &domain.UserStatusEntity{
+	statusEntity := &auth.UserStatusEntity{
 		Active:   true,
 		Verified: false,
-		IdDomain: domain.IdDomain{
+		IdDomain: auth.IdDomain{
 			AuthID: oauthId,
 		},
 	}
@@ -1485,9 +1462,9 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 
 	// Tạo UserOTPEntity mới
 	now := time.Now()
-	otpEntity := &domain.UserOTPEntity{
+	otpEntity := &auth.UserOTPEntity{
 		OTP: _utils.GenerateOTP(),
-		IdDomain: domain.IdDomain{
+		IdDomain: auth.IdDomain{
 			AuthID: oauthId,
 		},
 		// AuthID:       oauthId,
@@ -1504,7 +1481,7 @@ func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam
 	}, nil
 }
 
-func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *domain.UserOTPEntity, phone string) (otp string, smsChannel string) {
+func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *auth.UserOTPEntity, phone string) (otp string, smsChannel string) {
 	ip := _utils.AuditIPFromContext(c)
 	s.CheckOtpSpam(c, phone, ip)
 
@@ -1617,7 +1594,7 @@ func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) er
 }
 
 // GetParamValidate kiểm tra thông tin xác thực và trả về data.AuthParam
-func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMethod, otp string) (*dto.AuthParam, error) {
+func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *auth.AuthMethod, otp string) (*dto.AuthParam, error) {
 	if oauth == nil {
 		return nil, &_routes.Except{
 			Code:    400,
@@ -1649,7 +1626,7 @@ func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *domain.AuthMeth
 	}, nil
 }
 
-func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *domain.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
+func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *auth.AuthMethod, profile *dto.ProfileDTO, sessionID uint64) *dto.AuthLoginResponse {
 	if authEntity.UserID == 0 {
 		return &dto.AuthLoginResponse{
 			AuthID:   authEntity.ID,
@@ -1702,7 +1679,7 @@ func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *domain.Auth
 	return response
 }
 
-func (s *AuthUsecase) GetRefreshToken(ctx context.Context, authEntity *domain.AuthMethod, sessionID uint64) string {
+func (s *AuthUsecase) GetRefreshToken(ctx context.Context, authEntity *auth.AuthMethod, sessionID uint64) string {
 	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(ctx, authEntity.UserID)
 	refreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authEntity.ID,
@@ -1715,7 +1692,7 @@ func (s *AuthUsecase) GetRefreshToken(ctx context.Context, authEntity *domain.Au
 	return refreshToken
 }
 
-func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp *dto.OtpVerifyRequest) *domain.UserSessionEntity {
+func (s *AuthUsecase) CreateSession(c context.Context, e *auth.AuthMethod, otp *dto.OtpVerifyRequest) *auth.UserSessionEntity {
 	var authId uint64
 	if e != nil {
 		authId = e.ID
@@ -1731,7 +1708,7 @@ func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp
 		deviceID = otp.DeviceName
 	}
 	now := time.Now()
-	return &domain.UserSessionEntity{
+	return &auth.UserSessionEntity{
 		AuthID:     authId,
 		DeviceID:   deviceID,
 		Version:    otp.Version,
@@ -1747,7 +1724,7 @@ func (s *AuthUsecase) CreateSession(c context.Context, e *domain.AuthMethod, otp
 }
 
 // CreateAndSaveSession tạo session và lưu vào database
-func (s *AuthUsecase) CreateAndSaveSession(c context.Context, e *domain.AuthMethod, otp *dto.OtpVerifyRequest) (*domain.UserSessionEntity, error) {
+func (s *AuthUsecase) CreateAndSaveSession(c context.Context, e *auth.AuthMethod, otp *dto.OtpVerifyRequest) (*auth.UserSessionEntity, error) {
 	// Tạo session object
 	session := s.CreateSession(c, e, otp)
 
@@ -1851,9 +1828,9 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	}
 
 	// Ghi log admin history
-	go func() {
+	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -1923,26 +1900,24 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 
 // ------------------------------------------------------------
 
-func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *domain.AuthMethod, sessionId uint64) string {
+func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *auth.AuthMethod, sessionId uint64) string {
 	// Lưu Unix timestamp (UTC) vào cache để tránh vấn đề timezone
 	// Trừ 5 giây để đảm bảo token mới được issue sau thời điểm này sẽ hợp lệ
 	validFromTimestamp := time.Now().UTC().Add(-5 * time.Second).Unix()
-	println("GenRefreshToken: ", authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 	s.CacheProvider.SaveToken(c, authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 
 	refreshToken := s.GetRefreshToken(c, authEntity, sessionId)
 	// Không set cookie nữa, trả refreshToken trong response body
 	// s.CookieProvider.SetRefreshToken(c, refreshToken)
-	log.Printf("✅ [GenRefreshToken] authID=%d, validFrom=%d (%s), refreshToken=%s",
-		authEntity.ID, validFromTimestamp, time.Unix(validFromTimestamp, 0).UTC().Format(time.RFC3339), refreshToken)
+	log.Printf("[GenRefreshToken] authID=%d validFrom=%d", authEntity.ID, validFromTimestamp)
 	return refreshToken
 }
 
 // LogLoginHistory ghi lại lịch sử đăng nhập
-func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *domain.AuthMethod, profile *dto.ProfileDTO, title string) {
-	go func() {
+func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *auth.AuthMethod, profile *dto.ProfileDTO, title string) {
+	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -2060,15 +2035,15 @@ func (s *AuthUsecase) prepareHistoryAuthPayload(ctx context.Context, payload *dt
 	return result
 }
 
-func (s *AuthUsecase) logHistoryAuthAsync(ctx context.Context, payload *dto.HistoryAuthCreateDTO) {
+func (s *AuthUsecase) logHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) {
 	if s.NotificationClient == nil || payload == nil {
 		return
 	}
 
 	prepared := s.prepareHistoryAuthPayload(ctx, payload)
 
-	go func(p dto.HistoryAuthCreateDTO) {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	func(p dto.HistoryAuthCreateDTO) {
+		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
 		if err := s.NotificationClient.CreateHistoryAuth(timeoutCtx, &p); err != nil {
@@ -2078,7 +2053,6 @@ func (s *AuthUsecase) logHistoryAuthAsync(ctx context.Context, payload *dto.Hist
 }
 
 func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint64) (*dto.AuthLoginResponse, error) {
-	// principal := _jwt.MetadataFromContext(c)
 	authId := _utils.GetAuthIdFromContext(c)
 	sessionId := _utils.GetSessionIdFromContext(c)
 	profileId := _utils.GetProfileIdWithContext(c)
@@ -2088,21 +2062,16 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 			Message: "Không thể xác thực phiên đăng nhập",
 		}
 	}
-	clientResponse, err := s.OrganizationClient.SwitchOrganization(c, organizationID)
-	fmt.Printf("clientResponse=%+v\n", clientResponse)
-	if err != nil {
-		return nil, err
-	}
-	if clientResponse.OrganizationId == 0 {
+	if organizationID == 0 {
 		return nil, &_routes.Except{
 			Code:    400,
 			Message: "Không thể chuyển đổi tổ chức",
 		}
 	}
-	// authEntity, err := s.AuthMethodRepo.GetByID(c, principal.AuthID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if err := s.validateOrganizationMembership(c, profileId, organizationID); err != nil {
+		return nil, err
+	}
+
 	profile, err := s.ProfileProvider.GetByProfileID(c, profileId)
 	if err != nil || profile == nil {
 		return nil, &_routes.Except{
@@ -2127,7 +2096,7 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	// if err != nil {
 	// 	return nil, err
 	// }
-	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &clientResponse.OrganizationId)
+	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -2141,11 +2110,30 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 		// Avatar:         profile.Avatar,
 		// Email:          profile.Email,
 		// Phone:          profile.Phone,
-		OrganizationID: clientResponse.OrganizationId,
+		OrganizationID: organizationID,
 		ReferralCode:   profile.ReferralCode, // Mã giới thiệu
 	}
 
 	return response, nil
+}
+
+// validateOrganizationMembership giữ một owner duy nhất cho quy tắc phát
+// token có organization context: profile phải là thành viên active theo
+// dữ liệu của Organization Service. Role/permission chi tiết vẫn do
+// Organization Service quyết định; auth flow không tự sao chép catalog đó.
+func (s *AuthUsecase) validateOrganizationMembership(ctx context.Context, profileID, organizationID uint64) error {
+	if profileID == 0 || organizationID == 0 || s.OrganizationClient == nil {
+		return &_routes.Except{Code: 401, Message: "Không thể xác thực thành viên tổ chức"}
+	}
+
+	member, err := s.OrganizationClient.GetOrganizationMember(ctx, organizationID, profileID)
+	if err != nil {
+		return err
+	}
+	if member == nil || member.OrganizationId != organizationID || member.UserId != profileID || member.Status != organizationMemberStatusActive {
+		return &_routes.Except{Code: 403, Message: "Bạn không phải thành viên đang hoạt động của tổ chức"}
+	}
+	return nil
 }
 
 // AdminLogin xử lý đăng nhập admin bằng username và password
@@ -2170,7 +2158,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		)
 	}
 
-	var adminAuthEntity *domain.AuthMethod
+	var adminAuthEntity *auth.AuthMethod
 	for _, candidate := range candidates {
 		if candidate != nil && _utils.CheckPasswordHash(adminLogin.Password, candidate.Password) {
 			adminAuthEntity = candidate
@@ -2258,9 +2246,9 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	response.Username = adminAuthEntity.AuthName
 
 	// Ghi log admin history
-	go func() {
+	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -2332,7 +2320,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 // LockAccount khóa tài khoản (tạm thời hoặc vĩnh viễn)
 // func (s *AuthUsecase) LockAccount(ctx context.Context, req *dto.LockAccountRequest) (*dto.LockAccountResponse, error) {
 // 	// Validate duration cho khóa tạm thời
-// 	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+// 	if req.LockType == auth.StatusTemporarilyLocked && req.Duration <= 0 {
 // 		return &dto.LockAccountResponse{
 // 			Success: false,
 // 			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
@@ -2374,7 +2362,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 // 	}
 
 // 	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-// 	if req.LockType == domain.StatusTemporarilyLocked {
+// 	if req.LockType == auth.StatusTemporarilyLocked {
 // 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
 // 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
 // 	}
@@ -2431,24 +2419,24 @@ func (s *AuthUsecase) GetAccountStatus(ctx context.Context, req *dto.GetAccountS
 	// Xác định trạng thái text
 	var statusText string
 	switch userInfo.Status {
-	case domain.StatusActive:
+	case auth.StatusActive:
 		statusText = "Hoạt động"
-	case (domain.StatusInactive):
+	case (auth.StatusInactive):
 		statusText = "Vô hiệu hóa"
-	case domain.StatusTemporarilyLocked:
+	case auth.StatusTemporarilyLocked:
 		statusText = "Khóa tạm thời"
-	case domain.StatusPermanentlyLocked:
+	case auth.StatusPermanentlyLocked:
 		statusText = "Khóa vĩnh viễn"
 	default:
 		statusText = "Không xác định"
 	}
 
 	// Xác định loại khóa
-	var lockType domain.AccountStatus
+	var lockType auth.AccountStatus
 	if userInfo.IsTemporarilyLocked() {
-		lockType = domain.StatusTemporarilyLocked
+		lockType = auth.StatusTemporarilyLocked
 	} else if userInfo.IsPermanentlyLocked() {
-		lockType = domain.StatusPermanentlyLocked
+		lockType = auth.StatusPermanentlyLocked
 	}
 
 	// Kiểm tra khóa có hết hạn không
@@ -2490,7 +2478,7 @@ func (s *AuthUsecase) CheckAndUnlockExpiredAccounts(ctx context.Context) error {
 // LockMultipleUsers khóa nhiều user cùng lúc
 func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultipleUsersRequest) (*dto.LockMultipleUsersResponse, error) {
 	// Validate duration cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+	if req.LockType == auth.StatusTemporarilyLocked && req.Duration <= 0 {
 		return &dto.LockMultipleUsersResponse{
 			Success: false,
 			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
@@ -2516,7 +2504,7 @@ func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultip
 	}
 
 	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked {
+	if req.LockType == auth.StatusTemporarilyLocked {
 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
 	}
@@ -2601,7 +2589,7 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 	}
 
 	// Tạo auth_method mới với provider ADMIN
-	newAuthMethod := &domain.AuthMethod{
+	newAuthMethod := &auth.AuthMethod{
 		Provider: "ADMIN",
 		AuthName: profile.Phone, // Sử dụng phone làm username
 		Password: hashedPassword,
@@ -2622,10 +2610,10 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 	}
 
 	// Tạo status và OTP cho auth_method mới (nếu cần)
-	statusEntity := &domain.UserStatusEntity{
+	statusEntity := &auth.UserStatusEntity{
 		Active:   true,
 		Verified: true, // Đã verified vì user đã đăng nhập
-		IdDomain: domain.IdDomain{
+		IdDomain: auth.IdDomain{
 			AuthID: createdAuth.ID,
 		},
 	}
@@ -2651,12 +2639,14 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 
 	// Tìm auth_method theo username (có thể là phone)
 	// Thử tìm theo phone trước
-	var authEntity *domain.AuthMethod
+	var authEntity *auth.AuthMethod
 	var err error
 
 	// Kiểm tra xem username có phải là số điện thoại không
 	if _utils.ValidatePhoneNumber(req.Username) {
-		// Tìm theo phone với provider ADMIN
+		// Resolve the PHONE identity first, then its canonical PASSWORD
+		// credential. ADMIN remains a compatibility fallback for accounts whose
+		// password credential predates provider separation.
 		authEntity, err = s.AuthMethodRepo.FindByPhone(ctx, req.Username)
 		if err != nil || authEntity == nil {
 			return nil, _errors.ReturnError(
@@ -2664,11 +2654,13 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 				"Số điện thoại hoặc mật khẩu không đúng",
 			)
 		}
-		// Kiểm tra có auth_method với provider ADMIN không
-		if authEntity.Provider != "ADMIN" {
-			// Tìm auth_method ADMIN của cùng user
+		if authEntity.Provider != "PASSWORD" && authEntity.Provider != "ADMIN" {
 			if authEntity.UserID != 0 {
-				authEntity, err = s.AuthMethodRepo.GetByUserIdAndProvider(ctx, authEntity.UserID, "ADMIN")
+				profileID := authEntity.UserID
+				authEntity, err = s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileID, "PASSWORD")
+				if err != nil || authEntity == nil {
+					authEntity, err = s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileID, "ADMIN")
+				}
 				if err != nil || authEntity == nil {
 					return nil, _errors.ReturnError(
 						int32(401),
@@ -2683,8 +2675,12 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 			}
 		}
 	} else {
-		// Tìm theo username với provider ADMIN
-		authEntity, err = s.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.Username, "ADMIN")
+		// Prefer canonical end-user password credentials, then accept the
+		// existing ADMIN provider for rolling compatibility.
+		authEntity, err = s.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.Username, "PASSWORD")
+		if err != nil || authEntity == nil {
+			authEntity, err = s.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.Username, "ADMIN")
+		}
 		if err != nil || authEntity == nil {
 			return nil, _errors.ReturnError(
 				int32(401),
@@ -2693,8 +2689,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		}
 	}
 
-	// Kiểm tra provider phải là ADMIN
-	if authEntity.Provider != "ADMIN" {
+	if authEntity.Provider != "PASSWORD" && authEntity.Provider != "ADMIN" {
 		return nil, _errors.ReturnError(
 			int32(401),
 			"Phương thức đăng nhập không đúng",
@@ -2778,9 +2773,9 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	}
 
 	// Ghi log admin history
-	go func() {
+	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -2792,10 +2787,10 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 			ipAddress = "127.0.0.1"
 		}
 		if userAgent == "" {
-			userAgent = "Admin-Client"
+			userAgent = "Password-Client"
 		}
 
-		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
+		log.Printf("Creating password login history for user %d, IP: %s, UserAgent: %s",
 			authEntity.UserID, ipAddress, userAgent)
 
 		success := true
@@ -2822,6 +2817,9 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		preparedHistory := s.prepareHistoryAuthPayload(ctx, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
 			log.Printf("Failed to log password auth history: %v", err)
+		}
+		if authEntity.Provider != "ADMIN" {
+			return
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -3053,7 +3051,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 }
 
 // GetLoginHistory lấy danh sách lịch sử đăng nhập của user hiện tại
-func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
+func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*auth.UserSessionEntity, int64, error) {
 	authID := _utils.GetAuthIdFromContext(ctx)
 	if authID == 0 {
 		return nil, 0, _errors.ReturnError(
@@ -3190,7 +3188,7 @@ func (s *AuthUsecase) UpdateFullname(ctx context.Context, fullname string) (*dto
 }
 
 // GetSessionsByProfile lấy danh sách session theo profileId từ request
-func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pagable) ([]*domain.UserSessionEntity, int64, error) {
+func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pagable) ([]*auth.UserSessionEntity, int64, error) {
 	if pagable == nil {
 		pagable = &_dto.Pagable{}
 	}

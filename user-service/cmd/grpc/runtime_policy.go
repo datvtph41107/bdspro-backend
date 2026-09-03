@@ -1,4 +1,4 @@
-package cmd_grpc
+package main
 
 import (
 	"fmt"

@@ -6,7 +6,7 @@ import (
 	"common/configloader"
 	commonprovider "common/domain/provider"
 	qhprorpc "common/rpc"
-	"common/transporttrust"
+	"common/rpcenv"
 	"pb/clients"
 
 	"google.golang.org/grpc"
@@ -24,9 +24,7 @@ func bindDependency[T any](key string, bind func(grpc.ClientConnInterface) T) (T
 		Target:          target,
 		BackoffMaxDelay: 5 * time.Second,
 		Credentials:     insecure.NewCredentials(),
-		Transport: qhprorpc.TransportConfig{
-			Trust: transporttrust.ConfigFromEnv(),
-		},
+		Transport:       rpcenv.LoadTransportConfig(),
 	}, bind)
 }
 

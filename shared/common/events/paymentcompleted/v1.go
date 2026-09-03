@@ -1,6 +1,9 @@
 package paymentcompleted
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	EventTypeV1   = "payment.completed.v1"
@@ -22,4 +25,24 @@ type V1 struct {
 	AmountMinor      int64     `json:"amountMinor"`
 	FundsConfirmedAt time.Time `json:"fundsConfirmedAt"`
 	CompletedAt      time.Time `json:"completedAt"`
+}
+
+// IsValid protects the consumer Inbox from accepting a syntactically valid
+// JSON envelope that cannot describe a Payment-owned durable fact. It is
+// intentionally independent from transport authentication and provider
+// verification; those checks belong to their respective adapters.
+func (e V1) IsValid() bool {
+	if strings.TrimSpace(e.EventID) == "" || e.OrderID == 0 || strings.TrimSpace(e.SubjectID) == "" ||
+		strings.TrimSpace(e.ProductCode) == "" || strings.TrimSpace(e.PlanCode) == "" ||
+		e.PlanVersionID == 0 || strings.TrimSpace(e.PlanVersion) == "" ||
+		strings.TrimSpace(e.Currency) == "" || e.AmountMinor <= 0 ||
+		e.FundsConfirmedAt.IsZero() || e.CompletedAt.IsZero() {
+		return false
+	}
+	switch strings.TrimSpace(e.SubjectKind) {
+	case "profile", "organization":
+		return true
+	default:
+		return false
+	}
 }

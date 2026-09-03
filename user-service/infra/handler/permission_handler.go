@@ -45,32 +45,18 @@ func (h *PermissionHandler) GetPermissionById(ctx context.Context, req *sharepb.
 	return h.roleMapper.MapPermissionToPb(permission), nil
 }
 
-// @Summary Get permissions by module
-// @Description Get permissions by module
-// @Tags Permission
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param id path int true "Module ID"
-// @Param page query int true "Page"
-// @Param size query int true "Size"
-// @Success 200 {object} authpb.PermissionListResponse
-// @Router /permission/module/{id} [get]
+// GetPermissionsByModule giữ nguyên endpoint production và chuyển toàn bộ
+// truy vấn qua PermissionUsecase của User service.
 func (h *PermissionHandler) GetPermissionsByModule(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionListResponse, error) {
-	permissions, total, err := h.permissionUsecase.GetByModuleWithPagination(ctx, uint32(req.Id), int(req.Page), int(req.Size))
+	permissions, total, err := h.permissionUsecase.GetByModuleWithPagination(ctx, req.GetId(), int(req.GetPage()), int(req.GetSize()))
 	if err != nil {
 		return nil, err
 	}
-
-	pbPermissions := make([]*sharepb.Permission, len(permissions))
-	for i, permission := range permissions {
-		pbPermissions[i] = h.roleMapper.MapPermissionListWithChild(permission)
+	items := make([]*sharepb.Permission, 0, len(permissions))
+	for _, permission := range permissions {
+		items = append(items, h.roleMapper.MapPermissionListWithChild(permission))
 	}
-
-	return &authpb.PermissionListResponse{
-		Data:          pbPermissions,
-		TotalElements: total,
-	}, nil
+	return &authpb.PermissionListResponse{Data: items, TotalElements: total}, nil
 }
 
 // @Summary Get all permissions
@@ -206,29 +192,12 @@ func (h *PermissionHandler) GetPermissionByBranchId(ctx context.Context, req *sh
 	}, nil
 }
 
-// @Summary Get permission by organization ID
-// @Description Get permission by organization ID
-// @Tags Permission
-// @Security BearerAuth
-// @Accept json
-// @Produce json
-// @Param id path int true "Organization ID"
-// @Success 200 {object} authpb.PermissionKeysResponse
-// @Router /v2/auth/permission/organization/{id} [get]
+// GetPermissionByOrganizationId trả về union permission của toàn bộ role
+// thuộc tổ chức được yêu cầu, tương thích với API production cũ.
 func (h *PermissionHandler) GetPermissionByOrganizationId(ctx context.Context, req *sharepb.IdRequest) (*authpb.PermissionKeysResponse, error) {
-	permissions, err := h.permissionUsecase.GetByOrganizationID(ctx, req.Id)
+	keys, err := h.permissionUsecase.GetPermissionKeysByOrganizationID(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
-
-	keys := make([]string, 0, len(permissions))
-	for _, permission := range permissions {
-		if permission != nil && permission.Key != "" {
-			keys = append(keys, permission.Key)
-		}
-	}
-
-	return &authpb.PermissionKeysResponse{
-		Keys: keys,
-	}, nil
+	return &authpb.PermissionKeysResponse{Keys: keys}, nil
 }

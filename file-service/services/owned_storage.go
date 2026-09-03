@@ -36,7 +36,7 @@ func (s *StorageService) BuildOwnedFilePath(
 		fmt.Sprintf("%d%s", fileID, ext),
 	)
 
-	if err := validatePath(filePath, s.RootLocation); err != nil {
+	if err := validatePath(filePath, s.rootLocation); err != nil {
 		return "", ext, err
 	}
 
@@ -142,12 +142,14 @@ func (s *StorageService) StoreOwnedContent(
 		return nil, err
 	}
 
+	storedPath, err := s.StoredPath(filePath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dto.FileInfo{
-		FileName: filepath.Base(fileName),
-		RelativePath: strings.TrimPrefix(
-			filePath,
-			s.RootLocation+"/",
-		),
+		FileName:     filepath.Base(fileName),
+		RelativePath: storedPath,
 		AbsolutePath: filePath,
 		Extension:    ext,
 		Size:         written,

@@ -3,14 +3,14 @@ package enums
 type ReportQaStatus uint32
 
 const (
-	ReportQaStatusSubmitted        ReportQaStatus = 10
-	ReportQaStatusVerifying        ReportQaStatus = 20
-	ReportQaStatusNeedMoreInfo     ReportQaStatus = 30
-	ReportQaStatusVerified         ReportQaStatus = 40
-	ReportQaStatusWaitingDataFix   ReportQaStatus = 50
-	ReportQaStatusResolved         ReportQaStatus = 60
-	ReportQaStatusClosed           ReportQaStatus = 70
-	ReportQaStatusRejected         ReportQaStatus = 80
+	ReportQaStatusSubmitted      ReportQaStatus = 10
+	ReportQaStatusVerifying      ReportQaStatus = 20
+	ReportQaStatusNeedMoreInfo   ReportQaStatus = 30
+	ReportQaStatusVerified       ReportQaStatus = 40
+	ReportQaStatusWaitingDataFix ReportQaStatus = 50
+	ReportQaStatusResolved       ReportQaStatus = 60
+	ReportQaStatusClosed         ReportQaStatus = 70
+	ReportQaStatusRejected       ReportQaStatus = 80
 )
 
 type ReportSeverity uint32

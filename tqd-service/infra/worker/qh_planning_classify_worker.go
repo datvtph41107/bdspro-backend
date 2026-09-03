@@ -6,8 +6,6 @@ import (
 	"time"
 
 	qh_usecase "tqd/internal/usecase/qh"
-
-	"github.com/spf13/viper"
 )
 
 const (
@@ -16,12 +14,25 @@ const (
 )
 
 // QHPlanningClassifyWorker định kỳ gọi RunOnce để phân loại tài liệu Pending → Classified.
-type QHPlanningClassifyWorker struct {
-	usecase qh_usecase.IQHPlanningClassifyUsecase
+type ClassifyWorkerConfig struct {
+	Enabled   bool
+	Interval  time.Duration
+	BatchSize int
 }
 
-func NewQHPlanningClassifyWorker(usecase qh_usecase.IQHPlanningClassifyUsecase) *QHPlanningClassifyWorker {
-	return &QHPlanningClassifyWorker{usecase: usecase}
+type QHPlanningClassifyWorker struct {
+	usecase qh_usecase.IQHPlanningClassifyUsecase
+	config  ClassifyWorkerConfig
+}
+
+func NewQHPlanningClassifyWorker(usecase qh_usecase.IQHPlanningClassifyUsecase, cfg ClassifyWorkerConfig) *QHPlanningClassifyWorker {
+	if cfg.Interval <= 0 {
+		cfg.Interval = defaultClassifyInterval
+	}
+	if cfg.BatchSize <= 0 {
+		cfg.BatchSize = defaultClassifyBatch
+	}
+	return &QHPlanningClassifyWorker{usecase: usecase, config: cfg}
 }
 
 // Run chạy vòng lặp classify đến khi ctx bị cancel. Run là blocking:
@@ -39,19 +50,9 @@ func (w *QHPlanningClassifyWorker) Run(ctx context.Context) {
 		return
 	}
 
-	interval := defaultClassifyInterval
-	if sec := viper.GetInt("qh_planning_classify.interval_sec"); sec > 0 {
-		interval = time.Duration(sec) * time.Second
-	}
-	batchSize := defaultClassifyBatch
-	if n := viper.GetInt("qh_planning_classify.batch_size"); n > 0 {
-		batchSize = n
-	}
-	enabled := true
-	if viper.IsSet("qh_planning_classify.enabled") {
-		enabled = viper.GetBool("qh_planning_classify.enabled")
-	}
-	if !enabled {
+	interval := w.config.Interval
+	batchSize := w.config.BatchSize
+	if !w.config.Enabled {
 		log.Println("[QHPlanningClassifyWorker] disabled by config")
 		return
 	}

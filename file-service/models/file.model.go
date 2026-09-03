@@ -11,7 +11,6 @@ type FileEntity struct {
 	Name               string  `gorm:"column:name;type:varchar(255)" json:"name"`
 	Path               string  `gorm:"column:path;type:varchar(255)" json:"path"`
 	ThumbnailPath      string  `gorm:"column:thumbnail_path;type:varchar(255)" json:"thumbnail_path"`
-	AbsolutePath       string  `gorm:"column:absolute_path;type:varchar(255)" json:"absolute_path"`
 	Extension          string  `gorm:"column:extension;type:varchar(20)" json:"extension"` // Giới hạn 20 ký tự
 	Size               int64   `gorm:"column:size" json:"size"`
 	Hash               string  `gorm:"column:hash;type:varchar(255)" json:"hash"`
@@ -29,7 +28,6 @@ func (FileEntity) TableName() string {
 func (f *FileEntity) SetFields(fileInfo *dto.FileInfo) {
 	f.Name = fileInfo.FileName
 	f.Path = fileInfo.RelativePath
-	f.AbsolutePath = fileInfo.AbsolutePath
 	f.Extension = fileInfo.Extension
 	f.Size = fileInfo.Size
 	f.Hash = fileInfo.Hash

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	discoverydomain "tqd/internal/modules/discovery/domain"
+	discoverydomain "tqd/internal/domain/discovery/model"
 )
 
 // Row is the shared read-model used by spatial repositories when projecting a

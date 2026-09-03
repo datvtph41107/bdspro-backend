@@ -11,9 +11,9 @@ import (
 	_utils "common/utils"
 
 	tqdpb "pb/types/tqd"
+	"tqd/infra/handler/grpc/generatedreport"
 	"tqd/infra/mapper"
 	"tqd/internal/dto"
-	"tqd/internal/workspace/report/adapters/grpc"
 	"tqd/internal/usecase"
 
 	"google.golang.org/grpc/codes"

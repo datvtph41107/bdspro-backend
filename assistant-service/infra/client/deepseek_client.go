@@ -23,6 +23,7 @@ type DeepseekClient struct {
 	apiKey     string
 	baseURL    string
 	model      string
+	maxTokens  int
 	httpClient *http.Client
 }
 
@@ -30,9 +31,6 @@ func NewDeepseekClient() *DeepseekClient {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	if apiKey == "" {
 		apiKey = viper.GetString("deepseek.api_key")
-	}
-	if apiKey == "" {
-		apiKey = "sk-e55042ea5c144ac1ada1829ed11595f9" // Fallback key
 	}
 
 	baseURL := viper.GetString("deepseek.base_url")
@@ -49,11 +47,16 @@ func NewDeepseekClient() *DeepseekClient {
 	if timeoutSeconds == 0 {
 		timeoutSeconds = 30
 	}
+	maxTokens := viper.GetInt("deepseek.max_tokens")
+	if maxTokens <= 0 {
+		maxTokens = 4000
+	}
 
 	return &DeepseekClient{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		model:   model,
+		apiKey:    apiKey,
+		baseURL:   baseURL,
+		model:     model,
+		maxTokens: maxTokens,
 		httpClient: &http.Client{
 			Timeout: time.Duration(timeoutSeconds) * time.Second,
 		},
@@ -136,6 +139,9 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *DeepseekClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
+	if err := validateProviderCall("deepseek", c.apiKey); err != nil {
+		return "", err
+	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
 Bạn có kiến thức sâu rộng về bất động sản tại Việt Nam.
 Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiểu.`
@@ -151,9 +157,10 @@ Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiể
 	})
 
 	requestBody := dto.DeepseekRequest{
-		Model:    c.model,
-		Messages: messages,
-		Stream:   false,
+		Model:     c.model,
+		Messages:  messages,
+		Stream:    false,
+		MaxTokens: c.maxTokens,
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -212,6 +219,9 @@ func (c *DeepseekClient) GenerateContent(ctx context.Context, prompt string, max
 
 // sendRequest - Helper để gửi request đến DeepSeek API
 func (c *DeepseekClient) sendRequest(ctx context.Context, systemPrompt, userMessage string, maxTokens int, temperature float32) (*dto.DeepseekResponse, error) {
+	if err := validateProviderCall("deepseek", c.apiKey); err != nil {
+		return nil, err
+	}
 	messages := []dto.DeepseekMessage{}
 
 	if systemPrompt != "" {
@@ -232,9 +242,10 @@ func (c *DeepseekClient) sendRequest(ctx context.Context, systemPrompt, userMess
 		Stream:   false,
 	}
 
-	if maxTokens > 0 {
-		requestBody.MaxTokens = maxTokens
+	if maxTokens <= 0 {
+		maxTokens = c.maxTokens
 	}
+	requestBody.MaxTokens = maxTokens
 	if temperature > 0 {
 		requestBody.Temperature = temperature
 	}

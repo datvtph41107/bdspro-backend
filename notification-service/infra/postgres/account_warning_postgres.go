@@ -1,24 +1,25 @@
 package postgres
 
 import (
-	_db "common/db"
 	"context"
 	"time"
 
 	"notification/internal/domain"
 	"notification/internal/enums"
+
+	"gorm.io/gorm"
 )
 
-// @bind: notification/internal/repo.AccountWarningRepository
-type AccountWarningPostgresRepo struct{}
+// @bind: notification/internal/usecase.AccountWarningStore
+type AccountWarningPostgresRepo struct{ db *gorm.DB }
 
-func NewAccountWarningPostgresRepo() *AccountWarningPostgresRepo {
-	return &AccountWarningPostgresRepo{}
+func NewAccountWarningPostgresRepo(db *gorm.DB) *AccountWarningPostgresRepo {
+	return &AccountWarningPostgresRepo{db: db}
 }
 
 // Create tạo cảnh báo mới
 func (r *AccountWarningPostgresRepo) Create(c context.Context, warning *domain.AccountWarningEntity) (*domain.AccountWarningEntity, error) {
-	err := _db.DB.WithContext(c).Create(warning).Error
+	err := r.db.WithContext(c).Create(warning).Error
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +28,7 @@ func (r *AccountWarningPostgresRepo) Create(c context.Context, warning *domain.A
 
 // Update cập nhật cảnh báo
 func (r *AccountWarningPostgresRepo) Update(c context.Context, warning *domain.AccountWarningEntity) (*domain.AccountWarningEntity, error) {
-	err := _db.DB.WithContext(c).Save(warning).Error
+	err := r.db.WithContext(c).Save(warning).Error
 	if err != nil {
 		return nil, err
 	}
@@ -36,19 +37,19 @@ func (r *AccountWarningPostgresRepo) Update(c context.Context, warning *domain.A
 
 // Delete xóa cảnh báo
 func (r *AccountWarningPostgresRepo) Delete(c context.Context, id uint64) error {
-	return _db.DB.WithContext(c).Delete(&domain.AccountWarningEntity{}, id).Error
+	return r.db.WithContext(c).Delete(&domain.AccountWarningEntity{}, id).Error
 }
 
 // SoftDelete soft delete cảnh báo
 func (r *AccountWarningPostgresRepo) SoftDelete(c context.Context, id uint64) error {
 	now := time.Now()
-	return _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).Where("id = ?", id).Update("deleted_at", now).Error
+	return r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).Where("id = ?", id).Update("deleted_at", now).Error
 }
 
 // FindByID tìm cảnh báo theo ID
 func (r *AccountWarningPostgresRepo) FindByID(c context.Context, id uint64) (*domain.AccountWarningEntity, error) {
 	var warning domain.AccountWarningEntity
-	err := _db.DB.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&warning).Error
+	err := r.db.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&warning).Error
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (r *AccountWarningPostgresRepo) FindAll(c context.Context, page, size int, 
 	var warnings []*domain.AccountWarningEntity
 	var total int64
 
-	query := _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).Where("deleted_at IS NULL")
+	query := r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).Where("deleted_at IS NULL")
 
 	// Apply filters
 	if targetID, ok := filters["target_id"]; ok {
@@ -104,7 +105,7 @@ func (r *AccountWarningPostgresRepo) FindAll(c context.Context, page, size int, 
 // FindByTargetID tìm cảnh báo theo TargetID
 func (r *AccountWarningPostgresRepo) FindByTargetID(c context.Context, targetID uint64, targetType string) ([]*domain.AccountWarningEntity, error) {
 	var warnings []*domain.AccountWarningEntity
-	err := _db.DB.WithContext(c).Where("target_id = ? AND target_type = ? AND deleted_at IS NULL", targetID, targetType).Order("sent_at DESC").Find(&warnings).Error
+	err := r.db.WithContext(c).Where("target_id = ? AND target_type = ? AND deleted_at IS NULL", targetID, targetType).Order("sent_at DESC").Find(&warnings).Error
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (r *AccountWarningPostgresRepo) FindBySentBy(c context.Context, sentBy uint
 	var warnings []*domain.AccountWarningEntity
 	var total int64
 
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("sent_by = ? AND deleted_at IS NULL", sentBy).
 		Count(&total).Error
 	if err != nil {
@@ -124,7 +125,7 @@ func (r *AccountWarningPostgresRepo) FindBySentBy(c context.Context, sentBy uint
 	}
 
 	offset := (page - 1) * size
-	err = _db.DB.WithContext(c).Where("sent_by = ? AND deleted_at IS NULL", sentBy).
+	err = r.db.WithContext(c).Where("sent_by = ? AND deleted_at IS NULL", sentBy).
 		Order("sent_at DESC").
 		Offset(offset).
 		Limit(size).
@@ -139,7 +140,7 @@ func (r *AccountWarningPostgresRepo) FindBySentBy(c context.Context, sentBy uint
 // FindUnreadByTargetID tìm cảnh báo chưa đọc theo TargetID
 func (r *AccountWarningPostgresRepo) FindUnreadByTargetID(c context.Context, targetID uint64) ([]*domain.AccountWarningEntity, error) {
 	var warnings []*domain.AccountWarningEntity
-	err := _db.DB.WithContext(c).Where("target_id = ? AND is_read = ? AND deleted_at IS NULL", targetID, false).Order("sent_at DESC").Find(&warnings).Error
+	err := r.db.WithContext(c).Where("target_id = ? AND is_read = ? AND deleted_at IS NULL", targetID, false).Order("sent_at DESC").Find(&warnings).Error
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +150,7 @@ func (r *AccountWarningPostgresRepo) FindUnreadByTargetID(c context.Context, tar
 // MarkAsRead đánh dấu đã đọc
 func (r *AccountWarningPostgresRepo) MarkAsRead(c context.Context, id uint64, targetID uint64) error {
 	now := time.Now()
-	return _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
+	return r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("id = ? AND target_id = ? AND deleted_at IS NULL", id, targetID).
 		Updates(map[string]interface{}{
 			"is_read": true,
@@ -160,7 +161,7 @@ func (r *AccountWarningPostgresRepo) MarkAsRead(c context.Context, id uint64, ta
 
 // MarkAsAcknowledged đánh dấu đã xác nhận
 func (r *AccountWarningPostgresRepo) MarkAsAcknowledged(c context.Context, id uint64, targetID uint64) error {
-	return _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
+	return r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("id = ? AND target_id = ? AND deleted_at IS NULL", id, targetID).
 		Update("status", enums.WarningStatusAcknowledged).Error
 }
@@ -170,7 +171,7 @@ func (r *AccountWarningPostgresRepo) CheckDuplicateWarning(c context.Context, ta
 	var count int64
 	timeLimit := time.Now().Add(-time.Duration(hours) * time.Hour)
 
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("target_id = ? AND content = ? AND sent_at > ? AND deleted_at IS NULL", targetID, content, timeLimit).
 		Count(&count).Error
 
@@ -180,7 +181,7 @@ func (r *AccountWarningPostgresRepo) CheckDuplicateWarning(c context.Context, ta
 // CountByTargetID đếm số cảnh báo theo TargetID
 func (r *AccountWarningPostgresRepo) CountByTargetID(c context.Context, targetID uint64) (int64, error) {
 	var count int64
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningEntity{}).
 		Where("target_id = ? AND deleted_at IS NULL", targetID).
 		Count(&count).Error
 	return count, err
@@ -188,7 +189,7 @@ func (r *AccountWarningPostgresRepo) CountByTargetID(c context.Context, targetID
 
 // CreateTemplate tạo mẫu cảnh báo
 func (r *AccountWarningPostgresRepo) CreateTemplate(c context.Context, template *domain.AccountWarningTemplateEntity) (*domain.AccountWarningTemplateEntity, error) {
-	err := _db.DB.WithContext(c).Create(template).Error
+	err := r.db.WithContext(c).Create(template).Error
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +198,7 @@ func (r *AccountWarningPostgresRepo) CreateTemplate(c context.Context, template 
 
 // UpdateTemplate cập nhật mẫu cảnh báo
 func (r *AccountWarningPostgresRepo) UpdateTemplate(c context.Context, template *domain.AccountWarningTemplateEntity) (*domain.AccountWarningTemplateEntity, error) {
-	err := _db.DB.WithContext(c).Save(template).Error
+	err := r.db.WithContext(c).Save(template).Error
 	if err != nil {
 		return nil, err
 	}
@@ -207,13 +208,13 @@ func (r *AccountWarningPostgresRepo) UpdateTemplate(c context.Context, template 
 // DeleteTemplate xóa mẫu cảnh báo
 func (r *AccountWarningPostgresRepo) DeleteTemplate(c context.Context, id uint64) error {
 	now := time.Now()
-	return _db.DB.WithContext(c).Model(&domain.AccountWarningTemplateEntity{}).Where("id = ?", id).Update("deleted_at", now).Error
+	return r.db.WithContext(c).Model(&domain.AccountWarningTemplateEntity{}).Where("id = ?", id).Update("deleted_at", now).Error
 }
 
 // FindTemplateByID tìm mẫu cảnh báo theo ID
 func (r *AccountWarningPostgresRepo) FindTemplateByID(c context.Context, id uint64) (*domain.AccountWarningTemplateEntity, error) {
 	var template domain.AccountWarningTemplateEntity
-	err := _db.DB.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&template).Error
+	err := r.db.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&template).Error
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func (r *AccountWarningPostgresRepo) FindTemplateByID(c context.Context, id uint
 // FindTemplatesByType tìm mẫu cảnh báo theo loại
 func (r *AccountWarningPostgresRepo) FindTemplatesByType(c context.Context, warningType string) ([]*domain.AccountWarningTemplateEntity, error) {
 	var templates []*domain.AccountWarningTemplateEntity
-	err := _db.DB.WithContext(c).Where("warning_type = ? AND is_active = ? AND deleted_at IS NULL", warningType, true).Find(&templates).Error
+	err := r.db.WithContext(c).Where("warning_type = ? AND is_active = ? AND deleted_at IS NULL", warningType, true).Find(&templates).Error
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (r *AccountWarningPostgresRepo) FindAllTemplates(c context.Context, page, s
 	var templates []*domain.AccountWarningTemplateEntity
 	var total int64
 
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningTemplateEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningTemplateEntity{}).
 		Where("deleted_at IS NULL").
 		Count(&total).Error
 	if err != nil {
@@ -243,7 +244,7 @@ func (r *AccountWarningPostgresRepo) FindAllTemplates(c context.Context, page, s
 	}
 
 	offset := (page - 1) * size
-	err = _db.DB.WithContext(c).Where("deleted_at IS NULL").
+	err = r.db.WithContext(c).Where("deleted_at IS NULL").
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(size).
@@ -257,7 +258,7 @@ func (r *AccountWarningPostgresRepo) FindAllTemplates(c context.Context, page, s
 
 // CreateLog tạo log cảnh báo
 func (r *AccountWarningPostgresRepo) CreateLog(c context.Context, log *domain.AccountWarningLogEntity) error {
-	return _db.DB.WithContext(c).Create(log).Error
+	return r.db.WithContext(c).Create(log).Error
 }
 
 // FindLogsByWarningID tìm log theo WarningID
@@ -265,7 +266,7 @@ func (r *AccountWarningPostgresRepo) FindLogsByWarningID(c context.Context, warn
 	var logs []*domain.AccountWarningLogEntity
 	var total int64
 
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningLogEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningLogEntity{}).
 		Where("warning_id = ?", warningID).
 		Count(&total).Error
 	if err != nil {
@@ -273,7 +274,7 @@ func (r *AccountWarningPostgresRepo) FindLogsByWarningID(c context.Context, warn
 	}
 
 	offset := (page - 1) * size
-	err = _db.DB.WithContext(c).Where("warning_id = ?", warningID).
+	err = r.db.WithContext(c).Where("warning_id = ?", warningID).
 		Order("performed_at DESC").
 		Offset(offset).
 		Limit(size).
@@ -290,7 +291,7 @@ func (r *AccountWarningPostgresRepo) FindLogsByTargetID(c context.Context, targe
 	var logs []*domain.AccountWarningLogEntity
 	var total int64
 
-	err := _db.DB.WithContext(c).Model(&domain.AccountWarningLogEntity{}).
+	err := r.db.WithContext(c).Model(&domain.AccountWarningLogEntity{}).
 		Where("target_id = ?", targetID).
 		Count(&total).Error
 	if err != nil {
@@ -298,7 +299,7 @@ func (r *AccountWarningPostgresRepo) FindLogsByTargetID(c context.Context, targe
 	}
 
 	offset := (page - 1) * size
-	err = _db.DB.WithContext(c).Where("target_id = ?", targetID).
+	err = r.db.WithContext(c).Where("target_id = ?", targetID).
 		Order("performed_at DESC").
 		Offset(offset).
 		Limit(size).

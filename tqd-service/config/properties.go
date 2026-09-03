@@ -5,9 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
-	"tqd/env"
 	"tqd/internal/enums"
 
 	"github.com/spf13/viper"
@@ -173,8 +171,8 @@ var LayerResolverInstance *LayerResolver
 
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() (*Properties, error) {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	if err := configloader.LoadYMLFile(env.ENV_RUNTIME); err != nil {
+	_, err := configloader.LoadRuntimeYML()
+	if err != nil {
 		return nil, err
 	}
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,33 +30,104 @@ const userPrefix = "USER_"
 // Callers (e.g. HasPermissions) should fall back to DB immediately — do not dial.
 var errRedisUnavailable = errors.New("redis unavailable")
 
-// NewRedisService khởi tạo RedisService
-func NewRedisService() *RedisService {
+// Config is the process-owned technical input needed to create one Redis pool.
+type Config struct {
+	Address      string
+	Password     string
+	DB           int
+	DialTimeout  time.Duration
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	PoolTimeout  time.Duration
+	MaxRetries   int
+}
+
+// Open creates one Redis pool from explicit configuration. An unreachable
+// Redis instance preserves the historical degraded-start behavior: the service
+// is returned disconnected so callers can fall back without opening new pools.
+func Open(config Config) (*RedisService, error) {
+	address := strings.TrimSpace(config.Address)
+	if address == "" {
+		return nil, errors.New("redis address is required")
+	}
+
+	dialTimeout := config.DialTimeout
+	if dialTimeout <= 0 {
+		dialTimeout = 500 * time.Millisecond
+	}
+	readTimeout := config.ReadTimeout
+	if readTimeout <= 0 {
+		readTimeout = 500 * time.Millisecond
+	}
+	writeTimeout := config.WriteTimeout
+	if writeTimeout <= 0 {
+		writeTimeout = 500 * time.Millisecond
+	}
+	poolTimeout := config.PoolTimeout
+	if poolTimeout <= 0 {
+		poolTimeout = 500 * time.Millisecond
+	}
+	maxRetries := config.MaxRetries
+	if maxRetries == 0 {
+		maxRetries = 1
+	}
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
-		Password:     viper.GetString("redis.pass"),
-		DialTimeout:  500 * time.Millisecond,
-		ReadTimeout:  500 * time.Millisecond,
-		WriteTimeout: 500 * time.Millisecond,
-		PoolTimeout:  500 * time.Millisecond,
-		MaxRetries:   1,
+		Addr:         address,
+		Password:     config.Password,
+		DB:           config.DB,
+		DialTimeout:  dialTimeout,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		PoolTimeout:  poolTimeout,
+		MaxRetries:   maxRetries,
 	})
-	// Không crash app nếu không connect được, chỉ log warning
 	svc := &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),
 		logger: flogging.MustGetLogger("redis"),
 	}
+
 	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
 	defer cancel()
-	_, err := rdb.Ping(pingCtx).Result()
-	if err != nil {
-		log.Printf("Warning: Failed to connect to Redis at %s: %v. App will continue but Redis operations may fail.", viper.GetString("redis.host"), err)
-	} else {
-		svc.connected = true
-		log.Println("Connected to Redis at ", viper.GetString("redis.host"))
+	if _, err := rdb.Ping(pingCtx).Result(); err != nil {
+		svc.logger.Warnf("Redis unavailable at startup: %v", err)
+		return svc, nil
 	}
-	return svc
+	svc.connected = true
+	return svc, nil
+}
+
+// NewRedisService is the compatibility constructor for services that still
+// source Redis config from the shared Viper registry.
+func NewRedisService() *RedisService {
+	svc, err := Open(Config{
+		Address:  viper.GetString("redis.host"),
+		Password: viper.GetString("redis.pass"),
+		DB:       viper.GetInt("redis.db"),
+	})
+	if err == nil {
+		return svc
+	}
+
+	// Keep the old no-error constructor contract. The returned disconnected
+	// client makes failures explicit at operation time without hiding a second
+	// configuration source.
+	log.Printf("Redis configuration invalid: %v", err)
+	return &RedisService{
+		Client: redis.NewClient(&redis.Options{}),
+		Ctx:    context.Background(),
+		logger: flogging.MustGetLogger("redis"),
+	}
+}
+
+// Close releases the underlying Redis pool. The process that calls Open owns
+// this lifecycle and should call Close exactly once during shutdown.
+func (r *RedisService) Close() error {
+	if r == nil || r.Client == nil {
+		return nil
+	}
+	return r.Client.Close()
 }
 
 func (r *RedisService) markDisconnected() {

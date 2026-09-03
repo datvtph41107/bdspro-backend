@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"user/internal/domain"
+	"user/internal/domain/access"
 )
 
 type RoleMapper struct {
@@ -14,7 +14,7 @@ func NewRoleMapper() *RoleMapper {
 	return &RoleMapper{}
 }
 
-func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*sharepb.Role {
+func (m *RoleMapper) MapRoleListToItemPb(roles []access.Role) []*sharepb.Role {
 	var pbRoles []*sharepb.Role
 	for _, role := range roles {
 		pbRoles = append(pbRoles, &sharepb.Role{
@@ -26,7 +26,7 @@ func (m *RoleMapper) MapRoleListToItemPb(roles []domain.Role) []*sharepb.Role {
 	return pbRoles
 }
 
-func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*sharepb.Role {
+func (m *RoleMapper) MapRoleListToPb(roles []access.Role) []*sharepb.Role {
 	var pbRoles []*sharepb.Role
 	for _, role := range roles {
 		pbRoles = append(pbRoles, m.MapRoleToPb(&role))
@@ -35,7 +35,7 @@ func (m *RoleMapper) MapRoleListToPb(roles []domain.Role) []*sharepb.Role {
 }
 
 // mapRoleToPb chuyển domain Role sang protobuf Role
-func (m *RoleMapper) MapRoleToPb(role *domain.Role) *sharepb.Role {
+func (m *RoleMapper) MapRoleToPb(role *access.Role) *sharepb.Role {
 	if role == nil {
 		return nil
 	}
@@ -44,17 +44,17 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *sharepb.Role {
 		Id:              role.ID,
 		RoleName:        role.RoleName,
 		RoleDescription: role.RoleDescription,
-		// Key:             role.Key,
-		PermissionIds: role.PermissionIDs,
-		// OrganizationId:  role.OrganizationID,
-		IsDefault: role.IsDefault,
-		// DomainType:      role.DomainType,
-		ColorId:     role.ColorID,
-		RoleGroupId: role.RoleGroupID,
-		AllowAssign: role.AllowAssign,
-		RoleKey:     role.RoleKey,
-		CreatedAt:   _utils.FormatTimeToString(role.CreatedAt),
-		UpdatedAt:   _utils.FormatTimeToString(role.UpdatedAt),
+		Key:             role.Key,
+		PermissionIds:   role.PermissionIDs,
+		OrganizationId:  role.OrganizationID,
+		IsDefault:       role.IsDefault,
+		DomainType:      role.DomainType,
+		ColorId:         role.ColorID,
+		RoleGroupId:     role.RoleGroupID,
+		AllowAssign:     role.AllowAssign,
+		RoleKey:         role.RoleKey,
+		CreatedAt:       _utils.FormatTimeToString(role.CreatedAt),
+		UpdatedAt:       _utils.FormatTimeToString(role.UpdatedAt),
 	}
 
 	if role.RoleGroup != nil {
@@ -85,7 +85,7 @@ func (m *RoleMapper) MapRoleToPb(role *domain.Role) *sharepb.Role {
 	return pbRole
 }
 
-func (m *RoleMapper) MapPermissionListToPb(permissions []*domain.Permission) []*sharepb.Permission {
+func (m *RoleMapper) MapPermissionListToPb(permissions []*access.Permission) []*sharepb.Permission {
 	var pbPermissions []*sharepb.Permission
 	for _, permission := range permissions {
 		pbPermissions = append(pbPermissions, m.MapPermissionToPb(permission))
@@ -93,7 +93,7 @@ func (m *RoleMapper) MapPermissionListToPb(permissions []*domain.Permission) []*
 	return pbPermissions
 }
 
-func (m *RoleMapper) MapPermissionToPb(permission *domain.Permission) *sharepb.Permission {
+func (m *RoleMapper) MapPermissionToPb(permission *access.Permission) *sharepb.Permission {
 	if permission == nil {
 		return nil
 	}
@@ -111,7 +111,7 @@ func (m *RoleMapper) MapPermissionToPb(permission *domain.Permission) *sharepb.P
 	return pbPermission
 }
 
-func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *sharepb.Permission {
+func (m *RoleMapper) MapPermissionListWithChild(permission *access.Permission) *sharepb.Permission {
 	if permission == nil {
 		return nil
 	}
@@ -128,8 +128,8 @@ func (m *RoleMapper) MapPermissionListWithChild(permission *domain.Permission) *
 	return pbPermission
 }
 
-// MapAuthAdminWithRoleToPb convert domain.AuthAdminWithRole to proto
-func (m *RoleMapper) MapAuthAdminWithRoleToPb(admin *domain.AuthAdminWithRole) *userpb.AuthAdminWithRole {
+// MapAuthAdminWithRoleToPb convert access.AuthAdminWithRole to proto
+func (m *RoleMapper) MapAuthAdminWithRoleToPb(admin *access.AuthAdminWithRole) *userpb.AuthAdminWithRole {
 	if admin == nil {
 		return nil
 	}

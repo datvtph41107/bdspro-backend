@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"strconv"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,17 +20,16 @@ var insecureSecretLiterals = map[string]struct{}{
 	"key-generate-jwt-token-authentication":            {},
 }
 
-// RuntimeConfig is the validated production composition input for the legacy
+// RuntimeConfig is the validated production composition input for the
 // File-service runtime. Environment/YAML lookup ends here; business services
 // receive typed values and never read Viper directly.
 type RuntimeConfig struct {
-	HTTPPort     string
-	DatabaseDSN  string
-	JWTKey       string
-	Auth         AuthConfig
-	Hub          HubConfig
-	InternalGRPC InternalGRPCConfig
-	FileService  FileServiceConfig
+	HTTPPort    string
+	DatabaseDSN string
+	JWTKey      string
+	Auth        AuthConfig
+	Hub         HubConfig
+	FileService FileServiceConfig
 }
 
 type AuthConfig struct {
@@ -43,16 +42,13 @@ type HubConfig struct {
 	Timeout     time.Duration
 }
 
-type InternalGRPCConfig struct {
-	Enabled bool
-	Port    string
-}
-
 type FileServiceConfig struct {
-	SignatureKey    string
-	XorCryptKey     string
-	SignatureExpire time.Duration
-	ServiceAuthKey  string
+	StorageRoot        string
+	CORSAllowedOrigins []string
+	SignatureKey       string
+	XorCryptKey        string
+	SignatureExpire    time.Duration
+	ServiceAuthKey     string
 }
 
 // CurrentRuntimeConfig resolves Viper only after LoadConfig has loaded the
@@ -71,15 +67,13 @@ func CurrentRuntimeConfig() (RuntimeConfig, error) {
 			GRPCAddress: strings.TrimSpace(viper.GetString("hub.grpc_address")),
 			Timeout:     viper.GetDuration("hub.timeout"),
 		},
-		InternalGRPC: InternalGRPCConfig{
-			Enabled: viper.GetBool("internal_grpc.enabled"),
-			Port:    strings.TrimSpace(viper.GetString("internal_grpc.port")),
-		},
 		FileService: FileServiceConfig{
-			SignatureKey:    strings.TrimSpace(viper.GetString("file.signature_key")),
-			XorCryptKey:     strings.TrimSpace(viper.GetString("file.xor_crypt_key")),
-			SignatureExpire: viper.GetDuration("file.signature_expire"),
-			ServiceAuthKey:  strings.TrimSpace(viper.GetString("service.auth_key")),
+			StorageRoot:        strings.TrimSpace(viper.GetString("file.storage_root")),
+			CORSAllowedOrigins: configStringList("file.cors_allowed_origins"),
+			SignatureKey:       strings.TrimSpace(viper.GetString("file.signature_key")),
+			XorCryptKey:        strings.TrimSpace(viper.GetString("file.xor_crypt_key")),
+			SignatureExpire:    viper.GetDuration("file.signature_expire"),
+			ServiceAuthKey:     strings.TrimSpace(viper.GetString("service.auth_key")),
 		},
 	}
 	if err := cfg.Validate(); err != nil {
@@ -110,7 +104,10 @@ func (c RuntimeConfig) Validate() error {
 	if c.Hub.Timeout <= 0 {
 		return errors.New("file-service hub.timeout must be positive")
 	}
-	if err := validateInternalGRPC(c.InternalGRPC); err != nil {
+	if strings.TrimSpace(c.FileService.StorageRoot) == "" {
+		return errors.New("file.storage_root is required")
+	}
+	if err := validateCORSOrigins(c.FileService.CORSAllowedOrigins); err != nil {
 		return err
 	}
 	if err := validateSecret("file.signature_key", c.FileService.SignatureKey); err != nil {
@@ -144,17 +141,55 @@ func validateSecret(name, value string) error {
 	return nil
 }
 
-func validateInternalGRPC(cfg InternalGRPCConfig) error {
-	port := strings.TrimSpace(cfg.Port)
-	if cfg.Enabled && port == "" {
-		return errors.New("file-service internal_grpc.port is required when enabled")
+func configStringList(key string) []string {
+	var values []string
+	switch raw := viper.Get(key).(type) {
+	case []string:
+		values = append(values, raw...)
+	case []interface{}:
+		for _, item := range raw {
+			if value, ok := item.(string); ok {
+				values = append(values, value)
+			}
+		}
+	case string:
+		values = append(values, strings.Split(raw, ",")...)
 	}
-	if port == "" {
-		return nil
+
+	if len(values) == 0 {
+		values = append(values, viper.GetStringSlice(key)...)
 	}
-	value, err := strconv.Atoi(port)
-	if err != nil || value < 1 || value > 65535 {
-		return errors.New("file-service internal_grpc.port must be between 1 and 65535")
+
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		for _, part := range strings.Split(value, ",") {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			if _, exists := seen[part]; exists {
+				continue
+			}
+			seen[part] = struct{}{}
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func validateCORSOrigins(origins []string) error {
+	if len(origins) == 0 {
+		return errors.New("file.cors_allowed_origins is required")
+	}
+	for _, origin := range origins {
+		parsed, err := url.ParseRequestURI(origin)
+		if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return fmt.Errorf("file.cors_allowed_origins contains invalid origin %q", origin)
+		}
+		if parsed.Path != "" && parsed.Path != "/" {
+			return fmt.Errorf("file.cors_allowed_origins contains non-origin path %q", origin)
+		}
 	}
 	return nil
 }

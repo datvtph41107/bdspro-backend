@@ -15,7 +15,6 @@ func RegisterAuthService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		authpb.RegisterRoleServiceHandler,
 		authpb.RegisterPermissionServiceHandler,
 		authpb.RegisterRoleGroupServiceHandler,
-		authpb.RegisterAuthInternalServiceHandler,
 		authpb.RegisterUserInfoServiceHandler,
 	)
 }

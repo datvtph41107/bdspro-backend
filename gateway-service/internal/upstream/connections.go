@@ -44,7 +44,7 @@ func Open(cfg gatewayconfig.Runtime) (*Connections, error) {
 			Target:             target,
 			BackoffMaxDelay:    backoffMaxDelay,
 			Credentials:        insecure.NewCredentials(),
-			Transport:          rpc.TransportConfig{Trust: cfg.Trust},
+			Transport:          cfg.RPCTransport,
 			DefaultCallOptions: callOptions,
 		})
 		if err != nil {

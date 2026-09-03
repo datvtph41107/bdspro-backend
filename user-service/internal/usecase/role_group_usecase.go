@@ -4,13 +4,13 @@ import (
 	"common/case/crud"
 	_errors "common/errors"
 	"context"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/enums"
 	"user/internal/interface/repo"
 )
 
 type RoleGroupUsecase struct {
-	crud.BaseUsecase[domain.RoleGroup, repo.RoleGroupRepository]
+	crud.BaseUsecase[access.RoleGroup, repo.RoleGroupRepository]
 	permissionUsecase *PermissionUsecase
 }
 
@@ -19,7 +19,7 @@ func NewRoleGroupUsecase(
 	permissionUsecase *PermissionUsecase,
 ) *RoleGroupUsecase {
 	return &RoleGroupUsecase{
-		crud.BaseUsecase[domain.RoleGroup, repo.RoleGroupRepository]{
+		crud.BaseUsecase[access.RoleGroup, repo.RoleGroupRepository]{
 			Repo: roleGroupRepo,
 		},
 		permissionUsecase,
@@ -42,18 +42,18 @@ func (uc *RoleGroupUsecase) UpdateGroupPermissions(ctx context.Context, groupID 
 }
 
 // GetPermissionsByGroupKey lấy danh sách permission theo group key
-func (uc *RoleGroupUsecase) GetPermissionsByGroupKey(ctx context.Context, groupKey enums.GroupRoleKeyEnum) ([]*domain.Permission, error) {
+func (uc *RoleGroupUsecase) GetPermissionsByGroupKey(ctx context.Context, groupKey enums.GroupRoleKeyEnum) ([]*access.Permission, error) {
 	permissions, err := uc.Repo.GetPermissionsByGroupKey(ctx, groupKey)
 	if err != nil {
 		return nil, err
 	}
 
-	permMap := make(map[uint64]*domain.Permission)
+	permMap := make(map[uint64]*access.Permission)
 	for i := range permissions {
 		permMap[permissions[i].ID] = permissions[i]
 	}
 
-	var roots []*domain.Permission
+	var roots []*access.Permission
 
 	// Xây dựng quan hệ cha-con
 	for _, p := range permissions {

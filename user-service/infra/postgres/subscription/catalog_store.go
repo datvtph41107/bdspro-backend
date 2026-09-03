@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"common/productcatalog"
 	"gorm.io/gorm"
-	"user/internal/modules/subscription/settlement"
+	catalogdomain "user/internal/domain/plan"
+	"user/internal/usecase/subscription/settlement"
 )
 
 type targetRow struct {
@@ -42,5 +42,5 @@ func loadTarget(db *gorm.DB, planVersionID uint64) (settlement.Target, error) {
 	return settlement.Target{ProductID: r.ProductID, PlanID: r.PlanID, PlanVersionID: r.PlanVersionID,
 		ProductCode: r.ProductCode, PlanCode: r.PlanCode, PlanVersion: r.PlanVersion,
 		TierRank: *r.TierRank, SubscriptionTermDays: *r.SubscriptionTermDays,
-		TermsChecksum: r.TermsChecksum, Published: r.PublishedAt != nil, PlanStatus: productcatalog.Status(r.PlanStatus)}, nil
+		TermsChecksum: r.TermsChecksum, Published: r.PublishedAt != nil, PlanStatus: catalogdomain.Status(r.PlanStatus)}, nil
 }

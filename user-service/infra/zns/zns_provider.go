@@ -2,6 +2,7 @@ package zns
 
 import (
 	"bytes"
+	_redis "common/redis"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,8 +14,7 @@ import (
 	"sync"
 	"time"
 	"user/config"
-	"user/env"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 
@@ -38,91 +38,22 @@ const (
 	ZNSRefreshTokenKey = "zns:refresh_token"
 )
 
-// NewZnsProvider tạo instance mới của ZnsProvider
-func NewZnsProvider(authConfigRepo repo.IAuthConfigRepo) providers.IZnsProvider {
-	// Khởi tạo Redis client
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Properties.Redis.Host, config.Properties.Redis.Port),
-		Password: config.Properties.Redis.Password,
-		DB:       0,
-	})
-
-	provider := &ZnsProvider{
+// NewZnsProvider constructs the ZNS adapter without performing external I/O.
+//
+// Configuration files provide the initial in-memory values. Operations that
+// require current database-backed configuration reload it under the caller's
+// context instead of hiding database access inside dependency construction.
+func NewZnsProvider(authConfigRepo repo.IAuthConfigRepo, redisService *_redis.RedisService) providers.IZnsProvider {
+	return &ZnsProvider{
+		accessToken:    config.Properties.ZNS.AccessToken,
+		refreshToken:   config.Properties.ZNS.RefreshToken,
+		templateID:     config.Properties.ZNS.TemplateID,
+		otpTemplateID:  config.Properties.ZNS.OTPTemplateID,
 		authConfigRepo: authConfigRepo,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		redisClient: redisClient,
-	}
-
-	// Load tất cả config từ DB, nếu không có thì dùng config file
-	provider.loadAllConfigFromDB()
-
-	return provider
-}
-
-// loadAllConfigFromDB load tất cả config từ DB (tokens + template IDs)
-// Nếu không có trong DB thì load từ config file
-func (z *ZnsProvider) loadAllConfigFromDB() {
-	ctx := context.Background()
-
-	z.mu.Lock()
-	defer z.mu.Unlock()
-
-	// Load access token từ DB
-	accessTokenConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSToken)
-	if err != nil {
-		// Không có trong DB, dùng token từ config
-		z.accessToken = config.Properties.ZNS.AccessToken
-		fmt.Printf("⚠️ [ZNS] Error loading access token from DB: %v, using config\n", err)
-	} else {
-		z.accessToken = accessTokenConfig.ConfigValue
-		fmt.Println("✅ [ZNS] Loaded access token from DB")
-	}
-
-	// Load refresh token từ DB
-	refreshTokenConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSRefresh)
-	if err != nil {
-		// Không có trong DB, dùng token từ config
-		z.refreshToken = config.Properties.ZNS.RefreshToken
-		fmt.Printf("⚠️ [ZNS] Error loading refresh token from DB: %v, using config\n", err)
-	} else {
-		z.refreshToken = refreshTokenConfig.ConfigValue
-		fmt.Println("✅ [ZNS] Loaded refresh token from DB")
-	}
-
-	// Load template ID từ DB
-	templateConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSTemplateID)
-	if err != nil {
-		// Không có trong DB, dùng từ config
-		z.templateID = config.Properties.ZNS.TemplateID
-		fmt.Printf("⚠️ [ZNS] Error loading template ID from DB: %v, using config\n", err)
-	} else {
-		// Parse string to int
-		if templateID, err := strconv.Atoi(templateConfig.ConfigValue); err == nil {
-			z.templateID = templateID
-			fmt.Printf("✅ [ZNS] Loaded template ID from DB: %d\n", templateID)
-		} else {
-			z.templateID = config.Properties.ZNS.TemplateID
-			fmt.Printf("⚠️ [ZNS] Error parsing template ID from DB: %v, using config\n", err)
-		}
-	}
-
-	// Load OTP template ID từ DB
-	otpTemplateConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSOTPTemplate)
-	if err != nil {
-		// Không có trong DB, dùng từ config
-		z.otpTemplateID = config.Properties.ZNS.OTPTemplateID
-		fmt.Printf("⚠️ [ZNS] Error loading OTP template ID from DB: %v, using config\n", err)
-	} else {
-		// Parse string to int
-		if otpTemplateID, err := strconv.Atoi(otpTemplateConfig.ConfigValue); err == nil {
-			z.otpTemplateID = otpTemplateID
-			fmt.Printf("✅ [ZNS] Loaded OTP template ID from DB: %d\n", otpTemplateID)
-		} else {
-			z.otpTemplateID = config.Properties.ZNS.OTPTemplateID
-			fmt.Printf("⚠️ [ZNS] Error parsing OTP template ID from DB: %v, using config\n", err)
-		}
+		redisClient: redisService.Client,
 	}
 }
 
@@ -133,7 +64,7 @@ func (z *ZnsProvider) reloadConfigFromDB(ctx context.Context) error {
 	defer z.mu.Unlock()
 
 	// Load access token từ DB
-	accessTokenConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSToken)
+	accessTokenConfig, err := z.authConfigRepo.GetByKey(ctx, auth.ConfigKeyZNSToken)
 	if err != nil {
 		return fmt.Errorf("lỗi khi reload access token từ DB: %w", err)
 	}
@@ -142,7 +73,7 @@ func (z *ZnsProvider) reloadConfigFromDB(ctx context.Context) error {
 	}
 
 	// Load refresh token từ DB
-	refreshTokenConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSRefresh)
+	refreshTokenConfig, err := z.authConfigRepo.GetByKey(ctx, auth.ConfigKeyZNSRefresh)
 	if err != nil {
 		return fmt.Errorf("lỗi khi reload refresh token từ DB: %w", err)
 	}
@@ -151,7 +82,7 @@ func (z *ZnsProvider) reloadConfigFromDB(ctx context.Context) error {
 	}
 
 	// Load template ID từ DB
-	templateConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSTemplateID)
+	templateConfig, err := z.authConfigRepo.GetByKey(ctx, auth.ConfigKeyZNSTemplateID)
 	if err == nil && templateConfig.ConfigValue != "" {
 		if templateID, err := strconv.Atoi(templateConfig.ConfigValue); err == nil {
 			z.templateID = templateID
@@ -159,7 +90,7 @@ func (z *ZnsProvider) reloadConfigFromDB(ctx context.Context) error {
 	}
 
 	// Load OTP template ID từ DB
-	otpTemplateConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSOTPTemplate)
+	otpTemplateConfig, err := z.authConfigRepo.GetByKey(ctx, auth.ConfigKeyZNSOTPTemplate)
 	if err == nil && otpTemplateConfig.ConfigValue != "" {
 		if otpTemplateID, err := strconv.Atoi(otpTemplateConfig.ConfigValue); err == nil {
 			z.otpTemplateID = otpTemplateID
@@ -175,13 +106,13 @@ func (z *ZnsProvider) saveTokensToDB(ctx context.Context, accessToken, refreshTo
 	defer z.mu.Unlock()
 
 	// Lưu access token vào DB
-	err := z.authConfigRepo.UpdateValue(ctx, domain.ConfigKeyZNSToken, accessToken)
+	err := z.authConfigRepo.UpdateValue(ctx, auth.ConfigKeyZNSToken, accessToken)
 	if err != nil {
 		return fmt.Errorf("lỗi khi lưu access token vào DB: %w", err)
 	}
 
 	// Lưu refresh token vào DB
-	err = z.authConfigRepo.UpdateValue(ctx, domain.ConfigKeyZNSRefresh, refreshToken)
+	err = z.authConfigRepo.UpdateValue(ctx, auth.ConfigKeyZNSRefresh, refreshToken)
 	if err != nil {
 		return fmt.Errorf("lỗi khi lưu refresh token vào DB: %w", err)
 	}
@@ -292,7 +223,7 @@ func (z *ZnsProvider) SendZNSMessage(
 	// return nil, nil
 	// Chuẩn hóa số điện thoại sang format quốc tế
 	phone = cleanPhoneNumber(phone)
-	if env.ENV_RUNTIME == "" {
+	if !config.Properties.OutboundMessaging.Enabled {
 		return nil, nil
 	}
 
@@ -409,6 +340,14 @@ func (z *ZnsProvider) SendOTPZNS(
 	phone string,
 	otp string,
 ) (map[string]interface{}, error) {
+	if !config.Properties.OutboundMessaging.Enabled {
+		return map[string]interface{}{
+			"success": true,
+			"message": "Skip sending ZNS because outbound messaging is disabled",
+			"phone":   phone,
+		}, nil
+	}
+
 	// Chuẩn bị template data cho OTP
 	templateData := map[string]interface{}{
 		"otp": otp,
@@ -447,8 +386,15 @@ type ZNSRefreshTokenResponse struct {
 // Body: refresh_token, app_id, grant_type='refresh_token'
 // Response: access_token mới và refresh_token mới
 func (z *ZnsProvider) RefreshAccessToken(ctx context.Context) (string, string, error) {
+	if err := z.reloadConfigFromDB(ctx); err != nil {
+		return "", "", fmt.Errorf(
+			"reload ZNS configuration before token refresh: %w",
+			err,
+		)
+	}
+
 	// ✅ Lấy refresh token mới nhất từ DB thay vì memory
-	refreshTokenConfig, err := z.authConfigRepo.GetByKey(ctx, domain.ConfigKeyZNSRefresh)
+	refreshTokenConfig, err := z.authConfigRepo.GetByKey(ctx, auth.ConfigKeyZNSRefresh)
 	if err != nil {
 		return "", "", fmt.Errorf("lỗi khi lấy refresh token từ DB: %w", err)
 	}
@@ -457,8 +403,6 @@ func (z *ZnsProvider) RefreshAccessToken(ctx context.Context) (string, string, e
 	if currentRefreshToken == "" {
 		return "", "", fmt.Errorf("refresh token trong DB rỗng")
 	}
-
-	fmt.Printf("🔄 [ZNS] Using refresh token from DB: %s...\n", currentRefreshToken)
 
 	// Chuẩn bị form data
 	formData := url.Values{}

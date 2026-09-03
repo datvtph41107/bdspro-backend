@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"tqd/internal/workspace/report/adapters/memoryjob"
-	"tqd/internal/workspace/report/processing"
+	"tqd/internal/usecase/generatedreport/memoryjob"
+	"tqd/internal/usecase/generatedreport/processing"
 )
 
 type checkpointGenerator struct{}

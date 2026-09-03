@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"common/trust"
+	"common/identity"
 	"context"
 	"errors"
 
@@ -11,10 +11,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TransportConfig contains explicit cross-service trust policy. It owns no
+// TransportConfig contains explicit cross-service assertion policy. It owns no
 // service discovery, business authorization, quota, logging, or process exit.
 type TransportConfig struct {
-	Trust trust.Config
+	ServiceAssertion        ServiceAssertionConfig
+	RequireServiceAssertion bool
 }
 
 // ClientInterceptors is the canonical unary/stream outbound transport pair.
@@ -97,11 +98,11 @@ func WithOutgoingContext(
 	md = AppendRequestFromContext(ctx, md)
 	md = AppendIdentityFromContext(ctx, md)
 
-	if err := trust.Sign(method, md, cfg.Trust, QHPROMetadataContract()); err != nil {
-		if errors.Is(err, trust.ErrNotConfigured) && cfg.Trust.Mode != trust.ModeEnforce {
+	if err := SignServiceAssertion(method, md, cfg.ServiceAssertion); err != nil {
+		if errors.Is(err, ErrServiceAssertionNotConfigured) && !cfg.RequireServiceAssertion {
 			return metadata.NewOutgoingContext(ctx, md), nil
 		}
-		if errors.Is(err, trust.ErrNotConfigured) {
+		if errors.Is(err, ErrServiceAssertionNotConfigured) {
 			return nil, status.Error(codes.FailedPrecondition, "gRPC metadata signing is not configured")
 		}
 		return nil, status.Error(codes.Internal, "cannot sign gRPC metadata")
@@ -166,25 +167,31 @@ func PrepareIncomingContext(
 		md = metadata.MD{}
 	}
 
-	assessment := trust.Assess(method, md, cfg.Trust, QHPROMetadataContract())
+	transportCaller, verifyErr := VerifyServiceAssertion(method, md, cfg.ServiceAssertion)
+
+	verified := verifyErr == nil
+	hasPrivilegedMetadata := HasPrivilegedMetadata(md)
+	hasServiceAssertion := HasServiceAssertion(md)
+	unsignedAllowed := AllowsUnsignedServiceCall(method) &&
+		!hasPrivilegedMetadata &&
+		!hasServiceAssertion
+
 	switch {
-	case assessment.Verified():
-		bound, err := trust.BindCaller(ctx, assessment.Caller)
+	case verified:
+		bound, err := identity.BindServiceCaller(ctx, transportCaller)
 		if err != nil {
 			return ctx, status.Error(codes.Internal, "transport caller context conflict")
 		}
 		ctx = bound
-	case assessment.Reject():
-		return ctx, status.Error(codes.Unauthenticated, "trusted transport assertion required")
-	case assessment.LegacyUnverified():
-		bound, err := trust.BindCaller(ctx, trust.Caller{
-			ServiceID: "legacy-unverified",
-			Level:     trust.LevelLegacyUnverified,
-		})
-		if err != nil {
-			return ctx, status.Error(codes.Internal, "transport caller context conflict")
-		}
-		ctx = bound
+
+	case unsignedAllowed:
+		// Explicit infrastructure exception. No verified service caller is promoted.
+
+	case cfg.RequireServiceAssertion:
+		return ctx, status.Error(codes.Unauthenticated, "service assertion required")
+
+	case hasPrivilegedMetadata || hasServiceAssertion:
+		// Verification failed. No verified service caller or identity is promoted.
 	}
 
 	var err error
@@ -192,7 +199,7 @@ func PrepareIncomingContext(
 	if err != nil {
 		return ctx, err
 	}
-	ctx, err = restoreIdentityFromMetadata(ctx, md, assessment.CanPromotePrivilegedContext(), assessment.Verified())
+	ctx, err = restoreIdentityFromMetadata(ctx, md, verified, verified)
 	if err != nil {
 		return ctx, err
 	}
@@ -202,7 +209,7 @@ func PrepareIncomingContext(
 // StrictIdentityUnaryServerInterceptor preserves the historical identitygrpc
 // contract: the call must carry a valid signed transport assertion before
 // Actor/Caller are restored. It exists only for compatibility facades.
-func StrictIdentityUnaryServerInterceptor(cfg trust.Config) grpc.UnaryServerInterceptor {
+func StrictIdentityUnaryServerInterceptor(cfg ServiceAssertionConfig) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -214,11 +221,11 @@ func StrictIdentityUnaryServerInterceptor(cfg trust.Config) grpc.UnaryServerInte
 		if info != nil {
 			method = info.FullMethod
 		}
-		transportCaller, err := trust.Verify(method, md, cfg, QHPROMetadataContract())
+		transportCaller, err := VerifyServiceAssertion(method, md, cfg)
 		if err != nil {
-			return nil, status.Error(codes.Unauthenticated, "trusted gRPC metadata is required")
+			return nil, status.Error(codes.Unauthenticated, "service assertion is required")
 		}
-		bound, err := trust.BindCaller(ctx, transportCaller)
+		bound, err := identity.BindServiceCaller(ctx, transportCaller)
 		if err != nil {
 			return nil, status.Error(codes.Internal, "transport caller context conflict")
 		}

@@ -52,6 +52,21 @@ services:
       - "8002:8002"
     networks:
       - internal
+    environment:
+      ENV_RUNTIME: ${FILE_ENV_RUNTIME:-develop}
+      SERVER_PORT: "8002"
+      DATABASE_DSN: ${FILE_DATABASE_DSN:-}
+      JWT_KEY_GENERATE: ${FILE_JWT_KEY_GENERATE:-}
+      FILE_SIGNATURE_KEY: ${FILE_SIGNATURE_KEY:-}
+      FILE_XOR_CRYPT_KEY: ${FILE_XOR_CRYPT_KEY:-}
+      FILE_STORAGE_ROOT: /files
+      FILE_CORS_ALLOWED_ORIGINS: ${FILE_CORS_ALLOWED_ORIGINS:-}
+      SERVICE_AUTH_KEY: ${FILE_SERVICE_AUTH_KEY:-}
+      AUTH_GRPC_ADDRESS: ${FILE_AUTH_GRPC_ADDRESS:-auth:8216}
+      HUB_GRPC_ADDRESS: ${FILE_HUB_GRPC_ADDRESS:-hub:8280}
+      QHPRO_SERVICE_ID: file-service
+      QHPRO_INTERNAL_METADATA_SECRET: ${FILE_INTERNAL_METADATA_SECRET:-}
+      QHPRO_TRUSTED_METADATA_MODE: enforce
     volumes:
       - ${PWD}/files:/files
       - ./logs/file:/app/logs

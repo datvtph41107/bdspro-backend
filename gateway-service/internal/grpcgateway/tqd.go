@@ -24,6 +24,8 @@ func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.C
 		tqdpb.RegisterOneHouseServiceHandler,
 		tqdpb.RegisterLayerServiceHandler,
 		tqdpb.RegisterGisReportAdminServiceHandler,
+		tqdpb.RegisterAdminUsageServiceHandler,
+		tqdpb.RegisterProfileUsageServiceHandler,
 		tqdpb.RegisterReportServiceHandler,
 		tqdpb.RegisterSubscriptionServiceHandler,
 		tqdpb.RegisterQHLabelServiceHandler,

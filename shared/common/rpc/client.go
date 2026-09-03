@@ -14,7 +14,7 @@ import (
 )
 
 // ClientConfig contains channel-construction mechanics only. The composition
-// owner supplies topology, credentials, trust policy, and Close ownership.
+// owner supplies topology, credentials, service-assertion policy, and Close ownership.
 type ClientConfig struct {
 	Target             string
 	BackoffMaxDelay    time.Duration

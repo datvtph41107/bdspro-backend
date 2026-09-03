@@ -9,48 +9,44 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"os"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
-	"tqd/internal/dto"
-	"tqd/internal/interface/provider"
 
-	"github.com/spf13/viper"
+	"tqd/internal/interface/provider"
 )
 
 const fileClientServiceName = "tqd-service"
 
-// FileClient gọi sang file-service để upload/tải file. tqd-service chỉ lưu lại path trả về
-// (không lưu binary), giống cách assistant-service dùng file-service.
+// FileClient gọi sang file-service để upload/tải file. tqd-service chỉ lưu durable File reference
+// trả về và không sở hữu binary/storage semantics.
 type FileClient struct {
 	baseURL        string
 	serviceAuthKey string
 	httpClient     *http.Client
 }
 
-// NewFileClient trả về provider.FileProvider trực tiếp nên không cần wire.Bind.
-func NewFileClient() provider.FileProvider {
-	baseURL := viper.GetString("file_service.base_url")
+// FileConfig is process-owned configuration injected at composition.
+type FileConfig struct {
+	BaseURL        string
+	ServiceAuthKey string
+	Timeout        time.Duration
+}
+
+func NewFileClient(cfg FileConfig) provider.FileProvider {
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
 	if baseURL == "" {
-		baseURL = "http://localhost:8002"
+		baseURL = "http://127.0.0.1:8002"
 	}
-
-	serviceAuthKey := viper.GetString("file_service.service_auth_key")
-	if serviceAuthKey == "" {
-		serviceAuthKey = os.Getenv("FILE_SERVICE_AUTH_KEY")
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = 30 * time.Second
 	}
-
-	timeoutSeconds := viper.GetInt("file_service.timeout_seconds")
-	if timeoutSeconds == 0 {
-		timeoutSeconds = 30
-	}
-
 	return &FileClient{
 		baseURL:        baseURL,
-		serviceAuthKey: serviceAuthKey,
-		httpClient: &http.Client{
-			Timeout: time.Duration(timeoutSeconds) * time.Second,
-		},
+		serviceAuthKey: strings.TrimSpace(cfg.ServiceAuthKey),
+		httpClient:     &http.Client{Timeout: timeout},
 	}
 }
 
@@ -120,11 +116,11 @@ func (c *FileClient) UploadFile(ctx context.Context, file io.Reader, filename st
 }
 
 // GetFile tải nội dung file từ file-service theo path đã lưu (GET /v1/file/load/{p}/{s}).
-// Signature (s) để trống vì đây là service-to-service request, đã xác thực qua X-Service-Auth.
+// Segment s is a non-empty compatibility placeholder; service-to-service authorization is carried by X-Service-Auth.
 func (c *FileClient) GetFile(ctx context.Context, path string) ([]byte, error) {
-	url := fmt.Sprintf("%s/v1/file/load/%s/%s", c.baseURL, path, "")
+	requestURL := fmt.Sprintf("%s/v1/file/load/%s/local", c.baseURL, url.PathEscape(path))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -142,26 +138,4 @@ func (c *FileClient) GetFile(ctx context.Context, path string) ([]byte, error) {
 	}
 
 	return io.ReadAll(resp.Body)
-}
-
-func (c *FileClient) DeleteFile(ctx context.Context, fileURL string) error {
-	// Chưa cần dùng ở phase này (chưa có API xoá file trên file-service cho service nội bộ).
-	return nil
-}
-
-func (c *FileClient) GetFileURL(ctx context.Context, filePath string) string {
-	return fmt.Sprintf("%s/v1/file/load/%s/%s", c.baseURL, filePath, "")
-}
-
-func (c *FileClient) ValidateFile(ctx context.Context, file io.Reader, filename string, maxSize int64, allowedTypes []string) error {
-	// Validate cơ bản do file-service tự xử lý phía server; chưa cần validate thêm ở tqd.
-	return nil
-}
-
-func (c *FileClient) GetFileInfo(ctx context.Context, fileURL string) (*dto.FileInfoDTO, error) {
-	return nil, nil
-}
-
-func (c *FileClient) GenerateThumbnail(ctx context.Context, fileURL string) (string, error) {
-	return "", nil
 }

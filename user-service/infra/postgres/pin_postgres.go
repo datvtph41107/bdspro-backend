@@ -4,10 +4,8 @@ import (
 	"context"
 	"time"
 
-	_db "common/db"
-	"user/internal/domain"
-
 	"gorm.io/gorm"
+	"user/internal/domain/auth"
 )
 
 // PINPostgres implementation của PIN repository
@@ -22,9 +20,9 @@ func NewPINRepository(db *gorm.DB) *PINPostgres {
 }
 
 // GetByAuthID lấy PIN theo authID
-func (r *PINPostgres) GetByAuthID(ctx context.Context, authID uint64) (*domain.UserPINEntity, error) {
-	var pin domain.UserPINEntity
-	err := _db.DB.Where("auth_id = ?", authID).First(&pin).Error
+func (r *PINPostgres) GetByAuthID(ctx context.Context, authID uint64) (*auth.UserPINEntity, error) {
+	var pin auth.UserPINEntity
+	err := r.db.Where("auth_id = ?", authID).First(&pin).Error
 	if err != nil {
 		return nil, err
 	}
@@ -32,26 +30,26 @@ func (r *PINPostgres) GetByAuthID(ctx context.Context, authID uint64) (*domain.U
 }
 
 // Create tạo mới PIN
-func (r *PINPostgres) Create(ctx context.Context, pin *domain.UserPINEntity) error {
-	return _db.DB.Create(pin).Error
+func (r *PINPostgres) Create(ctx context.Context, pin *auth.UserPINEntity) error {
+	return r.db.Create(pin).Error
 }
 
 // Update cập nhật PIN, nếu chưa có thì tạo mới
-func (r *PINPostgres) Update(ctx context.Context, pin *domain.UserPINEntity) error {
+func (r *PINPostgres) Update(ctx context.Context, pin *auth.UserPINEntity) error {
 	// Kiểm tra xem PIN đã tồn tại chưa
-	var existingPIN domain.UserPINEntity
-	err := _db.DB.Where("auth_id = ?", pin.AuthID).First(&existingPIN).Error
+	var existingPIN auth.UserPINEntity
+	err := r.db.Where("auth_id = ?", pin.AuthID).First(&existingPIN).Error
 
 	if err != nil {
 		// Nếu không tìm thấy, tạo mới
 		if err == gorm.ErrRecordNotFound {
-			return _db.DB.Create(pin).Error
+			return r.db.Create(pin).Error
 		}
 		return err
 	}
 
 	// Nếu đã tồn tại, cập nhật
-	return r.db.Model(&domain.UserPINEntity{}).
+	return r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ?", pin.AuthID).
 		Updates(map[string]interface{}{
 			"pin":            pin.PIN,
@@ -65,12 +63,12 @@ func (r *PINPostgres) Update(ctx context.Context, pin *domain.UserPINEntity) err
 
 // Delete xóa PIN
 func (r *PINPostgres) Delete(ctx context.Context, authID uint64) error {
-	return _db.DB.Where("auth_id = ?", authID).Delete(&domain.UserPINEntity{}).Error
+	return r.db.Where("auth_id = ?", authID).Delete(&auth.UserPINEntity{}).Error
 }
 
 // ResetCheckCounter reset số lần nhập sai PIN
 func (r *PINPostgres) ResetCheckCounter(ctx context.Context, authID uint64) error {
-	return _db.DB.Model(&domain.UserPINEntity{}).
+	return r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ?", authID).
 		Updates(map[string]interface{}{
 			"pin_check_time": 0,
@@ -80,7 +78,7 @@ func (r *PINPostgres) ResetCheckCounter(ctx context.Context, authID uint64) erro
 
 // LockPIN khóa PIN do nhập sai nhiều lần
 func (r *PINPostgres) LockPIN(ctx context.Context, authID uint64, lockedUntil time.Time) error {
-	return _db.DB.Model(&domain.UserPINEntity{}).
+	return r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ?", authID).
 		Updates(map[string]interface{}{
 			"is_active":    false,
@@ -90,7 +88,7 @@ func (r *PINPostgres) LockPIN(ctx context.Context, authID uint64, lockedUntil ti
 
 // UnlockPIN mở khóa PIN
 func (r *PINPostgres) UnlockPIN(ctx context.Context, authID uint64) error {
-	return _db.DB.Model(&domain.UserPINEntity{}).
+	return r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ?", authID).
 		Updates(map[string]interface{}{
 			"is_active":      true,
@@ -102,7 +100,7 @@ func (r *PINPostgres) UnlockPIN(ctx context.Context, authID uint64) error {
 // CheckPINExists kiểm tra PIN có tồn tại không
 func (r *PINPostgres) CheckPINExists(ctx context.Context, authID uint64) (bool, error) {
 	var count int64
-	err := _db.DB.Model(&domain.UserPINEntity{}).
+	err := r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ? AND is_active = ?", authID, true).
 		Count(&count).Error
 	if err != nil {
@@ -113,7 +111,7 @@ func (r *PINPostgres) CheckPINExists(ctx context.Context, authID uint64) (bool, 
 
 // IncrementCheckTime tăng số lần nhập sai PIN
 func (r *PINPostgres) IncrementCheckTime(ctx context.Context, authID uint64) error {
-	return _db.DB.Model(&domain.UserPINEntity{}).
+	return r.db.Model(&auth.UserPINEntity{}).
 		Where("auth_id = ?", authID).
 		Update("pin_check_time", gorm.Expr("pin_check_time + ?", 1)).
 		Error

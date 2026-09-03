@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/providers"
@@ -45,7 +45,7 @@ func NewAdminUsecase(
 }
 
 // CreateAdmin tạo tài khoản admin mới
-func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMethod) (*domain.AuthMethod, error) {
+func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *auth.AuthMethod) (*auth.AuthMethod, error) {
 	// Validate request
 	if err := req.Validate(); err != nil {
 		return nil, _errors.ReturnError(int32(400), err.Error())
@@ -73,7 +73,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMeth
 	var roleKey uint32 = 1 // Default role, cần implement logic mapping
 
 	// Tạo auth method mới — AuthName bắt buộc cho AdminLogin (FindByUsername)
-	authMethod := &domain.AuthMethod{
+	authMethod := &auth.AuthMethod{
 		Provider:  "ADMIN",
 		AuthName:  req.AuthName,
 		Password:  hashedPassword,
@@ -119,7 +119,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMeth
 		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
 	}
 
-	return &domain.AuthMethod{
+	return &auth.AuthMethod{
 		ID:       createdAuth.ID,
 		UserID:   profile.ProfileID,
 		AuthName: req.AuthName,
@@ -132,7 +132,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *domain.AuthMeth
 }
 
 // UpdateAdmin cập nhật thông tin admin, nếu không tìm thấy thì tạo mới
-func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMethod) (*domain.AuthMethod, error) {
+func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod) (*auth.AuthMethod, error) {
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
@@ -157,7 +157,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *domain.AuthMeth
 		if err != nil {
 			return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
 		}
-		newAuthMethod := &domain.AuthMethod{
+		newAuthMethod := &auth.AuthMethod{
 			// ID:       req.ID,
 			Provider: "ADMIN",
 			AuthName: req.AuthName,
@@ -397,7 +397,7 @@ func (u *AuthAdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequ
 	}, nil
 }
 
-func resolveAdminProfile(admin *domain.AuthMethod, byAuthID, byID map[uint64]*models.AdminProfile) *models.AdminProfile {
+func resolveAdminProfile(admin *auth.AuthMethod, byAuthID, byID map[uint64]*models.AdminProfile) *models.AdminProfile {
 	if admin == nil {
 		return nil
 	}
@@ -413,7 +413,7 @@ func resolveAdminProfile(admin *domain.AuthMethod, byAuthID, byID map[uint64]*mo
 }
 
 // GetAdminByID lấy thông tin admin theo ID
-func (u *AuthAdminUsecase) GetByID(ctx context.Context, authID uint64) (*domain.AuthMethod, error) {
+func (u *AuthAdminUsecase) GetByID(ctx context.Context, authID uint64) (*auth.AuthMethod, error) {
 	// Tìm admin theo ID
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, authID)
 	if err != nil || authMethod == nil {

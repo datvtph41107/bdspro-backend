@@ -2,20 +2,20 @@ package job
 
 import (
 	"context"
-	"payment/internal/domain/entity"
-	"payment/internal/usecase"
+	"payment/internal/domain/wallet"
+	walletuc "payment/internal/usecase/wallet"
 	"time"
 
 	"github.com/robfig/cron/v3"
 )
 
 type TransactionDashboardJob struct {
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase walletuc.PaymentUsecase
 	cronJob        *cron.Cron
 }
 
 func NewTransactionDashboardJob(
-	paymentUsecase usecase.PaymentUsecase,
+	paymentUsecase walletuc.PaymentUsecase,
 ) *TransactionDashboardJob {
 	return &TransactionDashboardJob{
 		paymentUsecase: paymentUsecase,
@@ -32,7 +32,7 @@ func (j *TransactionDashboardJob) Run(ctx context.Context) error {
 		if err != nil {
 			return
 		}
-		err = j.paymentUsecase.CreateOrUpdateDashboardMetric(ctx, &entity.DashboardMetric{
+		err = j.paymentUsecase.CreateOrUpdateDashboardMetric(ctx, &wallet.DashboardMetric{
 			Time:            time.Now(),
 			ProcessingCount: uint64(processingCount),
 			CompletedCount:  uint64(completedCount),

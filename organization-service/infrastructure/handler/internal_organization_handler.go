@@ -1,13 +1,19 @@
 package handler
 
 import (
+	"common/identity"
 	"context"
 	"fmt"
+	"math"
+	"organization/env"
 	"organization/infrastructure/transformer"
 	"organization/internal/domain/repository"
 	"organization/internal/usecase"
 	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type InternalOrganizationHandler struct {
@@ -19,6 +25,7 @@ type InternalOrganizationHandler struct {
 	groupMemberRepo           repository.GroupMemberRepository
 	organizationMemberRepo    repository.OrganizationMemberRepository
 	organizationMemberUsecase usecase.OrganizationMemberUsecase
+	organizationAuthUsecase   usecase.OrganizationAuthUsecase
 	dealRepo                  repository.DealRepository
 	dealMemberRepo            repository.DealMemberRepository
 	dealUsecase               usecase.DealUsecase
@@ -32,6 +39,7 @@ func NewInternalOrganizationHandler(
 	groupMemberRepo repository.GroupMemberRepository,
 	organizationMemberRepo repository.OrganizationMemberRepository,
 	organizationMemberUsecase usecase.OrganizationMemberUsecase,
+	organizationAuthUsecase usecase.OrganizationAuthUsecase,
 	dealRepo repository.DealRepository,
 	dealMemberRepo repository.DealMemberRepository,
 	dealUsecase usecase.DealUsecase,
@@ -49,7 +57,39 @@ func NewInternalOrganizationHandler(
 		dealUsecase:               dealUsecase,
 		branchMemberRepo:          branchMemberRepo,
 		organizationMemberUsecase: organizationMemberUsecase,
+		organizationAuthUsecase:   organizationAuthUsecase,
 	}
+}
+
+// AuthorizeOrganizationAction là transport internal duy nhất công bố quyết
+// định permission thuộc organization. Caller chỉ gửi danh tính profile đã
+// được xác thực; organization-service tự kiểm membership, role và permission.
+func (h *InternalOrganizationHandler) AuthorizeOrganizationAction(ctx context.Context, req *organizationpb.AuthorizeOrganizationActionRequest) (*organizationpb.AuthorizeOrganizationActionResponse, error) {
+	if req == nil || req.GetActorProfileId() == 0 || req.GetOrganizationId() == 0 || req.GetOrganizationId() > math.MaxUint32 {
+		return nil, status.Error(codes.InvalidArgument, "valid actor profile and organization are required")
+	}
+	caller, ok := identity.ServiceCallerFromContext(ctx)
+	if !ok || caller.ServiceID != env.USER_SERVICE_ID {
+		return nil, status.Error(codes.PermissionDenied, "organization action caller is not allowed")
+	}
+	actor, ok := identity.ActorFromContext(ctx)
+	if !ok || actor.ProfileID == 0 || actor.ProfileID != req.GetActorProfileId() {
+		return nil, status.Error(codes.Unauthenticated, "signed actor profile does not match request")
+	}
+
+	var permission string
+	switch req.GetAction() {
+	case organizationpb.OrganizationAction_ORGANIZATION_ACTION_SUBSCRIPTION_CHECKOUT:
+		permission = env.CHECKOUT_ORGANIZATION_SUBSCRIPTION_PERMISSION
+	default:
+		return nil, status.Error(codes.InvalidArgument, "unsupported organization action")
+	}
+
+	allowed, err := h.organizationAuthUsecase.Authorize(ctx, req.GetActorProfileId(), uint32(req.GetOrganizationId()), permission)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "organization authorization failed")
+	}
+	return &organizationpb.AuthorizeOrganizationActionResponse{Allowed: allowed}, nil
 }
 
 func (h *InternalOrganizationHandler) GetOrganizationByIds(ctx context.Context, req *organizationpb.GetOrganizationByIdsRequest) (*organizationpb.GetOrganizationByIdsResponse, error) {

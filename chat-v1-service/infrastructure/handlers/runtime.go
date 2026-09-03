@@ -6,6 +6,7 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/mapper"
 	"chat/internal/usecases"
+	_utils "common/utils"
 	chatpb "pb/types/chat"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"

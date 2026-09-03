@@ -33,8 +33,9 @@ type APIKeyVerifier interface {
 }
 
 type config struct {
-	apiKeyVerifier APIKeyVerifier
-	tokenVerifier  jwtverify.Verifier
+	apiKeyVerifier           APIKeyVerifier
+	tokenVerifier            jwtverify.Verifier
+	providerCredentialRoutes []Route
 }
 
 type Option func(*config)
@@ -45,6 +46,15 @@ func WithAPIKeyVerifier(v APIKeyVerifier) Option {
 
 func WithTokenVerifier(v jwtverify.Verifier) Option {
 	return func(c *config) { c.tokenVerifier = v }
+}
+
+// WithProviderCredentialRoutes identifies endpoints whose Authorization value
+// belongs to an external provider protocol, not to QHPRO JWT authentication.
+// The raw header remains available to the transport adapter for digesting.
+func WithProviderCredentialRoutes(routes []Route) Option {
+	return func(c *config) {
+		c.providerCredentialRoutes = append([]Route(nil), routes...)
+	}
 }
 
 func APIKeyFromRequest(r *http.Request) (string, bool, error) {

@@ -1,83 +1,101 @@
-SHELL := /usr/bin/env bash
-ROOT_DIR := ..
-SHARED_CODE := $(ROOT_DIR)/shared/code
-PORT ?= 0
-HOST ?=
+SHELL := /bin/sh
+include ../tools/development/go.mk
 
-.PHONY: help build run-grpc run-pmtiles migrate migrate-up migrate-down clean bootstrap \
-        generate verify-generated test test-race vet lint check run-http run-both
+DB_URL ?= postgres://qhpro:qhpro@localhost:55434/qhpro_tqd?sslmode=disable
+MIGRATION_DIR := migrate
+ENV_FILE ?= .env
+ROOT_ENV_FILE ?= ../.env
+BIN := bin/tqd-service
+GO_TEST_FLAGS ?=
+
+define with_env
+set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host $(1)
+endef
 
 help:
-	@printf '%s\n' \
-	  'build            Build TQD binary' \
-	  'run-grpc         Build and run canonical TQD gRPC process' \
-	  'run-pmtiles      Build and run PMTiles process' \
-	  'migrate          Build and run application migration command' \
-	  'migrate-up       Run v3 SQL migrations up with migrate CLI' \
-	  'migrate-down     Run one v3 SQL migration down with migrate CLI' \
-	  'bootstrap        Restore module dependencies; may update go.sum if toolchain requires it' \
-	  'generate         Mutating: Buf TQD contracts, then generated Wire graph' \
-	  'verify-generated Read-only current tree; regenerate in disposable Git worktree' \
-	  'test             Run TQD tests' \
-	  'test-race        Run TQD tests with race detector' \
-	  'vet              Run go vet' \
-	  'lint             Run golangci-lint' \
-	  'check            Read-only architecture checks + test + vet' \
-	  'clean            Remove documented TQD build artifacts'
+	@printf '%s\n' 'postgres redis migrateup migratedown1 new_migration' \
+		'buf wire test vet build server dev pmtiles docker-build clean check'
 
-build:
-	@mkdir -p bin
-	@go build -o bin/tqd-service .
+postgres:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
 
-run-grpc: build
-	@./bin/tqd-service -server=grpc $(if $(filter-out 0,$(PORT)),-port=$(PORT),) $(if $(HOST),-host=$(HOST),)
+redis:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
 
-run-pmtiles: build
-	@./bin/tqd-service -server=pmtiles $(if $(filter-out 0,$(PORT)),-port=$(PORT),)
+deps-up:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
 
-migrate: build
-	@./bin/tqd-service -server=migrate
+deps-down:
+	$(MAKE) -C .. dev-dependencies-down SERVICE=tqd
 
-# Application HTTP is intentionally disabled. The public application boundary is Gateway HTTP -> TQD gRPC.
-run-http run-both:
-	@echo 'TQD application HTTP is disabled; use gateway-service HTTP -> TQD gRPC.' >&2
-	@exit 2
+migrateup:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose up)
 
-bootstrap:
-	@go mod download
+migrateup1:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose up 1)
 
-# Generation order is architectural: protobuf symbols must exist before Wire scans constructors.
-generate:
-	@$(MAKE) -C $(SHARED_CODE) buf-tqd
-	@$(MAKE) -C $(SHARED_CODE) wire tqd
+migratedown:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose down)
 
-verify-generated:
-	@bash $(ROOT_DIR)/scripts/architecture/verify-tqd-generated.sh $(ROOT_DIR)
+migratedown1:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose down 1)
 
-test:
-	@go test -count=1 ./...
+migrate-version:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" version)
 
-test-race:
-	@go test -count=1 -race ./...
+new_migration:
+	@test -n "$(name)" || { echo 'usage: make new_migration name=<schema_change>' >&2; exit 2; }
+	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $(name)
+
+buf:
+	$(MAKE) -C ../shared/code buf-tqd
+
+wire:
+	$(MAKE) -C ../shared/code wire tqd
+
+generate: buf wire
+
+fmt:
+	go fmt ./...
 
 vet:
-	@go vet ./...
+	go vet ./...
 
-lint:
-	@golangci-lint run
+test:
+	go test $(GO_TEST_FLAGS) -count=1 ./...
 
-check:
-	@bash $(ROOT_DIR)/scripts/architecture/verify-engineering-operating-model.sh $(ROOT_DIR)
-	@$(MAKE) test
-	@$(MAKE) vet
+test-race:
+	go test -race -count=1 ./...
+
+build:
+	mkdir -p bin
+	go build -o $(BIN) .
+
+server:
+	@$(call with_env,go run . -server=grpc)
+
+dev:
+	@$(call with_env,air -c .air.toml)
+
+pmtiles:
+	@$(call with_env,go run . -server=pmtiles)
+
+docker-build:
+	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/tqd-service:$${QHPRO_IMAGE_TAG:-local}" ..
 
 clean:
-	@rm -rf bin/
+	rm -rf bin .tmp
 
-migrate-up:
-	@test -n "$(TQD_DATABASE_URL)" || (echo 'TQD_DATABASE_URL is required' >&2; exit 2)
-	@migrate -path infra/db/migrations/v3 -database "$(TQD_DATABASE_URL)" -verbose up
+check: vet test build
 
-migrate-down:
-	@test -n "$(TQD_DATABASE_URL)" || (echo 'TQD_DATABASE_URL is required' >&2; exit 2)
-	@migrate -path infra/db/migrations/v3 -database "$(TQD_DATABASE_URL)" -verbose down 1
+migrate-up: migrateup
+migrate-down: migratedown1
+migrate-create: new_migration
+run-grpc: server
+run-pmtiles: pmtiles
+acceptance: check
+
+.PHONY: help postgres redis deps-up deps-down migrateup migrateup1 migratedown \
+	migratedown1 migrate-version new_migration migrate-up migrate-down migrate-create \
+	buf wire generate fmt vet test test-race build server dev pmtiles run-grpc run-pmtiles \
+	docker-build clean check acceptance

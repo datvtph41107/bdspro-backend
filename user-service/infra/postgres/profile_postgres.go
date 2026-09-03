@@ -167,6 +167,17 @@ func (r *ProfilePostgres) GetProfileByIds(ids []uint64) ([]*models.UserProfileEn
 	return userProfiles, nil
 }
 
+func (r *ProfilePostgres) SearchByPhoneOrName(ctx context.Context, text string) ([]models.UserProfileEntity, error) {
+	var profiles []models.UserProfileEntity
+	query := "%" + text + "%"
+	if err := r.DB.WithContext(ctx).
+		Where("(phone ILIKE ? OR full_name ILIKE ?) AND deleted_at IS NULL", query, query).
+		Find(&profiles).Error; err != nil {
+		return nil, err
+	}
+	return profiles, nil
+}
+
 func (r *ProfilePostgres) GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error) {
 	var userProfiles []*models.UserProfileEntity
 	if err := r.DB.Where("phone IN (?) and deleted_at is null", phones).Find(&userProfiles).Error; err != nil {

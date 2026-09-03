@@ -23,7 +23,12 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
-		ignoreToken := false
+		providerCredential := matchesRequest(
+			cfg.providerCredentialRoutes,
+			c.Request.Method,
+			c.Request.URL.Path,
+		)
+		ignoreToken := providerCredential
 		for _, route := range publicRoutes {
 			if MatchRequest(route, c.Request.Method, c.Request.URL.Path) {
 				ignoreToken = true
@@ -32,7 +37,7 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 		}
 		var principal *jwtverify.Principal
 		rawToken := strings.TrimSpace(c.GetHeader("Authorization"))
-		if rawToken != "" {
+		if rawToken != "" && !providerCredential {
 			rawToken = strings.TrimSpace(strings.TrimPrefix(rawToken, "Bearer "))
 			if cfg.tokenVerifier == nil {
 				c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "token verifier unavailable"})
@@ -103,4 +108,13 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 		c.Request = c.Request.WithContext(bound)
 		c.Next()
 	}
+}
+
+func matchesRequest(routes []Route, method, path string) bool {
+	for _, route := range routes {
+		if MatchRequest(route, method, path) {
+			return true
+		}
+	}
+	return false
 }

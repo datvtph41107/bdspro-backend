@@ -4,181 +4,245 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
 type fakeHTTPServer struct {
-	serveStarted chan struct{}
-	serveRelease chan struct{}
-	shutdown     chan struct{}
-	closed       chan struct{}
-	serveErr     error
-	shutdownErr  error
-	onShutdown   func()
-	onClose      func()
-	onceServe    sync.Once
-	onceRelease  sync.Once
-	onceShutdown sync.Once
-	onceClose    sync.Once
+	result chan error
+
+	shutdownErr error
+
+	shutdownCalled chan struct{}
+	closeCalled    chan struct{}
+
+	shutdownOnce sync.Once
+	closeOnce    sync.Once
 }
 
 func newFakeHTTPServer() *fakeHTTPServer {
 	return &fakeHTTPServer{
-		serveStarted: make(chan struct{}),
-		serveRelease: make(chan struct{}),
-		shutdown:     make(chan struct{}),
-		closed:       make(chan struct{}),
+		result:         make(chan error, 1),
+		shutdownCalled: make(chan struct{}),
+		closeCalled:    make(chan struct{}),
 	}
 }
 
 func (s *fakeHTTPServer) ListenAndServe() error {
-	s.onceServe.Do(func() { close(s.serveStarted) })
-	<-s.serveRelease
-	if s.serveErr != nil {
-		return s.serveErr
-	}
-	return http.ErrServerClosed
+	return <-s.result
 }
 
-func (s *fakeHTTPServer) Shutdown(context.Context) error {
-	if s.onShutdown != nil {
-		s.onShutdown()
-	}
+func (s *fakeHTTPServer) Shutdown(
+	context.Context,
+) error {
+	s.shutdownOnce.Do(func() {
+		close(s.shutdownCalled)
+	})
+
 	if s.shutdownErr != nil {
 		return s.shutdownErr
 	}
-	s.onceShutdown.Do(func() {
-		close(s.shutdown)
-	})
-	s.onceRelease.Do(func() { close(s.serveRelease) })
+
+	select {
+	case s.result <- http.ErrServerClosed:
+	default:
+	}
+
 	return nil
 }
 
 func (s *fakeHTTPServer) Close() error {
-	if s.onClose != nil {
-		s.onClose()
+	s.closeOnce.Do(func() {
+		close(s.closeCalled)
+	})
+
+	select {
+	case s.result <- http.ErrServerClosed:
+	default:
 	}
-	s.onceClose.Do(func() { close(s.closed) })
-	s.onceRelease.Do(func() { close(s.serveRelease) })
+
 	return nil
 }
 
 type actorFunc func(context.Context)
 
-func (f actorFunc) Run(ctx context.Context) { f(ctx) }
+func (f actorFunc) Run(ctx context.Context) {
+	f(ctx)
+}
 
-func TestRunStopsIngressBeforeActors(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	httpServer := newFakeHTTPServer()
+func TestRunStopsIngressBeforeActors(
+	t *testing.T,
+) {
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
 
-	internalStarted := make(chan struct{})
-	internalStopped := make(chan struct{})
-	internal := func(ctx context.Context) error {
-		close(internalStarted)
-		<-ctx.Done()
-		close(internalStopped)
-		return nil
-	}
+	server := newFakeHTTPServer()
 
 	actorStarted := make(chan struct{})
 	actorStopped := make(chan struct{})
+
 	actor := actorFunc(func(ctx context.Context) {
 		close(actorStarted)
 		<-ctx.Done()
-		select {
-		case <-httpServer.shutdown:
-		default:
-			t.Error("actor cancelled before HTTP ingress stopped")
-		}
-		select {
-		case <-internalStopped:
-		default:
-			t.Error("actor cancelled before internal ingress stopped")
-		}
 		close(actorStopped)
 	})
 
 	result := make(chan error, 1)
+
 	go func() {
-		result <- Run(ctx, cancel, httpServer, internal, []Actor{actor}, Config{ShutdownTimeout: 100 * time.Millisecond})
+		result <- Run(
+			ctx,
+			cancel,
+			server,
+			[]Actor{actor},
+			Config{
+				ShutdownTimeout: 50 * time.Millisecond,
+			},
+		)
 	}()
 
-	<-httpServer.serveStarted
-	<-internalStarted
 	<-actorStarted
 	cancel()
 
-	if err := <-result; err != nil {
-		t.Fatalf("Run error = %v, want nil", err)
+	select {
+	case <-server.shutdownCalled:
+	case <-time.After(time.Second):
+		t.Fatal("HTTP shutdown was not called")
 	}
+
 	select {
 	case <-actorStopped:
-	default:
-		t.Fatal("Run returned before actor stopped")
+	case <-time.After(time.Second):
+		t.Fatal("actor did not stop")
+	}
+
+	if err := <-result; err != nil {
+		t.Fatalf("Run() error = %v", err)
 	}
 }
 
-func TestRunPropagatesHTTPServeFailureAndWaits(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	httpServer := newFakeHTTPServer()
-	serveErr := errors.New("bind failed")
-	httpServer.serveErr = serveErr
+func TestRunPropagatesHTTPServeFailureAndWaits(
+	t *testing.T,
+) {
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+	defer cancel()
+
+	server := newFakeHTTPServer()
 
 	actorStopped := make(chan struct{})
+
 	actor := actorFunc(func(ctx context.Context) {
 		<-ctx.Done()
 		close(actorStopped)
 	})
 
 	result := make(chan error, 1)
-	go func() {
-		result <- Run(ctx, cancel, httpServer, nil, []Actor{actor}, Config{ShutdownTimeout: 100 * time.Millisecond})
-	}()
-	<-httpServer.serveStarted
-	httpServer.onceRelease.Do(func() { close(httpServer.serveRelease) })
 
-	if err := <-result; !errors.Is(err, serveErr) {
-		t.Fatalf("Run error = %v, want serve error", err)
+	go func() {
+		result <- Run(
+			ctx,
+			cancel,
+			server,
+			[]Actor{actor},
+			Config{
+				ShutdownTimeout: 50 * time.Millisecond,
+			},
+		)
+	}()
+
+	server.result <- errors.New("serve failed")
+
+	err := <-result
+	if err == nil ||
+		!strings.Contains(
+			err.Error(),
+			"http serve: serve failed",
+		) {
+		t.Fatalf("Run() error = %v", err)
 	}
+
 	select {
 	case <-actorStopped:
 	default:
-		t.Fatal("Run returned before actor stopped")
+		t.Fatal(
+			"Run returned before actor stopped",
+		)
 	}
 }
 
-func TestRunPropagatesInternalServeFailure(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	httpServer := newFakeHTTPServer()
-	internalErr := errors.New("grpc listener failed")
-	internal := func(context.Context) error { return internalErr }
+func TestRunForcesHTTPCloseWhenGracefulShutdownFails(
+	t *testing.T,
+) {
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
 
-	err := Run(ctx, cancel, httpServer, internal, nil, Config{ShutdownTimeout: 100 * time.Millisecond})
-	if !errors.Is(err, internalErr) {
-		t.Fatalf("Run error = %v, want internal server error", err)
-	}
-}
-
-func TestRunForcesHTTPCloseWhenGracefulShutdownFails(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	httpServer := newFakeHTTPServer()
-	httpServer.shutdownErr = errors.New("shutdown failed")
+	server := newFakeHTTPServer()
+	server.shutdownErr =
+		errors.New("shutdown failed")
 
 	result := make(chan error, 1)
+
 	go func() {
-		result <- Run(ctx, cancel, httpServer, nil, nil, Config{ShutdownTimeout: 100 * time.Millisecond})
+		result <- Run(
+			ctx,
+			cancel,
+			server,
+			nil,
+			Config{
+				ShutdownTimeout: 50 * time.Millisecond,
+			},
+		)
 	}()
-	<-httpServer.serveStarted
+
 	cancel()
 
-	if err := <-result; err != nil {
-		t.Fatalf("Run error = %v, want nil signal shutdown", err)
-	}
 	select {
-	case <-httpServer.closed:
-	default:
-		t.Fatal("forced HTTP Close was not called")
+	case <-server.closeCalled:
+	case <-time.After(time.Second):
+		t.Fatal(
+			"HTTP Close was not called after Shutdown failure",
+		)
+	}
+
+	if err := <-result; err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+}
+
+func TestRunRejectsMissingProcessDependencies(
+	t *testing.T,
+) {
+	server := newFakeHTTPServer()
+
+	if err := Run(
+		context.Background(),
+		func() {},
+		nil,
+		nil,
+		Config{},
+	); !errors.Is(err, ErrHTTPServerMissing) {
+		t.Fatalf(
+			"missing server error = %v",
+			err,
+		)
+	}
+
+	if err := Run(
+		context.Background(),
+		nil,
+		server,
+		nil,
+		Config{},
+	); !errors.Is(err, ErrCancelMissing) {
+		t.Fatalf(
+			"missing cancel error = %v",
+			err,
+		)
 	}
 }

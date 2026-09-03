@@ -37,6 +37,12 @@ message CreatePaymentAttemptRequest {
   uint64 orderId = 1;
   string method = 2;
   string commandKey = 3;
+
+  // Subject is derived by the trusted User service, never by the public client.
+  // Payment verifies this subject against the durable Order before any
+  // provider-side effect is created.
+  string subjectKind = 4;
+  string subjectId = 5;
 }
 
 message PaymentNextAction {

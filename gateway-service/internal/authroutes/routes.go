@@ -8,8 +8,9 @@ import (
 // RouteSet is the Gateway-owned authentication policy. Route semantics are
 // explicit: exact-looking paths never become prefixes by matcher accident.
 type RouteSet struct {
-	Public         []_httpauth.Route
-	TemporaryToken []_httpauth.Route
+	Public             []_httpauth.Route
+	TemporaryToken     []_httpauth.Route
+	ProviderCredential []_httpauth.Route
 }
 
 var publicRoutes = []_httpauth.Route{
@@ -41,10 +42,13 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Prefix("/v2/user/profile/info"),
 	_httpauth.Exact("/v2/user/profile/search/public"),
 	_httpauth.Exact("/v2/user/profile/find-by-phone"),
+	_httpauth.ExactMethod(http.MethodGet, "/v2/user/commercial/plans"),
 	_httpauth.Prefix("/v1/public"),
-	_httpauth.Prefix("/v1/file/swagger"),
-	_httpauth.Prefix("/v1/file/upload"),
-	_httpauth.Prefix("/v1/file/load"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v1/file/swagger"),
+	_httpauth.ExactMethod(http.MethodPost, "/v1/file/upload"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v1/file/load"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v1/file/video"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v1/file/version/download"),
 	_httpauth.Prefix("/v1/map/swagger"),
 	_httpauth.Prefix("/v1/map/locations/nearby"),
 	_httpauth.Prefix("/v1/map/locations/find-by-polygon"),
@@ -57,7 +61,6 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Prefix("/v1/search"),
 	_httpauth.Prefix("/v1/crm/contact/relation-ship"),
 	_httpauth.Prefix("/v2/crm/contact/relation-ship"),
-	_httpauth.Exact("/v2/payment/sepay/webhook"),
 	_httpauth.PrefixMethod(http.MethodGet, "/v2/social/news-feed/global"),
 	_httpauth.Prefix("/v2/social/comment/list"),
 	_httpauth.Prefix("/v2/social/news-feed/user"),
@@ -70,6 +73,7 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Exact("/v2/auth/token/refresh"),
 	_httpauth.Prefix("/v2/auth/oauth"),
 	_httpauth.Exact("/v2/auth/admin/login"),
+	_httpauth.ExactMethod(http.MethodPost, "/v2/auth/password/login"),
 	_httpauth.Prefix("/v2/auth/phone/check"),
 	_httpauth.Exact("/v2/bdspro/v2/product/market"),
 	_httpauth.Exact("/v2/bdspro/v2/list/area-region"),
@@ -121,6 +125,10 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/client/planning-projects"),
 }
 
+var providerCredentialRoutes = []_httpauth.Route{
+	_httpauth.ExactMethod(http.MethodPost, "/v2/payment/sepay/webhook"),
+}
+
 var temporaryTokenRoutes = []_httpauth.Route{
 	_httpauth.Exact("/v2/auth/fullname"),
 	_httpauth.Prefix("/v2/auth/phone"),
@@ -128,7 +136,8 @@ var temporaryTokenRoutes = []_httpauth.Route{
 
 func AuthenticationRoutes() RouteSet {
 	return RouteSet{
-		Public:         append([]_httpauth.Route(nil), publicRoutes...),
-		TemporaryToken: append([]_httpauth.Route(nil), temporaryTokenRoutes...),
+		Public:             append([]_httpauth.Route(nil), publicRoutes...),
+		TemporaryToken:     append([]_httpauth.Route(nil), temporaryTokenRoutes...),
+		ProviderCredential: append([]_httpauth.Route(nil), providerCredentialRoutes...),
 	}
 }

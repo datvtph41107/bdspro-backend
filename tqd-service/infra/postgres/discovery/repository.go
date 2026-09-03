@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"tqd/infra/postgres/entitycandidate"
-	"tqd/internal/modules/discovery/domain"
-	"tqd/internal/modules/discovery/ports"
+	"tqd/internal/domain/discovery/model"
+	"tqd/internal/usecase/discovery/ports"
 
 	"gorm.io/gorm"
 )

@@ -1,30 +1,15 @@
-.PHONY: build run clean
+SHELL := /bin/sh
+BINARY_NAME := assistant-service
 
-# Set CGO environment variables for Tesseract and Leptonica
-# For Homebrew on macOS (Apple Silicon)
-# export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig
-# export CGO_ENABLED=1
-# export CGO_CFLAGS=-I/opt/homebrew/include -I/usr/local/include
-# export CGO_LDFLAGS=-L/opt/homebrew/lib -ltesseract -lleptonica
-# export CGO_CFLAGS="-I/opt/homebrew/Cellar/tesseract/5.5.1_1/include -I/opt/homebrew/Cellar/leptonica/1.86.0/include/leptonica"
-# export CGO_LDFLAGS="-L/opt/homebrew/Cellar/tesseract/5.5.1_1/lib -ltesseract -L/opt/homebrew/opt/libarchive/lib -larchive -lcurl"
-# go build
+include ../tools/development/service.mk
 
-build:
-	@echo "Building assistant-service with CGO..."
-	@echo "CGO_CFLAGS=$(CGO_CFLAGS)"
-	@echo "CGO_LDFLAGS=$(CGO_LDFLAGS)"
-	@go build -o assistant-service .
+buf:
+	$(MAKE) -C ../shared/code buf-assistant
 
-run: build
-	@echo "Running assistant-service..."
-	@./assistant-service
+docker-build:
+	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/assistant-service:$${QHPRO_IMAGE_TAG:-local}" ..
 
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -f assistant-service
+help:
+	@printf '%s\n' 'fmt vet test test-race build server buf docker-build clean check'
 
-test:
-	@echo "Running tests..."
-	@go test ./...
-
+.PHONY: buf docker-build help

@@ -1,0 +1,10 @@
+BEGIN;
+DROP TABLE IF EXISTS dashboard_metrics;
+DROP TABLE IF EXISTS transaction_types;
+DROP TABLE IF EXISTS withdrawal_requests;
+DROP TABLE IF EXISTS wallet_audit_logs;
+DROP TABLE IF EXISTS wallet_transactions;
+DROP TABLE IF EXISTS payment_methods;
+DROP TABLE IF EXISTS wallets;
+DROP TABLE IF EXISTS banks;
+COMMIT;

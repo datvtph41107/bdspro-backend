@@ -28,3 +28,65 @@ func TestValidatePathAllowsDotsInsideFilename(t *testing.T) {
 		t.Fatalf("dots inside a filename are not traversal: %v", err)
 	}
 }
+
+func TestResolveStoredPathKeepsPathInsideStorageRoot(
+	t *testing.T,
+) {
+	root := t.TempDir()
+
+	storage, err := NewStorageService(root)
+	if err != nil {
+		t.Fatalf("NewStorageService() error = %v", err)
+	}
+
+	path, err := storage.ResolveStoredPath(
+		filepath.Join(
+			"public",
+			"version",
+			"42.apk",
+		),
+	)
+	if err != nil {
+		t.Fatalf(
+			"ResolveStoredPath() error = %v",
+			err,
+		)
+	}
+
+	want := filepath.Join(
+		root,
+		"public",
+		"version",
+		"42.apk",
+	)
+
+	if path != want {
+		t.Fatalf(
+			"path = %q, want %q",
+			path,
+			want,
+		)
+	}
+}
+
+func TestResolveStoredPathRejectsStorageEscape(
+	t *testing.T,
+) {
+	root := t.TempDir()
+
+	storage, err := NewStorageService(root)
+	if err != nil {
+		t.Fatalf("NewStorageService() error = %v", err)
+	}
+
+	if _, err := storage.ResolveStoredPath(
+		filepath.Join(
+			"..",
+			"outside.apk",
+		),
+	); err == nil {
+		t.Fatal(
+			"ResolveStoredPath() accepted path outside storage root",
+		)
+	}
+}

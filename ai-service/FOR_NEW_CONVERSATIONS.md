@@ -77,7 +77,7 @@ ai-service/
 cd ai-service
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp env.example .env  # Add OPENAI_API_KEY
+# Dùng ai-service/.env đã có sẵn; chỉ inject OPENAI_API_KEY khi cần gọi provider thật.
 python scripts/embed_context.py  # First time only
 python main.py  # Service at :8090
 ```
@@ -305,4 +305,3 @@ Khi user hỏi về AI service:
 **Good luck! 🚀**
 
 *P/S: File này được tạo để giúp AI conversations sau có thể continue seamlessly. Nếu bạn là AI đang đọc này → Perfect! You have all context needed!*
-

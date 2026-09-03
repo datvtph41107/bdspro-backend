@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 func TestConfigFilePathDefaultsToLocal(t *testing.T) {
@@ -21,6 +23,23 @@ func TestLoadYMLFileReturnsReadError(t *testing.T) {
 		err := LoadYMLFile("missing")
 		if err == nil || !strings.Contains(err.Error(), "read config config/missing.yml") {
 			t.Fatalf("LoadYMLFile() error = %v, want read error", err)
+		}
+	})
+}
+
+func TestLoadYMLFileHonorsOperatorConfigOverride(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "mounted.yml")
+	if err := os.WriteFile(path, []byte("runtime:\n  mode: mounted\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	withWorkingDir(t, t.TempDir(), func() {
+		t.Setenv("QHPRO_CONFIG_FILE", path)
+		if err := LoadYMLFile("production"); err != nil {
+			t.Fatalf("LoadYMLFile() with override: %v", err)
+		}
+		if got := viper.GetString("runtime.mode"); got != "mounted" {
+			t.Fatalf("runtime.mode = %q, want mounted", got)
 		}
 	})
 }

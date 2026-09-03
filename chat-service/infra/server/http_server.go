@@ -4,10 +4,12 @@ import (
 	"chat/config"
 	"chat/infra/db"
 	"chat/infra/handler"
-	"chat/infra/postgre"
+	"chat/infra/postgres"
 	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
+	_redis "common/redis"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"net/http"
@@ -56,12 +58,12 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 	transactionRepo := _db.NewTransactionRepo(dbInstance)
 
 	// Initialize repositories
-	conversationRepo := postgre.NewConversationRepo(transactionRepo)
-	messageRepo := postgre.NewMessageRepo(transactionRepo)
-	participantRepo := postgre.NewParticipantRepo(transactionRepo)
-	readPositionRepo := postgre.NewReadPositionRepo(transactionRepo)
-	messageReactionRepo := postgre.NewMessageReactionRepo(transactionRepo)
-	backgroundRepo := postgre.NewBackgroundRepo(transactionRepo)
+	conversationRepo := postgres.NewConversationRepo(transactionRepo)
+	messageRepo := postgres.NewMessageRepo(transactionRepo)
+	participantRepo := postgres.NewParticipantRepo(transactionRepo)
+	readPositionRepo := postgres.NewReadPositionRepo(transactionRepo)
+	messageReactionRepo := postgres.NewMessageReactionRepo(transactionRepo)
+	backgroundRepo := postgres.NewBackgroundRepo(transactionRepo)
 
 	// Process-owned outbound RPC dependencies.
 	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
@@ -75,7 +77,7 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 		return nil, fmt.Errorf("configure chat bdspro RPC: %w", err)
 	}
 
-	cleanup := func() {
+	rpcCleanup := func() {
 		bdsproCleanup()
 		userCleanup()
 	}
@@ -95,6 +97,8 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 	// Initialize mappers
 	backgroundMapper := handler.NewBackgroundMapper()
 	conversationMapper := handler.NewConversationMapper(backgroundMapper)
+	redisService := _redis.NewRedisService()
+	syncProvider := _utils.NewSyncUtil(redisService)
 
 	// Initialize handlers
 	chatHandler := handler.NewChatHandler(
@@ -107,8 +111,14 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
 	)
-	go chatHandler.Start()
+	chatHandler.Start()
+	cleanup := func() {
+		_ = chatHandler.Close()
+		_ = redisService.Close()
+		rpcCleanup()
+	}
 
 	backgroundHandler := handler.NewBackgroundHandler(backgroundImageUsecase)
 

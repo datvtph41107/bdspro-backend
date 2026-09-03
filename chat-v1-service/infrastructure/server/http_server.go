@@ -3,6 +3,7 @@ package server
 import (
 	chatrpc "chat/infrastructure/rpc"
 	_redis "common/redis"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
-	"chat/infrastructure/impl"
 	"chat/infrastructure/mapper"
 	middlewares "chat/infrastructure/middleware"
 	"chat/internal/repository"
@@ -72,7 +72,7 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 	bdsproClient := client.NewBdsproClient(bdsproRPC)
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)
 	redisClient := _redis.NewRedisService()
-	syncProvider := impl.NewSyncProvider(redisClient)
+	syncProvider := _utils.NewSyncUtil(redisClient)
 	messageUsecase := usecases.NewMessageUsecases(pRepository, converstationUsecase, syncProvider)
 	participantUsecase := usecases.NewParticipantUsecases(pRepository)
 	readReceptUsecase := usecases.NewReadReceptUsecases(pRepository)

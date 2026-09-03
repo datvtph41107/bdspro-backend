@@ -25,12 +25,6 @@ func NewOrganizationProviderClient(
 	}
 }
 
-func (c *OrganizationProviderClient) SwitchOrganization(ctx context.Context, organizationID uint64) (*dto.SwitchOrganizationResponse, error) {
-	return &dto.SwitchOrganizationResponse{
-		OrganizationId: organizationID,
-	}, nil
-}
-
 func (c *OrganizationProviderClient) GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error) {
 	page := uint32(1)
 	size := uint32(100)
@@ -106,5 +100,6 @@ func (c *OrganizationProviderClient) GetOrganizationMember(ctx context.Context, 
 		UserId:         userId,
 		RoleId:         &resp.RoleId,
 		RoleKey:        resp.RoleKey,
+		Status:         resp.Status,
 	}, nil
 }

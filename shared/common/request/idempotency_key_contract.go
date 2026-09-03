@@ -5,7 +5,11 @@ import (
 	"strings"
 )
 
-const MaxIdempotencyKeyLength = 128
+const (
+	IdempotencyKeyHeader      = "Idempotency-Key"
+	IdempotencyKeyMetadataKey = "idempotency-key"
+	MaxIdempotencyKeyLength   = 128
+)
 
 var (
 	ErrInvalidIdempotencyKey = errors.New(

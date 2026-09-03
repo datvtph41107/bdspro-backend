@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	sharepb "pb/types/shared"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 )
 
@@ -45,7 +45,7 @@ func (m *AuthSecurityMapper) MapToProto(data *dto.AuthSecurityDataDTO) *sharepb.
 	return result
 }
 
-func (m *AuthSecurityMapper) mapStatus(status *domain.UserStatusEntity) *sharepb.UserStatusV3Proto {
+func (m *AuthSecurityMapper) mapStatus(status *auth.UserStatusEntity) *sharepb.UserStatusV3Proto {
 	var lockedUntil string
 	if !status.LockedUntil.IsZero() {
 		lock := status.LockedUntil
@@ -67,7 +67,7 @@ func (m *AuthSecurityMapper) mapStatus(status *domain.UserStatusEntity) *sharepb
 	}
 }
 
-func (m *AuthSecurityMapper) mapPin(pin *domain.UserPINEntity) *sharepb.PinV3Proto {
+func (m *AuthSecurityMapper) mapPin(pin *auth.UserPINEntity) *sharepb.PinV3Proto {
 	return &sharepb.PinV3Proto{
 		// Pin:          pin.PIN,
 		AuthId:       pin.AuthID,
@@ -78,7 +78,7 @@ func (m *AuthSecurityMapper) mapPin(pin *domain.UserPINEntity) *sharepb.PinV3Pro
 	}
 }
 
-func (m *AuthSecurityMapper) mapDevices(devices []*domain.DeviceEntity) []*sharepb.DeviceV3Proto {
+func (m *AuthSecurityMapper) mapDevices(devices []*auth.DeviceEntity) []*sharepb.DeviceV3Proto {
 	result := make([]*sharepb.DeviceV3Proto, 0, len(devices))
 	for _, device := range devices {
 		if device == nil {
@@ -89,7 +89,7 @@ func (m *AuthSecurityMapper) mapDevices(devices []*domain.DeviceEntity) []*share
 	return result
 }
 
-func (m *AuthSecurityMapper) mapDevice(device *domain.DeviceEntity) *sharepb.DeviceV3Proto {
+func (m *AuthSecurityMapper) mapDevice(device *auth.DeviceEntity) *sharepb.DeviceV3Proto {
 	return &sharepb.DeviceV3Proto{
 		Id:             device.ID,
 		DeviceId:       device.DeviceID,

@@ -3,7 +3,7 @@ package integration
 import (
 	"common/identity"
 	"common/request"
-	"common/trust"
+	"common/rpc"
 	"context"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	"net/http"
@@ -21,7 +21,7 @@ type foundationObservation struct {
 	IdempotencyKey string
 	Actor          identity.Actor
 	Caller         identity.Caller
-	Transport      trust.Caller
+	ServiceCaller  identity.ServiceCaller
 	Incoming       metadata.MD
 }
 
@@ -39,7 +39,7 @@ func (s *foundationProbeServer) GetGroupNotifications(
 	idempotencyKey, _ := request.IdempotencyKeyFromContext(ctx)
 	actor, _ := identity.ActorFromContext(ctx)
 	caller, _ := identity.CallerFromContext(ctx)
-	transport, _ := trust.FromContext(ctx)
+	serviceCaller, _ := identity.ServiceCallerFromContext(ctx)
 	incoming, _ := metadata.FromIncomingContext(ctx)
 	s.observed <- foundationObservation{
 		RequestID:      requestID,
@@ -47,7 +47,7 @@ func (s *foundationProbeServer) GetGroupNotifications(
 		IdempotencyKey: idempotencyKey,
 		Actor:          actor,
 		Caller:         caller,
-		Transport:      transport,
+		ServiceCaller:  serviceCaller,
 		Incoming:       incoming.Copy(),
 	}
 	return &organizationpb.GetGroupNotificationsResponse{}, nil
@@ -89,15 +89,15 @@ func TestCanonicalGatewayHTTPToGRPCPropagation(t *testing.T) {
 		if got.Caller.Kind != identity.CallerUser {
 			t.Fatalf("Caller = %+v", got.Caller)
 		}
-		if got.Transport.Level != trust.LevelVerified || got.Transport.ServiceID != integrationGatewayServiceID {
-			t.Fatalf("transport caller = %+v", got.Transport)
+		if got.ServiceCaller.ServiceID != integrationGatewayServiceID {
+			t.Fatalf("service caller = %+v", got.ServiceCaller)
 		}
 		for _, key := range []string{"x-api-key", "api-key"} {
 			if values := got.Incoming.Get(key); len(values) != 0 {
 				t.Fatalf("raw credential %s crossed canonical RPC: %v", key, values)
 			}
 		}
-		if values := got.Incoming.Get(trust.SignatureMetadataKey); len(values) != 1 || values[0] == "" {
+		if values := got.Incoming.Get(rpc.ServiceAssertionSignatureMetadataKey); len(values) != 1 || values[0] == "" {
 			t.Fatalf("canonical trust signature missing: %v", values)
 		}
 	case <-time.After(2 * time.Second):

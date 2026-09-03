@@ -4,6 +4,7 @@ import (
 	chatrpc "chat/infrastructure/rpc"
 	_middleware "common/middleware"
 	_redis "common/redis"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"net"
@@ -16,7 +17,6 @@ import (
 	"chat/infrastructure/client"
 	"chat/infrastructure/database/postgres"
 	"chat/infrastructure/handlers"
-	"chat/infrastructure/impl"
 	"chat/infrastructure/mapper"
 	"chat/internal/repository"
 	"chat/internal/usecases"
@@ -63,7 +63,7 @@ func NewGRPCServer(port string) (*GRPCServer, error) {
 	crmClient := client.NewCrmClient(crmRPC)
 	bdsproClient := client.NewBdsproClient(bdsproRPC)
 	redisClient := _redis.NewRedisService()
-	syncProvider := impl.NewSyncProvider(redisClient)
+	syncProvider := _utils.NewSyncUtil(redisClient)
 	// conversationMapper := mapper.NewConversationMapper()
 
 	converstationUsecase := usecases.NewConversationUsecases(pRepository, userClient)

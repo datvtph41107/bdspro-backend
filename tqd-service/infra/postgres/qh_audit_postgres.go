@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"tqd/internal/modules/resolver/layer_resolver/rule"
-	"tqd/internal/modules/resolver/layer_resolver/types"
+	"tqd/internal/usecase/resolver/layer_resolver/rule"
+	"tqd/internal/usecase/resolver/layer_resolver/types"
 
 	"gorm.io/gorm"
 )

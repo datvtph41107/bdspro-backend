@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	planningdomain "tqd/internal/domain/planningclient/model"
 	"tqd/internal/enums"
-	planningdomain "tqd/internal/modules/planningclient/domain"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

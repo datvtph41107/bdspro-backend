@@ -1,0 +1,44 @@
+# Non-sensitive defaults shared by every deployment. Runtime endpoints and
+# secrets are supplied through environment variables.
+server:
+    port: 8102
+    tcp_port: 8202
+
+rpc:
+    user:
+        address: "localhost:8201"
+    auth:
+        address: "localhost:8216"
+    notification:
+        address: "localhost:8204"
+    organization:
+        address: "localhost:8207"
+    payment:
+        address: "localhost:8205"
+    hub:
+        address: "localhost:8280"
+    chat:
+        address: "localhost:8208"
+    tqd:
+        address: "localhost:8219"
+    crm:
+        address: "localhost:8206"
+
+database:
+    dsn: host=localhost user=postgres password=postgres dbname=db_bdspro port=5432 sslmode=disable
+
+redis:
+    host: "localhost:6379"
+    password:
+
+key:
+    jwt: key-generate-jwt-token-authentication
+
+jwt:
+    key-generate: key-generate-jwt-token-authentication
+    tokenPrefix: Bearer
+    tokenExpirationAfterDays: 14
+    accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+    listPermit:
+    authorizationHeader: Authorization
