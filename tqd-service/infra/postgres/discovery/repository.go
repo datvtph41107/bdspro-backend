@@ -873,6 +873,7 @@ func (r *Repository) SearchPOIs(ctx context.Context, req domain.SearchRequest) (
 		         WHEN LOWER(p.name) = LOWER(?) THEN 100
 		         WHEN LOWER(p.name) LIKE ? THEN 80
 		         WHEN LOWER(COALESCE(p.code,'')) = LOWER(?) THEN 70
+		         WHEN COALESCE(p.adr_search, '') <> '' AND LOWER(p.adr_search) LIKE ? THEN 50
 		         ELSE 40
 		       END::float8 AS score
 		FROM pois p
@@ -881,9 +882,14 @@ func (r *Repository) SearchPOIs(ctx context.Context, req domain.SearchRequest) (
 		  AND (
 		    LOWER(p.name) LIKE ?
 		    OR LOWER(COALESCE(p.code,'')) = LOWER(?)
+		    OR (COALESCE(p.adr_search, '') <> '' AND LOWER(p.adr_search) LIKE ?)
 		  )`
 
-	args := []any{q, prefixPattern, q, pattern, q}
+	adrPattern, _ := parcelAdrSearchPattern(q)
+	if adrPattern == "" {
+		adrPattern = "%" + strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(q))) + "%"
+	}
+	args := []any{q, prefixPattern, q, adrPattern, pattern, q, adrPattern}
 	query += viewportClause
 	args = append(args, viewportArgs...)
 	query += " ORDER BY score DESC, p.is_featured DESC, p.rating DESC LIMIT ?"

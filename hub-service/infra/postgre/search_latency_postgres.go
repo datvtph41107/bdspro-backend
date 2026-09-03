@@ -20,6 +20,9 @@ type searchLatencyAggRow struct {
 	SumDuration int64  `gorm:"column:sum_duration"`
 	MinDuration int64  `gorm:"column:min_duration"`
 	MaxDuration int64  `gorm:"column:max_duration"`
+	P50Duration int64  `gorm:"column:p50_duration"`
+	P95Duration int64  `gorm:"column:p95_duration"`
+	P99Duration int64  `gorm:"column:p99_duration"`
 }
 
 // @bind: internal/repo/ISearchLatencyRepo
@@ -40,14 +43,30 @@ func (r *SearchLatencyPostgres) GetSummary(ctx context.Context, fromTime time.Ti
 		SumDuration   int64  `gorm:"column:sum_duration"`
 		MinDuration   *int64 `gorm:"column:min_duration"`
 		MaxDuration   *int64 `gorm:"column:max_duration"`
+		P50Duration   int64  `gorm:"column:p50_duration"`
+		P95Duration   int64  `gorm:"column:p95_duration"`
+		P99Duration   int64  `gorm:"column:p99_duration"`
 	}
 	var item row
+	// Percentile khi gom nhiều batch: trung bình có trọng số theo count (xấp xỉ).
 	err := r.db.GetDB(ctx).WithContext(ctx).Raw(`
 		SELECT
 			COALESCE(SUM(count), 0)::bigint AS total_requests,
 			COALESCE(SUM(sum_duration_ms), 0)::bigint AS sum_duration,
 			MIN(min_duration_ms) AS min_duration,
-			MAX(max_duration_ms) AS max_duration
+			MAX(max_duration_ms) AS max_duration,
+			COALESCE(
+				ROUND(SUM(p50_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p50_duration,
+			COALESCE(
+				ROUND(SUM(p95_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p95_duration,
+			COALESCE(
+				ROUND(SUM(p99_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p99_duration
 		FROM search_latency_log
 		WHERE "timestamp" >= ? AND path = ?
 	`, fromTime, path).Scan(&item).Error
@@ -58,6 +77,9 @@ func (r *SearchLatencyPostgres) GetSummary(ctx context.Context, fromTime time.Ti
 	resp := &dto.GetSearchLatencyDashboardResponse{
 		Path:          path,
 		TotalRequests: item.TotalRequests,
+		P50DurationMs: item.P50Duration,
+		P95DurationMs: item.P95Duration,
+		P99DurationMs: item.P99Duration,
 	}
 	if item.TotalRequests > 0 {
 		resp.AvgDurationMs = item.SumDuration / int64(item.TotalRequests)
@@ -79,7 +101,19 @@ func (r *SearchLatencyPostgres) GetDailyStats(ctx context.Context, fromTime time
 			COALESCE(SUM(count), 0)::bigint AS count,
 			COALESCE(SUM(sum_duration_ms), 0)::bigint AS sum_duration,
 			COALESCE(MIN(min_duration_ms), 0)::bigint AS min_duration,
-			COALESCE(MAX(max_duration_ms), 0)::bigint AS max_duration
+			COALESCE(MAX(max_duration_ms), 0)::bigint AS max_duration,
+			COALESCE(
+				ROUND(SUM(p50_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p50_duration,
+			COALESCE(
+				ROUND(SUM(p95_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p95_duration,
+			COALESCE(
+				ROUND(SUM(p99_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p99_duration
 		FROM search_latency_log
 		WHERE "timestamp" >= ? AND path = ?
 		GROUP BY 1
@@ -99,7 +133,51 @@ func (r *SearchLatencyPostgres) GetHourlyStats(ctx context.Context, fromTime tim
 			COALESCE(SUM(count), 0)::bigint AS count,
 			COALESCE(SUM(sum_duration_ms), 0)::bigint AS sum_duration,
 			COALESCE(MIN(min_duration_ms), 0)::bigint AS min_duration,
-			COALESCE(MAX(max_duration_ms), 0)::bigint AS max_duration
+			COALESCE(MAX(max_duration_ms), 0)::bigint AS max_duration,
+			COALESCE(
+				ROUND(SUM(p50_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p50_duration,
+			COALESCE(
+				ROUND(SUM(p95_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p95_duration,
+			COALESCE(
+				ROUND(SUM(p99_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p99_duration
+		FROM search_latency_log
+		WHERE "timestamp" >= ? AND path = ?
+		GROUP BY 1
+		ORDER BY 1 ASC
+	`, fromTime, path).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	return mapSearchLatencyRows(rows), nil
+}
+
+func (r *SearchLatencyPostgres) GetMinuteStats(ctx context.Context, fromTime time.Time, path string) ([]dto.SearchLatencyDailyItem, error) {
+	var rows []searchLatencyAggRow
+	err := r.db.GetDB(ctx).WithContext(ctx).Raw(`
+		SELECT
+			to_char(("timestamp" AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:MI') AS date,
+			COALESCE(SUM(count), 0)::bigint AS count,
+			COALESCE(SUM(sum_duration_ms), 0)::bigint AS sum_duration,
+			COALESCE(MIN(min_duration_ms), 0)::bigint AS min_duration,
+			COALESCE(MAX(max_duration_ms), 0)::bigint AS max_duration,
+			COALESCE(
+				ROUND(SUM(p50_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p50_duration,
+			COALESCE(
+				ROUND(SUM(p95_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p95_duration,
+			COALESCE(
+				ROUND(SUM(p99_duration_ms * count)::numeric / NULLIF(SUM(count), 0)),
+				0
+			)::bigint AS p99_duration
 		FROM search_latency_log
 		WHERE "timestamp" >= ? AND path = ?
 		GROUP BY 1
@@ -124,6 +202,9 @@ func mapSearchLatencyRows(rows []searchLatencyAggRow) []dto.SearchLatencyDailyIt
 			AvgDurationMs: avg,
 			MinDurationMs: item.MinDuration,
 			MaxDurationMs: item.MaxDuration,
+			P50DurationMs: item.P50Duration,
+			P95DurationMs: item.P95Duration,
+			P99DurationMs: item.P99Duration,
 		})
 	}
 	return result

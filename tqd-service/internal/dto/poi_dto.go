@@ -2,6 +2,7 @@ package dto
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	_dto "common/domain/dto"
@@ -28,6 +29,7 @@ type CreatePoiRequest struct {
 	Images      []string `json:"images"`
 	Tags        []string `json:"tags"`
 	AmenityIDs  []uint64 `json:"amenityIds"`
+	ParcelID    uint64   `json:"parcelId"`
 }
 
 // UpdatePoiRequest represents request to update POI
@@ -48,6 +50,7 @@ type UpdatePoiRequest struct {
 	Images      []string `json:"images"`
 	Tags        []string `json:"tags"`
 	AmenityIDs  []uint64 `json:"amenityIds"`
+	ParcelID    *uint64  `json:"parcelId"`
 }
 
 // PoiFilter represents filter for listing POIs
@@ -65,6 +68,30 @@ type PoiFilter struct {
 	Longitude   *float64 `json:"longitude" form:"longitude"`
 	Radius      *float64 `json:"radius" form:"radius"` // in km
 	SortBy      string   `json:"sortBy" form:"sortBy"` // rating, distance, newest
+}
+
+// PublicPoiListRequest public search — không COUNT.
+type PublicPoiListRequest struct {
+	_dto.Pagable
+	Search string `json:"search" form:"search"`
+	Mode   string `json:"mode" form:"mode"` // suggest
+}
+
+func (r *PublicPoiListRequest) Normalize() {
+	if r == nil {
+		return
+	}
+	r.Pagable.Normalize()
+	if r.Size > 100 {
+		r.Size = 100
+	}
+	if strings.TrimSpace(r.Mode) == "" {
+		r.Mode = "suggest"
+	}
+}
+
+func (r *PublicPoiListRequest) IsSuggest() bool {
+	return strings.EqualFold(strings.TrimSpace(r.Mode), "suggest")
 }
 
 // NearbyPoiRequest represents request for nearby POIs
@@ -109,6 +136,7 @@ type PoiResponse struct {
 	UpdatedAt   time.Time       `json:"updatedAt"`
 	CreatedBy   uint64          `json:"createdBy"`
 	UpdatedBy   uint64          `json:"updatedBy"`
+	ParcelID    uint64          `json:"parcelId"`
 }
 
 // FromDomain converts domain POI to response DTO
@@ -140,6 +168,7 @@ func (r *PoiResponse) FromDomain(p *domain.POI) {
 	}
 	r.CreatedBy = p.CreatedBy
 	r.UpdatedBy = p.UpdatedBy
+	r.ParcelID = p.ParcelID
 
 	// Parse images from JSON
 	if p.ImagesJSON != "" {

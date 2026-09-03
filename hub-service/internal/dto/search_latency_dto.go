@@ -30,6 +30,9 @@ type GetSearchLatencyDashboardResponse struct {
 	AvgDurationMs int64  `json:"avgDurationMs"`
 	MinDurationMs int64  `json:"minDurationMs"`
 	MaxDurationMs int64  `json:"maxDurationMs"`
+	P50DurationMs int64  `json:"p50DurationMs"`
+	P95DurationMs int64  `json:"p95DurationMs"`
+	P99DurationMs int64  `json:"p99DurationMs"`
 	LastDates     uint32 `json:"lastDates"`
 }
 
@@ -44,8 +47,25 @@ func (r *GetSearchLatencyDailyStatsRequest) Normalize() {
 		return
 	}
 	r.LastDates = NormalizeLastDates(r.LastDates)
-	r.Gap = NormalizeRequestStatsGap(r.Gap)
+	r.Gap = NormalizeSearchLatencyGap(r.Gap)
 	r.Path = NormalizeSearchLatencyPath(r.Path)
+	// minutes sinh nhiều điểm (~1440/ngày) — giới hạn 2 ngày gần nhất.
+	if r.Gap == SearchLatencyGapMinutes && r.LastDates > 2 {
+		r.LastDates = 2
+	}
+}
+
+const SearchLatencyGapMinutes = "minutes"
+
+func NormalizeSearchLatencyGap(gap string) string {
+	switch strings.ToLower(strings.TrimSpace(gap)) {
+	case RequestStatsGapHours, "hour", "h":
+		return RequestStatsGapHours
+	case SearchLatencyGapMinutes, "minute", "min", "m":
+		return SearchLatencyGapMinutes
+	default:
+		return RequestStatsGapDates
+	}
 }
 
 type SearchLatencyDailyItem struct {
@@ -54,6 +74,9 @@ type SearchLatencyDailyItem struct {
 	AvgDurationMs int64  `json:"avgDurationMs"`
 	MinDurationMs int64  `json:"minDurationMs"`
 	MaxDurationMs int64  `json:"maxDurationMs"`
+	P50DurationMs int64  `json:"p50DurationMs"`
+	P95DurationMs int64  `json:"p95DurationMs"`
+	P99DurationMs int64  `json:"p99DurationMs"`
 }
 
 type GetSearchLatencyDailyStatsResponse struct {

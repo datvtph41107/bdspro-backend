@@ -106,6 +106,7 @@ func (m *PoiMapper) ToDomainFromCreate(req *dto.CreatePoiRequest, userID uint64)
 		LikeCount:     0,
 		CreatedBy:     userID,
 		UpdatedBy:     userID,
+		ParcelID:      req.ParcelID,
 	}, nil
 }
 
@@ -145,6 +146,7 @@ func (m *PoiMapper) ToDomainFromUpdate(req *dto.UpdatePoiRequest, existing *doma
 		LikeCount:     existing.LikeCount,
 		CreatedBy:     existing.CreatedBy,
 		UpdatedBy:     userID,
+		ParcelID:      existing.ParcelID,
 	}
 
 	// Update only provided fields
@@ -199,6 +201,9 @@ func (m *PoiMapper) ToDomainFromUpdate(req *dto.UpdatePoiRequest, existing *doma
 		amenitiesBytes, _ := json.Marshal(req.AmenityIDs)
 		updated.AmenitiesJSON = string(amenitiesBytes)
 	}
+	if req.ParcelID != nil {
+		updated.ParcelID = *req.ParcelID
+	}
 
 	return updated, nil
 }
@@ -249,6 +254,7 @@ func (m *PoiMapper) ToProto(p *domain.POI) *tqdpb.Poi {
 		UpdatedAt:   _utils.FormatTimeToString(p.UpdatedAt),
 		CreatedBy:   p.CreatedBy,
 		UpdatedBy:   p.UpdatedBy,
+		ParcelId:    p.ParcelID,
 	}
 }
 
@@ -284,6 +290,7 @@ func (m *PoiMapper) ToProtoFromResponse(resp *dto.PoiResponse) *tqdpb.Poi {
 		UpdatedAt:   _utils.FormatTimeToString(&resp.UpdatedAt),
 		CreatedBy:   resp.CreatedBy,
 		UpdatedBy:   resp.UpdatedBy,
+		ParcelId:    resp.ParcelID,
 	}
 }
 
@@ -335,6 +342,7 @@ func (m *PoiMapper) FromProto(proto *tqdpb.Poi) (*dto.CreatePoiRequest, error) {
 		CoverImage:  proto.CoverImage,
 		Images:      proto.Images,
 		Tags:        proto.Tags,
+		ParcelID:    proto.ParcelId,
 	}, nil
 }
 

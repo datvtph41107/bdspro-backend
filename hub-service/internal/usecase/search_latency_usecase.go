@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"log"
+	"math/rand"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +15,11 @@ import (
 	"hub/internal/repo"
 )
 
-const searchLatencyFlushDelay = 10 * time.Second
+const (
+	searchLatencyFlushDelay = 10 * time.Second
+	// Cap samples per path/method/service trong 1 cửa sổ flush để tránh OOM khi traffic cao.
+	searchLatencySampleCap = 20000
+)
 
 type searchLatencyKey struct {
 	Method  string
@@ -26,6 +32,7 @@ type searchLatencyAgg struct {
 	SumDurationMs int64
 	MinDurationMs int64
 	MaxDurationMs int64
+	Samples       []int64
 }
 
 type SearchLatencyUsecase struct {
@@ -78,28 +85,107 @@ func (u *SearchLatencyUsecase) Track(_ context.Context, req *dto.TrackSearchLate
 
 	agg, ok := u.aggs[key]
 	if !ok {
-		u.aggs[key] = &searchLatencyAgg{
-			Count:         1,
-			SumDurationMs: req.DurationMs,
-			MinDurationMs: req.DurationMs,
-			MaxDurationMs: req.DurationMs,
-		}
-	} else {
-		agg.Count++
-		agg.SumDurationMs += req.DurationMs
-		if req.DurationMs < agg.MinDurationMs {
-			agg.MinDurationMs = req.DurationMs
-		}
-		if req.DurationMs > agg.MaxDurationMs {
-			agg.MaxDurationMs = req.DurationMs
-		}
+		agg = &searchLatencyAgg{}
+		u.aggs[key] = agg
 	}
+	agg.addSample(req.DurationMs)
 
 	if !u.jobPending {
 		u.jobPending = true
 		u.afterFunc(u.flushDelay, u.flush)
 	}
 	return nil
+}
+
+func (a *searchLatencyAgg) addSample(durationMs int64) {
+	if a.Count == 0 {
+		a.Count = 1
+		a.SumDurationMs = durationMs
+		a.MinDurationMs = durationMs
+		a.MaxDurationMs = durationMs
+		a.Samples = []int64{durationMs}
+		return
+	}
+	a.Count++
+	a.SumDurationMs += durationMs
+	if durationMs < a.MinDurationMs {
+		a.MinDurationMs = durationMs
+	}
+	if durationMs > a.MaxDurationMs {
+		a.MaxDurationMs = durationMs
+	}
+	if len(a.Samples) < searchLatencySampleCap {
+		a.Samples = append(a.Samples, durationMs)
+		return
+	}
+	// Reservoir sampling: giữ phân phối mẫu khi vượt cap.
+	j := rand.Int63n(a.Count)
+	if j < int64(searchLatencySampleCap) {
+		a.Samples[j] = durationMs
+	}
+}
+
+func (a *searchLatencyAgg) merge(other *searchLatencyAgg) {
+	if other == nil || other.Count <= 0 {
+		return
+	}
+	if a.Count == 0 {
+		*a = *other
+		a.Samples = append([]int64(nil), other.Samples...)
+		return
+	}
+	a.Count += other.Count
+	a.SumDurationMs += other.SumDurationMs
+	if other.MinDurationMs < a.MinDurationMs {
+		a.MinDurationMs = other.MinDurationMs
+	}
+	if other.MaxDurationMs > a.MaxDurationMs {
+		a.MaxDurationMs = other.MaxDurationMs
+	}
+	for _, sample := range other.Samples {
+		if len(a.Samples) < searchLatencySampleCap {
+			a.Samples = append(a.Samples, sample)
+			continue
+		}
+		j := rand.Int63n(a.Count)
+		if j < int64(searchLatencySampleCap) {
+			a.Samples[j] = sample
+		}
+	}
+}
+
+func (a *searchLatencyAgg) percentiles() (p50, p95, p99 int64) {
+	if a == nil || len(a.Samples) == 0 {
+		return 0, 0, 0
+	}
+	sorted := append([]int64(nil), a.Samples...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
+	return percentileMs(sorted, 50), percentileMs(sorted, 95), percentileMs(sorted, 99)
+}
+
+func percentileMs(sorted []int64, p int) int64 {
+	n := len(sorted)
+	if n == 0 {
+		return 0
+	}
+	if n == 1 {
+		return sorted[0]
+	}
+	if p <= 0 {
+		return sorted[0]
+	}
+	if p >= 100 {
+		return sorted[n-1]
+	}
+	// Nearest-rank: ceil(p/100 * n) - 1
+	rank := (p*n + 99) / 100
+	if rank < 1 {
+		rank = 1
+	}
+	if rank > n {
+		rank = n
+	}
+	return sorted[rank-1]
 }
 
 func (u *SearchLatencyUsecase) flush() {
@@ -117,6 +203,7 @@ func (u *SearchLatencyUsecase) flush() {
 			if agg == nil || agg.Count <= 0 {
 				continue
 			}
+			p50, p95, p99 := agg.percentiles()
 			logs = append(logs, &domain.SearchLatencyLog{
 				Method:        key.Method,
 				Path:          key.Path,
@@ -125,6 +212,9 @@ func (u *SearchLatencyUsecase) flush() {
 				SumDurationMs: agg.SumDurationMs,
 				MinDurationMs: agg.MinDurationMs,
 				MaxDurationMs: agg.MaxDurationMs,
+				P50DurationMs: p50,
+				P95DurationMs: p95,
+				P99DurationMs: p99,
 				Timestamp:     now,
 			})
 		}
@@ -139,14 +229,7 @@ func (u *SearchLatencyUsecase) flush() {
 						u.aggs[key] = agg
 						continue
 					}
-					existing.Count += agg.Count
-					existing.SumDurationMs += agg.SumDurationMs
-					if agg.MinDurationMs < existing.MinDurationMs {
-						existing.MinDurationMs = agg.MinDurationMs
-					}
-					if agg.MaxDurationMs > existing.MaxDurationMs {
-						existing.MaxDurationMs = agg.MaxDurationMs
-					}
+					existing.merge(agg)
 				}
 				u.mu.Unlock()
 			}
@@ -195,7 +278,13 @@ func (u *SearchLatencyUsecase) GetDailyStats(ctx context.Context, req *dto.GetSe
 		data []dto.SearchLatencyDailyItem
 	)
 
-	if req.Gap == dto.RequestStatsGapHours {
+	if req.Gap == dto.SearchLatencyGapMinutes {
+		rows, err = u.repo.GetMinuteStats(ctx, fromTime, req.Path)
+		if err != nil {
+			return nil, &_err.ErrorDTO{Code: 500, Message: "Lỗi khi lấy latency theo phút: " + err.Error()}
+		}
+		data = buildSearchLatencyMinuteSeries(fromTime, rows)
+	} else if req.Gap == dto.RequestStatsGapHours {
 		rows, err = u.repo.GetHourlyStats(ctx, fromTime, req.Path)
 		if err != nil {
 			return nil, &_err.ErrorDTO{Code: 500, Message: "Lỗi khi lấy latency theo giờ: " + err.Error()}
@@ -227,13 +316,7 @@ func buildSearchLatencyDailySeries(fromTime time.Time, lastDates uint32, rows []
 		day := fromTime.AddDate(0, 0, i)
 		date := day.Format("2006-01-02")
 		item := byDate[date]
-		data = append(data, dto.SearchLatencyDailyItem{
-			Date:          date,
-			Count:         item.Count,
-			AvgDurationMs: item.AvgDurationMs,
-			MinDurationMs: item.MinDurationMs,
-			MaxDurationMs: item.MaxDurationMs,
-		})
+		data = append(data, copySearchLatencyItem(date, item))
 	}
 	return data
 }
@@ -253,13 +336,40 @@ func buildSearchLatencyHourlySeries(fromTime time.Time, rows []dto.SearchLatency
 	for cursor := startHour; !cursor.After(endHour); cursor = cursor.Add(time.Hour) {
 		key := cursor.Format("2006-01-02 15:00")
 		item := byHour[key]
-		data = append(data, dto.SearchLatencyDailyItem{
-			Date:          key,
-			Count:         item.Count,
-			AvgDurationMs: item.AvgDurationMs,
-			MinDurationMs: item.MinDurationMs,
-			MaxDurationMs: item.MaxDurationMs,
-		})
+		data = append(data, copySearchLatencyItem(key, item))
 	}
 	return data
+}
+
+func buildSearchLatencyMinuteSeries(fromTime time.Time, rows []dto.SearchLatencyDailyItem) []dto.SearchLatencyDailyItem {
+	byMinute := make(map[string]dto.SearchLatencyDailyItem, len(rows))
+	for _, row := range rows {
+		byMinute[row.Date] = row
+	}
+
+	loc := fromTime.Location()
+	now := time.Now().In(loc)
+	endMinute := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, loc)
+	startMinute := time.Date(fromTime.Year(), fromTime.Month(), fromTime.Day(), 0, 0, 0, 0, loc)
+
+	data := make([]dto.SearchLatencyDailyItem, 0)
+	for cursor := startMinute; !cursor.After(endMinute); cursor = cursor.Add(time.Minute) {
+		key := cursor.Format("2006-01-02 15:04")
+		item := byMinute[key]
+		data = append(data, copySearchLatencyItem(key, item))
+	}
+	return data
+}
+
+func copySearchLatencyItem(date string, item dto.SearchLatencyDailyItem) dto.SearchLatencyDailyItem {
+	return dto.SearchLatencyDailyItem{
+		Date:          date,
+		Count:         item.Count,
+		AvgDurationMs: item.AvgDurationMs,
+		MinDurationMs: item.MinDurationMs,
+		MaxDurationMs: item.MaxDurationMs,
+		P50DurationMs: item.P50DurationMs,
+		P95DurationMs: item.P95DurationMs,
+		P99DurationMs: item.P99DurationMs,
+	}
 }

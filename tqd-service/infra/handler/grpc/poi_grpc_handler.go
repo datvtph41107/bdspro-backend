@@ -3,10 +3,13 @@ package handler_grpc
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	_dto "common/domain/dto"
+	"common/injection"
 	_utils "common/utils"
+	"pb/clients"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -23,6 +26,7 @@ type PoiGrpcHandler struct {
 	usecase      usecase.PoiUsecase
 	mapper       *mapper.PoiMapper
 	SyncProvider *_utils.SyncUtil
+	hubClient    *clients.HubGrpcClient
 }
 
 func NewPoiGrpcHandler(
@@ -34,6 +38,7 @@ func NewPoiGrpcHandler(
 		usecase:      usecase,
 		mapper:       mapper,
 		SyncProvider: syncProvider,
+		hubClient:    injection.NewHubClient(),
 	}
 }
 
@@ -67,6 +72,7 @@ func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 		CoverImage:  req.CoverImage,
 		Images:      req.Images,
 		Tags:        req.Tags,
+		ParcelID:    req.ParcelId,
 	}
 
 	// Call usecase
@@ -234,6 +240,9 @@ func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	if req.CategoryId != 0 {
 		updateReq.CategoryID = &req.CategoryId
 	}
+	if req.ParcelId != 0 {
+		updateReq.ParcelID = &req.ParcelId
+	}
 	updateReq.IsActive = &req.IsActive
 	updateReq.IsFeatured = &req.IsFeatured
 
@@ -337,5 +346,52 @@ func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisReques
 	return &tqdpb.ListPoisResponse{
 		Data:  pois,
 		Total: result.Total,
+	}, nil
+}
+
+// ListPublicPois public search POI — không COUNT, 1 query lấy data.
+// @Summary Public list/search POIs
+// @Description mode=suggest: autocomplete theo name/code/adr_search. Không trả total.
+// @Tags Poi
+// @Produce json
+// @Param search query string false "Từ khóa"
+// @Param mode query string false "suggest"
+// @Param size query int false "Số bản ghi, mặc định 20"
+// @Param page query int false "Page (bỏ qua khi mode=suggest)"
+// @Success 200 {object} tqdpb.ListPublicPoisResponse
+// @Router /v2/tqd/public/pois [get]
+// @bind: internal/usecase.PoiUsecase
+func (h *PoiGrpcHandler) ListPublicPois(ctx context.Context, req *tqdpb.ListPublicPoisRequest) (*tqdpb.ListPublicPoisResponse, error) {
+	if req == nil {
+		req = &tqdpb.ListPublicPoisRequest{}
+	}
+
+	search := strings.TrimSpace(req.Search)
+	start := time.Now()
+	result, err := h.usecase.ListPublic(ctx, &dto.PublicPoiListRequest{
+		Pagable: _dto.Pagable{
+			Page: req.Page,
+			Size: req.Size,
+		},
+		Search: req.Search,
+		Mode:   req.Mode,
+	})
+	durationMs := time.Since(start).Milliseconds()
+
+	if h.hubClient != nil {
+		// Latency luôn ghi để theo dõi tải API; keyword chỉ khi có search text.
+		h.hubClient.TrackSearchLatency(ctx, "GET", "/v2/tqd/public/pois", "tqd", durationMs)
+		if search != "" {
+			h.hubClient.TrackKeywordSearch(ctx, search, "tqd")
+		}
+	}
+
+	if err != nil {
+		log.Printf("error listing public pois: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to list public pois: %v", err)
+	}
+
+	return &tqdpb.ListPublicPoisResponse{
+		Data: h.mapper.ToProtoListFromResponses(result),
 	}, nil
 }

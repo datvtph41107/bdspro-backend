@@ -315,6 +315,34 @@ func ensurePoisGeom() {
 	}
 }
 
+func ensurePoisParcelID() {
+	statements := []string{
+		`ALTER TABLE pois ADD COLUMN IF NOT EXISTS parcel_id BIGINT`,
+		`CREATE INDEX IF NOT EXISTS idx_pois_parcel_id
+			ON pois(parcel_id)
+			WHERE parcel_id IS NOT NULL AND parcel_id > 0`,
+	}
+	for _, stmt := range statements {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  ensurePoisParcelID: %v", err)
+		}
+	}
+}
+
+func ensurePoisAdrSearch() {
+	statements := []string{
+		`ALTER TABLE pois ADD COLUMN IF NOT EXISTS adr_search TEXT`,
+		`CREATE INDEX IF NOT EXISTS idx_pois_adr_search_trgm
+			ON pois USING GIN (LOWER(adr_search) gin_trgm_ops)
+			WHERE COALESCE(adr_search, '') <> ''`,
+	}
+	for _, stmt := range statements {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  ensurePoisAdrSearch: %v", err)
+		}
+	}
+}
+
 func ensurePlanningProjectClientView() {
 	if err := _db.DB.Exec(`
 		ALTER TABLE qh_planning_projects
@@ -609,6 +637,8 @@ func AutoMigrate() {
 	ensureLayerPlanDocRelation()
 	ensureProAIJobs()
 	ensurePoisGeom()
+	ensurePoisParcelID()
+	ensurePoisAdrSearch()
 	ensurePlanningProjectClientView()
 	ensurePlanningProjectSeoID()
 	ensurePlanningProjectLegalBasisID()

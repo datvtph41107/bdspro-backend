@@ -13,4 +13,5 @@ type ISearchLatencyRepo interface {
 	GetSummary(ctx context.Context, fromTime time.Time, path string) (*dto.GetSearchLatencyDashboardResponse, error)
 	GetDailyStats(ctx context.Context, fromTime time.Time, path string) ([]dto.SearchLatencyDailyItem, error)
 	GetHourlyStats(ctx context.Context, fromTime time.Time, path string) ([]dto.SearchLatencyDailyItem, error)
+	GetMinuteStats(ctx context.Context, fromTime time.Time, path string) ([]dto.SearchLatencyDailyItem, error)
 }

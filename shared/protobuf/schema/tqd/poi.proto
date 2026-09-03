@@ -67,6 +67,13 @@ service PoiService {
       get: "/v2/tqd/admin/pois"
     };
   }
+
+  // Public list/search POI — không COUNT, chỉ 1 query lấy data.
+  rpc ListPublicPois(ListPublicPoisRequest) returns (ListPublicPoisResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/pois"
+    };
+  }
 }
 
 message Poi {
@@ -96,6 +103,7 @@ message Poi {
   string updatedAt = 24;
   uint64 createdBy = 25;
   uint64 updatedBy = 26;
+  uint64 parcelId = 27;
 }
 
 
@@ -158,4 +166,16 @@ message ListPoisRequest {
 message ListPoisResponse {
   repeated Poi data = 1;
   int64 total = 2;
+}
+
+message ListPublicPoisRequest {
+  string search = 1;
+  // suggest (mặc định): autocomplete theo name/code/adr_search.
+  string mode = 2;
+  uint32 size = 3;
+  uint32 page = 4;
+}
+
+message ListPublicPoisResponse {
+  repeated Poi data = 1;
 }

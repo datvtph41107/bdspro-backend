@@ -19,6 +19,7 @@ type IPOIRepo interface {
 
 	// List operations
 	List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI, int64, error)
+	ListPublic(ctx context.Context, req *dto.PublicPoiListRequest) ([]domain.POI, error)
 	ListByCategory(ctx context.Context, categoryID uint64, limit int) ([]domain.POI, error)
 	ListNearby(ctx context.Context, lat, lng, radius float64, filter *dto.PoiFilter) ([]domain.POI, int64, error)
 

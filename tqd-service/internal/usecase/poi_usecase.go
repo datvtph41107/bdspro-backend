@@ -23,6 +23,7 @@ type PoiUsecase interface {
 
 	// List operations
 	List(ctx context.Context, filter *dto.PoiFilter) (*dto.ListPoisResponse, error)
+	ListPublic(ctx context.Context, req *dto.PublicPoiListRequest) ([]dto.PoiResponse, error)
 	ListByCategory(ctx context.Context, categoryID uint64, limit int) ([]dto.PoiResponse, error)
 	ListNearby(ctx context.Context, req *dto.NearbyPoiRequest) (*dto.ListPoisResponse, error)
 
@@ -218,6 +219,20 @@ func (u *poiUsecase) List(ctx context.Context, filter *dto.PoiFilter) (*dto.List
 		Page:  filter.Page,
 		Size:  filter.Size,
 	}, nil
+}
+
+func (u *poiUsecase) ListPublic(ctx context.Context, req *dto.PublicPoiListRequest) ([]dto.PoiResponse, error) {
+	if req == nil {
+		req = &dto.PublicPoiListRequest{}
+	}
+	req.Normalize()
+
+	pois, err := u.repo.ListPublic(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list public POIs: %v", err)
+	}
+
+	return u.mapper.ToResponseList(pois), nil
 }
 
 // ListByCategory implements PoiUsecase.ListByCategory

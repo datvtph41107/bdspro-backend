@@ -2,7 +2,6 @@ package db
 
 import (
 	_db "common/db"
-	seo_domain "crm/internal/domain/seo"
 	"log"
 )
 
@@ -25,11 +24,11 @@ func tableExists(name string) bool {
 }
 
 func AutoMigrate() {
-	ensureSEOMigrations()
+	// ensureSEOMigrations()
 
-	if err := _db.DB.AutoMigrate(&seo_domain.SeoRef{}); err != nil {
-		log.Printf("⚠️  AutoMigrate SeoRef: %v", err)
-	}
+	// if err := _db.DB.AutoMigrate(&seo_domain.SeoRef{}); err != nil {
+	// 	log.Printf("⚠️  AutoMigrate SeoRef: %v", err)
+	// }
 
 	log.Println("Migrate success")
 }

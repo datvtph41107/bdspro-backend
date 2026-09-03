@@ -2,7 +2,10 @@ package domain
 
 import (
 	_entity "common/domain/entity"
+	_utils "common/utils"
 	"fmt"
+
+	"gorm.io/gorm"
 )
 
 // POI represents a Point of Interest
@@ -31,6 +34,8 @@ type POI struct {
 	LikeCount     int64   `json:"likeCount" gorm:"column:like_count;default:0"`
 	CreatedBy     uint64  `json:"createdBy" gorm:"column:created_by"`
 	UpdatedBy     uint64  `json:"updatedBy" gorm:"column:updated_by"`
+	ParcelID      uint64  `json:"parcelId" gorm:"column:parcel_id;index"`
+	AdrSearch     string  `json:"adrSearch" gorm:"column:adr_search;type:text"`
 
 	// Relations
 	Category  *PoiCategory `json:"category,omitempty" gorm:"foreignKey:CategoryID;references:ID"`
@@ -54,6 +59,14 @@ func (p *POI) Validate() error {
 	}
 	if p.Longitude < -180 || p.Longitude > 180 {
 		return fmt.Errorf("longitude must be between -180 and 180")
+	}
+	return nil
+}
+
+// BeforeSave tự động cập nhật adr_search giống qh_parcel_info.
+func (p *POI) BeforeSave(_ *gorm.DB) error {
+	if p.Address != "" {
+		p.AdrSearch = _utils.CleanSearchText(p.Address)
 	}
 	return nil
 }

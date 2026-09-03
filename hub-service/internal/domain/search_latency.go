@@ -12,6 +12,10 @@ type SearchLatencyLog struct {
 	SumDurationMs int64     `gorm:"not null;column:sum_duration_ms"`
 	MinDurationMs int64     `gorm:"not null;column:min_duration_ms"`
 	MaxDurationMs int64     `gorm:"not null;column:max_duration_ms"`
+	// Percentiles computed from in-window samples at flush time.
+	P50DurationMs int64     `gorm:"not null;default:0;column:p50_duration_ms"`
+	P95DurationMs int64     `gorm:"not null;default:0;column:p95_duration_ms"`
+	P99DurationMs int64     `gorm:"not null;default:0;column:p99_duration_ms"`
 	Timestamp     time.Time `gorm:"not null;index;column:timestamp"`
 }
 

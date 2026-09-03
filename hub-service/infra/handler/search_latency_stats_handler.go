@@ -21,7 +21,7 @@ func NewSearchLatencyStatsHandler(searchLatencyUsecase _usecase.ISearchLatencyUs
 }
 
 // @Summary Thống kê latency API search có text
-// @Description Trả avg / min / max / count trong lastDates ngày (mặc định path=/v2/tqd/discovery/search)
+// @Description Trả avg / min / max / p50 / p95 / p99 / count trong lastDates ngày (mặc định path=/v2/tqd/discovery/search)
 // @Tags SearchLatencyStats
 // @Produce json
 // @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
@@ -52,15 +52,18 @@ func (h *SearchLatencyStatsHandler) GetSearchLatencyDashboard(
 		MinDurationMs: resp.MinDurationMs,
 		MaxDurationMs: resp.MaxDurationMs,
 		LastDates:     resp.LastDates,
+		P50DurationMs: resp.P50DurationMs,
+		P95DurationMs: resp.P95DurationMs,
+		P99DurationMs: resp.P99DurationMs,
 	}, nil
 }
 
-// @Summary Biểu đồ latency search theo ngày/giờ
-// @Description gap=dates|hours; mặc định path=/v2/tqd/discovery/search
+// @Summary Biểu đồ latency search theo ngày/giờ/phút
+// @Description gap=dates|hours|minutes; trả count/avg/min/max/p50/p95/p99 để vẽ biểu đồ. minutes giới hạn lastDates tối đa 2.
 // @Tags SearchLatencyStats
 // @Produce json
-// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
-// @Param gap query string false "dates | hours"
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3; minutes max 2)"
+// @Param gap query string false "dates | hours | minutes"
 // @Param path query string false "Path API search"
 // @Success 200 {object} hubpb.GetSearchLatencyDailyStatsResponse
 // @Router /v2/hub/search-latency/daily [get]
@@ -94,6 +97,9 @@ func (h *SearchLatencyStatsHandler) GetSearchLatencyDailyStats(
 			AvgDurationMs: item.AvgDurationMs,
 			MinDurationMs: item.MinDurationMs,
 			MaxDurationMs: item.MaxDurationMs,
+			P50DurationMs: item.P50DurationMs,
+			P95DurationMs: item.P95DurationMs,
+			P99DurationMs: item.P99DurationMs,
 		})
 	}
 

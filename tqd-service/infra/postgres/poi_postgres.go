@@ -9,11 +9,13 @@ import (
 	_db "common/db"
 	_dto "common/domain/dto"
 	_provider "common/provider"
+	_utils "common/utils"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // POIRepo implements IPOIRepo
@@ -33,6 +35,10 @@ func (r *POIRepo) BeforeSave(ctx context.Context, id *uint64, entity *domain.POI
 	// Validate entity
 	if err := entity.Validate(); err != nil {
 		return err
+	}
+
+	if entity.Address != "" {
+		entity.AdrSearch = _utils.CleanSearchText(entity.Address)
 	}
 
 	if entity.Code == "" {
@@ -152,11 +158,14 @@ func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI
 
 	query := r.GetDB(ctx).Model(&domain.POI{}).Where("deleted_at IS NULL")
 
-	// Apply search filter
+	// Apply search filter — địa chỉ dùng adr_search (CleanSearchText) giống parcel.
 	if filter.Search != "" {
-		searchPattern := "%" + strings.ToLower(filter.Search) + "%"
-		query = query.Where("LOWER(name) LIKE ? OR LOWER(address) LIKE ? OR LOWER(code) LIKE ?",
-			searchPattern, searchPattern, searchPattern)
+		rawPattern := "%" + strings.ToLower(strings.TrimSpace(filter.Search)) + "%"
+		adrPattern := "%" + strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(filter.Search))) + "%"
+		query = query.Where(
+			"LOWER(name) LIKE ? OR LOWER(COALESCE(code,'')) LIKE ? OR LOWER(COALESCE(adr_search,'')) LIKE ?",
+			rawPattern, rawPattern, adrPattern,
+		)
 	}
 
 	// Apply category filters
@@ -202,6 +211,52 @@ func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI
 		Find(&pois).Error
 
 	return pois, total, err
+}
+
+func (r *POIRepo) ListPublic(ctx context.Context, req *dto.PublicPoiListRequest) ([]domain.POI, error) {
+	if req == nil {
+		req = &dto.PublicPoiListRequest{}
+	}
+	req.Normalize()
+
+	search := strings.TrimSpace(req.Search)
+	query := r.GetDB(ctx).Model(&domain.POI{}).
+		Where("deleted_at IS NULL AND is_active = ?", true)
+
+	if search != "" {
+		rawPattern := "%" + strings.ToLower(search) + "%"
+		prefixPattern := strings.ToLower(search) + "%"
+		adrPattern := "%" + strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(search))) + "%"
+		query = query.Where(
+			"LOWER(name) LIKE ? OR LOWER(COALESCE(code,'')) LIKE ? OR LOWER(COALESCE(adr_search,'')) LIKE ?",
+			rawPattern, rawPattern, adrPattern,
+		)
+		if req.IsSuggest() {
+			query = query.Clauses(clause.OrderBy{
+				Expression: clause.Expr{
+					SQL: `CASE
+						WHEN LOWER(name) = LOWER(?) THEN 0
+						WHEN LOWER(name) LIKE ? THEN 1
+						WHEN LOWER(COALESCE(code,'')) = LOWER(?) THEN 2
+						ELSE 3
+					END, is_featured DESC, rating DESC, id DESC`,
+					Vars: []interface{}{search, prefixPattern, search},
+				},
+			})
+		}
+	}
+
+	if !req.IsSuggest() || search == "" {
+		query = query.Order("is_featured DESC, rating DESC, id DESC")
+	}
+
+	if !req.IsSuggest() {
+		query = query.Offset(req.GetOffset())
+	}
+
+	var pois []domain.POI
+	err := query.Limit(req.GetLimit()).Find(&pois).Error
+	return pois, err
 }
 
 // ListByCategory lists POIs by category
