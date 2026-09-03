@@ -7,6 +7,7 @@ import (
 	"crm/config"
 	"crm/infra/mapper"
 	"crm/infra/utils"
+	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
@@ -192,6 +193,7 @@ func (h *SeoDomainHandler) CreateSeoDomain(ctx context.Context, req *crmpb.Creat
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
 		CategoryID:        req.CategoryId,
+		VisibleOn:         req.VisibleOn,
 	}
 
 	created, err := h.seoDomainUsecase.CreateSeoDomain(ctx, seoReq)
@@ -363,6 +365,17 @@ func (h *SeoDomainHandler) GetSeoClickDailyStats(ctx context.Context, req *crmpb
 	}, nil
 }
 
+// GetSeoDomainList @Summary Danh sách trang SEO
+// @Tags CRM Admin SEO
+// @Param page query int false "Trang"
+// @Param size query int false "Số bản ghi"
+// @Param keyword query string false "Từ khóa"
+// @Param status query string false "Trạng thái: 10 nháp, 20 xuất bản, 30 lưu trữ. Ví dụ 20,10"
+// @Param refTypes query string false "Loại nguồn, ví dụ 200,100,700"
+// @Param visibleOns query string false "Vị trí hiển thị, ví dụ 20,30"
+// @Param isSiteMap query bool false "Lọc trang có trong sitemap"
+// @Success 200 {object} crmpb.GetSeoDomainListResponse
+// @Router /v2/crm/admin/seo-domains [get]
 func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetSeoDomainListRequest) (*crmpb.GetSeoDomainListResponse, error) {
 	if req == nil {
 		req = &crmpb.GetSeoDomainListRequest{}
@@ -389,6 +402,9 @@ func (h *SeoDomainHandler) GetSeoDomainList(ctx context.Context, req *crmpb.GetS
 		PageStatus:   req.PageStatus,
 		RenderStatus: req.RenderStatus,
 		TemplateKey:  req.TemplateKey,
+		Status:       dto.ParseUint32List(req.GetStatus()),
+		RefTypes:     dto.ParseUint32List(req.GetRefTypes()),
+		VisibleOns:   dto.ParseUint32List(req.GetVisibleOns()),
 	}
 	listReq.Normalize()
 
@@ -446,6 +462,7 @@ func (h *SeoDomainHandler) UpdateSeoDomain(ctx context.Context, req *crmpb.Updat
 		TemplateKey:       req.TemplateKey,
 		TemplateVersion:   req.TemplateVersion,
 		CategoryID:        req.CategoryId,
+		VisibleOn:         req.VisibleOn,
 	}
 
 	updated, err := h.seoDomainUsecase.UpdateSeoDomain(ctx, req.Id, updateReq)
@@ -485,6 +502,12 @@ func (h *SeoDomainHandler) BatchUpdateSeoDomain(ctx context.Context, req *crmpb.
 	}, nil
 }
 
+// DeleteSeoDomain @Summary Xóa cứng trang SEO
+// @Description Xóa hẳn bản ghi seo_domain và dữ liệu liên quan khỏi database
+// @Tags CRM Admin SEO
+// @Param id path uint64 true "seo domain id"
+// @Success 200 {object} sharepb.SubmitResponse
+// @Router /v2/crm/admin/seo-domains/{id} [delete]
 func (h *SeoDomainHandler) DeleteSeoDomain(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if err := h.seoDomainUsecase.DeleteSeoDomain(ctx, req.Id); err != nil {
 		return nil, err
@@ -515,9 +538,9 @@ func (h *SeoDomainHandler) CreateSeoDraft(ctx context.Context, req *crmpb.Create
 
 	seoReq := buildCreateSeoDraftRequest(req, cfg.Value, cfg.ResolverKey)
 	seoReq.RefSource = cfg.ResolverKey
-	seoReq.SourceStatus = "manual"
+	seoReq.SourceStatus = seo_domain.SeoSourceStatusManual
 
-	if sourceKey != "manual" {
+	if !enums.IsManualSEORefType(cfg.Value) {
 		if req.Source.RefId == 0 {
 			return nil, _errors.ReturnError(400, "refId là bắt buộc với source entity")
 		}
@@ -1174,7 +1197,7 @@ func buildCreateSeoDraftRequest(req *crmpb.CreateSeoDraftRequest, refType uint32
 
 	needGenerate := true
 	refMissing := false
-	sourceStatus := "manual"
+	sourceStatus := seo_domain.SeoSourceStatusManual
 
 	return &dto.SeoDomainCreateRequest{
 		Slug:            strings.TrimSpace(seo.Slug),

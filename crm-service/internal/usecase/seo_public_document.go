@@ -434,7 +434,7 @@ func moduleCollection(moduleID string) (string, string) {
 	case "planning-project":
 		return "Đồ án quy hoạch", "/tin-tuc/do-an-quy-hoach"
 	case "planning-news":
-		return "Tin quy hoạch", "/tin-tuc/bai-viet"
+		return "Tin quy hoạch", "/tin-tuc/tin"
 	case "planning-report":
 		return "Báo cáo quy hoạch", "/tin-tuc/bao-cao"
 	default:

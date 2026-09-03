@@ -31,18 +31,24 @@ type Principal struct {
 
 func GenerateToken(jwtTokenProperties JwtTokenProperties) (string, error) {
 	claims := jwt.MapClaims{
-		"profile":      jwtTokenProperties.ProfileID,
-		"origin":       jwtTokenProperties.OriginID,
-		"organization": jwtTokenProperties.OrganizationID,
-		"role":         jwtTokenProperties.Role,
-		"roleIds":      jwtTokenProperties.RoleIds,
-		"type":         jwtTokenProperties.Type,
-		"session":      jwtTokenProperties.SessionID,
-		"authorities":  jwtTokenProperties.Privileges,
-		"sub":          jwtTokenProperties.AuthID,
-		"plan":         jwtTokenProperties.PlanID,
-		"planAt":       jwtTokenProperties.PlanAt,
-		"iat":          time.Now().Unix(),
+		"profile":     jwtTokenProperties.ProfileID,
+		"origin":      jwtTokenProperties.OriginID,
+		"role":        jwtTokenProperties.Role,
+		"roleIds":     jwtTokenProperties.RoleIds,
+		"type":        jwtTokenProperties.Type,
+		"session":     jwtTokenProperties.SessionID,
+		"authorities": jwtTokenProperties.Privileges,
+		"sub":         jwtTokenProperties.AuthID,
+		"iat":         time.Now().Unix(),
+	}
+	if jwtTokenProperties.OrganizationID != nil && *jwtTokenProperties.OrganizationID > 0 {
+		claims["organization"] = *jwtTokenProperties.OrganizationID
+	}
+	if jwtTokenProperties.PlanID != nil && *jwtTokenProperties.PlanID > 0 {
+		claims["plan"] = *jwtTokenProperties.PlanID
+	}
+	if jwtTokenProperties.PlanAt != nil {
+		claims["planAt"] = jwtTokenProperties.PlanAt
 	}
 
 	// Nếu có thêm thông tin, merge vào claims
@@ -219,15 +225,23 @@ func GetProperties(tokenString string) (*JwtTokenProperties, error) {
 	}
 
 	planAt := time.Unix(planFrom, 0)
-	plan := uint64(planID)
-	organization := uint64(organizationID)
+	var planPtr *uint64
+	if planID > 0 {
+		plan := uint64(planID)
+		planPtr = &plan
+	}
+	var organizationPtr *uint64
+	if organizationID > 0 {
+		organization := uint64(organizationID)
+		organizationPtr = &organization
+	}
 	// Tạo đối tượng JwtTokenProperties
 	return &JwtTokenProperties{
 		SessionID:      uint64(sessionID),
 		AuthID:         uint64(authID),
 		ProfileID:      uint64(profileID),
-		OrganizationID: &organization,
-		PlanID:         &plan,
+		OrganizationID: organizationPtr,
+		PlanID:         planPtr,
 		Role:           role,
 		RoleIds:        roleIds,
 		Type:           TokenType(tokenType),

@@ -1,6 +1,8 @@
 package db
 
 import (
+	"log"
+
 	_db "common/db"
 	"user/internal/domain"
 	"user/internal/models"
@@ -9,6 +11,7 @@ import (
 func AutoMigrate() {
 	// Bảng activity login/refresh cho dashboard active users.
 	_ = _db.DB.AutoMigrate(&domain.UserActivityLog{})
+	ensureUserProfileLastLoginColumns()
 	return
 	_db.DB.AutoMigrate(
 		// Auth entities (migrated from auth-service)
@@ -62,4 +65,17 @@ func AutoMigrate() {
 		&models.PriceTableDomain{},
 		&models.PackItemDomain{},
 	)
+}
+
+func ensureUserProfileLastLoginColumns() {
+	stmts := []string{
+		`ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ DEFAULT NULL`,
+		`ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS total_login INTEGER NOT NULL DEFAULT 0`,
+		`CREATE INDEX IF NOT EXISTS idx_user_profile_last_login_at ON user_profile(last_login_at)`,
+	}
+	for _, stmt := range stmts {
+		if err := _db.DB.Exec(stmt).Error; err != nil {
+			log.Printf("⚠️  migrate user_profile last_login_at: %v", err)
+		}
+	}
 }

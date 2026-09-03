@@ -32,31 +32,59 @@ type UpdateSeoCategoryInput struct {
 	SortOrder   *int
 }
 
+type PlanningNewsCategory struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
 type PlanningNewsItem struct {
-	ID              uint64         `json:"id"`
-	SEOPageID       uint64         `json:"seoDomainId"`
-	Slug            string         `json:"slug"`
-	Title           string         `json:"title"`
-	Description     string         `json:"description,omitempty"`
-	Summary         string         `json:"summary,omitempty"`
-	Content         string         `json:"content,omitempty"`
-	RenderedHTML    string         `json:"renderedHtml,omitempty"`
-	CanonicalURL    string         `json:"canonicalUrl"`
-	PublicURL       string         `json:"publicUrl,omitempty"`
-	DeepLink        string         `json:"deepLink,omitempty"`
-	RefSource       string         `json:"refSource,omitempty"`
-	RefLabel        string         `json:"refLabel,omitempty"`
-	SourceStatus    string         `json:"sourceStatus,omitempty"`
-	PublishedAt     *time.Time     `json:"publishedAt,omitempty"`
-	UpdatedAt       *time.Time     `json:"updatedAt,omitempty"`
-	SavedAt         *time.Time     `json:"savedAt,omitempty"`
-	Metadata        map[string]any `json:"metadata,omitempty"`
-	RefSnapshotJSON map[string]any `json:"refSnapshotJson,omitempty"`
+	ID              uint64                 `json:"id"`
+	SEOPageID       uint64                 `json:"seoDomainId"`
+	Slug            string                 `json:"slug"`
+	Title           string                 `json:"title"`
+	Description     string                 `json:"description,omitempty"`
+	Summary         string                 `json:"summary,omitempty"`
+	Content         string                 `json:"content,omitempty"`
+	RenderedHTML    string                 `json:"renderedHtml,omitempty"`
+	CanonicalURL    string                 `json:"canonicalUrl"`
+	PublicURL       string                 `json:"publicUrl,omitempty"`
+	DeepLink        string                 `json:"deepLink,omitempty"`
+	ImageURL        string                 `json:"imageUrl,omitempty"`
+	RefSource       string                 `json:"refSource,omitempty"`
+	RefLabel        string                 `json:"refLabel,omitempty"`
+	SourceStatus    string                 `json:"sourceStatus,omitempty"`
+	VisibleOn       uint32                 `json:"visibleOn,omitempty"`
+	RefType         uint32                 `json:"refType,omitempty"`
+	RefTypeName     string                 `json:"refTypeName,omitempty"`
+	RefID           *uint64                `json:"refId,omitempty"`
+	PublishedAt     *time.Time             `json:"publishedAt,omitempty"`
+	UpdatedAt       *time.Time             `json:"updatedAt,omitempty"`
+	SavedAt         *time.Time             `json:"savedAt,omitempty"`
+	CategoryID      *uint64                `json:"categoryId,omitempty"`
+	CategoryCode    string                 `json:"categoryCode,omitempty"`
+	CategoryName    string                 `json:"categoryName,omitempty"`
+	Category        *PlanningNewsCategory  `json:"category,omitempty"`
+	Metadata        map[string]any         `json:"metadata,omitempty"`
+	RefSnapshotJSON map[string]any         `json:"refSnapshotJson,omitempty"`
 }
 
 type PlanningNewsListFilter struct {
-	Page int
-	Size int
+	Page        int
+	Size        int
+	Keyword     string
+	CategoryID  uint64
+	ProvinceID  uint64
+	ProvinceIDs []uint64
+	RefType     uint32
+	Location    string
+	VisibleOn   uint32
+	VisibleOns  []uint32
+	Range       string
+	Sort        string
+	SortBy      string
+	SortOrder   string
+	// LastDates lọc bản ghi updated_at trong N ngày gần nhất; 0 = không lọc.
+	LastDates uint32
 }
 
 type SavedPlanningNewsListFilter struct {

@@ -113,6 +113,44 @@ func intValue(m map[string]any, key string, fallback int) int {
 	return fallback
 }
 
+func parseVisibleOnsCSV(value string) []uint32 {
+	ids := parseUint64CSV(value)
+	if len(ids) == 0 {
+		return nil
+	}
+	out := make([]uint32, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, uint32(id))
+	}
+	return out
+}
+
+func parseUint64CSV(value string) []uint64 {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]uint64, 0, len(parts))
+	seen := make(map[uint64]struct{}, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		n, err := strconv.ParseUint(part, 10, 64)
+		if err != nil || n == 0 {
+			continue
+		}
+		if _, ok := seen[n]; ok {
+			continue
+		}
+		seen[n] = struct{}{}
+		out = append(out, n)
+	}
+	return out
+}
+
 func stringSlice(m map[string]any, key string) []string {
 	raw, ok := m[key]
 	if !ok {
@@ -262,12 +300,34 @@ func (h *PublicContentGrpcHandler) ListContentCategories(ctx context.Context, _ 
 	return jsonBytes(map[string]any{"data": items})
 }
 
+// ListPlanningNews @Summary Danh sách tin SEO công khai
+// @Tags CRM Public Content
+// @Produce json
+// @Param page query int false "Trang (bắt đầu từ 1)"
+// @Param size query int false "Số bản ghi / trang"
+// @Param visibleOns query string false "CSV vị trí hiển thị, ví dụ 40 hoặc 20,40"
+// @Param lastDates query int false "Số ngày gần nhất theo updatedAt (vd 10, 20); 0 = không lọc"
+// @Param refType query int false "Lọc theo refType (vd 800)"
+// @Param sort query string false "Sắp xếp: updated_desc, published_desc, ..."
+// @Param provinceIds query string false "CSV tỉnh/thành, ví dụ 1 hoặc 1,2,3"
+// @Param categoryId query int false "Lọc theo chủ đề seo_category.id (vd 4)"
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/public/seo/news [get]
 func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *crmpb.PlanningNewsQueryRequest) (*wrapperspb.BytesValue, error) {
 	if req == nil {
 		req = &crmpb.PlanningNewsQueryRequest{}
 	}
 
-	filter := catalogdomain.PlanningNewsListFilter{Page: int(req.GetPage()), Size: int(req.GetSize())}
+	filter := catalogdomain.PlanningNewsListFilter{
+		Page:        int(req.GetPage()),
+		Size:        int(req.GetSize()),
+		VisibleOns:  parseVisibleOnsCSV(req.GetVisibleOns()),
+		LastDates:   req.GetLastDates(),
+		RefType:     req.GetRefType(),
+		Sort:        strings.TrimSpace(req.GetSort()),
+		ProvinceIDs: parseUint64CSV(req.GetProvinceIds()),
+		CategoryID:  req.GetCategoryId(),
+	}
 	result, err := h.catalog.ListPlanningNews(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list planning news: %v", err)
@@ -276,8 +336,17 @@ func (h *PublicContentGrpcHandler) ListPlanningNews(ctx context.Context, req *cr
 	return jsonBytes(result)
 }
 
-func (h *PublicContentGrpcHandler) GetPlanningNews(ctx context.Context, req *crmpb.PlanningNewsSlugRequest) (*wrapperspb.BytesValue, error) {
-	result, err := h.catalog.GetPlanningNews(ctx, req.GetSlug())
+// GetPlanningNews @Summary Chi tiết tin SEO công khai theo id
+// @Tags CRM Public Content
+// @Produce json
+// @Param id path uint64 true "seo_domain.id"
+// @Success 200 {object} map[string]any
+// @Router /v2/crm/public/seo/news/{id} [get]
+func (h *PublicContentGrpcHandler) GetPlanningNews(ctx context.Context, req *crmpb.PlanningNewsByIDRequest) (*wrapperspb.BytesValue, error) {
+	if req == nil || req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	result, err := h.catalog.GetPlanningNews(ctx, req.GetId())
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, status.Error(codes.NotFound, "planning news was not found")
@@ -341,19 +410,43 @@ func (h *PublicContentGrpcHandler) UnsavePlanningNews(ctx context.Context, req *
 	return jsonBytes(map[string]any{"saved": false, "planningNewsId": req.GetId()})
 }
 
+// TrackSeoClick @Summary Ghi nhận click trang SEO công khai
+// @Description Hỗ trợ 2 kiểu body: {"id":8} hoặc {"refType":100,"refId":123}. Ưu tiên id nếu có.
+// @Tags CRM Public Content
+// @Accept json
+// @Produce json
+// @Param body body crmpb.TrackSeoClickRequest true "id hoặc refType+refId"
+// @Success 202 {object} map[string]any
+// @Router /v2/crm/public/seo/click [post]
 // TrackSeoClick records a public SEO page click into the in-memory counter.
 // Counts are flushed to seo_count every ~10s by a single pending job.
 func (h *PublicContentGrpcHandler) TrackSeoClick(ctx context.Context, req *crmpb.TrackSeoClickRequest) (*wrapperspb.BytesValue, error) {
 	if h.seoCount == nil {
 		return nil, status.Error(codes.FailedPrecondition, "seo click counter is not configured")
 	}
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "id hoặc refType+refId là bắt buộc")
+	}
+
+	seoID := req.GetId()
 	refID := req.GetRefId()
 	refType := req.GetRefType()
-	if refID == 0 {
-		return nil, status.Error(codes.InvalidArgument, "refId is required")
+
+	// Kiểu 1: chỉ id (seo_domain.id)
+	if seoID > 0 {
+		if err := h.seoCount.IncrementClickBySeoID(ctx, seoID); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		setHTTPMetadata(ctx, 202, "application/json; charset=utf-8", "no-store", "", "")
+		return jsonBytes(map[string]any{
+			"accepted": true,
+			"id":       seoID,
+		})
 	}
-	if refType == 0 {
-		return nil, status.Error(codes.InvalidArgument, "refType is required")
+
+	// Kiểu 2: refType + refId
+	if refID == 0 || refType == 0 {
+		return nil, status.Error(codes.InvalidArgument, "cần truyền id hoặc cặp refType+refId")
 	}
 	if err := h.seoCount.IncrementClick(ctx, refType, refID); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

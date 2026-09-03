@@ -2,6 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"crm/internal/enums"
 )
 
@@ -51,6 +52,8 @@ type SeoDomainCreateRequest struct {
 	TemplateKey     string  `json:"templateKey"`
 	TemplateVersion string  `json:"templateVersion"`
 	CategoryID      *uint64 `json:"categoryId"`
+	// VisibleOn: 10 đầu trang, 20 đáng chú ý, 30 mới nhất, 40 đọc nhiều, 50 tin nhanh.
+	VisibleOn *uint32 `json:"visibleOn"`
 }
 
 // SeoDomainUpdateRequest chứa các trường được phép cập nhật một phần.
@@ -99,6 +102,7 @@ type SeoDomainUpdateRequest struct {
 	TemplateKey     *string `json:"templateKey"`
 	TemplateVersion *string `json:"templateVersion"`
 	CategoryID      *uint64 `json:"categoryId"`
+	VisibleOn       *uint32 `json:"visibleOn"`
 }
 
 type BatchUpdateSeoDomainRequest struct {
@@ -127,6 +131,28 @@ type SeoDomainListRequest struct {
 	PageStatus   *string `json:"pageStatus" form:"pageStatus"`
 	RenderStatus *string `json:"renderStatus" form:"renderStatus"`
 	TemplateKey  *string `json:"templateKey" form:"templateKey"`
+
+	Status     []uint32 `json:"status" form:"status"`
+	RefTypes   []uint32 `json:"refTypes" form:"refTypes"`
+	VisibleOns []uint32 `json:"visibleOns" form:"visibleOns"`
+}
+
+func ParseUint32List(value string) []uint32 {
+	raw := _utils.ParseUint64Array(value)
+	if len(raw) == 0 {
+		return nil
+	}
+	out := make([]uint32, 0, len(raw))
+	seen := make(map[uint32]struct{}, len(raw))
+	for _, item := range raw {
+		code := uint32(item)
+		if _, ok := seen[code]; ok {
+			continue
+		}
+		seen[code] = struct{}{}
+		out = append(out, code)
+	}
+	return out
 }
 
 // CountRecentSeoByRefTypeRequest đếm SEO theo từng refType với updatedAt trong N ngày gần nhất.

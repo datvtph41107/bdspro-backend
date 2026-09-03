@@ -56,9 +56,13 @@ func JWTAuthMiddleware(pubRoutes []string, tempRoutes []string, options ...AuthO
 			requestCtx := WithPrincipal(c.Request.Context(), claims)
 			boundActorCtx, bindActorErr := _identitycontext.BindActor(requestCtx, ActorFromPrincipal(claims))
 			if bindActorErr != nil {
+				message := "invalid actor"
+				if errors.Is(bindActorErr, _identitycontext.ErrActorContextConflict) {
+					message = "actor context conflict"
+				}
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 					"code":    http.StatusInternalServerError,
-					"message": "actor context conflict",
+					"message": message,
 				})
 				return
 			}

@@ -48,20 +48,32 @@ message ContentQueryRequest {
   string sort_order = 16;
 }
 
-// PlanningNewsQueryRequest chỉ phân trang danh sách tin đã xuất bản.
+// PlanningNewsQueryRequest phân trang + lọc vị trí hiển thị danh sách tin đã xuất bản.
 message PlanningNewsQueryRequest {
   // page là trang bắt đầu từ 1.
   int32 page = 1;
   // size là số bản ghi trong một trang.
   int32 size = 2;
   // Các trường feed, category và hành vi cũ không được sử dụng lại.
-  reserved 3 to 13;
+  reserved 3 to 12;
   reserved "search", "keyword", "q", "visible_on", "category", "topic", "domain", "location", "range", "sort_by", "sort_order";
+  // visibleOns CSV vị trí hiển thị, ví dụ "40" hoặc "20,40".
+  string visibleOns = 13;
+  // lastDates = số ngày gần nhất theo updatedAt; ví dụ 10 hoặc 20. 0 = không lọc.
+  uint32 lastDates = 14;
+  // refType lọc theo loại nguồn SEO (vd 800 = nội dung thủ công).
+  uint32 refType = 15;
+  // sort ví dụ "updated_desc", "published_desc".
+  string sort = 16;
+  // provinceIds CSV tỉnh/thành, ví dụ "1" hoặc "1,2,3".
+  string provinceIds = 17;
+  // categoryId lọc theo chủ đề (seo_category.id), ví dụ 4. 0 = không lọc.
+  uint64 categoryId = 18;
 }
 
-// PlanningNewsSlugRequest định danh một trang tin bằng slug.
-message PlanningNewsSlugRequest {
-  string slug = 1;
+// PlanningNewsByIDRequest định danh một trang tin bằng seo_domain.id.
+message PlanningNewsByIDRequest {
+  uint64 id = 1;
 }
 
 // SavedPlanningNewsQueryRequest phân trang danh sách tin người dùng đã lưu.
@@ -75,9 +87,13 @@ message PlanningNewsSaveRequest {
   uint64 id = 1;
 }
 
+// TrackSeoClickRequest hỗ trợ 2 kiểu định danh trang SEO (ưu tiên id nếu có):
+// 1) id = seo_domain.id
+// 2) refType + refId
 message TrackSeoClickRequest {
   uint64 refId = 1;
   uint32 refType = 2;
+  uint64 id = 3;
 }
 
 message AssignPlanningNewsCategoryRequest {
@@ -166,9 +182,9 @@ service CRMPublicContentService {
   rpc ListPlanningNews(PlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {get: "/v2/crm/public/seo/news"};
   }
-  // GetPlanningNews trả chi tiết một trang tin đã xuất bản.
-  rpc GetPlanningNews(PlanningNewsSlugRequest) returns (google.protobuf.BytesValue) {
-    option (google.api.http) = {get: "/v2/crm/public/seo/news/{slug}"};
+  // GetPlanningNews trả chi tiết một trang tin đã xuất bản theo id.
+  rpc GetPlanningNews(PlanningNewsByIDRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/public/seo/news/{id}"};
   }
   // ListSavedPlanningNews trả danh sách tin người dùng đã lưu.
   rpc ListSavedPlanningNews(SavedPlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {

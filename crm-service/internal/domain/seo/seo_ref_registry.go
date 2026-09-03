@@ -171,9 +171,9 @@ func NormalizeSeoRefTypeConfig(cfg SeoRefTypeConfig) SeoRefTypeConfig {
 func SeoRefTypeConfigs() []SeoRefTypeConfig {
 	items := []SeoRefTypeConfig{
 		{
-			Value:            0,
+			Value:            uint32(enums.ESEORefTypeLegacy),
 			Key:              "manual",
-			Label:            "Trang thủ công",
+			Label:            "Nội dung thủ công",
 			Description:      "Landing, hub hoặc guide không gắn dữ liệu nguồn",
 			Family:           "manual",
 			SourceService:    "crm",
@@ -182,6 +182,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 			UniquePerRef:     false,
 			SupportsTemplate: true,
 			DefaultPageType:  "manual",
+			PublicURLPattern: "/tin-tuc/tin/{id}/{slug}",
 			Status:           SeoSourceStatusReady,
 			Resolvable:       false,
 			Capabilities: readyCapabilities(
@@ -380,6 +381,7 @@ func SeoRefTypeConfigs() []SeoRefTypeConfig {
 
 // GetSeoRefTypeConfig tìm cấu hình theo mã loại và thông tin kết nối cũ.
 func GetSeoRefTypeConfig(value uint32, resolverKey string, sourceService string) (SeoRefTypeConfig, bool) {
+	value = enums.CanonicalSEORefType(value)
 	resolverKey = strings.TrimSpace(resolverKey)
 	sourceService = strings.TrimSpace(sourceService)
 
@@ -402,6 +404,9 @@ func GetSeoRefTypeConfig(value uint32, resolverKey string, sourceService string)
 // GetSeoRefTypeConfigByKey tìm cấu hình nguồn theo một khóa duy nhất.
 func GetSeoRefTypeConfigByKey(sourceKey string) (SeoRefTypeConfig, bool) {
 	sourceKey = strings.TrimSpace(sourceKey)
+	if sourceKey == "legacy" {
+		sourceKey = "manual"
+	}
 	if sourceKey == "" {
 		return SeoRefTypeConfig{}, false
 	}

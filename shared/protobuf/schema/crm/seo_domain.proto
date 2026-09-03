@@ -57,6 +57,7 @@ service SeoDomainService {
   // ---------------------------------------------------------------------------
 
   // CreateSeoDomain tạo một trang SEO.
+  // refType=800 (nội dung thủ công) không cần refId; 0 được chuẩn hóa thành 800.
   rpc CreateSeoDomain(CreateSeoDomainRequest) returns (SeoDomainResponse) {
     option (google.api.http) = {
       post: "/v2/crm/admin/seo-domains"
@@ -122,6 +123,7 @@ service SeoDomainService {
     };
   }
 
+  // DeleteSeoDomain xóa cứng trang SEO khỏi database.
   rpc DeleteSeoDomain(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {delete: "/v2/crm/admin/seo-domains/{id}"};
   }
@@ -577,6 +579,7 @@ message CreateSeoDomainRequest {
   string slug = 1;
   string originUrl = 2;
   optional string canonicalUrl = 3;
+  // 100..700 gắn entity nguồn; 800 nội dung thủ công (không cần refId); 0 alias của 800.
   uint32 refType = 4;
   optional uint64 refId = 5;
   string scope = 6;
@@ -626,6 +629,8 @@ message CreateSeoDomainRequest {
   string templateVersion = 42;
   optional uint64 categoryId = 43;
   string imageUrl = 44;
+  // Vị trí hiển thị tin: 10 đầu trang, 20 đáng chú ý, 30 mới nhất, 40 đọc nhiều, 50 tin nhanh.
+  optional uint32 visibleOn = 45;
 }
 
 // UpdateSeoDomainRequest chỉ cập nhật các trường được truyền lên.
@@ -679,6 +684,8 @@ message UpdateSeoDomainRequest {
   optional string templateVersion = 43;
   optional uint64 categoryId = 44;
   optional string imageUrl = 45;
+  // Vị trí hiển thị tin: 10|20|30|40|50.
+  optional uint32 visibleOn = 46;
 }
 
 // GetSeoDomainListRequest chứa bộ lọc danh sách trang SEO.
@@ -704,6 +711,12 @@ message GetSeoDomainListRequest {
   optional string pageStatus = 16;
   optional string renderStatus = 17;
   optional string templateKey = 18;
+
+  // Các bộ lọc danh sách dạng CSV: status=20,10&refTypes=200,100,700&visibleOns=20,30.
+  // status: 10=draft, 20=published, 30=archived.
+  optional string status = 19;
+  optional string refTypes = 20;
+  optional string visibleOns = 21;
 }
 
 // GetSeoDomainListResponse chứa danh sách trang SEO có phân trang.

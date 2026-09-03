@@ -179,7 +179,9 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 			)
 		}
 	}
-	if req.RefType != nil {
+	if refTypes := enums.ExpandSEORefTypes(req.RefTypes); len(refTypes) > 0 {
+		query = query.Where("seo_domain.ref_type IN ?", refTypes)
+	} else if req.RefType != nil {
 		query = query.Where("seo_domain.ref_type = ?", *req.RefType)
 	}
 	if req.RefID != nil {
@@ -202,6 +204,12 @@ func (r *SeoDomainPostgres) GetList(ctx context.Context, req *dto.SeoDomainListR
 	}
 	if req.IsSiteMap != nil {
 		query = query.Where("seo_domain.is_site_map = ?", *req.IsSiteMap)
+	}
+	if len(req.VisibleOns) > 0 {
+		query = query.Where("seo_domain.visible_on IN ?", req.VisibleOns)
+	}
+	if pageStatuses := seo_domain.PageStatusesFromFilterCodes(req.Status); len(pageStatuses) > 0 {
+		query = query.Where("seo_domain.page_status IN ?", pageStatuses)
 	}
 	if req.IsIndex != nil {
 		query = query.Where("seo_domain.is_index = ?", *req.IsIndex)
@@ -329,7 +337,7 @@ func (r *SeoDomainPostgres) CountRecentByRefType(ctx context.Context, days uint3
 
 	totals := make(map[uint32]int64, len(rows))
 	for _, item := range rows {
-		totals[item.RefType] = item.Total
+		totals[enums.CanonicalSEORefType(item.RefType)] += item.Total
 	}
 
 	allTypes := enums.AllSEORefTypes()
@@ -492,7 +500,34 @@ func (r *SeoDomainPostgres) UpdateByIDs(ctx context.Context, ids []uint64, updat
 }
 
 func (r *SeoDomainPostgres) Delete(ctx context.Context, id uint64) error {
-	return impl.GetDB(ctx, r.db).Delete(&seo_domain.SeoDomain{}, id).Error
+	db := impl.GetDB(ctx, r.db)
+	hardDelete := func(model interface{}, query string, args ...interface{}) error {
+		q := db.Session(&gorm.Session{NewDB: true}).Unscoped()
+		if query != "" {
+			q = q.Where(query, args...)
+		}
+		return q.Delete(model).Error
+	}
+
+	if err := hardDelete(&seo_domain.SeoInternalLink{}, "parent_seo_id = ? OR child_seo_id = ?", id, id); err != nil {
+		return err
+	}
+	if err := hardDelete(&seo_domain.SeoRelative{}, "parent_seo_id = ? OR child_seo_id = ?", id, id); err != nil {
+		return err
+	}
+	if err := hardDelete(&seo_domain.SeoGenerationLog{}, "seo_domain_id = ?", id); err != nil {
+		return err
+	}
+	if err := hardDelete(&seo_domain.SeoRef{}, "seo_domain_id = ?", id); err != nil {
+		return err
+	}
+	if err := hardDelete(&seo_domain.SeoCount{}, "seo_id = ?", id); err != nil {
+		return err
+	}
+	if err := hardDelete(&seo_domain.SeoCountLog{}, "seo_id = ?", id); err != nil {
+		return err
+	}
+	return hardDelete(&seo_domain.SeoDomain{}, "id = ?", id)
 }
 
 func (r *SeoDomainPostgres) ExistByCanonicalURL(ctx context.Context, canonicalURL string, ignoreID *uint64) (bool, error) {
@@ -679,7 +714,7 @@ func (r *SeoInternalLinkPostgres) Delete(ctx context.Context, id uint64) error {
 }
 
 func (r *SeoInternalLinkPostgres) DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error {
-	return impl.GetDB(ctx, r.db).
+	return impl.GetDB(ctx, r.db).Session(&gorm.Session{NewDB: true}).Unscoped().
 		Where("parent_seo_id = ? OR child_seo_id = ?", seoDomainID, seoDomainID).
 		Delete(&seo_domain.SeoInternalLink{}).Error
 }
@@ -771,7 +806,7 @@ func (r *SeoRelativePostgres) Delete(ctx context.Context, id uint64) error {
 }
 
 func (r *SeoRelativePostgres) DeleteBySeoDomainID(ctx context.Context, seoDomainID uint64) error {
-	return impl.GetDB(ctx, r.db).
+	return impl.GetDB(ctx, r.db).Session(&gorm.Session{NewDB: true}).Unscoped().
 		Where("parent_seo_id = ? OR child_seo_id = ?", seoDomainID, seoDomainID).
 		Delete(&seo_domain.SeoRelative{}).Error
 }

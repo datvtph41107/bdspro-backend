@@ -16,6 +16,8 @@ import (
 const seoCountFlushDelay = 10 * time.Second
 
 type seoCountKey struct {
+	// SeoID > 0 khi track theo seo_domain.id; khi đó bỏ qua RefType/RefID.
+	SeoID   uint64
 	RefType uint32
 	RefID   uint64
 }
@@ -60,8 +62,31 @@ func (u *SeoCountUsecase) IncrementClick(_ context.Context, refType uint32, refI
 		return _errors.ReturnError(400, "refType không hợp lệ")
 	}
 
-	key := seoCountKey{RefType: refType, RefID: refID}
+	return u.bump(seoCountKey{RefType: refType, RefID: refID})
+}
 
+// IncrementClickBySeoID bumps the counter theo seo_domain.id (không cần refType/refId).
+func (u *SeoCountUsecase) IncrementClickBySeoID(ctx context.Context, seoID uint64) error {
+	if u == nil {
+		return nil
+	}
+	if seoID == 0 {
+		return _errors.ReturnError(400, "id is required")
+	}
+	if u.seoDomainRepo == nil {
+		return _errors.ReturnError(500, "seo domain repo is not configured")
+	}
+	page, err := u.seoDomainRepo.GetByID(ctx, seoID)
+	if err != nil {
+		return err
+	}
+	if page == nil || page.ID == 0 {
+		return _errors.ReturnError(404, "seo page not found")
+	}
+	return u.bump(seoCountKey{SeoID: page.ID})
+}
+
+func (u *SeoCountUsecase) bump(key seoCountKey) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
@@ -88,7 +113,7 @@ func (u *SeoCountUsecase) flush() {
 			}
 			seoID, err := u.resolveSeoID(context.Background(), key)
 			if err != nil {
-				log.Printf("seo_count resolve refType=%d refId=%d: %v", key.RefType, key.RefID, err)
+				log.Printf("seo_count resolve seoId=%d refType=%d refId=%d: %v", key.SeoID, key.RefType, key.RefID, err)
 				continue
 			}
 			logs = append(logs, &seo_domain.SeoCountLog{
@@ -125,6 +150,9 @@ func (u *SeoCountUsecase) flush() {
 }
 
 func (u *SeoCountUsecase) resolveSeoID(ctx context.Context, key seoCountKey) (uint64, error) {
+	if key.SeoID > 0 {
+		return key.SeoID, nil
+	}
 	if u.seoDomainRepo == nil {
 		return 0, fmt.Errorf("seo domain repo is not configured")
 	}

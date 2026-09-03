@@ -62,7 +62,10 @@ message GetSystemConfigsByGroupRequest {
 message GetSystemConfigsByGroupResponse {
     repeated SystemConfigItem data = 1;
     int32 total = 2;
-    string groupName = 3;
+    // groupName từng nằm ở field 3; bỏ vì gateway wrap cả message → data.data.
+    // groupName vẫn có trên từng SystemConfigItem.
+    reserved 3;
+    reserved "groupName";
 }
 
 message BulkUpsertSystemConfigRequest {

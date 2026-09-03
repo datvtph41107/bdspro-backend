@@ -14,7 +14,7 @@ type SeoRef struct {
 
 	SeoID   uint64            `gorm:"column:seo_domain_id;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
 	RefID   uint64            `gorm:"column:ref_id;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
-	RefType enums.ESEORefType `gorm:"column:ref_type;type:int4;not null;uniqueIndex:idx_seo_refs_domain_ref;index"`
+	RefType enums.ESEORefType `gorm:"column:ref_type;type:int4;not null;default:800;uniqueIndex:idx_seo_refs_domain_ref;index"`
 
 	SeoDomain *SeoDomain `gorm:"foreignKey:SeoID;references:ID"`
 

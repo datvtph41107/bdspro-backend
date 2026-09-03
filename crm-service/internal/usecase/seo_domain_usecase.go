@@ -71,10 +71,18 @@ func (u *SeoDomainUsecase) CreateSeoDomain(ctx context.Context, req *dto.SeoDoma
 		if err := u.updateSeoDomainPreserveCategory(ctx, existing.ID, updates); err != nil {
 			return nil, err
 		}
-		return u.seoDomainRepo.GetByID(ctx, existing.ID)
+		updated, err := u.seoDomainRepo.GetByID(ctx, existing.ID)
+		if err != nil {
+			return nil, err
+		}
+		return u.finalizeManualTinTucPaths(ctx, updated)
 	}
 
-	return u.seoDomainRepo.Create(ctx, seo)
+	created, err := u.seoDomainRepo.Create(ctx, seo)
+	if err != nil {
+		return nil, err
+	}
+	return u.finalizeManualTinTucPaths(ctx, created)
 }
 
 // findExistingSeoForCreate tìm SEO đã tồn tại theo refType+refId (ưu tiên), rồi refSource, rồi canonical URL.
@@ -104,12 +112,15 @@ func (u *SeoDomainUsecase) findExistingSeoForCreate(ctx context.Context, seo *se
 	}
 
 	if canonical := strings.TrimSpace(seo.CanonicalURL); canonical != "" {
-		existing, err := u.seoDomainRepo.GetByCanonicalURL(ctx, canonical)
-		if err != nil {
-			return nil, err
-		}
-		if existing != nil {
-			return existing, nil
+		// Manual create dùng slug segment tạm thời — không upsert theo canonical tạm.
+		if !enums.IsManualSEORefType(uint32(seo.RefType)) {
+			existing, err := u.seoDomainRepo.GetByCanonicalURL(ctx, canonical)
+			if err != nil {
+				return nil, err
+			}
+			if existing != nil {
+				return existing, nil
+			}
 		}
 	}
 
@@ -1667,7 +1678,6 @@ func (u *SeoDomainUsecase) DeleteSeoDomain(ctx context.Context, id uint64) error
 		return err
 	}
 
-	// Xóa page SEO phải xóa mềm link/relative liên quan để không còn đường ray trỏ tới ga đã xóa.
 	return u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		if err := u.seoInternalRepo.DeleteBySeoDomainID(ctx, id); err != nil {
 			return err
@@ -1683,7 +1693,7 @@ func (u *SeoDomainUsecase) TouchByRef(ctx context.Context, req *dto.TouchSeoDoma
 	if req == nil {
 		return _errors.ReturnError(400, "request không hợp lệ")
 	}
-	if !enums.IsValidSEORefType(req.RefType) || req.RefType == 0 {
+	if !enums.IsValidSEORefType(req.RefType) || enums.IsManualSEORefType(req.RefType) {
 		return _errors.ReturnError(400, "refType không hợp lệ")
 	}
 	if req.RefID == 0 {
@@ -1981,10 +1991,20 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	if err := validateRef(req.RefType, req.RefID); err != nil {
 		return nil, err
 	}
+	req.RefType = enums.CanonicalSEORefType(req.RefType)
 
 	sourceBinding, err := u.prepareSourceBinding(ctx, req.RefType, req.RefID, strings.TrimSpace(req.RefSource))
 	if err != nil {
 		return nil, err
+	}
+
+	slug := strings.TrimSpace(req.Slug)
+	if slug == "" {
+		slug = firstNonEmpty(sourceBinding.SuggestedSlug, slugify(req.Title), "seo-page")
+	}
+	isManual := enums.IsManualSEORefType(req.RefType)
+	if isManual {
+		slug = extractManualTinTucSlugSegment(slug)
 	}
 
 	originURL := strings.TrimSpace(req.OriginURL)
@@ -1992,17 +2012,23 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		originURL = sourceBinding.RefURL
 	}
 	if originURL == "" {
-		originURL = "/seo/" + firstNonEmpty(strings.TrimSpace(req.Slug), sourceBinding.SuggestedSlug, slugify(req.Title), "seo-page")
+		if isManual {
+			originURL = slug
+		} else {
+			originURL = "/seo/" + firstNonEmpty(strings.TrimSpace(req.Slug), sourceBinding.SuggestedSlug, slugify(req.Title), "seo-page")
+		}
+	} else if isManual {
+		originURL = extractManualTinTucSlugSegment(originURL)
 	}
 
 	canonicalURL := originURL
 	if req.CanonicalURL != nil && strings.TrimSpace(*req.CanonicalURL) != "" {
 		canonicalURL = strings.TrimSpace(*req.CanonicalURL)
-	}
-
-	slug := strings.TrimSpace(req.Slug)
-	if slug == "" {
-		slug = firstNonEmpty(sourceBinding.SuggestedSlug, slugify(canonicalURL))
+		if isManual {
+			canonicalURL = extractManualTinTucSlugSegment(canonicalURL)
+		}
+	} else if isManual {
+		canonicalURL = slug
 	}
 
 	scope := normalizeScope(req.Scope)
@@ -2080,6 +2106,11 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 
 	changeFreq := normalizeChangeFreq(req.SitemapChangeFreq)
 
+	visibleOn, err := normalizeVisibleOn(req.VisibleOn)
+	if err != nil {
+		return nil, err
+	}
+
 	title := firstNonEmpty(strings.TrimSpace(req.Title), sourceBinding.SuggestedTitle)
 	description := firstNonEmpty(strings.TrimSpace(req.Description), sourceBinding.SuggestedDescription)
 
@@ -2100,7 +2131,8 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	if err != nil {
 		return nil, err
 	}
-	if exist {
+	// Manual: canonical tạm là slug segment; path đầy đủ /tin-tuc/tin/{id}/{slug} gắn sau khi có ID.
+	if exist && !isManual {
 		return nil, _errors.ReturnError(409, "canonicalUrl đã tồn tại")
 	}
 
@@ -2118,7 +2150,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		RefSource:         sourceBinding.RefSource,
 		RefLabel:          firstNonEmpty(strings.TrimSpace(req.RefLabel), sourceBinding.RefLabel),
 		RefURL:            firstNonEmpty(strings.TrimSpace(req.RefURL), sourceBinding.RefURL),
-		SourceStatus:      normalizeSourceStatus(firstNonEmpty(strings.TrimSpace(req.SourceStatus), sourceBinding.SourceStatus), req.RefType == 0),
+		SourceStatus:      normalizeSourceStatus(firstNonEmpty(strings.TrimSpace(req.SourceStatus), sourceBinding.SourceStatus), enums.IsManualSEORefType(req.RefType)),
 		RefMissing:        refMissing,
 		RefSnapshotJSON:   refSnapshotJSON,
 		RefHash:           firstNonEmpty(strings.TrimSpace(req.RefHash), sourceBinding.RefHash),
@@ -2152,6 +2184,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		Metadata:          metadata,
 		Note:              req.Note,
 		CategoryID:        req.CategoryID,
+		VisibleOn:         visibleOn,
 	}, nil
 }
 
@@ -2181,13 +2214,30 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	refID := existing.RefID
 	refSource := existing.RefSource
 
+	manualRefType := refType
+	if req.RefType != nil {
+		manualRefType = enums.CanonicalSEORefType(*req.RefType)
+	}
+	isManual := enums.IsManualSEORefType(manualRefType)
+
 	if req.Slug != nil {
 		slug := strings.TrimSpace(*req.Slug)
 		if slug == "" {
 			return nil, _errors.ReturnError(400, "slug không được để trống")
 		}
-		state.Slug = slug
-		updates["slug"] = slug
+		if isManual {
+			segment := extractManualTinTucSlugSegment(slug)
+			path := buildManualTinTucCanonical(existing.ID, segment)
+			slugField := buildManualTinTucSlugField(existing.ID, segment)
+			state.Slug = slugField
+			state.Canonical = path
+			updates["slug"] = slugField
+			updates["origin_url"] = path
+			updates["canonical_url"] = path
+		} else {
+			state.Slug = slug
+			updates["slug"] = slug
+		}
 	}
 
 	if req.OriginURL != nil {
@@ -2195,13 +2245,47 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		if originURL == "" {
 			return nil, _errors.ReturnError(400, "originUrl không được để trống")
 		}
-		updates["origin_url"] = originURL
+		if isManual {
+			// Nếu đã rebuild từ slug ở trên thì giữ path đó; không thì chuẩn hóa theo id.
+			if _, ok := updates["origin_url"]; !ok {
+				segment := extractManualTinTucSlugSegment(originURL)
+				path := buildManualTinTucCanonical(existing.ID, segment)
+				updates["origin_url"] = path
+				if _, hasCanonical := updates["canonical_url"]; !hasCanonical {
+					updates["canonical_url"] = path
+					state.Canonical = path
+				}
+				if _, hasSlug := updates["slug"]; !hasSlug {
+					updates["slug"] = buildManualTinTucSlugField(existing.ID, segment)
+					state.Slug = updates["slug"].(string)
+				}
+			}
+		} else {
+			updates["origin_url"] = originURL
+		}
 	}
 
 	if req.CanonicalURL != nil {
 		canonicalURL := strings.TrimSpace(*req.CanonicalURL)
 		if canonicalURL == "" {
 			canonicalURL = existing.OriginURL
+		}
+		if isManual {
+			if _, ok := updates["canonical_url"]; !ok {
+				segment := extractManualTinTucSlugSegment(canonicalURL)
+				path := buildManualTinTucCanonical(existing.ID, segment)
+				canonicalURL = path
+				updates["canonical_url"] = path
+				if _, hasOrigin := updates["origin_url"]; !hasOrigin {
+					updates["origin_url"] = path
+				}
+				if _, hasSlug := updates["slug"]; !hasSlug {
+					updates["slug"] = buildManualTinTucSlugField(existing.ID, segment)
+					state.Slug = updates["slug"].(string)
+				}
+			} else {
+				canonicalURL = updates["canonical_url"].(string)
+			}
 		}
 
 		exist, err := u.seoDomainRepo.ExistByCanonicalURL(ctx, canonicalURL, &existing.ID)
@@ -2217,8 +2301,8 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	}
 
 	if req.RefType != nil {
-		refType = *req.RefType
-		updates["ref_type"] = enums.ESEORefType(*req.RefType)
+		refType = enums.CanonicalSEORefType(*req.RefType)
+		updates["ref_type"] = enums.ESEORefType(refType)
 	}
 	if req.RefID != nil {
 		refID = req.RefID
@@ -2359,7 +2443,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		updates["ref_url"] = strings.TrimSpace(*req.RefURL)
 	}
 	if req.SourceStatus != nil {
-		status := normalizeSourceStatus(*req.SourceStatus, refType == 0)
+		status := normalizeSourceStatus(*req.SourceStatus, enums.IsManualSEORefType(refType))
 		updates["source_status"] = status
 	}
 	if req.RefMissing != nil {
@@ -2439,6 +2523,13 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 		} else {
 			updates["category_id"] = *req.CategoryID
 		}
+	}
+	if req.VisibleOn != nil {
+		visibleOn, err := normalizeVisibleOn(req.VisibleOn)
+		if err != nil {
+			return nil, err
+		}
+		updates["visible_on"] = visibleOn
 	}
 
 	if req.StaticHtmlPath != nil {
@@ -2544,7 +2635,7 @@ type seoSourceBinding struct {
 func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uint32, refID *uint64, refSource string) (seoSourceBinding, error) {
 	emptyJSON := datatypes.JSON([]byte("{}"))
 
-	if refType == 0 {
+	if enums.IsManualSEORefType(refType) {
 		return seoSourceBinding{
 			RefSource:       seo_domain.SeoRefSourceManual,
 			SourceStatus:    seo_domain.SeoSourceStatusManual,
@@ -2554,7 +2645,7 @@ func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uin
 	}
 
 	if refID == nil || *refID == 0 {
-		return seoSourceBinding{}, _errors.ReturnError(400, "refId là bắt buộc khi refType khác 0")
+		return seoSourceBinding{}, _errors.ReturnError(400, "refId là bắt buộc khi refType khác 800")
 	}
 
 	cfg, err := resolveSeoRefConfig(refType, refSource, "")
@@ -2602,11 +2693,11 @@ func validateRef(refType uint32, refID *uint64) error {
 	if !enums.IsValidSEORefType(refType) {
 		return _errors.ReturnError(400, "refType không hợp lệ")
 	}
-	if refType == 0 {
+	if enums.IsManualSEORefType(refType) {
 		return nil
 	}
 	if refID == nil || *refID == 0 {
-		return _errors.ReturnError(400, "refId là bắt buộc khi refType khác 0")
+		return _errors.ReturnError(400, "refId là bắt buộc khi refType khác 800")
 	}
 	return nil
 }
@@ -2773,6 +2864,9 @@ func normalizeSourceStatus(status string, isManual bool) string {
 	}
 
 	switch strings.TrimSpace(status) {
+	case seo_domain.SeoSourceStatusManual,
+		"Thủ công": // legacy label — map về giá trị DB
+		return seo_domain.SeoSourceStatusManual
 	case seo_domain.SeoSourceStatusLinked,
 		seo_domain.SeoSourceStatusStale,
 		seo_domain.SeoSourceStatusMissing,
@@ -2780,6 +2874,22 @@ func normalizeSourceStatus(status string, isManual bool) string {
 		return strings.TrimSpace(status)
 	default:
 		return seo_domain.SeoSourceStatusLinked
+	}
+}
+
+func normalizeVisibleOn(value *uint32) (uint32, error) {
+	if value == nil || *value == 0 {
+		return seo_domain.SeoVisibleOnLatest, nil
+	}
+	switch *value {
+	case seo_domain.SeoVisibleOnFeatured,
+		seo_domain.SeoVisibleOnAttention,
+		seo_domain.SeoVisibleOnLatest,
+		seo_domain.SeoVisibleOnMostRead,
+		seo_domain.SeoVisibleOnBreaking:
+		return *value, nil
+	default:
+		return 0, _errors.ReturnError(400, "visibleOn không hợp lệ (cho phép 10,20,30,40,50)")
 	}
 }
 
@@ -2882,6 +2992,69 @@ func slugify(value string) string {
 		return "seo-page"
 	}
 	return value
+}
+
+// extractManualTinTucSlugSegment lấy segment slug cuối từ input (slug thuần hoặc path đầy đủ).
+// Ví dụ: "bai-viet-a", "/tin-tuc/tin/8/bai-viet-a", "/tin-tuc/bai-viet/bai-viet-a" → "bai-viet-a".
+func extractManualTinTucSlugSegment(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	value = strings.Trim(value, "/")
+	if value == "" {
+		return "seo-page"
+	}
+	parts := strings.Split(value, "/")
+	segment := parts[len(parts)-1]
+	segment = slugify(segment)
+	segment = strings.ReplaceAll(segment, "/", "-")
+	segment = strings.Trim(segment, "-")
+	if segment == "" {
+		return "seo-page"
+	}
+	return segment
+}
+
+func buildManualTinTucCanonical(id uint64, slugSegment string) string {
+	return buildSeoURLFromTemplate(manualTinTucURLTemplate(), id, slugSegment)
+}
+
+func buildManualTinTucSlugField(id uint64, slugSegment string) string {
+	return fmt.Sprintf("%d/%s", id, slugSegment)
+}
+
+func manualTinTucURLTemplate() string {
+	if template := strings.TrimSpace(viper.GetString("seo.manualTinTucUrlTemplate")); template != "" {
+		return template
+	}
+	return "/tin-tuc/tin/{id}/{slug}"
+}
+
+// finalizeManualTinTucPaths gắn canonical/origin/slug theo /tin-tuc/tin/{id}/{slug} sau khi có ID.
+func (u *SeoDomainUsecase) finalizeManualTinTucPaths(ctx context.Context, seo *seo_domain.SeoDomain) (*seo_domain.SeoDomain, error) {
+	if seo == nil || seo.ID == 0 || !enums.IsManualSEORefType(uint32(seo.RefType)) {
+		return seo, nil
+	}
+	segment := extractManualTinTucSlugSegment(seo.Slug)
+	if segment == "" || segment == "seo-page" {
+		if alt := extractManualTinTucSlugSegment(seo.CanonicalURL); alt != "" {
+			segment = alt
+		}
+	}
+	path := buildManualTinTucCanonical(seo.ID, segment)
+	slugField := buildManualTinTucSlugField(seo.ID, segment)
+	if seo.Slug == slugField && seo.CanonicalURL == path && seo.OriginURL == path {
+		return seo, nil
+	}
+	if err := u.seoDomainRepo.Update(ctx, seo.ID, map[string]interface{}{
+		"slug":          slugField,
+		"origin_url":    path,
+		"canonical_url": path,
+	}); err != nil {
+		return nil, err
+	}
+	return u.seoDomainRepo.GetByID(ctx, seo.ID)
 }
 
 func seoSlugSegment(label string, fallbackID uint64) string {

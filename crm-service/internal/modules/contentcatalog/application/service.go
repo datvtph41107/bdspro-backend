@@ -15,7 +15,7 @@ type Repository interface {
 	DeleteCategory(context.Context, uint64) error
 	AssignPlanningNewsCategory(context.Context, uint64, uint64) (*domain.PlanningNewsItem, error)
 	ListPlanningNews(context.Context, domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error)
-	GetPlanningNews(context.Context, string) (*domain.PlanningNewsDetailResult, error)
+	GetPlanningNews(context.Context, uint64) (*domain.PlanningNewsDetailResult, error)
 	ListSavedPlanningNews(context.Context, uint64, domain.SavedPlanningNewsListFilter) (*domain.PlanningNewsListResult, error)
 	SavePlanningNews(context.Context, uint64, uint64) (*domain.PlanningNewsItem, error)
 	UnsavePlanningNews(context.Context, uint64, uint64) error
@@ -48,8 +48,8 @@ func (s *Service) AssignPlanningNewsCategory(ctx context.Context, id, categoryID
 func (s *Service) ListPlanningNews(ctx context.Context, filter domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
 	return s.repository.ListPlanningNews(ctx, filter)
 }
-func (s *Service) GetPlanningNews(ctx context.Context, slug string) (*domain.PlanningNewsDetailResult, error) {
-	return s.repository.GetPlanningNews(ctx, slug)
+func (s *Service) GetPlanningNews(ctx context.Context, id uint64) (*domain.PlanningNewsDetailResult, error) {
+	return s.repository.GetPlanningNews(ctx, id)
 }
 func (s *Service) ListSavedPlanningNews(ctx context.Context, userID uint64, filter domain.SavedPlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
 	return s.repository.ListSavedPlanningNews(ctx, userID, filter)

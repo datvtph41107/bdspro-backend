@@ -40,3 +40,23 @@ func TestActorFromPrincipalRejectsRoleOnlyIdentity(t *testing.T) {
 		t.Fatalf("role-only actor is valid: %+v", actor)
 	}
 }
+
+func TestActorFromPrincipalTreatsZeroOrganizationAsAbsent(t *testing.T) {
+	t.Parallel()
+
+	zeroOrg := uint64(0)
+	actor := ActorFromPrincipal(&Principal{
+		AuthID:         11,
+		ProfileId:      12,
+		Session:        14,
+		OrganizationId: &zeroOrg,
+		Role:           "user",
+		Type:           "ACCESS",
+	})
+	if !actor.IsValid() {
+		t.Fatalf("actor with organization=0 should be valid after normalize: %+v", actor)
+	}
+	if actor.OrganizationID != nil {
+		t.Fatalf("organization=0 should become nil, got %v", *actor.OrganizationID)
+	}
+}

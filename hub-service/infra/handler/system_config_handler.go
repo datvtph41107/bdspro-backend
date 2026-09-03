@@ -38,9 +38,6 @@ func (h *SystemConfigHandler) GetSystemConfigsByGroup(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "failed to get configs by group: %v", err)
 	}
 
-	// Parse groupKey for response
-	configGroup, _ := enums.GetSystemConfigGroup(req.GroupKey)
-
 	var items []*hubpb.SystemConfigItem
 	for _, config := range configs {
 		items = append(items, &hubpb.SystemConfigItem{
@@ -56,9 +53,8 @@ func (h *SystemConfigHandler) GetSystemConfigsByGroup(ctx context.Context, req *
 	}
 
 	return &hubpb.GetSystemConfigsByGroupResponse{
-		Data:      items,
-		Total:     int32(len(items)),
-		GroupName: enums.GetSystemConfigGroupName(configGroup),
+		Data:  items,
+		Total: int32(len(items)),
 	}, nil
 }
 

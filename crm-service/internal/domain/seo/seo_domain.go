@@ -32,6 +32,7 @@ const (
 
 const (
 	// SeoSourceStatusManual cho biết trang được nhập thủ công.
+	// Giá trị lưu DB phải khớp chk_seo_domain_source_status: manual|linked|stale|missing|permission_denied.
 	SeoSourceStatusManual = "manual"
 	// SeoSourceStatusLinked cho biết trang đang liên kết với dữ liệu nguồn.
 	SeoSourceStatusLinked = "linked"
@@ -43,12 +44,53 @@ const (
 	SeoSourceStatusPermissionDenied = "permission_denied"
 )
 
+// Vị trí hiển thị tin (seo_domain.visible_on).
+const (
+	SeoVisibleOnFeatured  uint32 = 10 // Hiển thị lên đầu
+	SeoVisibleOnAttention uint32 = 20 // Tin đáng chú ý
+	SeoVisibleOnLatest    uint32 = 30 // Tin mới nhất
+	SeoVisibleOnMostRead  uint32 = 40 // Tin đọc nhiều
+	SeoVisibleOnBreaking  uint32 = 50 // Tin nhanh
+)
+
 // Các trạng thái vòng đời của một trang SEO.
 const (
 	SeoPageStatusDraft     = "draft"
 	SeoPageStatusPublished = "published"
 	SeoPageStatusArchived  = "archived"
+
+	SeoPageStatusDraftCode     uint32 = 10
+	SeoPageStatusPublishedCode uint32 = 20
+	SeoPageStatusArchivedCode  uint32 = 30
 )
+
+// PageStatusesFromFilterCodes chuyển mã số lọc admin (10/20/30) sang page_status.
+func PageStatusesFromFilterCodes(codes []uint32) []string {
+	if len(codes) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(codes))
+	seen := make(map[string]struct{}, len(codes))
+	for _, code := range codes {
+		var status string
+		switch code {
+		case SeoPageStatusDraftCode:
+			status = SeoPageStatusDraft
+		case SeoPageStatusPublishedCode:
+			status = SeoPageStatusPublished
+		case SeoPageStatusArchivedCode:
+			status = SeoPageStatusArchived
+		default:
+			continue
+		}
+		if _, ok := seen[status]; ok {
+			continue
+		}
+		seen[status] = struct{}{}
+		out = append(out, status)
+	}
+	return out
+}
 
 // Các trạng thái của quá trình tạo HTML.
 const (
@@ -109,8 +151,7 @@ type SeoDomain struct {
 	// Summary là phần tóm tắt hiển thị đầu trang.
 	Summary string `gorm:"type:text"`
 
-	// Planning-news default feed classification.
-	// 10 featured, 20 attention, 30 latest, 40 most_read, 50 breaking.
+	// Planning-news feed classification: 10 featured, 20 attention, 30 latest, 40 most_read, 50 breaking.
 	VisibleOn uint32 `gorm:"column:visible_on;type:smallint;not null;default:30;index"`
 
 	// Primary chủ đề (seo_category) denormalized for list/filter.
@@ -213,6 +254,8 @@ func (s *SeoDomain) GetSchema() string {
 		return "gis_layer"
 	case enums.ESEORefTypeReport:
 		return "report"
+	case enums.ESEORefTypeLegacy:
+		return "info"
 	default:
 		return "info"
 	}

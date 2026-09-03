@@ -209,7 +209,7 @@ func publicCanonicalPath(moduleID string, slug string) (string, error) {
 		"parcel":              "/tin-tuc/thua-dat",
 		"planning-region":     "/tin-tuc/vung-quy-hoach",
 		"planning-project":    "/tin-tuc/do-an-quy-hoach",
-		"planning-news":       "/tin-tuc/bai-viet",
+		"planning-news":       "/tin-tuc/tin",
 		"planning-report":     "/tin-tuc/bao-cao",
 	}
 	prefix := prefixes[moduleID]

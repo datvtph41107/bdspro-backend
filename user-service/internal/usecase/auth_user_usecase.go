@@ -2148,7 +2148,8 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	// if err != nil {
 	// 	return nil, err
 	// }
-	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &clientResponse.OrganizationId)
+	orgID := clientResponse.OrganizationId
+	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &orgID)
 	if err != nil {
 		return nil, err
 	}

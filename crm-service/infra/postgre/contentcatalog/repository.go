@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"crm/internal/enums"
 	"crm/internal/modules/contentcatalog/domain"
 
 	"gorm.io/gorm"
@@ -17,21 +18,92 @@ type Repository struct{ db *gorm.DB }
 
 func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
+// Client/public seo/news: chỉ trả trang có published = true.
 const planningNewsWhere = `
     sd.deleted_at IS NULL
     AND sd.published = TRUE
     AND sd.scope = 'public'
     AND (
-        sd.canonical_url LIKE '/quy-hoach/tin-tuc/%'
+        sd.canonical_url LIKE '/tin-tuc/%'
+        OR sd.canonical_url LIKE '/quy-hoach/tin-tuc/%'
         OR sd.template_key IN ('planning-news', 'planning-news-detail')
+        OR c.code = 'planning_news'
     )`
+
+const planningNewsCategoryJoin = `
+      LEFT JOIN seo_category c ON c.id = sd.category_id AND c.deleted_at IS NULL`
+
+const planningNewsSelect = `
+	sd.id,
+	sd.id AS seo_page_id,
+	sd.slug AS slug,
+	COALESCE(sd.title, '') AS title,
+	COALESCE(sd.description, '') AS description,
+	COALESCE(sd.summary, '') AS summary,
+	COALESCE(sd.content, '') AS "content",
+	COALESCE(sd.rendered_html, '') AS rendered_html,
+	sd.canonical_url AS canonical_url,
+	CASE
+		WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url
+		ELSE 'https://qhpro.vn' || sd.canonical_url
+	END AS public_url,
+	COALESCE(sd.deep_link, '') AS deep_link,
+	COALESCE(sd.image_url, '') AS image_url,
+	COALESCE(sd.ref_source, '') AS ref_source,
+	COALESCE(sd.ref_label, '') AS ref_label,
+	COALESCE(sd.source_status, '') AS source_status,
+	COALESCE(sd.visible_on, 30) AS visible_on,
+	sd.published_at AS published_at,
+	sd.updated_at AS updated_at,
+	sd.category_id AS category_id,
+	COALESCE(c.code, '') AS category_code,
+	COALESCE(c.name, '') AS category_name,
+	COALESCE(sd.metadata, '{}'::jsonb) AS metadata_json,
+	COALESCE(sd.ref_snapshot_json, '{}'::jsonb) AS ref_snapshot_raw,
+	COALESCE(sd.ref_type, 0) AS ref_type,
+	sd.ref_id AS ref_id`
+
+const planningNewsSelectBrief = `
+	sd.id,
+	sd.id AS seo_page_id,
+	sd.slug AS slug,
+	COALESCE(sd.title, '') AS title,
+	COALESCE(sd.description, '') AS description,
+	COALESCE(sd.summary, '') AS summary,
+	'' AS "content",
+	'' AS rendered_html,
+	sd.canonical_url AS canonical_url,
+	CASE
+		WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url
+		ELSE 'https://qhpro.vn' || sd.canonical_url
+	END AS public_url,
+	COALESCE(sd.deep_link, '') AS deep_link,
+	COALESCE(sd.image_url, '') AS image_url,
+	COALESCE(sd.ref_source, '') AS ref_source,
+	COALESCE(sd.ref_label, '') AS ref_label,
+	COALESCE(sd.source_status, '') AS source_status,
+	COALESCE(sd.visible_on, 30) AS visible_on,
+	sd.published_at AS published_at,
+	sd.updated_at AS updated_at,
+	sd.category_id AS category_id,
+	COALESCE(c.code, '') AS category_code,
+	COALESCE(c.name, '') AS category_name,
+	COALESCE(sd.metadata, '{}'::jsonb) AS metadata_json,
+	COALESCE(sd.ref_snapshot_json, '{}'::jsonb) AS ref_snapshot_raw,
+	COALESCE(sd.ref_type, 0) AS ref_type,
+	sd.ref_id AS ref_id`
 
 type planningNewsRow struct {
 	ID                                                                                                                             uint64
 	SEOPageID                                                                                                                      uint64
-	Slug, Title, Description, Summary, Content, RenderedHTML, CanonicalURL, PublicURL, DeepLink, RefSource, RefLabel, SourceStatus string
+	Slug, Title, Description, Summary, Content, RenderedHTML, CanonicalURL, PublicURL, DeepLink, ImageURL, RefSource, RefLabel, SourceStatus string
+	VisibleOn                                                                                                                      uint32
+	RefType                                                                                                                        uint32
+	RefID                                                                                                                          *uint64
 	PublishedAt, UpdatedAt                                                                                                         *time.Time
 	SavedAt                                                                                                                        *time.Time
+	CategoryID                                                                                                                     *uint64
+	CategoryCode, CategoryName                                                                                                     string
 	MetadataJSON, RefSnapshotRaw                                                                                                   []byte
 }
 
@@ -44,7 +116,7 @@ func decodeJSONObject(raw []byte) map[string]any {
 }
 
 func newsFromRow(row planningNewsRow) domain.PlanningNewsItem {
-	return domain.PlanningNewsItem{
+	item := domain.PlanningNewsItem{
 		ID:              row.ID,
 		SEOPageID:       row.ID,
 		Slug:            row.Slug,
@@ -56,15 +128,30 @@ func newsFromRow(row planningNewsRow) domain.PlanningNewsItem {
 		CanonicalURL:    row.CanonicalURL,
 		PublicURL:       row.PublicURL,
 		DeepLink:        row.DeepLink,
+		ImageURL:        row.ImageURL,
 		RefSource:       row.RefSource,
 		RefLabel:        row.RefLabel,
 		SourceStatus:    row.SourceStatus,
+		VisibleOn:       row.VisibleOn,
+		RefType:         row.RefType,
+		RefTypeName:     enums.ESEORefType(row.RefType).Name(),
+		RefID:           row.RefID,
 		PublishedAt:     row.PublishedAt,
 		UpdatedAt:       row.UpdatedAt,
 		SavedAt:         row.SavedAt,
+		CategoryID:      row.CategoryID,
+		CategoryCode:    row.CategoryCode,
+		CategoryName:    row.CategoryName,
 		Metadata:        decodeJSONObject(row.MetadataJSON),
 		RefSnapshotJSON: decodeJSONObject(row.RefSnapshotRaw),
 	}
+	if row.CategoryID != nil && *row.CategoryID > 0 {
+		item.Category = &domain.PlanningNewsCategory{
+			ID:   *row.CategoryID,
+			Name: row.CategoryName,
+		}
+	}
+	return item
 }
 
 func normalizePage(page, size int) (int, int) {
@@ -78,6 +165,45 @@ func normalizePage(page, size int) (int, int) {
 		size = 100
 	}
 	return page, size
+}
+
+func likeKeyword(keyword string) string {
+	keyword = strings.ToLower(strings.TrimSpace(keyword))
+	keyword = strings.ReplaceAll(keyword, "+", " ")
+	parts := strings.Fields(keyword)
+	if len(parts) == 0 {
+		return ""
+	}
+	return "%" + strings.Join(parts, "%") + "%"
+}
+
+func planningNewsOrderBy(filter domain.PlanningNewsListFilter) string {
+	token := strings.ToLower(strings.TrimSpace(filter.Sort))
+	if token == "" {
+		by := strings.ToLower(strings.TrimSpace(filter.SortBy))
+		order := strings.ToLower(strings.TrimSpace(filter.SortOrder))
+		switch {
+		case strings.HasSuffix(by, "_desc") || strings.HasSuffix(by, "_asc"):
+			token = by
+		case by != "" && order != "":
+			token = by + "_" + order
+		case by != "":
+			token = by + "_desc"
+		}
+	}
+
+	switch strings.ReplaceAll(token, "-", "_") {
+	case "updated_desc", "updatedat_desc", "updated_at_desc":
+		return "sd.updated_at DESC NULLS LAST, sd.id DESC"
+	case "updated_asc", "updatedat_asc", "updated_at_asc":
+		return "sd.updated_at ASC NULLS LAST, sd.id ASC"
+	case "published_asc", "publishedat_asc", "published_at_asc":
+		return "sd.published_at ASC NULLS LAST, sd.updated_at ASC, sd.id ASC"
+	case "published_desc", "publishedat_desc", "published_at_desc", "":
+		return "sd.published_at DESC NULLS LAST, sd.updated_at DESC, sd.id DESC"
+	default:
+		return "sd.published_at DESC NULLS LAST, sd.updated_at DESC, sd.id DESC"
+	}
 }
 
 func (r *Repository) ListCategories(ctx context.Context) ([]domain.ContentCategory, error) {
@@ -321,7 +447,7 @@ func (r *Repository) AssignPlanningNewsCategory(ctx context.Context, id uint64, 
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
-	detail, err := r.GetPlanningNews(ctx, strconv.FormatUint(id, 10))
+	detail, err := r.GetPlanningNews(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -412,14 +538,75 @@ func isUniqueViolation(err error) bool {
 
 func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.PlanningNewsListFilter) (*domain.PlanningNewsListResult, error) {
 	filter.Page, filter.Size = normalizePage(filter.Page, filter.Size)
-	base := ` FROM seo_domain sd WHERE ` + planningNewsWhere
+
+	base := ` FROM seo_domain sd` + planningNewsCategoryJoin + `
+      WHERE ` + planningNewsWhere
 	args := []any{}
+	if p := likeKeyword(filter.Keyword); p != "" {
+		base += " AND (LOWER(COALESCE(sd.title,'')) LIKE ? OR LOWER(COALESCE(sd.description,'')) LIKE ? OR LOWER(COALESCE(sd.summary,'')) LIKE ? OR LOWER(COALESCE(sd.content,'')) LIKE ? OR LOWER(COALESCE(sd.slug,'')) LIKE ?)"
+		args = append(args, p, p, p, p, p)
+	}
+	if filter.CategoryID > 0 {
+		base += " AND sd.category_id=?"
+		args = append(args, filter.CategoryID)
+	}
+	if len(filter.ProvinceIDs) > 0 {
+		placeholders := make([]string, 0, len(filter.ProvinceIDs))
+		for _, id := range filter.ProvinceIDs {
+			placeholders = append(placeholders, "?")
+			args = append(args, id)
+		}
+		base += " AND sd.province_id IN (" + strings.Join(placeholders, ",") + ")"
+	} else if filter.ProvinceID > 0 {
+		base += " AND sd.province_id=?"
+		args = append(args, filter.ProvinceID)
+	}
+	if filter.RefType > 0 {
+		base += " AND sd.ref_type=?"
+		args = append(args, filter.RefType)
+	}
+	if p := likeKeyword(filter.Location); p != "" {
+		base += " AND (LOWER(COALESCE(sd.ref_label,'')) LIKE ? OR LOWER(COALESCE(sd.metadata->>'location','')) LIKE ? OR LOWER(COALESCE(sd.ref_snapshot_json->>'location','')) LIKE ?)"
+		args = append(args, p, p, p)
+	}
+	if len(filter.VisibleOns) > 0 {
+		placeholders := make([]string, 0, len(filter.VisibleOns))
+		for _, code := range filter.VisibleOns {
+			placeholders = append(placeholders, "?")
+			args = append(args, code)
+		}
+		base += " AND sd.visible_on IN (" + strings.Join(placeholders, ",") + ")"
+	} else if filter.VisibleOn > 0 {
+		base += " AND sd.visible_on=?"
+		args = append(args, filter.VisibleOn)
+	}
+	switch strings.ToLower(strings.TrimSpace(filter.Range)) {
+	case "today":
+		base += " AND sd.published_at>=CURRENT_DATE"
+	case "week", "7d":
+		base += " AND sd.published_at>=NOW()-INTERVAL '7 days'"
+	case "month", "30d":
+		base += " AND sd.published_at>=NOW()-INTERVAL '30 days'"
+	case "year":
+		base += " AND sd.published_at>=NOW()-INTERVAL '1 year'"
+	}
+	if filter.LastDates > 0 {
+		days := filter.LastDates
+		if days > 365 {
+			days = 365
+		}
+		since := time.Now().AddDate(0, 0, -int(days))
+		base += " AND sd.updated_at>=?"
+		args = append(args, since)
+	}
+
 	var total int64
 	if err := r.db.WithContext(ctx).Raw("SELECT COUNT(DISTINCT sd.id)"+base, args...).Scan(&total).Error; err != nil {
 		return nil, fmt.Errorf("count planning news: %w", err)
 	}
 	rows := []planningNewsRow{}
-	selectSQL := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,COALESCE(sd.content,'') content,COALESCE(sd.rendered_html,'') rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,sd.published_at,sd.updated_at,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw` + base + ` ORDER BY sd.published_at DESC NULLS LAST,sd.updated_at DESC,sd.id DESC LIMIT ? OFFSET ?`
+	// List không trả content/renderedHtml (dùng brief); chi tiết lấy qua GetPlanningNews.
+	selectSQL := `SELECT ` + planningNewsSelectBrief + base + ` ORDER BY ` + planningNewsOrderBy(filter) + ` LIMIT ? OFFSET ?`
 	listArgs := append(append([]any{}, args...), filter.Size, (filter.Page-1)*filter.Size)
 	if err := r.db.WithContext(ctx).Raw(selectSQL, listArgs...).Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("list planning news: %w", err)
@@ -431,25 +618,29 @@ func (r *Repository) ListPlanningNews(ctx context.Context, filter domain.Plannin
 	return &domain.PlanningNewsListResult{Data: data, Total: total, Page: filter.Page, Size: filter.Size}, nil
 }
 
-func (r *Repository) GetPlanningNews(ctx context.Context, slug string) (*domain.PlanningNewsDetailResult, error) {
-	slug = strings.Trim(strings.TrimSpace(slug), "/")
-	if strings.Contains(slug, "/") {
-		parts := strings.Split(slug, "/")
-		slug = parts[len(parts)-1]
+func (r *Repository) GetPlanningNews(ctx context.Context, id uint64) (*domain.PlanningNewsDetailResult, error) {
+	if id == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	row := planningNewsRow{}
-	query := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,COALESCE(sd.content,'') content,COALESCE(sd.rendered_html,'') rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,sd.published_at,sd.updated_at,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw
-      FROM seo_domain sd WHERE ` + planningNewsWhere + ` AND (sd.slug=? OR sd.id::text=?) LIMIT 1`
-	if err := r.db.WithContext(ctx).Raw(query, slug, slug).Scan(&row).Error; err != nil {
+	query := `SELECT ` + planningNewsSelect + `
+      FROM seo_domain sd` + planningNewsCategoryJoin + `
+      WHERE ` + planningNewsWhere + ` AND sd.id=? LIMIT 1`
+	if err := r.db.WithContext(ctx).Raw(query, id).Scan(&row).Error; err != nil {
 		return nil, fmt.Errorf("get planning news: %w", err)
 	}
 	if row.ID == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
 	relatedRows := []planningNewsRow{}
-	relQuery := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,sd.published_at,sd.updated_at,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw
-      FROM seo_domain sd WHERE ` + planningNewsWhere + ` AND sd.id<>? ORDER BY sd.published_at DESC NULLS LAST LIMIT 8`
-	if err := r.db.WithContext(ctx).Raw(relQuery, row.ID).Scan(&relatedRows).Error; err != nil {
+	relQuery := `SELECT ` + planningNewsSelectBrief + `
+      FROM seo_domain sd` + planningNewsCategoryJoin + `
+      WHERE ` + planningNewsWhere + ` AND sd.id<>? AND (?=0 OR sd.category_id=?) ORDER BY sd.published_at DESC NULLS LAST LIMIT 8`
+	categoryID := uint64(0)
+	if row.CategoryID != nil {
+		categoryID = *row.CategoryID
+	}
+	if err := r.db.WithContext(ctx).Raw(relQuery, row.ID, categoryID, categoryID).Scan(&relatedRows).Error; err != nil {
 		return nil, fmt.Errorf("list related planning news: %w", err)
 	}
 	related := make([]domain.PlanningNewsItem, 0, len(relatedRows))
@@ -466,7 +657,7 @@ func (r *Repository) ListSavedPlanningNews(ctx context.Context, userID uint64, f
 	filter.Page, filter.Size = normalizePage(filter.Page, filter.Size)
 
 	base := ` FROM user_saved_planning_news saved
-	      JOIN seo_domain sd ON sd.id=saved.seo_domain_id
+	      JOIN seo_domain sd ON sd.id=saved.seo_domain_id` + planningNewsCategoryJoin + `
 	      WHERE saved.user_id=? AND saved.deleted_at IS NULL AND ` + planningNewsWhere
 
 	var total int64
@@ -475,7 +666,7 @@ func (r *Repository) ListSavedPlanningNews(ctx context.Context, userID uint64, f
 	}
 
 	rows := []planningNewsRow{}
-	selectSQL := `SELECT sd.id,sd.id AS seo_page_id,sd.slug,COALESCE(sd.title,'') title,COALESCE(sd.description,'') description,COALESCE(sd.summary,'') summary,'' content,'' rendered_html,sd.canonical_url,CASE WHEN sd.canonical_url LIKE 'http%' THEN sd.canonical_url ELSE 'https://qhpro.vn'||sd.canonical_url END public_url,COALESCE(sd.deep_link,'') deep_link,COALESCE(sd.ref_source,'') ref_source,COALESCE(sd.ref_label,'') ref_label,COALESCE(sd.source_status,'') source_status,sd.published_at,sd.updated_at,saved.updated_at AS saved_at,COALESCE(sd.metadata,'{}'::jsonb) metadata_json,COALESCE(sd.ref_snapshot_json,'{}'::jsonb) ref_snapshot_raw` + base + ` ORDER BY saved.updated_at DESC,saved.id DESC LIMIT ? OFFSET ?`
+	selectSQL := `SELECT ` + planningNewsSelectBrief + `, saved.updated_at AS saved_at` + base + ` ORDER BY saved.updated_at DESC, saved.id DESC LIMIT ? OFFSET ?`
 	if err := r.db.WithContext(ctx).Raw(selectSQL, userID, filter.Size, (filter.Page-1)*filter.Size).Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("list saved planning news: %w", err)
 	}
@@ -494,7 +685,7 @@ func (r *Repository) SavePlanningNews(ctx context.Context, userID, newsID uint64
 	result := r.db.WithContext(ctx).Exec(`
 		INSERT INTO user_saved_planning_news (user_id,seo_domain_id,created_at,updated_at,deleted_at)
 		SELECT ?,sd.id,NOW(),NOW(),NULL
-		FROM seo_domain sd
+		FROM seo_domain sd`+planningNewsCategoryJoin+`
 		WHERE `+planningNewsWhere+` AND sd.id=?
 		ON CONFLICT (user_id,seo_domain_id)
 		DO UPDATE SET updated_at=NOW(),deleted_at=NULL`, userID, newsID)
@@ -504,7 +695,7 @@ func (r *Repository) SavePlanningNews(ctx context.Context, userID, newsID uint64
 	if result.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
-	detail, err := r.GetPlanningNews(ctx, strconv.FormatUint(newsID, 10))
+	detail, err := r.GetPlanningNews(ctx, newsID)
 	if err != nil {
 		return nil, err
 	}
@@ -534,47 +725,55 @@ type contentSearchRow struct {
 	Summary      string
 	CanonicalURL string
 	DeepLink     string
+	ImageURL     string
 	PublishedAt  *time.Time
 	UpdatedAt    *time.Time
+	CategoryCode string
+	CategoryName string
 	Score        float64
 }
 
 func contentKind(canonicalURL string) (string, string) {
 	path := strings.ToLower(strings.TrimSpace(canonicalURL))
 	switch {
-	case strings.HasPrefix(path, "/quy-hoach/tin-tuc/"):
+	case strings.HasPrefix(path, "/tin-tuc/tin/"), strings.HasPrefix(path, "/tin-tuc/bai-viet/"):
 		return "news_article", "Tin quy hoạch"
-	case strings.HasPrefix(path, "/quy-hoach/bao-cao/"):
+	case strings.HasPrefix(path, "/tin-tuc/bao-cao/"):
 		return "analysis_report", "Báo cáo và phân tích"
-	case strings.HasPrefix(path, "/do-an-quy-hoach/"):
+	case strings.HasPrefix(path, "/tin-tuc/do-an-quy-hoach/"):
 		return "planning_project", "Đồ án quy hoạch"
-	case strings.HasPrefix(path, "/van-ban/"):
+	case strings.HasPrefix(path, "/tin-tuc/van-ban/"), strings.HasPrefix(path, "/tin-tuc/tai-lieu/"):
 		return "legal_document", "Văn bản pháp lý"
-	case strings.HasPrefix(path, "/vung-quy-hoach/"):
+	case strings.HasPrefix(path, "/tin-tuc/vung-quy-hoach/"):
 		return "planning_region", "Vùng quy hoạch"
+	case strings.HasPrefix(path, "/tin-tuc/lop/"):
+		return "planning_layer", "Lớp quy hoạch"
 	default:
 		return "news_article", "Nội dung quy hoạch"
 	}
 }
 
 func (r *Repository) SearchPublishedContent(ctx context.Context, query string, kinds []string, limit int) (*domain.ContentSearchResult, error) {
-	query = strings.Join(strings.Fields(strings.ToLower(strings.TrimSpace(query))), " ")
-	if query == "" {
+	pattern := likeKeyword(query)
+	if pattern == "" {
 		return &domain.ContentSearchResult{Groups: []domain.SearchGroup{}}, nil
 	}
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
-	pattern := "%" + query + "%"
+	query = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(query, "+", " ")))
 	rows := []contentSearchRow{}
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT sd.id, sd.slug, COALESCE(sd.title,'') AS title,
 		       COALESCE(sd.description,'') AS description, COALESCE(sd.summary,'') AS summary,
 		       sd.canonical_url, COALESCE(sd.deep_link,'') AS deep_link,
+		       COALESCE(sd.image_url,'') AS image_url,
 		       sd.published_at, sd.updated_at,
+		       COALESCE(c.code,'') AS category_code, COALESCE(c.name,'') AS category_name,
 		       CASE WHEN LOWER(COALESCE(sd.title,'')) = ? THEN 100
 		            WHEN LOWER(COALESCE(sd.title,'')) LIKE ? THEN 70 ELSE 35 END::float8 AS score
 		FROM seo_domain sd
+		LEFT JOIN seo_category c ON c.id = sd.category_id AND c.deleted_at IS NULL
 		WHERE sd.deleted_at IS NULL AND sd.published=TRUE AND sd.scope='public'
 		  AND (LOWER(COALESCE(sd.title,'')) LIKE ? OR LOWER(COALESCE(sd.description,'')) LIKE ?
 		       OR LOWER(COALESCE(sd.summary,'')) LIKE ? OR LOWER(COALESCE(sd.slug,'')) LIKE ?)
@@ -598,6 +797,7 @@ func (r *Repository) SearchPublishedContent(ctx context.Context, query string, k
 		id := strconv.FormatUint(row.ID, 10)
 		item.Entity = domain.SearchEntityRef{Kind: kind, ID: id, Key: kind + ":" + id}
 		item.Presentation.Title = row.Title
+		item.Presentation.Subtitle = row.CategoryName
 		item.Presentation.Description = row.Summary
 		item.Source.System = "crm-service"
 		item.Source.Dataset = "seo_domain"
@@ -609,7 +809,8 @@ func (r *Repository) SearchPublishedContent(ctx context.Context, query string, k
 		item.Match.Type = "full_text"
 		item.Match.MatchedFields = []string{"title", "description", "summary", "slug"}
 		item.Rank.Score = row.Score
-		item.Attributes = map[string]any{"deepLink": row.DeepLink, "publishedAt": row.PublishedAt}
+		item.Rank.ReasonCodes = []string{"published_content"}
+		item.Attributes = map[string]any{"categoryCode": row.CategoryCode, "categoryName": row.CategoryName, "deepLink": row.DeepLink, "imageUrl": row.ImageURL, "publishedAt": row.PublishedAt}
 		byKind[kind] = append(byKind[kind], item)
 		labels[kind] = label
 	}
