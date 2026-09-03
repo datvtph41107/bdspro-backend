@@ -64,8 +64,9 @@ type AdminListWardsRequest struct {
 
 type ListAdministrativeUnitsRequest struct {
 	_dto.Pagable
-	Search            string `json:"search"`
-	PlanningProjectID uint64 `json:"planningProjectId"`
+	Search            string   `json:"search"`
+	PlanningProjectID uint64   `json:"planningProjectId"`
+	CompositeIDs      []uint64 `json:"compositeIds"`
 }
 
 type AdminListProvincesResponse struct {

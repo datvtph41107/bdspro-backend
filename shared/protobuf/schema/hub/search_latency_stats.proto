@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+// Thống kê latency các API search có text (vd /v2/tqd/discovery/search).
+service SearchLatencyStatsService {
+  // Tổng hợp avg / min / max / count theo path trong lastDates ngày.
+  rpc GetSearchLatencyDashboard(GetSearchLatencyDashboardRequest) returns (GetSearchLatencyDashboardResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/search-latency/dashboard"
+    };
+  };
+
+  // Chuỗi thời gian avg/min/max theo dates hoặc hours (vẽ biểu đồ).
+  rpc GetSearchLatencyDailyStats(GetSearchLatencyDailyStatsRequest) returns (GetSearchLatencyDailyStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/search-latency/daily"
+    };
+  };
+}
+
+message GetSearchLatencyDashboardRequest {
+  // Số ngày gần nhất; mặc định 3, giới hạn 1-30.
+  uint32 lastDates = 1;
+  // Path API search; mặc định /v2/tqd/discovery/search nếu bỏ trống.
+  string path = 2;
+}
+
+message GetSearchLatencyDashboardResponse {
+  string path = 1;
+  uint64 totalRequests = 2;
+  // Trung bình (ms), làm tròn xuống.
+  int64 avgDurationMs = 3;
+  int64 minDurationMs = 4;
+  int64 maxDurationMs = 5;
+  uint32 lastDates = 6;
+}
+
+message GetSearchLatencyDailyStatsRequest {
+  uint32 lastDates = 1;
+  // dates (mặc định) | hours
+  string gap = 2;
+  string path = 3;
+}
+
+message SearchLatencyDailyItem {
+  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00
+  string date = 1;
+  uint64 count = 2;
+  int64 avgDurationMs = 3;
+  int64 minDurationMs = 4;
+  int64 maxDurationMs = 5;
+}
+
+message GetSearchLatencyDailyStatsResponse {
+  repeated SearchLatencyDailyItem data = 1;
+  uint32 lastDates = 2;
+  string gap = 3;
+  string path = 4;
+}

@@ -285,6 +285,7 @@ func (m *LocationMapper) FromProtoClientListAdministrativeUnitsRequest(req *tqdp
 		},
 		Search:            req.Search,
 		PlanningProjectID: req.PlanningProjectId,
+		CompositeIDs:      _utils.ParseUint64Array(req.GetCompositeIds()),
 	}
 }
 

@@ -64,6 +64,7 @@ type PlanningNewsItem struct {
 	CategoryCode    string                 `json:"categoryCode,omitempty"`
 	CategoryName    string                 `json:"categoryName,omitempty"`
 	Category        *PlanningNewsCategory  `json:"category,omitempty"`
+	ProvinceID      *uint64                `json:"provinceId,omitempty"`
 	Metadata        map[string]any         `json:"metadata,omitempty"`
 	RefSnapshotJSON map[string]any         `json:"refSnapshotJson,omitempty"`
 }

@@ -142,3 +142,28 @@ func (c *HubGrpcClient) TrackKeywordSearch(ctx context.Context, keyword, source 
 		}
 	}()
 }
+
+// TrackSearchLatency fire-and-forget ghi latency API search có text sang hub.
+func (c *HubGrpcClient) TrackSearchLatency(ctx context.Context, method, path, service string, durationMs int64) {
+	if c == nil || c.InternalClient == nil {
+		return
+	}
+	method = strings.TrimSpace(method)
+	path = strings.TrimSpace(path)
+	if method == "" || path == "" || durationMs < 0 {
+		return
+	}
+	go func() {
+		trackCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, err := c.InternalClient.TrackSearchLatency(trackCtx, &hubpb.TrackSearchLatencyRequest{
+			Method:     method,
+			Path:       path,
+			Service:    service,
+			DurationMs: durationMs,
+		})
+		if err != nil {
+			log.Printf("hub TrackSearchLatency error: %v", err)
+		}
+	}()
+}

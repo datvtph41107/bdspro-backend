@@ -17,6 +17,11 @@ type LocationRepository interface {
 	ListAllProvinces(ctx context.Context) ([]*domain.Province, error)
 	AdminListProvinces(ctx context.Context, req *dto.AdminListProvincesRequest) ([]*domain.Province, int64, error)
 	ListAdministrativeUnitRefs(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) ([]dto.AdministrativeUnitRef, int64, error)
+	GetProvincesByIDs(ctx context.Context, ids []uint64) ([]*domain.Province, error)
+	GetWardsByIDs(ctx context.Context, ids []uint64) ([]*domain.Ward, error)
+	FollowAdministrativeUnit(ctx context.Context, userID, compositeID uint64) error
+	UnfollowAdministrativeUnit(ctx context.Context, userID, compositeID uint64) error
+	ListFollowedAdministrativeUnitIDs(ctx context.Context, userID uint64, offset, limit int) ([]uint64, int64, error)
 	CreateProvince(ctx context.Context, province *domain.Province) error
 	UpdateProvince(ctx context.Context, province *domain.Province) error
 	SoftDeleteProvince(ctx context.Context, id uint64) error

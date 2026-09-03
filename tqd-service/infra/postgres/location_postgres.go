@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"tqd/internal/domain"
+	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
@@ -365,6 +366,85 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 		refs = append(refs, ref)
 	}
 	return refs, total, nil
+}
+
+func (r *locationRepo) GetProvincesByIDs(ctx context.Context, ids []uint64) ([]*domain.Province, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []domain.Province
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
+		Select(provinceSelectSQL("", false)).
+		Where("id IN ?", ids).
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*domain.Province, 0, len(rows))
+	for i := range rows {
+		out = append(out, &rows[i])
+	}
+	return out, nil
+}
+
+func (r *locationRepo) GetWardsByIDs(ctx context.Context, ids []uint64) ([]*domain.Ward, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []domain.Ward
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
+		Where("id IN ?", ids).
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*domain.Ward, 0, len(rows))
+	for i := range rows {
+		out = append(out, &rows[i])
+	}
+	return out, nil
+}
+
+func (r *locationRepo) FollowAdministrativeUnit(ctx context.Context, userID, compositeID uint64) error {
+	row := qh_domain.QHUserFollowedAdministrativeUnit{
+		UserID:      userID,
+		CompositeID: compositeID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	return r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "composite_id"}},
+			DoUpdates: clause.Assignments(map[string]any{"updated_at": time.Now()}),
+		}).
+		Create(&row).Error
+}
+
+func (r *locationRepo) UnfollowAdministrativeUnit(ctx context.Context, userID, compositeID uint64) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ? AND composite_id = ?", userID, compositeID).
+		Delete(&qh_domain.QHUserFollowedAdministrativeUnit{}).Error
+}
+
+func (r *locationRepo) ListFollowedAdministrativeUnitIDs(ctx context.Context, userID uint64, offset, limit int) ([]uint64, int64, error) {
+	query := r.db.WithContext(ctx).Model(&qh_domain.QHUserFollowedAdministrativeUnit{}).
+		Where("user_id = ?", userID)
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var ids []uint64
+	err := query.Order("created_at DESC, id DESC").
+		Offset(offset).
+		Limit(limit).
+		Pluck("composite_id", &ids).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return ids, total, nil
 }
 
 // ==================== WARD OPERATIONS ====================

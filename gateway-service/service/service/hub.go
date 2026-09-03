@@ -30,4 +30,5 @@ func RegisterHubService(ctx context.Context, mux *runtime.ServeMux, env string, 
 	_ = hubpb.RegisterApplinkServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterRequestStatsServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	_ = hubpb.RegisterKeywordSearchStatsServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
+	_ = hubpb.RegisterSearchLatencyStatsServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

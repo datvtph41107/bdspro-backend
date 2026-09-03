@@ -110,6 +110,17 @@ message TrackKeywordSearchResponse {
   bool success = 1;
 }
 
+message TrackSearchLatencyRequest {
+  string method = 1;
+  string path = 2;
+  string service = 3;
+  int64 durationMs = 4;
+}
+
+message TrackSearchLatencyResponse {
+  bool success = 1;
+}
+
 message GetRegionsRequest {
   repeated uint64 ids = 1;
 }
@@ -156,5 +167,8 @@ service HubInternalService {
 
   // TrackKeywordSearch - Internal: đếm từ khóa tìm kiếm từ CRM/TQD/...
   rpc TrackKeywordSearch (TrackKeywordSearchRequest) returns (TrackKeywordSearchResponse);
+
+  // TrackSearchLatency - Internal: ghi latency API search có text (fire-and-forget).
+  rpc TrackSearchLatency (TrackSearchLatencyRequest) returns (TrackSearchLatencyResponse);
 }
 

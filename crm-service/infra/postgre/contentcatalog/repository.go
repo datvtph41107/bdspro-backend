@@ -61,7 +61,8 @@ const planningNewsSelect = `
 	COALESCE(sd.metadata, '{}'::jsonb) AS metadata_json,
 	COALESCE(sd.ref_snapshot_json, '{}'::jsonb) AS ref_snapshot_raw,
 	COALESCE(sd.ref_type, 0) AS ref_type,
-	sd.ref_id AS ref_id`
+	sd.ref_id AS ref_id,
+	sd.province_id AS province_id`
 
 const planningNewsSelectBrief = `
 	sd.id,
@@ -91,7 +92,8 @@ const planningNewsSelectBrief = `
 	COALESCE(sd.metadata, '{}'::jsonb) AS metadata_json,
 	COALESCE(sd.ref_snapshot_json, '{}'::jsonb) AS ref_snapshot_raw,
 	COALESCE(sd.ref_type, 0) AS ref_type,
-	sd.ref_id AS ref_id`
+	sd.ref_id AS ref_id,
+	sd.province_id AS province_id`
 
 type planningNewsRow struct {
 	ID                                                                                                                             uint64
@@ -104,6 +106,7 @@ type planningNewsRow struct {
 	SavedAt                                                                                                                        *time.Time
 	CategoryID                                                                                                                     *uint64
 	CategoryCode, CategoryName                                                                                                     string
+	ProvinceID                                                                                                                     *uint64
 	MetadataJSON, RefSnapshotRaw                                                                                                   []byte
 }
 
@@ -142,6 +145,7 @@ func newsFromRow(row planningNewsRow) domain.PlanningNewsItem {
 		CategoryID:      row.CategoryID,
 		CategoryCode:    row.CategoryCode,
 		CategoryName:    row.CategoryName,
+		ProvinceID:      row.ProvinceID,
 		Metadata:        decodeJSONObject(row.MetadataJSON),
 		RefSnapshotJSON: decodeJSONObject(row.RefSnapshotRaw),
 	}

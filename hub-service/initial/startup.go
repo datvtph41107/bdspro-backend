@@ -9,25 +9,26 @@ import (
 )
 
 type InitialApp struct {
-	EventQueueService       *handler.EventQueueService
-	InternalHandler         *handler.InternalHandler
-	UpdateDataHandler       *handler.UpdateDataHandler
-	LocationHandler         *handler.LocationHandler
-	LocationV2Handler       *handler.LocationV2Handler
-	UserGuideHandler        *handler.UserGuideHandler
-	FAQHandler              *handler.FAQHandler
-	SystemConfigHandler     *handler.SystemConfigHandler
-	VersionHandler          *handler.VersionHandler
-	ApiKeyHandler           *handler.ApiKeyHandler
-	SystemConfigUsecase     *usecase.SystemConfigUsecase
-	ApiKeyUsecase           usecase.IApiKeyUsecase
-	Logger                  *flogging.FabricLogger
-	InteractiveEventHandler *handler.InteractiveEventHandler
-	ClickURLHandler         *handler.ClickURLHandler
-	ErrorLogHandler         *handler.ErrorLogHandler
-	ApplinkHandler          *handler.ApplinkHandler
-	RequestStatsHandler     *handler.RequestStatsHandler
+	EventQueueService         *handler.EventQueueService
+	InternalHandler           *handler.InternalHandler
+	UpdateDataHandler         *handler.UpdateDataHandler
+	LocationHandler           *handler.LocationHandler
+	LocationV2Handler         *handler.LocationV2Handler
+	UserGuideHandler          *handler.UserGuideHandler
+	FAQHandler                *handler.FAQHandler
+	SystemConfigHandler       *handler.SystemConfigHandler
+	VersionHandler            *handler.VersionHandler
+	ApiKeyHandler             *handler.ApiKeyHandler
+	SystemConfigUsecase       *usecase.SystemConfigUsecase
+	ApiKeyUsecase             usecase.IApiKeyUsecase
+	Logger                    *flogging.FabricLogger
+	InteractiveEventHandler   *handler.InteractiveEventHandler
+	ClickURLHandler           *handler.ClickURLHandler
+	ErrorLogHandler           *handler.ErrorLogHandler
+	ApplinkHandler            *handler.ApplinkHandler
+	RequestStatsHandler       *handler.RequestStatsHandler
 	KeywordSearchStatsHandler *handler.KeywordSearchStatsHandler
+	SearchLatencyStatsHandler *handler.SearchLatencyStatsHandler
 }
 
 func NewInitialApp(
@@ -49,6 +50,7 @@ func NewInitialApp(
 	appLinkHandler *handler.ApplinkHandler,
 	requestStatsHandler *handler.RequestStatsHandler,
 	keywordSearchStatsHandler *handler.KeywordSearchStatsHandler,
+	searchLatencyStatsHandler *handler.SearchLatencyStatsHandler,
 ) *InitialApp {
 	return &InitialApp{
 		EventQueueService:         eventQueueService,
@@ -70,5 +72,6 @@ func NewInitialApp(
 		ApplinkHandler:            appLinkHandler,
 		RequestStatsHandler:       requestStatsHandler,
 		KeywordSearchStatsHandler: keywordSearchStatsHandler,
+		SearchLatencyStatsHandler: searchLatencyStatsHandler,
 	}
 }

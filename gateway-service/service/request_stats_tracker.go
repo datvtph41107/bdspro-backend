@@ -119,6 +119,7 @@ var requestStatsIgnorePrefixes = []string{
 	"/swagger-doc",
 	"/v2/hub/request-stats",        // không đếm chính API thống kê request
 	"/v2/hub/keyword-search-stats", // không đếm API thống kê từ khóa
+	"/v2/hub/search-latency",       // không đếm API thống kê latency search
 }
 
 func shouldSkipRequestStats(path string) bool {

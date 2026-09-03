@@ -87,6 +87,8 @@ buf-assistant:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path assistant	
 buf-hub:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path hub	
+buf-file:
+	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path file	
 buf-all:
 	$(MAKE) buf-crm
 	$(MAKE) buf-group

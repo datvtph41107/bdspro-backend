@@ -774,11 +774,71 @@ func (h *LocationHandler) ClientGetAdministrativeUnitDetailByCompositeId(ctx con
 // @Param search query string false "Search keyword"
 // @Param planningProjectId query int false "Planning project ID"
 // @Param sort query string false "Sort, e.g. updatedAt,desc"
+// @Param compositeIds query string false "CSV compositeId, ví dụ 131,1422"
 // @Success 200 {object} tqdpb.ListAdministrativeUnitsResponse
 // @Router /v2/tqd/client/administrative-units [get]
 func (h *LocationHandler) ClientListAdministrativeUnits(ctx context.Context, req *tqdpb.ClientListAdministrativeUnitsRequest) (*tqdpb.ListAdministrativeUnitsResponse, error) {
 	dtoReq := h.mapper.FromProtoClientListAdministrativeUnitsRequest(req)
 	resp, err := h.locationUsecase.ClientListAdministrativeUnits(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+	return h.mapper.ToProtoListAdministrativeUnitsResponse(resp), nil
+}
+
+// FollowAdministrativeUnit @Summary Follow đơn vị hành chính theo compositeId
+// @Tags Location Client
+// @Produce json
+// @Param compositeId path uint64 true "Composite ID ({sourceId}{1=tỉnh|2=phường})"
+// @Success 200 {object} tqdpb.FollowAdministrativeUnitResponse
+// @Router /v2/tqd/client/followed-administrative-units/{compositeId} [post]
+func (h *LocationHandler) FollowAdministrativeUnit(ctx context.Context, req *tqdpb.FollowAdministrativeUnitRequest) (*tqdpb.FollowAdministrativeUnitResponse, error) {
+	if req == nil || req.GetCompositeId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "compositeId is required")
+	}
+	if _, err := authenticatedProfileID(ctx); err != nil {
+		return nil, err
+	}
+	if err := h.locationUsecase.FollowAdministrativeUnit(ctx, req.GetCompositeId()); err != nil {
+		return nil, h.handleError(err)
+	}
+	return &tqdpb.FollowAdministrativeUnitResponse{Followed: true, CompositeId: req.GetCompositeId()}, nil
+}
+
+// UnfollowAdministrativeUnit @Summary Bỏ follow đơn vị hành chính (xóa cứng)
+// @Tags Location Client
+// @Produce json
+// @Param compositeId path uint64 true "Composite ID ({sourceId}{1=tỉnh|2=phường})"
+// @Success 200 {object} tqdpb.FollowAdministrativeUnitResponse
+// @Router /v2/tqd/client/followed-administrative-units/{compositeId} [delete]
+func (h *LocationHandler) UnfollowAdministrativeUnit(ctx context.Context, req *tqdpb.FollowAdministrativeUnitRequest) (*tqdpb.FollowAdministrativeUnitResponse, error) {
+	if req == nil || req.GetCompositeId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "compositeId is required")
+	}
+	if _, err := authenticatedProfileID(ctx); err != nil {
+		return nil, err
+	}
+	if err := h.locationUsecase.UnfollowAdministrativeUnit(ctx, req.GetCompositeId()); err != nil {
+		return nil, h.handleError(err)
+	}
+	return &tqdpb.FollowAdministrativeUnitResponse{Followed: false, CompositeId: req.GetCompositeId()}, nil
+}
+
+// ListFollowedAdministrativeUnits @Summary Danh sách đơn vị hành chính đang follow
+// @Tags Location Client
+// @Produce json
+// @Param page query int false "Page"
+// @Param size query int false "Size"
+// @Success 200 {object} tqdpb.ListAdministrativeUnitsResponse
+// @Router /v2/tqd/client/followed-administrative-units [get]
+func (h *LocationHandler) ListFollowedAdministrativeUnits(ctx context.Context, req *tqdpb.ListFollowedAdministrativeUnitsRequest) (*tqdpb.ListAdministrativeUnitsResponse, error) {
+	if _, err := authenticatedProfileID(ctx); err != nil {
+		return nil, err
+	}
+	if req == nil {
+		req = &tqdpb.ListFollowedAdministrativeUnitsRequest{}
+	}
+	resp, err := h.locationUsecase.ListFollowedAdministrativeUnits(ctx, req.GetPage(), req.GetSize())
 	if err != nil {
 		return nil, h.handleError(err)
 	}
@@ -844,6 +904,10 @@ func (h *LocationHandler) AdminSyncAreaFromGeometry(ctx context.Context, req *tq
 
 func (h *LocationHandler) handleError(err error) error {
 	switch {
+	case errors.Is(err, usecase.ErrUnauthenticated):
+		return status.Error(codes.Unauthenticated, "authentication is required")
+	case errors.Is(err, usecase.ErrInvalidCompositeID):
+		return status.Error(codes.InvalidArgument, "compositeId is invalid")
 	case errors.Is(err, usecase.ErrProvinceNotFound):
 		return status.Error(codes.NotFound, "province not found")
 	case errors.Is(err, usecase.ErrWardNotFound):

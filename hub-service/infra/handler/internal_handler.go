@@ -20,6 +20,7 @@ type InternalHandler struct {
 	InteractiveEventRepo repo.IInteractiveEventRepo
 	UpdateUsecase        _usecase.IUpdateDataUsecase
 	KeywordSearchUsecase _usecase.IKeywordSearchUsecase
+	SearchLatencyUsecase _usecase.ISearchLatencyUsecase
 }
 
 func NewInternalHandler(
@@ -28,6 +29,7 @@ func NewInternalHandler(
 	interactiveEventRepo repo.IInteractiveEventRepo,
 	UpdateUsecase _usecase.IUpdateDataUsecase,
 	keywordSearchUsecase _usecase.IKeywordSearchUsecase,
+	searchLatencyUsecase _usecase.ISearchLatencyUsecase,
 ) *InternalHandler {
 	return &InternalHandler{
 		locationUsecase:      locationUsecase,
@@ -35,6 +37,7 @@ func NewInternalHandler(
 		InteractiveEventRepo: interactiveEventRepo,
 		UpdateUsecase:        UpdateUsecase,
 		KeywordSearchUsecase: keywordSearchUsecase,
+		SearchLatencyUsecase: searchLatencyUsecase,
 	}
 }
 
@@ -180,4 +183,23 @@ func (h *InternalHandler) TrackKeywordSearch(
 		return nil, status.Errorf(codes.Internal, errDTO.Message)
 	}
 	return &hubpb.TrackKeywordSearchResponse{Success: true}, nil
+}
+
+// TrackSearchLatency nhận latency API search có text từ service con, buffer rồi flush DB.
+func (h *InternalHandler) TrackSearchLatency(
+	ctx context.Context,
+	req *hubpb.TrackSearchLatencyRequest,
+) (*hubpb.TrackSearchLatencyResponse, error) {
+	if h.SearchLatencyUsecase == nil {
+		return &hubpb.TrackSearchLatencyResponse{Success: true}, nil
+	}
+	if errDTO := h.SearchLatencyUsecase.Track(ctx, &dto.TrackSearchLatencyRequest{
+		Method:     req.GetMethod(),
+		Path:       req.GetPath(),
+		Service:    req.GetService(),
+		DurationMs: req.GetDurationMs(),
+	}); errDTO != nil {
+		return nil, status.Errorf(codes.Internal, errDTO.Message)
+	}
+	return &hubpb.TrackSearchLatencyResponse{Success: true}, nil
 }

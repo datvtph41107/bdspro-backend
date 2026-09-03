@@ -25,6 +25,8 @@ var (
 	ErrInvalidCoordinate  = errors.New("invalid coordinate")
 	ErrLocationCodeExists = errors.New("code already exists")
 	ErrLocationIDExists   = errors.New("id already exists")
+	ErrInvalidCompositeID = errors.New("invalid compositeId")
+	ErrUnauthenticated    = errors.New("authentication is required")
 )
 
 type LocationUsecase struct {
@@ -361,6 +363,57 @@ func (u *LocationUsecase) AdminListWards(ctx context.Context, req *dto.AdminList
 
 func (u *LocationUsecase) ClientListAdministrativeUnits(ctx context.Context, req *dto.ListAdministrativeUnitsRequest) (*dto.ListAdministrativeUnitsResponse, error) {
 	return u.listAdministrativeUnits(ctx, req)
+}
+
+func (u *LocationUsecase) FollowAdministrativeUnit(ctx context.Context, compositeID uint64) error {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return ErrUnauthenticated
+	}
+	if _, _, err := _utils.DecodeLocationID(compositeID); err != nil {
+		return ErrInvalidCompositeID
+	}
+	if _, _, err := u.AdminGetAdministrativeUnitByCompositeId(ctx, compositeID); err != nil {
+		return err
+	}
+	return u.repo.FollowAdministrativeUnit(ctx, userID, compositeID)
+}
+
+func (u *LocationUsecase) UnfollowAdministrativeUnit(ctx context.Context, compositeID uint64) error {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return ErrUnauthenticated
+	}
+	if _, _, err := _utils.DecodeLocationID(compositeID); err != nil {
+		return ErrInvalidCompositeID
+	}
+	return u.repo.UnfollowAdministrativeUnit(ctx, userID, compositeID)
+}
+
+func (u *LocationUsecase) ListFollowedAdministrativeUnits(ctx context.Context, page, size uint32) (*dto.ListAdministrativeUnitsResponse, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, ErrUnauthenticated
+	}
+	if size == 0 {
+		size = 20
+	}
+	if size > 100 {
+		size = 100
+	}
+	offset := 0
+	if page >= 1 {
+		offset = int(page) * int(size)
+	}
+	ids, total, err := u.repo.ListFollowedAdministrativeUnitIDs(ctx, userID, offset, int(size))
+	if err != nil {
+		return nil, fmt.Errorf("list followed administrative units: %w", err)
+	}
+	items, err := u.unitsByCompositeIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.ListAdministrativeUnitsResponse{Data: items, Total: total}, nil
 }
 
 func (u *LocationUsecase) AdminCreateProvince(ctx context.Context, req *dto.ProvinceDTO) (*dto.ProvinceDTO, error) {
@@ -812,6 +865,15 @@ func (u *LocationUsecase) listAdministrativeUnits(ctx context.Context, req *dto.
 	}
 	req.Pagable.Normalize()
 
+	if len(req.CompositeIDs) > 0 {
+		items, err := u.unitsByCompositeIDs(ctx, req.CompositeIDs)
+		if err != nil {
+			return nil, err
+		}
+		pageItems, total := paginateAdministrativeUnits(items, req.GetOffset(), req.GetLimit())
+		return &dto.ListAdministrativeUnitsResponse{Data: pageItems, Total: total}, nil
+	}
+
 	refs, total, err := u.repo.ListAdministrativeUnitRefs(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("list administrative units: %w", err)
@@ -855,6 +917,90 @@ func (u *LocationUsecase) listAdministrativeUnits(ctx context.Context, req *dto.
 		Data:  items,
 		Total: total,
 	}, nil
+}
+
+func paginateAdministrativeUnits(items []*dto.AdministrativeUnitListItem, offset, limit int) ([]*dto.AdministrativeUnitListItem, int64) {
+	total := int64(len(items))
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= len(items) {
+		return []*dto.AdministrativeUnitListItem{}, total
+	}
+	end := len(items)
+	if limit > 0 && offset+limit < end {
+		end = offset + limit
+	}
+	return items[offset:end], total
+}
+
+func (u *LocationUsecase) unitsByCompositeIDs(ctx context.Context, ids []uint64) ([]*dto.AdministrativeUnitListItem, error) {
+	provinceIDs := make([]uint64, 0, len(ids))
+	wardIDs := make([]uint64, 0, len(ids))
+	seenProvince := make(map[uint64]struct{}, len(ids))
+	seenWard := make(map[uint64]struct{}, len(ids))
+	type decoded struct {
+		kind   uint32
+		source uint64
+	}
+	order := make([]decoded, 0, len(ids))
+	for _, id := range ids {
+		sourceID, kind, err := _utils.DecodeLocationID(id)
+		if err != nil {
+			continue
+		}
+		order = append(order, decoded{kind: kind, source: sourceID})
+		switch kind {
+		case _utils.LocationIDKindProvince:
+			if _, ok := seenProvince[sourceID]; ok {
+				continue
+			}
+			seenProvince[sourceID] = struct{}{}
+			provinceIDs = append(provinceIDs, sourceID)
+		case _utils.LocationIDKindWard:
+			if _, ok := seenWard[sourceID]; ok {
+				continue
+			}
+			seenWard[sourceID] = struct{}{}
+			wardIDs = append(wardIDs, sourceID)
+		}
+	}
+
+	provinces, err := u.repo.GetProvincesByIDs(ctx, provinceIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get provinces by ids: %w", err)
+	}
+	wards, err := u.repo.GetWardsByIDs(ctx, wardIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get wards by ids: %w", err)
+	}
+	provinceByID := make(map[uint64]*domain.Province, len(provinces))
+	for _, p := range provinces {
+		if p != nil {
+			provinceByID[p.ID] = p
+		}
+	}
+	wardByID := make(map[uint64]*domain.Ward, len(wards))
+	for _, w := range wards {
+		if w != nil {
+			wardByID[w.ID] = w
+		}
+	}
+
+	items := make([]*dto.AdministrativeUnitListItem, 0, len(order))
+	for _, item := range order {
+		switch item.kind {
+		case _utils.LocationIDKindProvince:
+			if p := provinceByID[item.source]; p != nil {
+				items = append(items, &dto.AdministrativeUnitListItem{Province: u.toProvinceDTO(p)})
+			}
+		case _utils.LocationIDKindWard:
+			if w := wardByID[item.source]; w != nil {
+				items = append(items, &dto.AdministrativeUnitListItem{Ward: u.toWardDTO(w)})
+			}
+		}
+	}
+	return items, nil
 }
 
 func (u *LocationUsecase) toProvinceDTO(p *domain.Province) *dto.ProvinceDTO {

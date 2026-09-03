@@ -185,6 +185,27 @@ service LocationService {
             get: "/v2/tqd/client/administrative-units"
         };
     }
+
+    // Follow đơn vị hành chính theo compositeId (cần đăng nhập).
+    rpc FollowAdministrativeUnit(FollowAdministrativeUnitRequest) returns (FollowAdministrativeUnitResponse) {
+        option (google.api.http) = {
+            post: "/v2/tqd/client/followed-administrative-units/{compositeId}"
+        };
+    }
+
+    // Bỏ follow — xóa cứng bản ghi (SQL DELETE).
+    rpc UnfollowAdministrativeUnit(FollowAdministrativeUnitRequest) returns (FollowAdministrativeUnitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/tqd/client/followed-administrative-units/{compositeId}"
+        };
+    }
+
+    // Danh sách đơn vị hành chính user đang follow.
+    rpc ListFollowedAdministrativeUnits(ListFollowedAdministrativeUnitsRequest) returns (ListAdministrativeUnitsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/followed-administrative-units"
+        };
+    }
     
     // Client: danh sách địa bàn lân cận (phường/xã) theo compositeId
     rpc ClientListAdministrativeUnitNeighbors(ClientListAdministrativeUnitNeighborsRequest) returns (ClientListAdministrativeUnitNeighborsResponse) {
@@ -380,6 +401,22 @@ message ClientListAdministrativeUnitsRequest {
     string search = 3;
     uint64 planningProjectId = 4;
     string sort = 5;
+    // compositeIds CSV public id, ví dụ "131,1422" ({sourceId}{1=tỉnh|2=phường}).
+    string compositeIds = 6;
+}
+
+message FollowAdministrativeUnitRequest {
+    uint64 compositeId = 1;
+}
+
+message FollowAdministrativeUnitResponse {
+    bool followed = 1;
+    uint64 compositeId = 2;
+}
+
+message ListFollowedAdministrativeUnitsRequest {
+    uint32 page = 1;
+    uint32 size = 2;
 }
 
 message AdminDeleteProvinceRequest {

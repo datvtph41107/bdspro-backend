@@ -3,6 +3,7 @@ package handler_grpc
 import (
 	"context"
 	"strings"
+	"time"
 
 	"common/injection"
 	"pb/clients"
@@ -96,12 +97,17 @@ func (h *DiscoveryGrpcHandler) SearchDiscovery(
 	}
 
 	request := h.mapper.FromProtoSearchRequest(input)
+	q := strings.TrimSpace(request.Query)
 
-	if q := strings.TrimSpace(request.Query); q != "" && h.hubClient != nil {
+	start := time.Now()
+	response, err := h.service.Search(ctx, request)
+	durationMs := time.Since(start).Milliseconds()
+
+	if q != "" && h.hubClient != nil {
 		h.hubClient.TrackKeywordSearch(ctx, q, "tqd")
+		h.hubClient.TrackSearchLatency(ctx, "GET", "/v2/tqd/discovery/search", "tqd", durationMs)
 	}
 
-	response, err := h.service.Search(ctx, request)
 	if err != nil {
 		return nil, discoveryError(err, "search")
 	}
