@@ -1,8 +1,7 @@
 package clients
 
 import (
-	"common"
-	"context"
+	"common/tcp/connect"
 	"fmt"
 	"log"
 	hubpb "pb/types/hub"
@@ -12,9 +11,7 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_middleware "common/middleware"
-
-	"google.golang.org/grpc"
+	"context"
 )
 
 type HubGrpcClient struct {
@@ -26,32 +23,21 @@ type HubGrpcClient struct {
 }
 
 func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
-	hubClient := &HubGrpcClient{Client: nil, InternalClient: nil}
-	go func() {
-		name := "hub"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
+	hubClient := &HubGrpcClient{}
+	name := "hub"
+	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8280", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial hub service: %v", err)
-		}
+	conn, err := connect.DialNamed(name, addr)
+	if err != nil {
+		log.Printf("failed to dial hub service at %s: %v (will retry via ConnectParams)", addr, err)
+		return hubClient
+	}
 
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Monitor connection status
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		hubClient.Client = hubpb.NewLocationServiceClient(conn)
-		hubClient.InternalClient = hubpb.NewHubInternalServiceClient(conn)
-		hubClient.LocationV2Client = hubpb.NewLocationV2ServiceClient(conn)
-		hubClient.ApiKeyClient = hubpb.NewApiKeyServiceClient(conn)
-		hubClient.UserGuideClient = hubpb.NewUserGuideServiceClient(conn)
-	}()
+	hubClient.Client = hubpb.NewLocationServiceClient(conn)
+	hubClient.InternalClient = hubpb.NewHubInternalServiceClient(conn)
+	hubClient.LocationV2Client = hubpb.NewLocationV2ServiceClient(conn)
+	hubClient.ApiKeyClient = hubpb.NewApiKeyServiceClient(conn)
+	hubClient.UserGuideClient = hubpb.NewUserGuideServiceClient(conn)
 	return hubClient
 }
 

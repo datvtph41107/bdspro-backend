@@ -30,6 +30,7 @@ type CreatePoiRequest struct {
 	Tags        []string `json:"tags"`
 	AmenityIDs  []uint64 `json:"amenityIds"`
 	ParcelID    uint64   `json:"parcelId"`
+	ViewInZ     uint32   `json:"viewInZ"`
 }
 
 // UpdatePoiRequest represents request to update POI
@@ -51,6 +52,7 @@ type UpdatePoiRequest struct {
 	Tags        []string `json:"tags"`
 	AmenityIDs  []uint64 `json:"amenityIds"`
 	ParcelID    *uint64  `json:"parcelId"`
+	ViewInZ     *uint32  `json:"viewInZ"`
 }
 
 // PoiFilter represents filter for listing POIs
@@ -137,6 +139,7 @@ type PoiResponse struct {
 	CreatedBy   uint64          `json:"createdBy"`
 	UpdatedBy   uint64          `json:"updatedBy"`
 	ParcelID    uint64          `json:"parcelId"`
+	ViewInZ     uint32          `json:"viewInZ"`
 }
 
 // FromDomain converts domain POI to response DTO
@@ -169,6 +172,10 @@ func (r *PoiResponse) FromDomain(p *domain.POI) {
 	r.CreatedBy = p.CreatedBy
 	r.UpdatedBy = p.UpdatedBy
 	r.ParcelID = p.ParcelID
+	r.ViewInZ = p.ViewInZ
+	if r.ViewInZ == 0 {
+		r.ViewInZ = 16
+	}
 
 	// Parse images from JSON
 	if p.ImagesJSON != "" {
@@ -183,10 +190,11 @@ func (r *PoiResponse) FromDomain(p *domain.POI) {
 	// Map category if exists
 	if p.Category != nil {
 		r.Category = &PoiCategoryDTO{
-			ID:   p.Category.ID,
-			Code: p.Category.Code,
-			Name: p.Category.Name,
-			Icon: p.Category.Icon,
+			ID:    p.Category.ID,
+			Code:  p.Category.Code,
+			Name:  p.Category.Name,
+			Icon:  p.Category.Icon,
+			Color: p.Category.Color,
 		}
 	}
 }
@@ -201,10 +209,11 @@ type ListPoisResponse struct {
 
 // PoiCategoryDTO represents a simplified POI category DTO
 type PoiCategoryDTO struct {
-	ID   uint64 `json:"id"`
-	Code string `json:"code"`
-	Name string `json:"name"`
-	Icon string `json:"icon"`
+	ID    uint64 `json:"id"`
+	Code  string `json:"code"`
+	Name  string `json:"name"`
+	Icon  string `json:"icon"`
+	Color string `json:"color"`
 }
 
 type OpenHourDTO struct {

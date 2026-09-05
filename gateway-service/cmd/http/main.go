@@ -39,6 +39,9 @@ import (
 
 // publicRoutes danh sách các route không cần authentication
 var publicRoutes = []string{
+	// Internal discovery (service ↔ gateway, no JWT)
+	"/internal/services",
+
 	// BDS Pro public routes
 	"/v1/bdspro/v1/user/post",
 	"/v1/bdspro/v1/user/post/global",
@@ -175,6 +178,7 @@ var publicRoutes = []string{
 	"/v2/tqd/client/provinces",
 	"/v2/crm/public",
 	"/v2/tqd/client/administrative-units",
+	"/v2/tqd/poi/categories/icons",
 }
 
 var tempRoutes = []string{
@@ -529,6 +533,9 @@ var HttpCmd = &cobra.Command{
 		r.Any("/v2/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
 		r.Any("/v2.1/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
 		r.Any("/v3/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
+
+		// Upstream discovery cho microservice reconnect khi start
+		service.RegisterInternalServicesRoute(r)
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")

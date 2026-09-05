@@ -37,6 +37,7 @@ type Row struct {
 	MapNumber      string  `gorm:"column:map_number"`
 	LandNumber     string  `gorm:"column:land_number"`
 	AreaSqm        float64 `gorm:"column:area_sqm"`
+	ParcelID       uint64  `gorm:"column:parcel_id"`
 	Relationship   string  `gorm:"column:relationship"`
 	DistanceMeters float64 `gorm:"column:distance_meters"`
 	Score          float64 `gorm:"column:score"`
@@ -92,6 +93,9 @@ func Build(
 	}
 	if row.AreaSqm > 0 {
 		attributes["areaSqm"] = row.AreaSqm
+	}
+	if row.ParcelID > 0 {
+		attributes["parcelId"] = row.ParcelID
 	}
 	if row.DistanceMeters > 0 {
 		attributes["distanceMeters"] = row.DistanceMeters

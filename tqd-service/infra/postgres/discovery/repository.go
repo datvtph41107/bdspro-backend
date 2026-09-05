@@ -1012,19 +1012,77 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			WHERE pp.id = ? AND pp.deleted_at IS NULL AND pp.client_view = true
 			LIMIT 1`, numericID).Scan(&row).Error
 	case domain.EntityKindPOI:
+		// Nếu POI gắn parcel_id: trả geometry thửa (MultiPolygon) + bounds/centroid từ parcel.
+		// Không có parcel/geometry: fallback Point của POI.
 		err = r.db.WithContext(ctx).Raw(`
-			SELECT p.id::text AS id,p.name AS title,COALESCE(p.address,'') AS subtitle,
-			       COALESCE(p.description,'') AS description,COALESCE(p.address,'') AS address,
-			       '' AS province,'' AS province_code,'' AS ward,'' AS ward_code,
-			       'Point' AS geometry_type,
-			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS center_lat,
-			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS center_lon,
-			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS min_lon,
-			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS min_lat,
-			       COALESCE(ST_X(p.geom), p.longitude, 0)::float8 AS max_lon,
-			       COALESCE(ST_Y(p.geom), p.latitude, 0)::float8 AS max_lat,
-			       '' AS geo_json,50::float8 AS score
+			SELECT p.id::text AS id,
+			       p.name AS title,
+			       COALESCE(p.address, '') AS subtitle,
+			       COALESCE(p.description, '') AS description,
+			       COALESCE(NULLIF(p.address, ''), NULLIF(pi.address_text, ''), '') AS address,
+			       COALESCE(prov.full_name, '') AS province,
+			       COALESCE(pi.province_code, '') AS province_code,
+			       COALESCE(w.full_name, '') AS ward,
+			       COALESCE(pi.ward_code, '') AS ward_code,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN GeometryType(parcel.geometry)
+			         ELSE 'Point'
+			       END AS geometry_type,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN COALESCE(
+			           ST_Y(parcel.centroid_geom),
+			           NULLIF(parcel.lat, 0),
+			           ST_Y(ST_PointOnSurface(parcel.geometry))
+			         )
+			         ELSE COALESCE(ST_Y(p.geom), p.latitude, 0)
+			       END::float8 AS center_lat,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN COALESCE(
+			           ST_X(parcel.centroid_geom),
+			           NULLIF(parcel.lon, 0),
+			           ST_X(ST_PointOnSurface(parcel.geometry))
+			         )
+			         ELSE COALESCE(ST_X(p.geom), p.longitude, 0)
+			       END::float8 AS center_lon,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN ST_XMin(Box2D(parcel.geometry))
+			         ELSE COALESCE(ST_X(p.geom), p.longitude, 0)
+			       END::float8 AS min_lon,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN ST_YMin(Box2D(parcel.geometry))
+			         ELSE COALESCE(ST_Y(p.geom), p.latitude, 0)
+			       END::float8 AS min_lat,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN ST_XMax(Box2D(parcel.geometry))
+			         ELSE COALESCE(ST_X(p.geom), p.longitude, 0)
+			       END::float8 AS max_lon,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL THEN ST_YMax(Box2D(parcel.geometry))
+			         ELSE COALESCE(ST_Y(p.geom), p.latitude, 0)
+			       END::float8 AS max_lat,
+			       CASE
+			         WHEN parcel.geometry IS NOT NULL
+			           THEN ST_AsGeoJSON(ST_Simplify(parcel.geometry, 0.000002), 6)
+			         WHEN p.geom IS NOT NULL
+			           THEN ST_AsGeoJSON(p.geom, 6)
+			         ELSE ''
+			       END AS geo_json,
+			       COALESCE(pi.map_number, '') AS map_number,
+			       COALESCE(pi.land_number, '') AS land_number,
+			       COALESCE(
+			         NULLIF(pi.total_area_sqm, 0),
+			         CASE WHEN parcel.geometry IS NOT NULL THEN ST_Area(parcel.geometry::geography) ELSE 0 END,
+			         0
+			       ) AS area_sqm,
+			       COALESCE(p.parcel_id, 0) AS parcel_id,
+			       50::float8 AS score
 			FROM pois p
+			LEFT JOIN parcels parcel
+			  ON parcel.id = p.parcel_id
+			 AND parcel.deleted_at IS NULL
+			LEFT JOIN qh_parcel_info pi ON pi.parcel_id = parcel.id
+			LEFT JOIN province_v2 prov ON prov.code = pi.province_code
+			LEFT JOIN ward_v2 w ON w.code = pi.ward_code
 			WHERE p.id = ? AND p.deleted_at IS NULL
 			LIMIT 1`, numericID).Scan(&row).Error
 	default:

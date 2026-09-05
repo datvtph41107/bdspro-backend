@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"strings"
 
@@ -14,8 +13,8 @@ import (
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
 
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // POIRepo implements IPOIRepo
@@ -38,25 +37,27 @@ func (r *POIRepo) BeforeSave(ctx context.Context, id *uint64, entity *domain.POI
 	}
 
 	if entity.Address != "" {
-		entity.AdrSearch = _utils.CleanSearchText(entity.Address)
+		entity.AdrSearch = strings.ToLower(_utils.CleanSearchText(entity.Address))
+	} else {
+		entity.AdrSearch = ""
 	}
 
-	if entity.Code == "" {
-		var count int64
-		r.GetDB(ctx).Model(&domain.POI{}).Count(&count)
-		entity.Code = fmt.Sprintf("POI%06d", count+1)
-	}
+	// if entity.Code == "" {
+	// 	var count int64
+	// 	r.GetDB(ctx).Model(&domain.POI{}).Count(&count)
+	// 	entity.Code = fmt.Sprintf("POI%06d", count+1)
+	// }
 
 	// Check if code already exists (for new records or code change)
-	if id == nil || (id != nil && entity.Code != "") {
-		var existing domain.POI
-		err := r.GetDB(ctx).Where("code = ? AND deleted_at IS NULL", entity.Code).First(&existing).Error
-		if err == nil {
-			if id == nil || existing.ID != *id {
-				return fmt.Errorf("poi with code %s already exists", entity.Code)
-			}
-		}
-	}
+	// if id == nil || (id != nil && entity.Code != "") {
+	// 	var existing domain.POI
+	// 	err := r.GetDB(ctx).Where("id = ? AND deleted_at IS NULL", entity.ID).First(&existing).Error
+	// 	if err == nil {
+	// 		if id == nil || existing.ID != *id {
+	// 			return fmt.Errorf("poi with code %s already exists", entity.Code)
+	// 		}
+	// 	}
+	// }
 
 	return nil
 }
@@ -153,18 +154,41 @@ func (r *POIRepo) Delete(ctx context.Context, id uint64) error {
 
 // List lists POIs with filters
 func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI, int64, error) {
-	var pois []domain.POI
-	var total int64
+	var (
+		pois  []domain.POI
+		total int64
+	)
 
+	g, gctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		return r.buildPoiListQuery(gctx, filter).Count(&total).Error
+	})
+
+	g.Go(func() error {
+		return r.buildPoiListQuery(gctx, filter).
+			Order(poiListOrder(filter)).
+			Preload("Category").
+			Offset(filter.GetOffset()).
+			Limit(filter.GetLimit()).
+			Find(&pois).Error
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, 0, err
+	}
+	return pois, total, nil
+}
+
+func (r *POIRepo) buildPoiListQuery(ctx context.Context, filter *dto.PoiFilter) *gorm.DB {
 	query := r.GetDB(ctx).Model(&domain.POI{}).Where("deleted_at IS NULL")
 
-	// Apply search filter — địa chỉ dùng adr_search (CleanSearchText) giống parcel.
+	// Apply search filter — chỉ search adr_search (CleanSearchText).
 	if filter.Search != "" {
-		rawPattern := "%" + strings.ToLower(strings.TrimSpace(filter.Search)) + "%"
 		adrPattern := "%" + strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(filter.Search))) + "%"
 		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(COALESCE(code,'')) LIKE ? OR LOWER(COALESCE(adr_search,'')) LIKE ?",
-			rawPattern, rawPattern, adrPattern,
+			"adr_search <> '' AND adr_search LIKE ?",
+			adrPattern,
 		)
 	}
 
@@ -195,22 +219,7 @@ func (r *POIRepo) List(ctx context.Context, filter *dto.PoiFilter) ([]domain.POI
 		query = query.Where("rating <= ?", *filter.MaxRating)
 	}
 
-	// Count total
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Apply sorting
-	query = query.Order(poiListOrder(filter))
-
-	// Apply pagination
-	err := query.
-		Preload("Category").
-		Offset(filter.GetOffset()).
-		Limit(filter.GetLimit()).
-		Find(&pois).Error
-
-	return pois, total, err
+	return query
 }
 
 func (r *POIRepo) ListPublic(ctx context.Context, req *dto.PublicPoiListRequest) ([]domain.POI, error) {
@@ -220,42 +229,56 @@ func (r *POIRepo) ListPublic(ctx context.Context, req *dto.PublicPoiListRequest)
 	req.Normalize()
 
 	search := strings.TrimSpace(req.Search)
-	query := r.GetDB(ctx).Model(&domain.POI{}).
-		Where("deleted_at IS NULL AND is_active = ?", true)
+	limit := req.GetLimit()
+	if limit <= 0 {
+		limit = 20
+	}
 
-	if search != "" {
-		rawPattern := "%" + strings.ToLower(search) + "%"
-		prefixPattern := strings.ToLower(search) + "%"
-		adrPattern := "%" + strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(search))) + "%"
-		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(COALESCE(code,'')) LIKE ? OR LOWER(COALESCE(adr_search,'')) LIKE ?",
-			rawPattern, rawPattern, adrPattern,
-		)
-		if req.IsSuggest() {
-			query = query.Clauses(clause.OrderBy{
-				Expression: clause.Expr{
-					SQL: `CASE
-						WHEN LOWER(name) = LOWER(?) THEN 0
-						WHEN LOWER(name) LIKE ? THEN 1
-						WHEN LOWER(COALESCE(code,'')) = LOWER(?) THEN 2
-						ELSE 3
-					END, is_featured DESC, rating DESC, id DESC`,
-					Vars: []interface{}{search, prefixPattern, search},
-				},
-			})
+	// Không search: browse featured (không đi GIN).
+	if search == "" {
+		var pois []domain.POI
+		q := r.GetDB(ctx).Model(&domain.POI{}).
+			Where("deleted_at IS NULL AND is_active = ?", true).
+			Order("is_featured DESC, rating DESC, id DESC").
+			Limit(limit)
+		if !req.IsSuggest() {
+			q = q.Offset(req.GetOffset())
 		}
+		err := q.Find(&pois).Error
+		return pois, err
 	}
 
-	if !req.IsSuggest() || search == "" {
-		query = query.Order("is_featured DESC, rating DESC, id DESC")
+	cleaned := strings.ToLower(strings.TrimSpace(_utils.CleanSearchText(search)))
+	// pg_trgm hiệu quả từ ~3 ký tự; ngắn hơn dễ seq/pkey scan.
+	if len(cleaned) < 3 {
+		return []domain.POI{}, nil
 	}
 
+	// Tránh ORDER BY id DESC trên query LIKE — planner chọn Index Scan Backward pkey
+	// rồi filter từng row (cost ~680k). Thay bằng subquery LIMIT trên GIN trước,
+	// rồi join lấy full row (sort nếu cần chỉ trên ≤ LIMIT rows).
+	adrPattern := "%" + cleaned + "%"
+	offset := 0
 	if !req.IsSuggest() {
-		query = query.Offset(req.GetOffset())
+		offset = req.GetOffset()
 	}
+
+	sql := `
+SELECT p.*
+FROM pois p
+INNER JOIN (
+	SELECT id
+	FROM pois
+	WHERE deleted_at IS NULL
+	  AND is_active = TRUE
+	  AND COALESCE(adr_search, '') <> ''
+	  AND LOWER(adr_search) LIKE ?
+	OFFSET ?
+	LIMIT ?
+) m ON m.id = p.id`
 
 	var pois []domain.POI
-	err := query.Limit(req.GetLimit()).Find(&pois).Error
+	err := r.GetDB(ctx).Raw(sql, adrPattern, offset, limit).Scan(&pois).Error
 	return pois, err
 }
 

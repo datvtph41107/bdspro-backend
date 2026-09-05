@@ -1,10 +1,8 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
+	"common/tcp/connect"
 	"context"
-	"fmt"
 	"log"
 	"pb/clients"
 	organizationpb "pb/types/organization"
@@ -12,9 +10,7 @@ import (
 	"user/internal/dto"
 
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -25,15 +21,19 @@ type OrganizationProviderClient struct {
 }
 
 func NewOrganizationProviderClient() *OrganizationProviderClient {
-	url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "organization")
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s%s", url, viper.GetString("grpc.organization.host")),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-	)
+	name := "organization"
+	port := viper.GetString("grpc.organization.host")
+	if port == "" {
+		port = connect.DefaultPort(name)
+	}
+	addr := connect.AddressOf(env.ENV_RUNTIME, name, port)
+
+	conn, err := connect.DialNamed(name, addr)
 	if err != nil {
-		log.Fatalf("Failed to connect to organization role service: %v", err)
+		log.Printf("Failed to connect to organization role service at %s: %v", addr, err)
+		return &OrganizationProviderClient{
+			OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
+		}
 	}
 
 	return &OrganizationProviderClient{
@@ -49,6 +49,9 @@ func (c *OrganizationProviderClient) SwitchOrganization(ctx context.Context, org
 }
 
 func (c *OrganizationProviderClient) GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error) {
+	if c.roleClient == nil {
+		return nil, status.Errorf(codes.Unavailable, "organization role client not available")
+	}
 	page := uint32(1)
 	size := uint32(100)
 	resp, err := c.roleClient.GetRoles(ctx, &organizationpb.GetRolesRequest{

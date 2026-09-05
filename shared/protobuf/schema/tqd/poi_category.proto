@@ -13,7 +13,7 @@ service PoiCategoryService {
   // Create a new POI category
   rpc CreatePoiCategory(PoiCategory) returns (PoiCategory) {
     option (google.api.http) = {
-      post: "/v2/tqd/poi/categories"
+      post: "/v2/tqd/admin/poi/categories"
       body: "*"
     };
   }
@@ -53,6 +53,13 @@ service PoiCategoryService {
       get: "/v2/tqd/poi/categories/tree"
     };
   }
+
+  // List available icons for POI category (name + full path)
+  rpc ListPoiCategoryIcons(google.protobuf.Empty) returns (ListPoiCategoryIconsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/poi/categories/icons"
+    };
+  }
 }
 
 // PoiCategory message
@@ -71,12 +78,27 @@ message PoiCategory {
   string path = 12;
   string createdAt = 13;
   string updatedAt = 14;
+  string iconPath = 15; // URL đầy đủ của icon
 }
 
-// TreeNode for hierarchical structure
+// TreeNode for hierarchical structure (flat fields + children, same shape as list item)
 message PoiCategoryTreeNode {
-  PoiCategory data = 1;
-  repeated PoiCategoryTreeNode children = 2;
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string code = 4;
+  string icon = 5;
+  string color = 6;
+  bool isActive = 7;
+  uint32 sortOrder = 8;
+  uint64 parentId = 9;
+  uint32 level = 10;
+  uint32 poiCount = 11;
+  string path = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+  repeated PoiCategoryTreeNode children = 15;
+  string iconPath = 16; // URL đầy đủ của icon
 }
 
 // Request/Response messages
@@ -84,7 +106,7 @@ message ListPoiCategoriesRequest {
   uint32 page = 1;
   uint32 size = 2;
   string search = 3;
-  bool isActive = 4;
+  optional bool isActive = 4;
   uint64 parentId = 5;
   uint32 level = 6;
 }
@@ -92,8 +114,21 @@ message ListPoiCategoriesRequest {
 message ListPoiCategoriesResponse {
   repeated PoiCategory data = 1;
   int64 total = 2;
+  uint32 page = 3;
+  uint32 size = 4;
 }
 
 message GetPoiCategoryTreeResponse {
   repeated PoiCategoryTreeNode data = 1;
+}
+
+message PoiCategoryIcon {
+  string name = 1; // giá trị lưu vào poi_categories.icon
+  string path = 2; // URL đầy đủ để hiển thị
+  repeated uint64 categoryIds = 3; // các category dùng chung icon
+  string color = 4; // màu của category
+}
+
+message ListPoiCategoryIconsResponse {
+  repeated PoiCategoryIcon data = 1;
 }

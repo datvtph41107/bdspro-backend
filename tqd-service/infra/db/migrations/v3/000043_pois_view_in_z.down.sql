@@ -1,0 +1,2 @@
+ALTER TABLE pois
+    DROP COLUMN IF EXISTS view_in_z;

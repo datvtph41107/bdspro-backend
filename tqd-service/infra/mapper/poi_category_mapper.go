@@ -21,6 +21,7 @@ func (m *PoiCategoryMapper) ToResponse(pc *domain.PoiCategory) *dto.PoiCategoryR
 	}
 	resp := &dto.PoiCategoryResponse{}
 	resp.FromDomain(pc)
+	resp.IconPath = m.resolveIconPath(pc.Icon)
 	return resp
 }
 
@@ -31,6 +32,7 @@ func (m *PoiCategoryMapper) ToResponseList(categories []domain.PoiCategory) []dt
 	result := make([]dto.PoiCategoryResponse, len(categories))
 	for i, pc := range categories {
 		result[i].FromDomain(&pc)
+		result[i].IconPath = m.resolveIconPath(pc.Icon)
 	}
 	return result
 }
@@ -41,6 +43,7 @@ func (m *PoiCategoryMapper) ToTreeResponse(pc *domain.PoiCategory) *dto.PoiCateg
 	}
 	resp := &dto.PoiCategoryTreeResponse{}
 	resp.FromDomainTree(pc)
+	resp.IconPath = m.resolveIconPath(pc.Icon)
 	return resp
 }
 
@@ -51,6 +54,7 @@ func (m *PoiCategoryMapper) ToTreeResponseList(categories []domain.PoiCategory) 
 	result := make([]dto.PoiCategoryTreeResponse, len(categories))
 	for i, pc := range categories {
 		result[i].FromDomainTree(&pc)
+		result[i].IconPath = m.resolveIconPath(pc.Icon)
 	}
 	return result
 }
@@ -115,11 +119,19 @@ func (m *PoiCategoryMapper) ToDomainFromCreate(req *dto.CreatePoiCategoryRequest
 		Description: req.Description,
 		Icon:        req.Icon,
 		Color:       req.Color,
-		ParentID:    req.ParentID,
+		ParentID:    normalizeParentID(req.ParentID),
 		SortOrder:   req.SortOrder,
 		IsActive:    req.IsActive,
 		Level:       1, // Sẽ được tính toán lại trong repository
 	}, nil
+}
+
+// normalizeParentID: parent_id=0 không hợp lệ với FK → lưu NULL (root category).
+func normalizeParentID(parentID *uint64) *uint64 {
+	if parentID == nil || *parentID == 0 {
+		return nil
+	}
+	return parentID
 }
 
 func (m *PoiCategoryMapper) ToDomainFromUpdate(req *dto.UpdatePoiCategoryRequest, existing *domain.PoiCategory, userID uint64) (*domain.PoiCategory, error) {
@@ -168,7 +180,7 @@ func (m *PoiCategoryMapper) ToDomainFromUpdate(req *dto.UpdatePoiCategoryRequest
 		updated.Color = *req.Color
 	}
 	if req.ParentID != nil {
-		updated.ParentID = req.ParentID
+		updated.ParentID = normalizeParentID(req.ParentID)
 	}
 	if req.SortOrder != nil {
 		updated.SortOrder = *req.SortOrder
@@ -191,6 +203,7 @@ func (m *PoiCategoryMapper) ToProto(pc *domain.PoiCategory) *tqdpb.PoiCategory {
 		Description: pc.Description,
 		Code:        pc.Code,
 		Icon:        pc.Icon,
+		IconPath:    m.resolveIconPath(pc.Icon),
 		Color:       pc.Color,
 		IsActive:    pc.IsActive,
 		SortOrder:   uint32(pc.SortOrder),
@@ -208,12 +221,18 @@ func (m *PoiCategoryMapper) ToProtoFromResponse(resp *dto.PoiCategoryResponse) *
 		return nil
 	}
 
+	iconPath := resp.IconPath
+	if iconPath == "" {
+		iconPath = m.resolveIconPath(resp.Icon)
+	}
+
 	return &tqdpb.PoiCategory{
 		Id:          resp.ID,
 		Name:        resp.Name,
 		Description: resp.Description,
 		Code:        resp.Code,
 		Icon:        resp.Icon,
+		IconPath:    iconPath,
 		Color:       resp.Color,
 		IsActive:    resp.IsActive,
 		SortOrder:   uint32(resp.SortOrder),
@@ -276,7 +295,12 @@ func (m *PoiCategoryMapper) buildProtoTreeNode(category *domain.PoiCategory,
 
 	processed[category.ID] = true
 	node := &tqdpb.PoiCategoryTreeNode{
-		Data: m.ToProto(category),
+		Id:       category.ID,
+		Name:     category.Name,
+		Icon:     category.Icon,
+		IconPath: m.resolveIconPath(category.Icon),
+		Path:     category.Path,
+		PoiCount: uint32(category.POICount),
 	}
 
 	// Find children
@@ -296,9 +320,10 @@ func (m *PoiCategoryMapper) FromProto(proto *tqdpb.PoiCategory) (*dto.CreatePoiC
 		return nil, nil
 	}
 
-	parentID := proto.ParentId
-	if parentID == 0 {
-		parentID = 0
+	var parentID *uint64
+	if proto.ParentId > 0 {
+		id := proto.ParentId
+		parentID = &id
 	}
 
 	return &dto.CreatePoiCategoryRequest{
@@ -307,7 +332,7 @@ func (m *PoiCategoryMapper) FromProto(proto *tqdpb.PoiCategory) (*dto.CreatePoiC
 		Description: proto.Description,
 		Icon:        proto.Icon,
 		Color:       proto.Color,
-		ParentID:    &parentID,
+		ParentID:    parentID,
 		SortOrder:   int32(proto.SortOrder),
 		IsActive:    proto.IsActive,
 	}, nil
@@ -318,4 +343,13 @@ func (m *PoiCategoryMapper) uint64PtrToValue(ptr *uint64) uint64 {
 		return 0
 	}
 	return *ptr
+}
+
+func (m *PoiCategoryMapper) resolveIconPath(icon string) string {
+	return icon
+	// domainFile := ""
+	// if config.AppConfig != nil {
+	// 	domainFile = config.AppConfig.ConfigApp.Qhpro.DomainFile
+	// }
+	// return enums.ResolvePoiCategoryIconPath(domainFile, icon)
 }

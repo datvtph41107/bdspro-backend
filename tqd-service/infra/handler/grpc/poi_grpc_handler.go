@@ -73,6 +73,7 @@ func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 		Images:      req.Images,
 		Tags:        req.Tags,
 		ParcelID:    req.ParcelId,
+		ViewInZ:     req.ViewInZ,
 	}
 
 	// Call usecase
@@ -243,6 +244,9 @@ func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	if req.ParcelId != 0 {
 		updateReq.ParcelID = &req.ParcelId
 	}
+	if req.ViewInZ != 0 {
+		updateReq.ViewInZ = &req.ViewInZ
+	}
 	updateReq.IsActive = &req.IsActive
 	updateReq.IsFeatured = &req.IsFeatured
 
@@ -351,7 +355,7 @@ func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisReques
 
 // ListPublicPois public search POI — không COUNT, 1 query lấy data.
 // @Summary Public list/search POIs
-// @Description mode=suggest: autocomplete theo name/code/adr_search. Không trả total.
+// @Description mode=suggest: autocomplete theo adr_search. Không trả total.
 // @Tags Poi
 // @Produce json
 // @Param search query string false "Từ khóa"

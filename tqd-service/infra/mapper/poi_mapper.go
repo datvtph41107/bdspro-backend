@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	_entity "common/domain/entity"
@@ -78,6 +79,10 @@ func (m *PoiMapper) ToDomainFromCreate(req *dto.CreatePoiRequest, userID uint64)
 	}
 
 	now := time.Now()
+	viewInZ := req.ViewInZ
+	if viewInZ == 0 {
+		viewInZ = 16
+	}
 	return &domain.POI{
 		BaseEntity: _entity.BaseEntity{
 			CreatedAt: &now,
@@ -107,6 +112,7 @@ func (m *PoiMapper) ToDomainFromCreate(req *dto.CreatePoiRequest, userID uint64)
 		CreatedBy:     userID,
 		UpdatedBy:     userID,
 		ParcelID:      req.ParcelID,
+		ViewInZ:       viewInZ,
 	}, nil
 }
 
@@ -147,6 +153,8 @@ func (m *PoiMapper) ToDomainFromUpdate(req *dto.UpdatePoiRequest, existing *doma
 		CreatedBy:     existing.CreatedBy,
 		UpdatedBy:     userID,
 		ParcelID:      existing.ParcelID,
+		ViewInZ:       existing.ViewInZ,
+		AdrSearch:     existing.AdrSearch,
 	}
 
 	// Update only provided fields
@@ -204,6 +212,16 @@ func (m *PoiMapper) ToDomainFromUpdate(req *dto.UpdatePoiRequest, existing *doma
 	if req.ParcelID != nil {
 		updated.ParcelID = *req.ParcelID
 	}
+	if req.ViewInZ != nil && *req.ViewInZ > 0 {
+		updated.ViewInZ = *req.ViewInZ
+	}
+
+	// Luôn regenerate adr_search từ address (lowercase, bỏ dấu, bỏ ký tự đặc biệt).
+	if updated.Address != "" {
+		updated.AdrSearch = strings.ToLower(_utils.CleanSearchText(updated.Address))
+	} else {
+		updated.AdrSearch = ""
+	}
 
 	return updated, nil
 }
@@ -240,6 +258,7 @@ func (m *PoiMapper) ToProto(p *domain.POI) *tqdpb.Poi {
 		Latitude:    p.Latitude,
 		Longitude:   p.Longitude,
 		CategoryId:  p.CategoryID,
+		Category:    m.categoryToProto(p.Category),
 		Rating:      p.Rating,
 		ReviewCount: p.ReviewCount,
 		IsVerified:  p.IsVerified,
@@ -255,6 +274,7 @@ func (m *PoiMapper) ToProto(p *domain.POI) *tqdpb.Poi {
 		CreatedBy:   p.CreatedBy,
 		UpdatedBy:   p.UpdatedBy,
 		ParcelId:    p.ParcelID,
+		ViewInZ:     normalizeViewInZ(p.ViewInZ),
 	}
 }
 
@@ -276,6 +296,7 @@ func (m *PoiMapper) ToProtoFromResponse(resp *dto.PoiResponse) *tqdpb.Poi {
 		Latitude:    resp.Latitude,
 		Longitude:   resp.Longitude,
 		CategoryId:  resp.CategoryID,
+		Category:    m.categoryDTOToProto(resp.Category),
 		Rating:      resp.Rating,
 		ReviewCount: resp.ReviewCount,
 		IsVerified:  resp.IsVerified,
@@ -291,6 +312,7 @@ func (m *PoiMapper) ToProtoFromResponse(resp *dto.PoiResponse) *tqdpb.Poi {
 		CreatedBy:   resp.CreatedBy,
 		UpdatedBy:   resp.UpdatedBy,
 		ParcelId:    resp.ParcelID,
+		ViewInZ:     normalizeViewInZ(resp.ViewInZ),
 	}
 }
 
@@ -343,9 +365,43 @@ func (m *PoiMapper) FromProto(proto *tqdpb.Poi) (*dto.CreatePoiRequest, error) {
 		Images:      proto.Images,
 		Tags:        proto.Tags,
 		ParcelID:    proto.ParcelId,
+		ViewInZ:     normalizeViewInZ(proto.ViewInZ),
 	}, nil
+}
+
+func normalizeViewInZ(v uint32) uint32 {
+	if v == 0 {
+		return 16
+	}
+	return v
 }
 
 func generatePoiCode() string {
 	return "ABCD"
+}
+
+func (m *PoiMapper) categoryToProto(c *domain.PoiCategory) *tqdpb.PoiCategory {
+	if c == nil {
+		return nil
+	}
+	return &tqdpb.PoiCategory{
+		Id:    c.ID,
+		Code:  c.Code,
+		Name:  c.Name,
+		Icon:  c.Icon,
+		Color: c.Color,
+	}
+}
+
+func (m *PoiMapper) categoryDTOToProto(c *dto.PoiCategoryDTO) *tqdpb.PoiCategory {
+	if c == nil {
+		return nil
+	}
+	return &tqdpb.PoiCategory{
+		Id:    c.ID,
+		Code:  c.Code,
+		Name:  c.Name,
+		Icon:  c.Icon,
+		Color: c.Color,
+	}
 }

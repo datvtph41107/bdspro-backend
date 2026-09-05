@@ -14,6 +14,7 @@ import (
 	"user/config"
 	"user/db"
 	"user/env"
+	user_infra_client "user/infra/client"
 	"user/wire"
 
 	_db "common/db"
@@ -36,6 +37,9 @@ var GrpcCmd = &cobra.Command{
 		config.LoadProperties()
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
+
+		// Hỏi gateway upstream nào đang up → dial + ConnectParams auto-reconnect
+		user_infra_client.BootstrapGRPCConnections(context.Background())
 
 		if _, err := _db.NewDB(); err != nil {
 			log.Fatalf("failed to connect database: %v", err)

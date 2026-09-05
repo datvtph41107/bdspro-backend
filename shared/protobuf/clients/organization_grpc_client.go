@@ -1,17 +1,12 @@
 package clients
 
 import (
-	"common"
-	_middleware "common/middleware"
+	"common/tcp/connect"
 	"context"
 	"errors"
-	"fmt"
 	"log"
-	"time"
 
 	organizationpb "pb/types/organization"
-
-	"google.golang.org/grpc"
 )
 
 type OrganizationClient struct {
@@ -20,28 +15,16 @@ type OrganizationClient struct {
 
 func MakeOrganizationClient(env_runtime string) *OrganizationClient {
 	organizationClient := &OrganizationClient{}
-	go func() {
-		name := "organization"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
+	name := "organization"
+	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8207", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
+	conn, err := connect.DialNamed(name, addr)
+	if err != nil {
+		log.Printf("failed to dial organization at %s: %v", addr, err)
+		return organizationClient
+	}
 
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := organizationpb.NewInternalOrganizationServiceClient(conn)
-		organizationClient.Client = client
-	}()
+	organizationClient.Client = organizationpb.NewInternalOrganizationServiceClient(conn)
 	return organizationClient
 }
 

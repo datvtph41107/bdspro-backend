@@ -325,6 +325,32 @@ func (h *PoiCategoryHandler) GetPoiCategoryTreeHTTP(c *gin.Context) {
 	})
 }
 
+// ListPoiCategoryIconsHTTP handles HTTP GET request for listing available icons
+// @Summary List POI category icons
+// @Description List available icons for POI category with full path
+// @Tags POI Category
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "POI category icons"
+// @Router /v2/tqd/poi/categories/icons [get]
+func (h *PoiCategoryHandler) ListPoiCategoryIconsHTTP(c *gin.Context) {
+	result, err := h.usecase.ListIcons(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "Failed to list POI category icons",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "POI category icons retrieved successfully",
+		"data":    result.Data,
+	})
+}
+
 // UpdatePoiCategoryStatsHTTP handles HTTP PUT request for updating category statistics
 // @Summary Update POI category statistics
 // @Description Update POI count for category

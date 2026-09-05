@@ -35,4 +35,7 @@ type IPoiCategoryRepo interface {
 
 	// ListWithFilter lists categories with filters
 	ListWithFilter(ctx context.Context, filter *dto.PoiCategoryFilter) ([]domain.PoiCategory, int64, error)
+
+	// ListCategoryIcons returns id + icon for categories that have icon
+	ListCategoryIcons(ctx context.Context) ([]dto.PoiCategoryIconResponse, error)
 }

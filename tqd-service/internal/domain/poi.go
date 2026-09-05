@@ -4,6 +4,7 @@ import (
 	_entity "common/domain/entity"
 	_utils "common/utils"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -35,6 +36,7 @@ type POI struct {
 	CreatedBy     uint64  `json:"createdBy" gorm:"column:created_by"`
 	UpdatedBy     uint64  `json:"updatedBy" gorm:"column:updated_by"`
 	ParcelID      uint64  `json:"parcelId" gorm:"column:parcel_id;index"`
+	ViewInZ       uint32  `json:"viewInZ" gorm:"column:view_in_z;default:16"`
 	AdrSearch     string  `json:"adrSearch" gorm:"column:adr_search;type:text"`
 
 	// Relations
@@ -66,7 +68,9 @@ func (p *POI) Validate() error {
 // BeforeSave tự động cập nhật adr_search giống qh_parcel_info.
 func (p *POI) BeforeSave(_ *gorm.DB) error {
 	if p.Address != "" {
-		p.AdrSearch = _utils.CleanSearchText(p.Address)
+		p.AdrSearch = strings.ToLower(_utils.CleanSearchText(p.Address))
+	} else {
+		p.AdrSearch = ""
 	}
 	return nil
 }

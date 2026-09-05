@@ -1,17 +1,12 @@
 package clients
 
 import (
-	"common"
-	_middleware "common/middleware"
+	"common/tcp/connect"
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	paymentpb "pb/types/payment"
 	sharepb "pb/types/shared"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 type PaymentClient struct {
@@ -20,28 +15,16 @@ type PaymentClient struct {
 
 func MakePaymentClient(env_runtime string) *PaymentClient {
 	paymentClient := &PaymentClient{}
-	go func() {
-		name := "payment"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
+	name := "payment"
+	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8205", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
+	conn, err := connect.DialNamed(name, addr)
+	if err != nil {
+		log.Printf("failed to dial payment at %s: %v", addr, err)
+		return paymentClient
+	}
 
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := paymentpb.NewInternalServiceClient(conn)
-		paymentClient.client = client
-	}()
+	paymentClient.client = paymentpb.NewInternalServiceClient(conn)
 	return paymentClient
 }
 

@@ -1,19 +1,15 @@
 package clients
 
 import (
-	"common"
+	"common/tcp/connect"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	_middleware "common/middleware"
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
-
-	"google.golang.org/grpc"
 )
 
 type NotificationClient struct {
@@ -23,30 +19,17 @@ type NotificationClient struct {
 
 func MakeNotificationClient(env_runtime string) *NotificationClient {
 	notificationClient := &NotificationClient{}
-	go func() {
-		name := "notification"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
+	name := "notification"
+	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8204", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
+	conn, err := connect.DialNamed(name, addr)
+	if err != nil {
+		log.Printf("failed to dial notification at %s: %v", addr, err)
+		return notificationClient
+	}
 
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := notificationpb.NewInternalNotificationServiceClient(conn)
-		historyClient := notificationpb.NewHistoryServiceClient(conn)
-		notificationClient.Client = client
-		notificationClient.historyClient = historyClient
-	}()
+	notificationClient.Client = notificationpb.NewInternalNotificationServiceClient(conn)
+	notificationClient.historyClient = notificationpb.NewHistoryServiceClient(conn)
 	return notificationClient
 }
 

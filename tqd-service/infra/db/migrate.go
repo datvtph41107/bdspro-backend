@@ -63,12 +63,17 @@ func ensureSchemaMigrationsTable() {
 	}
 }
 
-func isMigrationApplied(version string) bool {
-	var count int64
-	_ = _db.DB.Raw(
-		`SELECT COUNT(1) FROM schema_migrations WHERE version = ?`, version,
-	).Scan(&count).Error
-	return count > 0
+func loadAppliedMigrations() map[string]struct{} {
+	applied := make(map[string]struct{})
+	var versions []string
+	if err := _db.DB.Raw(`SELECT version FROM schema_migrations`).Scan(&versions).Error; err != nil {
+		log.Printf("⚠️  loadAppliedMigrations: %v", err)
+		return applied
+	}
+	for _, v := range versions {
+		applied[v] = struct{}{}
+	}
+	return applied
 }
 
 func markMigrationApplied(version string) {
@@ -99,9 +104,11 @@ func runPendingV3Migrations() {
 	}
 	sort.Strings(files)
 
+	applied := loadAppliedMigrations()
+
 	for _, name := range files {
 		version := strings.TrimSuffix(name, ".up.sql")
-		if isMigrationApplied(version) {
+		if _, ok := applied[version]; ok {
 			continue
 		}
 
@@ -117,6 +124,7 @@ func runPendingV3Migrations() {
 			continue
 		}
 		markMigrationApplied(version)
+		applied[version] = struct{}{}
 		log.Printf("✅ migration %s applied", version)
 	}
 }
@@ -335,6 +343,11 @@ func ensurePoisAdrSearch() {
 		`CREATE INDEX IF NOT EXISTS idx_pois_adr_search_trgm
 			ON pois USING GIN (LOWER(adr_search) gin_trgm_ops)
 			WHERE COALESCE(adr_search, '') <> ''`,
+		`CREATE INDEX IF NOT EXISTS idx_pois_adr_tsv
+			ON pois USING GIN (to_tsvector('simple', coalesce(adr_search, '')))
+			WHERE deleted_at IS NULL
+			  AND is_active = TRUE
+			  AND COALESCE(adr_search, '') <> ''`,
 	}
 	for _, stmt := range statements {
 		if err := _db.DB.Exec(stmt).Error; err != nil {
@@ -630,24 +643,24 @@ func AutoMigrate() {
 	runPendingV3Migrations()
 
 	// ensure*() bổ sung cột/index hot-path idempotent (legacy / không phụ thuộc version file).
-	ensureProvinceV2Columns()
-	ensureWardV2Columns()
-	ensureWardNeighbors()
-	ensurePlanningProjectWards()
-	ensureLayerPlanDocRelation()
-	ensureProAIJobs()
-	ensurePoisGeom()
-	ensurePoisParcelID()
-	ensurePoisAdrSearch()
-	ensurePlanningProjectClientView()
-	ensurePlanningProjectSeoID()
-	ensurePlanningProjectLegalBasisID()
-	ensurePlanningDocumentSeoID()
-	ensureLayerColumns()
-	ensurePlanningDocumentExt()
-	ensurePlanningDocumentLegalMetadata()
-	ensurePlanningDocumentEvents()
-	ensureDiscoveryParcelSearchIndexes()
+	// ensureProvinceV2Columns()
+	// ensureWardV2Columns()
+	// ensureWardNeighbors()
+	// ensurePlanningProjectWards()
+	// ensureLayerPlanDocRelation()
+	// ensureProAIJobs()
+	// ensurePoisGeom()
+	// ensurePoisParcelID()
+	// ensurePoisAdrSearch()
+	// ensurePlanningProjectClientView()
+	// ensurePlanningProjectSeoID()
+	// ensurePlanningProjectLegalBasisID()
+	// ensurePlanningDocumentSeoID()
+	// ensureLayerColumns()
+	// ensurePlanningDocumentExt()
+	// ensurePlanningDocumentLegalMetadata()
+	// ensurePlanningDocumentEvents()
+	// ensureDiscoveryParcelSearchIndexes()
 	// province_v2 / ward_v2 là bảng legacy — chỉ cập nhật schema qua ensure*() ở trên,
 	// không dùng GORM AutoMigrate (GORM cố DROP uni_*_code không tồn tại).
 }

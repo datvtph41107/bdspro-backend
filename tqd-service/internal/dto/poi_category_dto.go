@@ -53,6 +53,7 @@ type PoiCategoryResponse struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Icon        string    `json:"icon"`
+	IconPath    string    `json:"iconPath"`
 	Color       string    `json:"color"`
 	ParentID    *uint64   `json:"parentId"`
 	Level       int       `json:"level"`
@@ -84,6 +85,7 @@ func (r *PoiCategoryResponse) FromDomain(pc *domain.PoiCategory) {
 	r.UpdatedAt = *pc.UpdatedAt
 	r.CreatedBy = pc.CreatedBy
 	r.UpdatedBy = pc.UpdatedBy
+	r.IconPath = pc.Icon
 }
 
 // PoiCategoryTreeResponse represents POI category in tree structure
@@ -93,6 +95,7 @@ type PoiCategoryTreeResponse struct {
 	Name        string                    `json:"name"`
 	Description string                    `json:"description"`
 	Icon        string                    `json:"icon"`
+	IconPath    string                    `json:"iconPath"`
 	Color       string                    `json:"color"`
 	ParentID    *uint64                   `json:"parentId"`
 	Level       int                       `json:"level"`
@@ -125,4 +128,17 @@ type ListPoiCategoriesResponse struct {
 	Total int64                 `json:"total"`
 	Page  uint32                `json:"page"`
 	Size  uint32                `json:"size"`
+}
+
+// PoiCategoryIconResponse represents an available icon for POI category
+type PoiCategoryIconResponse struct {
+	Name        string   `json:"name"`        // value lưu vào poi_categories.icon
+	Path        string   `json:"path"`        // URL đầy đủ để hiển thị
+	CategoryIDs []uint64 `json:"categoryIds"` // các category dùng chung icon
+	Color       string   `json:"color"`       // màu của category
+}
+
+// ListPoiCategoryIconsResponse represents list of available icons
+type ListPoiCategoryIconsResponse struct {
+	Data []PoiCategoryIconResponse `json:"data"`
 }

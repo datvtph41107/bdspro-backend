@@ -136,15 +136,20 @@ func (h *PoiCategoryGrpcHandler) DeletePoiCategory(ctx context.Context, req *sha
 
 // ListPoiCategories handles list request
 func (h *PoiCategoryGrpcHandler) ListPoiCategories(ctx context.Context, req *tqdpb.ListPoiCategoriesRequest) (*tqdpb.ListPoiCategoriesResponse, error) {
+	if req == nil {
+		req = &tqdpb.ListPoiCategoriesRequest{}
+	}
+
 	// Build filter
 	filter := &dto.PoiCategoryFilter{
 		Pagable: _dto.Pagable{
-			Page: normalizePage(req.Page),
-			Size: normalizeSize(req.Size),
+			Page: req.Page,
+			Size: req.Size,
 		},
 		Search:   req.Search,
-		IsActive: &req.IsActive,
+		IsActive: req.IsActive,
 	}
+	filter.Pagable.Normalize()
 
 	// Set optional filters
 	if req.ParentId != 0 {
@@ -168,6 +173,8 @@ func (h *PoiCategoryGrpcHandler) ListPoiCategories(ctx context.Context, req *tqd
 	return &tqdpb.ListPoiCategoriesResponse{
 		Data:  categories,
 		Total: result.Total,
+		Page:  result.Page,
+		Size:  result.Size,
 	}, nil
 }
 
@@ -187,28 +194,47 @@ func (h *PoiCategoryGrpcHandler) GetPoiCategoryTree(ctx context.Context, req *em
 	}, nil
 }
 
+// ListPoiCategoryIcons handles list available icons request
+// @Summary List POI category icons
+// @Description List available icons for POI category with full path
+// @Tags POI Category
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.ListPoiCategoryIconsResponse
+// @Router /v2/tqd/poi/categories/icons [get]
+func (h *PoiCategoryGrpcHandler) ListPoiCategoryIcons(ctx context.Context, req *emptypb.Empty) (*tqdpb.ListPoiCategoryIconsResponse, error) {
+	result, err := h.usecase.ListIcons(ctx)
+	if err != nil {
+		log.Printf("error listing poi category icons: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to list poi category icons: %v", err)
+	}
+
+	data := make([]*tqdpb.PoiCategoryIcon, 0, len(result.Data))
+	for _, item := range result.Data {
+		data = append(data, &tqdpb.PoiCategoryIcon{
+			CategoryIds: item.CategoryIDs,
+			// Name:        item.Name,
+			Path:  item.Path,
+			Color: item.Color,
+		})
+	}
+
+	return &tqdpb.ListPoiCategoryIconsResponse{Data: data}, nil
+}
+
 // buildProtoTree builds proto tree from tree responses
 func (h *PoiCategoryGrpcHandler) buildProtoTree(treeResponses []dto.PoiCategoryTreeResponse) []*tqdpb.PoiCategoryTreeNode {
 	nodes := make([]*tqdpb.PoiCategoryTreeNode, len(treeResponses))
 	for i, resp := range treeResponses {
-		node := &tqdpb.PoiCategoryTreeNode{
-			Data: &tqdpb.PoiCategory{
-				Id:          resp.ID,
-				Name:        resp.Name,
-				Description: resp.Description,
-				Code:        resp.Code,
-				Icon:        resp.Icon,
-				Color:       resp.Color,
-				IsActive:    resp.IsActive,
-				SortOrder:   uint32(resp.SortOrder),
-				ParentId:    h.uint64PtrToValue(resp.ParentID),
-				Level:       uint32(resp.Level),
-				Path:        resp.Path,
-				PoiCount:    uint32(resp.POICount),
-			},
+		nodes[i] = &tqdpb.PoiCategoryTreeNode{
+			Id:       resp.ID,
+			Name:     resp.Name,
+			Icon:     resp.Icon,
+			IconPath: resp.IconPath,
+			Path:     resp.Path,
+			PoiCount: uint32(resp.POICount),
 			Children: h.buildProtoTree(resp.Children),
 		}
-		nodes[i] = node
 	}
 	return nodes
 }

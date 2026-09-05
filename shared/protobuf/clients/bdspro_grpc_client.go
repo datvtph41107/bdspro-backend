@@ -1,18 +1,14 @@
 package clients
 
 import (
-	"common"
+	"common/tcp/connect"
 	_dto "common/domain/dto"
-	_middleware "common/middleware"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 type BdsproGrpcClient struct {
@@ -21,31 +17,18 @@ type BdsproGrpcClient struct {
 }
 
 func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
-	bdsproClient := &BdsproGrpcClient{Client: nil, InternalClient: nil}
-	go func() {
-		name := "bdspro"
-		url := common.GetPrefixProtobufUrl(env_runtime, name)
+	bdsproClient := &BdsproGrpcClient{}
+	name := "bdspro"
+	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
 
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
+	conn, err := connect.DialNamed(name, addr)
+	if err != nil {
+		log.Printf("failed to dial bdspro at %s: %v", addr, err)
+		return bdsproClient
+	}
 
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := bdspropb.NewProductServiceClient(conn)
-		internalClient := bdspropb.NewBdsproInternalServiceClient(conn)
-		bdsproClient.Client = client
-		bdsproClient.InternalClient = internalClient
-	}()
+	bdsproClient.Client = bdspropb.NewProductServiceClient(conn)
+	bdsproClient.InternalClient = bdspropb.NewBdsproInternalServiceClient(conn)
 	return bdsproClient
 }
 

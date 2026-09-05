@@ -196,6 +196,67 @@ func (r *poiCategoryPostgres) DecrementPOICount(ctx context.Context, id uint64) 
 		UpdateColumn("poi_count", gorm.Expr("poi_count - 1")).Error
 }
 
+// ListCategoryIcons returns unique icons with categoryIds sharing the same path
+func (r *poiCategoryPostgres) ListCategoryIcons(ctx context.Context) ([]dto.PoiCategoryIconResponse, error) {
+	var rows []struct {
+		ID    uint64 `gorm:"column:id"`
+		Icon  string `gorm:"column:icon"`
+		Color string `gorm:"column:color"`
+	}
+	err := r.GetDB(ctx).
+		Model(&domain.PoiCategory{}).
+		Select("id", "icon", "color").
+		Where("deleted_at IS NULL").
+		Where("icon IS NOT NULL AND TRIM(icon) <> ''").
+		Order("id ASC").
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	type iconGroup struct {
+		Name        string
+		Path        string
+		Color       string
+		CategoryIDs []uint64
+	}
+	grouped := make(map[string]*iconGroup)
+	order := make([]string, 0)
+
+	for _, row := range rows {
+		path := strings.TrimSpace(row.Icon)
+		if path == "" {
+			continue
+		}
+		g, ok := grouped[path]
+		if !ok {
+			g = &iconGroup{
+				Name:        path,
+				Path:        path,
+				Color:       row.Color,
+				CategoryIDs: make([]uint64, 0, 1),
+			}
+			grouped[path] = g
+			order = append(order, path)
+		} else if g.Color == "" && row.Color != "" {
+			g.Color = row.Color
+		}
+		g.CategoryIDs = append(g.CategoryIDs, row.ID)
+	}
+
+	result := make([]dto.PoiCategoryIconResponse, 0, len(order))
+	for _, path := range order {
+		g := grouped[path]
+		result = append(result, dto.PoiCategoryIconResponse{
+			Name:        g.Name,
+			Path:        g.Path,
+			CategoryIDs: g.CategoryIDs,
+			Color:       g.Color,
+		})
+	}
+	return result, nil
+}
+
 // ListWithFilter lists categories with filters
 func (r *poiCategoryPostgres) ListWithFilter(ctx context.Context, filter *dto.PoiCategoryFilter) ([]domain.PoiCategory, int64, error) {
 	var categories []domain.PoiCategory
@@ -231,7 +292,7 @@ func (r *poiCategoryPostgres) ListWithFilter(ctx context.Context, filter *dto.Po
 
 	// Apply pagination and sorting
 	err := query.
-		Order("sort_order ASC, created_at DESC").
+		Order("updated_at DESC").
 		Offset(filter.GetOffset()).
 		Limit(filter.GetLimit()).
 		Find(&categories).Error

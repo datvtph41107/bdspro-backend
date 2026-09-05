@@ -24,6 +24,9 @@ type PoiCategoryUsecase interface {
 	// Tree operations
 	GetTree(ctx context.Context) ([]dto.PoiCategoryTreeResponse, error)
 
+	// Icon catalog
+	ListIcons(ctx context.Context) (*dto.ListPoiCategoryIconsResponse, error)
+
 	// POI count operations
 	IncrementPOICount(ctx context.Context, id uint64) error
 	DecrementPOICount(ctx context.Context, id uint64) error
@@ -196,18 +199,11 @@ func (u *poiCategoryUsecase) Delete(ctx context.Context, id uint64) error {
 
 // List implements PoiCategoryUsecase.List
 func (u *poiCategoryUsecase) List(ctx context.Context, filter *dto.PoiCategoryFilter) (*dto.ListPoiCategoriesResponse, error) {
-	// Validate pagination
-	if filter.Page < 1 {
-		filter.Page = 1
+	if filter == nil {
+		filter = &dto.PoiCategoryFilter{}
 	}
-	if filter.Size < 1 {
-		filter.Size = 10
-	}
-	if filter.Size > 100 {
-		filter.Size = 100
-	}
+	filter.Pagable.Normalize()
 
-	// Get from repository
 	categories, total, err := u.repo.ListWithFilter(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list categories: %v", err)
@@ -216,8 +212,8 @@ func (u *poiCategoryUsecase) List(ctx context.Context, filter *dto.PoiCategoryFi
 	return &dto.ListPoiCategoriesResponse{
 		Data:  u.mapper.ToResponseList(categories),
 		Total: total,
-		Page:  filter.Page,
-		Size:  filter.Size,
+		Page:  filter.GetPage(),
+		Size:  filter.GetSize(),
 	}, nil
 }
 
@@ -229,6 +225,16 @@ func (u *poiCategoryUsecase) GetTree(ctx context.Context) ([]dto.PoiCategoryTree
 	}
 
 	return u.mapper.BuildTree(categories), nil
+}
+
+// ListIcons returns unique icons from poi_categories (path + categoryIds).
+func (u *poiCategoryUsecase) ListIcons(ctx context.Context) (*dto.ListPoiCategoryIconsResponse, error) {
+	data, err := u.repo.ListCategoryIcons(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list icons: %v", err)
+	}
+
+	return &dto.ListPoiCategoryIconsResponse{Data: data}, nil
 }
 
 // IncrementPOICount implements PoiCategoryUsecase.IncrementPOICount

@@ -6,6 +6,7 @@ import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "shared/common.proto";
 import "tqd/amenity.proto";
+import "tqd/poi_category.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -44,7 +45,7 @@ service PoiService {
   // Update POI
   rpc UpdatePoi(Poi) returns (Poi) {
     option (google.api.http) = {
-      put: "/v2/tqd/pois/{id}"
+      put: "/v2/tqd/admin/pois/{id}"
       body: "*"
     };
   }
@@ -58,7 +59,7 @@ service PoiService {
 
   rpc DeletePoi(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
-      delete: "/v2/tqd/pois/{id}"
+      delete: "/v2/tqd/admin/pois/{id}"
     };
   }
 
@@ -104,6 +105,8 @@ message Poi {
   uint64 createdBy = 25;
   uint64 updatedBy = 26;
   uint64 parcelId = 27;
+  PoiCategory category = 28;
+  uint32 viewInZ = 29; // zoom level khi hiển thị POI trên map, mặc định 16
 }
 
 

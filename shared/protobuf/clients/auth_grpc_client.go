@@ -1,16 +1,12 @@
 package clients
 
 import (
-	"common"
 	_errors "common/errors"
-	_middleware "common/middleware"
+	"common/tcp/connect"
 	"context"
 	"fmt"
 	"log"
 	authpb "pb/types/auth"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 type AuthGrpcClient struct {
@@ -20,39 +16,23 @@ type AuthGrpcClient struct {
 
 func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
 	authClient := &AuthGrpcClient{}
-	go func() {
-		authName := "auth"
-		authURL := common.GetPrefixProtobufUrl(env_runtime, authName)
-		authConn, err := grpc.Dial(fmt.Sprintf("%s:8216", authURL),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial auth: %v", err)
-		}
 
-		authCtx, _ := context.WithCancel(context.Background())
-		go _middleware.MonitorConnection(authCtx, authName, authConn)
+	authAddr := connect.AddressOf(env_runtime, "auth", connect.DefaultPort("auth"))
+	authConn, err := connect.DialNamed("auth", authAddr)
+	if err != nil {
+		log.Printf("failed to dial auth at %s: %v", authAddr, err)
+	} else {
 		authClient.AuthInternalServiceClient = authpb.NewAuthInternalServiceClient(authConn)
+	}
 
-		userName := "user"
-		userURL := common.GetPrefixProtobufUrl(env_runtime, userName)
-		userConn, err := grpc.Dial(fmt.Sprintf("%s:8201", userURL),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial user: %v", err)
-		}
-
-		userCtx, _ := context.WithCancel(context.Background())
-		go _middleware.MonitorConnection(userCtx, userName, userConn)
+	userAddr := connect.AddressOf(env_runtime, "user", connect.DefaultPort("user"))
+	userConn, err := connect.DialNamed("user", userAddr)
+	if err != nil {
+		log.Printf("failed to dial user at %s: %v", userAddr, err)
+	} else {
 		authClient.RoleClient = authpb.NewRoleServiceClient(userConn)
-	}()
+	}
+
 	return authClient
 }
 
