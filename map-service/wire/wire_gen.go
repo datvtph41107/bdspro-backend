@@ -39,6 +39,6 @@ func InitializeApp() (*gin.Engine, error) {
 var WireSet = wire.NewSet(config.LoadConfig, _db.NewDB, db.Migrate, postgre.NewMapPointPostgres, usecase.NewMapPointUsecase, handler.NewMapPointHandler, NewRouter)
 
 // InitializeRuntime khởi tạo runtime
-func InitializeRuntime() {
-	initial.InitializeRuntime()
+func InitializeRuntime() error {
+	return initial.InitializeRuntime()
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	relayrpc "relay/rpc"
 	"syscall"
 	"time"
 
@@ -30,15 +31,32 @@ func parseTimeout(timeoutStr string) time.Duration {
 var wsLogger = flogging.MustGetLogger("ws_server")
 
 type WSServer struct {
-	server *http.Server
+	server  *http.Server
+	cleanup func()
 }
 
-func NewWSServer(port string) *WSServer {
+func NewWSServer(port string) (*WSServer, error) {
 	wsLogger.Info("Initializing WebSocket server...")
 
-	chatClient := client.NewChatClient()
-	userClient := client.NewUserClient()
-	notificationClient := client.NewNotificationClient()
+	userRPC, userCleanup, err := relayrpc.NewUserRPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("configure relay user RPC: %w", err)
+	}
+	chatRPC, chatCleanup, err := relayrpc.NewChatRPCClient()
+	if err != nil {
+		userCleanup()
+		return nil, fmt.Errorf("configure relay chat RPC: %w", err)
+	}
+	notificationRPC, notificationCleanup, err := relayrpc.NewNotificationRPCClient()
+	if err != nil {
+		chatCleanup()
+		userCleanup()
+		return nil, fmt.Errorf("configure relay notification RPC: %w", err)
+	}
+	cleanup := func() { notificationCleanup(); chatCleanup(); userCleanup() }
+	chatClient := client.NewChatClient(chatRPC)
+	userClient := client.NewUserClient(userRPC)
+	notificationClient := client.NewNotificationClient(notificationRPC)
 	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient, notificationClient)
 
 	mux := http.NewServeMux()
@@ -55,9 +73,7 @@ func NewWSServer(port string) *WSServer {
 	}
 	// start runner wshandle
 	go wsHandler.SubscribeToRedisChannel(constants.API_WS_CHANNEL)
-	return &WSServer{
-		server: server,
-	}
+	return &WSServer{server: server, cleanup: cleanup}, nil
 }
 
 func setupHandlers(mux *http.ServeMux, wsHandler *wshandler.WebSocketHandler) http.Handler {
@@ -71,7 +87,10 @@ func setupHandlers(mux *http.ServeMux, wsHandler *wshandler.WebSocketHandler) ht
 	return handler
 }
 
-func (s *WSServer) Start() {
+func (s *WSServer) Start() error {
+	if s.cleanup != nil {
+		defer s.cleanup()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
@@ -91,4 +110,5 @@ func (s *WSServer) Start() {
 	if err := s.server.Shutdown(ctx); err != nil {
 		wsLogger.Errorf("WebSocket server shutdown error: %v", err)
 	}
+	return nil
 }

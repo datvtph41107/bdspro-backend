@@ -15,8 +15,6 @@ func TestCatalogV2TableNames(t *testing.T) {
 		{"price", CatalogPriceItem{}.TableName(), "catalog_price_items"},
 		{"subscription", CatalogSubscription{}.TableName(), "catalog_subscriptions"},
 		{"subscription event", CatalogSubscriptionEvent{}.TableName(), "catalog_subscription_events"},
-		{"legacy plan mapping", LegacyPlanCatalogMapping{}.TableName(), "legacy_plan_catalog_mappings"},
-		{"legacy membership mapping", LegacyMembershipSubscriptionMapping{}.TableName(), "legacy_membership_subscription_mappings"},
 	}
 
 	for _, test := range tests {
@@ -51,10 +49,5 @@ func TestCatalogV2EnumValues(t *testing.T) {
 	if SubscriptionSubjectProfile != "profile" ||
 		SubscriptionSubjectOrganization != "organization" {
 		t.Fatal("subscription subject enum changed")
-	}
-	if CatalogMigrationPendingReview != "pending_review" ||
-		CatalogMigrationReviewed != "reviewed" ||
-		CatalogMigrationRolledBack != "rolled_back" {
-		t.Fatal("migration status enum changed")
 	}
 }

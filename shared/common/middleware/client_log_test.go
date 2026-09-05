@@ -1,14 +1,14 @@
 package _middleware
 
 import (
+	_rpc "common/rpc"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
 	_enums "common/domain/enum"
-	_requestcontext "common/requestcontext"
-	_transporttrust "common/transporttrust"
+	_request "common/request"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -21,7 +21,7 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 ) {
 	t.Parallel()
 
-	ctx := _requestcontext.WithRequestID(
+	ctx := _request.WithRequestID(
 		context.Background(),
 		"req-outbound-123",
 	)
@@ -32,9 +32,9 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 		ctx,
 		metadata.Pairs(
 			"x-custom-metadata", "keep-me",
-			_requestcontext.RequestIDMetadataKey, "stale-request-id",
-			_requestcontext.OperationIDMetadataKey, "stale-operation-id",
-			_requestcontext.IdempotencyKeyMetadataKey, "stale-idempotency-key",
+			_request.RequestIDMetadataKey, "stale-request-id",
+			_request.OperationIDMetadataKey, "stale-operation-id",
+			_request.IdempotencyKeyMetadataKey, "stale-idempotency-key",
 		),
 	)
 
@@ -70,7 +70,7 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 		t.Fatalf("custom metadata = %v, want [keep-me]", got)
 	}
 
-	requestIDs := captured.Get(_requestcontext.RequestIDMetadataKey)
+	requestIDs := captured.Get(_request.RequestIDMetadataKey)
 	if len(requestIDs) != 1 || requestIDs[0] != "req-outbound-123" {
 		t.Fatalf(
 			"request metadata = %v, want [req-outbound-123]",
@@ -78,7 +78,7 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 		)
 	}
 
-	operationIDs := captured.Get(_requestcontext.OperationIDMetadataKey)
+	operationIDs := captured.Get(_request.OperationIDMetadataKey)
 	if len(operationIDs) != 1 || operationIDs[0] != "op-outbound-456" {
 		t.Fatalf(
 			"operation metadata = %v, want [op-outbound-456]",
@@ -86,7 +86,7 @@ func TestUnaryClientInterceptorPropagatesCanonicalIDsAndPreservesMetadata(
 		)
 	}
 
-	idempotencyKeys := captured.Get(_requestcontext.IdempotencyKeyMetadataKey)
+	idempotencyKeys := captured.Get(_request.IdempotencyKeyMetadataKey)
 	if len(idempotencyKeys) != 1 || idempotencyKeys[0] != "idem-outbound-789" {
 		t.Fatalf(
 			"idempotency metadata = %v, want [idem-outbound-789]",
@@ -197,12 +197,15 @@ func TestUnaryClientInterceptorPreservesDeadline(t *testing.T) {
 
 func TestUnaryClientInterceptorSignsCanonicalMetadata(t *testing.T) {
 	now := time.Unix(1_700_000_000, 0)
-	cfg := _transporttrust.Config{
-		ServiceID: "tqd-service",
-		Secret:    "test-secret",
-		Mode:      _transporttrust.ModeEnforce,
-		MaxAge:    30 * time.Second,
-		Now:       func() time.Time { return now },
+	cfg := _rpc.TransportConfig{
+		ServiceAssertion: _rpc.ServiceAssertionConfig{
+			ServiceID: "tqd-service",
+			Secret:    "test-secret",
+
+			MaxAge: 30 * time.Second,
+			Now:    func() time.Time { return now },
+		},
+		RequireServiceAssertion: true,
 	}
 	ctx := context.WithValue(context.Background(), _enums.ProfileIDKey, uint64(42))
 
@@ -230,7 +233,7 @@ func TestUnaryClientInterceptorSignsCanonicalMetadata(t *testing.T) {
 		t.Fatalf("interceptor error = %v", err)
 	}
 
-	caller, err := _transporttrust.Verify("/test.Service/Call", captured, cfg)
+	caller, err := _rpc.VerifyServiceAssertion("/test.Service/Call", captured, cfg.ServiceAssertion)
 	if err != nil {
 		t.Fatalf("Verify() error = %v", err)
 	}
@@ -253,7 +256,7 @@ func TestUnaryClientInterceptorEnforceRequiresSignerConfig(t *testing.T) {
 	}
 
 	err := unaryClientInterceptorWithTrust(
-		_transporttrust.Config{Mode: _transporttrust.ModeEnforce},
+		_rpc.TransportConfig{RequireServiceAssertion: true},
 		context.Background(),
 		"/test.Service/Call",
 		nil,
@@ -271,11 +274,14 @@ func TestUnaryClientInterceptorEnforceRequiresSignerConfig(t *testing.T) {
 
 func TestStreamClientInterceptorSignsCallerMetadata(t *testing.T) {
 	now := time.Unix(1_700_000_000, 0)
-	cfg := _transporttrust.Config{
-		ServiceID: "gateway-service",
-		Secret:    "test-secret",
-		Mode:      _transporttrust.ModeEnforce,
-		Now:       func() time.Time { return now },
+	cfg := _rpc.TransportConfig{
+		ServiceAssertion: _rpc.ServiceAssertionConfig{
+			ServiceID: "gateway-service",
+			Secret:    "test-secret",
+
+			Now: func() time.Time { return now },
+		},
+		RequireServiceAssertion: true,
 	}
 	ctx := metadata.NewOutgoingContext(
 		context.Background(),
@@ -305,7 +311,7 @@ func TestStreamClientInterceptorSignsCallerMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stream interceptor error = %v", err)
 	}
-	if _, err := _transporttrust.Verify("/test.StreamService/Watch", captured, cfg); err != nil {
+	if _, err := _rpc.VerifyServiceAssertion("/test.StreamService/Watch", captured, cfg.ServiceAssertion); err != nil {
 		t.Fatalf("Verify() error = %v", err)
 	}
 	if got := captured.Get("x-qhpro-caller-kind"); len(got) != 1 || got[0] != "anonymous" {

@@ -1,15 +1,11 @@
 package client
 
 import (
-	"common/tcp/connect"
 	"context"
-	"log"
 	"pb/clients"
 	organizationpb "pb/types/organization"
-	"user/env"
 	"user/internal/dto"
 
-	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,38 +16,16 @@ type OrganizationProviderClient struct {
 	roleClient organizationpb.OrganizationRoleServiceClient
 }
 
-func NewOrganizationProviderClient() *OrganizationProviderClient {
-	name := "organization"
-	port := viper.GetString("grpc.organization.host")
-	if port == "" {
-		port = connect.DefaultPort(name)
-	}
-	addr := connect.AddressOf(env.ENV_RUNTIME, name, port)
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("Failed to connect to organization role service at %s: %v", addr, err)
-		return &OrganizationProviderClient{
-			OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
-		}
-	}
-
+func NewOrganizationProviderClient(
+	rpcClient *clients.OrganizationClient,
+) *OrganizationProviderClient {
 	return &OrganizationProviderClient{
-		OrganizationClient: clients.MakeOrganizationClient(env.ENV_RUNTIME),
-		roleClient:         organizationpb.NewOrganizationRoleServiceClient(conn),
+		OrganizationClient: rpcClient,
+		roleClient:         rpcClient.RoleClient,
 	}
-}
-
-func (c *OrganizationProviderClient) SwitchOrganization(ctx context.Context, organizationID uint64) (*dto.SwitchOrganizationResponse, error) {
-	return &dto.SwitchOrganizationResponse{
-		OrganizationId: organizationID,
-	}, nil
 }
 
 func (c *OrganizationProviderClient) GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error) {
-	if c.roleClient == nil {
-		return nil, status.Errorf(codes.Unavailable, "organization role client not available")
-	}
 	page := uint32(1)
 	size := uint32(100)
 	resp, err := c.roleClient.GetRoles(ctx, &organizationpb.GetRolesRequest{
@@ -126,5 +100,6 @@ func (c *OrganizationProviderClient) GetOrganizationMember(ctx context.Context, 
 		UserId:         userId,
 		RoleId:         &resp.RoleId,
 		RoleKey:        resp.RoleKey,
+		Status:         resp.Status,
 	}, nil
 }

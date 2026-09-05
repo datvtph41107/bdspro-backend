@@ -1,32 +1,23 @@
 package httpmiddleware
 
 import (
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 
 	"github.com/gin-gonic/gin"
 )
 
-// RequestID canonicalize request ID tại public boundary
-func RequestID(
-	recorder RequestIDDecisionRecorder,
-) gin.HandlerFunc {
+// RequestID canonicalizes one request ID at the public HTTP boundary.
+func RequestID(recorder RequestIDDecisionRecorder) gin.HandlerFunc {
 	if recorder == nil {
-		// Do nothing
 		recorder = noopRequestIDDecisionRecorder{}
 	}
-
 	return func(ctx *gin.Context) {
-		decision := _requestcontext.
-			PrepareHTTPRequestDecision(
-				ctx.Writer,
-				ctx.Request,
-			)
-
-		recorder.RecordRequestIDDecision(
-			ctx.Request.Context(),
-			decision,
-		)
-
+		decision := _request.ResolveRequestID(ctx.Request.Header.Values(RequestIDHeader))
+		requestCtx := _request.WithRequestID(ctx.Request.Context(), decision.ID)
+		ctx.Request = ctx.Request.WithContext(requestCtx)
+		ctx.Request.Header.Set(RequestIDHeader, decision.ID)
+		ctx.Writer.Header().Set(RequestIDHeader, decision.ID)
+		recorder.RecordRequestIDDecision(requestCtx, decision)
 		ctx.Next()
 	}
 }

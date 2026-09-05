@@ -1,244 +1,55 @@
 package cmd
 
 import (
-	_grpcclient "common/grpcclient"
-	_jwt "common/jwt"
-	_middleware "common/middleware"
-	_transporttrust "common/transporttrust"
-
+	"common/jwtverify"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
-	sharepb "pb/types/shared"
+	"os/signal"
+	"strconv"
+	"syscall"
 	"time"
 
 	"gateway/config"
+	_authroutes "gateway/internal/authroutes"
+	_grpcgateway "gateway/internal/grpcgateway"
 	_grpcmetadata "gateway/internal/grpcmetadata"
+	_httpauth "gateway/internal/httpauth"
+	_httperror "gateway/internal/httperror"
 	_httpmiddleware "gateway/internal/httpmiddleware"
+	_httpresponse "gateway/internal/httpresponse"
 	_observability "gateway/internal/observability"
-	"gateway/pkg"
-	"gateway/service"
-
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"google.golang.org/protobuf/proto"
+	_tqdmultipart "gateway/internal/tqdmultipart"
+	_upstream "gateway/internal/upstream"
+	_v1proxy "gateway/internal/v1proxy"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/backoff"
-	"google.golang.org/grpc/credentials/insecure"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-// publicRoutes danh sách các route không cần authentication
-var publicRoutes = []string{
-	// Internal discovery (service ↔ gateway, no JWT)
-	"/internal/services",
-
-	// BDS Pro public routes
-	"/v1/bdspro/v1/user/post",
-	"/v1/bdspro/v1/user/post/global",
-	"/v1/bdspro/v1/user/list/property-type",
-	"/v1/bdspro/v1/user/product/market",
-	"/v1/bdspro/v2/user/post",
-	"/v1/bdspro/v2/user/post/global",
-	"/v1/bdspro/v2/user/list/property-type",
-	"/v1/bdspro/v2/user/posts/publish",
-	"/v1/bdspro/v2/user/product/market",
-	"/v1/bdspro/v2/list/property-type",
-	"/v1/bdspro/v2/list/doc-type",
-	"/v1/bdspro/v2/list/region",
-	"/v1/bdspro/v2/list/project",
-	"/v1/bdspro/v2/list/amenity",
-	"/v1/bdspro/v2/product/market",
-
-	// User public routes
-	"/v1/user/oauth/zalo/login",
-	"/v1/user/oauth/facebook/login",
-	"/v1/user/oauth/google/login",
-	"/v1/user/auth/otp",
-	"/v1/user/oauth/zalo/callback",
-	"/v1/user/oauth/facebook/callback",
-	"/v1/user/oauth/google/callback",
-	"/v1/user/auth/token/refresh",
-	"/v1/user/profile/info/",
-	"/v1/user/profile/find-by-phone",
-	"/v2/user/profile/info/",
-	"/v2/user/profile/search/public",
-	"/v2/user/profile/find-by-phone",
-
-	// Other services public routes
-	"/v1/public",
-	"/v1/file/swagger",
-	"/v1/file/upload",
-	"/v1/file/load",
-	"/v1/map/swagger",
-	"/v1/map/locations/nearby",
-	"/v1/map/locations/find-by-polygon",
-	"/v2/user/membership/verify",
-	"/v2/user/plans",
-	"/v1/notification/swagger",
-	"/v1/notification/auth/otp",
-	"/v1/payment/swagger",
-	"/v1/payment/payos/webhook/verify",
-	"/v1/payment/wallet/account/new",
-	"/v1/payment/bank/all",
-	"/v1/search",
-	"/v1/crm/contact/relation-ship/",
-	"/v2/crm/contact/relation-ship/",
-	"/v2/payment/sepay/webhook",
-
-	// Social public routes
-	"/v2/social/news-feed/global",
-	"/v2/social/report/reasons",
-	"/v2/social/comment/list",
-	"/v2/social/news-feed/user",
-	"/v2/social/news-feed/detail",
-	"/v2/social/news-feed/global/reel",
-	"/v2/social/news-feed/reel/global",
-
-	"/v2/org/organization/global/profile",
-
-	// Auth public routes
-	"/v2/auth/otp",
-	"/v2/auth/login/key",
-	"/v2/auth/qr",
-	"/v2/auth/token/refresh",
-	"/v2/auth/oauth",
-	"/v2/auth/admin/login",
-	"/v2/auth/phone/check",
-	"/v2/bdspro/v2/product/market",
-	"/v2/bdspro/v2/list/area-region",
-	"/v2/bdspro/public/enums/",
-
-	// Feedback public routes
-	"/v2/feedback/rate/list",
-	"/v2/feedback/rate",
-	"/v2/feedback/rate/stats",
-	"/v2/feedback/report/reasons",
-	"/v2/feedback/report-reason",
-	"/v2/feedback/report",
-	"/v2/bdspro/v2/product/suggest/deepseek",
-	"/v2/bdspro/v2/post/global",
-	"/v2/hub/system-config/key",
-	"/v2/hub/system-config/by-group",
-	"/v2/hub/user-guides",
-	"/v2/hub/faqs",
-	"/v2/hub/app-bundle/version",
-	"/v2/hub/app-bundle/update-check",
-
-	"/v2/user/profile/search/public",
-	"/v2/bdspro/v2/post/detail/",
-	"/v2/social/news-feed/detail/",
-	"/v2/social/public/news-feed/user/",
-	"/v2/user/main-area",
-	"/v2/user/purpose-use",
-	"/v2/auth/device/check",
-	"/v3/user/profile/p",
-	"/v3/bdspro/post/personal",
-	"/v2/assistant/national-card/extract",
-	"/v2/pub/user/profile/tags",
-	"/v2/hub/applinks",
-	"/v2/hub/error/log",
-	"/v2/hub/v2/interactive-event",
-	"/v2/bdspro/v2/property/list/all",
-	"/v2/qh/config-app",
-	"/v2/tqd/parcels/batch",
-	"/v2/tqd/parcels/by-location",
-	"/v2/tqd/parcels/by-polygon",
-	"/v2/tqd/parcels/around",
-	"/v2/tqd/properties",
-	"/v2/tqd/client/layers",
-	"/v2/tqd/client/parcels/search",
-	"/v2/tqd/client/qh/layer-families/list",
-	"/v2/tqd/parcels/public",
-	"/v2/user/profile/session",
-	"/v2/tqd/qh/public/json",
-	"/v2/tqd/qh/public/font",
-	"/v2/crm/sitemap.xml",
-	"/v2/crm/public",
-	"/v2/tqd/qh/public",
-	"/v2/tqd/map-target/by-location",
-	"/v2/tqd/map-target/by-poi",
-	"/v2/tqd/discovery/",
-	"/v2/tqd/public/qh/checking-polygon",
-	"/v2/tqd/public/enums",
-	"/v2/tqd/public/maps",
-	"/v2/tqd/public/parcels",
-	"/v2/tqd/public",
-	"/v2/tqd/client/planning-projects",
-	"/v2/tqd/client/planning-documents",
-	"/v2/tqd/client/provinces",
-	"/v2/crm/public",
-	"/v2/tqd/client/administrative-units",
-	"/v2/tqd/poi/categories/icons",
-}
-
-var tempRoutes = []string{
-	"/v2/auth/fullname",
-	"/v2/auth/phone",
-}
 
 // HttpCmd chạy HTTP server
 var HttpCmd = &cobra.Command{
 	Use:   "http",
 	Short: "Chạy HTTP server",
-	Run: func(cmd *cobra.Command, args []string) {
-		config.LoadConfig()
-		port := viper.GetString("server.port")
-		gateway := pkg.NewGateway("url")
-
-		env := os.Getenv("ENV_RUNTIME")
-		// Set timezone
-		os.Setenv("TZ", "Europe/London")
-		time.Local = time.FixedZone("Europe/London", 7*60*60)
-
-		// Tạo thư mục nếu chưa có
-		if err :=
-			os.MkdirAll(
-				"./app/logs",
-				os.ModePerm,
-			); err != nil {
-
-			panic(err)
-		}
-		// Mở file log
-		f, err :=
-			os.OpenFile(
-				"./app/logs/app.log",
-				os.O_CREATE|
-					os.O_WRONLY|
-					os.O_APPEND,
-				0666,
-			)
-
+	RunE: func(cmd *cobra.Command, args []string) error {
+		runtimeConfig, err := config.LoadRuntime()
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("load gateway runtime config: %w", err)
 		}
-
-		defer func() {
-			if err :=
-				f.Close(); err != nil {
-
-				log.Printf(
-					"failed to close gateway log file: %v",
-					err,
-				)
-			}
-		}()
-
-		logOutput :=
-			io.MultiWriter(
-				f,
-				os.Stdout,
-			)
+		port := strconv.Itoa(runtimeConfig.Server.Port)
+		env := runtimeConfig.Environment
+		// Containers and native processes share one logging contract: stdout
+		// and stderr. Retention/rotation belongs to the runtime platform, never
+		// to a hidden file under the application working directory.
+		logOutput := os.Stdout
 
 		gin.DefaultWriter = logOutput
 
@@ -270,7 +81,6 @@ var HttpCmd = &cobra.Command{
 				)
 
 		r := gin.New() // custom logging, recovery with req_identity
-		r.Use(gin.LoggerWithWriter(logOutput))
 
 		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
 		r.RedirectTrailingSlash = false
@@ -304,29 +114,7 @@ var HttpCmd = &cobra.Command{
 			_httpmiddleware.
 				WithRequestIDCORS(
 					cors.Config{
-						AllowOrigins: []string{
-							"http://localhost:3000",
-							"http://127.0.0.1:3000",
-							"http://127.0.0.1:3001",
-							"http://14.225.210.29:3108",
-							"http://localhost:3001",
-							"http://localhost:8000",
-							"http://localhost:5173",
-							"http://localhost:5174",
-							"http://14.225.210.29:8000",
-							"http://14.225.205.222:8000",
-							"http://14.225.205.222:3107",
-							"http://14.225.205.222:3108",
-							"http://14.225.210.29:3110",
-							"http://103.145.63.185:3107",
-							"http://103.172.239.89:3108",
-							"https://admin.bdspro.com",
-							"https://bdspro.com",
-							"https://app.bdspro.com",
-							"https://map.qhpro.vn",
-							"https://qhpro.vn",
-							"https://test.qhpro.vn",
-						},
+						AllowOrigins: runtimeConfig.HTTP.AllowedOrigins,
 						AllowMethods: []string{
 							http.MethodGet,
 							http.MethodHead,
@@ -341,8 +129,8 @@ var HttpCmd = &cobra.Command{
 							"Content-Type",
 							"Accept",
 							"Authorization",
-							_jwt.APIKeyHeader,
-							_jwt.LegacyAPIKeyHeader,
+							_httpauth.APIKeyHeader,
+							_httpauth.LegacyAPIKeyHeader,
 							"Lang",
 							"If-None-Match",
 							"X-QHPro-Telemetry-Key",
@@ -391,107 +179,101 @@ var HttpCmd = &cobra.Command{
 				IdempotencyKey(),
 		)
 
-		// gRPC Gateway muxcs
-		mux := runtime.NewServeMux(
-			runtime.WithMetadata(_grpcmetadata.DuringReportMigration(
-				_grpcmetadata.ReportTargetEnabled(),
-				_middleware.InjectGrpcMetadataContextMiddleware,
-			)),
-			runtime.WithErrorHandler(func(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
-				if tokenErr, ok := ctx.Value("token_error").(error); ok {
-					http.Error(w, tokenErr.Error(), http.StatusUnauthorized)
-					return
-				}
-				_jwt.ErrorToGatewayResponse(ctx, w, err)
-			}),
-			runtime.WithMarshalerOption(runtime.MIMEWildcard, &CustomMarshaler{}),
-			runtime.WithForwardResponseOption(ForwardGatewayResponseMetadata),
-			runtime.WithForwardResponseOption(func(ctx context.Context, w http.ResponseWriter, resp proto.Message) error {
-				// nếu resp implement interface nào đó, ví dụ CommonResponse
-				if cr, ok := resp.(*sharepb.CommonResponse); ok {
-					// 1. apply cookies
-					for _, ck := range cr.Cookies {
-						http.SetCookie(w, &http.Cookie{
-							Name:     ck.Name,
-							Value:    ck.Value,
-							Path:     ck.Path,
-							Domain:   ck.Domain,
-							HttpOnly: ck.HttpOnly,
-							Secure:   ck.Secure,
-							MaxAge:   int(ck.MaxAge),
-						})
-					}
+		// Operational health is process-local; readiness flips before drain.
+		readiness := newReadinessState()
+		registerOperationalHealth(r, readiness)
 
-					// 2. handle redirect
-					if cr.RedirectUrl != "" {
-						http.Redirect(w, nil, cr.RedirectUrl, http.StatusFound) // 302
-						return nil                                              // stop normal response
-					}
-				}
-				return nil
-			}),
+		// gRPC Gateway mux. Transport adaptation is owned by dedicated Gateway packages.
+		mux := runtime.NewServeMux(
+			runtime.WithMetadata(_grpcmetadata.FromHTTPRequest),
+			runtime.WithErrorHandler(_httperror.HandleGRPC),
+			runtime.WithMarshalerOption(runtime.MIMEWildcard, &_httpresponse.Marshaler{}),
+			runtime.WithForwardResponseOption(_httpresponse.ForwardMetadata),
+			runtime.WithForwardResponseOption(_httpresponse.ForwardCommon),
 		)
 
-		ctx := context.Background()
-		trustConfig := _transporttrust.ConfigFromEnv()
-		opts := []grpc.DialOption{
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithChainUnaryInterceptor(_grpcclient.UnaryClientInterceptor(trustConfig)),
-			grpc.WithChainStreamInterceptor(_grpcclient.StreamClientInterceptor(trustConfig)),
-			grpc.WithConnectParams(grpc.ConnectParams{
-				Backoff: backoff.Config{
-					BaseDelay:  5 * time.Second,
-					Multiplier: 1.0,
-					Jitter:     0.0,
-					MaxDelay:   5 * time.Second,
-				},
-				MinConnectTimeout: 5 * time.Second,
-			}),
+		processCtx, stop := signal.NotifyContext(
+			context.Background(),
+			os.Interrupt,
+			syscall.SIGTERM,
+		)
+		defer stop()
+
+		connections, err := _upstream.Open(runtimeConfig)
+		if err != nil {
+			return err
 		}
 
-		apiKeyVerifier, verifierErr := service.NewHubAPIKeyVerifier(env, opts)
+		defer func() {
+			if closeErr := connections.Close(); closeErr != nil {
+				logger.Error("close Gateway upstream connections", "error", closeErr)
+			}
+		}()
+
+		apiKeyVerifier, verifierErr := _httpauth.NewHubAPIKeyVerifier(connections.Hub)
 		if verifierErr != nil {
 			log.Printf("Gateway API key verifier unavailable: %v", verifierErr)
 		}
-		if apiKeyVerifier != nil {
-			defer apiKeyVerifier.Close()
+
+		tokenVerifier, tokenVerifierErr := jwtverify.NewHMACVerifier(runtimeConfig.JWT.VerificationKey)
+		if tokenVerifierErr != nil {
+			return fmt.Errorf("construct Gateway JWT verifier: %w", tokenVerifierErr)
 		}
 
-		requestStatsTracker, trackerErr := service.NewRequestStatsTracker(env, opts)
-		if trackerErr != nil {
-			log.Printf("Gateway request stats tracker unavailable: %v", trackerErr)
-		}
-		if requestStatsTracker != nil {
-			defer requestStatsTracker.Close()
-		}
-
-		authMiddleware := _jwt.JWTAuthMiddleware(
-			publicRoutes,
-			tempRoutes,
-			_jwt.WithAPIKeyVerifier(apiKeyVerifier),
+		authRoutes := _authroutes.AuthenticationRoutes()
+		authMiddleware := _httpauth.Middleware(
+			authRoutes.Public,
+			authRoutes.TemporaryToken,
+			_httpauth.WithAPIKeyVerifier(apiKeyVerifier),
+			_httpauth.WithTokenVerifier(tokenVerifier),
+			_httpauth.WithProviderCredentialRoutes(authRoutes.ProviderCredential),
 		)
-		requestStatsMiddleware := service.RequestStatsMiddleware(requestStatsTracker)
 
-		// Đăng ký các gRPC services
-		service.RegisterNotificationService(ctx, mux, env, opts)
-		service.RegisterPaymentService(ctx, mux, env, opts)
-		// service.RegisterOrganizationService(ctx, mux, env, opts)
-		service.RegisterBdsproService(ctx, mux, env, opts)
-		service.RegisterCrmService(ctx, mux, env, opts)
-		service.RegisterSocialService(ctx, mux, env, opts)
-		// service.RegisterAppointmentService(ctx, mux, env, opts)
-		service.RegisterUserService(ctx, mux, env, opts)
-		service.RegisterChatService(ctx, mux, env, opts)
-		// service.RegisterMarketingService(ctx, mux, env, opts)
-		service.RegisterAuthService(ctx, mux, env, opts)
-		service.RegisterAssistantService(ctx, mux, env, opts)
-		service.RegisterHubService(ctx, mux, env, opts)
-		service.RegisterTqdService(ctx, mux, env, opts)
+		// Register generated handlers against process-owned connections.
+		if err := _grpcgateway.RegisterNotificationService(processCtx, mux, connections.Notification); err != nil {
+			return fmt.Errorf("register Notification gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterPaymentService(processCtx, mux, connections.Payment); err != nil {
+			return fmt.Errorf("register Payment gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterBdsproService(processCtx, mux, connections.BDSPro); err != nil {
+			return fmt.Errorf("register Bdspro gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterCrmService(processCtx, mux, connections.CRM); err != nil {
+			return fmt.Errorf("register Crm gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterOrganizationService(processCtx, mux, connections.Organization); err != nil {
+			return fmt.Errorf("register Organization gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterSocialService(processCtx, mux, connections.Social); err != nil {
+			return fmt.Errorf("register Social gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterUserService(processCtx, mux, connections.User); err != nil {
+			return fmt.Errorf("register User gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterChatService(processCtx, mux, connections.Chat); err != nil {
+			return fmt.Errorf("register Chat gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterAuthService(processCtx, mux, connections.Auth); err != nil {
+			return fmt.Errorf("register Auth gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterAssistantService(processCtx, mux, connections.Assistant); err != nil {
+			return fmt.Errorf("register Assistant gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterHubService(processCtx, mux, connections.Hub); err != nil {
+			return fmt.Errorf("register Hub gateway handlers: %w", err)
+		}
+		if err := _grpcgateway.RegisterTqdService(processCtx, mux, connections.TQD); err != nil {
+			return fmt.Errorf("register Tqd gateway handlers: %w", err)
+		}
 
-		// Multipart import: phải đăng ký trước mux — tránh grpc-gateway decode multipart thành JSON
-		v2Import := r.Group("/form", authMiddleware, requestStatsMiddleware)
-		service.RegisterTqdImportGeoJSONMultipartOnV2(v2Import, env, opts)
-		service.RegisterTqdPlanningFromFolderMultipartOnV2(v2Import, env, opts)
+		// Multipart compatibility routes borrow the same process-owned TQD connection.
+		multipartHandler, err := _tqdmultipart.New(connections.TQD, _tqdmultipart.DefaultLimits())
+		if err != nil {
+			return fmt.Errorf("construct TQD multipart boundary: %w", err)
+		}
+		v2Import := r.Group("/form", authMiddleware)
+		multipartHandler.Register(v2Import)
 
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
 		// như /v2/tqd/public/* và /v2/crm/public/{content,seo}/*. Vì vậy các route
@@ -530,12 +312,9 @@ var HttpCmd = &cobra.Command{
 		// 	authMiddleware,
 		// 	v2Fallback,
 		// )
-		r.Any("/v2/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
-		r.Any("/v2.1/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
-		r.Any("/v3/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
-
-		// Upstream discovery cho microservice reconnect khi start
-		service.RegisterInternalServicesRoute(r)
+		r.Any("/v2/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v2.1/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v3/*any", authMiddleware, gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")
@@ -555,13 +334,34 @@ var HttpCmd = &cobra.Command{
 			handler(c)
 		})
 
-		// v1 API routes (legacy proxy)
-		forwarding := pkg.ForwardingRequest(gateway, env)
-		r.Any("/v1/:service/*path", authMiddleware, requestStatsMiddleware, forwarding)
+		// v1 API routes remain an explicit bounded compatibility proxy.
+		v1, err := _v1proxy.New(runtimeConfig, 30*time.Second)
+		if err != nil {
+			return fmt.Errorf("construct v1 proxy: %w", err)
+		}
+		// Only true HTTP owners are reverse-proxied. Generated v1 contracts
+		// (currently TQD location) stay on the process-owned grpc-gateway mux.
+		r.Any("/v1/:service/*path", authMiddleware, v1.Handler(mux))
+
+		server := &http.Server{
+			Addr:              ":" + port,
+			Handler:           r,
+			ReadHeaderTimeout: 10 * time.Second,
+		}
+
+		listener, err := net.Listen("tcp", server.Addr)
+		if err != nil {
+			return fmt.Errorf("listen gateway HTTP on %s: %w", server.Addr, err)
+		}
 
 		log.Printf("Gateway server starting on port: %s", port)
-		if err := r.Run(":" + port); err != nil {
-			log.Fatalf("Gateway server failed: %v", err)
-		}
+
+		return serveHTTP(
+			processCtx,
+			server,
+			listener,
+			15*time.Second,
+			readiness,
+		)
 	},
 }

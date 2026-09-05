@@ -230,11 +230,12 @@ func (t GeneratedReportType) SupportsEntityType(entity WorkspaceEntityType) bool
 
 func (t GeneratedReportType) DefaultFormat() string {
 	switch t {
-	case GeneratedReportTypeSnapshot:
-		return "image"
-	case GeneratedReportTypePlanning,
+	case GeneratedReportTypeSnapshot,
+		GeneratedReportTypePlanning,
 		GeneratedReportTypeComparison,
 		GeneratedReportTypeAnalysis:
+		// Both canonical renderers currently produce a PDF. Format describes
+		// the persisted artifact, not a report-type presentation hint.
 		return "pdf"
 	default:
 		return ""

@@ -6,8 +6,6 @@ import (
 )
 
 type OrganizationProvider interface {
-	SwitchOrganization(ctx context.Context, organizationID uint64) (*dto.SwitchOrganizationResponse, error)
-
 	// Admin role management
 	GetAdminRoles(ctx context.Context) ([]dto.AdminRoleDTO, error)
 	GetGroupRoleUser(ctx context.Context, groupId uint64, userId uint64) (*dto.GroupMember, error)

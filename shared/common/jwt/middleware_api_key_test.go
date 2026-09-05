@@ -1,7 +1,7 @@
 package _jwt
 
 import (
-	_callercontext "common/callercontext"
+	"common/identity"
 	"context"
 	"errors"
 	"net/http"
@@ -20,6 +20,15 @@ func (f fakeAPIKeyVerifier) VerifyAPIKey(context.Context, string) (VerifiedAPIKe
 	return f.result, f.err
 }
 
+type fakeTokenVerifier struct {
+	principal *Principal
+	err       error
+}
+
+func (f fakeTokenVerifier) Parse(string) (*Principal, error) {
+	return f.principal, f.err
+}
+
 func TestJWTAuthMiddlewareAcceptsVerifiedAPIKeyWithoutJWT(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -28,8 +37,8 @@ func TestJWTAuthMiddlewareAcceptsVerifiedAPIKeyWithoutJWT(t *testing.T) {
 		result: VerifiedAPIKey{ID: 7, AppName: "release-uploader"},
 	})))
 	router.GET("/private", func(c *gin.Context) {
-		caller, ok := _callercontext.FromContext(c.Request.Context())
-		if !ok || caller.Kind != _callercontext.KindAPIKey || caller.APIKeyID != 7 {
+		caller, ok := identity.CallerFromContext(c.Request.Context())
+		if !ok || caller.Kind != identity.CallerAPIKey || caller.APIKeyID != 7 {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -113,5 +122,30 @@ func TestJWTAuthMiddlewareRejectsDuplicateAPIKeyHeaders(t *testing.T) {
 	router.ServeHTTP(resp, req)
 	if resp.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", resp.Code, http.StatusBadRequest)
+	}
+}
+
+func TestJWTAuthMiddlewareUsesInjectedTokenVerifier(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	router := gin.New()
+	router.Use(JWTAuthMiddleware(nil, nil, WithTokenVerifier(fakeTokenVerifier{
+		principal: &Principal{AuthID: 42, ProfileId: 42, Type: string(AccessToken)},
+	})))
+	router.GET("/private", func(c *gin.Context) {
+		actor, ok := identity.ActorFromContext(c.Request.Context())
+		if !ok || actor.ProfileID != 42 {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/private", nil)
+	req.Header.Set("Authorization", "Bearer verifier-owned-token")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	if resp.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", resp.Code, http.StatusNoContent)
 	}
 }

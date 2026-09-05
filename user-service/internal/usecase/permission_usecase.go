@@ -4,7 +4,9 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
-	"user/internal/domain"
+	"fmt"
+	"sort"
+	"user/internal/domain/access"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 )
@@ -30,29 +32,8 @@ func NewPermissionUsecase(
 	}
 }
 
-// Create tạo mới permission
-func (uc *PermissionUsecase) Create(ctx context.Context, permission *domain.Permission) (*domain.Permission, error) {
-	if permission.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên permission không được để trống")
-	}
-	if permission.Key == "" {
-		return nil, _errors.ReturnError(400, "Key permission không được để trống")
-	}
-	if permission.Module == "" {
-		return nil, _errors.ReturnError(400, "Module không được để trống")
-	}
-
-	// Kiểm tra key đã tồn tại chưa
-	existingPermission, err := uc.permissionRepo.GetByKey(ctx, permission.Key)
-	if err == nil && existingPermission != nil {
-		return nil, _errors.ReturnError(400, "Key permission đã tồn tại")
-	}
-
-	return uc.permissionRepo.Create(ctx, permission)
-}
-
 // GetByID lấy permission theo ID
-func (uc *PermissionUsecase) GetByID(ctx context.Context, id uint64) (*domain.Permission, error) {
+func (uc *PermissionUsecase) GetByID(ctx context.Context, id uint64) (*access.Permission, error) {
 	permission, err := uc.permissionRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -63,58 +44,62 @@ func (uc *PermissionUsecase) GetByID(ctx context.Context, id uint64) (*domain.Pe
 	return permission, nil
 }
 
-// Update cập nhật permission
-func (uc *PermissionUsecase) Update(ctx context.Context, id uint64, permission *domain.Permission) (*domain.Permission, error) {
-	if permission.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên permission không được để trống")
+// GetByModuleWithPagination phục vụ API permission production cũ nhưng vẫn
+// dùng repository/User IAM làm nguồn dữ liệu duy nhất.
+func (uc *PermissionUsecase) GetByModuleWithPagination(ctx context.Context, module uint64, page, size int) ([]*access.Permission, uint64, error) {
+	if module == 0 {
+		return nil, 0, _errors.ReturnError(400, "Module không được để trống")
 	}
-	if permission.Key == "" {
-		return nil, _errors.ReturnError(400, "Key permission không được để trống")
-	}
-	if permission.Module == "" {
-		return nil, _errors.ReturnError(400, "Module không được để trống")
-	}
+	return uc.permissionRepo.FindByModuleWithPagination(ctx, fmt.Sprintf("%d", module), page, size)
+}
 
-	// Kiểm tra permission có tồn tại không
-	existingPermission, err := uc.permissionRepo.FindById(ctx, id)
+// GetByOrganizationID trả về union permission keys của các role trong tổ chức.
+// Đây là read-only compatibility logic; role/permission persistence vẫn do User sở hữu.
+func (uc *PermissionUsecase) GetPermissionKeysByOrganizationID(ctx context.Context, organizationID uint64) ([]string, error) {
+	if organizationID == 0 {
+		return nil, _errors.ReturnError(400, "organizationId là bắt buộc")
+	}
+	roles, err := uc.roleRepo.FindByOrganizationId(ctx, organizationID)
 	if err != nil {
 		return nil, err
 	}
-	if existingPermission == nil {
-		return nil, _errors.ReturnError(404, "Permission không tồn tại")
+	set := make(map[string]struct{})
+	for _, role := range roles {
+		if role == nil {
+			continue
+		}
+		keys, keyErr := uc.roleRepo.GetPermissionKeysByRoleId(ctx, role.ID)
+		if keyErr != nil {
+			return nil, keyErr
+		}
+		for _, key := range keys {
+			if key != "" {
+				set[key] = struct{}{}
+			}
+		}
 	}
-
-	permission.ID = id
-	return uc.permissionRepo.Update(ctx, permission)
+	keys := make([]string, 0, len(set))
+	for key := range set {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys, nil
 }
 
 // Delete xóa permission
-func (uc *PermissionUsecase) Delete(ctx context.Context, id uint64) error {
-	// Kiểm tra permission có tồn tại không
-	existingPermission, err := uc.permissionRepo.FindById(ctx, id)
-	if err != nil {
-		return err
-	}
-	if existingPermission == nil {
-		return _errors.ReturnError(404, "Permission không tồn tại")
-	}
-
-	return uc.permissionRepo.Delete(ctx, id)
-}
-
 // GetAll lấy tất cả permission
-func (uc *PermissionUsecase) GetAll(ctx context.Context) ([]*domain.Permission, error) {
+func (uc *PermissionUsecase) GetAll(ctx context.Context) ([]*access.Permission, error) {
 	permissions, err := uc.permissionRepo.GetPermissions(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	permMap := make(map[uint64]*domain.Permission)
+	permMap := make(map[uint64]*access.Permission)
 	for i := range permissions {
 		permMap[permissions[i].ID] = permissions[i]
 	}
 
-	var roots []*domain.Permission
+	var roots []*access.Permission
 
 	// Xây dựng quan hệ cha-con
 	for _, p := range permissions {
@@ -127,7 +112,7 @@ func (uc *PermissionUsecase) GetAll(ctx context.Context) ([]*domain.Permission, 
 	return roots, nil
 }
 
-func (uc *PermissionUsecase) BuildHierarchy(permission *domain.Permission, permMap map[uint64]*domain.Permission) *domain.Permission {
+func (uc *PermissionUsecase) BuildHierarchy(permission *access.Permission, permMap map[uint64]*access.Permission) *access.Permission {
 	if permission == nil {
 		return nil
 	}
@@ -142,38 +127,6 @@ func (uc *PermissionUsecase) BuildHierarchy(permission *domain.Permission, permM
 
 	return permission
 }
-
-// GetByKey lấy permission theo key
-func (uc *PermissionUsecase) GetByKey(ctx context.Context, key string) (*domain.Permission, error) {
-	return uc.permissionRepo.GetByKey(ctx, key)
-}
-
-// GetByOrganizationID lấy danh sách permission theo organization ID
-func (uc *PermissionUsecase) GetByOrganizationID(ctx context.Context, organizationID uint64) ([]*domain.Permission, error) {
-	return uc.permissionRepo.FindByOrganizationId(ctx, organizationID)
-}
-
-// GetByOrganizationIDWithPagination lấy danh sách permission theo organization ID với phân trang
-func (uc *PermissionUsecase) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint64, page, size int) ([]*domain.Permission, uint64, error) {
-	return uc.permissionRepo.FindByOrganizationIdWithPagination(ctx, organizationID, page, size)
-}
-
-// GetByModule lấy danh sách permission theo module
-func (uc *PermissionUsecase) GetByModule(ctx context.Context, module string) ([]*domain.Permission, error) {
-	if module == "" {
-		return nil, _errors.ReturnError(400, "Module không được để trống")
-	}
-	return uc.permissionRepo.FindByModule(ctx, module)
-}
-
-// GetByModuleWithPagination lấy danh sách permission theo module với phân trang
-func (uc *PermissionUsecase) GetByModuleWithPagination(ctx context.Context, module uint32, page, size int) ([]*domain.Permission, uint64, error) {
-	if module <= 0 {
-		return nil, 0, _errors.ReturnError(400, "Module không được để trống")
-	}
-	return uc.permissionRepo.FindByModuleWithPagination(ctx, module, page, size)
-}
-
 func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) ([]string, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	groupMember, err := uc.organizationProvider.GetGroupRoleUser(ctx, groupId, profileId)
@@ -197,7 +150,7 @@ func (uc *PermissionUsecase) GetByGroupId(ctx context.Context, groupId uint64) (
 	return permissions, nil
 }
 
-func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, *domain.Role, error) {
+func (uc *PermissionUsecase) GetByDealId(ctx context.Context, dealId uint64) ([]string, *access.Role, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	dealMember, err := uc.bdsproProvider.GetDealMember(ctx, dealId, profileId)
 	if err != nil {

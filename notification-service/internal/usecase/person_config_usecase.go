@@ -7,14 +7,13 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
-)
+	)
 
 type PersonConfigUsecase struct {
-	repo repo.PersonConfigRepo
+	repo PersonConfigStore
 }
 
-func NewPersonConfigUsecase(repo repo.PersonConfigRepo) *PersonConfigUsecase {
+func NewPersonConfigUsecase(repo PersonConfigStore) *PersonConfigUsecase {
 	return &PersonConfigUsecase{repo: repo}
 }
 

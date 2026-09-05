@@ -3,7 +3,7 @@ package httpmiddleware
 import (
 	"time"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,13 +27,13 @@ func RequestLifecycle(
 				ctx,
 			)
 
-		requestID, _ := _requestcontext.
-			FromContext(
+		requestID, _ := _request.
+			RequestIDFromContext(
 				ctx.Request.Context(),
 			)
 
 		operationID, _ :=
-			_requestcontext.
+			_request.
 				OperationIDFromContext(
 					ctx.Request.Context(),
 				)

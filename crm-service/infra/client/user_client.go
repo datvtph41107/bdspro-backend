@@ -3,7 +3,6 @@ package client
 import (
 	_utils "common/utils"
 	"context"
-	"crm/env"
 	"crm/internal/domain"
 	"crm/internal/enums"
 	crmpb "pb/types/crm"
@@ -19,9 +18,9 @@ type UserClient struct {
 	*clients.UserGrpcClient
 }
 
-func NewUserClient() *UserClient {
+func NewUserClient(rpcClient *clients.UserGrpcClient) *UserClient {
 	return &UserClient{
-		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+		UserGrpcClient: rpcClient,
 	}
 }
 

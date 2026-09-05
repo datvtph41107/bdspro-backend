@@ -21,6 +21,7 @@ import (
 	"bdspro/infra/router/org"
 	"bdspro/infra/router/public"
 	"bdspro/infra/router/user"
+	"bdspro/infra/rpc"
 	"bdspro/infra/validator"
 	"bdspro/initial"
 	"bdspro/internal/job"
@@ -41,10 +42,10 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*initial.InitialApp, error) {
+func InitializeApp() (*initial.InitialApp, func(), error) {
 	db, err := _db.NewDB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	gormPostRepo := postgres.NewGormPostRepo(db)
 	transactionRepo := _db.NewTransactionRepo(db)
@@ -55,11 +56,20 @@ func InitializeApp() (*initial.InitialApp, error) {
 	gormPostMediaRepo := postgres.NewGormPostMediaRepo(db)
 	postgreAsset := postgres.NewPostgreAsset(db)
 	memberPlanUsecase := handler.NewMemberPlanUsecase()
-	notificationProvider := client.NewNotificationClient()
+	notificationClient, cleanup, err := rpc.NewNotificationRPCClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	notificationProvider := client.NewNotificationClient(notificationClient)
 	postgrePostOrganization := postgres.NewPostgrePostOrganization(db)
 	postgrePostUser := postgres.NewPostgrePostUser(db)
 	postUsecase := shared_usecase.NewSharedPostUsecase(gormPostRepo, productRepo, gormPostMediaRepo, postgreAsset, memberPlanUsecase, notificationProvider, postgrePostOrganization, postgrePostUser)
-	userClient := client.NewUserClient()
+	userGrpcClient, cleanup2, err := rpc.NewUserRPCClient()
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	userClient := client.NewUserClient(userGrpcClient)
 	postMapper := mapper.NewPostMapper(userClient)
 	postService := handler.NewGrpcPostService(gormPostRepo, postUsecase, postMapper)
 	gormProductMediaRepo := postgres.NewGormProductMediaRepo(db)
@@ -77,7 +87,9 @@ func InitializeApp() (*initial.InitialApp, error) {
 	productUserRepo := postgres.NewProductUserPostgres(db)
 	redisClient, err := redis_cli.NewClient()
 	if err != nil {
-		return nil, err
+		cleanup2()
+		cleanup()
+		return nil, nil, err
 	}
 	gormAssetLegalRepo := postgres.NewGormAssetLegalRepo(db)
 	postgreAssetOrganization := postgres.NewPostgreAssetOrganization(db)
@@ -99,9 +111,15 @@ func InitializeApp() (*initial.InitialApp, error) {
 	propertyLandInfoRepo := postgres.NewPostgrePropertyLandInfoRepo(db)
 	propertyBuildingInfoRepo := postgres.NewPostgrePropertyBuildingInfoRepo(db)
 	propertyMediaRepo := postgres.NewPostgrePropertyMediaRepo(db)
+	hubGrpcClient, cleanup3, err := rpc.NewHubRPCClient()
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	areaRegionRepo := postgres.NewAreaRegionPostgres(transactionRepo)
 	areaRegionUsecase := admin_usecases.NewAreaRegionUsecase(areaRegionRepo)
-	hubClient := client.NewHubClient(areaRegionUsecase)
+	hubClient := client.NewHubClient(hubGrpcClient, areaRegionUsecase)
 	redisService := _provider.NewRedisService()
 	syncUtil := _utils.NewSyncUtil(redisService)
 	propertyLineageRepository := postgres.NewLineageRepo(db)
@@ -118,14 +136,27 @@ func InitializeApp() (*initial.InitialApp, error) {
 	provinceV2Repository := postgres.NewProvinceV2Repository(db)
 	wardV2Repository := postgres.NewWardV2Repository(db)
 	propertyImpactRepository := postgres.NewSnapshotRepository(db)
-	tqdGrpcClient := injection.NewTQClient()
+	tqdGrpcClient, cleanup4, err := rpc.NewTQDRPCClient()
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	ruleEngine := modules.NewRuleEngine()
 	snapshotComparator := modules.NewSnapshotComparator(ruleEngine)
 	impactDetectionEngine := modules.NewImpactDetectionEngine(propertyImpactRepository, ruleEngine, snapshotComparator, propertyLineageRepository)
 	propertyUsecase := property_usecases.NewPropertyUsecase(propertyRepo, propertyUserRepo, propertyInfoRepo, propertyStatisticRepo, propertyIdentifyRepo, propertyLocationRepo, propertyExternalRefRepo, propertyEdvidenceRepo, propertyRelationRepo, propertyProductRepo, propertyLandInfoRepo, propertyBuildingInfoRepo, propertyMediaRepo, propertyAmenityRepo, gormAssetLegalRepo, productRepo, productUserRepo, gormProductPriceRepo, gormProductMediaRepo, postgreAsset, transactionGorm, notificationProvider, hubClient, syncUtil, propertyLineageRepository, propertyInfoRepository, propertyLocationRepository, propertyLandInfoRepository, propertyBuildingInfoRepository, propertyEvidenceRepository, propertyMediaRepository, propertyAmenityRepository, areaRegionRepository, propertyExternalRefRepository, propertyReportRepository, provinceV2Repository, wardV2Repository, propertyImpactRepository, tqdGrpcClient, impactDetectionEngine)
 	codeDataUsecase := providers.NewCodeDataUsecase()
 	deepseekClient := client.NewDeepseekClient()
-	crmProvider := injection.NewCRMClient()
+	crmProvider, cleanup5, err := rpc.NewCRMRPCClient()
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	distributeRepository := postgres.NewDistributionPostgres(db)
 	productUsecase := shared_usecase.NewProductUsecase(productRepo, postgreAsset, gormProductMediaRepo, postgreHistoryRepo, sharingAccessPostgre, gormHouseInfoRepo, gormProductPriceRepo, gormProductPrivateRepo, postgreRegion, postgreDocType, postgrePropertyType, propertyAmenityRepo, dealRepository, postgreProductChild, productOrganizationPostgres, productUserRepo, redisClient, memberPlanUsecase, postUsecase, assetUsecase, bdsDomainUsecase, propertyUsecase, codeDataUsecase, deepseekClient, transactionGorm, notificationProvider, crmProvider, userClient, distributeRepository, hubClient)
 	apartmentMapper := mapper.NewApartmentMapper()
@@ -167,12 +198,30 @@ func InitializeApp() (*initial.InitialApp, error) {
 	costTypeValidator := validator.NewCostTypeValidator()
 	costTypeMapper := mapper.NewCostTypeMapper()
 	assetCostTypeService := handler.NewAssetCostTypeServer(assetCostTypeUsecase, costTypeValidator, costTypeMapper)
-	chatProvider := injection.NewChatClient()
+	chatProvider, cleanup6, err := rpc.NewChatRPCClient()
+	if err != nil {
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	sharingAccessUsecase := shared_usecase.NewShareAccessUsecase(sharingAccessPostgre, productUsecase, notificationProvider, chatProvider, postgreAsset)
 	sharingAccessMapper := mapper.NewSharingAccessMapper()
 	sharingAccessValidator := validator.NewSharingAccessValidator()
-	organizationClient := client.NewOrganizationClient()
-	sharingAccessService := handler.NewSharingAccessService(sharingAccessUsecase, sharingAccessMapper, sharingAccessValidator, userClient, organizationClient)
+	organizationClient, cleanup7, err := rpc.NewOrganizationRPCClient()
+	if err != nil {
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	clientOrganizationClient := client.NewOrganizationClient(organizationClient)
+	sharingAccessService := handler.NewSharingAccessService(sharingAccessUsecase, sharingAccessMapper, sharingAccessValidator, userClient, clientOrganizationClient)
 	assetLegalUsecase := usecases.NewAssetLegalUc(gormAssetLegalRepo)
 	assetLegalService := handler.NewAssetLegalServer(assetLegalUsecase, assetLegalMapper)
 	projectBuildUsecase := usecases.NewProjectBuildUsecase(postgreProjectBuild)
@@ -184,7 +233,18 @@ func InitializeApp() (*initial.InitialApp, error) {
 	transactionHandler := handler.NewTransactionHandler(transactionValidator, transferTaxFeeUsecase, loanPaymentUsecase)
 	adminProductPostgres := admin_postgres.NewAdminProductPostgres(transactionRepo, productRepo)
 	adminProductUsecase := admin_usecases.NewAdminProductUsecase(adminProductPostgres, productUsecase, productRepo)
-	authClient := client.NewAuthClient()
+	authGrpcClient, cleanup8, err := rpc.NewAuthRPCClient()
+	if err != nil {
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	authClient := client.NewAuthClient(authGrpcClient, userGrpcClient)
 	adminProductHandler := admin_handler.NewAdminProductHandler(adminProductUsecase, productMapper, authClient, userClient)
 	adminAssetPostgres := admin_postgres.NewAdminAssetPostgres(transactionRepo)
 	adminAssetUsecase := admin_usecases.NewAdminAssetUsecase(adminAssetPostgres)
@@ -226,8 +286,20 @@ func InitializeApp() (*initial.InitialApp, error) {
 	bdsDomainMapper := mapper.NewBdsDomainMapper()
 	bdsDomainHandler := handler.NewBdsDomainHandler(bdsDomainUsecase, bdsDomainMapper)
 	dealValidator := validator.NewGroupDealValidator()
-	paymentClient := client.NewPaymentClient()
-	dealHandler := handler.NewDealHandler(dealUsecase, dealMapper, dealValidator, organizationClient, userClient, paymentClient, productRepo)
+	paymentClient, cleanup9, err := rpc.NewPaymentRPCClient()
+	if err != nil {
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	clientPaymentClient := client.NewPaymentClient(paymentClient)
+	dealHandler := handler.NewDealHandler(dealUsecase, dealMapper, dealValidator, clientOrganizationClient, userClient, clientPaymentClient, productRepo)
 	dealCommissionUsecase := usecases.NewDealCommissionUsecase(dealMemberPostgresRepository, dealRepository)
 	dealCommissionTransformer := mapper.NewDealCommissionTransformer()
 	dealCommissionValidator := validator.NewDealCommissionValidator()
@@ -276,10 +348,20 @@ func InitializeApp() (*initial.InitialApp, error) {
 	propertyIdentifierMapper := mapper.NewIdentifierMapper()
 	propertyIdentifierHandler := handler.NewIdentifierHandler(propertyIdentifierUsecase, propertyIdentifierMapper)
 	initialApp := initial.NewInitialApp(postService, productHandler, bdsproPublicService, assetService, assetExploitationService, assetCostService, assetCostTypeService, sharingAccessService, productUsecase, assetLegalService, projectBuildService, transactionHandler, adminProductHandler, adminAssetHandler, adminPostHandler, adminPropertyTypeHandler, adminProjectHandler, adminAreaRegionHandler, adminRegionHandler, internalHandler, bdsproDashboardHandler, bdsDomainHandler, assetDashboardStatsJob, productDashboardStatsJob, postDashboardStatsJob, dealHandler, dealCommissionHandler, dealInvestmentHandler, dealMilestoneHandler, dealInvitationHandler, dealInternalNoteHandler, internalTransactionHandler, txHandler, txContractDealHandler, txCostTypeHandler, txDealCostHandler, adminTxHandler, propertyHandler, distributionHandler, productNoteHandler, propertyIdentifierHandler)
-	return initialApp, nil
+	return initialApp, func() {
+		cleanup9()
+		cleanup8()
+		cleanup7()
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.HubProvider), new(*client.HubClient)), wire.Bind(new(provider.IUserProvider), new(*client.UserClient)), wire.Bind(new(provider.PlanProvider), new(*providers.MemberPlanProvider)), wire.Bind(new(provider.TransactionProvider), new(*postgres.TransactionGorm)), wire.Bind(new(repo.ApartmentRepo), new(*postgres.PostgreApartment)), wire.Bind(new(repo.AssetCostRepo), new(*postgres.GormAssetCostRepo)), wire.Bind(new(repo.AssetCostTypeRepo), new(*postgres.PostgreUserCostType)), wire.Bind(new(repo.AssetExploitationRepo), new(*postgres.PostgreAssetExploitation)), wire.Bind(new(repo.AssetIncomeTypeRepo), new(*postgres.GormAssetIncomeTypeRepo)), wire.Bind(new(repo.AssetLegalRepo), new(*postgres.GormAssetLegalRepo)), wire.Bind(new(repo.AssetOrganizationRepo), new(*postgres.PostgreAssetOrganization)), wire.Bind(new(repo.AssetRepo), new(*postgres.PostgreAsset)), wire.Bind(new(repo.AssetShareRepo), new(*postgres.AssetShareRepo)), wire.Bind(new(repo.AssetUserRepo), new(*postgres.PostgreAssetUser)), wire.Bind(new(repo.BankAccountRepository), new(*postgres.BankAccountPostgresRepository)), wire.Bind(new(repo.BdsDomainRepo), new(*postgres.BdsDomainPostgres)), wire.Bind(new(repo.CostDocumentRepo), new(*postgres.GormCostDocumentRepo)), wire.Bind(new(repo.DealMemberRepository), new(*postgres.DealMemberPostgresRepository)), wire.Bind(new(repo.DealMilestoneRepository), new(*postgres.DealMilestonePostgresRepository)), wire.Bind(new(repo.DocTypeRepo), new(*postgres.PostgreDocType)), wire.Bind(new(repo.DocumentRepository), new(*postgres.DocumentPostgresRepository)), wire.Bind(new(repo.HouseInfoRepo), new(*postgres.GormHouseInfoRepo)), wire.Bind(new(repo.IncomeDocumentRepo), new(*postgres.GormIncomeDocumentRepo)), wire.Bind(new(repo.InvestmentRepository), new(*postgres.InvestmentPostgres)), wire.Bind(new(repo.PostMediaRepo), new(*postgres.GormPostMediaRepo)), wire.Bind(new(repo.PostOrganizationRepo), new(*postgres.PostgrePostOrganization)), wire.Bind(new(repo.PostRepo), new(*postgres.GormPostRepo)), wire.Bind(new(repo.PostUserRepo), new(*postgres.PostgrePostUser)), wire.Bind(new(repo.ProductAssetRepo), new(*postgres.ProductAssetPostgres)), wire.Bind(new(repo.ProductHistoryRepo), new(*postgres.PostgreHistoryRepo)), wire.Bind(new(repo.ProductMediaRepo), new(*postgres.GormProductMediaRepo)), wire.Bind(new(repo.ProductOrganizationRepo), new(*postgres.ProductOrganizationPostgres)), wire.Bind(new(repo.ProductPriceRepo), new(*postgres.GormProductPriceRepo)), wire.Bind(new(repo.ProductPrivateRepo), new(*postgres.GormProductPrivateRepo)), wire.Bind(new(repo.ProjectBuildRepo), new(*postgres.PostgreProjectBuild)), wire.Bind(new(repo.ProjectRepo), new(*postgres.PostgreProject)), wire.Bind(new(repo.PropertyTypeRepo), new(*postgres.PostgrePropertyType)), wire.Bind(new(repo.RecordHistoryRepo), new(*postgres.PostgreReportHistory)), wire.Bind(new(repo.RegionRepo), new(*postgres.PostgreRegion)), wire.Bind(new(repo.SharingAccessRepo), new(*postgres.SharingAccessPostgre)), wire.Bind(new(repo.UProductChildRepo), new(*postgres.PostgreProductChild)), wire.Bind(new(admin_repo.AdminAssetRepo), new(*admin_postgres.AdminAssetPostgres)), wire.Bind(new(admin_repo.AdminPostRepo), new(*admin_postgres.AdminPostPostgres)), wire.Bind(new(admin_repo.AdminProductRepo), new(*admin_postgres.AdminProductPostgres)), wire.Bind(new(admin_repo.AdminProjectRepo), new(*admin_postgres.AdminProjectPostgres)), wire.Bind(new(admin_repo.AdminPropertyTypeRepo), new(*admin_postgres.AdminPropertyTypePostgres)), wire.Bind(new(usecases.PlanUsecase), new(*handler.MemberPlanUsecase)), injection.NewAuthClient, injection.NewBDSProClient, injection.NewCRMClient, injection.NewChatClient, injection.NewHubClient, injection.NewNotification, injection.NewOrganizationClient, injection.NewPaymentClient, injection.NewTQClient, injection.NewTransactionClient, injection.NewUserClient, injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewActionRepo, handler.NewAdminAreaRegionHandler, admin_handler.NewAdminAssetHandler, admin_postgres.NewAdminAssetPostgres, admin_usecases.NewAdminAssetUsecase, admin_handler.NewAdminPostHandler, admin_postgres.NewAdminPostPostgres, admin_usecases.NewAdminPostUsecase, admin_handler.NewAdminProductHandler, admin_postgres.NewAdminProductPostgres, admin_usecases.NewAdminProductUsecase, admin_handler.NewAdminProjectHandler, admin_postgres.NewAdminProjectPostgres, admin_usecases.NewAdminProjectUsecase, admin_handler.NewAdminPropertyTypeHandler, admin_postgres.NewAdminPropertyTypePostgres, admin_usecases.NewAdminPropertyTypeUsecase, handler.NewAdminRegionHandler, admin_handler.NewAdminTransactionHandler, mapper.NewAdminTransactionMapper, admin_postgres.NewAdminTransactionPostgres, admin_usecases.NewAdminTransactionUsecase, admin_handler.NewAdminTxHandler, postgres.NewAmenityRepo, mapper.NewApartmentAttributeMapper, mapper.NewApartmentMapper, shared_usecase.NewApartmentUsecase, mapper.NewAreaRegionMapper, postgres.NewAreaRegionPostgres, postgres.NewAreaRegionRepo, admin_usecases.NewAreaRegionUsecase, mapper.NewAssetCostMapper, handler.NewAssetCostService, handler.NewAssetCostTypeServer, shared_usecase.NewAssetCostTypeUsecase, shared_usecase.NewAssetCostUsecase, validator.NewAssetCostValidator, job.NewAssetDashboardStatsJob, mapper.NewAssetExploitationMapper, handler.NewAssetExploitationServer, shared_usecase.NewAssetExploitationUc, validator.NewAssetExploitationValidator, handler.NewAssetIncomeTypeServer, usecases.NewAssetIncomeTypeUc, mapper.NewAssetLegalMapper, handler.NewAssetLegalServer, usecases.NewAssetLegalUc, mapper.NewAssetMapper, postgres.NewAssetShareRepo, user_router.NewAssetShareRouter, usecases.NewAssetShareUC, postgres_audit.NewAuditLogRepository, client.NewAuthClient, mapper.NewBankAccountMapper, postgres.NewBankAccountPostgresRepository, handler.NewBdsDomainHandler, mapper.NewBdsDomainMapper, postgres.NewBdsDomainPostgres, usecases.NewBdsDomainUsecase, handler.NewBdsproDashboardHandler, handler.NewBdsproPublicService, mapper.NewBuildMapper, postgres.NewBuildingInfoRepo, redis_cli.NewClient, providers.NewCodeDataUsecase, mapper.NewCommonMapper, mapper.NewContractDealMapper, validator.NewContractDealValidator, handler.NewCostDocumentServer, usecases.NewCostDocumentUc, mapper.NewCostTypeMapper, postgres.NewCostTypeRepository, usecases.NewCostTypeUsecase, validator.NewCostTypeValidator, usecases.NewDashboardUsecase, handler.NewDealCommissionHandler, mapper.NewDealCommissionTransformer, usecases.NewDealCommissionUsecase, validator.NewDealCommissionValidator, usecases.NewDealContractUsecase, handler.NewDealCostHandler, mapper.NewDealCostMapper, postgres.NewDealCostRepository, usecases.NewDealCostUsecase, validator.NewDealCostValidator, handler.NewDealHandler, handler.NewDealInvestmentHandler, handler.NewDealInvitationHandler, mapper.NewDealInvitationTransformer, usecases.NewDealInvitationUsecase, validator.NewDealInvitationValidator, postgres.NewDealMemberPostgresRepository, handler.NewDealMilestoneHandler, postgres.NewDealMilestonePostgresRepository, mapper.NewDealMilestoneTransformer, usecases.NewDealMilestoneUsecase, validator.NewDealMilestoneValidator, postgres.NewDealOfBranchPostgres, postgres.NewDealOfGroupPostgres, postgres.NewDealOfOrganizationPostgres, postgres.NewDealTransactionPostgresRepository, usecases.NewDealUsecase, client.NewDeepseekClient, mapper.NewDepositeMapper, mapper.NewDeveloperMapper, repo.NewDeveloperRepo, handler.NewDistributionHandler, mapper.NewDistributionMapper, postgres.NewDistributionPostgres, usecases.NewDistributionUsecase, mapper.NewDocumentMapper, postgres.NewDocumentPostgresRepository, usecases.NewEventHistoryUsecase, postgres.NewEvidenceRepo, postgres.NewExternalRefRepo, postgres.NewGormAssetCostRepo, postgres.NewGormAssetIncomeTypeRepo, postgres.NewGormAssetLegalRepo, postgres.NewGormCostDocumentRepo, postgres.NewGormHouseInfoRepo, postgres.NewGormIncomeDocumentRepo, postgres.NewGormPostMediaRepo, postgres.NewGormPostRepo, postgres.NewGormProductMediaRepo, postgres.NewGormProductPriceRepo, postgres.NewGormProductPrivateRepo, postgres.NewGormUserProductRepo, postgres.NewGroupDealPostgresRepository, mapper.NewGroupDealTransformer, validator.NewGroupDealValidator, handler.NewGrpcAssetService, handler.NewGrpcPostService, mapper.NewHistoryMapper, client.NewHubClient, handler.NewIdentifierHandler, mapper.NewIdentifierMapper, postgres.NewIdentifierRepository, usecases.NewIdentifierUsecase, modules.NewImpactDetectionEngine, handler.NewIncomeDocumentServer, usecases.NewIncomeDocumentUc, postgres.NewInfoRepo, initial.NewInitialApp, postgres2.NewIntentPostgres, usecases.NewIntentUsecase, handler.NewInternalHandler, handler.NewInternalNoteHandler, postgres.NewInternalNotePostgresRepository, mapper.NewInternalNoteTransformer, usecases.NewInternalNoteUsecase, validator.NewInternalNoteValidator, handler.NewInternalTransactionHandler, mapper.NewInvestmentMapper, postgres.NewInvestmentPostgres, usecases.NewInvestmentUsecase, validator.NewInvestmentValidator, postgres.NewLandInfoRepo, postgres.NewLineageRepo, user_router.NewListRouter, usecases.NewListUsecase, usecases.NewLoanPaymentUsecase, postgres.NewLocationRepo, postgres.NewMediaRepo, providers.NewMemberPlanService, handler.NewMemberPlanUsecase, client.NewNotificationClient, org_router.NewOrgAssetCostRouter, org_router.NewOrgAssetExploitationRouter, org_router.NewOrgAssetRouter, org_router.NewOrgCostTypeRouter, org_router.NewOrgPostRoute, org_router.NewOrgProductChildRouter, client.NewOrganizationClient, client.NewPaymentClient, job.NewPostDashboardStatsJob, mapper.NewPostMapper, user_router.NewPostMediaRoute, postgres.NewPostgreApartmentRepo, postgres.NewPostgreAsset, postgres.NewPostgreAssetExploitation, postgres.NewPostgreAssetOrganization, postgres.NewPostgreAssetUser, postgres.NewPostgreDocType, postgres.NewPostgreHistoryRepo, postgres.NewPostgrePostOrganization, postgres.NewPostgrePostUser, postgres.NewPostgreProductChildRepo, postgres.NewPostgreProductNoteRepo, postgres.NewPostgreProject, postgres.NewPostgreProjectBuild, postgres.NewPostgrePropertyAmenityRepo, postgres.NewPostgrePropertyBuildingInfoRepo, postgres.NewPostgrePropertyEdvidenceRepo, postgres.NewPostgrePropertyExternalRefRepo, postgres.NewPostgrePropertyIdentifyRepo, postgres.NewPostgrePropertyInfoRepo, postgres.NewPostgrePropertyLandInfoRepo, postgres.NewPostgrePropertyLocationRepo, postgres.NewPostgrePropertyMediaRepo, postgres.NewPostgrePropertyProductRepo, postgres.NewPostgrePropertyRelationRepo, postgres.NewPostgrePropertyRepo, postgres.NewPostgrePropertyStatisticRepo, postgres.NewPostgrePropertyType, postgres.NewPostgreRegion, postgres.NewPostgreReportHistory, postgres.NewPostgreUserCostType, postgres.NewProductAssetPostgres, usecases.NewProductAssetUsecase, job.NewProductDashboardStatsJob, mapper.NewProductMapper, handler.NewProductNoteHandler, mapper.NewProductNoteMapper, usecases.NewProductNoteUsecase, postgres.NewProductOfOrgPostgres, mapper.NewProductPriceMapper, handler.NewProductService, shared_usecase.NewProductUsecase, postgres.NewProductUserPostgres, validator.NewProductValidator, mapper.NewProjectBuildMapper, handler.NewProjectBuildService, usecases.NewProjectBuildUsecase, mapper.NewProjectMapper, property_handler.NewPropertyHandler, mapper.NewPropertyMapper, postgres.NewPropertyReportRepository, mapper.NewPropertyTypeMapper, usecases.NewPropertyTypeUsecase, property_usecases.NewPropertyUsecase, postgres.NewPropertyUserPostgres, postgres.NewProvinceV2Repository, mapper.NewPublicMapper, public_router.NewPublicRouter, postgres_audit.NewPushRepo, usecases.NewRecordHistoryUsecase, providers.NewRedisProvider, mapper.NewRegionMapper, admin_usecases.NewRegionUsecase, shared_usecase.NewRequestUsecase, user_router.NewRouterManager, modules.NewRuleEngine, shared_usecase.NewShareAccessUsecase, shared_usecase.NewSharedAssetUsecase, shared_usecase.NewSharedPostUsecase, mapper.NewSharingAccessMapper, postgres.NewSharingAccessPostgre, handler.NewSharingAccessService, validator.NewSharingAccessValidator, modules.NewSnapshotComparator, postgres.NewSnapshotRepository, postgres.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgres.NewTransactionGorm, handler.NewTransactionHandler, postgres.NewTransactionPostgresRepository, usecases.NewTransactionUsecase, validator.NewTransactionValidator, usecases.NewTransferTaxFeeUsecase, handler.NewTxContractDealHandler, handler.NewTxCostTypeHandler, mapper.NewTxCostTypeMapper, handler.NewTxHandler, mapper.NewTxMapper, user_router.NewUAssetLegalRoute, usecases.NewUPostMediaUsecase, user_router.NewUProductAccessRouter, user_router.NewUserAssetCostRouter, user_router.NewUserAssetExploitationRouter, user_router.NewUserAssetRouter, client.NewUserClient, user_router.NewUserCostTypeRouter, user_router.NewUserPostRoute, user_router.NewUserProductChildRouter, user_router.NewUserProductRouter, user_router.NewUserProjectBuildRouter, postgres_audit.NewVersionRepo, postgres.NewWardV2Repository)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(provider.DeepseekProvider), new(*client.DeepseekClient)), wire.Bind(new(provider.HubProvider), new(*client.HubClient)), wire.Bind(new(provider.IUserProvider), new(*client.UserClient)), wire.Bind(new(provider.PlanProvider), new(*providers.MemberPlanProvider)), wire.Bind(new(provider.TransactionProvider), new(*postgres.TransactionGorm)), wire.Bind(new(repo.ApartmentRepo), new(*postgres.PostgreApartment)), wire.Bind(new(repo.AssetCostRepo), new(*postgres.GormAssetCostRepo)), wire.Bind(new(repo.AssetCostTypeRepo), new(*postgres.PostgreUserCostType)), wire.Bind(new(repo.AssetExploitationRepo), new(*postgres.PostgreAssetExploitation)), wire.Bind(new(repo.AssetIncomeTypeRepo), new(*postgres.GormAssetIncomeTypeRepo)), wire.Bind(new(repo.AssetLegalRepo), new(*postgres.GormAssetLegalRepo)), wire.Bind(new(repo.AssetOrganizationRepo), new(*postgres.PostgreAssetOrganization)), wire.Bind(new(repo.AssetRepo), new(*postgres.PostgreAsset)), wire.Bind(new(repo.AssetShareRepo), new(*postgres.AssetShareRepo)), wire.Bind(new(repo.AssetUserRepo), new(*postgres.PostgreAssetUser)), wire.Bind(new(repo.BankAccountRepository), new(*postgres.BankAccountPostgresRepository)), wire.Bind(new(repo.BdsDomainRepo), new(*postgres.BdsDomainPostgres)), wire.Bind(new(repo.CostDocumentRepo), new(*postgres.GormCostDocumentRepo)), wire.Bind(new(repo.DealMemberRepository), new(*postgres.DealMemberPostgresRepository)), wire.Bind(new(repo.DealMilestoneRepository), new(*postgres.DealMilestonePostgresRepository)), wire.Bind(new(repo.DocTypeRepo), new(*postgres.PostgreDocType)), wire.Bind(new(repo.DocumentRepository), new(*postgres.DocumentPostgresRepository)), wire.Bind(new(repo.HouseInfoRepo), new(*postgres.GormHouseInfoRepo)), wire.Bind(new(repo.IncomeDocumentRepo), new(*postgres.GormIncomeDocumentRepo)), wire.Bind(new(repo.InvestmentRepository), new(*postgres.InvestmentPostgres)), wire.Bind(new(repo.PostMediaRepo), new(*postgres.GormPostMediaRepo)), wire.Bind(new(repo.PostOrganizationRepo), new(*postgres.PostgrePostOrganization)), wire.Bind(new(repo.PostRepo), new(*postgres.GormPostRepo)), wire.Bind(new(repo.PostUserRepo), new(*postgres.PostgrePostUser)), wire.Bind(new(repo.ProductAssetRepo), new(*postgres.ProductAssetPostgres)), wire.Bind(new(repo.ProductHistoryRepo), new(*postgres.PostgreHistoryRepo)), wire.Bind(new(repo.ProductMediaRepo), new(*postgres.GormProductMediaRepo)), wire.Bind(new(repo.ProductOrganizationRepo), new(*postgres.ProductOrganizationPostgres)), wire.Bind(new(repo.ProductPriceRepo), new(*postgres.GormProductPriceRepo)), wire.Bind(new(repo.ProductPrivateRepo), new(*postgres.GormProductPrivateRepo)), wire.Bind(new(repo.ProjectBuildRepo), new(*postgres.PostgreProjectBuild)), wire.Bind(new(repo.ProjectRepo), new(*postgres.PostgreProject)), wire.Bind(new(repo.PropertyTypeRepo), new(*postgres.PostgrePropertyType)), wire.Bind(new(repo.RecordHistoryRepo), new(*postgres.PostgreReportHistory)), wire.Bind(new(repo.RegionRepo), new(*postgres.PostgreRegion)), wire.Bind(new(repo.SharingAccessRepo), new(*postgres.SharingAccessPostgre)), wire.Bind(new(repo.UProductChildRepo), new(*postgres.PostgreProductChild)), wire.Bind(new(admin_repo.AdminAssetRepo), new(*admin_postgres.AdminAssetPostgres)), wire.Bind(new(admin_repo.AdminPostRepo), new(*admin_postgres.AdminPostPostgres)), wire.Bind(new(admin_repo.AdminProductRepo), new(*admin_postgres.AdminProductPostgres)), wire.Bind(new(admin_repo.AdminProjectRepo), new(*admin_postgres.AdminProjectPostgres)), wire.Bind(new(admin_repo.AdminPropertyTypeRepo), new(*admin_postgres.AdminPropertyTypePostgres)), wire.Bind(new(usecases.PlanUsecase), new(*handler.MemberPlanUsecase)), injection.NewHttpClient, _utils.NewSyncUtil, postgres.NewActionRepo, handler.NewAdminAreaRegionHandler, admin_handler.NewAdminAssetHandler, admin_postgres.NewAdminAssetPostgres, admin_usecases.NewAdminAssetUsecase, admin_handler.NewAdminPostHandler, admin_postgres.NewAdminPostPostgres, admin_usecases.NewAdminPostUsecase, admin_handler.NewAdminProductHandler, admin_postgres.NewAdminProductPostgres, admin_usecases.NewAdminProductUsecase, admin_handler.NewAdminProjectHandler, admin_postgres.NewAdminProjectPostgres, admin_usecases.NewAdminProjectUsecase, admin_handler.NewAdminPropertyTypeHandler, admin_postgres.NewAdminPropertyTypePostgres, admin_usecases.NewAdminPropertyTypeUsecase, handler.NewAdminRegionHandler, admin_handler.NewAdminTransactionHandler, mapper.NewAdminTransactionMapper, admin_postgres.NewAdminTransactionPostgres, admin_usecases.NewAdminTransactionUsecase, admin_handler.NewAdminTxHandler, postgres.NewAmenityRepo, mapper.NewApartmentAttributeMapper, mapper.NewApartmentMapper, shared_usecase.NewApartmentUsecase, mapper.NewAreaRegionMapper, postgres.NewAreaRegionPostgres, postgres.NewAreaRegionRepo, admin_usecases.NewAreaRegionUsecase, mapper.NewAssetCostMapper, handler.NewAssetCostService, handler.NewAssetCostTypeServer, shared_usecase.NewAssetCostTypeUsecase, shared_usecase.NewAssetCostUsecase, validator.NewAssetCostValidator, job.NewAssetDashboardStatsJob, mapper.NewAssetExploitationMapper, handler.NewAssetExploitationServer, shared_usecase.NewAssetExploitationUc, validator.NewAssetExploitationValidator, handler.NewAssetIncomeTypeServer, usecases.NewAssetIncomeTypeUc, mapper.NewAssetLegalMapper, handler.NewAssetLegalServer, usecases.NewAssetLegalUc, mapper.NewAssetMapper, postgres.NewAssetShareRepo, user_router.NewAssetShareRouter, usecases.NewAssetShareUC, postgres_audit.NewAuditLogRepository, client.NewAuthClient, rpc.NewAuthRPCClient, mapper.NewBankAccountMapper, postgres.NewBankAccountPostgresRepository, handler.NewBdsDomainHandler, mapper.NewBdsDomainMapper, postgres.NewBdsDomainPostgres, usecases.NewBdsDomainUsecase, handler.NewBdsproDashboardHandler, handler.NewBdsproPublicService, mapper.NewBuildMapper, postgres.NewBuildingInfoRepo, rpc.NewCRMRPCClient, rpc.NewChatRPCClient, redis_cli.NewClient, providers.NewCodeDataUsecase, mapper.NewCommonMapper, mapper.NewContractDealMapper, validator.NewContractDealValidator, handler.NewCostDocumentServer, usecases.NewCostDocumentUc, mapper.NewCostTypeMapper, postgres.NewCostTypeRepository, usecases.NewCostTypeUsecase, validator.NewCostTypeValidator, usecases.NewDashboardUsecase, handler.NewDealCommissionHandler, mapper.NewDealCommissionTransformer, usecases.NewDealCommissionUsecase, validator.NewDealCommissionValidator, usecases.NewDealContractUsecase, handler.NewDealCostHandler, mapper.NewDealCostMapper, postgres.NewDealCostRepository, usecases.NewDealCostUsecase, validator.NewDealCostValidator, handler.NewDealHandler, handler.NewDealInvestmentHandler, handler.NewDealInvitationHandler, mapper.NewDealInvitationTransformer, usecases.NewDealInvitationUsecase, validator.NewDealInvitationValidator, postgres.NewDealMemberPostgresRepository, handler.NewDealMilestoneHandler, postgres.NewDealMilestonePostgresRepository, mapper.NewDealMilestoneTransformer, usecases.NewDealMilestoneUsecase, validator.NewDealMilestoneValidator, postgres.NewDealOfBranchPostgres, postgres.NewDealOfGroupPostgres, postgres.NewDealOfOrganizationPostgres, postgres.NewDealTransactionPostgresRepository, usecases.NewDealUsecase, client.NewDeepseekClient, mapper.NewDepositeMapper, mapper.NewDeveloperMapper, repo.NewDeveloperRepo, handler.NewDistributionHandler, mapper.NewDistributionMapper, postgres.NewDistributionPostgres, usecases.NewDistributionUsecase, mapper.NewDocumentMapper, postgres.NewDocumentPostgresRepository, usecases.NewEventHistoryUsecase, postgres.NewEvidenceRepo, postgres.NewExternalRefRepo, postgres.NewGormAssetCostRepo, postgres.NewGormAssetIncomeTypeRepo, postgres.NewGormAssetLegalRepo, postgres.NewGormCostDocumentRepo, postgres.NewGormHouseInfoRepo, postgres.NewGormIncomeDocumentRepo, postgres.NewGormPostMediaRepo, postgres.NewGormPostRepo, postgres.NewGormProductMediaRepo, postgres.NewGormProductPriceRepo, postgres.NewGormProductPrivateRepo, postgres.NewGormUserProductRepo, postgres.NewGroupDealPostgresRepository, mapper.NewGroupDealTransformer, validator.NewGroupDealValidator, handler.NewGrpcAssetService, handler.NewGrpcPostService, mapper.NewHistoryMapper, client.NewHubClient, rpc.NewHubRPCClient, handler.NewIdentifierHandler, mapper.NewIdentifierMapper, postgres.NewIdentifierRepository, usecases.NewIdentifierUsecase, modules.NewImpactDetectionEngine, handler.NewIncomeDocumentServer, usecases.NewIncomeDocumentUc, postgres.NewInfoRepo, initial.NewInitialApp, postgres2.NewIntentPostgres, usecases.NewIntentUsecase, handler.NewInternalHandler, handler.NewInternalNoteHandler, postgres.NewInternalNotePostgresRepository, mapper.NewInternalNoteTransformer, usecases.NewInternalNoteUsecase, validator.NewInternalNoteValidator, handler.NewInternalTransactionHandler, mapper.NewInvestmentMapper, postgres.NewInvestmentPostgres, usecases.NewInvestmentUsecase, validator.NewInvestmentValidator, postgres.NewLandInfoRepo, postgres.NewLineageRepo, user_router.NewListRouter, usecases.NewListUsecase, usecases.NewLoanPaymentUsecase, postgres.NewLocationRepo, postgres.NewMediaRepo, providers.NewMemberPlanService, handler.NewMemberPlanUsecase, client.NewNotificationClient, rpc.NewNotificationRPCClient, org_router.NewOrgAssetCostRouter, org_router.NewOrgAssetExploitationRouter, org_router.NewOrgAssetRouter, org_router.NewOrgCostTypeRouter, org_router.NewOrgPostRoute, org_router.NewOrgProductChildRouter, client.NewOrganizationClient, rpc.NewOrganizationRPCClient, client.NewPaymentClient, rpc.NewPaymentRPCClient, job.NewPostDashboardStatsJob, mapper.NewPostMapper, user_router.NewPostMediaRoute, postgres.NewPostgreApartmentRepo, postgres.NewPostgreAsset, postgres.NewPostgreAssetExploitation, postgres.NewPostgreAssetOrganization, postgres.NewPostgreAssetUser, postgres.NewPostgreDocType, postgres.NewPostgreHistoryRepo, postgres.NewPostgrePostOrganization, postgres.NewPostgrePostUser, postgres.NewPostgreProductChildRepo, postgres.NewPostgreProductNoteRepo, postgres.NewPostgreProject, postgres.NewPostgreProjectBuild, postgres.NewPostgrePropertyAmenityRepo, postgres.NewPostgrePropertyBuildingInfoRepo, postgres.NewPostgrePropertyEdvidenceRepo, postgres.NewPostgrePropertyExternalRefRepo, postgres.NewPostgrePropertyIdentifyRepo, postgres.NewPostgrePropertyInfoRepo, postgres.NewPostgrePropertyLandInfoRepo, postgres.NewPostgrePropertyLocationRepo, postgres.NewPostgrePropertyMediaRepo, postgres.NewPostgrePropertyProductRepo, postgres.NewPostgrePropertyRelationRepo, postgres.NewPostgrePropertyRepo, postgres.NewPostgrePropertyStatisticRepo, postgres.NewPostgrePropertyType, postgres.NewPostgreRegion, postgres.NewPostgreReportHistory, postgres.NewPostgreUserCostType, postgres.NewProductAssetPostgres, usecases.NewProductAssetUsecase, job.NewProductDashboardStatsJob, mapper.NewProductMapper, handler.NewProductNoteHandler, mapper.NewProductNoteMapper, usecases.NewProductNoteUsecase, postgres.NewProductOfOrgPostgres, mapper.NewProductPriceMapper, handler.NewProductService, shared_usecase.NewProductUsecase, postgres.NewProductUserPostgres, validator.NewProductValidator, mapper.NewProjectBuildMapper, handler.NewProjectBuildService, usecases.NewProjectBuildUsecase, mapper.NewProjectMapper, property_handler.NewPropertyHandler, mapper.NewPropertyMapper, postgres.NewPropertyReportRepository, mapper.NewPropertyTypeMapper, usecases.NewPropertyTypeUsecase, property_usecases.NewPropertyUsecase, postgres.NewPropertyUserPostgres, postgres.NewProvinceV2Repository, mapper.NewPublicMapper, public_router.NewPublicRouter, postgres_audit.NewPushRepo, usecases.NewRecordHistoryUsecase, providers.NewRedisProvider, mapper.NewRegionMapper, admin_usecases.NewRegionUsecase, shared_usecase.NewRequestUsecase, user_router.NewRouterManager, modules.NewRuleEngine, shared_usecase.NewShareAccessUsecase, shared_usecase.NewSharedAssetUsecase, shared_usecase.NewSharedPostUsecase, mapper.NewSharingAccessMapper, postgres.NewSharingAccessPostgre, handler.NewSharingAccessService, validator.NewSharingAccessValidator, modules.NewSnapshotComparator, postgres.NewSnapshotRepository, rpc.NewTQDRPCClient, postgres.NewTransactionActionPostgresRepository, validator.NewTransactionActionValidator, postgres.NewTransactionGorm, handler.NewTransactionHandler, postgres.NewTransactionPostgresRepository, usecases.NewTransactionUsecase, validator.NewTransactionValidator, usecases.NewTransferTaxFeeUsecase, handler.NewTxContractDealHandler, handler.NewTxCostTypeHandler, mapper.NewTxCostTypeMapper, handler.NewTxHandler, mapper.NewTxMapper, user_router.NewUAssetLegalRoute, usecases.NewUPostMediaUsecase, user_router.NewUProductAccessRouter, user_router.NewUserAssetCostRouter, user_router.NewUserAssetExploitationRouter, user_router.NewUserAssetRouter, client.NewUserClient, user_router.NewUserCostTypeRouter, user_router.NewUserPostRoute, user_router.NewUserProductChildRouter, user_router.NewUserProductRouter, user_router.NewUserProjectBuildRouter, rpc.NewUserRPCClient, postgres_audit.NewVersionRepo, postgres.NewWardV2Repository)

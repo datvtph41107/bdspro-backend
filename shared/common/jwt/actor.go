@@ -1,16 +1,16 @@
 package _jwt
 
-import _identitycontext "common/identitycontext"
+import "common/identity"
 
 /**
  * ActorFromPrincipal projects verified identity without entitlement state.
  * OrganizationID 0 is treated as absent (nil) so BindActor accepts personal tokens.
  */
-func ActorFromPrincipal(principal *Principal) _identitycontext.Actor {
+func ActorFromPrincipal(principal *Principal) identity.Actor {
 	if principal == nil {
-		return _identitycontext.Actor{}
+		return identity.Actor{}
 	}
-	return _identitycontext.Actor{
+	return identity.Actor{
 		AuthID:         principal.AuthID,
 		ProfileID:      principal.ProfileId,
 		OriginID:       principal.OriginId,

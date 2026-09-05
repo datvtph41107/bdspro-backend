@@ -1,153 +1,134 @@
 package cmd
 
 import (
-	"common"
-	"common/grpcclient"
-	_redis "common/redis"
-	"common/transporttrust"
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	filepb "pb/types/file"
-	userpb "pb/types/user"
 	"strings"
-	"tqd/env"
-	"tqd/infra/filegrpc"
-	handler_grpc "tqd/infra/handler/grpc"
-	"tqd/infra/reportgenerator"
-	"tqd/internal/reportjob"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	userpb "pb/types/user"
+	"tqd/config"
+	reportfilehttp "tqd/infra/client/file/generatedreport"
+	handler_grpc "tqd/infra/handler/grpc"
+	postgresrender "tqd/infra/postgres/generatedreport/render"
+	"tqd/infra/worker/generatedreport/generator"
+	"tqd/infra/worker/generatedreport/weasyprintpdf"
+	"tqd/internal/usecase/generatedreport/processing"
+	"tqd/internal/usecase/generatedreport/rendering"
+
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-/**
- * startReportTarget bật generated-report flow mới khi migration flag được bật.
- *
- * Default là tắt. Việc bật flag chỉ được làm sau khi proto đã generate và
- * database migrations của target đã được chạy.
- */
+// startReportTarget attaches the canonical Generated Report runtime using only
+// process-owned resources. The returned cleanup waits for report actors and
+// closes Report-owned adapters; DB/Redis/User RPC remain owned by cmd/grpc.
 func startReportTarget(
 	ctx context.Context,
 	database *gorm.DB,
+	redisClient *redis.Client,
+	accessClient userpb.InternalAccessServiceClient,
 	handler *handler_grpc.MapWorkspaceGrpcHandler,
+	cfg config.ReportRuntimeConfig,
 	logger *slog.Logger,
-	targetEnabled bool,
 ) (func(), error) {
-	if !targetEnabled {
-		return func() {}, nil
-	}
-	if database == nil || handler == nil {
-		return nil, fmt.Errorf("report target database/handler is missing")
+	if database == nil || redisClient == nil || accessClient == nil || handler == nil {
+		return nil, fmt.Errorf("report target process dependencies are incomplete")
 	}
 
-	accessConn, accessClient, err := dialAccessService(ctx)
+	reportGenerator, closeGenerator, err := reportGeneratorFromConfig(ctx, database, cfg)
 	if err != nil {
-		return nil, err
-	}
-
-	redisService := _redis.NewRedisService()
-	if redisService == nil || redisService.Client == nil {
-		_ = accessConn.Close()
-		return nil, fmt.Errorf("report target redis client is unavailable")
-	}
-
-	generator, closeGenerator, err := reportGeneratorFromEnv(ctx)
-	if err != nil {
-		_ = accessConn.Close()
 		return nil, err
 	}
 
 	target, err := newReportTarget(
 		database,
-		redisService.Client,
+		redisClient,
 		accessClient,
-		generator,
+		reportGenerator,
 		logger,
+		cfg.WorkerID,
 	)
 	if err != nil {
 		closeGenerator()
-		_ = accessConn.Close()
 		return nil, err
+	}
+	if err := target.Prepare(ctx); err != nil {
+		closeGenerator()
+		return nil, fmt.Errorf("prepare report quota projection: %w", err)
 	}
 
 	handler.UseCreateReportAdapter(target.adapter)
 	target.Start(ctx)
 
 	return func() {
+		target.Wait()
 		closeGenerator()
-		_ = accessConn.Close()
 	}, nil
 }
 
-// reportGeneratorFromEnv keeps production behavior unchanged by default.
-// Smoke mode exists only to prove the complete local queue/file lifecycle.
-func reportGeneratorFromEnv(
+// reportGeneratorFromConfig selects the rendering capability at the process
+// composition boundary. Disabled mode keeps non-report TQD capabilities alive;
+// canonical report creation then fails closed as unavailable.
+func reportGeneratorFromConfig(
 	ctx context.Context,
-) (reportjob.Generator, func(), error) {
-	mode := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_REPORT_GENERATOR_MODE")))
+	database *gorm.DB,
+	cfg config.ReportRuntimeConfig,
+) (processing.Generator, func(), error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	mode := strings.ToLower(strings.TrimSpace(cfg.GeneratorMode))
 	if mode == "" || mode == "disabled" || mode == "none" {
 		return nil, func() {}, nil
 	}
-	if mode != "smoke" {
+	if mode != "production" && mode != "smoke" {
 		return nil, nil, fmt.Errorf("unsupported report generator mode %q", mode)
 	}
-
-	addr := strings.TrimSpace(os.Getenv("QHPRO_FILE_GRPC_ADDR"))
-	if addr == "" {
-		addr = "127.0.0.1:8203"
+	if database == nil {
+		return nil, nil, fmt.Errorf("report renderer database is missing")
 	}
-	publicURL := strings.TrimSpace(os.Getenv("QHPRO_FILE_PUBLIC_BASE_URL"))
-	if publicURL == "" {
-		publicURL = "http://127.0.0.1:8002"
+	if strings.TrimSpace(cfg.File.ServiceAuthKey) == "" {
+		return nil, nil, fmt.Errorf("report File service auth key is required")
 	}
 
-	trust := transporttrust.ConfigFromEnv()
-	conn, err := grpc.DialContext(
-		ctx,
-		addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithChainUnaryInterceptor(grpcclient.UnaryClientInterceptor(trust)),
-		grpc.WithChainStreamInterceptor(grpcclient.StreamClientInterceptor(trust)),
+	uploader, err := reportfilehttp.New(reportfilehttp.Config{
+		BaseURL:        cfg.File.BaseURL,
+		PublicBaseURL:  cfg.File.PublicBaseURL,
+		ServiceName:    cfg.File.ServiceName,
+		ServiceAuthKey: cfg.File.ServiceAuthKey,
+		Timeout:        cfg.File.Timeout,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("configure Report File HTTP client: %w", err)
+	}
+	closeUploader := func() { uploader.Close() }
+
+	if mode == "smoke" {
+		smokeGenerator, err := generator.NewSmokeGenerator(uploader, uploader)
+		if err != nil {
+			closeUploader()
+			return nil, nil, err
+		}
+		return smokeGenerator, closeUploader, nil
+	}
+
+	engine, err := weasyprintpdf.New(cfg.WeasyPrintBinary, cfg.RenderTimeout)
+	if err != nil {
+		closeUploader()
+		return nil, nil, fmt.Errorf("configure production report PDF engine: %w", err)
+	}
+
+	productionRenderer, err := rendering.NewService(
+		postgresrender.NewSource(database),
+		engine,
+		uploader,
+		uploader,
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("dial file service for smoke report generator: %w", err)
-	}
-
-	uploader := filegrpc.NewClient(filepb.NewInternalFileServiceClient(conn))
-	generator, err := reportgenerator.NewSmokeGenerator(uploader, publicURL)
-	if err != nil {
-		_ = conn.Close()
+		closeUploader()
 		return nil, nil, err
 	}
-	return generator, func() { _ = conn.Close() }, nil
-}
-
-func reportTargetEnabled() bool {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_REPORT_TARGET_ENABLED")))
-	return value == "1" || value == "true" || value == "yes"
-}
-
-func dialAccessService(
-	ctx context.Context,
-) (*grpc.ClientConn, userpb.InternalAccessServiceClient, error) {
-	addr := strings.TrimSpace(os.Getenv("QHPRO_USER_GRPC_ADDR"))
-	if addr == "" {
-		addr = fmt.Sprintf("%s:8201", common.GetPrefixProtobufUrl(env.ENV_RUNTIME, "user"))
-	}
-
-	trust := transporttrust.ConfigFromEnv()
-	conn, err := grpc.DialContext(
-		ctx,
-		addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithChainUnaryInterceptor(grpcclient.UnaryClientInterceptor(trust)),
-		grpc.WithChainStreamInterceptor(grpcclient.StreamClientInterceptor(trust)),
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("dial user access service: %w", err)
-	}
-	return conn, userpb.NewInternalAccessServiceClient(conn), nil
+	return productionRenderer, closeUploader, nil
 }

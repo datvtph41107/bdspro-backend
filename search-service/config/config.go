@@ -1,9 +1,8 @@
 package config
 
 import (
-	"common"
-	"log"
-	"os"
+	"common/configloader"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -40,11 +39,14 @@ func NewConfigApp() *ConfigApp {
 }
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() {
-	ENV_RUNTIME := os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(ENV_RUNTIME)
+func LoadConfig() error {
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
+		return err
+	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		return fmt.Errorf("unmarshal search config: %w", err)
 	}
+
+	return nil
 }

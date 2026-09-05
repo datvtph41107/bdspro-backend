@@ -1,0 +1,76 @@
+# Non-sensitive defaults shared by every deployment. Runtime endpoints and
+# secrets are supplied through environment variables.
+rpc:
+  user:
+    address: "localhost:8201"
+  auth:
+    address: "localhost:8216"
+  payment:
+    address: "localhost:8205"
+  tqd:
+    address: "localhost:8219"
+  bdspro:
+    address: "localhost:8202"
+  notification:
+    address: "localhost:8204"
+  organization:
+    address: "localhost:8207"
+  chat:
+    address: "localhost:8208"
+
+server:
+  port: 8006
+  tcp_port: 8206
+  name: crm-service
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  dsn: "host=localhost user=postgres password=postgres dbname=db_crm port=5432 sslmode=disable"
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: localhost:6379
+  pass: ""
+
+email:
+  host: smtp.gmail.com
+  port: 587
+  username: ""
+  password: ""
+  from: ""
+  name: "QHPRO"
+
+seo:
+  public_base_url: "http://localhost:3000"
+  runtime_event_ingest_key: ""
+  internal_secret_key: ""
+  timezone: "Asia/Ho_Chi_Minh"
+  parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
+
+  sitemap:
+    default_change_freq: "daily"
+    default_priority: 0.5
+
+  generation_job:
+    enabled: true
+    cron: "0 0 * * *"
+    batch_size: 100
+
+# env thiết lập server
+# export ENV_RUNTIME=develop
+# export SEO_PUBLIC_BASE_URL=http://localhost:8000
+# export SEO_INTERNAL_SECRET_KEY='<secret>'

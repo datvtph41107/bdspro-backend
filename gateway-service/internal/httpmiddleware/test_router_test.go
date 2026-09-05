@@ -6,19 +6,19 @@ import (
 	"log/slog"
 	"net/http"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 
 	"github.com/gin-gonic/gin"
 )
 
 type testRecorder struct {
-	decisions []_requestcontext.RequestIDDecision
+	decisions []_request.RequestIDDecision
 	results   []HTTPRequestResult
 }
 
 func (recorder *testRecorder) RecordRequestIDDecision(
 	_ context.Context,
-	decision _requestcontext.RequestIDDecision,
+	decision _request.RequestIDDecision,
 ) {
 	recorder.decisions = append(recorder.decisions, decision)
 }
@@ -50,7 +50,7 @@ func newTestRouter(recorder *testRecorder) *gin.Engine {
 	)
 
 	router.GET("/ok", func(ctx *gin.Context) {
-		requestID, ok := _requestcontext.FromContext(
+		requestID, ok := _request.RequestIDFromContext(
 			ctx.Request.Context(),
 		)
 

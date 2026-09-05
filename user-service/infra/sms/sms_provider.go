@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 	"user/config"
-	"user/env"
 	"user/internal/interface/providers"
 )
 
@@ -53,10 +52,10 @@ func (s *SMSProvider) SendSMS(
 ) (map[string]interface{}, error) {
 	normalizedPhone := normalizePhoneNumber(phone)
 
-	if env.ENV_RUNTIME == "local" {
+	if !config.Properties.OutboundMessaging.Enabled {
 		return map[string]interface{}{
 			"success": true,
-			"message": "Skip sending SMS in local environment",
+			"message": "Skip sending SMS because outbound messaging is disabled",
 			"phone":   normalizedPhone,
 			"brand":   brand,
 		}, nil

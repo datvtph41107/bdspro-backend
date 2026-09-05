@@ -5,6 +5,7 @@ package userpb;
 import "shared/common.proto";
 import "shared/v3.proto";
 import "auth/role.proto";
+import "auth/auth_method.proto";
 
 option go_package = "pb/types/user;userpb";
 
@@ -35,6 +36,14 @@ service InternalUserService {
     rpc GetRoleById(sharepb.IdRequest) returns (sharepb.Role);
     rpc GetRolesByIds(sharepb.IdRequest) returns (authpb.RoleListResponse);
     rpc GetRolesByRoleKeys(GetRolesByRoleKeysRequest) returns (authpb.RoleListResponse);
+    // Các RPC dưới đây giữ compatibility với AuthInternal production cũ.
+    // User vẫn là owner duy nhất của auth_method/profile/role persistence.
+    rpc GetAdminRoleIdByGroupKey(sharepb.IdRequest) returns (sharepb.Role);
+    rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
+    rpc CreateAdmin(authpb.AuthMethod) returns (authpb.AuthMethod);
+    rpc UpdateAdmin(authpb.AuthMethod) returns (authpb.AuthMethod);
+    rpc DeleteAdmin(sharepb.IdRequest) returns (sharepb.SubmitResponse);
+    rpc GetAdminById(sharepb.IdRequest) returns (authpb.AuthMethod);
 
     // Lấy role kèm danh sách permissionId (id/ids cụ thể; để trống = tất cả role)
     rpc GetRolePermissions(sharepb.IdRequest) returns (GetRolePermissionsResponse);

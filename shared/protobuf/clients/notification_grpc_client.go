@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"common/tcp/connect"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
@@ -10,6 +9,8 @@ import (
 
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc"
 )
 
 type NotificationClient struct {
@@ -17,20 +18,11 @@ type NotificationClient struct {
 	historyClient notificationpb.HistoryServiceClient
 }
 
-func MakeNotificationClient(env_runtime string) *NotificationClient {
-	notificationClient := &NotificationClient{}
-	name := "notification"
-	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("failed to dial notification at %s: %v", addr, err)
-		return notificationClient
+func BindNotificationClient(conn grpc.ClientConnInterface) *NotificationClient {
+	return &NotificationClient{
+		Client:        notificationpb.NewInternalNotificationServiceClient(conn),
+		historyClient: notificationpb.NewHistoryServiceClient(conn),
 	}
-
-	notificationClient.Client = notificationpb.NewInternalNotificationServiceClient(conn)
-	notificationClient.historyClient = notificationpb.NewHistoryServiceClient(conn)
-	return notificationClient
 }
 
 func (s *NotificationClient) NotifyToUser(
@@ -267,4 +259,28 @@ func (s *NotificationClient) CreatePropertyHistoryActivity(
 		ActorId:     actorId,
 	})
 	return err
+}
+
+func (s *NotificationClient) GetPersonConfigs(
+	ctx context.Context,
+	userID uint64,
+) ([]*sharepb.PersonConfigV3Proto, error) {
+	if userID == 0 {
+		return []*sharepb.PersonConfigV3Proto{}, nil
+	}
+	if s == nil || s.Client == nil {
+		return nil, fmt.Errorf("notification grpc client chưa được khởi tạo")
+	}
+
+	resp, err := s.Client.GetPersonConfigs(
+		ctx,
+		&notificationpb.GetPersonConfigsRequest{
+			UserId: userID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetData(), nil
 }

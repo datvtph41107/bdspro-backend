@@ -1,28 +1,25 @@
 package grpcmetadata
 
 import (
-	"common/callercontext"
-	"common/identitycontext"
-	"common/requestcontext"
+	"common/identity"
+	"common/request"
 	"context"
 	"net/http"
 	"testing"
-
-	"google.golang.org/grpc/metadata"
 )
 
 func TestFromHTTPRequestUsesCanonicalContextOnly(t *testing.T) {
-	ctx := requestcontext.WithRequestID(context.Background(), "req_123")
+	ctx := request.WithRequestID(context.Background(), "req_123")
 	var err error
-	ctx, err = requestcontext.BindOperationID(ctx, "op_123")
+	ctx, err = request.BindOperationID(ctx, "op_123")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, err = requestcontext.BindIdempotencyKey(ctx, "idem_123")
+	ctx, err = request.BindIdempotencyKey(ctx, "idem_123")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, err = identitycontext.BindActor(ctx, identitycontext.Actor{
+	ctx, err = identity.BindActor(ctx, identity.Actor{
 		AuthID:    10,
 		ProfileID: 42,
 		OriginID:  20,
@@ -33,7 +30,7 @@ func TestFromHTTPRequestUsesCanonicalContextOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, err = callercontext.BindCaller(ctx, callercontext.Caller{Kind: callercontext.KindUser})
+	ctx, err = identity.BindCaller(ctx, identity.Caller{Kind: identity.CallerUser})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,103 +69,5 @@ func TestFromHTTPRequestUsesCanonicalContextOnly(t *testing.T) {
 		if values := md.Get(forbidden); len(values) != 0 {
 			t.Fatalf("%s must not be forwarded: %v", forbidden, values)
 		}
-	}
-}
-
-func TestDuringReportMigrationUsesTargetAdapterOnlyForEnabledTargetRoute(t *testing.T) {
-	legacyCalls := 0
-	legacy := func(_ context.Context, _ *http.Request) metadata.MD {
-		legacyCalls++
-		return metadata.Pairs("bridge", "legacy")
-	}
-
-	tests := []struct {
-		name          string
-		enabled       bool
-		method        string
-		path          string
-		wantLegacy    bool
-		wantOperation string
-	}{
-		{
-			name:       "flag disabled keeps target route legacy",
-			enabled:    false,
-			method:     http.MethodPost,
-			path:       createGeneratedReportPath,
-			wantLegacy: true,
-		},
-		{
-			name:          "enabled target route uses canonical adapter",
-			enabled:       true,
-			method:        http.MethodPost,
-			path:          createGeneratedReportPath + "/",
-			wantOperation: "op_target",
-		},
-		{
-			name:       "enabled non-target route stays legacy",
-			enabled:    true,
-			method:     http.MethodGet,
-			path:       "/v2/tqd/regions",
-			wantLegacy: true,
-		},
-		{
-			name:       "enabled wrong method stays legacy",
-			enabled:    true,
-			method:     http.MethodGet,
-			path:       createGeneratedReportPath,
-			wantLegacy: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			before := legacyCalls
-			ctx, err := requestcontext.BindOperationID(context.Background(), "op_target")
-			if err != nil {
-				t.Fatal(err)
-			}
-			req, err := http.NewRequestWithContext(ctx, tt.method, "http://gateway.local"+tt.path, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			md := DuringReportMigration(tt.enabled, legacy)(ctx, req)
-			if tt.wantLegacy {
-				if got := md.Get("bridge"); len(got) != 1 || got[0] != "legacy" {
-					t.Fatalf("legacy bridge metadata = %v", got)
-				}
-				if legacyCalls != before+1 {
-					t.Fatalf("legacy bridge calls = %d, want %d", legacyCalls, before+1)
-				}
-				return
-			}
-
-			if legacyCalls != before {
-				t.Fatalf("legacy bridge must not be called for target route")
-			}
-			if got := md.Get("x-operation-id"); len(got) != 1 || got[0] != tt.wantOperation {
-				t.Fatalf("operation metadata = %v, want %q", got, tt.wantOperation)
-			}
-		})
-	}
-}
-
-func TestReportTargetEnabled(t *testing.T) {
-	for _, value := range []string{"1", "true", "TRUE", " yes "} {
-		t.Run(value, func(t *testing.T) {
-			t.Setenv("QHPRO_REPORT_TARGET_ENABLED", value)
-			if !ReportTargetEnabled() {
-				t.Fatalf("value %q must enable target", value)
-			}
-		})
-	}
-
-	for _, value := range []string{"", "0", "false", "enabled"} {
-		t.Run("disabled_"+value, func(t *testing.T) {
-			t.Setenv("QHPRO_REPORT_TARGET_ENABLED", value)
-			if ReportTargetEnabled() {
-				t.Fatalf("value %q must not enable target", value)
-			}
-		})
 	}
 }

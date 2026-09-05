@@ -21,9 +21,7 @@ import (
 	"user/internal/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/copier"
-	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -41,6 +39,7 @@ type ProfileUsecase struct {
 	AuthProvider       providers.AuthProvider
 	NotificationClient providers.NotificationProvider
 	KYCRepo            repo.IKYCRepo
+	CacheProvider      providers.CacheProvider
 }
 
 func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
@@ -55,6 +54,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	AuthProvider providers.AuthProvider,
 	NotificationClient providers.NotificationProvider,
 	KYCRepo repo.IKYCRepo,
+	CacheProvider providers.CacheProvider,
 ) *ProfileUsecase {
 	planId := uint64(1)
 	return &ProfileUsecase{
@@ -71,6 +71,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 		AuthProvider:       AuthProvider,
 		NotificationClient: NotificationClient,
 		KYCRepo:            KYCRepo,
+		CacheProvider:      CacheProvider,
 	}
 }
 
@@ -565,7 +566,7 @@ func (s *ProfileUsecase) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo,
 	phone := c.DefaultQuery("phone", "")
 
 	// Lấy thông tin user từ DB
-	infoEntity, err := models.ProfileGetByPhone(phone)
+	infoEntity, err := s.ProfileRepo.GetByPhone(phone)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -584,7 +585,7 @@ func (s *ProfileUsecase) FindByPhone(ctx context.Context, phone string) (*models
 	}
 
 	// Lấy thông tin user từ DB
-	infoEntity, err := models.ProfileGetByPhone(phone)
+	infoEntity, err := s.ProfileRepo.GetByPhone(phone)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -617,7 +618,7 @@ func (s *ProfileUsecase) ProfileChatFind(c *gin.Context) (*[]dto.PublicUserInfo,
 	phone := c.DefaultQuery("text", "")
 
 	// Lấy thông tin user từ DB
-	infoEntity, err := models.ProfileSearchForChat(phone)
+	infoEntity, err := s.ProfileRepo.SearchByPhoneOrName(c.Request.Context(), phone)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -635,7 +636,7 @@ func (s *ProfileUsecase) ProfileFindByIds(c *gin.Context) (*[]dto.PublicUserInfo
 	query, _ := _utils.ParseQueryToStruct[dto.ProfileIDsRequest](c.Request.URL.Query())
 	ids := query.IDs
 	// Lấy thông tin user từ DB
-	infoEntity, err := models.ProfileByIDs(ids)
+	infoEntity, err := s.ProfileRepo.GetProfileByIds(ids)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -1226,22 +1227,16 @@ func (s *ProfileUsecase) GetStatusOnline(ctx context.Context, profileID uint64) 
 // Format trong Redis: "true|timestamp" hoặc "false|timestamp"
 // Key: "user:online:{profileID}"
 func (s *ProfileUsecase) getUserOnlineStatusFromRedis(ctx context.Context, profileID uint64) (bool, *string, error) {
-	// Tạo Redis client để đọc từ Redis
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     viper.GetString("redis.host"),
-		Password: viper.GetString("redis.pass"),
-		DB:       0,
-	})
-	defer redisClient.Close()
-
+	if s.CacheProvider == nil {
+		return false, nil, errors.New("profile cache is not configured")
+	}
 	key := "user:online:" + strconv.FormatUint(profileID, 10)
-
-	value, err := redisClient.Get(ctx, key).Result()
+	value, err := s.CacheProvider.Get(ctx, key)
 	if err != nil {
-		if err == redis.Nil {
-			return false, nil, errors.New("not found in redis")
-		}
-		return false, nil, err // Lỗi khi đọc Redis
+		return false, nil, err
+	}
+	if value == "" {
+		return false, nil, errors.New("not found in redis")
 	}
 
 	// Parse value theo format: "true|timestamp" hoặc "false|timestamp"

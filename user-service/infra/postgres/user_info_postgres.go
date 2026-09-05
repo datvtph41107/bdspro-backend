@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_db "common/db"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -22,7 +22,7 @@ func NewUserInfoRepository(db *_db.TransactionRepo) repo.UserInfoRepository {
 }
 
 // Create tạo mới UserInfo
-func (r *UserInfoPostgres) Create(ctx context.Context, userInfo *domain.AuthUser) (*domain.AuthUser, error) {
+func (r *UserInfoPostgres) Create(ctx context.Context, userInfo *auth.AuthUser) (*auth.AuthUser, error) {
 	err := r.GetDB(ctx).WithContext(ctx).Create(userInfo).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user info: %w", err)
@@ -31,7 +31,7 @@ func (r *UserInfoPostgres) Create(ctx context.Context, userInfo *domain.AuthUser
 }
 
 // Update cập nhật UserInfo
-func (r *UserInfoPostgres) Update(ctx context.Context, userInfo *domain.AuthUser) (*domain.AuthUser, error) {
+func (r *UserInfoPostgres) Update(ctx context.Context, userInfo *auth.AuthUser) (*auth.AuthUser, error) {
 	err := r.GetDB(ctx).WithContext(ctx).Save(userInfo).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user info: %w", err)
@@ -40,8 +40,8 @@ func (r *UserInfoPostgres) Update(ctx context.Context, userInfo *domain.AuthUser
 }
 
 // GetByProfileID lấy UserInfo theo profileID
-func (r *UserInfoPostgres) GetByProfileID(ctx context.Context, profileID uint64) (*domain.AuthUser, error) {
-	var userInfo domain.AuthUser
+func (r *UserInfoPostgres) GetByProfileID(ctx context.Context, profileID uint64) (*auth.AuthUser, error) {
+	var userInfo auth.AuthUser
 	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ?", profileID).First(&userInfo).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
@@ -51,7 +51,7 @@ func (r *UserInfoPostgres) GetByProfileID(ctx context.Context, profileID uint64)
 
 // Delete xóa UserInfo
 func (r *UserInfoPostgres) Delete(ctx context.Context, profileID uint64) error {
-	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ?", profileID).Delete(&domain.AuthUser{}).Error
+	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ?", profileID).Delete(&auth.AuthUser{}).Error
 	if err != nil {
 		return fmt.Errorf("failed to delete user info: %w", err)
 	}
@@ -59,16 +59,16 @@ func (r *UserInfoPostgres) Delete(ctx context.Context, profileID uint64) error {
 }
 
 // LockUser khóa user (tạm thời hoặc vĩnh viễn)
-func (r *UserInfoPostgres) LockUser(ctx context.Context, profileID uint64, lockType domain.AccountStatus, duration int, reason string, lockedBy uint64) error {
+func (r *UserInfoPostgres) LockUser(ctx context.Context, profileID uint64, lockType auth.AccountStatus, duration int, reason string, lockedBy uint64) error {
 	now := time.Now()
 	var lockedUntil *time.Time
 
 	// Xác định trạng thái và thời gian khóa
-	var status domain.AccountStatus
-	if lockType == domain.StatusPermanentlyLocked {
-		status = domain.StatusPermanentlyLocked
-	} else if lockType == domain.StatusTemporarilyLocked {
-		status = domain.StatusTemporarilyLocked
+	var status auth.AccountStatus
+	if lockType == auth.StatusPermanentlyLocked {
+		status = auth.StatusPermanentlyLocked
+	} else if lockType == auth.StatusTemporarilyLocked {
+		status = auth.StatusTemporarilyLocked
 		// Tính thời gian khóa đến
 		expiryTime := now.Add(time.Duration(duration) * time.Hour)
 		lockedUntil = &expiryTime
@@ -77,11 +77,11 @@ func (r *UserInfoPostgres) LockUser(ctx context.Context, profileID uint64, lockT
 	}
 
 	// Kiểm tra user info có tồn tại không
-	var userInfo domain.AuthUser
+	var userInfo auth.AuthUser
 	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
 	if err != nil {
 		// Nếu không tồn tại, tạo mới
-		userInfo = domain.AuthUser{
+		userInfo = auth.AuthUser{
 			ProfileID:   profileID,
 			Status:      status,
 			LockedAt:    &now,
@@ -104,7 +104,7 @@ func (r *UserInfoPostgres) LockUser(ctx context.Context, profileID uint64, lockT
 			updates["locked_until"] = lockedUntil
 		}
 
-		err = r.GetDB(ctx).Model(&domain.AuthUser{}).
+		err = r.GetDB(ctx).Model(&auth.AuthUser{}).
 			Where("profile_id = ? and deleted_at is null", profileID).
 			Updates(updates).Error
 	}
@@ -122,7 +122,7 @@ func (r *UserInfoPostgres) UnlockUser(ctx context.Context, profileID uint64, rea
 
 	// Cập nhật user về trạng thái active
 	updates := map[string]interface{}{
-		"status":       uint32(domain.StatusActive),
+		"status":       uint32(auth.StatusActive),
 		"locked_at":    nil,
 		"locked_until": nil,
 		"lock_reason":  "",
@@ -130,7 +130,7 @@ func (r *UserInfoPostgres) UnlockUser(ctx context.Context, profileID uint64, rea
 		"updated_at":   now,
 	}
 
-	err := r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthUser{}).
+	err := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
 		Where("profile_id = ? and deleted_at is null", profileID).
 		Updates(updates).Error
 
@@ -142,14 +142,14 @@ func (r *UserInfoPostgres) UnlockUser(ctx context.Context, profileID uint64, rea
 }
 
 // GetUserStatus lấy trạng thái user
-func (r *UserInfoPostgres) GetUserStatus(ctx context.Context, profileID uint64) (*domain.AuthUser, error) {
-	var userInfo domain.AuthUser
+func (r *UserInfoPostgres) GetUserStatus(ctx context.Context, profileID uint64) (*auth.AuthUser, error) {
+	var userInfo auth.AuthUser
 	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			newUser := domain.AuthUser{
+			newUser := auth.AuthUser{
 				ProfileID: profileID,
-				Status:    domain.StatusActive,
+				Status:    auth.StatusActive,
 			}
 			err = r.
 				GetDB(ctx).
@@ -171,9 +171,9 @@ func (r *UserInfoPostgres) CheckLockExpiration(ctx context.Context) error {
 	now := time.Now()
 
 	// Tìm các user khóa tạm thời đã hết hạn
-	var expiredUsers []domain.AuthUser
+	var expiredUsers []auth.AuthUser
 	err := r.GetDB(ctx).WithContext(ctx).Where("status = ? AND locked_until IS NOT NULL AND locked_until < ?",
-		uint32(domain.StatusTemporarilyLocked), now).Find(&expiredUsers).Error
+		uint32(auth.StatusTemporarilyLocked), now).Find(&expiredUsers).Error
 
 	if err != nil {
 		return fmt.Errorf("failed to find expired users: %w", err)
@@ -186,10 +186,10 @@ func (r *UserInfoPostgres) CheckLockExpiration(ctx context.Context) error {
 			profileIDs = append(profileIDs, user.ProfileID)
 		}
 
-		err = r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthUser{}).
+		err = r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
 			Where("profile_id IN ? and deleted_at is null", profileIDs).
 			Updates(map[string]interface{}{
-				"status":       domain.StatusActive,
+				"status":       auth.StatusActive,
 				"locked_at":    nil,
 				"locked_until": nil,
 				"lock_reason":  "",
@@ -206,8 +206,8 @@ func (r *UserInfoPostgres) CheckLockExpiration(ctx context.Context) error {
 }
 
 // GetUsersStatus lấy trạng thái nhiều user
-func (r *UserInfoPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs []uint64) ([]domain.AuthUser, error) {
-	var users []domain.AuthUser
+func (r *UserInfoPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs []uint64) ([]auth.AuthUser, error) {
+	var users []auth.AuthUser
 	err := r.GetDB(ctx).
 		// Model().
 		Preload("Role").
@@ -224,7 +224,7 @@ func (r *UserInfoPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs 
 func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID uint64) ([]uint64, error) {
 	roleIDSet := make(map[uint64]struct{})
 
-	var userInfo domain.AuthUser
+	var userInfo auth.AuthUser
 	err := r.GetDB(ctx).
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
 		First(&userInfo).Error
@@ -255,16 +255,16 @@ func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID 
 }
 
 // LockMultipleUsers khóa nhiều user cùng lúc
-func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType domain.AccountStatus, duration int, reason string, lockedBy uint64) error {
+func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType auth.AccountStatus, duration int, reason string, lockedBy uint64) error {
 	now := time.Now()
 	var lockedUntil *time.Time
 
 	// Xác định trạng thái và thời gian khóa
-	var status domain.AccountStatus
-	if lockType == domain.StatusPermanentlyLocked {
-		status = domain.StatusPermanentlyLocked
-	} else if lockType == domain.StatusTemporarilyLocked {
-		status = domain.StatusTemporarilyLocked
+	var status auth.AccountStatus
+	if lockType == auth.StatusPermanentlyLocked {
+		status = auth.StatusPermanentlyLocked
+	} else if lockType == auth.StatusTemporarilyLocked {
+		status = auth.StatusTemporarilyLocked
 		expiryTime := now.Add(time.Duration(duration) * time.Hour)
 		lockedUntil = &expiryTime
 	} else {
@@ -274,12 +274,12 @@ func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []u
 	// Sử dụng transaction để đảm bảo tính nhất quán
 	return r.GetDB(ctx).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, profileID := range profileIDs {
-			var userInfo domain.AuthUser
+			var userInfo auth.AuthUser
 			err := tx.Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
 
 			if err != nil {
 				// Tạo mới nếu không tồn tại
-				userInfo = domain.AuthUser{
+				userInfo = auth.AuthUser{
 					ProfileID:   profileID,
 					Status:      status,
 					LockedAt:    &now,
@@ -302,7 +302,7 @@ func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []u
 					updates["locked_until"] = lockedUntil
 				}
 
-				err = tx.Model(&domain.AuthUser{}).
+				err = tx.Model(&auth.AuthUser{}).
 					Where("profile_id = ? and deleted_at is null", profileID).
 					Updates(updates).Error
 			}
@@ -320,7 +320,7 @@ func (r *UserInfoPostgres) UnlockMultipleUsers(ctx context.Context, profileIDs [
 	now := time.Now()
 
 	updates := map[string]interface{}{
-		"status":       uint32(domain.StatusActive),
+		"status":       uint32(auth.StatusActive),
 		"locked_at":    nil,
 		"locked_until": nil,
 		"lock_reason":  "",
@@ -328,7 +328,7 @@ func (r *UserInfoPostgres) UnlockMultipleUsers(ctx context.Context, profileIDs [
 		"updated_at":   now,
 	}
 
-	err := r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthUser{}).
+	err := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
 		Where("profile_id IN ? and deleted_at is null", profileIDs).
 		Updates(updates).Error
 

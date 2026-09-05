@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_db "common/db"
 	_enum "common/domain/enum"
 	_jwt "common/jwt"
 	_routes "common/routes"
@@ -14,25 +13,23 @@ import (
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
-	iprovider "notification/internal/provider"
-	"notification/internal/repo"
-	notificationpb "pb/types/notification"
+			notificationpb "pb/types/notification"
 	"strconv"
 	"strings"
 )
 
 type NotificationUsecase struct {
-	Repo             repo.NotificationRepo
+	Repo             NotificationStore
 	RedisClient      *cache.RedisClient
-	AuthClient       iprovider.IAuthClient
-	FirebaseProvider iprovider.IFirebaseProvider
+	AuthClient       PushTokenResolver
+	FirebaseProvider PushSender
 }
 
 func NewNotificationService(
-	repo repo.NotificationRepo,
+	repo NotificationStore,
 	redisClient *cache.RedisClient,
-	authClient iprovider.IAuthClient,
-	firebaseProvider iprovider.IFirebaseProvider,
+	authClient PushTokenResolver,
+	firebaseProvider PushSender,
 ) *NotificationUsecase {
 	return &NotificationUsecase{
 		Repo:             repo,
@@ -68,7 +65,7 @@ func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto
 		AttachData:       request.AttachData,
 	}
 
-	if err := _db.SaveWithContext(c, notification); err != nil {
+	if err := s.Repo.Create(c, notification); err != nil {
 		return nil, err
 	}
 	return notification, nil
@@ -103,7 +100,7 @@ func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb
 		})
 	}
 
-	if err := _db.SaveWithContext(c, &notifications); err != nil {
+	if err := s.Repo.CreateBatch(c, notifications); err != nil {
 		return nil, err
 	}
 

@@ -1,31 +1,25 @@
 package clients
 
 import (
-	"common/tcp/connect"
 	"context"
 	"errors"
-	"log"
+
 	paymentpb "pb/types/payment"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc"
 )
 
 type PaymentClient struct {
-	client paymentpb.InternalServiceClient
+	client        paymentpb.InternalServiceClient
+	ServiceClient paymentpb.PaymentServiceClient
 }
 
-func MakePaymentClient(env_runtime string) *PaymentClient {
-	paymentClient := &PaymentClient{}
-	name := "payment"
-	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("failed to dial payment at %s: %v", addr, err)
-		return paymentClient
+func BindPaymentClient(conn grpc.ClientConnInterface) *PaymentClient {
+	return &PaymentClient{
+		client:        paymentpb.NewInternalServiceClient(conn),
+		ServiceClient: paymentpb.NewPaymentServiceClient(conn),
 	}
-
-	paymentClient.client = paymentpb.NewInternalServiceClient(conn)
-	return paymentClient
 }
 
 func (c *PaymentClient) GetBankById(ctx context.Context, id uint64) (*paymentpb.Bank, error) {

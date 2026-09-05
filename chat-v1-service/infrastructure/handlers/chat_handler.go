@@ -3,7 +3,6 @@ package handlers
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_provider "common/provider"
 	_utils "common/utils"
 	"context"
 	"fmt"

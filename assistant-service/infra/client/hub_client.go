@@ -1,9 +1,7 @@
 package client
 
 import (
-	"assistant/env"
 	"context"
-
 	"pb/clients"
 	hubpb "pb/types/hub"
 )
@@ -13,15 +11,8 @@ type HubClient struct {
 	*clients.HubGrpcClient
 }
 
-func NewHubClient() *HubClient {
-	runtimeEnv := ""
-	if env.ENV_RUNTIME != nil {
-		runtimeEnv = env.ENV_RUNTIME.Environment
-	}
-
-	return &HubClient{
-		HubGrpcClient: clients.MakeHubGrpcClient(runtimeEnv),
-	}
+func NewHubClient(rpcClient *clients.HubGrpcClient) *HubClient {
+	return &HubClient{HubGrpcClient: rpcClient}
 }
 
 func (c *HubClient) SearchLocationV2(ctx context.Context, keyword string, limit int32) ([]*hubpb.LocationSearchResultV2, error) {

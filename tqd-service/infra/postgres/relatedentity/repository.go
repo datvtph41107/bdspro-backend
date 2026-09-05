@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"tqd/infra/postgres/entitycandidate"
-	discoverydomain "tqd/internal/modules/discovery/domain"
-	discoveryports "tqd/internal/modules/discovery/ports"
-	relateddomain "tqd/internal/modules/relatedentity/domain"
-	relatedports "tqd/internal/modules/relatedentity/ports"
+	discoverydomain "tqd/internal/domain/discovery/model"
+	relateddomain "tqd/internal/domain/relatedentity/model"
+	discoveryports "tqd/internal/usecase/discovery/ports"
+	relatedports "tqd/internal/usecase/relatedentity/ports"
 
 	"gorm.io/gorm"
 )

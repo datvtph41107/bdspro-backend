@@ -6,8 +6,8 @@ import (
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	relatedapplication "tqd/internal/modules/relatedentity/application"
-	relateddomain "tqd/internal/modules/relatedentity/domain"
+	relateddomain "tqd/internal/domain/relatedentity/model"
+	relatedapplication "tqd/internal/usecase/relatedentity/application"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

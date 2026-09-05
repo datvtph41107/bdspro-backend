@@ -1,4 +1,3 @@
-// infra/client/redis/client.go
 package redis_cli
 
 import (

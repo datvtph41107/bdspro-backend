@@ -3,7 +3,7 @@ package dto
 import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
-	"user/internal/domain"
+	"user/internal/domain/access"
 )
 
 // RoleGroupRequest DTO cho request tạo/sửa role group
@@ -55,7 +55,7 @@ type RemovePermissionFromGroupRequest struct {
 }
 
 // Convert domain to DTO
-func RoleGroupToResponse(roleGroup *domain.RoleGroup) *RoleGroupResponse {
+func RoleGroupToResponse(roleGroup *access.RoleGroup) *RoleGroupResponse {
 	if roleGroup == nil {
 		return nil
 	}

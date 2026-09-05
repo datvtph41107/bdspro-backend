@@ -52,6 +52,10 @@ type InitialApp struct {
 	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
 	DiscoveryGrpcHandler           *handler_grpc.DiscoveryGrpcHandler
 	RelatedEntityGrpcHandler       *handler_grpc.RelatedEntityGrpcHandler
+	SeoProjectionGrpcHandler       *handler_grpc.SeoProjectionGrpcHandler
+	PlanningClientGrpcHandler      *handler_grpc.PlanningClientGrpcHandler
+	AdminUsageGrpcHandler          *handler_grpc.AdminUsageGrpcHandler
+	ProfileUsageGrpcHandler        *handler_grpc.ProfileUsageGrpcHandler
 
 	// Background workers
 	QHPlanningClassifyWorker *worker.QHPlanningClassifyWorker
@@ -100,6 +104,10 @@ func NewApp(
 	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
 	discoveryGrpcHandler *handler_grpc.DiscoveryGrpcHandler,
 	relatedEntityGrpcHandler *handler_grpc.RelatedEntityGrpcHandler,
+	seoProjectionGrpcHandler *handler_grpc.SeoProjectionGrpcHandler,
+	planningClientGrpcHandler *handler_grpc.PlanningClientGrpcHandler,
+	adminUsageGrpcHandler *handler_grpc.AdminUsageGrpcHandler,
+	profileUsageGrpcHandler *handler_grpc.ProfileUsageGrpcHandler,
 	qhPlanningClassifyWorker *worker.QHPlanningClassifyWorker,
 ) *InitialApp {
 	return &InitialApp{
@@ -144,6 +152,10 @@ func NewApp(
 		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
 		DiscoveryGrpcHandler:           discoveryGrpcHandler,
 		RelatedEntityGrpcHandler:       relatedEntityGrpcHandler,
+		SeoProjectionGrpcHandler:       seoProjectionGrpcHandler,
+		PlanningClientGrpcHandler:      planningClientGrpcHandler,
+		AdminUsageGrpcHandler:          adminUsageGrpcHandler,
+		ProfileUsageGrpcHandler:        profileUsageGrpcHandler,
 		QHPlanningClassifyWorker:       qhPlanningClassifyWorker,
 	}
 }

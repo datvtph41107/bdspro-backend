@@ -4,19 +4,20 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
+	"tqd/infra/client/user/generatedreport"
+	"tqd/infra/handler/grpc/generatedreport"
 	legacypostgres "tqd/infra/postgres"
-	reportpostgres "tqd/infra/postgres/report"
-	reportjobpostgres "tqd/infra/postgres/reportjob"
-	usageeventpostgres "tqd/infra/postgres/usageevent"
-	"tqd/infra/redisquota"
-	"tqd/infra/reportgrpc"
-	"tqd/infra/useraccess"
-	"tqd/internal/quota"
-	"tqd/internal/quotacleanup"
-	"tqd/internal/report"
-	"tqd/internal/reportjob"
-	"tqd/internal/usagecheck"
+	"tqd/infra/postgres/generatedreport/job"
+	"tqd/infra/postgres/generatedreport/report"
+	"tqd/infra/postgres/usage"
+	"tqd/infra/redis/quota"
+	"tqd/internal/usecase/generatedreport/application"
+	"tqd/internal/usecase/generatedreport/processing"
+	"tqd/internal/usecase/quota"
+	"tqd/internal/usecase/quota/reconciliation/reservationcleanup"
+	"tqd/internal/usecase/quota/reconciliation/usageprojection"
 
 	userpb "pb/types/user"
 
@@ -30,24 +31,37 @@ import (
  * Struct này chỉ dùng ở composition root, business code không import cmd package.
  */
 type reportTarget struct {
-	adapter       *reportgrpc.Adapter
-	jobRunner     *reportjob.Runner
-	cleanupRunner *quotacleanup.Runner
-	usageRunner   *usagecheck.Runner
+	adapter       *grpcadapter.Adapter
+	jobRunner     *processing.Runner
+	cleanupRunner *reservationcleanup.Runner
+	usageRunner   *usageprojection.Runner
+
+	wg sync.WaitGroup
+}
+
+/**
+ * Prepare phục hồi Redis projection từ durable ledger trước khi nhận traffic.
+ */
+func (r *reportTarget) Prepare(ctx context.Context) error {
+	if r == nil || r.usageRunner == nil {
+		return errors.New("generated report usage projection is not configured")
+	}
+	return r.usageRunner.ReconcileAll(ctx)
 }
 
 /**
  * newReportTarget lắp generated-report flow từ concrete DB/Redis/gRPC implementations.
  *
- * generator là phần render PDF/image thật. Có thể để nil trong giai đoạn đầu:
- * request vẫn accepted và report_job được lưu pending, chỉ worker render chưa chạy.
+ * generator là phần render PDF/image thật. Nếu nil, durable replay vẫn đọc được
+ * Report đã accepted trước đó nhưng command mới fail-closed vì processing unavailable.
  */
 func newReportTarget(
 	database *gorm.DB,
 	redisClient *redis.Client,
 	accessGRPC userpb.InternalAccessServiceClient,
-	generator reportjob.Generator,
+	generator processing.Generator,
 	logger *slog.Logger,
+	workerID string,
 ) (*reportTarget, error) {
 	if database == nil || redisClient == nil || accessGRPC == nil {
 		return nil, errors.New("generated report target dependencies are incomplete")
@@ -57,55 +71,79 @@ func newReportTarget(
 	}
 
 	workspaceStore := &legacypostgres.MapWorkspacePostgres{DB: database}
-	sourceStore := reportpostgres.NewSourceStore(workspaceStore)
-	reportStore := reportpostgres.NewReportStore(database)
+	sourceStore := postgresreport.NewSourceStore(workspaceStore)
+	reportStore := postgresreport.NewReportStore(database)
 	accessClient := useraccess.NewClient(accessGRPC)
 
 	quotaStore := redisquota.NewStore(redisClient)
 	quotaService := quota.NewService(quotaStore)
 
-	reportService := report.NewService(
+	reportService := application.NewService(
 		sourceStore,
 		reportStore,
 		accessClient,
 		quotaService,
+		generator != nil,
 		logger,
 	)
 
-	var jobRunner *reportjob.Runner
+	var jobRunner *processing.Runner
 	if generator != nil {
-		jobStore := reportjobpostgres.NewStore(database)
-		jobWorker := reportjob.NewWorker(
+		jobStore := postgresjob.NewStore(database)
+		if workerID == "" {
+			workerID = "tqd-report-worker"
+		}
+		jobWorker := processing.NewWorker(
 			jobStore,
 			generator,
 			logger,
-			"tqd-report-worker",
+			workerID,
 		)
-		jobRunner = reportjob.NewRunner(jobWorker, time.Second, logger)
+		jobRunner = processing.NewRunner(jobWorker, time.Second, logger)
 	}
 
-	usageStore := usageeventpostgres.NewStore(database)
-	cleanupService := quotacleanup.NewService(quotaStore, usageStore)
-	usageService := usagecheck.NewService(quotaStore, usageStore)
+	usageStore := postgresusage.NewStore(database)
+	cleanupService := reservationcleanup.NewService(quotaStore, usageStore)
+	usageService := usageprojection.NewService(quotaStore, usageStore)
 
 	return &reportTarget{
-		adapter:       reportgrpc.NewAdapter(reportService),
+		adapter:       grpcadapter.NewAdapter(reportService),
 		jobRunner:     jobRunner,
-		cleanupRunner: quotacleanup.NewRunner(cleanupService, time.Minute, 100, logger),
-		usageRunner:   usagecheck.NewRunner(usageService, usageStore, 5*time.Minute, 200, logger),
+		cleanupRunner: reservationcleanup.NewRunner(cleanupService, time.Minute, 100, logger),
+		usageRunner:   usageprojection.NewRunner(usageService, usageStore, 5*time.Minute, 200, logger),
 	}, nil
 }
 
-/**
- * Start chạy các background loop đi cùng report flow.
- */
+// Start launches the Report-owned actors but keeps their lifecycle observable
+// by the composition root. Dependencies must not be closed until Wait returns.
 func (r *reportTarget) Start(ctx context.Context) {
 	if r == nil {
 		return
 	}
 	if r.jobRunner != nil {
-		go r.jobRunner.Run(ctx)
+		r.start(ctx, r.jobRunner.Run)
 	}
-	go r.cleanupRunner.Run(ctx)
-	go r.usageRunner.Run(ctx)
+	if r.cleanupRunner != nil {
+		r.start(ctx, r.cleanupRunner.Run)
+	}
+	if r.usageRunner != nil {
+		r.start(ctx, r.usageRunner.Run)
+	}
+}
+
+func (r *reportTarget) start(ctx context.Context, run func(context.Context)) {
+	r.wg.Add(1)
+	go func() {
+		defer r.wg.Done()
+		run(ctx)
+	}()
+}
+
+// Wait blocks until every Report-owned actor has observed cancellation and
+// returned. This is the dependency-close barrier used by process shutdown.
+func (r *reportTarget) Wait() {
+	if r == nil {
+		return
+	}
+	r.wg.Wait()
 }

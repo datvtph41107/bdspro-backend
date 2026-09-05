@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 )
 
 type UserInfoMapper struct {
@@ -14,7 +14,7 @@ func NewUserInfoMapper() *UserInfoMapper {
 	return &UserInfoMapper{}
 }
 
-func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *domain.AuthUser) *userpb.AuthUserStatusInfo {
+func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *auth.AuthUser) *userpb.AuthUserStatusInfo {
 	result := &userpb.AuthUserStatusInfo{
 		ProfileId:   user.ProfileID,
 		Status:      uint32(user.Status),

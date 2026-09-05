@@ -4,9 +4,12 @@ import (
 	"chat/config"
 	"chat/infra/db"
 	"chat/infra/handler"
-	"chat/infra/postgre"
+	"chat/infra/postgres"
+	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
+	_redis "common/redis"
+	_utils "common/utils"
 	"context"
 	"fmt"
 	"net/http"
@@ -32,10 +35,11 @@ func parseTimeout(timeoutStr string) time.Duration {
 var logger = flogging.MustGetLogger("http_server")
 
 type HTTPServer struct {
-	server *http.Server
+	server  *http.Server
+	cleanup func()
 }
 
-func NewHTTPServer(port string) *HTTPServer {
+func NewHTTPServer(port string) (*HTTPServer, error) {
 	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
 
@@ -54,16 +58,32 @@ func NewHTTPServer(port string) *HTTPServer {
 	transactionRepo := _db.NewTransactionRepo(dbInstance)
 
 	// Initialize repositories
-	conversationRepo := postgre.NewConversationRepo(transactionRepo)
-	messageRepo := postgre.NewMessageRepo(transactionRepo)
-	participantRepo := postgre.NewParticipantRepo(transactionRepo)
-	readPositionRepo := postgre.NewReadPositionRepo(transactionRepo)
-	messageReactionRepo := postgre.NewMessageReactionRepo(transactionRepo)
-	backgroundRepo := postgre.NewBackgroundRepo(transactionRepo)
+	conversationRepo := postgres.NewConversationRepo(transactionRepo)
+	messageRepo := postgres.NewMessageRepo(transactionRepo)
+	participantRepo := postgres.NewParticipantRepo(transactionRepo)
+	readPositionRepo := postgres.NewReadPositionRepo(transactionRepo)
+	messageReactionRepo := postgres.NewMessageReactionRepo(transactionRepo)
+	backgroundRepo := postgres.NewBackgroundRepo(transactionRepo)
 
-	// Initialize clients
-	userClient := handler.NewUserClient()
-	bdsproClient := handler.NewBdsproClient()
+	// Process-owned outbound RPC dependencies.
+	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
+	if err != nil {
+		return nil, fmt.Errorf("configure chat user RPC: %w", err)
+	}
+
+	bdsproRPC, bdsproCleanup, err := chatrpc.NewBdsproRPCClient()
+	if err != nil {
+		userCleanup()
+		return nil, fmt.Errorf("configure chat bdspro RPC: %w", err)
+	}
+
+	rpcCleanup := func() {
+		bdsproCleanup()
+		userCleanup()
+	}
+
+	userClient := handler.NewUserClient(userRPC)
+	bdsproClient := handler.NewBdsproClient(bdsproRPC)
 
 	// Initialize usecases
 	conversationUsecase := usecases.NewConversationUsecases(conversationRepo, participantRepo, userClient)
@@ -77,6 +97,8 @@ func NewHTTPServer(port string) *HTTPServer {
 	// Initialize mappers
 	backgroundMapper := handler.NewBackgroundMapper()
 	conversationMapper := handler.NewConversationMapper(backgroundMapper)
+	redisService := _redis.NewRedisService()
+	syncProvider := _utils.NewSyncUtil(redisService)
 
 	// Initialize handlers
 	chatHandler := handler.NewChatHandler(
@@ -89,8 +111,14 @@ func NewHTTPServer(port string) *HTTPServer {
 		bdsproClient,
 		conversationMapper,
 		backgroundMapper,
+		syncProvider,
 	)
-	go chatHandler.Start()
+	chatHandler.Start()
+	cleanup := func() {
+		_ = chatHandler.Close()
+		_ = redisService.Close()
+		rpcCleanup()
+	}
 
 	backgroundHandler := handler.NewBackgroundHandler(backgroundImageUsecase)
 
@@ -99,7 +127,8 @@ func NewHTTPServer(port string) *HTTPServer {
 	// Register HTTP handlers
 	err = handler.RegisterHTTPServer(ctx, mux, chatHandler, backgroundHandler)
 	if err != nil {
-		logger.Fatalf("Failed to register HTTP handlers: %v", err)
+		cleanup()
+		return nil, fmt.Errorf("register chat HTTP handlers: %w", err)
 	}
 
 	// Apply middlewares
@@ -117,10 +146,16 @@ func NewHTTPServer(port string) *HTTPServer {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	return &HTTPServer{server: server}
+	return &HTTPServer{
+		server:  server,
+		cleanup: cleanup,
+	}, nil
 }
 
 func (s *HTTPServer) Start() error {
+	if s.cleanup != nil {
+		defer s.cleanup()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

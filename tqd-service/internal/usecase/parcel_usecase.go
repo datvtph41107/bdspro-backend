@@ -20,9 +20,9 @@ import (
 	"tqd/internal/enums"
 	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
-	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
-	"tqd/internal/modules/resolver/layer_resolver/rule"
-	"tqd/internal/modules/resolver/layer_resolver/types"
+	"tqd/internal/usecase/resolver/layer_resolver/engine/parcel_engine"
+	"tqd/internal/usecase/resolver/layer_resolver/rule"
+	"tqd/internal/usecase/resolver/layer_resolver/types"
 )
 
 type ParcelUsecase interface {
@@ -538,7 +538,11 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 	// }()
 
 	if includeAnalysis {
-		wg.Add(1)
+		// Two request-scoped queries run in parallel and must both be joined
+		// before this method returns. Keep WaitGroup accounting equal to the
+		// number of goroutines; otherwise one branch can outlive the response
+		// and the late Done panics with a negative WaitGroup counter.
+		wg.Add(2)
 		go func() {
 			defer wg.Done()
 			a, _, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter, false)

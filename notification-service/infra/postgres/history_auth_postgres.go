@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"notification/internal/domain"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 
 	"gorm.io/gorm"
 )
 
-// @bind: notification/internal/repo.HistoryAuthRepo
+// @bind: notification/internal/usecase.HistoryAuthStore
 type HistoryAuthPostgres struct {
 	db *gorm.DB
 }
@@ -23,7 +23,7 @@ func (r *HistoryAuthPostgres) CreateHistoryAuth(ctx context.Context, entity *dom
 	return r.db.WithContext(ctx).Create(entity).Error
 }
 
-func (r *HistoryAuthPostgres) SearchHistoryAuth(ctx context.Context, params repo.HistoryAuthSearch) ([]domain.HistoryAuthEntity, int64, error) {
+func (r *HistoryAuthPostgres) SearchHistoryAuth(ctx context.Context, params usecase.HistoryAuthSearch) ([]domain.HistoryAuthEntity, int64, error) {
 	if params.UserID == 0 {
 		return nil, 0, errors.New("userId is required")
 	}

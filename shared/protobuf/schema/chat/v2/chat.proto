@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package chatpb.v2;
+package chatpb;
 option go_package = "pb/types/chatv2;chatpb";
 import "google/api/annotations.proto";
 

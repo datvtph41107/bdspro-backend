@@ -24,10 +24,13 @@ type ProfilePostgres struct {
 	HubClient *client.HubClient
 }
 
-func NewProfilePostgres(db *gorm.DB) *ProfilePostgres {
+func NewProfilePostgres(
+	db *gorm.DB,
+	hubClient *client.HubClient,
+) *ProfilePostgres {
 	return &ProfilePostgres{
 		DB:        db,
-		HubClient: client.NewHubClient(),
+		HubClient: hubClient,
 	}
 }
 
@@ -162,6 +165,17 @@ func (r *ProfilePostgres) GetProfileByIds(ids []uint64) ([]*models.UserProfileEn
 		return nil, err
 	}
 	return userProfiles, nil
+}
+
+func (r *ProfilePostgres) SearchByPhoneOrName(ctx context.Context, text string) ([]models.UserProfileEntity, error) {
+	var profiles []models.UserProfileEntity
+	query := "%" + text + "%"
+	if err := r.DB.WithContext(ctx).
+		Where("(phone ILIKE ? OR full_name ILIKE ?) AND deleted_at IS NULL", query, query).
+		Find(&profiles).Error; err != nil {
+		return nil, err
+	}
+	return profiles, nil
 }
 
 func (r *ProfilePostgres) GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error) {
@@ -644,11 +658,11 @@ func (r *ProfilePostgres) parseListUsersSort(req *dto.ListUsersRequest) string {
 	}
 
 	fieldMap := map[string]string{
-		"createdAt":  "up.created_at",
-		"updatedAt":  "up.updated_at",
-		"fullName":   "up.full_name",
-		"email":      "up.email",
-		"lastLogin":  "session_agg.last_login_at",
+		"createdAt":   "up.created_at",
+		"updatedAt":   "up.updated_at",
+		"fullName":    "up.full_name",
+		"email":       "up.email",
+		"lastLogin":   "session_agg.last_login_at",
 		"lastLoginAt": "session_agg.last_login_at",
 	}
 

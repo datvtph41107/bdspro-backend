@@ -3,15 +3,15 @@ package repo
 import (
 	"context"
 	"time"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 )
 
 // PINRepository interface cho việc tương tác với dữ liệu PIN
 type PINRepository interface {
 	// PIN methods
-	GetByAuthID(ctx context.Context, authID uint64) (*domain.UserPINEntity, error)
-	Create(ctx context.Context, pin *domain.UserPINEntity) error
-	Update(ctx context.Context, pin *domain.UserPINEntity) error
+	GetByAuthID(ctx context.Context, authID uint64) (*auth.UserPINEntity, error)
+	Create(ctx context.Context, pin *auth.UserPINEntity) error
+	Update(ctx context.Context, pin *auth.UserPINEntity) error
 	Delete(ctx context.Context, authID uint64) error
 
 	// PIN utilities

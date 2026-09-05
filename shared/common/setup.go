@@ -4,14 +4,13 @@ import (
 	_middleware "common/middleware"
 
 	"bytes"
+	_configloader "common/configloader"
 	_db "common/db"
 	"context"
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -159,41 +158,11 @@ func LoadConfig(configFile []byte) {
 	}
 }
 
+// LoadYMLConfigFile is the legacy process-exiting compatibility wrapper.
+// New composition code must call configloader.LoadYMLFile and own the error.
 func LoadYMLConfigFile(runtimeEnv string) {
-	viper.SetConfigType("yaml")
-
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-	viper.AutomaticEnv()
-
-	// Default an toàn cho SEO runtime.
-	viper.SetDefault("seo.public_base_url", "http://localhost:3000")
-	viper.SetDefault("seo.internal_secret_key", "")
-	viper.SetDefault("seo.timezone", "Asia/Ho_Chi_Minh")
-	viper.SetDefault("seo.sitemap.default_change_freq", "daily")
-	viper.SetDefault("seo.sitemap.default_priority", 0.5)
-	viper.SetDefault("seo.generation_job.enabled", true)
-	viper.SetDefault("seo.generation_job.cron", "0 0 * * *")
-	viper.SetDefault("seo.generation_job.batch_size", 200)
-	viper.SetDefault("seo.parcelUrlTemplate", "/tin-tuc/thua-dat/{id}/{slug}")
-	viper.SetDefault("seo.layerUrlTemplate", "/tin-tuc/lop/{id}/{slug}")
-	viper.SetDefault("seo.planningProjectUrlTemplate", "/tin-tuc/do-an-quy-hoach/{id}/{slug}")
-	viper.SetDefault("seo.planningDocumentUrlTemplate", "/tin-tuc/tai-lieu/{id}/{slug}")
-	viper.SetDefault("seo.administrativeUnitUrlTemplate", "/tin-tuc/dia-ban/{id}/{slug}")
-	viper.SetDefault("seo.planningRegionUrlTemplate", "/tin-tuc/vung-quy-hoach/{id}/{slug}")
-	viper.SetDefault("seo.planningReportUrlTemplate", "/tin-tuc/bao-cao/{id}/{slug}")
-
-	env := "local"
-	if runtimeEnv != "" {
-		env = runtimeEnv
-	}
-
-	configFile, err := os.ReadFile("config/" + env + ".yml")
-	if err != nil {
+	if err := _configloader.LoadYMLFile(runtimeEnv); err != nil {
 		log.Fatal(err)
-	}
-
-	if err := viper.ReadConfig(bytes.NewReader(configFile)); err != nil {
-		log.Fatalf("Lỗi khi đọc file config: %v", err)
 	}
 }
 

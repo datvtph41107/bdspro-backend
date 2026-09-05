@@ -3,7 +3,7 @@ package mapper
 import (
 	_utils "common/utils"
 	authpb "pb/types/auth"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/enums"
 )
@@ -15,8 +15,8 @@ func NewRoleGroupMapper() *RoleGroupMapper {
 }
 
 // MapToDomain chuyển DTO sang domain
-func (m *RoleGroupMapper) MapToDomain(req *authpb.RoleGroupRequest) *domain.RoleGroup {
-	roleGroup := &domain.RoleGroup{
+func (m *RoleGroupMapper) MapToDomain(req *authpb.RoleGroupRequest) *access.RoleGroup {
+	roleGroup := &access.RoleGroup{
 		GroupName:   req.GroupName,
 		Description: req.Description,
 		Key:         enums.GroupRoleKeyEnum(req.Key),
@@ -30,7 +30,7 @@ func (m *RoleGroupMapper) MapToDomain(req *authpb.RoleGroupRequest) *domain.Role
 }
 
 // MapFromDomain chuyển domain sang DTO response
-func (m *RoleGroupMapper) MapFromDomain(roleGroup *domain.RoleGroup) *dto.RoleGroupResponse {
+func (m *RoleGroupMapper) MapFromDomain(roleGroup *access.RoleGroup) *dto.RoleGroupResponse {
 	if roleGroup == nil {
 		return nil
 	}
@@ -53,7 +53,7 @@ func (m *RoleGroupMapper) MapFromDomain(roleGroup *domain.RoleGroup) *dto.RoleGr
 }
 
 // MapListFromDomain chuyển danh sách domain sang DTO response
-func (m *RoleGroupMapper) MapListFromDomain(roleGroups []*domain.RoleGroup) []*dto.RoleGroupResponse {
+func (m *RoleGroupMapper) MapListFromDomain(roleGroups []*access.RoleGroup) []*dto.RoleGroupResponse {
 	if roleGroups == nil {
 		return nil
 	}
@@ -66,7 +66,7 @@ func (m *RoleGroupMapper) MapListFromDomain(roleGroups []*domain.RoleGroup) []*d
 	return response
 }
 
-func (m *RoleGroupMapper) MapToPb(roleGroup *domain.RoleGroup) *authpb.RoleGroup {
+func (m *RoleGroupMapper) MapToPb(roleGroup *access.RoleGroup) *authpb.RoleGroup {
 	return &authpb.RoleGroup{
 		Id:          roleGroup.ID,
 		GroupName:   roleGroup.GroupName,
@@ -77,7 +77,7 @@ func (m *RoleGroupMapper) MapToPb(roleGroup *domain.RoleGroup) *authpb.RoleGroup
 	}
 }
 
-func (m *RoleGroupMapper) MapToPbList(roleGroups []domain.RoleGroup) []*authpb.RoleGroup {
+func (m *RoleGroupMapper) MapToPbList(roleGroups []access.RoleGroup) []*authpb.RoleGroup {
 	if roleGroups == nil {
 		return nil
 	}

@@ -1,20 +1,13 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
 	_routes "common/routes"
 	"context"
-	"fmt"
-	"log"
 	"net/http"
+	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	pb_social "pb/types/social"
-	"social/env"
 	"social/internal/dto"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 // @bind: social/internal/interface.BdsproClient
@@ -22,32 +15,8 @@ type BdsproClient struct {
 	client bdspropb.PostServiceClient
 }
 
-func NewBdsproClient() *BdsproClient {
-	bdsproClient := &BdsproClient{client: nil}
-	go func() {
-		name := "bdspro"
-		url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, _ := context.WithCancel(context.Background())
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := bdspropb.NewPostServiceClient(conn)
-		bdsproClient.client = client
-	}()
-
-	return bdsproClient
+func NewBdsproClient(rpcClient *clients.BdsproGrpcClient) *BdsproClient {
+	return &BdsproClient{client: rpcClient.PostClient}
 }
 
 func (c *BdsproClient) OwnerPost(ctx context.Context, postID uint64, profileID uint64) error {

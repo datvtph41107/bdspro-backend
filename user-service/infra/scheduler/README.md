@@ -116,7 +116,7 @@ log.Printf("Current Access Token: %s", accessToken)
 ```go
 ctx := context.Background()
 err := znsProvider.UpdateTokens(ctx,
-    "RRoFMY3vhLDil81HA_QkKcQuZLyXwlfK...", // new access token
+    "EXAMPLE_ACCESS_TOKEN", // new access token
     "_JwjE4t_VdRyFg8pHl1zT_OwhprCx2nr...", // new refresh token
 )
 if err != nil {

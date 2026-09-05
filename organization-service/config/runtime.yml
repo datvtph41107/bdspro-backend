@@ -1,0 +1,32 @@
+rpc:
+  user:
+    address: "localhost:8201"
+  bdspro:
+    address: "localhost:8202"
+  notification:
+    address: "localhost:8204"
+  payment:
+    address: "localhost:8205"
+  chat:
+    address: "localhost:8208"
+  transaction:
+    address: "localhost:8215"
+  auth:
+    address: "localhost:8216"
+
+GRPC:
+  PORT: 8207
+  CHAT_SERVICE_HOST: localhost
+  CHAT_SERVICE_PORT: 8208
+  USER_SERVICE_HOST: localhost
+  USER_SERVICE_PORT: 8201
+
+Database:
+  PRIMARY_DB_TYPE: postgres
+
+database:
+  # Root Compose override DSN này; file chỉ giữ default local an toàn.
+  dsn: host=localhost user=postgres password=postgres dbname=organization port=5437 sslmode=disable
+
+Queue:
+  WORKER_QUEUE_SIZE: 1000

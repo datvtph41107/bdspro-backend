@@ -1,0 +1,2 @@
+ALTER TABLE file
+    ADD COLUMN IF NOT EXISTS absolute_path VARCHAR(255);

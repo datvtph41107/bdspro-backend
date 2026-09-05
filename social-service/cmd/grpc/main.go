@@ -23,20 +23,27 @@ import (
 var GrpcCmd = &cobra.Command{
 	Use:   "grpc",
 	Short: "gRPC server",
-	Run: func(cmd *cobra.Command, args []string) {
-		config.LoadConfig()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := config.LoadConfig(); err != nil {
+			return fmt.Errorf("load social config: %w", err)
+		}
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, _ := wire.InitializeApp()
+		app, cleanup, err := wire.InitializeApp()
+		if err != nil {
+			return fmt.Errorf("initialize social app: %w", err)
+		}
+		defer cleanup()
 		db.MigrateDomain()
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+			return fmt.Errorf("listen social gRPC on %s: %w", port, err)
 		}
+		defer func() { _ = lis.Close() }()
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
 			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
@@ -52,8 +59,10 @@ var GrpcCmd = &cobra.Command{
 		startScheduler(app)
 
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			return fmt.Errorf("serve social gRPC: %w", err)
 		}
+
+		return nil
 	},
 }
 

@@ -130,11 +130,14 @@ service RoleService {
 // Permission Service
 service PermissionService {
   rpc GetPermissionById(sharepb.IdRequest) returns (sharepb.Permission);
+
+  // Giữ nguyên contract production: lọc permission theo module.
   rpc GetPermissionsByModule(sharepb.IdRequest) returns (PermissionListResponse) {
     option (google.api.http) = {
       get: "/v2/auth/permission/module/{id}"
     };
   };
+
   rpc GetAllPermissions(sharepb.IdRequest) returns (PermissionListResponse) {
     option (google.api.http) = {
       get: "/v2/auth/permission/all"
@@ -163,6 +166,7 @@ service PermissionService {
     };
   };
 
+  // Giữ nguyên contract production cho client quản trị cũ.
   rpc GetPermissionByOrganizationId(sharepb.IdRequest) returns (PermissionKeysResponse) {
     option (google.api.http) = {
       get: "/v2/auth/permission/organization/{id}"

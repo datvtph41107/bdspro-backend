@@ -1,19 +1,25 @@
-FROM debian:stable-slim
+# syntax=docker/dockerfile:1
+FROM golang:1.25.10-alpine AS build
+WORKDIR /src
 
-# Cài FFmpeg
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+COPY shared/common ./shared/common
+COPY shared/protobuf ./shared/protobuf
+COPY file-service ./file-service
 
-WORKDIR /
+WORKDIR /src/file-service
+RUN --mount=type=cache,id=qhpro-go-mod,target=/go/pkg/mod \
+    --mount=type=cache,id=qhpro-go-build,target=/root/.cache/go-build \
+    GOWORK=off CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/file-service .
 
-COPY docs docsp
+FROM alpine:3.22 AS runtime
+RUN apk add --no-cache ca-certificates ffmpeg tzdata wget && \
+    addgroup -S app && adduser -S -G app app
 
-COPY config config
+WORKDIR /app
+COPY --from=build /out/file-service /app/file-service
+COPY file-service/config /app/config
+RUN mkdir -p /app/files && chown -R app:app /app
 
-COPY main .
-
-ENV ENV_RUNTIME=develop
-
-CMD ["./main","http"]
+USER app
+EXPOSE 8002
+ENTRYPOINT ["/app/file-service"]

@@ -40,16 +40,17 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		Name:           env.ADMIN_ROLE_NAME,
 		Key:            env.ADMIN_ROLE_KEY,
 		OrganizationId: uint32(organization.ID),
+		IsDefault:      true,
 	}
 	if err := tx.Create(&role).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
 
-	memberModel := member
-	memberModel.OrganizationID = uint32(organization.ID)
-	// memberModel.Role = role.I
-	if err := tx.Create(&memberModel).Error; err != nil {
+	member.OrganizationID = uint32(organization.ID)
+	member.RoleId = uint64(role.ID)
+	memberModel := OrganizationMemberEntityToModel(member)
+	if err := tx.Create(memberModel).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, err
 	}
@@ -70,7 +71,7 @@ func (o *OrganizationPostgresRepository) CreateOrganizationWithMember(ctx contex
 		return nil, nil, err
 	}
 
-	return organization, memberModel, nil
+	return organization, OrganizationMemberModelToEntity(memberModel), nil
 }
 
 func (o *OrganizationPostgresRepository) FindByTaxCode(ctx context.Context, taxCode string) (*entity.Organization, error) {
@@ -232,7 +233,7 @@ func (r *OrganizationPostgresRepository) DeleteOrganization(ctx context.Context,
 // GetAllOrganizationsWithMemberCounts - Lấy organizations với total members trong 1 query
 func (r *OrganizationPostgresRepository) GetAllOrganizationsWithMemberCounts(ctx context.Context, offset, limit int) ([]*entity.OrganizationWithMemberCount, uint32, error) {
 	var results []*entity.OrganizationWithMemberCount
-	
+
 	// Query với LEFT JOIN để lấy count members
 	err := r.db.WithContext(ctx).
 		Table("organizations o").

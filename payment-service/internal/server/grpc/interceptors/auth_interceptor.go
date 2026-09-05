@@ -2,7 +2,7 @@ package interceptors
 
 import (
 	"context"
-	"payment/appconfig"
+	"payment/internal/requestactor"
 	"payment/pkg/utils"
 	"slices"
 
@@ -39,7 +39,7 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger, whitelist []string) grp
 			logger.Error("Invalid token", err)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		newCtx := context.WithValue(ctx, appconfig.USER_CONTEXT, claims)
+		newCtx := context.WithValue(ctx, requestactor.UserContextKey, claims)
 		return handler(newCtx, req)
 	}
 }

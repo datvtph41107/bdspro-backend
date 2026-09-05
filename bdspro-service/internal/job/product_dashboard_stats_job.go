@@ -23,9 +23,9 @@ func NewProductDashboardStatsJob(
 	dashboardJob := dashboard.NewDashboardStatsJob(
 		db,
 		"product_stats", // table name
-		func() int64 {
+		func(ctx context.Context) int64 {
 			// Lấy count từ product repo
-			// count, err := productRepo.CountCurrent(context.Background())
+			// count, err := productRepo.CountCurrent(ctx)
 			// if err != nil {
 			// 	return 0
 			// }

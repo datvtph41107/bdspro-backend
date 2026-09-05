@@ -1,51 +1,60 @@
 package repository
 
 import (
-	_db "common/db"
+	"fmt"
 	"organization/infrastructure/repository/postgres"
+	"organization/internal/domain/entity"
+
+	"gorm.io/gorm"
 )
 
-func AutoMigrate() {
-	// db := database.NewPostgresDB(config.DB_DNS)
-	db := _db.DB
-	// Migrate các models hiện có
-	err := db.AutoMigrate(
-		// &postgres.GroupChatModel{},
-		// &postgres.OrganizationLogActivityModel{},
-		// &postgres.GroupDocumentModel{},
-		// &postgres.GroupNotificationModel{},
-		// &postgres.GroupLogActivityModel{},
-		// &postgres.GroupMemberModel{},
-		// &postgres.GroupSettingModel{},
-		// &postgres.GroupModel{},
-		// &postgres.OrganizationBranchMemberModel{},
-		// &postgres.OrganizationBranchModel{},
-		// &postgres.OrganizationPermissionModel{},
-		// &postgres.OrganizationRoleModel{},
-		// &postgres.OrganizationMemberModel{},
-		// &postgres.BusinessDomainModel{},
-		// &postgres.OrganizationBusinessDomainModel{},
-		// &postgres.OrganizationModel{}, &entity.Deal{},
-		// &entity.DealProduct{},
-		// &entity.AttachDocument{},
-		// &entity.BankAccount{},
-		// &entity.DealInvitation{},
-		// &entity.Investment{},
-		// &entity.DealMember{},
-		// &entity.DealTransaction{},
-		// &postgres.DealMemberModel{},
-		// &postgres.InternalNoteModel{},
-		// &entity.Color{},
-		// &entity.DealCost{},
-		// &entity.CostType{},
-		// &entity.DealAction{},
-		// &entity.Deal{},
-		// &entity.GroupMember{},
-		// &entity.Organization{},
-		// &entity.DealMember{},
+// AutoMigrateModels là registry bootstrap GORM duy nhất của Organization.
+// SQL production vẫn do organization-service/migrate sở hữu; registry này
+// chỉ chạy khi process owner chọn schema mode automigrate.
+func AutoMigrateModels() []any {
+	return []any{
+		&entity.Color{},
+		&entity.BusinessDomain{},
+		&entity.Organization{},
+		&postgres.OrganizationBusinessDomainModel{},
+		&postgres.OrganizationPermissionModel{},
+		&postgres.OrganizationRoleModel{},
 		&postgres.OrganizationMemberModel{},
-	)
-	if err != nil {
-		panic(err)
+		&postgres.OrganizationBranchModel{},
+		&postgres.OrganizationBranchMemberModel{},
+		&postgres.OrganizationLogActivityModel{},
+		&postgres.GroupModel{},
+		&postgres.GroupSettingModel{},
+		&postgres.GroupMemberModel{},
+		&postgres.GroupLogActivityModel{},
+		&postgres.GroupNotificationModel{},
+		&postgres.GroupDocumentModel{},
+		&postgres.GroupChatModel{},
+		&entity.BankAccount{},
+		&entity.Deal{},
+		&entity.DealProduct{},
+		&entity.DealMember{},
+		&entity.DealMilestone{},
+		&entity.Investment{},
+		&entity.AttachDocument{},
+		&entity.InternalNote{},
+		&entity.DealOfOrganization{},
+		&entity.DealOfBranch{},
+		&entity.DealOfGroup{},
 	}
+}
+
+func AutoMigrate(database *gorm.DB) error {
+	return database.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(
+			"SELECT pg_advisory_xact_lock(hashtext(?))",
+			"qhpro:organization:gorm-schema",
+		).Error; err != nil {
+			return fmt.Errorf("acquire Organization schema lock: %w", err)
+		}
+		if err := tx.AutoMigrate(AutoMigrateModels()...); err != nil {
+			return fmt.Errorf("migrate Organization models: %w", err)
+		}
+		return nil
+	})
 }

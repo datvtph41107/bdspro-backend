@@ -8,7 +8,7 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +17,7 @@ type AdminHistoryPostgres struct {
 	DB *gorm.DB
 }
 
-func NewAdminHistoryPostgres(db *gorm.DB) repo.AdminHistoryRepo {
+func NewAdminHistoryPostgres(db *gorm.DB) usecase.AdminHistoryStore {
 	return &AdminHistoryPostgres{DB: db}
 }
 

@@ -44,7 +44,7 @@ type RoleListResponse struct {
 type RoleSearchRequest struct {
 	_dto.Pagable
 	Scope       uint32  `form:"scope"`
-	DomainType  uint32  `form:"domainType"`
+	DomainType  string  `form:"domainType"`
 	Name        string  `form:"name"`
 	IsDefault   *bool   `form:"isDefault"`
 	RoleGroupID *uint64 `form:"roleGroupId"`

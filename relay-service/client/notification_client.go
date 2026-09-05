@@ -1,8 +1,6 @@
 package client
 
 import (
-	"relay/env"
-
 	clients "pb/clients"
 )
 
@@ -10,11 +8,8 @@ type NotificationClient struct {
 	*clients.NotificationClient
 }
 
-func NewNotificationClient() *NotificationClient {
-	notificationClient := clients.MakeNotificationClient(env.ENV_RUNTIME)
-	return &NotificationClient{
-		NotificationClient: notificationClient,
-	}
+func NewNotificationClient(rpcClient *clients.NotificationClient) *NotificationClient {
+	return &NotificationClient{NotificationClient: rpcClient}
 }
 
 // func (c *NotificationClient) NotifyToUser(

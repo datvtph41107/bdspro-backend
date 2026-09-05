@@ -1,17 +1,16 @@
 package clients
 
 import (
-	"common/tcp/connect"
+	"context"
 	"fmt"
-	"log"
 	hubpb "pb/types/hub"
 	sharepb "pb/types/shared"
-	"strings"
 	"time"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"context"
+
+	"google.golang.org/grpc"
 )
 
 type HubGrpcClient struct {
@@ -22,23 +21,14 @@ type HubGrpcClient struct {
 	UserGuideClient  hubpb.UserGuideServiceClient
 }
 
-func MakeHubGrpcClient(env_runtime string) *HubGrpcClient {
-	hubClient := &HubGrpcClient{}
-	name := "hub"
-	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("failed to dial hub service at %s: %v (will retry via ConnectParams)", addr, err)
-		return hubClient
+func BindHubGrpcClient(conn grpc.ClientConnInterface) *HubGrpcClient {
+	return &HubGrpcClient{
+		Client:           hubpb.NewLocationServiceClient(conn),
+		InternalClient:   hubpb.NewHubInternalServiceClient(conn),
+		LocationV2Client: hubpb.NewLocationV2ServiceClient(conn),
+		ApiKeyClient:     hubpb.NewApiKeyServiceClient(conn),
+		UserGuideClient:  hubpb.NewUserGuideServiceClient(conn),
 	}
-
-	hubClient.Client = hubpb.NewLocationServiceClient(conn)
-	hubClient.InternalClient = hubpb.NewHubInternalServiceClient(conn)
-	hubClient.LocationV2Client = hubpb.NewLocationV2ServiceClient(conn)
-	hubClient.ApiKeyClient = hubpb.NewApiKeyServiceClient(conn)
-	hubClient.UserGuideClient = hubpb.NewUserGuideServiceClient(conn)
-	return hubClient
 }
 
 func (c *HubGrpcClient) GetByIDs(ctx context.Context, req *hubpb.GetRegionsRequest) (*hubpb.GetRegionsResponse, error) {
@@ -104,52 +94,4 @@ func (c *HubGrpcClient) PutUpdate(ctx context.Context, resource string, resource
 
 func (c *HubGrpcClient) DelUpdate(ctx context.Context, resource string, id uint64, ownerId uint64) error {
 	return nil
-}
-
-// TrackKeywordSearch fire-and-forget đếm từ khóa tìm kiếm sang hub (CRM/TQD/...).
-func (c *HubGrpcClient) TrackKeywordSearch(ctx context.Context, keyword, source string) {
-	if c == nil || c.InternalClient == nil {
-		return
-	}
-	keyword = strings.TrimSpace(keyword)
-	if keyword == "" {
-		return
-	}
-	go func() {
-		trackCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		_, err := c.InternalClient.TrackKeywordSearch(trackCtx, &hubpb.TrackKeywordSearchRequest{
-			Keyword: keyword,
-			Source:  source,
-			Count:   1,
-		})
-		if err != nil {
-			log.Printf("hub TrackKeywordSearch error: %v", err)
-		}
-	}()
-}
-
-// TrackSearchLatency fire-and-forget ghi latency API search có text sang hub.
-func (c *HubGrpcClient) TrackSearchLatency(ctx context.Context, method, path, service string, durationMs int64) {
-	if c == nil || c.InternalClient == nil {
-		return
-	}
-	method = strings.TrimSpace(method)
-	path = strings.TrimSpace(path)
-	if method == "" || path == "" || durationMs < 0 {
-		return
-	}
-	go func() {
-		trackCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		_, err := c.InternalClient.TrackSearchLatency(trackCtx, &hubpb.TrackSearchLatencyRequest{
-			Method:     method,
-			Path:       path,
-			Service:    service,
-			DurationMs: durationMs,
-		})
-		if err != nil {
-			log.Printf("hub TrackSearchLatency error: %v", err)
-		}
-	}()
 }

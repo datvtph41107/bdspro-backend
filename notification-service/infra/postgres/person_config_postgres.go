@@ -9,7 +9,7 @@ import (
 	"notification/internal/domain"
 )
 
-// @bind: notification/internal/repo.PersonConfigRepo
+// @bind: notification/internal/usecase.PersonConfigStore
 type PersonConfigPostgres struct {
 	DB *gorm.DB
 }

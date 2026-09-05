@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_db "common/db"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/interface/repo"
 
 	"gorm.io/gorm"
@@ -22,8 +22,8 @@ func NewAuthRepository(db *_db.TransactionRepo) repo.AuthMethodRepository {
 }
 
 // FindByPhone tìm kiếm auth bằng số điện thoại
-func (r *AuthMethodPostgres) FindByPhone(ctx context.Context, phone string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindByPhone(ctx context.Context, phone string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", "PHONE", phone).First(&auth).Error
 	if err != nil {
 		return nil, err
@@ -32,8 +32,8 @@ func (r *AuthMethodPostgres) FindByPhone(ctx context.Context, phone string) (*do
 }
 
 // GetByID lấy auth theo ID
-func (r *AuthMethodPostgres) GetByID(ctx context.Context, id uint64) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) GetByID(ctx context.Context, id uint64) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).First(&auth, id).Error
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (r *AuthMethodPostgres) GetByID(ctx context.Context, id uint64) (*domain.Au
 // ExistsByOAuth kiểm tra sự tồn tại của auth theo OAuth
 func (r *AuthMethodPostgres) ExistsByOAuth(ctx context.Context, phone string) (bool, error) {
 	var count int64
-	err := r.GetDB(ctx).Model(&domain.AuthMethod{}).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", "PHONE", phone).Count(&count).Error
+	err := r.GetDB(ctx).Model(&auth.AuthMethod{}).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", "PHONE", phone).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
@@ -52,8 +52,8 @@ func (r *AuthMethodPostgres) ExistsByOAuth(ctx context.Context, phone string) (b
 }
 
 // FindByOAuthId tìm kiếm bằng provider và oauth_id (auth_name cho OAuth providers)
-func (r *AuthMethodPostgres) FindByOAuthID(ctx context.Context, oauthId, provider string) (*domain.AuthMethod, error) {
-	var user domain.AuthMethod
+func (r *AuthMethodPostgres) FindByOAuthID(ctx context.Context, oauthId, provider string) (*auth.AuthMethod, error) {
+	var user auth.AuthMethod
 	err := r.GetDB(ctx).Where("provider = ? AND auth_name = ? AND deleted_at IS NULL", provider, oauthId).First(&user).Error
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (r *AuthMethodPostgres) FindByOAuthID(ctx context.Context, oauthId, provide
 }
 
 // Create tạo mới auth
-func (r *AuthMethodPostgres) Create(ctx context.Context, auth *domain.AuthMethod) (*domain.AuthMethod, error) {
+func (r *AuthMethodPostgres) Create(ctx context.Context, auth *auth.AuthMethod) (*auth.AuthMethod, error) {
 	err := r.GetDB(ctx).Create(auth).Error
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (r *AuthMethodPostgres) Create(ctx context.Context, auth *domain.AuthMethod
 }
 
 // Update cập nhật auth
-func (r *AuthMethodPostgres) Update(ctx context.Context, auth *domain.AuthMethod) (*domain.AuthMethod, error) {
+func (r *AuthMethodPostgres) Update(ctx context.Context, auth *auth.AuthMethod) (*auth.AuthMethod, error) {
 	err := r.GetDB(ctx).Save(auth).Error
 	if err != nil {
 		return nil, err
@@ -89,12 +89,12 @@ func (r *AuthMethodPostgres) DeleteByUserId(ctx context.Context, userId uint64) 
 	return r.GetDB(ctx).
 		Unscoped().
 		Where("user_id = ?", userId).
-		Delete(&domain.AuthMethod{}).Error
+		Delete(&auth.AuthMethod{}).Error
 }
 
 // FindByUsername tìm kiếm auth bằng username
-func (r *AuthMethodPostgres) FindByUsername(ctx context.Context, username string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindByUsername(ctx context.Context, username string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).Where("auth_name = ? AND deleted_at IS NULL", username).First(&auth).Error
 	if err != nil {
 		return nil, err
@@ -103,8 +103,8 @@ func (r *AuthMethodPostgres) FindByUsername(ctx context.Context, username string
 }
 
 // FindByEmail tìm auth method theo email
-func (r *AuthMethodPostgres) FindByEmail(ctx context.Context, email string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindByEmail(ctx context.Context, email string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).Where("email = ? AND deleted_at IS NULL", email).First(&auth).Error
 	if err != nil {
 		return nil, err
@@ -113,8 +113,8 @@ func (r *AuthMethodPostgres) FindByEmail(ctx context.Context, email string) (*do
 }
 
 // FindByID tìm auth method theo ID
-func (r *AuthMethodPostgres) FindByID(ctx context.Context, id uint64) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindByID(ctx context.Context, id uint64) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&auth).Error
 	if err != nil {
 		return nil, err
@@ -123,12 +123,12 @@ func (r *AuthMethodPostgres) FindByID(ctx context.Context, id uint64) (*domain.A
 }
 
 // FindAdminsByProvider tìm danh sách admin theo provider với phân trang
-func (r *AuthMethodPostgres) FindAdminsByProvider(ctx context.Context, provider string, page, size int, roleId *uint64, name string) ([]*domain.AuthMethod, int64, error) {
-	var admins []*domain.AuthMethod
+func (r *AuthMethodPostgres) FindAdminsByProvider(ctx context.Context, provider string, page, size int, roleId *uint64, name string) ([]*auth.AuthMethod, int64, error) {
+	var admins []*auth.AuthMethod
 	var total int64
 
 	// Đếm tổng số
-	db := r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthMethod{}).
+	db := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthMethod{}).
 		Where("provider = ? AND deleted_at IS NULL", provider)
 
 	if roleId != nil && *roleId > 0 {
@@ -148,7 +148,7 @@ func (r *AuthMethodPostgres) FindAdminsByProvider(ctx context.Context, provider 
 	// Lấy danh sách với phân trang
 	offset := (page - 1) * size
 	listQuery := r.GetDB(ctx).WithContext(ctx).
-		Model(&domain.AuthMethod{}).
+		Model(&auth.AuthMethod{}).
 		Where("provider = ? AND deleted_at IS NULL", provider)
 
 	if roleId != nil && *roleId > 0 {
@@ -172,8 +172,8 @@ func (r *AuthMethodPostgres) FindAdminsByProvider(ctx context.Context, provider 
 }
 
 // GetByUserIdAndProvider tìm auth method theo userID và provider
-func (r *AuthMethodPostgres) GetByUserIdAndProvider(ctx context.Context, userID uint64, provider string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) GetByUserIdAndProvider(ctx context.Context, userID uint64, provider string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
 		Where("user_id = ? AND provider = ? AND deleted_at IS NULL", userID, provider).
 		First(&auth).Error
@@ -184,8 +184,8 @@ func (r *AuthMethodPostgres) GetByUserIdAndProvider(ctx context.Context, userID 
 }
 
 // GetFirstByUserID lấy auth method đầu tiên (ưu tiên theo thời gian tạo) của user
-func (r *AuthMethodPostgres) GetFirstByUserID(ctx context.Context, userID uint64) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) GetFirstByUserID(ctx context.Context, userID uint64) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
 		Where("user_id = ? AND deleted_at IS NULL", userID).
 		Order("created_at ASC").
@@ -197,8 +197,8 @@ func (r *AuthMethodPostgres) GetFirstByUserID(ctx context.Context, userID uint64
 }
 
 // FindByAuthNameAndProvider tìm auth method theo auth_name và provider
-func (r *AuthMethodPostgres) FindByAuthNameAndProvider(ctx context.Context, username, provider string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindByAuthNameAndProvider(ctx context.Context, username, provider string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
 		Where("auth_name = ? AND provider = ? AND deleted_at IS NULL", username, provider).
 		Order("updated_at DESC").
@@ -210,8 +210,8 @@ func (r *AuthMethodPostgres) FindByAuthNameAndProvider(ctx context.Context, user
 }
 
 // FindAllByAuthNameAndProvider trả về mọi auth_method trùng auth_name + provider (xử lý dữ liệu legacy trùng username)
-func (r *AuthMethodPostgres) FindAllByAuthNameAndProvider(ctx context.Context, username, provider string) ([]*domain.AuthMethod, error) {
-	var auths []*domain.AuthMethod
+func (r *AuthMethodPostgres) FindAllByAuthNameAndProvider(ctx context.Context, username, provider string) ([]*auth.AuthMethod, error) {
+	var auths []*auth.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
 		Where("auth_name = ? AND provider = ? AND deleted_at IS NULL", username, provider).
 		Order("updated_at DESC").
@@ -223,8 +223,8 @@ func (r *AuthMethodPostgres) FindAllByAuthNameAndProvider(ctx context.Context, u
 }
 
 // FindAllByEmailAndProvider trả về mọi auth_method trùng email + provider
-func (r *AuthMethodPostgres) FindAllByEmailAndProvider(ctx context.Context, email, provider string) ([]*domain.AuthMethod, error) {
-	var auths []*domain.AuthMethod
+func (r *AuthMethodPostgres) FindAllByEmailAndProvider(ctx context.Context, email, provider string) ([]*auth.AuthMethod, error) {
+	var auths []*auth.AuthMethod
 	err := r.GetDB(ctx).WithContext(ctx).
 		Where("email = ? AND provider = ? AND deleted_at IS NULL", email, provider).
 		Order("updated_at DESC").
@@ -238,7 +238,7 @@ func (r *AuthMethodPostgres) FindAllByEmailAndProvider(ctx context.Context, emai
 // CountByProvider đếm số lượng auth method theo provider
 func (r *AuthMethodPostgres) CountByProvider(ctx context.Context, provider string) (int64, error) {
 	var count int64
-	err := r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthMethod{}).
+	err := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthMethod{}).
 		Where("provider = ? AND deleted_at IS NULL", provider).
 		Count(&count).Error
 	return count, err
@@ -248,25 +248,25 @@ func (r *AuthMethodPostgres) Delete(ctx context.Context, id uint64) error {
 	return r.GetDB(ctx).WithContext(ctx).
 		Unscoped().
 		Where("id = ?", id).
-		Delete(&domain.AuthMethod{}).Error
+		Delete(&auth.AuthMethod{}).Error
 }
 
 // SoftDelete soft delete auth method
 func (r *AuthMethodPostgres) SoftDelete(ctx context.Context, id uint64) error {
 	now := time.Now()
-	return r.GetDB(ctx).WithContext(ctx).Model(&domain.AuthMethod{}).Where("id = ?", id).Update("deleted_at", now).Error
+	return r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthMethod{}).Where("id = ?", id).Update("deleted_at", now).Error
 }
 
 // RestoreAccount khôi phục tài khoản đã bị soft delete
 func (r *AuthMethodPostgres) RestoreAccount(c context.Context, id uint64) error {
-	return r.GetDB(c).WithContext(c).Model(&domain.AuthMethod{}).
+	return r.GetDB(c).WithContext(c).Model(&auth.AuthMethod{}).
 		Where("id = ?", id).
 		Update("deleted_at", nil).Error
 }
 
 // FindDeletedByPhone tìm auth method đã bị xóa theo phone
-func (r *AuthMethodPostgres) FindDeletedByPhone(c context.Context, phone string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindDeletedByPhone(c context.Context, phone string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(c).
 		WithContext(c).
 		Where("phone = ? AND deleted_at IS NOT NULL", phone).
@@ -278,8 +278,8 @@ func (r *AuthMethodPostgres) FindDeletedByPhone(c context.Context, phone string)
 }
 
 // FindDeletedByEmail tìm auth method đã bị xóa theo email
-func (r *AuthMethodPostgres) FindDeletedByEmail(c context.Context, email string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindDeletedByEmail(c context.Context, email string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(c).
 		WithContext(c).
 		Where("email = ? AND deleted_at IS NOT NULL", email).
@@ -291,8 +291,8 @@ func (r *AuthMethodPostgres) FindDeletedByEmail(c context.Context, email string)
 }
 
 // FindDeletedByUsername tìm auth method đã bị xóa theo username
-func (r *AuthMethodPostgres) FindDeletedByUsername(c context.Context, username string) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) FindDeletedByUsername(c context.Context, username string) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(c).
 		WithContext(c).
 		Where("auth_name = ? AND deleted_at IS NOT NULL", username).
@@ -312,9 +312,9 @@ func (r *AuthMethodPostgres) LockAccount(ctx context.Context, authID uint64, loc
 	// Xác định trạng thái và thời gian khóa
 	var status uint8
 	if lockType == "permanent" {
-		status = uint8(domain.StatusPermanentlyLocked)
+		status = uint8(auth.StatusPermanentlyLocked)
 	} else if lockType == "temporary" {
-		status = uint8(domain.StatusTemporarilyLocked)
+		status = uint8(auth.StatusTemporarilyLocked)
 		// Tính thời gian khóa đến
 		expiryTime := now.Add(time.Duration(duration) * time.Hour)
 		lockedUntil = &expiryTime
@@ -335,7 +335,7 @@ func (r *AuthMethodPostgres) LockAccount(ctx context.Context, authID uint64, loc
 		updates["locked_until"] = lockedUntil
 	}
 
-	err := r.GetDB(ctx).Model(&domain.AuthMethod{}).
+	err := r.GetDB(ctx).Model(&auth.AuthMethod{}).
 		Where("id = ? AND deleted_at IS NULL", authID).
 		Updates(updates).Error
 
@@ -352,7 +352,7 @@ func (r *AuthMethodPostgres) UnlockAccount(ctx context.Context, authID uint64, r
 
 	// Cập nhật tài khoản về trạng thái active
 	updates := map[string]interface{}{
-		"status":       uint8(domain.StatusActive),
+		"status":       uint8(auth.StatusActive),
 		"locked_at":    nil,
 		"locked_until": nil,
 		"lock_reason":  "",
@@ -360,7 +360,7 @@ func (r *AuthMethodPostgres) UnlockAccount(ctx context.Context, authID uint64, r
 		"updated_at":   now,
 	}
 
-	err := r.GetDB(ctx).Model(&domain.AuthMethod{}).
+	err := r.GetDB(ctx).Model(&auth.AuthMethod{}).
 		Where("id = ? AND deleted_at IS NULL", authID).
 		Updates(updates).Error
 
@@ -372,8 +372,8 @@ func (r *AuthMethodPostgres) UnlockAccount(ctx context.Context, authID uint64, r
 }
 
 // GetAccountStatus lấy trạng thái tài khoản
-func (r *AuthMethodPostgres) GetAccountStatus(ctx context.Context, authID uint64) (*domain.AuthMethod, error) {
-	var auth domain.AuthMethod
+func (r *AuthMethodPostgres) GetAccountStatus(ctx context.Context, authID uint64) (*auth.AuthMethod, error) {
+	var auth auth.AuthMethod
 	err := r.GetDB(ctx).Where("id = ? AND deleted_at IS NULL", authID).First(&auth).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get account status: %w", err)
@@ -386,9 +386,9 @@ func (r *AuthMethodPostgres) CheckLockExpiration(ctx context.Context) error {
 	now := time.Now()
 
 	// Tìm các tài khoản khóa tạm thời đã hết hạn
-	var expiredAccounts []domain.AuthMethod
+	var expiredAccounts []auth.AuthMethod
 	err := r.GetDB(ctx).Where("status = ? AND locked_until IS NOT NULL AND locked_until < ?",
-		uint8(domain.StatusTemporarilyLocked), now).Find(&expiredAccounts).Error
+		uint8(auth.StatusTemporarilyLocked), now).Find(&expiredAccounts).Error
 
 	if err != nil {
 		return fmt.Errorf("failed to find expired accounts: %w", err)
@@ -401,10 +401,10 @@ func (r *AuthMethodPostgres) CheckLockExpiration(ctx context.Context) error {
 			authIDs = append(authIDs, account.ID)
 		}
 
-		err = r.GetDB(ctx).Model(&domain.AuthMethod{}).
+		err = r.GetDB(ctx).Model(&auth.AuthMethod{}).
 			Where("id IN ?", authIDs).
 			Updates(map[string]interface{}{
-				"status":       uint8(domain.StatusActive),
+				"status":       uint8(auth.StatusActive),
 				"locked_at":    nil,
 				"locked_until": nil,
 				"lock_reason":  "",
@@ -421,8 +421,8 @@ func (r *AuthMethodPostgres) CheckLockExpiration(ctx context.Context) error {
 }
 
 // GetConnectedOAuthAccounts lấy danh sách các tài khoản OAuth đã liên kết của user
-func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, userID uint64) ([]*domain.AuthMethod, error) {
-	var accounts []*domain.AuthMethod
+func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, userID uint64) ([]*auth.AuthMethod, error) {
+	var accounts []*auth.AuthMethod
 
 	// Lấy tất cả auth_method của user với provider là OAuth (GOOGLE, FACEBOOK, ZALO)
 	err := r.GetDB(ctx).
@@ -438,8 +438,8 @@ func (r *AuthMethodPostgres) GetConnectedOAuthAccounts(ctx context.Context, user
 	return accounts, nil
 }
 
-func (r *AuthMethodPostgres) PhoneCheck(ctx context.Context, phone string) (*domain.AuthMethod, error) {
-	var auth *domain.AuthMethod
+func (r *AuthMethodPostgres) PhoneCheck(ctx context.Context, phone string) (*auth.AuthMethod, error) {
+	var auth *auth.AuthMethod
 	err := r.GetDB(ctx).Debug().Where("auth_name = ? AND deleted_at IS NULL AND provider = ?", phone, "PHONE").First(&auth).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

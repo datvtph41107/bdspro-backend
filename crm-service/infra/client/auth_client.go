@@ -1,7 +1,6 @@
 package client
 
 import (
-	"crm/env"
 	"pb/clients"
 )
 
@@ -10,9 +9,12 @@ type AuthClient struct {
 	UserClient *clients.UserGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
+func NewAuthClient(
+	authClient *clients.AuthGrpcClient,
+	userClient *clients.UserGrpcClient,
+) *AuthClient {
 	return &AuthClient{
-		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
-		UserClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+		AuthGrpcClient: authClient,
+		UserClient:     userClient,
 	}
 }

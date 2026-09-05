@@ -74,7 +74,7 @@ func (s *InternalHandler) GetProductViewStats(
 		req.FromTime,
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if rsl == nil {

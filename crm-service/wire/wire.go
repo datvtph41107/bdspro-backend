@@ -19,9 +19,11 @@ import (
 	crm_infra_mapper "crm/infra/mapper"
 	crm_infra_postgre "crm/infra/postgre"
 	crm_infra_postgre_contentcatalog "crm/infra/postgre/contentcatalog"
+	crm_infra_rpc "crm/infra/rpc"
 	crm_infra_validator "crm/infra/validator"
 	crm_initial "crm/initial"
 	crm_internal_domain_seo "crm/internal/domain/seo"
+	crm_internal_integrations_paymentcompleted "crm/internal/integrations/paymentcompleted"
 	crm_internal_interface_provider "crm/internal/interface/provider"
 	crm_internal_modules_contentcatalog_application "crm/internal/modules/contentcatalog/application"
 	crm_internal_repo "crm/internal/repo"
@@ -53,17 +55,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(crm_internal_repo.SharingAccessRepo), new(*crm_infra_postgre.SharingAccessPostgre)),
 	wire.Bind(new(crm_internal_repo.StageRepo), new(*crm_infra_postgre.PostgreStage)),
 	wire.Bind(new(crm_internal_usecase.PermissionUsecase), new(*crm_infra_client.PermissionUsecase)),
-	common_injection.NewAuthClient,
-	common_injection.NewBDSProClient,
-	common_injection.NewCRMClient,
-	common_injection.NewChatClient,
-	common_injection.NewHubClient,
-	common_injection.NewNotification,
-	common_injection.NewOrganizationClient,
-	common_injection.NewPaymentClient,
-	common_injection.NewTQClient,
-	common_injection.NewTransactionClient,
-	common_injection.NewUserClient,
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	crm_infra_postgre.NewAdminOpportunityEventPostgres,
@@ -80,7 +71,9 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewAppointmentUsecase,
 	crm_infra_validator.NewAppointmentValidator,
 	crm_infra_client.NewAuthClient,
+	crm_infra_rpc.NewAuthRPCClient,
 	crm_infra_client.NewBdsproClient,
+	crm_infra_rpc.NewBdsproRPCClient,
 	crm_infra_postgre.NewBlockRepo,
 	crm_infra_handler.NewBlockService,
 	crm_internal_usecase.NewBlockUsecase,
@@ -89,6 +82,8 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewCampaignDetailUsecase,
 	crm_infra_postgre.NewCampaignPostgresRepository,
 	crm_internal_usecase.NewCampaignUsecase,
+	crm_infra_rpc.NewChatRPCClient,
+	crm_internal_integrations_paymentcompleted.NewConsumer,
 	crm_infra_mapper.NewContactMapper,
 	crm_infra_postgre.NewContactProductPostgre,
 	crm_infra_postgre.NewContactRepo,
@@ -120,11 +115,14 @@ var wireSet = wire.NewSet(
 	crm_internal_usecase.NewLeadUsecase,
 	crm_infra_handler.NewMarketingGrpcHandler,
 	crm_infra_client.NewNotificationClient,
+	crm_infra_rpc.NewNotificationRPCClient,
 	crm_infra_client.NewOrganizationClient,
+	crm_infra_rpc.NewOrganizationRPCClient,
 	crm_internal_usecase.NewOwnerUsecase,
 	crm_infra_postgre.NewPackagePostgresRepository,
 	crm_internal_usecase.NewPackageUsecase,
 	crm_infra_client.NewPaymentClient,
+	crm_infra_rpc.NewPaymentRPCClient,
 	crm_internal_usecase.NewPaymentUsecase,
 	crm_infra_client.NewPermissionUsecase,
 	crm_infra_handler.NewPipelineService,
@@ -177,9 +175,11 @@ var wireSet = wire.NewSet(
 	crm_infra_handler_http_seopublic.NewSitemapHandler,
 	crm_infra_handler.NewStageService,
 	crm_internal_usecase.NewStageUsecase,
+	crm_internal_integrations_paymentcompleted.NewStore,
 	crm_infra_handler.NewSupportTicketHandler,
 	crm_infra_postgre.NewSupportTicketPostgres,
 	crm_internal_usecase.NewSupportTicketUsecase,
+	crm_infra_rpc.NewTQDRPCClient,
 	crm_infra_mapper.NewTagMapper,
 	crm_infra_postgre.NewTagPostgres,
 	crm_infra_handler.NewTagService,
@@ -187,9 +187,10 @@ var wireSet = wire.NewSet(
 	crm_infra_client.NewTqdClient,
 	crm_infra_impl.NewTransactionGorm,
 	crm_infra_client.NewUserClient,
+	crm_infra_rpc.NewUserRPCClient,
 )
 
-func InitializeApp() (*crm_initial.InitialApp, error) {
+func InitializeApp() (*crm_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
-	return nil, nil
+	return nil, nil, nil
 }

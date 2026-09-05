@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 	"user/infra/mapper"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -448,6 +448,95 @@ func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdReques
 	return h.roleMapper.MapRoleToPb(role), nil
 }
 
+// GetAdminRoleIdByGroupKey là compatibility RPC cho AuthInternal production.
+// Role vẫn được đọc từ repository User, không tạo thêm owner thứ hai.
+func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "groupKey là bắt buộc")
+	}
+	role, err := h.roleRepo.GetAdminRoleIdByGroupKey(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, status.Error(codes.NotFound, "admin role không tồn tại")
+	}
+	return h.roleMapper.MapRoleToPb(role), nil
+}
+
+// GetProfileByIds dùng profile repository canonical của User thay vì đọc
+// chéo auth_method như source production cũ.
+func (h *InternalHandler) GetProfileByIds(ctx context.Context, req *sharepb.GetProfileByIdsRequest) (*sharepb.GetProfileByIdsResponse, error) {
+	if req == nil || len(req.Ids) == 0 {
+		return &sharepb.GetProfileByIdsResponse{Profiles: []*sharepb.ProfileItem{}}, nil
+	}
+	profiles, err := h.profileUsecase.ProfileRepo.GetProfileByIds(req.Ids)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profiles: %v", err)
+	}
+	items := make([]*sharepb.ProfileItem, 0, len(profiles))
+	for _, profile := range profiles {
+		if profile == nil {
+			continue
+		}
+		items = append(items, &sharepb.ProfileItem{
+			Id:           profile.ProfileID,
+			FullName:     profile.FullName,
+			Avatar:       profile.Avatar,
+			TickVerified: profile.TickVerified,
+			Phone:        profile.Phone,
+		})
+	}
+	return &sharepb.GetProfileByIdsResponse{Profiles: items}, nil
+}
+
+// CreateAdmin/UpdateAdmin/GetAdminById/DeleteAdmin là facade nội bộ để Auth
+// forward contract cũ; credential và profile đều được User usecase xử lý.
+func (h *InternalHandler) CreateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
+	result, err := h.authMethodUsecase.CreateAdmin(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
+func (h *InternalHandler) UpdateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
+	if req == nil {
+		return nil, _errors.ReturnError(400, "request không hợp lệ")
+	}
+	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
+	result, err := h.authMethodUsecase.UpdateAdmin(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
+func (h *InternalHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "admin id là bắt buộc")
+	}
+	if err := h.authMethodUsecase.DeleteAdmin(ctx, req.Id); err != nil {
+		return nil, err
+	}
+	return &sharepb.SubmitResponse{Message: "Admin đã được xóa thành công"}, nil
+}
+
+func (h *InternalHandler) GetAdminById(ctx context.Context, req *sharepb.IdRequest) (*authpb.AuthMethod, error) {
+	if req == nil || req.Id == 0 {
+		return nil, _errors.ReturnError(400, "admin id là bắt buộc")
+	}
+	result, err := h.authMethodUsecase.GetByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return h.authMethodMapper.MapAuthMethodPb(result), nil
+}
+
 func (h *InternalHandler) GetRolesByIds(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleListResponse, error) {
 	roles, err := h.roleRepo.GetListByIDs(ctx, req.Ids)
 	if err != nil {
@@ -473,7 +562,7 @@ func (h *InternalHandler) GetRolesByRoleKeys(ctx context.Context, req *userpb.Ge
 }
 
 func (h *InternalHandler) GetRolePermissions(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetRolePermissionsResponse, error) {
-	var roles []domain.Role
+	var roles []access.Role
 	var err error
 
 	switch {
@@ -483,7 +572,7 @@ func (h *InternalHandler) GetRolePermissions(ctx context.Context, req *sharepb.I
 			return nil, getErr
 		}
 		if role != nil {
-			roles = []domain.Role{*role}
+			roles = []access.Role{*role}
 		}
 	case len(req.Ids) > 0:
 		roles, err = h.roleRepo.GetListByIDs(ctx, req.Ids)

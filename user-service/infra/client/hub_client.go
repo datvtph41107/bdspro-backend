@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"pb/clients"
 	hubpb "pb/types/hub"
-	"user/env"
 )
 
 // @bind: user/internal/interface/providers.HubProvider
@@ -13,9 +12,11 @@ type HubClient struct {
 	*clients.HubGrpcClient
 }
 
-func NewHubClient() *HubClient {
+func NewHubClient(
+	rpcClient *clients.HubGrpcClient,
+) *HubClient {
 	return &HubClient{
-		clients.MakeHubGrpcClient(env.ENV_RUNTIME),
+		HubGrpcClient: rpcClient,
 	}
 }
 

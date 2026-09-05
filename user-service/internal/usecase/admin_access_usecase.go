@@ -5,7 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -66,7 +66,7 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 	}
 
 	// Tạo quyền truy cập
-	access := &domain.AdminAccessDomain{
+	access := &access.AdminAccessDomain{
 		UserID:        req.UserID,
 		IPAddress:     req.IPAddress,
 		IPRange:       req.IPRange,
@@ -235,7 +235,7 @@ func (u *AdminAccessUsecase) ValidateAdminAccess(ctx context.Context, req dto.Ad
 	}
 
 	// Tạo log truy cập
-	log := &domain.AdminAccessLogDomain{
+	log := &access.AdminAccessLogDomain{
 		UserID:    req.UserID,
 		IPAddress: req.IPAddress,
 		DeviceID:  req.DeviceID,
@@ -263,7 +263,7 @@ func (u *AdminAccessUsecase) ValidateAdminAccess(ctx context.Context, req dto.Ad
 
 // CreateAdminAccessLog tạo log truy cập
 func (u *AdminAccessUsecase) CreateAdminAccessLog(ctx context.Context, req dto.AdminAccessLogRequest) error {
-	log := &domain.AdminAccessLogDomain{
+	log := &access.AdminAccessLogDomain{
 		UserID:     req.UserID,
 		IPAddress:  req.IPAddress,
 		DeviceID:   req.DeviceID,
@@ -293,7 +293,7 @@ func (u *AdminAccessUsecase) GetAdminAccessLogList(ctx context.Context, req dto.
 		req.Size = 10
 	}
 
-	var logs []*domain.AdminAccessLogDomain
+	var logs []*access.AdminAccessLogDomain
 	var total int64
 	var err error
 
@@ -336,7 +336,7 @@ func (u *AdminAccessUsecase) GetAdminAccessLogList(ctx context.Context, req dto.
 }
 
 // convertToResponse convert domain to response
-func (u *AdminAccessUsecase) convertToResponse(access *domain.AdminAccessDomain) *dto.AdminAccessResponse {
+func (u *AdminAccessUsecase) convertToResponse(access *access.AdminAccessDomain) *dto.AdminAccessResponse {
 	return &dto.AdminAccessResponse{
 		ID:            access.ID,
 		UserID:        access.UserID,

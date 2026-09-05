@@ -34,24 +34,21 @@ cd assistant-service
 wire ./wire
 ```
 
-### 3. Set Environment Variables
+### 3. Cấu hình runtime
 
-```bash
-# DeepSeek (optional)
-export DEEPSEEK_API_KEY="sk-your-deepseek-key"
-
-# OpenAI (optional)
-export OPENAI_API_KEY="sk-your-openai-key"
-
-export ENVIRONMENT="development"
-```
+`assistant-service/.env` là file cấu hình duy nhất của process này. Các biến
+`*_API_KEY` để trống là hợp lệ: provider sẽ trả lỗi capability rõ ràng khi
+được gọi, còn dev có thể chạy health/contract test mà không cần secret. Khi
+cần gọi provider thật, inject key từ secret manager hoặc shell local; không
+commit key vào Git.
 
 ### 4. Build & Run
 
 ```bash
 cd assistant-service
-go build -o main .
-./main
+make test
+make build
+./bin/assistant-service
 ```
 
 Service sẽ chạy trên:
@@ -365,4 +362,3 @@ wire ./wire
 ## 📄 License
 
 Copyright © 2025 - All rights reserved
-

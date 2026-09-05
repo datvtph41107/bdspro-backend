@@ -11,7 +11,7 @@ import (
 type QHUserReported struct {
 	ID uint64 `gorm:"primaryKey;autoIncrement" json:"id"`
 
-	UserID uint64 `gorm:"column:user_id;not null;index:idx_generated_reports_user_id;uniqueIndex:uidx_user_report_client_request,priority:1,where:client_request_id <> '' AND deleted_at IS NULL" json:"userId"`
+	UserID uint64 `gorm:"column:user_id;not null;index:idx_generated_reports_user_id;uniqueIndex:uidx_user_report_command_key,priority:1,where:command_key <> '' AND deleted_at IS NULL" json:"userId"`
 
 	ReportType enums.GeneratedReportType   `gorm:"column:report_type;not null;index:idx_generated_reports_report_type" json:"reportType"`
 	Status     enums.GeneratedReportStatus `gorm:"column:status;not null;index:idx_generated_reports_status" json:"status"`
@@ -46,10 +46,10 @@ type QHUserReported struct {
 	Comparison datatypes.JSON `gorm:"column:comparison;type:jsonb;default:'{}'::jsonb" json:"comparison"`
 	Metadata   datatypes.JSON `gorm:"column:metadata;type:jsonb;default:'{}'::jsonb" json:"metadata"`
 
-	ClientRequestID string `gorm:"column:client_request_id;type:varchar(128);default:'';uniqueIndex:uidx_user_report_client_request,priority:2" json:"clientRequestId"`
-	RequestHash     string `gorm:"column:request_hash;type:varchar(64);default:''" json:"-"`
-	JobID           string `gorm:"column:job_id;type:varchar(100);default:'';index:idx_generated_reports_job_id" json:"jobId"`
-	ErrorMessage    string `gorm:"column:error_message;type:text;default:''" json:"errorMessage"`
+	CommandKey   string `gorm:"column:command_key;type:varchar(128);default:'';uniqueIndex:uidx_user_report_command_key,priority:2" json:"commandKey"`
+	RequestHash  string `gorm:"column:request_hash;type:varchar(64);default:''" json:"-"`
+	JobID        string `gorm:"column:job_id;type:varchar(100);default:'';index:idx_generated_reports_job_id" json:"jobId"`
+	ErrorMessage string `gorm:"column:error_message;type:text;default:''" json:"errorMessage"`
 
 	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime;index:idx_generated_reports_created_at" json:"createdAt"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`

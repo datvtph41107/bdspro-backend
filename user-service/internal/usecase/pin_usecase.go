@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/providers"
@@ -16,6 +16,12 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+type AccessTokenIssuer interface {
+	GenerateAccessToken(ctx context.Context, authID uint64, sessionID uint64, organizationID *uint64) (string, error)
+}
+
+var _ AccessTokenIssuer = (*AuthUsecase)(nil)
 
 type PINUsecase struct {
 	pinRepo              repo.PINRepository
@@ -28,6 +34,7 @@ type PINUsecase struct {
 	notificationProvider providers.NotificationProvider
 	deviceUsecase        *DeviceUsecase
 	cacheProvider        providers.CacheProvider
+	tokenIssuer          AccessTokenIssuer
 	maxPINAttempts       int
 	pinLockDuration      time.Duration
 }
@@ -43,6 +50,7 @@ func NewPINUsecase(
 	notificationProvider providers.NotificationProvider,
 	deviceUsecase *DeviceUsecase,
 	cacheProvider providers.CacheProvider,
+	tokenIssuer AccessTokenIssuer,
 ) *PINUsecase {
 	return &PINUsecase{
 		pinRepo:              pinRepo,
@@ -55,6 +63,7 @@ func NewPINUsecase(
 		notificationProvider: notificationProvider,
 		deviceUsecase:        deviceUsecase,
 		cacheProvider:        cacheProvider,
+		tokenIssuer:          tokenIssuer,
 		maxPINAttempts:       3,
 		pinLockDuration:      15 * time.Minute,
 	}
@@ -108,8 +117,8 @@ func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) 
 
 	// Tạo PIN entity
 	now := time.Now()
-	pinEntity := &domain.UserPINEntity{
-		IdDomain: domain.IdDomain{
+	pinEntity := &auth.UserPINEntity{
+		IdDomain: auth.IdDomain{
 			AuthID: authEntity.ID,
 		},
 		PIN:          string(hashedPIN),
@@ -154,9 +163,11 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 		return nil, err
 	}
 
-	// Tạo session
+	// Tạo session trước khi phát access token; token luôn bind tới durable session ID.
 	newSession := s.createSession(c, authEntity, request)
-	s.sessionRepo.CreateSession(c, newSession)
+	if err := s.sessionRepo.CreateSession(c, newSession); err != nil {
+		return nil, _errors.ReturnError(500, "Không thể tạo phiên đăng nhập")
+	}
 
 	// Lấy thông tin profile
 	profile, err := s.profileProvider.GetByProfileID(c, authEntity.UserID)
@@ -164,8 +175,14 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
 	}
 
-	// Generate access token
-	accessToken := "generated_token" // TODO: Implement proper token generation
+	if s.tokenIssuer == nil {
+		return nil, _errors.ReturnError(500, "Token issuer chưa được cấu hình")
+	}
+
+	accessToken, err := s.tokenIssuer.GenerateAccessToken(c, authEntity.ID, newSession.SessionID, nil)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "Không thể tạo access token")
+	}
 
 	response := &dto.AuthLoginResponse{
 		AuthID:       authEntity.ID,
@@ -184,16 +201,14 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 			deviceID = request.DeviceName
 		}
 		if deviceID != "" && authEntity.ID > 0 && profile.ProfileID > 0 {
-			go func() {
-				// Tạo context mới với authId và profileId
-				deviceCtx := context.WithValue(context.Background(), _enum.ProfileIDKey, profile.ProfileID)
-				deviceCtx = context.WithValue(deviceCtx, _enum.AuthIDKey, authEntity.ID)
+			deviceCtx := context.WithValue(c, _enum.ProfileIDKey, profile.ProfileID)
+			deviceCtx = context.WithValue(deviceCtx, _enum.AuthIDKey, authEntity.ID)
+			deviceCtx, cancel := context.WithTimeout(deviceCtx, 5*time.Second)
+			defer cancel()
 
-				err := s.deviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, authEntity.ID, profile.ProfileID)
-				if err != nil {
-					log.Printf("Failed to update device with auth info after verify PIN: %v", err)
-				}
-			}()
+			if err := s.deviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, authEntity.ID, profile.ProfileID); err != nil {
+				log.Printf("Failed to update device with auth info after verify PIN: %v", err)
+			}
 		}
 	}
 
@@ -320,7 +335,7 @@ func (s *PINUsecase) CheckPINExists(c context.Context, authID uint64) (*dto.Chec
 	}, nil
 }
 
-func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *domain.AuthMethod, inputPIN string, meta *dto.PinVerifyMeta, requireActive bool) (*domain.UserPINEntity, error) {
+func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *auth.AuthMethod, inputPIN string, meta *dto.PinVerifyMeta, requireActive bool) (*auth.UserPINEntity, error) {
 	pinEntity, err := s.pinRepo.GetByAuthID(ctx, authEntity.ID)
 	if err != nil {
 		return nil, _errors.ReturnError(404, "Chưa thiết lập mã PIN")
@@ -369,7 +384,7 @@ func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *domain.AuthM
 	return pinEntity, nil
 }
 
-func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.AuthMethod, meta *dto.PinVerifyMeta, lockedUntil time.Time) {
+func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *auth.AuthMethod, meta *dto.PinVerifyMeta, lockedUntil time.Time) {
 	if s.notificationProvider == nil || authEntity == nil || authEntity.UserID == 0 {
 		return
 	}
@@ -436,10 +451,10 @@ func (s *PINUsecase) logPINLockHistory(ctx context.Context, authEntity *domain.A
 		Metadata:      metadata,
 	}
 
-	s.dispatchHistoryAuth(payload, "failed to log PIN lock history")
+	s.dispatchHistoryAuth(ctx, payload, "failed to log PIN lock history")
 }
 
-func (s *PINUsecase) logPINActionHistory(ctx context.Context, authEntity *domain.AuthMethod, actionType, actionName, description string, metadata map[string]interface{}) {
+func (s *PINUsecase) logPINActionHistory(ctx context.Context, authEntity *auth.AuthMethod, actionType, actionName, description string, metadata map[string]interface{}) {
 	if s.notificationProvider == nil || authEntity == nil || authEntity.UserID == 0 {
 		return
 	}
@@ -481,10 +496,10 @@ func (s *PINUsecase) logPINActionHistory(ctx context.Context, authEntity *domain
 		SourceService: "auth-service",
 	}
 
-	s.dispatchHistoryAuth(payload, fmt.Sprintf("failed to log %s history", actionName))
+	s.dispatchHistoryAuth(ctx, payload, fmt.Sprintf("failed to log %s history", actionName))
 }
 
-func (s *PINUsecase) dispatchHistoryAuth(payload dto.HistoryAuthCreateDTO, logPrefix string) {
+func (s *PINUsecase) dispatchHistoryAuth(ctx context.Context, payload dto.HistoryAuthCreateDTO, logPrefix string) {
 	if s.notificationProvider == nil {
 		return
 	}
@@ -493,18 +508,16 @@ func (s *PINUsecase) dispatchHistoryAuth(payload dto.HistoryAuthCreateDTO, logPr
 		payload.SourceService = "auth-service"
 	}
 
-	go func(history dto.HistoryAuthCreateDTO) {
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-		if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &history); err != nil {
-			log.Printf("%s: %v", logPrefix, err)
-		}
-	}(payload)
+	if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &payload); err != nil {
+		log.Printf("%s: %v", logPrefix, err)
+	}
 }
 
 // createSession tạo session mới cho user
-func (s *PINUsecase) createSession(c context.Context, authEntity *domain.AuthMethod, request dto.VerifyPINRequest) *domain.UserSessionEntity {
+func (s *PINUsecase) createSession(c context.Context, authEntity *auth.AuthMethod, request dto.VerifyPINRequest) *auth.UserSessionEntity {
 	userAgent := _utils.GetUserAgentFromContext(c)
 	ip := _utils.AuditIPFromContext(c)
 	deviceID := _utils.GetDeviceIdFromContext(c)
@@ -517,7 +530,7 @@ func (s *PINUsecase) createSession(c context.Context, authEntity *domain.AuthMet
 
 	now := time.Now()
 
-	return &domain.UserSessionEntity{
+	return &auth.UserSessionEntity{
 		AuthID:     authEntity.ID,
 		DeviceID:   deviceID,
 		Version:    request.Version,
@@ -532,7 +545,7 @@ func (s *PINUsecase) createSession(c context.Context, authEntity *domain.AuthMet
 	}
 }
 
-func (s *PINUsecase) buildAuthParam(c context.Context, authEntity *domain.AuthMethod, otp string) (*dto.AuthParam, error) {
+func (s *PINUsecase) buildAuthParam(c context.Context, authEntity *auth.AuthMethod, otp string) (*dto.AuthParam, error) {
 	if s.otpRepo == nil || s.otpUsecase == nil {
 		return nil, _errors.ReturnError(500, "OTP service chưa được cấu hình")
 	}

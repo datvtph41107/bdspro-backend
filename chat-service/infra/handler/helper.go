@@ -5,6 +5,7 @@ import (
 
 	"chat/infra/client"
 	"chat/infra/mapper"
+	"pb/clients"
 	chatpb "pb/types/chat"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -13,12 +14,12 @@ import (
 
 // Helper functions to export handlers and clients
 
-func NewUserClient() *client.UserClient {
-	return client.NewUserClient()
+func NewUserClient(rpcClient *clients.UserGrpcClient) *client.UserClient {
+	return client.NewUserClient(rpcClient)
 }
 
-func NewBdsproClient() *client.BdsproClient {
-	return client.NewBdsproClient()
+func NewBdsproClient(rpcClient *clients.BdsproGrpcClient) *client.BdsproClient {
+	return client.NewBdsproClient(rpcClient)
 }
 
 func NewConversationMapper(backgroundMapper *mapper.BackgroundMapper) *mapper.ConversationMapper {

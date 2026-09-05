@@ -1,306 +1,64 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "🔌 Gateway HTTP (8000)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev gateway http",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "👤 User gRPC (8201)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev user grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🏘 BDSPro gRPC (8202)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev bdspro",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🔔 Notification gRPC (8204)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev notification grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-        },
-        {
-            "label": "💳 Payment gRPC (8205)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev payment",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🧩 CRM gRPC (8206)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev crm grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🏢 Organization gRPC (8207)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev organization",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "💬 Chat gRPC (8208)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev chat-v1",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "🌐 Social gRPC (8209)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev social grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "📅 Appointment gRPC (8213)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev appointment",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "💳 Transaction gRPC (8215)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev transaction",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🔌 Auth HTTP (8002)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev auth grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🏘 BDSPro HTTP (8102)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev bdspro-http",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated",
-                "reveal": "always",
-                "focus": false
-            }
-        },
-        {
-            "label": "📁 File ",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev file",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "🗺️ Map",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev map",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "🎟 Membership",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev membership",
-            "args": [],
-            "presentation": {
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "📡 Relay WS (8308)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev relay",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "🔌 Feedback gRPC (8217)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev feedback grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🏘 TQD gRPC (8219)",
-            "type": "shell",
-            "command": "cd shared/code && make tqd-grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🔌 Assistant HTTP (8218)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev assistant http",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        },
-        {
-            "label": "🔌 Hub gRPC (8280)",
-            "type": "shell",
-            "command": "cd shared/code && make run-dev hub grpc",
-            "args": [],
-            "problemMatcher": [
-                "$go"
-            ],
-            "presentation": {
-                "panel": "dedicated"
-            },
-            "runOptions": {
-                // "runOn": "folderOpen"
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BDSPro · Setup",
+      "type": "process",
+      "command": "make",
+      "args": ["setup"],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Doctor",
+      "type": "process",
+      "command": "make",
+      "args": ["doctor"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend · Up",
+      "type": "process",
+      "command": "make",
+      "args": ["up"],
+      "problemMatcher": [],
+      "presentation": {"group": "backend", "panel": "dedicated", "reveal": "always"}
+    },
+    {
+      "label": "Backend · Status",
+      "type": "process",
+      "command": "make",
+      "args": ["status"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend · Smoke",
+      "type": "process",
+      "command": "make",
+      "args": ["smoke"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend · Test",
+      "type": "process",
+      "command": "make",
+      "args": ["test"],
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "Backend · Logs",
+      "type": "process",
+      "command": "make",
+      "args": ["logs"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {"group": "backend-logs", "panel": "dedicated", "reveal": "always"}
+    },
+    {
+      "label": "Backend · Down",
+      "type": "process",
+      "command": "make",
+      "args": ["down"],
+      "problemMatcher": []
+    }
+  ]
 }

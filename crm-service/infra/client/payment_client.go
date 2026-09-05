@@ -1,49 +1,21 @@
 package client
 
 import (
-	_middleware "common/middleware"
-
 	"context"
-	"crm/env"
 	"fmt"
 
+	"pb/clients"
 	pb_payment "pb/types/payment"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type PaymentClient struct {
-	conn   *grpc.ClientConn
 	client pb_payment.PaymentServiceClient
 }
 
-func NewPaymentClient() (*PaymentClient, error) {
-	url := "localhost"
-	if env.ENV_RUNTIME == "release" {
-		url = "payment"
-	}
-	paymentServiceURL := fmt.Sprintf("%s:8205", url)
-	conn, err := grpc.Dial(
-		paymentServiceURL,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to payment service: %w", err)
-	}
-
-	client := pb_payment.NewPaymentServiceClient(conn)
-
+func NewPaymentClient(rpcClient *clients.PaymentClient) *PaymentClient {
 	return &PaymentClient{
-		conn:   conn,
-		client: client,
-	}, nil
-}
-
-func (c *PaymentClient) Close() error {
-	return c.conn.Close()
+		client: rpcClient.ServiceClient,
+	}
 }
 
 // CreateWallet creates a new wallet using the payment service

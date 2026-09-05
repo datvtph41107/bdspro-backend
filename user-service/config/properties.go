@@ -1,21 +1,27 @@
 package config
 
+import "time"
+
 // AppProperties cấu hình tổng thể của ứng dụng
 type AppProperties struct {
 	Server struct {
 		TCPPort int `mapstructure:"tcp_port"`
 	} `mapstructure:"server"`
 	Database struct {
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Name     string `mapstructure:"name"`
-		User     string `mapstructure:"user"`
-		Password string `mapstructure:"password"`
+		Host            string        `mapstructure:"host"`
+		Port            int           `mapstructure:"port"`
+		Name            string        `mapstructure:"name"`
+		User            string        `mapstructure:"user"`
+		Password        string        `mapstructure:"password"`
+		DSN             string        `mapstructure:"dsn"`
+		MaxOpenConns    int           `mapstructure:"max_open_conns"`
+		MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+		ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
 	} `mapstructure:"database"`
 	Redis struct {
 		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Password string `mapstructure:"password"`
+		Password string `mapstructure:"pass"`
+		DB       int    `mapstructure:"db"`
 	} `mapstructure:"redis"`
 	OAuth struct {
 		Google struct {
@@ -61,6 +67,9 @@ type AppProperties struct {
 		TemplateID    int    `mapstructure:"template_id"`
 		OTPTemplateID int    `mapstructure:"otp_template_id"`
 	} `mapstructure:"zns"`
+	OutboundMessaging struct {
+		Enabled bool `mapstructure:"enabled"`
+	} `mapstructure:"outbound_messaging"`
 	// OTP Config
 	Otp struct {
 		MaxTimesResend    int   `mapstructure:"max-times-resend"`

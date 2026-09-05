@@ -1,7 +1,6 @@
 package client
 
 import (
-	"chat/env"
 	"chat/models"
 	"context"
 	"pb/clients"
@@ -13,10 +12,8 @@ type CrmClient struct {
 	Client *clients.CrmGrpcClient
 }
 
-func NewCrmClient() *CrmClient {
-	return &CrmClient{
-		Client: clients.MakeCrmGrpcClient(env.ENV_RUNTIME),
-	}
+func NewCrmClient(rpcClient *clients.CrmGrpcClient) *CrmClient {
+	return &CrmClient{Client: rpcClient}
 }
 
 func (c *CrmClient) MapContactToMessagePbList(ctx context.Context, messages []*chatpb.Message) {

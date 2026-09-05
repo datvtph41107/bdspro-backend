@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"user/config"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
 	"user/internal/usecase"
@@ -204,7 +204,7 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 	}
 
 	if existingUser == nil {
-		e := &domain.AuthMethod{
+		e := &auth.AuthMethod{
 			Provider:    "ZALO",
 			AuthName:    username,
 			FullName:    fullName,

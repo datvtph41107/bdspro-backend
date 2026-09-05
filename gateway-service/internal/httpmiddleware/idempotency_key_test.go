@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +19,7 @@ func newIdempotencyKeyTestRouter(before ...gin.HandlerFunc) *gin.Engine {
 	}
 	router.Use(IdempotencyKey())
 	router.POST("/commands", func(ctx *gin.Context) {
-		key, ok := _requestcontext.IdempotencyKeyFromContext(ctx.Request.Context())
+		key, ok := _request.IdempotencyKeyFromContext(ctx.Request.Context())
 		if !ok {
 			ctx.Status(http.StatusNoContent)
 			return
@@ -39,7 +39,7 @@ func TestIdempotencyKeyMiddlewareAllowsMissingWithoutOriginating(t *testing.T) {
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
 	}
-	if got := response.Header().Get(_requestcontext.IdempotencyKeyHeader); got != "" {
+	if got := response.Header().Get(IdempotencyKeyHeader); got != "" {
 		t.Fatalf("response Idempotency-Key = %q, want empty", got)
 	}
 }
@@ -48,7 +48,7 @@ func TestIdempotencyKeyMiddlewareBindsValidCallerKey(t *testing.T) {
 	t.Parallel()
 
 	request := httptest.NewRequest(http.MethodPost, "/commands", nil)
-	request.Header.Set(_requestcontext.IdempotencyKeyHeader, "  idem-command-123  ")
+	request.Header.Set(IdempotencyKeyHeader, "  idem-command-123  ")
 	response := httptest.NewRecorder()
 	newIdempotencyKeyTestRouter().ServeHTTP(response, request)
 
@@ -75,7 +75,7 @@ func TestIdempotencyKeyMiddlewareRejectsMalformedOrMultipleWithoutEcho(t *testin
 			t.Parallel()
 			request := httptest.NewRequest(http.MethodPost, "/commands", nil)
 			for _, value := range testCase.values {
-				request.Header.Add(_requestcontext.IdempotencyKeyHeader, value)
+				request.Header.Add(IdempotencyKeyHeader, value)
 			}
 			response := httptest.NewRecorder()
 			newIdempotencyKeyTestRouter().ServeHTTP(response, request)
@@ -96,7 +96,7 @@ func TestIdempotencyKeyMiddlewareMapsContextConflictToInternal(t *testing.T) {
 	t.Parallel()
 
 	prebind := func(ctx *gin.Context) {
-		bound, err := _requestcontext.BindIdempotencyKey(ctx.Request.Context(), "idem-existing-123")
+		bound, err := _request.BindIdempotencyKey(ctx.Request.Context(), "idem-existing-123")
 		if err != nil {
 			panic(err)
 		}
@@ -105,7 +105,7 @@ func TestIdempotencyKeyMiddlewareMapsContextConflictToInternal(t *testing.T) {
 	}
 
 	request := httptest.NewRequest(http.MethodPost, "/commands", nil)
-	request.Header.Set(_requestcontext.IdempotencyKeyHeader, "idem-different-456")
+	request.Header.Set(IdempotencyKeyHeader, "idem-different-456")
 	response := httptest.NewRecorder()
 	newIdempotencyKeyTestRouter(prebind).ServeHTTP(response, request)
 

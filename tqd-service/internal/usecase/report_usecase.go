@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"tqd/env"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
@@ -54,12 +53,17 @@ type reportUsecase struct {
 	userClient   *clients.UserGrpcClient
 }
 
-func NewReportUsecase(repo repo.ReportRepository, userProvider provider.UserProvider) ReportUsecase {
+func NewReportUsecase(
+	repo repo.ReportRepository,
+	userProvider provider.UserProvider,
+	authClient *clients.AuthGrpcClient,
+	userClient *clients.UserGrpcClient,
+) ReportUsecase {
 	return &reportUsecase{
 		repo:         repo,
 		userProvider: userProvider,
-		authClient:   clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
-		userClient:   clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+		authClient:   authClient,
+		userClient:   userClient,
 	}
 }
 
@@ -381,10 +385,10 @@ func (u *reportUsecase) ResolveLinkageDisplays(ctx context.Context, reports []do
 	seenL := map[uint64]struct{}{}
 
 	type ids struct {
-		parcelID uint64
-		layerID  uint64
-		hasP     bool
-		hasL     bool
+		parcelID     uint64
+		layerID      uint64
+		hasP         bool
+		hasL         bool
 		cachedParcel string
 		cachedLayer  string
 	}

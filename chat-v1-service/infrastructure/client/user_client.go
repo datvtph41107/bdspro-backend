@@ -1,7 +1,6 @@
 package client
 
 import (
-	"chat/env"
 	"chat/internal/dto"
 	"chat/models"
 	_utils "common/utils"
@@ -17,8 +16,8 @@ type UserClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewUserClient() *UserClient {
-	return &UserClient{Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME)}
+func NewUserClient(rpcClient *clients.UserGrpcClient) *UserClient {
+	return &UserClient{Client: rpcClient}
 }
 
 func (c *UserClient) GetUserById(ctx context.Context, id uint64) (*dto.UserProfile, error) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	authpb "pb/types/auth"
 
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/usecase"
 
@@ -37,7 +37,7 @@ func (h *AuthUserProfileHandler) LockAccount(ctx context.Context, req *authpb.Lo
 	// Convert proto request to DTO
 	dtoReq := &dto.LockAccountRequest{
 		ProfileID: req.ProfileId,
-		LockType:  domain.AccountStatus(req.LockType),
+		LockType:  auth.AccountStatus(req.LockType),
 		Duration:  int(req.Duration),
 		Reason:    req.Reason,
 		LockedBy:  req.LockedBy,
@@ -151,7 +151,7 @@ func (h *AuthUserProfileHandler) LockMultipleUsers(ctx context.Context, req *aut
 	// Convert proto request to DTO
 	dtoReq := &dto.LockMultipleUsersRequest{
 		ProfileIDs: req.ProfileIds,
-		LockType:   domain.AccountStatus(req.LockType),
+		LockType:   auth.AccountStatus(req.LockType),
 		Duration:   int(req.Duration),
 		Reason:     req.Reason,
 		LockedBy:   req.LockedBy,

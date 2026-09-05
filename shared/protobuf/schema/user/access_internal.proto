@@ -31,4 +31,10 @@ message GetAccessResponse {
   uint64 subscriptionId = 10;
   string planCode = 11;
   string planVersion = 12;
+
+  // Commercial evidence consumed by the calling service.
+  string featureCode = 13;
+  string meterCode = 14;
+  int64 unitsPerAction = 15;
+  string policyVersion = 16;
 }

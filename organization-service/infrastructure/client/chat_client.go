@@ -1,15 +1,10 @@
 package client
 
 import (
-	_middleware "common/middleware"
-
 	"context"
-	"fmt"
-	"organization/env"
 	"organization/internal/dto"
+	"pb/clients"
 	chatpb "pb/types/chat"
-
-	"google.golang.org/grpc"
 )
 
 // @bind: organization/internal/interface.IChatClient
@@ -17,19 +12,8 @@ type ChatClient struct {
 	client chatpb.ChatServiceClient
 }
 
-func NewChatClient() *ChatClient {
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%s", env.CHAT_SERVICE_HOST, env.CHAT_SERVICE_PORT),
-		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-	)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to chat service: %v", err))
-	}
-	return &ChatClient{
-		client: chatpb.NewChatServiceClient(conn),
-	}
+func NewChatClient(rpcClient *clients.ChatGrpcClient) *ChatClient {
+	return &ChatClient{client: rpcClient.Client}
 }
 
 func (c *ChatClient) CreateConversation(ctx context.Context, in *dto.CreateConversationRequest) (*uint64, error) {

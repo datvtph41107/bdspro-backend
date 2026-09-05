@@ -6,18 +6,18 @@ import (
 
 	dashboard "base/dashboard"
 
-	"payment/internal/usecase"
+	walletuc "payment/internal/usecase/wallet"
 
 	"gorm.io/gorm"
 )
 
 type PaymentDashboardStatsJob struct {
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase walletuc.PaymentUsecase
 	job            dashboard.DashboardStatsJob
 }
 
 func NewPaymentDashboardStatsJob(
-	paymentUsecase usecase.PaymentUsecase,
+	paymentUsecase walletuc.PaymentUsecase,
 	db *gorm.DB,
 ) *PaymentDashboardStatsJob {
 
@@ -25,9 +25,9 @@ func NewPaymentDashboardStatsJob(
 	dashboardJob := dashboard.NewDashboardStatsJob(
 		db,
 		"payment_stats", // table name
-		func() int64 {
+		func(ctx context.Context) int64 {
 			// Lấy count từ payment usecase (giao dịch đang xử lý)
-			count, err := paymentUsecase.CountProcessingTransactions(context.Background())
+			count, err := paymentUsecase.CountProcessingTransactions(ctx)
 			if err != nil {
 				return 0
 			}

@@ -1,9 +1,9 @@
 package requestlog
 
 import (
-	"common/businessoperation"
-	"common/identitycontext"
-	"common/requestcontext"
+	"common/identity"
+	"common/operation"
+	"common/request"
 	"context"
 	"log/slog"
 )
@@ -19,16 +19,16 @@ func FromContext(ctx context.Context, base *slog.Logger) *slog.Logger {
 	}
 
 	fields := make([]any, 0, 12)
-	if requestID, ok := requestcontext.FromContext(ctx); ok {
+	if requestID, ok := request.RequestIDFromContext(ctx); ok {
 		fields = append(fields, "request_id", requestID)
 	}
-	if operationID, ok := requestcontext.OperationIDFromContext(ctx); ok {
+	if operationID, ok := request.OperationIDFromContext(ctx); ok {
 		fields = append(fields, "operation_id", operationID)
 	}
-	if _, ok := requestcontext.IdempotencyKeyFromContext(ctx); ok {
+	if _, ok := request.IdempotencyKeyFromContext(ctx); ok {
 		fields = append(fields, "idempotency_key_set", true)
 	}
-	if actor, ok := identitycontext.FromContext(ctx); ok {
+	if actor, ok := identity.ActorFromContext(ctx); ok {
 		if actor.ProfileID > 0 {
 			fields = append(fields, "profile_id", actor.ProfileID)
 		}
@@ -36,8 +36,14 @@ func FromContext(ctx context.Context, base *slog.Logger) *slog.Logger {
 			fields = append(fields, "auth_id", actor.AuthID)
 		}
 	}
-	if operation, ok := businessoperation.FromContext(ctx); ok {
-		fields = append(fields, "business_operation", string(operation))
+	if currentOperation, ok := operation.FromContext(ctx); ok {
+		// Keep the existing log key until its external consumers are inventoried.
+		// Only the value authority changes here: common/operation is canonical.
+		fields = append(
+			fields,
+			"business_operation",
+			string(currentOperation),
+		)
 	}
 
 	return base.With(fields...)

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	_dto "common/domain/dto"
+	"context"
 	"time"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -19,6 +20,10 @@ func NewFriendPostgres(DB *gorm.DB) repo.IFriendRepo {
 	return &FriendPostgres{
 		DB: DB,
 	}
+}
+
+func (repo *FriendPostgres) Create(ctx context.Context, friend *models.FriendEntity) error {
+	return repo.DB.WithContext(ctx).Create(friend).Error
 }
 
 func (repo *FriendPostgres) UpdateStatusById(status enums.EFriendStatus, id uint64, respondedAt *time.Time) error {
@@ -86,7 +91,7 @@ func (repo *FriendPostgres) SearchFriend(currentId uint64, dto dto.FriendDTO, pa
 		Where("friend.status = 20 and friend.deleted_at is null")
 
 	if dto.Text != nil && *dto.Text != "" {
-		query = query.Where("full_name LIKE ? OR username LIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")
+		query = query.Where("profile_transfer.full_name ILIKE ? OR profile_transfer.phone ILIKE ?", "%"+*dto.Text+"%", "%"+*dto.Text+"%")
 	}
 
 	err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&friends).Error

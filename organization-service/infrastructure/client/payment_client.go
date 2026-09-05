@@ -1,7 +1,6 @@
 package client
 
 import (
-	"organization/env"
 	"pb/clients"
 )
 
@@ -9,8 +8,6 @@ type PaymentClient struct {
 	*clients.PaymentClient
 }
 
-func NewPaymentClient() *PaymentClient {
-	return &PaymentClient{
-		PaymentClient: clients.MakePaymentClient(env.ENV_RUNTIME),
-	}
+func NewPaymentClient(rpcClient *clients.PaymentClient) *PaymentClient {
+	return &PaymentClient{PaymentClient: rpcClient}
 }

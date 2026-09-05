@@ -1,97 +1,101 @@
-# TQD Service Makefile
+SHELL := /bin/sh
+include ../tools/development/go.mk
 
-.PHONY: build run-http run-grpc run-both clean help test lint deps
+DB_URL ?= postgres://qhpro:qhpro@localhost:55434/qhpro_tqd?sslmode=disable
+MIGRATION_DIR := migrate
+ENV_FILE ?= .env
+ROOT_ENV_FILE ?= ../.env
+BIN := bin/tqd-service
+GO_TEST_FLAGS ?=
 
-# Build the main binary
-build:
-	@echo "Building TQD Service..."
-	@go build -o bin/tqd-service .
+define with_env
+set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host $(1)
+endef
 
-# Run HTTP server
-run-http: build
-	@echo "Starting HTTP server..."
-	@./bin/tqd-service http
-
-# Run gRPC server
-run-grpc: build
-	@echo "Starting gRPC server..."
-	@./bin/tqd-service grpc
-
-# Run both servers
-run-both: build
-	@echo "Starting both HTTP and gRPC servers..."
-	@./bin/tqd-service both
-
-# Run HTTP server in background
-run-http-bg: build
-	@echo "Starting HTTP server in background..."
-	@./bin/tqd-service http &
-
-# Run gRPC server in background
-run-grpc-bg: build
-	@echo "Starting gRPC server in background..."
-	@./bin/tqd-service grpc &
-
-# Run both servers in background
-run-all-bg: build
-	@echo "Starting both servers in background..."
-	@./bin/tqd-service both &
-
-# Run HTTP server on custom port
-run-http-port: build
-	@echo "Starting HTTP server on custom port..."
-	@./bin/tqd-service http --port $(PORT)
-
-# Run gRPC server on custom port
-run-grpc-port: build
-	@echo "Starting gRPC server on custom port..."
-	@./bin/tqd-service grpc --port $(PORT)
-
-# Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf bin/
-
-# Install dependencies
-deps:
-	@echo "Installing dependencies..."
-	@go mod tidy
-	@go mod download
-
-# Run tests
-test:
-	@echo "Running tests..."
-	@go test ./...
-
-# Run linting
-lint:
-	@echo "Running linter..."
-	@golangci-lint run
-
-# Show help
 help:
-	@echo "Available commands:"
-	@echo "  build          Build the main binary"
-	@echo "  run-http       Build and run HTTP server"
-	@echo "  run-grpc       Build and run gRPC server"
-	@echo "  run-both       Build and run both servers"
-	@echo "  run-http-bg    Run HTTP server in background"
-	@echo "  run-grpc-bg    Run gRPC server in background"
-	@echo "  run-all-bg     Run both servers in background"
-	@echo "  run-http-port  Run HTTP server on custom port (set PORT=xxxx)"
-	@echo "  run-grpc-port  Run gRPC server on custom port (set PORT=xxxx)"
-	@echo "  clean          Clean build artifacts"
-	@echo "  deps           Install dependencies"
-	@echo "  test           Run tests"
-	@echo "  lint           Run linter"
-	@echo "  help           Show this help"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make run-http-port PORT=8080"
-	@echo "  make run-grpc-port PORT=9090"
+	@printf '%s\n' 'postgres redis migrateup migratedown1 new_migration' \
+		'buf wire test vet build server dev pmtiles docker-build clean check'
+
+postgres:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
+
+redis:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
+
+deps-up:
+	$(MAKE) -C .. dev-dependencies SERVICE=tqd
+
+deps-down:
+	$(MAKE) -C .. dev-dependencies-down SERVICE=tqd
 
 migrateup:
-	migrate -path infra/db/migrations/v3 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable" -verbose up
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose up)
+
+migrateup1:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose up 1)
 
 migratedown:
-	migrate -path infra/db/migrations/v3 -database "postgresql://hieubap:Matkhau.1@14.225.210.29:5433/db_tqd?sslmode=disable" -verbose down
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose down)
+
+migratedown1:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" -verbose down 1)
+
+migrate-version:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$${MIGRATION_URL:-$(DB_URL)}" version)
+
+new_migration:
+	@test -n "$(name)" || { echo 'usage: make new_migration name=<schema_change>' >&2; exit 2; }
+	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $(name)
+
+buf:
+	$(MAKE) -C ../shared/code buf-tqd
+
+wire:
+	$(MAKE) -C ../shared/code wire tqd
+
+generate: buf wire
+
+fmt:
+	go fmt ./...
+
+vet:
+	go vet ./...
+
+test:
+	go test $(GO_TEST_FLAGS) -count=1 ./...
+
+test-race:
+	go test -race -count=1 ./...
+
+build:
+	mkdir -p bin
+	go build -o $(BIN) .
+
+server:
+	@$(call with_env,go run . -server=grpc)
+
+dev:
+	@$(call with_env,air -c .air.toml)
+
+pmtiles:
+	@$(call with_env,go run . -server=pmtiles)
+
+docker-build:
+	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/tqd-service:$${QHPRO_IMAGE_TAG:-local}" ..
+
+clean:
+	rm -rf bin .tmp
+
+check: vet test build
+
+migrate-up: migrateup
+migrate-down: migratedown1
+migrate-create: new_migration
+run-grpc: server
+run-pmtiles: pmtiles
+acceptance: check
+
+.PHONY: help postgres redis deps-up deps-down migrateup migrateup1 migratedown \
+	migratedown1 migrate-version new_migration migrate-up migrate-down migrate-create \
+	buf wire generate fmt vet test test-race build server dev pmtiles run-grpc run-pmtiles \
+	docker-build clean check acceptance

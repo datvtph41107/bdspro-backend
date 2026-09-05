@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	_db "common/db"
 	_jwt "common/jwt"
 	_routes "common/routes"
 	"user/internal/dto"
@@ -91,7 +90,9 @@ func (s *FriendUsecase) Request(c *gin.Context) (*models.FriendEntity, error) {
 		Status:     enums.EFriendStatusPending,
 		ReceiverID: receiverId,
 	}
-	_db.SaveWithAudit(c, &e)
+	if err := s.repo.Create(c.Request.Context(), e); err != nil {
+		return nil, err
+	}
 	return e, nil
 }
 

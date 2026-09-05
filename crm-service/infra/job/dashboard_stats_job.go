@@ -25,9 +25,9 @@ func NewDashboardStatsJob(
 	dashboardJob := dashboard.NewDashboardStatsJob(
 		db,
 		"appointment_stats", // table name
-		func() int64 {
+		func(ctx context.Context) int64 {
 			// Lấy count từ appointment usecase
-			count, err := appointmentUsecase.CountCurrent(context.Background())
+			count, err := appointmentUsecase.CountCurrent(ctx)
 			if err != nil {
 				return 0
 			}

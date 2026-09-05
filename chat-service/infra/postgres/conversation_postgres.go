@@ -124,7 +124,10 @@ func (r *ConversationRepo) GetConversations(ctx context.Context, limit, offset i
 				msg.CreatedAt = &createdAt
 			}
 			if res.LatestMessageDeletedAt != nil {
-				msg.DeletedAt = res.LatestMessageDeletedAt
+				msg.DeletedAt = &gorm.DeletedAt{
+					Time:  *res.LatestMessageDeletedAt,
+					Valid: true,
+				}
 			}
 			conv.LatestMessage = msg
 		}

@@ -3,14 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
-	"organization/env"
+	"google.golang.org/protobuf/types/known/structpb"
 	"organization/internal/dto"
 	"organization/internal/enums"
 	clients "pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
-
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // @bind: organization/internal/interface.INotiClient
@@ -18,10 +16,8 @@ type NotificationClient struct {
 	*clients.NotificationClient
 }
 
-func NewNotificationClient() *NotificationClient {
-	return &NotificationClient{
-		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
-	}
+func NewNotificationClient(rpcClient *clients.NotificationClient) *NotificationClient {
+	return &NotificationClient{NotificationClient: rpcClient}
 }
 
 func (c *NotificationClient) SendNotification(ctx context.Context, notification *dto.NotificationDTO) error {

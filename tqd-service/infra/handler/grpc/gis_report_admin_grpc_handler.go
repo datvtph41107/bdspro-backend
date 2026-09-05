@@ -11,7 +11,6 @@ import (
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
-	"tqd/env"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -38,11 +37,21 @@ type GisReportAdminGrpcHandler struct {
 	authClient *clients.AuthGrpcClient
 }
 
-func NewGisReportAdminGrpcHandler(reportUsecase usecase.ReportUsecase) *GisReportAdminGrpcHandler {
+func NewGisReportAdminGrpcHandler(
+	reportUsecase usecase.ReportUsecase,
+	authClient *clients.AuthGrpcClient,
+) *GisReportAdminGrpcHandler {
 	return &GisReportAdminGrpcHandler{
 		usecase:    reportUsecase,
-		authClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
+		authClient: authClient,
 	}
+}
+
+func (h *GisReportAdminGrpcHandler) HasPermissions(ctx context.Context, keys []string) error {
+	if h == nil || h.authClient == nil {
+		return _errors.ReturnError(503, "permission authority unavailable")
+	}
+	return h.authClient.HasPermissions(ctx, keys)
 }
 
 func (h *GisReportAdminGrpcHandler) requirePerm(ctx context.Context, keys []string) error {

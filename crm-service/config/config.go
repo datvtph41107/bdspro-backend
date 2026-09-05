@@ -1,10 +1,8 @@
 package config
 
 import (
-	"common"
-	"crm/env"
-	"log"
-	"os"
+	"common/configloader"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -68,11 +66,13 @@ type UserProperties struct {
 var AppProperties UserProperties
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+func LoadConfig() error {
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
+		return err
+	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		return fmt.Errorf("parse CRM config: %w", err)
 	}
+	return nil
 }

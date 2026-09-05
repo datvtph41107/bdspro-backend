@@ -3,7 +3,7 @@ package discovery
 import (
 	"testing"
 
-	"tqd/internal/modules/discovery/domain"
+	"tqd/internal/domain/discovery/model"
 )
 
 func TestPlanningRegionDetailURLUsesPublicApplicationRoute(t *testing.T) {

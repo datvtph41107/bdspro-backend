@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bdspro/env"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
@@ -21,9 +20,11 @@ type NotificationClient struct {
 }
 
 // todo: triển khai nốt thông báo
-func NewNotificationClient() provider.NotificationProvider {
+func NewNotificationClient(
+	rpcClient *clients.NotificationClient,
+) provider.NotificationProvider {
 	return &NotificationClient{
-		NotificationClient: clients.MakeNotificationClient(env.ENV_RUNTIME),
+		NotificationClient: rpcClient,
 	}
 }
 

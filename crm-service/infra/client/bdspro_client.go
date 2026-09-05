@@ -1,19 +1,12 @@
 package client
 
 import (
-	"common"
-	_middleware "common/middleware"
 	"context"
-	"crm/env"
 	"errors"
-	"fmt"
-	"log"
+	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
-	"time"
-
-	"google.golang.org/grpc"
 )
 
 // @bind: crm/internal/interface/provider.BdsproProvider
@@ -25,37 +18,14 @@ type BdsproClient struct {
 	AdminAreaRegionClient bdspropb.AdminAreaRegionServiceClient
 }
 
-func NewBdsproClient() *BdsproClient {
-	bdsproClient := &BdsproClient{Client: nil, InternalClient: nil, AdminProjectClient: nil, AdminRegionClient: nil, AdminAreaRegionClient: nil}
-	go func() {
-		name := "bdspro"
-		url := common.GetPrefixProtobufUrl(env.ENV_RUNTIME, name)
-
-		conn, err := grpc.Dial(fmt.Sprintf("%s:8202", url),
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(5*time.Second),
-			grpc.WithUnaryInterceptor(_middleware.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(_middleware.StreamClientInterceptor),
-		)
-		if err != nil {
-			log.Fatalf("failed to dial: %v", err)
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// Khởi chạy goroutine để theo dõi trạng thái kết nối
-		go _middleware.MonitorConnection(ctx, name, conn)
-
-		client := bdspropb.NewProductServiceClient(conn)
-		bdsproClient.Client = client
-		internalClient := bdspropb.NewBdsproInternalServiceClient(conn)
-		bdsproClient.InternalClient = internalClient
-		bdsproClient.AdminProjectClient = bdspropb.NewAdminProjectServiceClient(conn)
-		bdsproClient.AdminRegionClient = bdspropb.NewAdminRegionServiceClient(conn)
-		bdsproClient.AdminAreaRegionClient = bdspropb.NewAdminAreaRegionServiceClient(conn)
-	}()
-	return bdsproClient
+func NewBdsproClient(rpcClient *clients.BdsproGrpcClient) *BdsproClient {
+	return &BdsproClient{
+		Client:                rpcClient.Client,
+		InternalClient:        rpcClient.InternalClient,
+		AdminProjectClient:    rpcClient.AdminProjectClient,
+		AdminRegionClient:     rpcClient.AdminRegionClient,
+		AdminAreaRegionClient: rpcClient.AdminAreaRegionClient,
+	}
 }
 
 func (c *BdsproClient) GetProductByIds(ctx context.Context, ids []uint64) ([]*bdspropb.ProductResponse, error) {

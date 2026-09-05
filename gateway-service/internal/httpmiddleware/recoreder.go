@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 )
 
 /**
@@ -13,7 +13,7 @@ import (
 type RequestIDDecisionRecorder interface {
 	RecordRequestIDDecision(
 		ctx context.Context,
-		decision _requestcontext.RequestIDDecision,
+		decision _request.RequestIDDecision,
 	)
 }
 
@@ -47,7 +47,7 @@ type noopRequestIDDecisionRecorder struct{}
 
 func (noopRequestIDDecisionRecorder) RecordRequestIDDecision(
 	context.Context,
-	_requestcontext.RequestIDDecision,
+	_request.RequestIDDecision,
 ) {
 
 }

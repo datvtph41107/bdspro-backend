@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"organization/env"
 	"pb/clients"
 	sharepb "pb/types/shared"
 	transactionpb "pb/types/transaction"
@@ -13,10 +12,8 @@ type TransactionClient struct {
 	TransactionGrpcClient *clients.TransactionGrpcClient
 }
 
-func NewTransactionClient() *TransactionClient {
-	return &TransactionClient{
-		TransactionGrpcClient: clients.NewTransactionGrpcClient(env.ENV_RUNTIME),
-	}
+func NewTransactionClient(rpcClient *clients.TransactionGrpcClient) *TransactionClient {
+	return &TransactionClient{TransactionGrpcClient: rpcClient}
 }
 
 func (c *TransactionClient) MapTransactionToDealContract(ctx context.Context, contracts []*transactionpb.DealContractResponse) {

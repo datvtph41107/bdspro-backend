@@ -6,34 +6,34 @@ import (
 	_utils "common/utils"
 	"context"
 
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
 )
 
 type RoleUsecase struct {
-	crud.BaseUsecase[domain.Role, repo.RoleRepository]
+	crud.BaseUsecase[access.Role, repo.RoleRepository]
 	OrganizationProvider providers.OrganizationProvider
-	ModuleService        *ModuleService
+	RoleGroupRegistry    *RoleGroupRegistry
 }
 
 func NewRoleUsecase(
 	roleRepo repo.RoleRepository,
 	organizationProvider providers.OrganizationProvider,
-	moduleService *ModuleService,
+	roleGroupRegistry *RoleGroupRegistry,
 ) *RoleUsecase {
 	return &RoleUsecase{
-		BaseUsecase: crud.BaseUsecase[domain.Role, repo.RoleRepository]{
+		BaseUsecase: crud.BaseUsecase[access.Role, repo.RoleRepository]{
 			Repo: roleRepo,
 		},
 		OrganizationProvider: organizationProvider,
-		ModuleService:        moduleService,
+		RoleGroupRegistry:    roleGroupRegistry,
 	}
 }
 
 // Create tạo mới role
-func (uc *RoleUsecase) Create(ctx context.Context, role *domain.Role) (*domain.Role, error) {
+func (uc *RoleUsecase) Create(ctx context.Context, role *access.Role) (*access.Role, error) {
 	if role.RoleName == "" {
 		return nil, _errors.ReturnError(400, "name không được để trống")
 	}
@@ -49,7 +49,7 @@ func (uc *RoleUsecase) Create(ctx context.Context, role *domain.Role) (*domain.R
 }
 
 // GetByID lấy role theo ID
-func (uc *RoleUsecase) Detail(ctx context.Context, id uint64) (*domain.Role, error) {
+func (uc *RoleUsecase) Detail(ctx context.Context, id uint64) (*access.Role, error) {
 	role, err := uc.Repo.GetDetail(ctx, id)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (uc *RoleUsecase) Detail(ctx context.Context, id uint64) (*domain.Role, err
 }
 
 // Update cập nhật role
-func (uc *RoleUsecase) Update(ctx context.Context, id uint64, role *domain.Role) (*domain.Role, error) {
+func (uc *RoleUsecase) Update(ctx context.Context, id uint64, role *access.Role) (*access.Role, error) {
 	if role.RoleName == "" {
 		return nil, _errors.ReturnError(400, "Tên role không được để trống")
 	}
@@ -101,24 +101,35 @@ func (uc *RoleUsecase) Delete(ctx context.Context, id uint64) error {
 }
 
 // GetByOrganizationID lấy danh sách role theo organization ID
-func (uc *RoleUsecase) GetByOrganizationID(ctx context.Context, organizationID uint64) ([]*domain.Role, error) {
+func (uc *RoleUsecase) GetByOrganizationID(ctx context.Context, organizationID uint64) ([]*access.Role, error) {
 	return uc.Repo.FindByOrganizationId(ctx, organizationID)
 }
 
 // GetByOrganizationIDWithPagination lấy danh sách role theo organization ID với phân trang
-func (uc *RoleUsecase) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint64, page, size int) ([]domain.Role, uint64, error) {
-	// return uc.roleRepo.FindByOrganizationIdWithPagination(ctx, organizationID, page, size)
-	return nil, 0, nil
+func (uc *RoleUsecase) GetByOrganizationIDWithPagination(ctx context.Context, organizationID uint64, page, size int) ([]access.Role, uint64, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 {
+		size = 20
+	}
+	roles, total, err := uc.Repo.FindByOrganizationIdWithPagination(ctx, organizationID, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := make([]access.Role, 0, len(roles))
+	for _, role := range roles {
+		if role != nil {
+			result = append(result, *role)
+		}
+	}
+	return result, total, nil
 }
 
-// AddPermissionToRole thêm permission vào role (legacy - giữ lại để tương thích)
-func (uc *RoleUsecase) AddPermissionToRole(ctx context.Context, roleID uint64, permissionID uint64) error {
-	return uc.Repo.AddPermissionToRole(ctx, roleID, permissionID)
-}
-
-// AddPermissionsToRole thêm nhiều permission vào role
-func (uc *RoleUsecase) AddPermissionsToRole(ctx context.Context, roleID uint64, permissionIDs []uint64) error {
-	// Kiểm tra role có tồn tại không
+// ReplacePermissions keeps the compatibility RPC but routes it through the
+// same CRUD association owner used by Create/Update. There is no second
+// permission mutation repository path.
+func (uc *RoleUsecase) ReplacePermissions(ctx context.Context, roleID uint64, permissionIDs []uint64) error {
 	existingRole, err := uc.Repo.GetByID(ctx, roleID)
 	if err != nil {
 		return err
@@ -126,19 +137,11 @@ func (uc *RoleUsecase) AddPermissionsToRole(ctx context.Context, roleID uint64, 
 	if existingRole == nil {
 		return _errors.ReturnError(404, "Role không tồn tại")
 	}
-
-	// Thêm từng permission vào role
-	for _, permissionID := range permissionIDs {
-		err := uc.Repo.AddPermissionToRole(ctx, roleID, permissionID)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	existingRole.PermissionIDs = append([]uint64(nil), permissionIDs...)
+	return uc.Repo.Update(ctx, roleID, existingRole)
 }
 
-// func (uc *RoleUsecase) GetListRole(ctx context.Context, pagable _dto.IPagable) ([]domain.Role, int64, error) {
+// func (uc *RoleUsecase) GetListRole(ctx context.Context, pagable _dto.IPagable) ([]access.Role, int64, error) {
 // 	roles, total, err := uc.Repo.GetList(ctx, pagable)
 // 	if err != nil {
 // 		return nil, 0, err
@@ -172,7 +175,7 @@ func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) 
 	return keys, nil
 }
 
-func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]domain.Role, int64, error) {
+func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]access.Role, int64, error) {
 	entities, total, err := s.Repo.GetListByGroupKey(c, groupKey)
 	if err != nil {
 		return nil, 0, _errors.ReturnError(500, err.Error())
@@ -216,8 +219,8 @@ func (uc *RoleUsecase) AssignRoleToUser(ctx context.Context, req *dto.AssignRole
 	}, nil
 }
 
-// convertRoleToDTO convert domain.Role to dto.RoleDTO
-func (uc *RoleUsecase) convertRoleToDTO(role *domain.Role) dto.RoleDTO {
+// convertRoleToDTO convert access.Role to dto.RoleDTO
+func (uc *RoleUsecase) convertRoleToDTO(role *access.Role) dto.RoleDTO {
 	roleDTO := dto.RoleDTO{
 		ID:              role.ID,
 		RoleName:        role.RoleName,
@@ -280,16 +283,16 @@ func (uc *RoleUsecase) convertRoleToDTO(role *domain.Role) dto.RoleDTO {
 	return roleDTO
 }
 
-func (uc *RoleUsecase) GetListByModuleCode(ctx context.Context, code string) ([]domain.Role, error) {
-	module, err := uc.ModuleService.GetModuleByCode(code)
+func (uc *RoleUsecase) GetListByModuleCode(ctx context.Context, code string) ([]access.Role, error) {
+	roleGroup, err := uc.RoleGroupRegistry.GetByCode(code)
 	if err != nil {
 		return nil, err
 	}
-	if module == nil {
+	if roleGroup == nil {
 		return nil, _errors.ReturnError(404, "Module không đúng")
 	}
 
-	entities, err := uc.Repo.GetRoleByGroupId(ctx, module.ID)
+	entities, err := uc.Repo.GetRoleByGroupId(ctx, roleGroup.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	_utils "common/utils"
 	"context"
 	clients "pb/clients"
-	"tqd/env"
 	"tqd/internal/dto"
 	"tqd/internal/interface/provider"
 )
@@ -15,27 +14,8 @@ type UserClient struct {
 }
 
 // @bind: tqd/internal/interface/provider.UserProvider
-func NewUserClient() provider.UserProvider {
-	return &UserClient{
-		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
-}
-
-func (c *UserClient) GetProfileByID(ctx context.Context, userID uint64) (*dto.UserProfileDTO, error) {
-	if userID == 0 || c.Client == nil {
-		return nil, nil
-	}
-	resp, err := c.GetProfileByIds(ctx, []uint64{userID})
-	if err != nil || resp == nil || len(resp.Profiles) == 0 {
-		return nil, err
-	}
-	p := resp.Profiles[0]
-	return &dto.UserProfileDTO{
-		ID:       p.GetId(),
-		FullName: p.GetFullName(),
-		Avatar:   p.GetAvatar(),
-		Phone:    p.GetPhone(),
-	}, nil
+func NewUserClient(rpcClient *clients.UserGrpcClient) provider.UserProvider {
+	return &UserClient{UserGrpcClient: rpcClient}
 }
 
 func (c *UserClient) GetProfilesByIDs(ctx context.Context, userIDs []uint64) (map[uint64]*dto.UserProfileDTO, error) {
@@ -82,14 +62,4 @@ func (c *UserClient) GetProfileIdWithContext(ctx context.Context) uint64 {
 
 func (c *UserClient) GetOrganizationIdFromContext(ctx context.Context) uint64 {
 	return _utils.GetOrganizationIdFromContext(ctx)
-}
-
-func (c *UserClient) GetUserInfo(ctx context.Context, userID uint64) (*dto.UserInfoDTO, error) {
-	// Return nil for now, implement later when needed
-	return nil, nil
-}
-
-func (c *UserClient) GetUserOrganization(ctx context.Context, userID uint64) (*dto.UserOrganizationDTO, error) {
-	// Return nil for now, implement later when needed
-	return nil, nil
 }

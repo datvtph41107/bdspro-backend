@@ -2,24 +2,22 @@ package client
 
 import (
 	"context"
-	"notification/env"
+	"errors"
 	clients "pb/clients"
 )
 
-// @bind: notification/internal/provider.IAuthClient
+// @bind: notification/internal/usecase.PushTokenResolver
 type AuthClient struct {
 	Client *clients.UserGrpcClient
 }
 
-func NewAuthClient() *AuthClient {
-	return &AuthClient{
-		Client: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewAuthClient(rpcClient *clients.UserGrpcClient) *AuthClient {
+	return &AuthClient{Client: rpcClient}
 }
 
 func (c *AuthClient) GetPushTokensByProfileId(ctx context.Context, profileID uint64) ([]string, error) {
-	if c.Client == nil {
-		return nil, nil
+	if c == nil || c.Client == nil {
+		return nil, errors.New("notification user gRPC client is not configured")
 	}
 
 	resp, err := c.Client.GetPushTokensByProfileId(ctx, profileID)

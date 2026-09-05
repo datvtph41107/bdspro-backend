@@ -4,7 +4,6 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	"pb/clients"
-	"user/env"
 	"user/internal/interface/providers"
 	"user/internal/models"
 )
@@ -14,10 +13,13 @@ type AuthClient struct {
 	userClient *clients.UserGrpcClient
 }
 
-func NewAuthClient() providers.AuthProvider {
+func NewAuthClient(
+	authClient *clients.AuthGrpcClient,
+	userClient *clients.UserGrpcClient,
+) providers.AuthProvider {
 	return &AuthClient{
-		AuthGrpcClient: clients.MakeAuthGrpcClient(env.ENV_RUNTIME),
-		userClient:     clients.MakeUserGrpcClient(env.ENV_RUNTIME),
+		AuthGrpcClient: authClient,
+		userClient:     userClient,
 	}
 }
 

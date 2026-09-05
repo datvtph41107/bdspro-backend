@@ -1,49 +1,131 @@
-package cmd_grpc
+package main
 
 import (
 	"errors"
 	"fmt"
-	"user/infra/handler/accessgrpc"
-	accesspostgres "user/infra/postgres/access"
-	useraccess "user/internal/access"
+	"time"
+	paymentclient "user/infra/client/payment"
+
+	"user/infra/handler/grpc/entitlement"
+	"user/infra/postgres"
+	checkoutpostgres "user/infra/postgres/checkout"
+	accesspostgres "user/infra/postgres/entitlement"
+	"user/infra/postgres/iampermission"
+	subscriptionpostgres "user/infra/postgres/subscription"
+	"user/internal/usecase/commercialprofile"
+	useraccess "user/internal/usecase/entitlement"
+	"user/internal/usecase/plan/admin"
+	"user/internal/usecase/plan/publish"
+	subscriptionusecase "user/internal/usecase/subscription"
+	checkoutapp "user/internal/usecase/subscription/checkout"
+	settlementapp "user/internal/usecase/subscription/settlement"
 
 	_db "common/db"
+	"gorm.io/gorm"
+	"pb/clients"
 	userpb "pb/types/user"
+	usergrpc "user/infra/handler/grpc"
 
 	"google.golang.org/grpc"
 )
 
 /**
- * registerAccessService lắp access flow mới vào gRPC server hiện tại.
+ * registerTargetServices lắp các capability theo trusted identity vào gRPC server.
  *
  * Hàm dùng cùng PostgreSQL connection của user-service và không mở HTTP route.
  */
-func registerAccessService(server *grpc.Server) error {
+func registerTargetServices(server *grpc.Server, database *gorm.DB, organizationClient *clients.OrganizationClient) (func(), error) {
 	if server == nil {
-		return errors.New("grpc server is nil")
+		return nil, errors.New("grpc server is nil")
 	}
-	if _db.DB == nil {
-		return errors.New("user database is not initialized")
+	if database == nil {
+		return nil, errors.New("user database is not initialized")
+	}
+	if organizationClient == nil {
+		return nil, errors.New("organization authorization client is not initialized")
 	}
 
-	subscriptions := accesspostgres.NewSubscriptionStore(_db.DB)
-	plans := accesspostgres.NewPlanAccessStore(_db.DB)
+	subscriptions := accesspostgres.NewSubscriptionStore(database)
+	plans := accesspostgres.NewPlanAccessStore(database)
 	service := useraccess.NewService(subscriptions, plans)
 	handler := accessgrpc.NewHandler(service)
 
 	userpb.RegisterInternalAccessServiceServer(server, handler)
-	return nil
+	registerAdminPlanService(server, database)
+	registerAdminSubscriptionService(server, database)
+	registerCommercialProfileService(server, database)
+
+	tx := _db.NewTransactionRepo(database)
+	checkoutStore := checkoutpostgres.NewCheckoutStore(tx)
+	paymentCommands, cleanup, err := paymentclient.NewCommands()
+	if err != nil {
+		return nil, fmt.Errorf("create Payment commercial channel: %w", err)
+	}
+	checkoutService := checkoutapp.NewService(checkoutStore, checkoutStore, checkoutStore, paymentCommands, paymentCommands, time.Now)
+	userpb.RegisterCheckoutServiceServer(server, usergrpc.NewSubscriptionCheckoutHandler(checkoutService, organizationClient))
+
+	settlementStore := subscriptionpostgres.NewSettlementStore(tx)
+	userpb.RegisterInternalSubscriptionServiceServer(server, usergrpc.NewSubscriptionSettlementHandler(settlementapp.NewService(settlementStore)))
+	return cleanup, nil
+}
+
+func registerAdminSubscriptionService(server *grpc.Server, database *gorm.DB) {
+	store := subscriptionpostgres.NewAdminProjectionStore(database)
+	authorizer := iampermission.NewChecker(database)
+	handler := usergrpc.NewSubscriptionAdminHandler(subscriptionusecase.NewAdminService(store), authorizer)
+	userpb.RegisterAdminCommercialServiceServer(server, handler)
+}
+
+func registerCommercialProfileService(server *grpc.Server, database *gorm.DB) {
+	tx := _db.NewTransactionRepo(database)
+	planRepository := postgres.NewPlanVersionRepo(tx)
+	planService := admin.NewService(planRepository, nil)
+	subscriptionStore := subscriptionpostgres.NewAdminProjectionStore(database)
+	subscriptionService := subscriptionusecase.NewAdminService(subscriptionStore)
+	handler := usergrpc.NewCommercialProfileHandler(
+		commercialprofile.NewService(planService, subscriptionService, time.Now),
+	)
+	userpb.RegisterCommercialProfileServiceServer(server, handler)
+}
+
+/** registerAdminPlanService installs the versioned Plan control plane. */
+func registerAdminPlanService(server *grpc.Server, database *gorm.DB) {
+	tx := _db.NewTransactionRepo(database)
+	repository := postgres.NewPlanVersionRepo(tx)
+	publisher := publish.NewService(
+		tx,
+		repository,
+	)
+	authorizer := iampermission.NewChecker(database)
+	handler := usergrpc.NewPlanVersionAdminHandler(admin.NewService(repository, publisher), authorizer)
+	userpb.RegisterAdminCatalogServiceServer(server, handler)
 }
 
 /**
- * internalAccessMethod trả true cho gRPC method chỉ dùng để đọc access.
+ * trustedIdentityMethod trả true cho RPC cần canonical identity đã được ký.
  *
- * Legacy quota interceptor phải bỏ qua method này vì đây không phải user business action.
+ * Legacy quota interceptor phải bỏ qua các method này: chúng không phải user business action.
  */
-func internalAccessMethod(fullMethod string) bool {
-	return fullMethod == "/userpb.InternalAccessService/GetAccess"
+func trustedIdentityMethod(fullMethod string) bool {
+	switch fullMethod {
+	case "/userpb.InternalAccessService/GetAccess",
+		"/userpb.CommercialProfileService/ListAvailablePlans",
+		"/userpb.CommercialProfileService/GetMyCommercialProfile",
+		"/userpb.CheckoutService/Checkout",
+		"/userpb.CheckoutService/CreatePaymentAttempt",
+		"/userpb.InternalSubscriptionService/ApplySettlement",
+		"/userpb.AdminCatalogService/ListPlanVersions",
+		"/userpb.AdminCatalogService/GetPlanVersion",
+		"/userpb.AdminCatalogService/PublishPlanVersion",
+		"/userpb.AdminCommercialService/ListSubscriptions",
+		"/userpb.AdminCommercialService/GetUserProjection",
+		"/userpb.AdminCommercialService/ListUserProjections":
+		return true
+	default:
+		return false
+	}
 }
 
-func accessRegistrationError(err error) error {
-	return fmt.Errorf("register internal access service: %w", err)
+func targetRegistrationError(err error) error {
+	return fmt.Errorf("register trusted target services: %w", err)
 }

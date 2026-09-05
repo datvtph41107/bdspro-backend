@@ -1,357 +1,127 @@
-# BDSPro Golang Microservices
+# BDSPro Backend
 
-A comprehensive real estate management system built with Go microservices architecture, featuring gRPC communication, REST APIs, and modern development practices.
+BDSPro Backend là workspace Go chứa các service nghiệp vụ của BDSPro. QHPro là
+capability quy hoạch thuộc TQD Service, không phải tên của toàn hệ thống.
 
-## 🏗️ System Architecture
+Admin và ứng dụng mobile chỉ gửi command hoặc đọc dữ liệu qua Gateway. Giá,
+thanh toán, subscription, entitlement, quota và usage luôn do backend quyết
+định.
 
-This system consists of multiple microservices, each handling specific business domains:
+## Bắt đầu
 
-### Core Services
-- **Gateway Service** - API Gateway and routing
-- **User Service** - User management and authentication
-- **Organization Service** - Organization and business domain management
-- **BDSPro Service** - Real estate property management
-- **CRM Service** - Customer relationship management
-- **Payment Service** - Payment processing and transactions
-- **Notification Service** - Push notifications and messaging
-- **File Service** - File upload and management
-- **Marketing Service** - Marketing campaigns and advertising
-
-### Communication Services
-- **Chat Service** - Real-time messaging
-- **Relay Service** - WebSocket and real-time communication
-- **Social Service** - Social features and interactions
-
-### Support Services
-- **Appointment Service** - Scheduling and appointments
-- **Membership Service** - Membership and subscription management
-- **Task Service** - Task and project management
-- **Search Service** - Search functionality
-- **Map Service** - Location and mapping services
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Go 1.21+
-- Docker & Docker Compose
-- Make
-- Buf CLI
-- Air (for hot reloading)
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/hieubap/bdspro-golang-microservices.git
-cd bdspro-golang-microservices
-```
-
-2. **Install dependencies**
-```bash
-make init
-```
-
-3. **Generate protobuf files**
-```bash
-make buf-all
-```
-
-4. **Start all services**
-```bash
-make start-all
-```
-
-## 📋 Makefile Commands
-
-The project includes a comprehensive Makefile for managing all aspects of development and deployment.
-
-### 🔧 Development Commands
-
-#### Service Management
-```bash
-# Start all services in background
-make start-all
-
-# Stop all services
-make stop-all
-
-# Start individual services
-make gateway-http      # Gateway service (HTTP)
-make user-http         # User service (HTTP)
-make user-grpc         # User service (gRPC)
-make organization      # Organization service
-make crm-grpc          # CRM service
-make bdspro-grpc       # BDSPro service
-make notification      # Notification service
-make social            # Social service
-make appointment       # Appointment service
-make chat-http         # Chat service (HTTP)
-make chat-grpc         # Chat service (gRPC)
-make relay-grpc        # Relay service
-make payment-grpc      # Payment service
-make membership-grpc   # Membership service
-make file-http         # File service
-make marketing-grpc    # Marketing service
-```
-
-#### Protobuf Generation
-```bash
-# Generate all protobuf files
-make buf-all
-
-# Generate specific service protobuf files
-make buf-user          # User service
-make buf-organization  # Organization service
-make buf-bdspro        # BDSPro service
-make buf-crm           # CRM service
-make buf-social        # Social service
-make buf-notification  # Notification service
-make buf-appointment   # Appointment service
-make buf-payment       # Payment service
-make buf-chat          # Chat service
-make buf-task          # Task service
-make buf-marketing     # Marketing service
-make buf-shared        # Shared types
-```
-
-#### Swagger Documentation
-```bash
-# Generate swagger documentation for file service
-make swag-file
-
-# Merge all swagger files
-make merge-swagger
-```
-
-#### Wire Dependency Injection
-```bash
-# Generate wire files for specific service
-make wire [service-name]
-```
-
-### 🏃‍♂️ Running Services
-
-#### Development Mode (with hot reload)
-```bash
-# Start individual service with Air (hot reload)
-make gateway-http      # Uses Air for automatic restart
-make user-http         # Uses Air for automatic restart
-make organization      # Uses Air for automatic restart
-```
-
-#### Production Mode
-```bash
-# Run service directly with Go
-make crm              # Runs without Air
-```
-
-### 🐳 Docker Commands
+Yêu cầu: Linux/WSL2, Git, Make và Docker Engine có Docker Compose.
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Stop Docker services
-docker-compose down
-
-# View logs
-docker-compose logs -f [service-name]
+make setup
+make up
+make status
+make smoke
 ```
 
-## 📁 Project Structure
+- `setup` tạo config local còn thiếu và cài đúng toolchain của repository.
+- `up` build image, chạy migration và khởi động backend.
+- `status` cho biết container nào đang chạy và health hiện tại.
+- `smoke` gọi public API thật qua Gateway.
 
-```
-bdspro-golang-microservices/
-├── gateway-service/          # API Gateway
-├── user-service/            # User management
-├── organization-service/    # Organization management
-├── bdspro-service/         # Real estate management
-├── crm-service/            # Customer relationship
-├── payment-service/        # Payment processing
-├── notification-service/   # Notifications
-├── file-service/          # File management
-├── marketing-service/     # Marketing campaigns
-├── chat-service/          # Real-time chat
-├── relay-service/         # WebSocket relay
-├── social-service/        # Social features
-├── appointment-service/   # Appointments
-├── membership-service/    # Memberships
-├── task-service/         # Task management
-├── search-service/       # Search functionality
-├── map-service/          # Mapping services
-├── common/               # Shared utilities
-├── protobuf/            # Protocol buffers
-│   ├── schema/          # .proto files
-│   ├── types/           # Generated Go types
-│   └── docs/            # Generated documentation
-├── code/                # Code generation scripts
-├── docs/                # API documentation
-├── Makefile             # Build and development commands
-├── docker-compose.yml   # Docker orchestration
-└── deploy.sh           # Deployment script
-```
+Xem toàn bộ lệnh dành cho developer:
 
-## 🔌 API Documentation
-
-### Swagger UI
-- **Gateway API**: http://localhost:8080/swagger/index.html
-- **File Service**: http://localhost:8081/swagger/index.html
-
-### gRPC Services
-All services expose gRPC endpoints on their respective ports. Use tools like:
-- **gRPCui**: `grpcui -plaintext localhost:50051`
-- **BloomRPC**: For testing gRPC calls
-- **Postman**: For REST API testing
-
-## 🛠️ Development Workflow
-
-### 1. Adding a New Service
 ```bash
-# 1. Create service directory
-mkdir new-service
-
-# 2. Initialize Go module
-cd new-service && go mod init new-service
-
-# 3. Add to Makefile
-# Add build and run commands
-
-# 4. Generate protobuf
-make buf-[service-name]
-
-# 5. Start development
-make [service-name]-grpc
+make help
 ```
 
-### 2. Modifying Protobuf
+## Công việc hằng ngày
+
 ```bash
-# 1. Edit .proto files in protobuf/schema/
-# 2. Generate new types
-make buf-[service-name]
-# 3. Update swagger
-make merge-swagger
+make up
+make logs service=payment-service
+make test service=payment-service
+make test-e2e
+make down
 ```
 
-### 3. Database Migrations
+`down` giữ dữ liệu. `reset` xóa database/queue/file local và luôn yêu cầu xác
+nhận.
+
+Các lệnh dài cũ như `dev-up`, `test-backend` và
+`runtime-value-chain-acceptance` hiện chỉ là compatibility/internal targets.
+Developer không cần ghi nhớ chúng.
+
+## Tìm code theo nghiệp vụ
+
+| Cần sửa | Owner |
+| --- | --- |
+| HTTP public, JWT, routing, error mapping | `gateway-service` |
+| Profile, login, IAM, catalog, subscription, entitlement | `user-service` |
+| Thành viên và quyền trong tổ chức | `organization-service` |
+| Order, payment attempt, webhook, settlement, outbox | `payment-service` |
+| QHPro, planning, quota, usage, report | `tqd-service` |
+| File metadata, nội dung và signed access | `file-service` |
+| Notification inbox và delivery | `notification-service` |
+
+`auth-service` đang là compatibility boundary trong lúc chuyển authorization
+về User. Không thêm nghiệp vụ mới vào Auth.
+
+Khi đọc một service, bắt đầu từ `main.go` hoặc `cmd/<server>/main.go`, sau đó đi
+theo constructor tới package nghiệp vụ và repository tương ứng. Không sửa file
+generated `*.pb.go` hoặc `wire_gen.go` bằng tay.
+
+## Các lệnh chính
+
 ```bash
-# Run migrations for specific service
-cd [service-name] && go run migrate.go
+make dev service=payment-service
+make test
+make test service=tqd-service
+make migrate
+make migrate service=user-service
+make generate
+make logs service=notification-service
 ```
 
-## 🔧 Configuration
+`make dev` rebuild và restart riêng image/container của service trong topology
+đang chạy. Full integration dùng `make up`. Native debugger cần host/container
+wiring hai chiều nên đang được chuẩn hóa lần lượt, bắt đầu từ Payment; README
+không tuyên bố mode đó đã sẵn sàng trước khi được kiểm chứng.
 
-### Environment Variables
-Each service has its own configuration files:
-- `config/config.yaml` - Main configuration
-- `config/docker_config.yaml` - Docker-specific config
-- `.env` files for environment-specific settings
+## Local và production
 
-### Database
-- **PostgreSQL**: Primary database
-- **Redis**: Caching and sessions
-- **MongoDB**: Document storage (if needed)
+Source, binary và Dockerfile của application là một. Hai môi trường chỉ khác
+endpoint, secret, tài nguyên và số instance được inject từ bên ngoài.
 
-## 🚀 Deployment
+- `compose.yaml` là topology development.
+- `<service>/config/runtime.yml` chứa default kỹ thuật không nhạy cảm.
+- `.env` bị ignore và chỉ cung cấp runtime values.
+- `<service>/migrate/` là migration authority của service.
+- Application log ra stdout/stderr.
 
-### Local Development
-```bash
-# Start all services
-make start-all
+Production hiện vẫn dùng semantics của `shared/code/deploy.sh`: operator chọn
+một service, build/chuyển artifact và restart service đó. Script này đang được
+giữ tương thích trong khi production Compose, config và selector được audit;
+không được dùng file `.env` development làm production config.
 
-# Monitor logs
-tail -f */tmp/*.log
+## Trạng thái chuyển đổi
 
-# Stop all services
-make stop-all
-```
+Correctness của commercial/quota/report vẫn được giữ: integer money, database
+transaction, idempotency, webhook verification, outbox/inbox, durable jobs,
+quota durability và graceful shutdown.
 
-### Production Deployment
-```bash
-# Deploy with Docker
-./deploy.sh
+Topology development dùng một PostgreSQL/PostGIS, một Redis và một RabbitMQ;
+database/Redis index/migration authority vẫn tách theo owner. Migration là
+one-shot container. Payment, Notification và TQD chạy actor bền vững trong
+lifecycle của default process, không tạo standing worker container riêng.
 
-# Or use Docker Compose
-docker-compose -f docker-compose.prod.yml up -d
-```
+Fresh workspace, fresh database, recovery labs và commercial/quota E2E đã PASS.
+Whole backend vẫn chưa CLOSED vì Membership/Transaction/Marketing/Task,
+Chat/Chat-v1, AI, non-core runtime và production deployment parity còn gate.
 
-## 🧪 Testing
+Ba bản đồ current/target và deployment gap nằm tại
+[`documents/OPERATIONAL-MAPS.md`](documents/OPERATIONAL-MAPS.md).
 
-### Unit Tests
-```bash
-# Run tests for specific service
-cd [service-name] && go test ./...
+Đối chiếu 23 production deployable với source hiện tại nằm tại
+[`documents/PRODUCTION-COMPATIBILITY.md`](documents/PRODUCTION-COMPATIBILITY.md).
 
-# Run all tests
-find . -name "*.go" -exec dirname {} \; | sort | uniq | xargs -I {} sh -c 'cd {} && go test ./...'
-```
+Kiến trúc owner hiện tại nằm tại
+[`BACKEND-ARCHITECTURE.md`](BACKEND-ARCHITECTURE.md). Kết quả kiểm chứng và các
+gate chưa đóng được ghi tại [`BACKEND-ACCEPTANCE.md`](BACKEND-ACCEPTANCE.md).
 
-### Integration Tests
-```bash
-# Start test environment
-docker-compose -f docker-compose.test.yml up -d
-
-# Run integration tests
-go test ./tests/...
-```
-
-## 📊 Monitoring
-
-### Health Checks
-- **Gateway**: http://localhost:8080/health
-- **Services**: http://localhost:[port]/health
-
-### Metrics
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Update documentation
-6. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **Port conflicts**: Check if ports are already in use
-```bash
-lsof -i :8080
-```
-
-2. **Protobuf generation errors**: Ensure buf CLI is installed
-```bash
-go install github.com/bufbuild/buf/cmd/buf@latest
-```
-
-3. **Service not starting**: Check logs
-```bash
-tail -f [service-name]/tmp/*.log
-```
-
-4. **Database connection issues**: Verify database is running
-```bash
-docker-compose ps
-```
-
-### Getting Help
-- Check the logs in `*/tmp/*.log`
-- Review service-specific documentation
-- Open an issue on GitHub
-
-## 🔗 Links
-
-- **API Documentation**: [Swagger UI](http://localhost:8080/swagger/index.html)
-- **Repository**: [GitHub](https://github.com/hieubap/bdspro-golang-microservices)
-- **Issues**: [GitHub Issues](https://github.com/hieubap/bdspro-golang-microservices/issues)
-
----
-
-**Happy Coding! 🚀** 
+Đọc [`CONTRIBUTING.md`](CONTRIBUTING.md) trước khi đổi public contract,
+transaction, migration, payment, entitlement, quota hoặc event liên service.

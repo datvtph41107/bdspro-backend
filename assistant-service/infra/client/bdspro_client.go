@@ -1,8 +1,6 @@
 package client
 
 import (
-	"assistant/env"
-
 	"pb/clients"
 )
 
@@ -11,17 +9,8 @@ type BdsproInternalClient struct {
 	*clients.BdsproGrpcClient
 }
 
-func NewBdsproInternalClient() *BdsproInternalClient {
-	runtimeEnv := ""
-	if env.ENV_RUNTIME != nil {
-		runtimeEnv = env.ENV_RUNTIME.Environment
-	}
-
-	print("runtimeEnv:" + runtimeEnv)
-
-	return &BdsproInternalClient{
-		BdsproGrpcClient: clients.MakeBdsproGrpcClient(runtimeEnv),
-	}
+func NewBdsproInternalClient(rpcClient *clients.BdsproGrpcClient) *BdsproInternalClient {
+	return &BdsproInternalClient{BdsproGrpcClient: rpcClient}
 }
 
 // func (c *BdsproInternalClient) GetSuggest(ctx context.Context, req string) (*_dto.ProductV3DTO, error) {

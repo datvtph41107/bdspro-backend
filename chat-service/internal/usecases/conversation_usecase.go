@@ -1,13 +1,12 @@
 package usecases
 
 import (
-	_errors "common/errors"
 	"context"
 	"strings"
+	"time"
 
 	"chat/infra/delivery/errors"
 	"chat/internal/domain"
-	"chat/internal/dto"
 	iusecase "chat/internal/interface"
 	_repo "chat/internal/repo"
 	"chat/utils"
@@ -47,10 +46,60 @@ func (c *ConversationUsecases) GetFullNamesJoined(ctx context.Context, ids []uin
 	return strings.Join(names, ", "), nil
 }
 
-func (c *ConversationUsecases) CreateConversation(ctx context.Context, req *dto.CreateConversationDTO) (*domain.Conversation, error) {
-	// 1. có 2 trường hợp xử lý để tái sử dụng cho tạo với 1, 1, và tạo nhóm
-	// hãy xử lý với nhóm vì khi tạo v
-	return c.conversationRepo.CreateConversation(ctx, req)
+func (c *ConversationUsecases) CreateConversation(ctx context.Context, conversation *domain.Conversation, members []uint64) (*domain.Conversation, error) {
+	currentUserID := utils.GetCurrentUserID(ctx)
+	if currentUserID == 0 {
+		return nil, errors.Unauthorized()
+	}
+
+	conversation.CreatedBy = currentUserID
+	if conversation.Name == nil || strings.TrimSpace(*conversation.Name) == "" {
+		fullNames, err := c.GetFullNamesJoined(ctx, members)
+		if err != nil {
+			return nil, err
+		}
+		conversation.Name = &fullNames
+	}
+
+	allMembers := append(append([]uint64(nil), members...), currentUserID)
+	var existing *domain.Conversation
+	var err error
+	if conversation.ReceiverId != nil {
+		existing, err = c.conversationRepo.GetConversationWithReceiverID(ctx, currentUserID, *conversation.ReceiverId)
+	} else if len(allMembers) > 1 {
+		existing, err = c.participantRepo.HasExactConversationWithUserIDs(ctx, allMembers)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+
+	joinedAt := time.Now().UTC()
+	participants := make([]domain.Participant, 0, len(members)+2)
+	for _, memberID := range members {
+		participants = append(participants, domain.Participant{
+			UserID:   memberID,
+			Role:     domain.ParticipantRoleMember,
+			JoinedAt: joinedAt,
+		})
+	}
+	if conversation.ReceiverId != nil {
+		participants = append(participants, domain.Participant{
+			UserID:   *conversation.ReceiverId,
+			Role:     domain.ParticipantRoleMember,
+			JoinedAt: joinedAt,
+		})
+	}
+	participants = append(participants, domain.Participant{
+		UserID:   currentUserID,
+		Role:     domain.ParticipantRoleAdmin,
+		JoinedAt: joinedAt,
+	})
+	conversation.Participants = participants
+
+	return c.conversationRepo.CreateConversation(ctx, conversation)
 }
 
 func (c *ConversationUsecases) GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, keyword string) ([]*domain.Conversation, error) {
@@ -265,13 +314,4 @@ func (c *ConversationUsecases) SetBackgroundImage(ctx context.Context, conversat
 		return nil, err
 	}
 	return conversation, nil
-}
-
-func (c *ConversationUsecases) SetBackgroundImageI(ctx context.Context, conversationId uint64, backgroundImageId uint64) (*domain.Conversation, error) {
-	currentUserId := utils.GetCurrentUserID(ctx)
-
-	participant, err := c.participantRepo.FindParticipant(ctx, conversationId, conversationId)
-	if err != nil {
-		return nil, _errors.InternalServerException("Get Participant not found")
-	}
 }

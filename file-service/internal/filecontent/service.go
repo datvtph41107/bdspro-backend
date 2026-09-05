@@ -1,34 +1,30 @@
 package filecontent
 
 import (
-	"bytes"
-	_utils "common/utils"
 	"context"
 	"errors"
-	"file/models"
-	"file/repositories"
-	"file/services"
 	"fmt"
-	"mime"
-	"os"
-	"path/filepath"
-	"strconv"
+	"io"
 	"strings"
+	"time"
+
+	_utils "common/utils"
+
+	"file/dto"
+	"file/models"
 )
 
-var (
-	ErrInvalidPath  = errors.New("file path không hợp lệ")
-	ErrNoActor      = errors.New("secure file cần profile hiện tại")
-	ErrAccessDenied = errors.New("không có quyền đọc secure file")
+var ErrNoActor = errors.New("secure file requires current profile")
+
+const (
+	MaxContentBytes      = 64 << 20
+	compensationTimeout  = 5 * time.Second
+	ordinaryDocumentPath = "document"
 )
 
-const MaxContentBytes = 64 << 20
-
-/**
- * UploadInput là dữ liệu tối thiểu cần để lưu một file từ service nội bộ.
- */
 type UploadInput struct {
-	Content     []byte
+	Content     io.Reader
+	Size        int64
 	Filename    string
 	ContentType string
 	Description string
@@ -37,62 +33,79 @@ type UploadInput struct {
 }
 
 type SavedFile struct {
-	ID          uint64
-	Path        string
-	Filename    string
-	ContentType string
-	Size        int64
+	ID            uint64
+	Path          string
+	Filename      string
+	ThumbnailPath string
+	Extension     string
+	Size          int64
+	Hash          string
+	ContentType   string
 }
 
-type ReadFile struct {
-	Content     []byte
-	ContentType string
+type fileMetadataStore interface {
+	SaveWithContext(ctx context.Context, file *models.FileEntity) error
+	DeleteByIDWithContext(ctx context.Context, id uint64) error
+	FinalizeUpload(ctx context.Context, file *models.FileEntity, access *models.AccessEntity) error
+	TryCreateOwned(ctx context.Context, file *models.FileEntity) (bool, error)
+	FindByOwner(ctx context.Context, namespace string, key string) (*models.FileEntity, bool, error)
 }
 
-/**
- * Service xử lý lưu và đọc file cho gRPC nội bộ.
- *
- * Không nhận gin.Context và không đọc HTTP header.
- * repositories/StorageService hiện là bridge sang code file-service cũ;
- * khi migrate xong có thể thay bridge này mà không đổi gRPC contract.
- */
+type contentStorage interface {
+	StoreContent(
+		reader io.Reader,
+		fileName string,
+		contentType string,
+		size int64,
+		accessID *uint64,
+		fileID uint64,
+		relativePaths ...string,
+	) (*dto.FileInfo, error)
+	StoreOwnedContent(
+		reader io.Reader,
+		fileName string,
+		contentType string,
+		size int64,
+		accessID *uint64,
+		fileID uint64,
+		relativePaths ...string,
+	) (*dto.FileInfo, error)
+	RemovePhysicalPath(path string) error
+}
+
+// Service owns transport-independent ordinary and owned File effects. DB and
+// filesystem implementations are consumed only through the capabilities the
+// use cases require.
 type Service struct {
-	files    *repositories.FileRepository
-	access   *repositories.AccessRepository
-	storage  *services.StorageService
-	xorKey   string
-	document string
+	files   fileMetadataStore
+	storage contentStorage
+	xorKey  string
 }
 
 func NewService(
-	files *repositories.FileRepository,
-	access *repositories.AccessRepository,
-	storage *services.StorageService,
+	files fileMetadataStore,
+	storage contentStorage,
 	xorKey string,
 ) *Service {
 	return &Service{
-		files:    files,
-		access:   access,
-		storage:  storage,
-		xorKey:   xorKey,
-		document: "document",
+		files:   files,
+		storage: storage,
+		xorKey:  xorKey,
 	}
 }
 
-/**
- * UploadFile lưu file và trả path cùng format mà source hiện tại đang sử dụng.
- *
- * Nếu secure=true, profile hiện tại phải tồn tại để tạo quyền đọc file.
- */
 func (s *Service) UploadFile(ctx context.Context, input UploadInput) (SavedFile, error) {
 	if ctx == nil {
 		return SavedFile{}, errors.New("context is nil")
 	}
-	if len(input.Content) == 0 {
-		return SavedFile{}, errors.New("file content is empty")
+	if s == nil || s.files == nil || s.storage == nil {
+		return SavedFile{}, errors.New("file content dependencies are unavailable")
 	}
-	if len(input.Content) > MaxContentBytes {
-		return SavedFile{}, errors.New("file content exceeds 64 MiB")
+	if input.Content == nil {
+		return SavedFile{}, errors.New("file content is nil")
+	}
+	if input.Size < 0 {
+		return SavedFile{}, errors.New("file size is invalid")
 	}
 	input.Filename = strings.TrimSpace(input.Filename)
 	if input.Filename == "" {
@@ -103,8 +116,14 @@ func (s *Service) UploadFile(ctx context.Context, input UploadInput) (SavedFile,
 	}
 
 	fileEntity := &models.FileEntity{Description: input.Description}
-	if err := s.files.Save(fileEntity); err != nil {
+	if err := s.files.SaveWithContext(ctx, fileEntity); err != nil {
 		return SavedFile{}, fmt.Errorf("create file record: %w", err)
+	}
+
+	cleanupCtx, cancelCleanup := compensationContext(ctx)
+	defer cancelCleanup()
+	cleanupRecord := func() error {
+		return s.files.DeleteByIDWithContext(cleanupCtx, fileEntity.ID)
 	}
 
 	var accessID *uint64
@@ -114,131 +133,65 @@ func (s *Service) UploadFile(ctx context.Context, input UploadInput) (SavedFile,
 	}
 
 	fileInfo, err := s.storage.StoreContent(
-		bytes.NewReader(input.Content),
+		input.Content,
 		input.Filename,
 		input.ContentType,
-		int64(len(input.Content)),
+		input.Size,
 		accessID,
 		fileEntity.ID,
-		s.document,
+		ordinaryDocumentPath,
 	)
 	if err != nil {
-		_ = s.files.DeleteByID(fileEntity.ID)
-		return SavedFile{}, fmt.Errorf("store file content: %w", err)
+		return SavedFile{}, errors.Join(
+			fmt.Errorf("store file content: %w", err),
+			cleanupRecord(),
+		)
 	}
 
-	encryptedPath := _utils.XorEncode(fileInfo.RelativePath, s.xorKey)
+	cleanupArtifact := func() error {
+		return s.storage.RemovePhysicalPath(fileInfo.AbsolutePath)
+	}
+
 	fileEntity.SetFields(fileInfo)
+	encryptedPath := _utils.XorEncode(fileInfo.RelativePath, s.xorKey)
 	if input.Secure {
 		fileEntity.Path = "s" + encryptedPath
 	} else {
 		fileEntity.Path = "p" + encryptedPath
 	}
 
-	if err := s.files.Save(fileEntity); err != nil {
-		_ = os.Remove(fileInfo.AbsolutePath)
-		_ = s.files.DeleteByID(fileEntity.ID)
-		return SavedFile{}, fmt.Errorf("save file info: %w", err)
-	}
-
+	var access *models.AccessEntity
 	if input.Secure {
-		if err := s.access.Create(&models.AccessEntity{
+		access = &models.AccessEntity{
 			FileID:   fileEntity.ID,
 			AccessID: input.ProfileID,
-		}); err != nil {
-			_ = os.Remove(fileInfo.AbsolutePath)
-			_ = s.files.DeleteByID(fileEntity.ID)
-			return SavedFile{}, fmt.Errorf("save file access: %w", err)
 		}
+	}
+
+	if err := s.files.FinalizeUpload(ctx, fileEntity, access); err != nil {
+		return SavedFile{}, errors.Join(
+			fmt.Errorf("finalize file metadata: %w", err),
+			cleanupArtifact(),
+			cleanupRecord(),
+		)
 	}
 
 	return SavedFile{
-		ID:          fileEntity.ID,
-		Path:        fileEntity.Path,
-		Filename:    fileInfo.FileName,
-		ContentType: fileInfo.ContentType,
-		Size:        fileInfo.Size,
+		ID:            fileEntity.ID,
+		Path:          fileEntity.Path,
+		Filename:      fileInfo.FileName,
+		ThumbnailPath: fileInfo.ThumbnailPath,
+		Extension:     fileInfo.Extension,
+		Size:          fileInfo.Size,
+		Hash:          fileInfo.Hash,
+		ContentType:   fileInfo.ContentType,
 	}, nil
 }
 
-/**
- * ReadFile đọc nội dung bằng path đã lưu trong database.
- *
- * Đây là service-to-service call đã qua trusted gRPC metadata nên không dùng
- * HTTP signature. Secure file vẫn bắt buộc Actor và file_access tương ứng.
- */
-func (s *Service) ReadFile(ctx context.Context, encodedPath string, profileID uint64) (ReadFile, error) {
-	if ctx == nil {
-		return ReadFile{}, errors.New("context is nil")
+func compensationContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	base := context.Background()
+	if ctx != nil {
+		base = context.WithoutCancel(ctx)
 	}
-	if len(encodedPath) < 2 {
-		return ReadFile{}, ErrInvalidPath
-	}
-	prefix := encodedPath[0]
-	if prefix != 'p' && prefix != 's' {
-		return ReadFile{}, ErrInvalidPath
-	}
-
-	decodedPath, err := _utils.XorDecode(encodedPath[1:], s.xorKey)
-	if err != nil {
-		return ReadFile{}, ErrInvalidPath
-	}
-	cleanPath := filepath.Clean(decodedPath)
-	if cleanPath == "." || strings.Contains(cleanPath, "..") {
-		return ReadFile{}, ErrInvalidPath
-	}
-	root := filepath.Clean(s.storage.RootLocation)
-	absolutePath := cleanPath
-	if !filepath.IsAbs(absolutePath) && !strings.HasPrefix(cleanPath, root+string(os.PathSeparator)) {
-		absolutePath = filepath.Join(root, cleanPath)
-	}
-
-	rel, err := filepath.Rel(root, absolutePath)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return ReadFile{}, ErrInvalidPath
-	}
-	expectedRoot := filepath.Clean(s.storage.RootPublicPath)
-	if prefix == 's' {
-		expectedRoot = filepath.Clean(s.storage.RootSecurePath)
-	}
-	expectedRel, err := filepath.Rel(expectedRoot, absolutePath)
-	if err != nil || expectedRel == ".." || strings.HasPrefix(expectedRel, ".."+string(os.PathSeparator)) {
-		return ReadFile{}, ErrInvalidPath
-	}
-	if prefix == 's' {
-		if profileID == 0 {
-			return ReadFile{}, ErrNoActor
-		}
-		fileID, err := fileIDFromPath(decodedPath)
-		if err != nil {
-			return ReadFile{}, ErrInvalidPath
-		}
-		allowed, err := s.access.ExistsAccess(int64(fileID), int64(profileID))
-		if err != nil {
-			return ReadFile{}, fmt.Errorf("check file access: %w", err)
-		}
-		if !allowed {
-			return ReadFile{}, ErrAccessDenied
-		}
-	}
-
-	content, err := os.ReadFile(absolutePath)
-	if err != nil {
-		return ReadFile{}, err
-	}
-	contentType := mime.TypeByExtension(strings.ToLower(filepath.Ext(absolutePath)))
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-	return ReadFile{Content: content, ContentType: contentType}, nil
-}
-
-func fileIDFromPath(path string) (uint64, error) {
-	base := filepath.Base(filepath.Clean(path))
-	name := strings.TrimSuffix(base, filepath.Ext(base))
-	fileID, err := strconv.ParseUint(name, 10, 64)
-	if err != nil || fileID == 0 {
-		return 0, ErrInvalidPath
-	}
-	return fileID, nil
+	return context.WithTimeout(base, compensationTimeout)
 }

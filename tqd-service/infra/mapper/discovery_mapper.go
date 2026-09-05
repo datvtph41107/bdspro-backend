@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	tqdpb "pb/types/tqd"
-	"tqd/internal/modules/discovery/domain"
+	"tqd/internal/domain/discovery/model"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )

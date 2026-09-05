@@ -1,7 +1,7 @@
 package httpmiddleware
 
 import (
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	"io"
 	"log/slog"
 	"net/http"
@@ -102,7 +102,7 @@ func newOperationIDTestRouter(
 			ctx *gin.Context,
 		) {
 			operationID, ok :=
-				_requestcontext.
+				_request.
 					OperationIDFromContext(
 						ctx.Request.Context(),
 					)
@@ -145,14 +145,12 @@ func TestOperationIDMiddlewarePreservesCallerIdentity(
 		)
 
 	request.Header.Set(
-		_requestcontext.
-			RequestIDHeader,
+		RequestIDHeader,
 		"req-operation-success-123",
 	)
 
 	request.Header.Set(
-		_requestcontext.
-			OperationIDHeader,
+		OperationIDHeader,
 		"op-caller-456",
 	)
 
@@ -177,8 +175,7 @@ func TestOperationIDMiddlewarePreservesCallerIdentity(
 	if got :=
 		response.Header().
 			Get(
-				_requestcontext.
-					OperationIDHeader,
+				OperationIDHeader,
 			); got !=
 		"op-caller-456" {
 
@@ -222,12 +219,12 @@ func TestOperationIDMiddlewareGeneratesOnlyWhenMissing(
 	}
 
 	operationID := strings.TrimSpace(response.Body.String())
-	if !_requestcontext.IsValidOperationID(operationID) {
+	if !_request.IsValidOperationID(operationID) {
 		t.Fatalf("generated operation ID = %q", operationID)
 	}
 
 	if got := response.Header().Get(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 	); got != operationID {
 		t.Fatalf(
 			"response Operation-ID = %q, want %q",
@@ -256,7 +253,7 @@ func TestOperationIDMiddlewareRejectsMalformedIdentityWithoutEcho(
 		)
 
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 		malformed,
 	)
 
@@ -284,7 +281,7 @@ func TestOperationIDMiddlewareRejectsMalformedIdentityWithoutEcho(
 	}
 
 	if got := response.Header().Get(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 	); got != "" {
 		t.Fatalf("response Operation-ID = %q, want empty", got)
 	}
@@ -325,7 +322,7 @@ func TestOperationIDMiddlewareRejectsMultipleValues(
 
 				for _, value := range testCase.values {
 					request.Header.Add(
-						_requestcontext.OperationIDHeader,
+						OperationIDHeader,
 						value,
 					)
 				}
@@ -349,7 +346,7 @@ func TestOperationIDMiddlewareMapsContextConflictToInternal(
 	t *testing.T,
 ) {
 	prebind := func(ctx *gin.Context) {
-		bound, err := _requestcontext.BindOperationID(
+		bound, err := _request.BindOperationID(
 			ctx.Request.Context(),
 			"op-existing-123",
 		)
@@ -373,7 +370,7 @@ func TestOperationIDMiddlewareMapsContextConflictToInternal(
 		nil,
 	)
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 		"op-different-456",
 	)
 

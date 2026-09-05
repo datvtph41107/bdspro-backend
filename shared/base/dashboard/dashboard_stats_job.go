@@ -17,10 +17,10 @@ type DashboardStatsJob interface {
 type dashboardStatsJob struct {
 	Usecase   DashboardStatsUsecase
 	TableName string
-	GetValue  func() int64 // Function để lấy giá trị cần lưu
+	GetValue  func(context.Context) int64 // Function để lấy giá trị cần lưu
 }
 
-func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func() int64) DashboardStatsJob {
+func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func(context.Context) int64) DashboardStatsJob {
 	// Auto migrate table trước khi tạo job
 	// err := db.Table(tableName).AutoMigrate(&DashboardStats{})
 	// if err != nil {
@@ -40,7 +40,7 @@ func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func() int64) 
 
 func (j *dashboardStatsJob) Run(ctx context.Context) error {
 	// Lấy giá trị từ function
-	count := j.GetValue()
+	count := j.GetValue(ctx)
 
 	// Tạo thời gian hiện tại (ngày hiện tại)
 	now := time.Now()
@@ -63,29 +63,26 @@ func (j *dashboardStatsJob) Run(ctx context.Context) error {
 	return nil
 }
 
-// RunDailyAtMidnight chạy job hàng ngày vào 0h00
+// RunDailyAtMidnight blocks as one process-owned actor. It schedules the next
+// actual midnight instead of polling on an arbitrary process-start offset.
 func (j *dashboardStatsJob) RunDailyAtMidnight(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Minute) // Check mỗi phút
-	defer ticker.Stop()
-
 	for {
+		now := time.Now()
+		next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+		timer := time.NewTimer(time.Until(next))
 		select {
 		case <-ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
 			log.Printf("Dashboard stats job stopped for table %s", j.TableName)
 			return
-		case now := <-ticker.C:
-			// Kiểm tra nếu đã qua 0h00 của ngày mới
-			if now.Hour() == 0 && now.Minute() == 0 {
-				log.Printf("Running dashboard stats job for table %s at %s",
-					j.TableName, now.Format("2006-01-02 15:04:05"))
-
-				if err := j.Run(ctx); err != nil {
-					log.Printf("Error running dashboard stats job for table %s: %v",
-						j.TableName, err)
-				}
-
-				// Sleep 1 phút để tránh chạy nhiều lần trong cùng 1 phút
-				time.Sleep(1 * time.Minute)
+		case <-timer.C:
+			if err := j.Run(ctx); err != nil {
+				log.Printf("Error running dashboard stats job for table %s: %v", j.TableName, err)
 			}
 		}
 	}

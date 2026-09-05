@@ -43,8 +43,8 @@ func (u *MapPointUsecase) CreateMapPoint(ctx context.Context, req *dto.CreateMap
 
 	return &dto.MapPointResponse{
 		ID:   mapPoint.ID,
-		Lat:  0, // MapPoint uses Geom, not Lat/Lng
-		Lng:  0, // MapPoint uses Geom, not Lat/Lng
+		Lat:  mapPoint.Lat,
+		Lng:  mapPoint.Lng,
 		Name: mapPoint.Name,
 	}, nil
 }
@@ -141,8 +141,8 @@ func (u *MapPointUsecase) GetMapPointByID(ctx context.Context, id uint) (*dto.Ma
 
 	return &dto.MapPointResponse{
 		ID:   mapPoint.ID,
-		Lat:  0, // MapPoint uses Geom, not Lat/Lng
-		Lng:  0, // MapPoint uses Geom, not Lat/Lng
+		Lat:  mapPoint.Lat,
+		Lng:  mapPoint.Lng,
 		Name: mapPoint.Name,
 	}, nil
 }
@@ -168,8 +168,8 @@ func (u *MapPointUsecase) UpdateMapPoint(ctx context.Context, id uint, req *dto.
 
 	return &dto.MapPointResponse{
 		ID:   mapPoint.ID,
-		Lat:  0, // MapPoint uses Geom, not Lat/Lng
-		Lng:  0, // MapPoint uses Geom, not Lat/Lng
+		Lat:  mapPoint.Lat,
+		Lng:  mapPoint.Lng,
 		Name: mapPoint.Name,
 	}, nil
 }

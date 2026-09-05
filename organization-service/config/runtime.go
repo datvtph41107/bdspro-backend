@@ -1,12 +1,11 @@
 package config
 
 import (
-	_ "embed"
-	"log"
+	"common/configloader"
+	"fmt"
 	"organization/env"
 	"organization/infrastructure/server/grpc"
-	"os"
-	"path"
+	"strings"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
@@ -27,41 +26,36 @@ var (
 	configLogger = flogging.MustGetLogger("config")
 )
 
-func InitConfig() {
-	loadConfig()
-	if err := readConfig(); err != nil {
-		configLogger.Fatalf("Error reading config values: %v", err)
-	}
-}
-
-func loadConfig() {
-	file := "config.yaml"
-	if envFile := os.Getenv("CONFIG_FILE"); envFile != "" {
-		file = envFile
-	}
-	flogging.ActivateSpec("debug")
-
-	cfg = viper.New()
-	cfg.SetConfigType("yaml")
-	cfg.SetConfigName(path.Base(file))
-	cfg.AddConfigPath(path.Dir(file))
-	cfg.AddConfigPath("./config/")
-	cfg.AddConfigPath("../config/")
-
-	configLogger.Infof("Loading config file: %s", file)
-
-	if err := cfg.ReadInConfig(); err != nil {
-		configLogger.Fatalf("Error parsing config file: %s", err)
-	}
-
-	viper.SetConfigType("yaml") // 👈 cần thiết!
-	viper.AutomaticEnv()
-
-	// Đọc file config
-	err := cfg.ReadInConfig()
+func InitConfig() error {
+	_, err := configloader.LoadRuntimeYML()
 	if err != nil {
-		log.Fatalf("Lỗi khi đọc file config: %v", err)
+		return fmt.Errorf("load organization config: %w", err)
 	}
+
+	// YAML sở hữu topology/default; process environment sở hữu DSN
+	// và endpoint thay đổi theo lần deploy. Bind tường minh để Viper
+	// Unmarshal và common/db cùng đọc một registry duy nhất.
+	for key, names := range map[string][]string{
+		"database.dsn":             {"ORGANIZATION_DATABASE_URL", "DATABASE_DSN"},
+		"rpc.user.address":         {"ORGANIZATION_USER_GRPC_ADDRESS"},
+		"rpc.bdspro.address":       {"ORGANIZATION_BDSPRO_GRPC_ADDRESS"},
+		"rpc.notification.address": {"ORGANIZATION_NOTIFICATION_GRPC_ADDRESS"},
+		"rpc.payment.address":      {"ORGANIZATION_PAYMENT_GRPC_ADDRESS"},
+		"rpc.chat.address":         {"ORGANIZATION_CHAT_GRPC_ADDRESS"},
+		"rpc.transaction.address":  {"ORGANIZATION_TRANSACTION_GRPC_ADDRESS"},
+		"rpc.auth.address":         {"ORGANIZATION_AUTH_GRPC_ADDRESS"},
+		"grpc.port":                {"ORGANIZATION_GRPC_PORT"},
+	} {
+		args := append([]string{key}, names...)
+		if err := viper.BindEnv(args...); err != nil {
+			return fmt.Errorf("bind organization config %s: %w", key, err)
+		}
+	}
+	cfg = viper.GetViper()
+	if err := readConfig(); err != nil {
+		return fmt.Errorf("read organization config: %w", err)
+	}
+	return nil
 }
 
 func readConfig() error {
@@ -72,7 +66,7 @@ func readConfig() error {
 		env.PRIMARY_DB_TYPE = env.DBTypePostgres
 	}
 
-	if dns := cfg.GetString("Database.DB_DNS"); dns != "" {
+	if dns := cfg.GetString("database.dsn"); dns != "" {
 		env.DB_DNS = dns
 	} else {
 		configLogger.Warnf("Database DNS not specified, using default: %s", env.DefaultDBDNS)
@@ -118,12 +112,17 @@ func readConfig() error {
 		configLogger.Warnf("User service port not specified, using default: %s", env.USER_SERVICE_PORT)
 	}
 
-	if envRuntime := cfg.GetString("ENV_RUNTIME"); envRuntime != "" {
-		env.ENV_RUNTIME = envRuntime
-		configLogger.Infof("Environment runtime specified: %s", envRuntime)
-	} else {
-		configLogger.Warnf("Environment runtime not specified, using default: %s", env.ENV_RUNTIME)
-	}
-
 	return nil
+}
+
+func RPCAddress(service string) (string, error) {
+	if cfg == nil {
+		return "", fmt.Errorf("organization config is not initialized")
+	}
+	key := "rpc." + strings.TrimSpace(service) + ".address"
+	value := strings.TrimSpace(cfg.GetString(key))
+	if value == "" {
+		return "", fmt.Errorf("config %s is required", key)
+	}
+	return value, nil
 }

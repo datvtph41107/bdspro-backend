@@ -2,12 +2,11 @@ package repo
 
 import (
 	"chat/internal/domain"
-	"chat/internal/dto"
 	"context"
 )
 
-type ConversationRepository interface {
-	CreateConversation(ctx context.Context, req *dto.CreateConversationDTO) (*domain.Conversation, error)
+type ConversationRepo interface {
+	CreateConversation(ctx context.Context, conversation *domain.Conversation) (*domain.Conversation, error)
 	GetConversations(ctx context.Context, limit, offset int64, conversationType *int32, userId uint64, keyword string) ([]*domain.Conversation, error)
 	GetConversationByID(ctx context.Context, conversationID uint64) (*domain.Conversation, error)
 	GetConversationsByIDs(ctx context.Context, conversationIDs []uint64) ([]*domain.Conversation, error)

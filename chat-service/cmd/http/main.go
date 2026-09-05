@@ -16,7 +16,10 @@ func NewCommand() *cobra.Command {
 				return err
 			}
 
-			httpServer := server.NewHTTPServer(httpPort)
+			httpServer, err := server.NewHTTPServer(httpPort)
+			if err != nil {
+				return err
+			}
 			return httpServer.Start()
 		},
 	}

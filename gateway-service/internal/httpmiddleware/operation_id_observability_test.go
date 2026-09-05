@@ -2,7 +2,7 @@ package httpmiddleware_test
 
 import (
 	"bytes"
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	"encoding/json"
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_observability "gateway/internal/observability"
@@ -171,14 +171,14 @@ func TestRejectedOperationIDValuesNeverReachStructuredLogs(
 					)
 
 				request.Header.Set(
-					_requestcontext.RequestIDHeader,
+					_httpmiddleware.RequestIDHeader,
 					"request-rejected-operation-123",
 				)
 
 				for _, value := range testCase.values {
 
 					request.Header.Add(
-						_requestcontext.OperationIDHeader,
+						_httpmiddleware.OperationIDHeader,
 						value,
 					)
 				}
@@ -227,7 +227,7 @@ func TestRejectedOperationIDValuesNeverReachStructuredLogs(
 				}
 
 				if got := response.Header().Get(
-					_requestcontext.OperationIDHeader,
+					_httpmiddleware.OperationIDHeader,
 				); got != "" {
 					t.Fatalf(
 						"response Operation-ID = %q, want empty",
@@ -283,7 +283,7 @@ func TestOperationIDConflictLogsOnlyCanonicalContextIdentity(
 		ctx *gin.Context,
 	) {
 		bound, err :=
-			_requestcontext.BindOperationID(
+			_request.BindOperationID(
 				ctx.Request.Context(),
 				canonicalOperationID,
 			)
@@ -317,12 +317,12 @@ func TestOperationIDConflictLogsOnlyCanonicalContextIdentity(
 		)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		"request-operation-conflict-123",
 	)
 
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		_httpmiddleware.OperationIDHeader,
 		conflictingOperationID,
 	)
 

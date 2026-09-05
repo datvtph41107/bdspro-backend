@@ -19,9 +19,9 @@ func (m *PriceTableMapper) ToProto(entity *models.PriceTableDomain) *pb.PriceTab
 	}
 
 	resp := &pb.PriceTableResponse{
-		Id:   entity.ID,
-		Name: entity.Name,
-		// Price:       entity.Price,
+		Id:          entity.ID,
+		Name:        entity.Name,
+		Price:       entity.Price,
 		Currency:    entity.Currency,
 		Description: entity.Description,
 		IsActive:    entity.IsActive,
@@ -43,8 +43,8 @@ func (m *PriceTableMapper) FromCreateRequest(req *pb.CreatePriceTableRequest) *m
 	}
 
 	return &models.PriceTableDomain{
-		Name: req.Name,
-		// Price:       req.Price,
+		Name:        req.Name,
+		Price:       req.Price,
 		Currency:    req.Currency,
 		Description: req.Description,
 		IsActive:    req.IsActive,
@@ -57,8 +57,8 @@ func (m *PriceTableMapper) FromUpdateRequest(req *pb.UpdatePriceTableRequest) *m
 	}
 
 	entity := &models.PriceTableDomain{
-		Name: req.Name,
-		// Price:       req.Price,
+		Name:        req.Name,
+		Price:       req.Price,
 		Currency:    req.Currency,
 		Description: req.Description,
 		IsActive:    req.IsActive,

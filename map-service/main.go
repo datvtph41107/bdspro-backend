@@ -15,7 +15,9 @@ import (
 // @name Authorization
 func main() {
 	// Initialize runtime
-	wire.InitializeRuntime()
+	if err := wire.InitializeRuntime(); err != nil {
+		log.Fatalf("Failed to initialize runtime: %v", err)
+	}
 
 	// Initialize application with wire
 	router, err := wire.InitializeApp()

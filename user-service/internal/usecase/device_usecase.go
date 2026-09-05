@@ -6,7 +6,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
 )
@@ -24,7 +24,7 @@ func NewDeviceUsecase(deviceRepo repo.DeviceRepository) *DeviceUsecase {
 }
 
 // RegisterDevice tạo mới hoặc cập nhật thông tin thiết bị
-func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDeviceRequest) (*domain.DeviceEntity, error) {
+func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDeviceRequest) (*auth.DeviceEntity, error) {
 	if req == nil {
 		return nil, _errors.ReturnError(400, "Yêu cầu không hợp lệ")
 	}
@@ -52,7 +52,7 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 	}
 
 	if existing == nil {
-		device := &domain.DeviceEntity{
+		device := &auth.DeviceEntity{
 			DeviceID:       req.DeviceID,
 			DeviceName:     req.DeviceName,
 			DeviceType:     req.DeviceType,

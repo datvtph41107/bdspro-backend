@@ -9,7 +9,7 @@ import (
 	"pb/clients"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
-	"tqd/internal/modules/discovery/application"
+	"tqd/internal/usecase/discovery/application"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

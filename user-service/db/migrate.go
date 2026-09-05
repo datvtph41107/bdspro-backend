@@ -1,42 +1,50 @@
+// Package db owns User Service's GORM bootstrap registry.
+//
+// Production schema evolution remains owned by user-service/migrate. The
+// registry exists for the explicit QHPRO_USER_DB_SCHEMA_MODE=automigrate mode
+// and contains only current, reachable GORM-owned models.
 package db
 
 import (
-	"log"
-
-	_db "common/db"
+	checkoutpostgres "user/infra/postgres/checkout"
+	subscriptionpostgres "user/infra/postgres/subscription"
 	"user/internal/domain"
+	access "user/internal/domain/access"
+	auth "user/internal/domain/auth"
 	"user/internal/models"
+
+	"gorm.io/gorm"
 )
 
-func AutoMigrate() {
-	// Bảng activity login/refresh cho dashboard active users.
-	_ = _db.DB.AutoMigrate(&domain.UserActivityLog{})
-	ensureUserProfileLastLoginColumns()
-	return
-	_db.DB.AutoMigrate(
-		// Auth entities (migrated from auth-service)
-		&domain.AuthMethod{},
-		&domain.AuthUser{},
-		&domain.UserOTPEntity{},
-		&domain.UserSessionEntity{},
-		&domain.DeviceEntity{},
-		&domain.UserStatusEntity{},
-		&domain.Role{},
-		&domain.Permission{},
-		&domain.RoleGroup{},
-		&domain.RoleProfile{},
-		&domain.AdminAccessDomain{},
-		&domain.AdminAccessLogDomain{},
-		&domain.Color{},
-		&domain.AuthConfig{},
-		&domain.UserPINEntity{},
+// AutoMigrateModels là registry duy nhất giữa bootstrap GORM và contract test
+// SQL. Khi thêm model persistence mới phải bổ sung tại đây và trong migrate/.
+func AutoMigrateModels() []any {
+	registry := []any{
+		// Auth identity and session state (owned by User, not auth-service).
+		&auth.AuthMethod{},
+		&auth.AuthUser{},
+		&auth.UserOTPEntity{},
+		&auth.UserSessionEntity{},
+		&auth.DeviceEntity{},
+		&auth.UserStatusEntity{},
+		&auth.AuthConfig{},
+		&auth.UserPINEntity{},
+		&domain.UserActivityLog{},
 
-		// Core entities
+		// Access-control state. Role and RoleGroup materialize the canonical
+		// role_permissions and group_permissions join tables.
+		&access.Permission{},
+		&access.Color{},
+		&access.RoleGroup{},
+		&access.Role{},
+		&access.RoleProfile{},
+		&access.AdminAccessDomain{},
+		&access.AdminAccessLogDomain{},
+
+		// Profile and social state.
 		&models.UserProfileEntity{},
 		&models.ProfileDeleted{},
 		&models.AdminProfile{},
-
-		// Social entities
 		&models.BlockEntity{},
 		&models.ContactEntity{},
 		&models.FollowEntity{},
@@ -51,31 +59,26 @@ func AutoMigrate() {
 		&models.TagUserEntity{},
 		&models.KYCEntity{},
 		&models.ProfileMediaEntity{},
-
-		// Profile related entities
 		&models.ProfessionEntity{},
 		&models.CertificationEntity{},
-		&models.AttachEntity{},
-
-		// Membership & plan
-		&models.Membership{},
-		&models.Plan{},
-
-		// Pack related entities
+		&models.Profile{},
 		&models.PriceTableDomain{},
-		&models.PackItemDomain{},
-	)
+
+		// Canonical commercial catalog/subscription read and write models.
+		&models.CatalogProduct{},
+		&models.CatalogPlan{},
+		&models.CatalogPlanVersion{},
+		&models.CatalogPlanEntitlement{},
+		&models.CatalogPlanOperationPolicy{},
+		&models.CatalogPriceItem{},
+		&models.CatalogSubscription{},
+		&models.CatalogSubscriptionEvent{},
+	}
+	registry = append(registry, checkoutpostgres.AutoMigrateModels()...)
+	registry = append(registry, subscriptionpostgres.AutoMigrateModels()...)
+	return registry
 }
 
-func ensureUserProfileLastLoginColumns() {
-	stmts := []string{
-		`ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ DEFAULT NULL`,
-		`ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS total_login INTEGER NOT NULL DEFAULT 0`,
-		`CREATE INDEX IF NOT EXISTS idx_user_profile_last_login_at ON user_profile(last_login_at)`,
-	}
-	for _, stmt := range stmts {
-		if err := _db.DB.Exec(stmt).Error; err != nil {
-			log.Printf("⚠️  migrate user_profile last_login_at: %v", err)
-		}
-	}
+func AutoMigrate(database *gorm.DB) error {
+	return database.AutoMigrate(AutoMigrateModels()...)
 }

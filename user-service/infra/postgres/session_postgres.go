@@ -5,48 +5,37 @@ import (
 	"strings"
 	"time"
 
-	_db "common/db"
 	_dto "common/domain/dto"
-	"user/internal/domain"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"user/internal/domain"
+	"user/internal/domain/auth"
 )
 
 // SessionPostgres implementation của Session repository
 // @bind: user/internal/interface/repo.SessionRepository
 type SessionPostgres struct {
-	// TODO: Add database connection
+	db *gorm.DB
 }
 
 // NewSessionRepository tạo mới SessionRepository
-func NewSessionRepository() *SessionPostgres {
-	return &SessionPostgres{}
+func NewSessionRepository(db *gorm.DB) *SessionPostgres {
+	return &SessionPostgres{db: db}
 }
 
 // GetBySessionID lấy session theo sessionID
-func (r *SessionPostgres) GetBySessionID(ctx context.Context, sessionID uint64) (*domain.UserSessionEntity, error) {
-	var session domain.UserSessionEntity
-	err := _db.DB.Where("session_id = ?", sessionID).First(&session).Error
+func (r *SessionPostgres) GetBySessionID(ctx context.Context, sessionID uint64) (*auth.UserSessionEntity, error) {
+	var session auth.UserSessionEntity
+	err := r.db.Where("session_id = ?", sessionID).First(&session).Error
 	if err != nil {
 		return nil, err
 	}
 	return &session, nil
 }
 
-func (r *SessionPostgres) GetBySessionIDAndAuthID(ctx context.Context, sessionID uint64, authID uint64) (*domain.UserSessionEntity, error) {
-	var session domain.UserSessionEntity
-	err := _db.DB.Where("session_id = ? and auth_id = ?", sessionID, authID).First(&session).Error
-	if err != nil {
-		return nil, err
-	}
-	return &session, nil
-}
-
-// GetByAuthID lấy session theo authID
-func (r *SessionPostgres) GetByAuthID(ctx context.Context, authID uint64) (*domain.UserSessionEntity, error) {
-	var session domain.UserSessionEntity
-	err := _db.DB.Where("auth_id = ?", authID).First(&session).Error
+func (r *SessionPostgres) GetBySessionIDAndAuthID(ctx context.Context, sessionID uint64, authID uint64) (*auth.UserSessionEntity, error) {
+	var session auth.UserSessionEntity
+	err := r.db.Where("session_id = ? and auth_id = ?", sessionID, authID).First(&session).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +43,9 @@ func (r *SessionPostgres) GetByAuthID(ctx context.Context, authID uint64) (*doma
 }
 
 // GetSessionsByAuthID lấy toàn bộ session theo authID
-func (r *SessionPostgres) GetSessionsByAuthIDWithoutSessionId(ctx context.Context, authID uint64, sessionID uint64) ([]*domain.UserSessionEntity, error) {
-	var sessions []*domain.UserSessionEntity
-	if err := _db.DB.WithContext(ctx).
+func (r *SessionPostgres) GetSessionsByAuthIDWithoutSessionId(ctx context.Context, authID uint64, sessionID uint64) ([]*auth.UserSessionEntity, error) {
+	var sessions []*auth.UserSessionEntity
+	if err := r.db.WithContext(ctx).
 		Where("auth_id = ? and logout_at is null and session_id != ?", authID, sessionID).
 		Find(&sessions).Error; err != nil {
 		return nil, err
@@ -64,26 +53,11 @@ func (r *SessionPostgres) GetSessionsByAuthIDWithoutSessionId(ctx context.Contex
 	return sessions, nil
 }
 
-// GetByDeviceAndAuthID lấy session theo deviceID và authID
-func (r *SessionPostgres) GetByDeviceAndAuthID(ctx context.Context, deviceID string, authID uint64) (*domain.UserSessionEntity, error) {
-	var session domain.UserSessionEntity
-	err := _db.DB.WithContext(ctx).
-		Where("device_id = ? AND auth_id = ?", deviceID, authID).
-		First(&session).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &session, nil
-}
-
 // CreateSession tạo mới session, nếu tồn tại deviceId + authId thì cập nhật, không thì tạo mới
-func (r *SessionPostgres) CreateSession(ctx context.Context, session *domain.UserSessionEntity) error {
-	var existing domain.UserSessionEntity
+func (r *SessionPostgres) CreateSession(ctx context.Context, session *auth.UserSessionEntity) error {
+	var existing auth.UserSessionEntity
 	now := time.Now()
-	err := _db.DB.
+	err := r.db.
 		Where("device_id = ? AND auth_id = ?", session.DeviceID, session.AuthID).
 		First(&existing).Error
 
@@ -106,59 +80,29 @@ func (r *SessionPostgres) CreateSession(ctx context.Context, session *domain.Use
 
 		session.SessionID = existing.SessionID
 
-		return _db.DB.Save(&existing).Error
+		return r.db.Save(&existing).Error
 	}
 
 	// Nếu không tìm thấy (gorm.ErrRecordNotFound), tạo mới
 	if err == gorm.ErrRecordNotFound {
-		return _db.DB.Create(session).Error
+		return r.db.Create(session).Error
 	}
 	// Nếu lỗi khác, trả về lỗi
 	return err
 }
 
 // UpdateSession cập nhật session
-func (r *SessionPostgres) UpdateSession(ctx context.Context, session *domain.UserSessionEntity) error {
-	return _db.DB.Save(session).Error
-}
-
-// DeleteSession xóa session
-func (r *SessionPostgres) DeleteSession(ctx context.Context, sessionID uint64) error {
-	return _db.DB.Where("session_id = ?", sessionID).Delete(&domain.UserSessionEntity{}).Error
-}
-
-// GetActiveSessionsByAuthID lấy danh sách session đang hoạt động theo authID
-func (r *SessionPostgres) GetActiveSessionsByAuthID(ctx context.Context, authID uint64) ([]*domain.UserSessionEntity, error) {
-	var sessions []*domain.UserSessionEntity
-	err := _db.DB.Where("auth_id = ? AND finished_date IS NULL", authID).Find(&sessions).Error
-	if err != nil {
-		return nil, err
-	}
-	return sessions, nil
-}
-
-// GetExpiredSessions lấy danh sách session đã hết hạn
-func (r *SessionPostgres) GetExpiredSessions(ctx context.Context, before time.Time) ([]*domain.UserSessionEntity, error) {
-	var sessions []*domain.UserSessionEntity
-	err := _db.DB.Where("created_at < ?", before).Find(&sessions).Error
-	if err != nil {
-		return nil, err
-	}
-	return sessions, nil
-}
-
-// CleanupExpiredSessions xóa các session đã hết hạn
-func (r *SessionPostgres) CleanupExpiredSessions(ctx context.Context, before time.Time) error {
-	return _db.DB.Where("created_at < ?", before).Delete(&domain.UserSessionEntity{}).Error
+func (r *SessionPostgres) UpdateSession(ctx context.Context, session *auth.UserSessionEntity) error {
+	return r.db.Save(session).Error
 }
 
 // GetLoginHistoryByAuthID lấy danh sách lịch sử đăng nhập theo authID với phân trang
-func (r *SessionPostgres) GetLoginHistoryByAuthID(ctx context.Context, authID uint64, page, size int32) ([]*domain.UserSessionEntity, int64, error) {
-	var sessions []*domain.UserSessionEntity
+func (r *SessionPostgres) GetLoginHistoryByAuthID(ctx context.Context, authID uint64, page, size int32) ([]*auth.UserSessionEntity, int64, error) {
+	var sessions []*auth.UserSessionEntity
 	var total int64
 
 	// Đếm tổng số bản ghi
-	if err := _db.DB.Model(&domain.UserSessionEntity{}).Where("auth_id = ?", authID).Count(&total).Error; err != nil {
+	if err := r.db.Model(&auth.UserSessionEntity{}).Where("auth_id = ?", authID).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -176,7 +120,7 @@ func (r *SessionPostgres) GetLoginHistoryByAuthID(ctx context.Context, authID ui
 	offset := (page - 1) * size
 
 	// Lấy dữ liệu với phân trang, sắp xếp theo thời gian tạo giảm dần (mới nhất lên đầu)
-	err := _db.DB.Where("auth_id = ?", authID).
+	err := r.db.Where("auth_id = ?", authID).
 		Order("created_date DESC").
 		Limit(int(size)).
 		Offset(int(offset)).
@@ -191,16 +135,16 @@ func (r *SessionPostgres) GetLoginHistoryByAuthID(ctx context.Context, authID ui
 
 // GetSessionsByProfile lấy danh sách session theo userID với phân trang
 // JOIN với auth_method để lọc theo user_id
-func (r *SessionPostgres) GetSessionsByProfile(ctx context.Context, userID uint64, pagable *_dto.Pagable) ([]*domain.UserSessionEntity, int64, error) {
-	var sessions []*domain.UserSessionEntity
+func (r *SessionPostgres) GetSessionsByProfile(ctx context.Context, userID uint64, pagable *_dto.Pagable) ([]*auth.UserSessionEntity, int64, error) {
+	var sessions []*auth.UserSessionEntity
 	var total int64
 
 	if pagable == nil {
 		pagable = &_dto.Pagable{}
 	}
 
-	baseQuery := _db.DB.WithContext(ctx).
-		Model(&domain.UserSessionEntity{}).
+	baseQuery := r.db.WithContext(ctx).
+		Model(&auth.UserSessionEntity{}).
 		Joins("INNER JOIN auth_method ON user_session.auth_id = auth_method.id").
 		Where("auth_method.user_id = ?", userID)
 
@@ -248,7 +192,7 @@ func (r *SessionPostgres) RecordUserActivity(ctx context.Context, profileID uint
 		CreatedAt: time.Now().UTC(),
 	}
 
-	return _db.DB.WithContext(ctx).
+	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "profile_id"}, {Name: "slot_at"}},
 			DoNothing: true,

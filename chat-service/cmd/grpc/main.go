@@ -15,7 +15,11 @@ func NewCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return server.NewGRPCServer(port).Start()
+			grpcServer, err := server.NewGRPCServer(port)
+			if err != nil {
+				return err
+			}
+			return grpcServer.Start()
 		},
 	}
 

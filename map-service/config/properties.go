@@ -1,16 +1,14 @@
 package config
 
 import (
-	"common"
+	"common/configloader"
 	_ "embed"
-	"log"
-	"map/env"
-	"os"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
 
-//go:embed config.yml
+//go:embed runtime.yml
 var EmbeddedConfig []byte
 
 // Properties holds all configuration properties
@@ -57,15 +55,15 @@ type KeyConfig struct {
 var AppConfig *Properties
 
 // LoadConfig đọc cấu hình từ file config.yml
-func LoadConfig() *Properties {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
-
-	AppConfig = &Properties{}
-	err := viper.Unmarshal(AppConfig)
-	if err != nil {
-		log.Fatalf("Error unmarshaling config: %v", err)
+func LoadConfig() (*Properties, error) {
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
+		return nil, fmt.Errorf("load map runtime config: %w", err)
 	}
 
-	return AppConfig
+	AppConfig = &Properties{}
+	if err := viper.Unmarshal(AppConfig); err != nil {
+		return nil, fmt.Errorf("parse map runtime config: %w", err)
+	}
+
+	return AppConfig, nil
 }

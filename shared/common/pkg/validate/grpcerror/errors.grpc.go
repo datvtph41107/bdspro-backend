@@ -50,5 +50,5 @@ func From(err error) error {
 		return FromValidation(ve)
 	}
 	// Error thông thường → Internal
-	return status.Errorf(codes.Internal, err.Error())
+	return status.Error(codes.Internal, err.Error())
 }

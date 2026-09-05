@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package tqdpb;
+
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// AdminUsageService projects TQD-owned durable accounting and Redis runtime
+// quota state. It provides no endpoint that directly mutates Redis counters.
+service AdminUsageService {
+  rpc ListUsage(ListAdminUsageRequest) returns (ListAdminUsageResponse) {
+    option (google.api.http) = { get: "/v2/tqd/admin/commercial/usage" };
+  }
+
+  // ReconcileUsage asks the TQD owner to compare PostgreSQL durable usage with
+  // the Redis runtime projection. It never accepts a replacement counter.
+  rpc ReconcileUsage(ReconcileAdminUsageRequest) returns (ReconcileAdminUsageResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/commercial/usage:reconcile"
+      body: "*"
+    };
+  }
+
+  // ListGeneratedReports exposes TQD-owned report/job/file evidence. It is
+  // read-only: recovery remains with the report worker and File-service.
+  rpc ListGeneratedReports(ListAdminGeneratedReportsRequest) returns (ListAdminGeneratedReportsResponse) {
+    option (google.api.http) = { get: "/v2/tqd/admin/commercial/generated-reports" };
+  }
+}
+
+// ProfileUsageService exposes the authenticated actor's generated-report
+// usage. The operation and amount are fixed by the server.
+service ProfileUsageService {
+  rpc GetMyGeneratedReportUsage(GetMyGeneratedReportUsageRequest) returns (ProfileUsageProjection) {
+    option (google.api.http) = { get: "/v2/tqd/commercial/generated-report-usage" };
+  }
+}
+
+message ListAdminUsageRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  uint64 profile_id = 3;
+  string operation = 4;
+  string meter_code = 5;
+}
+
+message ListAdminUsageResponse {
+  repeated AdminUsageProjection usage = 1;
+  uint64 total = 2;
+  uint32 page = 3;
+  uint32 page_size = 4;
+}
+
+message AdminUsageProjection {
+  string subject_type = 1;
+  string subject_id = 2;
+  string operation = 3;
+  string meter_code = 4;
+  int64 durable_used = 5;
+  int64 runtime_used = 6;
+  int64 runtime_reserved = 7;
+  int64 remaining_projection = 8;
+  bool limit_known = 9;
+  int64 limit_snapshot = 10;
+  google.protobuf.Timestamp period_start = 11;
+  google.protobuf.Timestamp period_end = 12;
+  uint64 subscription_id = 13;
+  string plan_code = 14;
+  string plan_version = 15;
+  string policy_version = 16;
+  bool runtime_projection_available = 17;
+  string reconciliation_health = 18;
+  google.protobuf.Timestamp last_usage_at = 19;
+}
+
+message ReconcileAdminUsageRequest {
+  uint64 profile_id = 1;
+  string meter_code = 2;
+  google.protobuf.Timestamp period_start = 3;
+  google.protobuf.Timestamp period_end = 4;
+}
+
+message ReconcileAdminUsageResponse {
+  int64 durable_used = 1;
+  int64 previous_runtime_used = 2;
+  int64 runtime_reserved = 3;
+  bool fixed = 4;
+  string reconciliation_health = 5;
+}
+
+message ListAdminGeneratedReportsRequest {
+  uint32 page = 1;
+  uint32 page_size = 2;
+  uint64 profile_id = 3;
+  uint32 status = 4;
+  string job_status = 5;
+}
+
+message ListAdminGeneratedReportsResponse {
+  repeated AdminGeneratedReportProjection reports = 1;
+  uint64 total = 2;
+  uint32 page = 3;
+  uint32 page_size = 4;
+}
+
+message AdminGeneratedReportProjection {
+  uint64 report_id = 1;
+  uint64 profile_id = 2;
+  uint32 report_type = 3;
+  uint32 status = 4;
+  string title = 5;
+  string subtitle = 6;
+  uint64 parcel_id = 7;
+  uint64 region_id = 8;
+  string format = 9;
+  string thumbnail_url = 10;
+  string image_url = 11;
+  string pdf_url = 12;
+  string share_url = 13;
+  uint64 file_size = 14;
+  string error_message = 15;
+  string job_id = 16;
+  string job_status = 17;
+  int32 job_attempts = 18;
+  string job_locked_by = 19;
+  int64 job_claim_version = 20;
+  string job_last_error = 21;
+  google.protobuf.Timestamp job_available_at = 22;
+  google.protobuf.Timestamp created_at = 23;
+  google.protobuf.Timestamp updated_at = 24;
+  google.protobuf.Timestamp expires_at = 25;
+}
+
+message GetMyGeneratedReportUsageRequest {}
+
+message ProfileUsageProjection {
+  string operation = 1;
+  bool allowed = 2;
+  bool unlimited = 3;
+  string feature_code = 4;
+  string meter_code = 5;
+  bool limit_known = 6;
+  int64 limit = 7;
+  int64 durable_used = 8;
+  int64 runtime_used = 9;
+  int64 runtime_reserved = 10;
+  int64 remaining = 11;
+  bool runtime_projection_available = 12;
+  string reconciliation_health = 13;
+  google.protobuf.Timestamp period_start = 14;
+  google.protobuf.Timestamp period_end = 15;
+  uint64 subscription_id = 16;
+  string plan_code = 17;
+  string plan_version = 18;
+  string policy_version = 19;
+}

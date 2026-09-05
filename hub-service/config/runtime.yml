@@ -1,0 +1,51 @@
+# Base URL local cho deep link.
+applink:
+  base_url: "http://localhost:8000/app/link/"
+
+server:
+  name: hub-service
+  http_port: 8030
+  tcp_port: 8280
+
+rpc:
+  bdspro:
+    address: "localhost:8202"
+  notification:
+    address: "localhost:8204"
+  user:
+    address: "localhost:8201"
+
+database:
+  host: localhost
+  port: 5432
+  name: hub_service
+  user: postgres
+  password: "postgres"
+  dsn: "postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable"
+
+jwt:
+  key-generate: ""
+  tokenPrefix: "Bearer "
+  tokenExpirationAfterDays: 7
+  accessExpAfterMinutes: 60
+  refreshExpAfterMinutes: 43200
+  authorizationHeader: "Authorization"
+  listPermit:
+    - "/v2/hub/event-queue/list"
+    - "/v2/hub/event-queue/detail"
+
+security:
+  api_key: ""
+  protected_methods:
+    - "/hubpb.VersionService/CreateVersionFromDev"
+
+redis:
+  host: localhost:6379
+  pass: ""
+
+config-app:
+  qhpro:
+    - domain_api: "http://localhost:8000"
+    - domain_file: "http://localhost:8002"
+    - domain_pmtile: "http://localhost:8002"
+    - domain_style: "http://localhost:8002"

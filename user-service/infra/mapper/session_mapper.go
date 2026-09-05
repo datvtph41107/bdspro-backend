@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 )
 
@@ -18,7 +18,7 @@ func NewSessionMapper() *SessionMapper {
 }
 
 // MapSessionToLoginHistoryItem chuyển đổi UserSessionEntity sang LoginHistoryItem
-func (m *SessionMapper) MapSessionToLoginHistoryItem(session *domain.UserSessionEntity) *dto.LoginHistoryItem {
+func (m *SessionMapper) MapSessionToLoginHistoryItem(session *auth.UserSessionEntity) *dto.LoginHistoryItem {
 	if session == nil {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (m *SessionMapper) MapSessionToLoginHistoryItem(session *domain.UserSession
 }
 
 // MapSessionToLoginHistoryItemPb chuyển đổi UserSessionEntity sang LoginHistoryItem protobuf
-func (m *SessionMapper) MapSessionToLoginHistoryItemPb(session *domain.UserSessionEntity) *authpb.LoginHistoryItem {
+func (m *SessionMapper) MapSessionToLoginHistoryItemPb(session *auth.UserSessionEntity) *authpb.LoginHistoryItem {
 	if session == nil {
 		return nil
 	}
@@ -84,7 +84,7 @@ func (m *SessionMapper) MapSessionToLoginHistoryItemPb(session *domain.UserSessi
 }
 
 // MapSessionsToLoginHistoryList chuyển đổi danh sách UserSessionEntity sang danh sách LoginHistoryItem
-func (m *SessionMapper) MapSessionsToLoginHistoryList(sessions []*domain.UserSessionEntity) []dto.LoginHistoryItem {
+func (m *SessionMapper) MapSessionsToLoginHistoryList(sessions []*auth.UserSessionEntity) []dto.LoginHistoryItem {
 	if sessions == nil {
 		return []dto.LoginHistoryItem{}
 	}
@@ -100,7 +100,7 @@ func (m *SessionMapper) MapSessionsToLoginHistoryList(sessions []*domain.UserSes
 }
 
 // MapSessionsToLoginHistoryListPb chuyển đổi danh sách UserSessionEntity sang danh sách LoginHistoryItem protobuf
-func (m *SessionMapper) MapSessionsToLoginHistoryListPb(sessions []*domain.UserSessionEntity) []*authpb.LoginHistoryItem {
+func (m *SessionMapper) MapSessionsToLoginHistoryListPb(sessions []*auth.UserSessionEntity) []*authpb.LoginHistoryItem {
 	if sessions == nil {
 		return []*authpb.LoginHistoryItem{}
 	}
@@ -116,7 +116,7 @@ func (m *SessionMapper) MapSessionsToLoginHistoryListPb(sessions []*domain.UserS
 }
 
 // MapSessionToSessionV3Proto chuyển đổi UserSessionEntity sang SessionV3Proto
-func (m *SessionMapper) MapSessionToSessionV3Proto(session *domain.UserSessionEntity) *sharepb.SessionV3Proto {
+func (m *SessionMapper) MapSessionToSessionV3Proto(session *auth.UserSessionEntity) *sharepb.SessionV3Proto {
 	if session == nil {
 		return nil
 	}
@@ -169,7 +169,7 @@ func (m *SessionMapper) MapSessionToSessionV3Proto(session *domain.UserSessionEn
 }
 
 // MapSessionsToSessionV3ProtoList chuyển đổi danh sách UserSessionEntity sang danh sách SessionV3Proto
-func (m *SessionMapper) MapSessionsToSessionV3ProtoList(sessions []*domain.UserSessionEntity) []*sharepb.SessionV3Proto {
+func (m *SessionMapper) MapSessionsToSessionV3ProtoList(sessions []*auth.UserSessionEntity) []*sharepb.SessionV3Proto {
 	if sessions == nil {
 		return []*sharepb.SessionV3Proto{}
 	}

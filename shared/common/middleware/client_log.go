@@ -1,7 +1,8 @@
 package _middleware
 
 import (
-	_transporttrust "common/transporttrust"
+	_rpc "common/rpc"
+	_rpcenv "common/rpcenv"
 
 	"context"
 	"errors"
@@ -23,13 +24,13 @@ func UnaryClientInterceptor(
 	opts ...grpc.CallOption,
 ) error {
 	return unaryClientInterceptorWithTrust(
-		_transporttrust.ConfigFromEnv(),
+		_rpcenv.LoadTransportConfig(),
 		ctx, method, req, reply, cc, invoker, opts...,
 	)
 }
 
 func unaryClientInterceptorWithTrust(
-	trustConfig _transporttrust.Config,
+	transportConfig _rpc.TransportConfig,
 	ctx context.Context,
 	method string,
 	req, reply interface{},
@@ -39,7 +40,7 @@ func unaryClientInterceptorWithTrust(
 ) error {
 	start := time.Now()
 
-	outgoingCtx, err := outgoingContextWithTrust(trustConfig, ctx, method)
+	outgoingCtx, err := outgoingContextWithTrust(transportConfig, ctx, method)
 	if err != nil {
 		return err
 	}
@@ -61,13 +62,13 @@ func StreamClientInterceptor(
 	opts ...grpc.CallOption,
 ) (grpc.ClientStream, error) {
 	return streamClientInterceptorWithTrust(
-		_transporttrust.ConfigFromEnv(),
+		_rpcenv.LoadTransportConfig(),
 		ctx, desc, cc, method, streamer, opts...,
 	)
 }
 
 func streamClientInterceptorWithTrust(
-	trustConfig _transporttrust.Config,
+	transportConfig _rpc.TransportConfig,
 	ctx context.Context,
 	desc *grpc.StreamDesc,
 	cc *grpc.ClientConn,
@@ -77,7 +78,7 @@ func streamClientInterceptorWithTrust(
 ) (grpc.ClientStream, error) {
 	start := time.Now()
 
-	outgoingCtx, err := outgoingContextWithTrust(trustConfig, ctx, method)
+	outgoingCtx, err := outgoingContextWithTrust(transportConfig, ctx, method)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func streamClientInterceptorWithTrust(
 }
 
 func outgoingContextWithTrust(
-	trustConfig _transporttrust.Config,
+	transportConfig _rpc.TransportConfig,
 	ctx context.Context,
 	method string,
 ) (context.Context, error) {
@@ -101,11 +102,15 @@ func outgoingContextWithTrust(
 		mergedMD.Set(key, values...)
 	}
 
-	if err := _transporttrust.Sign(method, mergedMD, trustConfig); err != nil {
-		if trustConfig.Mode == _transporttrust.ModeEnforce {
+	if err := _rpc.SignServiceAssertion(
+		method,
+		mergedMD,
+		transportConfig.ServiceAssertion,
+	); err != nil {
+		if transportConfig.RequireServiceAssertion {
 			return nil, status.Error(codes.FailedPrecondition, "internal metadata signing is unavailable")
 		}
-		if !errors.Is(err, _transporttrust.ErrNotConfigured) {
+		if !errors.Is(err, _rpc.ErrServiceAssertionNotConfigured) {
 			log.Printf("[gRPC Client] Trusted metadata signing skipped: %v", err)
 		}
 	}

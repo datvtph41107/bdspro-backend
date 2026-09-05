@@ -21,6 +21,24 @@ service InternalOrganizationService {
     rpc AddProductToDeal(AddProductToDealRequest) returns (sharepb.SubmitResponse);
     rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
     rpc GetBranchMembers(GetBranchMembersRequest) returns (GetBranchMemberByIdsResponse);
+    // Organization service là owner duy nhất quyết định quyền của thành viên
+    // trong tổ chức. Service gọi không tự suy diễn từ global role trong token.
+    rpc AuthorizeOrganizationAction(AuthorizeOrganizationActionRequest) returns (AuthorizeOrganizationActionResponse);
+}
+
+enum OrganizationAction {
+    ORGANIZATION_ACTION_UNSPECIFIED = 0;
+    ORGANIZATION_ACTION_SUBSCRIPTION_CHECKOUT = 1;
+}
+
+message AuthorizeOrganizationActionRequest {
+    uint64 organization_id = 1 [json_name = "organizationId"];
+    uint64 actor_profile_id = 2 [json_name = "actorProfileId"];
+    OrganizationAction action = 3 [json_name = "action"];
+}
+
+message AuthorizeOrganizationActionResponse {
+    bool allowed = 1 [json_name = "allowed"];
 }
 
 message GetOrganizationByIdsRequest {

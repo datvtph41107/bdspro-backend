@@ -11,8 +11,6 @@ import (
 	"tqd/internal/enums"
 	"tqd/internal/interface/provider"
 	"tqd/internal/interface/repo"
-
-	"github.com/spf13/viper"
 )
 
 // classifyPromptFilenameTemplate — phân loại chỉ dựa tên file / path / đuôi (fallback).
@@ -63,6 +61,12 @@ const (
 	defaultMaxInlineBytes = 15 << 20 // 15MB
 )
 
+// ClassifyPolicy is process-owned configuration injected into the business usecase.
+type ClassifyPolicy struct {
+	ReadContent    bool
+	MaxInlineBytes int
+}
+
 // classifyResult — kết quả JSON Gemini trả về, parse từ content thô.
 type classifyResult struct {
 	DocumentType string  `json:"documentType"`
@@ -76,6 +80,7 @@ type classifyResult struct {
 // để phân loại DocumentType, cập nhật trạng thái tài liệu/đồ án. Được gọi lặp lại bởi 1 worker định kỳ.
 type IQHPlanningClassifyUsecase interface {
 	RunOnce(ctx context.Context, batchSize int) (int, error)
+	Close() error
 }
 
 type qhPlanningClassifyUsecase struct {
@@ -84,6 +89,7 @@ type qhPlanningClassifyUsecase struct {
 	aiJobRepo    repo.IProAIJobRepo
 	assistant    provider.AssistantProvider
 	fileProvider provider.FileProvider
+	policy       ClassifyPolicy
 }
 
 // NewQHPlanningClassifyUsecase @bind: internal/usecase/qh.IQHPlanningClassifyUsecase
@@ -93,6 +99,7 @@ func NewQHPlanningClassifyUsecase(
 	aiJobRepo repo.IProAIJobRepo,
 	assistant provider.AssistantProvider,
 	fileProvider provider.FileProvider,
+	policy ClassifyPolicy,
 ) IQHPlanningClassifyUsecase {
 	return &qhPlanningClassifyUsecase{
 		documentRepo: documentRepo,
@@ -100,7 +107,22 @@ func NewQHPlanningClassifyUsecase(
 		aiJobRepo:    aiJobRepo,
 		assistant:    assistant,
 		fileProvider: fileProvider,
+		policy:       normalizeClassifyPolicy(policy),
 	}
+}
+
+func normalizeClassifyPolicy(policy ClassifyPolicy) ClassifyPolicy {
+	if policy.MaxInlineBytes <= 0 {
+		policy.MaxInlineBytes = defaultMaxInlineBytes
+	}
+	return policy
+}
+
+func (u *qhPlanningClassifyUsecase) Close() error {
+	if u == nil || u.assistant == nil {
+		return nil
+	}
+	return u.assistant.Close()
 }
 
 func (u *qhPlanningClassifyUsecase) RunOnce(ctx context.Context, batchSize int) (int, error) {
@@ -167,10 +189,7 @@ func (u *qhPlanningClassifyUsecase) classifyOne(ctx context.Context, doc *qh_dom
 		return
 	}
 
-	readContent := true
-	if viper.IsSet("qh_planning_classify.read_content") {
-		readContent = viper.GetBool("qh_planning_classify.read_content")
-	}
+	readContent := u.policy.ReadContent
 
 	mimeType, readable := mimeTypeForExt(ext)
 	var (
@@ -184,10 +203,7 @@ func (u *qhPlanningClassifyUsecase) classifyOne(ctx context.Context, doc *qh_dom
 
 	if readContent && readable && doc.Filepath != "" {
 		fileBytes, err = u.fileProvider.GetFile(ctx, doc.Filepath)
-		maxInline := viper.GetInt("qh_planning_classify.max_inline_bytes")
-		if maxInline <= 0 {
-			maxInline = defaultMaxInlineBytes
-		}
+		maxInline := u.policy.MaxInlineBytes
 		if err != nil {
 			log.Printf("[QHPlanningClassify] GetFile document %d lỗi, fallback filename: %v", doc.ID, err)
 		} else if len(fileBytes) > maxInline {

@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"organization/env"
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	organizationpb "pb/types/organization"
@@ -17,11 +16,8 @@ type BdsproClient struct {
 	*clients.BdsproGrpcClient
 }
 
-func NewBdsproClient() *BdsproClient {
-	bdsproClient := &BdsproClient{
-		BdsproGrpcClient: clients.MakeBdsproGrpcClient(env.ENV_RUNTIME),
-	}
-	return bdsproClient
+func NewBdsproClient(rpcClient *clients.BdsproGrpcClient) *BdsproClient {
+	return &BdsproClient{BdsproGrpcClient: rpcClient}
 }
 
 func (c *BdsproClient) MapProductToDealPb(ctx context.Context, deals []*organizationpb.GroupDeal) {

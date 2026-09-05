@@ -2,9 +2,10 @@ package handler
 
 import (
 	"assistant/internal/dto"
-	"assistant/internal/interface/provider"
 	"assistant/internal/usecases"
 	"context"
+	"os"
+	"strings"
 	"time"
 
 	assistantpb "pb/types/assistant"
@@ -16,16 +17,14 @@ import (
 
 type AssistantHandler struct {
 	assistantpb.UnimplementedAssistantServiceServer
-	Usecase      *usecases.AssistantUsecase
-	FileProvider provider.FileProvider
-	StartTime    time.Time
+	Usecase   *usecases.AssistantUsecase
+	StartTime time.Time
 }
 
-func NewAssistantHandler(usecase *usecases.AssistantUsecase, fileProvider provider.FileProvider) *AssistantHandler {
+func NewAssistantHandler(usecase *usecases.AssistantUsecase) *AssistantHandler {
 	return &AssistantHandler{
-		Usecase:      usecase,
-		FileProvider: fileProvider,
-		StartTime:    time.Now(),
+		Usecase:   usecase,
+		StartTime: time.Now(),
 	}
 }
 
@@ -229,11 +228,15 @@ func (h *AssistantHandler) GenerateContent(ctx context.Context, req *assistantpb
 // @Router /v2/assistant/health [get]
 func (h *AssistantHandler) Health(ctx context.Context, req *assistantpb.HealthRequest) (*assistantpb.HealthResponse, error) {
 	uptime := int64(time.Since(h.StartTime).Seconds())
+	providerStatus := strings.ToLower(strings.TrimSpace(os.Getenv("QHPRO_AI_PROVIDER_MODE")))
+	if providerStatus == "" {
+		providerStatus = "live"
+	}
 
 	checks := map[string]string{
-		"deepseek_client": "healthy",
-		"openai_client":   "healthy",
-		"gemini_client":   "healthy",
+		"deepseek_client": providerStatus,
+		"openai_client":   providerStatus,
+		"gemini_client":   providerStatus,
 		"service":         "healthy",
 	}
 

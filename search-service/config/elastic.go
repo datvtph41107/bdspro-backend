@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -11,7 +11,7 @@ import (
 
 var ES *elasticsearch.Client
 
-func InitElastic() {
+func InitElastic() error {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			AppProperties.Elastic.Search.Url,
@@ -30,7 +30,8 @@ func InitElastic() {
 	}
 	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		log.Fatalf("Error creating the client: %s", err)
+		return fmt.Errorf("create Elasticsearch client: %w", err)
 	}
 	ES = es
+	return nil
 }

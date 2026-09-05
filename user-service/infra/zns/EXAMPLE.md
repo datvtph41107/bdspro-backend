@@ -6,7 +6,7 @@ Khi gọi refresh token API, bạn sẽ nhận được response như sau:
 
 ```json
 {
-    "access_token": "RRoFMY3vhLDil81HA_QkKcQu",
+    "access_token": "EXAMPLE_ACCESS_TOKEN",
     "refresh_token": "_JwjE4t_VdRyFg8pHl1zT_OwhprCx2nrcLoEE5IL",
     "expires_in": "90000"
 }
@@ -108,7 +108,7 @@ func main() {
     ctx := context.Background()
     
     // Response tokens từ Zalo API
-    accessToken := "RRoFMY3vhLDil81HA_QkKcQuZLyXwlfKFCw90d7zvWrs..."
+    accessToken := "EXAMPLE_ACCESS_TOKEN"
     refreshToken := "_JwjE4t_VdRyFg8pHl1zT_OwhprCx2nrcLoEE5ILL2gn..."
     
     // Update vào service

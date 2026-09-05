@@ -1,20 +1,24 @@
 package config
 
 import (
-	"auth/env"
-	"common"
-	"log"
-	"os"
+	"common/configloader"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
 
-// LoadProperties đọc cấu hình từ file config.yml
-func LoadProperties() {
-	env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-	common.LoadYMLConfigFile(env.ENV_RUNTIME)
+// LoadProperties reads Auth configuration and returns startup failures to the process owner.
+func LoadProperties() error {
+	_, err := configloader.LoadRuntimeYML()
+	if err != nil {
+		return err
+	}
+	// YAML chỉ giữ topology/default không nhạy cảm. Secret và override của từng
+	// môi trường được Viper đọc từ biến môi trường tại process boundary này.
 
 	if err := viper.Unmarshal(&Properties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		return fmt.Errorf("parse auth properties: %w", err)
 	}
+
+	return nil
 }

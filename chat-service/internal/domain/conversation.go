@@ -2,25 +2,26 @@ package domain
 
 import (
 	"chat/internal/enums"
-	"time"
-
+	_models "common/domain/entity"
 	"github.com/lib/pq"
+	"time"
 )
 
 type Conversation struct {
-	ID              uint64                 `gorm:"primaryKey;autoIncrement"`
-	Type            enums.ConversationType `gorm:"type:smallint;not null;index"`
-	Name            *string                `gorm:"type:varchar(255);index"`
-	Status          enums.Status           `gorm:"type:smallint;not null;index;default:1"`
-	AvartarURL      *string                `gorm:"type:varchar(255)"`
-	Theme           *string                `gorm:"type:varchar(100)"`
-	EmotIcon        *string                `gorm:"type:varchar(50)"`  // owner
-	ReferralLink    *string                `gorm:"type:varchar(255)"` // link tham gia nhóm
-	QrReferralImage *string                `gorm:"type:varchar(255)"`
-	EnableApproval  bool                   `gorm:"not null;default:false"` // phê duyệt tham gia
-	CreatedBy       uint64                 `gorm:"not null;index"`         // Owner
-	CreatedAt       time.Time              `gorm:"not null;autoCreateTime"`
-	UpdatedAt       time.Time              `gorm:"not null;autoUpdateTime"`
+	_models.BaseEntity
+	Type              enums.ConversationType `gorm:"type:smallint;not null;index"`
+	Name              *string                `gorm:"type:varchar(255);index"`
+	CreatedBy         uint64                 `gorm:"not null;index"`
+	ReceiverId        *uint64                `gorm:"column:receiver_id"`
+	IsBroadcast       bool                   `gorm:"default:false;column:is_broadcast"`
+	ForbidForward     bool                   `gorm:"default:false;column:forbid_forward"`
+	Avatar            string                 `gorm:"size:255"`
+	BackgroundImage   *BackgroundImage       `gorm:"foreignKey:BackgroundImageID;references:ID"`
+	BackgroundImageID *uint64                `gorm:"column:background_image_id"`
+	Participants      []Participant          `gorm:"foreignKey:ConversationID;references:ID"`
+	UnreadCount       int                    `gorm:"-"`
+	LatestMessage     Message                `gorm:"-"`
+	ParticipantIDs    []uint64               `gorm:"-"`
 }
 
 func (Conversation) TableName() string {
@@ -29,11 +30,23 @@ func (Conversation) TableName() string {
 
 type ConversationWithMessage struct {
 	Conversation
-	LatestMessageID        uint64
-	LatestMessageType      uint32
-	LatestMessageContent   *string
-	LatestMessageSenderID  *uint64
-	LatestMessageCreatedAt time.Time
-	UnreadCount            int
-	ParticipantIDs         pq.Int64Array `gorm:"type:bigint[]"`
+	LatestMessageID          uint64
+	LatestMessageContent     string
+	LatestMessageContentType string
+	LatestMessageFileURL     *string
+	LatestMessageForwardFrom *uint64
+	LatestMessageSenderID    uint64
+	LatestMessageCreatedAt   time.Time
+	LatestMessageDeletedAt   *time.Time
+	LatestMessagePined       bool
+	LatestMessageRecall      bool
+	UnreadCount              int
+	ParticipantIDs           pq.Int64Array `gorm:"type:bigint[]"`
 }
+
+type ConversationTypeEnum = enums.ConversationType
+
+const (
+	ConversationTypePrivate = enums.CONVERSATION_TYPE_PRIVATE
+	ConversationTypeGroup   = enums.CONVERSATION_TYPE_GROUP
+)

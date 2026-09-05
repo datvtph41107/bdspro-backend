@@ -19,7 +19,7 @@ source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
 
 # 4. Configure
-cp env.example .env
+# ai-service/.env đã là file runtime duy nhất; điền OPENAI_API_KEY nếu cần.
 # Edit .env: Thêm OPENAI_API_KEY
 
 # 5. Embed context (first time only - ~30 seconds)
@@ -291,4 +291,3 @@ ask "Repository pattern là gì?"
 ---
 
 **🎉 Done! Giờ bạn có AI assistant riêng cho BDSPro!**
-

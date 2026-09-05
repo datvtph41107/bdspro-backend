@@ -2,20 +2,20 @@ package job
 
 import (
 	"context"
-	"payment/internal/domain/entity"
-	"payment/internal/usecase"
+	"payment/internal/domain/wallet"
+	walletuc "payment/internal/usecase/wallet"
 	"time"
 
 	"github.com/robfig/cron/v3"
 )
 
 type TransactionDashboardJob struct {
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase walletuc.PaymentUsecase
 	cronJob        *cron.Cron
 }
 
 func NewTransactionDashboardJob(
-	paymentUsecase usecase.PaymentUsecase,
+	paymentUsecase walletuc.PaymentUsecase,
 ) *TransactionDashboardJob {
 	return &TransactionDashboardJob{
 		paymentUsecase: paymentUsecase,
@@ -23,7 +23,7 @@ func NewTransactionDashboardJob(
 	}
 }
 func (j *TransactionDashboardJob) Run(ctx context.Context) error {
-	j.cronJob.AddFunc("0 0 * * *", func() {
+	_, err := j.cronJob.AddFunc("0 0 * * *", func() {
 		processingCount, err := j.paymentUsecase.CountProcessingTransactions(ctx)
 		if err != nil {
 			return
@@ -32,7 +32,7 @@ func (j *TransactionDashboardJob) Run(ctx context.Context) error {
 		if err != nil {
 			return
 		}
-		err = j.paymentUsecase.CreateOrUpdateDashboardMetric(ctx, &entity.DashboardMetric{
+		err = j.paymentUsecase.CreateOrUpdateDashboardMetric(ctx, &wallet.DashboardMetric{
 			Time:            time.Now(),
 			ProcessingCount: uint64(processingCount),
 			CompletedCount:  uint64(completedCount),
@@ -41,6 +41,12 @@ func (j *TransactionDashboardJob) Run(ctx context.Context) error {
 			return
 		}
 	})
+	if err != nil {
+		return err
+	}
 	j.cronJob.Start()
+	<-ctx.Done()
+	stopCtx := j.cronJob.Stop()
+	<-stopCtx.Done()
 	return nil
 }

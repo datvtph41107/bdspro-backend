@@ -346,11 +346,9 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 		}
 	}
 
-	// Tự động generate password nếu không có (8 ký tự random)
 	password := req.Password
 	if password == "" {
-		// TODO: Gửi password này qua email cho user
-		password = "Admin@123" // Default password - nên thay đổi sau
+		return nil, _errors.ReturnError(int32(400), "Mật khẩu là bắt buộc")
 	}
 
 	// Tạo auth method trong auth service

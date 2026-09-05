@@ -4,15 +4,15 @@ import "time"
 
 // UserProfileDTO represents user profile data
 type UserProfileDTO struct {
-	ID           uint64    `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	FullName     string    `json:"full_name"`
-	Avatar       string    `json:"avatar"`
-	Phone        string    `json:"phone"`
-	IsActive     bool      `json:"is_active"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID        uint64    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	FullName  string    `json:"full_name"`
+	Avatar    string    `json:"avatar"`
+	Phone     string    `json:"phone"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // UserInfoDTO represents basic user information

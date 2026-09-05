@@ -41,11 +41,17 @@ func (OrganizationMemberModel) TableName() string {
 }
 
 func OrganizationMemberModelToEntity(model *OrganizationMemberModel) *entity.OrganizationMember {
+	roleID := model.RoleId
+	if roleID == 0 {
+		// `role` là cột production legacy. Đồng bộ đọc giúp dữ liệu cũ tiếp tục
+		// chạy trong khi mọi write mới luôn ghi cả role và role_id.
+		roleID = uint64(model.Role)
+	}
 	return &entity.OrganizationMember{
 		ID:             model.ID,
 		OrganizationID: model.OrganizationID,
 		UserID:         uint64(model.UserID),
-		RoleId:         uint64(model.RoleId),
+		RoleId:         roleID,
 		RoleKey:        model.RoleKey,
 		Status:         entity.OrganizationMemberStatus(model.Status),
 		JoinedAt:       model.JoinedAt,
@@ -144,12 +150,25 @@ func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationIdWith
 }
 
 func (r *OrganizationMemberPostgresRepository) FindByUserIdAndOrganizationId(ctx context.Context, userId, organizationId uint32) (*entity.OrganizationMember, error) {
-	var organizationMemberModel *OrganizationMemberModel
-	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_id = ? AND is_deleted = ?", userId, organizationId, false).First(&organizationMemberModel).Error
+	return r.findByUserIDAndOrganizationID(ctx, uint64(userId), organizationId)
+}
+
+// FindByUserIDAndOrganizationID giữ nguyên profile ID 64-bit cho các RPC
+// internal mới; method legacy uint32 phía trên vẫn còn để không phá contract.
+func (r *OrganizationMemberPostgresRepository) FindByUserIDAndOrganizationID(ctx context.Context, userID uint64, organizationID uint32) (*entity.OrganizationMember, error) {
+	return r.findByUserIDAndOrganizationID(ctx, userID, organizationID)
+}
+
+func (r *OrganizationMemberPostgresRepository) findByUserIDAndOrganizationID(ctx context.Context, userID uint64, organizationID uint32) (*entity.OrganizationMember, error) {
+	var organizationMemberModel OrganizationMemberModel
+	err := r.db.WithContext(ctx).Where("user_id = ? AND organization_id = ? AND is_deleted = ?", userID, organizationID, false).First(&organizationMemberModel).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	return OrganizationMemberModelToEntity(organizationMemberModel), nil
+	return OrganizationMemberModelToEntity(&organizationMemberModel), nil
 }
 
 func (r *OrganizationMemberPostgresRepository) CreateOrganizationMember(ctx context.Context, organizationMember *entity.OrganizationMember) (*entity.OrganizationMember, error) {

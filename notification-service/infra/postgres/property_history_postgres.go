@@ -7,7 +7,7 @@ import (
 
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
+	usecase "notification/internal/usecase"
 
 	"gorm.io/gorm"
 )
@@ -16,7 +16,7 @@ type propertyHistoryPostgres struct {
 	db *gorm.DB
 }
 
-func NewActivityHistoryPostgres(db *gorm.DB) repo.PropertyHistoryRepo {
+func NewActivityHistoryPostgres(db *gorm.DB) usecase.PropertyHistoryStore {
 	return &propertyHistoryPostgres{db: db}
 }
 

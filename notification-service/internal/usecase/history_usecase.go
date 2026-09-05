@@ -4,16 +4,15 @@ import (
 	"context"
 	"notification/internal/domain"
 	"notification/internal/dto"
-	"notification/internal/repo"
-	shared_dto "pb/dto"
+		shared_dto "pb/dto"
 	shared_enum "pb/enums"
 )
 
 type HistoryUsecase struct {
-	historyRepo repo.HistoryRepo
+	historyRepo HistoryStore
 }
 
-func NewHistoryUsecase(historyRepo repo.HistoryRepo) *HistoryUsecase {
+func NewHistoryUsecase(historyRepo HistoryStore) *HistoryUsecase {
 	return &HistoryUsecase{
 		historyRepo: historyRepo,
 	}

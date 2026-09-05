@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bdspro/env"
 	"context"
 	clients "pb/clients"
 	bdspropb "pb/types/bdspro"
@@ -14,10 +13,8 @@ type UserClient struct {
 	*clients.UserGrpcClient
 }
 
-func NewUserClient() *UserClient {
-	return &UserClient{
-		UserGrpcClient: clients.MakeUserGrpcClient(env.ENV_RUNTIME),
-	}
+func NewUserClient(rpcClient *clients.UserGrpcClient) *UserClient {
+	return &UserClient{UserGrpcClient: rpcClient}
 }
 
 // todo: thêm thông tin user vào lịch sử

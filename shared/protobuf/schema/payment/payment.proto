@@ -416,18 +416,18 @@ message DeleteTransactionTypeRequest {
 }
 
 message SepayWebhookRequest {
-  string Gateway = 1;
-  string TransactionDate = 2;
-  string AccountNumber = 3;
-  string SubAccount = 4;
-  string Code = 5;
-  string Content = 6;
-  string TransferType = 7;
-  string Description = 8;
-  double TransferAmount = 9;
-  string ReferenceCode = 10;
-  double Accumulated = 11;
-  uint32 Id = 12;
+  string gateway = 1;
+  string transaction_date = 2;
+  string account_number = 3;
+  string sub_account = 4;
+  string code = 5;
+  string content = 6;
+  string transfer_type = 7;
+  string description = 8;
+  double transfer_amount = 9;
+  string reference_code = 10;
+  double accumulated = 11;
+  uint32 id = 12;
 }
 
 message GetDashboardMetricsRequest {
@@ -444,4 +444,3 @@ message DashboardMetric {
 message GetDashboardMetricsResponse {
   repeated DashboardMetric data = 1;
 }
-

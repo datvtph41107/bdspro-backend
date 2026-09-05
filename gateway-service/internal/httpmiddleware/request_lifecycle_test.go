@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	_requestcontext "common/requestcontext"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,7 +60,7 @@ func TestRequestLifecycleRecordsRouteTemplate(
 	)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		RequestIDHeader,
 		"request-route-template-123",
 	)
 
@@ -164,7 +162,7 @@ func TestRequestLifecycleBoundsUnmatchedRouteCardinality(
 		)
 
 		request.Header.Set(
-			_requestcontext.RequestIDHeader,
+			RequestIDHeader,
 			requestIDs[index],
 		)
 
@@ -221,7 +219,7 @@ func TestRequestLifecycleRecordsAbortAndGinErrors(
 	)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		RequestIDHeader,
 		"request-abort-123",
 	)
 
@@ -337,12 +335,12 @@ func TestRequestLifecycleRecordsOperationIDBoundByInnerMiddleware(
 	const operationID = "op-lifecycle-operation-456"
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		RequestIDHeader,
 		requestID,
 	)
 
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 		operationID,
 	)
 

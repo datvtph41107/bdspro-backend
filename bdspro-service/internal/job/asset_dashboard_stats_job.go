@@ -22,9 +22,9 @@ func NewAssetDashboardStatsJob(
 	dashboardJob := dashboard.NewDashboardStatsJob(
 		db,
 		"asset_stats", // table name
-		func() int64 {
+		func(ctx context.Context) int64 {
 			// Lấy count từ asset repo
-			// count, err := assetRepo.CountCurrent(context.Background())
+			// count, err := assetRepo.CountCurrent(ctx)
 			// if err != nil {
 			// 	return 0
 			// }

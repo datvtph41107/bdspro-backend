@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	_requestcontext "common/requestcontext"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -80,7 +78,7 @@ func TestCORSAllowsClientRequestIDHeader(
 
 	request.Header.Set(
 		"Access-Control-Request-Headers",
-		_requestcontext.RequestIDHeader,
+		RequestIDHeader,
 	)
 
 	response := httptest.NewRecorder()
@@ -105,7 +103,7 @@ func TestCORSAllowsClientRequestIDHeader(
 	if !strings.Contains(
 		strings.ToLower(allowedHeaders),
 		strings.ToLower(
-			_requestcontext.RequestIDHeader,
+			RequestIDHeader,
 		),
 	) {
 		t.Fatalf(
@@ -145,7 +143,7 @@ func TestCORSExposesResponseRequestID(
 	if !strings.Contains(
 		strings.ToLower(exposedHeaders),
 		strings.ToLower(
-			_requestcontext.RequestIDHeader,
+			RequestIDHeader,
 		),
 	) {
 		t.Fatalf(
@@ -169,7 +167,7 @@ func TestCORSAllowsClientOperationIDHeader(
 	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
 	request.Header.Set(
 		"Access-Control-Request-Headers",
-		_requestcontext.OperationIDHeader,
+		OperationIDHeader,
 	)
 
 	response := httptest.NewRecorder()
@@ -188,7 +186,7 @@ func TestCORSAllowsClientOperationIDHeader(
 	)
 	if !strings.Contains(
 		strings.ToLower(allowedHeaders),
-		strings.ToLower(_requestcontext.OperationIDHeader),
+		strings.ToLower(OperationIDHeader),
 	) {
 		t.Fatalf("allowed headers = %q", allowedHeaders)
 	}
@@ -214,7 +212,7 @@ func TestCORSExposesResponseOperationID(
 	)
 	if !strings.Contains(
 		strings.ToLower(exposedHeaders),
-		strings.ToLower(_requestcontext.OperationIDHeader),
+		strings.ToLower(OperationIDHeader),
 	) {
 		t.Fatalf("exposed headers = %q", exposedHeaders)
 	}
@@ -227,7 +225,7 @@ func TestCORSAllowsClientIdempotencyKeyHeader(t *testing.T) {
 	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
 	request.Header.Set(
 		"Access-Control-Request-Headers",
-		_requestcontext.IdempotencyKeyHeader,
+		IdempotencyKeyHeader,
 	)
 
 	response := httptest.NewRecorder()
@@ -239,7 +237,7 @@ func TestCORSAllowsClientIdempotencyKeyHeader(t *testing.T) {
 	allowedHeaders := response.Header().Get("Access-Control-Allow-Headers")
 	if !strings.Contains(
 		strings.ToLower(allowedHeaders),
-		strings.ToLower(_requestcontext.IdempotencyKeyHeader),
+		strings.ToLower(IdempotencyKeyHeader),
 	) {
 		t.Fatalf("allowed headers = %q", allowedHeaders)
 	}
@@ -255,7 +253,7 @@ func TestCORSDoesNotExposeIdempotencyKeyResponseHeader(t *testing.T) {
 	exposedHeaders := response.Header().Get("Access-Control-Expose-Headers")
 	if strings.Contains(
 		strings.ToLower(exposedHeaders),
-		strings.ToLower(_requestcontext.IdempotencyKeyHeader),
+		strings.ToLower(IdempotencyKeyHeader),
 	) {
 		t.Fatalf("idempotency key unexpectedly exposed: %q", exposedHeaders)
 	}

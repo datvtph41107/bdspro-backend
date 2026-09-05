@@ -15,11 +15,11 @@ import (
 )
 
 // @bind: assistant/internal/interface/provider.OpenAIProvider
-
 type OpenAIClient struct {
 	apiKey     string
 	baseURL    string
 	model      string
+	maxTokens  int
 	httpClient *http.Client
 }
 
@@ -43,11 +43,16 @@ func NewOpenAIClient() *OpenAIClient {
 	if timeoutSeconds == 0 {
 		timeoutSeconds = 60
 	}
+	maxTokens := viper.GetInt("openai.max_tokens")
+	if maxTokens <= 0 {
+		maxTokens = 4000
+	}
 
 	return &OpenAIClient{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		model:   model,
+		apiKey:    apiKey,
+		baseURL:   baseURL,
+		model:     model,
+		maxTokens: maxTokens,
 		httpClient: &http.Client{
 			Timeout: time.Duration(timeoutSeconds) * time.Second,
 		},
@@ -127,6 +132,9 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *OpenAIClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
+	if err := validateProviderCall("openai", c.apiKey); err != nil {
+		return "", err
+	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
 Bạn có kiến thức sâu rộng về bất động sản tại Việt Nam.
 Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiểu.`
@@ -142,9 +150,10 @@ Hãy trả lời câu hỏi một cách chính xác, ngắn gọn và dễ hiể
 	})
 
 	requestBody := dto.DeepseekRequest{
-		Model:    c.model,
-		Messages: messages,
-		Stream:   false,
+		Model:     c.model,
+		Messages:  messages,
+		Stream:    false,
+		MaxTokens: c.maxTokens,
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -203,6 +212,9 @@ func (c *OpenAIClient) GenerateContent(ctx context.Context, prompt string, maxTo
 
 // sendRequest - Helper để gửi request đến OpenAI API
 func (c *OpenAIClient) sendRequest(ctx context.Context, systemPrompt, userMessage string, maxTokens int, temperature float32) (*dto.DeepseekResponse, error) {
+	if err := validateProviderCall("openai", c.apiKey); err != nil {
+		return nil, err
+	}
 	messages := []dto.DeepseekMessage{}
 
 	if systemPrompt != "" {
@@ -223,9 +235,10 @@ func (c *OpenAIClient) sendRequest(ctx context.Context, systemPrompt, userMessag
 		Stream:   false,
 	}
 
-	if maxTokens > 0 {
-		requestBody.MaxTokens = maxTokens
+	if maxTokens <= 0 {
+		maxTokens = c.maxTokens
 	}
+	requestBody.MaxTokens = maxTokens
 	if temperature > 0 {
 		requestBody.Temperature = temperature
 	}

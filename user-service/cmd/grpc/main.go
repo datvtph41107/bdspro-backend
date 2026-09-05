@@ -1,143 +1,162 @@
-package cmd_grpc
+package main
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"strconv"
+	"os/signal"
+	"syscall"
 	"time"
-
-	authpb "pb/types/auth"
-	userpb "pb/types/user"
-	"user/config"
-	"user/db"
-	"user/env"
-	user_infra_client "user/infra/client"
-	"user/wire"
 
 	_db "common/db"
 	_middleware "common/middleware"
-	"common/quota"
+	"common/process"
 	_redis "common/redis"
-	"common/transporttrust"
+	"common/rpcenv"
+	authpb "pb/types/auth"
+	userpb "pb/types/user"
+	"user/config"
+	userdb "user/db"
 	admin_middleware "user/infra/middleware"
+	"user/wire"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
-var GrpcCmd = &cobra.Command{
-	Use:   "grpc",
-	Short: "Run the GRPC server",
-	Run: func(cmd *cobra.Command, args []string) {
-		env.ENV_RUNTIME = os.Getenv("ENV_RUNTIME")
-		config.LoadProperties()
-		os.Setenv("TZ", "Europe/London")
-		time.Local = time.FixedZone("Europe/London", 7*60*60)
+func main() {
+	if err := runGRPC(); err != nil {
+		log.Fatal(err)
+	}
+}
 
-		// Hỏi gateway upstream nào đang up → dial + ConnectParams auto-reconnect
-		user_infra_client.BootstrapGRPCConnections(context.Background())
+func runGRPC() error {
+	runtimeConfig, err := config.LoadRuntime()
+	if err != nil {
+		return fmt.Errorf("load User runtime config: %w", err)
+	}
 
-		if _, err := _db.NewDB(); err != nil {
-			log.Fatalf("failed to connect database: %v", err)
+	runtimePolicy, err := loadRuntimePolicy()
+	if err != nil {
+		return fmt.Errorf("load User runtime policy: %w", err)
+	}
+	log.Printf(
+		"User runtime policy: module_warmup=%t dashboard_stats=%t zns_scheduler=%t",
+		runtimePolicy.ModuleWarmup,
+		runtimePolicy.DashboardStats,
+		runtimePolicy.ZNSScheduler,
+	)
+
+	database, err := _db.Open(_db.DatabaseConfig{
+		DSN:             runtimeConfig.Database.DSN,
+		MaxOpenConns:    runtimeConfig.Database.MaxOpenConns,
+		MaxIdleConns:    runtimeConfig.Database.MaxIdleConns,
+		ConnMaxLifetime: runtimeConfig.Database.ConnMaxLifetime,
+	})
+	if err != nil {
+		return fmt.Errorf("open User database: %w", err)
+	}
+	sqlDB, err := database.DB()
+	if err != nil {
+		return fmt.Errorf("get User database pool: %w", err)
+	}
+	defer sqlDB.Close()
+
+	schemaPolicy, err := _db.LoadSchemaPolicy("user")
+	if err != nil {
+		return fmt.Errorf("load User schema policy: %w", err)
+	}
+	log.Printf("User database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	if err := _db.ApplySchemaPolicy(database, schemaPolicy, userdb.AutoMigrate); err != nil {
+		return fmt.Errorf("apply User schema policy: %w", err)
+	}
+
+	redisService, err := _redis.Open(_redis.Config{
+		Address:  runtimeConfig.Redis.Address,
+		Password: runtimeConfig.Redis.Password,
+		DB:       runtimeConfig.Redis.DB,
+	})
+	if err != nil {
+		return fmt.Errorf("open User Redis: %w", err)
+	}
+	defer redisService.Close()
+
+	app, cleanup, err := wire.InitializeApp(database, redisService)
+	if err != nil {
+		return fmt.Errorf("initialize User app: %w", err)
+	}
+	defer cleanup()
+
+	lis, err := net.Listen("tcp", runtimeConfig.GRPCAddress)
+	if err != nil {
+		return fmt.Errorf("listen User gRPC %s: %w", runtimeConfig.GRPCAddress, err)
+	}
+
+	transportConfig := rpcenv.LoadTransportConfig()
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			accessIngress(transportConfig),
+			admin_middleware.AdminAuthInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+		),
+	)
+
+	userpb.RegisterAdminProfileServiceServer(server, app.AdminHandler)
+	userpb.RegisterAdminUserProfileServiceServer(server, app.AdminUserProfileHandler)
+	userpb.RegisterProfileServiceServer(server, app.ProfileService)
+	userpb.RegisterBookmarkUserServiceServer(server, app.BookmarkUserHandler)
+	userpb.RegisterInternalUserServiceServer(server, app.InternalHandler)
+	targetCleanup, err := registerTargetServices(server, database, app.OrganizationClient)
+	if err != nil {
+		return targetRegistrationError(err)
+	}
+	defer targetCleanup()
+	userpb.RegisterMainAreaServiceServer(server, app.MainAreaHandler)
+	userpb.RegisterPurposeUseServiceServer(server, app.PurposeUseHandler)
+	userpb.RegisterProfessionServiceServer(server, app.ProfessionHandler)
+	userpb.RegisterTagServiceServer(server, app.TagHandler)
+	userpb.RegisterKYCServiceServer(server, app.KYCHandler)
+	userpb.RegisterPriceTableServiceServer(server, app.PriceTableHandler)
+
+	authpb.RegisterAuthServiceServer(server, app.AuthHandler)
+	authpb.RegisterOAuthServiceServer(server, app.OAuthHandler)
+	authpb.RegisterPermissionServiceServer(server, app.PermissionHandler)
+	authpb.RegisterRoleServiceServer(server, app.RoleHandler)
+	authpb.RegisterRoleGroupServiceServer(server, app.RoleGroupHandler)
+	authpb.RegisterUserInfoServiceServer(server, app.UserInfoHandler)
+
+	signalCtx, stopSignals := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stopSignals()
+	processCtx, processCancel := context.WithCancel(signalCtx)
+	defer processCancel()
+
+	if runtimePolicy.ModuleWarmup {
+		if err := app.LoadRoleGroupsOnStartup(processCtx); err != nil {
+			log.Printf("User module cache warmup failed; starting degraded: %v", err)
 		}
-		db.AutoMigrate()
+	}
 
-		app, _ := wire.InitializeApp()
-		go app.UserDashboardStatsJob.RunDailyAtMidnight(context.Background())
-		// app.CrmProvider.RegisterService(context.Background())
+	actors := make([]process.Actor, 0, 2)
+	if runtimePolicy.DashboardStats && app.UserDashboardStatsJob != nil {
+		actors = append(actors, process.ActorFunc(app.UserDashboardStatsJob.RunDailyAtMidnight))
+	}
+	if runtimePolicy.ZNSScheduler && app.ZnsScheduler != nil {
+		actors = append(actors, process.ActorFunc(app.ZnsScheduler.Run))
+	}
 
-		// === QUOTA INIT ===
-		var quotaInterceptor grpc.UnaryServerInterceptor
-		quotaCfg, err := quota.LoadQuotaConfig()
-		if err == nil && quotaCfg.Enabled {
-			redisService := _redis.NewRedisService()
-			storage := quota.NewRedisQuotaStorage(redisService)
-			policy, err := quota.NewDefaultPolicyEngine(quotaCfg.PolicyFile)
-			if err != nil {
-				log.Printf("Failed to load quota policy: %v, quota disabled", err)
-			} else {
-				qm := quota.NewQuotaManager(storage, policy)
-				extractUserID := func(ctx context.Context) string {
-					if uid := ctx.Value("user_id"); uid != nil {
-						switch v := uid.(type) {
-						case uint64:
-							return strconv.FormatUint(v, 10)
-						case string:
-							return v
-						}
-					}
-					return ""
-				}
-				quotaInterceptor = quota.UnaryServerInterceptor(qm, extractUserID)
-				log.Println("Quota interceptor enabled for user-service")
-			}
-		}
-		if quotaInterceptor == nil {
-			quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-				return handler(ctx, req)
-			}
-		}
-
-		legacyQuotaInterceptor := quotaInterceptor
-		quotaInterceptor = func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-			if info != nil && internalAccessMethod(info.FullMethod) {
-				return handler(ctx, req)
-			}
-			return legacyQuotaInterceptor(ctx, req, info, handler)
-		}
-		// =========================
-
-		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
-		lis, err := net.Listen("tcp", port)
-		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
-		}
-
-		trustConfig := transporttrust.ConfigFromEnv()
-		s := grpc.NewServer(
-			grpc.ChainUnaryInterceptor(
-				accessIngress(trustConfig),
-				admin_middleware.AdminAuthInterceptor,
-				quotaInterceptor,
-			),
-			grpc.ChainStreamInterceptor(
-				_middleware.ParseGrpcMetadataContextStreamMiddleware,
-			),
-		)
-
-		// Register services (unchanged)
-		userpb.RegisterAdminProfileServiceServer(s, app.AdminHandler)
-		userpb.RegisterAdminUserProfileServiceServer(s, app.AdminUserProfileHandler)
-		userpb.RegisterProfileServiceServer(s, app.ProfileService)
-		userpb.RegisterBookmarkUserServiceServer(s, app.BookmarkUserHandler)
-		userpb.RegisterMembershipServiceServer(s, app.MembershipHandler)
-		userpb.RegisterPlanServiceServer(s, app.PlanHandler)
-		userpb.RegisterInternalUserServiceServer(s, app.InternalHandler)
-		if err := registerAccessService(s); err != nil {
-			log.Fatal(accessRegistrationError(err))
-		}
-		userpb.RegisterMainAreaServiceServer(s, app.MainAreaHandler)
-		userpb.RegisterPurposeUseServiceServer(s, app.PurposeUseHandler)
-		userpb.RegisterProfessionServiceServer(s, app.ProfessionHandler)
-		userpb.RegisterTagServiceServer(s, app.TagHandler)
-		userpb.RegisterKYCServiceServer(s, app.KYCHandler)
-		userpb.RegisterPriceTableServiceServer(s, app.PriceTableHandler)
-
-		authpb.RegisterAuthServiceServer(s, app.AuthHandler)
-		authpb.RegisterOAuthServiceServer(s, app.OAuthHandler)
-		// authpb.RegisterAuthInternalServiceServer(s, app.InternalHandler)
-		authpb.RegisterPermissionServiceServer(s, app.PermissionHandler)
-		authpb.RegisterRoleServiceServer(s, app.RoleHandler)
-		authpb.RegisterRoleGroupServiceServer(s, app.RoleGroupHandler)
-		authpb.RegisterUserInfoServiceServer(s, app.UserInfoHandler)
-
-		log.Printf("Listen: %v", port)
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
-		}
-	},
+	log.Printf("User gRPC listening on %s", runtimeConfig.GRPCAddress)
+	return process.Run(
+		processCtx,
+		processCancel,
+		server,
+		lis,
+		actors,
+		process.Config{GracefulStopTimeout: 10 * time.Second},
+	)
 }

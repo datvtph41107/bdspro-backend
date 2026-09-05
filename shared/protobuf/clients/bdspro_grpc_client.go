@@ -1,7 +1,6 @@
 package clients
 
 import (
-	"common/tcp/connect"
 	_dto "common/domain/dto"
 	"context"
 	"errors"
@@ -9,27 +8,28 @@ import (
 	"log"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc"
 )
 
 type BdsproGrpcClient struct {
-	Client         bdspropb.ProductServiceClient
-	InternalClient bdspropb.BdsproInternalServiceClient
+	Client                bdspropb.ProductServiceClient
+	InternalClient        bdspropb.BdsproInternalServiceClient
+	PostClient            bdspropb.PostServiceClient
+	AdminProjectClient    bdspropb.AdminProjectServiceClient
+	AdminRegionClient     bdspropb.AdminRegionServiceClient
+	AdminAreaRegionClient bdspropb.AdminAreaRegionServiceClient
 }
 
-func MakeBdsproGrpcClient(env_runtime string) *BdsproGrpcClient {
-	bdsproClient := &BdsproGrpcClient{}
-	name := "bdspro"
-	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("failed to dial bdspro at %s: %v", addr, err)
-		return bdsproClient
+func BindBdsproGrpcClient(conn grpc.ClientConnInterface) *BdsproGrpcClient {
+	return &BdsproGrpcClient{
+		Client:                bdspropb.NewProductServiceClient(conn),
+		InternalClient:        bdspropb.NewBdsproInternalServiceClient(conn),
+		PostClient:            bdspropb.NewPostServiceClient(conn),
+		AdminProjectClient:    bdspropb.NewAdminProjectServiceClient(conn),
+		AdminRegionClient:     bdspropb.NewAdminRegionServiceClient(conn),
+		AdminAreaRegionClient: bdspropb.NewAdminAreaRegionServiceClient(conn),
 	}
-
-	bdsproClient.Client = bdspropb.NewProductServiceClient(conn)
-	bdsproClient.InternalClient = bdspropb.NewBdsproInternalServiceClient(conn)
-	return bdsproClient
 }
 
 func (c *BdsproGrpcClient) GetProductByIds(ctx context.Context, ids []uint64) (*bdspropb.ProductInternalResponse, error) {

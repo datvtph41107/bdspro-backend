@@ -2,12 +2,13 @@ package integration
 
 import (
 	"context"
+	_httpmiddleware "gateway/internal/httpmiddleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	_requestcontext "common/requestcontext"
+	_request "common/request"
 	organizationpb "pb/types/organization"
 )
 
@@ -39,17 +40,17 @@ func (
 		ctx.Deadline()
 
 	requestID, _ :=
-		_requestcontext.FromContext(
+		_request.RequestIDFromContext(
 			ctx,
 		)
 
 	operationID, _ :=
-		_requestcontext.OperationIDFromContext(
+		_request.OperationIDFromContext(
 			ctx,
 		)
 
 	idempotencyKey, _ :=
-		_requestcontext.IdempotencyKeyFromContext(
+		_request.IdempotencyKeyFromContext(
 			ctx,
 		)
 
@@ -117,17 +118,17 @@ func TestHTTPDeadlineReachesGRPCService(
 			)
 
 	request.Header.Set(
-		_requestcontext.RequestIDHeader,
+		_httpmiddleware.RequestIDHeader,
 		"request-deadline-integration-123",
 	)
 
 	request.Header.Set(
-		_requestcontext.OperationIDHeader,
+		_httpmiddleware.OperationIDHeader,
 		"operation-deadline-integration-456",
 	)
 
 	request.Header.Set(
-		_requestcontext.IdempotencyKeyHeader,
+		_httpmiddleware.IdempotencyKeyHeader,
 		"idempotency-deadline-integration-789",
 	)
 

@@ -42,9 +42,9 @@ type AdminReportFilter struct {
 	QaStatuses []uint32
 	// ExcludeQaStatuses: loại trừ (vd Closed/Rejected)
 	ExcludeQaStatuses []uint32
-	Q             string
-	Page          int
-	Limit         int
+	Q                 string
+	Page              int
+	Limit             int
 }
 
 // QueueSummary đếm 3 bucket hàng đợi (10.8.3).

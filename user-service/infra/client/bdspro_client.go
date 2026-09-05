@@ -5,7 +5,6 @@ import (
 	"errors"
 	"pb/clients"
 	sharepb "pb/types/shared"
-	"user/env"
 	"user/internal/dto"
 )
 
@@ -14,9 +13,11 @@ type BdsproClient struct {
 	*clients.BdsproGrpcClient
 }
 
-func NewBdsproClient() *BdsproClient {
+func NewBdsproClient(
+	rpcClient *clients.BdsproGrpcClient,
+) *BdsproClient {
 	return &BdsproClient{
-		BdsproGrpcClient: clients.MakeBdsproGrpcClient(env.ENV_RUNTIME),
+		BdsproGrpcClient: rpcClient,
 	}
 }
 

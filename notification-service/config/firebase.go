@@ -3,91 +3,57 @@ package config
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	firebase "firebase.google.com/go"
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
 )
 
-// FirebaseConfig lưu trữ thông tin cấu hình Firebase
+// FirebaseConfig là capability tùy chọn tại process boundary. Thiếu credential
+// sẽ tắt push delivery nhưng không làm Notification history/inbox fail. File
+// service-account thật phải nằm ngoài Git và được inject bằng env.
 type FirebaseConfig struct {
-	FileURL        string
-	ConfigUsername string
-	ConfigPassword string
 	CredentialFile string
 	App            *firebase.App
 }
 
-// NewFirebaseConfig khởi tạo FirebaseConfig
 func NewFirebaseConfig() (*FirebaseConfig, error) {
-	fileURL := viper.GetString("firebase.file")
-	credentialFile := viper.GetString("firebase.fileUrl")
-
-	fbConfig := &FirebaseConfig{
-		FileURL: fileURL,
-		// ConfigUsername: username,
-		// ConfigPassword: password,
-		CredentialFile: credentialFile,
+	credentialFile := strings.TrimSpace(os.Getenv("NOTIFICATION_FIREBASE_CREDENTIAL_FILE"))
+	if credentialFile == "" {
+		credentialFile = strings.TrimSpace(viper.GetString("firebase.fileUrl"))
 	}
-
-	err := fbConfig.initFirebase()
+	cfg := &FirebaseConfig{CredentialFile: credentialFile}
+	if credentialFile == "" {
+		return cfg, nil
+	}
+	if !filepath.IsAbs(credentialFile) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		credentialFile = filepath.Join(wd, credentialFile)
+	}
+	serviceAccountJSON, err := os.ReadFile(credentialFile)
+	if os.IsNotExist(err) {
+		return cfg, nil
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read Firebase credential: %w", err)
 	}
-
-	return fbConfig, nil
+	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsJSON(serviceAccountJSON))
+	if err != nil {
+		return nil, fmt.Errorf("initialize Firebase: %w", err)
+	}
+	cfg.App = app
+	return cfg, nil
 }
 
-// initFirebase khởi tạo Firebase App
-func (fc *FirebaseConfig) initFirebase() error {
-	// 1. Lấy nội dung JSON từ Config Server (nếu cần)
-	// Nếu lấy từ URL:
-	// serviceAccountJSON, err := fc.fetchFirebaseConfigFromServer()
-	// Nếu lấy từ file:
-	wd, err := os.Getwd()
-	serviceAccountJSON, err := os.ReadFile(wd + "/" + fc.CredentialFile)
-	if err != nil {
-		return fmt.Errorf("failed to read Firebase config file: %w", err)
-	}
-
-	// 2. Khởi tạo Firebase
-	opt := option.WithCredentialsJSON(serviceAccountJSON)
-	app, err := firebase.NewApp(context.Background(), nil, opt)
-	if err != nil {
-		return fmt.Errorf("failed to initialize Firebase: %w", err)
-	}
-
-	fc.App = app
-	return nil
-}
-
-// fetchFirebaseConfigFromServer lấy file JSON từ Config Server
-func (fc *FirebaseConfig) fetchFirebaseConfigFromServer() ([]byte, error) {
-	req, err := http.NewRequest("GET", fc.FileURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.SetBasicAuth(fc.ConfigUsername, fc.ConfigPassword)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch Firebase config: %s", resp.Status)
-	}
-
-	return io.ReadAll(resp.Body)
-}
-
-// FirebaseApp trả về Firebase App đã khởi tạo
 func (fc *FirebaseConfig) FirebaseApp() *firebase.App {
+	if fc == nil {
+		return nil
+	}
 	return fc.App
 }

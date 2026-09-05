@@ -4,25 +4,25 @@ import (
 	"common/case/crud"
 	_db "common/db"
 	"context"
-	"user/internal/domain"
+	"user/internal/domain/access"
 	"user/internal/enums"
 	"user/internal/interface/repo"
 )
 
 type RoleGroupRepo struct {
-	*crud.CrudRepo[domain.RoleGroup]
+	*crud.CrudRepo[access.RoleGroup]
 }
 
 func NewRoleGroupRepo(db *_db.TransactionRepo) repo.RoleGroupRepository {
 	x := &RoleGroupRepo{
-		CrudRepo: &crud.CrudRepo[domain.RoleGroup]{},
+		CrudRepo: &crud.CrudRepo[access.RoleGroup]{},
 	}
 	x.CrudRepo.Init(x, db)
 	return x
 }
 
-func (r *RoleGroupRepo) GetByKey(ctx context.Context, key enums.GroupRoleKeyEnum) (*domain.RoleGroup, error) {
-	var roleGroup domain.RoleGroup
+func (r *RoleGroupRepo) GetByKey(ctx context.Context, key enums.GroupRoleKeyEnum) (*access.RoleGroup, error) {
+	var roleGroup access.RoleGroup
 	err := r.GetDB(ctx).Where("key = ?", key).First(&roleGroup).Error
 	if err != nil {
 		return nil, err
@@ -33,14 +33,14 @@ func (r *RoleGroupRepo) GetByKey(ctx context.Context, key enums.GroupRoleKeyEnum
 // UpdateGroupPermissions cập nhật permission cho group
 func (r *RoleGroupRepo) UpdateGroupPermissions(ctx context.Context, groupID uint64, permissionIDs []uint64) error {
 	// Lấy group
-	var group domain.RoleGroup
+	var group access.RoleGroup
 	err := r.GetDB(ctx).First(&group, groupID).Error
 	if err != nil {
 		return err
 	}
 
 	// Lấy danh sách permission
-	var permissions []domain.Permission
+	var permissions []access.Permission
 	if len(permissionIDs) > 0 {
 		err = r.GetDB(ctx).Where("id IN ?", permissionIDs).Find(&permissions).Error
 		if err != nil {
@@ -53,8 +53,8 @@ func (r *RoleGroupRepo) UpdateGroupPermissions(ctx context.Context, groupID uint
 }
 
 // GetPermissionsByGroupKey lấy danh sách permission theo group key
-func (r *RoleGroupRepo) GetPermissionsByGroupKey(ctx context.Context, groupKey enums.GroupRoleKeyEnum) ([]*domain.Permission, error) {
-	var permissions []*domain.Permission
+func (r *RoleGroupRepo) GetPermissionsByGroupKey(ctx context.Context, groupKey enums.GroupRoleKeyEnum) ([]*access.Permission, error) {
+	var permissions []*access.Permission
 
 	err := r.GetDB(ctx).
 		Table("permissions").

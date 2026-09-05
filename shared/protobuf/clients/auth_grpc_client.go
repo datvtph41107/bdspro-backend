@@ -2,11 +2,13 @@ package clients
 
 import (
 	_errors "common/errors"
-	"common/tcp/connect"
 	"context"
 	"fmt"
 	"log"
+
 	authpb "pb/types/auth"
+
+	"google.golang.org/grpc"
 )
 
 type AuthGrpcClient struct {
@@ -14,26 +16,14 @@ type AuthGrpcClient struct {
 	RoleClient authpb.RoleServiceClient
 }
 
-func MakeAuthGrpcClient(env_runtime string) *AuthGrpcClient {
-	authClient := &AuthGrpcClient{}
-
-	authAddr := connect.AddressOf(env_runtime, "auth", connect.DefaultPort("auth"))
-	authConn, err := connect.DialNamed("auth", authAddr)
-	if err != nil {
-		log.Printf("failed to dial auth at %s: %v", authAddr, err)
-	} else {
-		authClient.AuthInternalServiceClient = authpb.NewAuthInternalServiceClient(authConn)
+func BindAuthGrpcClient(
+	conn grpc.ClientConnInterface,
+	roleClient authpb.RoleServiceClient,
+) *AuthGrpcClient {
+	return &AuthGrpcClient{
+		AuthInternalServiceClient: authpb.NewAuthInternalServiceClient(conn),
+		RoleClient:                roleClient,
 	}
-
-	userAddr := connect.AddressOf(env_runtime, "user", connect.DefaultPort("user"))
-	userConn, err := connect.DialNamed("user", userAddr)
-	if err != nil {
-		log.Printf("failed to dial user at %s: %v", userAddr, err)
-	} else {
-		authClient.RoleClient = authpb.NewRoleServiceClient(userConn)
-	}
-
-	return authClient
 }
 
 func (c *AuthGrpcClient) HasRoles(ctx context.Context, keys []string) (bool, error) {
@@ -42,7 +32,7 @@ func (c *AuthGrpcClient) HasRoles(ctx context.Context, keys []string) (bool, err
 }
 
 func (c *AuthGrpcClient) RequiredPermissions(ctx context.Context, permissionIds []uint32) error {
-	if c.AuthInternalServiceClient == nil {
+	if c == nil || c.AuthInternalServiceClient == nil {
 		return _errors.ReturnError(503, "auth client chưa sẵn sàng")
 	}
 	log.Printf("[AuthGrpcClient] RequiredPermissions: permissionIds: %v", permissionIds)
@@ -59,7 +49,7 @@ func (c *AuthGrpcClient) RequiredPermissions(ctx context.Context, permissionIds 
 }
 
 func (c *AuthGrpcClient) HasPermissions(ctx context.Context, keys []string) error {
-	if c.AuthInternalServiceClient == nil {
+	if c == nil || c.AuthInternalServiceClient == nil {
 		return _errors.ReturnError(503, "auth client chưa sẵn sàng")
 	}
 	response, err := c.AuthInternalServiceClient.RequiredPermissions(ctx, &authpb.RequiredPermissionsRequest{

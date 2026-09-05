@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"user/internal/domain"
+	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
 )
@@ -23,7 +23,7 @@ func NewUserInfoUsecase(userInfoRepo repo.UserInfoRepository) *AuthUserProfileUs
 // LockAccount khóa tài khoản (tạm thời hoặc vĩnh viễn)
 func (u *AuthUserProfileUsecase) LockAccount(ctx context.Context, req *dto.LockAccountRequest) (*dto.LockAccountResponse, error) {
 	// Validate duration cho khóa tạm thời
-	// if req.LockType == uint32(domain.StatusTemporarilyLocked) && req.Duration <= 0 {
+	// if req.LockType == uint32(auth.StatusTemporarilyLocked) && req.Duration <= 0 {
 	// 	return &dto.LockAccountResponse{
 	// 		Success: false,
 	// 		Message: "Thời gian khóa tạm thời phải lớn hơn 0",
@@ -65,7 +65,7 @@ func (u *AuthUserProfileUsecase) LockAccount(ctx context.Context, req *dto.LockA
 	}
 
 	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked {
+	if req.LockType == auth.StatusTemporarilyLocked {
 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
 	}
@@ -122,24 +122,24 @@ func (u *AuthUserProfileUsecase) GetAccountStatus(ctx context.Context, req *dto.
 	// Xác định trạng thái text
 	var statusText string
 	switch userInfo.Status {
-	case domain.StatusActive:
+	case auth.StatusActive:
 		statusText = "Hoạt động"
-	case domain.StatusInactive:
+	case auth.StatusInactive:
 		statusText = "Vô hiệu hóa"
-	case domain.StatusTemporarilyLocked:
+	case auth.StatusTemporarilyLocked:
 		statusText = "Khóa tạm thời"
-	case domain.StatusPermanentlyLocked:
+	case auth.StatusPermanentlyLocked:
 		statusText = "Khóa vĩnh viễn"
 	default:
 		statusText = "Không xác định"
 	}
 
 	// Xác định loại khóa
-	var lockType domain.AccountStatus
+	var lockType auth.AccountStatus
 	if userInfo.IsTemporarilyLocked() {
-		lockType = domain.StatusTemporarilyLocked
+		lockType = auth.StatusTemporarilyLocked
 	} else if userInfo.IsPermanentlyLocked() {
-		lockType = domain.StatusPermanentlyLocked
+		lockType = auth.StatusPermanentlyLocked
 	}
 
 	// Kiểm tra khóa có hết hạn không
@@ -181,7 +181,7 @@ func (u *AuthUserProfileUsecase) CheckAndUnlockExpiredAccounts(ctx context.Conte
 // LockMultipleUsers khóa nhiều user cùng lúc
 func (u *AuthUserProfileUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultipleUsersRequest) (*dto.LockMultipleUsersResponse, error) {
 	// Validate duration cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked && req.Duration <= 0 {
+	if req.LockType == auth.StatusTemporarilyLocked && req.Duration <= 0 {
 		return &dto.LockMultipleUsersResponse{
 			Success: false,
 			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
@@ -207,7 +207,7 @@ func (u *AuthUserProfileUsecase) LockMultipleUsers(ctx context.Context, req *dto
 	}
 
 	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-	if req.LockType == domain.StatusTemporarilyLocked {
+	if req.LockType == auth.StatusTemporarilyLocked {
 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
 	}
@@ -238,7 +238,7 @@ func (u *AuthUserProfileUsecase) UnlockMultipleUsers(ctx context.Context, req *d
 }
 
 // GetAuthUsersByProfileIDs lấy thông tin AuthUser theo danh sách profile IDs
-func (u *AuthUserProfileUsecase) GetAuthUsersByProfileIDs(ctx context.Context, req []uint64) ([]domain.AuthUser, error) {
+func (u *AuthUserProfileUsecase) GetAuthUsersByProfileIDs(ctx context.Context, req []uint64) ([]auth.AuthUser, error) {
 	// Lấy thông tin users từ database
 	users, err := u.UserInfoRepo.GetUsersByProfileIDs(ctx, req)
 	if err != nil {

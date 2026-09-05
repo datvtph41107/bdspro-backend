@@ -1,31 +1,24 @@
 package clients
 
 import (
-	"common/tcp/connect"
 	"context"
 	"errors"
-	"log"
 
 	organizationpb "pb/types/organization"
+
+	"google.golang.org/grpc"
 )
 
 type OrganizationClient struct {
-	Client organizationpb.InternalOrganizationServiceClient
+	Client     organizationpb.InternalOrganizationServiceClient
+	RoleClient organizationpb.OrganizationRoleServiceClient
 }
 
-func MakeOrganizationClient(env_runtime string) *OrganizationClient {
-	organizationClient := &OrganizationClient{}
-	name := "organization"
-	addr := connect.AddressOf(env_runtime, name, connect.DefaultPort(name))
-
-	conn, err := connect.DialNamed(name, addr)
-	if err != nil {
-		log.Printf("failed to dial organization at %s: %v", addr, err)
-		return organizationClient
+func BindOrganizationClient(conn grpc.ClientConnInterface) *OrganizationClient {
+	return &OrganizationClient{
+		Client:     organizationpb.NewInternalOrganizationServiceClient(conn),
+		RoleClient: organizationpb.NewOrganizationRoleServiceClient(conn),
 	}
-
-	organizationClient.Client = organizationpb.NewInternalOrganizationServiceClient(conn)
-	return organizationClient
 }
 
 func (c *OrganizationClient) GetOrganizationMapByIDs(ctx context.Context, organizationIDSet map[uint64]struct{}) (map[uint64]*organizationpb.OrganizationItem, error) {
@@ -222,6 +215,23 @@ func (c *OrganizationClient) GetOrganizationMember(ctx context.Context, organiza
 	}
 
 	return resp.Data[0], nil
+}
+
+// AuthorizeOrganizationAction hỏi đúng policy owner thay vì để service gọi
+// tự diễn giải role/permission của organization.
+func (c *OrganizationClient) AuthorizeOrganizationAction(ctx context.Context, organizationID, actorProfileID uint64, action organizationpb.OrganizationAction) (bool, error) {
+	if c == nil || c.Client == nil {
+		return false, errors.New("organization client not available")
+	}
+	resp, err := c.Client.AuthorizeOrganizationAction(ctx, &organizationpb.AuthorizeOrganizationActionRequest{
+		OrganizationId: organizationID,
+		ActorProfileId: actorProfileID,
+		Action:         action,
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.GetAllowed(), nil
 }
 
 func (c *OrganizationClient) GetOrganizationsByUserId(ctx context.Context, userId uint64) ([]*organizationpb.Organization, error) {

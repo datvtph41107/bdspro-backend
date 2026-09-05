@@ -30,9 +30,18 @@ func RunTileServer(port int) error {
 		*publicURL = fmt.Sprintf("http://localhost:%d", port)
 	}
 
-	config.LoadConfig()
+	if _, err := config.LoadConfig(); err != nil {
+		return fmt.Errorf("load TQD tile config: %w", err)
+	}
 	logger := log.New(os.Stdout, "[pmtiles] ", log.LstdFlags)
 	redisSvc := _redis.NewRedisService()
+	defer func() {
+		if redisSvc != nil && redisSvc.Client != nil {
+			if closeErr := redisSvc.Client.Close(); closeErr != nil {
+				logger.Printf("close PMTiles Redis client: %v", closeErr)
+			}
+		}
+	}()
 
 	blockedTilesets := make(map[string]struct{})
 	for _, name := range validatePMTilesDir(*tilesDir, logger) {
@@ -44,7 +53,7 @@ func RunTileServer(port int) error {
 
 	server, err := pmtiles.NewServer(bucketURL, "", logger, *cacheSize, *publicURL)
 	if err != nil {
-		logger.Fatalf("Không thể khởi tạo pmtiles server: %v", err)
+		return fmt.Errorf("initialize pmtiles server: %w", err)
 	}
 	server.Start()
 	logger.Printf("PMTiles server đã khởi động")
@@ -145,25 +154,36 @@ func RunTileServer(port int) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
+	logger.Printf("HTTP server lắng nghe tại http://0.0.0.0:%d", port)
+	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopSignals()
+	serveErr := make(chan error, 1)
 	go func() {
-		logger.Printf("HTTP server lắng nghe tại http://0.0.0.0:%d", port)
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("ListenAndServe: %v", err)
+		err := httpServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			serveErr <- err
+			return
 		}
+		serveErr <- nil
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	var rootErr error
+	select {
+	case <-signalCtx.Done():
+	case err := <-serveErr:
+		if err != nil {
+			rootErr = fmt.Errorf("serve pmtiles HTTP: %w", err)
+		}
+	}
 
 	logger.Println("Đang tắt server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Printf("Lỗi khi tắt server: %v", err)
+	if err := httpServer.Shutdown(shutdownCtx); err != nil && rootErr == nil {
+		rootErr = fmt.Errorf("shutdown pmtiles HTTP: %w", err)
 	}
 	logger.Println("Server đã dừng.")
-	return nil
+	return rootErr
 }
 
 func logTileRequest(logger *log.Logger, start time.Time, r *http.Request, statusCode, bodyLen int) {
