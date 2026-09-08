@@ -63,70 +63,65 @@ jobs:
         run: |
           set -euo pipefail
           test -d payment-service/database/migrations
-          test -L payment-service/migrate
-          test "$(readlink payment-service/migrate)" = 'database/migrations'
+          test ! -e payment-service/migrate
           test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 7
           test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 7
           test -f payment-service/database/migrations/000007_canonical_order_reference.up.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' payment-service/Makefile
           grep -Fq 'payment:payment-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './payment-service/migrate:/migrations:ro' compose.yaml
+          grep -Fq './payment-service/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify TQD migration authority
         shell: bash
         run: |
           set -euo pipefail
           test -d tqd-service/database/migrations
-          test -L tqd-service/migrate
-          test "$(readlink tqd-service/migrate)" = 'database/migrations'
+          test ! -e tqd-service/migrate
           test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 44
           test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 44
           test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' tqd-service/Makefile
           grep -Fq 'tqd:tqd-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './tqd-service/migrate:/migrations:ro' compose.yaml
+          grep -Fq './tqd-service/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify Notification migration authority
         shell: bash
         run: |
           set -euo pipefail
           test -d notification-service/database/migrations
-          test -L notification-service/migrate
-          test "$(readlink notification-service/migrate)" = 'database/migrations'
+          test ! -e notification-service/migrate
           test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 2
           test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 2
           test -f notification-service/database/migrations/000002_payment_eventing.up.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' notification-service/Makefile
           grep -Fq 'notification:notification-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './notification-service/migrate:/migrations:ro' compose.yaml
+          grep -Fq './notification-service/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify File migration authority
         shell: bash
         run: |
           set -euo pipefail
           test -d file-service/database/migrations
-          test -L file-service/migrate
-          test "$(readlink file-service/migrate)" = 'database/migrations'
+          test ! -e file-service/migrate
           test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 4
           test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 4
           test -f file-service/database/migrations/000004_drop_physical_path_authority.up.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' file-service/Makefile
           grep -Fq 'file:file-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './file-service/migrate:/migrations:ro' compose.yaml
+          grep -Fq './file-service/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify Hub migration authority
         shell: bash
         run: |
           set -euo pipefail
           test -d hub-service/database/migrations
-          test -L hub-service/migrate
-          test "$(readlink hub-service/migrate)" = 'database/migrations'
+          test ! -e hub-service/migrate
           test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
           test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
           test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.up.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
           grep -Fq 'hub:hub-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './hub-service/migrate:/migrations:ro' compose.yaml
+          grep -Fq './hub-service/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify BDSPro migration authority
         shell: bash
@@ -153,6 +148,21 @@ jobs:
           test -f crm-service/database/migrations/000025_payment_event_inbox.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' crm-service/Makefile
           grep -Fq 'crm:crm-service/database/migrations' shared/code/development/verify-migrations.sh
+
+      - name: Verify canonical root migration mounts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in payment tqd notification file hub; do
+            test ! -e "${service}-service/migrate"
+            test "$(grep -Fc "./${service}-service/database/migrations:/migrations:ro" compose.yaml)" -eq 1
+          done
+          if grep -Eq '\./(payment|tqd|notification|file|hub)-service/migrate:/migrations:ro' compose.yaml; then
+            echo 'legacy root migration mount detected' >&2
+            grep -En '\./(payment|tqd|notification|file|hub)-service/migrate:/migrations:ro' compose.yaml >&2
+            exit 1
+          fi
+          test "$(grep -Fc './organization-service/migrate:/migrations:ro' compose.yaml)" -eq 1
 
       - name: Build tracked-source manifest evidence
         shell: bash
