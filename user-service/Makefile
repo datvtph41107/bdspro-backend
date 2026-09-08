@@ -5,6 +5,7 @@ RUN_PACKAGE := ./cmd/grpc
 DB_URL ?= postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
 MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres redis
+SEED_NAME ?= $(if $(name),$(name),admin)
 
 include ../shared/code/development/service.mk
 include ../shared/code/development/deps.mk
@@ -17,6 +18,11 @@ wire:
 	$(MAKE) -C ../shared/code wire user
 
 generate: buf wire
+
+# Named database lifecycle data. Defaults to the development admin seed;
+# acceptance/root seeds require their explicit environment/operator inputs.
+seed:
+	@$(call with_env,go run ./cmd/seed --name "$(SEED_NAME)")
 
 # One-time empty-installation operation. Inputs are supplied by the operator;
 # this target never invents or persists default credentials.
@@ -41,7 +47,8 @@ help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
 	  'deps-up deps-down migrateup migratedown1 migrate-version new_migration' \
+	  'seed [name=admin|acceptance-admin|acceptance-client|root-admin]' \
 	  'bootstrap-admin buf wire generate docker-build compose-up compose-down compose-logs clean'
 
-.PHONY: help buf wire generate bootstrap-admin docker-build \
+.PHONY: help buf wire generate seed bootstrap-admin docker-build \
 	compose-up compose-down compose-logs acceptance-static
