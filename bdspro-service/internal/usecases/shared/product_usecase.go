@@ -407,6 +407,23 @@ func (uc *ProductUsecase) checkSpecificProducts(
 	}, nil
 }
 
+func (uc *ProductUsecase) ensureSyncCache(ctx context.Context, profileID uint64) error {
+	client, err := uc.redisClient.Client(ctx)
+	if err != nil {
+		return err
+	}
+
+	ready, err := client.Exists(ctx, cache.UserSyncTimeKey(profileID)).Result()
+	if err != nil {
+		return err
+	}
+	if ready > 0 {
+		return nil
+	}
+
+	return uc.seedFromDB(ctx, profileID)
+}
+
 func (uc *ProductUsecase) syncAllProducts(
 	ctx context.Context,
 	profileID uint64,
@@ -417,6 +434,12 @@ func (uc *ProductUsecase) syncAllProducts(
 	tk, err := token.DecodeZSetPageToken(pageToken)
 	if err != nil {
 		return nil, err
+	}
+
+	if pageToken == "" {
+		if err := uc.ensureSyncCache(ctx, profileID); err != nil {
+			return nil, err
+		}
 	}
 
 	startScore := lastSync
@@ -437,13 +460,6 @@ func (uc *ProductUsecase) syncAllProducts(
 	).Result()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(results) == 0 && pageToken == "" && lastSync == 0 {
-		if err := uc.seedFromDB(ctx, profileID); err != nil {
-			return nil, err
-		}
-		return uc.syncAllProducts(ctx, profileID, lastSync, pageSize, pageToken)
 	}
 
 	changed := make([]*dto.ChangedProduct, 0, pageSize)
@@ -547,7 +563,12 @@ func (uc *ProductUsecase) seedFromDB(
 		}
 	}
 
-	return nil
+	pipe := uc.redisClient.Pipeline()
+	pipe.Expire(ctx, userHash, cache.TTLUserSync)
+	pipe.Expire(ctx, changeZSet, cache.TTLUserSync)
+	pipe.Set(ctx, cache.UserSyncTimeKey(profileID), time.Now().UnixMilli(), cache.TTLUserSync)
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 func (uc *ProductUsecase) onProductChanged(

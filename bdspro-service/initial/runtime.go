@@ -4,6 +4,7 @@ import (
 	"bdspro/infra/handler"
 	admin_handler "bdspro/infra/handler/admin"
 	property_handler "bdspro/infra/handler/property"
+	redis_cli "bdspro/infra/redis"
 	"bdspro/internal/job"
 	shared_usecase "bdspro/internal/usecases/shared"
 )
@@ -23,6 +24,7 @@ type InitialApp struct {
 	SharingAccessService     *handler.SharingAccessService
 	AssetLegalService        *handler.AssetLegalService
 	ProductUsecase           *shared_usecase.ProductUsecase
+	RedisClient              *redis_cli.RedisClient
 	ProjectBuildService      *handler.ProjectBuildService
 	TransactionService       *handler.TransactionHandler
 	AdminProductHandler      *admin_handler.AdminProductHandler
@@ -130,6 +132,7 @@ func NewInitialApp(
 	distributeHandler *handler.DistributionHandler,
 	productNoteHandler *handler.ProductNoteHandler,
 	propertyIdentifier *handler.PropertyIdentifierHandler,
+	redisClient *redis_cli.RedisClient,
 ) *InitialApp {
 	return &InitialApp{
 		// GrpcServer:        GrpcServer,
@@ -144,6 +147,7 @@ func NewInitialApp(
 		SharingAccessService:     sharingAccessService,
 		AssetLegalService:        assetLegalService,
 		ProductUsecase:           productUsecase,
+		RedisClient:              redisClient,
 		ProjectBuildService:      projectBuildService,
 		TransactionService:       transactionService,
 		AdminProductHandler:      adminProductHandler,

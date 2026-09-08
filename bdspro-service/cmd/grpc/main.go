@@ -39,6 +39,13 @@ var GrpcCmd = &cobra.Command{
 		if app == nil {
 			log.Fatal("app is nil after InitializeApp")
 		}
+		if app.RedisClient != nil {
+			defer func() {
+				if err := app.RedisClient.Close(); err != nil {
+					log.Printf("failed to close Redis client: %v", err)
+				}
+			}()
+		}
 		db.MigrateDomain()
 
 		// Chạy IdentifierProperty với lineageID=23 lúc start (tạo property_identify và đính vào lineage + các bảng thuộc tính)

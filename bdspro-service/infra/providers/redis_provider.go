@@ -1,33 +1,30 @@
 package providers
 
 import (
-	"context"
 	"encoding/json"
 
+	redis_cli "bdspro/infra/redis"
+
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	"github.com/spf13/viper"
 )
 
+// RedisProvider is a compatibility adapter over the process-owned Redis client.
+// It must never construct or own a second Redis connection.
 type RedisProvider struct {
-	client *redis.Client
-	ctx    context.Context
+	client *redis_cli.RedisClient
 }
 
-func NewRedisProvider() *RedisProvider {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     viper.GetString("redis.host"), // Địa chỉ Redis (ví dụ: "localhost:6379")
-		Password: viper.GetString("redis.pass"),
-	})
-	return &RedisProvider{
-		client: rdb,
-		ctx:    context.Background(),
-	}
+func NewRedisProvider(client *redis_cli.RedisClient) *RedisProvider {
+	return &RedisProvider{client: client}
 }
 
 func GetValueWithRedis[T any](r *RedisProvider, ctx *gin.Context, key string) (*T, error) {
 	var result T
-	val, err := r.client.Get(ctx, key).Result()
+	client, err := r.client.Client(ctx)
+	if err != nil {
+		return &result, err
+	}
+	val, err := client.Get(ctx, key).Result()
 	if err != nil {
 		return &result, err
 	}

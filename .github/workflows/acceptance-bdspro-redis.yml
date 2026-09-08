@@ -1,0 +1,92 @@
+name: Acceptance BDSPro Redis Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-bdspro-redis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bdspro-redis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Verify single Redis construction and lifecycle ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
+          test "$count" = "1"
+          git grep -n 'redis.NewClient(' -- bdspro-service/infra/redis/runtime.go
+          ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
+          grep -q 'func NewRedisProvider(client \*redis_cli.RedisClient)' bdspro-service/infra/providers/redis_provider.go
+          grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' bdspro-service/initial/runtime.go
+          grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+          grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
+          ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
+          ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
+
+      - name: Verify Redis-loss rebuild semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'UserSyncTimeKey(profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
+          ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
+
+      - name: Generate protobuf and prove Wire cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire bdspro
+          git diff --exit-code -- bdspro-service/wire/wire_gen.go
+          git diff --check
+
+      - name: Compile test and vet BDSPro
+        shell: bash
+        working-directory: bdspro-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go vet ./...
+          go build ./...
