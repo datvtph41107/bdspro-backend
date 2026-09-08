@@ -11,7 +11,7 @@ permissions:
 jobs:
   user-seed-proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:17-alpine
@@ -31,6 +31,7 @@ jobs:
       USER_DATABASE_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       MIGRATION_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       PGPASSWORD: postgres
+      QHPRO_TOOLCHAIN_ROOT: /home/runner/.cache/qhpro/toolchain
 
     steps:
       - name: Checkout exact acceptance candidate
@@ -49,73 +50,72 @@ jobs:
           test "$actual" = "$TARGET_SHA"
           test -z "$(git status --porcelain)"
 
-      - name: Set up Go from User module
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: user-service/go.mod
-          cache: false
-
-      - name: Install proof and generation tools
+      - name: Install host prerequisites
         shell: bash
         run: |
           set -euo pipefail
-          go version
-          go install github.com/bufbuild/buf/cmd/buf@v1.57.2
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
-          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.29.0
-          go install github.com/google/wire/cmd/wire@v0.7.0
-          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-          if ! command -v psql >/dev/null 2>&1 || ! command -v pg_dump >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y postgresql-client
-          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client python3-venv unzip
+
+      - name: Bootstrap repository-pinned toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash shared/code/development/toolchain.sh bootstrap
+          bash shared/code/development/toolchain.sh verify
+          echo "$QHPRO_TOOLCHAIN_ROOT/bin" >> "$GITHUB_PATH"
+          echo "$QHPRO_TOOLCHAIN_ROOT/protoc35.0/bin" >> "$GITHUB_PATH"
+          echo "$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin" >> "$GITHUB_PATH"
 
       - name: Generate canonical protobuf dependencies
         shell: bash
         run: |
           set -euo pipefail
-          export PATH="$(go env GOPATH)/bin:$PATH"
+          export PATH="$QHPRO_TOOLCHAIN_ROOT/bin:$QHPRO_TOOLCHAIN_ROOT/protoc35.0/bin:$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin:$PATH"
           make -C shared/code buf-all
 
-      - name: Compile test and vet User
-        working-directory: user-service
+      - name: Compile test and vet User with pinned service contract
         shell: bash
         run: |
           set -euo pipefail
-          go test -count=1 ./...
-          go vet ./...
-          go build -o /tmp/bdspro-user-seed ./cmd/seed
-          go build -o /tmp/bdspro-bootstrap-admin ./cmd/bootstrap-admin
+          make -C user-service test
+          make -C user-service vet
+          make -C user-service build
+          (
+            cd user-service
+            GOROOT="$QHPRO_TOOLCHAIN_ROOT/go1.25.10" \
+            GOTOOLCHAIN=local \
+            GOWORK=off \
+            PATH="$QHPRO_TOOLCHAIN_ROOT/bin:$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin:$PATH" \
+            "$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin/go" build -o /tmp/bdspro-user-seed ./cmd/seed
+            GOROOT="$QHPRO_TOOLCHAIN_ROOT/go1.25.10" \
+            GOTOOLCHAIN=local \
+            GOWORK=off \
+            PATH="$QHPRO_TOOLCHAIN_ROOT/bin:$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin:$PATH" \
+            "$QHPRO_TOOLCHAIN_ROOT/go1.25.10/bin/go" build -o /tmp/bdspro-bootstrap-admin ./cmd/bootstrap-admin
+          )
 
       - name: Prove User Wire is reproducible
-        working-directory: user-service
         shell: bash
         run: |
           set -euo pipefail
-          before="$(git diff --binary -- wire | sha256sum | awk '{print $1}')"
-          make wire
-          after="$(git diff --binary -- wire | sha256sum | awk '{print $1}')"
-          echo "wire diff digest before=$before"
-          echo "wire diff digest after=$after"
-          test "$before" = "$after"
-          git diff --exit-code -- wire
+          git diff --exit-code -- user-service/wire
+          make -C user-service wire
+          git diff --exit-code -- user-service/wire
 
       - name: Fresh PostgreSQL migrations from zero
-        working-directory: user-service
         shell: bash
         run: |
           set -euo pipefail
           until pg_isready -h localhost -p 5432 -U postgres -d user_service; do sleep 1; done
-          make migrateup
-          make migrate-version
+          make -C user-service migrateup
+          make -C user-service migrate-version
 
       - name: Prove DatabaseSeeder has zero scenario side effects
-        working-directory: user-service
         shell: bash
         run: |
           set -euo pipefail
+
           pre_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
           echo "acceptance identities before seed=$pre_acceptance"
           test "$pre_acceptance" = "0"
@@ -123,7 +123,7 @@ jobs:
           pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-before-seed.sql
           sha256sum /tmp/user-before-seed.sql
 
-          seed_output="$(make seed 2>&1)"
+          seed_output="$(make -C user-service seed 2>&1)"
           printf '%s\n' "$seed_output"
           grep -q 'User DatabaseSeeder complete: seeders=0' <<<"$seed_output"
 
@@ -133,7 +133,12 @@ jobs:
 
           pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-after-seed.sql
           sha256sum /tmp/user-after-seed.sql
-          cmp -s /tmp/user-before-seed.sql /tmp/user-after-seed.sql
+
+          if ! cmp -s /tmp/user-before-seed.sql /tmp/user-after-seed.sql; then
+            echo "Database data changed across intentionally empty DatabaseSeeder" >&2
+            diff -u /tmp/user-before-seed.sql /tmp/user-after-seed.sql >&2 || true
+            exit 1
+          fi
 
       - name: Record proof summary
         if: always()
@@ -144,6 +149,7 @@ jobs:
             echo
             echo "- acceptance candidate: \`$TARGET_SHA\`"
             echo "- runner checkout: \`$(git rev-parse HEAD 2>/dev/null || echo unavailable)\`"
+            echo '- repository-pinned toolchain bootstrap is part of this proof'
             echo '- proof-control workflow is not part of the acceptance candidate'
             echo '- this proof never implies FINAL ACCEPTED for the whole project'
           } >> "$GITHUB_STEP_SUMMARY"
