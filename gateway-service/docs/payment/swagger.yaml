@@ -1,0 +1,754 @@
+basePath: /v2/payment
+definitions:
+  payment.Bank:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      logo:
+        type: string
+      name:
+        type: string
+    type: object
+  payment.BankList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/payment.Bank'
+        type: array
+      total:
+        type: integer
+    type: object
+  payment.DeletePaymentMethodRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  payment.DeleteTransactionTypeRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  payment.DepositRequest:
+    properties:
+      amount:
+        type: number
+      externalPaymentId:
+        type: string
+      paymentMethod:
+        type: string
+      walletId:
+        type: integer
+    type: object
+  payment.Empty:
+    type: object
+  payment.ExportResponse:
+    properties:
+      data:
+        items:
+          type: integer
+        type: array
+      format:
+        type: string
+    type: object
+  payment.GetPaymentMethodsRequest:
+    properties:
+      organizationId:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  payment.GetWalletTransactionsRequest:
+    properties:
+      fromDate:
+        type: string
+      page:
+        type: integer
+      size:
+        type: integer
+      status:
+        type: string
+      toDate:
+        type: string
+      type:
+        type: string
+    type: object
+  payment.PaymentMethod:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      organizationId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  payment.PaymentMethodList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/payment.PaymentMethod'
+        type: array
+      total:
+        type: integer
+    type: object
+  payment.PaymentRequest:
+    properties:
+      amount:
+        type: number
+      relatedId:
+        type: string
+      relatedService:
+        type: string
+      walletId:
+        type: integer
+    type: object
+  payment.ReportRequest:
+    properties:
+      fromDate:
+        type: string
+      toDate:
+        type: string
+      type:
+        type: string
+      walletId:
+        type: integer
+    type: object
+  payment.ReportResponse:
+    properties:
+      totalAmount:
+        type: number
+      totalTransactions:
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/payment.WalletTransaction'
+        type: array
+    type: object
+  payment.SepayWebhookRequest:
+    properties:
+      AccountNumber:
+        type: string
+      Accumulated:
+        type: number
+      Code:
+        type: string
+      Content:
+        type: string
+      Description:
+        type: string
+      Gateway:
+        type: string
+      Id:
+        type: integer
+      ReferenceCode:
+        type: string
+      SubAccount:
+        type: string
+      TransactionDate:
+        type: string
+      TransferAmount:
+        type: number
+      TransferType:
+        type: string
+    type: object
+  payment.TransactionType:
+    properties:
+      category:
+        type: string
+      code:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  payment.TransactionTypeList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/payment.TransactionType'
+        type: array
+    type: object
+  payment.WalletDashboard:
+    properties:
+      alerts:
+        items:
+          type: string
+        type: array
+      balance:
+        type: number
+      pendingTransactions:
+        type: integer
+      totalExpense:
+        type: number
+      totalIncome:
+        type: number
+    type: object
+  payment.WalletTransaction:
+    properties:
+      amount:
+        type: number
+      createdAt:
+        type: string
+      externalPaymentId:
+        type: string
+      id:
+        type: integer
+      relatedId:
+        type: string
+      relatedService:
+        type: string
+      status:
+        type: string
+      transactionCode:
+        type: string
+      type:
+        type: string
+      updatedAt:
+        type: string
+      walletId:
+        type: integer
+    type: object
+  payment.WalletTransactionList:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/payment.WalletTransaction'
+        type: array
+      total:
+        type: integer
+    type: object
+  status.Error:
+    type: object
+info:
+  contact: {}
+  description: Payment Service
+  title: Payment Service
+  version: "1.0"
+paths:
+  /bank/all:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách ngân hàng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/payment.BankList'
+      summary: Lấy danh sách ngân hàng
+      tags:
+      - Bank
+  /payment-methods:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa phương thức thanh toán
+      parameters:
+      - description: Request body
+        in: body
+        name: deletePaymentMethodRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.DeletePaymentMethodRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Phương thức thanh toán
+          schema:
+            $ref: '#/definitions/payment.Empty'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Xóa phương thức thanh toán
+      tags:
+      - Payment
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách phương thức thanh toán
+      parameters:
+      - description: Request body
+        in: body
+        name: getPaymentMethodsRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.GetPaymentMethodsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách phương thức thanh toán
+          schema:
+            $ref: '#/definitions/payment.PaymentMethodList'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách phương thức thanh toán
+      tags:
+      - Payment
+    post:
+      consumes:
+      - application/json
+      description: Tạo phương thức thanh toán
+      parameters:
+      - description: Phương thức thanh toán
+        in: body
+        name: paymentMethod
+        required: true
+        schema:
+          $ref: '#/definitions/payment.PaymentMethod'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Phương thức thanh toán
+          schema:
+            $ref: '#/definitions/payment.PaymentMethod'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Tạo phương thức thanh toán
+      tags:
+      - Payment
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật phương thức thanh toán
+      parameters:
+      - description: Phương thức thanh toán
+        in: body
+        name: paymentMethod
+        required: true
+        schema:
+          $ref: '#/definitions/payment.PaymentMethod'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Phương thức thanh toán
+          schema:
+            $ref: '#/definitions/payment.PaymentMethod'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật phương thức thanh toán
+      tags:
+      - Payment
+  /sepay/webhook:
+    post:
+      consumes:
+      - application/json
+      description: Webhook thanh toán Sepay
+      parameters:
+      - description: Request body
+        in: body
+        name: sepayWebhookRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.SepayWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook thanh toán Sepay
+          schema:
+            $ref: '#/definitions/payment.Empty'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      summary: Webhook thanh toán Sepay
+      tags:
+      - Payment
+  /transaction-types:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa loại giao dịch
+      parameters:
+      - description: Request body
+        in: body
+        name: deleteTransactionTypeRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.DeleteTransactionTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Loại giao dịch
+          schema:
+            $ref: '#/definitions/payment.Empty'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Xóa loại giao dịch
+      tags:
+      - Payment
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách loại giao dịch
+      parameters:
+      - description: Empty request
+        in: body
+        name: empty
+        required: true
+        schema:
+          $ref: '#/definitions/payment.Empty'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách loại giao dịch
+          schema:
+            $ref: '#/definitions/payment.TransactionTypeList'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách loại giao dịch
+      tags:
+      - Payment
+    post:
+      consumes:
+      - application/json
+      description: Tạo loại giao dịch
+      parameters:
+      - description: Loại giao dịch
+        in: body
+        name: transactionType
+        required: true
+        schema:
+          $ref: '#/definitions/payment.TransactionType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Loại giao dịch
+          schema:
+            $ref: '#/definitions/payment.TransactionType'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Tạo loại giao dịch
+      tags:
+      - Payment
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật loại giao dịch
+      parameters:
+      - description: Loại giao dịch
+        in: body
+        name: transactionType
+        required: true
+        schema:
+          $ref: '#/definitions/payment.TransactionType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Loại giao dịch
+          schema:
+            $ref: '#/definitions/payment.TransactionType'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật loại giao dịch
+      tags:
+      - Payment
+  /wallets/{walletId}/export:
+    get:
+      consumes:
+      - application/json
+      description: Xuất dữ liệu ví
+      parameters:
+      - description: ID ví
+        in: path
+        name: walletId
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: reportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dữ liệu ví
+          schema:
+            $ref: '#/definitions/payment.ExportResponse'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Xuất dữ liệu ví
+      tags:
+      - Payment
+  /wallets/{walletId}/report:
+    get:
+      consumes:
+      - application/json
+      description: Lấy báo cáo ví
+      parameters:
+      - description: ID ví
+        in: path
+        name: walletId
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: reportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Báo cáo ví
+          schema:
+            $ref: '#/definitions/payment.ReportResponse'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Lấy báo cáo ví
+      tags:
+      - Payment
+  /wallets/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Lấy dashboard ví
+      parameters:
+      - description: Empty request
+        in: body
+        name: empty
+        required: true
+        schema:
+          $ref: '#/definitions/payment.Empty'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Wallet dashboard
+          schema:
+            $ref: '#/definitions/payment.WalletDashboard'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Lấy dashboard ví
+      tags:
+      - Payment
+  /wallets/deposit:
+    post:
+      consumes:
+      - application/json
+      description: Nạp tiền
+      parameters:
+      - description: Request body
+        in: body
+        name: depositRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.DepositRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Giao dịch nạp tiền
+          schema:
+            $ref: '#/definitions/payment.WalletTransaction'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Nạp tiền
+      tags:
+      - Payment
+  /wallets/payment:
+    post:
+      consumes:
+      - application/json
+      description: Tạo giao dịch
+      parameters:
+      - description: Request body
+        in: body
+        name: paymentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.PaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Giao dịch
+          schema:
+            $ref: '#/definitions/payment.WalletTransaction'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Tạo giao dịch
+      tags:
+      - Payment
+  /wallets/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách giao dịch ví
+      parameters:
+      - description: Request body
+        in: body
+        name: getWalletTransactionsRequest
+        required: true
+        schema:
+          $ref: '#/definitions/payment.GetWalletTransactionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách giao dịch ví
+          schema:
+            $ref: '#/definitions/payment.WalletTransactionList'
+        "400":
+          description: Lỗi yêu cầu không hợp lệ
+          schema:
+            $ref: '#/definitions/status.Error'
+        "500":
+          description: Lỗi server
+          schema:
+            $ref: '#/definitions/status.Error'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách giao dịch ví
+      tags:
+      - Payment
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

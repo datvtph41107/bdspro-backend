@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package hubpb;
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+service SystemConfigService {
+    // Lấy danh sách config theo group
+    rpc GetSystemConfigsByGroup(GetSystemConfigsByGroupRequest) returns (GetSystemConfigsByGroupResponse) {
+        option (google.api.http) = {
+            get: "/v2/hub/system-config/by-group/{groupKey}"
+        };
+    }
+
+    // Bulk upsert configs (tạo mới nếu chưa có, update nếu đã tồn tại)
+    rpc BulkUpsertSystemConfig(BulkUpsertSystemConfigRequest) returns (BulkUpsertSystemConfigResponse) {
+        option (google.api.http) = {
+            post: "/v2/hub/system-config/bulk-upsert"
+            body: "*"
+        };
+    }
+
+    // Reset config về giá trị mặc định theo group
+    rpc ResetDefaultByGroup(ResetDefaultByGroupRequest) returns (ResetDefaultByGroupResponse) {
+        option (google.api.http) = {
+            post: "/v2/hub/system-config/reset-default/{groupKey}"
+        };
+    }
+
+    // Lấy config theo key
+    rpc GetSystemConfigByKey(GetSystemConfigByKeyRequest) returns (SystemConfigItem) {
+        option (google.api.http) = {
+            get: "/v2/hub/system-config/key/{key}"
+        };
+    }
+
+    // API cho user - Lấy settings theo group (chỉ trả key-value)
+    rpc GetUserSettingsByGroup(GetUserSettingsByGroupRequest) returns (GetUserSettingsByGroupResponse) {
+        option (google.api.http) = {
+            get: "/v2/hub/settings/{groupKey}"
+        };
+    }
+}
+
+message SystemConfigItem {
+    uint64 id = 1;
+    string name = 2;
+    string key = 3;
+    string value = 4;
+    string createdAt = 5;
+    string updatedAt = 6;
+    string groupKey = 7;
+    string groupName = 8;
+}
+
+message GetSystemConfigsByGroupRequest {
+    string groupKey = 1;
+}
+
+message GetSystemConfigsByGroupResponse {
+    repeated SystemConfigItem data = 1;
+    int32 total = 2;
+    string groupName = 3;
+}
+
+message BulkUpsertSystemConfigRequest {
+    repeated UpsertConfigItem configs = 1;
+}
+
+message UpsertConfigItem {
+    string key = 1;
+    string name = 2;
+    string value = 3;
+    string groupKey = 4;
+}
+
+message BulkUpsertSystemConfigResponse {
+    bool success = 1;
+    string message = 2;
+    int32 createdCount = 3;
+    int32 updatedCount = 4;
+    repeated SystemConfigItem configs = 5;
+}
+
+message ResetDefaultByGroupRequest {
+    string groupKey = 1;
+}
+
+message ResetDefaultByGroupResponse {
+    bool success = 1;
+    string message = 2;
+    int32 resetCount = 3;
+    repeated SystemConfigItem configs = 4;
+}
+
+message GetSystemConfigByKeyRequest {
+    string key = 1;
+}
+
+message GetSystemConfigByKeyResponse {
+    SystemConfigItem config = 1;
+}
+
+// API cho user - Messages
+message GetUserSettingsByGroupRequest {
+    string groupKey = 1;
+}
+
+message GetUserSettingsByGroupResponse {
+    map<string, string> settings = 1;  // key-value pairs
+    string groupKey = 2;
+}
+
+

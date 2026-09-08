@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package social;
+
+option go_package = "pb/types/social;pb_social";
+
+import "google/api/annotations.proto";
+
+service LikeService {
+    rpc LikeComment(LikeCommentRequest) returns (LikeResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/like/comment/{commentId}"
+            body: "*"
+        };
+    }
+    rpc LikeNewsFeed(LikeNewsFeedRequest) returns (LikeResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/like/news-feed/{newsFeedId}"
+            body: "*"
+        };
+    }
+    rpc UnlikeComment(LikeCommentRequest) returns (LikeResponse) {
+        option (google.api.http) = {
+            delete: "/v2/social/like/comment/{commentId}"
+        };
+    }
+    rpc UnlikeNewsFeed(LikeNewsFeedRequest) returns (LikeResponse) {
+        option (google.api.http) = {
+            delete: "/v2/social/like/news-feed/{newsFeedId}"
+        };
+    }
+    rpc GetListLikeComment(LikeCommentSearch) returns (ListLikeResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/like/comment/list/{commentId}"
+        };
+    }
+    rpc GetListLikeNewsFeed(LikeNewsFeedSearch) returns (ListLikeResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/like/news-feed/list/{newsFeedId}"
+        };
+    }
+}
+
+message LikeCommentRequest {
+    uint64 commentId = 1;
+    bool dislike = 2;
+}
+
+message LikeNewsFeedRequest {
+    uint64 newsFeedId = 1;
+    bool dislike = 2;
+}
+
+message LikeResponse {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    uint32 targetType = 3;
+    uint64 userId = 4;
+    string createdAt = 5;
+}
+
+message UnLikeResponse {
+    repeated LikeResponse data = 1;
+    int32 total = 2;
+}
+
+message ListLikeResponse {
+    repeated LikeResponse data = 1;
+    int32 total = 2;
+}
+
+message LikeNewsFeedSearch {
+    uint64 newsFeedId = 1;
+    bool dislike = 2;
+}
+
+message LikeCommentSearch {
+    uint64 commentId = 1;
+    bool dislike = 2;
+}

@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+// ========== Messages ==========
+
+message ProvinceV2 {
+  uint64 id = 1;
+  string name = 2;
+  int32 code = 3;
+  string codename = 4;
+  string divisionType = 5;
+  int32 phoneCode = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message WardV2 {
+  uint64 id = 1;
+  string name = 2;
+  int32 code = 3;
+  string codename = 4;
+  string divisionType = 5;
+  string shortCodename = 6;
+  int32 provinceCode = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+message ProvinceV2WithWards {
+  ProvinceV2 province = 1;
+  repeated WardV2 wards = 2;
+}
+
+message LocationSearchResultV2 {
+  uint64 wardId = 1;
+  string wardName = 2;
+  string wardType = 3;
+  uint64 provinceId = 4;
+  string provinceName = 5;
+  string provinceType = 6;
+  string fullAddress = 7;
+}
+
+// ========== Request/Response Messages ==========
+
+message GetProvincesV2Request {
+  string keyword = 1; // Search by name (optional)
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetProvincesV2Response {
+  repeated ProvinceV2 data = 1;
+  int64 total = 2;
+}
+
+message GetProvinceV2ByCodeRequest {
+  int32 code = 1; // Province code
+  bool includeWards = 2; // Include wards in response
+}
+
+message GetProvinceV2ByCodeResponse {
+  ProvinceV2WithWards data = 1;
+}
+
+message GetWardsV2Request {
+  uint64 provinceId = 1; // Filter by province ID (optional)
+  string keyword = 2;    // Search by name (optional)
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message GetWardsV2Response {
+  repeated WardV2 data = 1;
+  int64 total = 2;
+}
+
+message GetWardV2ByCodeRequest {
+  int32 code = 1; // Ward code
+}
+
+message GetWardV2ByCodeResponse {
+  WardV2 data = 1;
+}
+
+message SearchLocationV2Request {
+  string keyword = 1; // Search keyword (e.g., "hà nội")
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message SearchLocationV2Response {
+  repeated LocationSearchResultV2 data = 1;
+  int64 total = 2;
+}
+
+// ========== Service Definition ==========
+
+service LocationV2Service {
+  // Province V2 APIs
+  rpc GetProvincesV2 (GetProvincesV2Request) returns (GetProvincesV2Response) {
+    option (google.api.http) = {
+      get: "/v2/hub/v2/provinces"
+    };
+  };
+
+  rpc GetProvinceV2ByCode (GetProvinceV2ByCodeRequest) returns (GetProvinceV2ByCodeResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/v2/province/{code}"
+    };
+  };
+
+  // Ward V2 APIs
+  rpc GetWardsV2 (GetWardsV2Request) returns (GetWardsV2Response) {
+    option (google.api.http) = {
+      get: "/v2/hub/v2/wards"
+    };
+  };
+
+  rpc GetWardV2ByCode (GetWardV2ByCodeRequest) returns (GetWardV2ByCodeResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/v2/ward/{code}"
+    };
+  };
+
+  // Search Location V2
+  rpc SearchLocationV2 (SearchLocationV2Request) returns (SearchLocationV2Response) {
+    option (google.api.http) = {
+      get: "/v2/hub/v2/location/search"
+    };
+  };
+
+  rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/search"
+    };
+  };
+}
+
+
+
+message SearchItem {
+  string address = 1;
+  string name = 2;
+  double latitude = 3;
+  double longitude = 4;
+  bytes geometry = 5;
+  uint64 seoId = 6;
+  uint64 parcelId = 7;
+}
+
+message SearchResponse {
+  repeated SearchItem data  = 1;
+}

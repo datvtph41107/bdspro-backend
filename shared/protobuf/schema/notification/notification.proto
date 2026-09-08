@@ -1,0 +1,535 @@
+syntax = "proto3";
+
+package notificationpb;
+option go_package = "pb/types/notification;notificationpb";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service GatewayNotificationService {
+  rpc Create (GatewayNotiNewRequest) returns (NotificationDTO) {
+    option (google.api.http) = {
+      post: "/v2/notification/new"
+      body: "*"
+    };
+  };
+  rpc Count (CountRequest) returns (CountResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/count"
+    };
+  };
+  rpc Read (IdRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read/{id}"
+    };
+  };
+  rpc ReadMany (ReadManyRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read-many"
+      body: "*"
+    };
+  };
+  rpc ReadAll (EmptyRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/read-all"
+    };
+  };
+  rpc Remove (IdRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      delete: "/v2/notification/remove/{id}"
+    };
+  };
+  rpc List (ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/list"
+    };
+  };
+  rpc PushByToken (PushTokenRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/push/token"
+      body: "*"
+    };
+  };
+  rpc PushByTopic (PushTopicRequest) returns (PushResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/push/topic"
+      body: "*"
+    };
+  };
+  rpc SearchAdminHistory (AdminHistorySearchRequest) returns (AdminHistoryListResponse) {
+    option (google.api.http) = {
+      get: "/v2/admin-history/search"
+    };
+  };
+
+  // Account Warning APIs
+  rpc SendAccountWarning(SendAccountWarningRequest) returns (SendAccountWarningResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/{ownerOf}/account-warning/send"
+      body: "*"
+    };
+  }
+
+  rpc GetAccountWarningList(GetAccountWarningListRequest) returns (GetAccountWarningListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/{ownerOf}/account-warning/list"
+    };
+  }
+
+  rpc MarkWarningAsRead(MarkWarningAsReadRequest) returns (MarkWarningAsReadResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/{ownerOf}/account-warning/read"
+      body: "*"
+    };
+  }
+
+  rpc MarkWarningAsAcknowledged(MarkWarningAsAcknowledgedRequest) returns (MarkWarningAsAcknowledgedResponse) {
+    option (google.api.http) = {
+      put: "/v2/notification/{ownerOf}/account-warning/acknowledge"
+      body: "*"
+    };
+  }
+
+  rpc CreateWarningTemplate(CreateWarningTemplateRequest) returns (CreateWarningTemplateResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/{ownerOf}/account-warning/template"
+      body: "*"
+    };
+  }
+
+  rpc GetWarningTemplateList(GetWarningTemplateListRequest) returns (GetWarningTemplateListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/{ownerOf}/account-warning/template/list"
+    };
+  }
+
+  rpc GetWarningTemplateDetail(GetWarningTemplateDetailRequest) returns (GetWarningTemplateDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/{ownerOf}/account-warning/template/{id}"
+    };
+  }
+
+  rpc GetWarningLogList(GetWarningLogListRequest) returns (GetWarningLogListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/{ownerOf}/account-warning/log/list"
+    };
+  }
+
+  // System Warning APIs - Admin
+  rpc GetAdminSystemWarningList(GetSystemWarningListRequest) returns (GetSystemWarningListResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/admin/system-warning"
+    };
+  }
+
+  rpc CreateSystemWarning(CreateSystemWarningRequest) returns (CreateSystemWarningResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/admin/system-warning"
+      body: "*"
+    };
+  }
+
+  rpc DeleteSystemWarning(DeleteSystemWarningRequest) returns (DeleteSystemWarningResponse) {
+    option (google.api.http) = {
+      delete: "/v2/notification/admin/system-warning/{id}"
+    };
+  }
+
+  // System Warning APIs - User
+  rpc GetMySystemWarnings(GetMySystemWarningsRequest) returns (GetMySystemWarningsResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/system-warning/me"
+    };
+  }
+}
+
+
+message PushTopicRequest {
+    string topic = 1;
+    string title = 2;
+    string body = 3;
+}
+message PushTokenRequest {
+    string token = 1;
+    string title = 2;
+    string body = 3;
+}
+message PushResponse {
+    string messageId = 1;
+}
+
+message ListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string sort = 3;
+    bool isRead = 4;
+    int64 timestamp = 5;  // client gửi timestamp lần trước; 0 = luôn lấy từ DB
+}
+message ListResponse {
+  repeated NotificationDTO data = 1;
+  int32 total = 2;
+  int64 timestamp = 3;   // timestamp dữ liệu
+  bool unchanged = 4;    // true nếu client đã có bản mới, không cần cập nhật
+}
+
+message NotificationDTO {
+    uint64 id = 1;
+    string link = 2;
+    repeated string message = 3;
+    string title = 4;
+    int32 type = 5;
+    uint64 userId = 6;
+    bool isRead = 7;
+    string timestamp = 8;
+    string avatar = 9;
+    optional uint64 targetId = 10;
+    uint32 notificationType = 11;
+}
+
+message IdRequest {
+    uint64 id = 1;
+}
+
+message ReadManyRequest {
+    repeated uint64 ids = 1;
+}
+
+message EmptyRequest {}
+message EmptyResponse {}
+
+message CountRequest {
+  int64 timestamp = 1;  // client gửi timestamp lần trước; 0 = luôn lấy từ DB
+}
+
+message CountResponse {
+    int32 count = 1;
+    int32 unread = 2;
+    int64 timestamp = 3;   // timestamp dữ liệu
+    bool unchanged = 4;    // true nếu client đã có bản mới, không cần cập nhật
+}
+
+message GatewayNotiNewRequest {
+    string title = 1;
+    string message = 2;
+    int32 type = 3;
+    string link = 4;
+    uint64 ownerId = 5;
+}
+
+message StatusResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Admin History Messages
+message AdminHistoryDTO {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    int32 targetType = 3;
+    int32 actionType = 4;
+    string title = 5;
+    repeated string note = 6;
+    string preStage = 7;
+    string afterStage = 8;
+    uint64 adminId = 9;
+    optional uint64 ownerId = 10;
+    int32 ownerType = 11;
+    bool isInternal = 12;
+    string adminRole = 13;
+    string ipAddress = 14;
+    string userAgent = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+    optional string adminName = 18;
+    optional string adminAvatar = 19;
+}
+
+message AdminHistoryListResponse {
+    repeated AdminHistoryDTO data = 1;
+    int32 total = 2;
+}
+
+message AdminHistorySearchRequest {
+    int32 page = 1;
+    int32 size = 2;
+    optional uint64 adminId = 3;
+    optional uint64 ownerId = 4;
+    optional int32 ownerType = 5;
+    optional uint64 targetId = 6;
+    optional int32 targetType = 7;
+    optional int32 actionType = 8;
+    optional string adminRole = 9;
+    optional string fromDate = 10;
+    optional string toDate = 11;
+    optional bool isInternal = 12;
+}
+
+// Account Warning Messages
+message SendAccountWarningRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    bool sendEmail = 8;
+    optional uint64 relatedId = 9;
+    string relatedType = 10;
+    optional string expiresAt = 11;
+    optional uint64 templateId = 12; // ID của mẫu cảnh báo nếu sử dụng
+}
+
+message SendAccountWarningResponse {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    uint64 sentBy = 9;
+    string sentAt = 10;
+    bool emailSent = 11;
+    string message = 12;
+}
+
+message GetAccountWarningListRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    optional uint64 targetId = 4;
+    string targetType = 5;
+    string warningType = 6;
+    string severity = 7;
+    string status = 8;
+    optional uint64 sentBy = 9;
+    optional bool isRead = 10;
+}
+
+message GetAccountWarningListResponse {
+    repeated AccountWarningItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message AccountWarningItem {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    bool isRead = 9;
+    optional string readAt = 10;
+    uint64 sentBy = 11;
+    string sentAt = 12;
+    bool emailSent = 13;
+    optional string emailSentAt = 14;
+    optional uint64 relatedId = 15;
+    string relatedType = 16;
+    optional string expiresAt = 17;
+    string createdAt = 18;
+    string updatedAt = 19;
+}
+
+message MarkWarningAsReadRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    uint64 warningId = 2;
+    uint64 targetId = 3;
+}
+
+message MarkWarningAsReadResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message MarkWarningAsAcknowledgedRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    uint64 warningId = 2;
+    uint64 targetId = 3;
+}
+
+message MarkWarningAsAcknowledgedResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message CreateWarningTemplateRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+}
+
+message CreateWarningTemplateResponse {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message GetWarningTemplateListRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    string warningType = 4;
+}
+
+message GetWarningTemplateListResponse {
+    repeated WarningTemplateItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message GetWarningTemplateDetailRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    uint64 id = 2;
+}
+
+message GetWarningTemplateDetailResponse {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message WarningTemplateItem {
+    uint64 id = 1;
+    string name = 2;
+    string warningType = 3;
+    string title = 4;
+    string content = 5;
+    string severity = 6;
+    bool isActive = 7;
+    uint64 createdBy = 8;
+    uint64 updatedBy = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message GetWarningLogListRequest {
+    sharepb.OwnerOf ownerOf = 1; // user, group, organization
+    int32 page = 2;
+    int32 size = 3;
+    optional uint64 warningId = 4;
+    optional uint64 targetId = 5;
+}
+
+message GetWarningLogListResponse {
+    repeated WarningLogItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message WarningLogItem {
+    uint64 id = 1;
+    uint64 warningId = 2;
+    uint64 targetId = 3;
+    string action = 4;
+    string status = 5;
+    string reason = 6;
+    uint64 performedBy = 7;
+    string performedAt = 8;
+    string ipAddress = 9;
+    string userAgent = 10;
+}
+
+// System Warning Messages
+message GetSystemWarningListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string sort = 3;
+    optional string warningType = 4;
+    optional string severity = 5;
+    optional uint64 targetId = 6;
+    optional string targetType = 7;
+    optional bool isRead = 8;
+}
+
+message GetSystemWarningListResponse {
+    repeated SystemWarningItem data = 1;
+    int32 total = 2;
+}
+
+message CreateSystemWarningRequest {
+    string warningType = 1;
+    string title = 2;
+    string content = 3;
+    string severity = 4;
+    uint64 targetId = 5;
+}
+
+message CreateSystemWarningResponse {
+    uint64 id = 1;
+    string warningType = 2;
+    string title = 3;
+    string content = 4;
+    string severity = 5;
+    uint64 targetId = 6;
+    uint64 sentBy = 7;
+    string sentAt = 8;
+    string message = 9;
+}
+
+message DeleteSystemWarningRequest {
+    uint64 id = 1;
+}
+
+message DeleteSystemWarningResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetMySystemWarningsRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string sort = 3;
+    optional string warningType = 4;
+    optional bool isRead = 5;
+}
+
+message GetMySystemWarningsResponse {
+    repeated SystemWarningItem data = 1;
+    int32 total = 2;
+}
+
+message SystemWarningItem {
+    uint64 id = 1;
+    uint64 targetId = 2;
+    string targetType = 3;
+    string warningType = 4;
+    string title = 5;
+    string content = 6;
+    string severity = 7;
+    string status = 8;
+    bool isRead = 9;
+    optional string readAt = 10;
+    uint64 sentBy = 11;
+    string sentAt = 12;
+    string createdAt = 13;
+    string updatedAt = 14;
+}

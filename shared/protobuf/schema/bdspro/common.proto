@@ -1,0 +1,414 @@
+syntax = "proto3";
+
+package bdspropb;
+import "user/profile.proto";
+import "google/protobuf/timestamp.proto";
+import "bdspro/project.proto";
+import "bdspro/developer.proto";
+import "bdspro/amenity.proto";
+import "bdspro/doc_type.proto";
+import "bdspro/region.proto";
+import "bdspro/deposite.proto";
+import "bdspro/apartment.proto";
+import "bdspro/apartment_attribute.proto";
+import "bdspro/attribute_product.proto";
+import "bdspro/transaction.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+option go_package = "pb/types/bdspro;bdspropb";
+
+message ArchivedRequest {
+    uint64 id = 1;
+    bool archived = 2;
+}
+
+message MediaItem {
+    uint64 id = 1;
+    string mediaUrl = 2;
+    string mediaType = 3;
+    bool isMain = 4;
+    int32 order = 5;
+    int32 targetType = 6;
+    uint64 targetId = 7;
+}
+
+message IdRequest {
+    uint64 id = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string sort = 4;
+    string text = 5;
+    uint32 ownerType = 6;
+    repeated uint64 ids = 7;
+    int64 timestamp = 8;
+    uint64 endId = 9;
+}
+
+
+message Response {
+    uint64 id = 1;
+    string message = 2;
+}
+
+// message History {
+//     uint64 id = 1;
+//     uint64 action = 2;
+//     uint64 parentId = 3;
+//     uint64 productId = 4;
+//     repeated uint64 childIds = 5;
+//     uint64 createdUserId = 6;
+//     sharepb.ProfileItem createdUser = 7;
+//     repeated ProductInfo childs = 8;
+//     // ProductInfo parent = 4;
+//     // ProductInfo product = 6;
+//     // repeated double areas = 10;
+//     // repeated ProductInfo childs = 11;
+// }
+
+// message HistoryResponse {
+//     repeated History data = 1;
+//     uint64 total = 2;
+// }
+
+message HouseInfo {
+    uint64 id = 1;
+    optional int32 numBedroom = 2;
+    optional int32 numBathroom = 3;
+    optional int32 numFloor = 4;
+    optional int32 numFront = 5;
+    optional int32 numCarPark = 6;
+    optional string furniture = 7;
+    optional string orientation = 8;
+    optional int32 numToilet = 9;
+    optional uint32 orientationHouse = 10; // Enum hướng nhà
+    optional string orientationName = 11; // Tên hướng nhà (tự động map từ enum)
+    optional uint32 certificateHouse = 12; // Enum chứng nhận
+    optional string certificateName = 13; // Tên giấy chứng nhận (tự động map từ enum)
+    optional double roadWidth = 14; // Đường vào (m)
+    optional double frontWidth = 15; // Mặt tiền (m)
+    optional double backWidth = 16; // Hậu (m)
+    optional double width = 17; // Rộng (m)
+    optional double height = 18; // Dài (m)
+  }
+  
+  message ProductPrivate {
+      uint64 id = 1;
+      uint64 productId = 2;
+      double importPrice = 3;
+      double operatingCost = 4;
+      string internalNote = 5;
+      double targetProfit = 6;
+      string privateDocs = 7;
+  }
+
+  message ProductPrice {
+    uint64 id = 1;
+      uint64 productId = 2;
+      string currency = 3;
+      optional double priceOwner = 4;
+      optional double salePrice = 5;
+      optional double saleCommission = 6; // 1000000 -> 10%
+      optional double deposite = 7;
+      optional double rentPrice = 8;
+      optional double rentCommission = 9; // 1000000 -> 10%
+      optional uint32 rentPaymentCycle = 10;
+      optional uint32 saleCommissionType = 11;
+      optional uint32 rentCommissionType = 12;
+      string changeNote = 13;
+      bool channelPrice = 14;
+  }
+
+message ProductResponse {
+    uint64 id = 1;
+    optional uint64 parentId = 2;
+    optional uint64 assetId = 3;
+    optional uint64 propertyTypeId = 4;
+    optional ItemResponse propertyType = 5;
+    optional uint64 docTypeId = 6;
+    optional DocType docType = 7;
+    repeated AmenityItem amenities = 8;
+    uint32 visibility = 9;
+    string name = 10;
+    string code = 11;
+    optional uint64 categoryId = 12;
+    double area = 13;
+    string positionUrl = 14;
+    string description = 15;
+    uint64 organizationId = 16;
+    int32 orgStatus = 17;
+    optional uint64 lastPriceId = 18;
+    optional ProductPrice price = 19;
+    optional uint64 apartmentId = 20;
+    Apartment apartment = 21;
+    ApartmentAttribute apartmentAttribute = 22;
+    ProjectBuild build = 23;
+    Project project = 24;
+    Developer developer = 25;
+    uint32 sourceType = 26;
+    optional uint64 customerId = 27;
+    optional ProductPrivate privateData = 28;
+    string note = 29;
+    int32 transactionType = 30;
+    uint32 saleStatus = 31;
+    uint32 saleVisibility = 32;
+    uint32 rentStatus = 33;
+    uint32 rentVisibility = 34;
+    optional uint64 ownerId = 35;
+    uint32 ownerType = 36;
+    optional uint64 provinceId = 37;
+    optional Region province = 38;
+    optional uint64 districtId = 39;
+    optional Region district = 40;
+    optional uint64 wardId = 41;
+    optional Region ward = 42;
+    sharepb.AddressV3Proto address = 43;
+    string googleMapLink = 44;
+    repeated AttributeProduct attributes = 45;
+    repeated MediaItem mediaList = 46;
+    HouseInfo houseInfo = 47;
+    bool archived = 48;
+    optional double priceSuggest = 49;
+    string districtName = 50;
+    string provinceName = 51;
+    string wardName = 52;
+    optional sharepb.ProfileItem createdUser = 53;
+    optional Transaction saleTransaction = 54;
+    optional Transaction rentTransaction = 55;
+    string createdAt = 56;
+    string updatedAt = 57;
+    repeated AssetItem assets = 58;
+    repeated PostItem posts = 59;
+    optional uint64 imageId = 60;
+    string imageUrl = 61;
+    optional double availableArea = 62;
+    optional uint64 projectId = 63;
+    string projectName = 64;
+    // Statistics fields
+    int64 publicListingCount = 65; // Số tin đăng công khai
+    optional uint64 sourceContactId = 70;
+    string sourceContactNote = 71;
+    string certificateHouseNote = 72;
+    optional sharepb.ContactDTO sourceContact = 73;
+    optional string propertyTypeName = 75;
+    optional PropertyBuildingInfo buildingInfo = 76; // Thông tin nhà/công trình từ PropertyBuildingInfo
+    
+    uint32 shareCount = 66;         // Số lượt chia sẻ
+    uint32 assetCount = 67;            // Có gắn với ít nhất 1 tài sản
+    bool hasInventory = 68;        // Thuộc bảng hàng
+    uint32 dealCount = 69;             // Đang ở ít nhất 1 thương vụ
+    uint32 postCount = 77;
+    uint32 appointmentCount = 78;
+    uint32 contactCount = 79;
+
+    optional MediaItem avatar = 80;
+    optional PropertyResponse property = 81;
+
+    // SOUURCE UPDATE RESPONE
+    uint32 sourceStatus = 82;  
+    uint32 priority = 83;  
+    optional uint64 propertyId = 84;
+    string sourceTypeName = 85;
+    optional uint64 createdBy = 86;
+    optional string deletedAt = 87;
+}
+
+message PropertyLandInfo {
+    optional double frontage = 1;            // Mặt tiền (m)
+    optional double depth = 2;               // Chiều sâu (m)
+    optional double roadWidth = 3;           // Độ rộng đường (m)
+    string landNote = 4;                    // Ghi chú về đất
+}
+
+message PropertyMediaItem {
+    string mediaType = 1;                     // Loại media (image, video)
+    string url = 2;                          // URL ảnh/video
+    string thumbUrl = 3;                     // URL thumbnail
+    int32 sortOrder = 4;                     // Thứ tự sắp xếp
+    bool isCover = 5;                        // Ảnh bìa
+}
+
+message PropertyResponse {
+    uint64 id = 1;
+    optional uint64 propertyTypeId = 2;
+    string title = 3;
+    optional uint64 locationId = 4;               // deprecated
+    string addressDetail = 5;
+    optional double latitude = 6;
+    optional double longitude = 7;
+    string mapUrl = 8;
+    optional uint64 projectId = 9;
+    string buildingBlock = 10;                     // tên block/tòa nhà (có thể redundant)
+    string level = 11;                             // tầng
+    string unitCode = 12;                          // mã căn hộ
+    optional double areaTotal = 13;
+    optional double areaLand = 14;
+    optional double areaResidential = 15;
+    uint32 legalStatus = 16;                       // enum EHouseCertificate
+    string legalNote = 17;
+    optional uint64 buildingInfoId = 18;           // ID thông tin nhà
+    uint32 recordStatus = 19;                      // enum EPropertyStatus
+    string createdAt = 20;                          // ISO string
+    string updatedAt = 21;                          // ISO string
+    optional int64 productCount = 22;
+    optional int64 assetCount = 23;
+    optional int64 postCount = 24;
+    string legalStatusName = 25;
+    string recordStatusName = 26;
+    optional sharepb.AddressV3Proto address = 27;
+    optional string projectName = 28;
+    optional PropertyBuildingInfo buildingInfo = 29;
+    string propertyTypeName = 30;
+    optional PropertyMediaItem avatar = 31;
+    repeated bdspropb.MediaItem mediaList = 32;     // cần import hoặc định nghĩa MediaItem
+    optional sharepb.TagItem project = 33;          // dạng tag cho project
+    optional sharepb.TagItem propertyType = 34;     // dạng tag cho loại BĐS
+    optional PropertyLandInfo landInfo = 35;
+    repeated sharepb.TagItem amenities = 36;
+
+    // [ADDED] Các trường mới theo UI
+    uint32 scope = 37;                              // "private", "shared", "public"
+    string identifier = 38;                          // mã BDSPro
+    string nationalId = 39;                          // mã QG
+    bool nationalIdVerified = 40;
+    uint32 sourceType = 41;
+    uint64 blockId = 42;
+    string blockName = 43;
+    uint64 buildingId = 44;
+    string buildingName = 45;
+    optional Region region = 46;
+    uint32 visibility = 47;
+    uint64 createdBy = 48;
+}
+
+// dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết
+message ProductAttachment {
+    uint64 id = 1;
+    string name = 2;
+    string code = 3;
+    double area = 4;
+    double price = 5;
+    string image = 6;
+    optional uint64 assetId = 7;
+    optional uint64 depositeId = 8;
+    uint32 rentStatus = 9;
+    uint32 saleStatus = 10;
+    int32 sourceType = 11;
+    string sourceTypeName = 12;
+}
+
+message Asset {
+    uint64 id = 1;
+    string name = 2;
+    optional uint64 wardId = 3;
+    optional uint64 districtId = 4;
+    optional uint64 provinceId = 5;
+    double price = 6;
+    google.protobuf.Timestamp buyedDate = 7;
+    uint32 docStatus = 8; // 1: sổ đỏ, 2: sổ hồng, 3: chưa có sổ
+    optional uint64 productId = 9;
+    optional uint64 ownerId = 10;
+    optional uint32 ownerType = 11;
+    optional uint64 parentAssetId = 12;
+    string splitMergeStatus = 13;
+    double purchasePrice = 14;
+    string purchaseDate = 15;
+    uint32 legalStatus = 16;
+    bool archived = 17;
+    uint32 rentStatus = 18;
+    double area = 19;
+    string address = 20;
+    string description = 21;
+    repeated LegalItem legalItems = 22;
+    string propertyTypeName = 23;
+    string provinceName = 24;
+    string districtName = 25;
+    string wardName = 26;
+    optional uint64 propertyTypeId = 27;
+    optional bdspropb.ProductResponse product = 28;
+    string imageUrl = 29;
+}
+
+message LegalItem {
+	uint64 id = 1;
+	uint64 assetId = 2;
+	string documentType = 3;
+	string documentName = 4;
+	string documentUrl = 5;
+	string issuedDate = 6;
+	string expiryDate = 7;
+	string description = 8;
+}
+
+message ProductInfo {
+	uint64 id = 1;
+	string name = 2;
+	string code = 3;
+	uint64 categoryId = 4;
+	double area = 5;
+	uint64 lastPriceId = 6;
+}
+
+message ProductItem {
+	uint64 id = 1;
+	uint64 productId = 2;
+	double area = 3;
+	double price = 4;
+	uint64 lastPriceId = 5;
+	uint64 ownerUserId = 6;
+	uint64 ownerType = 7;
+	uint64 createdAt = 8;
+	uint64 updatedAt = 9;
+}
+
+message ProjectBuild {
+    uint64 id = 1;
+    string name = 2;
+    uint32 numFloor = 3;
+    uint32 numApartment = 4;
+    string note = 5;
+    uint64 projectId = 6;
+    repeated Apartment apartments = 7;
+    repeated ApartmentAttribute attributes = 8;
+}
+
+message ItemResponse {
+    uint64 id = 1;
+    string name = 2;
+}
+
+// AssetItem for product detail response
+message AssetItem {
+    uint64 id = 1;
+    string code = 2;
+    string name = 3;
+    double area = 4;
+    optional uint64 provinceId = 5;
+    string provinceName = 6;
+    optional uint64 wardId = 7;
+    string wardName = 8;
+    string address = 9;
+    double purchasePrice = 10;
+    uint32 legalStatus = 11;
+    uint32 rentStatus = 12;
+}
+
+// PostItem for product detail response  
+message PostItem {
+    uint64 id = 1;
+    string code = 2;
+}
+
+message PropertyBuildingInfo {
+    uint32 buildingType = 1;        // Loại nhà (10=Nhà ở, 20=Nhà xưởng)
+    optional double areaActual = 2;    // Diện tích xây dựng (m²)
+    optional double areaFloor = 3;           // Diện tích sàn (m²)
+    optional double areaConstruction = 4;    // Diện tích xây dựng (m²)
+    optional uint32 floors = 5;              // Số tầng
+    optional uint32 roomNumber = 6;            // Số phòng
+    optional uint32 bedrooms = 7;            // Số phòng ngủ
+    optional uint32 bathrooms = 8;          // Số phòng tắm
+    uint32 buildStatus = 9;           // Trạng thái công trình (enum EBuildStatus)
+    uint32 direction = 10;           // Hướng nhà (enum EHouseOrient)
+    uint32 balconyDirection = 11;    // Hướng ban công (enum EHouseOrient)
+    string note = 12;
+}

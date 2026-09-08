@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+// ========== Messages ==========
+
+// Location message - represents Province, District, or Ward
+message Location {
+  uint64 id = 1;
+  string name = 2;
+  int32 type = 3;
+  string typeText = 4;
+  int32 level = 5; // 1=Province, 2=District, 3=Ward
+  optional string parentId = 6; // Province ID for District, District ID for Ward
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message GetLocationsByIdsRequest {
+  repeated uint64 ids = 1; // List of location IDs (Province, District, or Ward)
+}
+
+message GetLocationsByIdsResponse {
+  repeated Location data = 1; // List of locations
+}
+
+message GetAddressV2ByIdsRequest {
+  optional uint64 provinceId = 1;
+  optional uint64 wardId = 2;
+}
+
+message AddressV2Info {
+  optional uint64 provinceId = 1;
+  optional string provinceName = 2;
+  optional string provinceCode = 3;
+  optional string provinceType = 4;
+  optional uint64 wardId = 5;
+  optional string wardName = 6;
+  optional string wardCode = 7;
+  optional string wardType = 8;
+  optional string fullAddress = 9;
+}
+
+message GetAddressV2ByIdsResponse {
+  AddressV2Info data = 1;
+}
+
+message InferAddressFromTextRequest {
+  string text = 1; // Raw address text to analyze
+}
+
+message ProductStatsViewRequest {
+  uint64 productId = 1;
+  int64  fromTime  = 2;
+}
+
+message InferAddressFromTextResponse {
+  repeated AddressV2Info data = 1; // List of inferred address candidates
+}
+
+
+
+message ProductStatsViewResponse {
+  uint64 viewCount     = 1;
+  uint64 totalDuration = 2;
+  int64  maxEventTime = 3;
+}
+
+// PutUpdate - Internal: Service khác gọi để ghi nhận đã update (sync tracking)
+message PutUpdateRequest {
+  string resource = 1;    // Tên resource: product, asset, contact, ...
+  uint64 id = 2;          // ID bản ghi được update (resource_id)
+  int64 updatedAt = 3;    // Timestamp (Unix) khi update
+  repeated uint64 ownerIds = 4;  // Owner/Profile ID - bắt buộc cho sync per-user
+}
+
+message PutUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// DelUpdate - Internal: Service khác gọi để xóa khỏi sync tracking (khi soft-delete/remove)
+message DelUpdateRequest {
+  string resource = 1;   // Tên resource: product, asset, contact, ...
+  uint64 id = 2;         // ID bản ghi bị xóa (resource_id)
+  optional uint64 ownerId = 3;  // Owner/Profile ID - bắt buộc cho sync per-user
+}
+
+message DelUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetRegionsRequest {
+  repeated uint64 ids = 1;
+}
+
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  bool active = 4;
+}
+
+message GetRegionsResponse {
+  repeated Region regions = 1;
+}
+
+// Region CRUD APIs moved to tqd-service. Use /v2/tqd/regions
+
+service HubInternalService {
+  rpc HealthCheck (sharepb.Empty) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/health"
+    };
+  };
+
+  rpc GetByIDs(GetRegionsRequest) returns (GetRegionsResponse);
+
+  // Get Product View Stats - Internal RPC for other services
+  rpc GetProductViewStats(ProductStatsViewRequest)returns (ProductStatsViewResponse);
+
+  // Get Locations by IDs - Internal RPC for other services
+  rpc GetLocationsByIds (GetLocationsByIdsRequest) returns (GetLocationsByIdsResponse);
+
+  // Get Address V2 by Province and Ward IDs - Returns full address information
+  rpc GetAddressV2ByIds (GetAddressV2ByIdsRequest) returns (GetAddressV2ByIdsResponse);
+
+  // Infer address information (province, ward, etc.) from free text input
+  rpc InferAddressFromText (sharepb.RequestV3Proto) returns (sharepb.AddressV3Proto);
+
+  // PutUpdate - Internal: Service khác gọi để ghi nhận đã update (sync tracking)
+  rpc PutUpdate (PutUpdateRequest) returns (PutUpdateResponse);
+
+  // DelUpdate - Internal: Service khác gọi để xóa khỏi sync tracking
+  rpc DelUpdate (DelUpdateRequest) returns (DelUpdateResponse);
+}
+

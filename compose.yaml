@@ -1,0 +1,505 @@
+name: bdspro
+
+# Canonical runtime selector/trust được khai báo một lần. Mỗi process chỉ bổ
+# sung service identity và resource topology của chính nó.
+x-runtime-environment: &runtime-environment
+  QHPRO_ENVIRONMENT: ${QHPRO_ENVIRONMENT:?QHPRO_ENVIRONMENT is required}
+  QHPRO_EXECUTION_MODE: container
+  QHPRO_TRUSTED_METADATA_MODE: ${QHPRO_TRUSTED_METADATA_MODE:-enforce}
+  QHPRO_INTERNAL_METADATA_SECRET: ${QHPRO_INTERNAL_METADATA_SECRET:?QHPRO_INTERNAL_METADATA_SECRET is required}
+  QHPRO_INTERNAL_METADATA_MAX_AGE: ${QHPRO_INTERNAL_METADATA_MAX_AGE:-30s}
+  QHPRO_INTERNAL_METADATA_CLOCK_SKEW: ${QHPRO_INTERNAL_METADATA_CLOCK_SKEW:-5s}
+  # Empty means shared-secret compatibility. A non-empty JSON object
+  # enables per-service verification keys and intentionally disables fallback.
+  QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS: "${QHPRO_INTERNAL_METADATA_VERIFICATION_KEYS:-}"
+
+# Giữ log trên stdout/stderr để cùng một image chạy ở development và
+# production orchestrator; Compose development chỉ đặt giới hạn lưu trữ.
+x-service-defaults: &service-defaults
+  # Long-running containers are restarted by the orchestrator when a process
+  # deliberately exits after losing a non-reconnectable dependency channel.
+  # One-shot migrations and acceptance fixtures override this policy below.
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+# Mỗi deployment tạo network và volume riêng qua Compose project name. Runtime
+# wiring dùng service DNS; endpoint/secret của environment được inject từ ngoài.
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:
+  file-storage:
+
+services:
+  # Development uses one physical data plane. Business ownership remains
+  # separated by database name, migration directory and service credentials.
+  postgres:
+    <<: *service-defaults
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      # TCP is exposed only by the final server, not the temporary init server.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [backend]
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./shared/code/development/postgres-init.sql:/docker-entrypoint-initdb.d/10-bdspro-databases.sql:ro
+
+  redis:
+    <<: *service-defaults
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+    ports: ["${REDIS_PORT:-6379}:6379"]
+    volumes: [redis-data:/data]
+
+  hub-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./hub-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/hub_service?sslmode=disable", "up"]
+    # A fresh PostgreSQL volume briefly exposes its bootstrap server before
+    # switching to the final server. Retry the one-shot migration if it lands
+    # in that transition window; a successful run still exits permanently.
+    restart: on-failure
+
+  hub:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/hub-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: hub-service/Dockerfile}
+    env_file: [./hub-service/.env]
+    environment:
+      <<: *runtime-environment
+      HUB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/hub_service?sslmode=disable
+      HUB_REDIS_ADDRESS: redis:6379
+      HUB_REDIS_DB: 3
+      HUB_USER_GRPC_ADDRESS: user:8201
+      HUB_NOTIFICATION_GRPC_ADDRESS: notification:8204
+      JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}
+      QHPRO_SERVICE_ID: hub-service
+      QHPRO_HUB_DB_SCHEMA_MODE: sql
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8280"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      hub-migrate: {condition: service_completed_successfully}
+      user: {condition: service_healthy}
+      notification: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${HUB_GRPC_PORT:-8280}:8280"]
+
+  user-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./user-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable", "up"]
+    restart: on-failure
+
+  # Opt-in acceptance data. It never runs in the default topology and stays
+  # separate from schema migrations and production identity provisioning.
+  user-admin-test-data:
+    <<: *service-defaults
+    image: postgres:17-alpine
+    profiles: ["acceptance"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      user-migrate: {condition: service_completed_successfully}
+    environment:
+      QHPRO_ACCEPTANCE_ADMIN_PASSWORD: ${QHPRO_ACCEPTANCE_ADMIN_PASSWORD:-}
+    networks: [backend]
+    volumes:
+      - ./integration-test/fixtures/acceptance_commercial_admin.sql:/fixture/acceptance_commercial_admin.sql:ro
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        exec psql
+        'postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable'
+        -v admin_password="$${QHPRO_ACCEPTANCE_ADMIN_PASSWORD}"
+        -f /fixture/acceptance_commercial_admin.sql
+    restart: "no"
+
+  # Opt-in acceptance identity for the client flow. It uses the real password
+  # login transport and never exists in production migrations.
+  user-client-test-data:
+    <<: *service-defaults
+    image: postgres:17-alpine
+    profiles: ["acceptance"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      user-migrate: {condition: service_completed_successfully}
+    environment:
+      QHPRO_ACCEPTANCE_USER_PASSWORD: ${QHPRO_ACCEPTANCE_USER_PASSWORD:-}
+      QHPRO_ACCEPTANCE_USERNAME: ${QHPRO_ACCEPTANCE_USERNAME:-qhpro_acceptance_0000000000}
+      QHPRO_ACCEPTANCE_PHONE: ${QHPRO_ACCEPTANCE_PHONE:-0390000000}
+      QHPRO_ACCEPTANCE_EMAIL: ${QHPRO_ACCEPTANCE_EMAIL:-qhpro-0000000000@e.invalid}
+    networks: [backend]
+    volumes:
+      - ./integration-test/fixtures/acceptance_commercial_user.sql:/fixture/acceptance_commercial_user.sql:ro
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        exec psql
+        'postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable'
+        -v username="$${QHPRO_ACCEPTANCE_USERNAME}"
+        -v phone="$${QHPRO_ACCEPTANCE_PHONE}"
+        -v email="$${QHPRO_ACCEPTANCE_EMAIL}"
+        -v user_password="$${QHPRO_ACCEPTANCE_USER_PASSWORD}"
+        -f /fixture/acceptance_commercial_user.sql
+    restart: "no"
+
+  user:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/user-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: user-service/Dockerfile}
+    env_file: [./user-service/.env]
+    environment:
+      <<: *runtime-environment
+      GRPC_ADDRESS: ":8201"
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable
+      QHPRO_USER_DB_SCHEMA_MODE: sql
+      REDIS_ADDRESS: redis:6379
+      USER_REDIS_DB: 0
+      RPC_USER_ADDRESS: user:8201
+      RPC_AUTH_ADDRESS: auth:8216
+      RPC_ORGANIZATION_ADDRESS: organization:8207
+      RPC_HUB_ADDRESS: hub:8280
+      RPC_BDSPRO_ADDRESS: bdspro:8202
+      RPC_NOTIFICATION_ADDRESS: notification:8204
+      RPC_PAYMENT_ADDRESS: payment:8205
+      RPC_CHAT_ADDRESS: chat:8208
+      RPC_CRM_ADDRESS: crm:8206
+      JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}
+      QHPRO_SERVICE_ID: user-service
+      QHPRO_USER_MODULE_WARMUP_ENABLED: "false"
+      QHPRO_USER_DASHBOARD_STATS_ENABLED: "false"
+      QHPRO_USER_ZNS_SCHEDULER_ENABLED: "false"
+      QHPRO_USER_OUTBOUND_MESSAGING_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8201"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      user-migrate: {condition: service_completed_successfully}
+    networks: [backend]
+    ports: ["${USER_GRPC_PORT:-8201}:8201"]
+
+  organization-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./organization-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/organization?sslmode=disable", "up"]
+    restart: on-failure
+
+  organization:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/organization-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: organization-service/Dockerfile}
+    env_file: [./organization-service/.env]
+    environment:
+      <<: *runtime-environment
+      ORGANIZATION_DATABASE_URL: host=postgres user=postgres password=postgres dbname=organization port=5432 sslmode=disable
+      QHPRO_ORGANIZATION_DB_SCHEMA_MODE: sql
+      ORGANIZATION_GRPC_PORT: 8207
+      ORGANIZATION_USER_GRPC_ADDRESS: user:8201
+      ORGANIZATION_BDSPRO_GRPC_ADDRESS: bdspro:8202
+      ORGANIZATION_NOTIFICATION_GRPC_ADDRESS: notification:8204
+      ORGANIZATION_PAYMENT_GRPC_ADDRESS: payment:8205
+      ORGANIZATION_CHAT_GRPC_ADDRESS: chat:8208
+      ORGANIZATION_TRANSACTION_GRPC_ADDRESS: transaction:8215
+      ORGANIZATION_AUTH_GRPC_ADDRESS: auth:8216
+      QHPRO_SERVICE_ID: organization-service
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8207"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      organization-migrate: {condition: service_completed_successfully}
+      user: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${ORGANIZATION_GRPC_PORT:-8207}:8207"]
+
+  auth:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/auth-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: auth-service/Dockerfile}
+    env_file: [./auth-service/.env]
+    environment:
+      <<: *runtime-environment
+      QHPRO_SERVICE_ID: auth-service
+      # Host wiring from auth-service/.env must be overridden by container DNS.
+      RPC_USER_ADDRESS: user:8201
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8216"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      user: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${AUTH_GRPC_PORT:-8216}:8216"]
+
+  rabbitmq:
+    <<: *service-defaults
+    image: rabbitmq:4-management-alpine
+    healthcheck:
+      # The container itself starts RabbitMQ as the rabbitmq user. Running the
+      # health probe as root can race first boot and create a root-owned Erlang
+      # cookie in the persistent volume, preventing RabbitMQ from starting.
+      test: ["CMD", "su-exec", "rabbitmq", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [backend]
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
+  payment-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./payment-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/payment_service?sslmode=disable", "up"]
+    restart: on-failure
+
+  payment:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/payment-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: payment-service/Dockerfile}
+    env_file: [./payment-service/.env]
+    environment:
+      <<: *runtime-environment
+      PAYMENT_GRPC_ADDRESS: 0.0.0.0:8205
+      PAYMENT_DATABASE_URL: postgres://postgres:postgres@postgres:5432/payment_service?sslmode=disable
+      QHPRO_PAYMENT_DB_SCHEMA_MODE: sql
+      QHPRO_USER_GRPC_ADDRESS: user:8201
+      QHPRO_AUTH_GRPC_ADDRESS: auth:8216
+      QHPRO_NOTIFICATION_GRPC_ADDRESS: notification:8204
+      PAYMENT_RABBIT_URL: amqp://guest:guest@rabbitmq:5672/
+      QHPRO_SERVICE_ID: payment-service
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8205"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      payment-migrate: {condition: service_completed_successfully}
+      user: {condition: service_healthy}
+      auth: {condition: service_healthy}
+      notification: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${PAYMENT_GRPC_PORT:-8205}:8205"]
+
+  tqd-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./tqd-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_tqd?sslmode=disable", "up"]
+    restart: on-failure
+
+  tqd:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/tqd-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: tqd-service/Dockerfile}
+    env_file: [./tqd-service/.env]
+    environment:
+      <<: *runtime-environment
+      TQD_GRPC_PORT: 8219
+      TQD_DATABASE_URL: postgres://qhpro:qhpro@postgres:5432/qhpro_tqd?sslmode=disable
+      QHPRO_TQD_DB_SCHEMA_MODE: sql
+      TQD_REDIS_ADDR: redis:6379
+      TQD_REDIS_DB: 1
+      QHPRO_USER_GRPC_ADDR: user:8201
+      QHPRO_AUTH_GRPC_ADDR: auth:8216
+      TQD_CLASSIFY_ENABLED: "false"
+      QHPRO_FILE_HTTP_BASE_URL: http://file:8002
+      QHPRO_FILE_PUBLIC_BASE_URL: http://localhost:8002
+      QHPRO_FILE_HTTP_SERVICE_AUTH_KEY: ${SERVICE_AUTH_KEY:?SERVICE_AUTH_KEY is required}
+      QHPRO_REPORT_GENERATOR_MODE: production
+      QHPRO_SERVICE_ID: tqd-service
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8219"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      tqd-migrate: {condition: service_completed_successfully}
+      user: {condition: service_healthy}
+      auth: {condition: service_healthy}
+      hub: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${TQD_GRPC_PORT:-8219}:8219"]
+
+  notification-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./notification-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_notification?sslmode=disable", "up"]
+    restart: on-failure
+
+  notification:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/notification-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: notification-service/Dockerfile}
+    env_file: [./notification-service/.env]
+    environment:
+      <<: *runtime-environment
+      NOTIFICATION_GRPC_PORT: 8204
+      NOTIFICATION_DATABASE_DSN: postgres://qhpro:qhpro@postgres:5432/qhpro_notification?sslmode=disable
+      QHPRO_NOTIFICATION_DB_SCHEMA_MODE: sql
+      NOTIFICATION_REDIS_ADDR: redis:6379
+      NOTIFICATION_REDIS_DB: 2
+      QHPRO_USER_GRPC_ADDR: user:8201
+      QHPRO_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      QHPRO_BUSINESS_EVENTS_EXCHANGE: qhpro.payment.events
+      QHPRO_SERVICE_ID: notification-service
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8204"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      notification-migrate: {condition: service_completed_successfully}
+      user: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${NOTIFICATION_GRPC_PORT:-8204}:8204"]
+
+  file-migrate:
+    <<: *service-defaults
+    image: migrate/migrate:v4.19.1
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [backend]
+    volumes: [./file-service/migrate:/migrations:ro]
+    command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/file_service?sslmode=disable", "up"]
+    restart: on-failure
+
+  file:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/file-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: file-service/Dockerfile}
+    env_file: [./file-service/.env]
+    environment:
+      <<: *runtime-environment
+      DATABASE_DSN: host=postgres user=postgres password=postgres dbname=file_service port=5432 sslmode=disable
+      QHPRO_FILE_DB_SCHEMA_MODE: sql
+      JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}
+      SERVICE_AUTH_KEY: ${SERVICE_AUTH_KEY:?SERVICE_AUTH_KEY is required}
+      AUTH_GRPC_ADDRESS: auth:8216
+      HUB_GRPC_ADDRESS: hub:8280
+      QHPRO_SERVICE_ID: file-service
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8002/livez"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres: {condition: service_healthy}
+      file-migrate: {condition: service_completed_successfully}
+      auth: {condition: service_healthy}
+      hub: {condition: service_healthy}
+    networks: [backend]
+    volumes: [file-storage:/app/files]
+    ports: ["${FILE_HTTP_PORT:-8002}:8002"]
+
+  assistant:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/assistant-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: assistant-service/Dockerfile}
+    env_file: [./assistant-service/.env]
+    environment:
+      <<: *runtime-environment
+      QHPRO_SERVICE_ID: assistant-service
+      RPC_BDSPRO_ADDRESS: bdspro:8202
+      RPC_HUB_ADDRESS: hub:8280
+      QHPRO_AI_PROVIDER_MODE: stub
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8218"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      hub: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${ASSISTANT_GRPC_PORT:-8218}:8218"]
+
+  gateway:
+    <<: *service-defaults
+    image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/gateway-service:${QHPRO_IMAGE_TAG:-local}
+    build: {context: ., dockerfile: gateway-service/Dockerfile}
+    env_file: [./gateway-service/.env]
+    environment:
+      <<: *runtime-environment
+      JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}
+      QHPRO_SERVICE_ID: gateway-service
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8000/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      user: {condition: service_healthy}
+      organization: {condition: service_healthy}
+      auth: {condition: service_healthy}
+      payment: {condition: service_healthy}
+      notification: {condition: service_healthy}
+      tqd: {condition: service_healthy}
+      file: {condition: service_healthy}
+      hub: {condition: service_healthy}
+      assistant: {condition: service_healthy}
+    networks: [backend]
+    ports: ["${GATEWAY_HTTP_PORT:-8000}:8000"]

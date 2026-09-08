@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+package chatpb;
+
+import "google/protobuf/any.proto";
+import "chat/chat.proto";
+import "chat/background.proto";
+
+option go_package = "pb/types/chat;chatpb";
+
+
+message SendMessage {
+  string type = 1;
+  Message data = 2;
+}
+
+message CreateRoomData {
+  string roomId = 1;
+  repeated string members = 2;
+}
+
+message CreateRoom {
+  string type = 1;
+  CreateRoomData data = 2;
+}
+
+message JoinRoomData {
+  string roomId = 1;
+  string userId = 2;
+  optional string fullName = 3;
+  optional string avatar = 4;
+}
+
+message JoinRoom {
+  string type = 1;
+  JoinRoomData data = 2;
+}
+
+message LeaveRoomData {
+  string roomId = 1;
+  string userId = 2;
+}
+
+message LeaveRoom {
+  string type = 1;
+  LeaveRoomData data = 2;
+}
+
+message ReadMessageData {
+  repeated string messageIds = 1;
+  string userId = 2;
+  string roomId = 3;
+  optional string fullName = 4;
+  optional string avatar = 5;
+}
+
+message ReadMessage {
+  string type = 1;
+  ReadMessageData data = 2;
+}
+
+message RecallMessageData {
+  string messageId = 1;
+  string roomId = 2;
+
+}
+
+message RecallMessage {
+  string type = 1;
+  RecallMessageData data = 2;
+}
+
+message EditMessageData {
+  string messageId = 1;
+  string newMessage = 2;
+  string roomId = 3;
+}
+
+message EditMessage {
+  string type = 1;
+  EditMessageData data = 2;
+}
+
+message PinMessageData {
+  string roomId = 1;
+  string messageId = 2;
+  optional string fullName = 3;
+  optional string avatar = 4;
+}
+
+message PinMessage {
+  string type = 1;
+  Message data = 2;
+}
+
+message ReactMessageData {
+  string messageId = 1;
+  string emoji = 2;
+}
+
+message ReactMessage {
+  string type = 1;
+  ReactMessageData data = 2;
+}
+
+message SeenMessageData {
+  string messageId = 1;
+  string userId = 2;
+}
+
+message SeenMessage {
+  string type = 1;
+  SeenMessageData data = 2;
+}
+
+// message Conversation {
+//   string roomId = 1;
+//   string backgroundImageId = 2;
+//   bool isBroadcast = 3;
+//   bool forbidForward = 4;
+//   string name = 5;
+//   optional BackgroundImage backgroundImage = 6;
+// }
+
+message UpdateSettings {
+  string type = 1;
+  Conversation data = 2;
+}
+
+message DeleteRoomData {
+  string roomId = 1;
+}
+
+message DeleteRoom {
+  string type = 1;
+  DeleteRoomData data = 2;
+}
+
+message RemoveMemberData {
+  string roomId = 1;
+  string userId = 2;
+}
+
+message RemoveMember {
+  string type = 1;
+  RemoveMemberData data = 2;
+}
+
+message DeleteViolationMessageData {
+  string messageId = 1;
+  string reason = 2;
+}
+
+message DeleteViolationMessage {
+  string type = 1;
+  DeleteViolationMessageData data = 2;
+}
+
+message UpdateRoomMessageData {
+  repeated string members = 1;
+  string roomId = 2;
+}
+
+message UpdateRoomMessage {
+  string type = 1;
+  UpdateRoomMessageData data = 2;
+}
+
+message ExistedConversationResponse {
+  int32 conversationId = 1;
+}
+
+message ReactionMessage {
+  string type = 1;
+  MessageReaction data = 2;
+}
+
+// Sự kiện typing qua relay — type WS = "typing" (không gửi push notification khi offline). count = giá trị Redis.
+message TypingIndicatorData {
+  string roomId = 1;
+  string userId = 2;
+  bool isTyping = 3;
+  optional string fullName = 4;
+  optional string avatar = 5;
+  int64 count = 6;
+}
+
+message TypingIndicator {
+  string type = 1;
+  TypingIndicatorData data = 2;
+}

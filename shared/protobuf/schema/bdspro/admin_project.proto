@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "bdspro/public.proto";
+import "bdspro/project.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service AdminProjectService {
+  rpc GetList(SearchQueryRequest) returns (ProjectListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/project/list"
+    };
+  };
+  rpc Create(Project) returns (Project) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/project"
+      body: "*"
+    };
+  };
+  rpc Update(Project) returns (Project) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/project/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/project/{id}"
+    };
+  };
+}

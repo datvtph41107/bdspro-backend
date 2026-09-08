@@ -1,0 +1,6 @@
+### Quy tắc tạo crud:
+- Domain: tạo 1 struct kế thừa _entity.BaseEntity.
+- DTO: tạo 1 class <>ListRequest để filter + phân trang (embbed _dto.Pagable).
+- Usecase: viết đủ CRUD (thêm, sửa, xóa, lấy danh sách, lấy chi tiết).
+- Thêm + Sửa: dùng trực tiếp Entity làm input/output.
+- Handler: viết HTTP handler bằng Gin, map route cho các API trên.

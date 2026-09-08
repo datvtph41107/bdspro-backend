@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+enum CommissionType {
+    COMMISSION_TYPE_UNSPECIFIED = 0;
+    COMMISSION_TYPE_PERCENT = 10;
+    COMMISSION_TYPE_VND = 20;
+}
+
+enum DistributionStatus {
+    DISTRIBUTION_STATUS_UNKNOWN = 0;
+    DISTRIBUTION_STATUS_ACTIVE = 10;
+    DISTRIBUTION_STATUS_EXPRIED = 30;
+    DISTRIBUTION_STATUS_REVOKED = 20;
+}
+
+enum DistributionReason {
+    DISTRIBUTION_REASON_UNSPECIFIED = 0;
+    DISTRIBUTION_REASON_PROMOTION = 10;
+    DISTRIBUTION_REASON_PARTNER = 20;
+    DISTRIBUTION_REASON_OTHER = 30;
+}
+
+service DistributionService {
+    rpc CreateDistribute(DistributeRequest) returns (DistributeResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/distributions"
+            body: "*"
+        };
+    }
+
+    rpc UpdateDistribute(UpdateDistributeRequest) returns (DistributeResponse) {
+        option (google.api.http) = {
+            put: "/v2/bdspro/distributions/{id}"
+            body: "*"
+        };
+    }
+
+    rpc GetDistribution(GetDistributionRequest) returns (DistributionEntity) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/distributions/{id}"
+        };
+    }
+
+    rpc ListDistributions(ListDistributionsRequest) returns (ListDistributionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/distributions/all/{productId}"
+        };
+    }
+
+    rpc RevokeDistribute(RevokeDistributeRequest) returns (RevokeDistributeResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/distributions/revoke"
+            body: "*"
+        };
+    }
+
+    rpc RevokeUserFromDistribute(RevokeUserFromDistributeRequest) returns (RevokeUserFromDistributeResponse) {
+        option (google.api.http) = {
+            delete: "/v2/bdspro/distributions/{distributeId}/users/{originProfileId}"
+        };
+    }
+}
+
+message DistributionEntity {
+    uint64 id = 1;
+    uint64 productId = 2;
+    DistributionStatus status = 3;
+    DistributionReason reason = 4;
+    string reasonOther = 5;
+    string distributedAt = 6;
+    string revokedAt = 7;
+    string fromDate = 8;
+    string toDate = 9;
+    int64 price = 10;
+    bool canDeal = 11;
+    bool channelPrice = 12;
+    CommissionType commissionType = 13;
+    double commissionValue = 14;
+    double partnerCommission = 15;
+    string note = 16;
+    string createdAt = 17;
+    string updatedAt = 18;
+
+    repeated uint64 partnerIds = 19;
+    int32 partnerCount = 20;
+    repeated sharepb.OriginProfile partners = 21;
+    string code = 22;
+}
+
+message ListDistributionsRequest {
+    string fromDate = 1;
+    string toDate = 2;
+    optional bool canDeal = 3;
+    optional bool channelPrice = 4;
+    uint32 page = 5;
+    uint32 size = 6;
+    string sort = 7;
+    uint64 productId = 8;
+    string query = 9;
+    repeated DistributionStatus status = 10;
+    int64 timestamp = 11;
+}
+
+message ListDistributionsResponse {
+    repeated DistributionEntity data = 1;
+    int64 total = 2;
+}
+
+message GetDistributionRequest {
+    uint64 id = 1;
+}
+
+message DistributeRequest {
+    uint64 productId = 1;
+    repeated uint64 partnerIds = 2;
+    int64 price = 3;
+    bool canDeal = 4;
+    bool channelPrice = 5;
+    CommissionType commissionType = 6;
+    double commissionValue = 7;
+    string note = 8;
+    string fromDate = 9;
+    string toDate = 10;
+}
+
+message UpdateDistributeRequest {
+    uint64 id = 1;
+    repeated uint64 partnerIds = 2;
+    int64 price = 3;
+    bool canDeal = 4;
+    bool channelPrice = 5;
+    CommissionType commissionType = 6;
+    double commissionValue = 7;
+    string note = 8;
+    string fromDate = 9;
+    string toDate = 10;
+}
+
+message DistributeResponse {
+    int64 price = 1;
+    bool canDeal = 2;
+    bool channelPrice = 3;
+    DistributionStatus status = 4;
+    CommissionType commissionType = 5;
+    double commissionValue = 6;
+    string note = 7;
+    double partnerCommission = 8;
+    int32 createdCount = 9;
+    string fromDate = 10;
+    string toDate = 11;
+}
+
+message RevokeDistributeRequest {
+    uint64 distributeId = 1;
+    DistributionReason reason = 2;
+    string reasonOther = 3;
+}
+
+message RevokeDistributeResponse {
+    bool success = 1;
+}
+
+message RevokeUserFromDistributeRequest {
+    uint64 distributeId = 1;
+    uint64 originProfileId = 2;
+}
+
+message RevokeUserFromDistributeResponse {
+    bool success = 1;
+}

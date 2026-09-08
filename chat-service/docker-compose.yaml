@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  http-server:
+    build: .
+    container_name: http-server
+    ports:
+      - "8081:8081"
+    command: ["sh", "-c", "sleep 5 && /app/binary http-serve --httpPort=8081 || sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+
+  ws-server:
+    build: .
+    container_name: ws-server
+    ports:
+      - "3001:3001"
+    command: ["sh", "-c", "sleep 5 && /app/binary ws-serve --wsPort=3001 || sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "password"]
+    environment:
+      - REDIS_PASSWORD=password
+
+
+  postgres:
+    image: postgres:alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d mydatabase"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

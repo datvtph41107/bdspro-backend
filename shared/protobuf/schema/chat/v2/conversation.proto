@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package chatpb;
+
+option go_package = "pb/types/chat/v2;chatpb";
+
+service ConversationService {
+  rpc CreateConversationWithGroup (CreateConversationRequest) returns (CreateConversationResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/conversations"
+      body: "*"
+    };
+  };
+}
+
+message CreateConversationRequest {
+  uint32 type = 1;
+  string name = 2;
+  repeated uint64 participants = 3;
+  int32 createdBy = 4;
+}
+
+message CreateConversationResponse {
+  uint64 conversationId = 1;
+  string name = 2;
+  string type = 3;
+  string createdAt = 4;
+}

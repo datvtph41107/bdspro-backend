@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// QHLayerFamilyService — CRUD danh mục họ lớp (nhóm layer, bảng qh_layer_families).
+service QHLayerFamilyService {
+  // CreateLayerFamily — tạo họ lớp
+  rpc CreateLayerFamily(CreateLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layer-families"
+      body: "*"
+    };
+  }
+
+  // GetLayerFamily — chi tiết theo id
+  rpc GetLayerFamily(GetLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-families/{id}"
+    };
+  }
+
+  // UpdateLayerFamily — cập nhật tên (optional được gửi)
+  rpc UpdateLayerFamily(UpdateLayerFamilyRequest) returns (QHLayerFamilyResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/layer-families/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteLayerFamily — xóa mềm
+  rpc DeleteLayerFamily(DeleteLayerFamilyRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layer-families/{id}"
+    };
+  }
+
+  // ListLayerFamilies — danh sách phân trang
+  rpc ListLayerFamilies(ListLayerFamiliesRequest) returns (ListLayerFamiliesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layer-families/list"
+    };
+  }
+
+  // GetClientLayerFamilies - Danh sách họ lớp cho client (legacy)
+  rpc GetClientLayerFamilies(ListLayerFamiliesRequest) returns (ListLayerFamiliesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/qh/layer-families/list"
+    };
+  }
+
+  // ListClientFamilies - Danh sách họ lớp public (có layer active), kèm URL tile
+  rpc ListClientFamilies(ListClientFamiliesRequest) returns (ListLayerFamiliesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/families"
+    };
+  }
+
+  // BuildFamilyPMTiles - Build file PMTiles gộp mọi layer trong họ (server streaming)
+  rpc BuildFamilyPMTiles(BuildFamilyPMTilesRequest) returns (stream BuildFamilyPMTilesProgress) {
+    option (google.api.http) = {
+      post: "/v2/tqd/client/families/{familyId}/build-tile",
+      body: "*"
+    };
+  }
+}
+
+message CreateLayerFamilyRequest {
+  string name = 1;
+  int32 sortNumber = 2;
+}
+
+message UpdateLayerFamilyRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional int32 sortNumber = 3;
+}
+
+message GetLayerFamilyRequest {
+  uint64 id = 1;
+}
+
+message DeleteLayerFamilyRequest {
+  uint64 id = 1;
+}
+
+message ListLayerFamiliesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional string search = 3;
+  optional string sort = 4;
+}
+
+message ListClientFamiliesRequest {
+  optional string search = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  int64 timestamp = 4;
+}
+
+message BuildFamilyPMTilesRequest {
+  uint64 familyId = 1;
+  uint32 minZoom = 2;
+  uint32 maxZoom = 3;
+  optional string outputDir = 4;
+}
+
+message QHLayerFamilyResponse {
+  uint64 id = 1;
+  string name = 2;
+  string createdAt = 3;
+  string updatedAt = 4;
+  int32 sortNumber = 5;
+  string familyUrl = 6;
+  uint32 minZoom = 7;
+  uint32 maxZoom = 8;
+  string layerUrl = 9;
+  string styleConfig = 10;
+  string sourceType = 11;
+  string sourceCode = 12;
+}
+
+message BuildFamilyPMTilesProgress {
+  string status = 1;
+  string message = 2;
+  int32 currentZoom = 3;
+  int64 tilesWritten = 4;
+  int64 totalTiles = 5;
+  string outputPath = 6;
+}
+
+message ListLayerFamiliesResponse {
+  repeated QHLayerFamilyResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

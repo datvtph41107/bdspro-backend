@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+service InteractiveEventService {
+  rpc TrackInteractiveEvent(TrackInteractiveEventBatchRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/hub/v2/interactive-event"
+      body: "*"
+    };
+  };
+}
+
+message TrackInteractiveEventBatchRequest {
+  repeated TrackInteractiveEventRequest events = 1; // mảng các interactive event cần track
+}
+
+message TrackInteractiveEventRequest {
+  int64  start_time = 1; // thời gian bắt đầu (timestamp)
+  int64  end_time   = 2; // thời gian kết thúc (timestamp, optional)
+  string event      = 3; // tên sự kiện
+  uint64 ref_id     = 4; // id tham chiếu
+  string screen     = 5; // màn hình/trang (optional)
+  int64  duration   = 6; // thời lượng (giây, optional)
+}
+

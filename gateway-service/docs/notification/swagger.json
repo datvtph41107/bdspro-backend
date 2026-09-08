@@ -1,0 +1,2634 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API phần logic thông báo",
+        "title": "Notification API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/v2/notification",
+    "paths": {
+        "/account-warning/acknowledge": {
+            "put": {
+                "description": "Đánh dấu cảnh báo đã được xác nhận",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning"
+                ],
+                "summary": "Đánh dấu cảnh báo đã xác nhận",
+                "parameters": [
+                    {
+                        "description": "Thông tin xác nhận",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/list": {
+            "get": {
+                "description": "Lấy danh sách cảnh báo tài khoản với filter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning"
+                ],
+                "summary": "Lấy danh sách cảnh báo tài khoản",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người nhận",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại đối tượng",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại cảnh báo",
+                        "name": "warningType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Mức độ nghiêm trọng",
+                        "name": "severity",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trạng thái",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người gửi",
+                        "name": "sentBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Đã đọc",
+                        "name": "isRead",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetAccountWarningListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetAccountWarningListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetAccountWarningListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetAccountWarningListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/log/list": {
+            "get": {
+                "description": "Lấy danh sách log cảnh báo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning Log"
+                ],
+                "summary": "Lấy danh sách log cảnh báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID cảnh báo",
+                        "name": "warningId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người nhận",
+                        "name": "targetId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningLogListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningLogListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningLogListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningLogListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/read": {
+            "put": {
+                "description": "Đánh dấu cảnh báo đã được đọc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning"
+                ],
+                "summary": "Đánh dấu cảnh báo đã đọc",
+                "parameters": [
+                    {
+                        "description": "Thông tin đánh dấu",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.MarkWarningAsReadResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/send": {
+            "post": {
+                "description": "Gửi cảnh báo, nhắc nhở hoặc hướng dẫn khắc phục lỗi đến tài khoản người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning"
+                ],
+                "summary": "Gửi cảnh báo tài khoản",
+                "parameters": [
+                    {
+                        "description": "Thông tin cảnh báo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.SendAccountWarningRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.SendAccountWarningResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.SendAccountWarningResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.SendAccountWarningResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.SendAccountWarningResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/template": {
+            "post": {
+                "description": "Tạo mẫu cảnh báo mới",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning Template"
+                ],
+                "summary": "Tạo mẫu cảnh báo",
+                "parameters": [
+                    {
+                        "description": "Thông tin mẫu",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateWarningTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateWarningTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateWarningTemplateResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateWarningTemplateResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateWarningTemplateResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/template/list": {
+            "get": {
+                "description": "Lấy danh sách mẫu cảnh báo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning Template"
+                ],
+                "summary": "Lấy danh sách mẫu cảnh báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại cảnh báo",
+                        "name": "warningType",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/account-warning/template/{id}": {
+            "get": {
+                "description": "Lấy chi tiết mẫu cảnh báo theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Account Warning Template"
+                ],
+                "summary": "Lấy chi tiết mẫu cảnh báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID mẫu cảnh báo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateDetailResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateDetailResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetWarningTemplateDetailResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin-history/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm lịch sử các hành động của admin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin History"
+                ],
+                "summary": "Tìm kiếm lịch sử admin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang cần lấy (default = 0)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng trên mỗi trang (default = 20)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của admin",
+                        "name": "adminId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của owner",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại owner",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID của target",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại target",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại hành động",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Vai trò admin",
+                        "name": "adminRole",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Từ ngày (RFC3339 format)",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Đến ngày (RFC3339 format)",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Có phải internal không",
+                        "name": "isInternal",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách lịch sử admin",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.AdminHistoryListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/system-warning": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin lấy danh sách tất cả cảnh báo hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System Warning - Admin"
+                ],
+                "summary": "Lấy danh sách cảnh báo hệ thống (Admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại cảnh báo",
+                        "name": "warningType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Mức độ nghiêm trọng",
+                        "name": "severity",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID người nhận",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại người nhận",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Đã đọc chưa",
+                        "name": "isRead",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetSystemWarningListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetSystemWarningListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetSystemWarningListResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin tạo cảnh báo hệ thống gửi tới user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System Warning - Admin"
+                ],
+                "summary": "Tạo cảnh báo hệ thống (Admin)",
+                "parameters": [
+                    {
+                        "description": "Thông tin cảnh báo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateSystemWarningRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateSystemWarningResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateSystemWarningResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateSystemWarningResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.CreateSystemWarningResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/system-warning/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin xóa cảnh báo hệ thống",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System Warning - Admin"
+                ],
+                "summary": "Xóa cảnh báo hệ thống (Admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID cảnh báo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.DeleteSystemWarningResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.DeleteSystemWarningResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.DeleteSystemWarningResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.DeleteSystemWarningResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.DeleteSystemWarningResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/count": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hiển thị số lượng thông báo chưa đọc của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Số thông báo mới chưa đọc",
+                "responses": {
+                    "200": {
+                        "description": "count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/history/auth": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của người dùng",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "deviceId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "organizationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "success",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/campaign/{campaignId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của chiến dịch quảng cáo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của chiến dịch quảng cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của chiến dịch",
+                        "name": "campaignId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/contact/{contactId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của liên hệ",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của liên hệ",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của liên hệ",
+                        "name": "contactId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/crm/{crmId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của CRM",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của CRM",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của CRM",
+                        "name": "crmId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/list/{ownerId}/{ownerType}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của người dùng",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của người dùng",
+                        "name": "ownerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Loại người dùng",
+                        "name": "ownerType",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/package/{packageId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của gói quảng cáo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của gói quảng cáo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của gói quảng cáo",
+                        "name": "packageId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/product/child/{productId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của sản phẩm con",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của sản phẩm con",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của sản phẩm",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/history/rule-event/{ruleEventId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch sử của quy tắc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch sử"
+                ],
+                "summary": "Lấy lịch sử của quy tắc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của quy tắc",
+                        "name": "ruleEventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "actionType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "fromDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "isInternal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "ownerType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "targetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "toDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Trả về danh sách thông báo của người dùng",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Lấy danh sách thông báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang cần lấy (default = 0)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Số lượng trên mỗi trang (default = 200)",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách thông báo",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/notificationpb.NotificationDTO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/new": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "API này không bắn thông báo tới thiết bị của người dùng, chỉ tạo thông báo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Tạo thông báo mới",
+                "parameters": [
+                    {
+                        "description": "Chi tiết thông báo",
+                        "name": "notification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GatewayNotiNewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/read-all": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đánh dấu tất cả thông báo là đã đọc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Đánh dấu tất cả thông báo là đã đọc",
+                "responses": {
+                    "200": {
+                        "description": "message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/read/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đánh dấu thông báo với ID cụ thể là đã đọc",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Đánh dấu thông báo đã đọc",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thông báo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/remove/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa thông báo với ID cụ thể",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Xóa thông báo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID của thông báo",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/system-warning/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "User lấy danh sách cảnh báo hệ thống của mình",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System Warning - User"
+                ],
+                "summary": "Lấy cảnh báo hệ thống của tôi (User)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sắp xếp",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loại cảnh báo",
+                        "name": "warningType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Đã đọc chưa",
+                        "name": "isRead",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetMySystemWarningsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetMySystemWarningsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/notificationpb.GetMySystemWarningsResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "notificationpb.AccountWarningItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "emailSent": {
+                    "type": "boolean"
+                },
+                "emailSentAt": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "readAt": {
+                    "type": "string"
+                },
+                "relatedId": {
+                    "type": "integer"
+                },
+                "relatedType": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "sentBy": {
+                    "type": "integer"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.AdminHistoryDTO": {
+            "type": "object",
+            "properties": {
+                "actionType": {
+                    "type": "integer"
+                },
+                "adminAvatar": {
+                    "type": "string"
+                },
+                "adminId": {
+                    "type": "integer"
+                },
+                "adminName": {
+                    "type": "string"
+                },
+                "adminRole": {
+                    "type": "string"
+                },
+                "afterStage": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "isInternal": {
+                    "type": "boolean"
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "preStage": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userAgent": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.AdminHistoryListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.AdminHistoryDTO"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.CreateSystemWarningRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.CreateSystemWarningResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "sentBy": {
+                    "type": "integer"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.CreateWarningTemplateRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerOf": {
+                    "description": "user, group, organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.OwnerOf"
+                        }
+                    ]
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.CreateWarningTemplateResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.DeleteSystemWarningResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "notificationpb.GatewayNotiNewRequest": {
+            "type": "object",
+            "properties": {
+                "link": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.GetAccountWarningListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.AccountWarningItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.GetMySystemWarningsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.SystemWarningItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.GetSystemWarningListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.SystemWarningItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.GetWarningLogListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.WarningLogItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.GetWarningTemplateDetailResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.GetWarningTemplateListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notificationpb.WarningTemplateItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.MarkWarningAsAcknowledgedRequest": {
+            "type": "object",
+            "properties": {
+                "ownerOf": {
+                    "description": "user, group, organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.OwnerOf"
+                        }
+                    ]
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "warningId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.MarkWarningAsAcknowledgedResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "notificationpb.MarkWarningAsReadRequest": {
+            "type": "object",
+            "properties": {
+                "ownerOf": {
+                    "description": "user, group, organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.OwnerOf"
+                        }
+                    ]
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "warningId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.MarkWarningAsReadResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "notificationpb.NotificationDTO": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notificationType": {
+                    "type": "integer"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.SendAccountWarningRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "ownerOf": {
+                    "description": "user, group, organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/sharepb.OwnerOf"
+                        }
+                    ]
+                },
+                "relatedId": {
+                    "type": "integer"
+                },
+                "relatedType": {
+                    "type": "string"
+                },
+                "sendEmail": {
+                    "type": "boolean"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "templateId": {
+                    "description": "ID của mẫu cảnh báo nếu sử dụng",
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.SendAccountWarningResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "emailSent": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "sentBy": {
+                    "type": "integer"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.SystemWarningItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "readAt": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "string"
+                },
+                "sentBy": {
+                    "type": "integer"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "notificationpb.WarningLogItem": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ipAddress": {
+                    "type": "string"
+                },
+                "performedAt": {
+                    "type": "string"
+                },
+                "performedBy": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetId": {
+                    "type": "integer"
+                },
+                "userAgent": {
+                    "type": "string"
+                },
+                "warningId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notificationpb.WarningTemplateItem": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "updatedBy": {
+                    "type": "integer"
+                },
+                "warningType": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.OwnerOf": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20,
+                30
+            ],
+            "x-enum-varnames": [
+                "OwnerOf_unknown",
+                "OwnerOf_user",
+                "OwnerOf_group",
+                "OwnerOf_organization"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

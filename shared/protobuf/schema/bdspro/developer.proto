@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+message Developer {
+  uint64 id = 1;
+  string name = 2;
+  string slug = 3;
+  string logoUrl = 4;
+  string backgroundUrl = 5;
+  string description = 6;
+  string address = 7;
+  string phone = 8;
+  string email = 9;
+  string website = 10;
+  string foundedAt = 11;
+  int32 status = 12;
+}

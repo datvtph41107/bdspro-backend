@@ -1,0 +1,48 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Transaction Development Guideline (MDC)
+
+## 1. Ràng buộc dữ liệu giao dịch (`Tx`)
+- **Tên bảng**:
+  - `Tx` → `"tx_transaction"`
+  - `TxAction` → `"tx_transaction_action"`
+- **Enum bắt buộc**:
+  - `Method` → `enums.EMethod` (check bằng `enums.IsValidMethod()`).
+  - `FromOf`, `ToOf` → `enums.EOwnerType`.
+  - `Status` → `enums.TxStatus`.
+- **Note (`gorm:"-"`)** trong `Tx` không lưu DB.
+- **Value** là `float64` và **không được âm** trừ khi có quy định đặc biệt.
+
+---
+
+## 2. Ràng buộc dữ liệu hành động (`TxAction`)
+- `Action` → thuộc `enums.EAction`.
+- `FromOf`, `ToOf` → `enums.EOwnerType`.
+- `Timestamp` → thời điểm thực hiện hành động, **không dùng** từ `BaseEntity`.
+- `Action` phải **tương thích** với `Method` của `Tx`.
+
+---
+
+## 3. Mapping Method ↔ Action hợp lệ
+| Method              | Action hợp lệ                                    |
+|---------------------|--------------------------------------------------|
+| `EMethodSign`       | `EActionSign`, `EActionApprove`, `EActionReject` |
+| `EMethodCost`       | `EActionTransfer`, `EActionApprove`, `EActionReject` |
+| `EMethodRevenue`    | `EActionApprove`                                 |
+| `EMethodInvestment` | `EActionTransfer`, `EActionApprove`, `EActionReject` |
+| `EMethodDeposit`    | `EActionTransfer`, `EActionApprove`, `EActionReject` |
+| `EMethodRent`       | `EActionTransfer`, `EActionSign`, `EActionApprove`, `EActionReject` |
+| `EMethodSale`       | `EActionTransfer`, `EActionSign`, `EActionApprove`, `EActionReject` |
+| `EMethodBuy`        | `EActionTransfer`, `EActionSign`, `EActionApprove`, `EActionReject` |
+
+---
+
+## 4. Quy tắc khi tạo mới giao dịch
+- Validate method:
+  ```go
+  if !enums.IsValidMethod(tx.Method) {
+      return errors.New("Invalid transaction method")
+  }

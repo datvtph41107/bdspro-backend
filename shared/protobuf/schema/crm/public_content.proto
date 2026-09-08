@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+package crmpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "pb/types/crm;crmpb";
+
+// SeoDocumentRequest định danh tài liệu SEO theo module và slug.
+message SeoDocumentRequest {
+  // module là nhóm nội dung của trang.
+  string module = 1;
+  // slug là phần định danh cuối đường dẫn.
+  string slug = 2;
+}
+
+// RenderedSeoPageRequest yêu cầu HTML theo đường dẫn công khai.
+message RenderedSeoPageRequest {
+  // path là đường dẫn trang không gồm tên miền.
+  string path = 1;
+}
+
+// ContentQueryRequest chứa tham số tìm kiếm nội dung công khai.
+message ContentQueryRequest {
+  // page và size điều khiển phân trang.
+  int32 page = 1;
+  int32 size = 2;
+  // search, q, query và keyword là các tên tương thích của từ khóa.
+  string search = 3;
+  string q = 4;
+  string query = 5;
+  string keyword = 6;
+  // kinds giới hạn loại nội dung cần tìm.
+  repeated string kinds = 7;
+  // Các trường dưới đây được giữ để tương thích với client cũ.
+  string domain = 8;
+  string domain_code = 9;
+  string category = 10;
+  string category_code = 11;
+  reserved 12;
+  reserved "visible_on";
+  // limit giới hạn số kết quả trả về.
+  int32 limit = 13;
+  string cursor = 14;
+  string sort_by = 15;
+  string sort_order = 16;
+}
+
+// PlanningNewsQueryRequest chỉ phân trang danh sách tin đã xuất bản.
+message PlanningNewsQueryRequest {
+  // page là trang bắt đầu từ 1.
+  int32 page = 1;
+  // size là số bản ghi trong một trang.
+  int32 size = 2;
+  // Các trường feed, category và hành vi cũ không được sử dụng lại.
+  reserved 3 to 13;
+  reserved "search", "keyword", "q", "visible_on", "category", "topic", "domain", "location", "range", "sort_by", "sort_order";
+}
+
+// PlanningNewsSlugRequest định danh một trang tin bằng slug.
+message PlanningNewsSlugRequest {
+  string slug = 1;
+}
+
+// SavedPlanningNewsQueryRequest phân trang danh sách tin người dùng đã lưu.
+message SavedPlanningNewsQueryRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+// PlanningNewsSaveRequest định danh trang tin cần lưu hoặc bỏ lưu.
+message PlanningNewsSaveRequest {
+  uint64 id = 1;
+}
+
+// CRMPublicContentService là hợp đồng công khai duy nhất cho nội dung SEO từ CRM.
+// Gateway cung cấp HTTP; CRM chỉ triển khai gRPC.
+service CRMPublicContentService {
+  // GetPublicSeoDocument trả tài liệu có cấu trúc cho web và ứng dụng.
+  rpc GetPublicSeoDocument(SeoDocumentRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/seo/documents/{module}/{slug}"
+      additional_bindings: {
+        custom: {
+          kind: "HEAD"
+          path: "/v2/crm/public/seo/documents/{module}/{slug}"
+        }
+      }
+    };
+  }
+  // GetRenderedSeoPage trả HTML đã render của một trang đã xuất bản.
+  rpc GetRenderedSeoPage(RenderedSeoPageRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/page/{path=**}"
+      additional_bindings: {
+        custom: {
+          kind: "HEAD"
+          path: "/v2/crm/public/content/page/{path=**}"
+        }
+      }
+    };
+  }
+  // GetSitemap trả sitemap XML của các trang đủ điều kiện kỹ thuật.
+  rpc GetSitemap(google.protobuf.Empty) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/crm/public/content/sitemap.xml"
+      additional_bindings: {
+        custom: {
+          kind: "HEAD"
+          path: "/v2/crm/public/content/sitemap.xml"
+        }
+      }
+      additional_bindings: {get: "/v2/crm/sitemap.xml"}
+      additional_bindings: {
+        custom: {
+          kind: "HEAD"
+          path: "/v2/crm/sitemap.xml"
+        }
+      }
+    };
+  }
+  // SearchContent tìm trong các nội dung công khai đã xuất bản.
+  rpc SearchContent(ContentQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/public/content/search"};
+  }
+  // ListPlanningNews trả tin đã xuất bản theo thứ tự mới nhất trước.
+  rpc ListPlanningNews(PlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/public/seo/news"};
+  }
+  // GetPlanningNews trả chi tiết một trang tin đã xuất bản.
+  rpc GetPlanningNews(PlanningNewsSlugRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/public/seo/news/{slug}"};
+  }
+  // ListSavedPlanningNews trả danh sách tin người dùng đã lưu.
+  rpc ListSavedPlanningNews(SavedPlanningNewsQueryRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {get: "/v2/crm/client/content/planning-news/saved"};
+  }
+  // SavePlanningNews lưu một trang tin cho người dùng hiện tại.
+  rpc SavePlanningNews(PlanningNewsSaveRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {post: "/v2/crm/client/content/planning-news/{id}/saved"};
+  }
+  // UnsavePlanningNews bỏ một trang tin khỏi danh sách đã lưu.
+  rpc UnsavePlanningNews(PlanningNewsSaveRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {delete: "/v2/crm/client/content/planning-news/{id}/saved"};
+  }
+}

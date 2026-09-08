@@ -1,0 +1,28 @@
+go 1.25.0
+
+// Go workspace để gopls index cross-service (Go to Implementation / References).
+// Không thêm module trùng tên: chat (chat-service vs chat-v1-service), bdspro (bdspro-service vs shared/platform/bdspro).
+use (
+	./assistant-service
+	./auth-service
+	./bdspro-service
+	./chat-service
+	./crm-service
+	./file-service
+	./gateway-service
+	./hub-service
+	./integration-test
+	./map-service
+	./notification-service
+	./organization-service
+	./payment-service
+	./relay-service
+	./search-service
+	./shared/base
+	./shared/code
+	./shared/common
+	./shared/protobuf
+	./social-service
+	./tqd-service
+	./user-service
+)

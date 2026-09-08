@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service ColorService {
+    rpc CreateColor(CreateColorRequest) returns (CreateColorResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/color"
+            body: "*"
+        };
+    }
+
+    rpc UpdateColor(UpdateColorRequest) returns (UpdateColorResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/color/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteColor(DeleteColorRequest) returns (DeleteColorResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/color/{id}"
+        };
+    }
+
+    rpc GetColor(GetColorRequest) returns (GetColorResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/color/{id}"
+        };
+    }
+
+    rpc GetColors(GetColorsRequest) returns (GetColorsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/color"
+        };
+    }
+}
+
+message CreateColorRequest {
+    string name = 1 [json_name = "name"];
+    string contentColor = 2 [json_name = "contentColor"];
+    string backgroundColor = 3 [json_name = "backgroundColor"];
+    optional string description = 4 [json_name = "description"];
+    bool isActive = 5 [json_name = "isActive"];
+}
+
+message CreateColorResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdateColorRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string contentColor = 3 [json_name = "contentColor"];
+    string backgroundColor = 4 [json_name = "backgroundColor"];
+    optional string description = 5 [json_name = "description"];
+    bool isActive = 6 [json_name = "isActive"];
+}
+
+message UpdateColorResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteColorRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteColorResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetColorRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetColorResponse {
+    Color color = 1 [json_name = "color"];
+}
+
+message GetColorsRequest {
+    optional uint32 page = 1 [json_name = "page"];
+    optional uint32 size = 2 [json_name = "size"];
+    optional bool isActive = 3 [json_name = "isActive"];
+}
+
+message GetColorsResponse {
+    repeated Color data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message Color {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string contentColor = 3 [json_name = "contentColor"];
+    string backgroundColor = 4 [json_name = "backgroundColor"];
+    optional string description = 5 [json_name = "description"];
+    bool isActive = 6 [json_name = "isActive"];
+    string createdAt = 7 [json_name = "createdAt"];
+    string updatedAt = 8 [json_name = "updatedAt"];
+    uint32 createdBy = 9 [json_name = "createdBy"];
+    uint32 updatedBy = 10 [json_name = "updatedBy"];
+} 

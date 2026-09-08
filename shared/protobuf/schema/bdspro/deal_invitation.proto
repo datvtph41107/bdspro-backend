@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "bdspro/deal.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service DealMemberService {
+    // API lấy danh sách thành viên của deal
+  rpc SendDealInvitation(SendDealInvitationRequest) returns (SendDealInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation"
+      body: "*"
+    };
+  }
+
+  rpc AcceptDealInvitation(AcceptDealInvitationRequest) returns (AcceptDealInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/accept"
+      body: "*"
+    };
+  }
+
+  rpc RejectDealInvitation(RejectDealInvitationRequest) returns (RejectDealInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/reject"
+      body: "*"
+    };
+  }
+
+  rpc ResendDealInvitation(ResendDealInvitationRequest) returns (ResendDealInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/resend"
+      body: "*"
+    };
+  }
+
+  rpc GetAcceptedMembers(GetAcceptedMembersRequest) returns (GetAcceptedMembersResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deal-invitation/{dealId}/accepted-members"
+    };
+  }
+
+  rpc WithdrawFromDeal(WithdrawFromDealRequest) returns (WithdrawFromDealResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/withdraw"
+      body: "*"
+    };
+  }
+
+  rpc RemoveFromDeal(RemoveFromDealRequest) returns (RemoveFromDealResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/remove"
+      body: "*"
+    };
+  }
+
+  rpc ConfirmWithdrawal(ConfirmWithdrawalRequest) returns (ConfirmWithdrawalResponse) {
+    option (google.api.http) = {
+      post: "/v2.1/org/deal-invitation/confirm-withdrawal"
+      body: "*"
+    };
+  }
+
+  rpc SearchMembers(SearchDealMembersRequest) returns (SearchDealMembersResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deal-invitation/{dealId}/search-members"
+    };
+  }
+
+  rpc GetDealInvitation(GetDealInvitationRequest) returns (GetDealInvitationResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deal-invitation/{id}"
+    };
+  }
+
+  rpc GetPendingInvitations(GetPendingInvitationsRequest) returns (GetPendingInvitationsResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deal-invitation/pending"
+    };
+  }
+
+  rpc GetDealInvitationsByDeal(GetDealInvitationsByDealRequest) returns (GetDealInvitationsByDealResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/org/deal-invitation/list/{dealId}"
+    };
+  }
+}
+
+
+// Messages cho Deal Invitation APIs
+message SendDealInvitationRequest {
+  uint64 dealId = 1;
+  uint64 inviterId = 2;
+  uint64 memberId = 3;
+  string message = 4;
+  uint64 roleId = 5;
+  optional uint32 colorId = 6;
+  uint32 roleKey = 7;
+}
+
+message SendDealInvitationResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+  string message = 3;
+  uint64 roleId = 4;
+  uint32 roleKey = 5;
+}
+
+message AcceptDealInvitationRequest {
+  uint64 invitationId = 1;
+}
+
+message AcceptDealInvitationResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+}
+
+message RejectDealInvitationRequest {
+  uint64 invitationId = 1;
+  string reason = 2;
+}
+
+message RejectDealInvitationResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+}
+
+message ResendDealInvitationRequest {
+  uint64 invitationId = 1;
+}
+
+message ResendDealInvitationResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message GetAcceptedMembersRequest {
+  uint64 dealId = 1;
+}
+
+message GetAcceptedMembersResponse {
+  repeated sharepb.DealMember members = 1;
+}
+
+message WithdrawFromDealRequest {
+  uint64 invitationId = 1;
+  string reason = 2;
+}
+
+message WithdrawFromDealResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+}
+
+message RemoveFromDealRequest {
+  uint64 invitationId = 1;
+  string reason = 2;
+}
+
+message RemoveFromDealResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+}
+
+message ConfirmWithdrawalRequest {
+  uint64 invitationId = 1;
+}
+
+message ConfirmWithdrawalResponse {
+  uint64 invitationId = 1;
+  bool success = 2;
+}
+
+message SearchDealMembersResponse {
+    repeated sharepb.DealMember members = 1;
+    int64 total = 2;
+}
+
+message GetDealInvitationRequest {
+    uint64 id = 1;
+}
+
+message GetDealInvitationResponse {
+    sharepb.DealMember member = 1;
+}
+
+message GetPendingInvitationsRequest {
+  uint64 memberId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetPendingInvitationsResponse {
+    repeated sharepb.DealMember data = 1;
+    int64 total = 2;
+}
+
+message GetDealInvitationsByDealRequest {
+    uint64 dealId = 1;
+    int32 page = 2;
+    int32 size = 3;
+}
+
+message GetDealInvitationsByDealResponse {
+    repeated sharepb.DealMember data = 1;
+    int64 total = 2;
+}

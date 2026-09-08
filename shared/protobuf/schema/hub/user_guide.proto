@@ -1,0 +1,373 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+// ========== Enums ==========
+
+enum UserGuideMode {
+  USER_GUIDE_MODE_UNSPECIFIED = 0;
+  USER_GUIDE_MODE_SINGLE = 10;    // Chế độ đơn
+  USER_GUIDE_MODE_STEPS = 20;     // Các bước
+}
+
+// ========== Messages ==========
+
+message UserGuideStep {
+  uint64 id = 1;
+  uint64 userGuideId = 2;
+  int32 stepOrder = 3;
+  string image = 4;
+  string content = 5;
+}
+
+message UserGuide {
+  uint64 id = 1;
+  string title = 2;
+  string description = 3;
+  string groupKey = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+  repeated UserGuideStep steps = 7;
+  string key = 8;
+  UserGuideMode mode = 9;
+}
+
+message UserGuideDetail {
+  uint64 id = 1;
+  string title = 2;
+  string description = 3;
+  string groupKey = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+  repeated UserGuideStep steps = 7;
+  string key = 8;
+  UserGuideMode mode = 9;
+}
+
+// ========== Request/Response Messages ==========
+
+message UserGuideStepInput {
+  int32 stepOrder = 1;
+  string image = 2;
+  string content = 3;
+}
+
+message CreateUserGuideRequest {
+  string title = 1;
+  string description = 2;
+  string groupKey = 3;
+  repeated UserGuideStepInput steps = 4;
+  string key = 5;
+  UserGuideMode mode = 6;
+}
+
+message CreateUserGuideResponse {
+  UserGuideDetail data = 1;
+}
+
+message UpdateUserGuideRequest {
+  uint64 id = 1;
+  string title = 2;
+  string description = 3;
+  string groupKey = 4;
+  repeated UserGuideStepInput steps = 5;
+  string key = 6;
+  UserGuideMode mode = 7;
+}
+
+message UpdateUserGuideResponse {
+  UserGuideDetail data = 1;
+}
+
+message DeleteUserGuideRequest {
+  uint64 id = 1;
+}
+
+message DeleteUserGuideResponse {
+  bool success = 1;
+}
+
+message GetUserGuideRequest {
+  uint64 id = 1;
+}
+
+message GetUserGuideResponse {
+  UserGuideDetail data = 1;
+}
+
+message GetUserGuideByKeyRequest {
+  string key = 1;
+}
+
+message GetUserGuideByKeyResponse {
+  UserGuideDetail data = 1;
+}
+
+// Sync: lấy toàn bộ user guide có key; dùng 1 timestamp chung trong Redis.
+message GetAllUserGuidesByKeyRequest {
+  int64 timestamp = 1;  // client gửi timestamp lần trước; 0 = luôn lấy full
+}
+
+message GetAllUserGuidesByKeyResponse {
+  repeated UserGuide data = 1;
+  int64 timestamp = 2;   // timestamp của dữ liệu (max updatedAt)
+  bool unchanged = 3;   // true nếu client đã có bản mới, không cần trả full data
+}
+
+message GetUserGuideListRequest {
+  string title = 1;      // Search by title (optional)
+  string groupKey = 2;   // Filter by groupKey (optional)
+  int32 page = 3;        // Page number (default: 1)
+  int32 size = 4;        // Page size (default: 20)
+}
+
+message GetUserGuideListResponse {
+  repeated UserGuide data = 1;
+  int64 total = 2;
+}
+
+message GetUserGuideGroupsRequest {}
+
+message UserGuideGroup {
+  string groupKey = 1;
+  int64 count = 2;
+}
+
+message GetUserGuideGroupsResponse {
+  repeated UserGuideGroup data = 1;
+}
+
+// API cho user - Messages đơn giản
+message GetUserGuideSimpleRequest {
+  string groupKey = 1;   // Filter by groupKey (optional)
+  int32 page = 2;        // Page number (default: 1)
+  int32 size = 3;        // Page size (default: 20)
+  string text = 4;       // Search by title (optional)
+}
+
+message UserGuideSimple {
+  uint64 id = 1;
+  string title = 2;
+  string description = 3;  // Tối đa 80 ký tự
+}
+
+message GetUserGuideSimpleResponse {
+  repeated UserGuideSimple data = 1;
+  int64 total = 2;
+}
+
+// ========== FAQ Messages ==========
+
+message FAQ {
+  uint64 id = 1;
+  string question = 2;
+  string answer = 3;
+  string groupKey = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message FAQDetail {
+  uint64 id = 1;
+  string question = 2;
+  string answer = 3;
+  string groupKey = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message CreateFAQRequest {
+  string question = 1;
+  string answer = 2;
+  string groupKey = 3;
+}
+
+message CreateFAQResponse {
+  FAQDetail data = 1;
+}
+
+message UpdateFAQRequest {
+  uint64 id = 1;
+  string question = 2;
+  string answer = 3;
+  string groupKey = 4;
+}
+
+message UpdateFAQResponse {
+  FAQDetail data = 1;
+}
+
+message DeleteFAQRequest {
+  uint64 id = 1;
+}
+
+message DeleteFAQResponse {
+  bool success = 1;
+}
+
+message GetFAQRequest {
+  uint64 id = 1;
+}
+
+message GetFAQResponse {
+  FAQDetail data = 1;
+}
+
+message GetFAQListRequest {
+  string question = 1;    // Search by question (optional)
+  string groupKey = 2;    // Filter by groupKey (optional)
+  int32 page = 3;         // Page number (default: 1)
+  int32 size = 4;         // Page size (default: 20)
+}
+
+message GetFAQListResponse {
+  repeated FAQ data = 1;
+  int64 total = 2;
+}
+
+// API cho user - FAQ đơn giản
+message GetFAQSimpleRequest {
+  string groupKey = 1;   // Filter by groupKey (optional)
+  int32 page = 2;        // Page number (default: 1)
+  int32 size = 3;        // Page size (default: 20)
+  string text = 4;       // Search by question or answer (optional)
+}
+
+message FAQSimple {
+  uint64 id = 1;
+  string question = 2;
+  string answer = 3;  // Tối đa 50 ký tự
+}
+
+message GetFAQSimpleResponse {
+  repeated FAQSimple data = 1;
+  int64 total = 2;
+}
+
+// ========== Service Definition ==========
+
+service UserGuideService {
+  // Create User Guide
+  rpc CreateUserGuide (CreateUserGuideRequest) returns (CreateUserGuideResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/user-guides"
+      body: "*"
+    };
+  };
+
+  // Update User Guide
+  rpc UpdateUserGuide (UpdateUserGuideRequest) returns (UpdateUserGuideResponse) {
+    option (google.api.http) = {
+      put: "/v2/hub/user-guides/{id}"
+      body: "*"
+    };
+  };
+
+  // Delete User Guide
+  rpc DeleteUserGuide (DeleteUserGuideRequest) returns (DeleteUserGuideResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/user-guides/{id}"
+    };
+  };
+
+  // Get User Guide Detail
+  rpc GetUserGuide (GetUserGuideRequest) returns (GetUserGuideResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/{id}"
+    };
+  };
+
+  // Get User Guide Detail by Key
+  rpc GetUserGuideByKey(GetUserGuideByKeyRequest) returns (GetUserGuideByKeyResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/by-key/{key}"
+    };
+  };
+
+  // Lấy toàn bộ user guide có key; sync theo timestamp (1 key Redis chung).
+  rpc GetAllUserGuidesByKey(GetAllUserGuidesByKeyRequest) returns (GetAllUserGuidesByKeyResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/by-key"
+    };
+  };
+
+  // Get User Guide List with search and pagination
+  rpc GetUserGuideList (GetUserGuideListRequest) returns (GetUserGuideListResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/user-guides"
+    };
+  };
+
+  // Get User Guide Groups
+  rpc GetUserGuideGroups (GetUserGuideGroupsRequest) returns (GetUserGuideGroupsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides/groups"
+    };
+  };
+
+  // API cho user - Lấy danh sách user guides đơn giản (chỉ id, title, description tối đa 80 ký tự)
+  rpc GetUserGuideSimple(GetUserGuideSimpleRequest) returns (GetUserGuideSimpleResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/user-guides"
+    };
+  };
+}
+
+// ========== FAQ Service Definition ==========
+
+service FAQService {
+  // Create FAQ
+  rpc CreateFAQ (CreateFAQRequest) returns (CreateFAQResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/admin/faqs"
+      body: "*"
+    };
+  };
+
+  // Update FAQ
+  rpc UpdateFAQ (UpdateFAQRequest) returns (UpdateFAQResponse) {
+    option (google.api.http) = {
+      put: "/v2/hub/admin/faqs/{id}"
+      body: "*"
+    };
+  };
+
+  // Delete FAQ
+  rpc DeleteFAQ (DeleteFAQRequest) returns (DeleteFAQResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/admin/faqs/{id}"
+    };
+  };
+
+  // Get FAQ Detail
+  rpc GetFAQ (GetFAQRequest) returns (GetFAQResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/faqs/{id}"
+    };
+  };
+
+  // Get FAQ List (Admin)
+  rpc GetFAQList (GetFAQListRequest) returns (GetFAQListResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/faqs"
+    };
+  };
+
+  // API cho user - Lấy danh sách FAQs đơn giản (chỉ id, question, answer tối đa 50 ký tự)
+  rpc GetFAQSimple (GetFAQSimpleRequest) returns (GetFAQSimpleResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/faqs"
+    };
+  };
+  
+  rpc GetFAQSimpleDetail (GetFAQRequest) returns (FAQDetail) {
+    option (google.api.http) = {
+      get: "/v2/hub/faqs/{id}"
+    };
+  };
+}
+

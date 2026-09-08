@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service OrganizationPermissionService {
+  
+    rpc CreatePermission(CreatePermissionRequest) returns (CreatePermissionResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/permission"
+            body: "*"
+        };
+    }
+
+    rpc UpdatePermission(UpdatePermissionRequest) returns (UpdatePermissionResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/permission/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeletePermission(DeletePermissionRequest) returns (DeletePermissionResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/organization/permission/{id}"
+        };
+    }
+
+    rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/permission"
+        };
+    }
+}
+
+message CreatePermissionRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    uint32 organizationId = 3 [json_name = "organizationId"];
+}
+
+message CreatePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdatePermissionRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+}
+
+message UpdatePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeletePermissionRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeletePermissionResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetPermissionsRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message Permission {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated Permission childrens = 4 [json_name = "childrens"];
+}
+
+message GetPermissionsResponse {
+    repeated Permission permissions = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+

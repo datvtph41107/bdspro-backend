@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+option go_package = "pb/types/hub;hubpb";
+
+// CheckVersionSync
+message CheckVersionSyncRequest {
+  string resource = 1;
+  uint64 id = 2;
+  int64 lastSync = 3;
+  int64 limit = 4;
+}
+
+message CheckVersionSyncResponse {
+  bool needSync = 1;
+  int64 currentVersion = 2;
+  int32 changeCount = 3;
+  repeated uint64 changedIds = 4;
+  optional int64 next = 5;
+}
+
+// RefreshSyncIds
+message RefreshSyncIdsRequest {
+  string resource = 1;
+  int64 lastSync = 2;
+  int64 limit = 3;
+}
+
+message RefreshSyncIdsResponse {
+  bool needSync = 1;
+  int64 currentVersion = 2;
+  int32 changeCount = 3;
+  repeated uint64 changedIds = 4;
+  optional int64 next = 5;
+}
+
+// FlushSyncIds
+message FlushSyncIdsRequest {
+  string resource = 1;
+  int64 limit = 2;
+}
+
+message FlushSyncIdsResponse {
+  string message = 1;
+}
+
+service UpdateDataService {
+  rpc CheckVersionSync(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/update/{resource}/sync/status"
+    };
+  }
+  rpc CheckVersionSyncById(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/update/{resource}/sync/status/{id}"
+    };
+  }
+  rpc RefreshSyncIds(RefreshSyncIdsRequest) returns (RefreshSyncIdsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/update/{resource}/refresh/ids"
+    };
+  }
+  rpc FlushSyncIds(FlushSyncIdsRequest) returns (FlushSyncIdsResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/update/{resource}/flush/ids"
+      body: "*"
+    };
+  }
+}

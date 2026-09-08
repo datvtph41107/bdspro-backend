@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+message DealCostDTO {
+  uint64 id = 1;
+  uint64 dealId = 2;
+  double amount = 3;
+  string confirmedAt = 4;
+  string note = 5;
+  uint64 costTypeId = 6;
+  string costTypeName = 7;
+  string costName = 8;
+  uint32 status = 9; // enums.ApprovedStatus
+}
+
+message DealCostSearchDTO {
+  uint64 dealId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message DealCostListDTO {
+  repeated DealCostDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service DealCostService {
+  rpc Search (DealCostSearchDTO) returns (DealCostListDTO) {
+    option (google.api.http) = {
+      get: "/v2.1/transaction/deal-cost/list/{dealId}"
+    };
+  }
+
+  rpc Detail (sharepb.IdRequest) returns (DealCostDTO) {
+    option (google.api.http) = {
+      get: "/v2.1/transaction/deal-cost/detail/{id}"
+    };
+  }
+
+  rpc Create (DealCostDTO) returns (DealCostDTO) {
+    option (google.api.http) = {
+      post: "/v2.1/transaction/deal-cost"
+      body: "*"
+    };
+  }
+
+  rpc Update (DealCostDTO) returns (DealCostDTO) {
+    option (google.api.http) = {
+      put: "/v2.1/transaction/deal-cost/{id}"
+      body: "*"
+    };
+  }
+
+  rpc Delete (sharepb.IdRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2.1/transaction/deal-cost/{id}"
+    };
+  }
+}
+

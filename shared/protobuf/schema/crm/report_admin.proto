@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "crm/report.proto";
+
+// Report Admin Service
+service ReportAdminService {
+  rpc GetAdminReportList(GetAdminReportListRequest) returns (GetAdminReportListResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/admin/report/{registry}"
+    };
+  }
+  rpc ApproveReport(ApproveReportRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/feedback/admin/report/{id}/approve"
+      body: "*"
+    };
+  }
+  rpc RejectReport(RejectReportRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/feedback/admin/report/{id}/reject"
+      body: "*"
+    };
+  }
+  rpc RemoveReport(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/feedback/admin/report/{id}/remove"
+    };
+  }
+}
+
+// Admin Report Messages
+message GetAdminReportListRequest {
+  string registry = 1;
+  optional uint32 status = 2;
+  optional uint64 reason_id = 3;
+  optional uint64 userId = 4;
+  optional uint64 ownerId = 5;
+  uint32 page = 6;
+  uint32 size = 7;
+}
+
+message GetAdminReportListResponse {
+  repeated ReportResponse data = 1;
+  int64 total = 2;
+}
+
+message ApproveReportRequest {
+  uint64 id = 1;
+  optional string response = 2;
+  optional string adminNote = 3;
+  optional bool sendNotification = 4;
+}
+
+message RejectReportRequest {
+  uint64 id = 1;
+  optional string response = 2;
+  optional string adminNote = 3;
+  optional bool sendNotification = 4;
+}
+

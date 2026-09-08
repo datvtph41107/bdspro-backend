@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package authpb;
+import "google/api/annotations.proto";
+import "auth/internal.proto";
+
+option go_package = "pb/types/auth;authpb";
+
+service UserInfoService {
+    // Single Account Lock Management
+    rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/account/lock"
+            body: "*"
+        };
+    }
+
+    rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/account/unlock"
+            body: "*"
+        };
+    }
+
+    rpc GetAccountStatus(GetAccountStatusRequest) returns (GetAccountStatusResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/account/status/{profileId}"
+        };
+    }
+
+    // Batch Account Lock Management
+    rpc LockMultipleUsers(LockMultipleUsersRequest) returns (LockMultipleUsersResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/account/lock-multiple"
+            body: "*"
+        };
+    }
+
+    rpc UnlockMultipleUsers(UnlockMultipleUsersRequest) returns (UnlockMultipleUsersResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/account/unlock-multiple"
+            body: "*"
+        };
+    }
+}
+
+// Single Account Lock Messages
+message LockAccountRequest {
+    uint64 profileId = 1;
+    uint32 lockType = 2;
+    int32 duration = 3; // Số giờ khóa (chỉ dùng cho temporary)
+    string reason = 4;
+    uint64 lockedBy = 5; // ID admin thực hiện khóa
+}
+
+message LockAccountResponse {
+    bool success = 1;
+    string message = 2;
+    uint64 profileId = 3;
+    uint32 lockType = 4;
+    string lockedAt = 5;
+    string lockedUntil = 6; // Chỉ có khi lockType = temporary
+}
+
+message UnlockAccountRequest {
+    uint64 profileId = 1;
+    string reason = 2;
+    uint64 unlockedBy = 3; // ID admin thực hiện mở khóa
+}
+
+message UnlockAccountResponse {
+    bool success = 1;
+    string message = 2;
+    uint64 profileId = 3;
+    string unlockedAt = 4;
+}
+
+message GetAccountStatusRequest {
+    uint64 profileId = 1;
+}
+
+message GetAccountStatusResponse {
+    uint64 profileId = 1;
+    uint32 status = 2;
+    string statusText = 3;
+    bool isLocked = 4;
+    uint32 lockType = 5;
+    string lockedAt = 6;
+    string lockedUntil = 7;
+    string lockReason = 8;
+    optional uint64 lockedBy = 9;
+    bool canLogin = 10;
+    bool isExpired = 11; // Chỉ có khi lockType = temporary
+}
+
+// Batch Account Lock Messages
+message LockMultipleUsersRequest {
+    repeated uint64 profileIds = 1;
+    uint32 lockType = 2;
+    int32 duration = 3; // Số giờ khóa (chỉ dùng cho temporary)
+    string reason = 4;
+    uint64 lockedBy = 5; // ID admin thực hiện khóa
+}
+
+message LockMultipleUsersResponse {
+    bool success = 1;
+    string message = 2;
+    repeated uint64 profileIds = 3;
+    uint32 lockType = 4;
+    string lockedAt = 5;
+    string lockedUntil = 6; // Chỉ có khi lockType = temporary
+}
+
+message UnlockMultipleUsersRequest {
+    repeated uint64 profileIds = 1;
+    string reason = 2;
+    uint64 unlockedBy = 3; // ID admin thực hiện mở khóa
+}
+
+message UnlockMultipleUsersResponse {
+    bool success = 1;
+    string message = 2;
+    repeated uint64 profileIds = 3;
+    string unlockedAt = 4;
+}

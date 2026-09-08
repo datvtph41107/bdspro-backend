@@ -1,0 +1,69 @@
+# Non-sensitive defaults shared by every deployment. Runtime endpoints and
+# secrets are supplied through environment variables.
+rpc:
+  bdspro:
+    address: "localhost:8202"
+  hub:
+    address: "localhost:8280"
+
+app:
+  name: "Assistant Service"
+  version: "1.0.0"
+  environment: ""
+  port:
+    grpc: "8218"
+    http: "8061"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "bdspro_db"
+  sslmode: "disable"
+  max_connections: 100
+  max_idle_connections: 10
+  type: "POSTGRES"
+  # Runtime inject DATABASE_DSN từ assistant-service/.env hoặc secret store deploy.
+  dns: ""
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  max_retries: 3
+
+deepseek:
+  api_key: ""
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-chat"
+  timeout_seconds: 30
+  max_tokens: 4000
+
+openai:
+  api_key: ""
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4o-mini"  # Nhanh hơn gpt-4o-mini, chi phí thấp hơn
+  timeout_seconds: 45  # Giảm timeout vì model nhanh hơn
+  max_tokens: 4000
+
+gemini:
+  api_key: ""
+  base_url: "https://generativelanguage.googleapis.com/v1beta"  # Optional, default
+  model: "gemini-2.5-flash-lite"  # Optional, default
+  timeout_seconds: 60  # Optional, default
+  max_tokens: 4000
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+monitoring:
+  enabled: true
+  prometheus_port: "9091"
+
+ocr:
+  timeout_seconds: 60
+  temp_dir: "" # Để trống sẽ dùng system temp dir

@@ -1,0 +1,58 @@
+{
+  "version": "2.0.0",
+  "defaultMapId": "street",
+  "maps": [
+    {
+      "id": "street",
+      "name": "Giao thông",
+      "description": "Bản đồ nền vector được sở hữu bởi style chính của QHMap.",
+      "sourceKind": "style",
+      "source": {
+        "kind": "style",
+        "url": "{{domain_api}}/v2/tqd/qh/public/json/style"
+      },
+      "default": true,
+      "mandatory": true,
+      "priority": 100,
+      "transport": {
+        "kind": "public-http",
+        "preserveHost": true,
+        "encrypted": false
+      }
+    },
+    {
+      "id": "satellite",
+      "name": "Vệ tinh",
+      "description": "Lớp nền raster vệ tinh, bật theo lựa chọn người dùng.",
+      "sourceKind": "tiles",
+      "source": {
+        "kind": "tiles",
+        "type": "raster",
+        "tiles": [
+          "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+        ],
+        "tileSize": 256,
+        "minzoom": 0,
+        "maxzoom": 22
+      },
+      "layers": [
+        {
+          "id": "base-map-layer-satellite",
+          "type": "raster",
+          "paint": {
+            "raster-opacity": 1
+          }
+        }
+      ],
+      "default": false,
+      "mandatory": false,
+      "priority": 50,
+      "fallbackId": "street",
+      "transport": {
+        "kind": "public-http",
+        "preserveHost": true,
+        "encrypted": false
+      }
+    }
+  ]
+}

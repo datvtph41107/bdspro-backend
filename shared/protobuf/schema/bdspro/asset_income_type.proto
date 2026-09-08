@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+message AssetIncomeTypeDTO {
+  uint64 id = 1;
+  string typeName = 2;
+  bool isCustom = 3;
+}
+
+message AssetIncomeTypeListDTO {
+  repeated AssetIncomeTypeDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service AssetIncomeTypeService {
+    rpc Get (AssetIncomeTypeDTO) returns (AssetIncomeTypeListDTO);
+    rpc Detail (AssetIncomeTypeDTO) returns (AssetIncomeTypeDTO);
+    rpc Create (AssetIncomeTypeDTO) returns (AssetIncomeTypeDTO);
+    rpc Update (AssetIncomeTypeDTO) returns (AssetIncomeTypeDTO);
+    rpc Delete (AssetIncomeTypeDTO) returns (AssetIncomeTypeDTO);
+}

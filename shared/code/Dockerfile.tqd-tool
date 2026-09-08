@@ -1,0 +1,26 @@
+FROM alpine:latest
+
+WORKDIR /build
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+RUN apk add --no-cache \
+    git \
+    make \
+    g++ \
+    gcc \
+    libc-dev \
+    linux-headers \
+    bash \
+    cmake \
+    zlib-dev \
+    boost-dev \
+    sqlite-dev
+
+# 👉 dùng fork của Felt thay vì Mapbox
+RUN git clone https://github.com/felt/tippecanoe.git /tmp/tippecanoe \
+    && cd /tmp/tippecanoe \
+    && make -j$(nproc) \
+    && make install \
+    && cd / \
+    && rm -rf /tmp/tippecanoe

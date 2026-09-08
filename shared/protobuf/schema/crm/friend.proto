@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "organization/deal.proto";
+import "organization/organization_member.proto";
+import "organization/group_member.proto";
+
+service FriendService {
+    rpc FriendList(sharepb.FriendListRequest) returns (FriendProfileListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/list"
+        };
+    };
+    rpc FriendRequest(FriendRequestDTO) returns (FriendRequestResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/friend/request/{receiverId}"
+            body: "*"
+        };
+    };
+    rpc CancelFriendRequest(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/friend/cancel/{id}"
+        };
+    };
+    rpc FriendAccept(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend/accept/{id}"
+            body: "*"
+        };
+    };
+    rpc FriendReject(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/friend/reject/{id}"
+        };
+    };
+    rpc FriendUpdateGroup(GroupUpdateRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend/group/{requestId}/{groupId}"
+            body: "*"
+        };
+    };
+    rpc FriendSent(sharepb.FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/request/sent"
+        };
+    };
+    rpc FriendReceived(sharepb.FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/request/received"
+        };
+    };
+    rpc FriendInfo(sharepb.Empty) returns (FriendInfoResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/info"
+        };
+    };
+    rpc FriendListWithLead(sharepb.FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/with-lead"
+        };
+    };
+    rpc FriendListWithMember(sharepb.FriendListRequest) returns (FriendListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend/with-member"
+        };
+    };
+}
+
+message Friend {
+    uint64 id = 1;
+    uint64 createdBy = 2;
+    uint64 receiverId = 3;
+    string respondedAt = 4;
+    int32 status = 5;
+    optional uint64 groupId = 6;
+    optional uint64 groupReceiverId = 7;
+    optional sharepb.ProfileItem createdUser = 8;
+    optional sharepb.ProfileItem receiverUser = 9;
+    string createdAt = 10;
+    optional organizationpb.DealMember dealMember = 11;
+    optional organizationpb.OrganizationMember organizationMember = 12;
+    optional organizationpb.GroupMember groupMember = 13;
+}
+
+message FriendRequestDTO {
+    uint64 receiverId = 1;
+}
+
+message FriendRequestResponse {
+    Friend data = 1;
+    int32 status = 2;
+}
+
+message FriendListResponse {
+    repeated Friend data = 1;
+    int32 total = 2;
+}
+
+message GroupUpdateRequest {
+    uint64 requestId = 1;
+    uint64 groupId = 2;
+}
+
+message FriendInfoResponse {
+    int64 numFollower = 1;
+    int64 numFollowing = 2;
+    int64 numFriend = 3;
+}
+
+message FriendProfileListResponse {
+    repeated sharepb.ProfileItem data = 1;
+    int32 total = 2;
+}

@@ -1,0 +1,73 @@
+// tqd/layer_legal.proto
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service LayerLegalService {
+  rpc AddLayerLegalDocs(AddLayerLegalDocsRequest) returns (AddLayerLegalDocsResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/layers/{layerId}/legal-docs"
+      body: "*"
+    };
+  }
+  
+  rpc GetLayerLegalDocs(GetLayerLegalDocsRequest) returns (GetLayerLegalDocsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/layers/{layerId}/legal-docs"
+    };
+  }
+  
+  rpc DeleteLayerLegalDoc(DeleteLayerLegalDocRequest) returns (DeleteLayerLegalDocResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/layers/legal-docs/{id}"
+    };
+  }
+}
+
+message AddLayerLegalDocsRequest {
+  uint64 layerId = 1;
+  repeated LayerLegalDocInput legalDocs = 2;
+}
+
+message LayerLegalDocInput {
+  string name = 1;
+  string fileUrl = 2;
+  string fileType = 3;
+}
+
+message AddLayerLegalDocsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated LayerLegalDoc legalDocs = 3;
+}
+
+message GetLayerLegalDocsRequest {
+  uint64 layerId = 1;
+}
+
+message GetLayerLegalDocsResponse {
+  uint64 layerId = 1;
+  repeated LayerLegalDoc legalDocs = 2;
+}
+
+message DeleteLayerLegalDocRequest {
+  uint64 id = 1;
+}
+
+message DeleteLayerLegalDocResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message LayerLegalDoc {
+  uint64 id = 1;
+  uint64 layerId = 2;
+  string name = 3;
+  string fileUrl = 4;
+  string fileType = 5;
+  string createdAt = 6;
+}

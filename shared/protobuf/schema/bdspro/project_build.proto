@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "bdspro/apartment.proto";
+import "bdspro/apartment_attribute.proto";
+import "bdspro/public.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+
+service ProjectBuildService {
+  rpc GetProjectBuild(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/project-build/items"
+    };
+  };
+  rpc GetProjectBuildById(sharepb.IdRequest) returns (ProjectBuild) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/project-build/detail/{id}"
+    };
+  };
+  rpc CreateProjectBuild(ProjectBuild) returns (ProjectBuild) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/project-build"
+      body: "*"
+    };
+  };
+  rpc UpdateProjectBuild(ProjectBuild) returns (ProjectBuild) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/project-build/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteProjectBuild(sharepb.IdRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/project-build/{id}"
+    };
+  };
+}
+
+
+
+message ProjectBuildSearchDTO {
+  uint32 page = 1;
+  uint32 size = 2;
+  string text = 3;
+}

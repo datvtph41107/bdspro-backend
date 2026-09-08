@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "organization/organization_permission.proto";
+import "shared/common.proto";
+import "organization/color.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service OrganizationRoleService {
+    rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/role"
+            body: "*"
+        };
+    }
+
+    rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/role/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/organization/role/{id}"
+        };
+    }
+
+    rpc GetRoles(GetRolesRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/role"
+        };
+    }
+
+    rpc GetRolesCurrent(sharepb.IdRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/roles/current"
+        };
+    }
+
+    rpc GetRoleDealMembers(GetRoleRequest) returns (GetRolesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/role/deal-members"
+        };
+    }
+
+    rpc GetRole(GetRoleRequest) returns (GetRoleResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/role/detail/{id}"
+        };
+    }
+
+    rpc AddPermissionToRole(AddPermissionToRoleRequest) returns (AddPermissionToRoleResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/role/add-permission"
+            body: "*"
+        };
+    }
+
+    rpc CreateNewRoleWithMembers(CreateNewRoleWithMembersRequest) returns (CreateNewRoleWithMembersResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/role/with-members"
+            body: "*"
+        };
+    }
+
+    rpc UpdateRoleWithMembers(UpdateRoleWithMembersRequest) returns (UpdateRoleWithMembersResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/role/{id}/with-members"
+            body: "*"
+        };
+    }
+    
+}
+
+message CreateRoleRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    uint32 organizationId = 3 [json_name = "organizationId"];
+    repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
+    optional uint32 colorId = 7 [json_name = "colorId"];
+}
+
+message CreateRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdateRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
+    optional uint32 colorId = 7 [json_name = "colorId"];
+}
+
+message UpdateRoleResponse {    
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetRolesRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message Role {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated Permission permissions = 4 [json_name = "permissions"];
+    bool isDefault = 5 [json_name = "isDefault"];
+    uint32 domainType = 6 [json_name = "domainType"];
+    optional Color color = 7 [json_name = "color"];
+    uint32 roleKey = 8 [json_name = "roleKey"];
+}
+
+message GetRolesResponse {
+    repeated Role data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetRoleRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetRoleResponse {
+    Role role = 1 [json_name = "role"];
+}
+
+message AddPermissionToRoleRequest {
+    uint32 roleId = 1 [json_name = "roleId"];
+    uint32 permissionId = 2 [json_name = "permissionId"];
+}
+
+message AddPermissionToRoleResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message CreateNewRoleWithMembersRequest {
+    string name = 1 [json_name = "name"];
+    string key = 2 [json_name = "key"];
+    repeated uint32 memberIds = 3 [json_name = "memberIds"];
+    repeated uint64 permissionIds = 4 [json_name = "permissionIds"];
+    optional uint32 colorId = 5 [json_name = "colorId"];
+}
+
+message CreateNewRoleWithMembersResponse {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated uint32 memberIds = 4 [json_name = "memberIds"];
+    repeated uint64 permissionIds = 5 [json_name = "permissionIds"];
+}
+
+message UpdateRoleWithMembersRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string key = 3 [json_name = "key"];
+    repeated uint32 memberIds = 4 [json_name = "memberIds"];
+    repeated uint64 permissionIds = 5 [json_name = "permissionIds"];
+    bool isDefault = 6 [json_name = "isDefault"];
+    uint32 domainType = 7 [json_name = "domainType"];
+    optional uint32 colorId = 8 [json_name = "colorId"];
+}
+
+message UpdateRoleWithMembersResponse {
+    uint32 id = 1 [json_name = "id"];
+}

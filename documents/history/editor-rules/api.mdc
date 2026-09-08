@@ -1,0 +1,31 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# Quy tắc viết 1 api thông thường khi có yêu cầu:
+  - quy tắc đặt tên biến dùng camelcase
+  - Toàn bộ api đã theo chuẩn v2 tôi thiết kế nghĩa là:
+    - Không dùng lại routes mà đổi sang viết định tuyến trong handler. 
+    - Triển khai lại các api định nghĩa trong proto trong handler
+  - Không cần viết test, không cần viết doc. không cần tạo wire và gen_wire
+  - Định nghĩa dữ liệu và api trong .proto nằm trong protobuf
+  - Trong infra/handler định nghĩa các implement nằm trong protobuf.
+  - handler nhớ thêm comment của swagger sinh mới
+  - viết các validator và mapper nếu cần
+  - viết usecase trong internal/usecases
+  - Định nghĩa các repo để tương tác với dữ liệu trong internal/repo
+  - viết lớp triển khai repo đó trong infra/postgre
+  - nếu cần phải sử dụng thông tin đến từ các service khác. viết 1 client trong infra/client
+  - nếu usecase cần tương tác với client từ service khác. định nghĩa 1 usecase trong internal/interface
+  - sau đó client trong infra/client triển khai lại
+  - không dùng gin.Context mà đổi sang context.Context
+  - mấy phần triển khai lại nhớ thêm: // @bind: internal/..... để sau gen code dựa vào đó mà tạo wire.
+  - Nếu là handler mới hoàn toàn nhớ đăng ký trong gateway-service
+  - Mapper:
+    - với trường liên quan tới time thì dùng _utils.FormatTimeToString, _utils.ParseStringToTime
+  - Đối với api trả ra danh sách:
+    - Luôn trả danh sách trong trường data
+    - trả thêm cả total và request cần nhập page, size
+    - dto luôn embed _dto.Pagable

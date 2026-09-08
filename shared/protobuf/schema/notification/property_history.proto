@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package notificationpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/notification;notificationpb";
+
+service PropertyHistoryService {
+  rpc CreatePropertyHistory(CreatePropertyHistoryRequest)
+      returns (CreatePropertyHistoryResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/property-history"
+      body: "*"
+    };
+  }
+
+  rpc GetPropertyHistory(GetPropertyHistoryRequest)
+      returns (GetPropertyHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/property-history/{subjectId}"
+    };
+  }
+
+  rpc GetPropertyHistoryByID(GetPropertyHistoryByIDRequest)
+      returns (GetPropertyHistoryByIDResponse) {
+    option (google.api.http) = {
+      get: "/v2/notification/property-history/detail/{id}"
+    };
+  }
+
+  rpc SoftDeletePropertyHistoryId(SoftDeletePropertyHistoryIdRequest) returns (SoftDeletePropertyHistoryIdResponse) {
+    option (google.api.http) = {
+      post: "/v2/notification/property-history/{id}"
+    };
+  }
+}
+
+message SoftDeletePropertyHistoryIdRequest {
+  uint64 id = 1;
+  uint64 actorId = 2;
+}
+
+message SoftDeletePropertyHistoryIdResponse {
+  bool success = 1;
+}
+
+message CreatePropertyHistoryRequest {
+  uint64 subjectId = 1;
+  uint32 action = 3;
+  string description = 4;
+  uint64 actorId = 5;
+}
+
+message CreatePropertyHistoryResponse {
+  bool success = 1;
+  uint64 id = 2;
+}
+
+
+
+message GetPropertyHistoryRequest {
+  uint32 action = 1;
+  uint64 actorId = 2;
+  string keyword = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+  string sort = 6;
+  uint64 subjectId = 7;
+  int64 timestamp = 8;
+}
+
+message GetPropertyHistoryResponse {
+  repeated PropertyHistoryItem data = 1;
+  int64 total = 2;
+}
+
+message GetPropertyHistoryByIDRequest {
+  uint64 id = 1;
+}
+
+message GetPropertyHistoryByIDResponse {
+  PropertyHistoryItem data = 1;
+}
+
+message PropertyHistoryItem {
+  uint64 id = 1;
+  uint64 subjectId = 2;
+  string subjectType = 3;
+  string action = 4;
+  string description = 5;
+  google.protobuf.Struct metadata = 6;
+  ActorInfo  actor = 7;
+  string occurredAt = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message ActorInfo {
+  uint64 id = 1;
+  string fullName = 2;
+  string avatar = 3;
+  bool tickVerified = 4;
+}

@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "bdspro/common.proto";
+import "bdspro/post.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service AdminPostService {
+  rpc GetPosts(AdminPostSearchRequest) returns (AdminPostSearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/posts"
+    };
+  };
+  rpc AdminDetailPost(sharepb.IdRequest) returns (Post) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/posts/{id}"
+    };
+  };
+  rpc CreatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts"
+      body: "*"
+    };
+  };
+  rpc UpdatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/posts/{id}"
+      body: "*"
+    };
+  };
+  rpc DeletePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/posts/{id}"
+    };
+  };
+  rpc ApprovePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/approve"
+    };
+  };
+  rpc RejectPost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/reject"
+    };
+  };
+  rpc ArchivePost(ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/posts/archived"
+      body: "*"
+    };
+  };
+  rpc HidePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/hide"
+    };
+  };
+  rpc UnhidePost(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/posts/{id}/unhide"
+    };
+  };
+}
+
+message PostRequest {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+// AdminPostSearchRequest - Request cho API admin posts
+message AdminPostSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string title = 3;                    // Tên bài viết
+  repeated uint32 status = 4;                  // Trạng thái duyệt
+  string fromDate = 5;                // Từ ngày
+  string toDate = 6;                  // Đến ngày
+  repeated uint32 transactionTypes = 7; // Loại giao dịch
+  repeated uint32 visibleStatuses = 8; // Trạng thái hiển thị
+}
+
+// AdminPostSearchResponse - Response cho API admin posts
+message AdminPostSearchResponse {
+  repeated AdminPostItem data = 1;
+  int64 total = 2;
+}
+
+// AdminPostItem - Thông tin bài viết cho admin
+message AdminPostItem {
+  uint64 id = 1;                      // ID bài viết
+  string code = 2;                    // Mã bài viết
+  string title = 3;                   // Tên bài viết
+  uint32 status = 4;                  // Trạng thái
+  string statusName = 5;              // Tên trạng thái
+  sharepb.ProfileItem owner = 6;      // Chủ sở hữu
+  string publishedAt = 7;             // Ngày công khai
+  int64 viewCount = 8;                // Lượt xem
+  int64 interestCount = 9;            // Lượt quan tâm
+  int64 contactCount = 10;            // Lượt liên hệ
+  uint32 transactionType = 11;        // Loại giao dịch
+  uint32 transactionStatus = 12;      // Trạng thái giao dịch
+  uint32 visibleStatus = 13;          // Trạng thái hiển thị
+}

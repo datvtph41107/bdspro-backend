@@ -1,0 +1,37 @@
+# Non-sensitive defaults shared by every deployment. Runtime endpoints and
+# secrets are supplied through environment variables.
+server:
+    port: 8007
+    tcp_port: 8208
+
+rpc:
+    user:
+        address: "localhost:8201"
+    bdspro:
+        address: "localhost:8202"
+
+eureka:
+    url: localhost
+    port: 8761
+
+database:
+    type: "POSTGRES"
+    dsn: "host=localhost user=postgres password=postgres dbname=db_chat port=5432 sslmode=disable"
+
+timeout:
+    transaction: 30s
+    idle: 120s
+    read: 30s
+    write: 60s
+
+redis:
+    host: "localhost:6379"
+    password: ""
+
+swagger:
+    path: "./proto/docs/chat/chat.swagger.json"
+
+worker:
+    number: 10
+
+max_participant: 10

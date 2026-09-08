@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// DirectoryCategory service
+service DirectoryCategoryService {
+  // Create a new service category
+  rpc CreateDirectoryCategory(DirectoryCategory) returns (DirectoryCategory) {
+    option (google.api.http) = {
+      post: "/v2/tqd/service/categories"
+      body: "*"
+    };
+  }
+
+  // Get service category by ID
+  rpc GetDirectoryCategory(sharepb.IdRequest) returns (DirectoryCategory) {
+    option (google.api.http) = {
+      get: "/v2/tqd/service/categories/{id}"
+    };
+  }
+
+  // Update service category
+  rpc UpdateDirectoryCategory(DirectoryCategory) returns (DirectoryCategory) {
+    option (google.api.http) = {
+      put: "/v2/tqd/service/categories/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete service category
+  rpc DeleteDirectoryCategory(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/service/categories/{id}"
+    };
+  }
+
+  // List service categories
+  rpc ListServiceCategories(ListServiceCategoriesRequest) returns (ListServiceCategoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/service/categories"
+    };
+  }
+
+  // Get active service categories
+  rpc GetActiveServiceCategories(google.protobuf.Empty) returns (ListServiceCategoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/service/categories/active"
+    };
+  }
+
+  // Get service categories by level
+  rpc GetServiceCategoriesByLevel(GetServiceCategoriesByLevelRequest) returns (ListServiceCategoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/service/categories/level/{level}"
+    };
+  }
+}
+
+// DirectoryCategory message
+message DirectoryCategory {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string code = 4;
+  string icon = 5;
+  string color = 6;
+  bool isActive = 7;
+  uint32 sortOrder = 8;
+  uint32 level = 9;
+  string path = 10;
+  uint32 directoryCount = 11;
+  string createdAt = 12;
+  string updatedAt = 13;
+  uint64 createdBy = 14;
+  uint64 updatedBy = 15;
+}
+
+// Request/Response messages
+message GetDirectoryCategoryRequest {
+  uint64 id = 1;
+}
+
+message ListServiceCategoriesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  bool is_active = 4;
+  uint32 level = 5;
+}
+
+message GetServiceCategoriesByLevelRequest {
+  uint32 level = 1;
+}
+
+message ListServiceCategoriesResponse {
+  repeated DirectoryCategory data = 2;
+  int64 total = 3;
+}

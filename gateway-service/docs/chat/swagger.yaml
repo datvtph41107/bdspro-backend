@@ -1,0 +1,1220 @@
+basePath: /v2/chat
+definitions:
+  chatpb.AddUserRequest:
+    properties:
+      conversationId:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  chatpb.AddUserResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.BackgroundImage:
+    properties:
+      color:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      imageType:
+        $ref: '#/definitions/chatpb.ImageType'
+      imageUrl:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  chatpb.Conversation:
+    properties:
+      avatar:
+        type: string
+      avatars:
+        items:
+          type: string
+        type: array
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
+      conversationId:
+        type: integer
+      lastMessage:
+        $ref: '#/definitions/chatpb.Message'
+      name:
+        type: string
+      participantIds:
+        items:
+          type: integer
+        type: array
+      type:
+        $ref: '#/definitions/chatpb.ConversationTypeEnum'
+      unreadCount:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  chatpb.ConversationTypeEnum:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - ConversationTypeEnum_ConversationTypePrivate
+    - ConversationTypeEnum_ConversationTypeGroup
+    - ConversationTypeEnum_ConversationTypeChannel
+  chatpb.CreateConversationRequest:
+    properties:
+      avatar:
+        type: string
+      backgroundImageId:
+        type: integer
+      created_by:
+        type: integer
+      forbid_forward:
+        type: boolean
+      is_broadcast:
+        type: boolean
+      members:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/chatpb.ConversationTypeEnum'
+    type: object
+  chatpb.CreateConversationResponse:
+    properties:
+      conversationId:
+        type: integer
+    type: object
+  chatpb.CreateOrgChannelRequest:
+    properties:
+      departmentId:
+        type: integer
+      forbid_forward:
+        type: boolean
+      is_broadcast:
+        type: boolean
+      orgId:
+        type: integer
+    type: object
+  chatpb.CreateOrgChannelResponse:
+    properties:
+      conversationId:
+        type: integer
+    type: object
+  chatpb.DeleteRoomRequest:
+    properties:
+      conversationId:
+        type: integer
+    type: object
+  chatpb.DeleteRoomResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.DeleteViolationRequest:
+    properties:
+      messageId:
+        type: integer
+    type: object
+  chatpb.DeleteViolationResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.EditChannelRequest:
+    properties:
+      backgroundImage:
+        type: string
+      conversationId:
+        type: integer
+      forbid_forward:
+        type: boolean
+      is_broadcast:
+        type: boolean
+      name:
+        type: string
+    type: object
+  chatpb.EditChannelResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.EditMessageRequest:
+    properties:
+      content:
+        type: string
+      fileURL:
+        type: string
+      messageId:
+        type: integer
+    type: object
+  chatpb.EditMessageResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.ForwardMessageRequest:
+    properties:
+      messageId:
+        type: integer
+      senderId:
+        type: integer
+      targetConversationId:
+        type: integer
+    type: object
+  chatpb.ForwardMessageResponse:
+    properties:
+      messageId:
+        type: integer
+    type: object
+  chatpb.GetConversationByIdResponse:
+    properties:
+      avatar:
+        type: string
+      avatars:
+        items:
+          type: string
+        type: array
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
+      conversationId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      forbid_forward:
+        type: boolean
+      is_broadcast:
+        type: boolean
+      name:
+        type: string
+      participants:
+        items:
+          $ref: '#/definitions/chatpb.Participant'
+        type: array
+      type:
+        $ref: '#/definitions/chatpb.ConversationTypeEnum'
+      updatedAt:
+        type: string
+    type: object
+  chatpb.GetConversationsResponse:
+    properties:
+      conversations:
+        items:
+          $ref: '#/definitions/chatpb.Conversation'
+        type: array
+    type: object
+  chatpb.GetFilesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/chatpb.Message'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetImagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/chatpb.Message'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetLinksResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/chatpb.Message'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetListParticipantResponse:
+    properties:
+      participants:
+        items:
+          $ref: '#/definitions/chatpb.Participant'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/chatpb.Message'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetReadReceiptResponse:
+    properties:
+      readReceipts:
+        items:
+          $ref: '#/definitions/chatpb.ReadReceipt'
+        type: array
+      total:
+        type: integer
+    type: object
+  chatpb.GetSettingResponse:
+    properties:
+      backgroundImage:
+        $ref: '#/definitions/chatpb.BackgroundImage'
+      forbid_forward:
+        type: boolean
+      id:
+        type: integer
+      is_broadcast:
+        type: boolean
+      is_deleted:
+        type: boolean
+      mute_notif:
+        type: boolean
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/chatpb.ConversationTypeEnum'
+    type: object
+  chatpb.ImageType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - ImageType_IMAGE_TYPE_UNSPECIFIED
+    - ImageType_JPEG
+    - ImageType_PNG
+    - ImageType_GIF
+  chatpb.LeaveRoomRequest:
+    properties:
+      conversationId:
+        type: integer
+    type: object
+  chatpb.MarkAsReadRequest:
+    properties:
+      conversationId:
+        type: integer
+      messageIds:
+        items:
+          type: integer
+        type: array
+      userId:
+        type: integer
+    type: object
+  chatpb.MarkAsReadResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.Message:
+    properties:
+      avatar:
+        type: string
+      content:
+        type: string
+      content_type:
+        type: string
+      createdAt:
+        type: string
+      file_url:
+        type: string
+      fullName:
+        type: string
+      isRecall:
+        type: boolean
+      messageId:
+        type: integer
+      reactions:
+        items:
+          $ref: '#/definitions/chatpb.MessageReaction'
+        type: array
+      replyMessage:
+        $ref: '#/definitions/chatpb.Message'
+      room_id:
+        type: string
+      senderId:
+        type: integer
+    type: object
+  chatpb.MessageReaction:
+    properties:
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      messageId:
+        type: integer
+      reaction:
+        type: string
+      room_id:
+        type: string
+      userId:
+        type: integer
+    type: object
+  chatpb.MuteConversationRequest:
+    properties:
+      conversationId:
+        type: integer
+      mute:
+        type: boolean
+      userId:
+        type: integer
+    type: object
+  chatpb.MuteConversationResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.Participant:
+    properties:
+      joinedAt:
+        type: string
+      leftAt:
+        type: string
+      muteNotif:
+        type: boolean
+      role:
+        $ref: '#/definitions/chatpb.ParticipantRoleEnum'
+      userId:
+        type: integer
+    type: object
+  chatpb.ParticipantRoleEnum:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - ParticipantRoleEnum_RoleMember
+    - ParticipantRoleEnum_RoleAdmin
+    - ParticipantRoleEnum_RoleBanned
+  chatpb.PinMessageRequest:
+    properties:
+      conversationId:
+        type: integer
+      doPin:
+        type: boolean
+      messageId:
+        type: integer
+    type: object
+  chatpb.PinMessageResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.ReactionMessageRequest:
+    properties:
+      messageId:
+        type: integer
+      reaction:
+        type: string
+    type: object
+  chatpb.ReactionMessageResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.ReadReceipt:
+    properties:
+      readAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  chatpb.RecallMessageRequest:
+    properties:
+      messageId:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  chatpb.RecallMessageResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.RemoveUserRequest:
+    properties:
+      adminUserId:
+        type: integer
+      conversationId:
+        type: integer
+      targetUserId:
+        type: integer
+    type: object
+  chatpb.RemoveUserResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  chatpb.SearchResponse:
+    properties:
+      conversations:
+        items:
+          $ref: '#/definitions/chatpb.Conversation'
+        type: array
+      messages:
+        items:
+          $ref: '#/definitions/chatpb.Message'
+        type: array
+    type: object
+  chatpb.SearchTypeEnum:
+    enum:
+    - 0
+    - 1
+    type: integer
+    x-enum-varnames:
+    - SearchTypeEnum_SearchTypeMessage
+    - SearchTypeEnum_SearchTypeConversation
+  chatpb.SendMessageRequest:
+    properties:
+      content:
+        type: string
+      content_type:
+        type: string
+      conversationId:
+        type: integer
+      file_url:
+        type: string
+      reply_id:
+        type: integer
+      senderId:
+        type: integer
+    type: object
+  chatpb.SendMessageResponse:
+    properties:
+      createdAt:
+        type: string
+      messageId:
+        type: integer
+    type: object
+  timestamppb.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: API for chat service
+  title: Chat Service API
+  version: "1.0"
+paths:
+  /conversation/{conversationId}/edit:
+    put:
+      consumes:
+      - application/json
+      description: Chỉnh sửa đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại cần chỉnh sửa
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.EditChannelRequest'
+      - description: ID đoạn hội thoại
+        in: path
+        name: conversationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.EditChannelResponse'
+      security:
+      - BearerAuth: []
+      summary: Chỉnh sửa đoạn hội thoại
+      tags:
+      - Chat
+  /conversation/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy đoạn hội thoại theo ID
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: include_members
+        type: boolean
+      - description: ID đoạn hội thoại
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetConversationByIdResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy đoạn hội thoại theo ID
+      tags:
+      - Chat
+  /conversation/{id}/setting:
+    get:
+      consumes:
+      - application/json
+      description: Lấy cài đặt đoạn hội thoại được chỉ định
+      parameters:
+      - description: ID đoạn hội thoại
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetSettingResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy cài đặt đoạn hội thoại
+      tags:
+      - Chat
+  /conversation/add-user:
+    post:
+      consumes:
+      - application/json
+      description: Thêm thành viên vào đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và thành viên cần thêm
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.AddUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.AddUserResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm thành viên
+      tags:
+      - Chat
+  /conversation/create-org:
+    post:
+      consumes:
+      - application/json
+      description: Tạo đoạn hội thoại tổ chức
+      parameters:
+      - description: Đoạn hội thoại tổ chức cần tạo
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.CreateOrgChannelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.CreateOrgChannelResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo đoạn hội thoại tổ chức
+      tags:
+      - Chat
+  /conversation/delete:
+    post:
+      consumes:
+      - application/json
+      description: Xóa đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại cần xóa
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.DeleteRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.DeleteRoomResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa đoạn hội thoại
+      tags:
+      - Chat
+  /conversation/members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên trong đoạn hội thoại được chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetListParticipantResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên
+      tags:
+      - Chat
+  /conversation/mute:
+    post:
+      consumes:
+      - application/json
+      description: Ngưng thông báo trong đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và thông báo cần ngưng
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.MuteConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.MuteConversationResponse'
+      security:
+      - BearerAuth: []
+      summary: Ngưng thông báo
+      tags:
+      - Chat
+  /conversation/remove-member:
+    post:
+      consumes:
+      - application/json
+      description: Xóa thành viên khỏi đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và thành viên cần xóa
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.RemoveUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.RemoveUserResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên
+      tags:
+      - Chat
+  /conversations:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đoạn hội thoại theo các tiêu chí được chỉ định
+      parameters:
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: type
+        type: integer
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetConversationsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách đoạn hội thoại
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      description: Tạo đoạn hội thoại với các thành viên được chỉ định
+      parameters:
+      - description: Đoạn hội thoại cần tạo
+        in: body
+        name: conversation
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.CreateConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.CreateConversationResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo đoạn hội thoại
+      tags:
+      - Chat
+  /messages:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tin nhắn theo các tiêu chí được chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetMessagesResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tin nhắn
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      description: Gửi tin nhắn đến đoạn hội thoại được chỉ định
+      parameters:
+      - description: Tin nhắn cần gửi
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.SendMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Gửi tin nhắn
+      tags:
+      - Chat
+  /messages/delete-violation:
+    post:
+      consumes:
+      - application/json
+      description: Xóa vi phạm tin nhắn đã được gửi trong đoạn hội thoại được chỉ
+        định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần xóa vi phạm
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.DeleteViolationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.DeleteViolationResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa vi phạm
+      tags:
+      - Chat
+  /messages/edit:
+    post:
+      consumes:
+      - application/json
+      description: Chỉnh sửa tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần chỉnh sửa
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.EditMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.EditMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Chỉnh sửa tin nhắn
+      tags:
+      - Chat
+  /messages/files:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tệp tin trong đoạn hội thoại được chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetFilesResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tệp tin
+      tags:
+      - Chat
+  /messages/forward:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển tiếp tin nhắn đến đoạn hội thoại được chỉ định
+      parameters:
+      - description: Tin nhắn cần chuyển tiếp
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.ForwardMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.ForwardMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Chuyển tiếp tin nhắn
+      tags:
+      - Chat
+  /messages/images:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách hình ảnh trong đoạn hội thoại được chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetImagesResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách hình ảnh
+      tags:
+      - Chat
+  /messages/links:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách liên kết trong đoạn hội thoại được chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetLinksResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách liên kết
+      tags:
+      - Chat
+  /messages/pin:
+    post:
+      consumes:
+      - application/json
+      description: Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần đánh dấu
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.PinMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.PinMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Đánh dấu tin nhắn đã đọc
+      tags:
+      - Chat
+  /messages/pinned:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tin nhắn được đánh dấu trong đoạn hội thoại được
+        chỉ định
+      parameters:
+      - in: query
+        name: conversationId
+        type: integer
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetMessagesResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tin nhắn được đánh dấu
+      tags:
+      - Chat
+  /messages/reaction:
+    post:
+      consumes:
+      - application/json
+      description: Thêm phản hồi vào tin nhắn đã được gửi trong đoạn hội thoại được
+        chỉ định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần thêm phản hồi
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.ReactionMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.ReactionMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm phản hồi
+      tags:
+      - Chat
+  /messages/read:
+    post:
+      consumes:
+      - application/json
+      description: Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần đánh dấu
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.MarkAsReadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.MarkAsReadResponse'
+      security:
+      - BearerAuth: []
+      summary: Đánh dấu tin nhắn đã đọc
+      tags:
+      - Chat
+  /messages/read-receipt:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách đọc tin nhắn trong đoạn hội thoại được chỉ định
+      parameters:
+      - in: query
+        name: messageId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.GetReadReceiptResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách đọc tin nhắn
+      tags:
+      - Chat
+  /messages/recall:
+    post:
+      consumes:
+      - application/json
+      description: Gỡ tin nhắn đã được gửi trong đoạn hội thoại được chỉ định
+      parameters:
+      - description: Đoạn hội thoại và tin nhắn cần gỡ
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/chatpb.RecallMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.RecallMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Gỡ tin nhắn
+      tags:
+      - Chat
+  /search:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm tin nhắn và đoạn hội thoại theo các tiêu chí được chỉ
+        định
+      parameters:
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - enum:
+        - 0
+        - 1
+        in: query
+        name: type
+        type: integer
+        x-enum-varnames:
+        - SearchTypeEnum_SearchTypeMessage
+        - SearchTypeEnum_SearchTypeConversation
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/chatpb.SearchResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm
+      tags:
+      - Chat
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

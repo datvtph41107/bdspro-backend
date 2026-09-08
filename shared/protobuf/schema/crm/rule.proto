@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service RuleService {
+  rpc Search (RuleSearchRequest) returns (RuleListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/rule/list"
+    };
+  };
+  rpc Detail (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/rule/detail/{id}"
+    };
+  };
+  rpc Create (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/rule"
+      body: "*"
+    };
+  };
+  rpc Update (RuleDTO) returns (RuleDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/rule/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/rule/{id}"
+    };
+  };
+  rpc Active (ActiveRuleRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/rule/{id}/active",
+      body: "*"
+    };
+  };
+}
+
+message ActiveRuleRequest {
+  uint64 id = 1;
+  bool active = 2;
+}
+
+message RuleSearchRequest {
+  uint64 page = 1;
+  uint32 size = 2;
+  string name = 3;
+  uint64 ownerId = 4;
+  int32 ownerType = 5;
+}
+
+message RuleDTO {
+  uint64 id = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+  bool active = 4;
+  string ruleName = 5;
+  string note = 6;
+  int32 condition = 7;
+  string conditionValue = 8;
+  int32 trigger = 9;
+  string triggerValue = 10;
+  sharepb.ProfileItem triggerProfile = 11;
+}
+
+message RuleListDTO {
+  repeated RuleDTO data = 1;
+  uint32 total = 2;
+}

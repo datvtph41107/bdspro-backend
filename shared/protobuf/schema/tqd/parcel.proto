@@ -1,0 +1,1145 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "shared/common.proto";
+import "tqd/features.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service ParcelService {
+  rpc CreateBatchParcels(ParcelListDTO) returns (ParcelListDTO) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/batch"
+      body: "*"
+    };
+  }
+  
+  rpc FindParcelByLocation(FindParcelByLocationRequest) returns (Parcel) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/by-location"
+      body: "*"
+    };
+  }
+
+  rpc ResolveMapTargetByLocation(ResolveMapTargetByLocationRequest) returns (ResolveMapTargetByLocationResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-target/by-location"
+      body: "*"
+    };
+  }
+
+  rpc FindParcelsByPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/parcels/by-polygon"
+      body: "*"
+    };
+  }
+
+  rpc CheckingPolygon(FindParcelsByPolygonRequest) returns (FindParcelsByPolygonResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/public/qh/checking-polygon"
+      body: "*"
+    };
+  }
+
+  rpc PreviewParcelsById(sharepb.RequestV3Proto) returns (ParcelInfo) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/preview/{id}"
+    };
+  }
+
+  rpc PublicParcelsById(sharepb.RequestV3Proto) returns (ParcelInfo) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/public/{id}"
+    };
+  }
+
+  rpc SearchTxtClientParcels(sharepb.RequestV3Proto) returns (ListParcelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/parcels/search"
+    };
+  }
+
+  rpc SearchPublicParcels(sharepb.RequestV3Proto) returns (ListParcelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/parcels/search"
+    };
+  }
+
+  rpc GetParcelInfo(GetParcelDetailRequest) returns (ParcelInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/info"
+    };
+  }
+
+  // ============================================================
+  // PHASE 1: CORE API — Lấy tổng quan thửa đất
+  // ============================================================
+  rpc GetParcelDetail(GetParcelDetailRequest) returns (ParcelDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/detail"
+    };
+  }
+
+  // ============================================================
+  // PHASE 2: LAYERS API — Lấy chi tiết các layer
+  // ============================================================
+  rpc GetParcelLayers(GetParcelLayersRequest) returns (ParcelLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/layers"
+    };
+  }
+
+  // ============================================================
+  // PHASE 3: GEOMETRY API — Lấy GeoJSON của zone
+  // ============================================================
+  rpc GetZoneGeometry(GetZoneGeometryRequest) returns (ZoneGeometryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/layers/{layerId}/zones/{zoneId}/geometry"
+    };
+  }
+
+  // ============================================================
+  // PHASE 4: LEGAL DOCUMENTS API
+  // ============================================================
+  rpc GetParcelLegalDocuments(GetParcelLegalDocumentsRequest) returns (ParcelLegalDocumentsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/legal-documents"
+    };
+  }
+
+  // ============================================================
+  // LEGACY — GIỮ LẠI ĐỂ TƯƠNG THÍCH NGƯỢC
+  // ============================================================
+  rpc GetParcelPlanning(GetParcelPlanningRequest) returns (ParcelPlanningResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/planning"
+    };
+  }
+
+  rpc GetParcelQuickLayers(GetParcelPlanningRequest) returns (LayerQuickInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/parcels/{parcelId}/quick-layers"
+    };
+  }
+
+  rpc GetParcelTimeline(GetParcelDetailRequest) returns (ParcelTimelineResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/parcels/{parcelId}/timeline"
+    };
+  }
+
+  rpc GetLayerHistory(GetLayerHistoryRequest) returns (LayerHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/layers/{layerId}/history"
+    };
+  }
+
+  rpc GetParcelSeoSource(GetParcelDetailRequest) returns (ParcelSeoSourceResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/internal/parcels/{parcelId}/seo-source"
+    };
+  }
+
+  rpc ListParcelSeoSourcesForGenerate(ListParcelSeoSourcesRequest) returns (ListParcelSeoSourcesResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/internal/parcels/seo-sources"
+      body: "*"
+    };
+  }
+
+  rpc UpdateParcelSeoID(UpdateParcelSeoIDRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/internal/parcels/{parcelId}/seo-id"
+      body: "*"
+    };
+  }
+}
+
+// ============================================================
+// SHARED ENUMS (uint32) — Comment mapping
+// ============================================================
+// BuildStatus: 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+// AlertLevel: 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+// DocumentType: 10=PLANNING_DECISION, 20=LAND_CERTIFICATE, 30=LAW, 
+//              40=DECREE, 50=REGULATION, 60=CIRCULAR, 99=OTHER
+// DocumentStatus: 10=ACTIVE, 20=SUPERSEDED, 30=EXPIRED, 40=DRAFT
+
+// ============================================================
+// PHASE 1: CORE API
+// ============================================================
+
+message ParcelDetailResponse {
+  ParcelIdentity parcel = 1;
+  CurrentUse currentUse = 2;
+  PlanningConclusion planningConclusion = 3;
+  PrimaryUse primaryUse = 4;
+  Guidance guidance = 5;
+  LegalDocumentsSummary legalDocuments = 6;
+  ResponseMetadata meta = 7;
+  Links links = 8;
+}
+
+message ParcelIdentity {
+  string id = 1;
+  string mapSheetNumber = 2;
+  string landParcelNumber = 3;
+  string address = 4;
+  double totalAreaSqm = 5;
+  Centroid centroid = 6;
+  Ownership ownership = 7;
+  Location location = 8;
+}
+
+message Centroid {
+  double lat = 1;
+  double lng = 2;
+}
+
+message Ownership {
+  string certificateNumber = 1;
+  string issuedAt = 2;
+  string issuedBy = 3;
+  string holderName = 4;
+  string legalDocumentId = 5;
+}
+
+message Location {
+  string province = 1;
+  string provinceCode = 2;
+  string wardCode = 3;
+}
+
+message CurrentUse {
+  string code = 1;
+  string name = 2;
+  string color = 3;
+  uint32 buildStatus = 4;      // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+  string legalDocumentId = 5;
+}
+
+message PlanningConclusion {
+  uint32 buildStatus = 1;      // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+  bool hasConflict = 2;
+  Alert alert = 3;
+  LegalBasis legalBasis = 4;
+  repeated PlanningBreakdown breakdown = 5;
+  PlanningStatistics statistics = 6;
+}
+
+message Alert {
+  uint32 level = 1;            // 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+  uint32 score = 2;
+  string message = 3;
+}
+
+message LegalBasis {
+  string summary = 1;
+  repeated string legalDocumentIds = 2;
+}
+
+message PlanningBreakdown {
+  uint32 rank = 1;
+  string landUseCode = 2;
+  string landUseName = 3;
+  string landUseColor = 4;
+  string groupCode = 5;
+  string groupName = 6;
+  double areaSqm = 7;
+  double percent = 8;
+  uint32 buildStatus = 9;      // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+  uint32 alertLevel = 10;      // 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+  repeated string legalDocumentIds = 11;
+}
+
+message PlanningStatistics {
+  uint32 totalLayersAffected = 1;
+  uint32 totalZonesAffected = 2;
+  double totalOverlapAreaSqm = 3;
+  double totalOverlapPercent = 4;
+}
+
+message PrimaryUse {
+  string rule = 1;             // "LARGEST_AREA"
+  string landUseCode = 2;
+  string landUseName = 3;
+  double percent = 4;
+  uint32 buildStatus = 5;      // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+}
+
+message Guidance {
+  repeated Warning warnings = 1;
+  repeated Recommendation recommendations = 2;
+}
+
+message Warning {
+  uint32 alertLevel = 1;       // 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+  string landUseCode = 2;
+  double affectedAreaSqm = 3;
+  double affectedPercent = 4;
+  string title = 5;
+  string action = 6;
+  LegalBasis legalBasis = 7;
+}
+
+message Recommendation {
+  string type = 1;             // "ALLOWED" | "FORBIDDEN" | "INFO"
+  string message = 2;
+  repeated string legalDocumentIds = 3;
+}
+
+// ============================================================
+// LEGAL DOCUMENTS
+// ============================================================
+
+message LegalDocumentsSummary {
+  repeated LegalDocumentItem items = 1;
+  LegalDocumentSummary summary = 2;
+}
+
+message LegalDocumentItem {
+  string id = 1;
+  uint32 type = 2;             // 10=PLANNING_DECISION, 20=LAND_CERTIFICATE, 30=LAW, 40=DECREE, 50=REGULATION, 60=CIRCULAR, 99=OTHER
+  string typeName = 3;
+  string typeIcon = 4;
+  string name = 5;
+  string fullName = 6;
+  string issuedBy = 7;
+  string issuedAt = 8;
+  string effectiveDate = 9;
+  optional string expiryDate = 10;
+  uint32 status = 11;          // 10=ACTIVE, 20=SUPERSEDED, 30=EXPIRED, 40=DRAFT
+  string statusLabel = 12;
+  string statusColor = 13;
+  optional string supersededBy = 14;
+  repeated string supersedes = 15;
+  repeated string relevantArticles = 16;
+  LegalFile file = 17;
+  bool isPublic = 18;
+  bool requiresAuth = 19;
+  AffectsEntities affectsEntities = 20;
+}
+
+message LegalFile {
+  string type = 1;             // "PDF", "DOCX", "XLSX", "JPG"
+  uint32 sizeKb = 2;
+  uint32 pages = 3;
+  optional string url = 4;
+  optional string previewUrl = 5;
+  optional string downloadUrl = 6;
+}
+
+message AffectsEntities {
+  repeated uint64 layerIds = 1;
+  repeated uint64 zoneIds = 2;
+}
+
+message LegalDocumentSummary {
+  uint32 total = 1;
+  map<string, uint32> byType = 2;
+  map<string, uint32> byStatus = 3;
+  bool hasSupersededDocs = 4;
+}
+
+// ============================================================
+// PHASE 2: LAYERS API
+// ============================================================
+
+message GetParcelLayersRequest {
+  uint64 parcelId = 1;
+  uint32 page = 2;
+  uint32 limit = 3;
+}
+
+message ParcelLayersResponse {
+  repeated LayerDetailItem data = 1;
+  Pagination pagination = 2;
+  LayersMeta meta = 3;
+  Links links = 4;
+}
+
+message LayerDetailItem {
+  uint64 layerId = 1;
+  string layerCode = 2;
+  string layerName = 3;
+  string layerDisplayName = 4;
+  string layerType = 5;
+  string layerDescription = 6;
+  LayerLegalStatus legalStatus = 7;
+  IssuingAuthority issuingAuthority = 8;
+  repeated string legalDocumentIds = 9;
+  repeated ZoneItem zones = 10;
+  uint32 zoneCount = 11;
+  double totalArea = 12;
+  double totalPercent = 13;
+}
+
+message LayerLegalStatus {
+  string code = 1;             // "ACTIVE", "SUPERSEDED", "EXPIRED"
+  string label = 2;
+  string effectiveDate = 3;
+  optional string expiryDate = 4;
+  string issuedDate = 5;
+  string legalDocumentId = 6;
+}
+
+message IssuingAuthority {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string level = 4;
+}
+
+message ZoneItem {
+  uint64 zoneId = 1;
+  string zoneName = 2;
+  string zoneDisplayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string landUseColor = 6;
+  string groupCode = 7;
+  string groupName = 8;
+  double areaSqm = 9;
+  double percent = 10;
+  uint32 buildStatus = 11;     // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+  uint32 alertLevel = 12;      // 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+  repeated string legalDocumentIds = 13;
+  repeated AdditionalConstraint additionalConstraints = 14;
+  Centroid centroid = 15;
+  ZoneLinks links = 16;
+}
+
+message AdditionalConstraint {
+  string constraintType = 1;   // "CONVERSION_REQUIRED", "BUFFER_ZONE", "HEIGHT_RESTRICTION", "DENSITY_RESTRICTION"
+  string description = 2;
+  repeated string legalDocumentIds = 3;
+  string authority = 4;
+  uint32 processingDays = 5;
+}
+
+message ZoneLinks {
+  string geometry = 1;
+}
+
+message Pagination {
+  uint32 page = 1;
+  uint32 limit = 2;
+  uint32 total = 3;
+  bool hasMore = 4;
+}
+
+message LayersMeta {
+  bool partialData = 1;
+  repeated FailedLayer failedLayers = 2;
+  uint32 responseTimeMs = 3;
+}
+
+message FailedLayer {
+  uint64 layerId = 1;
+  string layerCode = 2;
+  string error = 3;
+  string message = 4;
+}
+
+// ============================================================
+// PHASE 3: GEOMETRY API
+// ============================================================
+
+message GetZoneGeometryRequest {
+  uint64 parcelId = 1;
+  uint64 layerId = 2;
+  uint64 zoneId = 3;
+}
+
+message ZoneGeometryResponse {
+  string type = 1;             // "Feature"
+  ZoneGeometryProperties properties = 2;
+  string geometry = 3;         // GeoJSON string
+}
+
+message ZoneGeometryProperties {
+  uint64 zoneId = 1;
+  string zoneName = 2;
+  string landUseCode = 3;
+  string landUseName = 4;
+  string landUseColor = 5;
+  uint32 buildStatus = 6;      // 10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN
+  uint32 alertLevel = 7;       // 0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH
+  repeated string legalDocumentIds = 8;
+}
+
+// ============================================================
+// PHASE 4: LEGAL DOCUMENTS API
+// ============================================================
+
+message GetParcelLegalDocumentsRequest {
+  uint64 parcelId = 1;
+  optional uint32 type = 2;    // 10=PLANNING_DECISION, 20=LAND_CERTIFICATE, ...
+  optional uint32 status = 3;  // 10=ACTIVE, 20=SUPERSEDED, 30=EXPIRED, 40=DRAFT
+  uint32 page = 4;
+  uint32 limit = 5;
+}
+
+message ParcelLegalDocumentsResponse {
+  repeated LegalDocumentItem data = 1;
+  LegalDocumentSummary summary = 2;
+  LegalFilters filters = 3;
+  ResponseMetadata meta = 4;
+  Links links = 5;
+}
+
+message LegalFilters {
+  LegalFiltersApplied applied = 1;
+  repeated string availableTypes = 2;
+  repeated string availableStatuses = 3;
+}
+
+message LegalFiltersApplied {
+  optional uint32 type = 1;
+  optional uint32 status = 2;
+}
+
+// ============================================================
+// SHARED MESSAGES
+// ============================================================
+
+message ResponseMetadata {
+  string dataVersion = 1;
+  string dataQuality = 2;
+  string queriedAt = 3;
+  uint32 responseTimeMs = 4;
+  bool partialData = 5;
+}
+
+message Links {
+  string self = 1;
+  optional string layers = 2;
+  optional string legalDocuments = 3;
+  optional string shareUrl = 4;
+  optional string next = 5;
+  optional string prev = 6;
+  optional string reportError = 7;
+}
+
+// ============================================================
+// LEGACY PLANNING MESSAGES — GIỮ NGUYÊN
+// ============================================================
+
+message GetParcelPlanningRequest {
+  uint64 parcelId = 1;
+  string view = 2;
+  string mode = 3;
+  string preset = 4;
+  string asOfDate = 5;
+  bool includeOverview = 6;
+  bool includeAssessment = 7;
+  int64 timestamp = 8;
+}
+
+message ParcelPlanningResponse {
+  uint64 parcelId = 1;
+  string view = 2;
+  ParcelOverviewResponse overview = 3;
+  ParcelAssessmentResponse assessment = 4;
+  ResponseMetadataInfo metadata = 5;
+}
+
+// ============================================================
+// LEGACY — CÁC MESSAGE KHÁC GIỮ NGUYÊN
+// ============================================================
+
+message GetParcelDetailRequest {
+  uint64 parcelId = 1;
+  int64 timestamp = 2;
+}
+
+message ParcelSeoSourceResponse {
+  uint64 parcelId = 1;
+  string adrSearch = 2;
+  uint64 seoId = 3;
+}
+
+message ListParcelSeoSourcesRequest {
+  uint32 limit = 1;
+}
+
+message ListParcelSeoSourcesResponse {
+  repeated ParcelSeoSourceResponse data = 1;
+}
+
+message UpdateParcelSeoIDRequest {
+  uint64 parcelId = 1;
+  uint64 seoId = 2;
+}
+
+message ParcelInfoResponse {
+  uint64 parcelId = 1;
+  double lat = 2;
+  double lon = 3;
+  double areaSqm = 4;
+  string address = 5;
+  bytes geometry = 6;
+  string mapNumber = 7;
+  string landNumber = 8;
+  string propertyCode = 9;
+  string propertyUuid = 10;
+  string shape = 11;
+  string direction = 12;
+  string landUseCode = 13;
+  string landUseName = 14;
+  string landUseColor = 15;
+  string province = 16;
+  string provinceCode = 17;
+  string wardCode = 18;
+  uint64 seoId = 19;
+  bool isSeo = 20;
+}
+
+message ParcelSummary {
+  string dominantLandUse = 1;
+  double dominantPercentage = 2;
+  double totalAffectedPercentage = 3;
+  string topLayerName = 4;
+  bool buildable = 5;
+  string dominantLandUseCode = 6;
+  string dominantLandUseColor = 7;
+  string dominantLandUseGroupCode = 8;
+  string dominantLandUseGroupName = 9;
+  double dominantAreaSqm = 10;
+  bool dominantCanBuild = 11;
+}
+
+message ParcelOverviewResponse {
+  uint64 parcelId = 1;
+  double parcelAreaSqm = 2;
+  ParcelSummary summary = 3;
+  repeated Layer layers = 4;
+  double totalOverlapArea = 5;
+  double totalOverlapPercent = 6;
+  uint32 layersAffected = 7;
+  uint32 labelsAffected = 8;
+  uint32 regionsAffected = 9;
+  bool hasConflict = 10;
+  string warning = 11;
+  string riskLevel = 12;
+  uint32 riskScore = 13;
+  bool canBuild = 14;
+  repeated string riskReasons = 15;
+  string recommendation = 16;
+  string dataSource = 17;
+  string queriedAt = 18;
+  int64 responseTimeMs = 19;
+  bool spatialDataAvailable = 20;
+  Region conclude_label = 21;
+  ParcelInfoResponse info = 22;
+  PlanDetailInfo primaryPlan = 23;
+  repeated PlanLandUseGroupDetail landUseGroups = 24;
+}
+
+message ParcelAssessmentResponse {
+  uint64 parcelId = 1;
+  double parcelAreaSqm = 2;
+  PlanDetailInfo currentPlan = 3;
+  repeated PlanDetailInfo otherPlans = 4;
+  bool hasConflict = 5;
+  repeated ConflictDetail conflicts = 6;
+  AssessmentResponse assessment = 7;
+  ResponseMetadataInfo metadata = 8;
+  uint32 riskScore = 9;
+  string riskLevel = 10;
+  repeated string riskReasons = 11;
+  string resolutionStatus = 12;
+  repeated ConflictDetail infoConflicts = 13;
+  CompareResult compareResult = 14;
+  HistoricalRisk historicalRisk = 15;
+  repeated LayerDetail layers = 16;
+}
+
+message PlanDetailInfo {
+  uint64 layerId = 1;
+  string layerName = 2;
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string landUseColor = 6;
+  string groupCode = 7;
+  double impactPercent = 8;
+  double impactAreaSqm = 9;
+  repeated PlanLandUseGroupDetail landUseGroups = 10;
+  string legalCanonical = 11;
+  string legalConfidence = 12;
+  string legalActiveState = 13;
+  string groupName = 14;
+  bool canBuild = 15;
+}
+
+message PlanLandUseGroupDetail {
+  string code = 1;
+  string name = 2;
+  string color = 3;
+  bool canBuild = 4;
+  int32 priority = 5;
+  string landUseCode = 6;
+  string landUseName = 7;
+  string landUseColor = 8;
+  double overlapPercent = 9;
+  double overlapAreaSqm = 10;
+  int32 warnLevel = 11;
+}
+
+message ConflictDetail {
+  string type = 1;
+  string severity = 2;
+  string description = 3;
+  string recommendation = 4;
+  string actionRequired = 5;
+  double affectedPercent = 6;
+}
+
+message AssessmentResponse {
+  BuildabilityResponse buildability = 1;
+  string summary = 2;
+  string verdict = 3;
+}
+
+message BuildabilityResponse {
+  bool canBuild = 1;
+  string status = 2;
+  string reason = 3;
+  string recommendation = 4;
+}
+
+message ResponseMetadataInfo {
+  int64 responseTimeMs = 1;
+  string dataVersion = 2;
+  bool isCached = 3;
+  string disclaimer = 4;
+}
+
+message CompareResult {
+  int32 totalLayers = 1;
+  repeated CompareChange changes = 2;
+}
+
+message CompareChange {
+  uint64 layerId = 1;
+  string layerName = 2;
+  string changeType = 3;
+  string oldValue = 4;
+  string newValue = 5;
+}
+
+message HistoricalRisk {
+  string trend = 1;
+  string trendDetail = 2;
+  int32 activeLayers = 3;
+  int32 expiringLayers = 4;
+  string analyzedAt = 5;
+}
+
+message LayerDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  uint32 type = 4;
+  string effectiveDate = 5;
+  repeated LabelDetail labels = 6;
+  repeated LegalDocDetail legalDocs = 7;
+  AuthorityDetail authority = 8;
+  double totalArea = 9;
+  double totalPct = 10;
+}
+
+message LabelDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string color = 4;
+  repeated RegionDetail regions = 5;
+  double totalArea = 6;
+  double totalPct = 7;
+}
+
+message RegionDetail {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string color = 6;
+  double overlapAreaSqm = 7;
+  double overlapPct = 8;
+  bytes geometry = 9;
+}
+
+message LegalDocDetail {
+  uint64 id = 1;
+  string name = 2;
+  string fileUrl = 3;
+  string fileType = 4;
+}
+
+message AuthorityDetail {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+}
+
+// ─── Timeline messages ───
+
+message ParcelTimelineResponse {
+  uint64 parcelId = 1;
+  repeated TimelineEvent events = 2;
+  TimelineSummary summary = 3;
+}
+
+message TimelineEvent {
+  string id = 1;
+  string date = 2;
+  string eventType = 3;
+  uint64 layerId = 4;
+  string layerName = 5;
+  string description = 6;
+}
+
+message TimelineSummary {
+  int32 totalEvents = 1;
+  string firstEventAt = 2;
+  string lastEventAt = 3;
+  repeated string majorChanges = 4;
+}
+
+// ─── LayerHistory messages ───
+message GetLayerHistoryRequest {
+  uint64 layerId = 1;
+}
+
+message LayerHistoryResponse {
+  uint64 layerId = 1;
+  uint64 familyId = 2;
+  repeated LayerVersionInfo versions = 3;
+  uint64 currentId = 4;
+}
+
+message LayerVersionInfo {
+  int32 version = 1;
+  uint64 layerId = 2;
+  string state = 3;
+  string createdAt = 4;
+  string createdBy = 5;
+  bool isLatest = 6;
+  repeated LifecycleTransitionInfo transitions = 7;
+}
+
+message LifecycleTransitionInfo {
+  string fromState = 1;
+  string toState = 2;
+  string timestamp = 3;
+  string actor = 4;
+  string reason = 5;
+  string legalDoc = 6;
+}
+
+message ParcelListDTO {
+  repeated Parcel data = 1;
+}
+
+message ListParcelResponse {
+  repeated ParcelInfo data  = 1;
+  uint32              total = 2;
+}
+
+// ─── Compare & Historical Risk messages ───
+message LayerQuickInfoResponse {
+  repeated LayerQuickInfo layers = 1;
+  repeated string warnings = 2;
+}
+
+message LandUseQuickInfo {
+  uint64 landUseId = 1;
+  string landUseName = 2;
+  double intersectAreaSqm = 3;
+  double percent = 4;
+  string landUseColor = 5;
+  uint32 warnLevel = 6;
+  bool canBuild = 7;  
+}
+
+message LayerQuickInfo {
+  uint64 parcelId = 1;
+  uint64 layerId = 2;
+  string layerName = 3;
+  string relationType = 4;
+  repeated LandUseQuickInfo landUses = 5;
+  double intersectAreaSqm = 6;
+  uint32 legalStatus = 7;
+  string legalStatusName = 8;
+  string layerAvatar = 9;
+  string layerDisplayName = 10;
+  int32 layerOrder = 11;
+  uint32 layerType = 12;
+  string updatedAt = 13;
+  optional uint64 planningProjectId = 14;
+}
+
+message Layer {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  uint32 type = 4;
+  string severity = 5;
+  string effectiveDate = 6;
+  string legalDoc = 7;
+  repeated Label labels = 8;
+  double totalArea = 9;
+  double totalPercent = 10;
+  repeated LayerLegalDocInfo legalDocs = 11;
+  optional AuthorityIssuingInfo authorityIssuing = 12;
+  uint32 legalStatus = 13;
+  string legalStatusName = 14;
+  string layerAvatar = 15;
+}
+
+message LayerLegalDocInfo {
+  uint64 id = 1;
+  string name = 2;
+  string fileUrl = 3;
+  string fileType = 4;
+}
+
+message AuthorityIssuingInfo {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+}
+
+message Label {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string color = 4;
+  uint32 fontSize = 5;
+  string fontWeight = 6;
+  uint32 minZoom = 7;
+  uint32 maxZoom = 8;
+  repeated Region regions = 9;
+  double totalArea = 10;
+  double totalPercent = 11;
+}
+
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string landUseCode = 4;
+  string landUseName = 5;
+  string landUseGroup = 6;
+  string color = 7;
+  double overlapArea = 8;
+  double overlapPercent = 9;
+  double centerLat = 10;
+  double centerLng = 11;
+  bytes geometry = 12;
+  int32 warnLevel = 13;
+  bool canBuild = 14;
+}
+
+// ─── Find messages ───
+
+message FindParcelsByPolygonRequest {
+  repeated Point coordinates = 1;
+  double maxAreaHa = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  bool allowAutoShrink = 5;
+  bool intersect = 6;
+  int64 timestamp = 7;
+  optional uint32 z = 8;
+  repeated uint64 layerIds = 9;
+  repeated uint64 labelIds = 10;
+  repeated uint64 landUseIds = 11;
+  repeated string landUseCodes = 12;
+  optional bool canBuild = 13;
+  string keyword = 14;
+  bool includeAnalysis = 15;
+}
+
+message FindParcelsByPolygonResponse {
+  repeated Parcel parcels = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+  string adjustedGeoJson = 5;
+  string adjustmentReason = 6;
+  double originalAreaKm2 = 7;
+  double adjustedAreaKm2 = 8;
+  double maxAllowedAreaKm2 = 9;
+  string warning = 10;
+  repeated RegionInfoResponse regions = 11;
+  uint32 resultType = 12;
+  uint32 z = 13;
+  PolygonAnalysisSummary analysis = 14;
+  repeated LayerQuickInfo layers = 15;
+  repeated string quickWarnings = 16;
+}
+
+message PolygonLandUseStat {
+  uint64 landUseId = 1;
+  string landUseCode = 2;
+  string landUseName = 3;
+  string landUseColor = 4;
+  bool canBuild = 5;
+  int64 regionCount = 6;
+  double areaSqm = 7;
+  double areaPct = 8;
+}
+
+message PolygonLayerStat {
+  uint64 layerId = 1;
+  string layerName = 2;
+  string layerDisplayName = 3;
+  int64 regionCount = 4;
+  double areaSqm = 5;
+  double areaPct = 6;
+}
+
+message PolygonBuildabilityStat {
+  bool canBuild = 1;
+  int64 regionCount = 2;
+  double areaSqm = 3;
+  double areaPct = 4;
+}
+
+message PolygonAnalysisWarning {
+  string type = 1;
+  int64 count = 2;
+  string severity = 3;
+  string message = 4;
+}
+
+message PolygonAnalysisSummary {
+  uint32 resultType = 1;
+  uint32 z = 2;
+  double queryAreaSqm = 3;
+  double totalMatchedAreaSqm = 4;
+  int64 regionCount = 5;
+  int64 parcelCount = 6;
+  repeated PolygonLandUseStat landUseStats = 7;
+  repeated PolygonLayerStat layerStats = 8;
+  repeated PolygonBuildabilityStat buildabilityStats = 9;
+  double legalKnownPct = 10;
+  double legalUnknownPct = 11;
+  repeated PolygonAnalysisWarning warnings = 12;
+}
+
+message FindParcelByLocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3;
+  int64 timestamp = 4;
+}
+
+message ResolveMapTargetByLocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3;
+  int64 timestamp = 4;
+}
+
+message ResolveMapTargetByLocationResponse {
+  uint32 targetType = 1;
+  uint64 targetId = 2;
+  ParcelInfoResponse parcel = 3;
+  RegionInfoResponse region = 4;
+}
+
+message RegionBounds {
+  double minLon = 1;
+  double minLat = 2;
+  double maxLon = 3;
+  double maxLat = 4;
+}
+
+message RegionInfoResponse {
+  uint64 regionId = 1;
+  uint64 layerId = 2;
+  uint64 labelId = 3;
+  uint64 landUseId = 4;
+  uint64 legendId = 5;
+  string name = 6;
+  string displayName = 7;
+  string description = 8;
+  string layerName = 9;
+  string layerDisplayName = 10;
+  string landUseCode = 11;
+  string landUseName = 12;
+  string landUseColor = 13;
+  bool canBuild = 14;
+  string labelName = 15;
+  string labelColor = 16;
+  string legendColor = 17;
+  string legendType = 18;
+  string geometryType = 19;
+  string legalDoc = 20;
+  string planningName = 21;
+  double areaSqm = 22;
+  double areaHa = 23;
+  double perimeterM = 24;
+  double centerLat = 25;
+  double centerLon = 26;
+  RegionBounds bounds = 27;
+  string geoJson = 28;
+  string province = 29;
+  string provinceCode = 30;
+  string wardCode = 31;
+}
+
+message Parcel {
+  uint64 id = 1;
+  string name = 2;
+  double latitude = 3;
+  double longitude = 4;
+  bytes geometry = 5;
+  double minLat = 6;
+  double minLng = 7;
+  double maxLat = 8;
+  double maxLng = 9;
+  uint64 seoId = 10;
+}
+
+message ParcelInfo {
+  uint64 id = 1;
+  string addressStr = 2;
+  uint32 mapNumber = 3;
+  uint32 landNumber = 4;
+  double lat = 5;
+  double lng = 6;
+  uint64 parcelId = 7;
+  sharepb.ItemV3Proto shape = 8;
+  uint32 facade = 9;
+  double totalArea = 10;
+  sharepb.ItemV3Proto landType = 11;
+  bytes geometry = 12;
+  repeated sharepb.ItemV3Proto directions = 13;
+  bool isSeo = 14;
+}
+
+message GetParcelRequest {
+  int32 id = 1;
+}
+
+message ListParcelsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+}
+
+message ListParcelsResponse {
+  repeated Parcel parcels = 1;
+  int32           total   = 2;
+}

@@ -1,0 +1,1683 @@
+basePath: /v2/notification
+definitions:
+  notificationpb.AccountWarningItem:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      emailSent:
+        type: boolean
+      emailSentAt:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: integer
+      isRead:
+        type: boolean
+      readAt:
+        type: string
+      relatedId:
+        type: integer
+      relatedType:
+        type: string
+      sentAt:
+        type: string
+      sentBy:
+        type: integer
+      severity:
+        type: string
+      status:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.AdminHistoryDTO:
+    properties:
+      actionType:
+        type: integer
+      adminAvatar:
+        type: string
+      adminId:
+        type: integer
+      adminName:
+        type: string
+      adminRole:
+        type: string
+      afterStage:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      isInternal:
+        type: boolean
+      note:
+        items:
+          type: string
+        type: array
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      preStage:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        type: string
+      userAgent:
+        type: string
+    type: object
+  notificationpb.AdminHistoryListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.AdminHistoryDTO'
+        type: array
+      total:
+        type: integer
+    type: object
+  notificationpb.CreateSystemWarningRequest:
+    properties:
+      content:
+        type: string
+      severity:
+        type: string
+      targetId:
+        type: integer
+      title:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.CreateSystemWarningResponse:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      message:
+        type: string
+      sentAt:
+        type: string
+      sentBy:
+        type: integer
+      severity:
+        type: string
+      targetId:
+        type: integer
+      title:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.CreateWarningTemplateRequest:
+    properties:
+      content:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+      ownerOf:
+        allOf:
+        - $ref: '#/definitions/sharepb.OwnerOf'
+        description: user, group, organization
+      severity:
+        type: string
+      title:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.CreateWarningTemplateResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      severity:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      warningType:
+        type: string
+    type: object
+  notificationpb.DeleteSystemWarningResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  notificationpb.GatewayNotiNewRequest:
+    properties:
+      link:
+        type: string
+      message:
+        type: string
+      ownerId:
+        type: integer
+      title:
+        type: string
+      type:
+        type: integer
+    type: object
+  notificationpb.GetAccountWarningListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.AccountWarningItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  notificationpb.GetMySystemWarningsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.SystemWarningItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  notificationpb.GetSystemWarningListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.SystemWarningItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  notificationpb.GetWarningLogListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.WarningLogItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  notificationpb.GetWarningTemplateDetailResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      severity:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      warningType:
+        type: string
+    type: object
+  notificationpb.GetWarningTemplateListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/notificationpb.WarningTemplateItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  notificationpb.MarkWarningAsAcknowledgedRequest:
+    properties:
+      ownerOf:
+        allOf:
+        - $ref: '#/definitions/sharepb.OwnerOf'
+        description: user, group, organization
+      targetId:
+        type: integer
+      warningId:
+        type: integer
+    type: object
+  notificationpb.MarkWarningAsAcknowledgedResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  notificationpb.MarkWarningAsReadRequest:
+    properties:
+      ownerOf:
+        allOf:
+        - $ref: '#/definitions/sharepb.OwnerOf'
+        description: user, group, organization
+      targetId:
+        type: integer
+      warningId:
+        type: integer
+    type: object
+  notificationpb.MarkWarningAsReadResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  notificationpb.NotificationDTO:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: integer
+      isRead:
+        type: boolean
+      link:
+        type: string
+      message:
+        items:
+          type: string
+        type: array
+      notificationType:
+        type: integer
+      targetId:
+        type: integer
+      timestamp:
+        type: string
+      title:
+        type: string
+      type:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  notificationpb.SendAccountWarningRequest:
+    properties:
+      content:
+        type: string
+      expiresAt:
+        type: string
+      ownerOf:
+        allOf:
+        - $ref: '#/definitions/sharepb.OwnerOf'
+        description: user, group, organization
+      relatedId:
+        type: integer
+      relatedType:
+        type: string
+      sendEmail:
+        type: boolean
+      severity:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        type: string
+      templateId:
+        description: ID của mẫu cảnh báo nếu sử dụng
+        type: integer
+      title:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.SendAccountWarningResponse:
+    properties:
+      content:
+        type: string
+      emailSent:
+        type: boolean
+      id:
+        type: integer
+      message:
+        type: string
+      sentAt:
+        type: string
+      sentBy:
+        type: integer
+      severity:
+        type: string
+      status:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        type: string
+      title:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.SystemWarningItem:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isRead:
+        type: boolean
+      readAt:
+        type: string
+      sentAt:
+        type: string
+      sentBy:
+        type: integer
+      severity:
+        type: string
+      status:
+        type: string
+      targetId:
+        type: integer
+      targetType:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      warningType:
+        type: string
+    type: object
+  notificationpb.WarningLogItem:
+    properties:
+      action:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      performedAt:
+        type: string
+      performedBy:
+        type: integer
+      reason:
+        type: string
+      status:
+        type: string
+      targetId:
+        type: integer
+      userAgent:
+        type: string
+      warningId:
+        type: integer
+    type: object
+  notificationpb.WarningTemplateItem:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      severity:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      warningType:
+        type: string
+    type: object
+  sharepb.OwnerOf:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - OwnerOf_unknown
+    - OwnerOf_user
+    - OwnerOf_group
+    - OwnerOf_organization
+info:
+  contact: {}
+  description: API phần logic thông báo
+  title: Notification API
+  version: "1.0"
+paths:
+  /account-warning/acknowledge:
+    put:
+      consumes:
+      - application/json
+      description: Đánh dấu cảnh báo đã được xác nhận
+      parameters:
+      - description: Thông tin xác nhận
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsAcknowledgedResponse'
+      summary: Đánh dấu cảnh báo đã xác nhận
+      tags:
+      - Account Warning
+  /account-warning/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách cảnh báo tài khoản với filter
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: ID người nhận
+        in: query
+        name: targetId
+        type: integer
+      - description: Loại đối tượng
+        in: query
+        name: targetType
+        type: string
+      - description: Loại cảnh báo
+        in: query
+        name: warningType
+        type: string
+      - description: Mức độ nghiêm trọng
+        in: query
+        name: severity
+        type: string
+      - description: Trạng thái
+        in: query
+        name: status
+        type: string
+      - description: ID người gửi
+        in: query
+        name: sentBy
+        type: integer
+      - description: Đã đọc
+        in: query
+        name: isRead
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetAccountWarningListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.GetAccountWarningListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetAccountWarningListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetAccountWarningListResponse'
+      summary: Lấy danh sách cảnh báo tài khoản
+      tags:
+      - Account Warning
+  /account-warning/log/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách log cảnh báo
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: ID cảnh báo
+        in: query
+        name: warningId
+        type: integer
+      - description: ID người nhận
+        in: query
+        name: targetId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningLogListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningLogListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningLogListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningLogListResponse'
+      summary: Lấy danh sách log cảnh báo
+      tags:
+      - Account Warning Log
+  /account-warning/read:
+    put:
+      consumes:
+      - application/json
+      description: Đánh dấu cảnh báo đã được đọc
+      parameters:
+      - description: Thông tin đánh dấu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.MarkWarningAsReadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.MarkWarningAsReadResponse'
+      summary: Đánh dấu cảnh báo đã đọc
+      tags:
+      - Account Warning
+  /account-warning/send:
+    post:
+      consumes:
+      - application/json
+      description: Gửi cảnh báo, nhắc nhở hoặc hướng dẫn khắc phục lỗi đến tài khoản
+        người dùng
+      parameters:
+      - description: Thông tin cảnh báo
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.SendAccountWarningRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.SendAccountWarningResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.SendAccountWarningResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.SendAccountWarningResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.SendAccountWarningResponse'
+      summary: Gửi cảnh báo tài khoản
+      tags:
+      - Account Warning
+  /account-warning/template:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mẫu cảnh báo mới
+      parameters:
+      - description: Thông tin mẫu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.CreateWarningTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.CreateWarningTemplateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.CreateWarningTemplateResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.CreateWarningTemplateResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.CreateWarningTemplateResponse'
+      summary: Tạo mẫu cảnh báo
+      tags:
+      - Account Warning Template
+  /account-warning/template/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết mẫu cảnh báo theo ID
+      parameters:
+      - description: ID mẫu cảnh báo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateDetailResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateDetailResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateDetailResponse'
+      summary: Lấy chi tiết mẫu cảnh báo
+      tags:
+      - Account Warning Template
+  /account-warning/template/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách mẫu cảnh báo
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Loại cảnh báo
+        in: query
+        name: warningType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetWarningTemplateListResponse'
+      summary: Lấy danh sách mẫu cảnh báo
+      tags:
+      - Account Warning Template
+  /admin-history/search:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm lịch sử các hành động của admin
+      parameters:
+      - description: Trang cần lấy (default = 0)
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng trên mỗi trang (default = 20)
+        in: query
+        name: size
+        type: integer
+      - description: ID của admin
+        in: query
+        name: adminId
+        type: integer
+      - description: ID của owner
+        in: query
+        name: ownerId
+        type: integer
+      - description: Loại owner
+        in: query
+        name: ownerType
+        type: integer
+      - description: ID của target
+        in: query
+        name: targetId
+        type: integer
+      - description: Loại target
+        in: query
+        name: targetType
+        type: integer
+      - description: Loại hành động
+        in: query
+        name: actionType
+        type: integer
+      - description: Vai trò admin
+        in: query
+        name: adminRole
+        type: string
+      - description: Từ ngày (RFC3339 format)
+        in: query
+        name: fromDate
+        type: string
+      - description: Đến ngày (RFC3339 format)
+        in: query
+        name: toDate
+        type: string
+      - description: Có phải internal không
+        in: query
+        name: isInternal
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lịch sử admin
+          schema:
+            $ref: '#/definitions/notificationpb.AdminHistoryListResponse'
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm lịch sử admin
+      tags:
+      - Admin History
+  /admin/system-warning:
+    get:
+      consumes:
+      - application/json
+      description: Admin lấy danh sách tất cả cảnh báo hệ thống
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Sắp xếp
+        in: query
+        name: sort
+        type: string
+      - description: Loại cảnh báo
+        in: query
+        name: warningType
+        type: string
+      - description: Mức độ nghiêm trọng
+        in: query
+        name: severity
+        type: string
+      - description: ID người nhận
+        in: query
+        name: targetId
+        type: integer
+      - description: Loại người nhận
+        in: query
+        name: targetType
+        type: string
+      - description: Đã đọc chưa
+        in: query
+        name: isRead
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetSystemWarningListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetSystemWarningListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetSystemWarningListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách cảnh báo hệ thống (Admin)
+      tags:
+      - System Warning - Admin
+    post:
+      consumes:
+      - application/json
+      description: Admin tạo cảnh báo hệ thống gửi tới user
+      parameters:
+      - description: Thông tin cảnh báo
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.CreateSystemWarningRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.CreateSystemWarningResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.CreateSystemWarningResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.CreateSystemWarningResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.CreateSystemWarningResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo cảnh báo hệ thống (Admin)
+      tags:
+      - System Warning - Admin
+  /admin/system-warning/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Admin xóa cảnh báo hệ thống
+      parameters:
+      - description: ID cảnh báo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.DeleteSystemWarningResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/notificationpb.DeleteSystemWarningResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.DeleteSystemWarningResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/notificationpb.DeleteSystemWarningResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.DeleteSystemWarningResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa cảnh báo hệ thống (Admin)
+      tags:
+      - System Warning - Admin
+  /count:
+    get:
+      consumes:
+      - application/json
+      description: Hiển thị số lượng thông báo chưa đọc của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: count
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Số thông báo mới chưa đọc
+      tags:
+      - Notifications
+  /history/auth:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của người dùng
+      parameters:
+      - in: query
+        name: actionType
+        type: string
+      - in: query
+        name: channel
+        type: string
+      - in: query
+        name: deviceId
+        type: string
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: success
+        type: boolean
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của người dùng
+      tags:
+      - Lịch sử
+  /history/campaign/{campaignId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của chiến dịch quảng cáo
+      parameters:
+      - description: ID của chiến dịch
+        in: path
+        name: campaignId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của chiến dịch quảng cáo
+      tags:
+      - Lịch sử
+  /history/contact/{contactId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của liên hệ
+      tags:
+      - Lịch sử
+  /history/crm/{crmId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của CRM
+      parameters:
+      - description: ID của CRM
+        in: path
+        name: crmId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của CRM
+      tags:
+      - Lịch sử
+  /history/list/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Loại người dùng
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của người dùng
+      tags:
+      - Lịch sử
+  /history/package/{packageId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của gói quảng cáo
+      parameters:
+      - description: ID của gói quảng cáo
+        in: path
+        name: packageId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của gói quảng cáo
+      tags:
+      - Lịch sử
+  /history/product/child/{productId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của sản phẩm con
+      parameters:
+      - description: ID của sản phẩm
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của sản phẩm con
+      tags:
+      - Lịch sử
+  /history/rule-event/{ruleEventId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch sử của quy tắc
+      parameters:
+      - description: ID của quy tắc
+        in: path
+        name: ruleEventId
+        required: true
+        type: integer
+      - in: query
+        name: actionType
+        type: integer
+      - in: query
+        name: fromDate
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: isInternal
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: targetId
+        type: integer
+      - in: query
+        name: targetType
+        type: integer
+      - in: query
+        name: toDate
+        type: string
+      - in: query
+        name: userId
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử của quy tắc
+      tags:
+      - Lịch sử
+  /list:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách thông báo của người dùng
+      parameters:
+      - description: Trang cần lấy (default = 0)
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng trên mỗi trang (default = 200)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách thông báo
+          schema:
+            items:
+              $ref: '#/definitions/notificationpb.NotificationDTO'
+            type: array
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thông báo
+      tags:
+      - Notifications
+  /new:
+    post:
+      consumes:
+      - application/json
+      description: API này không bắn thông báo tới thiết bị của người dùng, chỉ tạo
+        thông báo
+      parameters:
+      - description: Chi tiết thông báo
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/notificationpb.GatewayNotiNewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo thông báo mới
+      tags:
+      - Notifications
+  /read-all:
+    put:
+      consumes:
+      - application/json
+      description: Đánh dấu tất cả thông báo là đã đọc
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Đánh dấu tất cả thông báo là đã đọc
+      tags:
+      - Notifications
+  /read/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Đánh dấu thông báo với ID cụ thể là đã đọc
+      parameters:
+      - description: ID của thông báo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Đánh dấu thông báo đã đọc
+      tags:
+      - Notifications
+  /remove/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thông báo với ID cụ thể
+      parameters:
+      - description: ID của thông báo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thông báo
+      tags:
+      - Notifications
+  /system-warning/me:
+    get:
+      consumes:
+      - application/json
+      description: User lấy danh sách cảnh báo hệ thống của mình
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Sắp xếp
+        in: query
+        name: sort
+        type: string
+      - description: Loại cảnh báo
+        in: query
+        name: warningType
+        type: string
+      - description: Đã đọc chưa
+        in: query
+        name: isRead
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notificationpb.GetMySystemWarningsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/notificationpb.GetMySystemWarningsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/notificationpb.GetMySystemWarningsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy cảnh báo hệ thống của tôi (User)
+      tags:
+      - System Warning - User
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

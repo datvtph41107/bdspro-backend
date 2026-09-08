@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// PoiCategoryService service
+service PoiCategoryService {
+  // Create a new POI category
+  rpc CreatePoiCategory(PoiCategory) returns (PoiCategory) {
+    option (google.api.http) = {
+      post: "/v2/tqd/poi/categories"
+      body: "*"
+    };
+  }
+
+  // Get POI category by ID
+  rpc GetPoiCategory(sharepb.IdRequest) returns (PoiCategory) {
+    option (google.api.http) = {
+      get: "/v2/tqd/poi/categories/{id}"
+    };
+  }
+
+  // Update POI category
+  rpc UpdatePoiCategory(PoiCategory) returns (PoiCategory) {
+    option (google.api.http) = {
+      put: "/v2/tqd/poi/categories/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete POI category
+  rpc DeletePoiCategory(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/poi/categories/{id}"
+    };
+  }
+
+  // List POI categories
+  rpc ListPoiCategories(ListPoiCategoriesRequest) returns (ListPoiCategoriesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/poi/categories"
+    };
+  }
+
+  // Get POI category tree
+  rpc GetPoiCategoryTree(google.protobuf.Empty) returns (GetPoiCategoryTreeResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/poi/categories/tree"
+    };
+  }
+}
+
+// PoiCategory message
+message PoiCategory {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string code = 4;
+  string icon = 5;
+  string color = 6;
+  bool isActive = 7;
+  uint32 sortOrder = 8;
+  uint64 parentId = 9;
+  uint32 level = 10;
+  uint32 poiCount = 11;
+  string path = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+// TreeNode for hierarchical structure
+message PoiCategoryTreeNode {
+  PoiCategory data = 1;
+  repeated PoiCategoryTreeNode children = 2;
+}
+
+// Request/Response messages
+message ListPoiCategoriesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  bool isActive = 4;
+  uint64 parentId = 5;
+  uint32 level = 6;
+}
+
+message ListPoiCategoriesResponse {
+  repeated PoiCategory data = 1;
+  int64 total = 2;
+}
+
+message GetPoiCategoryTreeResponse {
+  repeated PoiCategoryTreeNode data = 1;
+}

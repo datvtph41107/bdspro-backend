@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service FriendGroupService {
+    rpc Create(FriendGroup) returns (FriendGroup) {
+        option (google.api.http) = {
+            post: "/v2/crm/friend-group"
+            body: "*"
+        };
+    };
+    rpc Update(FriendGroup) returns (FriendGroup) {
+        option (google.api.http) = {
+            put: "/v2/crm/friend-group/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/friend-group"
+        };
+    };
+    rpc List(sharepb.IdRequest) returns (ListFriendGroupsResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/friend-group/list"
+        };
+    };
+}
+
+message ListFriendGroupsResponse {
+    repeated FriendGroup data = 1;
+    int32 total = 2;
+}
+
+message FriendGroup {
+    uint64 id = 1;
+    string name = 2;
+    string description = 3;
+    string created_at = 4;
+    string updated_at = 5;
+}

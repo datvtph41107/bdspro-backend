@@ -1,0 +1,1222 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "appointment/appointment.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AppointmentService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/admin/appointment": {
+      "get": {
+        "operationId": "AppointmentService_AdminListAppointments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAdminListAppointmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "startTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    },
+    "/v2/appointment": {
+      "get": {
+        "operationId": "AppointmentService_ListAppointments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentListAppointmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "startTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "post": {
+        "operationId": "AppointmentService_CreateAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/appointmentCreateAppointmentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    },
+    "/v2/appointment/{id}": {
+      "get": {
+        "operationId": "AppointmentService_GetAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "delete": {
+        "operationId": "AppointmentService_DeleteAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentDeleteAppointmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      },
+      "put": {
+        "operationId": "AppointmentService_UpdateAppointment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appointmentAppointment"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AppointmentServiceUpdateAppointmentBody"
+            }
+          }
+        ],
+        "tags": [
+          "AppointmentService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AppointmentServiceUpdateAppointmentBody": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "reminderSchedule": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "optionExtend": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentAdminListAppointmentsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/appointmentAppointment"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "appointmentAppointment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "reminderSchedule": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "deal": {
+          "$ref": "#/definitions/organizationpbGroupDeal"
+        },
+        "dealTransactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbDealContractResponse"
+          }
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        },
+        "optionExtend": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentCreateAppointmentRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "participantIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "dealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "productIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "reminderSchedule": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "optionExtend": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "transactionIds": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentDeleteAppointmentResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "appointmentListAppointmentsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/appointmentAppointment"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "authpbColor": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contentColor": {
+          "type": "string"
+        },
+        "backgroundColor": {
+          "type": "string"
+        },
+        "colorKey": {
+          "type": "string"
+        },
+        "hexCode": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "authpbPermission": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissionType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Permission message"
+    },
+    "authpbRole": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "roleDescription": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "permissionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/authpbPermission"
+          }
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "domainType": {
+          "type": "string"
+        },
+        "colorId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "color": {
+          "$ref": "#/definitions/authpbColor"
+        },
+        "roleGroupId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "roleGroupName": {
+          "type": "string"
+        },
+        "allowAssign": {
+          "type": "boolean"
+        },
+        "roleKey": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "Role message"
+    },
+    "bdspropbProductAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "area": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "image": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "depositeId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "rentStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "saleStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceType": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sourceTypeName": {
+          "type": "string"
+        }
+      },
+      "title": "dùng để chia sẻ cho các service gọi tới. chỉ lấy các thông tin thật cần thiết"
+    },
+    "organizationpbBankAccountItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "bankId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "bank": {
+          "$ref": "#/definitions/paymentpbBank"
+        }
+      }
+    },
+    "organizationpbDocumentItem": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "organizationpbGroupDeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "targetProfit": {
+          "type": "number",
+          "format": "double"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dealType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ownerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "numMember": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bdspropbProductAttachment"
+          }
+        },
+        "dealTypeName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/organizationpbDocumentItem"
+          }
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/organizationpbBankAccountItem"
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "partners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbProfileItem"
+          }
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "isUnilateral": {
+          "type": "boolean",
+          "title": "Đơn phương (gỡ khỏi thương vụ)"
+        },
+        "isManual": {
+          "type": "boolean",
+          "title": "Nhập tay (dành cho doanh thu)"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "chargePersonName": {
+          "type": "string"
+        },
+        "chargePersonId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromDate": {
+          "type": "string"
+        },
+        "toDate": {
+          "type": "string"
+        },
+        "allowSharing": {
+          "type": "boolean"
+        },
+        "memberCanAddTransaction": {
+          "type": "boolean"
+        },
+        "onlyOwnerGetCommission": {
+          "type": "boolean"
+        },
+        "internalNote": {
+          "type": "string"
+        },
+        "chargePerson": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "code": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/authpbRole"
+        }
+      }
+    },
+    "paymentpbBank": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbProfileItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "tickVerified": {
+          "type": "boolean"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "isMember": {
+          "type": "boolean"
+        },
+        "joinedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbActionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "action": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "note": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbDealContractResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dealId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "customer": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "productId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "product": {
+          "$ref": "#/definitions/bdspropbProductAttachment"
+        },
+        "staffId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "staffName": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "statusName": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "transaction": {
+          "$ref": "#/definitions/transactionpbTransactionResponse"
+        },
+        "transactionType": {
+          "$ref": "#/definitions/transactionpbTransactionType"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    },
+    "transactionpbOwnerType": {
+      "type": "string",
+      "enum": [
+        "OWNER_TYPE_UNKNOWN",
+        "OWNER_TYPE_USER",
+        "OWNER_TYPE_GROUP",
+        "OWNER_TYPE_ORGANIZATION",
+        "OWNER_TYPE_DEAL"
+      ],
+      "default": "OWNER_TYPE_UNKNOWN",
+      "title": "- OWNER_TYPE_USER: Người dùng\n - OWNER_TYPE_GROUP: Nhóm\n - OWNER_TYPE_ORGANIZATION: Tổ chức\n - OWNER_TYPE_DEAL: Thương vụ"
+    },
+    "transactionpbTransactionMethod": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_METHOD_UNKNOWN",
+        "TRANSACTION_METHOD_SIGN",
+        "TRANSACTION_METHOD_COST",
+        "TRANSACTION_METHOD_REVENUE",
+        "TRANSACTION_METHOD_INVESTMENT",
+        "TRANSACTION_METHOD_DEPOSIT",
+        "TRANSACTION_METHOD_RENT",
+        "TRANSACTION_METHOD_SALE",
+        "TRANSACTION_METHOD_BUY"
+      ],
+      "default": "TRANSACTION_METHOD_UNKNOWN",
+      "title": "- TRANSACTION_METHOD_SIGN: Ký hợp đồng\n - TRANSACTION_METHOD_COST: Chi phí\n - TRANSACTION_METHOD_REVENUE: Thu nhập\n - TRANSACTION_METHOD_INVESTMENT: Góp vốn\n - TRANSACTION_METHOD_DEPOSIT: Đặt cọc\n - TRANSACTION_METHOD_RENT: Cho thuê\n - TRANSACTION_METHOD_SALE: Bán\n - TRANSACTION_METHOD_BUY: Mua"
+    },
+    "transactionpbTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "transactionName": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/transactionpbTransactionStatus"
+        },
+        "method": {
+          "$ref": "#/definitions/transactionpbTransactionMethod"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toOf": {
+          "$ref": "#/definitions/transactionpbOwnerType"
+        },
+        "profile": {
+          "$ref": "#/definitions/sharepbProfileItem"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/transactionpbActionResponse"
+          }
+        }
+      }
+    },
+    "transactionpbTransactionStatus": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_STATUS_UNKNOWN",
+        "TRANSACTION_STATUS_PENDING",
+        "TRANSACTION_STATUS_APPROVED",
+        "TRANSACTION_STATUS_REJECTED"
+      ],
+      "default": "TRANSACTION_STATUS_UNKNOWN",
+      "title": "- TRANSACTION_STATUS_PENDING: Chờ xác nhận\n - TRANSACTION_STATUS_APPROVED: Đã xác nhận\n - TRANSACTION_STATUS_REJECTED: Từ chối"
+    },
+    "transactionpbTransactionType": {
+      "type": "string",
+      "enum": [
+        "TRANSACTION_TYPE_UNKNOWN",
+        "TRANSACTION_TYPE_EXPENSE",
+        "TRANSACTION_TYPE_REVENUE",
+        "TRANSACTION_TYPE_BUY",
+        "TRANSACTION_TYPE_SELL",
+        "TRANSACTION_TYPE_RENT",
+        "TRANSACTION_TYPE_NEGOTIATE"
+      ],
+      "default": "TRANSACTION_TYPE_UNKNOWN",
+      "title": "- TRANSACTION_TYPE_EXPENSE: Chi phí\n - TRANSACTION_TYPE_REVENUE: Doanh thu\n - TRANSACTION_TYPE_BUY: Mua\n - TRANSACTION_TYPE_SELL: Bán\n - TRANSACTION_TYPE_RENT: Thuê\n - TRANSACTION_TYPE_NEGOTIATE: Góp vốn"
+    }
+  }
+}

@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+// Report Reason Service - Manage report reasons
+service ReportReasonService {
+  rpc CreateReportReason(CreateReportReasonRequest) returns (CreateReportReasonResponse) {
+    option (google.api.http) = {
+      post: "/v2/feedback/report-reason"
+      body: "*"
+    };
+  }
+  rpc GetReportReasonList(GetReportReasonListRequest) returns (GetReportReasonListResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/report-reason"
+    };
+  }
+  rpc GetReportReason(sharepb.IdRequest) returns (GetReportReasonResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/report-reason/{id}"
+    };
+  }
+  rpc UpdateReportReason(UpdateReportReasonRequest) returns (UpdateReportReasonResponse) {
+    option (google.api.http) = {
+      put: "/v2/feedback/report-reason/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteReportReason(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/feedback/report-reason/{id}"
+    };
+  }
+}
+
+// Report Reason Messages
+message CreateReportReasonRequest {
+  string name = 1;
+  string description = 2;
+  bool isActive = 3;
+}
+
+message CreateReportReasonResponse {
+  ReportReason reason = 1;
+}
+
+message GetReportReasonListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional bool isActive = 3;
+}
+
+message GetReportReasonListResponse {
+  repeated ReportReason data = 1;
+  int64 total = 2;
+}
+
+message GetReportReasonResponse {
+  ReportReason reason = 1;
+}
+
+message UpdateReportReasonRequest {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  bool isActive = 4;
+}
+
+message UpdateReportReasonResponse {
+  ReportReason reason = 1;
+}
+
+
+message ReportReason {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  bool isActive = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}

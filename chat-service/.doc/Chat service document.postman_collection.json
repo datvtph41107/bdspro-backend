@@ -1,0 +1,1212 @@
+{
+	"info": {
+		"_postman_id": "47136439-58f5-4c9b-b067-e220a1760092",
+		"name": "Chat service document",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13168758"
+	},
+	"item": [
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Create converstation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"type\": \"0\",\r\n    \"name\": \"Room 1\",\r\n    \"members\": [\r\n        15\r\n    ],\r\n    \"isBroadcast\": false,\r\n    \"forbidForward\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/conversations",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"conversations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get converstation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/chat/conversations?limit=5&offset=1&type=0",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"conversations"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								},
+								{
+									"key": "type",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"content\": \"Hello, how are you?\",\r\n    \"content_type\": \"link\",\r\n    \"file_url\": \"https://example.com/file.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/messages",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/chat/messages?conversationId={{ROOM_ID}}",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "conversationId",
+									"value": "{{ROOM_ID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forward message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"messageId\": 1,\r\n    \"targetConversationId\": {{TARGET_ID}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/forward",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"forward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"messageIds\": [\r\n        1\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/read",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"read"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pin message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"messageId\": 2,\r\n    \"doPin\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/pin",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"pin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Recall message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"messageId\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/recall",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"recall"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"targetUserId\": 15\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/removeUser",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"removeUser"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit channel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"is_broadcast\": true,\r\n    \"forbid_forward\": true,\r\n    \"name\": \"New conversation name\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/editChannel",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"editChannel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mute Conversation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"mute\": true\r\n   \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/chat/mute",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"mute"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search messages or conversations",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/chat/search?keyword=&type=0&limit=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"chat",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": ""
+								},
+								{
+									"key": "type",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get conversation by id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/14?include_members=true",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"14"
+							],
+							"query": [
+								{
+									"key": "include_members",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get participants",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/room/14/members?size=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"room",
+								"14",
+								"members"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get read recepts",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/messages/1/readReceipt?size=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"messages",
+								"1",
+								"readReceipt"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get pinned message",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/messages/14/pinned?page",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"messages",
+								"14",
+								"pinned"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}},\r\n    \"userId\": 20\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/add-user",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"add-user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Leave",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"conversationId\": {{ROOM_ID}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/leave",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"leave"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"content\": \"New content\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/messages/edit/{{ROOM_ID}}",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"messages",
+								"edit",
+								"{{ROOM_ID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Violation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/messages/delete-violation/2",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"messages",
+								"delete-violation",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete room",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/conversation/delete-conversation/1",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"delete-conversation",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Setting",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/1/setting",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"1",
+								"setting"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get File",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/1/files?page=0&size=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"1",
+								"files"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get link",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/1/links?page=0&size=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"1",
+								"links"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get image",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/conversation/1/images?page=0&size=10",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"conversation",
+								"1",
+								"images"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AUTH",
+			"item": [
+				{
+					"name": "GET OTP 1",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullname\": \"string\",\n  \"phone\": \"0345809015\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{OPT_URL}}/user/auth/otp/request",
+							"host": [
+								"{{OPT_URL}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"otp",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VERIFY 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse JSON response\r",
+									"let response = pm.response.json();\r",
+									"\r",
+									"// Kiểm tra nếu response chứa accessToken\r",
+									"if (response.data && response.data.accessToken) {\r",
+									"    pm.environment.set(\"token\", response.data.accessToken);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"authId\": 55,\n  \"fullname\": \"string\",\n  \"os\": \"string\",\n  \"otp\": \"650126\",\n  \"phone\": \"0345809015\",\n  \"platform\": \"string\",\n  \"version\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{OPT_URL}}/user/auth/otp/verify",
+							"host": [
+								"{{OPT_URL}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"otp",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET OTP 1 Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullname\": \"string\",\n  \"phone\": \"0345809014\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{OPT_URL}}/user/auth/otp/request",
+							"host": [
+								"{{OPT_URL}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"otp",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VERIFY 1 Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse JSON response\r",
+									"let response = pm.response.json();\r",
+									"\r",
+									"// Kiểm tra nếu response chứa accessToken\r",
+									"if (response.data && response.data.accessToken) {\r",
+									"    pm.environment.set(\"token2\", response.data.accessToken);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"authId\": 49,\n  \"fullname\": \"string\",\n  \"os\": \"string\",\n  \"otp\": \"032566\",\n  \"phone\": \"0345809014\",\n  \"platform\": \"string\",\n  \"version\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{OPT_URL}}/user/auth/otp/verify",
+							"host": [
+								"{{OPT_URL}}"
+							],
+							"path": [
+								"user",
+								"auth",
+								"otp",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

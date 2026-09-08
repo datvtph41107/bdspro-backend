@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service GroupService {
+    rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/group"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/group/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/group/{id}"
+        };
+    }
+
+    rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group/{id}"
+        };
+    }
+    
+    rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group"
+        };
+    }
+
+    rpc GetGroupByUserId(GetGroupByUserIdRequest) returns (GetGroupsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group/by-member"
+        };
+    }
+}
+
+
+message CreateGroupRequest {
+    string name = 1;
+    string description = 2;
+    string avatarUrl = 3;
+    string status = 4;
+}
+
+message CreateGroupResponse {
+    uint32 id = 1;
+}
+
+message UpdateGroupRequest {
+    uint32 id = 1;
+    string name = 2;
+    string description = 3;
+
+}
+
+message UpdateGroupResponse {
+    uint32 id = 1;
+}
+
+message DeleteGroupRequest {
+    uint32 id = 1;
+}
+
+message DeleteGroupResponse {
+    uint32 id = 1;
+}
+
+message GetGroupRequest {
+    uint32 id = 1;
+}
+
+message GetGroupResponse {
+    Group group = 1;
+}
+
+message GetGroupsRequest {
+    optional uint32 page = 1;
+    optional uint32 size = 2;
+}
+
+message GetGroupsResponse {
+    repeated Group data = 1;
+    uint32 total = 2;
+}
+
+message Group {
+    uint32 id = 1;
+    string name = 2;
+    string description = 3;
+    string avatarUrl = 4;
+    string status = 5;
+    uint32 memberCount = 6;
+    string userRole = 7;
+    string additionalInfo = 8;
+}
+
+message GetGroupsByUserIdRequest {
+    uint32 userId = 1;
+}
+
+message GetGroupsByUserIdResponse {
+    repeated Group groups = 1;
+}
+
+message GetGroupByUserIdRequest {
+    uint32 userId = 1;
+}

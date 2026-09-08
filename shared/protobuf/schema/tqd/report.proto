@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package tqd;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// ReportService — báo cáo user/app (không phải admin GIS).
+// Admin GIS HTTP: GisReportAdminService (/v2/tqd/admin/reports*).
+service ReportService {
+  rpc CreateReportAsync(CreateReportAsyncRequest) returns (CreateReportAsyncResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/reports"
+      body: "*"
+    };
+  }
+  rpc GetReportStatus(GetReportStatusRequest) returns (ReportStatusResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/reports/{reportId}/status"
+    };
+  }
+  rpc DownloadReport(DownloadReportRequest) returns (DownloadReportResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/reports/{reportId}/download"
+    };
+  }
+  rpc ListReports(ListReportsRequest) returns (ListReportsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/reports"
+    };
+  }
+  rpc DeleteReport(DeleteReportRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/reports/{reportId}"
+    };
+  }
+}
+
+message CreateReportAsyncRequest {
+  uint32 reportType = 1;
+  optional uint64 targetId = 2;
+  optional string targetData = 3;
+  uint32 profile = 4;
+  uint32 format = 5;
+  optional bool includeMapImage = 6;
+  string description = 7;
+  uint32 problemReport = 8;
+}
+
+message CreateReportAsyncResponse {
+  uint64 reportId = 1;
+  uint32 status = 2;
+  string createdAt = 3;
+}
+
+message GetReportStatusRequest {
+  uint64 reportId = 1;
+}
+
+message ReportStatusResponse {
+  uint64 id = 1;
+  uint32 status = 2;
+  optional string fileUrl = 3;
+  optional string errorMessage = 4;
+  optional string completedAt = 5;
+  optional string expiresAt = 6;
+}
+
+message DownloadReportRequest {
+  uint64 reportId = 1;
+}
+
+message DownloadReportResponse {
+  bytes fileContent = 1;
+  string contentType = 2;
+  string fileName = 3;
+}
+
+message ListReportsRequest {
+  optional uint32 reportType = 1;
+  optional uint32 status = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  int64 timestamp = 5;
+}
+
+message ListReportsResponse {
+  repeated ReportSummary data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message ReportSummary {
+  uint64 id = 1;
+  uint32 reportType = 2;
+  uint32 profile = 3;
+  uint32 status = 4;
+  string createdAt = 5;
+  optional string completedAt = 6;
+  optional string fileUrl = 7;
+  string description = 8;
+  uint32 problemReport = 9;
+  optional uint64 targetId = 10;
+}
+
+message DeleteReportRequest {
+  uint64 reportId = 1;
+}

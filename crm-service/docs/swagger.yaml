@@ -1,0 +1,605 @@
+basePath: /crm
+definitions:
+  data.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  data.FriendDTO:
+    properties:
+      groupId:
+        type: integer
+      groupReceiverId:
+        type: integer
+      id:
+        type: integer
+      isSender:
+        description: |-
+          Group           *FriendGroupDTO `json:"group,omitempty"`
+          UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
+        type: boolean
+      receiverId:
+        type: integer
+      respondedAt:
+        type: string
+      senderId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.FriendStatus'
+      text:
+        type: string
+    type: object
+  enums.FriendStatus:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-comments:
+      Accepted: '"ACCEPT"'
+      Pending: '"PENDING"'
+      Reject: '"REJECT"'
+    x-enum-varnames:
+    - Pending
+    - Accepted
+    - Reject
+  domain.GroupEntity:
+    properties:
+      backgroundColor:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      textColor:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: CRM API
+  version: "1.0"
+paths:
+  /block/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Bỏ chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần bỏ chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Bỏ chặn một người dùng
+      tags:
+      - Chặn
+    post:
+      consumes:
+      - application/json
+      description: Chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Chặn một người dùng
+      tags:
+      - Chặn
+  /block/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách ID của những người mà người dùng hiện tại đã chặn
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người dùng bị chặn
+      tags:
+      - Chặn
+  /follow/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một người khỏi danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã xóa người khỏi danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa người khỏi danh sách theo dõi
+      tags:
+      - Theo dõi
+    post:
+      consumes:
+      - application/json
+      description: Thêm một người vào danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã thêm người vào danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thêm người vào danh sách theo dõi
+      tags:
+      - Theo dõi
+  /follow/followers:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người theo dõi người dùng cụ thể
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người theo dõi của người dùng
+      tags:
+      - Theo dõi
+  /follow/following:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người mà người dùng đang theo dõi
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người mà người dùng đang theo dõi
+      tags:
+      - Theo dõi
+  /friend/group/{requestId}/{groupId}:
+    put:
+      consumes:
+      - application/json
+      description: Gán nhóm cho bạn bè
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/data.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      tags:
+      - Bạn bè
+  /friend/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè
+      tags:
+      - Bạn bè
+  /friend/request/{receiverId}:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời kết bạn đến người dùng khác
+      parameters:
+      - description: ID của người nhận lời mời
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được gửi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người nhận
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/accept:
+    put:
+      consumes:
+      - application/json
+      description: Đồng ý lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Đồng ý kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/reject:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/received:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã nhận
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã nhận
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã nhận
+      tags:
+      - Bạn bè
+  /friend/request/sent:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã gửi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã gửi
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
+  /groups:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm
+    post:
+      consumes:
+      - application/json
+      description: Tạo một nhóm mới với thông tin được cung cấp
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "409":
+          description: Nhóm đã tồn tại
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Tạo nhóm mới
+      tags:
+      - Nhóm
+  /groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một nhóm khỏi hệ thống
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã bị xóa
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa nhóm
+      tags:
+      - Nhóm
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin nhóm hiện tại
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.GroupEntity'
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy nhóm
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin nhóm
+      tags:
+      - Nhóm
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

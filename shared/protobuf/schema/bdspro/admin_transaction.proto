@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "shared/common.proto";
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+
+service AdminTransactionService {
+  // Lấy danh sách thương vụ
+  rpc GetTransactions(AdminTransactionSearchRequest) returns (AdminTransactionSearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/transactions"
+    };
+  };
+  
+  // Lấy chi tiết thương vụ
+  rpc GetTransactionDetail(sharepb.IdRequest) returns (AdminTransactionDetail) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/transactions/{id}"
+    };
+  };
+  
+  // Phê duyệt thương vụ
+  rpc ApproveTransaction(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/transactions/{id}/approve"
+    };
+  };
+  
+  // Từ chối thương vụ
+  rpc RejectTransaction(AdminRejectTransactionRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/transactions/{id}/reject"
+      body: "*"
+    };
+  };
+  
+  // Xóa thương vụ
+  rpc DeleteTransaction(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/transactions/{id}"
+    };
+  };
+}
+
+// Request tìm kiếm thương vụ cho admin
+message AdminTransactionSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional string keyword = 3;
+  optional uint32 transactionType = 4;       // 10: Bán, 20: Thuê
+  optional uint32 transactionStatus = 5;     // 10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy
+  optional string approvalStatus = 6;        // pending, approved, rejected
+  optional string startDate = 7;
+  optional string endDate = 8;
+  optional uint64 productId = 9;
+  optional uint64 contactId = 10;
+  optional uint64 ownerId = 11;
+  optional uint32 ownerType = 12;            // 10: Member, 20: Group, 30: Organization
+}
+
+// Response danh sách thương vụ
+message AdminTransactionSearchResponse {
+  repeated AdminTransactionItem data = 1;
+  int64 total = 2;
+}
+
+// Item thương vụ trong danh sách
+message AdminTransactionItem {
+  uint64 id = 1;
+  string transactionName = 2;
+  double amount = 3;
+  string currency = 4;
+  uint32 transactionType = 5;           // 10: Bán, 20: Thuê
+  string transactionTypeName = 6;
+  uint32 transactionStatus = 7;         // 10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy
+  string transactionStatusName = 8;
+  string approvalStatus = 9;            // pending, approved, rejected
+  string transactionDate = 10;
+  optional double depositeAmount = 11;
+  
+  // Thông tin owner
+  uint64 ownerId = 12;
+  uint32 ownerType = 13;
+  sharepb.ProfileItem owner = 14;
+  
+  // Thông tin sản phẩm
+  optional uint64 productId = 15;
+  optional string productName = 16;
+  optional string productCode = 17;
+  
+  // Thông tin contact
+  optional uint64 contactId = 18;
+  optional string contactName = 19;
+  optional string contactPhone = 20;
+  
+  // Thời gian
+  string createdAt = 21;
+  string updatedAt = 22;
+  
+  // Thông tin phê duyệt
+  optional uint64 approvedBy = 23;
+  optional string approvalDate = 24;
+  optional sharepb.ProfileItem approver = 25;
+}
+
+// Chi tiết thương vụ
+message AdminTransactionDetail {
+  uint64 id = 1;
+  string transactionName = 2;
+  double amount = 3;
+  string currency = 4;
+  string description = 5;
+  
+  uint32 transactionType = 6;           // 10: Bán, 20: Thuê
+  string transactionTypeName = 7;
+  uint32 transactionStatus = 8;         // 10: Nháp, 20: Đặt cọc, 30: Đã ký, 40: Hoàn thành, 50: Hủy
+  string transactionStatusName = 9;
+  string approvalStatus = 10;           // pending, approved, rejected
+  string transactionDate = 11;
+  
+  // Thông tin đặt cọc
+  optional double depositeAmount = 12;
+  optional string depositeNote = 13;
+  
+  // Thông tin owner
+  uint64 ownerId = 14;
+  uint32 ownerType = 15;
+  sharepb.ProfileItem owner = 16;
+  
+  // Thông tin sản phẩm
+  optional uint64 productId = 17;
+  optional bdspropb.ProductInfo product = 18;
+  
+  // Thông tin contact
+  optional uint64 contactId = 19;
+  optional ContactInfo contact = 20;
+  
+  // Thông tin thanh toán
+  uint32 categoryId = 21;
+  uint32 paymentMethodId = 22;
+  optional uint32 relatedDealId = 23;
+  optional uint32 relatedTransactionId = 24;
+  
+  // Thông tin phê duyệt
+  optional uint64 approvedBy = 25;
+  optional string approvalDate = 26;
+  optional sharepb.ProfileItem approver = 27;
+  
+  // Thời gian
+  string createdAt = 28;
+  string updatedAt = 29;
+  optional uint64 createdBy = 30;
+  optional uint64 updatedBy = 31;
+  optional sharepb.ProfileItem creator = 32;
+  optional sharepb.ProfileItem updater = 33;
+}
+
+// Thông tin contact trong transaction
+message ContactInfo {
+  uint64 id = 1;
+  string name = 2;
+  optional string phone = 3;
+  optional string email = 4;
+  optional string address = 5;
+}
+
+// Request từ chối thương vụ
+message AdminRejectTransactionRequest {
+  uint64 id = 1;
+  string reason = 2;
+}
+

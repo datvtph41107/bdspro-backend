@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+message Project {
+  uint64 id = 1;
+  string name = 2;
+  uint64 developerId = 3;
+  string description = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+  bool active = 7;
+}
+
+message ProjectListResponse {
+  repeated Project data = 1;
+  int64 totalElements = 2;
+}

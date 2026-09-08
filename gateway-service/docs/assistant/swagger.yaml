@@ -1,0 +1,711 @@
+definitions:
+  assistantpb.AnalysisMetadata:
+    properties:
+      confidence_score:
+        type: number
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.AnalyzeRequest:
+    properties:
+      content:
+        description: Văn bản mô tả sản phẩm cần phân tích
+        type: string
+      context:
+        description: Context bổ sung (optional)
+        type: string
+    type: object
+  assistantpb.AnalyzeResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/assistantpb.AnalysisMetadata'
+      product:
+        $ref: '#/definitions/assistantpb.ProductInfo'
+      raw_response:
+        description: Raw JSON từ AI
+        type: string
+    type: object
+  assistantpb.ChatMessage:
+    properties:
+      content:
+        type: string
+      role:
+        description: '"user" hoặc "assistant"'
+        type: string
+      timestamp:
+        type: integer
+    type: object
+  assistantpb.ChatMetadata:
+    properties:
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.ChatRequest:
+    properties:
+      context:
+        description: Context bổ sung
+        type: string
+      history:
+        description: Chat history
+        items:
+          $ref: '#/definitions/assistantpb.ChatMessage'
+        type: array
+      message:
+        type: string
+      session_id:
+        description: Session ID để maintain conversation
+        type: string
+    type: object
+  assistantpb.ChatResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/assistantpb.ChatMetadata'
+      reply:
+        type: string
+      session_id:
+        type: string
+    type: object
+  assistantpb.ExtractMetadata:
+    properties:
+      confidence_score:
+        description: Độ tin cậy (0-1)
+        type: number
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.ExtractNationalCardRequest:
+    properties:
+      backImageUrl:
+        description: Link ảnh mặt sau căn cước
+        type: string
+      frontImageUrl:
+        description: Link ảnh mặt trước căn cước
+        type: string
+    type: object
+  assistantpb.ExtractNationalCardResponse:
+    properties:
+      info:
+        $ref: '#/definitions/assistantpb.NationalCardInfo'
+      metadata:
+        $ref: '#/definitions/assistantpb.ExtractMetadata'
+      mrz:
+        description: Machine Readable Zone (MRZ) nếu có
+        type: string
+    type: object
+  assistantpb.GenerateMetadata:
+    properties:
+      model:
+        type: string
+      processing_time_ms:
+        type: integer
+      tokens_used:
+        type: integer
+    type: object
+  assistantpb.GenerateRequest:
+    properties:
+      max_tokens:
+        type: integer
+      prompt:
+        type: string
+      temperature:
+        description: 0.0 - 1.0
+        type: number
+      template:
+        description: 'Template type: "product_description", "email", "social_post"'
+        type: string
+      variables:
+        additionalProperties:
+          type: string
+        description: Variables để thay vào template
+        type: object
+    type: object
+  assistantpb.GenerateResponse:
+    properties:
+      content:
+        type: string
+      metadata:
+        $ref: '#/definitions/assistantpb.GenerateMetadata'
+    type: object
+  assistantpb.HealthResponse:
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        description: Component health checks
+        type: object
+      status:
+        description: '"healthy", "degraded", "unhealthy"'
+        type: string
+      uptime_seconds:
+        type: integer
+      version:
+        type: string
+    type: object
+  assistantpb.NationalCardInfo:
+    properties:
+      address:
+        description: Địa chỉ
+        type: string
+      dateOfBirth:
+        description: Ngày sinh (dd/mm/yyyy)
+        type: string
+      ethnic:
+        description: Dân tộc
+        type: string
+      expiryDate:
+        description: Ngày hết hạn (nếu có)
+        type: string
+      features:
+        description: Đặc điểm nhận dạng
+        type: string
+      fullName:
+        description: Họ và tên
+        type: string
+      gender:
+        description: Giới tính
+        type: string
+      idNumber:
+        description: Thông tin từ mặt trước
+        type: string
+      issueDate:
+        description: Thông tin từ mặt sau
+        type: string
+      issuePlace:
+        description: Nơi cấp
+        type: string
+      nationality:
+        description: Quốc tịch
+        type: string
+      placeOfOrigin:
+        description: Quê quán
+        type: string
+      placeOfResidence:
+        description: Nơi thường trú
+        type: string
+      religion:
+        description: Tôn giáo
+        type: string
+    type: object
+  assistantpb.ProductInfo:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          type: string
+        type: array
+      area:
+        type: number
+      bathroom:
+        type: integer
+      bedroom:
+        type: integer
+      description:
+        type: string
+      district:
+        type: string
+      floor:
+        type: integer
+      frontage:
+        type: number
+      furniture:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      legalDoc:
+        type: string
+      name:
+        type: string
+      orientation:
+        type: string
+      propertyType:
+        type: string
+      province:
+        type: string
+      rent_price:
+        type: number
+      salePrice:
+        type: number
+      transaction_type:
+        description: 1=Bán, 2=Thuê, 3=Cả hai
+        type: integer
+      ward:
+        type: string
+    type: object
+  assistantpb.SuggestResponse:
+    properties:
+      modelName:
+        type: string
+      processingTime:
+        type: integer
+      product:
+        $ref: '#/definitions/sharepb.ProductV3Proto'
+    type: object
+  sharepb.AddressV3Proto:
+    properties:
+      detail:
+        type: string
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  sharepb.HouseInfoV3Proto:
+    properties:
+      furniture:
+        type: string
+      numBathroom:
+        type: integer
+      numBedroom:
+        type: integer
+      numCarPark:
+        type: integer
+      numFloor:
+        type: integer
+      numFront:
+        type: number
+      orientation:
+        type: string
+    type: object
+  sharepb.ItemV3Proto:
+    properties:
+      fileName:
+        description: file upload
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      issuedAt:
+        type: string
+      issuer:
+        type: integer
+      itemType:
+        description: tag
+        type: integer
+      name:
+        type: string
+      status:
+        description: approved
+        type: integer
+    type: object
+  sharepb.PriceV3Proto:
+    properties:
+      currency:
+        type: string
+      rentCommission:
+        type: number
+      rentCommissionType:
+        type: integer
+      rentPaymentCycle:
+        type: integer
+      rentPrice:
+        type: number
+      saleCommission:
+        type: number
+      saleCommissionType:
+        type: integer
+      salePrice:
+        type: number
+    type: object
+  sharepb.ProductV3Proto:
+    properties:
+      address:
+        $ref: '#/definitions/sharepb.AddressV3Proto'
+      amenities:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      area:
+        type: number
+      description:
+        type: string
+      docType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      houseInfo:
+        $ref: '#/definitions/sharepb.HouseInfoV3Proto'
+      id:
+        type: integer
+      name:
+        type: string
+      priceData:
+        $ref: '#/definitions/sharepb.PriceV3Proto'
+      propertyType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      sourceType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      transactionType:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+    type: object
+info:
+  contact: {}
+  description: API cho assistant service, bao gồm event-queue và các tiện ích khác
+  title: Assistant API
+  version: "1.0"
+paths:
+  /v2/assistant/bdspro/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng AI để phân tích và trích xuất thông tin từ văn bản mô tả
+        sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.SuggestResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng AI
+      tags:
+      - Assistant
+  /v2/assistant/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/deepseek/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng DeepSeek AI để phân tích và trích xuất thông tin từ văn
+        bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng DeepSeek AI
+      tags:
+      - Assistant
+  /v2/assistant/deepseek/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với DeepSeek AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với DeepSeek AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/deepseek/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng DeepSeek
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với DeepSeek
+      tags:
+      - Assistant
+  /v2/assistant/gemini/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng Google Gemini AI để phân tích và trích xuất thông tin từ
+        văn bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng Gemini AI
+      tags:
+      - Assistant
+  /v2/assistant/gemini/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với Google Gemini AI assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với Gemini AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/gemini/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng Google Gemini
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với Gemini
+      tags:
+      - Assistant
+  /v2/assistant/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung
+      tags:
+      - Assistant
+  /v2/assistant/health:
+    get:
+      consumes:
+      - application/json
+      description: Kiểm tra trạng thái service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.HealthResponse'
+      summary: Health check
+      tags:
+      - Assistant
+  /v2/assistant/national-card/extract:
+    post:
+      consumes:
+      - application/json
+      description: Nhận vào 2 link ảnh (mặt trước và mặt sau), sử dụng OCR để đọc
+        thông tin và MRZ
+      parameters:
+      - description: Link ảnh căn cước
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ExtractNationalCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin đã trích xuất
+          schema:
+            $ref: '#/definitions/assistantpb.ExtractNationalCardResponse'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Trích xuất thông tin từ ảnh căn cước công dân
+      tags:
+      - Assistant
+  /v2/assistant/openai/analyze/product:
+    post:
+      consumes:
+      - application/json
+      description: Sử dụng OpenAI GPT để phân tích và trích xuất thông tin từ văn
+        bản mô tả sản phẩm
+      parameters:
+      - description: Nội dung cần phân tích
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.AnalyzeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.AnalyzeResponse'
+      security:
+      - BearerAuth: []
+      summary: Phân tích văn bản sản phẩm BĐS sử dụng OpenAI
+      tags:
+      - Assistant
+  /v2/assistant/openai/chat:
+    post:
+      consumes:
+      - application/json
+      description: Thực hiện conversation với OpenAI GPT assistant
+      parameters:
+      - description: Message và history
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.ChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.ChatResponse'
+      security:
+      - BearerAuth: []
+      summary: Chat với OpenAI AI assistant
+      tags:
+      - Assistant
+  /v2/assistant/openai/generate:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nội dung theo template và prompt sử dụng OpenAI GPT
+      parameters:
+      - description: Prompt và template
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/assistantpb.GenerateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/assistantpb.GenerateResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate nội dung với OpenAI
+      tags:
+      - Assistant
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

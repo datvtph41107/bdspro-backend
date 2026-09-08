@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package notificationpb;
+
+option go_package = "pb/types/notification;notificationpb";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "notification/internal.proto";
+
+
+service HistoryService {
+  rpc OwnerHistory (HistorySearchRequest) returns (HistoryListDTO) {
+      option (google.api.http) = {
+          get: "/v2/notification/history/list/{ownerId}/{ownerType}"
+      };
+  };
+
+  rpc CrmHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/crm"
+    };
+  };
+
+  rpc ContactHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/contact/{id}"
+    };
+  };
+
+  rpc AssetHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/asset/{id}"
+    };
+  };
+
+  rpc ProductHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/product/{id}"
+    };
+  };
+
+  rpc ProductChildHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/product/child/{id}"
+    };
+  };
+
+  rpc RuleEventHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/rule-event/{id}"
+    };
+  };
+
+  rpc CampaignHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/campaign/{id}"
+    };
+  };
+
+  rpc PackageHistory (HistorySearchRequest) returns (HistoryListDTO) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/package/{id}"
+    };
+  };
+
+  rpc AuthHistory (HistoryAuthSearchRequest) returns (HistoryAuthListResponse) {
+    option (google.api.http) = {
+        get: "/v2/notification/history/auth"
+    };
+  };
+
+  rpc Create (HistoryDTO) returns (HistoryDTO);
+  rpc CreateInternal (HistoryDTO) returns (HistoryDTO);
+  rpc SearchInternal (HistorySearchRequest) returns (HistoryListDTO);
+}
+
+// message HistoryContactRequest {
+//   uint64 id = 1;
+//   uint32 page = 2;
+//   uint32 size = 3;
+//   google.protobuf.Timestamp fromDate = 4;
+//   google.protobuf.Timestamp toDate = 5;
+// }
+
+message HistorySearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+
+  uint64 userId = 3;
+  string fromDate = 4;
+  string toDate = 5;
+
+  optional int32 actionType = 6;
+  optional int32 targetType = 7;
+  optional uint64 targetId = 8;
+
+  uint64 ownerId = 9;
+  uint32 ownerType = 10;
+
+  uint64 id = 11;
+  bool isInternal = 12;
+}
+
+message HistoryDTO {
+  uint64 targetId = 1;
+  int32 targetType = 2;     
+  int32 actionType = 3;     
+
+  repeated string note = 4;
+  string preStage = 5;
+  string afterStage = 6;
+
+  optional uint64 ownerId = 7;
+  int32 ownerType = 8;
+  string createdAt = 9;
+  optional uint64 createdBy = 10;
+  string title = 11;
+  string actionUser = 12;
+  string actionName = 13;
+}
+
+message HistoryListDTO {
+    repeated HistoryDTO data = 1;
+    uint32 total = 2;
+}
+
+message HistoryAuthSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 userId = 3;
+  optional uint64 organizationId = 4;
+  string actionType = 5;
+  string channel = 6;
+  string deviceId = 7;
+  optional bool success = 8;
+  string fromDate = 9;
+  string toDate = 10;
+}
+
+message HistoryAuthListResponse {
+  repeated HistoryAuthDTO data = 1;
+  uint64 total = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+}

@@ -1,0 +1,300 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "bdspro/product.proto";
+import "bdspro/common.proto";
+import "bdspro/region.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+service BdsproPublicService {
+  // Cấu hình app quy hoạch (public): JSON object (map string → any) gồm backgroundMaps, qhLayers
+  rpc GetQhConfigApp(google.protobuf.Empty) returns (google.protobuf.Struct) {
+    option (google.api.http) = {
+      get: "/v2/qh/config-app"
+    };
+  }
+  rpc GetProductMarket(ProductMarketRequest) returns (ProductMarketResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/market"
+    };
+  };
+  rpc GetPropertyType(SearchQueryRequest) returns (PropertyTypeListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/property-type"
+    };
+  };
+  rpc GetRegion(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/region"
+    };
+  };
+  rpc GetAreaRegion(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/area-region"
+    };
+  };
+  rpc GetDocType(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/doc-type"
+    };
+  };
+  rpc GetProject(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/project"
+    };
+  };
+  rpc GetAmenity(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/amenity"
+    };
+  };
+  rpc GetProductTotal(ProductTotalRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/total"
+    };
+  };
+  rpc GetProjectBuild(SearchQueryRequest) returns (ListItemResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/list/project-build"
+    };
+  };
+  rpc GetUserProductsPublic(PublicUserProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/public/product/user/{profileId}"
+    };
+  };
+  rpc GetEnumByName(sharepb.IdRequest) returns (GetEnumResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/public/enums/{text}"
+    };
+  };
+  rpc GetEnums(sharepb.SyncRequest) returns (GetEnumsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/public/enums"
+    };
+  };
+}
+
+message ProductTotalRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string text = 3;
+}
+
+
+
+message ProductMarketRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string text = 4;
+  uint64 provinceId = 5;
+  uint64 districtId = 6;
+  uint64 wardId = 7;
+  int32 transactionType = 14;
+  int32 saleStatus = 15;
+  int32 rentStatus = 16;
+  int32 saleVisibility = 17;
+  int32 rentVisibility = 18;
+  int32 sourceType = 19;
+  int32 transactionPrice = 20;
+  int32 salePrice = 21;
+  int32 rentPrice = 22;
+  int32 saleCommission = 23;
+  int32 rentCommission = 24;
+  int32 rentPaymentCycle = 25;
+}
+
+message ProductMarketResponse {
+    repeated ProductMarket data = 1;
+    int64 total = 2;
+}
+
+message ProductMarket {
+    int64 id = 1;
+    string createdAt = 2;
+    string updatedAt = 3;
+    string name = 4;
+    string code = 5;
+    optional int64 categoryId = 6;
+    optional double area = 7;
+    string description = 8;
+    optional int32 transactionType = 9;
+    int32 saleStatus = 10;
+    int32 saleVisibility = 11;
+    int32 rentStatus = 12;
+    int32 rentVisibility = 13;
+    int64 ownerUserId = 14;
+    int64 ownerOrgId = 15;
+    int64 propertyTypeId = 16;
+    int64 docTypeId = 17;
+    string positionUrl = 18;
+    string address = 19;
+    string googleMapLink = 20;
+    int64 assetId = 21;
+    int64 apartmentId = 22;
+    int64 lastPriceId = 23;
+    double transactionPrice = 24;
+    bool archived = 25;
+    
+	// House Info
+	int64 numBedroom = 26;
+	int64 numBathroom = 27;
+	int64 numFloor = 28;
+	string furniture = 29;
+	string orientation = 30;
+	int64 numFront = 31;
+	int64 numCarPark = 32;
+	int64 numToilet = 33;
+
+	// Amenities and Media
+	string amenityIds = 34;
+	repeated string mediaUrls = 35;
+	repeated string mediaTypes = 36;
+	string mainImage = 37;
+
+	// Region Names
+	optional string provinceName = 38;
+	optional string districtName = 39;
+	optional string wardName = 40;
+
+	// DocType and PropertyType Name
+	optional string docTypeName = 41;
+	optional string propertyTypeName = 42;
+
+	// Latest Product Price Info
+	string currency = 43;
+	optional int64 priceOwner = 44;
+	optional double salePrice = 45;
+	optional int64 saleCommission = 46;
+	int64 saleCommissionType = 47;
+	double rentPrice = 48;
+	double rentCommission = 49;
+	int64 rentCommissionType = 50;
+	int64 rentPaymentCycle = 51;
+	int64 importPrice = 52;
+	double operatingCost = 53;
+	int64 internalNote = 54;
+	int64 targetProfit = 55;
+	double privateDocs = 56;
+	double deposite = 57;
+    // string deletedAt = 25;
+}
+
+// message PropertyTypeRequest {
+//     uint32 page = 1;
+//     uint32 size = 2;
+//     string text = 3;
+// }
+
+// message PropertyTypeResponse {
+//     repeated PropertyType data = 1;
+// }
+
+// message PropertyType {
+//     uint64 id = 1;
+//     string name = 2;
+// }
+
+// message RegionRequest {
+//     uint32 page = 1;
+//     uint32 size = 2;
+//     string text = 3;
+// }
+
+// message RegionResponse {
+//     repeated Region data = 1;
+// }
+
+// message Region {
+//     uint64 id = 1;
+//     string name = 2;
+// }
+
+// message DocTypeRequest {
+//     uint32 page = 1;
+//     uint32 size = 2;
+//     string text = 3;
+// }
+
+// message DocTypeResponse {
+//     repeated DocType data = 1;
+// }
+
+message ListItemResponse {
+    repeated ItemResponse data = 1;
+    uint32 total = 2;
+}
+
+message SearchQueryRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    string text = 3;
+    optional uint64 parentId = 4;
+}
+
+message PublicUserProductSearch {
+  uint64 profileId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string sort = 4;
+  string text = 5;
+  optional uint64 parentId = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  optional uint64 projectId = 9;
+  optional uint64 provinceId = 10;
+  optional uint64 districtId = 11;
+  optional uint64 wardId = 12;
+  optional int32 transactionType = 13;
+  optional int32 saleStatus = 14;
+  optional int32 rentStatus = 15;
+  optional int32 saleVisibility = 16;
+  optional int32 rentVisibility = 17;
+  optional int32 sourceType = 18;
+  optional int32 transactionPrice = 19;
+  optional int32 salePrice = 20;
+  optional int32 rentPrice = 21;
+  optional int32 saleCommission = 22;
+  optional int32 rentCommission = 23;
+  optional int32 rentPaymentCycle = 24;
+  optional bool archived = 25;
+}
+
+message EnumItem {
+  uint32 value = 1;
+  string name = 2;
+}
+
+message GetEnumResponse {
+  repeated EnumItem data = 1;
+  string key = 2;
+}
+
+message GetEnumsResponse {
+  repeated GetEnumResponse enums = 1;
+  int64 timestamp = 2;
+  bool lastest = 3;
+}
+
+message PropertyType {
+  uint64 id = 1;
+  string name = 2;
+  string createdAt = 3;
+  string updatedAt = 4;
+  bool active = 5;
+  uint32 classifyProperty = 6;
+  string fieldStrs = 7;
+}
+
+message PropertyTypeListResponse {
+  repeated PropertyType data = 1;
+  int64 totalElements = 2;
+}

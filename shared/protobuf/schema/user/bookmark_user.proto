@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package userpb;
+
+import "shared/common.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "user/admin_user_profile.proto";
+
+option go_package = "pb/types/user;userpb";
+
+// BookmarkUserService service cho bookmark user
+service BookmarkUserService {
+  // GetBookmarkUsers lấy danh sách bookmark user với phân trang
+  rpc GetBookmarkUsers(GetBookmarkUsersRequest) returns (ListAllUsersResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/bookmark-users"
+    };
+  };
+  
+  // UpdateBookmarkUsers cập nhật bookmark users (thay thế toàn bộ danh sách)
+  rpc UpdateBookmarkUsers(UpdateBookmarkUsersRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v2/user/bookmark-users"
+      body: "*"
+    };
+  };
+}
+
+// GetBookmarkUsersRequest request để lấy danh sách bookmark user
+message GetBookmarkUsersRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  uint64 admin_id = 3;
+}
+
+// GetBookmarkUsersResponse response cho danh sách bookmark user
+message GetBookmarkUsersResponse {
+  uint32 page = 1;
+  uint32 size = 2;
+  int64 total = 3;
+  repeated BookmarkUserResponse data = 4;
+}
+
+// UpdateBookmarkUsersRequest request để cập nhật bookmark users
+message UpdateBookmarkUsersRequest {
+  repeated uint64 profileIds = 1;
+  bool bookmark = 2;
+}
+
+// BookmarkUserResponse response cho bookmark user
+message BookmarkUserResponse {
+  uint64 id = 1;
+  uint64 admin_id = 2;
+  uint64 user_id = 3;
+  string created_at = 4;
+  string updated_at = 5;
+  UserItem user = 6;
+}
+
+// GetUsersWithBookmarkRequest request để lấy danh sách users với thông tin bookmark
+message GetUsersWithBookmarkRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  bool bookmark = 3; // true nếu muốn lấy thông tin bookmark
+  string search = 4; // tìm kiếm theo tên hoặc phone
+}
+
+// GetUsersWithBookmarkResponse response cho danh sách users với thông tin bookmark
+message GetUsersWithBookmarkResponse {
+  uint32 page = 1;
+  uint32 size = 2;
+  int64 total = 3;
+  repeated UserWithBookmarkResponse data = 4;
+}
+
+// UserWithBookmarkResponse response cho user với thông tin bookmark
+message UserWithBookmarkResponse {
+  uint64 profile_id = 1;
+  string full_name = 2;
+  string avatar = 3;
+  bool tick_verified = 4;
+  string phone = 5;
+  string email = 6;
+  bool is_bookmark = 7; // true nếu user này được admin bookmark
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// UserItem thông tin user item
+message UserItem {
+  uint64 profile_id = 1;
+  string full_name = 2;
+  string avatar = 3;
+  bool tick_verified = 4;
+}

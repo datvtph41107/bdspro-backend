@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// Feature là một đối tượng địa lý (thửa đất hoặc POI)
+message Feature {
+  uint64 id = 1;
+  int32 sessionId = 2;
+  string layer = 3;
+  google.protobuf.Struct geometry = 4;  // GeoJSON geometry
+  google.protobuf.Struct properties = 5;
+  string tile = 6;
+  int32 extent = 7;
+  string featureHash = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message GetFeaturesByPointRadiusRequest {
+  double lat = 1;
+  double lng = 2;
+  int32 radius = 3;          // meters
+  int32 limit = 4;           // max number of features (default 1000)
+  int32 offset = 5;          // number of features to skip (default 0)
+  int64 timestamp = 6;
+}
+
+message GetFeaturesByPolygonRequest {
+  // Cách 1: dùng mảng tọa độ (đơn giản)
+  repeated Point coordinates = 1;
+  string polygon_geojson = 2;
+  
+  int32 limit = 3;
+  int32 offset = 4;
+  int64 timestamp = 5;
+}
+
+message Point {
+  double lat = 1;
+  double lng = 2;
+}
+
+message ListFeaturesResponse {
+  repeated Feature features = 1;
+  int64 total = 2;            // tổng số feature thỏa mãn (không bị giới hạn bởi limit)
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+service FeatureService {
+  // Tìm features theo tâm bán kính
+  rpc GetFeaturesByPointRadius(GetFeaturesByPointRadiusRequest) returns (ListFeaturesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/features/nearby"
+    };
+  }
+
+  // Tìm features trong đa giác
+  rpc GetFeaturesByPolygon(GetFeaturesByPolygonRequest) returns (ListFeaturesResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/features/polygon"
+      body: "*"
+    };
+  }
+}

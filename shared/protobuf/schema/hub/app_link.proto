@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+
+import "google/api/annotations.proto";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Applink Service
+//
+// action dùng int32 — enum đầy đủ quản lý ở internal/enums/applink_action.go
+// XXYY: XX=service (01=user, 02=bdspro, 08=chat), YY=event
+// ─────────────────────────────────────────────────────────────────────────────
+
+message ApplinkInfo {
+  string code = 1; // base64(numeric_code)
+  uint64 refId = 2;
+  int32 action = 3; // enums.ApplinkAction (100, 201, 801...)
+  string actionName = 4; // "user_profile", "bdspro_property", "chat_room"...
+  string createdAt  = 5;
+  string link = 6;   // base_url + code — URL deep link đầy đủ
+}
+
+message CreateApplinkRequest {
+  uint64 refId = 1;
+  int32  action = 2;
+}
+
+message CreateApplinkResponse {
+  ApplinkInfo applink = 1;
+}
+
+message GetApplinkByCodeRequest {
+  string code = 1; // base64 string — nhận từ URL path param
+}
+
+message GetApplinkByCodeResponse {
+  ApplinkInfo applink = 1;
+}
+
+service ApplinkService {
+
+  // Public — QR share gọi để sinh code
+  rpc CreateApplink(CreateApplinkRequest) returns (CreateApplinkResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/applinks"
+      body: "*"
+    };
+  }
+
+  rpc GetApplinkByCode(GetApplinkByCodeRequest) returns (GetApplinkByCodeResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/applinks/{code}"
+    };
+  }
+}

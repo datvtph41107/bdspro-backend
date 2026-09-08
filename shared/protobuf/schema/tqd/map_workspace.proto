@@ -1,0 +1,454 @@
+syntax = "proto3";
+
+package types.tqd;
+
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/api/annotations.proto";
+import "operation/operation.proto";
+
+service MapWorkspaceService {
+  rpc ListFollowedParcels(WorkspacePageRequest) returns (ListFollowedParcelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/followed-parcels"
+    };
+  }
+
+  rpc FollowParcel(FollowParcelRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/followed-parcels"
+      body: "*"
+    };
+  }
+
+  rpc RemoveFollowedParcel(RemoveFollowedParcelRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/map-workspace/followed-parcels/{followId}"
+      additional_bindings {
+        delete: "/v2/tqd/map-workspace/followed-parcels/by-parcel/{parcelId}"
+      }
+    };
+  }
+
+  rpc ListViewHistory(WorkspacePageRequest) returns (ListViewHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/view-history"
+    };
+  }
+
+  rpc AddViewHistory(AddViewHistoryRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/view-history"
+      body: "*"
+    };
+  }
+
+  rpc TrackViewHistory(TrackViewHistoryRequest) returns (TrackViewHistoryResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/view-history:track"
+      body: "*"
+    };
+  }
+
+  rpc RemoveViewHistory(RemoveViewHistoryRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/map-workspace/view-history/{historyId}"
+    };
+  }
+
+  rpc ClearViewHistory(ClearViewHistoryRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/map-workspace/view-history"
+    };
+  }
+
+  rpc CreateGeneratedReport(CreateGeneratedReportRequest) returns (CreateGeneratedReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/reports"
+      body: "*"
+    };
+    option (types.operation.operation) = {
+      code: "workspace.report.generate"
+    };
+  }
+
+  rpc ListGeneratedReports(WorkspacePageRequest) returns (ListGeneratedReportsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/reports"
+    };
+  }
+
+  rpc GetGeneratedReport(GetGeneratedReportRequest) returns (GeneratedReportPreview) {
+    option (google.api.http) = {
+      get: "/v2/tqd/map-workspace/reports/{reportId}"
+    };
+  }
+
+  rpc RemoveGeneratedReport(RemoveGeneratedReportRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/map-workspace/reports/{reportId}"
+    };
+  }
+
+  rpc RegenerateReport(RegenerateReportRequest) returns (WorkspaceMutationResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/reports/{reportId}:regenerate"
+      body: "*"
+    };
+  }
+
+  rpc ShareReport(ShareReportRequest) returns (ShareReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/map-workspace/reports/{reportId}:share"
+      body: "*"
+    };
+  }
+}
+
+message WorkspacePageRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string cursor = 3;
+  string timestamp = 4;
+}
+
+message WorkspaceMutationResponse {
+  bool success = 1;
+  string message = 2;
+  uint64 id = 3;
+}
+
+message SpatialPoint {
+  double lat = 1;
+  double lon = 2;
+}
+
+message SpatialBounds {
+  double minLon = 1;
+  double minLat = 2;
+  double maxLon = 3;
+  double maxLat = 4;
+}
+
+message GeometryPreview {
+  string type = 1;
+  string geoJson = 2;
+  SpatialPoint centroid = 3;
+  SpatialBounds bounds = 4;
+  uint32 srid = 5;
+}
+
+message PreviewHint {
+  uint32 mode = 1;
+  SpatialBounds bounds = 2;
+  SpatialPoint centroid = 3;
+  double fitPaddingRatio = 4;
+  string thumbnailUrl = 5;
+  string highlightLayer = 6;
+}
+
+message SpatialFocusTarget {
+  uint32 type = 1;
+  SpatialBounds bounds = 2;
+  SpatialPoint centroid = 3;
+  string geoJson = 4;
+  uint32 srid = 5;
+}
+
+message WorkspaceLocation {
+  string address = 1;
+  string province = 2;
+  string provinceCode = 3;
+  string wardCode = 4;
+}
+
+message WorkspaceParcelMeta {
+  string mapNumber = 1;
+  string landNumber = 2;
+  double areaSqm = 3;
+}
+
+message FollowedParcelActions {
+  bool focus = 1;
+  bool remove = 2;
+  bool compare = 3;
+  bool createReport = 4;
+}
+
+message FollowedParcelPreview {
+  string id = 1;
+  uint32 type = 2;
+
+  uint64 followId = 3;
+  uint64 userId = 4;
+  uint64 parcelId = 5;
+
+  string title = 6;
+  string subtitle = 7;
+
+  WorkspaceParcelMeta parcel = 8;
+  WorkspaceLocation location = 9;
+
+  double lat = 10;
+  double lon = 11;
+
+  GeometryPreview geometryPreview = 12;
+  PreviewHint preview = 13;
+  SpatialFocusTarget focusTarget = 14;
+
+  string followedAt = 15;
+
+  FollowedParcelActions actions = 16;
+}
+
+message ViewHistoryContext {
+  uint32 source = 1;
+  double zoom = 2;
+}
+
+message ViewHistoryActions {
+  bool focus = 1;
+  bool remove = 2;
+  bool follow = 3;
+}
+
+message ViewHistoryPreview {
+  string id = 1;
+  uint32 type = 2;
+
+  uint64 historyId = 3;
+  uint64 userId = 4;
+
+  uint32 entityType = 5;
+  uint64 entityId = 6;
+  uint64 parcelId = 7;
+
+  string title = 8;
+  string subtitle = 9;
+
+  WorkspaceParcelMeta parcel = 10;
+  WorkspaceLocation location = 11;
+
+  double lat = 12;
+  double lon = 13;
+
+  GeometryPreview geometryPreview = 14;
+  PreviewHint preview = 15;
+  SpatialFocusTarget focusTarget = 16;
+
+  string viewedAt = 17;
+  ViewHistoryContext viewContext = 18;
+
+  ViewHistoryActions actions = 19;
+
+  uint64 regionId = 20;
+  uint64 viewCount = 21;
+  uint64 countedViewCount = 22;
+}
+
+message ReportSpatialPreview {
+  SpatialBounds bounds = 1;
+  SpatialPoint centroid = 2;
+}
+
+message ReportAssets {
+  string thumbnailUrl = 1;
+  string imageUrl = 2;
+  string pdfUrl = 3;
+  string shareUrl = 4;
+}
+
+message ReportMeta {
+  string createdAt = 1;
+  string updatedAt = 2;
+  string expiresAt = 3;
+  uint64 fileSize = 4;
+  string format = 5;
+}
+
+message ReportComparison {
+  string fromPlanName = 1;
+  string toPlanName = 2;
+  uint32 fromYear = 3;
+  uint32 toYear = 4;
+}
+
+message ReportActions {
+  bool focus = 1;
+  bool downloadImage = 2;
+  bool downloadPdf = 3;
+  bool share = 4;
+  bool regenerate = 5;
+  bool remove = 6;
+}
+
+message GeneratedReportPreview {
+  string id = 1;
+  uint32 type = 2;
+
+  uint64 reportId = 3;
+  uint64 userId = 4;
+
+  uint32 reportType = 5;
+  uint32 status = 6;
+
+  string title = 7;
+  string subtitle = 8;
+
+  WorkspaceLocation location = 9;
+  ReportSpatialPreview spatial = 10;
+  ReportAssets assets = 11;
+  ReportMeta reportMeta = 12;
+  ReportComparison comparison = 13;
+  ReportActions actions = 14;
+
+  uint32 entityType = 15;
+  uint64 entityId = 16;
+  uint64 parcelId = 17;
+  uint64 regionId = 18;
+}
+
+message ListFollowedParcelsResponse {
+  repeated FollowedParcelPreview data = 1;
+  string nextCursor = 2;
+  int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message ListViewHistoryResponse {
+  repeated ViewHistoryPreview data = 1;
+  string nextCursor = 2;
+  int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message ListGeneratedReportsResponse {
+  repeated GeneratedReportPreview data = 1;
+  string nextCursor = 2;
+  int64 total = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message FollowParcelRequest {
+  uint64 parcelId = 1;
+  string note = 2;
+  string timestamp = 3;
+}
+
+message RemoveFollowedParcelRequest {
+  uint64 followId = 1;
+  uint64 parcelId = 2;
+  string timestamp = 3;
+}
+
+message AddViewHistoryRequest {
+  uint32 entityType = 1;
+  uint64 entityId = 2;
+  uint64 parcelId = 3;
+  uint32 source = 4;
+  double zoom = 5;
+  string timestamp = 6;
+  uint64 regionId = 7;
+}
+
+message TrackViewHistoryRequest {
+  string clientEventId = 1;
+  string sessionId = 2;
+  string deviceId = 3;
+
+  uint32 entityType = 4;
+  uint64 entityId = 5;
+  uint64 parcelId = 6;
+  uint64 regionId = 7;
+
+  uint32 source = 8;
+  string sourceRef = 9;
+  string routeName = 10;
+
+  double zoom = 11;
+  SpatialPoint center = 12;
+  SpatialBounds viewportBounds = 13;
+
+  uint64 visibleMs = 14;
+  bool countIntent = 15;
+
+  string timestamp = 16;
+  string metadataJson = 17;
+}
+
+message TrackViewHistoryResponse {
+  bool success = 1;
+  uint64 historyId = 2;
+  uint64 eventId = 3;
+  bool counted = 4;
+  uint64 viewCount = 5;
+  string message = 6;
+}
+
+message RemoveViewHistoryRequest {
+  uint64 historyId = 1;
+  string timestamp = 2;
+}
+
+message ClearViewHistoryRequest {
+  string timestamp = 1;
+}
+
+message CreateGeneratedReportRequest {
+  uint32 reportType = 1;
+
+  uint32 entityType = 2;
+  uint64 entityId = 3;
+
+  uint64 parcelId = 4;
+  uint64 regionId = 5;
+
+  string title = 6;
+  string subtitle = 7;
+
+  WorkspaceLocation location = 8;
+  ReportSpatialPreview spatial = 9;
+  ReportComparison comparison = 10;
+
+  // Durable identity for workspace.report.generate. Field number 11 is kept
+  // for protobuf wire compatibility; legacy HTTP JSON keeps clientRequestId
+  // until all old clients are retired. Canonical clients send Idempotency-Key.
+  string commandKey = 11 [json_name = "clientRequestId"];
+  string timestamp = 12;
+  string metadataJson = 13;
+}
+
+message CreateGeneratedReportResponse {
+  bool success = 1;
+  string message = 2;
+  GeneratedReportPreview item = 3;
+}
+
+message GetGeneratedReportRequest {
+  uint64 reportId = 1;
+  string timestamp = 2;
+}
+
+message RemoveGeneratedReportRequest {
+  uint64 reportId = 1;
+  string timestamp = 2;
+}
+
+message RegenerateReportRequest {
+  uint64 reportId = 1;
+  string timestamp = 2;
+}
+
+message ShareReportRequest {
+  uint64 reportId = 1;
+  string timestamp = 2;
+}
+
+message ShareReportResponse {
+  bool success = 1;
+  string shareUrl = 2;
+  string message = 3;
+}

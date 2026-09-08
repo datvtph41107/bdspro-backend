@@ -1,0 +1,830 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+import "google/protobuf/timestamp.proto";
+import "bdspro/common.proto";
+import "bdspro/developer.proto";
+import "bdspro/asset.proto";
+import "bdspro/product.proto";
+import "bdspro/project.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+import "bdspro/post.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/wrappers.proto";
+import "bdspro/public.proto";
+
+service PropertyService {
+  rpc AddPropertyUser(AddPropertyUserRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/add"
+      body: "*"
+    };
+  }
+  rpc CreatePropertyUser(ClonePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{propertyId}/clone"
+    };
+  }
+  rpc GetList(PropertySearchRequest) returns (PropertyListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/list/{owned}"
+    };
+  };
+
+  rpc ListMe(sharepb.SyncRequest) returns (PropertyListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/me"
+    };
+  };
+  
+  rpc GetDetail(sharepb.SyncRequest) returns (PropertyDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/detail/{id}"
+    };
+  };
+
+  // GetPropertyTimestamps trả về timestamp của detail và history cho FE check cache/sync.
+  rpc GetPropertyTimestamps(sharepb.IdRequest) returns (PropertyTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/timestamp"
+    };
+  };
+  
+  rpc GetAssets(PropertyAssetsRequest) returns (PropertyAssetsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/assets"
+    };
+  };
+  
+  rpc GetProducts(PropertyProductsRequest) returns (PropertyProductsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/products"
+    };
+  };
+  
+  rpc GetRelation(PropertyRelationRequest) returns (PropertyRelationResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{id}/relation"
+    };
+  };
+  
+  rpc CreateProperty(CreatePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/new"
+      body: "*"
+    };
+  };
+
+  // ImportProperty: tạo identifier trước, rồi lineage, sau đó update identifier.lineage_id (dùng cho import data).
+  rpc ImportProperty(CreatePropertyRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/import"
+      body: "*"
+    };
+  };
+  
+  rpc SearchTags(TagSearchRequest) returns (TagListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/tags/search"
+    };
+  }
+
+  rpc GetPropertyAmenities(GetPropertyAmenitiesRequest)
+      returns (GetPropertyAmenitiesResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/property/{propertyId}/amenities"
+    };
+  };
+
+  rpc UpdateProperty(UpdatePropertyRequest) returns (UpdatePropertyResponse) {
+    option (google.api.http) = {
+      patch: "/v2/bdspro/v2/property/{id}"
+      body: "*"
+    };
+  };
+
+   rpc ConfirmPropertyUpdate(ConfirmPropertyUpdateRequest) returns (UpdatePropertyResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{id}/confirm"
+      body: "*"
+    };
+  };
+
+  rpc SendPropertyReport(SendReportPropertyRequest) returns (ReportPropertyResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{id}/report"
+      body: "*"
+    };
+  };
+
+  rpc UpdatePropertyAmenities(UpdatePropertyAmenitiesRequest)
+      returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/property/{propertyId}/amenities"
+      body: "*"
+    };
+  };
+
+  rpc DeleteProperties(DeletePropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/batch"
+      body: "*"
+    };
+  };
+
+  rpc ArchiveProperties(ArchivePropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/archive"
+      body: "*"
+    };
+  };
+
+  rpc HideProperties(HiddenPropertiesRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/property/hide"
+      body: "*"
+    };
+  };
+
+  rpc ArchiveProducts(ArchiveProductUsersRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/user/archive"
+      body: "*"
+    };
+  };
+}
+
+message SendReportPropertyRequest {
+  uint64 id = 1;
+  uint32 type = 2;
+  optional string note = 3;
+  optional UpdatePropertyRequest contributeData = 4;
+  // Sub-issues chi tiết người dùng chọn (string constants).
+  // VD: ["wrong_name", "wrong_area", "wrong_coords"]
+  // Danh sách constant định nghĩa ở enums/report.go phía server.
+  repeated string subIssues = 5;
+
+  // BĐS liên quan — bắt buộc khi type=30 (duplicate/trùng)
+  optional uint64 relatedLineage_id = 6;
+
+  // Media IDs làm bằng chứng (đã upload qua media endpoint)
+  repeated uint64 attachmentMedia_ids = 7;
+
+  // File IDs tài liệu đính kèm (đã upload)
+  repeated uint64 attachmentFileIds = 8;
+}
+
+// message mới:
+message ReportPropertyResponse {
+  uint64 report_id         = 1; // ID của property_report vừa tạo
+  uint64 lineage_id        = 2; // lineage gốc được báo cáo
+  uint64 propose_lineage_id = 3; // propose lineage (0 nếu không có contribute_data)
+  uint32 type              = 4; // echo lại report_type
+  string note              = 5; // echo lại note
+  string created_at        = 6;
+  string message           = 7;
+}
+
+message UpdatePropertyRequest {
+  // ID của PropertyLineage
+  uint64 id = 1;
+
+  google.protobuf.FieldMask field_mask = 2;
+  // Sub-domain payloads — null = không update domain đó
+  UpdateInfoPayload        info          = 3;
+  UpdateLocationPayload    location      = 4;
+  UpdateLandInfoPayload    landInfo     = 5;
+  UpdateBuildingPayload    buildingInfo = 6;
+  UpdateEvidencePayload    evidence      = 7;
+  UpdateMediaPayload       media         = 8;
+  UpdateAmenityPayload     amenities     = 9;
+  UpdateExternalRefPayload external_refs = 10;
+  UpdateLineageMetaPayload lineage_meta  = 11;
+  UpdateAreaRegionPayload areaRegions = 12;
+  UpdatePersonalizationPayload personalization = 13;
+
+  ImpactAssessmentConfig impactAssessment = 14;
+}
+
+message ImpactAssessmentConfig {
+  bool previewOnly = 1;
+  bool confirmed = 2;
+  string sessionId = 3;
+}
+
+message PreviewPropertyUpdateRequest {
+  uint64 id = 1;
+  google.protobuf.FieldMask field_mask = 2;
+  UpdateInfoPayload        info          = 3;
+  UpdateLocationPayload    location      = 4;
+  UpdateLandInfoPayload    landInfo      = 5;
+  UpdateBuildingPayload    buildingInfo  = 6;
+  UpdateEvidencePayload    evidence      = 7;
+  UpdateMediaPayload       media         = 8;
+  UpdateAmenityPayload     amenities     = 9;
+  UpdateExternalRefPayload external_refs = 10;
+  UpdateLineageMetaPayload lineage_meta  = 11;
+  UpdateAreaRegionPayload  areaRegions   = 12;
+  UpdatePersonalizationPayload personalization = 13;
+}
+
+message ConfirmPropertyUpdateRequest {
+  uint64 id = 1;
+  string session_id = 2;
+  ImpactAssessmentConfig impact_assessment = 3;
+}
+
+message PreviewPropertyUpdateResponse {
+  uint64 lineage_id = 1;
+  bool requires_confirm = 2;
+  ImpactEvaluation impact_evaluation = 3;
+}
+
+message ImpactEvaluation {
+  string impact_level = 1;
+  string action_policy = 2;
+  bool requires_confirm = 3;
+  string block_reason = 4;
+  repeated string warnings = 5;
+  repeated string suggestions = 6;
+  AffectedSummary affected_summary = 7;
+  ProjectedStates projected_states = 8;
+  repeated FieldChange changed_fields = 9;
+  repeated AffectedEntityDetail affected_entities_detail = 10;
+}
+
+message AffectedSummary {
+  int32 products = 1;
+  int32 listings = 2;
+  int32 assets = 3;
+  int32 deals = 4;
+  int32 crm_notes = 5;
+  int32 total = 6;
+}
+
+message ProjectedStates {
+  int32 active = 1;
+  int32 restricted = 2;
+  int32 frozen = 3;
+  int32 archived = 4;
+}
+
+message FieldChange {
+  string field_path = 1;
+  string old_value = 2;
+  string new_value = 3;
+  string change_type = 4;
+}
+
+message AffectedEntityDetail {
+  uint64 entity_id = 1;
+  string entity_type = 2;
+  string entity_name = 3;
+  string current_state = 4;
+  string projected_state = 5;
+  string reason = 6;
+}
+
+// ─── info.* ──────────────────────────────────────────────────────────────────
+message UpdateInfoPayload {
+  optional string title = 1;
+  optional string note = 2;
+  optional string unit_code = 3;
+  optional string identifier = 4;
+  optional string level = 5;
+
+  optional uint32 scope = 6;
+  optional uint32 source_type = 7;
+  optional uint32 legalStatus = 8;
+  optional uint32 recordStatus = 9;
+
+  optional uint64 avatarId = 10;
+  optional uint64 propertyTypeId = 11;
+  optional uint64 projectId = 12;
+  optional uint64 originProfileId = 13;
+
+}
+
+// ─── location.* ──────────────────────────────────────────────────────────────
+message UpdateLocationPayload {
+  optional string addressDetail = 1;
+  optional string mapUrl = 2;
+
+  optional double latitude = 3;
+  optional double longitude = 4;
+
+  optional uint64 regionId = 5;
+  optional uint64 provinceId = 6;
+  // optional uint64 districtId = 7;
+  optional uint64 wardId = 8;
+}
+
+// ─── landInfo.* ─────────────────────────────────────────────────────────────
+message UpdateLandInfoPayload {
+  optional string documentNo = 1;
+  optional string issuringAuth = 2;
+  optional uint32 documentType = 3;
+  optional uint32 plot = 4;
+  optional uint32 sheet = 5;
+  optional double areaTotal = 6;
+  optional double areaLand = 7;
+  optional double areaPlant = 8;
+  optional double frontWidth = 9;
+  optional double depth = 10;
+  optional double streetWidth = 11;
+  optional string expiredLand = 12;
+  optional string expiredPlant = 13;
+  optional string note = 14;
+  optional string landNote = 15;
+  optional int32 purposeUsed = 16;
+}
+
+// ─── buildingInfo.* ─────────────────────────────────────────────────────────
+message UpdateBuildingPayload {
+  optional string note = 1;
+
+  optional uint32 buildStatus = 2;
+  optional uint32 buildingType = 3;
+  optional uint32 direction = 4;
+  optional uint32 balconyDirection = 5;
+
+  optional double areaActual = 6;
+  optional double areaFloor = 7;
+  optional double areaConstruction = 8;
+
+  optional uint32 floors = 9;
+  optional uint32 roomNumber = 10;
+  optional uint32 bedrooms = 11;
+  optional uint32 bathrooms = 12;
+}
+
+// ─── evidence.* ──────────────────────────────────────────────────────────────
+message UpdateEvidencePayload {
+  optional string title = 1;
+  optional string description = 2;
+  optional uint64 fileId = 3;
+}
+
+// ─── media (list upsert — không dùng field_mask) ─────────────────────────────
+// id = 0 → INSERT mới | id > 0 → UPDATE record đó
+// Xóa media → dùng endpoint DELETE /media/{id} riêng
+message UpdateMediaPayload {
+  repeated UpdateMediaItem items = 1;
+}
+
+message UpdateMediaItem {
+  uint64 id = 1;
+  string mediaType = 2;
+  string mediaUrl = 3;
+  string thumbUrl = 4;
+  int32 sortOrder = 5;
+  bool isCover = 6;
+}
+
+// ─── amenities (REPLACE list — không dùng field_mask) ────────────────────────
+message UpdateAmenityPayload {
+  repeated uint64 amenityIds = 1;
+}
+
+message UpdateAreaRegionPayload {
+  repeated uint64 areaRegionIds = 1;
+}
+
+// ─── external_refs (list upsert — không dùng field_mask) ─────────────────────
+message UpdateExternalRefPayload {
+  repeated UpdateExternalRefItem items = 1;
+}
+
+message UpdateExternalRefItem {
+  uint64 id = 1;
+  string source_code = 2;
+  string note = 3;
+  uint64 external_ref_id = 4;
+  int32 source_system = 5;
+  uint32 confidence = 6;
+  int32 sync_status = 7;
+}
+// ─── lineage_meta.* (admin/system only) ──────────────────────────────────────
+message UpdateLineageMetaPayload {
+  optional string national_id = 1;
+  optional int32 lineage_status = 2;
+  optional string verified_national_at = 3;
+}
+
+message UpdatePersonalizationPayload {
+  optional string archived_at = 1;
+  optional string hidden_at = 2;
+}
+// ─── Response ────────────────────────────────────────────────────────────────
+message UpdatePropertyResponse {
+   uint64 lineageId = 1;
+  string updatedAt = 2;
+  string message = 3;
+  bool requiresConfirm = 4;
+  ImpactEvaluation impactEvaluation = 5;
+}
+
+// PropertyTimestampsResponse: map key -> timestamp (ms) cho FE check cache
+message PropertyTimestampsResponse {
+  map<string, int64> timestamps = 1;
+}
+
+message ClonePropertyRequest {
+  uint64 propertyId = 1;
+}
+
+message AddPropertyUserRequest {
+  uint64 propertyIdentifierId = 1;
+}
+
+message PropertySearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;               // "updated_at_desc", "title_asc", "priority_product", "priority_asset", "priority_listing", "identified_first", "verified_first"
+  string text = 4;                // tìm kiếm
+
+  // Filter cơ bản
+  optional uint64 propertyTypeId = 5;
+  optional uint64 locationId = 6;       // deprecated, dùng provinceId + districtId + wardId
+  optional uint64 projectId = 7;
+  optional string recordStatus = 8;     // "active", "inactive", "archived"
+
+  // [ADDED] Các filter mới từ UI
+  optional string scope = 9;             // "private", "shared", "public"
+  optional bool identified = 10;         // true: đã định danh, false: chưa
+  optional bool nationalVerified = 11;   // true: đã xác thực QG, false: chưa
+
+  // [ADDED] Địa chỉ hành chính
+  optional uint64 provinceId = 12;
+  optional uint64 districtId = 13;
+  optional uint64 wardId = 14;
+
+  optional bool hasAsset = 15;           // Có tài sản
+  optional bool hasProduct = 16;         // Có sản phẩm
+  optional bool hasListing = 17;          // Có tin đăng
+
+  optional string createdFrom = 18;      
+  optional string createdTo = 19;
+  optional string updatedFrom = 20;
+  optional string updatedTo = 21;
+  optional uint32 sourceType = 22;
+  string owned = 23;
+  uint64 regionID = 24;
+}
+
+message PropertyAmenityItem {
+  uint64 id = 1;
+  string name = 2;
+  bool active = 3;   
+  bool checked = 4; 
+}
+
+message GetPropertyAmenitiesRequest {
+  uint64 propertyId = 1;
+  uint32 sourceType = 2;
+}
+
+message GetPropertyAmenitiesResponse {
+  repeated PropertyAmenityItem data = 1;
+}
+
+message UpdatePropertyAmenitiesRequest {
+  uint64 propertyId = 1;
+  repeated uint64 amenityIds = 2;
+}
+
+message DeletePropertiesRequest {
+  repeated uint64 ids = 1;
+}
+
+message ArchivePropertiesRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
+}
+
+message HiddenPropertiesRequest {
+  repeated uint64 ids = 1;
+  bool hidden = 2;
+}
+
+message ArchiveProductUsersRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
+}
+
+message TagResponse {
+  uint64 id = 1;
+  string name = 2;
+  string type = 3;
+  string description = 4;
+  string icon = 5;
+}
+
+message TagSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string keyword = 3;
+  string type = 4;
+}
+
+message TagListResponse {
+  repeated TagResponse data = 1;
+  int64 total = 2;
+}
+
+message PropertyDetailRequest {
+  uint64 id = 1;
+  uint32 sourceType = 2;
+}
+
+// PropertyDetailResponse - chi tiết đầy đủ BĐS cho màn detail
+message PropertyDetailResponse {
+  uint64 id = 1;
+  optional PropertyInfo info = 2;    // PID, version - mã BDSPro
+  optional PropertyLocationInfo location = 3;     // Địa chỉ chi tiết
+  optional PropertyLandInfoDetail landInfo = 4;   // Thông tin đất/GCN
+  optional PropertyBuildingInfo buildingInfo = 5; // Thông tin nhà/công trình
+  optional PropertyEdvidenceInfo edvidence = 6;   // Chứng minh thực tế
+  PropertyLineageInfo lineage = 7;                // nationalId, verifiedNationalAt
+  repeated bdspropb.MediaItem mediaList = 8;
+  repeated sharepb.TagItem amenities = 9;
+  optional PropertyStatistic statistic = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+  optional MediaItem avatar = 13;
+  optional Project project = 14;
+  optional Developer developer = 15;  // Chủ đầu tư (từ project)
+  optional PropertyType propertyType = 16;
+  optional PropertyPersonalization personalization = 17;
+  optional PropertyIdentify identifier = 18;
+  repeated sharepb.TagItem areaRegions = 19;
+}
+
+message PropertyStatistic {
+  uint64 id = 1;
+  optional int64 productCount = 2;
+  optional int64 assetCount = 3;
+  optional int64 listingCount = 4;
+}
+
+message PropertyIdentify {
+  uint64 id = 1;
+  uint64 pid = 2;
+  uint32 version = 3;
+  string code = 4;  // mã BDSPro format: BDS{pid}
+  uint64 lineageId = 5;
+}
+
+message PropertyLocationInfo {
+  uint64 id = 1;
+  string detail = 2;
+  optional uint64 regionId = 3;
+  optional uint64 provinceId = 4;
+  optional uint64 districtId = 5;
+  optional uint64 wardId = 6;
+  optional double latitude = 7;
+  optional double longitude = 8;
+  string mapUrl = 9;
+  string provinceName = 10;
+  string districtName = 11; 
+  string wardName = 12;
+}
+
+message PropertyLandInfoDetail {
+  uint64 id = 1;
+  uint32 documentType = 2;
+  string documentNo = 3;
+  string issuringAuth = 4;
+  optional uint32 plot = 5;
+  optional uint32 sheet = 6;
+  optional double areaTotal = 7;
+  optional double areaLand = 8;
+  optional double areaPlant = 9;
+  optional string expiredLand = 10;
+  optional string expiredPlant = 11;
+  optional uint32 purposeUsed = 12;
+  string note = 13;
+  optional double frontWidth = 14;
+  optional double depth = 15;
+  optional double streetWidth = 16;
+  string landNote = 17;
+}
+
+message PropertyEdvidenceInfo {
+  uint64 id = 1;
+  string title = 2;
+  optional uint64 fileId = 3;
+  string description = 4;
+}
+
+message PropertyLineageInfo {
+  string nationalId = 1;
+  optional int64 verifiedNationalAt = 2;
+}
+
+message PropertyPersonalization {
+  uint64 id = 1;
+  uint64 ownerOriginId = 2;
+  optional uint64 propertyLineageId = 3;
+  optional string ownerAt = 4;
+  optional uint64 roleId = 5;
+  optional uint64 originProfileId = 6;
+  optional string archivedAt = 7;
+  optional string hiddenAt = 8;
+  optional uint32 recordStatus = 9;
+}
+
+message PropertyAssetsRequest {
+  uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message PropertyProductsRequest {
+  uint64 id = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message PropertyListResponse {
+  repeated PropertyDetailResponse data = 1;
+  Pagination pagination = 2; 
+}
+
+message PropertyAssetsResponse {
+  repeated Asset data = 1;
+  Pagination pagination = 2; 
+}
+
+message PropertyProductsResponse {
+  repeated ProductResponse data = 1;
+  Pagination pagination = 2;    
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 size = 2;
+  int64 total = 3;
+  int32 pages = 4;
+  bool hasNext = 5;
+  bool hasPrevious = 6;
+}
+
+message PropertyRelationRequest {
+  uint64 id = 1;
+}
+
+message PropertyRelation {
+  uint64 id = 1;
+  uint64 propertyId = 2;
+  uint64 relationId = 3;
+  uint64 relationType = 4;
+  optional Asset asset = 5;
+  optional ProductResponse product = 6;
+  optional Post post = 7;
+}
+
+message PropertyRelationResponse {
+  repeated PropertyRelation data = 1;
+  int64 total = 2;
+}
+
+// CreatePropertyRequest - khớp với dto.CreatePropertyProductRequest
+message CreatePropertyRequest {
+  // BasicInfo (PropertyIdentify) - optional, server tạo default nếu null
+  optional PropertyInfo info = 1;
+  // Location - địa chỉ BĐS
+  optional PropertyLocationCreate location = 2;
+  // Thông tin đất (PropertyLandInfo)
+  optional PropertyLandInfoCreate landInfo = 3;
+  // Thông tin nhà/công trình
+  optional PropertyBuildingInfoCreate buildingInfo = 4;
+  // Tham chiếu ngoài
+  optional PropertyExternalRefCreate externalRef = 5;
+  // Chứng minh thực tế
+  optional PropertyEdvidenceCreate edvidence = 6;
+  // Lineage - nationalId, verifiedAt (tạo cuối)
+  optional PropertyLineageCreate lineage = 7;
+  // Thông tin PropertyMedia
+  repeated PropertyMediaItem mediaList = 8;
+  // Thông tin AssetLegal (giấy tờ pháp lý)
+  repeated AssetLegalItem legalInfo = 9;
+  repeated uint64 amenityIds = 10;
+  repeated uint64 tagIds = 11;
+  PostSaveWithProduct post = 12;
+  ProductSaveRequest product = 13;
+  AssetCreateWithProduct asset = 14;
+  string note = 15;
+}
+
+// PropertyIdentifyCreate - PID, Version (server set default nếu không có)
+message PropertyIdentifyCreate {
+  optional uint64 pid = 1;
+  optional uint32 version = 2;
+}
+
+// PropertyLocationCreate - địa chỉ chi tiết
+message PropertyLocationCreate {
+  string addressDetail = 1;
+  optional uint64 regionId = 2;
+  optional uint64 provinceId = 3;
+  optional uint64 districtId = 4;
+  optional uint64 wardId = 5;
+  optional double latitude = 6;
+  optional double longitude = 7;
+  string mapUrl = 8;
+  optional sharepb.AddressV3Proto address = 9;
+}
+
+// PropertyLandInfoCreate - thông tin đất/GCN
+message PropertyLandInfoCreate {
+  optional uint32 documentType = 1;
+  string documentNo = 2;
+  string issuringAuth = 3;
+  optional uint32 plot = 4;
+  optional uint32 sheet = 5;
+  optional double areaTotal = 6;
+  optional double areaLand = 7;
+  optional double areaPlant = 8;
+  optional string expiredLand = 9;   // timestamp ms
+  optional string expiredPlant = 10; // timestamp ms
+  optional uint32 purposeUsed = 11; // enum EPurposeUsed
+  string note = 12;
+  optional double frontWidth = 13;  // Mặt tiền
+  optional double depth = 14;
+  optional double streetWidth = 15;
+  string landNote = 16;
+}
+
+// PropertyBuildingInfoCreate - thông tin nhà/công trình
+message PropertyBuildingInfoCreate {
+  optional uint32 buildingType = 1;     // enum EBuildingType
+  optional uint32 buildStatus = 2;      // enum EBuildStatus
+  optional double areaActual = 3;
+  optional double areaFloor = 4;
+  optional double areaConstruction = 5;
+  optional uint32 floors = 6;
+  optional uint32 roomNumber = 7;
+  optional uint32 bedrooms = 8;
+  optional uint32 bathrooms = 9;
+  optional uint32 direction = 10;       // enum EHouseOrient
+  optional uint32 balconyDirection = 11;
+  string note = 12;
+}
+
+// PropertyExternalRefCreate - tham chiếu nguồn ngoài
+message PropertyExternalRefCreate {
+  optional uint64 externalRefId = 1;
+  optional uint32 sourceSystem = 2;     // enum ERefSourceSys
+  string sourceCode = 3;
+  optional uint32 confidence = 4;
+  optional uint32 syncStatus = 5;       // enum ESyncStatus
+  string note = 6;
+}
+
+// PropertyEdvidenceCreate - chứng minh thực tế
+message PropertyEdvidenceCreate {
+  string title = 1;
+  optional uint64 fileId = 2;
+  string description = 3;
+}
+
+// PropertyLineageCreate - NationalID, VerifiedAt
+message PropertyLineageCreate {
+  optional string nationalId = 1;
+  optional int64 verifiedNationalAt = 2;  // timestamp ms
+}
+
+message PropertyInfo {
+  optional uint64 propertyIdentifyId = 1; // Liên kết với Property
+	// Để lấy được thông tin của property identify
+	optional uint32 sourceType = 2;
+	optional uint64 propertyTypeId = 3;
+	optional uint64 projectId = 4;
+	optional uint32 legalStatus = 5;
+	optional uint32 privacyLevel = 6;
+	optional uint32 recordStatus = 7;
+	optional string note = 8;
+	optional string unitCode = 9;
+	optional string identifier = 10;
+	optional string level = 11;
+	optional uint64 avatarId = 12;
+	optional string scope = 13;
+	optional uint32 visibility = 14;
+  optional string title = 15;
+  optional bdspropb.MediaItem avatar = 16;
+}
+
+message AssetLegalItem {
+  string documentName = 1;                 // Tên giấy tờ
+  string documentUrl = 2;                  // URL giấy tờ
+  string documentType = 3;                  // Loại giấy tờ
+  optional int64 issuedDate = 4;            // Ngày cấp (timestamp)
+  optional int64 expiryDate = 5;            // Ngày hết hạn (timestamp)
+  string description = 6;                   // Mô tả
+  optional uint64 relatedSplitMergeId = 7;  // ID liên quan đến chia/tách
+}
+

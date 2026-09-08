@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "bdspro/common.proto";
+import "bdspro/asset.proto";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service AdminAssetService {
+  rpc GetAssets(AdminAssetSearchRequest) returns (AdminAssetSearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/assets"
+    };
+  };
+  rpc AssetDetail(sharepb.IdRequest) returns (Asset) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/assets/{id}"
+    };
+  };
+  rpc CreateAsset(SaveAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets"
+      body: "*"
+    };
+  };
+  rpc UpdateAsset(SaveAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/assets/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/assets/{id}"
+    };
+  };
+  rpc ApproveAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/{id}/approve"
+    };
+  };
+  rpc RejectAsset(sharepb.IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/{id}/reject"
+    };
+  };
+  rpc ArchiveAsset(ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/assets/archived"
+      body: "*"
+    };
+  };
+  rpc MergeAssets(MergeAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/merge"
+      body: "*"
+    };
+  };
+  rpc SplitAsset(SplitAssetRequest) returns (Asset) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/assets/split"
+      body: "*"
+    };
+  };
+}
+
+message AssetRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+// Admin Asset Search Request
+message AdminAssetSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string name = 3;
+  repeated uint32 status = 4; // Trạng thái tài sản
+  bool archived = 5; // Có lưu trữ hay không
+  string fromDate = 6; // Từ ngày (ISO format)
+  string toDate = 7; // Đến ngày (ISO format)
+  string text = 8; // Tìm kiếm theo text
+  repeated uint64 provinceIds = 9; // Danh sách tỉnh/thành phố
+  repeated uint64 propertyTypeIds = 10; // Danh sách loại bất động sản
+}
+
+// Admin Asset Search Response
+message AdminAssetSearchResponse {
+  repeated AdminAssetItem data = 1;
+  uint64 total = 2;
+}
+
+// Admin Asset Item
+message AdminAssetItem {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+  uint32 status = 4; // Trạng thái tài sản
+  string statusName = 5; // Tên trạng thái tài sản
+  double area = 6; // Diện tích
+  string address = 7; // Địa chỉ đầy đủ
+  string provinceName = 8; // Tên tỉnh/thành phố
+  string districtName = 9; // Tên quận/huyện
+  string wardName = 10; // Tên phường/xã
+  sharepb.ProfileItem owner = 11; // Thông tin chủ sở hữu
+  string propertyTypeName = 12; // Tên loại bất động sản
+  string createdAt = 13; // Ngày tạo (ISO format)
+  string updatedAt = 14; // Ngày cập nhật (ISO format)
+  double purchasePrice = 15; // Giá mua
+  string purchaseDate = 16; // Ngày mua (ISO format)
+  uint32 legalStatus = 17; // Trạng thái pháp lý
+  string legalStatusName = 18; // Tên trạng thái pháp lý
+  // Product information
+  optional uint64 productId = 19; // ID sản phẩm
+  optional string productCode = 20; // Mã sản phẩm
+  // Contract information
+  string contractEndDate = 21; // Ngày kết thúc hợp đồng (ISO format)
+  uint32 contractStatus = 22; // Trạng thái hợp đồng
+  string contractStatusName = 23; // Tên trạng thái hợp đồng
+}

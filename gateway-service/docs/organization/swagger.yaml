@@ -1,0 +1,4315 @@
+basePath: /v2/org
+definitions:
+  authpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      colorKey:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      hexCode:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  authpb.Permission:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      permissionType:
+        type: string
+      priority:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.Role:
+    properties:
+      allowAssign:
+        type: boolean
+      color:
+        $ref: '#/definitions/authpb.Color'
+      colorId:
+        type: integer
+      createdAt:
+        type: string
+      domainType:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      permissions:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleGroupName:
+        type: string
+      roleKey:
+        type: integer
+      roleName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  entity.AttachDocument:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      docName:
+        type: string
+      docOwner:
+        $ref: '#/definitions/enums.DocOwner'
+      docPath:
+        type: string
+      docSize:
+        type: integer
+      docType:
+        type: string
+      id:
+        type: integer
+      ownerId:
+        description: DealID or GroupID do DocOwner quyết định
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  entity.Investment:
+    properties:
+      amount:
+        type: number
+      attachDocument:
+        items:
+          $ref: '#/definitions/entity.AttachDocument'
+        type: array
+      changedAt:
+        type: string
+      confirmed:
+        description: For tracking confirmation status
+        type: boolean
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      dealID:
+        type: integer
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      id:
+        type: integer
+      investType:
+        $ref: '#/definitions/enums.DealMemberType'
+      memberID:
+        type: integer
+      note:
+        type: string
+      proxyUserID:
+        description: For proxy investments (when admin creates on behalf of user)
+        type: integer
+      status:
+        $ref: '#/definitions/enums.ApprovedStatus'
+      transferProofImage:
+        description: URL to transfer proof image
+        type: string
+      transferTime:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  enums.ApprovedStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ApprovedStatusPending
+    - ApprovedStatusApproved
+    - ApprovedStatusRejected
+  enums.DealMemberType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - DealMemberTypeCustomer
+    - DealMemberTypePartner
+    - DealMemberTypeMember
+  enums.DocOwner:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - DocOwnerDeal
+    - DocOwnerGroup
+    - DocOwnerInvest
+  organizationpb.AcceptDealInvitationRequest:
+    properties:
+      invitationId:
+        type: integer
+    type: object
+  organizationpb.AcceptDealInvitationResponse:
+    properties:
+      invitationId:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  organizationpb.AddInternalNoteRequest:
+    properties:
+      actionType:
+        description: Loại hành động (từ enum ActionType)
+        type: integer
+      content:
+        description: Nội dung ghi chú
+        type: string
+      dealId:
+        type: integer
+    type: object
+  organizationpb.AddInternalNoteResponse:
+    properties:
+      actionType:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      dealId:
+        type: integer
+      noteId:
+        type: integer
+    type: object
+  organizationpb.AddMemberToOrganizationBranchRequest:
+    properties:
+      id:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  organizationpb.ApprovedInvestmentItem:
+    properties:
+      amount:
+        type: number
+      confirmed:
+        type: boolean
+      id:
+        type: integer
+      note:
+        type: string
+      statusName:
+        type: string
+      transferTime:
+        type: string
+    type: object
+  organizationpb.BankAccountItem:
+    properties:
+      accountName:
+        type: string
+      accountNumber:
+        type: string
+      bank:
+        $ref: '#/definitions/paymentpb.Bank'
+      bankId:
+        type: integer
+      bankName:
+        type: string
+      name:
+        type: string
+    type: object
+  organizationpb.CancelDealRequest:
+    properties:
+      id:
+        type: integer
+      reason:
+        type: string
+    type: object
+  organizationpb.CancelDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.CheckOrganizationIsExistRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.ConfirmWithdrawalRequest:
+    properties:
+      invitationId:
+        type: integer
+    type: object
+  organizationpb.ConfirmWithdrawalResponse:
+    properties:
+      invitationId:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  organizationpb.CreateBusinessDomainRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+    type: object
+  organizationpb.CreateGroupDealRequest:
+    properties:
+      amount:
+        type: number
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankAccountId:
+        type: integer
+      chargePersonId:
+        type: integer
+      customerIds:
+        items:
+          type: integer
+        type: array
+      dealType:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      fromDate:
+        type: string
+      groupId:
+        type: integer
+      isManual:
+        description: Nhập tay (dành cho doanh thu)
+        type: boolean
+      isUnilateral:
+        description: Đơn phương (gỡ khỏi thương vụ)
+        type: boolean
+      memberIds:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      partnerIds:
+        items:
+          type: integer
+        type: array
+      productIds:
+        items:
+          type: integer
+        type: array
+      status:
+        type: integer
+      targetProfit:
+        type: number
+      toDate:
+        type: string
+    type: object
+  organizationpb.CreateGroupDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.CreateGroupDealV2Request:
+    properties:
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankAccountId:
+        type: integer
+      chargePersonId:
+        type: integer
+      customerIds:
+        items:
+          type: integer
+        type: array
+      dealType:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      groupId:
+        type: integer
+      isManual:
+        description: Nhập tay (dành cho doanh thu)
+        type: boolean
+      isUnilateral:
+        description: Đơn phương (gỡ khỏi thương vụ)
+        type: boolean
+      memberIds:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      partnerIds:
+        items:
+          type: integer
+        type: array
+      productIds:
+        items:
+          type: integer
+        type: array
+      targetProfit:
+        type: number
+    type: object
+  organizationpb.CreateGroupDealV2Response:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.CreateGroupDocumentRequest:
+    properties:
+      description:
+        type: string
+      fileSize:
+        type: integer
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      groupId:
+        type: integer
+      name:
+        type: string
+    type: object
+  organizationpb.CreateGroupMemberBatchRequest:
+    properties:
+      groupId:
+        type: integer
+      userIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.CreateGroupMemberRequest:
+    properties:
+      groupId:
+        type: integer
+      role:
+        type: string
+      roleId:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  organizationpb.CreateGroupRequest:
+    properties:
+      avatarUrl:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  organizationpb.CreateNewRoleWithMembersRequest:
+    properties:
+      colorId:
+        type: integer
+      key:
+        type: string
+      memberIds:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.CreateOrganizationBranchRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      managerId:
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      phone:
+        type: string
+      type:
+        description: branch, department, store
+        type: string
+    type: object
+  organizationpb.CreateOrganizationDealRequest:
+    properties:
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankAccountId:
+        type: integer
+      chargePersonId:
+        type: integer
+      customerIds:
+        items:
+          type: integer
+        type: array
+      dealType:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      isManual:
+        description: Nhập tay (dành cho doanh thu)
+        type: boolean
+      isUnilateral:
+        description: Đơn phương (gỡ khỏi thương vụ)
+        type: boolean
+      memberIds:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      organizationId:
+        type: integer
+      partnerIds:
+        items:
+          type: integer
+        type: array
+      productIds:
+        items:
+          type: integer
+        type: array
+      targetProfit:
+        type: number
+    type: object
+  organizationpb.CreateOrganizationDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.CreateOrganizationMemberBatchRequest:
+    properties:
+      userIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.CreateOrganizationMemberRequest:
+    properties:
+      organizationId:
+        type: integer
+      role:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  organizationpb.CreateOrganizationRequest:
+    properties:
+      address:
+        type: string
+      approveInvestor:
+        type: boolean
+      businessDomainIds:
+        items:
+          type: integer
+        type: array
+      businessLicenseUrl:
+        type: string
+      description:
+        type: string
+      detailAddress:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: integer
+      taxCode:
+        type: string
+      website:
+        type: string
+    type: object
+  organizationpb.CreatePermissionRequest:
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+      organizationId:
+        type: integer
+    type: object
+  organizationpb.CreateRoleRequest:
+    properties:
+      colorId:
+        type: integer
+      domainType:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      name:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.DealHistoryItem:
+    properties:
+      actionName:
+        description: Tên hành động
+        type: string
+      actionType:
+        description: Loại hành động
+        type: integer
+      actorAvatar:
+        description: Avatar người thực hiện
+        type: string
+      actorId:
+        description: ID người thực hiện
+        type: integer
+      actorName:
+        description: Tên người thực hiện
+        type: string
+      content:
+        description: Nội dung chi tiết
+        type: string
+      createdAt:
+        description: Thời gian tạo
+        type: string
+      dealId:
+        type: integer
+      id:
+        type: integer
+    type: object
+  organizationpb.DealMember:
+    properties:
+      amountCommit:
+        type: number
+      color:
+        $ref: '#/definitions/authpb.Color'
+      commissionType:
+        description: 'Loại hoa hồng (10: %, 20: VND)'
+        type: integer
+      commissionValue:
+        description: Giá trị hoa hồng
+        type: number
+      createdAt:
+        type: string
+      deal:
+        $ref: '#/definitions/organizationpb.GroupDeal'
+      dealId:
+        type: integer
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      id:
+        type: integer
+      invitedAt:
+        description: Thời gian mời
+        type: string
+      inviterId:
+        type: integer
+      isOwner:
+        description: Đánh dấu là chủ thương vụ
+        type: boolean
+      memberId:
+        type: integer
+      message:
+        type: string
+      note:
+        description: Ghi chú
+        type: string
+      profile:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      reason:
+        type: string
+      respondedAt:
+        description: Thời gian phản hồi
+        type: string
+      role:
+        $ref: '#/definitions/authpb.Role'
+      roleId:
+        type: integer
+      roleKey:
+        description: 'Role key (400: Owner, 420: Admin, 430: Member)'
+        type: integer
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      withdrawnAt:
+        description: Thời gian rút khỏi
+        type: string
+    type: object
+  organizationpb.DealMemberCommissionUpdate:
+    properties:
+      commissionType:
+        type: integer
+      commissionValue:
+        type: number
+      memberId:
+        type: integer
+      note:
+        type: string
+    type: object
+  organizationpb.DealProcessItem:
+    properties:
+      bgColor:
+        type: string
+      borderColor:
+        type: string
+      code:
+        type: string
+      color:
+        type: string
+      statusName:
+        type: string
+      timestamp:
+        type: string
+      transactionId:
+        type: string
+    type: object
+  organizationpb.DealSearchRequest:
+    properties:
+      groupId:
+        type: integer
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      ownerOf:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+      text:
+        type: string
+    type: object
+  organizationpb.DeleteGroupDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.DeleteGroupDocumentRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.DeleteOrganizationBranchRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.DocumentItem:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      type:
+        type: string
+    type: object
+  organizationpb.GetAcceptedMembersResponse:
+    properties:
+      members:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+    type: object
+  organizationpb.GetAllOrganizationsWithMembersForAdminRequest:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  organizationpb.GetDealCommissionStatsResponse:
+    properties:
+      commissionPercentage:
+        description: Phần trăm đã chia
+        type: number
+      dealId:
+        type: integer
+      memberCount:
+        description: Số người đã chia
+        type: integer
+      remainingProfit:
+        description: Lợi nhuận còn lại
+        type: number
+      targetProfit:
+        description: Lợi nhuận mục tiêu
+        type: number
+      totalCommission:
+        description: Tổng tiền đã chia
+        type: number
+    type: object
+  organizationpb.GetDealHistoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealHistoryItem'
+        type: array
+      total:
+        description: Tổng số item
+        type: integer
+    type: object
+  organizationpb.GetDealInvitationResponse:
+    properties:
+      member:
+        $ref: '#/definitions/organizationpb.DealMember'
+    type: object
+  organizationpb.GetDealInvitationsByDealResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetDealMembersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetDealProcessResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealProcessItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetDealProductsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/bdspropb.ProductAttachment'
+        type: array
+    type: object
+  organizationpb.GetDealsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.GroupDeal'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetGroupDealResponse:
+    properties:
+      deal:
+        $ref: '#/definitions/organizationpb.GroupDeal'
+    type: object
+  organizationpb.GetInvestmentHistoriesResponse:
+    properties:
+      data:
+        description: Danh sách lịch sử đầu tư
+        items:
+          $ref: '#/definitions/organizationpb.ApprovedInvestmentItem'
+        type: array
+      totalInvestment:
+        description: Tổng số tiền các lần đã góp và được duyệt
+        type: number
+    type: object
+  organizationpb.GetOrganizationDealsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.GroupDeal'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GetOrganizationsRequest:
+    properties:
+      id:
+        type: integer
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  organizationpb.GetPendingInvitationsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.GroupDeal:
+    properties:
+      allowSharing:
+        type: boolean
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      cancelReason:
+        type: string
+      chargePerson:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      chargePersonId:
+        type: integer
+      chargePersonName:
+        type: string
+      code:
+        type: string
+      createdAt:
+        type: string
+      customers:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      dealType:
+        type: integer
+      dealTypeName:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      fromDate:
+        type: string
+      id:
+        type: integer
+      internalNote:
+        type: string
+      isManual:
+        description: Nhập tay (dành cho doanh thu)
+        type: boolean
+      isUnilateral:
+        description: Đơn phương (gỡ khỏi thương vụ)
+        type: boolean
+      memberCanAddTransaction:
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      numMember:
+        type: integer
+      onlyOwnerGetCommission:
+        type: boolean
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      partners:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/bdspropb.ProductAttachment'
+        type: array
+      profitAmount:
+        type: number
+      role:
+        $ref: '#/definitions/authpb.Role'
+      status:
+        type: integer
+      statusName:
+        type: string
+      targetProfit:
+        type: number
+      toDate:
+        type: string
+      totalAmount:
+        type: number
+      updatedAt:
+        type: string
+    type: object
+  organizationpb.InfoInvestmentResponse:
+    properties:
+      amountApproved:
+        type: number
+      amountPending:
+        type: number
+      amountRejected:
+        type: number
+      amountRest:
+        type: number
+      amountTarget:
+        type: number
+      numApproved:
+        type: integer
+      numInvestment:
+        type: integer
+      numMemberSubmit:
+        type: integer
+      numPending:
+        type: integer
+      numRejected:
+        type: integer
+      percentDone:
+        type: number
+      totalInvestment:
+        type: integer
+    type: object
+  organizationpb.Investment:
+    properties:
+      amount:
+        type: number
+      changedAt:
+        type: string
+      confirmed:
+        type: boolean
+      createdBy:
+        type: integer
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      dealId:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      histories:
+        description: Danh sách các lần góp vốn đã được xác nhận
+        items:
+          $ref: '#/definitions/organizationpb.ApprovedInvestmentItem'
+        type: array
+      id:
+        type: integer
+      investType:
+        type: integer
+      memberId:
+        description: ID of the deal member
+        type: integer
+      note:
+        type: string
+      proxyUser:
+        allOf:
+        - $ref: '#/definitions/sharepb.ProfileItem'
+        description: Profile of proxy user
+      proxyUserId:
+        description: ID of admin who created on behalf
+        type: integer
+      status:
+        type: integer
+      statusName:
+        type: string
+      totalInvestment:
+        description: Tổng số tiền các lần đã góp và được duyệt
+        type: number
+      transferProofImage:
+        description: URL to transfer proof image
+        type: string
+      transferTime:
+        type: string
+    type: object
+  organizationpb.RejectDealInvitationRequest:
+    properties:
+      invitationId:
+        type: integer
+      reason:
+        type: string
+    type: object
+  organizationpb.RejectDealInvitationResponse:
+    properties:
+      invitationId:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  organizationpb.RemoveFromDealRequest:
+    properties:
+      invitationId:
+        type: integer
+      reason:
+        type: string
+    type: object
+  organizationpb.RemoveFromDealResponse:
+    properties:
+      invitationId:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  organizationpb.RemoveMemberFromOrganizationBranchRequest:
+    properties:
+      id:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  organizationpb.ResendDealInvitationRequest:
+    properties:
+      invitationId:
+        type: integer
+    type: object
+  organizationpb.ResendDealInvitationResponse:
+    properties:
+      invitationId:
+        type: integer
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  organizationpb.SaveDealProductResponse:
+    properties:
+      status:
+        type: integer
+    type: object
+  organizationpb.SearchDealMembersResponse:
+    properties:
+      members:
+        items:
+          $ref: '#/definitions/organizationpb.DealMember'
+        type: array
+      total:
+        type: integer
+    type: object
+  organizationpb.SendDealInvitationRequest:
+    properties:
+      colorId:
+        type: integer
+      dealId:
+        type: integer
+      inviterId:
+        type: integer
+      memberId:
+        type: integer
+      message:
+        type: string
+      roleId:
+        type: integer
+      roleKey:
+        type: integer
+    type: object
+  organizationpb.SendDealInvitationResponse:
+    properties:
+      invitationId:
+        type: integer
+      message:
+        type: string
+      roleId:
+        type: integer
+      roleKey:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  organizationpb.SubmitInvestRequest:
+    properties:
+      amount:
+        type: number
+      dealId:
+        type: integer
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      doneInvestment:
+        description: Đánh dấu đã đủ vốn góp
+        type: boolean
+      id:
+        type: integer
+      investType:
+        type: integer
+      memberId:
+        description: ID of the deal member making the investment
+        type: integer
+      note:
+        type: string
+      proxyUserId:
+        description: For proxy investments
+        type: integer
+      status:
+        type: integer
+      transferProofImage:
+        description: URL to transfer proof image
+        type: string
+      transferTime:
+        type: string
+    type: object
+  organizationpb.SummaryResponse:
+    properties:
+      amountApproved:
+        type: number
+      amountCost:
+        type: number
+      amountPending:
+        type: number
+      amountProfit:
+        type: number
+      amountRejected:
+        type: number
+      amountRest:
+        type: number
+      amountTarget:
+        type: number
+      amountTotal:
+        type: number
+      numApproved:
+        type: integer
+      numInvestment:
+        type: integer
+      numMemberSubmit:
+        type: integer
+      numPending:
+        type: integer
+      numRejected:
+        type: integer
+      numTransaction:
+        type: integer
+      percentDone:
+        type: number
+      totalPayment:
+        type: number
+    type: object
+  organizationpb.UpdateAllowManualInputRequest:
+    properties:
+      allowManualInput:
+        type: boolean
+      dealId:
+        type: integer
+    type: object
+  organizationpb.UpdateAllowManualInputResponse:
+    properties:
+      dealId:
+        type: integer
+    type: object
+  organizationpb.UpdateBusinessDomainRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+    type: object
+  organizationpb.UpdateDealMemberCommissionRequest:
+    properties:
+      commissionType:
+        description: 'Loại hoa hồng (10: %, 20: VND)'
+        type: integer
+      commissionValue:
+        description: Giá trị hoa hồng
+        type: number
+      dealId:
+        type: integer
+      memberId:
+        type: integer
+      note:
+        description: Ghi chú
+        type: string
+    type: object
+  organizationpb.UpdateDealMemberCommissionResponse:
+    properties:
+      commissionType:
+        type: integer
+      commissionValue:
+        type: number
+      dealId:
+        type: integer
+      memberId:
+        type: integer
+      note:
+        type: string
+    type: object
+  organizationpb.UpdateDealMemberNoteRequest:
+    properties:
+      dealId:
+        type: integer
+      memberId:
+        type: integer
+      note:
+        type: string
+    type: object
+  organizationpb.UpdateDealMemberNoteResponse:
+    properties:
+      dealId:
+        type: integer
+      memberId:
+        type: integer
+      note:
+        type: string
+    type: object
+  organizationpb.UpdateDealMemberRoleRequest:
+    properties:
+      dealId:
+        description: ID thương vụ
+        type: integer
+      memberId:
+        description: ID thành viên
+        type: integer
+      roleKey:
+        description: Vai trò mới (RoleKey enum)
+        type: integer
+    type: object
+  organizationpb.UpdateDealMembersCommissionRequest:
+    properties:
+      dealId:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/organizationpb.DealMemberCommissionUpdate'
+        type: array
+    type: object
+  organizationpb.UpdateDealMembersCommissionResponse:
+    properties:
+      dealId:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/organizationpb.DealMemberCommissionUpdate'
+        type: array
+    type: object
+  organizationpb.UpdateDealSettingRequest:
+    properties:
+      accountName:
+        type: string
+      accountNumber:
+        type: string
+      allowManualInput:
+        type: boolean
+      allowSharing:
+        type: boolean
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      bankId:
+        type: integer
+      dealId:
+        type: integer
+      fromDate:
+        type: string
+      internalNote:
+        type: string
+      memberCanAddTransaction:
+        type: boolean
+      name:
+        type: string
+      onlyOwnerGetCommission:
+        type: boolean
+      ownerId:
+        type: integer
+      status:
+        type: integer
+      targetProfit:
+        type: number
+      toDate:
+        type: string
+    type: object
+  organizationpb.UpdateDealSettingResponse:
+    properties:
+      dealId:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealRequest:
+    properties:
+      amount:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusRequest:
+    properties:
+      id:
+        type: integer
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusV2Request:
+    properties:
+      dealId:
+        type: integer
+      groupId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDealStatusV2Response:
+    properties:
+      dealId:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupDocumentRequest:
+    properties:
+      description:
+        type: string
+      fileSize:
+        type: integer
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  organizationpb.UpdateGroupMemberRequest:
+    properties:
+      id:
+        type: integer
+      role:
+        type: string
+      roleId:
+        type: integer
+    type: object
+  organizationpb.UpdateGroupRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  organizationpb.UpdateOrganizationBranchRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      type:
+        description: branch, department, store
+        type: string
+    type: object
+  organizationpb.UpdateOrganizationDealStatusRequest:
+    properties:
+      dealId:
+        type: integer
+      organizationId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateOrganizationDealStatusResponse:
+    properties:
+      dealId:
+        type: integer
+    type: object
+  organizationpb.UpdateOrganizationMemberRequest:
+    properties:
+      id:
+        type: integer
+      roleKey:
+        type: integer
+      status:
+        type: integer
+    type: object
+  organizationpb.UpdateOrganizationRequest:
+    properties:
+      address:
+        type: string
+      approveInvestor:
+        type: boolean
+      businessDomainIds:
+        items:
+          type: integer
+        type: array
+      businessLicenseUrl:
+        type: string
+      description:
+        type: string
+      detailAddress:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: integer
+      taxCode:
+        type: string
+      website:
+        type: string
+    type: object
+  organizationpb.UpdatePermissionRequest:
+    properties:
+      id:
+        type: integer
+      key:
+        type: string
+      name:
+        type: string
+    type: object
+  organizationpb.UpdateRoleRequest:
+    properties:
+      colorId:
+        type: integer
+      domainType:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      name:
+        type: string
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.WithdrawFromDealRequest:
+    properties:
+      invitationId:
+        type: integer
+      reason:
+        type: string
+    type: object
+  organizationpb.WithdrawFromDealResponse:
+    properties:
+      invitationId:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  paymentpb.Bank:
+    properties:
+      active:
+        type: boolean
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      logo:
+        type: string
+      name:
+        type: string
+    type: object
+  bdspropb.ProductAttachment:
+    properties:
+      area:
+        type: number
+      assetId:
+        type: integer
+      code:
+        type: string
+      depositeId:
+        type: integer
+      id:
+        type: integer
+      image:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      rentStatus:
+        type: integer
+      saleStatus:
+        type: integer
+      sourceType:
+        type: integer
+      sourceTypeName:
+        type: string
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Organization Service API
+  title: Organization Service
+  version: "1.0"
+paths:
+  /business-domain:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả lĩnh vực hoạt động
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tất cả lĩnh vực hoạt động
+      tags:
+      - Lĩnh vực hoạt động
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới một lĩnh vực hoạt động
+      parameters:
+      - description: Thông tin lĩnh vực hoạt động
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateBusinessDomainRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo lĩnh vực hoạt động
+      tags:
+      - Lĩnh vực hoạt động
+  /business-domain/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa lĩnh vực hoạt động (soft delete)
+      parameters:
+      - description: ID của lĩnh vực hoạt động
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa lĩnh vực hoạt động
+      tags:
+      - Lĩnh vực hoạt động
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết lĩnh vực hoạt động theo ID
+      parameters:
+      - description: ID của lĩnh vực hoạt động
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết lĩnh vực hoạt động
+      tags:
+      - Lĩnh vực hoạt động
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin lĩnh vực hoạt động
+      parameters:
+      - description: Thông tin lĩnh vực hoạt động
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateBusinessDomainRequest'
+      - description: ID của lĩnh vực hoạt động
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật lĩnh vực hoạt động
+      tags:
+      - Lĩnh vực hoạt động
+  /business-domain/active:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lĩnh vực hoạt động đang active
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy lĩnh vực hoạt động đang active
+      tags:
+      - Lĩnh vực hoạt động
+  /deal:
+    post:
+      consumes:
+      - application/json
+      description: Tạo thương vụ
+      parameters:
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.CreateGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo thương vụ
+      tags:
+      - Thương vụ
+  /deal-invitation:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời tham gia thương vụ
+      parameters:
+      - description: Thông tin lời mời
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.SendDealInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SendDealInvitationResponse'
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời tham gia thương vụ
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin lời mời theo ID
+      parameters:
+      - description: ID của lời mời
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealInvitationResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy lời mời theo ID
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/accept:
+    post:
+      consumes:
+      - application/json
+      description: Xác nhận lời mời tham gia thương vụ
+      parameters:
+      - description: Thông tin xác nhận
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.AcceptDealInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.AcceptDealInvitationResponse'
+      security:
+      - BearerAuth: []
+      summary: Xác nhận lời mời
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/confirm-withdrawal:
+    post:
+      consumes:
+      - application/json
+      description: Xác nhận rút khỏi thương vụ (dành cho admin/phụ trách)
+      parameters:
+      - description: Thông tin xác nhận
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.ConfirmWithdrawalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.ConfirmWithdrawalResponse'
+      security:
+      - BearerAuth: []
+      summary: Xác nhận rút khỏi thương vụ
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/pending:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lời mời đang chờ xác nhận
+      parameters:
+      - in: query
+        name: memberId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetPendingInvitationsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách lời mời đang chờ
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/reject:
+    post:
+      consumes:
+      - application/json
+      description: Từ chối lời mời tham gia thương vụ
+      parameters:
+      - description: Thông tin từ chối
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.RejectDealInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.RejectDealInvitationResponse'
+      security:
+      - BearerAuth: []
+      summary: Từ chối lời mời
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/remove:
+    post:
+      consumes:
+      - application/json
+      description: Gỡ khỏi thương vụ (dành cho admin/phụ trách)
+      parameters:
+      - description: Thông tin gỡ khỏi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.RemoveFromDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.RemoveFromDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Gỡ khỏi thương vụ
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/resend:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại lời mời tham gia thương vụ
+      parameters:
+      - description: Thông tin gửi lại
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.ResendDealInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.ResendDealInvitationResponse'
+      security:
+      - BearerAuth: []
+      summary: Gửi lại lời mời
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/search:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm thành viên + sort theo thương vụ chung
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: doneInvestment
+        type: boolean
+      - in: query
+        name: keyword
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SearchDealMembersResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm thành viên
+      tags:
+      - Lời mời thương vụ
+  /deal-invitation/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Rút khỏi thương vụ (dành cho thành viên)
+      parameters:
+      - description: Thông tin rút khỏi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.WithdrawFromDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.WithdrawFromDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Rút khỏi thương vụ
+      tags:
+      - Lời mời thương vụ
+  /deal/{deal_id}/accepted-members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên đã chấp nhận lời mời tham gia thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: deal_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetAcceptedMembersResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên đã accept
+      tags:
+      - Lời mời thương vụ
+  /deal/{deal_id}/invitations:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lời mời theo thương vụ
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealInvitationsByDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách lời mời theo thương vụ
+      tags:
+      - Lời mời thương vụ
+  /deal/{dealId}/commission/stats:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê về lợi nhuận mục tiêu, tổng tiền đã chia, số người
+        đã chia
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealCommissionStatsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thống kê lợi nhuận và hoa hồng
+      tags:
+      - Hoa hồng
+  /deal/{dealId}/history:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lịch sử của deal với phân trang và lọc theo loại
+        hành động
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - collectionFormat: csv
+        description: Lọc theo loại hành động
+        in: query
+        items:
+          type: integer
+        name: actionTypes
+        type: array
+      - default: 1
+        description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Số lượng item mỗi trang
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealHistoryResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách lịch sử
+      tags:
+      - Ghi chú nội bộ
+  /deal/{dealId}/internal-note:
+    post:
+      consumes:
+      - application/json
+      description: Thêm ghi chú nội bộ cho deal
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Thông tin ghi chú
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.AddInternalNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.AddInternalNoteResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm ghi chú nội bộ
+      tags:
+      - Ghi chú nội bộ
+  /deal/{dealId}/member/{memberId}/commission:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật hoa hồng cho deal member
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: ID thành viên
+        in: path
+        name: memberId
+        required: true
+        type: integer
+      - description: Thông tin hoa hồng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealMemberCommissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateDealMemberCommissionResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật hoa hồng cho deal member
+      tags:
+      - Hoa hồng
+  /deal/{dealId}/member/{memberId}/note:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật ghi chú cho deal member
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: ID thành viên
+        in: path
+        name: memberId
+        required: true
+        type: integer
+      - description: Thông tin ghi chú
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealMemberNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateDealMemberNoteResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật ghi chú cho deal member
+      tags:
+      - Hoa hồng
+  /deal/{dealId}/members/commission:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật hoa hồng cho nhiều deal members cùng lúc
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Thông tin hoa hồng cho nhiều members
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealMembersCommissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateDealMembersCommissionResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật hoa hồng cho nhiều deal members
+      tags:
+      - Hoa hồng
+  /deal/{dealId}/process:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin process của deal bao gồm statusName, timestamp, code,
+        transactionId, color
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealProcessResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin process của deal
+      tags:
+      - Thương vụ
+  /deal/{dealId}/products:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách sản phẩm thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealProductsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách sản phẩm thương vụ
+      tags:
+      - Thương vụ
+    post:
+      consumes:
+      - application/json
+      description: Thêm sản phẩm thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Danh sách ID sản phẩm
+        in: body
+        name: productIds
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SaveDealProductResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm sản phẩm thương vụ
+      tags:
+      - Thương vụ
+  /deal/{dealId}/summary:
+    get:
+      consumes:
+      - application/json
+      description: Tổng quan thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - in: query
+        name: all
+        type: boolean
+      - in: query
+        name: amountApproved
+        type: boolean
+      - in: query
+        name: amountCost
+        type: boolean
+      - in: query
+        name: amountPending
+        type: boolean
+      - in: query
+        name: amountProfit
+        type: boolean
+      - in: query
+        name: amountRejected
+        type: boolean
+      - in: query
+        name: amountTarget
+        type: boolean
+      - in: query
+        name: amountTotal
+        type: boolean
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: numApproved
+        type: boolean
+      - in: query
+        name: numInvestment
+        type: boolean
+      - in: query
+        name: numMemberSubmit
+        type: boolean
+      - in: query
+        name: numPending
+        type: boolean
+      - in: query
+        name: numRejected
+        type: boolean
+      - in: query
+        name: numTransaction
+        type: boolean
+      - in: query
+        name: percentDone
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.SummaryResponse'
+      security:
+      - BearerAuth: []
+      summary: Tổng quan thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.DeleteGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa thương vụ
+      tags:
+      - Thương vụ
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin thương vụ
+      tags:
+      - Thương vụ
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thương vụ
+      parameters:
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateGroupDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/allow-manual-input:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật cho phép nhập thủ công
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateAllowManualInputRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateAllowManualInputResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật cho phép nhập thủ công
+      tags:
+      - Thương vụ
+  /deal/{id}/bank-account:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin tài khoản đầu tư
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.BankAccountItem'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin tài khoản đầu tư
+      tags:
+      - Thương vụ
+  /deal/{id}/cancel:
+    put:
+      consumes:
+      - application/json
+      description: Hủy thương vụ với lý do
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Lý do hủy
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CancelDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.CancelDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Hủy thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/investment:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin đầu tư thống kê khai báo thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.InfoInvestmentResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin đầu tư thống kê khai báo thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealMembersResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/setting:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin thương vụ
+      parameters:
+      - description: ID thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealSettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateDealSettingResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin thương vụ
+      tags:
+      - Thương vụ
+  /deal/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái thương vụ
+      parameters:
+      - description: ID của thương vụ
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật trạng thái thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDealStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateGroupDealStatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái thương vụ
+      tags:
+      - Thương vụ
+  /deal/member/role:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật vai trò thành viên thương vụ
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateDealMemberRoleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật vai trò thành viên thương vụ
+      tags:
+      - Thương vụ
+  /group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm của user hiện tại
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm của user hiện tại
+      tags:
+      - Nhóm
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nhóm
+      tags:
+      - Nhóm
+  /group-member:
+    post:
+      consumes:
+      - application/json
+      description: Tạo thành viên nhóm
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: groupMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/{groupMemberId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thành viên nhóm
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: groupMemberId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên nhóm
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên nhóm
+      tags:
+      - Thành viên
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thành viên nhóm
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: groupMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/batch:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhiều thành viên nhóm cùng lúc
+      parameters:
+      - description: Danh sách thành viên nhóm
+        in: body
+        name: members
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupMemberBatchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nhiều thành viên nhóm cùng lúc
+      tags:
+      - Thành viên
+  /group-member/list/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên nhóm
+      tags:
+      - Thành viên
+  /group-member/switch:
+    post:
+      consumes:
+      - application/json
+      description: Đổi nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đổi nhóm
+      tags:
+      - Thành viên
+  /group/{groupId}/deal:
+    post:
+      consumes:
+      - application/json
+      description: Tạo thương vụ cho nhóm
+      parameters:
+      - description: ID nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupDealV2Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.CreateGroupDealV2Response'
+      security:
+      - BearerAuth: []
+      summary: Tạo thương vụ cho nhóm
+      tags:
+      - Thương vụ
+  /group/{groupId}/deal/{dealId}/status:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái thương vụ cho nhóm
+      parameters:
+      - description: ID nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDealStatusV2Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateGroupDealStatusV2Response'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái thương vụ cho nhóm
+      tags:
+      - Thương vụ
+  /group/{groupId}/deals/overview:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê tổng quan thương vụ theo nhóm
+      parameters:
+      - description: ID nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổng quan thương vụ theo nhóm
+      tags:
+      - Thương vụ
+  /group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa nhóm
+      parameters:
+      - description: ID của nhóm
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa nhóm
+      tags:
+      - Nhóm
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật nhóm
+      tags:
+      - Nhóm
+  /group/by-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm của user hiện tại
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhóm của user hiện tại
+      tags:
+      - Nhóm
+  /group/document:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo tài liệu
+      tags:
+      - Tài liệu
+  /group/document/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DeleteGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa tài liệu
+      tags:
+      - Tài liệu
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật tài liệu
+      parameters:
+      - description: Thông tin tài liệu
+        in: body
+        name: group_document
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateGroupDocumentRequest'
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tài liệu
+      tags:
+      - Tài liệu
+  /group/document/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tài liệu
+      parameters:
+      - description: ID của tài liệu
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tài liệu
+      tags:
+      - Tài liệu
+  /group/document/list/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tài liệu
+      parameters:
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài liệu
+      tags:
+      - Tài liệu
+  /group/log-activity/{groupId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách hoạt động của nhóm
+      parameters:
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách hoạt động của nhóm
+      tags:
+      - Hoạt động
+  /investment:
+    post:
+      consumes:
+      - application/json
+      description: submit form khai báo góp vốn
+      parameters:
+      - description: Investment
+        in: body
+        name: investment
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.SubmitInvestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: submit form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: delete form khai báo góp vốn
+      tags:
+      - Investment
+    get:
+      consumes:
+      - application/json
+      description: get form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.Investment'
+      security:
+      - BearerAuth: []
+      summary: get form khai báo góp vốn
+      tags:
+      - Investment
+    put:
+      consumes:
+      - application/json
+      description: update form khai báo góp vốn
+      parameters:
+      - description: Investment
+        in: body
+        name: investment
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.SubmitInvestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: update form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: approve form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: approve form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: confirm form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: confirm form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: reject form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: reject form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/{id}/unconfirm:
+    post:
+      consumes:
+      - application/json
+      description: unconfirm form khai báo góp vốn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+      security:
+      - BearerAuth: []
+      summary: unconfirm form khai báo góp vốn
+      tags:
+      - Investment
+  /investment/histories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get investment histories
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/organizationpb.GetInvestmentHistoriesResponse'
+      security:
+      - BearerAuth: []
+      summary: get investment histories
+      tags:
+      - Investment
+  /investments/{dealId}:
+    get:
+      consumes:
+      - application/json
+      description: get form khai báo góp vốn
+      parameters:
+      - description: Deal ID
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Investment'
+      security:
+      - BearerAuth: []
+      summary: get form khai báo góp vốn
+      tags:
+      - Investment
+  /organization/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật tổ chức
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật tổ chức
+      tags:
+      - Tổ chức
+  /organization/{organizationId}/deal:
+    post:
+      consumes:
+      - application/json
+      description: Tạo thương vụ cho tổ chức
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: organizationId
+        required: true
+        type: integer
+      - description: Thông tin thương vụ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationDealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.CreateOrganizationDealResponse'
+      security:
+      - BearerAuth: []
+      summary: Tạo thương vụ cho tổ chức
+      tags:
+      - Thương vụ
+  /organization/{organizationId}/deal/{dealId}/status:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái thương vụ cho tổ chức
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: organizationId
+        required: true
+        type: integer
+      - description: ID thương vụ
+        in: path
+        name: dealId
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationDealStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.UpdateOrganizationDealStatusResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái thương vụ cho tổ chức
+      tags:
+      - Thương vụ
+  /organization/{organizationId}/deals:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ của tổ chức
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: organizationId
+        required: true
+        type: integer
+      - default: 1
+        description: Trang
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Kích thước
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetOrganizationDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ của tổ chức
+      tags:
+      - Thương vụ
+  /organization/{organizationId}/deals/overview:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê tổng quan thương vụ theo tổ chức
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: organizationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổng quan thương vụ theo tổ chức
+      tags:
+      - Thương vụ
+  /organization/admin/all-with-members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả doanh nghiệp với thành viên cho admin
+      parameters:
+      - description: Thông tin request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.GetAllOrganizationsWithMembersForAdminRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tất cả doanh nghiệp với thành viên (Admin only)
+      tags:
+      - Tổ chức
+  /organization/branch:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách chi nhánh
+      parameters:
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách chi nhánh
+      tags:
+      - Chi nhánh
+    post:
+      consumes:
+      - application/json
+      description: Tạo chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{branchId}/deals:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ theo chi nhánh
+      parameters:
+      - description: ID chi nhánh
+        in: path
+        name: branchId
+        required: true
+        type: integer
+      - default: 1
+        description: Trang
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Kích thước
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ theo chi nhánh
+      tags:
+      - Thương vụ
+  /organization/branch/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DeleteOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa chi nhánh
+      tags:
+      - Chi nhánh
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết chi nhánh
+      parameters:
+      - description: ID chi nhánh
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết chi nhánh
+      tags:
+      - Chi nhánh
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}/member:
+    post:
+      consumes:
+      - application/json
+      description: Thêm thành viên vào chi nhánh
+      parameters:
+      - description: ID chi nhánh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.AddMemberToOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Thêm thành viên vào chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}/member/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên khỏi chi nhánh
+      parameters:
+      - description: Thông tin chi nhánh
+        in: body
+        name: organization_branch
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.RemoveMemberFromOrganizationBranchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên khỏi chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/branch/{id}/members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của chi nhánh
+      parameters:
+      - description: ID chi nhánh
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của chi nhánh
+      tags:
+      - Chi nhánh
+  /organization/by-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tổ chức của người dùng hiện tại
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổ chức của người dùng hiện tại
+      tags:
+      - Tổ chức
+  /organization/check/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Kiểm tra tổ chức có tồn tại không
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CheckOrganizationIsExistRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Kiểm tra tổ chức có tồn tại không
+      tags:
+      - Tổ chức
+  /organization/current:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tổ chức hiện tại
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy tổ chức hiện tại
+      tags:
+      - Tổ chức
+  /organization/current/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Lấy dashboard của tổ chức hiện tại
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy dashboard của tổ chức hiện tại
+      tags:
+      - Tổ chức
+  /organization/deals/current:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thương vụ của tổ chức hiện tại
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: ids
+        type: array
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetOrganizationDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thương vụ của tổ chức hiện tại mà người dùng request
+        đến
+      tags:
+      - Thương vụ
+  /organization/global/profile/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy profile của tổ chức global
+      parameters:
+      - description: ID tổ chức
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Lấy profile của tổ chức global
+      tags:
+      - Tổ chức
+  /organization/member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang
+        đăng nhập
+      parameters:
+      - description: Role ID để lọc thành viên
+        in: query
+        name: roleId
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      - description: Tên thành viên
+        in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng
+        nhập
+      tags:
+      - Thành viên
+    post:
+      consumes:
+      - application/json
+      description: Tạo thành viên tổ chức
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: organizationMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo thành viên tổ chức
+      tags:
+      - Thành viên
+  /organization/member/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa thành viên tổ chức
+      parameters:
+      - description: ID của thành viên
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa thành viên tổ chức
+      tags:
+      - Thành viên
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thành viên tổ chức
+      parameters:
+      - description: Thông tin thành viên
+        in: body
+        name: organizationMember
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateOrganizationMemberRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thành viên tổ chức
+      tags:
+      - Thành viên
+  /organization/member/batch:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhiều thành viên tổ chức cùng lúc
+      parameters:
+      - description: Danh sách thông tin thành viên
+        in: body
+        name: organizationMembers
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationMemberBatchRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nhiều thành viên tổ chức cùng lúc
+      tags:
+      - Thành viên
+  /organization/members/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang
+        đăng nhập
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của tổ chức hiện tại mà người dùng đang đăng
+        nhập
+      tags:
+      - Thành viên
+  /organization/new:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tổ chức mới
+      parameters:
+      - description: Thông tin tổ chức
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateOrganizationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo tổ chức mới
+      tags:
+      - Tổ chức
+  /organization/permission:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách quyền
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách quyền
+      tags:
+      - Quyền
+    post:
+      consumes:
+      - application/json
+      description: Tạo quyền
+      parameters:
+      - description: Thông tin quyền
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quyền
+      tags:
+      - Quyền
+  /organization/permission/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quyền
+      parameters:
+      - description: ID của quyền
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quyền
+      tags:
+      - Quyền
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quyền
+      parameters:
+      - description: Thông tin quyền
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quyền
+      tags:
+      - Quyền
+  /organization/role:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách vai trò
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng mục trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách vai trò
+      tags:
+      - Vai trò
+    post:
+      consumes:
+      - application/json
+      description: Tạo vai trò
+      parameters:
+      - description: Thông tin vai trò
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateRoleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo vai trò
+      tags:
+      - Vai trò
+  /organization/role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa vai trò
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa vai trò
+      tags:
+      - Vai trò
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết vai trò theo ID
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết vai trò
+      tags:
+      - Vai trò
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật vai trò
+      parameters:
+      - description: Thông tin vai trò
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.UpdateRoleRequest'
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật vai trò
+      tags:
+      - Vai trò
+  /organization/role/deal-members:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách thành viên của vai trò thương vụ
+      parameters:
+      - description: ID của vai trò
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thành viên của vai trò thương vụ
+      tags:
+      - Vai trò
+  /organization/role/with-members:
+    post:
+      consumes:
+      - application/json
+      description: Tạo vai trò mới và gán thành viên cùng quyền
+      parameters:
+      - description: Thông tin vai trò với thành viên và quyền
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.CreateNewRoleWithMembersRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo vai trò với thành viên và quyền
+      tags:
+      - Vai trò
+  /organization/roles/current:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách vai trò của tổ chức hiện tại user đang request
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách vai trò của tổ chức hiện tại user đang request
+      tags:
+      - Vai trò
+  /v2/org/deals/user:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId
+        và text
+      parameters:
+      - description: Thông tin tìm kiếm deals
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm deals chung
+      tags:
+      - Thương vụ
+  /v2/org/deals/user/organization:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm deals với các điều kiện lọc theo organizationId, groupId
+        và text
+      parameters:
+      - description: Thông tin tìm kiếm deals
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/organizationpb.DealSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/organizationpb.GetDealsResponse'
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm deals chung
+      tags:
+      - Thương vụ
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

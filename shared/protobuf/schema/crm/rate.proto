@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+// Rate Service
+service RateService {
+  rpc CreateRate(CreateRateRequest) returns (RateResponse) {
+    option (google.api.http) = {
+      post: "/v2/feedback/rate/{registry}"
+      body: "*"
+    };
+  }
+  rpc GetRateList(GetRateListRequest) returns (GetRateListResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/rate/{registry}/list/{ownerId}"
+    };
+  }
+  rpc GetRateStats(GetRateStatsRequest) returns (RateStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/rate/{registry}/stats/{ownerId}"
+    };
+  }
+  rpc UpdateRate(UpdateRateRequest) returns (UpdateRateResponse) {
+    option (google.api.http) = {
+      put: "/v2/feedback/rate/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteRate(RegistryIdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/feedback/rate/{id}"
+    };
+  }
+  rpc GetRate(RegistryIdRequest) returns (RateResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/rate/detail/{id}"
+    };
+  }
+  rpc UpdateHidden(UpdateHiddenRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/feedback/rate/{registry}/hidden/{id}"
+      body: "*"
+    };
+  }
+}
+
+// Rate Messages
+message CreateRateRequest {
+  bool anonymous = 1;
+  uint64 ownerId = 2;
+  uint32 ownerOf = 3;
+  uint32 score = 4;
+  string comment = 5;
+  optional uint64 parentId = 6;
+  repeated string attachs = 7;
+  string registry = 8;
+}
+
+message CreateRateResponse {
+  RateResponse rate = 1;
+}
+
+message GetRateListRequest {
+  uint64 ownerId = 1;
+  optional uint64 parentId = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  string registry = 5;
+}
+
+message GetRateListResponse {
+  repeated RateResponse data = 1;
+  int64 total = 2;
+}
+
+message GetRateStatsRequest {
+  uint64 ownerId = 1;
+  string registry = 2;
+}
+
+message RateStatsResponse {
+  int64 totalReviews = 1;
+  double averageScore = 2;
+  int64 star1Count = 3;
+  int64 star2Count = 4;
+  int64 star3Count = 5;
+  int64 star4Count = 6;
+  int64 star5Count = 7;
+}
+
+message UpdateRateRequest {
+  uint64 id = 1;
+  uint32 score = 2;
+  string comment = 3;
+  repeated string attachs = 4;
+  string registry = 5;
+}
+
+message UpdateRateResponse {
+  bool success = 1;
+}
+
+
+message RateResponse {
+  uint64 id = 1;
+  bool anonymous = 2;
+  uint64 ownerId = 3;
+  uint32 ownerOf = 4;
+  uint32 score = 5;
+  string comment = 6;
+  optional uint64 parentId = 7;
+  optional uint64 createdBy = 8;
+  optional sharepb.ProfileItem createdUser = 9;
+  string createdAt = 10;
+  repeated AttachEntity attachs = 11;
+}
+
+message AttachEntity {
+  uint64 id = 1;
+  string fileUrl = 2;
+  string fileName = 3;
+  string fileType = 4;
+}
+
+message GetHistoryRateRequest {
+  uint64 rateId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string registry = 4;
+}
+
+message GetRateRequest {
+  uint64 id = 1;
+  string registry = 2;
+}
+
+message UpdateHiddenRequest {
+  uint64 id = 1;
+  bool hidden = 2;
+  string registry = 3;
+}
+
+message RegistryIdRequest {
+  string registry = 1;
+  uint64 id = 2;
+}

@@ -1,0 +1,593 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+package chatpb;
+option go_package = "pb/types/chat;chatpb";
+
+import "chat_v1/background.proto";
+import "shared/common.proto";
+import "bdspro/common.proto";
+
+service ChatService {
+  rpc CreateConversation (CreateConversationRequest) returns (CreateConversationResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/conversations"
+      body: "*"
+    };
+  };
+  rpc GetConversations (GetConversationsRequest) returns (GetConversationsResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversations"
+    };
+  };
+  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages"
+      body: "*"
+    };
+  };
+  rpc SendToReceiver (SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/to-receiver"
+      body: "*"
+    };
+  };
+  rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/messages"
+    };
+  };
+  rpc ForwardMessage (ForwardMessageRequest) returns (ForwardMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/forward"
+      body: "*"
+    };
+  };
+  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/read"
+      body: "*"
+    };
+  };
+  rpc PinMessage (PinMessageRequest) returns (PinMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/pin"
+      body: "*"
+    };
+  };
+  rpc RecallMessage (RecallMessageRequest) returns (RecallMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/recall"
+      body: "*"
+    };
+  };
+  rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/removeUser"
+      body: "*"
+    };
+  };
+  rpc EditChannel (EditChannelRequest) returns (EditChannelResponse) {
+    option (google.api.http) = {
+      put: "/v2/chat/conversation/{conversationId}/edit"
+      body: "*"
+    };
+  };
+  rpc CreateOrgChannel (CreateOrgChannelRequest) returns (CreateOrgChannelResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/createOrgChannel"
+      body: "*"
+    };
+  };
+  rpc MuteConversation (MuteConversationRequest) returns (MuteConversationResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/mute"
+      body: "*"
+    };
+  };
+  rpc Search (SearchRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/search"
+    };
+  };
+
+  rpc GetConversationById (GetConversationByIdRequest) returns (GetConversationByIdResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{conversationId}"
+    };
+  };
+  rpc GetListParticipant (GetListParticipantRequest) returns (GetListParticipantResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{conversationId}/members"
+    };
+  };
+  rpc GetReadReceipt (GetReadReceiptRequest) returns (GetReadReceiptResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/messages/{messageId}/readReceipt"
+    };
+  };
+  rpc GetPinnedMessages (GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/messages/{conversationId}/pinned"
+    };
+  };
+
+  rpc AddUsers(AddUserRequest) returns (AddUserResponse) {
+    option (google.api.http) = {
+      put: "/v2/chat/conversation/add-user"
+      body: "*"
+    };
+  };
+  rpc LeaveRoom (LeaveRoomRequest) returns (LeaveRoomResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/conversation/leave"
+      body: "*"
+    };
+  };
+  rpc EditMessage (EditMessageRequest) returns (EditMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/edit/{messageId}"
+      body: "*"
+    };
+  };
+  rpc DeleteViolation (DeleteViolationRequest) returns (DeleteViolationResponse) {
+    option (google.api.http) = {
+      delete: "/v2/chat/messages/delete-violation/{messageId}"
+    };
+  };
+  rpc DeleteRoom (DeleteRoomRequest) returns (DeleteRoomResponse) {
+    option (google.api.http) = {
+      delete: "/v2/chat/conversation/delete-conversation/{conversationId}"
+    };
+  };
+
+  rpc GetSetting(GetSettingRequest) returns (GetSettingResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{id}/setting"
+    };
+  };
+  rpc GetFiles(GetFilesRequest) returns (GetFilesResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{conversationId}/files"
+    };
+  };
+  rpc GetImages (GetImagesRequest) returns (GetImagesResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{conversationId}/images"
+    };
+  };
+  rpc GetLinks(GetLinksRequest) returns (GetLinksResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/conversation/{conversationId}/links"
+    };
+  };
+
+  rpc ReactionMessage(ReactionMessageRequest) returns (ReactionMessageResponse) {
+    option (google.api.http) = {
+      post: "/v2/chat/messages/reaction"
+      body: "*"
+    };
+  };
+  rpc SetBackgroundImage(SetBackgroundImageRequest) returns (SetBackgroundImageResponse) {
+    option (google.api.http) = {
+      put: "/v2/chat/conversation/background"
+      body: "*"
+    };
+  };
+  rpc UnreadCount (sharepb.Empty) returns (UnreadCountResponse) {
+    option (google.api.http) = {
+      get: "/v2/chat/unread-count"
+    };
+  };
+  rpc ValidConversationAndCurrentUser(sharepb.IdRequest) returns (sharepb.Empty);
+  rpc GetMembersOfRoom(sharepb.IdRequest) returns (GetRoomMemberIdResponse);
+}
+
+message UnreadCountResponse {
+  int64 unreadCount = 1;
+}
+
+message SetBackgroundImageRequest {
+  int32 conversationId = 1;
+  uint64 backgroundImageId = 2;
+}
+
+message SetBackgroundImageResponse {
+  bool success = 1;
+}
+
+enum ConversationTypeEnum {
+  ConversationTypePrivate = 0;
+  ConversationTypeGroup = 1;
+  ConversationTypeChannel = 2;
+}
+
+message CreateConversationRequest {
+  ConversationTypeEnum type = 1;
+  string name = 2;
+  repeated int32 members = 3;
+  bool isBroadcast = 4;
+  bool forbidForward = 5;
+  int32 createdBy = 6;
+  string avatar = 7;
+  optional uint64 backgroundImageId = 8;
+  optional uint64 receiverId = 9;
+}
+
+message CreateConversationResponse {
+  int32 conversationId = 1;
+}
+
+message GetConversationsRequest {
+  int32 userId = 1;
+  optional int32 type = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+  string keyword = 5;
+}
+
+message GetConversationsResponse {
+  repeated Conversation conversations = 1;
+}
+
+message Conversation {
+  int32 conversationId = 1;
+  ConversationTypeEnum type = 2;
+  string name = 3;
+  Message lastMessage = 4;
+  string updatedAt = 5;
+  int32 unreadCount = 6;
+  string avatar = 7;
+  optional BackgroundImage backgroundImage = 8;
+  repeated string avatars = 9;
+  repeated uint64 participantIds = 10;
+  optional uint64 receiverId = 11;
+  uint64 createdBy = 12;
+}
+
+message SendMessageRequest {
+  int32 conversationId = 1;
+  int32 senderId = 2;
+  string content = 3;
+  string contentType = 4;
+  optional string fileUrl = 5;
+  optional uint64 replyId  = 6;
+  optional uint64 extraId = 7;
+  optional uint64 receiverId = 8;
+}
+
+message SendMessageResponse {
+  int32 messageId = 1;
+  string createdAt = 2;
+}
+
+message GetMessagesRequest {
+  int32 conversationId = 1;
+  optional int32 size = 2;
+  optional int32 page = 3;
+  optional string sort = 4;
+  optional string fromDate = 5;
+  optional string toDate = 6;
+}
+
+message GetMessagesResponse {
+  repeated Message messages = 1;
+  int64 total = 2;
+}
+
+message SystemMessageData {
+    string action = 1;          // "pin", "add_member", etc.
+    uint64 actorId = 2;        // Người thực hiện
+    repeated uint64 targetIds = 3;
+    repeated string targetNames = 4;
+    string extra = 5;           // JSON string cho extra data
+}
+
+
+message Message {
+  int32 messageId = 1;
+  int32 senderId = 2;
+  string content = 3;
+  string contentType = 4;
+  optional string fileUrl = 5;
+  string roomId = 6;
+  string createdAt = 7;
+  bool isRecall = 8;
+  optional Message replyMessage = 9;
+  repeated MessageReaction reactions = 10;
+  optional string fullName = 11;
+  optional string avatar = 12;
+  optional uint64 extraId = 13;
+  optional bdspropb.ProductAttachment product = 14;
+  SystemMessageData systemData = 15;
+  optional sharepb.ProfileItem contactUser = 16;
+}
+
+message ForwardMessageRequest {
+  int32 messageId = 1;
+  repeated uint64 conversationIds = 2;
+  int32 senderId = 3;
+}
+
+message ForwardMessageResponse {
+  repeated uint64 messageIds = 1;
+}
+
+message MarkAsReadRequest {
+  int32 conversationId = 1;
+  int32 userId = 2;
+  repeated int32 messageIds = 3;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+}
+
+message PinMessageRequest {
+  int32 conversationId = 1;
+  int32 messageId = 2;
+  bool doPin = 3;
+}
+
+message PinMessageResponse {
+  bool success = 1;
+}
+
+message RecallMessageRequest {
+  int32 messageId = 1;
+  int32 userId = 2;
+}
+
+message RecallMessageResponse {
+  bool success = 1;
+}
+
+message RemoveUserRequest {
+  int32 conversationId = 1;
+  int32 adminUserId = 2;
+  int32 targetUserId = 3;
+}
+
+message RemoveUserResponse {
+  bool success = 1;
+}
+
+message EditChannelRequest {
+  int32 conversationId = 1;
+  optional bool isBroadcast = 2;
+  optional bool forbidForward = 3;
+  optional string name = 4;
+  optional uint64 backgroundImageId = 5;
+}
+
+message EditChannelResponse {
+  bool success = 1;
+}
+
+message CreateOrgChannelRequest {
+  int32 orgId = 1;
+  int32 departmentId = 2;
+  optional bool isBroadcast = 3;
+  optional bool forbidForward = 4;
+}
+
+message CreateOrgChannelResponse {
+  int32 conversationId = 1;
+}
+
+message MuteConversationRequest {
+  int32 conversationId = 1;
+  int32 userId = 2;
+  bool mute = 3;
+}
+
+message MuteConversationResponse {
+  bool success = 1;
+}
+
+enum SearchTypeEnum {
+  SearchTypeMessage = 0;
+  SearchTypeConversation = 1;
+}
+
+message SearchRequest {
+  string keyword = 1;
+  optional SearchTypeEnum type = 2;
+  optional int32 limit = 3;
+  optional int32 offset = 4;
+}
+
+message SearchResponse {
+  repeated Message messages = 1;
+  repeated Conversation conversations = 2;
+}
+
+message GetConversationByIdRequest {
+  int32 conversationId = 1;
+  bool includeMembers = 2;
+}
+
+message GetConversationByIdResponse {
+  int32 conversationId = 1;
+  ConversationTypeEnum type = 2;
+  string name = 3;
+  int32 createdBy = 4;
+  bool isBroadcast = 5;
+  bool forbidForward = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+  repeated Participant participants = 9;
+  optional BackgroundImage backgroundImage = 10;
+  string avatar = 11;
+  repeated string avatars = 12;
+  optional uint64 receiverId = 13;
+}
+
+message Participant {
+  uint64 userId = 1;
+  string joinedAt = 2;
+  optional string leftAt = 3;
+  bool muteNotif = 4;
+  ParticipantRoleEnum role = 5;
+  sharepb.ProfileItem profile = 6;
+}
+
+enum ParticipantRoleEnum {
+  RoleMember = 0;
+  RoleAdmin = 1;
+  RoleBanned = 2;
+}
+
+message GetListParticipantRequest {
+  uint64 conversationId = 1;
+  int64 page = 2;
+  int64 size = 3;
+}
+
+message GetListParticipantResponse {
+  repeated Participant data = 1;
+  int32 total = 2;
+}
+
+message GetReadReceiptRequest {
+  uint64 messageId = 1;
+  int64 page = 2;
+  int64 size = 3;
+}
+
+message ReadReceipt {
+  uint64 userId = 1;
+  string readAt = 2;
+}
+
+message GetReadReceiptResponse {
+  repeated ReadReceipt readReceipts = 1;
+  int64 total = 2;
+}
+
+message AddUserRequest {
+  uint64 conversationId = 1;
+  repeated uint64 userIds = 2;
+}
+
+message AddUserResponse {
+  bool success = 1;
+  int32 totalAdded = 2;
+}
+
+message LeaveRoomRequest {
+  int32 conversationId = 1;
+}
+
+message LeaveRoomResponse {
+  bool success = 1;
+}
+
+message EditMessageRequest {
+  int32 messageId = 1;
+  string content = 2;
+  string fileURL = 3;
+}
+
+message EditMessageResponse {
+  bool success = 1;
+}
+
+message DeleteViolationRequest {
+  int32 messageId = 1;
+}
+
+message DeleteViolationResponse {
+  bool success = 1;
+}
+
+message DeleteMessageRequest {
+  int32 conversationId = 1;
+}
+
+message DeleteMessageResponse {
+  bool success = 1;
+}
+
+message DeleteRoomRequest {
+  int32 conversationId = 1;
+}
+
+message DeleteRoomResponse {
+  bool success = 1;
+}
+
+message GetSettingRequest {
+  uint64 id = 1;
+}
+
+message GetSettingResponse {
+  uint64 id = 1;
+  ConversationTypeEnum type = 2;
+  optional string name = 3;
+  bool isBroadcast = 4;
+  bool forbidForward = 5;
+  bool isDeleted = 6;
+  bool muteNotif = 7;
+  optional BackgroundImage backgroundImage = 8;
+}
+
+message GetFilesRequest {
+  int32 conversationId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetFilesResponse {
+  repeated Message messages = 1;
+  int64 total = 2;
+}
+
+message GetImagesRequest {
+  int32 conversationId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetImagesResponse {
+  repeated Message data = 1;
+  int64 total = 2;
+}
+
+
+message GetLinksRequest {
+  int32 conversationId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+
+message GetLinksResponse {
+  repeated Message messages = 1;
+  int64 total = 2;
+}
+
+message MessageReaction {
+  int32 messageId = 1;
+  string reaction = 2;
+  int32 userId = 3;
+  string createdAt = 4;
+  uint64 id = 5;
+  string roomId = 6;
+  optional string fullName = 7;
+  optional string avatar = 8;
+}
+
+message ReactionMessageRequest {
+  int32 messageId = 1;
+  string reaction = 2;
+}
+
+message ReactionMessageResponse {
+  bool success = 1;
+}
+
+message GetRoomMemberIdResponse {
+  repeated uint64 profileIds = 1;
+}

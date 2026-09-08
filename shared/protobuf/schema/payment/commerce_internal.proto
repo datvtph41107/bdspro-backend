@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package paymentpb;
+option go_package = "pb/types/payment;paymentpb";
+
+// InternalCommerceService receives server-owned commercial commands. It is not
+// a public checkout API and never accepts client-authoritative pricing terms.
+service InternalCommerceService {
+  rpc CreateCommercialOrder(CreateCommercialOrderRequest) returns (CreateCommercialOrderResponse);
+  rpc CreatePaymentAttempt(CreatePaymentAttemptRequest) returns (CreatePaymentAttemptResponse);
+}
+
+message CreateCommercialOrderRequest {
+  string subjectKind = 1;
+  string subjectId = 2;
+  string productCode = 3;
+  string planCode = 4;
+  uint64 planVersionId = 5;
+  string planVersion = 6;
+  int32 tierRank = 7;
+  int32 subscriptionTermDays = 8;
+  string termsChecksum = 9;
+  string currency = 10;
+  int64 amountMinor = 11;
+  string commandKey = 12;
+}
+
+message CreateCommercialOrderResponse {
+  uint64 orderId = 1;
+  string reference = 2;
+  string status = 3;
+  bool created = 4;
+}
+
+
+message CreatePaymentAttemptRequest {
+  uint64 orderId = 1;
+  string method = 2;
+  string commandKey = 3;
+
+  // Subject is derived by the trusted User service, never by the public client.
+  // Payment verifies this subject against the durable Order before any
+  // provider-side effect is created.
+  string subjectKind = 4;
+  string subjectId = 5;
+}
+
+message PaymentNextAction {
+  string kind = 1;
+  string redirectUrl = 2;
+  string qrPayload = 3;
+  string expiresAt = 4;
+}
+
+message CreatePaymentAttemptResponse {
+  uint64 attemptId = 1;
+  uint64 orderId = 2;
+  string method = 3;
+  string provider = 4;
+  string providerReference = 5;
+  string status = 6;
+  PaymentNextAction nextAction = 7;
+  string expiresAt = 8;
+  bool created = 9;
+}

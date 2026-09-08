@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+message VersionItem {
+  uint64 id = 1;
+  string platform = 2;
+  string versionName = 3;
+  uint64 buildNumber = 4;
+  bool forceUpdate = 5;
+  string downloadUrl = 6;
+  string releaseNotes = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+  string appName = 10;
+  uint64 bundleSize = 11;
+  string bundleName = 12;
+  bool active = 13;
+}
+
+message CreateVersionRequest {
+  string platform = 1;
+  string versionName = 2;
+  uint64 buildNumber = 3;
+  bool forceUpdate = 4;
+  string downloadUrl = 5;
+  string releaseNotes = 6;
+  string appName = 7;
+  uint64 bundleSize = 8;
+  string bundleName = 9;
+  bool active = 10;
+}
+
+message CreateVersionResponse {
+  VersionItem data = 1;
+}
+
+message UpdateVersionRequest {
+  uint64 id = 1;
+  string platform = 2;
+  string versionName = 3;
+  uint64 buildNumber = 4;
+  bool forceUpdate = 5;
+  string downloadUrl = 6;
+  string releaseNotes = 7;
+  string appName = 8;
+  uint64 bundleSize = 9;
+  string bundleName = 10;
+  bool active = 11;
+}
+
+message UpdateVersionResponse {
+  VersionItem data = 1;
+}
+
+message DeleteVersionRequest {
+  uint64 id = 1;
+}
+
+message DeleteVersionResponse {
+  bool success = 1;
+}
+
+message GetVersionRequest {
+  uint64 id = 1;
+}
+
+message GetVersionResponse {
+  VersionItem data = 1;
+}
+
+message GetVersionListRequest {
+  string platform = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string appName = 4;
+}
+
+message GetVersionListResponse {
+  repeated VersionItem data = 1;
+  int64 total = 2;
+}
+
+message CheckAppUpdateRequest {
+  string appName = 1;
+  string platform = 2;
+  string targetVersion = 3;
+}
+
+message CheckAppUpdateResponse {
+  bool needUpdate = 1;
+  bool forceUpdate = 2;
+  VersionItem latestVersion = 3;
+}
+
+service VersionService {
+  rpc CreateVersion(CreateVersionRequest) returns (CreateVersionResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/admin/versions"
+      body: "*"
+    };
+  };
+
+  rpc UpdateVersion(UpdateVersionRequest) returns (UpdateVersionResponse) {
+    option (google.api.http) = {
+      put: "/v2/hub/admin/versions/{id}"
+      body: "*"
+    };
+  };
+
+  rpc DeleteVersion(DeleteVersionRequest) returns (DeleteVersionResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/admin/versions/{id}"
+    };
+  };
+
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/versions/{id}"
+    };
+  };
+
+  rpc GetVersionList(GetVersionListRequest) returns (GetVersionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/versions"
+    };
+  };
+
+  rpc CreateVersionFromDev(CreateVersionRequest) returns (CreateVersionResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/app-bundle/version"
+      body: "*"
+    };
+  };
+  rpc CheckAppUpdate(CheckAppUpdateRequest) returns (CheckAppUpdateResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/app-bundle/update-check/{appName}"
+    };
+  };
+}
+
+

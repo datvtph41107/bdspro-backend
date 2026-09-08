@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service BusinessDomainService {
+    rpc CreateBusinessDomain(CreateBusinessDomainRequest) returns (CreateBusinessDomainResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/business-domain"
+            body: "*"
+        };
+    }
+
+    rpc UpdateBusinessDomain(UpdateBusinessDomainRequest) returns (UpdateBusinessDomainResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/business-domain/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteBusinessDomain(DeleteBusinessDomainRequest) returns (DeleteBusinessDomainResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/business-domain/{id}"
+        };
+    }
+
+    rpc GetBusinessDomain(GetBusinessDomainRequest) returns (GetBusinessDomainResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/business-domain/{id}"
+        };
+    }
+
+    rpc GetAllBusinessDomains(GetAllBusinessDomainsRequest) returns (GetAllBusinessDomainsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/business-domain"
+        };
+    }
+
+    rpc GetActiveBusinessDomains(GetActiveBusinessDomainsRequest) returns (GetActiveBusinessDomainsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/business-domain/active"
+        };
+    }
+}
+
+message CreateBusinessDomainRequest {
+    string name = 1 [json_name = "name"];
+    optional string description = 2 [json_name = "description"];
+    string code = 3 [json_name = "code"];
+    bool isActive = 4 [json_name = "isActive"];
+}
+
+message CreateBusinessDomainResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdateBusinessDomainRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    optional string description = 3 [json_name = "description"];
+    string code = 4 [json_name = "code"];
+    bool isActive = 5 [json_name = "isActive"];
+}
+
+message UpdateBusinessDomainResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteBusinessDomainRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteBusinessDomainResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetBusinessDomainRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetBusinessDomainResponse {
+    BusinessDomain businessDomain = 1 [json_name = "businessDomain"];
+}
+
+message GetAllBusinessDomainsRequest {
+}
+
+message GetAllBusinessDomainsResponse {
+    repeated BusinessDomain data = 1;
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetActiveBusinessDomainsRequest {
+}
+
+message GetActiveBusinessDomainsResponse {
+    repeated BusinessDomain data = 1;
+}
+
+message BusinessDomain {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    optional string description = 3 [json_name = "description"];
+    string code = 4 [json_name = "code"];
+    bool isActive = 5 [json_name = "isActive"];
+    string createdAt = 6 [json_name = "createdAt"];
+    string updatedAt = 7 [json_name = "updatedAt"];
+    uint32 createdBy = 8 [json_name = "createdBy"];
+    uint32 updatedBy = 9 [json_name = "updatedBy"];
+} 

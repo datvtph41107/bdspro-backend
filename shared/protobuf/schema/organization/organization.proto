@@ -1,0 +1,218 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "organization/business_domain.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service OrganizationService {
+    rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/new"
+            body: "*"
+        };
+    }
+
+    rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/{id}"
+            body: "*"
+        };
+    }
+
+    rpc GetOrganizations(GetOrganizationsRequest) returns (GetOrganizationsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization"
+        };
+    }
+
+    rpc GetOrganizationByUserId(GetOrganizationByUserIdRequest) returns (GetOrganizationByUserIdResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/by-member"
+        };
+    }
+
+    rpc CheckOrganizationIsExist(CheckOrganizationIsExistRequest) returns (CheckOrganizationIsExistResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/check-is-exist/{id}"
+        };
+    }   
+
+    rpc GetOwnedOrganization(GetOwnedOrganizationRequest) returns (GetOwnedOrganizationResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/current"
+        };
+    }
+    
+    rpc GetCurrentDashboard(sharepb.IdRequest) returns (DashboardResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/current/dashboard"
+        };
+    }
+    
+    rpc GetAllOrganizationsWithMembersForAdmin(GetAllOrganizationsWithMembersForAdminRequest) returns (GetAllOrganizationsWithMembersForAdminResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/admin/all-with-members"
+        };
+    }
+    
+    rpc GetGlobalProfile(sharepb.IdRequest) returns (Organization) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/global/profile/{id}"
+        };
+    }
+    
+    rpc GetCountByOwner(GetCountByOwnerRequest) returns (DashboardResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/count-by-owner"
+        };
+    }
+}
+
+message DashboardResponse {
+    uint32 totalProduct = 1; 
+    uint32 totalNewsfeed = 2;
+    uint32 totalPost = 3;
+    uint32 totalProject = 4;
+    uint32 totalAsset = 5;
+    uint32 totalSchedule = 6;
+    uint32 totalTransaction = 7;
+    uint32 totalClicked = 8;
+    uint32 totalViewHome = 9;
+}
+
+message CreateOrganizationRequest {
+    string name = 1 [json_name = "name"]; 
+    string taxCode = 2 [json_name = "taxCode"];
+    optional string businessLicenseUrl = 3 [json_name = "businessLicenseUrl"];
+    optional string address = 4 [json_name = "address"];
+    optional string phone = 5 [json_name = "phone"];
+    optional string email = 6 [json_name = "email"];
+    optional string website = 7 [json_name = "website"];
+    optional string logoUrl = 8 [json_name = "logoUrl"];
+    repeated uint32 businessDomainIds = 9 [json_name = "businessDomainIds"];
+    optional string description = 10 [json_name = "description"];
+    string foundedAt = 11 [json_name = "foundedAt"];
+    uint32 status = 12 [json_name = "status"];
+    optional bool approveInvestor = 13 [json_name = "approveInvestor"];
+    optional string detailAddress = 14 [json_name = "detailAddress"];
+}
+
+message CreateOrganizationResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message UpdateOrganizationRequest {
+    uint32 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string taxCode = 3 [json_name = "taxCode"];
+    optional string businessLicenseUrl = 4 [json_name = "businessLicenseUrl"];
+    optional string address = 5 [json_name = "address"];
+    optional string phone = 6 [json_name = "phone"];
+    optional string email = 7 [json_name = "email"];
+    optional string website = 8 [json_name = "website"];
+    optional string logoUrl = 9 [json_name = "logoUrl"];
+    optional uint32 status = 10 [json_name = "status"];
+    repeated uint32 businessDomainIds = 11 [json_name = "businessDomainIds"];
+    optional string description = 12 [json_name = "description"];
+    string foundedAt = 13 [json_name = "foundedAt"];
+    optional bool approveInvestor = 14 [json_name = "approveInvestor"];
+    optional string detailAddress = 15 [json_name = "detailAddress"];
+}
+
+message UpdateOrganizationResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetOrganizationsRequest {
+    uint32 id = 1 [json_name = "id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message Organization {
+    uint64 id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string taxCode = 3 [json_name = "taxCode"];
+    optional string businessLicenseUrl = 4 [json_name = "businessLicenseUrl"];
+    optional string address = 5 [json_name = "address"];
+    optional string phone = 6 [json_name = "phone"];
+    optional string email = 7 [json_name = "email"];
+    optional string website = 8 [json_name = "website"];
+    optional string logoUrl = 9 [json_name = "logoUrl"];
+    repeated BusinessDomain businessDomains = 10 [json_name = "businessDomains"];
+    optional string description = 11 [json_name = "description"];
+    optional string foundedAt = 12 [json_name = "foundedAt"];
+    optional bool approveInvestor = 13 [json_name = "approveInvestor"];
+    optional string detailAddress = 14 [json_name = "detailAddress"];
+    uint64 ownerId = 15 [json_name = "ownerId"];
+    optional sharepb.ProfileItem owner = 16 [json_name = "owner"];
+    string code = 17 [json_name = "code"];
+    string updatedAt = 18 [json_name = "updatedAt"];
+}
+
+message GetOrganizationsResponse {
+    repeated Organization data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetOrganizationByUserIdRequest {
+    uint32 userId = 1 [json_name = "userId"];
+}
+
+message GetOrganizationByUserIdResponse {
+    repeated Organization data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message CheckOrganizationIsExistRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message CheckOrganizationIsExistResponse {
+    bool isExist = 1 [json_name = "isExist"];
+}
+
+message GetOwnedOrganizationRequest {
+}
+
+message GetOwnedOrganizationResponse {
+    Organization organization = 1 [json_name = "organization"];
+}
+
+message GetAllOrganizationsWithMembersForAdminRequest {
+    optional uint32 page = 1 [json_name = "page"];
+    optional uint32 size = 2 [json_name = "size"];
+}
+
+message OrganizationWithMembers {
+    Organization organization = 1 [json_name = "organization"];
+    uint32 totalMembers = 2 [json_name = "totalMembers"];
+}
+
+message OrganizationMemberWithProfile {
+    uint32 id = 1 [json_name = "id"];
+    uint32 organizationId = 2 [json_name = "organizationId"];
+    uint32 userId = 3 [json_name = "userId"];
+    uint32 roleId = 4 [json_name = "roleId"];
+    uint32 status = 5 [json_name = "status"];
+    string joinedAt = 6 [json_name = "joinedAt"];
+    optional string removedAt = 7 [json_name = "removedAt"];
+    string roleName = 8 [json_name = "roleName"];
+    uint32 roleKey = 9 [json_name = "roleKey"];
+    repeated string permissions = 10 [json_name = "permissions"];
+    sharepb.ProfileItem profile = 11 [json_name = "profile"];
+}
+
+message GetAllOrganizationsWithMembersForAdminResponse {
+    repeated OrganizationWithMembers data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetCountByOwnerRequest {
+    sharepb.OwnerOf ownerOf = 1 [json_name = "ownerOf"];
+    uint64 ownerId = 2 [json_name = "ownerId"];
+}

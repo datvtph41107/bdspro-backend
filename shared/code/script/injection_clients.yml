@@ -1,0 +1,29 @@
+# Shared constructors intentionally available to generated Wire graphs.
+# RPC transport ownership is process-local under each service's infra/rpc.
+packages:
+  - import: common/injection
+    constructors:
+      - NewHttpClient
+
+  - import: common/utils
+    constructors:
+      - NewSyncUtil
+
+
+# Packages below are operational transition code, not serving process dependencies.
+# They remain executable through their dedicated cmd entrypoints until cutover is proven,
+# then are retired. The Wire generator must not materialize them into user-service runtime.
+scan_exclude:
+  user:
+    - internal/modules/catalog
+    - internal/modules/subscription/backfill
+    - internal/modules/subscription/cutover
+    - internal/modules/subscription/read
+    - internal/modules/subscription/shadow
+
+# Process-owned resources are opt-in. Services not listed preserve the legacy
+# generator behavior until their composition lifecycle is migrated.
+process_inputs:
+  user:
+    database: true
+    redis: true

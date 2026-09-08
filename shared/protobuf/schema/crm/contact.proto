@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "crm/common.proto";
+import "crm/tag.proto";
+import "shared/v3.proto";
+import "bdspro/product.proto";
+
+service ContactService {
+  rpc ListMe (sharepb.SyncRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/list/me"
+    };
+  };
+  rpc Search (ContactSearchRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/list/{ownerOf}/{ownerId}"
+    };
+  };
+  rpc Detail (sharepb.SyncRequest) returns (ContactDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/detail/{id}"
+    };
+  };
+  rpc Create (ContactSaveDTO) returns (ContactDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/contact"
+      body: "*"
+    };
+  };
+  rpc Update (ContactSaveDTO) returns (ContactDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/edit/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/contact/{id}"
+    };
+  };
+  rpc Sync (ContactSyncRequest) returns (ContactSyncResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/contact/sync"
+      body: "*"
+    };
+  };
+  rpc RelationShip (sharepb.IdRequest) returns (RelationShipResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/relation-ship/{id}"
+    };
+  };
+  rpc Note (NoteContactDTO) returns (NoteContactDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/note/{id}"
+      body: "*"
+    };
+  };
+  rpc CheckPhone(CheckPhoneRequest) returns (ContactDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}"
+    };
+  };
+  rpc GetListContactByProductId (sharepb.SyncRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/by-product/{id}"
+    };
+  };
+  rpc UpdateProductIds (UpdateProductIdsRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/crm/contact/{contactId}/products"
+      body: "*"
+    };
+  };
+  rpc GetContactProducts (sharepb.IdRequest) returns (bdspropb.SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/detail/{id}/products"
+    };
+  };
+  rpc ContactListWithMember(sharepb.FriendListRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+        get: "/v2/crm/contact/with-member"
+    };
+  };
+  rpc ContactListFriends(sharepb.FriendListRequest) returns (ContactListDTO) {
+    option (google.api.http) = {
+        get: "/v2/crm/contact/friends"
+    };
+  };
+
+  rpc GetInterestedContactsByProduct (ContactProductInterestRequest)
+      returns (ContactProductInterestResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/contact/interested/product/{productId}"
+    };
+  }
+
+   rpc PinContact(PinRequest) returns (PinResponse) {
+      option (google.api.http) = {
+        post: "/v2/crm/contact/pin"
+      };
+    }
+}
+
+message PinRequest {
+  uint32 target = 1; // kiểu của enum PinTarget
+  map<string, uint64> targetIds = 2; // id theo các trường column riêng biệt
+  string namespace = 3;
+  string action = 4;
+}
+
+message PinResponse {
+  bool success = 1;
+}
+
+message ContactProductInterestRequest {
+  uint64 productId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message ContactProductInterestResponse {
+  repeated ContactProductInterestItem data = 1;
+  uint32 total = 2;
+}
+
+message ContactProductInterestItem {
+  optional uint64 contactId = 1;
+  optional uint64 originProfileId = 2;
+  string displayName = 3;
+  string phone = 4;
+  string avatar = 5;
+  uint32 status = 6;
+  bool hasContact = 7;
+  bool pinned = 8;
+  string createdAt = 9;
+}
+
+message ContactSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string text = 3;
+  sharepb.OwnerOf ownerOf = 4;
+  string friendStatus = 5;
+  optional bool following = 6;
+  repeated int32 roles = 7;
+  optional bool leaded = 8;
+  optional bool connected = 9;
+  optional bool appInstalled = 10;
+  uint64 ownerId = 11;
+  optional uint64 conversationId = 12;
+  optional uint64 distributeId = 13;
+}
+
+message ContactSaveDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  int32 ownerOf = 4;
+  string email = 5;
+  string zalo = 6;
+  string company = 7;
+  string note = 8;
+  string avatar = 9;
+  int32 visibility = 10;
+  bool assignedCrm = 11;
+  repeated TagItem tags = 12;
+  repeated sharepb.ItemV3Proto contactTags = 13;
+  repeated uint64 productIds = 14;
+}
+
+message ContactListDTO {
+  repeated sharepb.ContactDTO data = 1; 
+  uint32 total = 3;
+}
+
+message ContactSyncRequest {
+  repeated ContactSaveDTO contacts = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+}
+
+message ContactSyncResponse {
+  repeated ContactDTO data = 1;
+  uint32 total = 2;
+}
+
+message RelationShipResponse {
+  optional sharepb.FriendItem friendStatus = 1;
+  bool following = 2;
+  bool blocked = 3;
+  int64 numFollower = 4;
+  int64 numFollowing = 5;
+  int64 numFriend = 6;
+}
+
+message NoteContactDTO {
+  uint64 id = 1;
+  string note = 2;
+}
+
+message CheckPhoneRequest {
+  string phone = 1;
+  sharepb.OwnerOf ownerOf = 2;
+  uint64 ownerId = 3;
+}
+
+message CheckPhoneResponse {
+  bool existed = 1;
+  optional ContactDTO contact = 2;
+}
+
+message GetByProductIdRequest {
+  uint64 productId = 1;
+  uint64 page = 2;
+  uint32 size = 3;
+  int64 timestamp = 4;
+}
+
+message UpdateProductIdsRequest {
+  uint64 contactId = 1;
+  repeated uint64 productIds = 2;
+}

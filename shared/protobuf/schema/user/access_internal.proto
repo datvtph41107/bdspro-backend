@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+// InternalAccessService chỉ dùng cho service-to-service qua gRPC.
+// Service này không expose HTTP route.
+service InternalAccessService {
+  rpc GetAccess(GetAccessRequest) returns (GetAccessResponse);
+}
+
+message GetAccessRequest {
+  // operation là business action đã được service gọi xác định trước đó.
+  string operation = 1;
+}
+
+message GetAccessResponse {
+  string subjectType = 1;
+  string subjectId = 2;
+  string operation = 3;
+
+  bool allowed = 4;
+  bool unlimited = 5;
+  int64 limit = 6;
+  string period = 7;
+
+  int64 periodStartUnix = 8;
+  int64 periodEndUnix = 9;
+
+  uint64 subscriptionId = 10;
+  string planCode = 11;
+  string planVersion = 12;
+
+  // Commercial evidence consumed by the calling service.
+  string featureCode = 13;
+  string meterCode = 14;
+  int64 unitsPerAction = 15;
+  string policyVersion = 16;
+}

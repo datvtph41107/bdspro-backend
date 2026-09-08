@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package sharepb;
+
+import "google/protobuf/any.proto";
+
+option go_package = "pb/types/shared;sharepb";
+
+message ErrorResponse {
+    int32 code = 1;
+    string message = 2;
+    google.protobuf.Any data = 3;
+    optional int32 second = 4; // Số giây đếm ngược (dùng cho LIMIT_REQUEST_TIME)
+}

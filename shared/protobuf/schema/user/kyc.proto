@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+// ============= KYC Service =============
+
+service KYCService {
+    // User submit KYC request
+    rpc SubmitKYC(SubmitKYCRequest) returns (sharepb.KYCV3Proto) {
+        option (google.api.http) = {
+            post: "/v2/user/kyc/submit"
+            body: "*"
+        };
+    }
+    
+    // Lấy danh sách KYC requests (Admin only)
+    rpc ListKYCs(ListKYCsRequest) returns (ListKYCsResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/kycs"
+        };
+    }
+    
+    // Duyệt KYC request (Admin only)
+    rpc ApproveKYC(ApproveKYCRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/kyc/approve/{id}"
+            body: "*"
+        };
+    }
+    
+    // Từ chối KYC request (Admin only)
+    rpc RejectKYC(RejectKYCRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/kyc/reject/{id}"
+            body: "*"
+        };
+    }
+}
+
+// ============= Request Messages =============
+
+message SubmitKYCRequest {
+    string fullName = 1;        // Họ tên
+    string identityCard = 2;    // Số CMND/CCCD
+    string frontImage = 3;      // Ảnh mặt trước CMND/CCCD
+    string backImage = 4;       // Ảnh mặt sau CMND/CCCD
+    string selfieImage = 5;     // Ảnh selfie (optional)
+    optional string idNumber = 6;      // Số CMND/CCCD (optional)
+    optional string dateOfBirth = 7;   // Ngày sinh (optional)
+    optional string expiryDate = 8;     // Ngày hết hạn (optional)
+}
+
+message ListKYCsRequest {
+    uint32 page = 1;            // Trang hiện tại
+    uint32 size = 2;            // Số lượng item trên mỗi trang
+    string search = 3;          // Tìm kiếm theo tên, số CMND
+    uint32 status = 4;         // Lọc theo trạng thái: 10: Pending, 20: Approved, 30: Rejected
+    string sortBy = 5;          // Sắp xếp theo trường
+    string sortOrder = 6;       // Thứ tự sắp xếp (asc, desc)
+}
+
+message ApproveKYCRequest {
+    uint64 id = 1;              // KYC ID
+}
+
+message RejectKYCRequest {
+    uint64 id = 1;              // KYC ID
+    string reason = 2;          // Lý do từ chối
+}
+
+// ============= Response Messages =============
+
+message ListKYCsResponse {
+    repeated sharepb.KYCV3Proto data = 1;
+    int64 total = 2;
+}
+

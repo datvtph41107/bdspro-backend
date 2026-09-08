@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+
+message AssetCostDTO {
+  uint64 id = 1;
+  uint64 assetId = 2;
+  double amount = 3;
+  string date = 4;
+  string description = 5;
+  uint32 ownerType = 6;
+  uint32 type = 7;
+  string typeName = 8;
+  uint64 costTypeId = 9;
+  string costTypeName = 10;
+  optional uint64 ownerId = 11;
+}
+
+message AssetCostListDTO {
+  repeated AssetCostDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service AssetCostService {
+    rpc Search (IdRequest) returns (AssetCostListDTO){
+      option (google.api.http) = {
+        get: "/v2/bdspro/v2/asset/cost/{id}/{ownerType}"
+      };
+    };
+    rpc Detail (IdRequest) returns (AssetCostDTO){
+      option (google.api.http) = {
+        get: "/v2/bdspro/v2/asset/cost/detail/{id}"
+      };
+    };
+    rpc Create (AssetCostDTO) returns (AssetCostDTO){
+      option (google.api.http) = {
+        post: "/v2/bdspro/v2/asset/cost"
+        body: "*"
+      };
+    };
+    rpc Update (AssetCostDTO) returns (AssetCostDTO){
+      option (google.api.http) = {
+        put: "/v2/bdspro/v2/asset/cost/{id}"
+        body: "*"
+      };
+    };
+    rpc Delete (IdRequest) returns (Response){
+      option (google.api.http) = {
+        delete: "/v2/bdspro/v2/asset/cost/{id}"
+      };
+    };
+}

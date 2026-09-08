@@ -1,0 +1,24 @@
+.git
+.gitignore
+.github
+.vscode
+
+# Artifact/cache local không thuộc build context.
+**/bin
+**/.tmp
+**/tmp
+**/*.log
+**/coverage.out
+
+# Secret và runtime data không bao giờ được đóng gói vào image.
+**/.env
+**/.env.local
+**/.env.runtime
+**/config/product.yml
+**/config/production.yml
+**/files
+
+# Tài liệu/test lab không phải runtime input của service image.
+documents
+integration-test
+research

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+message ApartmentAttribute {
+  uint64 id = 1;
+  string name = 2;
+  optional double area = 3;
+  optional uint32 numBedroom = 4;
+  optional uint32 numBathroom = 5;
+  string furniture = 6;
+  string blueprintUrl = 7;
+  double price = 8;
+}

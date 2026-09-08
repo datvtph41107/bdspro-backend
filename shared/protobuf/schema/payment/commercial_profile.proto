@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package paymentpb;
+
+option go_package = "pb/types/payment;paymentpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// PaymentProfileService exposes Payment-owned progress for one order to the
+// authenticated subject that owns it. It is read-only and does not expose
+// provider evidence, command keys or operator recovery controls.
+service PaymentProfileService {
+  rpc GetMyPaymentOrder(GetMyPaymentOrderRequest) returns (MyPaymentOrder) {
+    option (google.api.http) = {
+      get: "/v2/payment/commercial/orders/{order_id}"
+    };
+  }
+}
+
+message GetMyPaymentOrderRequest { uint64 order_id = 1; }
+
+message MyPaymentOrder {
+  uint64 order_id = 1;
+  string reference = 2;
+  string subject_kind = 3;
+  string subject_id = 4;
+  string product_code = 5;
+  string plan_code = 6;
+  string currency = 7;
+  int64 amount_minor = 8;
+  string order_status = 9;
+  string latest_attempt_status = 10;
+  string settlement_status = 11;
+  string fulfillment_status = 12;
+  string progress_state = 13;
+  google.protobuf.Timestamp expires_at = 14;
+  google.protobuf.Timestamp funds_confirmed_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}

@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "crm/contact.proto";
+import "crm/common.proto";
+
+service InvitationInstallService {
+    rpc SendInvitation(SendInvitationRequest) returns (SendInvitationResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/invitation/send"
+            body: "*"
+        };
+    };
+    rpc ListInvitation(ListInvitationRequest) returns (ListInvitationResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/invitation/list"
+        };
+    };
+}
+
+message AppInvited {
+    uint64 id = 1;
+    string content = 2;
+    string link = 3;
+    string channel = 4;
+    optional uint64 contactId = 5;
+    uint64 createdAt = 6;
+    uint64 updatedAt = 7;
+    ContactDTO contact = 8;
+}
+
+message SendInvitationRequest {
+    repeated uint64 contactIds = 4;
+    string content = 1;
+    string link = 2;
+    string channel = 3;
+}
+
+message SendInvitationResponse {
+    repeated AppInvited data = 1;
+}
+
+message ListInvitationRequest {
+    uint64 page = 1;
+    uint64 size = 2;
+}
+
+message ListInvitationResponse {
+    repeated AppInvited data = 1;
+    int32 total = 2;
+}

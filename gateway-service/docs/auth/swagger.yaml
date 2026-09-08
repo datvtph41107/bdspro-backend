@@ -1,0 +1,2027 @@
+basePath: /v2/auth
+definitions:
+  authpb.AddPermissionToRoleRequest:
+    properties:
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      roleId:
+        type: integer
+    type: object
+  authpb.AdminAccessItem:
+    properties:
+      authType:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+      deviceType:
+        type: string
+      effectiveFrom:
+        type: string
+      effectiveTo:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      ipRange:
+        type: string
+      maxDevices:
+        type: integer
+      require2fa:
+        type: boolean
+      status:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  authpb.AdminAccessLogItem:
+    properties:
+      action:
+        type: string
+      createdAt:
+        type: string
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      reason:
+        type: string
+      status:
+        type: string
+      userAgent:
+        type: string
+      userId:
+        type: integer
+    type: object
+  authpb.AdminAccessResponse:
+    properties:
+      authType:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+      deviceType:
+        type: string
+      effectiveFrom:
+        type: string
+      effectiveTo:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      ipRange:
+        type: string
+      maxDevices:
+        type: integer
+      require2fa:
+        type: boolean
+      status:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  authpb.AdminItem:
+    properties:
+      authId:
+        type: integer
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      phone:
+        type: string
+      profileId:
+        type: integer
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  authpb.AdminListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.AdminItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  authpb.AdminLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  authpb.AssignRoleRequest:
+    properties:
+      authId:
+        type: integer
+      roleKey:
+        type: string
+    type: object
+  authpb.AssignRoleResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.AuthSuccessResponse:
+    properties:
+      accessToken:
+        type: string
+      authId:
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      organizationId:
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+      refreshToken:
+        type: string
+      role:
+        type: string
+    type: object
+  authpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      colorKey:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      hexCode:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  authpb.CreateAdminAccessLogRequest:
+    properties:
+      action:
+        type: string
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+      ipAddress:
+        type: string
+      reason:
+        type: string
+      status:
+        type: string
+      userAgent:
+        type: string
+      userId:
+        type: integer
+    type: object
+  authpb.CreateAdminAccessLogResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.CreateAdminRequest:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  authpb.DeleteAccountResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.DeleteAdminAccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.DeleteAdminRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  authpb.DeleteAdminResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.GetAdminAccessListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.AdminAccessItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  authpb.GetAdminAccessLogListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.AdminAccessLogItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  authpb.LogoutResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  authpb.Permission:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      permissionType:
+        type: string
+      priority:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.PermissionKeysResponse:
+    properties:
+      keys:
+        items:
+          type: string
+        type: array
+      role:
+        $ref: '#/definitions/authpb.Role'
+    type: object
+  authpb.PermissionListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      totalElements:
+        type: integer
+    type: object
+  authpb.QRConfirmRequest:
+    properties:
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
+  authpb.QRInitRequest:
+    properties:
+      clientId:
+        type: string
+      csrfToken:
+        type: string
+      expiration:
+        type: integer
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+      userAgent:
+        type: string
+    type: object
+  authpb.QRInitResponse:
+    properties:
+      qrCode:
+        type: string
+      sessionId:
+        type: integer
+      sessionKey:
+        type: string
+    type: object
+  authpb.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  authpb.RefreshTokenResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  authpb.RequestOTPRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        type: string
+    type: object
+  authpb.RequestOTPResponse:
+    properties:
+      authId:
+        type: integer
+      message:
+        type: string
+    type: object
+  authpb.ResendOTPRequest:
+    properties:
+      fullname:
+        type: string
+      phone:
+        type: string
+    type: object
+  authpb.ResendOTPResponse:
+    properties:
+      authId:
+        type: integer
+      message:
+        type: string
+    type: object
+  authpb.RestoreAccountRequest:
+    properties:
+      phone:
+        type: string
+    type: object
+  authpb.RestoreAccountResponse:
+    properties:
+      authId:
+        type: integer
+      oauthId:
+        type: string
+      provider:
+        type: string
+    type: object
+  authpb.RestoreDeletedAccountRequest:
+    properties:
+      email:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
+  authpb.RestoreDeletedAccountResponse:
+    properties:
+      authId:
+        type: integer
+      message:
+        type: string
+      oauthId:
+        type: string
+      provider:
+        type: string
+    type: object
+  authpb.Role:
+    properties:
+      allowAssign:
+        type: boolean
+      color:
+        $ref: '#/definitions/authpb.Color'
+      colorId:
+        type: integer
+      createdAt:
+        type: string
+      domainType:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      permissions:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleGroupName:
+        type: string
+      roleKey:
+        type: integer
+      roleName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  authpb.RoleGroup:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      groupName:
+        type: string
+      id:
+        type: integer
+      key:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.RoleGroupListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.RoleGroup'
+        type: array
+      totalElements:
+        type: integer
+    type: object
+  authpb.RoleGroupRequest:
+    properties:
+      description:
+        type: string
+      groupName:
+        type: string
+      id:
+        type: integer
+      key:
+        type: integer
+    type: object
+  authpb.RoleListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/authpb.Role'
+        type: array
+      totalElements:
+        type: integer
+    type: object
+  authpb.RoleRequest:
+    properties:
+      allowAssign:
+        type: boolean
+      colorId:
+        type: integer
+      domainType:
+        type: string
+      id:
+        description: id chỉ dùng cho update, create thì không cần truyền
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleKey:
+        type: integer
+      roleName:
+        type: string
+    type: object
+  authpb.RoleSearchRequest:
+    properties:
+      domainType:
+        type: integer
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      page:
+        type: integer
+      scope:
+        type: integer
+      size:
+        type: integer
+    type: object
+  authpb.SwitchOrganizationRequest:
+    properties:
+      organizationId:
+        type: integer
+    type: object
+  authpb.UpdateAdminAccessRequest:
+    properties:
+      authType:
+        type: string
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+      deviceType:
+        type: string
+      effectiveFrom:
+        type: string
+      effectiveTo:
+        type: string
+      id:
+        type: integer
+      ipAddress:
+        type: string
+      ipRange:
+        type: string
+      maxDevices:
+        type: integer
+      require2fa:
+        type: boolean
+      status:
+        type: string
+      userId:
+        type: integer
+    type: object
+  authpb.UpdateAdminRequest:
+    properties:
+      authId:
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      phone:
+        type: string
+    type: object
+  authpb.UpdateGroupPermissionsRequest:
+    properties:
+      groupId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  authpb.ValidateAdminAccessRequest:
+    properties:
+      deviceId:
+        type: string
+      ipAddress:
+        type: string
+      userId:
+        type: integer
+    type: object
+  authpb.ValidateAdminAccessResponse:
+    properties:
+      accessId:
+        type: integer
+      deviceId:
+        type: string
+      ipAddress:
+        type: string
+      isAllowed:
+        type: boolean
+      reason:
+        type: string
+      require2fa:
+        type: boolean
+    type: object
+  authpb.VerifyOTPRequest:
+    properties:
+      authId:
+        type: integer
+      fullname:
+        type: string
+      os:
+        type: string
+      otp:
+        type: string
+      phone:
+        type: string
+      platform:
+        type: string
+      version:
+        type: string
+    type: object
+  sharepb.SubmitResponse:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API phần logic xác thực và đăng nhập
+  title: Auth Service API
+  version: "1.0"
+paths:
+  /admin-access:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách quyền truy cập hệ thống nội bộ
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: ID người dùng
+        in: query
+        name: userId
+        type: integer
+      - description: Trạng thái
+        in: query
+        name: status
+        type: string
+      - description: Loại xác thực
+        in: query
+        name: authType
+        type: string
+      - description: Địa chỉ IP
+        in: query
+        name: ipAddress
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessListResponse'
+      summary: Lấy danh sách quyền truy cập admin
+      tags:
+      - Admin Access Control
+  /admin-access/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quyền truy cập hệ thống nội bộ
+      parameters:
+      - description: ID quyền truy cập
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminAccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminAccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminAccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminAccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminAccessResponse'
+      summary: Xóa quyền truy cập admin
+      tags:
+      - Admin Access Control
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quyền truy cập hệ thống nội bộ
+      parameters:
+      - description: ID quyền truy cập
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.UpdateAdminAccessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AdminAccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AdminAccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authpb.AdminAccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/authpb.AdminAccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AdminAccessResponse'
+      summary: Cập nhật quyền truy cập admin
+      tags:
+      - Admin Access Control
+  /admin-access/log:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách log truy cập hệ thống nội bộ
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: ID người dùng
+        in: query
+        name: userId
+        type: integer
+      - description: Địa chỉ IP
+        in: query
+        name: ipAddress
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessLogListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessLogListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessLogListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.GetAdminAccessLogListResponse'
+      summary: Lấy danh sách log truy cập admin
+      tags:
+      - Admin Access Control
+    post:
+      consumes:
+      - application/json
+      description: Tạo log truy cập hệ thống nội bộ
+      parameters:
+      - description: Thông tin log
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.CreateAdminAccessLogRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.CreateAdminAccessLogResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.CreateAdminAccessLogResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.CreateAdminAccessLogResponse'
+      summary: Tạo log truy cập admin
+      tags:
+      - Admin Access Control
+  /admin-access/validate:
+    post:
+      consumes:
+      - application/json
+      description: Kiểm tra quyền truy cập hệ thống nội bộ
+      parameters:
+      - description: Thông tin kiểm tra
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.ValidateAdminAccessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.ValidateAdminAccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.ValidateAdminAccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.ValidateAdminAccessResponse'
+      summary: Kiểm tra quyền truy cập admin
+      tags:
+      - Admin Access Control
+  /admin/assign-role:
+    post:
+      consumes:
+      - application/json
+      description: Gán quyền cho admin
+      parameters:
+      - description: Thông tin gán quyền
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AssignRoleResponse'
+      summary: Assign Role
+      tags:
+      - Admin
+  /admin/create:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tài khoản admin mới
+      parameters:
+      - description: Thông tin tạo admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Create Admin
+      tags:
+      - Admin
+  /admin/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài khoản admin
+      parameters:
+      - description: Thông tin xóa admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.DeleteAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.DeleteAdminResponse'
+      summary: Delete Admin
+      tags:
+      - Admin
+  /admin/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách admin
+      parameters:
+      - description: Trang hiện tại
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng item trên mỗi trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AdminListResponse'
+      summary: List Admins
+      tags:
+      - Admin
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Đăng nhập admin bằng username và password
+      parameters:
+      - description: Thông tin đăng nhập admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Admin Login
+      tags:
+      - Auth
+  /admin/update:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin admin
+      parameters:
+      - description: Thông tin cập nhật admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.UpdateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Update Admin
+      tags:
+      - Admin
+  /delete:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài khoản
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.DeleteAccountResponse'
+      summary: Delete account
+      tags:
+      - Auth
+  /logout:
+    delete:
+      consumes:
+      - application/json
+      description: Logout để đăng xuất
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.LogoutResponse'
+      summary: Logout
+      tags:
+      - Auth
+  /oauth/{provider}/callback:
+    get:
+      consumes:
+      - application/json
+      description: Nhận callback từ provider sau khi người dùng đăng nhập và xử lý
+        xác thực.
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Mã xác thực từ provider
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Chuỗi state để bảo vệ chống tấn công CSRF
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin người dùng từ provider
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Lỗi khi xử lý callback
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Callback
+      tags:
+      - OAuth
+  /oauth/{provider}/login:
+    get:
+      consumes:
+      - application/json
+      description: Chuyển hướng người dùng đến trang đăng nhập của provider (Google,
+        Facebook, Zalo, v.v.).
+      parameters:
+      - description: Tên của provider (google, facebook, zalo, ...)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Chuyển hướng đến trang đăng nhập của provider
+        "400":
+          description: Lỗi khi provider không hợp lệ
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth Login
+      tags:
+      - OAuth
+  /otp/request:
+    post:
+      consumes:
+      - application/json
+      description: Gửi OTP để đăng nhập
+      parameters:
+      - description: Số điện thoại
+        in: body
+        name: phone
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RequestOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RequestOTPResponse'
+      summary: Gửi OTP
+      tags:
+      - Auth
+  /otp/resend:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lại OTP để đăng nhập
+      parameters:
+      - description: Thông tin OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.ResendOTPResponse'
+      summary: Gửi lại OTP
+      tags:
+      - Auth
+  /otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Xác minh OTP để đăng nhập
+      parameters:
+      - description: Thông tin OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Xác minh OTP
+      tags:
+      - Auth
+  /permission/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permission by ID
+      parameters:
+      - description: Permission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Permission'
+      security:
+      - BearerAuth: []
+      summary: Get permission by ID
+      tags:
+      - Permission
+  /permission/all:
+    get:
+      consumes:
+      - application/json
+      description: Get all permissions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all permissions
+      tags:
+      - Role
+  /permission/branch/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permission by branch ID
+      parameters:
+      - description: Branch ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionKeysResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permission by branch ID
+      tags:
+      - Permission
+  /permission/deal/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permission by deal ID
+      parameters:
+      - description: Deal ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionKeysResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permission by deal ID
+      tags:
+      - Permission
+  /permission/group/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permission by group ID
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionKeysResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permission by group ID
+      tags:
+      - Permission
+  /permission/me:
+    get:
+      consumes:
+      - application/json
+      description: Get all permission keys
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionKeysResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permission keys
+      tags:
+      - Permission
+  /permission/module/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get permissions by module
+      parameters:
+      - description: Module ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Get permissions by module
+      tags:
+      - Permission
+  /qr/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Xác nhận QR code để đăng nhập
+      parameters:
+      - description: Thông tin QR
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.QRConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: QR Confirm
+      tags:
+      - Auth
+  /qr/init:
+    post:
+      consumes:
+      - application/json
+      description: Tạo QR code để đăng nhập
+      parameters:
+      - description: Thông tin QR
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.QRInitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.QRInitResponse'
+      summary: QR Init
+      tags:
+      - Auth
+  /restore:
+    put:
+      consumes:
+      - application/json
+      description: Khôi phục tài khoản
+      parameters:
+      - description: Thông tin khôi phục tài khoản
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RestoreAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RestoreAccountResponse'
+      summary: Restore account
+      tags:
+      - Auth
+  /restore-deleted:
+    put:
+      consumes:
+      - application/json
+      description: Khôi phục tài khoản đã bị soft delete bằng cách bỏ trường deleted_at
+      parameters:
+      - description: Thông tin khôi phục tài khoản đã bị xóa
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RestoreDeletedAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RestoreDeletedAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RestoreDeletedAccountResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/authpb.RestoreDeletedAccountResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RestoreDeletedAccountResponse'
+      summary: Khôi phục tài khoản đã bị xóa
+      tags:
+      - Auth
+  /role:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới role
+      parameters:
+      - description: Role to create
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Tạo mới role
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật role
+      parameters:
+      - description: Role to update
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật role
+      tags:
+      - Role
+  /role-group:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới role group
+      parameters:
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Tạo mới role group
+      tags:
+      - RoleGroup
+  /role-group/{groupKey}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách permission theo group key
+      parameters:
+      - description: Group key
+        in: path
+        name: groupKey
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.PermissionListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách permission theo group key
+      tags:
+      - RoleGroup
+  /role-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      summary: Xóa role group
+      tags:
+      - RoleGroup
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật role group
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin role group
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Cập nhật role group
+      tags:
+      - RoleGroup
+  /role-group/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết role group theo ID
+      parameters:
+      - description: ID role group
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroup'
+      summary: Lấy chi tiết role group
+      tags:
+      - RoleGroup
+  /role-group/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role group với phân trang
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleGroupListResponse'
+      summary: Lấy danh sách role group
+      tags:
+      - RoleGroup
+  /role-group/permissions:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật toàn bộ permission cho group
+      parameters:
+      - description: Thông tin cập nhật permission
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.UpdateGroupPermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật permission cho group
+      tags:
+      - RoleGroup
+  /role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa role
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa role
+      tags:
+      - Role
+    get:
+      consumes:
+      - application/json
+      description: Lấy role theo ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.Role'
+      security:
+      - BearerAuth: []
+      summary: Lấy role theo ID
+      tags:
+      - Role
+  /role/by-group/{groupKey}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role theo group key
+      parameters:
+      - description: Group key
+        in: path
+        name: groupKey
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách role theo group key
+      tags:
+      - Role
+  /role/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role
+      parameters:
+      - description: Role search request
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RoleSearchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách role
+      tags:
+      - Role
+  /role/organization/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách role theo organization ID
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Size
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RoleListResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách role theo organization ID
+      tags:
+      - Role
+  /role/permissions:
+    post:
+      consumes:
+      - application/json
+      description: Thêm permission vào role
+      parameters:
+      - description: Role to add permission
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.AddPermissionToRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Thêm permission vào role
+      tags:
+      - Role
+  /switch/organization:
+    post:
+      consumes:
+      - application/json
+      description: Chuyển đổi tổ chức
+      parameters:
+      - description: Thông tin chuyển đổi tổ chức
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.SwitchOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Switch Organization
+      tags:
+      - Auth
+  /token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh token để đăng nhập
+      parameters:
+      - description: Thông tin refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/authpb.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.RefreshTokenResponse'
+      summary: Refresh token
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

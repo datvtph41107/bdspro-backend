@@ -1,0 +1,98 @@
+basePath: /v1/file
+info:
+  contact: {}
+  description: This is a sample API
+  title: Example API
+  version: "1.0"
+paths:
+  /load/{p}/{s}:
+    get:
+      description: Tải file
+      parameters:
+      - description: Parameter S
+        in: path
+        name: s
+        required: true
+        type: string
+      - description: Parameter P
+        in: path
+        name: p
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Tải file
+  /signature:
+    put:
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: API sinh chữ ký để xem file được bảo vệ
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: API để upload file với mô tả và cờ bảo mật
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Secure flag
+        in: formData
+        name: secure
+        required: true
+        type: boolean
+      - description: Optional description
+        in: formData
+        name: description
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload file
+  /upload/video:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload video HLS
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload video HLS
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

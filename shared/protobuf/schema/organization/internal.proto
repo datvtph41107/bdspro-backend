@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package organizationpb;
+
+option go_package = "pb/types/organization;organizationpb";
+import "organization/deal_invitation.proto";
+import "organization/group_member.proto";
+import "organization/organization_member.proto";
+import "organization/deal.proto";
+import "organization/organization_branch.proto";
+import "shared/common.proto";
+
+service InternalOrganizationService {
+    rpc GetOrganizationByIds(GetOrganizationByIdsRequest) returns (GetOrganizationByIdsResponse);
+    rpc GetGroupByIds(GetGroupByIdsRequest) returns (GetGroupByIdsResponse);
+    rpc GetDealMemberByIds(GetMemberByIdsRequest) returns (GetDealMemberByIdsResponse);
+    rpc GetGroupMemberByIds(GetMemberByIdsRequest) returns (GetGroupMemberByIdsResponse);
+    rpc GetOrganizationMemberByIds(GetMemberByIdsRequest) returns (GetOrganizationMemberByIdsResponse);
+    rpc CheckUsersInOrganization(CheckUsersInOrganizationRequest) returns (CheckUsersInOrganizationResponse) {}
+    rpc GetDealById(GetDealByIdRequest) returns (GetDealByIdResponse);
+    rpc AddProductToDeal(AddProductToDealRequest) returns (sharepb.SubmitResponse);
+    rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
+    rpc GetBranchMembers(GetBranchMembersRequest) returns (GetBranchMemberByIdsResponse);
+    // Organization service là owner duy nhất quyết định quyền của thành viên
+    // trong tổ chức. Service gọi không tự suy diễn từ global role trong token.
+    rpc AuthorizeOrganizationAction(AuthorizeOrganizationActionRequest) returns (AuthorizeOrganizationActionResponse);
+}
+
+enum OrganizationAction {
+    ORGANIZATION_ACTION_UNSPECIFIED = 0;
+    ORGANIZATION_ACTION_SUBSCRIPTION_CHECKOUT = 1;
+}
+
+message AuthorizeOrganizationActionRequest {
+    uint64 organization_id = 1 [json_name = "organizationId"];
+    uint64 actor_profile_id = 2 [json_name = "actorProfileId"];
+    OrganizationAction action = 3 [json_name = "action"];
+}
+
+message AuthorizeOrganizationActionResponse {
+    bool allowed = 1 [json_name = "allowed"];
+}
+
+message GetOrganizationByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetOrganizationByIdsResponse {
+    repeated OrganizationItem organizations = 1;
+}
+
+message GetGroupByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message GetGroupByIdsResponse {
+    repeated GroupItem groups = 1;
+}
+
+message GetMemberByIdsRequest {
+    uint64 groupId = 1;
+    repeated uint64 ids = 2;
+}
+
+message GetBranchMemberByIdsResponse {
+    repeated OrganizationBranchMember data = 1;
+}
+
+message GetDealMemberByIdsResponse {
+    repeated DealMember data = 1;
+}
+
+message GetGroupMemberByIdsResponse {
+    repeated GroupMember data = 1;
+}
+
+message GetOrganizationMemberByIdsResponse {
+    repeated OrganizationMember data = 1;
+}
+
+message GroupItem {
+    uint64 id = 1;
+    string name = 2;
+    string avatar = 3;
+}
+
+message OrganizationItem {
+    uint64 id = 1;
+    string name = 2;
+    string avatar = 3;
+}
+
+message CheckUsersInOrganizationRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    repeated uint64 userIds = 2 [json_name = "userIds"];
+}
+message CheckUserInOrganization {
+    uint64 userId = 1 [json_name = "userId"];
+    bool isExist = 2 [json_name = "isExist"];
+    string joinedAt = 3 [json_name = "joinedAt"];
+}
+
+message CheckUsersInOrganizationResponse {
+    repeated CheckUserInOrganization data = 1 [json_name = "data"];
+}
+
+message GetDealByIdRequest {
+    uint64 id = 1;
+}
+
+message GetDealByIdResponse {
+    GroupDeal deal = 1;
+}
+
+message GetDealTransactionsByIdsRequest {
+    repeated uint64 ids = 1;
+}
+
+message AddProductToDealRequest {
+    uint64 dealId = 1;
+    uint64 productId = 2;
+}
+
+message DealMemberRequest {
+    uint64 dealId = 1;
+    repeated uint64 userIds = 2;
+}
+
+message GetBranchMembersRequest {
+    uint64 branchId = 1;
+    repeated uint64 userIds = 2;
+}
+
+message GetOrganizationMemberRequest {
+    uint64 organizationId = 1;
+    uint64 userId = 2;
+}

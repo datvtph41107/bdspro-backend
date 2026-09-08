@@ -1,0 +1,45 @@
+auth:
+    jwt_issuer: "myapp-dev"
+    jwt_secret: "dev-secret-change-me" # sẽ override bằng env
+services:
+    endpoints:
+        user:
+            addresses: ["localhost:8201"]
+            timeout: 2s
+        bdspro:
+            addresses: ["localhost:8202"]
+        auth:
+            addresses: ["localhost:8201"]
+        tqd:
+            addresses: ["localhost:8219"]
+        crm:
+            addresses: ["localhost:8206"]
+        chat:
+            addresses: ["localhost:8208"]
+        payment:
+            addresses: ["localhost:8205"]
+        notification:
+            addresses: ["localhost:8204"]
+        organization:
+            addresses: ["localhost:8207"]
+        social:
+            addresses: ["localhost:8209"]
+        map:
+            addresses: ["localhost:8210"]
+        search:
+            addresses: ["localhost:8211"]
+        appointment:
+            addresses: ["localhost:8213"]
+        marketing:
+            addresses: ["localhost:8214"]
+        transaction:
+            addresses: ["localhost:8215"]
+        feedback:
+            addresses: ["localhost:8217"]
+        assistant:
+            addresses: ["localhost:8218"]
+        hub:
+            addresses: ["localhost:8280"]
+        file:
+            addresses: ["localhost:8203"]
+        # ... các service còn lại

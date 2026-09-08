@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service EventQueueService {
+  rpc List (EventQueueListRequest) returns (EventQueueListResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/event-queue/list"
+    };
+  };
+  rpc Detail (sharepb.IdRequest) returns (EventQueueDTO) {
+    option (google.api.http) = {
+      get: "/v2/hub/event-queue/detail/{id}"
+    };
+  };
+  rpc Create (EventQueueSaveDTO) returns (EventQueueDTO) {
+    option (google.api.http) = {
+      post: "/v2/hub/event-queue"
+      body: "*"
+    };
+  };
+  rpc Update (EventQueueSaveDTO) returns (EventQueueDTO) {
+    option (google.api.http) = {
+      put: "/v2/hub/event-queue/edit/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/event-queue/{id}"
+    };
+  };
+  rpc UpdateStatus (EventQueueStatusDTO) returns (EventQueueDTO) {
+    option (google.api.http) = {
+      put: "/v2/hub/event-queue/status/{id}"
+      body: "*"
+    };
+  };
+}
+
+// Request messages
+message EventQueueListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional string text = 3;
+  optional uint64 profileId = 4;
+  optional uint64 organizationId = 5;
+  repeated uint32 status = 6;
+  repeated string eventType = 7;
+  optional string fromDate = 8;
+  optional string toDate = 9;
+}
+
+message EventQueueSaveDTO {
+  uint64 id = 1;
+  string eventType = 2;
+  string eventName = 3;
+  optional string eventData = 4;
+  optional string metadata = 5;
+  optional uint32 status = 6;
+  optional uint64 profileId = 7;
+  optional uint64 organizationId = 8;
+  optional string scheduledAt = 9;
+  optional uint32 retryCount = 10;
+  optional uint32 maxRetries = 11;
+  optional string errorMessage = 12;
+}
+
+message EventQueueStatusDTO {
+  uint64 id = 1;
+  uint32 status = 2;
+  optional string errorMessage = 3;
+}
+
+// Response messages
+message EventQueueDTO {
+  uint64 id = 1;
+  string eventType = 2;
+  string eventName = 3;
+  optional string eventData = 4;
+  optional string metadata = 5;
+  uint32 status = 6;
+  optional uint64 profileId = 7;
+  optional uint64 organizationId = 8;
+  optional string scheduledAt = 9;
+  optional string processedAt = 10;
+  uint32 retryCount = 11;
+  uint32 maxRetries = 12;
+  optional string errorMessage = 13;
+  optional uint64 createdBy = 14;
+  optional uint64 updatedBy = 15;
+  string createdAt = 16;
+  string updatedAt = 17;
+}
+
+message EventQueueListResponse {
+  repeated EventQueueDTO data = 1;
+  uint32 total = 2;
+}
+

@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+
+service CheckoutService {
+  rpc UpdateCheckoutContact(UpdateCheckoutContactRequest) returns (CheckoutContact) {
+    option (google.api.http) = {
+      put: "/v2/user/checkout/contact"
+      body: "*"
+    };
+  }
+  rpc Checkout(CheckoutRequest) returns (CheckoutResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/checkout"
+      body: "*"
+    };
+  }
+
+  rpc CreatePaymentAttempt(CheckoutPaymentAttemptRequest)
+      returns (CheckoutPaymentAttemptResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/checkout/payment-attempts"
+      body: "*"
+    };
+  }
+}
+
+message UpdateCheckoutContactRequest {
+  string full_name = 1;
+  string email = 2;
+}
+
+message CheckoutContact {
+  string full_name = 1;
+  string email = 2;
+  string phone = 3;
+}
+
+message CheckoutRequest {
+  string planCode = 1;
+  string subjectKind = 2;
+}
+
+message CheckoutResponse {
+  uint64 orderId = 1;
+  string reference = 2;
+  string status = 3;
+  bool created = 4;
+}
+
+message CheckoutPaymentAttemptRequest {
+  uint64 orderId = 1;
+  string subjectKind = 2;
+  string method = 3;
+}
+
+message CheckoutNextAction {
+  string kind = 1;
+  string redirectUrl = 2;
+  string qrPayload = 3;
+  string expiresAt = 4;
+}
+
+message CheckoutPaymentAttemptResponse {
+  uint64 attemptId = 1;
+  uint64 orderId = 2;
+  string method = 3;
+  string provider = 4;
+  string providerReference = 5;
+  string status = 6;
+  CheckoutNextAction nextAction = 7;
+  string expiresAt = 8;
+  bool created = 9;
+}

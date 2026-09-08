@@ -1,0 +1,108 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# cursor-rules.yml
+rules:
+  - description: "Go project with Clean Architecture and structured infra layer"
+    match: "**/*.go"
+    instructions: |
+      - Project tuân theo Clean Architecture, chia layer rõ ràng:
+
+        **1. config/**
+        - Chứa file cấu hình (YAML, ENV) và code load config.
+        - Không chứa logic business.
+        
+        **2. infra/**
+        - Layer triển khai hạ tầng, không chứa business logic.
+        - Các thư mục con:
+          - client/: Chứa code kết nối tới service bên ngoài (API client, gRPC client...).
+          - db/: Code kết nối database (khởi tạo connection pool, transaction management).
+          - handler/: Định nghĩa HTTP handlers, binding request/response DTO.
+          - mapper/: Chuyển đổi giữa entity/domain và DTO hoặc schema DB.
+          - postgre/: Triển khai repository cho PostgreSQL (có thể chia nhỏ file theo bảng).
+          - properties/: Chứa code load properties và runtime config.
+          - redis/: Triển khai Redis provider và cache logic.
+          - oauth/: Triển khai OAuth providers (Google, Facebook, Zalo...).
+          - cookie/: Triển khai cookie provider.
+        - Quy tắc import:
+          - infra không import từ internal/usecase.
+          - infra có thể import internal/domain, internal/dto, internal/interface để implement.
+          - Không viết business logic ở đây, chỉ là triển khai kỹ thuật (technical detail).
+
+        **3. internal/**
+        - domain/: Entity và business object.
+        - dto/: Data Transfer Objects cho request/response.
+        - enums/: Enum/constant dùng chung.
+        - interface/: Định nghĩa interface cho repo, service, client...
+          - factory/: Interface cho factory pattern.
+          - provider/: Interface cho các provider (auth, cache, cookie, notification...).
+          - repo/: Repository interface (không chứa implementation).
+        - usecase/: Chứa business logic, gọi repository hoặc service qua interface.
+        - utils/: Hàm tiện ích dùng chung, không phụ thuộc vào business logic.
+        - validator/: Chứa các validator cho request/response DTO.
+
+        **4. cmd/**
+        - Entry point khởi chạy ứng dụng (gRPC, HTTP...).
+
+        **5. env/**
+        - Chứa code load environment variables và runtime config.
+
+        **6. initial/**
+        - Chứa code khởi tạo và setup ban đầu cho service.
+
+        **7. wire/**
+        - Chứa dependency injection setup (wire.go, wire_gen.go).
+
+      - **Quy tắc coding đặc biệt khi lấy thông tin user từ request**:
+        - Luôn import utils với alias `_utils`:
+          ```go
+          import _utils "common/utils"
+          ```
+        - Để lấy **profileId** của user:
+          ```go
+          profileID := _utils.GetProfileIdWithContext(ctx)
+          ```
+        - Để lấy **organizationId** của tổ chức hiện tại:
+          ```go
+          organizationID := _utils.GetOrganizationIdFromContext(ctx)
+          ```
+        - Không được tự parse thông tin từ JWT hay context ngoài utils.
+        - Chỉ gọi các hàm này trong layer usecase, router, hoặc service cần thông tin user.
+
+      - Không viết routes trong routes vì đây là cách cũ
+      - Định nghĩa file .proto trong protobuf/schema/<service tương ứng>
+      - DTO chỉ dùng để giao tiếp với handler/controller.
+      - Mapper phải dùng để convert giữa DTO và domain/entity, không convert trực tiếp ở usecase.
+      - Repository implementation phải nằm trong infra/postgre.
+      - Luôn tách interface và implementation ở các layer khác nhau.
+      - Viết test với `_test.go` và mock dependency qua interface.
+      - Sử dụng dependency injection với wire để quản lý dependencies.
+      - Tất cả external dependencies phải được inject qua interface.
+
+# Quy tắc viết 1 api thông thường khi có yêu cầu:
+  - quy tắc đặt tên biến dùng camelcase
+  - Toàn bộ api đã theo chuẩn v2 tôi thiết kế nghĩa là:
+    - Không dùng lại routes mà đổi sang viết định tuyến trong handler. 
+    - Triển khai lại các api định nghĩa trong proto trong handler
+  - Không cần viết test, không cần viết doc. không cần tạo wire và gen_wire
+  - Định nghĩa dữ liệu và api trong .proto nằm trong protobuf
+  - Trong infra/handler định nghĩa các implement nằm trong protobuf.
+  - handler nhớ thêm comment của swagger sinh mới
+  - viết các validator và mapper nếu cần
+  - viết usecase trong internal/usecase
+  - Định nghĩa các repo để tương tác với dữ liệu trong internal/interface/repo
+  - viết lớp triển khai repo đó trong infra/postgre
+  - nếu cần phải sử dụng thông tin đến từ các service khác. viết 1 client trong infra/client
+  - nếu usecase cần tương tác với client từ service khác. định nghĩa 1 interface trong internal/interface/provider
+  - sau đó client trong infra/client triển khai lại
+  - không dùng gin.Context mà đổi sang context.Context
+  - mấy phần triển khai lại nhớ thêm: // @bind: internal/..... để sau gen code dựa vào đó mà tạo wire.
+  - Nếu là handler mới hoàn toàn nhớ đăng ký trong gateway-service
+  - Mapper:
+    - với trường liên quan tới time thì dùng _utils.FormatTimeToString, _utils.ParseStringToTime
+  - Đối với api trả ra danh sách:
+    - Luôn trả danh sách trong trường data
+    - trả thêm cả total và request cần nhập page, size
+    - dto luôn embed _dto.Pagable

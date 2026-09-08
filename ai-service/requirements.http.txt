@@ -1,0 +1,14 @@
+# Minimal requirements for http_server.py (QR Code Detection Service)
+# Only includes packages actually used by http_server.py
+
+# Core web framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.10.0
+python-multipart>=0.0.20
+
+# QR Code reading
+pyzbar>=0.1.9
+Pillow>=10.0.0
+
+pytesseract>=0.3.10

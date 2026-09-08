@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "crm/rate.proto";
+import "crm/report_reason.proto";
+
+// Report Service
+service ReportService {
+  rpc CreateReport(CreateReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/feedback/report/{registry}"
+      body: "*"
+    };
+  }
+  rpc GetReportList(GetReportListRequest) returns (GetReportListResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/report/{registry}/list/{ownerId}"
+    };
+  }
+  rpc GetReportReasons(GetReportReasonsRequest) returns (GetReportReasonsResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/report/reasons"
+    };
+  }
+  rpc UpdateReport(UpdateReportRequest) returns (UpdateReportResponse) {
+    option (google.api.http) = {
+      put: "/v2/feedback/report/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteReport(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/feedback/report/{id}"
+    };
+  }
+}
+
+// Report Messages
+message CreateReportRequest {
+  uint64 reasonId = 1;
+  uint64 userId = 2;
+  uint64 ownerId = 3;
+  uint32 ownerOf = 4;
+  string registry = 5;
+  string content = 6;
+  repeated string proofDocs = 7;
+}
+
+message CreateReportResponse {
+  ReportResponse report = 1;
+}
+
+message GetReportListRequest {
+  optional uint64 userId = 1;
+  optional uint32 status = 2;
+  optional uint64 reason_id = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+  string registry = 6;
+  uint64 ownerId = 7;
+}
+
+message GetReportListResponse {
+  repeated ReportResponse data = 1;
+  int64 total = 2;
+}
+
+message GetReportReasonsRequest {
+}
+
+message GetReportReasonsResponse {
+  repeated ReportReason data = 1;
+  int64 total = 2;
+}
+
+message UpdateReportRequest {
+  uint64 id = 1;
+  optional uint64 reasonId = 2;
+  optional string content = 3;
+  repeated string proofDocs = 4;
+}
+
+message UpdateReportResponse {
+  ReportResponse report = 1;
+}
+
+
+message ReportResponse {
+  uint64 id = 1;
+  uint64 reasonId = 2;
+  optional ReportReason reason = 3;
+  uint32 reportStatus = 4;
+  uint64 userId = 5;
+  optional sharepb.ProfileItem user = 6;
+  repeated ReportProof proofDocs = 7;
+  optional string response = 8;
+  optional sharepb.ProfileItem reporter = 9;
+  optional string adminNote = 10;
+  uint64 ownerId = 11;
+  uint32 ownerOf = 12;
+  string content = 13;
+  string createdAt = 14;
+  string updatedAt = 15;
+}
+
+
+message ReportProof {
+  uint64 id = 1;
+  string fileUrl = 2;
+  string fileName = 3;
+  string fileType = 4;
+}
+

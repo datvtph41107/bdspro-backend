@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package tqdpb;
+
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+import "shared/common.proto";
+
+service TqdPublicService {
+  // Config app quy hoạch
+  rpc GetQhConfigApp(GetQhConfigAppRequest) returns (GetQhConfigAppResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/json/{config}"
+    };
+  }
+
+  rpc GetEnums(sharepb.SyncRequest) returns (sharepb.GetEnumsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/enums"
+    };
+  }
+
+  rpc GetPublicMaps(google.protobuf.Empty) returns (GetPublicMapsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/public/maps"
+    };
+  }
+
+  rpc GetFont(GetFontRequest) returns (sharepb.CommonResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/public/font/{fontstack}/{range}"
+    };
+  }
+}
+
+message GetPublicMapsResponse {
+  repeated MapSource data = 1;
+}
+
+message MapSource {
+  string source = 1;
+  string type = 2;
+  string name = 3;
+}
+
+message GetQhConfigAppRequest {
+  string config = 1;
+}
+
+message GetQhConfigAppResponse {
+  int32 code = 1;
+  google.protobuf.Struct data = 2;
+}
+
+message GetFontRequest {
+  string fontstack = 1;
+  string range = 2;
+}

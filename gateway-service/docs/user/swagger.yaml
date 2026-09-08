@@ -1,0 +1,3864 @@
+definitions:
+  _enum.EUserStatus:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    - 40
+    type: integer
+    x-enum-comments:
+      EUserStatusActive: Hoạt động
+      EUserStatusInactive: Chưa hoạt động
+      EUserStatusPermanentlyLocked: Khóa vĩnh viễn
+      EUserStatusSuspended: Ngừng hoạt động
+      EUserStatusTemporaryLocked: Khóa tạm thời
+    x-enum-varnames:
+    - EUserStatusInactive
+    - EUserStatusActive
+    - EUserStatusTemporaryLocked
+    - EUserStatusPermanentlyLocked
+    - EUserStatusSuspended
+  authpb.AuthSuccessResponse:
+    properties:
+      accessToken:
+        type: string
+      authId:
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      encryptedAuthKey:
+        description: Auth key đã được mã hóa bằng shared secret (Diffie-Hellman)
+        type: string
+      fullName:
+        type: string
+      organizationId:
+        type: integer
+      passwordAuthId:
+        description: ID của auth_method có provider ADMIN (password authentication)
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+      referralCode:
+        description: Mã giới thiệu của user
+        type: string
+      refreshToken:
+        type: string
+      requireFullname:
+        description: true nếu user cần cập nhật họ tên
+        type: boolean
+      role:
+        type: string
+      serverPublicKey:
+        description: Diffie-Hellman public key của server (nếu cần gửi về client)
+        type: string
+      tempToken:
+        description: Token tạm thời (10 phút) cho user chưa có họ tên, chỉ dùng để
+          gọi UpdateFullname
+        type: string
+    type: object
+  authpb.Color:
+    properties:
+      backgroundColor:
+        type: string
+      colorKey:
+        type: string
+      contentColor:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      description:
+        type: string
+      hexCode:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  authpb.Permission:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      permissionType:
+        type: string
+      priority:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  authpb.Role:
+    properties:
+      allowAssign:
+        type: boolean
+      color:
+        $ref: '#/definitions/authpb.Color'
+      colorId:
+        type: integer
+      createdAt:
+        type: string
+      domainType:
+        type: string
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+      organizationId:
+        type: integer
+      permissionIds:
+        items:
+          type: integer
+        type: array
+      permissions:
+        items:
+          $ref: '#/definitions/authpb.Permission'
+        type: array
+      roleDescription:
+        type: string
+      roleGroupId:
+        type: integer
+      roleGroupName:
+        type: string
+      roleKey:
+        type: integer
+      roleName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  dto.FriendDTO:
+    properties:
+      groupId:
+        type: integer
+      groupReceiverId:
+        type: integer
+      id:
+        type: integer
+      isSender:
+        description: |-
+          Group           *FriendGroupDTO `json:"group,omitempty"`
+          UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
+        type: boolean
+      receiverId:
+        type: integer
+      respondedAt:
+        type: string
+      senderId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.EFriendStatus'
+      text:
+        type: string
+    type: object
+  dto.PublicUserInfo:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      bookmark:
+        type: boolean
+      certifications:
+        description: transient
+        items:
+          $ref: '#/definitions/models.CertificationEntity'
+        type: array
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      following:
+        type: boolean
+      frontIdentify:
+        type: string
+      fullname:
+        type: string
+      gender:
+        type: integer
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
+        type: string
+      mainAreas:
+        items:
+          $ref: '#/definitions/models.MainAreaEntity'
+        type: array
+      phone:
+        type: string
+      phone2:
+        type: string
+      planAt:
+        type: string
+      planId:
+        type: integer
+      position:
+        type: string
+      professions:
+        items:
+          $ref: '#/definitions/models.ProfessionEntity'
+        type: array
+      profileId:
+        type: integer
+      profileVisibility:
+        type: integer
+      purposeUses:
+        items:
+          $ref: '#/definitions/models.PurposeUseEntity'
+        type: array
+      rateStats:
+        $ref: '#/definitions/models.RateStats'
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      relationShip:
+        $ref: '#/definitions/models.FriendItem'
+      roleBgColor:
+        type: string
+      roleColor:
+        type: string
+      roleId:
+        type: integer
+      roleKey:
+        type: integer
+      roleName:
+        type: string
+      roleRealEstate:
+        $ref: '#/definitions/enums.ERoleRealEstate'
+      roleType:
+        $ref: '#/definitions/enums.ERole'
+      slogan:
+        type: string
+      startDate:
+        type: string
+      status:
+        $ref: '#/definitions/_enum.EUserStatus'
+      statusOnline:
+        $ref: '#/definitions/enums.EOnlineStatus'
+      tabDefault:
+        $ref: '#/definitions/enums.ESettingTab'
+      taxCode:
+        type: string
+      tickVerified:
+        type: boolean
+      twitter:
+        type: string
+      visibility:
+        type: integer
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  dto.UserInfoResponse:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      birth:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      followerNumber:
+        type: integer
+      followingNumber:
+        type: integer
+      friendNumber:
+        type: integer
+      fullname:
+        type: string
+      phone:
+        type: string
+      position:
+        type: string
+      profileId:
+        type: integer
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      roleType:
+        type: string
+      startDate:
+        type: string
+      taxCode:
+        type: string
+    type: object
+  enums.EFriendStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      EFriendStatusAccepted: '"ACCEPT"'
+      EFriendStatusPending: '"PENDING"'
+      EFriendStatusReject: '"REJECT"'
+    x-enum-varnames:
+    - EFriendStatusPending
+    - EFriendStatusAccepted
+    - EFriendStatusReject
+  enums.EOnlineStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - Online
+    - LASTEST
+    - HIDDEN
+  enums.ERole:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - ERoleUser
+    - ERoleAdmin
+    - ERoleSuperAdmin
+  enums.ERoleRealEstate:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    type: integer
+    x-enum-varnames:
+    - ERoleRealEstateBroker
+    - ERoleRealEstateAppraiser
+    - ERoleRealEstateLegal
+    - ERoleRealEstateInvestor
+    - ERoleRealEstateCustomer
+    - ERoleRealEstateManager
+  enums.ESettingTab:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    - 60
+    - 70
+    - 80
+    - 90
+    - 100
+    - 110
+    - 120
+    - 130
+    type: integer
+    x-enum-varnames:
+    - ETabProfile
+    - ETabPost
+    - ETabActivity
+    - ETabSetting
+    - EIntrodution
+    - EEvaluation
+    - EReaction
+    - EShare
+    - ESharePost
+    - EShareActivity
+    - EShareSetting
+    - EShareIntrodution
+    - EShareEvaluation
+  enums.VerifyStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - VerifyPending
+    - VerifyVerified
+    - VerifyRejected
+  models.CertificationEntity:
+    properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      fileName:
+        description: Tên file
+        type: string
+      fileType:
+        description: Loại file
+        type: string
+      fileUrl:
+        description: Link tài liệu
+        type: string
+      id:
+        type: integer
+      issueDate:
+        description: Ngày cấp
+        type: string
+      issuer:
+        description: Cơ quan cấp
+        type: string
+      name:
+        description: Tên chứng chỉ
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+      verifiedStatus:
+        allOf:
+        - $ref: '#/definitions/enums.VerifyStatus'
+        description: Trạng thái xác minh
+    type: object
+  models.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.EFriendStatus'
+        description: '1: Pending, 2: Accepted, 3: Declined'
+    type: object
+  models.MainAreaEntity:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      numberProfile:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.ProfessionEntity:
+    properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      issueDate:
+        description: ngày cấp
+        type: string
+      issuer:
+        description: cơ quan cấp
+        type: string
+      name:
+        description: tên văn bằng
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.VerifyStatus'
+        description: trạng thái
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.PurposeUseEntity:
+    properties:
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      numberProfile:
+        type: integer
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    type: object
+  models.RateStats:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
+  sharepb.AddressV3Proto:
+    properties:
+      detail:
+        type: string
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  sharepb.BDSProDashboardProto:
+    properties:
+      totalAsset:
+        type: integer
+      totalPost:
+        type: integer
+      totalProduct:
+        type: integer
+      totalProject:
+        type: integer
+    type: object
+  sharepb.ContactInfoV3Proto:
+    properties:
+      blockId:
+        type: integer
+      contactId:
+        type: integer
+      followId:
+        type: integer
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+      reportId:
+        type: integer
+    type: object
+  sharepb.Empty:
+    type: object
+  sharepb.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  sharepb.FriendV3Proto:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  sharepb.GetStatsResponse:
+    properties:
+      firstDate:
+        type: string
+      firstDateCount:
+        type: integer
+      secondDate:
+        type: string
+      secondDateCount:
+        type: integer
+    type: object
+  sharepb.IdRequest:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      sort:
+        type: string
+      text:
+        type: string
+    type: object
+  sharepb.ItemV3PageProto:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      total:
+        type: integer
+    type: object
+  sharepb.ItemV3Proto:
+    properties:
+      id:
+        type: integer
+      itemType:
+        type: integer
+      name:
+        type: string
+    type: object
+  sharepb.KYCV3Proto:
+    properties:
+      backImage:
+        type: string
+      createdAt:
+        type: string
+      frontImage:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      identityCard:
+        type: string
+      profileId:
+        type: integer
+      rejectReason:
+        type: string
+      reviewedAt:
+        type: string
+      reviewedBy:
+        type: integer
+      selfieImage:
+        type: string
+      status:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  sharepb.RateStatsV3Proto:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
+  sharepb.SubmitResponse:
+    properties:
+      id:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+    type: object
+  sharepb.TotalResponseProto:
+    properties:
+      bdsproInfo:
+        $ref: '#/definitions/sharepb.BDSProDashboardProto'
+      contactInfo:
+        $ref: '#/definitions/sharepb.ContactInfoV3Proto'
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendV3Proto'
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
+      province:
+        $ref: '#/definitions/sharepb.ItemV3Proto'
+      rateStats:
+        $ref: '#/definitions/sharepb.RateStatsV3Proto'
+      user:
+        $ref: '#/definitions/sharepb.UserV3Proto'
+    type: object
+  sharepb.UserV3Proto:
+    properties:
+      address:
+        $ref: '#/definitions/sharepb.AddressV3Proto'
+      avatar:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      blogUrl:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      facebookUrl:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      instagramUrl:
+        type: string
+      introduction:
+        type: string
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
+      linkedinUrl:
+        type: string
+      mainAreaIds:
+        items:
+          type: integer
+        type: array
+      mainAreaNews:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      mainAreas:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      otherUrl:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
+      profileId:
+        type: integer
+      profileVisibility:
+        type: integer
+      purposeUseIds:
+        items:
+          type: integer
+        type: array
+      purposeUses:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      roleRealEstate:
+        type: integer
+      signatureVisible:
+        type: boolean
+      statusOnline:
+        type: integer
+      tagJobs:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagMainAreas:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagProjects:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tagSpecialities:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      tags:
+        items:
+          $ref: '#/definitions/sharepb.ItemV3Proto'
+        type: array
+      twitterUrl:
+        type: string
+      updateTags:
+        type: boolean
+      updatedAt:
+        type: string
+      visibility:
+        type: integer
+      websiteUrl:
+        type: string
+      youtubeUrl:
+        type: string
+      zaloUrl:
+        type: string
+    type: object
+  timestamppb.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
+  userpb.AccountInfo:
+    properties:
+      avatar:
+        type: string
+      backgroundImage:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      groupId:
+        type: integer
+      organizationId:
+        type: integer
+      ownerType:
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+    type: object
+  userpb.AccountInfoResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.AccountInfo'
+        type: array
+      total:
+        type: integer
+    type: object
+  userpb.AdminProfile:
+    properties:
+      address:
+        type: string
+      attachments:
+        items:
+          type: string
+        type: array
+      avatar:
+        type: string
+      birth:
+        type: string
+      bookmark:
+        type: boolean
+      createdAt:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      id:
+        type: integer
+      internalNotes:
+        type: string
+      jobTitle:
+        type: string
+      lastLoginAt:
+        type: string
+      lockedAt:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      position:
+        type: string
+      role:
+        $ref: '#/definitions/authpb.Role'
+      roleId:
+        type: integer
+      roleKey:
+        type: string
+      roleRealEstate:
+        type: string
+      roleType:
+        type: string
+      sendNotification:
+        type: boolean
+      status:
+        type: integer
+      tickVerified:
+        type: boolean
+      totalLogin:
+        type: integer
+      updatedAt:
+        type: string
+      username:
+        type: string
+      verifiedAt:
+        type: string
+      workAt:
+        type: string
+    type: object
+  userpb.AdminUserItem:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      birth:
+        type: string
+      bookmark:
+        description: true nếu user này được admin bookmark
+        type: boolean
+      createdAt:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      lastLoginAt:
+        description: Lần đăng nhập cuối
+        type: string
+      lockedAt:
+        description: Thời gian khóa tài khoản
+        type: string
+      phone:
+        type: string
+      position:
+        type: string
+      profileId:
+        type: integer
+      role:
+        allOf:
+        - $ref: '#/definitions/authpb.Role'
+        description: Role của user
+      roleRealEstate:
+        description: Role real estate
+        type: string
+      roleType:
+        description: Role type của user
+        type: string
+      status:
+        description: 'Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời,
+          30: Khóa vĩnh viễn, 40: Ngừng hoạt động'
+        type: integer
+      tickVerified:
+        description: Tài khoản đã xác thực
+        type: boolean
+      totalLogin:
+        description: Tổng số lần đăng nhập
+        type: integer
+      updatedAt:
+        type: string
+      verifiedAt:
+        description: Thời gian xác thực
+        type: string
+      warningLevel:
+        description: 'Cấp độ cảnh báo (0: none, 10: info, 20: warning, 30: danger,
+          40: critical)'
+        type: integer
+    type: object
+  userpb.ApproveUserRequest:
+    properties:
+      note:
+        description: Ghi chú khi duyệt
+        type: string
+      profileId:
+        type: integer
+    type: object
+  userpb.CertificationItem:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+    type: object
+  userpb.CreateOrderRequest:
+    properties:
+      planId:
+        type: integer
+    type: object
+  userpb.CreateOrderResponse:
+    properties:
+      membership:
+        $ref: '#/definitions/userpb.MembershipResponse'
+      paymentUrl:
+        type: string
+    type: object
+  userpb.CreatePlanRequest:
+    properties:
+      color:
+        type: string
+      createOrganization:
+        type: integer
+      createProduct:
+        type: integer
+      createProductAI:
+        type: integer
+      customerLimit:
+        type: integer
+      duration:
+        type: integer
+      features:
+        items:
+          type: string
+        type: array
+      friendLimit:
+        type: integer
+      joinOrg:
+        type: integer
+      limitPost:
+        type: integer
+      orgMemberLimit:
+        type: integer
+      orgProductLimit:
+        type: integer
+      packageName:
+        type: string
+      price:
+        type: integer
+      publicProductLimit:
+        type: integer
+      visibility:
+        type: boolean
+    type: object
+  userpb.CreateUserRequest:
+    properties:
+      address:
+        description: Địa chỉ
+        type: string
+      avatar:
+        description: URL avatar
+        type: string
+      birth:
+        description: 'Ngày sinh (format: YYYY-MM-DD)'
+        type: string
+      email:
+        description: Email
+        type: string
+      fullName:
+        description: Họ và tên
+        type: string
+      gender:
+        description: 'Giới tính (0: khác, 1: nam, 2: nữ)'
+        type: integer
+      password:
+        description: Mật khẩu (optional - tự động generate nếu không có)
+        type: string
+      phone:
+        description: Số điện thoại
+        type: string
+      roleId:
+        description: Role ID
+        type: integer
+      username:
+        description: Tên đăng nhập (optional - tự động generate từ email nếu không
+          có)
+        type: string
+    type: object
+  userpb.CreateUserResponse:
+    properties:
+      authId:
+        description: ID của auth method vừa tạo
+        type: integer
+      avatar:
+        description: URL avatar
+        type: string
+      createdAt:
+        description: Thời gian tạo
+        type: string
+      email:
+        description: Email
+        type: string
+      fullName:
+        description: Họ và tên
+        type: string
+      phone:
+        description: Số điện thoại
+        type: string
+      profileId:
+        description: ID của user vừa tạo
+        type: integer
+      roleId:
+        description: Role ID
+        type: integer
+      username:
+        description: Tên đăng nhập
+        type: string
+    type: object
+  userpb.DeletePlanResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  userpb.DeleteUserRequest:
+    properties:
+      profileId:
+        description: ID của user cần xóa
+        type: integer
+      reason:
+        description: Lý do xóa
+        type: string
+    type: object
+  userpb.FindByPhoneResponse:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      phone:
+        description: Thông tin user tìm được (null nếu không tìm thấy)
+        type: string
+    type: object
+  userpb.GetAllPlansResponse:
+    properties:
+      plans:
+        items:
+          $ref: '#/definitions/userpb.PlanResponse'
+        type: array
+    type: object
+  userpb.GetMyMembershipResponse:
+    properties:
+      membership:
+        $ref: '#/definitions/userpb.MembershipResponse'
+    type: object
+  userpb.GetPlanByIdResponse:
+    properties:
+      plan:
+        $ref: '#/definitions/userpb.PlanResponse'
+    type: object
+  userpb.GetUserDetailResponse:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      createdAt:
+        type: string
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      frontIdentify:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      instagram:
+        type: string
+      introduction:
+        type: string
+      linkedin:
+        type: string
+      phone:
+        type: string
+      phone2:
+        type: string
+      position:
+        type: string
+      profileId:
+        type: integer
+      role:
+        $ref: '#/definitions/authpb.Role'
+      slogan:
+        type: string
+      status:
+        description: 'Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời,
+          30: Khóa vĩnh viễn, 40: Ngừng hoạt động'
+        type: integer
+      taxCode:
+        type: string
+      tickVerified:
+        type: boolean
+      twitter:
+        type: string
+      updatedAt:
+        type: string
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  userpb.GetVisiblePlansResponse:
+    properties:
+      plans:
+        items:
+          $ref: '#/definitions/userpb.PlanResponse'
+        type: array
+    type: object
+  userpb.ListAllUsersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.AdminUserItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  userpb.ListKYCsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/sharepb.KYCV3Proto'
+        type: array
+      total:
+        type: integer
+    type: object
+  userpb.LockUserRequest:
+    properties:
+      lockType:
+        description: Loại khóa tài khoản
+        type: integer
+      profileId:
+        type: integer
+      reason:
+        description: Lý do khóa tài khoản
+        type: string
+    type: object
+  userpb.MainArea:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      numberProfile:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  userpb.MainAreaItem:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  userpb.MainAreaPage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.MainArea'
+        type: array
+      total:
+        type: integer
+    type: object
+  userpb.MembershipResponse:
+    properties:
+      createdAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      finishedDate:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      id:
+        type: integer
+      orderId:
+        type: integer
+      paidAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      planId:
+        type: integer
+      profileId:
+        type: integer
+      updatedAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+    type: object
+  userpb.PersonConfigInput:
+    properties:
+      channel:
+        type: integer
+      checked:
+        type: boolean
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      key:
+        type: string
+    type: object
+  userpb.PlanResponse:
+    properties:
+      color:
+        type: string
+      createOrganization:
+        type: integer
+      createProduct:
+        type: integer
+      createProductAI:
+        type: integer
+      createdAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      customerLimit:
+        type: integer
+      duration:
+        type: integer
+      features:
+        items:
+          type: string
+        type: array
+      friendLimit:
+        type: integer
+      id:
+        type: integer
+      joinOrg:
+        type: integer
+      limitPost:
+        type: integer
+      orgMemberLimit:
+        type: integer
+      orgProductLimit:
+        type: integer
+      packageName:
+        type: string
+      price:
+        type: integer
+      publicProductLimit:
+        type: integer
+      updatedAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      visibility:
+        type: boolean
+    type: object
+  userpb.Profession:
+    properties:
+      approveUserId:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  userpb.ProfessionItem:
+    properties:
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      issueDate:
+        type: string
+      issuer:
+        type: string
+      name:
+        type: string
+      verifiedStatus:
+        type: integer
+    type: object
+  userpb.ProfilePublicInfo:
+    properties:
+      address:
+        type: string
+      avatar:
+        type: string
+      backIdentify:
+        type: string
+      backgroundImage:
+        type: string
+      birth:
+        type: string
+      certifications:
+        items:
+          $ref: '#/definitions/userpb.CertificationItem'
+        type: array
+      departmentId:
+        type: integer
+      email:
+        type: string
+      facebook:
+        type: string
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
+      frontIdentify:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      instagram:
+        type: string
+      introduction:
+        type: string
+      kyc:
+        $ref: '#/definitions/sharepb.KYCV3Proto'
+      linkedin:
+        type: string
+      mainAreas:
+        items:
+          $ref: '#/definitions/userpb.MainAreaItem'
+        type: array
+      phone:
+        type: string
+      phone2:
+        type: string
+      position:
+        type: string
+      professions:
+        items:
+          $ref: '#/definitions/userpb.ProfessionItem'
+        type: array
+      profileId:
+        type: integer
+      profileVisibility:
+        type: integer
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      purposeUses:
+        items:
+          $ref: '#/definitions/userpb.PurposeUseItem'
+        type: array
+      rateStats:
+        $ref: '#/definitions/userpb.RateStats'
+      referralBy:
+        type: string
+      referralCode:
+        type: string
+      roleRealEstate:
+        type: integer
+      slogan:
+        type: string
+      startDate:
+        type: string
+      statusOnline:
+        type: integer
+      tabDefault:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/userpb.TagItem'
+        type: array
+      taxCode:
+        type: string
+      twitter:
+        type: string
+      visibility:
+        type: integer
+      wardId:
+        type: integer
+      wardName:
+        type: string
+      website:
+        type: string
+      youtube:
+        type: string
+    type: object
+  userpb.PurposeUse:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      numberProfile:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  userpb.PurposeUseItem:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  userpb.PurposeUsePage:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/userpb.PurposeUse'
+        type: array
+      total:
+        type: integer
+    type: object
+  userpb.RateStats:
+    properties:
+      averageScore:
+        type: number
+      star1Count:
+        type: integer
+      star2Count:
+        type: integer
+      star3Count:
+        type: integer
+      star4Count:
+        type: integer
+      star5Count:
+        type: integer
+      totalReviews:
+        type: integer
+    type: object
+  userpb.RejectKYCRequest:
+    properties:
+      id:
+        description: KYC ID
+        type: integer
+      reason:
+        description: Lý do từ chối
+        type: string
+    type: object
+  userpb.SetPersonRequest:
+    properties:
+      birth:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: integer
+      phone:
+        type: string
+      provinceId:
+        type: integer
+      wardId:
+        type: integer
+    type: object
+  userpb.SubmitKYCRequest:
+    properties:
+      backImage:
+        description: Ảnh mặt sau CMND/CCCD
+        type: string
+      frontImage:
+        description: Ảnh mặt trước CMND/CCCD
+        type: string
+      fullName:
+        description: Họ tên
+        type: string
+      identityCard:
+        description: Số CMND/CCCD
+        type: string
+      selfieImage:
+        description: Ảnh selfie (optional)
+        type: string
+    type: object
+  userpb.TagItem:
+    properties:
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      isDefault:
+        type: boolean
+      name:
+        type: string
+      tagType:
+        type: integer
+    type: object
+  userpb.UnLockUserRequest:
+    properties:
+      profileId:
+        type: integer
+      reason:
+        description: Lý do mở khóa tài khoản
+        type: string
+    type: object
+  userpb.UpdatePlanRequest:
+    properties:
+      color:
+        type: string
+      createOrganization:
+        type: integer
+      createProduct:
+        type: integer
+      createProductAI:
+        type: integer
+      customerLimit:
+        type: integer
+      duration:
+        type: integer
+      features:
+        items:
+          type: string
+        type: array
+      friendLimit:
+        type: integer
+      id:
+        type: integer
+      joinOrg:
+        type: integer
+      limitPost:
+        type: integer
+      orgMemberLimit:
+        type: integer
+      orgProductLimit:
+        type: integer
+      packageName:
+        type: string
+      price:
+        type: integer
+      publicProductLimit:
+        type: integer
+      visibility:
+        type: boolean
+    type: object
+  userpb.UpdatePrivacySettingRequest:
+    properties:
+      personConfigs:
+        items:
+          $ref: '#/definitions/userpb.PersonConfigInput'
+        type: array
+      profileVisibility:
+        type: integer
+      statusOnline:
+        type: integer
+      visibility:
+        type: integer
+    type: object
+  userpb.UpdateUserRequest:
+    properties:
+      address:
+        description: Địa chỉ
+        type: string
+      avatar:
+        description: URL avatar
+        type: string
+      birth:
+        description: Ngày sinh
+        type: string
+      email:
+        description: Email
+        type: string
+      fullName:
+        description: Họ và tên
+        type: string
+      gender:
+        description: Giới tính
+        type: integer
+      idVerifiedAt:
+        description: 'Thời gian xác thực ID (format: ISO 8601)'
+        type: string
+      phone:
+        description: Số điện thoại
+        type: string
+      profileId:
+        description: ID của user cần cập nhật
+        type: integer
+      roleId:
+        description: Role ID
+        type: integer
+      status:
+        description: 'Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời,
+          30: Khóa vĩnh viễn, 40: Ngừng hoạt động'
+        type: integer
+    type: object
+  userpb.UpdateUserResponse:
+    properties:
+      avatar:
+        description: URL avatar
+        type: string
+      email:
+        description: Email
+        type: string
+      fullName:
+        description: Họ và tên
+        type: string
+      phone:
+        description: Số điện thoại
+        type: string
+      profileId:
+        description: ID của user vừa cập nhật
+        type: integer
+      roleId:
+        description: Role ID
+        type: integer
+      status:
+        description: 'Trạng thái: 0: Chưa hoạt động, 10: Hoạt động, 20: Khóa tạm thời,
+          30: Khóa vĩnh viễn, 40: Ngừng hoạt động'
+        type: integer
+      updatedAt:
+        description: Thời gian cập nhật
+        type: string
+    type: object
+  userpb.VerifyOrderRequest:
+    properties:
+      paidAt:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      signature:
+        type: string
+      targetId:
+        type: integer
+      type:
+        type: integer
+    type: object
+  userpb.VerifyOrderResponse:
+    properties:
+      membership:
+        $ref: '#/definitions/userpb.MembershipResponse'
+      success:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: API phần logic chính của BĐSPro
+  title: BDSPRO API
+  version: "1.0"
+paths:
+  /admin/create:
+    post:
+      consumes:
+      - application/json
+      description: Tạo tài khoản admin mới
+      parameters:
+      - description: Thông tin tạo admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.AdminProfile'
+      produces:
+      - application/json
+      responses: {}
+      summary: Create Admin
+      tags:
+      - Admin
+  /admin/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa tài khoản admin
+      parameters:
+      - description: Thông tin xóa admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.IdRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: Delete Admin
+      tags:
+      - Admin
+  /admin/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả admin trong hệ thống với phân trang và thông
+        tin role (chỉ dành cho admin)
+      parameters:
+      - description: Tìm kiếm theo tên, email, phone
+        in: query
+        name: search
+        type: string
+      - description: 'Trang hiện tại (mặc định: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)'
+        in: query
+        name: size
+        type: integer
+      - description: Sắp xếp theo trường (createdAt, fullName, email)
+        in: query
+        name: sortBy
+        type: string
+      - description: Thứ tự sắp xếp (asc, desc)
+        in: query
+        name: sortOrder
+        type: string
+      - description: 'Lọc theo trạng thái (1: active, 0: inactive)'
+        in: query
+        name: status
+        type: integer
+      - description: Lọc theo role type
+        in: query
+        name: roleType
+        type: string
+      - description: 'Lọc từ ngày tạo (format: 2006-01-02T15:04:05)'
+        in: query
+        name: startDate
+        type: string
+      - description: 'Lọc đến ngày tạo (format: 2006-01-02T15:04:05)'
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Lấy danh sách tất cả admin (Admin only)
+      tags:
+      - Admin
+  /admin/plans:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tất cả các gói membership (bao gồm ẩn) (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetAllPlansResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy tất cả gói membership
+      tags:
+      - Plan
+    post:
+      consumes:
+      - application/json
+      description: Tạo một gói membership mới (Admin only)
+      parameters:
+      - description: Thông tin gói
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.CreatePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.PlanResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo gói membership mới
+      tags:
+      - Plan
+  /admin/plans/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm gói membership (Admin only)
+      parameters:
+      - description: Plan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.DeletePlanResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Xóa gói membership
+      tags:
+      - Plan
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết một gói membership (Admin only)
+      parameters:
+      - description: Plan ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetPlanByIdResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin gói membership theo ID
+      tags:
+      - Plan
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin gói membership (Admin only)
+      parameters:
+      - description: Thông tin gói cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdatePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.PlanResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Cập nhật gói membership
+      tags:
+      - Plan
+  /admin/update:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin admin
+      parameters:
+      - description: Thông tin cập nhật admin
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.AdminProfile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.AdminProfile'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.AdminProfile'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authpb.AuthSuccessResponse'
+      summary: Update Admin
+      tags:
+      - Admin
+  /user/membership/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin gói membership đang sử dụng của user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetMyMembershipResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin membership của user hiện tại
+      tags:
+      - Membership
+  /user/membership/order:
+    post:
+      consumes:
+      - application/json
+      description: Tạo đơn hàng để mua gói membership và nhận link thanh toán
+      parameters:
+      - description: Thông tin đơn hàng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.CreateOrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo đơn hàng mua gói membership
+      tags:
+      - Membership
+  /user/membership/verify:
+    post:
+      consumes:
+      - application/json
+      description: Webhook từ payment service để xác nhận thanh toán và kích hoạt
+        membership
+      parameters:
+      - description: Thông tin xác nhận thanh toán
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.VerifyOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.VerifyOrderResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xác nhận thanh toán từ payment service
+      tags:
+      - Membership
+  /user/plans:
+    get:
+      consumes:
+      - application/json
+      description: Lấy tất cả các gói membership đang hiển thị cho user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetVisiblePlansResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách các gói membership hiển thị
+      tags:
+      - Plan
+  /v1/user/block/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Bỏ chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần bỏ chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Bỏ chặn một người dùng
+      tags:
+      - Chặn
+    post:
+      consumes:
+      - application/json
+      description: Chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Chặn một người dùng
+      tags:
+      - Chặn
+  /v1/user/block/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách ID của những người mà người dùng hiện tại đã chặn
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người dùng bị chặn
+      tags:
+      - Chặn
+  /v1/user/follow/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một người khỏi danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã xóa người khỏi danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa người khỏi danh sách theo dõi
+      tags:
+      - Theo dõi
+    post:
+      consumes:
+      - application/json
+      description: Thêm một người vào danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã thêm người vào danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thêm người vào danh sách theo dõi
+      tags:
+      - Theo dõi
+  /v1/user/follow/followers:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người theo dõi người dùng cụ thể
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người theo dõi của người dùng
+      tags:
+      - Theo dõi
+  /v1/user/follow/following:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người mà người dùng đang theo dõi
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người mà người dùng đang theo dõi
+      tags:
+      - Theo dõi
+  /v1/user/friend/group/{requestId}/{groupId}:
+    put:
+      consumes:
+      - application/json
+      description: Gán nhóm cho bạn bè
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /v1/user/friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/dto.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      tags:
+      - Bạn bè
+  /v1/user/friend/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/dto.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè
+      tags:
+      - Bạn bè
+  /v1/user/friend/request/{receiverId}:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời kết bạn đến người dùng khác
+      parameters:
+      - description: ID của người nhận lời mời
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được gửi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người nhận
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời kết bạn
+      tags:
+      - Bạn bè
+  /v1/user/friend/request/{requestId}/accept:
+    put:
+      consumes:
+      - application/json
+      description: Đồng ý lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Đồng ý kết bạn
+      tags:
+      - Bạn bè
+  /v1/user/friend/request/{requestId}/reject:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
+  /v1/user/friend/request/received:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã nhận
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã nhận
+          schema:
+            items:
+              $ref: '#/definitions/dto.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã nhận
+      tags:
+      - Bạn bè
+  /v1/user/friend/request/sent:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã gửi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã gửi
+          schema:
+            items:
+              $ref: '#/definitions/dto.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
+  /v1/user/profile/chat/find:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: text
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /v1/user/profile/find-by-phone:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /v1/user/profile/find/ids:
+    get:
+      consumes:
+      - application/json
+      description: API này trả về thông tin của user hiện tại
+      parameters:
+      - description: ID của Profile
+        in: query
+        name: ids
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin cá nhân của user
+      tags:
+      - Profile
+  /v1/user/profile/info/{profileId}:
+    get:
+      consumes:
+      - application/json
+      description: API này gọi không cần Token. dùng trong màn preview profile
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: profileId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cập nhật thành công
+          schema:
+            $ref: '#/definitions/dto.PublicUserInfo'
+      security:
+      - BearerAuth: []
+      summary: Xem thông tin public của người dùng
+      tags:
+      - Profile
+  /v2/kyc/submit:
+    post:
+      consumes:
+      - application/json
+      description: User submit KYC verification request
+      parameters:
+      - description: Thông tin KYC
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.SubmitKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.KYCV3Proto'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Submit KYC request
+      tags:
+      - KYC
+  /v2/user/admin/kyc/approve/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Admin duyệt yêu cầu KYC của user
+      parameters:
+      - description: KYC ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Duyệt KYC request
+      tags:
+      - Admin KYC
+  /v2/user/admin/kyc/reject/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Admin từ chối yêu cầu KYC của user
+      parameters:
+      - description: KYC ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Lý do từ chối
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.RejectKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Từ chối KYC request
+      tags:
+      - Admin KYC
+  /v2/user/admin/kycs:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả KYC requests với phân trang và tìm kiếm (Admin
+        only)
+      parameters:
+      - description: 'Trang hiện tại (mặc định: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Số lượng item trên mỗi trang (mặc định: 20)'
+        in: query
+        name: size
+        type: integer
+      - description: Tìm kiếm theo tên, số CMND
+        in: query
+        name: search
+        type: string
+      - description: 'Lọc theo trạng thái: 10: Pending, 20: Approved, 30: Rejected'
+        in: query
+        name: status
+        type: integer
+      - description: Sắp xếp theo trường
+        in: query
+        name: sortBy
+        type: string
+      - description: Thứ tự sắp xếp (asc, desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ListKYCsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách KYC requests
+      tags:
+      - Admin KYC
+  /v2/user/admin/main-area:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhãn khu vực hoạt động (Admin)
+      parameters:
+      - description: Thông tin nhãn
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.IdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.MainAreaPage'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhãn khu vực hoạt động
+      tags:
+      - AdminDictionary
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhãn khu vực hoạt động mới (Admin)
+      parameters:
+      - description: Thông tin nhãn
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.MainArea'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.MainArea'
+      security:
+      - BearerAuth: []
+      summary: Tạo nhãn khu vực hoạt động
+      tags:
+      - AdminDictionary
+  /v2/user/admin/main-area/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm nhãn khu vực hoạt động (Admin)
+      parameters:
+      - description: ID nhãn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa nhãn khu vực hoạt động
+      tags:
+      - AdminDictionary
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nhãn khu vực hoạt động (Admin)
+      parameters:
+      - description: ID nhãn
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin nhãn
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.MainArea'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.MainArea'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật nhãn khu vực hoạt động
+      tags:
+      - AdminDictionary
+  /v2/user/admin/profession:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nghề nghiệp với phân trang (Admin)
+      parameters:
+      - description: Trang hiện tại (bắt đầu từ 0)
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang (tối đa 100)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nghề nghiệp
+      tags:
+      - AdminDictionary
+    post:
+      consumes:
+      - application/json
+      description: Tạo nghề nghiệp mới (Admin)
+      parameters:
+      - description: Thông tin nghề nghiệp
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Profession'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo nghề nghiệp
+      tags:
+      - AdminDictionary
+  /v2/user/admin/profession/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm nghề nghiệp (Admin)
+      parameters:
+      - description: ID nghề nghiệp
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa nghề nghiệp
+      tags:
+      - AdminDictionary
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin nghề nghiệp (Admin)
+      parameters:
+      - description: ID nghề nghiệp
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin nghề nghiệp
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.Profession'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật nghề nghiệp
+      tags:
+      - AdminDictionary
+  /v2/user/admin/purpose-use:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách mục đích sử dụng (Admin)
+      parameters:
+      - description: Thông tin mục đích sử dụng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.IdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.PurposeUsePage'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách mục đích sử dụng
+      tags:
+      - AdminDictionary
+    post:
+      consumes:
+      - application/json
+      description: Tạo mục đích sử dụng mới (Admin)
+      parameters:
+      - description: Thông tin mục đích sử dụng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.PurposeUse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.PurposeUse'
+      security:
+      - BearerAuth: []
+      summary: Tạo mục đích sử dụng mới
+      tags:
+      - AdminDictionary
+  /v2/user/admin/purpose-use/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm mục đích sử dụng (Admin)
+      parameters:
+      - description: ID mục đích sử dụng
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.SubmitResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa mục đích sử dụng
+      tags:
+      - AdminDictionary
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật mục đích sử dụng (Admin)
+      parameters:
+      - description: ID mục đích sử dụng
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin mục đích sử dụng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.PurposeUse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.PurposeUse'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật mục đích sử dụng
+      tags:
+      - AdminDictionary
+  /v2/user/admin/user/new:
+    post:
+      consumes:
+      - application/json
+      description: Tạo user mới giống với tài khoản admin (chỉ dành cho admin)
+      parameters:
+      - description: Thông tin user mới
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.CreateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.CreateUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/userpb.CreateUserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/userpb.CreateUserResponse'
+      summary: Tạo user mới (Admin only)
+      tags:
+      - Admin
+  /v2/user/admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả user trong hệ thống với phân trang và tìm
+        kiếm (chỉ dành cho admin)
+      parameters:
+      - description: Tìm kiếm theo tên, email, phone
+        in: query
+        name: search
+        type: string
+      - description: 'Trang hiện tại (mặc định: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Số lượng item trên mỗi trang (mặc định: 20, tối đa: 100)'
+        in: query
+        name: size
+        type: integer
+      - description: Sắp xếp theo trường (createdAt, fullName, email)
+        in: query
+        name: sortBy
+        type: string
+      - description: Thứ tự sắp xếp (asc, desc)
+        in: query
+        name: sortOrder
+        type: string
+      - description: 'Lọc theo trạng thái (1: active, 0: inactive)'
+        in: query
+        name: status
+        type: integer
+      - description: Lọc theo role ID
+        in: query
+        name: roleId
+        type: integer
+      - description: Lọc theo role type
+        in: query
+        name: roleType
+        type: string
+      - description: 'Lọc từ ngày tạo (format: 2006-01-02T15:04:05)'
+        in: query
+        name: startDate
+        type: string
+      - description: 'Lọc đến ngày tạo (format: 2006-01-02T15:04:05)'
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.ListAllUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.ListAllUsersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/userpb.ListAllUsersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/userpb.ListAllUsersResponse'
+      summary: Lấy danh sách tất cả user (Admin only)
+      tags:
+      - Admin
+  /v2/user/admin/users/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa user khỏi hệ thống (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần xóa
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - description: Thông tin xóa
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.DeleteUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      summary: Xóa user (Admin only)
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết thông tin user (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần lấy chi tiết
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.GetUserDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.GetUserDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/userpb.GetUserDetailResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/userpb.GetUserDetailResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/userpb.GetUserDetailResponse'
+      summary: Lấy chi tiết user (Admin only)
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin user (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần cập nhật
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.UpdateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.UpdateUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/userpb.UpdateUserResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/userpb.UpdateUserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/userpb.UpdateUserResponse'
+      summary: Cập nhật thông tin user (Admin only)
+      tags:
+      - Admin
+  /v2/user/admin/users/{profileId}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Duyệt tài khoản user với ghi chú. Cập nhật status thành "Hoạt động"
+        trong bảng user_profile (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần duyệt
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - description: Thông tin duyệt tài khoản
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.ApproveUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      summary: Duyệt tài khoản user (Admin only)
+      tags:
+      - Admin
+  /v2/user/admin/users/{profileId}/lock:
+    post:
+      consumes:
+      - application/json
+      description: Khóa tài khoản user với lý do cụ thể. Cập nhật status thành "Khóa
+        tạm thời" trong bảng user_profile (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần khóa
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - description: Thông tin khóa tài khoản
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.LockUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      summary: Khóa tài khoản user (Admin only)
+      tags:
+      - Admin
+  /v2/user/admin/users/{profileId}/unlock:
+    post:
+      consumes:
+      - application/json
+      description: Mở khóa tài khoản user với lý do cụ thể. Cập nhật status thành
+        "Hoạt động" trong bảng user_profile (chỉ dành cho admin)
+      parameters:
+      - description: ID của user cần mở khóa
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      - description: Thông tin mở khóa tài khoản
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UnLockUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      summary: Mở khóa tài khoản user (Admin only)
+      tags:
+      - Admin
+  /v2/user/main-area:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhãn khu vực hoạt động (User)
+      parameters:
+      - description: Từ khóa tìm kiếm
+        in: query
+        name: request
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.ItemV3PageProto'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nhãn khu vực hoạt động
+      tags:
+      - UserDictionary
+  /v2/user/profession:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nghề nghiệp đã được duyệt (User)
+      parameters:
+      - description: Trang hiện tại (bắt đầu từ 0)
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang (tối đa 100)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách nghề nghiệp
+      tags:
+      - UserDictionary
+  /v2/user/profile/accounts/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tài khoản của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách tài khoản của người dùng
+          schema:
+            $ref: '#/definitions/userpb.AccountInfoResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách tài khoản của người dùng
+      tags:
+      - Profile
+  /v2/user/profile/find-by-phone:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm thông tin user dựa trên số điện thoại
+      parameters:
+      - description: Số điện thoại cần tìm
+        in: query
+        name: phone
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/userpb.FindByPhoneResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/userpb.FindByPhoneResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/userpb.FindByPhoneResponse'
+      summary: Tìm user theo số điện thoại
+      tags:
+      - Profile
+  /v2/user/profile/info/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/userpb.ProfilePublicInfo'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng
+      tags:
+      - Profile
+  /v2/user/profile/info/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng request me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/userpb.ProfilePublicInfo'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng request
+      tags:
+      - Profile
+  /v2/user/profile/privacy:
+    put:
+      consumes:
+      - application/json
+      description: Chỉ cập nhật visibility, profileVisibility, statusOnline và đồng
+        bộ person_config sang notification
+      parameters:
+      - description: Thiết lập quyền riêng tư
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.UpdatePrivacySettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quyền riêng tư hồ sơ
+      tags:
+      - Profile
+  /v2/user/profile/quick-setup:
+    post:
+      consumes:
+      - application/json
+      description: Thiết lập nhanh vai trò, khu vực hoạt động và mục đích sử dụng
+        cho người dùng hiện tại
+      parameters:
+      - description: Thông tin cài đặt nhanh
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.UserV3Proto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+      security:
+      - BearerAuth: []
+      summary: Cài đặt nhanh hồ sơ người dùng
+      tags:
+      - Profile
+  /v2/user/profile/set-info:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt,
+        email, địa chỉ)
+      parameters:
+      - description: Thông tin cá nhân
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.UserV3Proto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin cá nhân
+      tags:
+      - Profile
+  /v2/user/profile/set-person:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin cá nhân cơ bản (tên, giới tính, ngày sinh, sdt,
+        email, địa chỉ)
+      parameters:
+      - description: Thông tin cá nhân
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userpb.SetPersonRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.Empty'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin cá nhân
+      tags:
+      - Profile
+  /v2/user/purpose-use:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách mục đích sử dụng (User)
+      parameters:
+      - description: Thông tin mục đích sử dụng
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sharepb.IdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sharepb.ItemV3PageProto'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách mục đích sử dụng
+      tags:
+      - UserDictionary
+  /v2/user/stats:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thống kê số lượng user theo 2 ngày
+      parameters:
+      - description: Ngày đầu tiên (YYYY-MM-DD)
+        in: query
+        name: firstDate
+        required: true
+        type: string
+      - description: Ngày thứ hai (YYYY-MM-DD)
+        in: query
+        name: secondDate
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/sharepb.GetStatsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy thống kê số lượng user
+      tags:
+      - Dashboard
+  /v3/user/profile/info/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin công khai của người dùng v3
+      parameters:
+      - description: ID của Profile
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thông tin công khai của người dùng
+          schema:
+            $ref: '#/definitions/sharepb.TotalResponseProto'
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin công khai của người dùng v3
+      tags:
+      - Profile
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

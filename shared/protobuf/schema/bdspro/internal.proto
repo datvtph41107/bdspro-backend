@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+import "google/protobuf/timestamp.proto";
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "bdspro/product.proto";
+import "shared/v3.proto";
+import "bdspro/deal.proto";
+import "bdspro/tx_contract_deal.proto";
+
+service BdsproInternalService {
+    rpc GetCountByOwner(GetCountByOwnerRequest) returns (GetCountByOwnerResponse);
+    rpc GetSuggest(sharepb.RequestV3Proto) returns (sharepb.ProductV3Proto);
+    rpc GetDashboardByProfileId(sharepb.IdRequest) returns (sharepb.BDSProDashboardProto);
+    rpc GetDealById(sharepb.IdRequest) returns (GroupDeal);
+    rpc GetDealsByIds(sharepb.IdRequest) returns (DealsResponse);
+    rpc GetDealMembers(DealMemberRequest) returns (GetDealMemberByIdsResponse);
+    rpc GetDealContractsByIds(sharepb.IdRequest) returns (DealContractListResponse);
+    rpc UpdateScheduleCount(UpdateScheduleCountRequest) returns (Response);
+    rpc UpdateContactCount(UpdateContactCountRequest) returns (Response);
+    rpc GetProductUsersByDistributeId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
+    rpc GetProductUsersByProductId(sharepb.IdRequest) returns (GetProductUsersByDistributeIdResponse);
+    rpc GetResourceIds(ResourceRequest) returns (ResourceResponse);
+    rpc GetUpdatedAtOfId(ResourceRequest) returns (ResourceResponse);
+}
+
+message ResourceRequest {
+    string resource = 1;
+    uint64 id = 2;
+}
+
+message ResourceResponse {
+    repeated uint64 ids = 1;
+    int64 timestamp = 2;
+}
+
+message DealsResponse {
+    repeated GroupDeal data = 1;
+}
+
+message DealMemberRequest {
+    uint64 dealId = 1;
+    repeated uint64 userIds = 2;
+}
+
+message GetDealMemberByIdsResponse {
+    repeated sharepb.DealMember data = 1;
+}
+
+message GetCountByOwnerRequest {
+    sharepb.OwnerOf ownerOf = 1;
+    uint64 ownerId = 2;
+}
+
+message GetCountByOwnerResponse {
+    uint32 totalProduct = 1;
+    uint32 totalAsset = 2;
+    uint32 totalPost = 3;
+    uint32 totalProject = 4;
+}
+
+message UpdateScheduleCountRequest {
+    uint64 productId = 1;
+    uint32 count = 2;
+}
+
+message UpdateContactCountRequest {
+    uint64 productId = 1;
+    uint32 count = 2;
+}
+
+message GetProductUsersByDistributeIdResponse {
+    repeated sharepb.ProductUser data = 1;
+}

@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service GroupSettingService {
+    rpc CreateGroupSetting(CreateGroupSettingRequest) returns (CreateGroupSettingResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/group-setting"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroupSetting(UpdateGroupSettingRequest) returns (UpdateGroupSettingResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/group-setting/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroupSetting(DeleteGroupSettingRequest) returns (DeleteGroupSettingResponse) {            
+        option (google.api.http) = {
+            delete: "/v2/org/group-setting/{id}"
+        };
+    }
+
+    rpc GetGroupSetting(GetGroupSettingRequest) returns (GetGroupSettingResponse) { 
+        option (google.api.http) = {
+            get: "/v2/org/group-setting/{id}"
+        };
+    }
+
+    rpc GetGroupSettings(GetGroupSettingsRequest) returns (GetGroupSettingsResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group-setting"
+        };
+    }
+}
+
+message CreateGroupSettingRequest {
+    uint32 groupId = 1;
+    string configKey = 2;
+    string configValue = 3;
+}
+
+message CreateGroupSettingResponse {
+    uint32 id = 1;  
+}   
+
+message UpdateGroupSettingRequest {
+    uint32 id = 1;
+    string configKey = 2;
+    string configValue = 3;
+}
+
+message UpdateGroupSettingResponse {
+    uint32 id = 1;
+}
+
+message DeleteGroupSettingRequest {
+    uint32 id = 1;
+}
+
+message DeleteGroupSettingResponse {
+    uint32 id = 1;
+}
+
+message GetGroupSettingRequest {
+    uint32 id = 1;
+}
+
+message GetGroupSettingResponse {
+    GroupSetting setting = 1;
+}
+
+message GetGroupSettingsRequest {
+    uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetGroupSettingsResponse {
+    repeated GroupSetting settings = 1;
+    uint32 total = 2;
+}
+
+message GroupSetting {
+    uint32 id = 1;
+    uint32 groupId = 2;
+    string configKey = 3;
+    string configValue = 4;
+}

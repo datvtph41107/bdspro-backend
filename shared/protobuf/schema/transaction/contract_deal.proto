@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+package transactionpb;
+
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+import "google/protobuf/empty.proto";
+import "organization/deal.proto";
+import "transaction/internal.proto";
+import "transaction/type.proto";
+import "transaction/transaction.proto";
+
+option go_package = "pb/types/transaction;transactionpb";
+
+// Enum cho loại giao dịch
+enum ContractType {
+    CONTRACT_TYPE_UNKNOWN = 0;
+    CONTRACT_TYPE_EXPENSE = 10; // Chi phí
+    CONTRACT_TYPE_REVENUE = 20; // Doanh thu
+}
+
+// Enum cho trạng thái phê duyệt
+enum ContractStatus {
+    CONTRACT_STATUS_UNKNOWN = 0;
+    CONTRACT_STATUS_PENDING = 10;   // Chờ xác nhận
+    CONTRACT_STATUS_APPROVED = 20;  // Đã xác nhận
+    CONTRACT_STATUS_REJECTED = 30;  // Từ chối
+}
+
+service DealContractService {
+    // Cập nhật giao dịch
+    // rpc UpdateContract(UpdateDealContractRequest) returns (DealContractResponse) {
+    //     option (google.api.http) = {
+    //         put: "/v2/transaction/contract/deal/{id}"
+    //         body: "*"
+    //     };
+    // }
+    rpc DealContractProcess(sharepb.IdRequest) returns (ContractProcessResponse) {
+        option (google.api.http) = {
+            get: "/v2/transaction/contract/deal/{id}/process"
+        };
+    }
+
+    // Xóa giao dịch
+    rpc DeleteContract(sharepb.IdRequest) returns (IdResponse) {
+        option (google.api.http) = {
+            delete: "/v2/transaction/contract/deal/{id}"
+        };
+    }
+
+    // Lấy chi tiết giao dịch
+    rpc GetContract(sharepb.IdRequest) returns (DealContractResponse) {
+        option (google.api.http) = {
+            get: "/v2/transaction/contract/deal/detail/{id}"
+        };
+    }
+
+    // Lấy danh sách giao dịch
+    rpc GetContracts(GetDealContractRequest) returns (DealContractListResponse) {
+        option (google.api.http) = {
+            get: "/v2/transaction/contract/deal/list/{dealId}"
+        };
+    }
+
+    // Phê duyệt/từ chối giao dịch
+    rpc ApproveContract(ApproveDealContractRequest) returns (IdResponse) {
+        option (google.api.http) = {
+            put: "/v2/transaction/contract/deal/{id}/approve"
+            body: "*"
+        };
+    }
+
+    // Lấy thống kê tài chính
+    rpc GetSummary(sharepb.IdRequest) returns (FinancialSummaryResponse) {
+        option (google.api.http) = {
+            get: "/v2/transaction/contract/deal/{id}/summary"
+        };
+    }
+
+    // Giao dịch ký hợp đồng
+    // rpc CreateAction(ProductActionRequest) returns (DealContractResp) {
+    //     option (google.api.http) = {
+    //         post: "/v2/transaction/contract/deal/action"
+    //         body: "*"
+    //     };
+    // }
+
+    // Giao dịch mua/bán/thuê
+    rpc CreateContractPayment(DealContractPaymentRequest) returns (DealContractResponse) {
+        option (google.api.http) = {
+            post: "/v2/transaction/contract/deal/payment"
+            body: "*"
+        };
+    }
+
+    rpc CreateActionPayment(PaymentActionRequest) returns (ActionResponse) {
+        option (google.api.http) = {
+            post: "/v2/transaction/contract/deal/payment/action"
+            body: "*"
+        };
+    }
+
+
+    rpc GetStatistics (DealCostStatisticsRequestDTO) returns (ContractDealStatisticsDTO) {
+        option (google.api.http) = {
+            get: "/v2/transaction/contract/deal/statistics/{dealId}"
+        };
+    }
+
+    // // Giao dịch thu/chi
+    // rpc GetDealContract(sharepb.IdRequest) returns (DealContractListResponse) {
+    //     option (google.api.http) = {
+    //         get: "/v2/transaction/contract/deal/{id}/transactions"
+    //     };
+    // }
+}
+
+// Request mua/bán/thuê
+message DealContractPaymentRequest {
+    uint64 id = 1;
+    double amount = 2;
+    uint64 customerId = 3;
+    uint64 dealId = 4;
+    string note = 5;
+    uint64 productId = 6;
+    string timestamp = 7;
+    uint32 transactionStep = 8;
+    uint32 transactionType = 9;
+}
+
+// Request cập nhật giao dịch
+message UpdateDealContractRequest {
+    uint64 id = 1;
+    double amount = 2;
+    string description = 3;
+    string contractDate = 4;
+    string category = 5;
+    string note = 6;
+    repeated uint64 documentIds = 7;
+}
+
+// Request lấy chi tiết giao dịch
+message GetDealContractRequest {
+    uint64 dealId = 1;
+    int32 page = 2;
+    int32 size = 3;
+}
+
+// Request phê duyệt giao dịch
+message ApproveDealContractRequest {
+    uint64 id = 1;
+    string rejectReason = 2;
+}
+
+message DealContractItem {
+    uint64 id = 1;
+    string transactionName = 2;
+    double amount = 3;
+    uint64 customerId = 4;
+    sharepb.ProfileItem customer = 5;
+    string customerName = 6;
+    string createdAt = 7;
+    uint64 status = 8;
+    string statusName = 9;
+    uint64 contractId = 10;
+}
+
+// Response cho danh sách giao dịch
+message DealContractListResponse {
+    repeated DealContractItem data = 1;
+    int32 total = 2;
+}
+
+// Request lấy thống kê tài chính
+message GetFinancialSummaryRequest {
+    uint64 dealId = 1;
+}
+
+
+// Response cho thống kê tài chính
+message FinancialSummaryResponse {
+    uint64 dealId = 1;
+    double totalRevenue = 2;
+    double totalExpense = 3;
+    double netProfit = 4;
+    double profitMargin = 5;
+    double targetProfit = 6;
+    string profitStatus = 7;
+    repeated string warningMessages = 8;
+} 
+
+message PaymentActionRequest {
+    uint64 id = 1;
+    uint32 action = 2;
+    string note = 3;
+    uint64 fromId = 4;
+    OwnerType fromOf = 5;
+    uint64 toId = 6;
+    OwnerType toOf = 7;
+    double amount = 8;
+    string currency = 9;
+    uint64 transactionId = 10;
+    string timestamp = 11;
+    uint64 contractId = 12;
+}
+
+message IdResponse {
+    uint64 id = 1;
+}
+
+
+message StatsDTO {
+    double approved = 1;
+    double reject = 2;
+    double pending = 3;
+    double total = 4;
+}
+  
+message DealCostStatisticsRequestDTO {
+    uint64 dealId = 1;
+    bool payment = 2;
+    bool cost = 3;
+}
+
+message ContractDealStatisticsDTO {
+    uint64 dealId = 1;
+    StatsDTO payment = 2;
+    StatsDTO amountCost = 3;
+    StatsDTO amountRevenue = 4;
+    StatsDTO numPayment = 5;
+    StatsDTO numCost = 6;
+    StatsDTO numRevenue = 7;
+    double totalAmount = 8;
+    double totalCost = 9;
+    double totalProfit = 10;
+}

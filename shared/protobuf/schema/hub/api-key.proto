@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+option go_package = "pb/types/hub;hubpb";
+
+message ApiKeyProto {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string apiKey = 4;
+  string appName = 5;
+  string expiredAt = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message ApiKeyResponse {
+  repeated ApiKeyProto data = 1;
+  uint32 total = 2;
+}
+
+message VerifyApiKeyRequest {
+  string apiKey = 1;
+}
+
+message VerifyApiKeyResponse {
+  bool valid = 1;
+  ApiKeyProto data = 2;
+  string message = 3;
+}
+
+service ApiKeyService {
+  rpc CreateApiKey(ApiKeyProto) returns (ApiKeyProto) {
+    option (google.api.http) = {
+      post: "/v2/hub/admin/api-keys"
+      body: "*"
+    };
+  };
+  rpc GetApiKey(ApiKeyProto) returns (ApiKeyResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/admin/api-keys"
+    };
+  };
+  rpc DeleteApiKey(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/hub/admin/api-keys/{id}"
+    };
+  };
+  rpc VerifyApiKey(VerifyApiKeyRequest) returns (VerifyApiKeyResponse) {
+    option (google.api.http) = {
+      post: "/v2/hub/admin/api-keys/verify"
+      body: "*"
+    };
+  };
+}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "shared/v3.proto";
+
+service EnumService {
+  rpc GetEnumByName(GetEnumRequest) returns (sharepb.ItemV3PageProto) {
+    option (google.api.http) = {
+      get: "/v2/enums/crm/{name}"
+    };
+  };
+}
+
+message GetEnumRequest {
+  string name = 1; // Tên enum: tagContact, statusContact, visibility, priority, ownerOf, step, sourceLead, friendStatus, condition, ruleThen, targetType, reportStatus
+}
+

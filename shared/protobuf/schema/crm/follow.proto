@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+service FollowService {
+    rpc ListFollowers(sharepb.IdRequest) returns (ListFollowersResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/follow/followers"
+        };
+    };
+    rpc ListFollowing(sharepb.IdRequest) returns (ListFollowingResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/follow/following"
+        };
+    };
+    rpc AddFollow(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/follow/{id}"
+            body: "*"
+        };
+    };
+    rpc RemoveFollow(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/crm/follow/{id}"
+        };
+    };
+}
+
+message ListFollowersResponse {
+    repeated uint64 data = 1;
+    int32 total = 2;
+}
+
+message ListFollowingResponse {
+    repeated sharepb.ProfileItem data = 1;
+    int32 total = 2;
+}

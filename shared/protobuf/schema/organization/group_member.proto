@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service GroupMemberService {
+    rpc SwitchGroup(SwitchGroupRequest) returns (SwitchGroupResponse);
+    rpc CreateGroupMember(CreateGroupMemberRequest) returns (CreateGroupMemberResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/group-member"
+            body: "*"
+        };
+    }
+
+    rpc CreateGroupMemberBatch(CreateGroupMemberBatchRequest) returns (CreateGroupMemberBatchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/group-member/batch"
+            body: "*"
+        };
+    }
+
+    rpc UpdateGroupMember(UpdateGroupMemberRequest) returns (UpdateGroupMemberResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/group-member/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteGroupMember(DeleteGroupMemberRequest) returns (DeleteGroupMemberResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/group-member/{id}"
+        };
+    }
+
+    rpc GetGroupMember(GetGroupMemberRequest) returns (GetGroupMemberResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group-member/{id}"
+        };
+    }
+    
+    rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group-member/list/{groupId}"
+        };
+    }
+}
+
+message CreateGroupMemberRequest {
+    uint32 groupId = 1;
+    uint32 userId = 2;
+    string role = 3;
+    optional uint64 roleId = 4;
+}
+
+message CreateGroupMemberResponse {
+    uint32 id = 1;
+}
+
+message CreateGroupMemberBatchRequest {
+    repeated uint64 userIds = 1;
+    uint64 groupId = 2;
+}
+
+message CreateGroupMemberBatchResponse {
+    repeated uint32 ids = 1;
+}
+
+message UpdateGroupMemberRequest {
+    uint32 id = 1;
+    string role = 2;
+    optional uint64 roleId = 3;
+}
+
+message UpdateGroupMemberResponse {
+    uint32 id = 1;
+}
+
+message DeleteGroupMemberRequest {
+    uint32 id = 1;
+}
+
+message DeleteGroupMemberResponse {
+    uint32 id = 1;
+}
+
+message GetGroupMemberRequest {
+    uint32 id = 1;
+}
+
+message GetGroupMemberResponse {
+    GroupMember member = 1;
+}
+
+message GetGroupMembersRequest {
+    uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetGroupMembersResponse {
+    repeated GroupMember data = 1;
+    uint32 total = 2;
+}
+
+message GroupMember {
+    uint32 id = 1;
+    uint32 groupId = 2;
+    uint32 userId = 3;
+    string role = 4;
+    sharepb.ProfileItem profile = 5;
+    optional uint64 roleId = 6;
+}
+
+message SwitchGroupRequest {
+    uint32 groupId = 1;
+    uint32 userId = 2;
+}
+
+message SwitchGroupResponse {
+    bool isSuccess = 1;
+}

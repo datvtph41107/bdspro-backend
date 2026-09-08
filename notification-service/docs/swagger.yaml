@@ -1,0 +1,278 @@
+definitions:
+  data.SendNotiRequest:
+    properties:
+      body:
+        type: string
+      image:
+        type: string
+      target:
+        description: Token của thiết bị nhận
+        type: string
+      title:
+        type: string
+    type: object
+  enums.TypeEnum:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-comments:
+      Follow: '"FOLLOW"'
+      FriendRequest: '"FRIEND_REQUEST"'
+      FriendResponse: '"FRIEND_RESPONSE"'
+    x-enum-varnames:
+    - FriendRequest
+    - FriendResponse
+    - Follow
+  gin.H:
+    additionalProperties: {}
+    type: object
+  models.NotificationEntity:
+    properties:
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      isRead:
+        type: boolean
+      link:
+        type: string
+      message:
+        type: string
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/enums.TypeEnum'
+      updatedBy:
+        type: integer
+      userID:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: API quản lý người dùng
+  title: User API
+  version: "1.0"
+paths:
+  /notification:
+    get:
+      consumes:
+      - application/json
+      description: Trả về danh sách thông báo của người dùng
+      parameters:
+      - description: Trang cần lấy (default = 0)
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng trên mỗi trang (default = 200)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách thông báo
+          schema:
+            items:
+              $ref: '#/definitions/models.NotificationEntity'
+            type: array
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách thông báo
+      tags:
+      - Notifications
+  /notification/app/push/token:
+    post:
+      consumes:
+      - application/json
+      description: API chỉ lưu lịch sử, không lưu thông báo
+      parameters:
+      - description: Thông tin thông báo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SendNotiRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Gửi thông báo đến một thiết bị qua token
+      tags:
+      - Notifications
+  /notification/app/push/topic:
+    post:
+      consumes:
+      - application/json
+      description: API chỉ lưu lịch sử, không lưu thông báo
+      parameters:
+      - description: Thông tin thông báo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/data.SendNotiRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Gửi thông báo đến topic
+      tags:
+      - Notifications
+  /notification/count:
+    get:
+      consumes:
+      - application/json
+      description: Hiển thị số lượng thông báo chưa đọc của người dùng
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: count
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Số thông báo mới chưa đọc
+      tags:
+      - Notifications
+  /notification/new:
+    post:
+      consumes:
+      - application/json
+      description: API này không bắn thông báo tới thiết bị của người dùng, chỉ tạo
+        thông báo
+      parameters:
+      - description: Chi tiết thông báo
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/models.NotificationEntity'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tạo thông báo mới
+      tags:
+      - Notifications
+  /notification/read/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Đánh dấu thông báo với ID cụ thể là đã đọc
+      parameters:
+      - description: ID của thông báo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Đánh dấu thông báo đã đọc
+      tags:
+      - Notifications
+  /notification/remove/{id}:
+    delete:
+      description: Xóa thông báo theo ID
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Xóa thông báo
+      tags:
+      - Notifications
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

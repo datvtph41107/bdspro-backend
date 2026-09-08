@@ -1,0 +1,285 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "shared/common.proto";
+import "tqd/qh_layer_family.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// =====================================================
+// LAYER SERVICE
+// Quản lý layer (lớp hiển thị trên bản đồ)
+// =====================================================
+
+service LayerService {
+  
+  // ========== Admin APIs ==========
+  
+  // CreateLayer - Tạo layer mới
+  rpc CreateLayer(CreateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layers"
+      body: "*"
+    };
+  }
+  
+  // UpdateLayer - Cập nhật layer
+  rpc UpdateLayer(UpdateLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/layers/{id}"
+      body: "*"
+    };
+  }
+  
+  // DeleteLayer - Xóa mềm layer
+  rpc DeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layers/{id}"
+    };
+  }
+
+  // HardDeleteLayer - Xóa thật layer và toàn bộ dữ liệu liên quan (regions, labels)
+  rpc HardDeleteLayer(DeleteLayerRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/layers/{id}/delete"
+    };
+  }
+  
+  // GetLayer - Lấy chi tiết layer
+  rpc GetLayer(GetLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layers/{id}"
+    };
+  }
+  
+  // ListLayers - Danh sách layers (có filter, phân trang)
+  rpc ListLayers(ListLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layers"
+    };
+  }
+  
+  // UpdateLayerStatus - Cập nhật trạng thái layer
+  rpc UpdateLayerStatus(UpdateLayerStatusRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/qh/admin/layers/{id}/status"
+      body: "*"
+    };
+  }
+
+  // ToggleLayerBasicVisibility - Ẩn/hiện layer cơ bản: đảo dấu displayOrder (âm ↔ dương)
+  rpc ToggleLayerBasicVisibility(ToggleLayerBasicVisibilityRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/layers/{id}/toggle-basic-visibility"
+      body: "*"
+    };
+  }
+  
+  // ========== Client APIs ==========
+  
+  // ListClientLayers - Danh sách layers public (chỉ active và có hiệu lực)
+  rpc ListClientLayers(ListClientLayersRequest) returns (ListLayersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers"
+    };
+  }
+  
+  // GetClientLayer - Chi tiết layer public
+  rpc GetClientLayer(GetClientLayerRequest) returns (LayerResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers/{id}"
+    };
+  }
+  
+  // BuildPMTiles - Build file PMTiles từ dữ liệu của layer (server streaming)
+  rpc BuildPMTiles(BuildPMTilesRequest) returns (stream BuildPMTilesProgress) {
+    option (google.api.http) = {
+      post: "/v2/tqd/client/layers/{layerId}/build-tile",
+      body: "*"
+    };
+  }
+}
+
+// =====================================================
+// REQUEST MESSAGES
+// =====================================================
+
+message CreateLayerRequest {
+  string name = 1;                     // Tên kỹ thuật (unique)
+  string displayName = 2;              // Tên hiển thị
+  string description = 3;              // Mô tả
+  uint32 type = 4;                     // Loại layer: 1=landUse, 2=infrastructure, 3=planning
+  optional uint32 status = 5;          // 1=draft, 10=active, 20=expired, 30=archived
+  int32 visible = 6;                   // 0=ẩn, 1=hiển thị
+  int32 displayOrder = 7;              // Thứ tự hiển thị (số càng nhỏ càng ở dưới)
+  uint32 minZoom = 8;                   // Zoom tối thiểu (0-22)
+  uint32 maxZoom = 9;                   // Zoom tối đa (0-22)
+  string layerUrl = 10;                // URL dữ liệu (PMTiles/GeoJSON/WMS)
+  string avatar = 11;                  // URL ảnh đại diện
+  string imageUrl = 12;                // URL ảnh preview
+  string thumbnailUrl = 13;            // URL ảnh thumbnail
+  string styleConfig = 14;             // Cấu hình style (JSON string)
+  string legalDoc = 15;                // Văn bản pháp lý
+  string legalDocUrl = 16;             // URL văn bản pháp lý
+  string documentNumber = 17;          // Số hiệu văn bản
+  string issuingAuthority = 18;        // Cơ quan ban hành
+  optional string effectiveDate = 19;  // Ngày hiệu lực (YYYY-MM-DD)
+  optional string expiryDate = 20;     // Ngày hết hiệu lực (YYYY-MM-DD)
+  string sourceType = 21;              // raster, vector, pmtiles
+  string sourceCode = 22;              // Mã nguồn (tự sinh)
+  optional uint32 legalStatus = 23;
+  optional double trustValue = 24;
+  // Các layer cũ sẽ được đánh dấu legalStatus=replaced và lưu id layer mới (replacedByLayerId) để truy vết
+  repeated uint64 replaceLayerIds = 25;
+  optional uint64 familyId = 26; // FK → qh_layer_families (nhóm layer)
+  int64 timestamp = 27;
+  repeated int32 publishScopes = 28; // phạm vi áp dụng
+}
+
+message UpdateLayerRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional uint32 type = 5;
+  optional uint32 status = 6;
+  optional int32 visible = 7;
+  optional int32 displayOrder = 8;
+  optional uint32 minZoom = 9;
+  optional uint32 maxZoom = 10;
+  optional string layerUrl = 11;
+  optional string avatar = 12;
+  optional string imageUrl = 13;
+  optional string thumbnailUrl = 14;
+  optional string styleConfig = 15;
+  optional string legalDoc = 16;
+  optional string legalDocUrl = 17;
+  optional string documentNumber = 18;
+  optional string issuingAuthority = 19;
+  optional string effectiveDate = 20;
+  optional string expiryDate = 21;
+  google.protobuf.FieldMask updateMask = 22;
+  string sourceType = 23;
+  string sourceCode = 24;
+  optional uint32 legalStatus = 25;
+  optional double trustValue = 26;
+  optional uint64 familyId = 27; // Gán đổi nhóm; gửi 0 để gỡ gán (NULL)
+  repeated int32 publishScopes = 28;
+  optional uint64 replacedByLayerId = 29;
+  int64 timestamp = 30;
+}
+
+message UpdateLayerStatusRequest {
+  uint64 id = 1;
+  uint32 status = 2;                   // 1=draft, 10=active, 20=expired, 30=archived
+  int64 timestamp = 3;
+}
+
+message ToggleLayerBasicVisibilityRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message DeleteLayerRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message GetLayerRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message GetClientLayerRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message ListLayersRequest {
+  optional uint32 status = 1;          // Lọc theo status
+  optional uint32 type = 2;            // Lọc theo type
+  optional int32 visible = 3;          // Lọc theo visible (0/1)
+  optional string search = 4;          // Tìm kiếm theo name/displayName
+  uint32 page = 5;
+  uint32 size = 6;
+  optional string orderBy = 7;         // displayOrder, createdAt, name
+  optional string orderDir = 8;        // asc, desc
+  int64 timestamp = 9;
+}
+
+message ListClientLayersRequest {
+  optional uint32 type = 1;            // Lọc theo type
+  optional string search = 2;          // Tìm kiếm
+  uint32 page = 3;
+  uint32 size = 4;
+  int64 timestamp = 5;
+}
+
+message BuildPMTilesRequest {
+  uint64 layerId = 1;                  // ID của layer
+  uint32 minZoom = 2;                   // Zoom tối thiểu (mặc định 0)
+  uint32 maxZoom = 3;                   // Zoom tối đa (mặc định 14, tối đa 18)
+  optional string outputDir = 4;       // Thư mục output (mặc định ./files/tiles)
+}
+
+// =====================================================
+// RESPONSE MESSAGES
+// =====================================================
+
+message LayerResponse {
+  uint64 id = 1;
+  string name = 2;
+  string displayName = 3;
+  string description = 4;
+  uint32 type = 5;
+  uint32 status = 6;
+  int32 visible = 7;
+  int32 displayOrder = 8;
+  uint32 minZoom = 9;
+  uint32 maxZoom = 10;
+  string layerUrl = 11;
+  string avatar = 12;
+  string imageUrl = 13;
+  string thumbnailUrl = 14;
+  string styleConfig = 15;             // JSON string
+  string legalDoc = 16;
+  string legalDocUrl = 17;
+  string documentNumber = 18;
+  string issuingAuthority = 19;
+  optional string effectiveDate = 20;  // YYYY-MM-DD
+  optional string expiryDate = 21;     // YYYY-MM-DD
+  string createdAt = 22;               // RFC3339
+  string updatedAt = 23;               // RFC3339
+  string sourceType = 24;
+  string sourceCode = 25;
+  uint32 legalStatus = 26;
+  double trustValue = 27;
+  // Chỉ có giá trị khi layer này đã bị thay thế bởi layer khác (truy vết)
+  optional uint64 replacedByLayerId = 28;
+  string legalStatusName = 29;
+  optional uint64 familyId = 30;
+  // Họ lớp (qh_layer_families); chỉ có khi load chi tiết kèm preload Family
+  optional QHLayerFamilyResponse family = 31;
+  repeated int32 publishScopes = 32;
+  bool defaultVisible = 33;
+}
+
+message ListLayersResponse {
+  repeated LayerResponse data = 1;
+  int64 total = 2;
+  uint32 page = 3;
+  uint32 pageSize = 4;
+}
+
+message BuildPMTilesProgress {
+  string status = 1;                   // "processing", "done", "error"
+  string message = 2;
+  int32 currentZoom = 3;
+  int64 tilesWritten = 4;
+  int64 totalTiles = 5;
+  string outputPath = 6;               // Đường dẫn file output khi hoàn thành
+}

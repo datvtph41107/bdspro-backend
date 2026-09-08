@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "bdspro/product.proto";
+import "shared/common.proto";
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "google/api/annotations.proto";
+
+service BdsproDashboardService {
+    rpc GetCashProfit(GetCashProfitRequest) returns (GetCashProfitResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/cash-profit/type"
+        };
+    };
+    rpc GetCashProfitTime(GetCashProfitRequest) returns (GetCashProfitTimeResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/cash-profit/time"
+        };
+    };
+
+    rpc GetAssetStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/asset-stats"
+        };
+    };
+    rpc GetProductStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/product-stats"
+        };
+    };
+    rpc GetPostStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/post-stats"
+        };
+    };
+    rpc GetCountPostByTime(GetCountPostByTimeRequest) returns (GetCountPostByTimeResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/count-post-by-time"
+        };
+    };
+    rpc GetSuggestToday(SuggestTodayRequest) returns (SuggestTodayResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/suggest/today"
+        };
+    };
+    rpc GetCountOfUser(GetCountOfUserRequest) returns (GetCountOfUserResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/dashboard/count/product"
+        };
+    };
+}
+
+message GetCashProfitRequest {
+    string fromDate = 1;
+    string toDate = 2;
+    uint64 costTypeId = 3;
+    uint32 quarter = 4;
+}
+
+message CashProfit {
+    string name = 1;
+    double amountIn = 2;
+    double amountOut = 3;
+    double profit = 4;
+}
+
+message GetCashProfitResponse {
+    repeated CashProfit data = 1;
+}
+
+message CashProfitTime {
+    string time = 1;
+    double amountIn = 2;
+    double amountOut = 3;
+    double profit = 4;
+}
+
+
+message GetCashProfitTimeResponse {
+    repeated CashProfitTime data = 1;
+}
+
+message GetCountPostByTimeRequest {
+    string from = 1;
+    string to = 2;
+}
+
+message CountPostByTime {
+    string date = 1;
+    uint32 count = 2;
+}
+
+message GetCountPostByTimeResponse {
+    repeated CountPostByTime data = 1;
+}
+
+message SuggestTodayRequest {}
+
+message SuggestTodayResponse {
+    repeated SuggestTodayItem data = 1;
+}
+
+message SuggestTodayItem {
+    string imageUrl = 1;
+    string title = 2;
+    double price = 3;
+    uint64 linkId = 4;
+    int32 domainType = 5;
+}
+
+message GetCountOfUserRequest {}
+
+message GetCountOfUserResponse {
+    uint32 totalPosted = 1;            // Số tin đã đăng
+    uint32 totalInterestedProduct = 2; // Số sản phẩm quan tâm
+    uint32 totalSavedProduct = 3;      // Số sản phẩm đã lưu
+}

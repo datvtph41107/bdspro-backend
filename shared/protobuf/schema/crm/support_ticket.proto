@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service SupportTicketService {
+  rpc ListSupportTickets(ListSupportTicketsRequest) returns (ListSupportTicketsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/support/tickets"
+    };
+  }
+  // Path riêng — tránh grpc-gateway match nhầm "summary" vào {id}
+  rpc GetSupportTicketSummary(google.protobuf.Empty) returns (SupportTicketSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/support/ticket-summary"
+    };
+  }
+  rpc GetSupportTicket(sharepb.IdRequest) returns (GetSupportTicketResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/support/tickets/{id}"
+    };
+  }
+  rpc CreateSupportTicket(CreateSupportTicketRequest) returns (GetSupportTicketResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets"
+      body: "*"
+    };
+  }
+  rpc UpdateSupportTicket(UpdateSupportTicketRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/support/tickets/{id}"
+      body: "*"
+    };
+  }
+  rpc AssignSupportTicket(AssignSupportTicketRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/assign"
+      body: "*"
+    };
+  }
+  rpc UpdateSupportTicketPriority(UpdateSupportTicketPriorityRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/support/tickets/{id}/priority"
+      body: "*"
+    };
+  }
+  rpc UpdateSupportTicketStatus(UpdateSupportTicketStatusRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/support/tickets/{id}/status"
+      body: "*"
+    };
+  }
+  rpc AddSupportTicketNote(AddSupportTicketNoteRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/notes"
+      body: "*"
+    };
+  }
+  rpc CloseSupportTicket(CloseSupportTicketRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/close"
+      body: "*"
+    };
+  }
+  rpc UpdateSupportTicketImages(UpdateSupportTicketImagesRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/images"
+      body: "*"
+    };
+  }
+  rpc TransferSupportTicket(TransferSupportTicketRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/support/tickets/{id}/transfer"
+      body: "*"
+    };
+  }
+}
+
+message ListSupportTicketsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  optional uint32 status = 3;
+  optional uint32 priority = 4;
+  optional uint32 issueType = 5;
+  optional uint64 assigneeId = 6;
+  optional string q = 7;
+  optional uint32 product = 8;
+  optional uint32 source = 9;
+  optional uint32 handlingTeam = 10;
+  optional bool unassignedOnly = 11;
+}
+
+message ListSupportTicketsResponse {
+  repeated SupportTicketItem data = 1;
+  int64 total = 2;
+}
+
+message SupportTicketSummaryResponse {
+  int64 total = 1;
+  int64 statusNew = 2;
+  int64 statusInProgress = 3;
+  int64 statusWaitingUser = 4;
+  int64 statusResolved = 5;
+  int64 statusClosed = 6;
+  int64 statusTransferred = 7;
+  int64 unassigned = 8;
+  int64 priorityCritical = 9;
+}
+
+message CreateSupportTicketRequest {
+  string title = 1;
+  string description = 2;
+  uint32 issueType = 3;
+  uint32 priority = 4;
+  optional uint64 relatedUserId = 5;
+  optional uint64 relatedReportId = 6;
+  uint32 product = 7;
+  uint32 source = 8;
+  repeated string images = 9;
+}
+
+message UpdateSupportTicketRequest {
+  uint64 id = 1;
+  optional string title = 2;
+  optional string description = 3;
+}
+
+message AssignSupportTicketRequest {
+  uint64 id = 1;
+  uint64 assigneeId = 2;
+  optional string note = 3;
+}
+
+message UpdateSupportTicketPriorityRequest {
+  uint64 id = 1;
+  uint32 priority = 2;
+  string reason = 3;
+}
+
+message UpdateSupportTicketStatusRequest {
+  uint64 id = 1;
+  uint32 status = 2;
+  string note = 3;
+}
+
+message AddSupportTicketNoteRequest {
+  uint64 id = 1;
+  string body = 2;
+}
+
+message CloseSupportTicketRequest {
+  uint64 id = 1;
+  string note = 2;
+}
+
+message UpdateSupportTicketImagesRequest {
+  uint64 id = 1;
+  repeated string images = 2;
+}
+
+message TransferSupportTicketRequest {
+  uint64 id = 1;
+  uint32 handlingTeam = 2;
+  string reason = 3;
+}
+
+message GetSupportTicketResponse {
+  SupportTicketDetail ticket = 1;
+}
+
+message SupportTicketItem {
+  uint64 id = 1;
+  string code = 2;
+  string title = 3;
+  uint32 issueType = 4;
+  uint32 status = 5;
+  uint32 priority = 6;
+  optional uint64 assigneeId = 7;
+  optional uint64 relatedUserId = 8;
+  optional uint64 relatedReportId = 9;
+  uint32 product = 10;
+  string updatedAt = 11;
+  string createdAt = 12;
+  repeated string images = 13;
+  uint64 createdBy = 14;
+  optional uint32 handlingTeam = 15;
+  uint32 source = 16;
+}
+
+message SupportTicketNoteItem {
+  uint64 id = 1;
+  uint64 authorId = 2;
+  string body = 3;
+  string createdAt = 4;
+}
+
+message SupportTicketEventItem {
+  uint64 id = 1;
+  uint64 actorId = 2;
+  string action = 3;
+  string note = 4;
+  string createdAt = 5;
+  optional string actorName = 6;
+  optional string beforeJson = 7;
+  optional string afterJson = 8;
+}
+
+message SupportTicketDetail {
+  uint64 id = 1;
+  string code = 2;
+  string title = 3;
+  string description = 4;
+  uint32 issueType = 5;
+  uint32 status = 6;
+  uint32 priority = 7;
+  optional uint64 assigneeId = 8;
+  optional uint64 relatedUserId = 9;
+  optional uint64 relatedReportId = 10;
+  uint32 product = 11;
+  uint32 source = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+  optional string closedAt = 15;
+  repeated SupportTicketNoteItem notes = 16;
+  repeated SupportTicketEventItem events = 17;
+  repeated string images = 18;
+  uint64 createdBy = 19;
+  optional uint32 handlingTeam = 20;
+}

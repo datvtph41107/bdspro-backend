@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "organization/deal.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+
+
+service OrganizationMemberService {
+    rpc SwitchOrganization(SwitchOrganizationRequest) returns (SwitchOrganizationResponse) {}
+    rpc CreateOrganizationMember(CreateOrganizationMemberRequest) returns (CreateOrganizationMemberResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/member"
+            body: "*"
+        };
+    }
+    rpc CreateOrganizationMemberBatch(CreateOrganizationMemberBatchRequest) returns (CreateOrganizationMemberBatchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/member/batch"
+            body: "*"
+        };
+    }
+    rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/member/{id}"
+            body: "*"
+        };
+    }
+    rpc DeleteOrganizationMember(DeleteOrganizationMemberRequest) returns (DeleteOrganizationMemberResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/organization/member/{id}"
+        };
+    }
+
+    rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/member"
+        };
+    }
+
+    // rpc GetOrganizationMember(Empty) returns (GetOrganizationMembersResponse) {
+    //     option (google.api.http) = {
+    //         get: "/v2/org/organization/members"
+    //     };
+    // }
+
+    rpc GetCurrentOrganizationMembers(sharepb.FriendListRequest) returns (GetOrganizationMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/members/me"
+        };
+    }
+    
+    rpc GetOrganizationMembersForAdmin(GetOrganizationMembersForAdminRequest) returns (GetOrganizationMembersForAdminResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/admin/{organizationId}/members"
+        };
+    }
+    
+    rpc GetCurrentOrganizationMemberRole(Empty) returns (GetCurrentOrganizationMemberRoleResponse) {
+        option (google.api.http) = {
+            get: "/v2/organization/member/me"
+        };
+    }
+}
+
+message Empty {}
+
+message SwitchOrganizationRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    uint32 userId = 2 [json_name = "userId"];
+}
+
+message SwitchOrganizationResponse {
+    uint32 id = 1 [json_name = "id"];
+    uint32 userId = 2 [json_name = "userId"];
+    bool isSuccess = 3 [json_name = "isSuccess"];
+    string role = 4 [json_name = "role"];
+    repeated string permissions = 5 [json_name = "permissions"];
+}
+
+message CreateOrganizationMemberRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    uint64 userId = 2 [json_name = "userId"];
+    uint32 role = 3 [json_name = "role"];
+}
+
+message CreateOrganizationMemberResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message CreateOrganizationMemberBatchRequest {
+    repeated uint64 userIds = 1;
+}
+
+message CreateOrganizationMemberBatchResponse {
+    repeated uint32 ids = 1 [json_name = "ids"];
+}
+
+message UpdateOrganizationMemberRequest {
+    uint32 id = 1 [json_name = "id"];
+    uint32 status = 2 [json_name = "status"];
+    uint32 roleKey = 3 [json_name = "roleKey"];
+}
+
+message UpdateOrganizationMemberResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteOrganizationMemberRequest {   
+    uint32 id = 1 [json_name = "id"];
+}
+
+message DeleteOrganizationMemberResponse {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetOrganizationMembersRequest {
+    optional uint32 roleId = 1 [json_name = "roleId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message GetOrganizationMembersForAdminRequest {
+    uint32 organizationId = 1 [json_name = "organizationId"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message OrganizationMember {
+    uint32 id = 1 [json_name = "id"];
+    uint64 userId = 2 [json_name = "userId"];
+    uint32 role = 3 [json_name = "role"];
+    uint64 roleId = 4 [json_name = "roleId"];
+    uint32 roleKey = 5 [json_name = "roleKey"];
+    string roleName = 6 [json_name = "roleName"];
+    uint32 status = 7 [json_name = "status"];
+    optional sharepb.ProfileItem profile = 8;
+    optional DealMember dealMember = 9;
+}
+
+message GetOrganizationMembersResponse {
+    repeated OrganizationMember data = 1;
+    uint32 total = 2;
+}
+
+message GetOrganizationMembersForAdminResponse {
+    repeated OrganizationMember data = 1 [json_name = "data"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetCurrentOrganizationMemberRoleResponse {
+    uint32 roleId = 1 [json_name = "roleId"];
+    string joinDate = 2 [json_name = "joinDate"];
+    string roleName = 3 [json_name = "roleName"];
+}

@@ -1,0 +1,284 @@
+// tqd/qh_planning.proto
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "tqd/qh_layer.proto";
+import "tqd/planning_client.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service QHPlanningService {
+  // QHPlanningProject APIs
+  rpc CreatePlanningProject(PlanningProject) returns (PlanningProject) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects"
+      body: "*"
+    };
+  }
+  rpc GetPlanningProject(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-projects/{id}"
+    };
+  }
+  rpc UpdatePlanningProject(PlanningProject) returns (PlanningProject) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-projects/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningProject(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-projects/{id}"
+    };
+  }
+  // CreatePlanningProjectFromFolder tạo đồ án + toàn bộ tài liệu từ 1 folder admin chọn.
+  // Mỗi file trong folder trở thành 1 PlanningDocument (trạng thái Pending, chờ job AI phân loại).
+  rpc CreatePlanningProjectFromFolder(CreatePlanningProjectFromFolderRequest) returns (CreatePlanningProjectFromFolderResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/from-folder"
+      body: "*"
+    };
+  }
+  // ApprovePlanningProject phê duyệt đồ án (chỉ khi đã Classified), đồng thời phê duyệt các tài liệu đã Classified.
+  rpc ApprovePlanningProject(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{id}/approve"
+    };
+  }
+  // RetryFailedPlanningDocuments đưa tất cả tài liệu Failed của đồ án về Pending để job classify chạy lại.
+  rpc RetryFailedPlanningDocuments(IdRequest) returns (PlanningProject) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-projects/{id}/retry-failed"
+    };
+  }
+
+  // Pro AI Jobs — tiến trình AI (type Đồ án gắn planning_project_id).
+  rpc ListProAIJobs(ListProAIJobsRequest) returns (ListProAIJobsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/ai-jobs"
+    };
+  }
+  rpc GetProAIJob(IdRequest) returns (ProAIJob) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/ai-jobs/{id}"
+    };
+  }
+
+  // QHPlanningDocument APIs
+  rpc CreatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents"
+      body: "*"
+    };
+  }
+  rpc GetPlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/planning-documents/{id}"
+    };
+  }
+  rpc UpdatePlanningDocument(PlanningDocument) returns (PlanningDocument) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/planning-documents/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePlanningDocument(IdRequest) returns (SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/planning-documents/{id}"
+    };
+  }
+  // ApprovePlanningDocument phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang Classified).
+  rpc ApprovePlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/{id}/approve"
+    };
+  }
+  // RetryPlanningDocument đưa 1 tài liệu Failed về Pending để job classify chạy lại.
+  rpc RetryPlanningDocument(IdRequest) returns (PlanningDocument) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/planning-documents/{id}/retry"
+    };
+  }
+
+  // Client APIs
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientGetPlanningProject(IdRequest) returns (PlanningProject);
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientGetPlanningDocument(IdRequest) returns (PlanningDocument);
+  // gRPC compatibility method. Client HTTP ownership belongs to PlanningClientService.
+  rpc ClientListPlanningEvents(ListPlanningEventsRequest) returns (ListPlanningEventsResponse);
+  rpc ClientListPlanningRelations(ListPlanningEventsRequest) returns (ListPlanningRelationsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/relations"
+    };
+  }
+}
+
+message Jurisdiction {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message PlanningProject {
+  uint64 id = 1;
+  string code = 2;
+  string name = 3;
+  uint32 planningType = 4;
+  string planningTypeName = 17;
+  uint32 planningLevel = 5;
+  string planningLevelName = 18;
+  string authority = 6;
+  uint64 jurisdictionId = 7;
+  Jurisdiction jurisdiction = 19;
+  string summary = 8;
+  string approvalDate = 9;
+  string effectiveDate = 10;
+  string expiryDate = 11;
+  string validityStatus = 12;
+  string currentVersion = 13;
+  string metadata = 14; // JSON string
+  string createdAt = 15;
+  string updatedAt = 16;
+  uint32 legalStatus = 20;
+  string legalStatusName = 21;
+  repeated LayerResponse layers = 22;
+  string sourceFolderName = 23;
+  string sourceFolderPath = 24;
+  uint32 processStatus = 25;
+  string processStatusName = 26;
+  string researchScope = 27; // Phạm vi nghiên cứu hiển thị trên hồ sơ đồ án công khai.
+  string indicators = 28; // JSON array chỉ tiêu quy hoạch hiển thị trên hồ sơ đồ án công khai.
+}
+
+message ListPlanningProjectsResponse {
+  repeated PlanningProject data = 1;
+  int64 total = 2;
+}
+
+message PlanningDocument {
+  uint64 id = 1;
+  uint64 planningProjectId = 2;
+  string documentType = 3;
+  string code = 4;
+  string title = 5;
+  string description = 6;
+  string filepath = 7;
+  string versionNo = 8;
+  string validityStatus = 9;
+  string issueDate = 10;
+  string effectiveDate = 11;
+  string metadata = 12; // JSON string
+  string createdAt = 13;
+  string updatedAt = 14;
+  string thumbnail = 15;
+  string relativePath = 16;
+  uint32 processStatus = 17;
+  string processStatusName = 18;
+  string classifyError = 19;
+}
+
+// FolderFileEntry — 1 file trong folder admin chọn để tạo đồ án.
+message FolderFileEntry {
+  string relative_path = 1;
+  bytes content = 2;
+  string content_type = 3;
+}
+
+message CreatePlanningProjectFromFolderRequest {
+  string folder_name = 1;
+  string code = 2;
+  string name = 3;
+  uint32 planning_type = 4;
+  uint32 planning_level = 5;
+  string validity_status = 6;
+  string authority = 7;
+  string summary = 8;
+  uint64 jurisdiction_id = 9;
+  repeated FolderFileEntry files = 10;
+  // job_type: 10 = Đồ án (mặc định). Chỉ type Đồ án được hỗ trợ hiện tại.
+  uint32 job_type = 11;
+}
+
+message CreatePlanningProjectFromFolderResponse {
+  PlanningProject project = 1;
+  repeated PlanningDocument documents = 2;
+  ProAIJob ai_job = 3;
+}
+
+message ProAIJob {
+  uint64 id = 1;
+  uint32 job_type = 2;
+  string job_type_name = 3;
+  string name = 4;
+  string source_folder_name = 5;
+  uint32 process_status = 6;
+  string process_status_name = 7;
+  uint64 planning_project_id = 8;
+  string classify_error = 9;
+  string metadata = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  string completed_at = 13; // thời gian hoàn thành job (phân loại xong / lỗi)
+  string approved_at = 14;  // thời gian phê duyệt
+}
+
+message ListProAIJobsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  string job_type = 4;
+  string process_status = 5;
+}
+
+message ListProAIJobsResponse {
+  repeated ProAIJob data = 1;
+  int64 total = 2;
+}
+
+message ListPlanningDocumentsResponse {
+  repeated PlanningDocument data = 1;
+  int64 total = 2;
+}
+
+message PlanningEvent {
+  uint64 id = 1;
+  uint64 planningProjectId = 2;
+  string eventName = 3;
+  string eventDate = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+  string description = 7;
+  repeated PlanningDocument docs = 8;
+  repeated uint64 docIds = 9;
+  string verNo = 10;
+  uint32 legalStatus = 11;
+  string legalStatusName = 12;
+}
+
+message ListPlanningEventsResponse {
+  repeated PlanningEvent data = 1;
+  int64 total = 2;
+}
+
+message IdRequest {
+  uint64 id = 1;
+}
+
+message SubmitResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListPlanningRelationsResponse {
+  repeated PlanningRelation data = 1;
+  int64 total = 2;
+}
+
+message PlanningRelation {
+  PlanningProject parent = 1;
+  PlanningProject child = 2;
+  PlanningProject peer = 3;
+}

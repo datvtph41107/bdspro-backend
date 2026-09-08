@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package authpb;
+import "shared/common.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/auth;authpb";
+
+service OAuthService {
+    // OAuth Provider Login
+    rpc GetLoginURL(GetLoginURLRequest) returns (GetLoginURLResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/oauth/{provider}/login"
+        };
+    }
+
+    // OAuth Callback
+    rpc HandleCallback(HandleCallbackRequest) returns (HandleCallbackResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/oauth/{provider}/callback"
+        };
+    }
+
+    // Check Connected Social Accounts
+    rpc GetConnectedAccounts(GetConnectedAccountsRequest) returns (GetConnectedAccountsResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/oauth/connected-accounts"
+        };
+    }
+}
+
+message GetLoginURLRequest {
+    string provider = 1; // google, facebook, zalo
+}
+
+message GetLoginURLResponse {
+    string url = 1;
+    string state = 2;
+}
+
+message HandleCallbackRequest {
+    string provider = 1;   // google, facebook, zalo
+    string code = 2;
+    string state = 3;
+    string platform = 4;   // WEB, MOBILE, DESKTOP
+    string version = 5;    // App version
+    string os = 6;         // iOS, Android, Windows, MacOS, Linux
+    string deviceName = 7; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message HandleCallbackResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    string accessToken = 3;
+    string refreshToken = 4;
+    string fullName = 5;
+    string avatar = 6;
+    string email = 7;
+    string phone = 8;
+    string provider = 9;
+    string referralCode = 10; // Mã giới thiệu của user
+}
+
+message GetConnectedAccountsRequest {
+    // Empty - profileId sẽ lấy từ context
+}
+
+message GetConnectedAccountsResponse {
+    repeated ConnectedAccount data = 1;
+}
+
+message ConnectedAccount {
+    uint64 authId = 1;
+    string provider = 2; // GOOGLE, FACEBOOK, ZALO
+    string authName = 3; // OAuth ID từ provider
+    string fullName = 4;
+    string email = 5;
+    string avatar = 6;
+    string createdAt = 7;
+}

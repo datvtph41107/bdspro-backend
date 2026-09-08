@@ -1,0 +1,906 @@
+syntax = "proto3";
+
+package authpb;
+import "google/api/annotations.proto";
+import "shared/v3.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/auth;authpb";
+
+service AuthService {
+    // OTP Authentication
+    // Toàn hệ thống chỉ có duy nhất 2 api để gửi OTP là otp/request và otp/resend
+    // mode: "auth" -> đăng nhập/đăng ký (required: phone)
+    // mode: "verify" -> xác thực OTP (required: authId)
+    rpc RequestOTP(RequestOTPRequest) returns (RequestOTPResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/request"
+            body: "*"
+        };
+    }
+
+    rpc ResendOTP(ResendOTPRequest) returns (ResendOTPResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/resend"
+            body: "*"
+        };
+    }
+
+    rpc VerifyOTP(VerifyOTPRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/verify"
+            body: "*"
+        };
+    }
+
+    rpc VerifyRecovery(VerifyOTPRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/otp/verify-recovery"
+            body: "*"
+        };
+    }
+
+    // Token Management
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/token/refresh"
+            body: "*"
+        };
+    }
+
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/logout"
+            body: "*"
+        };
+    }
+
+    // Account Management
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+        option (google.api.http) = {
+            delete: "/v2/auth/delete/{otp}"
+        };
+    }
+
+    rpc OwnerLockAccount(sharepb.OTPV3Proto) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/auth/account/lock"
+            body: "*"
+        };
+    }
+
+    rpc RestoreAccount(RestoreAccountRequest) returns (RestoreAccountResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/restore"
+            body: "*"
+        };
+    }
+
+    rpc RestoreDeletedAccount(RestoreDeletedAccountRequest) returns (RestoreDeletedAccountResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/restore-deleted"
+            body: "*"
+        };
+    }
+
+    // Admin Access Control
+    rpc CreateAdminAccess(CreateAdminAccessRequest) returns (AdminAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access"
+            body: "*"
+        };
+    }
+
+    rpc UpdateAdminAccess(UpdateAdminAccessRequest) returns (AdminAccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/admin-access/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteAdminAccess(DeleteAdminAccessRequest) returns (DeleteAdminAccessResponse) {
+        option (google.api.http) = {
+            delete: "/v2/auth/admin-access/{id}"
+        };
+    }
+
+    rpc GetAdminAccessList(GetAdminAccessListRequest) returns (GetAdminAccessListResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/admin-access"
+        };
+    }
+
+    rpc ValidateAdminAccess(ValidateAdminAccessRequest) returns (ValidateAdminAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access/validate"
+            body: "*"
+        };
+    }
+
+    rpc CreateAdminAccessLog(CreateAdminAccessLogRequest) returns (CreateAdminAccessLogResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin-access/log"
+            body: "*"
+        };
+    }
+
+    rpc GetAdminAccessLogList(GetAdminAccessLogListRequest) returns (GetAdminAccessLogListResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/admin-access/log"
+        };
+    }
+
+    // QR Authentication
+    rpc QRInit(QRInitRequest) returns (QRInitResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/init"
+            body: "*"
+        };
+    }
+
+    rpc QRConfirm(QRConfirmRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/confirm"
+            body: "*"
+        };
+    }
+
+    rpc QRStatus(QRStatusRequest) returns (QRStatusResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/qr/status"
+            body: "*"
+        };
+    }
+
+    // Organization Management
+    rpc SwitchOrganization(SwitchOrganizationRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/switch/organization"
+            body: "*"
+        };
+    }
+    rpc SwitchAccount(SwitchAccountRequest) returns (SwitchAccountResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/switch/user"
+            body: "*"
+        };
+    }
+
+    // Admin Authentication
+    rpc AdminLogin(AdminLoginRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/admin/login"
+            body: "*"
+        };
+    }
+
+    // Danh sách tài khoản ADMIN (auth_method) — có authId, username, fullName
+    rpc ListAdmins(AdminListRequest) returns (AdminListResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/admin/list"
+        };
+    }
+
+    // Password Management
+    rpc CreatePassword(CreatePasswordRequest) returns (CreatePasswordResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/password/create"
+            body: "*"
+        };
+    }
+
+    rpc LoginWithPassword(LoginWithPasswordRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/password/login"
+            body: "*"
+        };
+    }
+
+    // Device Management
+    rpc RegisterDevice(CreateDeviceRequest) returns (CreateDeviceResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/device/check"
+            body: "*"
+        };
+    }
+
+    rpc UpdateDeviceMode(AppStateRequest) returns (AppStateResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/device/state/{state}"
+        };
+    }
+
+    // Auth Security
+    rpc GetCurrentAuthSetting(sharepb.Empty) returns (sharepb.AuthDataV3Proto) {
+        option (google.api.http) = {
+            get: "/v2/auth/setting/me"
+        };
+    }
+
+    // PIN Management
+    rpc PhoneCheck(PhoneCheckRequest) returns (PhoneCheckResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/phone/check/{phone}"
+        };
+    }
+
+    // PIN Management
+    rpc CreatePIN(CreatePINRequest) returns (CreatePINResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/pin/create"
+            body: "*"
+        };
+    }
+
+    rpc VerifyPIN(VerifyPINRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/pin/verify"
+            body: "*"
+        };
+    }
+
+    rpc UpdatePIN(UpdatePINRequest) returns (UpdatePINResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/pin/update"
+            body: "*"
+        };
+    }
+
+    rpc ActivePIN(ActivePINRequest) returns (UpdatePINResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/pin/active"
+            body: "*"
+        };
+    }
+
+    rpc CheckPINExists(CheckPINExistsRequest) returns (CheckPINExistsResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/pin/check"
+        };
+    }
+
+    // Login History
+    rpc GetLoginHistory(GetLoginHistoryRequest) returns (GetLoginHistoryResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/login-history"
+        };
+    }
+
+    rpc GetSessionsByProfile(sharepb.RequestV3Proto) returns (SessionPageResponse) {
+        option (google.api.http) = {
+            get: "/v2/auth/sessions"
+        };
+    }
+
+    // Update Fullname
+    rpc UpdateFullname(UpdateFullnameRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/auth/fullname"
+            body: "*"
+        };
+    }
+
+    // Login with Key (Diffie-Hellman Auth Key)
+    rpc LoginWithKey(LoginWithKeyRequest) returns (AuthSuccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/auth/login/key"
+            body: "*"
+        };
+    }
+}
+
+// OTP Messages
+message RequestOTPRequest {
+    string phone = 1;
+    string fullname = 2;
+    string mode = 3;
+    uint64 authId = 4;
+}
+
+message RequestOTPResponse {
+    uint64 authId = 1;
+    string message = 2;
+    bool existed = 3;  // true: user đã tồn tại, false: user mới đăng ký
+    string smsChannel = 4;
+}
+
+message VerifyOTPRequest {
+    string phone = 1;
+    string otp = 2;
+    uint64 authId = 3;
+    string version = 4;
+    string platform = 5;
+    string os = 6;
+    string fullname = 7;
+    string deviceName = 8;  // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+    string clientPublicKey = 9; // Diffie-Hellman public key từ client
+}
+
+message AuthSuccessResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    string accessToken = 3;
+    string refreshToken = 4;
+    string fullName = 5;
+    string avatar = 6;
+    string phone = 7;
+    string email = 8;
+    uint64 organizationId = 9;
+    string role = 10;
+    uint64 passwordAuthId = 11; // ID của auth_method có provider ADMIN (password authentication)
+    string referralCode = 12; // Mã giới thiệu của user
+    bool requireFullname = 13; // true nếu user cần cập nhật họ tên
+    string tempToken = 14; // Token tạm thời (10 phút) cho user chưa có họ tên, chỉ dùng để gọi UpdateFullname
+    string encryptedAuthKey = 15; // Auth key đã được mã hóa bằng shared secret (Diffie-Hellman)
+    string serverPublicKey = 16; // Diffie-Hellman public key của server (nếu cần gửi về client)
+}
+
+message ResendOTPRequest {
+    string phone = 1;
+    string fullname = 2;
+    uint64 authId = 3;
+}
+
+message ResendOTPResponse {
+    uint64 authId = 1;
+    string message = 2;
+}
+
+// Token Messages
+message RefreshTokenRequest {
+    string refreshToken = 1;
+}
+
+message RefreshTokenResponse {
+    string accessToken = 1;
+    string refreshToken = 2;
+}
+
+message LogoutRequest {
+    // Empty request
+    optional uint64 sessionId = 1;
+    string type = 2;// "device","session","others"
+}
+
+message LogoutResponse {
+    string message = 1;
+}
+
+// Account Management Messages
+message DeleteAccountRequest {
+    // Empty request - profileId will be extracted from context
+    string otp = 1;
+}
+
+message DeleteAccountResponse {
+    string message = 1;
+}
+
+message RestoreAccountRequest {
+    string phone = 1;
+}
+
+message RestoreAccountResponse {
+    uint64 authId = 1;
+    string provider = 2;
+    string authName = 3;
+}
+
+message RestoreDeletedAccountRequest {
+    string phone = 1;
+    string email = 2;
+    string username = 3;
+}
+
+message RestoreDeletedAccountResponse {
+    uint64 authId = 1;
+    string provider = 2;
+    string authName = 3;
+    string message = 4;
+}
+
+// Device Management Messages
+message CreateDeviceRequest {
+    string deviceId = 1;
+    string deviceName = 2;
+    string deviceType = 3;
+    string platform = 4;
+    string osVersion = 5;
+    string appVersion = 6;
+    string buildNumber = 7;
+    string manufacturer = 8;
+    string model = 9;
+    string locale = 10;
+    string timezone = 11;
+    string pushToken = 12;
+    string ipAddress = 13;
+    string userAgent = 14;
+    string lastSeenAt = 15;
+}
+
+message Device {
+    uint64 id = 1;
+    string deviceId = 2;
+    string deviceName = 3;
+    string deviceType = 4;
+    string platform = 5;
+    string osVersion = 6;
+    string appVersion = 7;
+    string buildNumber = 8;
+    string manufacturer = 9;
+    string model = 10;
+    string locale = 11;
+    string timezone = 12;
+    string pushToken = 13;
+    string ipAddress = 14;
+    string userAgent = 15;
+    uint64 profileId = 16;
+    uint64 organizationId = 17;
+    uint64 authId = 18;
+    string lastSeenAt = 19;
+    string createdAt = 20;
+    string updatedAt = 21;
+}
+
+message CreateDeviceResponse {
+    Device data = 1;
+}
+
+message AppStateRequest {
+    string state = 1; // active, inactive
+}
+
+message AppStateResponse {
+    string message = 1;
+}
+
+message AdminAccessResponse {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+    uint64 createdBy = 14;
+    uint64 updatedBy = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+}
+
+// Admin Access Control Messages
+message CreateAdminAccessRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string ipRange = 3;
+    string deviceId = 4;
+    string deviceName = 5;
+    string deviceType = 6;
+    string authType = 7;
+    string status = 8;
+    string effectiveFrom = 9;
+    string effectiveTo = 10;
+    int32 maxDevices = 11;
+    bool require2fa = 12;
+}
+
+message UpdateAdminAccessRequest {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+}
+
+message DeleteAdminAccessRequest {
+    uint64 id = 1;
+}
+
+message DeleteAdminAccessResponse {
+    string message = 1;
+}
+
+message GetAdminAccessListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    uint64 userId = 3;
+    string status = 4;
+    string authType = 5;
+    string ipAddress = 6;
+}
+
+message GetAdminAccessListResponse {
+    repeated AdminAccessItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+message ValidateAdminAccessRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string deviceId = 3;
+}
+
+message ValidateAdminAccessResponse {
+    bool isAllowed = 1;
+    string reason = 2;
+    bool require2fa = 3;
+    uint64 accessId = 4;
+    string deviceId = 5;
+    string ipAddress = 6;
+}
+
+message CreateAdminAccessLogRequest {
+    uint64 userId = 1;
+    string ipAddress = 2;
+    string deviceId = 3;
+    string deviceName = 4;
+    string action = 5;
+    string status = 6;
+    string reason = 7;
+    string userAgent = 8;
+}
+
+message CreateAdminAccessLogResponse {
+    string message = 1;
+}
+
+message GetAdminAccessLogListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    uint64 userId = 3;
+    string ipAddress = 4;
+}
+
+message GetAdminAccessLogListResponse {
+    repeated AdminAccessLogItem data = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 size = 4;
+}
+
+// QR Authentication Messages
+message QRInitRequest {
+    string clientId = 1;
+    string userAgent = 2;
+    string csrfToken = 3;
+    int64  expiration = 4;
+    string sessionKey = 5;
+    uint64 sessionId = 6;
+}
+
+message QRInitResponse {
+    string sessionKey = 1;
+    uint64 sessionId = 2;
+    string qrCode = 3;
+}
+
+message QRConfirmRequest {
+    uint64 sessionId = 1;
+    string sessionKey = 2;
+}
+
+message QRConfirmResponse {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string platform = 3;
+    string version = 4;
+    string os = 5;
+    string createdDate = 6;
+    string finishedDate = 7;
+    string ipRequest = 8;
+    uint64 totalRequest = 9;
+    string userAgent = 10;
+    bool activate = 11;
+    string sessionKey = 12;
+    string clientId = 13;
+}
+
+message QRStatusRequest {
+    string sessionKey = 1;
+    uint64 sessionId = 2;
+}
+
+message QRStatusResponse {
+    string status = 1; // "pending", "confirmed", "expired"
+    string message = 2;
+}
+
+// Organization Messages
+message SwitchOrganizationRequest {
+    uint64 organizationId = 1;
+}
+
+message SwitchOrganizationResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    uint64 organizationId = 3;
+    string role = 4;
+    string fullName = 5;
+    string avatar = 6;
+    string email = 7;
+    string phone = 8;
+    string accessToken = 9;
+}
+
+// Admin Authentication Messages
+message AdminLoginRequest {
+    string username = 1;
+    string password = 2;
+    string version = 3;    // App version
+    string platform = 4;   // WEB, MOBILE, DESKTOP
+    string os = 5;         // iOS, Android, Windows, MacOS, Linux
+    string deviceName = 6; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message AdminAccessItem {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string ipRange = 4;
+    string deviceId = 5;
+    string deviceName = 6;
+    string deviceType = 7;
+    string authType = 8;
+    string status = 9;
+    string effectiveFrom = 10;
+    string effectiveTo = 11;
+    int32 maxDevices = 12;
+    bool require2fa = 13;
+    uint64 createdBy = 14;
+    uint64 updatedBy = 15;
+    string createdAt = 16;
+    string updatedAt = 17;
+    string username = 18;
+}
+
+message AdminAccessLogItem {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string ipAddress = 3;
+    string deviceId = 4;
+    string deviceName = 5;
+    string action = 6;
+    string status = 7;
+    string reason = 8;
+    string userAgent = 9;
+    string createdAt = 10;
+}
+
+// Admin Management Messages
+message CreateAdminRequest {
+    string username = 1;
+    string password = 2;
+    string fullName = 3;
+    string email = 4;
+    string phone = 5;
+    string avatar = 6;
+    string jobTitle = 7;
+    string roleKey = 8;
+    repeated string attachments = 9;
+    string internalNotes = 10;
+    bool sendNotification = 11;
+}
+
+message CreateAdminResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    string username = 3;
+    string fullName = 4;
+    string email = 5;
+    string phone = 6;
+    string avatar = 7;
+    string role = 8;
+}
+
+message UpdateAdminRequest {
+    uint64 authId = 1;
+    string fullName = 2;
+    string email = 3;
+    string phone = 4;
+    string avatar = 5;
+}
+
+message DeleteAdminRequest {
+    uint64 authId = 1;
+}
+
+message DeleteAdminResponse {
+    string message = 1;
+}
+
+message AdminListRequest {
+    int32 page = 1;
+    int32 size = 2;
+    uint64 roleId = 3;
+    string name = 4;
+}
+
+message AdminListResponse {
+    repeated AdminItem data = 1;
+    int32 total = 2;
+}
+
+message AdminItem {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    string username = 3;
+    string fullName = 4;
+    string email = 5;
+    string phone = 6;
+    string avatar = 7;
+    string role = 8;
+    string createdAt = 9;
+}
+
+
+message AuthMethod {
+    uint64 id = 1;
+    uint64 userId = 2;
+    string provider = 3;
+    string authName = 4;
+    string password = 5;
+    string fullName = 6;
+    string email = 7;
+    string phone = 8;
+    string avatar = 9;
+    string roleKey = 10;
+    string createdAt = 11;
+    string updatedAt = 12;
+    string deletedAt = 13;
+}
+
+// Password Management Messages
+message CreatePasswordRequest {
+    string password = 1;
+    string confirmPassword = 2;
+}
+
+message CreatePasswordResponse {
+    uint64 authId = 1;
+    string message = 2;
+    bool success = 3;
+}
+
+message LoginWithPasswordRequest {
+    string username = 1;   // Phone hoặc username
+    string password = 2;
+    string version = 3;
+    string platform = 4;
+    string os = 5;
+    string deviceName = 6; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message SwitchAccountRequest {
+    uint64 profileId = 1;
+    optional uint64 organizationId = 2;
+    optional uint64 groupId = 3;
+    optional uint32 ownerType = 4;
+}
+
+message SwitchAccountResponse {
+    uint64 authId = 1;
+    uint64 profileId = 2;
+    optional uint64 organizationId = 3;
+    optional uint64 groupId = 4;
+    string role = 5;
+    string fullName = 6;
+    string avatar = 7;
+    string email = 8;
+    string phone = 9;
+    string accessToken = 10;
+}
+
+// Login History Messages
+message GetLoginHistoryRequest {
+    int32 page = 1;
+    int32 size = 2;
+}
+
+message GetLoginHistoryResponse {
+    repeated LoginHistoryItem data = 1;
+    int64 total = 2;
+}
+
+message SessionPageResponse {
+    repeated sharepb.SessionV3Proto data = 1;
+    int64 total = 2;
+}
+
+message LoginHistoryItem {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string platform = 3;
+    string version = 4;
+    string os = 5;
+    string deviceName = 6;
+    string createdDate = 7;
+    string finishedDate = 8;
+    string ipRequest = 9;
+    uint64 totalRequest = 10;
+    string userAgent = 11;
+    bool activate = 12;
+}
+
+// Update Fullname Messages
+message UpdateFullnameRequest {
+    string fullname = 1;
+}
+
+// Login with Key Messages (Diffie-Hellman Auth Key)
+message LoginWithKeyRequest {
+    string phone = 1;              // Số điện thoại để identify user
+    string encryptedAuthKey = 2;   // Auth key đã được mã hóa bằng server public key (từ lần verify trước)
+    string clientPublicKey = 3;    // Diffie-Hellman public key mới của client
+    string version = 4;            // App version
+    string platform = 5;           // WEB, MOBILE, DESKTOP
+    string os = 6;                 // iOS, Android, Windows, MacOS, Linux
+    string deviceName = 7;         // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+}
+
+message PhoneCheckResponse {
+    bool existed = 1;
+    optional uint64 userId = 2;
+}
+
+// PIN Messages
+message CreatePINRequest {
+    string pin = 1;                // Mã PIN 6 số
+    string phone = 2;              // Số điện thoại
+    string otp = 3;                // Mã OTP xác minh
+}
+
+message CreatePINResponse {
+    uint64 authId = 1;
+    string message = 2;
+}
+
+message VerifyPINRequest {
+    string phone = 1;
+    string pin = 2;
+    string version = 3;
+    string platform = 4;
+    string os = 5;
+    string deviceName = 6;
+}
+
+message UpdatePINRequest {
+    string oldPin = 1;             // Mã PIN cũ để xác thực
+    string newPin = 2;             // Mã PIN mới
+}
+
+message UpdatePINResponse {
+    string message = 1;
+}
+
+message ActivePINRequest {
+    bool active = 1;               // Trạng thái muốn cập nhật (true: bật, false: tắt)
+    string pin = 2;                // Mã PIN để xác thực
+}
+
+message CheckPINExistsRequest {
+    // Empty - lấy từ token
+}
+
+message PhoneCheckRequest {
+    string phone = 1;
+}
+message CheckPINExistsResponse {
+    bool exists = 1;
+    uint64 authId = 2;
+}

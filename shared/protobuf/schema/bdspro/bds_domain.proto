@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package bdspropb;
+import "google/api/annotations.proto";
+option go_package = "pb/types/bdspro;bdspropb";
+
+service BdsDomainService {
+  // @Summary Lấy danh sách bất động sản
+  // @Description Lấy danh sách bất động sản với phân trang và bộ lọc
+  // @Tags User: Bất động sản
+  // @Accept json
+  // @Produce json
+  // @Security BearerAuth
+  // @Param page query int false "Trang hiện tại" default(1)
+  // @Param size query int false "Số lượng item" default(20)
+  // @Param sort query string false "Sắp xếp"
+  // @Param text query string false "Tìm kiếm theo text"
+  // @Param productId query int false "Lọc theo Product ID"
+  // @Param assetId query int false "Lọc theo Asset ID"
+  // @Param provinceId query int false "Lọc theo Tỉnh/TP"
+  // @Param wardId query int false "Lọc theo Phường/Xã"
+  // @Param districtId query int false "Lọc theo Quận/Huyện"
+  // @Success 200 {object} BdsDomainListResponse
+  // @Router /v2/bdspro/v2/bds/list [get]
+  rpc GetBdsDomainList (BdsDomainListRequest) returns (BdsDomainListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/bds/list"
+    };
+  };
+}
+
+// Messages cho BDS Domain
+message BdsDomainListRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  optional string text = 4;
+  optional uint64 productId = 5;
+  optional uint64 assetId = 6;
+  optional uint64 provinceId = 7;
+  optional uint64 wardId = 8;
+  optional uint64 districtId = 9;
+}
+
+message BdsDomainListResponse {
+  repeated BdsDomain data = 1;
+  int64 total = 2;
+}
+
+message BdsDomain {
+  uint64 id = 1;
+  optional uint64 productId = 2;
+  optional uint64 assetId = 3;
+  optional double area = 4;
+  optional double areaUse = 5;
+  optional double areaBuild = 6;
+  optional double areaLand = 7;
+  optional double areaFloor = 8;
+  optional double areaGreen = 9;
+  optional double areaParking = 10;
+  optional double areaBalcony = 11;
+  optional double areaTerrace = 12;
+  optional double length = 13;
+  optional double width = 14;
+  optional double height = 15;
+  optional double frontWidth = 16;
+  optional double backWidth = 17;
+  optional double leftWidth = 18;
+  optional double rightWidth = 19;
+  optional double latitude = 20;
+  optional double longitude = 21;
+  string address = 22;
+  string street = 23;
+  string streetNumber = 24;
+  optional uint64 wardId = 25;
+  optional uint64 districtId = 26;
+  optional uint64 provinceId = 27;
+  optional double roadWidth = 28;
+  string roadType = 29;
+  string roadAccess = 30;
+  optional double distanceToRoad = 31;
+  string orientation = 32;
+  string mainDirection = 33;
+  optional bool cornerLot = 34;
+  optional bool alleyAccess = 35;
+  optional double alleyWidth = 36;
+  string shape = 37;
+  string topography = 38;
+  optional double elevation = 39;
+  string note = 40;
+  optional uint64 profileId = 41;
+  string createdAt = 42;
+  string updatedAt = 43;
+}
+

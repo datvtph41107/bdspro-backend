@@ -1,0 +1,336 @@
+[
+  {
+    "content": "⭐️ ÔI TRỜI E CẠN LỜI ĐỂ NÓI VỀ LÔ ĐẤT NÀY \n💫💫 Lô đất tuyến 2 đẹp như này giờ hiếm lắm.\n🎗Nằm cách Quốc Lộ 21A chỉ có 30m, đường đã  được phê duyệt mở rộng 2 bên 80m.\n🎗 Mặt 5m, hậu 5m, dài 18m, có diện tích 89,0 m2, có 60m2 đất ở?\n🎗 Cách khu công nghệ cao có 4km, cách ngã tư lục quân 800m, cách sân golf Đồng Mô 500m?\n🎗Đường to Thông suốt oto vào tận đất, vị trí quá lý tưởng để ở và làm vc?\n🎗 Cách chùa Khai Nguyên có 300m?\n🎗Xung quanh toàn nhà cao tầng, dân ở đông vui, an ninh cực tốt?\n🎗Sổ hồng sang tên nhanh gọn?\n💵 Anh chị quan tâm LH \n———————————————————   \nVPBĐS Gia Hoà ☎️0973954457. Nhanh còn chậm hết ạ?",
+    "context": "",
+    "gemini": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 2132.51,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Lô đất tuyến 2 đẹp như này giờ hiếm lắm",
+            "area": 89,
+            "address": "Tuyến 2, cách Quốc Lộ 21A chỉ có 30m, đường đã được phê duyệt mở rộng 2 bên 80m. Cách khu công nghệ cao có 4km, cách ngã tư lục quân 800m, cách sân golf Đồng Mô 500m. Cách chùa Khai Nguyên có 300m",
+            "propertyType": "Đất nền",
+            "transaction_type": 10,
+            "frontage": 5,
+            "legalDoc": "Sổ hồng",
+            "amenities": [
+              "Đường to Thông suốt oto vào tận đất",
+              "Dân ở đông vui, an ninh cực tốt"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 2129,
+            "model": "gemini-2.5-flash-lite"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "deepseek": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 2254.79,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Lô đất tuyến 2 gần Quốc Lộ 21A",
+            "area": 89,
+            "address": "Cách Quốc Lộ 21A chỉ có 30m, gần sân golf Đồng Mô, chùa Khai Nguyên",
+            "propertyType": "đất nền",
+            "transaction_type": 10,
+            "legalDoc": "sổ hồng"
+          },
+          "metadata": {
+            "processing_time_ms": 2250,
+            "model": "gpt-4o"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "timestamp": "2025-11-06 09:37:04"
+  },
+  {
+    "content": "\n        - Bằng Y , Sơn Đà , Huyện Ba Vì ( cũ ) . \nChủ nhờ bán lô đất sẵn nhà , sẵn truồng trại . \n- S : 946m2 có 60m thổ cư còn lại là đất trồng cây lâu năm .\n- Lô góc 2 mặt tiền , mặt chính 14,5m . Đường thông thoáng ô tô đánh võng . Thế đất cao , thoáng . View hồ sen . \n- Đất cách đường TL413 chỉ vài trăm mét . \n- Giá chưa tới 2 tỷ \n- Lh zalo 0969722996\n        ",
+    "context": "",
+    "gemini": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 981.63,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán lô đất sẵn nhà, sẵn chuồng trại",
+            "area": 946,
+            "address": "Bằng Y",
+            "district": "Ba Vì",
+            "ward": "Sơn Đà",
+            "propertyType": "Đất nền",
+            "transaction_type": 10,
+            "salePrice": 2000000000,
+            "frontage": 2,
+            "legalDoc": "thổ cư",
+            "amenities": [
+              "nhà",
+              "chuồng trại"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 978,
+            "model": "gemini-2.5-flash-lite"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "deepseek": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 2300.36,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán lô đất sẵn nhà, sẵn truồng trại tại Bằng Y, Sơn Đà, Ba Vì",
+            "area": 946,
+            "address": "Bằng Y, Sơn Đà, Huyện Ba Vì",
+            "province": "Hà Nội",
+            "district": "Ba Vì",
+            "ward": "Sơn Đà",
+            "propertyType": "đất nền",
+            "transaction_type": 10,
+            "salePrice": 2000000000,
+            "frontage": 2
+          },
+          "metadata": {
+            "processing_time_ms": 2296,
+            "model": "gpt-4o"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "timestamp": "2025-11-06 09:37:08"
+  },
+  {
+    "content": "\n        ✈ Bán lô góc 2 mặt tiền diện tích chỉ 88m2 \n🚀 Khu đấu giá X1, Lục Xuân, xã Phúc Lộc, (Phúc Thọ) Hà Nội\n🍗 Mặt tiền 6m, bên cạnh cụm công nghiệp Võng Xuyên \n🍺 80m ra đường tỉnh 418, một phút ra ĐL Tây Thăng Long \n🍾 Đối diện đang làm hạ tầng đấu giá, đất trung tâm xã \n🍽 Giá chỉ 4 tỷ 850 triệu liên hệ 0968.785.586 / 0372.556.875 để làm việc\nHoa hồng 30 ạ\n        ",
+    "context": "",
+    "gemini": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 987.02,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán lô góc 2 mặt tiền diện tích chỉ 88m2",
+            "area": 88,
+            "address": "Khu đấu giá X1, Lục Xuân",
+            "province": "Hà Nội",
+            "district": "Phúc Thọ",
+            "ward": "Phúc Lộc",
+            "propertyType": "Đất nền",
+            "transaction_type": 10,
+            "salePrice": 4850000000,
+            "frontage": 2,
+            "amenities": [
+              "mặt tiền 6m",
+              "bên cạnh cụm công nghiệp Võng Xuyên",
+              "80m ra đường tỉnh 418",
+              "một phút ra ĐL Tây Thăng Long",
+              "đất trung tâm xã"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 983,
+            "model": "gemini-2.5-flash-lite"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "deepseek": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 2415.43,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán lô góc 2 mặt tiền diện tích chỉ 88m2",
+            "area": 88,
+            "address": "Khu đấu giá X1, Lục Xuân, xã Phúc Lộc",
+            "province": "Hà Nội",
+            "district": "Phúc Thọ",
+            "ward": "Phúc Lộc",
+            "propertyType": "đất nền",
+            "transaction_type": 10,
+            "salePrice": 4850000000,
+            "frontage": 2
+          },
+          "metadata": {
+            "processing_time_ms": 2411,
+            "model": "gpt-4o"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "timestamp": "2025-11-06 09:37:13"
+  },
+  {
+    "content": "\n        🤙🤙 ALO QUÝ KHÁCH HÀNG, E XIN NHẮC LẠI LẦN CUỐI CHO QUÝ NHÀ ĐẦU TƯ NHỚ Ạ.\n🤙 E BÁN LÔ ĐẤT HIẾM : Mặt 5,5m, dài 16m, diện tích 85m2 có 60m2 \nđất ở.\n♥️ ĐẤT Ở XÃ SƠN ĐÔNG, THỊ XÃ SƠN TÂY, TP HÀ NỘI( nay là xã ĐOÀI PHƯƠNG, TP HÀ NÔI).\n♥️ ĐƯỜNG OTO VÀO TẬN ĐẤT TÌM CẢ XÃ CÒN ĐÚNG LÔ.\n♥️ ĐẶC BIỆT CÁC BÁC THÍCH ĐI LỄ CHÙA CẦU MAY THÌ CẠNH ĐẤY LÀ CHÙA KHAI NGUYÊN LỚN NHẤT VIỆT NAM TIỆN QUÁ TRỜI LUÔN\n💵 GIÁ CHỈ NHỈNH 1,3 tỷ tí RẺ NHẤT KHU VỰC Ạ.\n✌️ Nhanh tay Alo e để biết thêm thông tin nhé.\n🤙 Số e: ☎️ 0973954457\n        ",
+    "context": "",
+    "gemini": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 1093.38,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán lô đất hiếm mặt 5,5m, dài 16m, diện tích 85m2 có 60m2 đất ở",
+            "area": 85,
+            "address": "Xã Sơn Đông, Thị xã Sơn Tây, TP Hà Nội (nay là xã Đoài Phương, TP Hà Nội)",
+            "province": "Hà Nội",
+            "district": "Sơn Tây",
+            "ward": "Sơn Đông",
+            "propertyType": "Đất nền",
+            "transaction_type": 10,
+            "salePrice": 1300000000,
+            "frontage": 1,
+            "legalDoc": "đất ở",
+            "amenities": [
+              "đường oto vào tận đất"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 1090,
+            "model": "gemini-2.5-flash-lite"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "deepseek": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 3007.68,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Lô đất hiếm tại Xã Sơn Đông, Thị xã Sơn Tây, TP Hà Nội",
+            "area": 85,
+            "address": "",
+            "province": "TP Hà Nội",
+            "district": "Thị xã Sơn Tây",
+            "ward": "Xã Sơn Đông",
+            "propertyType": "đất nền",
+            "transaction_type": 10,
+            "salePrice": 1300000000,
+            "frontage": 1,
+            "amenities": [
+              "Gần chùa Khai Nguyên"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 3004,
+            "model": "gpt-4o"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "timestamp": "2025-11-06 09:37:18"
+  },
+  {
+    "content": "\n        • 61,3m  Thôn 7, xã Tân Xã, huyện Thạch Thất, Hà Nội\n• Lô đất nằm gần trục đường liên xã DH10, giao thông thuận tiện\n• Gần khu vực đấu giá đất, quy hoạch đồng bộ, dân cư hiện hữu\n• Chỉ mất vài phút di chuyển tới khu công nghệ cao Hòa Lạc và trường FPT\nGiá bán: Chỉ nhỉnh 2 tỷ – cơ hội đầu tư sinh lời cao hoặc an cư lý tưởng\nLiên hệ ngay: 0374522137\n        ",
+    "context": "",
+    "gemini": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 1244.13,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Đất nền Thôn 7, xã Tân Xã, huyện Thạch Thất, Hà Nội",
+            "area": 61.3,
+            "address": "Thôn 7",
+            "province": "Hà Nội",
+            "district": "Thạch Thất",
+            "ward": "Tân Xã",
+            "propertyType": "Đất nền",
+            "transaction_type": 10,
+            "salePrice": 2000000000,
+            "legalDoc": "sổ đỏ/hồng",
+            "amenities": [
+              "giao thông thuận tiện",
+              "quy hoạch đồng bộ",
+              "dân cư hiện hữu"
+            ]
+          },
+          "metadata": {
+            "processing_time_ms": 1240,
+            "model": "gemini-2.5-flash-lite"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "deepseek": {
+      "status_code": 200,
+      "success": true,
+      "response_time_ms": 2505.34,
+      "ai_response": "success",
+      "error": null,
+      "full_response_data": {
+        "code": 0,
+        "data": {
+          "product": {
+            "name": "Bán đất tại Thôn 7, xã Tân Xã, huyện Thạch Thất, Hà Nội",
+            "area": 61.3,
+            "address": "Thôn 7, xã Tân Xã",
+            "province": "Hà Nội",
+            "district": "Thạch Thất",
+            "ward": "Tân Xã",
+            "propertyType": "đất nền",
+            "transaction_type": 10,
+            "salePrice": 2000000000
+          },
+          "metadata": {
+            "processing_time_ms": 2501,
+            "model": "gpt-4o"
+          }
+        },
+        "message": "success"
+      }
+    },
+    "timestamp": "2025-11-06 09:37:23"
+  }
+]

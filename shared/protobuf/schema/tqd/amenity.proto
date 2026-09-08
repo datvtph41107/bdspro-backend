@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// AmenityService service
+service AmenityService {
+  // Create a new amenity
+  rpc CreateAmenity(Amenity) returns (Amenity) {
+    option (google.api.http) = {
+      post: "/v2/tqd/amenities"
+      body: "*"
+    };
+  }
+
+  // Get amenity by ID
+  rpc GetAmenity(GetAmenityRequest) returns (Amenity) {
+    option (google.api.http) = {
+      get: "/v2/tqd/amenities/{id}"
+    };
+  }
+
+  // Update amenity
+  rpc UpdateAmenity(Amenity) returns (Amenity) {
+    option (google.api.http) = {
+      put: "/v2/tqd/amenities/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete amenity
+  rpc DeleteAmenity(DeleteAmenityRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/amenities/{id}"
+    };
+  }
+
+  // List amenities
+  rpc ListAmenities(ListAmenitiesRequest) returns (ListAmenitiesResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/amenities"
+    };
+  }
+}
+
+// Amenity message
+message Amenity {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  string icon = 4;
+  string category = 5;
+  int32 sortOrder = 6;
+  bool isActive = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+// Request/Response messages
+message GetAmenityRequest {
+  uint64 id = 1;
+}
+
+message DeleteAmenityRequest {
+  uint64 id = 1;
+}
+
+message ListAmenitiesRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  optional bool isActive = 4;
+  optional string category = 5;
+}
+
+message ListAmenitiesResponse {
+  repeated Amenity data = 1;
+  int64 total = 2;
+}
+

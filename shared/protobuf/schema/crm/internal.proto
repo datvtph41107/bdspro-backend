@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "shared/v3.proto";
+
+service CrmInternalService {
+    rpc FriendStatusByProfileIds(FriendStatusByProfileIdsRequest) returns (FriendStatusByProfileIdsResponse);
+    rpc GetFriendInfoByProfileId(sharepb.IdRequest) returns (sharepb.ContactInfoV3Proto);
+    rpc GetContactById(sharepb.IdRequest) returns (sharepb.ContactDTO);
+    rpc GetContactByOriginId(sharepb.IdRequest) returns (sharepb.ContactDTO);
+
+    rpc RegisterEntity(FeedbackRegistry) returns (sharepb.SubmitResponse);
+    rpc GetRateStats(sharepb.IdRequest) returns (sharepb.RateStatsV3Proto);
+    rpc GetOrCreateContactByProfileIdWithNullOwner(sharepb.IdRequest) returns (GetOrCreateContactResponse);
+    rpc GetOriginProfileByOriginIds(sharepb.IdRequest) returns (GetOriginProfileByOriginIdResponse);
+    rpc MakeOriginProfile(sharepb.OriginProfile) returns (sharepb.OriginProfile);
+    rpc GetOriginProfileByProfileID(sharepb.IdRequest) returns (sharepb.OriginProfile);
+    
+    rpc HasContactRelation(HasContactRelationRequest) returns (HasContactRelationResponse);
+}
+
+message HasContactRelationRequest {
+  uint64 ownerId = 1;                 
+  uint64 contactOriginProfile_id = 2; 
+}
+
+message HasContactRelationResponse {
+  bool exists = 1;
+}
+
+
+message FriendStatusByProfileIdsRequest {
+    repeated uint64 profileIds = 1;
+    uint64 currentProfileId = 2;
+}
+
+message FriendStatusByProfileIdsResponse {
+    repeated sharepb.FriendItem friendStatus = 1;
+}
+
+// Internal Messages
+message FeedbackRegistry {
+    uint32 registry_key = 1;
+    string registry_name = 2;
+    int32 port = 3;
+    string service = 4;
+}
+
+message GetOrCreateContactResponse {
+    uint64 id = 1;
+    optional uint64 profileId = 2;
+    uint64 ownerId = 3;
+    int32 ownerOf = 4;
+}
+
+message GetOriginProfileByOriginIdResponse {
+    repeated sharepb.OriginProfile data = 1;
+}

@@ -1,0 +1,300 @@
+syntax = "proto3";
+
+package user;
+option go_package = "pb/types/user;userpb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "user/report_proof.proto";
+import "user/report_reason.proto";
+
+// Report service definition
+service ReportService {
+  // Tạo báo cáo mới
+  rpc CreateReport(CreateReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/report"
+      body: "*"
+    };
+  }
+
+  // Lấy danh sách báo cáo theo userId (bắt buộc truyền userId)
+  rpc GetReports(GetReportsRequest) returns (GetReportsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/list/{userId}"
+    };
+  }
+
+  // Lấy thông tin chi tiết báo cáo
+  rpc GetReport(GetReportRequest) returns (Report) {
+    option (google.api.http) = {
+      get: "/v2/user/report/detail/{id}"
+    };
+  }
+
+  // Cập nhật báo cáo (chỉ khi chưa duyệt)
+  rpc UpdateReport(UpdateReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {
+      put: "/v2/user/report/{id}"
+      body: "*"
+    };
+  }
+
+  // Xóa báo cáo
+  rpc DeleteReport(DeleteReportRequest) returns (DeleteReportResponse) {
+    option (google.api.http) = {
+      delete: "/v2/user/report/{id}"
+    };
+  }
+
+  // Phản hồi báo cáo (admin)
+  rpc RespondToReport(RespondToReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/report/{id}/respond"
+      body: "*"
+    };
+  }
+
+  // Thống kê báo cáo (admin)
+  rpc GetReportStats(GetReportStatsRequest) returns (GetReportStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/stats"
+    };
+  }
+
+  // Lấy danh sách báo cáo của tôi (current user)
+  rpc GetMyReports(GetMyReportsRequest) returns (GetReportsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/report/my"
+    };
+  }
+
+  // Lấy danh sách báo cáo admin có thể xem
+  rpc AdminNote(AdminNoteRequest) returns (AdminNoteResponse) {
+    option (google.api.http) = {
+      put: "/v2/user/report/admin-note"
+      body: "*"
+    };
+  }
+}
+
+// Report entity
+message Report {
+  uint64 id = 1;
+  uint64 reasonId = 2;
+  ReportReason reason = 3;
+  uint32 reportStatus = 4;
+  string statusText = 5;
+  uint64 userId = 6;                     // User bị báo cáo
+  ReportUser user = 7;                   // Thông tin user bị báo cáo
+  uint64 reporterId = 8;                 // User báo cáo
+  ReportUser reporter = 9;               // Thông tin user báo cáo
+  repeated ReportProof proofDocs = 10;
+  string response = 11;                  // Phản hồi từ admin
+  string description = 12;               // Mô tả chi tiết từ người báo cáo
+  string adminNote = 13;                 // Ghi chú nội bộ admin
+  uint32 priority = 14;                  // Mức độ ưu tiên (1=thấp, 5=cao)
+  string ipAddress = 15;                 // IP address của người báo cáo
+  string userAgent = 16;                 // User agent của người báo cáo
+  string createdAt = 17;
+  string updatedAt = 18;
+  string resolvedAt = 19;                // Thời gian xử lý xong
+  uint64 createdBy = 20;
+  uint64 updatedBy = 21;
+  uint64 resolvedBy = 22;                // Admin xử lý
+}
+
+message ReportUser {
+  uint64 profileId = 1;
+  string phone = 2;
+  string fullName = 3;
+  string email = 4;
+  string avatar = 5;
+  string username = 6;                   // Username/handle
+  string address = 7;                    // Địa chỉ
+  uint32 userType = 8;                   // Loại user (1=individual, 2=business)
+  bool isVerified = 9;                   // Tài khoản đã xác thực
+  string lastLogin = 10;                 // Lần đăng nhập cuối
+}
+
+// Report statistics
+message ReportStats {
+  int64 totalReports = 1;
+  int64 pendingReports = 2;
+  int64 approvedReports = 3;
+  int64 rejectedReports = 4;
+  int64 inProgressReports = 5;           // Báo cáo đang xử lý
+  double approvalRate = 6;               // Tỷ lệ chấp nhận (%)
+  double avgResponseTime = 7;            // Thời gian phản hồi TB (giờ)
+  repeated ReportStatsByReason statsByReason = 8;
+  repeated ReportStatsByDate statsByDate = 9;
+  repeated ReportStatsByPriority statsByPriority = 10;
+  repeated ReportStatsByAdmin statsByAdmin = 11;
+}
+
+message ReportStatsByReason {
+  uint64 reasonId = 1;
+  string reasonName = 2;
+  int64 count = 3;
+  double percentage = 4;                 // Phần trăm
+}
+
+message ReportStatsByDate {
+  string date = 1;
+  int64 count = 2;
+  int64 pending = 3;
+  int64 resolved = 4;
+}
+
+message ReportStatsByPriority {
+  uint32 priority = 1;
+  string priorityName = 2;
+  int64 count = 3;
+}
+
+message ReportStatsByAdmin {
+  uint64 adminId = 1;
+  string adminName = 2;
+  int64 handledCount = 3;
+  double avgResponseTime = 4;
+}
+
+// Request/Response messages
+message CreateReportRequest {
+  uint64 reasonId = 1;
+  uint64 userId = 2;                     // User bị báo cáo
+  repeated ReportProof proofDocs = 3;
+  optional string description = 4;
+  optional uint32 priority = 5;          // Mức độ ưu tiên
+  optional string additionalInfo = 6;    // Thông tin bổ sung
+}
+
+message GetReportRequest {
+  uint64 id = 1;
+  optional bool includeHistory = 2;      // Bao gồm lịch sử thay đổi
+}
+
+message GetReportsRequest {
+  uint64 userId = 1;                     // Required: userId bắt buộc phải truyền
+  optional uint32 status = 2;
+  optional uint64 reasonId = 3;
+  int32 page = 4;
+  int32 size = 5;
+  optional string fromDate = 6;
+  optional string toDate = 7;
+  optional string search = 8;
+  optional uint32 priority = 9;          // Filter theo priority
+  optional string sortBy = 10;           // Sort field (created_at, priority, status)
+  optional string sortOrder = 11;        // asc/desc
+}
+
+message GetMyReportsRequest {
+  optional uint32 status = 1;
+  optional uint64 reasonId = 2;
+  int32 page = 3;
+  int32 size = 4;
+  optional string fromDate = 5;
+  optional string toDate = 6;
+}
+
+message GetAllReportsRequest {
+  optional uint64 userId = 1;
+  optional uint64 reporterId = 2;        // Filter theo người báo cáo
+  optional uint32 status = 3;
+  optional uint64 reasonId = 4;
+  optional uint32 priority = 5;
+  int32 page = 6;
+  int32 size = 7;
+  optional string fromDate = 8;
+  optional string toDate = 9;
+  optional string search = 10;
+  optional string sortBy = 11;
+  optional string sortOrder = 12;
+}
+
+message GetReportsResponse {
+  repeated Report data = 1;            // Keep reports for now until protobuf regeneration
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+  int32 totalPages = 5;
+  bool hasNext = 6;                      // Có trang tiếp theo
+  bool hasPrev = 7;                      // Có trang trước
+  ReportStats summary = 8;               // Thống kê tóm tắt
+}
+
+message UpdateReportRequest {
+  uint64 id = 1;
+  optional uint64 reasonId = 2;
+  repeated ReportProof proofDocs = 3;
+  optional string description = 4;
+  optional uint32 priority = 5;
+  optional string additionalInfo = 6;
+}
+
+message DeleteReportRequest {
+  uint64 id = 1;
+  optional string reason = 2;            // Lý do xóa
+}
+
+message DeleteReportResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+message RespondToReportRequest {
+  uint64 id = 1;
+  uint32 status = 2;                     // 1=pending, 2=approved, 3=rejected
+  string response = 3;                   // Phản hồi công khai
+  optional string adminNote = 4;         // Ghi chú nội bộ
+  optional bool sendNotification = 5;    // Gửi thông báo cho user
+}
+
+message GetReportStatsRequest {
+  optional string fromDate = 1;
+  optional string toDate = 2;
+  optional uint64 reasonId = 3;
+  optional uint32 groupBy = 4;           // 1=daily, 2=weekly, 3=monthly
+  optional bool includeDetails = 5;      // Bao gồm chi tiết
+}
+
+message GetReportStatsResponse {
+  ReportStats stats = 1;
+  string generatedAt = 2;                // Thời gian tạo báo cáo
+  string period = 3;                     // Khoảng thời gian
+}
+
+message ExportReportsRequest {
+  optional uint64 userId = 1;
+  optional uint32 status = 2;
+  optional string fromDate = 3;
+  optional string toDate = 4;
+  string format = 5;                     // excel, csv, pdf
+  repeated string fields = 6;            // Các trường cần xuất
+}
+
+message ExportReportsResponse {
+  string downloadUrl = 1;                // URL download file
+  string fileName = 2;
+  int64 fileSize = 3;
+  string expiresAt = 4;                  // Thời gian hết hạn link
+}
+
+message ReportResponse {
+  Report report = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// Admin Note messages
+message AdminNoteRequest {
+  uint64 reportId = 1;                        // ID báo cáo cần cập nhật ghi chú
+  string adminNote = 2;                       // Ghi chú nội bộ admin
+  optional bool isInternal = 3;               // Ghi chú nội bộ hay công khai
+}
+
+message AdminNoteResponse {
+  bool success = 1;
+  string message = 2;
+  Report report = 3;                          // Báo cáo đã được cập nhật
+} 

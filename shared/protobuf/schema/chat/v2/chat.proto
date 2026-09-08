@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package chatpb;
+option go_package = "pb/types/chatv2;chatpb";
+import "google/api/annotations.proto";
+
+message ID {
+    uint64 id = 1;
+}
+
+enum EventType {
+    EVENT_UNKNOWN = 0;
+    EVENT_MESSAGE = 1;
+    EVENT_SYSTEM = 2;
+    EVENT_ACTION = 3;
+}
+
+
+message TimelineEvent {
+    uint64 eventID = 1;
+    EventType type = 2;
+    uint64 conversationID = 3;
+    uint64 sequence = 4;
+    string timestamp = 5;
+    uint64 actorID = 6; // default 0
+    uint64 messageID = 7; // nullable (0 = none)
+    oneof content {
+        MessageContent message = 10;
+        SystemContent system = 11;
+    }
+    repeated uint64 readBy = 20;
+    bool pinned = 21;
+    bool deleted = 22;
+    bool edited = 23;
+}
+
+message MessageContent {
+    string text = 1;
+    uint64 fileID = 2;
+    uint64 replyTo = 3;
+    uint64 forwardFrom = 4;
+}
+
+message SystemContent {
+    string text = 1;
+    string kind = 2;
+}
+
+service ChatService {
+    rpc SendMessage(SendMessageReq) returns (SendMessageResp);
+    // rpc LoadLastestMessages(LoadMessagesReq) returns (LoadMessagesResp);
+    rpc LoadMessageBefore(LoadPositionMessageReq) returns (LoadMessagesResp);
+    rpc JumpToMessage(JumpMessageReq) returns (LoadMessagesResp);
+    rpc UpdateRead(UpdateReadReq) returns (Empty);
+}
+
+
+message SendMessageReq {
+  uint64 conversation_id = 1;
+  uint64 senderID = 2;
+  MessageContent content = 3;
+}
+
+message SendMessageResp {
+  uint64 messageID = 1;
+  uint64 sequence = 2;
+  string timestamp = 3;
+}
+
+message LoadReq { 
+    uint64 conversationID = 1; 
+    int32 limit = 2; 
+}
+message LoadPositionMessageReq { 
+    uint64 conversationID = 1; 
+    uint64 seq = 2; 
+    int64 ts = 3; 
+    int32 limit = 4; 
+}
+message JumpMessageReq { 
+    uint64 conversationID = 1; 
+    uint64 messageID = 2; 
+    int32 before = 3; 
+    int32 after = 4; 
+}
+message LoadMessagesResp { 
+    TimelineEvent items = 1; 
+    uint64 minSeq = 2; 
+    uint64 maxSeq = 3; 
+}
+
+message UpdateReadReq { 
+    uint64 conversationID = 1; 
+    uint64 userID = 2;
+    uint64 lastReadSeq = 3; 
+    int64 readAtMs = 4; // Unix timestamp in milliseconds
+}
+
+message Empty {}

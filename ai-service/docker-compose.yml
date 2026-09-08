@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  ai-service:
+    build: .
+    container_name: bdspro-ai-service
+    ports:
+      - "8090:8090"
+      - "50070:50070"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EMBEDDING_MODEL=text-embedding-3-small
+      - LLM_MODEL=gpt-4-turbo-preview
+      - HTTP_PORT=8090
+      - GRPC_PORT=50070
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ../context:/app/context:ro  # Mount context as read-only
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/v2/ai/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  http-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.http
+    container_name: http-server
+    ports:
+      - "8218:8218"
+    environment:
+      - HTTP_PORT=8218
+    volumes:
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8218/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

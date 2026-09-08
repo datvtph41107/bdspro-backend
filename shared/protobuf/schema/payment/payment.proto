@@ -1,0 +1,446 @@
+syntax = "proto3";
+
+package paymentpb;
+option go_package = "pb/types/payment;paymentpb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service PaymentService {
+  // Wallet Dashboard
+  rpc GetWalletDashboard(Empty) returns (WalletDashboard) {
+    option (google.api.http) = {
+      get: "/v2/payment/wallets/dashboard"
+    };
+  }
+  
+  // Wallet Transactions
+  rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse) {}
+
+  rpc GetWalletByUserId(GetWalletByUserIdRequest) returns (Wallet) {} 
+
+  rpc GetWalletByWalletId(GetWalletByWalletIdRequest) returns (Wallet) {} 
+
+  rpc GetWalletTransactions(GetWalletTransactionsRequest) returns (WalletTransactionList) {
+    option (google.api.http) = {
+      get: "/v2/payment/wallets/transactions"
+    };
+  }
+  
+  rpc GetWalletTransactionsByWalletId(GetWalletTransactionsByWalletIdRequest) returns (WalletTransactionList) {}
+  
+  rpc TransferBetweenWallets(TransferBetweenWalletsRequest) returns (TransferBetweenWalletsResponse) {}
+  
+  rpc MakePayment(PaymentRequest) returns (WalletTransaction) {
+    option (google.api.http) = {
+      post: "/v2/payment/wallets/payment"
+      body: "*"
+    };
+  }
+  rpc Deposit(DepositRequest) returns (WalletTransaction) {
+    option (google.api.http) = {
+      post: "/v2/payment/wallets/deposit"
+      body: "*"
+    };
+  }
+
+  
+  // rpc Withdraw(WithdrawRequest) returns (WithdrawalRequest) {
+  //   option (google.api.http) = {
+  //     post: "/v2/payment/wallets/withdraw"
+  //     body: "*"
+  //   };
+  // }
+  
+  
+  // Payment Methods
+  rpc GetPaymentMethods(GetPaymentMethodsRequest) returns (PaymentMethodList) {
+    option (google.api.http) = {
+      get: "/v2/payment/payment-methods"
+    };
+  }
+  rpc CreatePaymentMethod(PaymentMethod) returns (PaymentMethod) {
+    option (google.api.http) = {
+      post: "/v2/payment/payment-methods"
+      body: "*"
+    };
+  }
+  rpc UpdatePaymentMethod(PaymentMethod) returns (PaymentMethod) {
+    option (google.api.http) = {
+      put: "/v2/payment/payment-methods/{id}"
+      body: "*"
+    };
+  }
+  rpc DeletePaymentMethod(DeletePaymentMethodRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v2/payment/payment-methods/{id}"
+    };
+  }
+  
+  // Reports
+  rpc GetWalletReport(ReportRequest) returns (ReportResponse) {
+    option (google.api.http) = {  
+      get: "/v2/payment/wallets/{walletId}/report"
+    };
+  }
+  rpc ExportWalletData(ReportRequest) returns (ExportResponse) {
+    option (google.api.http) = {
+      get: "/v2/payment/wallets/{walletId}/export"
+    };
+  }
+  
+  // // Deal Transactions
+  // rpc GetDealTransactionsDashboard(Empty) returns (DealTransactionsDashboard) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/dashboard"
+  //   };
+  // }
+  // rpc GetDealTransactions(GetDealTransactionsRequest) returns (DealTransactionList) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions"
+  //   };
+  // }
+  // rpc GetDealTransaction(GetDealTransactionRequest) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/{id}"
+  //   };
+  // }
+  // rpc UpdateDealTransaction(DealTransaction) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     put: "/v2/payment/deal-transactions/{id}"
+  //     body: "*"
+  //   };
+  // }
+  // rpc ApproveDealTransaction(ApproveDealTransactionRequest) returns (DealTransaction) {
+  //   option (google.api.http) = {
+  //     post: "/v2/payment/deal-transactions/{id}/approve"
+  //     body: "*"
+  //   };
+  // }
+  // rpc GetDealTransactionsReport(ReportRequest) returns (ReportResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/payment/deal-transactions/report"
+  //   };
+  // }
+  // Transaction Types
+  rpc GetTransactionTypes(Empty) returns (TransactionTypeList) {
+    option (google.api.http) = {
+      get: "/v2/payment/transaction-types"
+    };
+  }
+  rpc CreateTransactionType(TransactionType) returns (TransactionType) {
+    option (google.api.http) = {
+      post: "/v2/payment/transaction-types"
+      body: "*"
+    };
+  }
+  rpc UpdateTransactionType(TransactionType) returns (TransactionType) {
+    option (google.api.http) = {
+      put: "/v2/payment/transaction-types/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteTransactionType(DeleteTransactionTypeRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v2/payment/transaction-types/{id}"
+    };
+  }
+
+  rpc SepayWebhook(SepayWebhookRequest) returns (Empty) {
+    option (google.api.http) = {
+      post: "/v2/payment/sepay/webhook"
+      body: "*"
+    };
+  }
+  
+  // Dashboard API - Lấy thống kê số lượng giao dịch đang xử lý
+  rpc GetPaymentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+    option (google.api.http) = {
+      get: "/v2/payment/stats"
+    };
+  }
+
+  rpc GetDashboardMetrics(GetDashboardMetricsRequest) returns (GetDashboardMetricsResponse) {
+    option (google.api.http) = {
+      get: "/v2/payment/dashboard-metrics"
+    };
+  }
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+// Wallet related messages
+message Wallet {
+  uint32 id = 1;
+  uint32 userId = 2;
+  double balance = 3;
+  string currency = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message WalletDashboard {
+  double balance = 1;
+  double totalIncome = 2;
+  double totalExpense = 3;
+  int32 pendingTransactions = 4;
+  repeated string alerts = 5;
+}
+
+message WalletTransaction {
+  uint32 id = 1;
+  uint32 walletId = 2;
+  string type = 3;
+  double amount = 4;
+  string status = 5;
+  string relatedService = 6;
+  string relatedId = 7;
+  string externalPaymentId = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+  string transactionCode = 11;
+}
+
+message WalletTransactionList {
+  repeated WalletTransaction data = 1;
+  uint32 total = 2;
+}
+
+message GetWalletByUserIdRequest {
+  uint32 userId = 1;
+}
+
+message GetWalletByWalletIdRequest {
+  uint32 walletId = 1;
+}
+
+message GetWalletResponse {
+  Wallet wallet = 1;
+}
+
+message PaymentMethod {
+  uint32 id = 1;
+  uint32 organizationId = 2;
+  string name = 3;
+  string code = 4;
+  bool isActive = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message WithdrawalRequest {
+  uint32 id = 1;
+  uint32 walletId = 2;
+  double amount = 3;
+  string status = 4;
+  string paymentMethod = 5;
+  string bankAccountInfo = 6;
+  uint32 requestedBy = 7;
+  uint32 approvedBy = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+// Request/Response messages
+message CreateWalletRequest {
+  uint32 userId = 1;
+  double balance = 2;
+  string currency = 3;
+}
+
+message CreateWalletResponse {
+  uint32 id = 1;
+
+}
+
+message DepositRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string paymentMethod = 3;
+  string externalPaymentId = 4;
+}
+
+message WithdrawRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string paymentMethod = 3;
+  string bankAccountInfo = 4;
+}
+
+message PaymentRequest {
+  uint32 walletId = 1;
+  double amount = 2;
+  string relatedService = 3;
+  string relatedId = 4;
+}
+
+
+
+message ReportRequest {
+  uint32 walletId = 1;    
+  string fromDate = 2;
+  string toDate = 3;
+  string type = 4;
+}
+
+message ReportResponse {
+  double totalAmount = 1;
+  int32 totalTransactions = 2;
+  repeated WalletTransaction transactions = 3;
+}
+
+// Additional messages for request/response
+message Empty {}
+
+message GetWalletTransactionsRequest {
+  string type = 1;
+  string status = 2;
+  string fromDate = 3;
+  string toDate = 4;
+  uint32 page = 5;
+  uint32 size = 6;
+}
+
+message GetWalletTransactionsByWalletIdRequest {
+  uint32 walletId = 1;
+  string type = 2;
+  string status = 3;
+  string fromDate = 4;
+  string toDate = 5;
+  uint32 page = 6;
+  uint32 size = 7;
+}
+
+message TransferBetweenWalletsRequest {
+  uint32 fromWalletId = 1;
+  uint32 toWalletId = 2;
+  double amount = 3;
+  string description = 4;
+  string relatedService = 5;
+  string relatedId = 6;
+}
+
+message TransferBetweenWalletsResponse {
+  uint32 fromTransactionId = 1;
+  uint32 toTransactionId = 2;
+  double amount = 3;
+  string status = 4;
+  string transactionCode = 5;
+  string createdAt = 6;
+}
+
+message GetPaymentMethodsRequest {
+  uint32 organizationId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+message PaymentMethodList {
+  repeated PaymentMethod data = 1;
+  uint32 total = 2;
+}
+
+message DeletePaymentMethodRequest {
+  uint32 id = 1;
+}
+
+message ExportResponse {
+  bytes data = 1;
+  string format = 2;
+}
+
+message DealTransactionsDashboard {
+  double totalIncome = 1;
+  double totalExpense = 2;
+  int32 pendingTransactions = 3;
+  repeated string alerts = 4;
+}
+
+message GetDealTransactionsRequest {
+  string type = 1;
+  string status = 2;
+  string fromDate = 3;
+  string toDate = 4; 
+  uint32 page = 5;
+  uint32 size = 6;
+}
+
+message DealTransactionList {
+  repeated DealTransaction data = 1;
+  uint32 total = 2;
+}
+
+message GetDealTransactionRequest {
+  uint32 id = 1;
+}
+
+message DealTransaction {
+  uint32 id = 1;
+  string type = 2;
+  double amount = 3;
+  string status = 4;
+  string description = 5;
+  uint32 createdBy = 6;
+  uint32 approvedBy = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+message ApproveDealTransactionRequest {
+  uint32 id = 1;
+  uint32 approvedBy = 2;
+  string comment = 3;
+}
+
+message TransactionType {
+  uint32 id = 1;
+  string name = 2;
+  string code = 3;
+  string category = 4;
+  bool isActive = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message TransactionTypeList {
+  repeated TransactionType data = 1;
+}
+
+message DeleteTransactionTypeRequest {
+  uint32 id = 1;
+}
+
+message SepayWebhookRequest {
+  string gateway = 1;
+  string transaction_date = 2;
+  string account_number = 3;
+  string sub_account = 4;
+  string code = 5;
+  string content = 6;
+  string transfer_type = 7;
+  string description = 8;
+  double transfer_amount = 9;
+  string reference_code = 10;
+  double accumulated = 11;
+  uint32 id = 12;
+}
+
+message GetDashboardMetricsRequest {
+  string fromDate = 1;
+  string toDate = 2;
+}
+
+message DashboardMetric {
+  string time = 1;
+  uint64 processingCount = 2;
+  uint64 completedCount = 3;
+}
+
+message GetDashboardMetricsResponse {
+  repeated DashboardMetric data = 1;
+}

@@ -1,0 +1,33 @@
+rpc:
+    user:
+        address: "localhost:8201"
+
+server:
+    tcp_port: 8204
+
+eureka:
+    url: localhost
+    port: 8761
+
+database:
+    dsn: ""
+
+key:
+    jwt: ""
+
+jwt:
+    key-generate: ""
+    tokenPrefix: Bearer
+    tokenExpirationAfterDays: 14
+    accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+    listPermit:
+    authorizationHeader: Authorization
+
+redis:
+    host: localhost:6379
+    pass: ""
+
+firebase:
+    file: ""
+    fileUrl: ""

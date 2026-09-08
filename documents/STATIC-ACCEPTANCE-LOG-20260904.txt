@@ -1,0 +1,63 @@
+# BDSPro final artifact static acceptance — 2026-09-04
+
+## make help
+BDSPro Backend
+
+make setup                         Chuẩn bị config và pinned toolchain
+make doctor                        Chẩn đoán toolchain + Docker environment
+make deps [service=payment-service] Khởi động dependency local cần thiết
+make dev service=payment-service  Chạy service native bằng Air (daily loop)
+make test [service=payment-service] Chạy proof nhỏ nhất ở service/repo
+make migrate service=payment-service Chạy migration của DB owner
+make up                            Khởi động full Compose integration stack
+make rebuild [service=payment-service] Build lại integration image (một/all)
+make status                        Xem container và health của integration stack
+make logs [service=payment-service] Theo dõi log container integration
+make smoke                         Kiểm tra public boundary cơ bản
+make test-e2e                      Chạy flow mua gói đến báo cáo
+make verify                        Static/code/repository proof
+make accept                        Full local rebuild + smoke + E2E
+make verify-migrations             Kiểm tra toàn migration history
+make generate                      Sinh protobuf và Wire code
+make down                          Dừng backend, giữ dữ liệu
+make reset                         Xóa dữ liệu local có xác nhận
+
+Native dev: gateway, auth, user, organization, payment, tqd, notification, file, hub.
+Assistant nằm trong Compose integration nhưng chưa có canonical Air target.
+
+## env-check
+root/service .env contract PASS
+
+## verify-backend (source/config/migration/layout/ownership; no Go compile)
+root/service .env contract PASS
+runtime config isolation verification PASS
+user: migration contract checked (4 versions)
+organization: migration contract checked (3 versions)
+payment: migration contract checked (7 versions)
+tqd: migration contract checked (41 versions)
+notification: migration contract checked (2 versions)
+file: migration contract checked (4 versions)
+hub: migration contract checked (3 versions)
+bdspro: migration contract checked (3 versions)
+crm: migration contract checked (25 versions)
+migration contract PASS
+source layout verification PASS
+backend owner verification PASS
+
+## verify-non-go-source
+ai-service Python syntax PASS (16 files)
+
+## verify-docs
+canonical markdown links PASS (31 docs checked)
+
+## tasks.json
+tasks.json syntax PASS
+
+## shell syntax
+shared/code shell syntax PASS
+
+## notification generated contract
+QHPRO_BUSINESS_EVENTS_EXCHANGE=qhpro.payment.events
+notification generated exchange contract PASS
+
+NOTE: full make verify/make accept not executed in this artifact-build container because pinned Go 1.25.10 engineering toolchain and Docker daemon are unavailable here.

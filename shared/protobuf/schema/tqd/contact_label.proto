@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// ContactLabel service
+service ContactLabelService {
+  // Create a new contact label
+  rpc CreateContactLabel(ContactLabel) returns (ContactLabel) {
+    option (google.api.http) = {
+      post: "/v2/tqd/contact/labels"
+      body: "*"
+    };
+  }
+
+  // Get contact label by ID
+  rpc GetContactLabel(GetContactLabelRequest) returns (ContactLabel) {
+    option (google.api.http) = {
+      get: "/v2/tqd/contact/labels/{id}"
+    };
+  }
+
+  // Update contact label
+  rpc UpdateContactLabel(ContactLabel) returns (ContactLabel) {
+    option (google.api.http) = {
+      put: "/v2/tqd/contact/labels/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete contact label
+  rpc DeleteContactLabel(DeleteContactLabelRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/contact/labels/{id}"
+    };
+  }
+
+  // List contact labels
+  rpc ListContactLabels(ListContactLabelsRequest) returns (ListContactLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/contact/labels"
+    };
+  }
+}
+
+// ContactLabel message
+message ContactLabel {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string color = 5;
+  string icon = 6;
+  bool isActive = 7;
+  int32 sortOrder = 8;
+  int32 contactCount = 9;
+  bool isSystem = 10;
+  int32 status = 11;
+  int32 type = 12;
+  string createdAt = 13;
+  string updatedAt = 14;
+}
+
+// Request/Response messages
+message CreateContactLabelRequest {
+  string name = 1;
+  string code = 2;
+  string description = 3;
+  string color = 4;
+  string icon = 5;
+  bool is_active = 6;
+  int32 sort_order = 7;
+  bool is_system = 8;
+  int32 type = 9;
+}
+
+message GetContactLabelRequest {
+  uint64 id = 1;
+}
+
+message DeleteContactLabelRequest {
+  uint64 id = 1;
+}
+
+message ListContactLabelsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  bool is_active = 4;
+  bool is_system = 5;
+}
+
+message ListContactLabelsResponse {
+  repeated ContactLabel data = 2;
+  int64 total = 3;
+}

@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service OneHouseService {
+  rpc GetOneHouseDetail(GetOneHouseDetailRequest) returns (OneHouse) {
+    option (google.api.http) = {get: "/v2/tqd/properties/{id}"};
+  }
+}
+
+message GetOneHouseDetailRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+} // id dạng text, có thể là "2" hoặc property_uuid
+
+message Meta {
+  string code = 1;
+}
+
+message OneHouse {
+  string id = 1;
+  double lat = 2;
+  double lng = 3;
+  string address = 4;
+  string district = 5;
+  string districtCode = 6;
+  string city = 7;
+  string cityCode = 8;
+  string province = 9;
+  string provinceCode = 10;
+  string ward = 11;
+  string wardCode = 12;
+  string mapNumber = 13;
+  string landNumber = 14;
+  double latitude = 15;
+  double longitude = 16;
+  string direction = 17;
+  string shape = 18;
+  string numberOfFacades = 19;
+  double totalArea = 20;
+  string planningLandType = 21;
+  string planningLandTypeCode = 22;
+  repeated PlanningInfo planningInfos = 23;
+  string shapeFileId = 24;
+  Geometry geometry = 25;
+  bool isSavedByUser = 26;
+  string propertyCode = 27;
+  string propertyUuid = 28;
+  bool acceptedTnc = 29;
+}
+
+message PlanningInfo {
+  string planningTypeCode = 1;
+  string planningTypeName = 2;
+  double planningArea = 3;
+}
+
+message Geometry {
+  repeated MultiPolygon multiPolygon = 1;
+}
+
+message MultiPolygon {
+  repeated Polygon polygons = 1;
+}
+
+message Polygon {
+  repeated LineString rings = 1;
+}
+
+message PointTile {
+  double x = 1;
+  double y = 2;
+}
+
+message LineString {
+  repeated PointTile points = 1;
+}

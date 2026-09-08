@@ -1,0 +1,263 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "tqd/qh_label.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// =====================================================
+// REGION SERVICE
+// =====================================================
+
+service RegionService {
+  
+  // ========== Admin APIs ==========
+
+  // CreateRegion - Tạo region (layerId, name, geometry GeoJSON UTF-8 trong bytes; có thể gửi Polygon, MultiPolygon hoặc Feature)
+  rpc CreateRegion(CreateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/regions"
+      body: "*"
+    };
+  }
+
+  // UpdateRegion - Cập nhật metadata region (không sửa geometry)
+  rpc UpdateRegion(UpdateRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/admin/regions/{id}"
+      body: "*"
+    };
+  }
+  
+  // DeleteRegion - Xóa mềm region
+  rpc DeleteRegion(DeleteRegionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/regions/{id}"
+    };
+  }
+  
+  // GetRegion - Lấy chi tiết region
+  rpc GetRegion(GetRegionRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/regions/{id}"
+    };
+  }
+  
+  // ListRegions - Danh sách regions (có filter, phân trang)
+  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/regions"
+    };
+  }
+
+  // ListAdminRegionsByLayer - Danh sách regions theo layer (admin), layer_id bắt buộc trong path
+  rpc ListAdminRegionsByLayer(ListAdminRegionsByLayerRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/layers/{layer_id}/regions"
+    };
+  }
+  
+  // UpdateRegionProcessingStatus - Cập nhật trạng thái xử lý của region
+  rpc UpdateRegionProcessingStatus(UpdateProcessingStatusRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      patch: "/v2/tqd/admin/regions/{regionId}/processing-status"
+      body: "*"
+    };
+  }
+
+  // SyncRegion - Đồng bộ landUseId/legendId cho regions theo layerId và labelId
+  rpc SyncRegion(SyncRegionRequest) returns (SyncRegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/regions/sync-region"
+      body: "*"
+    };
+  }
+  
+  // ========== Client APIs ==========
+  
+  // ListClientRegions - Danh sách regions public (chỉ active)
+  rpc ListClientRegions(ListClientRegionsRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/regions"
+    };
+  }
+  
+  // FindRegionByPoint - Tìm region theo tọa độ điểm
+  rpc FindRegionByPoint(FindRegionByPointRequest) returns (RegionResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/regions/by-point"
+    };
+  }
+  
+  // FindRegionsByBBox - Tìm regions theo bounding box
+  rpc FindRegionsByBBox(FindRegionsByBBoxRequest) returns (ListRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/regions/by-bbox"
+    };
+  }
+}
+
+// =====================================================
+// REQUEST MESSAGES
+// =====================================================
+
+message CreateRegionRequest {
+  uint64 layerId = 1;
+  string name = 2;
+  bytes geometry = 3;
+  uint64 labelId = 4;
+}
+
+message UpdateRegionRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional uint32 status = 5;
+  optional uint64 labelId = 6;
+}
+
+message DeleteRegionRequest {
+  uint64 id = 1;
+}
+
+message GetRegionRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message ListRegionsRequest {
+  optional uint64 layerId = 1;          // Lọc theo layer
+  optional uint64 labelId = 2;          // Lọc theo label (join với region_labels)
+  optional uint32 status = 3;           // Lọc theo status: 10=active, 20=inactive
+  optional uint32 processingStatus = 4; // Lọc theo processing_status: 10=pending, 20=mapped, 30=verified, 40=rejected
+  optional string search = 5;           // Tìm kiếm theo name/displayName
+  uint32 page = 6;
+  uint32 size = 7;
+  optional string orderBy = 8;          // id, name, areaHa, createdAt
+  optional string orderDir = 9;         // asc, desc
+  int64 timestamp = 10;
+}
+
+message ListAdminRegionsByLayerRequest {
+  uint64 layer_id = 1;                  // path: id layer (bắt buộc)
+  optional uint64 labelId = 2;
+  optional uint32 status = 3;
+  optional uint32 processingStatus = 4;
+  optional string search = 5;
+  uint32 page = 6;
+  uint32 size = 7;
+  optional string orderBy = 8;
+  optional string orderDir = 9;
+  int64 timestamp = 10;
+}
+
+message ListClientRegionsRequest {
+  optional uint64 layerId = 1;          // Layer ID (bắt buộc)
+  optional double minLng = 2;           // BBox: kinh độ tối thiểu
+  optional double minLat = 3;           // BBox: vĩ độ tối thiểu
+  optional double maxLng = 4;           // BBox: kinh độ tối đa
+  optional double maxLat = 5;           // BBox: vĩ độ tối đa
+  uint32 page = 6;
+  uint32 size = 7;
+  int64 timestamp = 10;
+}
+
+message FindRegionByPointRequest {
+  double lat = 1;
+  double lng = 2;
+  optional uint64 layerId = 3;
+  int64 timestamp = 4;
+}
+
+message FindRegionsByBBoxRequest {
+  BBox bbox = 1;
+  optional uint64 layerId = 2;
+  optional uint64 labelId = 3;
+  uint32 page = 4;
+  uint32 size = 5;
+  int64 timestamp = 6;
+}
+
+message BBox {
+  double minLng = 1;
+  double minLat = 2;
+  double maxLng = 3;
+  double maxLat = 4;
+}
+
+message UpdateProcessingStatusRequest {
+  uint64 regionId = 1;
+  uint32 processingStatus = 2;          // 10=pending, 20=mapped, 30=verified, 40=rejected
+  optional string notes = 3;
+}
+
+message SyncRegionRequest {
+  uint64 layerId = 1;
+  uint64 labelId = 2;
+}
+
+message SyncRegionResponse {
+  uint64 layerId = 1;
+  uint64 labelId = 2;
+  uint64 landUseId = 3;
+  uint64 legendId = 4;
+  int64 total = 5;
+}
+
+// =====================================================
+// RESPONSE MESSAGES
+// =====================================================
+
+message ListRegionsResponse {
+  repeated RegionResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}
+
+message RegionResponse {
+  // ===== Thông tin cơ bản =====
+  uint64 id = 1;
+  uint64 layerId = 2;
+  string name = 3;
+  string displayName = 4;
+  string description = 5;
+  
+  // ===== Dữ liệu hình học =====
+  string geometryGeoJson = 6;
+  double areaHa = 7;
+  double areaSqm = 8;
+  
+  // ===== Màu sắc =====
+  uint32 colorRed = 9;
+  uint32 colorGreen = 10;
+  uint32 colorBlue = 11;
+  string colorHex = 12;
+  
+  // ===== Style =====
+  string styleConfig = 13;
+  
+  // ===== Dữ liệu gốc =====
+  google.protobuf.Struct originalProperties = 14;
+  string sourceFile = 15;
+  string importBatchId = 16;
+  
+  // ===== Metadata =====
+  uint32 status = 17;                   // 10: active, 20: inactive
+  uint32 processingStatus = 18;         // 10: pending, 20: mapped, 30: verified, 40: rejected
+  uint32 version = 19;
+  bool isLatest = 20;
+  
+  // ===== Thời gian =====
+  string createdAt = 21;
+  string updatedAt = 22;
+  
+  // ===== Labels =====
+  QHLabelResponse label = 23;
+  bytes geometry = 24;
+}

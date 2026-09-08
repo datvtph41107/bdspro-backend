@@ -1,0 +1,54 @@
+server:
+    port: 8000
+
+service:
+    domain: localhost
+    host:
+        # Public Auth/OAuth/role/permission surface có serving owner là User.
+        # auth-service:8216 chỉ dành cho RPC AuthInternal service-to-service.
+        auth: user
+    port:
+        gateway: 8000
+        user: 8201
+        bdspro: 8202
+        file: 8203
+        notification: 8204
+        payment: 8205
+        crm: 8206
+        organization: 8207
+        chat: 8208
+        social: 8209
+        map: 8210
+        search: 8211
+        appointment: 8213
+        marketing: 8214
+        transaction: 8215
+        # Auth public protobuf hiện do User Service phục vụ; AuthInternal dùng 8216 riêng.
+        auth: 8201
+        feedback: 8217
+        assistant: 8218
+        hub: 8280
+        tqd: 8219
+    # Legacy HTTP compatibility has a different protocol and, for several
+    # owners, a different serving process. Never reuse the gRPC port map.
+    http_port:
+        bdspro: 8102
+        chat: 8007
+        file: 8002
+        map: 8101
+        search: 8008
+
+jwt:
+    key-generate: ""
+
+http:
+    allowed_origins:
+        - "http://localhost:3000"
+        - "http://127.0.0.1:3000"
+        - "http://127.0.0.1:3001"
+        - "http://localhost:3001"
+        - "http://localhost:8000"
+        - "http://localhost:5173"
+        - "http://127.0.0.1:5173"
+        - "http://localhost:5174"
+        - "http://127.0.0.1:5174"

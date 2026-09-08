@@ -1,0 +1,2803 @@
+basePath: /v2/crm
+definitions:
+  _routes.Except:
+    properties:
+      code:
+        type: integer
+      errors:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  crmpb.ActiveRuleRequest:
+    properties:
+      active:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  crmpb.ContactDTO:
+    properties:
+      avatar:
+        type: string
+      birthday:
+        type: string
+      blocked:
+        type: boolean
+      company:
+        type: string
+      contactStatus:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      email:
+        type: string
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      phone:
+        type: string
+      profileId:
+        type: integer
+      profileInfo:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      statusName:
+        type: string
+      zalo:
+        type: string
+    type: object
+  crmpb.ContactSaveDTO:
+    properties:
+      assignedCrm:
+        type: boolean
+      avatar:
+        type: string
+      company:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerType:
+        type: integer
+      phone:
+        type: string
+      visibility:
+        type: integer
+      zalo:
+        type: string
+    type: object
+  crmpb.ContactSyncRequest:
+    properties:
+      contacts:
+        items:
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
+        type: array
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+    type: object
+  crmpb.DocumentDTO:
+    properties:
+      fileName:
+        type: string
+      fileType:
+        type: string
+      fileUrl:
+        type: string
+      id:
+        type: integer
+    type: object
+  crmpb.FriendGroup:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  crmpb.LeadAssignCrmRequest:
+    properties:
+      contactId:
+        type: integer
+      note:
+        type: string
+      personChargeId:
+        type: integer
+      stageId:
+        type: integer
+    type: object
+  crmpb.LeadAssignPersonRequest:
+    properties:
+      chargePersonId:
+        type: integer
+      chargePersonType:
+        type: integer
+      leadId:
+        type: integer
+      noteAssign:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+    type: object
+  crmpb.LeadDetailDTO:
+    properties:
+      assignNote:
+        type: string
+      chargePerson:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      chargePersonId:
+        type: integer
+      contact:
+        $ref: '#/definitions/crmpb.ContactDTO'
+      documents:
+        items:
+          $ref: '#/definitions/crmpb.DocumentDTO'
+        type: array
+      id:
+        type: integer
+      note:
+        type: string
+      pipeline:
+        $ref: '#/definitions/crmpb.PipelineDTO'
+      pipelineId:
+        type: integer
+      priority:
+        type: integer
+      priorityName:
+        type: string
+      productCareIds:
+        items:
+          type: integer
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/bdspropb.ProductResponse'
+        type: array
+      source:
+        type: integer
+      sourceName:
+        type: string
+      stage:
+        $ref: '#/definitions/crmpb.StageDTO'
+      stageId:
+        type: integer
+      stageNote:
+        type: string
+    type: object
+  crmpb.LeadNoteRequest:
+    properties:
+      leadId:
+        type: integer
+      note:
+        type: string
+    type: object
+  crmpb.LeadSaveRequest:
+    properties:
+      address:
+        type: string
+      assignNote:
+        type: string
+      avatar:
+        type: string
+      birthday:
+        type: string
+      chargePersonId:
+        type: integer
+      company:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/crmpb.DocumentDTO'
+        type: array
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      phone:
+        type: string
+      priority:
+        type: integer
+      productCareIds:
+        items:
+          type: integer
+        type: array
+      removeDocumentIds:
+        items:
+          type: integer
+        type: array
+      source:
+        type: integer
+      stageId:
+        type: integer
+      zalo:
+        type: string
+    type: object
+  crmpb.LeadStageRequest:
+    properties:
+      leadId:
+        type: integer
+      stageId:
+        type: integer
+      stageNote:
+        type: string
+    type: object
+  crmpb.ListFriendGroupsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/crmpb.FriendGroup'
+        type: array
+      total:
+        type: integer
+    type: object
+  crmpb.NoteContactDTO:
+    properties:
+      id:
+        type: integer
+      note:
+        type: string
+    type: object
+  crmpb.PipelineDTO:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      defaultStage:
+        $ref: '#/definitions/crmpb.StageDTO'
+      id:
+        type: integer
+      isCustom:
+        type: boolean
+      isDefault:
+        type: boolean
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      pipelineName:
+        type: string
+      stages:
+        items:
+          $ref: '#/definitions/crmpb.StageDTO'
+        type: array
+    type: object
+  crmpb.PipelineSaveRequest:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      id:
+        type: integer
+      isDefault:
+        type: boolean
+      pipelineName:
+        type: string
+      removeStageIds:
+        items:
+          type: integer
+        type: array
+      stages:
+        items:
+          $ref: '#/definitions/crmpb.StageDTO'
+        type: array
+    type: object
+  crmpb.RelationShipResponse:
+    properties:
+      blocked:
+        type: boolean
+      following:
+        type: boolean
+      friendStatus:
+        $ref: '#/definitions/sharepb.FriendItem'
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  crmpb.RuleDTO:
+    properties:
+      active:
+        type: boolean
+      condition:
+        type: integer
+      conditionValue:
+        type: string
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      ruleName:
+        type: string
+      trigger:
+        type: integer
+      triggerProfile:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      triggerValue:
+        type: string
+    type: object
+  crmpb.SendInvitationRequest:
+    properties:
+      channel:
+        type: string
+      contactIds:
+        items:
+          type: integer
+        type: array
+      content:
+        type: string
+      link:
+        type: string
+    type: object
+  crmpb.SharingDTO:
+    properties:
+      contactId:
+        type: integer
+      note:
+        type: string
+      ownerType:
+        type: integer
+      permissions:
+        items:
+          type: integer
+        type: array
+      toId:
+        type: integer
+    type: object
+  crmpb.SharingRequest:
+    properties:
+      contactId:
+        type: integer
+      deletedIds:
+        items:
+          type: integer
+        type: array
+      note:
+        type: string
+      ownerType:
+        type: integer
+      permissions:
+        items:
+          type: integer
+        type: array
+      receivers:
+        items:
+          $ref: '#/definitions/crmpb.SharingDTO'
+        type: array
+    type: object
+  crmpb.StageDTO:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      colorRGB:
+        type: string
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      pipelineId:
+        type: integer
+      ruleId:
+        type: integer
+      stageName:
+        type: string
+      step:
+        type: integer
+    type: object
+  data.FollowInfoRes:
+    properties:
+      numFollower:
+        type: integer
+      numFollowing:
+        type: integer
+      numFriend:
+        type: integer
+    type: object
+  data.FriendDTO:
+    properties:
+      groupId:
+        type: integer
+      groupReceiverId:
+        type: integer
+      id:
+        type: integer
+      isSender:
+        description: |-
+          Group           *FriendGroupDTO `json:"group,omitempty"`
+          UserInfo        *AccountDTO     `json:"userInfo,omitempty"`
+        type: boolean
+      receiverId:
+        type: integer
+      respondedAt:
+        type: string
+      senderId:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.FriendStatus'
+      text:
+        type: string
+    type: object
+  domain.PipelineEntity:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      defaultStage:
+        $ref: '#/definitions/domain.StageEntity'
+      id:
+        type: integer
+      isCustom:
+        type: boolean
+      isDefault:
+        type: boolean
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      pipelineName:
+        type: string
+      stageDefaultId:
+        type: integer
+      stages:
+        items:
+          $ref: '#/definitions/domain.StageEntity'
+        type: array
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - ownerId
+    - ownerType
+    - pipelineName
+    type: object
+  domain.RuleEntity:
+    properties:
+      active:
+        type: boolean
+      condition:
+        $ref: '#/definitions/enums.ECondition'
+      conditionValue:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      note:
+        type: string
+      ownerId:
+        type: integer
+      ownerType:
+        $ref: '#/definitions/enums.EOwnerType'
+      ruleName:
+        type: string
+      trigger:
+        $ref: '#/definitions/enums.ERuleTrigger'
+      triggerValue:
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - condition
+    - conditionValue
+    - ruleName
+    - trigger
+    - triggerValue
+    type: object
+  domain.StageEntity:
+    properties:
+      active:
+        type: boolean
+      color:
+        type: integer
+      colorRGB:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        description: gorm.Model
+        type: integer
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      pipeline:
+        $ref: '#/definitions/domain.PipelineEntity'
+      pipelineId:
+        type: integer
+      ruleId:
+        type: integer
+      stageName:
+        type: string
+      step:
+        $ref: '#/definitions/enums.EStep'
+      updatedAt:
+        type: string
+      updatedBy:
+        type: integer
+    required:
+    - orderNumber
+    - pipelineId
+    - stageName
+    type: object
+  enums.ECondition:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-varnames:
+    - ConditionDateNotHistory
+    - ConditionStage
+    - ConditionTag
+    - ConditionBirth
+    - ConditionEventDate
+  enums.EOwnerType:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-varnames:
+    - EOwnerTypeMember
+    - EOwnerTypeGroup
+    - EOwnerTypeOrgnization
+  enums.ERuleTrigger:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    type: integer
+    x-enum-varnames:
+    - RuleThenReminder
+    - RuleThenLabel
+    - RuleThenAssignLead
+    - RuleThenSwitchStage
+  enums.EStep:
+    enum:
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50
+    type: integer
+    x-enum-varnames:
+    - StepNew
+    - StepContacted
+    - StepNegotiate
+    - StepDeposite
+    - StepClose
+  enums.FriendStatus:
+    enum:
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      FriendStatusAccepted: '"ACCEPT"'
+      FriendStatusPending: '"PENDING"'
+      FriendStatusReject: '"REJECT"'
+    x-enum-varnames:
+    - FriendStatusPending
+    - FriendStatusAccepted
+    - FriendStatusReject
+  bdspropb.AmenityItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.Apartment:
+    properties:
+      apartmentAttrId:
+        type: integer
+      archived:
+        type: integer
+      buildId:
+        type: integer
+      floor:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      ordinal:
+        type: integer
+      status:
+        type: integer
+    type: object
+  bdspropb.ApartmentAttribute:
+    properties:
+      area:
+        type: number
+      blueprintUrl:
+        type: string
+      furniture:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      numBathroom:
+        type: integer
+      numBedroom:
+        type: integer
+      price:
+        type: number
+    type: object
+  bdspropb.AttributeProduct:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.Developer:
+    properties:
+      address:
+        type: string
+      backgroundUrl:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      foundedAt:
+        type: string
+      id:
+        type: integer
+      logoUrl:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+      status:
+        type: integer
+      website:
+        type: string
+    type: object
+  bdspropb.DocType:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.HouseInfo:
+    properties:
+      furniture:
+        type: string
+      id:
+        type: integer
+      numBathroom:
+        type: integer
+      numBedroom:
+        type: integer
+      numCarPark:
+        type: integer
+      numFloor:
+        type: integer
+      numFront:
+        type: integer
+      numToilet:
+        type: integer
+      orientation:
+        type: string
+    type: object
+  bdspropb.MediaItem:
+    properties:
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      order:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+    type: object
+  bdspropb.ProductPrice:
+    properties:
+      currency:
+        type: string
+      deposite:
+        type: number
+      id:
+        type: integer
+      priceOwner:
+        type: number
+      productId:
+        type: integer
+      rentCommission:
+        description: 1000000 -> 10%
+        type: number
+      rentPaymentCycle:
+        type: integer
+      rentPrice:
+        type: number
+      saleCommission:
+        description: 1000000 -> 10%
+        type: number
+      salePrice:
+        type: number
+    type: object
+  bdspropb.ProductPrivate:
+    properties:
+      id:
+        type: integer
+      importPrice:
+        type: number
+      internalNote:
+        type: string
+      operatingCost:
+        type: number
+      privateDocs:
+        type: string
+      productId:
+        type: integer
+      targetProfit:
+        type: number
+    type: object
+  bdspropb.ProductResponse:
+    properties:
+      address:
+        type: string
+      amenities:
+        items:
+          $ref: '#/definitions/bdspropb.AmenityItem'
+        type: array
+      apartment:
+        $ref: '#/definitions/bdspropb.Apartment'
+      apartmentAttribute:
+        $ref: '#/definitions/bdspropb.ApartmentAttribute'
+      apartmentId:
+        type: integer
+      archived:
+        type: boolean
+      area:
+        type: number
+      assetId:
+        type: integer
+      attributes:
+        items:
+          $ref: '#/definitions/bdspropb.AttributeProduct'
+        type: array
+      build:
+        $ref: '#/definitions/bdspropb.ProjectBuild'
+      categoryId:
+        type: integer
+      code:
+        type: string
+      createdUser:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      customerId:
+        type: integer
+      description:
+        type: string
+      developer:
+        $ref: '#/definitions/bdspropb.Developer'
+      district:
+        $ref: '#/definitions/bdspropb.Region'
+      districtId:
+        type: integer
+      districtName:
+        type: string
+      docType:
+        $ref: '#/definitions/bdspropb.DocType'
+      docTypeId:
+        type: integer
+      googleMapLink:
+        type: string
+      houseInfo:
+        $ref: '#/definitions/bdspropb.HouseInfo'
+      id:
+        type: integer
+      lastPriceId:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/bdspropb.MediaItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      orgStatus:
+        type: integer
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      parentId:
+        type: integer
+      positionUrl:
+        type: string
+      price:
+        $ref: '#/definitions/bdspropb.ProductPrice'
+      priceSuggest:
+        type: number
+      privateData:
+        $ref: '#/definitions/bdspropb.ProductPrivate'
+      project:
+        $ref: '#/definitions/bdspropb.Project'
+      propertyType:
+        $ref: '#/definitions/bdspropb.PropertyType'
+      propertyTypeId:
+        type: integer
+      province:
+        $ref: '#/definitions/bdspropb.Region'
+      provinceId:
+        type: integer
+      provinceName:
+        type: string
+      rentStatus:
+        type: integer
+      rentTransaction:
+        $ref: '#/definitions/bdspropb.Transaction'
+      rentVisibility:
+        type: integer
+      saleStatus:
+        type: integer
+      saleTransaction:
+        $ref: '#/definitions/bdspropb.Transaction'
+      saleVisibility:
+        type: integer
+      sourceType:
+        type: integer
+      transactionType:
+        type: integer
+      visibility:
+        type: integer
+      ward:
+        $ref: '#/definitions/bdspropb.Region'
+      wardId:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  bdspropb.Project:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.ProjectBuild:
+    properties:
+      apartments:
+        items:
+          $ref: '#/definitions/bdspropb.Apartment'
+        type: array
+      attributes:
+        items:
+          $ref: '#/definitions/bdspropb.ApartmentAttribute'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      numApartment:
+        type: integer
+      numFloor:
+        type: integer
+      projectId:
+        type: integer
+    type: object
+  bdspropb.PropertyType:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.Region:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  bdspropb.Transaction:
+    properties:
+      amount:
+        type: number
+      approvalDate:
+        type: string
+      approvalStatus:
+        type: string
+      approvedBy:
+        type: integer
+      categoryId:
+        type: integer
+      contactId:
+        type: integer
+      createdAt:
+        type: string
+      currency:
+        type: string
+      depositeAmount:
+        type: number
+      depositeNote:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      isDeleted:
+        type: boolean
+      organizationId:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      paymentMethodId:
+        type: integer
+      productId:
+        type: integer
+      relatedDealId:
+        type: integer
+      relatedTransactionId:
+        type: integer
+      status:
+        type: integer
+      transactionDate:
+        type: string
+      transactionName:
+        type: string
+      transactionStatus:
+        type: integer
+      transactionType:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  sharepb.FriendItem:
+    properties:
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      receiverId:
+        type: integer
+      status:
+        type: integer
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: API phần logic chính của CRM. Đã chuyển sang grpc
+  title: CRM API
+  version: "1.0"
+paths:
+  /block/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Bỏ chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần bỏ chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Bỏ chặn một người dùng
+      tags:
+      - Chặn
+    post:
+      consumes:
+      - application/json
+      description: Chặn một người dùng với profileId cụ thể
+      parameters:
+      - description: ID người dùng cần chặn
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Chặn một người dùng
+      tags:
+      - Chặn
+  /block/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách ID của những người mà người dùng hiện tại đã chặn
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người dùng bị chặn
+      tags:
+      - Chặn
+  /contact:
+    post:
+      consumes:
+      - application/json
+      description: Tạo một liên hệ mới với thông tin được cung cấp
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "409":
+          description: Liên hệ đã tồn tại
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Tạo liên hệ mới
+      tags:
+      - Liên hệ
+  /contact/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một liên hệ khỏi hệ thống
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa liên hệ
+      tags:
+      - Liên hệ
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin liên hệ hiện tại
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.ContactSaveDTO'
+      - description: ID của lời mời kết bạn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật thông tin liên hệ
+      tags:
+      - Liên hệ
+  /contact/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thông tin liên hệ
+      tags:
+      - Liên hệ
+  /contact/list/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Tên liên hệ
+        in: query
+        name: text
+        type: string
+      - description: 'Loại sở hữu (10: user, 20: nhóm, 30: organization) để 30 nhé'
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - collectionFormat: csv
+        description: 'Trạng thái bạn bè, 10: Đã gửi lời mời, 20: Bạn bè, 30: Chưa
+          kết bạn'
+        in: query
+        items:
+          type: integer
+        name: friendStatus
+        type: array
+      - description: Đang theo dõi
+        in: query
+        name: following
+        type: boolean
+      - collectionFormat: csv
+        description: 'Nhóm quyền: 10: quản trị,20: Nhân viên, 30: khách hàng'
+        in: query
+        items:
+          type: integer
+        name: roles
+        type: array
+      - description: Gán CRM
+        in: query
+        name: leaded
+        type: boolean
+      - description: Kết nối
+        in: query
+        name: connected
+        type: boolean
+      - description: Đã cài app
+        in: query
+        name: appInstalled
+        type: boolean
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách liên hệ
+      tags:
+      - Liên hệ
+  /contact/note/{contactId}:
+    put:
+      consumes:
+      - application/json
+      description: Ghi chú liên hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      - description: Ghi chú
+        in: body
+        name: note
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.NoteContactDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Ghi chú liên hệ
+      tags:
+      - Liên hệ
+  /contact/relation-ship/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy trạng thái quan hệ
+      parameters:
+      - description: ID của liên hệ
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/crmpb.RelationShipResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy trạng thái quan hệ
+      tags:
+      - Liên hệ
+  /contact/sync:
+    post:
+      consumes:
+      - application/json
+      description: Đồng bộ danh bạ
+      parameters:
+      - description: Danh bạ
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.ContactSyncRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Đồng bộ danh bạ
+      tags:
+      - Liên hệ
+  /follow/{profileId}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa một người khỏi danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã xóa người khỏi danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Xóa người khỏi danh sách theo dõi
+      tags:
+      - Theo dõi
+    post:
+      consumes:
+      - application/json
+      description: Thêm một người vào danh sách theo dõi của người dùng
+      parameters:
+      - description: ID của người dùng
+        in: path
+        name: profileId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Đã thêm người vào danh sách theo dõi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng hoặc người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thêm người vào danh sách theo dõi
+      tags:
+      - Theo dõi
+  /follow/followers:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người theo dõi người dùng cụ thể
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người theo dõi của người dùng
+      tags:
+      - Theo dõi
+  /follow/following:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách những người mà người dùng đang theo dõi
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người dùng
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách người mà người dùng đang theo dõi
+      tags:
+      - Theo dõi
+  /friend-group:
+    post:
+      consumes:
+      - application/json
+      description: Tạo nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được tạo
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Tạo nhóm
+      tags:
+      - Nhóm bạn bè
+  /friend-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được xóa
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Xóa nhóm
+      tags:
+      - Nhóm bạn bè
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nhóm đã được cập nhật
+          schema:
+            $ref: '#/definitions/crmpb.FriendGroup'
+      summary: Cập nhật nhóm
+      tags:
+      - Nhóm bạn bè
+  /friend-group/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách nhóm
+      parameters:
+      - description: Thông tin nhóm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.FriendGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách nhóm
+          schema:
+            $ref: '#/definitions/crmpb.ListFriendGroupsResponse'
+      summary: Lấy danh sách nhóm
+      tags:
+      - Nhóm bạn bè
+  /friend/cancel/{receiverId}:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị hủy
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy lời mời kết bạn
+      tags:
+      - Bạn bè
+  /friend/group/{requestId}/{groupId}:
+    put:
+      consumes:
+      - application/json
+      description: Gán nhóm cho bạn bè
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      - description: ID của nhóm
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gán nhóm bạn bè
+      tags:
+      - Bạn bè
+  /friend/info:
+    get:
+      consumes:
+      - application/json
+      description: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Số lượng theo dõi và bạn bè
+          schema:
+            $ref: '#/definitions/data.FollowInfoRes'
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Thông tin số người theo dõi, đang theo dõi và số bạn bè
+      tags:
+      - Bạn bè
+  /friend/list:
+    get:
+      consumes:
+      - application/json
+      description: 'Lấy danh sách tất cả bạn bè của người dùng. trong đó truyền: organizationId
+        nếu muốn xem bạn bè có thuộc tổ chức không, groupId nếu muốn xem bạn bè có
+        thuộc nhóm không, dealId nếu muốn xem bạn bè có thuộc thương vụ không'
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè
+      tags:
+      - Bạn bè
+  /friend/reject/{requestId}:
+    delete:
+      consumes:
+      - application/json
+      description: Hủy lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã bị từ chối
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Hủy kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{receiverId}:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời kết bạn đến người dùng khác
+      parameters:
+      - description: ID của người nhận lời mời
+        in: path
+        name: receiverId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được gửi
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy người nhận
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/{requestId}/accept:
+    put:
+      consumes:
+      - application/json
+      description: Đồng ý lời mời kết bạn đang chờ
+      parameters:
+      - description: ID của lời mời kết bạn
+        in: path
+        name: requestId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lời mời đã được chấp nhận
+          schema:
+            type: string
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy lời mời
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Đồng ý kết bạn
+      tags:
+      - Bạn bè
+  /friend/request/received:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã nhận
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã nhận
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã nhận
+      tags:
+      - Bạn bè
+  /friend/request/sent:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách các lời mời kết bạn mà người dùng đã gửi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách lời mời đã gửi
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách các lời mời kết bạn đã gửi
+      tags:
+      - Bạn bè
+  /friend/with-group:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc nhóm không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc nhóm không
+      tags:
+      - Bạn bè
+  /friend/with-member:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc thương vụ không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc thương vụ không
+      tags:
+      - Bạn bè
+  /friend/with-organization:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả bạn bè của người dùng đi kèm thông tin bạn
+        bè có thuộc tổ chức không
+      parameters:
+      - in: query
+        name: dealId
+        type: integer
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: organizationId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách bạn bè
+          schema:
+            items:
+              $ref: '#/definitions/data.FriendDTO'
+            type: array
+        "400":
+          description: Yêu cầu không hợp lệ
+          schema:
+            type: string
+        "404":
+          description: Không tìm thấy
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách bạn bè đi kèm thông tin bạn bè có thuộc tổ chức không
+      tags:
+      - Bạn bè
+  /invitation/list:
+    get:
+      consumes:
+      - application/json
+      description: Danh sách lời mời
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Danh sách lời mời
+      tags:
+      - Lời mời
+  /invitation/send:
+    post:
+      consumes:
+      - application/json
+      description: Gửi lời mời
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.SendInvitationRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gửi lời mời
+      tags:
+      - Lời mời
+  /lead:
+    post:
+      consumes:
+      - application/json
+      description: Tạo khách hàng
+      parameters:
+      - description: Khách hàng
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadSaveRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo khách hàng
+      tags:
+      - Khách hàng
+  /lead/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa khách hàng
+      tags:
+      - Khách hàng
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadSaveRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật khách hàng
+      tags:
+      - Khách hàng
+  /lead/assign-crm:
+    post:
+      consumes:
+      - application/json
+      description: Gán liên hệ vào CRM
+      parameters:
+      - description: Gán khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadAssignCrmRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán liên hệ vào CRM
+      tags:
+      - Khách hàng
+  /lead/assign-person:
+    post:
+      consumes:
+      - application/json
+      description: Gán liên hệ cho nhân viên phụ trách
+      parameters:
+      - description: Gán khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadAssignPersonRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Gán liên hệ cho nhân viên phụ trách
+      tags:
+      - Khách hàng
+  /lead/by-contact/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy khách hàng theo liên hệ
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy khách hàng theo liên hệ
+      tags:
+      - Khách hàng
+  /lead/care-expired:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thời gian hết hạn bảo trì
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy thời gian hết hạn bảo trì
+      tags:
+      - Khách hàng
+  /lead/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Chi tiết khách hàng
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/crmpb.LeadDetailDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/_routes.Except'
+      security:
+      - BearerAuth: []
+      summary: Chi tiết khách hàng
+      tags:
+      - Khách hàng
+  /lead/manage/{pipelineId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách khách hàng hiển thị trên dashboard
+      parameters:
+      - in: query
+        name: lastUpdatedAt
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pipelineId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của pipeline
+        in: path
+        name: pipelineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách khách hàng hiển thị trên dashboard
+      tags:
+      - Khách hàng
+  /lead/note:
+    post:
+      consumes:
+      - application/json
+      description: Ghi chú khách hàng
+      parameters:
+      - description: Ghi chú khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadNoteRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Ghi chú khách hàng
+      tags:
+      - Khách hàng
+  /lead/stage:
+    put:
+      consumes:
+      - application/json
+      description: Chuyển trạng thái khách hàng
+      parameters:
+      - description: Chuyển trạng thái khách hàng
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.LeadStageRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chuyển trạng thái khách hàng
+      tags:
+      - Khách hàng
+  /lead/total:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách
+      parameters:
+      - description: Thời gian cập nhật gần nhất. Lưu lại thời điểm gọi api và các
+          lần sau gọi api này thì truyền thời gian gấn nhất đó vào để chỉ lấy các
+          bản ghi có thay đổi thôi đỡ phải gọi lại quá nhiều
+        in: query
+        name: lastUpdatedAt
+        type: string
+      - collectionFormat: csv
+        description: Danh sách ID của nhân viên phụ trách
+        in: query
+        items:
+          type: integer
+        name: chargePersonIds
+        type: array
+      - description: Loại nhân viên phụ trách
+        in: query
+        name: chargeType
+        type: integer
+      - description: Số điện thoại
+        in: query
+        name: phone
+        type: string
+      - description: Tên khách hàng
+        in: query
+        name: fullName
+        type: string
+      - collectionFormat: csv
+        description: Danh sách ID của bước
+        in: query
+        items:
+          type: integer
+        name: steps
+        type: array
+      - collectionFormat: csv
+        description: Danh sách ID của nguồn
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
+      - collectionFormat: csv
+        description: Danh sách ID của giai đoạn
+        in: query
+        items:
+          type: integer
+        name: stageIds
+        type: array
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Số lượng
+        in: query
+        name: size
+        type: integer
+      - collectionFormat: csv
+        description: Danh sách ID của danh mục sản phẩm quan tâm
+        in: query
+        items:
+          type: integer
+        name: productCategoryIds
+        type: array
+      - collectionFormat: csv
+        description: Danh sách enum nguồn
+        in: query
+        items:
+          type: integer
+        name: sources
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách khách hàng
+      tags:
+      - Khách hàng
+  /pipeline:
+    post:
+      consumes:
+      - application/json
+      description: Tạo quy trình
+      parameters:
+      - description: Pipeline entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.PipelineDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quy trình
+      tags:
+      - Quy trình
+  /pipeline/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quy trình
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quy trình
+      tags:
+      - Quy trình
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quy trình
+      parameters:
+      - description: Pipeline entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.PipelineSaveRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quy trình
+      tags:
+      - Quy trình
+  /pipeline/default:
+    get:
+      consumes:
+      - application/json
+      description: Lấy quy trình mặc định
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy quy trình mặc định
+      tags:
+      - Quy trình
+  /pipeline/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy chi tiết quy trình
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết quy trình
+      tags:
+      - Quy trình
+  /pipeline/list:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy trình
+      parameters:
+      - in: query
+        name: active
+        type: boolean
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: color
+        type: array
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pipelineName
+        type: string
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - 10
+          - 20
+          - 30
+          - 40
+          - 50
+          type: integer
+        name: steps
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy trình
+      tags:
+      - Quy trình
+  /pipeline/with-stages:
+    get:
+      consumes:
+      - application/json
+      description: Lấy quy trình và stage
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy quy trình và stage
+      tags:
+      - Quy trình
+  /rule:
+    post:
+      consumes:
+      - application/json
+      description: Tạo quy tắc
+      parameters:
+      - description: Quy tắc
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.RuleDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo quy tắc
+      tags:
+      - Quy tắc
+  /rule/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa quy tắc
+      tags:
+      - Quy tắc
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Quy tắc
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.RuleDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật quy tắc
+      tags:
+      - Quy tắc
+  /rule/{id}/active:
+    put:
+      consumes:
+      - application/json
+      description: Active quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Active
+        in: body
+        name: active
+        schema:
+          $ref: '#/definitions/crmpb.ActiveRuleRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Active quy tắc
+      tags:
+      - Quy tắc
+  /rule/{ownerId}/{ownerType}:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy tắc
+      parameters:
+      - description: Owner ID
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - description: Owner Type
+        enum:
+        - 10
+        - 20
+        - 30
+        in: path
+        name: ownerType
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: ruleName
+        type: string
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy tắc
+      tags:
+      - Quy tắc
+  /rule/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Chi tiết quy tắc
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chi tiết quy tắc
+      tags:
+      - Quy tắc
+  /rule/list:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm quy tắc
+      parameters:
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: ownerId
+        type: integer
+      - in: query
+        name: ownerType
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm quy tắc
+      tags:
+      - Quy tắc
+  /sharing/list/{contactId}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách chia sẻ
+      parameters:
+      - in: query
+        name: contactId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID của liên hệ
+        in: path
+        name: contactId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách chia sẻ
+      tags:
+      - Chia sẻ liên hệ
+  /sharing/share:
+    post:
+      consumes:
+      - application/json
+      description: Chia sẻ liên hệ
+      parameters:
+      - description: Thông tin chia sẻ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/crmpb.SharingRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Chia sẻ liên hệ
+      tags:
+      - Chia sẻ liên hệ
+  /stage:
+    post:
+      consumes:
+      - application/json
+      description: Tạo giai đoạn
+      parameters:
+      - description: Stage entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.StageEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo giai đoạn
+      tags:
+      - Giai đoạn
+  /stage/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa giai đoạn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa giai đoạn
+      tags:
+      - Giai đoạn
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật giai đoạn
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stage entity
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/domain.StageEntity'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật giai đoạn
+      tags:
+      - Giai đoạn
+  /stage/list/{pipelineId}:
+    get:
+      consumes:
+      - application/json
+      description: Tìm kiếm giai đoạn theo pipeline
+      parameters:
+      - description: Pipeline ID
+        in: path
+        name: pipelineId
+        required: true
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: stageName
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tìm kiếm giai đoạn theo pipeline
+      tags:
+      - Giai đoạn
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

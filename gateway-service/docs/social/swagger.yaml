@@ -1,0 +1,1146 @@
+basePath: /v2/social
+definitions:
+  bdspropb.Post:
+    properties:
+      comment:
+        type: integer
+      content:
+        type: string
+      districtName:
+        type: string
+      expiredAt:
+        type: string
+      hidden:
+        type: boolean
+      id:
+        type: integer
+      like:
+        type: integer
+      mediaList:
+        items:
+          $ref: '#/definitions/bdspropb.PostMedia'
+        type: array
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      numDate:
+        type: integer
+      numView:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        description: '1: user, 2: admin'
+        type: integer
+      packageVisible:
+        description: '1: thường, 2: VIP'
+        type: integer
+      postPrice:
+        type: number
+      priceType:
+        description: '1: chính thức, 2: thỏa thuận'
+        type: integer
+      productId:
+        type: integer
+      provinceName:
+        type: string
+      status:
+        type: integer
+      title:
+        type: string
+      transactionType:
+        type: integer
+      type:
+        description: '1: normal, 2: feed, 3: share'
+        type: string
+      visibility:
+        type: integer
+      wardName:
+        type: string
+    type: object
+  bdspropb.PostMedia:
+    properties:
+      id:
+        type: integer
+      isMain:
+        type: boolean
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  pb_social.CommentListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.CommentResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  pb_social.CommentRequest:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      newsFeedId:
+        type: integer
+      page:
+        type: integer
+      parentId:
+        type: integer
+      size:
+        type: integer
+    type: object
+  pb_social.CommentResponse:
+    properties:
+      author:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      content:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      dislike:
+        type: boolean
+      id:
+        type: integer
+      likedAt:
+        type: string
+      mediaType:
+        type: string
+      mediaUrl:
+        type: string
+      newsFeedId:
+        type: integer
+      numDisLike:
+        type: integer
+      numLike:
+        type: integer
+      numReply:
+        type: integer
+      parentId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  pb_social.LikeCommentRequest:
+    properties:
+      commentId:
+        type: integer
+      dislike:
+        type: boolean
+    type: object
+  pb_social.LikeResponse:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  pb_social.ListLikeResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.LikeResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  pb_social.ListNewsFeed:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.NewsFeed'
+        type: array
+      total:
+        type: integer
+    type: object
+  pb_social.NewsFeed:
+    properties:
+      author:
+        $ref: '#/definitions/sharepb.ProfileItem'
+      content:
+        type: string
+      createdBy:
+        type: integer
+      disLike:
+        type: boolean
+      friendTagIds:
+        items:
+          type: integer
+        type: array
+      friendTags:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      groupId:
+        type: integer
+      id:
+        type: integer
+      image:
+        type: string
+      isReel:
+        type: boolean
+      likedAt:
+        type: string
+      link:
+        type: string
+      mediaFeeds:
+        items:
+          $ref: '#/definitions/pb_social.NewsFeedMedia'
+        type: array
+      numComment:
+        type: integer
+      numLike:
+        type: integer
+      numShare:
+        type: integer
+      numView:
+        type: integer
+      ownerOf:
+        $ref: '#/definitions/pb_social.OwnerOf'
+      post:
+        $ref: '#/definitions/bdspropb.Post'
+      postId:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        type: string
+      visibility:
+        type: integer
+    type: object
+  pb_social.NewsFeedMedia:
+    properties:
+      id:
+        type: integer
+      orderNumber:
+        type: integer
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  pb_social.OwnerOf:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - OwnerOf_unknown
+    - OwnerOf_user
+    - OwnerOf_group
+    - OwnerOf_organization
+  pb_social.ReportMessage:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      reasonId:
+        type: integer
+      reasonName:
+        type: string
+      status:
+        type: integer
+      statusName:
+        type: string
+      targetId:
+        type: integer
+      targetName:
+        type: string
+      targetType:
+        type: integer
+    type: object
+  pb_social.ReportMessageResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.ReportMessage'
+        type: array
+      total:
+        type: integer
+    type: object
+  pb_social.ReportReason:
+    properties:
+      active:
+        type: boolean
+      id:
+        type: integer
+      reasonName:
+        type: string
+    type: object
+  pb_social.ReportReasonResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/pb_social.ReportReason'
+        type: array
+      total:
+        type: integer
+    type: object
+  pb_social.ReportRequest:
+    properties:
+      content:
+        type: string
+      id:
+        type: integer
+      reasonId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+    type: object
+  pb_social.ReportResponse:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      reasonId:
+        type: integer
+      targetId:
+        type: integer
+      targetType:
+        type: integer
+    type: object
+  pb_social.ReportStatusRequest:
+    properties:
+      id:
+        type: integer
+      status:
+        type: integer
+    type: object
+  pb_social.ShareRequest:
+    properties:
+      content:
+        type: string
+      newsFeedId:
+        type: integer
+      shareType:
+        type: integer
+      targetId:
+        type: integer
+    type: object
+  pb_social.ShareResponse:
+    properties:
+      id:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  pb_social.VisibilityRequest:
+    properties:
+      newsFeedId:
+        type: integer
+      visibility:
+        type: integer
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Social Service
+  title: Social Service
+  version: "1.0"
+paths:
+  /comment:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentRequest
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.CommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+  /comment/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: mediaType
+        type: string
+      - in: query
+        name: mediaUrl
+        type: string
+      - in: query
+        name: newsFeedId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentRequest
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.CommentRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.CommentResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+  /comment/list/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - in: query
+        name: content
+        type: string
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: mediaType
+        type: string
+      - in: query
+        name: mediaUrl
+        type: string
+      - in: query
+        name: newsFeedId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: parentId
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.CommentListResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Comment
+  /like/comment/{commentId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      - description: LikeCommentRequest
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.LikeCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /like/comment/list/{commentId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: CommentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListLikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /like/news-feed/{newsFeedId}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.LikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /like/news-feed/list/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListLikeResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Like
+  /news-feed:
+    post:
+      consumes:
+      - application/json
+      description: Create a new news feed
+      parameters:
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Create a new news feed
+      tags:
+      - News Feed
+  /news-feed/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa news feed
+      tags:
+      - News Feed
+    put:
+      consumes:
+      - application/json
+      description: Update news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Update news feed
+      tags:
+      - News Feed
+  /news-feed/{newsFeedId}/share:
+    post:
+      consumes:
+      - application/json
+      description: Share news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - description: ShareRequest
+        in: body
+        name: shareRequest
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.ShareRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ShareResponse'
+      security:
+      - BearerAuth: []
+      summary: Share news feed
+      tags:
+      - News Feed
+  /news-feed/{newsFeedId}/visibility:
+    put:
+      consumes:
+      - application/json
+      description: Update visibility of news feed
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      - description: VisibilityRequest
+        in: body
+        name: visibility
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.VisibilityRequest'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Update visibility of news feed
+      tags:
+      - News Feed
+  /news-feed/{ownerOf}/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by owner
+      parameters:
+      - description: OwnerOf
+        in: path
+        name: ownerOf
+        required: true
+        type: string
+      - description: OwnerId
+        in: path
+        name: ownerId
+        required: true
+        type: integer
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Get news feed by owner
+      tags:
+      - News Feed
+  /news-feed/detail/{newsFeedId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by id
+      parameters:
+      - description: NewsFeedId
+        in: path
+        name: newsFeedId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết news feed
+      tags:
+      - News Feed
+  /news-feed/global:
+    get:
+      consumes:
+      - application/json
+      description: Get global news feed
+      parameters:
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách news feed
+      tags:
+      - News Feed
+  /news-feed/global/{ownerOf}/{ownerId}:
+    get:
+      consumes:
+      - application/json
+      description: Get global news feed
+      parameters:
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      summary: Lấy danh sách news feed
+      tags:
+      - News Feed
+  /news-feed/global/reel:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      summary: Get news feed by id
+      tags:
+      - News Feed
+  /news-feed/group:
+    post:
+      consumes:
+      - application/json
+      description: Create a new group news feed
+      parameters:
+      - description: NewsFeed
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.NewsFeed'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.NewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Create a new news feed
+      tags:
+      - News Feed
+  /news-feed/user/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Get news feed by userID
+      parameters:
+      - description: UserId
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - in: query
+        name: isPost
+        type: boolean
+      - in: query
+        name: isReel
+        type: boolean
+      - in: query
+        name: ownerId
+        type: integer
+      - enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        in: query
+        name: ownerOf
+        type: integer
+        x-enum-varnames:
+        - OwnerOf_unknown
+        - OwnerOf_user
+        - OwnerOf_group
+        - OwnerOf_organization
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ListNewsFeed'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách news feed theo userID
+      tags:
+      - News Feed
+  /report/me:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách báo cáo của tôi
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: message
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ReportMessageResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách báo cáo của tôi
+      tags:
+      - Report
+  /report/reasons:
+    get:
+      consumes:
+      - application/json
+      description: Danh sách lý do báo cáo
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ReportReasonResponse'
+      summary: Danh sách lý do báo cáo
+      tags:
+      - Report
+  /report/status/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái báo cáo
+      parameters:
+      - description: ReportStatusRequest
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.ReportStatusRequest'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái báo cáo
+      tags:
+      - Report
+  /report/submit:
+    post:
+      consumes:
+      - application/json
+      description: Gửi báo cáo
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/pb_social.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pb_social.ReportResponse'
+      security:
+      - BearerAuth: []
+      summary: Gửi báo cáo
+      tags:
+      - Report
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

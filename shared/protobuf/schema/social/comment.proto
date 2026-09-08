@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package social;
+
+option go_package = "pb/types/social;pb_social";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service CommentService {
+    rpc CreateComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/comment"
+            body: "*"
+        };
+    };
+    rpc UpdateComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            put: "/v2/social/comment/{id}"
+            body: "*"
+        };
+    };
+    rpc DeleteComment(CommentRequest) returns (CommentResponse) {
+        option (google.api.http) = {
+            delete: "/v2/social/comment/{id}"
+        };
+    };
+    rpc GetListComment(CommentRequest) returns (CommentListResponse) { 
+        option (google.api.http) = {
+            get: "/v2/social/comment/list/{newsFeedId}"
+        };
+    };
+}
+
+message CommentRequest {
+    uint64 id = 1;
+    string content = 2;
+    optional uint64 parentId = 3;
+    uint64 newsFeedId = 4;
+    uint64 page = 5;
+    uint64 size = 6;
+    string mediaUrl = 7;
+    string mediaType = 8;
+}
+
+message CommentResponse {
+    uint64 id = 1;
+    string content = 2;
+    optional uint64 parentId = 3;
+    uint64 newsFeedId = 4;
+    string updatedAt = 5;
+    uint32 numLike = 6;
+    uint32 numDisLike = 7;
+    uint32 numReply = 8;
+    optional uint64 createdBy = 9;
+    optional sharepb.ProfileItem author = 10;
+    string mediaUrl = 11;
+    string mediaType = 12;
+    string likedAt = 13;
+    optional bool dislike = 14;
+    string createdAt = 15;
+}
+
+message CommentListResponse {
+    repeated CommentResponse data = 1;
+    int32 total = 2;
+}

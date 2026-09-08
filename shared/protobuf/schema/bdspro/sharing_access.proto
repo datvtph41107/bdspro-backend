@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service SharingAccessService {
+    rpc BulkSave(SharingAccessBulkRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            post: "/v2/bdspro/v2/sharing-access/bulk"
+            body: "*"
+        };
+    };
+    rpc SearchProduct(SharingAccessRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/sharing-access/product"
+        };
+    };
+    rpc SearchAsset(SharingAccessRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            get: "/v2/bdspro/v2/sharing-access/asset"
+        };
+    };
+
+    rpc SetCommission(SharingAccessByDomainRequest) returns (SharingAccessResponse) {
+        option (google.api.http) = {
+            put: "/v2/bdspro/v2/sharing-access/commission"
+            body: "*"
+        };
+    };
+    rpc ProductDelete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+        option (google.api.http) = {
+            delete: "/v2/bdspro/v2/sharing-access/product/{id}"
+        };
+    };
+}
+
+message SharingAccess {
+    uint64 id = 1;
+    uint64 domainId = 2;
+    uint32 domain = 3;
+    uint64 fromId = 4;
+    uint32 fromType = 5;
+    uint64 toId = 6;
+    uint32 toType = 7;
+    string fields = 8;
+    double commission = 9;
+    string permissions = 10;
+    string toName = 11;
+    string avatar = 12;
+    string sharedAt = 13;
+}
+
+message BatchRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    repeated SharingAccess shares = 4;
+}
+
+message SharingAccessRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    uint32 toType = 4;
+    uint32 page = 5;
+    uint32 size = 6;
+}
+
+message SharingAccessResponse {
+    repeated SharingAccess data = 1;
+    uint32 total = 2;
+}
+
+message SharingAccessBulkRequest {
+    repeated SharingAccess datas = 1;
+    repeated SharingAccess deletes = 2;
+    uint64 domainId = 3;
+    double commission = 4;
+    uint32 fromType = 5;
+    uint32 domainType = 6;
+}
+
+message SharingAccessByDomainRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    uint32 toType = 4;
+    uint64 toId = 5;
+    double commission = 6;
+}
+
+message ToOwner {
+    uint64 toId = 1;
+    uint32 toType = 2;
+}
+
+message SharingAccessDeletedRequest {
+    uint64 domainId = 1;
+    uint32 domain = 2;
+    uint32 fromType = 3;
+    repeated ToOwner owners = 4;
+}

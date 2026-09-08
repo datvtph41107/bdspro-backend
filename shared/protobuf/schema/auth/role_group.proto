@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package authpb;
+option go_package = "pb/types/auth;authpb";
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "auth/role.proto";
+
+// RoleGroup message
+message RoleGroup {
+  uint64 id = 1;
+  string groupName = 2;
+  string description = 3;
+  uint32 key = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+// RoleGroup request/response messages
+message RoleGroupRequest {
+  uint64 id = 1;
+  string groupName = 2;
+  string description = 3;
+  uint32 key = 4;
+}
+
+message RoleGroupListResponse {
+  repeated RoleGroup data = 1;
+  uint32 totalElements = 2;
+}
+
+// Update group permissions request
+message UpdateGroupPermissionsRequest {
+  uint64 groupId = 1;
+  repeated uint64 permissionIds = 2;
+}
+
+// Get permissions by group key request
+message GetPermissionsByGroupKeyRequest {
+  uint32 groupKey = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+// RoleGroup Service
+service RoleGroupService {
+  rpc GetListRoleGroup(sharepb.IdRequest) returns (RoleGroupListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role-group/list"
+    };
+  };
+  rpc CreateRoleGroup(RoleGroupRequest) returns (RoleGroup) {
+    option (google.api.http) = {
+      post: "/v2/auth/role-group"
+      body: "*"
+    };
+  };
+  rpc UpdateRoleGroup(RoleGroupRequest) returns (RoleGroup) {
+    option (google.api.http) = {
+      put: "/v2/auth/role-group/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteRoleGroup(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/auth/role-group/{id}"
+    };
+  };
+  rpc GetRoleGroupById(sharepb.IdRequest) returns (RoleGroup) {
+    option (google.api.http) = {
+      get: "/v2/auth/role-group/detail/{id}"
+    };
+  };
+  rpc UpdateGroupPermissions(UpdateGroupPermissionsRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      put: "/v2/auth/role-group/permissions"
+      body: "*"
+    };
+  };
+  rpc GetPermissionsByGroupKey(GetPermissionsByGroupKeyRequest) returns (PermissionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/auth/role-group/{groupKey}/permissions"
+    };
+  };
+}

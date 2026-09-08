@@ -1,0 +1,12 @@
+DROP INDEX IF EXISTS idx_discovery_province_name_trgm;
+DROP INDEX IF EXISTS idx_discovery_ward_name_trgm;
+DROP INDEX IF EXISTS idx_discovery_pois_address_trgm;
+DROP INDEX IF EXISTS idx_discovery_pois_name_trgm;
+DROP INDEX IF EXISTS idx_discovery_regions_name_trgm;
+DROP INDEX IF EXISTS idx_discovery_regions_display_name_trgm;
+DROP INDEX IF EXISTS idx_discovery_regions_geometry_active;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_adr_trgm;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_map_land;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_property_code_lower;
+DROP INDEX IF EXISTS idx_discovery_parcel_info_parcel_id;
+DROP INDEX IF EXISTS idx_discovery_parcels_geometry_active;

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+
+message IncomeDocumentDTO {
+  uint64 id = 1;
+  bool archived = 2;
+}
+
+message IncomeDocumentListDTO {
+  repeated IncomeDocumentDTO data = 1;
+  uint32 totalElements = 2;
+}
+
+service IncomeDocumentService {
+    rpc Get (IncomeDocumentDTO) returns (IncomeDocumentListDTO);
+    rpc Detail (IncomeDocumentDTO) returns (IncomeDocumentDTO);
+    rpc Create (IncomeDocumentDTO) returns (IncomeDocumentDTO);
+    rpc Update (IncomeDocumentDTO) returns (IncomeDocumentDTO);
+    rpc Delete (IncomeDocumentDTO) returns (IncomeDocumentDTO);
+}

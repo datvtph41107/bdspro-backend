@@ -1,0 +1,159 @@
+# internal/modules/resolver/layer_resolver/config/config.yaml
+# Cấu hình mặc định cho layer resolver
+
+# =====================================================
+# TRỌNG SỐ TÍNH ĐIỂM (tổng = 1.0)
+# =====================================================
+weights:
+    legal_weight: 0.60 # Trọng số pháp lý
+    priority_weight: 0.30 # Trọng số priority từ group
+    area_weight: 0.10 # Trọng số diện tích
+
+# =====================================================
+# THANG ĐIỂM PHÁP LÝ
+# =====================================================
+legal_scores:
+    1000: 100 # effective
+    900: 70 # approved
+    800: 30 # draft
+    700: 15 # referenced
+    400: 10 # expired
+    300: 10 # replaced
+
+# =====================================================
+# MA TRẬN XUNG ĐỘT GIỮA CÁC NHÓM
+# =====================================================
+conflict_matrix:
+    residential:
+        transport: true
+        public: true
+        green: true
+        water: true
+        cemetery: true
+        commercial: false
+    public:
+        green: false
+    commercial:
+        residential: false
+
+# =====================================================
+# PRIORITY MẶC ĐỊNH THEO NHÓM
+# =====================================================
+group_priority:
+    residential: 100
+    commercial: 85
+    public: 80
+    industrial: 70
+    green: 30
+    cemetery: 20
+    transport: 10
+    water: 10
+
+# =====================================================
+# NGƯỠNG ĐÁNH GIÁ
+# =====================================================
+thresholds:
+    min_overlap_percent: 5.0
+    conflict_warning_threshold: 30.0
+    high_risk_threshold: 50.0
+    critical_risk_threshold: 80.0
+
+# =====================================================
+# TRỌNG SỐ RỦI RO THEO LOẠI ĐẤT
+# =====================================================
+risk_weights:
+    DGT:
+        multiplier: 2.0
+        label: "không được phép xây dựng"
+    DHT:
+        multiplier: 2.0
+        label: "không được phép xây dựng"
+    DCX:
+        multiplier: 1.0
+        label: "hạn chế xây dựng"
+    DSH:
+        multiplier: 1.0
+        label: "hạn chế xây dựng"
+    ODT:
+        multiplier: 0.35
+        label: "phù hợp mục đích ở"
+    ONT:
+        multiplier: 0.35
+        label: "phù hợp mục đích ở"
+
+# =====================================================
+# NGƯỠNG PHÂN LOẠI RỦI RO
+# =====================================================
+risk_thresholds:
+    - min_score: 85
+      level: "CRITICAL"
+      can_build: false
+      recommendation: "Rủi ro rất cao, không nên giao dịch trước khi xác minh quy hoạch."
+    - min_score: 60
+      level: "HIGH"
+      can_build: false
+      recommendation: "Rủi ro cao, cần kiểm tra kỹ quy hoạch trước khi quyết định."
+    - min_score: 30
+      level: "MEDIUM"
+      can_build: true
+      recommendation: "Có rủi ro quy hoạch, nên kiểm tra thêm hồ sơ pháp lý."
+    - min_score: 0
+      level: "LOW"
+      can_build: true
+      recommendation: "Rủi ro thấp, có thể tiếp tục xem xét."
+
+# =====================================================
+# NHÃN XUNG ĐỘT
+# =====================================================
+conflict_labels:
+    type: "land_use_mismatch"
+    severity: "high"
+    recommendation: "Cần đối chiếu hồ sơ pháp lý gốc"
+    action_required: "verify"
+
+# =====================================================
+# CẢNH BÁO
+# =====================================================
+warning_messages:
+    overlap_exceeded: "Phát hiện chồng lấn quy hoạch vượt quá diện tích thửa đất"
+    multi_layer: "Thửa đất đang chịu ảnh hưởng từ nhiều layer quy hoạch"
+    conflict: "Phát hiện xung đột giữa các quy hoạch"
+
+# =====================================================
+# THÔNG BÁO ĐÁNH GIÁ
+# =====================================================
+assess_messages:
+    no_planning_impact: "Không phát hiện ảnh hưởng quy hoạch"
+    no_significant_impact: "Không phát hiện ảnh hưởng quy hoạch đáng kể"
+
+# =====================================================
+# TRẠNG THÁI XÂY DỰNG
+# =====================================================
+status_labels:
+    prohibited: "prohibited"
+    conditional: "conditional"
+    allowed: "allowed"
+    conflict_suffix: " (Có mâu thuẫn với quy hoạch khác)"
+
+# =====================================================
+# TÊN LOẠI ĐẤT
+# =====================================================
+land_type_names:
+    1: "Đất ở đô thị"
+    2: "Đất ở nông thôn"
+    3: "Đất nông nghiệp"
+    4: "Đất lâm nghiệp"
+    5: "Đất thương mại"
+    6: "Đất dịch vụ"
+    7: "Đất công nghiệp"
+    8: "Đất cây xanh"
+    9: "Đất giao thông"
+    10: "Đất hạ tầng"
+    11: "Đất công cộng"
+    12: "Đất hỗn hợp"
+
+# =====================================================
+# NHÃN TỔNG KẾT
+# =====================================================
+summary_labels:
+    conflict_suffix: " - Có xung đột quy hoạch"

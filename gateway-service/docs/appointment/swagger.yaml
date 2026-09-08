@@ -1,0 +1,486 @@
+definitions:
+  appointment.Appointment:
+    properties:
+      deal:
+        $ref: '#/definitions/organizationpb.GroupDeal'
+      dealId:
+        type: integer
+      dealTransactions:
+        items:
+          $ref: '#/definitions/organizationpb.DealTransactionResponse'
+        type: array
+      description:
+        type: string
+      endTime:
+        type: string
+      id:
+        type: integer
+      mode:
+        type: integer
+      optionExtend:
+        type: integer
+      participantIds:
+        items:
+          type: integer
+        type: array
+      participants:
+        items:
+          $ref: '#/definitions/organizationpb.DealInvitationMember'
+        type: array
+      place:
+        type: string
+      productIds:
+        items:
+          type: integer
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/bdspropb.ProductAttachment'
+        type: array
+      reminderSchedule:
+        type: integer
+      startTime:
+        type: string
+      title:
+        type: string
+      transactionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  appointment.CreateAppointmentRequest:
+    properties:
+      dealId:
+        type: integer
+      description:
+        type: string
+      endTime:
+        type: string
+      mode:
+        type: integer
+      optionExtend:
+        type: integer
+      participantIds:
+        items:
+          type: integer
+        type: array
+      place:
+        type: string
+      productIds:
+        items:
+          type: integer
+        type: array
+      reminderSchedule:
+        type: integer
+      startTime:
+        type: string
+      title:
+        type: string
+      transactionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  appointment.DeleteAppointmentResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  appointment.ListAppointmentsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/appointment.Appointment'
+        type: array
+      total:
+        type: integer
+    type: object
+  appointment.UpdateAppointmentRequest:
+    properties:
+      dealId:
+        type: integer
+      description:
+        type: string
+      endTime:
+        type: string
+      id:
+        type: integer
+      mode:
+        type: integer
+      optionExtend:
+        type: integer
+      participantIds:
+        items:
+          type: integer
+        type: array
+      place:
+        type: string
+      productIds:
+        items:
+          type: integer
+        type: array
+      reminderSchedule:
+        type: integer
+      startTime:
+        type: string
+      title:
+        type: string
+      transactionIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  organizationpb.ApprovedStatus:
+    enum:
+    - 0
+    - 10
+    - 20
+    - 30
+    type: integer
+    x-enum-comments:
+      ApprovedStatus_APPROVED_STATUS_APPROVED: Đã xác nhận
+      ApprovedStatus_APPROVED_STATUS_PENDING: Chờ xác nhận
+      ApprovedStatus_APPROVED_STATUS_REJECTED: Từ chối
+    x-enum-varnames:
+    - ApprovedStatus_APPROVED_STATUS_UNKNOWN
+    - ApprovedStatus_APPROVED_STATUS_PENDING
+    - ApprovedStatus_APPROVED_STATUS_APPROVED
+    - ApprovedStatus_APPROVED_STATUS_REJECTED
+  organizationpb.BankAccountItem:
+    properties:
+      accountName:
+        type: string
+      accountNumber:
+        type: string
+      bankName:
+        type: string
+      name:
+        type: string
+    type: object
+  organizationpb.DealInvitationMember:
+    properties:
+      email:
+        type: string
+      joinedAt:
+        type: string
+      name:
+        type: string
+      roleId:
+        type: integer
+      status:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  organizationpb.DealTransactionResponse:
+    properties:
+      amount:
+        type: number
+      approvedAt:
+        type: string
+      approvedBy:
+        type: integer
+      category:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      dealId:
+        type: integer
+      description:
+        type: string
+      documentIds:
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      note:
+        type: string
+      rejectReason:
+        type: string
+      status:
+        $ref: '#/definitions/organizationpb.ApprovedStatus'
+      statusName:
+        type: string
+      transactionDate:
+        type: string
+      type:
+        $ref: '#/definitions/organizationpb.TransactionType'
+      typeName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  organizationpb.DocumentItem:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      type:
+        type: string
+    type: object
+  organizationpb.GroupDeal:
+    properties:
+      bankAccount:
+        $ref: '#/definitions/organizationpb.BankAccountItem'
+      cancelReason:
+        type: string
+      chargePersonId:
+        type: integer
+      chargePersonName:
+        type: string
+      createdAt:
+        type: string
+      customers:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      dealType:
+        type: integer
+      dealTypeName:
+        type: string
+      documents:
+        items:
+          $ref: '#/definitions/organizationpb.DocumentItem'
+        type: array
+      id:
+        type: integer
+      isManual:
+        description: Nhập tay (dành cho doanh thu)
+        type: boolean
+      isUnilateral:
+        description: Đơn phương (gỡ khỏi thương vụ)
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      name:
+        type: string
+      note:
+        type: string
+      numMember:
+        type: integer
+      ownerId:
+        type: integer
+      ownerType:
+        type: integer
+      partners:
+        items:
+          $ref: '#/definitions/sharepb.ProfileItem'
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/bdspropb.ProductAttachment'
+        type: array
+      profitAmount:
+        type: number
+      status:
+        type: integer
+      statusName:
+        type: string
+      targetProfit:
+        type: number
+      totalAmount:
+        type: number
+      updatedAt:
+        type: string
+    type: object
+  organizationpb.TransactionType:
+    enum:
+    - 0
+    - 10
+    - 20
+    type: integer
+    x-enum-comments:
+      TransactionType_TRANSACTION_TYPE_EXPENSE: Chi phí
+      TransactionType_TRANSACTION_TYPE_REVENUE: Doanh thu
+    x-enum-varnames:
+    - TransactionType_TRANSACTION_TYPE_UNKNOWN
+    - TransactionType_TRANSACTION_TYPE_EXPENSE
+    - TransactionType_TRANSACTION_TYPE_REVENUE
+  bdspropb.ProductAttachment:
+    properties:
+      area:
+        type: number
+      assetId:
+        type: integer
+      code:
+        type: string
+      depositeId:
+        type: integer
+      id:
+        type: integer
+      image:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      rentStatus:
+        type: integer
+      saleStatus:
+        type: integer
+      sourceType:
+        type: integer
+      sourceTypeName:
+        type: string
+    type: object
+  sharepb.ProfileItem:
+    properties:
+      avatar:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      isMember:
+        type: boolean
+      joinedAt:
+        type: string
+      phone:
+        type: string
+      tickVerified:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: API for appointment service
+  title: Appointment Service API
+  version: "1.0"
+paths:
+  /v2/appointment:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách lịch hẹn
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/appointment.ListAppointmentsResponse'
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách lịch hẹn
+      tags:
+      - Lịch hẹn
+    post:
+      consumes:
+      - application/json
+      description: Tạo lịch hẹn
+      parameters:
+      - description: Thông tin lịch hẹn
+        in: body
+        name: appointment
+        required: true
+        schema:
+          $ref: '#/definitions/appointment.CreateAppointmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/appointment.Appointment'
+      security:
+      - BearerAuth: []
+      summary: Tạo lịch hẹn
+      tags:
+      - Lịch hẹn
+  /v2/appointment/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa lịch hẹn
+      parameters:
+      - description: ID lịch hẹn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/appointment.DeleteAppointmentResponse'
+      security:
+      - BearerAuth: []
+      summary: Xóa lịch hẹn
+      tags:
+      - Lịch hẹn
+    get:
+      consumes:
+      - application/json
+      description: Lấy lịch hẹn
+      parameters:
+      - description: ID lịch hẹn
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/appointment.Appointment'
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch hẹn
+      tags:
+      - Lịch hẹn
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật lịch hẹn
+      parameters:
+      - description: ID lịch hẹn
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin lịch hẹn
+        in: body
+        name: appointment
+        required: true
+        schema:
+          $ref: '#/definitions/appointment.UpdateAppointmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Thành công
+          schema:
+            $ref: '#/definitions/appointment.Appointment'
+      security:
+      - BearerAuth: []
+      summary: Cập nhật lịch hẹn
+      tags:
+      - Lịch hẹn
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,255 @@
+syntax = "proto3";
+
+package tqd;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service SubscriptionService {
+  // Client - Parcel
+  rpc ListParcelSubscriptions(ListParcelSubscriptionsRequest) returns (ListParcelSubscriptionsResponse) {  // <-- THÊM MỚI
+    option (google.api.http) = {
+      get: "/v2/tqd/subscriptions/parcels"
+    };
+  }
+  rpc GetParcelSubscriptionStatus(GetParcelSubscriptionStatusRequest) returns (ParcelSubscriptionStatusResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/subscriptions/parcels/{parcelId}/status"
+    };
+  }
+  rpc CreateParcelSubscription(CreateParcelSubscriptionRequest) returns (SubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/subscriptions/parcels/{parcelId}"
+      body: "*"
+    };
+  }
+  rpc DeleteParcelSubscription(DeleteParcelSubscriptionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/subscriptions/parcels/{parcelId}"
+    };
+  }
+  
+  // Client - Region
+  rpc ListRegionSubscriptions(ListRegionSubscriptionsRequest) returns (ListRegionSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/subscriptions/regions"
+    };
+  }
+  rpc CreateRegionSubscription(CreateRegionSubscriptionRequest) returns (SubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/subscriptions/regions"
+      body: "*"
+    };
+  }
+  rpc DeleteRegionSubscription(DeleteRegionSubscriptionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/subscriptions/regions/{subscriptionId}"
+    };
+  }
+  
+  // Client - Notifications
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/notifications"
+    };
+  }
+  rpc MarkNotificationRead(MarkNotificationReadRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v2/tqd/notifications/{notificationId}/read"
+    };
+  }
+  rpc MarkAllNotificationsRead(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v2/tqd/notifications/mark-all-read"
+    };
+  }
+
+  // Admin
+  rpc AdminListSubscriptions(AdminListSubscriptionsRequest) returns (ListSubscriptionsAdminResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/subscriptions"
+    };
+  }
+  rpc AdminDeleteSubscription(AdminDeleteSubscriptionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/subscriptions/{subscriptionId}"
+    };
+  }
+}
+
+message ListParcelSubscriptionsRequest {
+  optional uint32 status = 1;   // 10=active, 20=paused, 30=deleted
+  uint32 page = 2;
+  uint32 size = 3;
+  int64 timestamp = 4;
+}
+
+message ListParcelSubscriptionsResponse {
+  repeated ParcelSubscriptionItem data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message ParcelSubscriptionItem {
+  uint64 subscriptionId = 1;
+  uint64 parcelId = 2;
+  optional string parcelName = 3;           // Tên thửa đất
+  optional bytes geometry = 4;             // GeoJSON geometry
+  optional double lat = 5;                  // Vĩ độ
+  optional double lng = 6;                  // Kinh độ
+  optional string address = 7;              // Địa chỉ (nếu có)
+  SubscriptionScopeMessage subscriptionScope = 8;
+  uint32 status = 9;
+  string createdAt = 10;
+}
+
+message GetParcelSubscriptionStatusRequest {
+  uint64 parcelId = 1;
+}
+
+message ParcelSubscriptionStatusResponse {
+  bool isFollowing = 1;
+  optional uint64 subscriptionId = 2;
+  optional SubscriptionScopeMessage subscriptionScope = 3;
+  optional string createdAt = 4;
+}
+
+message CreateParcelSubscriptionRequest {
+  uint64 parcelId = 1;
+  optional SubscriptionScopeMessage subscriptionScope = 2;
+  optional string triggerConfig = 3;
+}
+
+message DeleteParcelSubscriptionRequest {
+  uint64 parcelId = 1;
+}
+
+message CreateRegionSubscriptionRequest {
+  uint64 regionId = 1;
+  optional SubscriptionScopeMessage subscriptionScope = 2;
+  optional string triggerConfig = 3;
+}
+
+message DeleteRegionSubscriptionRequest {
+  uint64 subscriptionId = 1;
+}
+
+message ListRegionSubscriptionsRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  int64 timestamp = 3;
+}
+
+message ListRegionSubscriptionsResponse {
+  repeated RegionSubscriptionItem data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message RegionSubscriptionItem {
+  uint64 subscriptionId = 1;
+  string regionName = 2;
+  bytes geometry = 3;
+  SubscriptionScopeMessage subscriptionScope = 4;
+  uint32 status = 5;
+  string createdAt = 6;
+}
+
+message SubscriptionResponse {
+  uint64 id = 1;
+  string targetType = 2;
+  uint64 targetId = 3;
+  SubscriptionScopeMessage subscriptionScope = 4;
+  uint32 status = 5;
+  string createdAt = 6;
+}
+
+message ListNotificationsRequest {
+  optional uint32 type = 1;
+  optional bool read = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  int64 timestamp = 5;
+}
+
+message ListNotificationsResponse {
+  repeated NotificationItem data = 1;
+  int64 total = 2;
+  int64 unreadCount = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message NotificationItem {
+  uint64 id = 1;
+  string title = 2;
+  repeated string message = 3;
+  uint32 notificationType = 4;
+  uint32 severity = 5;
+  optional string actionLink = 6;
+  bool isRead = 7;
+  string createdAt = 8;
+}
+
+message MarkNotificationReadRequest {
+  uint64 notificationId = 1;
+}
+
+message AdminListSubscriptionsRequest {
+  optional uint64 userId = 1;
+  optional string targetType = 2;
+  optional uint32 status = 3;
+  optional uint32 page = 4;
+  optional uint32 size = 5;
+}
+
+message ListSubscriptionsAdminResponse {
+  repeated SubscriptionAdminItem data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message SubscriptionAdminItem {
+  uint64 id = 1;
+  uint64 userId = 2;
+  string targetType = 3;
+  uint64 targetId = 4;
+  SubscriptionScopeMessage subscriptionScope = 5;
+  uint32 status = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}
+
+message AdminDeleteSubscriptionRequest {
+  uint64 subscriptionId = 1;
+}
+
+message SubscriptionScopeMessage {
+  optional LayerScopeMessage layers = 1;
+  optional LegalScopeMessage legal = 2;
+  optional VersionScopeMessage version = 3;
+}
+
+message LayerScopeMessage {
+  bool watchAllLayers = 1;
+  repeated uint64 includedLayerIds = 2;
+  repeated uint64 excludedLayerIds = 3;
+  bool includeNewLayerAvailable = 4;
+}
+
+message LegalScopeMessage {
+  bool watchStatusChange = 1;
+  repeated string includedStatuses = 2;
+  bool priorityEffectiveChange = 3;
+}
+
+message VersionScopeMessage {
+  bool watchVersionChange = 1;
+  bool watchLineageChange = 2;
+  bool includeMinorUpdate = 3;
+}

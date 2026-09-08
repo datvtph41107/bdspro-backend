@@ -1,0 +1,740 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for appointment service",
+        "title": "Appointment Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/v2/appointment": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách lịch hẹn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch hẹn"
+                ],
+                "summary": "Lấy danh sách lịch hẹn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Trang",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Kích thước trang",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/appointment.ListAppointmentsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo lịch hẹn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch hẹn"
+                ],
+                "summary": "Tạo lịch hẹn",
+                "parameters": [
+                    {
+                        "description": "Thông tin lịch hẹn",
+                        "name": "appointment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/appointment.CreateAppointmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/appointment.Appointment"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/appointment/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy lịch hẹn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch hẹn"
+                ],
+                "summary": "Lấy lịch hẹn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID lịch hẹn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/appointment.Appointment"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cập nhật lịch hẹn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch hẹn"
+                ],
+                "summary": "Cập nhật lịch hẹn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID lịch hẹn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Thông tin lịch hẹn",
+                        "name": "appointment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/appointment.UpdateAppointmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/appointment.Appointment"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa lịch hẹn",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lịch hẹn"
+                ],
+                "summary": "Xóa lịch hẹn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID lịch hẹn",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "schema": {
+                            "$ref": "#/definitions/appointment.DeleteAppointmentResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "appointment.Appointment": {
+            "type": "object",
+            "properties": {
+                "deal": {
+                    "$ref": "#/definitions/organizationpb.GroupDeal"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "dealTransactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealTransactionResponse"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "optionExtend": {
+                    "type": "integer"
+                },
+                "participantIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DealInvitationMember"
+                    }
+                },
+                "place": {
+                    "type": "string"
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
+                    }
+                },
+                "reminderSchedule": {
+                    "type": "integer"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "appointment.CreateAppointmentRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "optionExtend": {
+                    "type": "integer"
+                },
+                "participantIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "place": {
+                    "type": "string"
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "reminderSchedule": {
+                    "type": "integer"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "appointment.DeleteAppointmentResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "appointment.ListAppointmentsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/appointment.Appointment"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "appointment.UpdateAppointmentRequest": {
+            "type": "object",
+            "properties": {
+                "dealId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "optionExtend": {
+                    "type": "integer"
+                },
+                "participantIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "place": {
+                    "type": "string"
+                },
+                "productIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "reminderSchedule": {
+                    "type": "integer"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "transactionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "organizationpb.ApprovedStatus": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20,
+                30
+            ],
+            "x-enum-comments": {
+                "ApprovedStatus_APPROVED_STATUS_APPROVED": "Đã xác nhận",
+                "ApprovedStatus_APPROVED_STATUS_PENDING": "Chờ xác nhận",
+                "ApprovedStatus_APPROVED_STATUS_REJECTED": "Từ chối"
+            },
+            "x-enum-varnames": [
+                "ApprovedStatus_APPROVED_STATUS_UNKNOWN",
+                "ApprovedStatus_APPROVED_STATUS_PENDING",
+                "ApprovedStatus_APPROVED_STATUS_APPROVED",
+                "ApprovedStatus_APPROVED_STATUS_REJECTED"
+            ]
+        },
+        "organizationpb.BankAccountItem": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string"
+                },
+                "accountNumber": {
+                    "type": "string"
+                },
+                "bankName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.DealInvitationMember": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "joinedAt": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "roleId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "organizationpb.DealTransactionResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "approvedAt": {
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "type": "integer"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "dealId": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "documentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "rejectReason": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/organizationpb.ApprovedStatus"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "transactionDate": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/organizationpb.TransactionType"
+                },
+                "typeName": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.DocumentItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.GroupDeal": {
+            "type": "object",
+            "properties": {
+                "bankAccount": {
+                    "$ref": "#/definitions/organizationpb.BankAccountItem"
+                },
+                "cancelReason": {
+                    "type": "string"
+                },
+                "chargePersonId": {
+                    "type": "integer"
+                },
+                "chargePersonName": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "customers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "dealType": {
+                    "type": "integer"
+                },
+                "dealTypeName": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/organizationpb.DocumentItem"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isManual": {
+                    "description": "Nhập tay (dành cho doanh thu)",
+                    "type": "boolean"
+                },
+                "isUnilateral": {
+                    "description": "Đơn phương (gỡ khỏi thương vụ)",
+                    "type": "boolean"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "numMember": {
+                    "type": "integer"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "ownerType": {
+                    "type": "integer"
+                },
+                "partners": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sharepb.ProfileItem"
+                    }
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/bdspropb.ProductAttachment"
+                    }
+                },
+                "profitAmount": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "statusName": {
+                    "type": "string"
+                },
+                "targetProfit": {
+                    "type": "number"
+                },
+                "totalAmount": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "organizationpb.TransactionType": {
+            "type": "integer",
+            "enum": [
+                0,
+                10,
+                20
+            ],
+            "x-enum-comments": {
+                "TransactionType_TRANSACTION_TYPE_EXPENSE": "Chi phí",
+                "TransactionType_TRANSACTION_TYPE_REVENUE": "Doanh thu"
+            },
+            "x-enum-varnames": [
+                "TransactionType_TRANSACTION_TYPE_UNKNOWN",
+                "TransactionType_TRANSACTION_TYPE_EXPENSE",
+                "TransactionType_TRANSACTION_TYPE_REVENUE"
+            ]
+        },
+        "bdspropb.ProductAttachment": {
+            "type": "object",
+            "properties": {
+                "area": {
+                    "type": "number"
+                },
+                "assetId": {
+                    "type": "integer"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "depositeId": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "rentStatus": {
+                    "type": "integer"
+                },
+                "saleStatus": {
+                    "type": "integer"
+                },
+                "sourceType": {
+                    "type": "integer"
+                },
+                "sourceTypeName": {
+                    "type": "string"
+                }
+            }
+        },
+        "sharepb.ProfileItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isMember": {
+                    "type": "boolean"
+                },
+                "joinedAt": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "tickVerified": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

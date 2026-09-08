@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package crmpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/crm;crmpb";
+
+service SharingAccessService {
+    rpc Share (SharingRequest) returns (SharingResponse) {
+        option (google.api.http) = {
+            post: "/v2/crm/sharing/share"
+            body: "*"
+        };
+    }
+    rpc List (SharingListRequest) returns (SharingListResponse) {
+        option (google.api.http) = {
+            get: "/v2/crm/sharing/list/{contactId}"
+        };
+    }
+}
+
+message SharingDTO {
+    uint64 toId = 1;
+    int32 ownerType = 2;
+    uint64 contactId = 3;
+    repeated int32 permissions = 4;
+    string note = 5;
+}
+
+message SharingBulkDTO {
+    int32 toId = 1;
+    int32 ownerType = 2;
+}
+
+message SharingRequest {
+    uint64 contactId = 1;
+    repeated SharingDTO receivers = 2;
+    repeated uint64 deletedIds = 3;
+    int32 ownerType = 4;
+    string note = 5;
+    repeated int32 permissions = 6;
+}
+
+message SharingResponse {
+    uint32 status = 1;
+    string message = 2;
+}
+
+message SharingListRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+    uint64 contactId = 3;
+}
+
+message SharingListResponse {
+    repeated SharingDTO data = 1;
+    int32 total = 2;
+}

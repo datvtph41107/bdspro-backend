@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "shared/common.proto";
+import "crm/sharing.proto";
+import "crm/common.proto";
+import "bdspro/common.proto";
+
+service LeadService {
+  // rpc Search (LeadSearchRequest) returns (LeadTotalDTO) {
+  //   option (google.api.http) = {
+  //     get: "/v2/crm/lead/total"
+  //   };
+  // };
+  rpc Detail (sharepb.IdRequest) returns (LeadDetailDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/detail/{id}"
+    };
+  };
+  rpc GetByContact (sharepb.IdRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/by-contact/{id}"
+    };
+  };
+  rpc Create (LeadSaveRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead/{ownerOf}/{ownerId}"
+      body: "*"
+    };
+  };
+  rpc Update (LeadSaveRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/lead/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete (sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/lead/{id}"
+    };
+  };
+  rpc AssignPerson (LeadAssignPersonRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead/assign-person"
+      body: "*"
+    };
+  };
+  rpc AssignCrm (LeadAssignCrmRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      post: "/v2/crm/lead/assign-crm"
+      body: "*"
+    };
+  };
+  rpc Manager (LeadManagerRequest) returns (LeadManagerResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/manage/{ownerOf}/{ownerId}/{pipelineId}"
+    };
+  };
+  rpc GetCareExpiredTime (sharepb.Empty) returns (CareExpiredResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/lead/care-expired"
+    };
+  };
+  rpc Stage (LeadStageRequest) returns (LeadDTO) {
+    option (google.api.http) = {
+      put: "/v2/crm/lead/stage"
+      body: "*"
+    };
+  };
+}
+
+message CareExpiredResponse {
+  int64 count = 1;
+}
+
+message LeadSearchRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+
+  string phone = 3;
+  string fullName = 4;
+
+  repeated int32 steps = 5;                 // EStep (int32)
+  repeated uint64 stageIds = 6;
+  repeated int32 sources = 7;               // ESourceLead (int32)
+  repeated uint64 chargePersonIds = 8;
+
+  int32 chargeType = 9; // [deprecated = true]; // EOwnerType (int32), deprecated
+
+  google.protobuf.Timestamp fromDate = 10;
+  google.protobuf.Timestamp toDate = 11;
+
+  repeated uint64 productIds = 12;
+
+  uint64 ownerId = 13;
+  int32 ownerType = 14;
+
+  string lastUpdatedAt = 15;
+}
+
+message LeadTotalDTO {
+    repeated LeadDTO data = 1;
+    uint32 total = 2;
+}
+
+message LeadAssignPersonRequest {
+  uint64 leadId = 1;
+  uint64 ownerId = 2;
+  int32 ownerType = 3;
+  uint64 chargePersonId = 4;
+  int32 chargePersonType = 5;
+  string noteAssign = 6;
+}
+
+message LeadNoteRequest {
+  uint64 leadId = 1;
+  string note = 2;
+} 
+
+message LeadStageRequest {
+  uint64 leadId = 1;
+  uint64 stageId = 2;
+  string stageNote = 3;
+}
+
+message LeadAssignCrmRequest {
+  uint64 contactId = 1;
+  uint64 personChargeId = 2;
+  uint64 stageId = 3;
+  string note = 4;
+}
+
+message LeadSaveRequest {
+  uint64 id = 1;
+  string fullName = 2;
+  string phone = 3;
+  string avatar = 4;
+  string email = 5;
+  string zalo = 6;
+  string company = 7;
+  string address = 8;
+  string birthday = 9;
+  string note = 10;
+
+  int32 source = 11;
+  string assignNote = 12;
+  uint64 stageId = 13;
+  int32 priority = 14;
+  uint64 chargePersonId = 15;
+  repeated uint64 productIds = 16;
+  repeated DocumentDTO documents = 17;
+  repeated uint64 removeDocumentIds = 18;
+  sharepb.OwnerOf ownerOf = 19;
+  uint64 ownerId = 20;
+}
+
+message LeadDetailDTO {
+  uint64 id = 1;
+  uint32 source = 2;
+  string assignNote = 3;
+  optional uint64 pipelineId = 4;
+  optional uint64 stageId = 5;
+  optional uint64 chargePersonId = 6;
+  uint32 priority = 7;
+  repeated uint64 productIds = 8;
+  repeated DocumentDTO documents = 9;
+  optional ContactDTO contact = 10;
+  optional StageDTO stage = 11;
+  optional PipelineDTO pipeline = 12;
+  repeated bdspropb.ProductResponse products = 13;
+  string sourceName = 14;
+  string priorityName = 15;
+  optional sharepb.ProfileItem chargePerson = 21;
+  string stageNote = 22;
+  string note = 24;
+}
+
+message LeadManagerRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string lastUpdatedAt = 3;
+  uint64 pipelineId = 4;
+  uint64 ownerId = 5;
+  sharepb.OwnerOf ownerOf = 6;
+}
+
+message LeadManagerItem {
+  uint64 id = 1;
+  optional uint64 stageId = 2;
+  optional uint64 pipelineId = 3;
+  optional uint64 contactId = 4;
+  uint64 priority = 5;
+  string createdAt = 6; 
+  string updatedAt = 7;
+
+  string leadName = 8;
+  string leadPhone = 9;
+  string leadAvatar = 10;
+  string chargePersonName = 11;
+  string chargePersonPhone = 12;
+  string chargePersonAvatar = 13;
+  string profileName = 14;
+  string profileAvatar = 15;
+  string profilePhone = 16;
+
+  optional uint64 profileId = 17;
+  optional uint64 chargePersonId = 18;
+  string stageNote = 19;
+  string assignNote = 20;
+  string note = 21;
+}
+message LeadManagerResponse {
+  repeated LeadManagerItem data = 1;
+  uint32 total = 2;
+}

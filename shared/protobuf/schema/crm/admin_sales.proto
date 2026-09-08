@@ -1,0 +1,426 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service AdminSalesService {
+  rpc ListOpportunities(ListAdminOpportunitiesRequest) returns (ListAdminOpportunitiesResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/sales/opportunities"
+    };
+  }
+  rpc GetOpportunitiesSummary(google.protobuf.Empty) returns (AdminOpportunitiesSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/sales/summary"
+    };
+  }
+  rpc ListContacts(ListAdminContactsRequest) returns (ListAdminContactsResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/sales/contacts"
+    };
+  }
+  rpc CreateContact(CreateAdminContactRequest) returns (AdminContactResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/contacts"
+      body: "*"
+    };
+  }
+  rpc GetOpportunity(sharepb.IdRequest) returns (AdminOpportunityResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/sales/opportunities/{id}"
+    };
+  }
+  rpc GetOpportunityQuickView(sharepb.IdRequest) returns (AdminOpportunityQuickViewResponse) {
+    option (google.api.http) = {
+      get: "/v2/crm/admin/sales/opportunities/{id}/quick-view"
+    };
+  }
+  rpc CreateOpportunity(CreateAdminOpportunityRequest) returns (AdminOpportunityResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities"
+      body: "*"
+    };
+  }
+  rpc UpdateOpportunity(UpdateAdminOpportunityRequest) returns (AdminOpportunityResponse) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/sales/opportunities/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteOpportunity(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/crm/admin/sales/opportunities/{id}"
+    };
+  }
+  rpc AssignOpportunity(AssignAdminOpportunityRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities/{id}/assign"
+      body: "*"
+    };
+  }
+  rpc SwitchStage(SwitchAdminOpportunityStageRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities/{id}/stage"
+      body: "*"
+    };
+  }
+  rpc UpdateNote(UpdateAdminOpportunityNoteRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities/{id}/note"
+      body: "*"
+    };
+  }
+  rpc UpdateStatus(UpdateAdminOpportunityStatusRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      patch: "/v2/crm/admin/sales/opportunities/{id}/status"
+      body: "*"
+    };
+  }
+  rpc CreateFollowUp(CreateAdminOpportunityFollowUpRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities/{id}/follow-ups"
+      body: "*"
+    };
+  }
+  rpc CloseOpportunity(CloseAdminOpportunityRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/opportunities/{id}/close"
+      body: "*"
+    };
+  }
+  rpc ExportOpportunities(ExportAdminOpportunitiesRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      post: "/v2/crm/admin/sales/exports"
+      body: "*"
+    };
+  }
+}
+
+message ListAdminOpportunitiesRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string q = 3;
+  repeated uint64 stageIds = 4;
+  repeated uint64 chargePersonIds = 5;
+  optional uint64 pipelineId = 6;
+  repeated int32 sources = 7;
+  optional bool unassignedOnly = 8;
+  repeated int32 opportunityStatuses = 9;
+  repeated int32 customerTypes = 10;
+  repeated int32 adminSources = 11;
+  string queue = 12;
+  optional string followUpFrom = 13;
+  optional string followUpTo = 14;
+  optional double minExpectedValue = 15;
+  optional double maxExpectedValue = 16;
+  repeated int32 probabilities = 17;
+  repeated int32 churnRisks = 18;
+  optional bool upgradeOnly = 19;
+  optional bool renewalOnly = 20;
+  string interestedPlan = 21;
+  string viewMode = 22; // list | funnel
+}
+
+message ListAdminOpportunitiesResponse {
+  repeated AdminOpportunityItem data = 1;
+  int64 total = 2;
+  repeated AdminFunnelBucket funnel = 3;
+}
+
+message AdminFunnelBucket {
+  int32 status = 1;
+  string label = 2;
+  int64 count = 3;
+  double expectedValueSum = 4;
+}
+
+message AdminOpportunitiesSummaryResponse {
+  int64 total = 1;
+  int64 overdueFollowUp = 2;
+  int64 unassigned = 3;
+  int64 waitingQuote = 4;
+  int64 waitingApproval = 5;
+  int64 waitingPayment = 6;
+  int64 renewal = 7;
+  int64 upgrade = 8;
+  int64 churnRisk = 9;
+  int64 statusNew = 10;
+  int64 consulting = 11;
+  int64 won = 12;
+  int64 lost = 13;
+  double expectedRevenue = 14;
+  double waitingPaymentValue = 15;
+  double wonValue = 16;
+}
+
+message AdminOpportunityItem {
+  uint64 id = 1;
+  uint64 contactId = 2;
+  string fullName = 3;
+  string phone = 4;
+  string email = 5;
+  string company = 6;
+  string avatar = 7;
+  int32 source = 8;
+  optional uint64 stageId = 9;
+  string stageName = 10;
+  optional uint64 pipelineId = 11;
+  string pipelineName = 12;
+  optional uint64 chargePersonId = 13;
+  int32 priority = 14;
+  string note = 15;
+  string assignNote = 16;
+  google.protobuf.Timestamp createdAt = 17;
+  google.protobuf.Timestamp updatedAt = 18;
+
+  string code = 19;
+  string title = 20;
+  int32 customerType = 21;
+  string needSummary = 22;
+  string interestedPlan = 23;
+  int32 opportunityStatus = 24;
+  int32 adminSource = 25;
+  optional double expectedValue = 26;
+  int32 probability = 27;
+  optional string expectedCloseDate = 28;
+  google.protobuf.Timestamp nextFollowUpAt = 29;
+  int32 churnRisk = 30;
+  bool upgradeSignal = 31;
+  bool renewalSignal = 32;
+  string ownerTeam = 33;
+  optional uint64 relatedUserId = 34;
+  optional uint64 relatedBusinessId = 35;
+  string proposalRef = 36;
+  string paymentRequestRef = 37;
+  string subscriptionRef = 38;
+  string ticketRef = 39;
+  string segment = 40;
+  string region = 41;
+  string tags = 42;
+  google.protobuf.Timestamp closedAt = 43;
+  string closeReason = 44;
+  repeated string alerts = 45;
+  bool followUpOverdue = 46;
+}
+
+message AdminOpportunityResponse {
+  AdminOpportunityItem data = 1;
+  string address = 2;
+  string zalo = 3;
+  repeated AdminOpportunityEventItem events = 4;
+  AdminCommercialProfile commercial = 5;
+}
+
+message AdminOpportunityQuickViewResponse {
+  AdminOpportunityItem data = 1;
+  string address = 2;
+  string zalo = 3;
+  repeated AdminOpportunityEventItem recentEvents = 4;
+  repeated string alerts = 5;
+}
+
+message AdminCommercialProfile {
+  // Health scores 0-100 (derived / placeholder until linked modules)
+  int32 usageHealth = 1;
+  int32 renewalHealth = 2;
+  int32 paymentHealth = 3;
+  int32 supportHealth = 4;
+  int32 churnScore = 5;
+  int32 upgradeScore = 6;
+  string activityStatus = 7; // active | low | inactive
+  string currentPlanLabel = 8;
+  optional int32 daysToExpiry = 9;
+  optional double usagePercent = 10;
+  int32 openTicketCount = 11;
+  string paymentStatusLabel = 12;
+  string overviewNote = 13;
+  // Context tabs — refs / empty until 10.9.3/4/5 modules wired
+  repeated AdminContextRow usageRows = 14;
+  repeated AdminContextRow planRows = 15;
+  repeated AdminContextRow proposalRows = 16;
+  repeated AdminContextRow paymentRows = 17;
+  repeated AdminContextRow supportRows = 18;
+  repeated AdminContextRow renewalRows = 19;
+}
+
+message AdminContextRow {
+  string key = 1;
+  string label = 2;
+  string value = 3;
+  string status = 4;
+  string href = 5;
+}
+
+message AdminOpportunityEventItem {
+  uint64 id = 1;
+  uint64 actorId = 2;
+  string action = 3;
+  string note = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  optional string actorName = 6;
+  optional string beforeJson = 7;
+  optional string afterJson = 8;
+}
+
+message CreateAdminOpportunityRequest {
+  string fullName = 1;
+  string phone = 2;
+  string email = 3;
+  string company = 4;
+  string avatar = 5;
+  string address = 6;
+  string zalo = 7;
+  string note = 8;
+  int32 source = 9;
+  optional uint64 stageId = 10;
+  optional uint64 chargePersonId = 11;
+  int32 priority = 12;
+  string assignNote = 13;
+  string title = 14;
+  int32 customerType = 15;
+  string needSummary = 16;
+  string interestedPlan = 17;
+  int32 opportunityStatus = 18;
+  int32 adminSource = 19;
+  optional double expectedValue = 20;
+  int32 probability = 21;
+  optional string expectedCloseDate = 22;
+  optional string nextFollowUpAt = 23;
+  int32 churnRisk = 24;
+  bool upgradeSignal = 25;
+  bool renewalSignal = 26;
+  string ownerTeam = 27;
+  string segment = 28;
+  string region = 29;
+  string tags = 30;
+  // Prefer linking an existing admin contact; when set, contact fields above are ignored for create.
+  optional uint64 contactId = 31;
+}
+
+message ListAdminContactsRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string q = 3;
+}
+
+message ListAdminContactsResponse {
+  repeated AdminContactItem data = 1;
+  int64 total = 2;
+}
+
+message AdminContactItem {
+  uint64 id = 1;
+  string fullName = 2;
+  string phone = 3;
+  string email = 4;
+  string company = 5;
+  string avatar = 6;
+  string address = 7;
+  string zalo = 8;
+  string note = 9;
+  google.protobuf.Timestamp createdAt = 10;
+  google.protobuf.Timestamp updatedAt = 11;
+}
+
+message CreateAdminContactRequest {
+  string fullName = 1;
+  string phone = 2;
+  string email = 3;
+  string company = 4;
+  string avatar = 5;
+  string address = 6;
+  string zalo = 7;
+  string note = 8;
+}
+
+message AdminContactResponse {
+  AdminContactItem data = 1;
+}
+
+message UpdateAdminOpportunityRequest {
+  uint64 id = 1;
+  string fullName = 2;
+  string phone = 3;
+  string email = 4;
+  string company = 5;
+  string avatar = 6;
+  string address = 7;
+  string zalo = 8;
+  string note = 9;
+  int32 source = 10;
+  optional uint64 stageId = 11;
+  optional uint64 chargePersonId = 12;
+  int32 priority = 13;
+  string assignNote = 14;
+  string title = 15;
+  int32 customerType = 16;
+  string needSummary = 17;
+  string interestedPlan = 18;
+  int32 opportunityStatus = 19;
+  int32 adminSource = 20;
+  optional double expectedValue = 21;
+  int32 probability = 22;
+  optional string expectedCloseDate = 23;
+  optional string nextFollowUpAt = 24;
+  int32 churnRisk = 25;
+  bool upgradeSignal = 26;
+  bool renewalSignal = 27;
+  string ownerTeam = 28;
+  string segment = 29;
+  string region = 30;
+  string tags = 31;
+  string proposalRef = 32;
+  string paymentRequestRef = 33;
+  string subscriptionRef = 34;
+  string ticketRef = 35;
+}
+
+message AssignAdminOpportunityRequest {
+  uint64 id = 1;
+  uint64 chargePersonId = 2;
+  string assignNote = 3;
+}
+
+message SwitchAdminOpportunityStageRequest {
+  uint64 id = 1;
+  uint64 stageId = 2;
+  string stageNote = 3;
+}
+
+message UpdateAdminOpportunityNoteRequest {
+  uint64 id = 1;
+  string note = 2;
+}
+
+message UpdateAdminOpportunityStatusRequest {
+  uint64 id = 1;
+  int32 opportunityStatus = 2;
+  string note = 3;
+}
+
+message CreateAdminOpportunityFollowUpRequest {
+  uint64 id = 1;
+  string nextFollowUpAt = 2; // RFC3339
+  string content = 3;
+  string nextAction = 4;
+}
+
+message CloseAdminOpportunityRequest {
+  uint64 id = 1;
+  int32 result = 2; // 110 won | 120 lost | 130 cancelled
+  string closeReason = 3;
+}
+
+message ExportAdminOpportunitiesRequest {
+  string reason = 1;
+  string q = 2;
+  string queue = 3;
+  repeated int32 opportunityStatuses = 4;
+  repeated uint64 chargePersonIds = 5;
+}

@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "shared/common.proto";
+import "crm/tag.proto";
+
+enum OwnerOf {
+    unknown = 0;
+    user = 10;
+    group = 20;
+    organization = 30;
+    admin = 40;
+}
+
+message LeadDTO {
+    optional uint64 contactId = 1;
+    string fullName = 2;
+    string phone = 3;
+    int32 source = 4;                        // ESourceLead (int32)
+    string email = 5;
+    string address = 6;
+    string birthday = 7;
+    string note = 8;
+    string assignNote = 10;
+  
+    optional uint64 pipelineId = 11;
+    optional uint64 stageId = 12;
+    optional uint64 chargeId = 13;
+  
+    int32 chargeType = 15;                 // EOwnerType (int32)
+    optional uint64 ownerId = 16;
+    int32 ownerOf = 17;                  // EOwnerType (int32)
+    uint64 id = 18;
+    optional StageDTO stage = 19;
+    optional PipelineDTO pipeline = 20;
+    optional sharepb.ProfileItem chargePerson = 21;
+    string avatar = 22;
+    string zalo = 23;
+    string company = 24;
+    repeated uint64 productIds = 25;
+    int32 priority = 26;
+    repeated DocumentDTO documents = 27;
+    repeated uint64 removeDocumentIds = 28;
+    optional ContactDTO contact = 29;
+    string priorityName = 30;
+    optional sharepb.ProfileItem profileInfo = 31;
+    string updatedAt = 32;
+    string stageNote = 33;
+}
+
+message PipelineDTO {
+    uint64 id = 1;
+    string pipelineName = 2;
+    uint32 color = 3;
+    bool active = 4;
+    uint64 ownerId = 5;
+    uint32 ownerType = 6;
+    bool isDefault = 7;
+    bool isCustom = 8;
+    StageDTO defaultStage = 9;
+    repeated StageDTO stages = 10;
+}
+
+
+message StageDTO {
+    uint64 id = 1;
+    string stageName = 2;
+    int32 orderNumber = 3;
+    uint64 pipelineId = 4;
+    uint64 ruleId = 5;
+    uint32 step = 6;
+    bool active = 7;
+    uint32 color = 8;
+    string colorRGB = 9;
+}
+
+message DocumentDTO {
+    uint64 id = 1;
+    string fileName = 2;
+    string fileUrl = 3;
+    string fileType = 4;
+}
+
+
+message ContactDTO {
+  uint64 id = 1;
+  string phone = 2;
+  string fullName = 3;
+  uint64 ownerId = 4;
+  int32 ownerOf = 5;
+  string createdAt = 6;
+  optional uint64 createdBy = 7;
+  uint32 contactStatus = 8;
+  string statusName = 9;
+  sharepb.FriendItem friendStatus = 10;
+  bool following = 11;
+  string avatar = 12;
+  sharepb.ProfileItem profileInfo = 13;
+  optional uint64 profileId = 14;
+  bool blocked = 15;
+  string email = 16;
+  string zalo = 17;
+  string company = 18;
+  string note = 19;
+  string birthday = 20;
+  repeated TagItem tags = 21;
+  optional ConversationMember member = 22;
+  repeated uint64 productIds = 23;
+  string updatedAt = 24;
+}
+
+message ConversationMember {
+  uint64 userId = 1;
+  string joinedAt = 2;
+  optional string leftAt = 3;
+  bool muteNotif = 4;
+  int32 role = 5; // 0: Member, 1: Admin, 2: Banned
+}

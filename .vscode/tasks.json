@@ -1,0 +1,216 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BDSPro · Setup",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "setup"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Dependencies · Up",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "deps"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Dependencies · Down",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "deps-down"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Dev · Gateway",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=gateway-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · Auth",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=auth-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · User",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=user-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · Organization",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=organization-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · Payment",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=payment-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · TQD",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=tqd-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · Notification",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=notification-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · File",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=file-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Dev · Hub",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "dev",
+        "service=hub-service"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "BDSPro · Runtime · Up (Native)",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "up"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Runtime · Status",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "status"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · Runtime · Smoke",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "smoke"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "BDSPro · CI · Verify Candidate",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "verify"
+      ],
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "BDSPro · Release · Accept Candidate",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "accept"
+      ],
+      "problemMatcher": [
+        "$go"
+      ]
+    },
+    {
+      "label": "BDSPro · Runtime · Down",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "down"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,301 @@
+---
+description: ngữ cảnh sử dụng trong internal
+alwaysApply: true
+---
+
+# Common Domain - Shared Components
+
+Thư mục này chứa các domain models, DTOs, và usecases dùng chung cho toàn bộ microservices. Tất cả các components này được thiết kế để tái sử dụng và tuân thủ Clean Architecture.
+
+## 📁 Cấu trúc thư mục
+
+### 1. `crud/` - Generic CRUD Components
+
+**Mục đích**: Cung cấp base interface và implementation cho các thao tác CRUD chuẩn
+
+#### `crud/repo.go` - ICrudRepo Interface
+- **Interface generic**: `ICrudRepo[T any]` để implement repository pattern
+- **Phương thức cung cấp**:
+  - `Create`, `Update`, `Delete`: Thao tác CUD cơ bản
+  - `GetByID`, `GetDetail`: Lấy 1 bản ghi theo ID
+  - `GetAll`: Lấy toàn bộ danh sách
+  - `GetList`: Lấy danh sách có phân trang (trả về data + total)
+  - `GetListByIDs`: Lấy danh sách theo nhiều ID
+  - `BeforeSave`, `AfterSave`: Hook callbacks trước/sau khi save
+
+#### `crud/usecase.go` - BaseUsecase
+- **Struct generic**: `BaseUsecase[T any, R ICrudRepo[T]]`
+- **Interface**: `IBaseUsecase[T any]` định nghĩa các method chuẩn
+- **Xử lý lỗi**: Tự động wrap error thành `ErrorDTO` với code và message tiếng Việt
+- **Sử dụng**: Các usecase khác có thể embed `BaseUsecase` để kế thừa logic CRUD cơ bản
+
+**Khi nào dùng**:
+- Khi cần implement CRUD cho 1 entity mới, chỉ cần:
+  1. Tạo repo implement `ICrudRepo[YourEntity]`
+  2. Tạo usecase embed `BaseUsecase[YourEntity, YourRepo]`
+  3. Override các method nếu cần custom logic
+
+---
+
+### 2. `dto/` - Data Transfer Objects
+
+**Mục đích**: Định nghĩa các DTO dùng chung giữa các services
+
+#### `dto/pagable.go` - Phân trang
+- **Interface**: `IPagable` định nghĩa contract cho pagination
+- **Struct**: `Pagable` implement phân trang chuẩn
+- **Fields**: `Page`, `Size`, `Sort` (bind từ query params)
+- **Logic**:
+  - Default size = 20
+  - Max size = 100
+  - `GetOffset()`: tính offset từ page và size
+  - `GetLimit()`: giới hạn size tối đa
+
+**Cách dùng**: 
+- DTO request embed `Pagable` khi cần phân trang
+- Truyền vào `repo.GetList()` để query paginated data
+
+#### `dto/history_dto.go` - Lịch sử hoạt động
+- **HistoryDTO**: DTO để tạo log lịch sử hành động của user
+- **Fields**:
+  - `Title`, `Note[]`: Nội dung mô tả
+  - `TargetId`, `TargetType`: Đối tượng bị tác động (Contact, Product, Asset...)
+  - `ActionType`: Loại hành động (Create, Update, Delete...)
+  - `OwnerID`, `OwnerOf`: Ai thực hiện (Member/Group/Organization)
+
+**Khi nào dùng**: Gọi History Service để log mọi hành động quan trọng
+
+#### `dto/notification_dto.go` - Thông báo
+- **NotificationDTO**: DTO để gửi thông báo cho user
+- **NotificationBatchDTO**: Gửi nhiều thông báo cùng lúc
+- **Fields**: `Title`, `Message`, `Type`, `UserID`, `VisibleAt`
+
+**Khi nào dùng**: Gọi Notification Service để push notification
+
+---
+
+### 3. `entity/` - Base Entities
+
+**Mục đích**: Cung cấp các base entity với audit fields và soft delete
+
+#### `entity/base_entity.go` - BaseEntity
+- **Struct**: `BaseEntity` chứa các trường chuẩn cho mọi table
+- **Fields**:
+  - `ID`: Primary key (uint64)
+  - `CreatedAt`, `UpdatedAt`: Timestamps tự động
+  - `DeletedAt`: Hỗ trợ soft delete (GORM)
+- **Embed**: `AuditBase` để có thêm audit fields
+
+**Cách dùng**: Mọi entity nên embed `BaseEntity`:
+```go
+type Product struct {
+    _models.BaseEntity
+    Name string
+    Price float64
+}
+```
+
+#### `entity/audit.go` - AuditBase
+- **Struct**: `AuditBase` tracking user tạo/sửa
+- **Fields**: `CreatedBy`, `UpdatedBy` (pointer uint64)
+- **GORM Callbacks**:
+  - `BeforeCreate`: Tự động set `CreatedBy` và `UpdatedBy`
+  - `BeforeUpdate`: Tự động cập nhật `UpdatedBy`
+- **Lấy user ID**: Từ context key `profileId` hoặc `ProfileIDKey`
+
+**Lưu ý**: Phải set profileId vào context trước khi gọi DB
+
+---
+
+### 4. `enum/` - Enumerations & Constants
+
+#### `enum/context_key_enum.go` - Context Keys
+- **Type**: `ContextKey` (string)
+- **Constants**:
+  - `ProfileIDKey`: ID của profile user đang login
+  - `OrganizationIDKey`: ID organization hiện tại
+  - `AuthIDKey`, `SessionKey`, `RoleKey`, `TypeKey`
+  - `PlanIDKey`, `PlanFromKey`: Thông tin plan/subscription
+
+**Cách dùng**: 
+```go
+profileID := ctx.Value(_enum.ProfileIDKey).(uint64)
+```
+
+#### `enum/history_enum.go` - History Action Types
+- **Type**: `EHistory` (int32)
+- **Categories**:
+  - Pipeline: Create/Update/Delete Pipeline, Stage, Rule
+  - Contact: Create/Update/Delete/Assign/Message Contact
+  - Asset: Create/Update/Delete/Merge/Split/Archive Asset
+  - Product: Create/Update/Delete/Merge/Divide Product
+  - Campaign: Create/Update/Delete/Payment/Activate Campaign
+- **Maps**: 
+  - `HistoryMap`: Map action → Vietnamese name
+  - `HistoryContactAction`, `HistoryAssetActionType`, etc: Grouping actions by domain
+
+**Khi nào dùng**: Chọn action type khi tạo HistoryDTO
+
+#### `enum/notification_enum.go` - Owner Types
+- **Type**: `EOwnerOf` (int)
+- **Values**:
+  - `EOwnerOfMember` (10): Hành động của 1 member
+  - `EOwnerOfGroup` (20): Hành động của nhóm
+  - `EOwnerOfOrgnization` (30): Hành động của tổ chức
+- **Method**: `IsValid()` để validate
+
+#### `enum/target_notification_enum.go` - History Targets
+- **Type**: `ETargetHistory` (int)
+- **Values**: Lead, Contact, Pipeline, Stage, Rule, Product, Asset, Campaign, Package
+- **Map**: `TargetNotificationMap` → Vietnamese names
+- **Method**: `IsValid()` để validate
+
+---
+
+### 5. `err/` - Error Handling
+
+#### `err/dto.go` - ErrorDTO
+- **Struct**: `ErrorDTO` với `Code` (int) và `Message` (string)
+- **Implement**: Interface `error` qua method `Error() string`
+
+**Cách dùng**:
+- Usecase trả về `(*T, *ErrorDTO)` thay vì `(*T, error)`
+- Handler kiểm tra ErrorDTO để response HTTP status code đúng
+
+---
+
+### 6. `usecase/` - Common Business Logic
+
+#### `usecase/code_data_usecase.go` - Code Generator
+- **Struct**: `CodeDataUsecase`
+- **Phương thức**: Generate code chuẩn cho các entity
+  - **Product**: `GetProductCode()` → `SP000001`, `SP000002`...
+  - **Asset**: `GetAssetCode()` → `AS000001`, `AS000002`...
+  - **Post**: `GetPostCode()` → `PO000001`, `PO000002`...
+- **Variants**: Cả version trả value và pointer, batch generation
+
+**Khi nào dùng**: 
+- Generate display code/reference number cho Product, Asset, Post
+- Dùng trong mapper khi convert entity → DTO để thêm code field
+
+---
+
+### 7. `provider/` - Base Repository Implementation
+
+**Mục đích**: Cung cấp base implementation cho repository pattern với transaction support
+
+#### `provider/repository.go` - CrudRepo Base Implementation
+- **Struct generic**: `CrudRepo[T any]` cung cấp implementation chuẩn cho `ICrudRepo[T]`
+- **Features**:
+  - **Transaction Support**: Tích hợp với `_db.TransactionRepo` để hỗ trợ database transactions
+  - **Soft Delete**: Tự động filter các record đã bị xóa mềm (`deleted_at is null`)
+  - **Hook Callbacks**: Hỗ trợ `BeforeSave` và `AfterSave` callbacks
+  - **Generic CRUD**: Implement đầy đủ các method CRUD cơ bản
+
+- **Methods được implement**:
+  - `Create`: Tạo mới với transaction và hooks
+  - `Update`: Cập nhật với validation và hooks
+  - `Delete`: Soft delete (set deleted_at)
+  - `GetByID`, `GetDetail`: Lấy 1 record theo ID
+  - `GetAll`: Lấy tất cả records (chưa bị xóa)
+  - `GetList`: Lấy danh sách có phân trang
+  - `GetListByIDs`: Lấy danh sách theo nhiều ID
+
+**Cách sử dụng trong infra layer**:
+```go
+// Trong infra/postgre/your_entity_postgres.go
+type YourEntityRepo struct {
+    _provider.CrudRepo[YourEntity]
+}
+
+func NewYourEntityRepo(db *_db.TransactionRepo) _repo.IYourEntityRepo {
+    repo := &YourEntityRepo{}
+    repo.Init(repo, db) // Khởi tạo base CrudRepo
+    return repo
+}
+
+// Override các method cần custom logic
+func (r *YourEntityRepo) BeforeSave(c context.Context, id *uint64, entity *YourEntity) error {
+    // Custom validation logic
+    return nil
+}
+
+func (r *YourEntityRepo) AfterSave(c context.Context, id *uint64, entity *YourEntity) error {
+    // Custom post-save logic (cache, audit, etc.)
+    return nil
+}
+```
+
+**Lưu ý quan trọng**:
+- **Luôn dùng `CrudRepo[T]`** trong infra layer thay vì implement từ đầu
+- **Khởi tạo**: Phải gọi `repo.Init(repo, db)` trong constructor
+- **Override**: Chỉ override `BeforeSave`/`AfterSave` khi cần custom logic
+- **Transaction**: Tất cả operations đều được wrap trong transaction
+
+---
+
+## 🔧 Quy tắc sử dụng
+
+### Import Conventions
+```go
+import (
+    _dto "common/domain/dto"
+    _models "common/domain/entity"
+    _enum "common/domain/enum"
+    _err "common/domain/err"
+    _crud "common/domain/crud"
+    _usecase "common/domain/usecase"
+    _provider "common/provider" // Cho infra layer
+)
+```
+
+### Khi tạo Entity mới
+1. Embed `_models.BaseEntity`
+2. **Infra layer**: Repo struct embed `_provider.CrudRepo[YourEntity]` và gọi `Init()`
+3. Usecase embed `_crud.BaseUsecase[YourEntity, YourRepo]`
+
+### Khi implement Repository trong infra layer
+1. **Bắt buộc**: Struct embed `_provider.CrudRepo[YourEntity]`
+2. **Constructor**: Gọi `repo.Init(repo, db)` để khởi tạo
+3. **Override**: Chỉ override `BeforeSave`/`AfterSave` khi cần custom logic
+4. **Ví dụ**:
+```go
+type ProductRepo struct {
+    _provider.CrudRepo[Product]
+}
+
+func NewProductRepo(db *_db.TransactionRepo) _repo.IProductRepo {
+    repo := &ProductRepo{}
+    repo.Init(repo, db)
+    return repo
+}
+```
+
+### Khi tạo API có phân trang
+1. Request DTO embed `_dto.Pagable`
+2. Response trả `data` (array) và `total` (int64)
+3. Handler parse Pagable từ query params
+
+### Khi cần log History
+1. Tạo `_dto.HistoryDTO` với đủ fields
+2. Chọn `ActionType` từ `_enum.EHistory`
+3. Chọn `TargetType` từ `_enum.ETargetHistory`
+4. Gọi History Service/Client để lưu
+
+### Context Management
+- Luôn dùng `context.Context`, không dùng `gin.Context` trong usecase/repo
+- Set `_enum.ProfileIDKey` và `_enum.OrganizationIDKey` vào context từ middleware
+- AuditBase sẽ tự động lấy profileId từ context
+
+---
+
+## ⚠️ Lưu ý quan trọng
+
+1. **Generic Types**: Tận dụng Go generics để giảm code duplication
+2. **Error Handling**: Luôn trả `*ErrorDTO` thay vì `error` ở usecase layer
+3. **Soft Delete**: BaseEntity có `DeletedAt`, dùng GORM để auto filter
+4. **Audit Trail**: AuditBase tự động track created_by/updated_by qua GORM callbacks
+5. **Pagination**: Default size=20, max size=100
+6. **Code Generation**: Dùng CodeDataUsecase để generate mã hiển thị chuẩn
+7. **Repository Pattern**: **LUÔN dùng `_provider.CrudRepo[T]`** trong infra layer, không implement từ đầu
+8. **Transaction**: CrudRepo tự động wrap tất cả operations trong transaction

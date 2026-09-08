@@ -1,0 +1,305 @@
+syntax = "proto3";
+
+package assistantpb;
+
+import "google/api/annotations.proto";
+import "bdspro/common.proto";
+import "bdspro/product.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/assistant;assistantpb";
+
+service AssistantService {
+  // Phân tích văn bản sản phẩm BĐS sử dụng AI
+  rpc AnalyzeProductText (AnalyzeRequest) returns (SuggestResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/bdspro/product"
+      body: "*"
+    };
+  };
+
+  // Chat với AI assistant
+  rpc Chat (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content
+  rpc GenerateContent (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/generate"
+      body: "*"
+    };
+  };
+
+  // Health check
+  rpc Health (HealthRequest) returns (HealthResponse) {
+    option (google.api.http) = {
+      get: "/v2/assistant/health"
+    };
+  };
+
+  // DeepSeek APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng DeepSeek
+  rpc AnalyzeProductTextWithDeepSeek (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với DeepSeek AI assistant
+  rpc ChatWithDeepSeek (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với DeepSeek
+  rpc GenerateContentWithDeepSeek (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/deepseek/generate"
+      body: "*"
+    };
+  };
+
+  // OpenAI APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng OpenAI
+  rpc AnalyzeProductTextWithOpenAI (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với OpenAI AI assistant
+  rpc ChatWithOpenAI (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với OpenAI
+  rpc GenerateContentWithOpenAI (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/openai/generate"
+      body: "*"
+    };
+  };
+
+  // Gemini APIs
+  // Phân tích văn bản sản phẩm BĐS sử dụng Gemini
+  rpc AnalyzeProductTextWithGemini (AnalyzeRequest) returns (AnalyzeResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/analyze/product"
+      body: "*"
+    };
+  };
+
+  // Chat với Gemini AI assistant
+  rpc ChatWithGemini (ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/chat"
+      body: "*"
+    };
+  };
+
+  // Generate text content với Gemini
+  rpc GenerateContentWithGemini (GenerateRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/generate"
+      body: "*"
+    };
+  };
+
+  // Trích xuất thông tin từ ảnh căn cước
+  rpc ExtractNationalCard (ExtractNationalCardRequest) returns (ExtractNationalCardResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/national-card/extract"
+      body: "*"
+    };
+  };
+
+  // Phân loại/đọc nội dung 1 tài liệu bằng Gemini (multimodal). file_content rỗng => text-only.
+  rpc ClassifyDocumentWithGemini (ClassifyDocumentRequest) returns (GenerateResponse) {
+    option (google.api.http) = {
+      post: "/v2/assistant/gemini/classify-document"
+      body: "*"
+    };
+  };
+}
+
+// =============== Analyze Product Text ===============
+
+message AnalyzeRequest {
+  string content = 1; // Văn bản mô tả sản phẩm cần phân tích
+  string context = 2; // Context bổ sung (optional)
+}
+
+message AnalyzeResponse {
+  ProductInfo product = 1;
+  string raw_response = 2; // Raw JSON từ AI
+  AnalysisMetadata metadata = 3;
+}
+
+message ProductInfo {
+  optional string name = 1;
+  optional float area = 2;
+  optional string address = 3;
+  optional string province = 4;
+  optional string district = 5;
+  optional string ward = 6;
+  optional string propertyType = 7;
+  optional int32 transaction_type = 8; // 1=Bán, 2=Thuê, 3=Cả hai
+  optional double salePrice = 9;
+  optional double rent_price = 10;
+  optional int32 bedroom = 11;
+  optional int32 bathroom = 12;
+  optional int32 floor = 13;
+  optional float frontage = 14;
+  optional string orientation = 15;
+  optional string legalDoc = 16;
+  optional string furniture = 17;
+  optional string description = 18;
+  repeated string amenities = 19;
+  repeated string images = 20;
+}
+
+message AnalysisMetadata {
+  int64 processing_time_ms = 1;
+  int32 tokens_used = 2;
+  float confidence_score = 3;
+  string model = 4;
+}
+
+// =============== Chat ===============
+
+message ChatRequest {
+  string message = 1;
+  repeated ChatMessage history = 2; // Chat history
+  string context = 3; // Context bổ sung
+  string session_id = 4; // Session ID để maintain conversation
+}
+
+message ChatMessage {
+  string role = 1; // "user" hoặc "assistant"
+  string content = 2;
+  int64 timestamp = 3;
+}
+
+message ChatResponse {
+  string reply = 1;
+  string session_id = 2;
+  ChatMetadata metadata = 3;
+}
+
+message ChatMetadata {
+  int64 processing_time_ms = 1;
+  int32 tokens_used = 2;
+  string model = 3;
+}
+
+// =============== Generate Content ===============
+
+message GenerateRequest {
+  string prompt = 1;
+  string template = 2; // Template type: "product_description", "email", "social_post"
+  map<string, string> variables = 3; // Variables để thay vào template
+  int32 max_tokens = 4;
+  float temperature = 5; // 0.0 - 1.0
+}
+
+message GenerateResponse {
+  string content = 1;
+  GenerateMetadata metadata = 2;
+}
+
+// ClassifyDocumentRequest — prompt kèm nội dung file để Gemini đọc & phân loại.
+message ClassifyDocumentRequest {
+  string prompt = 1;
+  bytes file_content = 2;   // rỗng => fallback text-only (chỉ dựa prompt)
+  string mime_type = 3;     // ví dụ application/pdf, image/png
+  int32 max_tokens = 4;
+  float temperature = 5;
+}
+
+message GenerateMetadata {
+  int64 processing_time_ms = 1;
+  int32 tokens_used = 2;
+  string model = 3;
+}
+
+// =============== Health Check ===============
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1; // "healthy", "degraded", "unhealthy"
+  int64 uptime_seconds = 2;
+  string version = 3;
+  map<string, string> checks = 4; // Component health checks
+}
+
+// =============== Common Types ===============
+
+message Response {
+  uint64 id = 1;
+  string message = 2;
+}
+
+message ErrorResponse {
+  int32 code = 1;
+  string message = 2;
+  repeated string details = 3;
+}
+
+message SuggestResponse {
+  string modelName = 1;
+  int64 processingTime = 2;
+  sharepb.ProductV3Proto product = 3;
+}
+
+// =============== Extract National Card ===============
+
+message ExtractNationalCardRequest {
+  string frontImageUrl = 1; // Link ảnh mặt trước căn cước
+  string backImageUrl = 2;  // Link ảnh mặt sau căn cước
+}
+
+message ExtractNationalCardResponse {
+  NationalCardInfo info = 1;
+  string mrz = 2; // Machine Readable Zone (MRZ) nếu có
+  ExtractMetadata metadata = 3;
+  string qrCode = 4; // QR code nếu có
+}
+
+message NationalCardInfo {
+  // Thông tin từ mặt trước
+  optional string idNumber = 1;        // Số CMND/CCCD
+  optional string fullName = 2;        // Họ và tên
+  optional string dateOfBirth = 3;     // Ngày sinh (dd/mm/yyyy)
+  optional string gender = 4;          // Giới tính
+  optional string nationality = 5;     // Quốc tịch
+  optional string placeOfOrigin = 6;   // Quê quán
+  optional string placeOfResidence = 7; // Nơi thường trú
+  optional string ethnic = 8;          // Dân tộc
+  optional string religion = 9;        // Tôn giáo
+  
+  // Thông tin từ mặt sau
+  optional string issueDate = 10;      // Ngày cấp
+  optional string issuePlace = 11;     // Nơi cấp
+  optional string expiryDate = 12;      // Ngày hết hạn (nếu có)
+  optional string features = 13;       // Đặc điểm nhận dạng
+  optional string address = 14;        // Địa chỉ
+}
+
+message ExtractMetadata {
+  int64 processing_time_ms = 1;
+  int32 tokens_used = 2;
+  string model = 3;
+  float confidence_score = 4; // Độ tin cậy (0-1)
+}

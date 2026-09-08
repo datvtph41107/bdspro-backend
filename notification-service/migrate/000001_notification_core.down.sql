@@ -1,0 +1,14 @@
+BEGIN;
+DROP TABLE IF EXISTS account_warning_logs;
+DROP TABLE IF EXISTS account_warnings;
+DROP TABLE IF EXISTS account_warning_templates;
+DROP TABLE IF EXISTS property_histories;
+DROP TABLE IF EXISTS person_configs;
+DROP TABLE IF EXISTS tb_history;
+DROP TABLE IF EXISTS history_auth;
+DROP TABLE IF EXISTS deal_history;
+DROP TABLE IF EXISTS admin_histories;
+DROP TABLE IF EXISTS noti_histories;
+DROP TABLE IF EXISTS notification_history;
+DROP TABLE IF EXISTS notification;
+COMMIT;

@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+import "google/api/annotations.proto";
+import "crm/common.proto";
+import "shared/common.proto";
+
+message PipelineSearchRequest {
+    uint32 page = 1;
+    uint32 size = 2;
+
+    string pipelineName = 3;
+    repeated uint32 colors = 4;
+    bool active = 5;
+
+    uint64 ownerId = 6;
+    uint32 ownerType = 7;
+    optional bool isDefault = 8;
+    optional bool isCustom = 9;
+}
+
+message PipelineListDTO {
+    repeated PipelineDTO data = 1;
+    uint32 total = 2;
+}
+
+service PipelineService {
+    rpc Search (PipelineSearchRequest) returns (PipelineListDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/list"
+        };
+    };
+    rpc GetDefault (sharepb.Empty) returns (PipelineDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/default"
+        };
+    };
+    rpc Detail (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/detail/{id}"
+        };
+    };
+    rpc Create (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            post: "/v2/crm/pipeline"
+            body: "*"
+        };
+    };
+    rpc Update (PipelineSaveRequest) returns (PipelineDTO) {
+        option (google.api.http) = {
+            put: "/v2/crm/pipeline/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete (PipelineDTO) returns (PipelineDTO) {
+        option (google.api.http) = {
+            delete: "/v2/crm/pipeline/{id}"
+        };
+    };
+    rpc GetWithStages (PipelineDTO) returns (PipelineListDTO) {
+        option (google.api.http) = {
+            get: "/v2/crm/pipeline/with-stages"
+        };
+    };
+}
+
+
+message PipelineSaveRequest {
+    uint64 id = 1;
+    string pipelineName = 2;
+    uint32 color = 3;
+    bool active = 4;
+    bool isDefault = 5;
+    repeated StageDTO stages = 6;
+    repeated uint64 removeStageIds = 7;
+}

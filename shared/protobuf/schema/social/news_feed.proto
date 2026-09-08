@@ -1,0 +1,291 @@
+syntax = "proto3";
+
+package pb_social;
+
+import "google/api/annotations.proto";
+import "bdspro/post.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/social;pb_social";
+
+enum OwnerOf {
+    unknown = 0;
+    user = 10;
+    group = 20;
+    organization = 30;
+}
+
+service NewsFeedService {
+    rpc CreateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed/{ownerOf}"
+            body: "*"
+        };
+    };
+    rpc GetNewsFeedByOwner(NewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/{ownerOf}/{ownerId}"
+        };
+    };
+    rpc UpdateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/news-feed/{id}"
+            body: "*"
+        };
+    };
+    rpc GetNewsFeedByUserID(NewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/user/{userId}"
+        };
+    };
+    rpc DetailNewsFeed(DetailRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/detail/{newsFeedId}"
+        };
+    };
+    rpc DeleteNewsFeed(sharepb.IdRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/social/news-feed/{id}"
+        };
+    };
+    
+    rpc CountByOwner(CountByOwnerRequest) returns (CountByOwnerResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/count-by-owner"
+        };
+    };
+    rpc ShareNewsFeed(ShareRequest) returns (ShareResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/news-feed/{newsFeedId}/share"
+            body: "*"
+        };
+    };
+    rpc UpdateVisibility(VisibilityRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/news-feed/{newsFeedId}/visibility"
+            body: "*"
+        };
+    };
+
+    rpc GetGlobalNewsFeed(NewsFeedGlobalSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/global"
+        };
+    };
+    rpc GetReelNewsFeed(sharepb.IdRequest) returns (ListReelResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/global/reel"
+        };
+    };
+    rpc GetGlobalNewsFeedByOwner(NewsFeedGlobalSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/global/{ownerOf}/{ownerId}"
+        };
+    };
+    rpc GetMyNewsFeed(MyNewsFeedRequest) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/news-feed/me"
+        };
+    };
+    rpc GetUserNewsFeedPublic(PublicNewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/public/news-feed/user/{userId}"
+        };
+    };
+    
+    // Admin APIs
+    rpc AdminCreateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            post: "/v2/social/admin/news-feed"
+            body: "*"
+        };
+    };
+    rpc AdminUpdateNewsFeed(NewsFeed) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/admin/news-feed/{id}"
+            body: "*"
+        };
+    };
+    rpc AdminDeleteNewsFeed(sharepb.IdRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/social/admin/news-feed/{id}"
+        };
+    };
+    rpc AdminHideNewsFeed(AdminHideRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            put: "/v2/social/admin/news-feed/{newsFeedId}/hide"
+            body: "*"
+        };
+    };
+    rpc AdminGetListNewsFeed(AdminNewsFeedSearch) returns (ListNewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/admin/news-feed"
+        };
+    };
+    rpc AdminDetailNewsFeed(DetailRequest) returns (NewsFeed) {
+        option (google.api.http) = {
+            get: "/v2/social/admin/news-feed/detail/{newsFeedId}"
+        };
+    };
+}
+
+message VisibilityRequest {
+    uint64 newsFeedId = 1;
+    int32 visibility = 2;
+}
+
+
+message NewsFeedMedia {
+    uint64 id = 1;
+    string url = 2;
+    string type = 3;
+    int32 orderNumber = 4;
+}
+
+message NewsFeed {
+    uint64 id = 1;
+    string title = 2;
+    string content = 3;
+    string image = 4;
+    string link = 5;
+    int32 visibility = 6;
+    int32 numLike = 7;
+    int32 numComment = 8;
+    int32 numShare = 9;
+    int32 numView = 10;
+    string updatedAt = 11;
+    optional uint64 postId = 12;
+    repeated NewsFeedMedia mediaFeeds = 13;
+    repeated uint64 friendTagIds = 14;
+    sharepb.ProfileItem author = 15;
+    bool isReel = 16;
+    bdspropb.Post post = 17;
+    optional uint64 createdBy = 18;
+    repeated sharepb.ProfileItem friendTags = 19;
+    string likedAt = 20;
+    optional bool disLike = 21;
+    optional uint64 groupId = 22;
+    OwnerOf ownerOf = 23;
+}
+
+message NewsFeedSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    uint64 userId = 4;
+    optional bool isReel = 5;
+    uint64 ownerId = 6;
+    OwnerOf ownerOf = 7;
+    optional bool isPost = 8;
+}
+
+message ListNewsFeed {
+    repeated NewsFeed data = 1;
+    optional int32 total = 2;
+}
+
+message NewsFeedGlobalSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional bool isReel = 5;
+    optional bool isPost = 6;
+    uint64 ownerId = 7;
+    OwnerOf ownerOf = 8;
+}
+
+message ShareRequest {
+    uint64 newsFeedId = 1;
+    uint64 targetId = 2;
+    int32 shareType = 3;
+    string content = 4;
+}
+
+message ShareResponse {
+    uint64 id = 1;
+    bool success = 2;
+}
+
+
+message DetailRequest {
+    uint64 newsFeedId = 1;
+}
+
+message ReelResponse {
+    uint64 id = 1;
+    string content = 2;
+    string reelUrl = 3;
+    string authorAvatar = 4;
+    string authorName = 5;
+    string createdAt = 6;
+    uint64 numLike = 7;
+    uint64 numComment = 8;
+    uint64 numShare = 9;
+    uint64 numView = 10;
+    uint64 createdBy = 11;
+}
+message ListReelResponse {
+    repeated ReelResponse data = 1;
+    int32 total = 2;
+}
+
+message NewsFeedOfUser {
+    uint64 id = 1;
+    uint64 postId = 2;
+    uint64 userId = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+}
+
+message NewsFeedOfGroup {
+    uint64 id = 1;
+    uint64 postId = 2;
+    uint64 groupId = 3;
+    string createdAt = 4;
+    string updatedAt = 5;
+}
+
+message CountByOwnerRequest {
+    OwnerOf ownerOf = 1 [json_name = "ownerOf"];
+    uint64 ownerId = 2 [json_name = "ownerId"];
+}
+
+message CountByOwnerResponse {
+    uint32 count = 1 [json_name = "count"];
+}
+
+message MyNewsFeedRequest {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional bool isReel = 4;
+    optional bool isPost = 5;
+}
+
+message PublicNewsFeedSearch {
+    uint64 userId = 1;
+    int32 page = 2;
+    int32 size = 3;
+    string text = 4;
+    optional bool isReel = 5;
+    optional bool isPost = 6;
+}
+
+message AdminHideRequest {
+    uint64 newsFeedId = 1;
+    bool isHidden = 2;
+}
+
+message AdminNewsFeedSearch {
+    int32 page = 1;
+    int32 size = 2;
+    string text = 3;
+    optional bool isReel = 4;
+    optional bool isPost = 5;
+    optional uint64 ownerId = 6;
+    optional OwnerOf ownerOf = 7;
+    optional int32 visibility = 8;
+    optional bool isHidden = 9; // Lọc theo trạng thái ẩn (removed_at)
+    optional uint64 createdBy = 10; // Lọc theo người tạo
+}

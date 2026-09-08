@@ -1,0 +1,17 @@
+{
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "go.useLanguageServer": true,
+  "go.work": "${workspaceFolder}/go.work",
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/.tools": true,
+    "**/.work": true,
+    "**/bin": true
+  },
+  "search.exclude": {
+    "**/*.pb.go": true,
+    "**/*_grpc.pb.go": true,
+    "**/.tools/**": true,
+    "**/.work/**": true
+  }
+}

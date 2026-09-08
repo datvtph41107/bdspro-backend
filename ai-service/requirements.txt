@@ -1,0 +1,34 @@
+# Core web framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.10.0
+python-multipart>=0.0.20
+httpx>=0.27.0
+
+# QR Code reading
+pyzbar>=0.1.9
+Pillow>=10.0.0
+
+# RAG & Embeddings (for main.py - optional if only using http_server.py)
+# openai>=1.57.0
+# chromadb>=0.5.0
+# sentence-transformers>=3.3.0
+
+# gRPC (for grpc.py - optional if only using http_server.py)
+# grpcio>=1.69.0
+# grpcio-tools>=1.69.0
+
+# OCR (for national_card_ocr.py - optional if only using QR code)
+pytesseract>=0.3.10
+# opencv-python>=4.10.0
+# passporteye>=0.4.0
+# readmrz>=0.0.2  # Optional
+
+# Training dependencies (only needed for training models)
+# datasets>=4.2.0
+# accelerate>=0.26.0
+
+# Testing (only needed for development)
+# pytest>=8.3.0
+# pytest-asyncio>=0.24.0
+# locust>=2.32.0

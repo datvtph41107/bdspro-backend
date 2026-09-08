@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+import "google/api/annotations.proto";
+
+// Message definitions
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  string codeName = 4;
+  uint32 level = 5;
+  optional uint64 parentId = 6;
+  string unit = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+}
+
+message RegionListRequest {
+  int32 page = 1;
+  int32 size = 2;
+  optional string text = 3;
+  optional uint32 level = 4;
+  optional uint64 parentId = 5;
+}
+
+message RegionListResponse {
+  repeated Region data = 1;
+  int64 total = 2;
+}
+
+message RegionDetailRequest {
+  uint64 id = 1;
+}
+
+// Admin Region Service
+service AdminRegionService {
+  // @Summary Lấy danh sách địa chỉ (tỉnh/huyện/xã)
+  // @Description Lấy danh sách địa chỉ theo level: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường
+  // @Tags Admin - Region
+  // @Accept json
+  // @Produce json
+  // @Param page query int false "Trang hiện tại" default(1)
+  // @Param size query int false "Số lượng item" default(20)
+  // @Param text query string false "Tìm kiếm theo tên"
+  // @Param level query int false "Cấp địa chỉ: 1=Tỉnh/TP, 2=Quận/Huyện, 3=Xã/Phường"
+  // @Param parentId query int false "ID của cấp cha"
+  // @Success 200 {object} RegionListResponse
+  // @Router /v2/bdspro/admin/region/list [get]
+  rpc GetRegionList(RegionListRequest) returns (RegionListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/region/list"
+    };
+  }
+
+  // @Summary Lấy chi tiết địa chỉ
+  // @Description Lấy thông tin chi tiết của một địa chỉ
+  // @Tags Admin - Region
+  // @Accept json
+  // @Produce json
+  // @Param id path int true "ID của địa chỉ"
+  // @Success 200 {object} Region
+  // @Router /v2/bdspro/admin/region/{id} [get]
+  rpc GetRegionDetail(RegionDetailRequest) returns (Region) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/region/{id}"
+    };
+  }
+}
+
+// ========== Area Region (Khu vực - bảng regions) ==========
+message AreaRegion {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  bool active = 4;
+}
+
+message CreateAreaRegionRequest {
+  string name = 1;
+  uint32 code = 2;
+  bool active = 3;
+}
+
+message UpdateAreaRegionRequest {
+  uint64 id = 1;
+  string name = 2;
+  uint32 code = 3;
+  bool active = 4;
+}
+
+message DeleteAreaRegionRequest {
+  uint64 id = 1;
+}
+
+message GetAreaRegionByIDRequest {
+  uint64 id = 1;
+}
+
+message AreaRegionResponse {
+  AreaRegion region = 1;
+}
+
+message DeleteAreaRegionResponse {
+  bool success = 1;
+}
+
+message ListAreaRegionsRequest {}
+message ListAreaRegionsResponse {
+  repeated AreaRegion data = 1;
+}
+
+message GetAreaRegionsByIDsRequest {
+  repeated uint64 ids = 1;
+}
+
+message GetAreaRegionsByIDsResponse {
+  repeated AreaRegion regions = 1;
+}
+
+service AdminAreaRegionService {
+  rpc CreateAreaRegion(CreateAreaRegionRequest) returns (AreaRegionResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/area-regions"
+      body: "*"
+    };
+  }
+  rpc UpdateAreaRegion(UpdateAreaRegionRequest) returns (AreaRegionResponse) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/area-regions/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteAreaRegion(DeleteAreaRegionRequest) returns (DeleteAreaRegionResponse) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/area-regions/{id}"
+    };
+  }
+  rpc GetAreaRegionByID(GetAreaRegionByIDRequest) returns (AreaRegionResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/area-regions/{id}"
+    };
+  }
+  rpc ListAreaRegions(ListAreaRegionsRequest) returns (ListAreaRegionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/area-regions"
+    };
+  }
+  rpc GetAreaRegionsByIDs(GetAreaRegionsByIDsRequest) returns (GetAreaRegionsByIDsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/area-regions/by-ids"
+    };
+  }
+}

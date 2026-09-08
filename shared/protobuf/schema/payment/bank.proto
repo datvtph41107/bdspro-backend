@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package paymentpb;
+option go_package = "pb/types/payment;paymentpb";
+
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service BankService {
+  rpc GetAll(sharepb.Empty) returns (BankList) {
+    option (google.api.http) = {
+      get: "/v2/payment/bank/all"
+    };
+  }
+}
+
+message Bank {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string logo = 4;
+  bool active = 5;
+  string description = 6;
+}
+
+message BankList {
+  repeated Bank data = 1;
+  int64 total = 2;
+}

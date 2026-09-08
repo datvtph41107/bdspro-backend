@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service OrganizationLogActivityService {
+    rpc GetOrganizationLogActivityByID(GetOrganizationLogActivityByIDRequest) returns (GetOrganizationLogActivityByIDResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/log/{id}"
+        };
+    }
+
+    rpc GetOrganizationLogActivitiesByOrganizationID(GetOrganizationLogActivitiesByOrganizationIDRequest) returns (GetOrganizationLogActivitiesByOrganizationIDResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/{organization_id}/logs"
+        };
+    }
+
+    rpc GetOrganizationLogActivitiesByActorID(GetOrganizationLogActivitiesByActorIDRequest) returns (GetOrganizationLogActivitiesByActorIDResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/logs/actor/{actor_id}"
+        };
+    }
+}
+
+message GetOrganizationLogActivityByIDRequest {
+    uint32 id = 1 [json_name = "id"];
+}
+
+message GetOrganizationLogActivityByIDResponse {
+    OrganizationLogActivity log = 1 [json_name = "log"];
+}
+
+message GetOrganizationLogActivitiesByOrganizationIDRequest {
+    uint32 organization_id = 1 [json_name = "organization_id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message GetOrganizationLogActivitiesByOrganizationIDResponse {
+    repeated OrganizationLogActivity logs = 1 [json_name = "logs"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message GetOrganizationLogActivitiesByActorIDRequest {
+    uint32 actor_id = 1 [json_name = "actor_id"];
+    optional uint32 page = 2 [json_name = "page"];
+    optional uint32 size = 3 [json_name = "size"];
+}
+
+message GetOrganizationLogActivitiesByActorIDResponse {
+    repeated OrganizationLogActivity logs = 1 [json_name = "logs"];
+    uint32 total = 2 [json_name = "total"];
+}
+
+message OrganizationLogActivity {
+    uint32 id = 1 [json_name = "id"];
+    int64 created_at = 2 [json_name = "created_at"];
+    int64 updated_at = 3 [json_name = "updated_at"];
+    uint32 created_by = 4 [json_name = "created_by"];
+    uint32 updated_by = 5 [json_name = "updated_by"];
+    uint32 organization_id = 6 [json_name = "organization_id"];
+    uint32 actor_id = 7 [json_name = "actor_id"];
+    string log_type = 8 [json_name = "log_type"];
+    string log_data = 9 [json_name = "log_data"];
+} 

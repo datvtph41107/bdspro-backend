@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// =====================================================
+// IMPORT SERVICE
+// =====================================================
+
+service ImportService {
+  
+  // PreviewImport - Phân tích file GeoJSON trước khi import
+  rpc PreviewImport(PreviewImportRequest) returns (PreviewImportResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/import/preview"
+      body: "*"
+    };
+  }
+  
+  // ImportGeoJson - Upload file JSON/GeoJSON/NDJSON.
+  // Trả về ngay ImportGeoJsonResponse (batchId, status=processing, message) sau khi ghi file tạm + gắn batch;
+  // phần đọc feature và INSERT region/label chạy nền (không block response).
+  // Kết quả cuối (completed / failed, số lượng, lỗi): gọi GetImportBatchStatus với batchId.
+  rpc ImportGeoJson(ImportGeoJsonRequest) returns (ImportGeoJsonResponse) {
+    option (google.api.http) = {
+      post: "/form/tqd/admin/import/geojson"
+      body: "*"
+    };
+  }
+  
+  // GetImportBatchStatus - Kiểm tra trạng thái batch import
+  rpc GetImportBatchStatus(GetImportBatchStatusRequest) returns (ImportBatchStatusResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/import/batches/{batchId}"
+    };
+  }
+  
+  // RollbackImport - Rollback batch import
+  rpc RollbackImport(RollbackImportRequest) returns (RollbackImportResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/admin/import/batches/{batchId}"
+    };
+  }
+
+  // ListImportRegionErrors - Danh sách bản ghi lỗi import (qh_region_import_error_logs) theo layer, có phân trang
+  rpc ListImportRegionErrors(ListImportRegionErrorsRequest) returns (ListImportRegionErrorsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/admin/layers/{layerId}/import/errors"
+    };
+  }
+
+  // RetryImportError - Retry một bản ghi lỗi theo id: insert lần lượt từng region trong regions_payload; lỗi insert vẫn ghi log mới (CreateBatch)
+  rpc RetryImportError(RetryImportErrorRequest) returns (RetryImportErrorResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/admin/import/errors/{errorId}/retry"
+      body: "*"
+    };
+  }
+}
+
+// =====================================================
+// PREVIEW IMPORT
+// =====================================================
+
+message PreviewImportRequest {
+  string geoJson = 1;
+  uint64 layerId = 2;
+}
+
+message PreviewImportResponse {
+  int32 totalFeatures = 1;
+  repeated string availableFields = 2;
+  
+  message FieldStat {
+    string fieldName = 1;
+    int32 coverage = 2;
+    repeated string distinctValues = 3;
+  }
+  repeated FieldStat fieldStats = 3;
+  
+  message FeatureSample {
+    int32 index = 1;
+    string geometryType = 2;
+    google.protobuf.Struct properties = 3;
+  }
+  repeated FeatureSample samples = 4;
+}
+
+// =====================================================
+// IMPORT GEOJSON
+// =====================================================
+
+// ImportGeoJsonRequest
+//
+// Chuẩn upload file (giống file-service): REST trên **tqd-service HTTP** (POST /v2/tqd/admin/import/geojson) dùng
+//   Content-Type: multipart/form-data
+//   - file (bắt buộc): file .json / .geojson / .ndjson — stream vào file tạm, xóa sau khi job xong
+//   - file_format: auto | geojson | ndjson
+//   - layer_id (bắt buộc)
+//   - label_field, default_label_id, source_file_name (tuỳ chọn)
+//   - label_mappings: chuỗi JSON object map name -> id, ví dụ {"a":1,"b":2}
+//   - validate_geometry, auto_fix_geometry, skip_invalid: true / false
+//
+// GRPC / gateway JSON (transcoding): điền file_content (bytes, JSON base64).
+message ImportGeoJsonRequest {
+  bytes file_content = 1;
+
+  string file_format = 2;
+  uint64 layer_id = 3;
+
+  string label_field = 4;
+  map<string, uint64> label_mappings = 5;
+  optional uint64 default_label_id = 6;
+
+  optional string source_file_name = 7;
+  bool validate_geometry = 8;
+  bool auto_fix_geometry = 9;
+  bool skip_invalid = 10;
+}
+
+message ImportGeoJsonResponse {
+  uint32 code = 1;
+  string batchId = 2;              // dùng với GetImportBatchStatus để lấy kết quả sau khi job nền xong
+  string status = 3;             // processing tại thời điểm trả về (đồng bộ qh_layers.import_status)
+  string message = 4;            // hướng dẫn: poll GetImportBatchStatus(batchId) cho completed/failed + thống kê
+}
+
+// =====================================================
+// BATCH MANAGEMENT
+// =====================================================
+
+message GetImportBatchStatusRequest {
+  string batchId = 1;
+}
+
+message ImportBatchStatusResponse {
+  string batchId = 1;
+  string status = 2;                   // "completed", "failed", "processing"
+  int32 totalFeatures = 3;
+  int32 successCount = 4;
+  int32 failedCount = 5;
+  string createdAt = 6;
+  string completedAt = 7;
+  repeated string errorMessages = 8;
+}
+
+message RollbackImportRequest {
+  string batchId = 1;
+}
+
+message RollbackImportResponse {
+  bool success = 1;
+  string message = 2;
+  int32 deletedCount = 3;
+}
+
+// ListImportRegionErrorsRequest — layerId từ path; page, size query (mặc định theo Pagable)
+message ListImportRegionErrorsRequest {
+  uint64 layerId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+}
+
+// ImportError — khớp bảng qh_region_import_error_logs (regions_payload là chuỗi JSON)
+message ImportError {
+  uint64 id = 1;
+  string importBatchId = 2;
+  uint64 layerId = 3;
+  string errorMessage = 4;
+  string regionsPayload = 5; // JSON: mảng RegionSnapshot đã lưu khi batch insert lỗi
+  int32 batchSize = 6;
+  int32 retryCount = 7;
+  string status = 8; // pending | resolved | ignored
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message ListImportRegionErrorsResponse {
+  repeated ImportError data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}
+
+message RetryImportErrorRequest {
+  uint64 errorId = 1;
+}
+
+message RetryImportErrorResponse {
+  bool success = 1;
+  string message = 2;
+  int32 totalItems = 3;
+  int32 successCount = 4;
+  int32 failedCount = 5;
+}

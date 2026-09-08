@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package bdspropb;
+option go_package = "pb/types/bdspro;bdspropb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+service AssetLegalService {
+  rpc Get (AssetLegalDTO) returns (AssetLegalListDTO) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset-legal"
+    };
+  }
+  rpc Detail (sharepb.IdRequest) returns (AssetLegalDTO) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/asset-legal/{id}"
+    };
+  };
+  rpc Create (AssetLegalDTO) returns (AssetLegalDTO) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/asset-legal"
+      body: "*"
+    };
+  };
+  rpc Update (AssetLegalDTO) returns (AssetLegalDTO) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/asset-legal/{id}"
+    };
+  };
+  rpc Delete (sharepb.IdRequest) returns (sharepb.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/asset-legal/{id}"
+    };
+  };
+}
+
+message AssetLegalDTO {
+  uint64 id = 1;
+  optional bool archived = 2;
+  string documentName = 3;
+  string documentUrl = 4;
+  string issuedDate = 5;
+  string expiryDate = 6;
+  string description = 7;
+  uint64 assetId = 8;
+  optional uint64 relatedSplitMergeId = 9;
+}
+
+message AssetLegalListDTO {
+  repeated AssetLegalDTO data = 1;
+  uint32 totalElements = 2;
+}

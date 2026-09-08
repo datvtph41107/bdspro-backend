@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package hubpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "pb/types/hub;hubpb";
+
+service ErrorLogService {
+  rpc LogError(LogErrorRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/hub/error/log"
+      body: "*"
+    };
+  };
+}
+
+message LogErrorRequest {
+  string message = 1;              // Error message (required)
+  optional string stack = 2;       // Stack trace
+  optional string screen = 3;      // Screen/route name
+  optional string user_id = 4;     // User ID from app
+  optional ErrorLogDevice device = 5;  // Device info
+  optional google.protobuf.Struct extra = 6;  // breadcrumbs, etc.
+}
+
+message ErrorLogDevice {
+  optional string platform = 1;    // Platform.OS (ios, android)
+  optional string model = 2;       // Device model
+  optional string os_version = 3;  // OS version
+  optional string app_version = 4; // App version
+}

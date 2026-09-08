@@ -1,0 +1,863 @@
+syntax = "proto3";
+
+package bdspropb;
+import "bdspro/asset.proto";
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+import "user/profile.proto";
+import "bdspro/post.proto";
+import "bdspro/deposite.proto";
+import "bdspro/transaction.proto";
+import "shared/common.proto";
+import "bdspro/deal.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service ProductService {
+  // New sync methods
+  rpc CheckVersionSync(CheckVersionSyncRequest) returns (CheckVersionSyncResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/version/{resource}/{id}/sync/status"
+    };
+  }
+  rpc SyncProducts(SyncProductsRequest) returns (SyncProductsResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/{resource}/sync"
+      body: "*"
+    };
+  }
+  rpc GetCurrentVersion(GetCurrentVersionRequest) returns (GetCurrentVersionResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/version/{profileId}"
+    };
+  }
+  rpc BatchGetProducts(BatchGetProductsRequest) returns (BatchGetProductsResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/batch"
+      body: "*"
+    };
+  }
+  
+  rpc GetDetailByIds (IdRequest) returns (ProductInternalResponse);
+  rpc GetProductAttachmentByIds (IdRequest) returns (ProductAttachmentResponse);
+  rpc ArchiveProduct (ArchivedRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/archived"
+      body: "*"
+    };
+  };
+  rpc ChildDevideProduct (DevideChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/devide"
+      body: "*"
+    };
+  };
+  // rpc ChildHistories (IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/product/child/history/{id}"
+  //   };
+  // };
+  rpc ChildMergeProduct (MergeChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/merge"
+      body: "*"
+    };
+  };
+  rpc ChildMergeAll (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/merge-all/{id}"
+      body: "*"
+    };
+  };
+  rpc ChildSplit (SaveChildRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/child/split"
+      body: "*"
+    };
+  };
+  rpc ProductDeposite (DepositeRequest) returns (bdspropb.Transaction) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/deposite"
+      body: "*"
+    };
+  };
+  rpc DeleteDeposite (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/product/deposite/{id}"
+    };
+  };
+  rpc ExportProduct (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/export/{id}"
+      body: "*"
+    };
+  };
+  rpc ProductMe(sharepb.SyncRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/me"
+    };
+  };
+  // deprecated
+  rpc ProductNew (ProductSaveRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/new"
+      body: "*"
+    };
+  };
+  rpc RentStatus (StatusRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/rent-status"
+      body: "*"
+    };
+  };
+  rpc RentVisibility (VisibilityRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/rent-visibility"
+      body: "*"
+    };
+  };
+  rpc SaleStatus (StatusRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/sale-status"
+      body: "*"
+    };
+  };
+  rpc SaleVisibility (VisibilityRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/sale-visibility"
+      body: "*"
+    };
+  };
+  rpc Suggest (SuggestRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/suggest"
+      body: "*"
+    };
+  };
+  rpc SuggestDeepseek (SuggestRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/suggest/deepseek"
+      body: "*"
+    };
+  };
+  rpc GetDetail (sharepb.SyncRequest) returns (ProductResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/detail"
+    };
+  };
+  rpc CreateProductForUser (CreateProductForUserRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/create-for-user"
+      body: "*"
+    };
+  };
+  rpc CreateProductForOrg (CreateProductForOrgRequest) returns (CreateProductResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/create-for-org"
+      body: "*"
+    };
+  };
+  // rpc GetHistories (IdRequest) returns (HistoryResponse) {
+  //   option (google.api.http) = {
+  //     get: "/v2/bdspro/v2/product/{id}/histories"
+  //   };
+  // };
+  rpc GetMembers (IdRequest) returns (MemberResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/members"
+    };
+  };
+  rpc GetPosts (sharepb.SyncRequest) returns (PostResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/posts"
+    };
+  };
+  rpc GetDeals (sharepb.SyncRequest) returns (GetOrganizationDealsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/deals"
+    };
+  };
+  rpc UpdateProduct(UpdateProductRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/product/edit/{id}"
+      body: "*"
+    };
+  };
+  rpc DeleteProduct (IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/product/{id}"
+    };
+  };
+  rpc AreaInfo (IdRequest) returns (AreaInfoResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/area-info/{id}"
+    };
+  };
+  
+  rpc GetGroupProducts (GroupProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/group/{groupId}"
+    };
+  };
+
+  rpc CurrentOrganizationProducts (ProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/organization/current"
+    };
+  };
+  rpc CreateOrganizationProduct (ProductSaveRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/organization"
+      body: "*"
+    };
+  };
+  rpc GetUserProducts (UserProductSearch) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/user/{userId}"
+    };
+  };
+  rpc ProductSummary (ProductSearch) returns (ProductSummaryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/summary"
+    };
+  };
+  
+  // API liên kết Product với Asset
+  rpc LinkProductAsset (LinkProductAssetRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/link-asset"
+      body: "*"
+    };
+  };
+  
+  rpc UnlinkProductAsset (UnlinkProductAssetRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/unlink-asset"
+      body: "*"
+    };
+  };
+  
+  rpc GetAssetsByProduct (sharepb.IdRequest) returns (ProductAssetListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/assets"
+    };
+  };
+  
+  rpc GetPriceHistory (PriceHistoryRequest) returns (PriceHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{productId}/price-history"
+    };
+  };
+
+  // GetProductTimestamps trả về timestamp của các loại data liên quan đến product.
+  // FE dùng để check thay đổi trước khi gọi các API detail, giảm tải server.
+  rpc GetProductTimestamps (sharepb.IdRequest) returns (ProductTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/{id}/timestamp"
+    };
+  };
+  
+  rpc GetProductNavigation (ProductSearch) returns (ProductNavigationResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/product/navigation"
+    };
+  };
+
+  rpc ApplyPriceUpdate(ApplyPriceUpdateRequest)
+    returns (ApplyPriceUpdateResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/property/{productId}/apply-price"
+      body: "*"
+    };
+  };
+
+   rpc UpdateProductSource(UpdateProductSourceRequest) returns (Response) {
+      option (google.api.http) = {
+        put: "/v2/bdspro/product/{productId}/source"
+        body: "*"
+      };
+  }
+
+  rpc GetProductPriceDetail(ProductPriceDetailRequest) returns (ProductPriceDetailResponse) {
+    option (google.api.http) = {
+        get: "/v2/bdspro/products/{productId}/price-detail"
+    };
+  }
+
+  rpc ArchiveProducts(ArchiveProductsRequest) returns (Response) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/product/archive"
+      body: "*"
+    };
+  }
+}
+
+enum ProductTransactionType {
+  PRODUCT_TRANSACTION_TYPE_UNSPECIFIED = 0;
+  PRODUCT_TRANSACTION_TYPE_SALE = 10;
+  PRODUCT_TRANSACTION_TYPE_RENT = 20;
+}
+
+
+enum ProductPriceStatus {
+  PRICE_STATUS_UNSPECIFIED = 0;
+  PRICE_STATUS_FIXED = 1;     
+  PRICE_STATUS_NEGOTIABLE = 2;
+  PRICE_STATUS_CONTACT = 3;   
+}
+
+
+message CheckVersionSyncRequest {
+  string resource = 1;  
+  uint64 id = 2;
+  int64 lastSync = 3; 
+  int64 limit = 4;
+}
+
+message CheckVersionSyncResponse {
+  bool needSync = 1;          
+  int64 currentVersion = 2;    
+  int32 changeCount = 3;      
+  repeated uint64 changedIds = 4; 
+  optional int64 next = 5;
+}
+
+message GetVersionDataRequest {
+  string resource = 1;          
+  repeated uint64 resourceIds = 3;
+}
+
+message GetVersionDataResponse {
+  repeated ProductResponse data = 1;  
+  int32 total = 2;        
+}
+
+
+message SyncProductsRequest {
+  string resource = 1;
+  uint64 profileId = 2;
+  int64 lastVersionTimestamp =3;
+  int32 pageSize = 4;
+  string pageToken = 5;
+  repeated uint64 ids = 6;
+}
+
+message SyncProductsResponse {
+  repeated ChangedProduct productIds = 1;
+  repeated uint64 removedIds = 2;
+  int64 currentSyncTime  = 3;
+  string nextToken = 4;
+  bool hasMore = 5;
+}
+
+message ChangedProduct {
+  uint64 id = 1;
+  int64 updatedAt = 2;
+  int32 changeType = 3;
+}
+
+message GetCurrentVersionRequest {
+  uint64 profileId = 1;
+}
+
+message GetCurrentVersionResponse {
+  int64 currentVersionTimestamp = 1;
+}
+
+message BatchGetProductsRequest {
+  repeated uint64 ids = 1;
+}
+
+message BatchGetProductsResponse {
+  map<uint64, ProductResponse> products = 1;  
+}
+
+message ApplyPriceUpdateRequest {
+  uint64 productId = 1;
+  double price = 2;
+  ProductPriceStatus priceStatus = 3;
+  optional string changeNote = 4;
+}
+
+message ApplyPriceUpdateResponse {
+  uint64 productId = 1;
+  double oldPrice = 2;
+  double newPrice = 3;
+  double pricePerM2 = 4;
+  string updatedAt = 5;
+}
+
+message UpdateProductRequest {
+  uint64 id = 1;
+  // Basic fields
+  optional uint64 productId = 2;
+  string name = 3;
+  uint32 status = 4;
+  uint32 visibility = 5;
+  string description = 6;
+  string note = 7;
+  
+  // Property fields
+  optional uint64 propertyTypeId = 8;
+  double areaLand = 9; // AreaLand
+  double areaTotal = 10;
+  uint32 direction = 11; // EHouseOrient
+  uint32 balconyDirection = 12; // EHouseOrient
+  optional uint32 bedrooms = 13; // Số phòng ngủ
+  optional uint32 bathrooms = 14; // Số phòng tắm
+  optional double roadWidth = 15; // Đường vào (m2)
+  optional uint32 floors = 16; // Số tầng
+  
+  // Amenity
+  repeated uint64 amenityIds = 17;
+  
+  // Price
+  optional double price = 18;
+  optional double importPrice = 19;
+  optional double commissionValue = 20;
+  uint32 commissionType = 21;
+  bool channelPrice = 22;
+  string changeNote = 23;
+  
+  // Media
+  repeated MediaItem mediaItems = 24;
+  
+  // Nguồn
+  uint32 sourceType = 25; // ESourceType
+  uint64 sourceContactId = 26;
+  string sourceContactNote = 27;
+  uint32 sourceStatus = 28; // ESourceStatus
+  uint32 priority = 29; // EPriority
+  repeated uint64 sourceTagIds = 30;
+  
+  // Dự án
+  optional uint64 projectId = 31;
+
+  // mining
+  uint32 miningMode = 32;   
+  string miningScope = 33;
+  string miningDescription = 34;
+}
+
+message PropertyUpdateRequest {
+  optional uint64 propertyTypeId = 1;
+  optional string title = 2;
+  optional uint64 locationId = 3;
+  optional string addressDetail = 4;
+  optional double latitude = 5;
+  optional double longitude = 6;
+  optional string mapUrl = 7;
+  optional uint64 projectId = 8;
+  optional string buildingBlock = 9;
+  optional string level = 10;
+  optional string unitCode = 11;
+  optional double areaTotal = 12;
+  optional double areaLand = 13;
+  optional double areaResidential = 14;
+  optional uint32 legalStatus = 15;
+  optional string legalNote = 16;
+  optional uint64 buildingInfoId = 17;
+  optional uint32 recordStatus = 18;
+  optional uint32 direction = 19;
+}
+
+message UpdateProductSourceRequest {
+  uint64 productId = 1;
+  uint32 sourceType = 2;
+  uint64 sourceContactId = 3;
+  string sourceContactNote = 4;
+   uint32 sourceStatus = 5; 
+  uint32 priority = 6;
+  repeated uint64 sourceTagIds = 7;
+  // uint64 assignedUserId = 5;
+}
+
+
+message PingResponse {}
+message ProductInternalRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sort = 3;
+  string text = 4;
+}
+message ProductInternalResponse {
+  repeated ProductResponse data = 1;
+}
+
+message ProductAttachmentResponse {
+  repeated ProductAttachment data = 1;
+}
+
+message StatusRequest {
+  uint64 id = 1;
+  int32 status = 2;
+  uint64 contactId = 3;
+  string note = 4;
+  double amount = 5;
+  string phone = 6;
+}
+
+message VisibilityRequest {
+  uint64 id = 1;
+  int32 visibility = 2;
+}
+
+message ProductPriceDetailRequest {
+  uint64 productId = 1;
+}
+
+message ProductPriceDetailResponse {
+  ProductPriceDetail data = 1;
+}
+
+message ProductPriceDetail {
+  optional double price = 1;
+  int64 pricePerM2 = 2;
+  string currency = 3;
+  optional double cost = 4;
+  optional double commission = 5;
+  optional bool channel = 6;
+  optional int64 channelValue = 7;
+  optional double profit = 8;
+  optional string note = 9;
+}
+
+message DeleteDepositeRequest {
+  uint64 id = 1;
+}
+
+message SaveChildRequest {
+  uint64 parentId = 1;
+  string name = 2;
+  string code = 3;
+  double area = 4;
+  string description = 5;
+  string note = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  repeated uint64 amenityIds = 9;
+  optional uint64 projectId = 10;
+  optional uint64 provinceId = 11;
+  optional uint64 districtId = 12;
+  optional uint64 wardId = 13;
+  int32 transactionType = 14;
+  ProductPrice priceData = 15;
+  repeated MediaItem mediaItems = 16;
+  HouseInfo houseInfo = 17;
+  ProductPrivate productPrivate = 18;
+  string googleMapLink = 19;
+  uint32 sourceType = 20;
+  uint32 saleStatus = 21;
+  uint32 rentStatus = 22;
+  PostSaveWithProduct post = 23;
+  AssetCreateWithProduct asset = 24;
+  int32 saleVisibility = 25;
+  int32 rentVisibility = 26;
+  optional uint64 imageId = 27;
+  optional uint64 sourceContactId = 28;
+  string sourceContactNote = 29;
+}
+
+message PostSaveWithProduct {
+  uint64 productId = 1;
+  string title = 2;
+  string content = 3;
+  double postPrice = 4;
+  int32 transactionType = 5;
+  int32 visibility = 6;
+  int32 packageVisible = 7;
+  int32 expiredAt = 8;
+  int32 numDate = 9;
+  bool hidden = 10;
+  repeated MediaItem metadatas = 11;
+}
+
+message AssetCreateWithProduct {
+  double purchasePrice = 1;
+  int32 purchaseDate = 2;
+  int32 legalStatus = 3;
+  int32 rentStatus = 4;
+  string description = 5;
+  repeated LegalItem legalItems = 6;
+}
+
+
+message ProductSearch {
+  uint32 page = 1;
+  uint32 size = 2;
+  string sort = 3;
+  string text = 4;
+  uint64 ownerId = 5;
+  uint64 ownerType = 6;
+  optional uint64 parentId = 7;
+  uint64 propertyTypeId = 8;
+  uint64 docTypeId = 9;
+  uint64 projectId = 10;
+  optional uint64 provinceId = 11;
+  optional uint64 districtId = 12;
+  optional uint64 wardId = 13;
+  int32 transactionType = 14;
+  int32 saleStatus = 15;
+  int32 rentStatus = 16;
+  int32 saleVisibility = 17;
+  int32 rentVisibility = 18;
+  int32 sourceType = 19;
+  int32 transactionPrice = 20;
+  int32 salePrice = 21;
+  int32 rentPrice = 22;
+  int32 saleCommission = 23;
+  int32 rentCommission = 24;
+  int32 rentPaymentCycle = 25;
+  optional bool archived = 26;
+  string transactionTypes = 27;
+  string propertyTypeIds = 28;
+  string projectIds = 29;
+  string saleStatuses = 30;
+  string rentStatuses = 31;
+  string saleVisibilities = 32;
+  string rentVisibilities = 33;
+  string sourceTypeIds = 34;
+  string visibilities = 35;
+  string provinceIds = 36;
+  string wardIds = 37;
+  optional uint64 id = 38;
+}
+
+message GroupProductSearch {
+  uint64 groupId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string sort = 4;
+  string text = 5;
+  optional uint64 parentId = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  optional uint64 projectId = 9;
+  optional uint64 provinceId = 10;
+  optional uint64 districtId = 11;
+  optional uint64 wardId = 12;
+  optional int32 transactionType = 13;
+  optional int32 saleStatus = 14;
+  optional int32 rentStatus = 15;
+  optional int32 saleVisibility = 16;
+  optional int32 rentVisibility = 17;
+  optional int32 sourceType = 18;
+  optional int32 transactionPrice = 19;
+  optional int32 salePrice = 20;
+  optional int32 rentPrice = 21;
+  optional int32 saleCommission = 22;
+  optional int32 rentCommission = 23;
+  optional int32 rentPaymentCycle = 24;
+  optional bool archived = 25;
+}
+
+message UserProductSearch {
+  uint64 userId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string sort = 4;
+  string text = 5;
+  optional uint64 parentId = 6;
+  optional uint64 propertyTypeId = 7;
+  optional uint64 docTypeId = 8;
+  optional uint64 projectId = 9;
+  optional uint64 provinceId = 10;
+  optional uint64 districtId = 11;
+  optional uint64 wardId = 12;
+  optional int32 transactionType = 13;
+  optional int32 saleStatus = 14;
+  optional int32 rentStatus = 15;
+  optional int32 saleVisibility = 16;
+  optional int32 rentVisibility = 17;
+  optional int32 sourceType = 18;
+  optional int32 transactionPrice = 19;
+  optional int32 salePrice = 20;
+  optional int32 rentPrice = 21;
+  optional int32 saleCommission = 22;
+  optional int32 rentCommission = 23;
+  optional int32 rentPaymentCycle = 24;
+  optional bool archived = 25;
+}
+
+message SearchResponse {
+  repeated ProductResponse data = 1;
+  int64 totalElements = 2;
+}
+
+message MemberResponse {
+  repeated ProductAccess data = 1;
+}
+
+message ProductAccess {
+  uint64 id = 1;
+	uint64 productId = 2;
+	string fields = 3;
+	uint32 targetType = 4;
+	uint64 targetId = 5;
+	float commission = 6;
+	string targetName = 7;
+	string avatar = 8;
+}
+
+message PostResponse {
+  repeated Post data = 1;
+}
+
+
+message AreaInfoResponse {
+  double totalArea = 1;
+	double avaiableArea = 2;
+	double splitArea = 3;
+}
+
+message DevideChildRequest {
+  uint64 parentId = 1;
+  repeated SaveChildRequest childs = 2;
+}
+
+message MergeChildRequest {
+  uint64 parentId = 1;
+  repeated uint64 childIds = 2;
+}
+
+
+message ProductSaveRequest {
+	optional uint64 parentId = 1;
+	string name = 2;
+	string code = 3;
+	double area = 4;
+	string description = 5;
+	string note = 6;
+	optional uint64 propertyTypeId = 7;
+	optional uint64 docTypeId = 8;
+	repeated uint64 amenityIds = 9;
+	optional uint64 projectId = 10;
+	optional uint64 provinceId = 11;
+	optional uint64 districtId = 12;
+	optional uint64 wardId = 13;
+	int32 transactionType = 14;
+	ProductPrice priceData = 15;
+	repeated MediaItem mediaItems = 16;
+	HouseInfo houseInfo = 17;
+	ProductPrivate productPrivate = 18;
+	string googleMapLink = 19;
+	uint32 sourceType = 20;
+	uint32 saleStatus = 21;
+	uint32 rentStatus = 22;
+	PostSaveWithProduct post = 23;
+	AssetCreateWithProduct asset = 24;
+	uint32 saleVisibility = 25;
+	uint32 rentVisibility = 26;
+	uint32 ownerType = 27;
+  uint64 id = 28;
+  uint64 ownerId = 29;
+  uint32 visibility = 30;
+  optional uint64 imageId = 31;
+	optional uint64 sourceContactId = 32;
+	string sourceContactNote = 33;
+  string certificateHouseNote = 34;
+}
+
+
+message SuggestRequest {
+  string content = 1;
+}
+
+message CreateProductForUserRequest {
+  ProductSaveRequest product = 1;
+  uint64 profileId = 2;
+  bool isOwner = 3;
+  uint64 roleId = 4;
+}
+
+message CreateProductForOrgRequest {
+  ProductSaveRequest product = 1;
+  uint64 organizationId = 2;
+  bool isOwner = 3;
+  uint64 roleId = 4;
+}
+
+message CreateProductResponse {
+  uint64 productId = 1;
+  string message = 2;
+}
+
+message EmptyRequest {}
+
+message ProductSummaryResponse {
+  int64 totalProducts = 1;
+  int64 sellingProducts = 2;
+  double totalValue = 3;
+}
+
+// Messages cho Product-Asset linking
+message LinkProductAssetRequest {
+  repeated uint64 productIds = 1; // Nhiều sản phẩm
+  uint64 assetId = 2;             // 1 tài sản
+}
+
+message UnlinkProductAssetRequest {
+  uint64 productId = 1;
+  uint64 assetId = 2;
+}
+
+message ProductAssetListResponse {
+  repeated Asset data = 1;
+}
+
+message PriceHistoryRequest {
+  uint64 productId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  int64 timestamp = 4;
+}
+
+message PriceHistoryResponse {
+  repeated PriceHistoryItem data = 1;
+  int64 total = 2;
+}
+
+message PriceHistoryItem {
+  uint64 id = 1;
+  uint64 productId = 2;
+  ProductTransactionType transactionType = 3;
+  string currency = 4;
+  Price old = 5;
+  Price new = 6;
+  bool isCurrentPrice = 7;
+  string createdAt = 8;
+  string changeNote = 9;
+  optional uint64 distributeId = 10;
+}
+
+message Price {
+  double price = 1;
+  double commission = 2;
+  uint32 commissionType = 3;
+  UserInfo createdBy = 4;
+  string changeNote = 5;
+  bool channelPrice = 6;
+}
+
+message UserInfo {
+  uint64 id = 1;
+  string name = 2;
+  string avatar = 3;
+  string role = 4;
+}
+
+message ProductNavigationResponse {
+  uint64 previousId = 1; // ID sản phẩm trước đó (0 nếu không có)
+  uint64 nextId = 2;     // ID sản phẩm tiếp theo (0 nếu không có)
+}
+
+message ArchiveProductsRequest {
+  repeated uint64 ids = 1;
+  bool archived = 2;
+}
+
+// ProductTimestampsResponse: map key -> timestamp (ms) cho FE check cache
+// Keys: detail, priceHistory, distributions, posts, deals, productNotes, appointments, contacts, propertyHistory
+message ProductTimestampsResponse {
+  map<string, int64> timestamps = 1;
+}

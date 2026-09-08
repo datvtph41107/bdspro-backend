@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE commerce_command_effects
+    ADD COLUMN IF NOT EXISTS reason TEXT NOT NULL DEFAULT '';
+
+COMMIT;

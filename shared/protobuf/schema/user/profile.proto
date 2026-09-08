@@ -1,0 +1,455 @@
+syntax = "proto3";
+
+package userpb;
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "auth/role.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/user;userpb";
+
+service ProfileService {
+    rpc GetProfileByIds(sharepb.GetProfileByIdsRequest) returns (sharepb.GetProfileByIdsResponse);
+    rpc GetProfileByPhones(GetProfileByPhonesRequest) returns (sharepb.GetProfileByIdsResponse);
+    rpc GetProfileInfo(IdRequest) returns (ProfilePublicInfo) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/info/{id}"
+        };
+    }
+    rpc GetProfileInfoV3(sharepb.SyncRequest) returns (sharepb.TotalResponseProto) {
+        option (google.api.http) = {
+            get: "/v3/user/profile/{access}/{id}"
+        };
+    }
+    rpc GetProfileInfoMe(sharepb.Empty) returns (sharepb.UserV3Proto) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/info/me"
+        };
+    }
+
+    // GenTileSessionToken — tạo sessionK + sessionEncryptKey, lưu Redis (TTL ~5 phút) cho tile ci_*.
+    rpc GenTileSessionToken(sharepb.Empty) returns (GenTileSessionTokenResponse) {
+        option (google.api.http) = {
+            post: "/v2/user/profile/session"
+            body: "*"
+        };
+    }
+
+    rpc ListAccountMe(sharepb.Empty) returns (AccountInfoResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/accounts/me"
+        };
+    }
+    rpc SetInfo(SetInfoRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/set-info"
+            body: "*"
+        };
+    }
+    
+    rpc SetPerson(sharepb.UserV3Proto) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/data"
+            body: "*"
+        };
+    }
+    rpc UpdatePrivacySetting(UpdatePrivacySettingRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            put: "/v2/user/profile/privacy"
+            body: "*"
+        };
+    }
+    rpc QuickSetup(sharepb.UserV3Proto) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/profile/quick-setup"
+            body: "*"
+        };
+    }
+    rpc SearchProfilePublic(SearchProfilePublicRequest) returns (SearchProfilePublicResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/search/public"
+        };
+    }
+    rpc CheckAccountStatus(CheckAccountStatusRequest) returns (CheckAccountStatusResponse);
+    
+    // Tìm user theo số điện thoại
+    rpc FindByPhone(FindByPhoneRequest) returns (FindByPhoneResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/find-by-phone"
+        };
+    }
+    
+    // Lấy phần trăm hoàn thành cập nhật tài khoản
+    rpc GetProfileCompletion(sharepb.Empty) returns (ProfileCompletionResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/completion"
+        };
+    }
+    
+    // Lấy trạng thái online/offline của user
+    rpc GetStatusOnline(IdRequest) returns (StatusOnlineResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/status-online/{id}"
+        };
+    }
+}
+
+service TagService {
+    rpc AdminCreateTag(AdminTagRequest) returns (TagItem) {
+        option (google.api.http) = {
+            post: "/v2/user/admin/tags"
+            body: "*"
+        };
+    }
+
+    rpc AdminUpdateTag(AdminTagRequest) returns (TagItem) {
+        option (google.api.http) = {
+            put: "/v2/user/admin/tags/{id}"
+            body: "*"
+        };
+    }
+
+    rpc AdminDeleteTag(sharepb.IdRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            delete: "/v2/user/admin/tags/{id}"
+        };
+    }
+
+    rpc AdminListTags(AdminTagListRequest) returns (AdminTagListResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/admin/tags"
+        };
+    }
+
+    rpc ListTagsByType(TagListRequest) returns (TagListResponse) {
+        option (google.api.http) = {
+            get: "/v2/user/profile/tags/{tagType}"
+        };
+    }
+
+    rpc GetProfileTagsByType(GetProfileTagsByTypeRequest) returns (TagListResponse) {
+        option (google.api.http) = {
+            get: "/v2/pub/user/profile/tags/{tagType}"
+        };
+    }
+}
+
+message ProfileItem {
+    uint64 id = 1;
+    string fullName = 2;
+    string avatar = 4;
+}
+
+message Profile {
+    uint64 id = 1;
+    string fullName = 2;
+    string email = 3;
+    string avatar = 4;
+    string cover = 5;
+    string phone = 6;
+    string address = 7;
+    uint32 gender = 8;
+    string birthDate = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}
+
+message ProfilePublicInfo {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string avatar = 3;
+    string phone = 5;
+    string phone2 = 6;
+    string email = 7;
+    string taxCode = 8;
+    string address = 9;
+    string backgroundImage = 10;
+    string referralCode = 11;
+    string referralBy = 12;
+    uint32 roleRealEstate = 13;
+    string position = 14;
+    uint64 departmentId = 15;
+    string birth = 16;
+    string startDate = 17;
+    string frontIdentify = 18;
+    string backIdentify = 19;
+    string slogan = 20;
+    string website = 21;
+    string facebook = 22;
+    string instagram = 23;
+    string twitter = 24;
+    string linkedin = 25;
+    string youtube = 26;
+    string introduction = 27;
+    uint32 statusOnline = 28;
+    repeated CertificationItem certifications = 29;
+    repeated ProfessionItem professions = 30;
+    RateStats rateStats = 31;
+    sharepb.FriendItem friendStatus = 32;
+    bool following = 33;
+    uint32 tabDefault = 34;
+    uint32 visibility = 35;
+    uint32 profileVisibility = 36;
+    optional uint64 provinceId = 37;
+    optional uint64 wardId = 38;
+    uint32 gender = 39;
+    optional string provinceName = 40;
+    optional string wardName = 41;
+    repeated PurposeUseItem purposeUses = 43;
+    repeated MainAreaItem mainAreas = 42;
+    repeated TagItem tags = 44;
+    optional sharepb.KYCV3Proto kyc = 45;
+    uint32 visibilityIntroduce = 46;
+    uint32 visibilityProfession = 47;
+    uint32 visibilityMainArea = 48;
+    uint32 visibilityFriends = 49;
+    uint32 visibilitySignature = 50;
+    repeated uint32 viewRoles = 51;
+    string workplace = 52;
+    string roleTitle = 53;
+}
+
+message RateStats {
+	uint64 totalReviews = 1;
+	float averageScore = 2;
+	uint64 star1Count = 3;
+	uint64 star2Count = 4;
+	uint64 star3Count = 5;
+	uint64 star4Count = 6;
+	uint64 star5Count = 7;
+}
+
+message GenTileSessionTokenResponse {
+    // sessionK — số ngẫu nhiên dạng string (tránh mất precision trên JS > 2^53-1).
+    string sessionK = 1;
+    int64 expiresIn = 2;
+    // sessionEncryptKey — AES-256 key base64; client gửi header X-Session-Encrypt-Key khi tải tile ci_*.
+    string sessionEncryptKey = 3;
+}
+
+message IdRequest {
+    uint64 id = 1;
+}
+
+message GetProfileByPhonesRequest {
+    repeated string phones = 1;
+}
+
+message AccountInfoResponse {
+    repeated AccountInfo data = 1;
+    int32 total = 2;
+}
+
+message AccountInfo {
+    optional uint64 profileId = 1;
+    optional string fullName = 2;
+    optional string avatar = 3;
+    optional string phone = 4;
+    optional string email = 5;
+    optional string backgroundImage = 8;
+    optional uint64 organizationId = 9;
+    optional uint32 groupId = 10;
+    optional uint32 ownerType = 11;
+}
+
+message SetInfoRequest {
+    string phone = 1;
+    string phone2 = 2;
+    string email = 3;
+    string taxCode = 4;
+    string fullName = 5;
+    string address = 6;
+    string avatar = 7;
+    string backgroundImage = 8;
+    string position = 9;
+    string workplace = 53;
+    string roleTitle = 54;
+    uint64 departmentId = 10;
+    string birth = 11;
+    string startDate = 12;
+    string frontIdentify = 13;
+    string backIdentify = 14;
+    string slogan = 15;
+    string website = 16;
+    string facebook = 17;
+    string instagram = 18;
+    string twitter = 19;
+    string linkedin = 20;
+    string youtube = 21;
+    string introduction = 22;
+    uint32 visibility = 23;
+    uint32 profileVisibility = 24;
+    uint32 statusOnline = 25;
+    uint32 tabDefault = 26;
+    uint32 roleRealEstate = 27;
+
+    repeated CertificationItem certifications = 28;
+    repeated uint64 certificationRemoveIds = 29;
+    repeated ProfessionItem professions = 30;
+    repeated uint64 professionRemoveIds = 31;
+    repeated uint64 mainAreaIds = 32;
+    repeated uint64 purposeUseIds = 33;
+    repeated TagItem tags = 34;
+    bool updateTags = 35;
+}
+
+message SetPersonRequest {
+    optional string fullName = 1;
+    optional uint32 gender = 2;
+    optional string birth = 3;
+    optional string phone = 4;
+    optional string email = 5;
+    optional uint64 provinceId = 6;
+    optional uint64 wardId = 7;
+}
+
+message UpdatePrivacySettingRequest {
+    uint32 visibility = 1;
+    uint32 profileVisibility = 2;
+    uint32 statusOnline = 3;
+    repeated PersonConfigInput personConfigs = 4;
+}
+
+message PersonConfigInput {
+    uint64 id = 1;
+    string key = 2;
+    bool checked = 3;
+    bool isDefault = 4;
+    uint32 channel = 5;
+}
+
+message CertificationItem {
+    uint64 id = 1;
+    string name = 2;
+    string issuer = 3;
+    string fileUrl = 4;
+    string fileType = 5;
+    string fileName = 6;
+    string issueDate = 7;
+}
+
+message ProfessionItem {
+    uint64 id = 1;
+    string name = 2;
+    string issuer = 3;
+    string issueDate = 4;
+    uint32 verifiedStatus = 5;
+    optional bool isActive = 6;
+}
+
+message TagItem {
+    uint64 id = 1;
+    string name = 2;
+    uint32 tagType = 3;
+    bool isDefault = 4;
+    bool isActive = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
+}
+
+message AdminTagRequest {
+    uint64 id = 1;
+    string name = 2;
+    uint32 tagType = 3;
+    bool isActive = 4;
+    bool isDefault = 5;
+}
+
+message TagListRequest {
+    uint32 tagType = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string text = 4;
+    string sort = 5;
+}
+
+message TagListResponse {
+    repeated TagItem data = 1;
+    uint32 total = 2;
+}
+
+message AdminTagListRequest {
+    repeated uint32 tagTypes = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+    string text = 4;
+    string sort = 5;
+    optional bool isDefault = 6;
+}
+
+message AdminTagListResponse {
+    repeated TagItem data = 1;
+    uint32 total = 2;
+}
+
+message GetProfileTagsByTypeRequest {
+    uint64 profileId = 1;
+    uint32 tagType = 2; // Mặc định là 20 (mainArea)
+}
+
+message MainAreaItem {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
+}
+
+message PurposeUseItem {
+    uint64 id = 1;
+    string name = 2;
+    optional string description = 3;
+}
+
+message UserSearchItem {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string avatar = 3;
+    optional sharepb.FriendItem friendStatus = 4;
+}
+
+message SearchProfilePublicRequest {
+    string text = 1;
+    uint32 page = 2;
+    uint32 size = 3;
+}
+
+message SearchProfilePublicResponse {
+    repeated UserSearchItem data = 1;
+    int32 total = 2;
+}
+
+message CheckAccountStatusRequest {
+    uint64 profileId = 1;
+}
+
+message CheckAccountStatusResponse {
+    uint64 profileId = 1;
+    uint32 status = 2;
+    string statusText = 3;
+    bool isLocked = 4;
+    bool canLogin = 5;
+}
+
+message FindByPhoneRequest {
+    string phone = 1; // Số điện thoại cần tìm
+}
+
+message FindByPhoneResponse {
+    string phone = 1; // Thông tin user tìm được (null nếu không tìm thấy)
+    string fullName = 2;
+    string avatar = 3;
+}
+
+message ProfileCompletionResponse {
+    uint32 percentage = 1; // Phần trăm hoàn thành (0-100)
+    uint32 completedFields = 2; // Số field đã hoàn thành
+    uint32 totalFields = 3; // Tổng số field cần thiết
+    repeated string missingFields = 4; // Danh sách các field còn thiếu
+}
+
+message StatusOnlineResponse {
+    uint64 profileId = 1; // Profile ID của user
+    bool online = 2;      // Trạng thái online (true) hoặc offline (false)
+    optional string offAt = 3; // Thời gian offline (nếu offline)
+}
+
+

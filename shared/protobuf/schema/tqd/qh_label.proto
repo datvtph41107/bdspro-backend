@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service QHLabelService {
+
+  rpc CreateLabel(CreateLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels"
+      body: "*"
+    };
+  }
+
+  rpc BatchCreateLabels(BatchCreateLabelsRequest) returns (BatchCreateLabelsResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/batch"
+      body: "*"
+    };
+  }
+
+  rpc GetLabel(GetLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/labels/{id}"
+    };
+  }
+
+  rpc UpdateLabel(UpdateLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/labels/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/labels/{id}"
+    };
+  }
+
+  rpc BatchDeleteLabels(BatchDeleteLabelsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/batch-delete"
+      body: "*"
+    };
+  }
+
+  rpc MergeLabels(MergeLabelsRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/labels/merge"
+      body: "*"
+    };
+  }
+
+  rpc ListAdminLabels(ListAdminLabelsRequest) returns (ListLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/labels/list"
+    };
+  }
+
+  rpc ListLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/layers/{layerId}/labels"
+    };
+  }
+
+  rpc ListClientLabelsByLayer(ListLabelsByLayerRequest) returns (ListLabelsResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers/{layerId}/labels"
+    };
+  }
+
+  rpc GetClientLabel(GetLabelRequest) returns (QHLabelResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/labels/{id}"
+    };
+  }
+}
+
+message CreateLabelRequest {
+  uint64 layerId = 1;
+  string name = 2;
+  string displayName = 3;
+  string description = 4;
+  string color = 5;
+  double fillOpacity = 6;
+  string strokeColor = 7;
+  int32 strokeWidth = 8;
+  string strokeDashArray = 20;
+  int32 displayOrder = 9;
+  bool isVisible = 10;
+  int32 minZoom = 11;
+  int32 maxZoom = 12;
+  optional uint32 status = 13;
+  optional string standardAt = 14;
+}
+
+message BatchCreateLabelsRequest {
+  uint64 layerId = 1;
+  repeated BatchCreateLabelItem items = 2;
+}
+
+message BatchCreateLabelItem {
+  string name = 1;
+  string displayName = 2;
+  string description = 3;
+  string color = 4;
+  double fillOpacity = 5;
+  string strokeColor = 6;
+  int32 strokeWidth = 7;
+  string strokeDashArray = 14;
+  int32 displayOrder = 8;
+  bool isVisible = 9;
+  int32 minZoom = 10;
+  int32 maxZoom = 11;
+  optional uint32 status = 12;
+  optional string standardAt = 13;
+}
+
+message BatchCreateLabelsResponse {
+  repeated QHLabelResponse created = 1;
+  repeated string skippedNames = 2;
+}
+
+message UpdateLabelRequest {
+  uint64 id = 1;
+  optional string name = 2;
+  optional string displayName = 3;
+  optional string description = 4;
+  optional string color = 5;
+  optional double fillOpacity = 6;
+  optional string strokeColor = 7;
+  optional int32 strokeWidth = 8;
+  optional string strokeDashArray = 20;
+  optional int32 displayOrder = 9;
+  optional bool isVisible = 10;
+  optional int32 minZoom = 11;
+  optional int32 maxZoom = 12;
+  optional uint32 status = 13;
+  optional string standardAt = 14;
+  optional uint64 landUseId = 15;
+  optional uint64 legendId = 16;
+  optional uint64 layerId = 17;
+}
+
+message GetLabelRequest {
+  uint64 id = 1;
+  int64 timestamp = 2;
+}
+
+message DeleteLabelRequest {
+  uint64 id = 1;
+}
+
+message BatchDeleteLabelsRequest {
+  repeated uint64 ids = 1;
+}
+
+message MergeLabelsRequest {
+  uint64 layerId = 1;
+  repeated uint64 sourceLabelIds = 2;
+  MergeLabelsNewLabel newLabel = 3;
+}
+
+message MergeLabelsNewLabel {
+  string name = 1;
+  string displayName = 2;
+  string description = 3;
+  string color = 4;
+  double fillOpacity = 5;
+  string strokeColor = 6;
+  int32 strokeWidth = 7;
+  string strokeDashArray = 14;
+  int32 displayOrder = 8;
+  bool isVisible = 9;
+  int32 minZoom = 10;
+  int32 maxZoom = 11;
+  optional uint32 status = 12;
+  optional string standardAt = 13;
+}
+
+message ListAdminLabelsRequest {
+  optional uint64 layerId = 1;
+  bool includeInactive = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  int64 timestamp = 5;
+}
+
+message ListLabelsByLayerRequest {
+  uint64 layerId = 1;
+  bool includeInactive = 2;
+  uint32 page = 3;
+  uint32 size = 4;
+  int64 timestamp = 5;
+}
+
+message QHLabelResponse {
+  uint64 id = 1;
+  uint64 layerId = 2;
+  string name = 3;
+  string displayName = 4;
+  string description = 5;
+  string color = 6;
+  double fillOpacity = 7;
+  string strokeColor = 8;
+  int32 strokeWidth = 9;
+  string strokeDashArray = 20;
+  int32 displayOrder = 10;
+  bool isVisible = 11;
+  int32 minZoom = 12;
+  int32 maxZoom = 13;
+  uint32 status = 14;
+  string createdAt = 15;
+  string updatedAt = 16;
+  int64 regionCount = 17;
+  double totalAreaHa = 18;
+  string standardAt = 19;
+  optional uint64 landUseId = 21;
+  optional uint64 legendId = 22;
+}
+
+message ListLabelsResponse {
+  repeated QHLabelResponse data = 1;
+  int64 total = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+}

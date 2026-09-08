@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "shared/common.proto";
+import "bdspro/public.proto";
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service AdminPropertyTypeService {
+  rpc GetList(SearchQueryRequest) returns (PropertyTypeListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/admin/property-type/list"
+    };
+  };
+  rpc Create(PropertyType) returns (PropertyType) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/admin/property-type"
+      body: "*"
+    };
+  };
+  rpc Update(PropertyType) returns (PropertyType) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/admin/property-type/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/admin/property-type/{id}"
+    };
+  };
+}

@@ -1,0 +1,1 @@
+-- Không rollback nội dung editorial đã có thể được thay đổi sau khi deploy.

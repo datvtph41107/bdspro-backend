@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+service GroupLogActivityService {
+    
+    rpc GetGroupLogActivities(GetGroupLogActivitiesRequest) returns (GetGroupLogActivitiesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/group/log-activity/{groupId}"
+        };
+    }  
+}
+
+message GetGroupLogActivitiesRequest {
+    uint32 groupId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message GetGroupLogActivitiesResponse {
+    repeated GroupLogActivity logActivities = 1;
+    uint32 total = 2;
+}
+
+message GroupLogActivity {
+    uint32 id = 1;
+    uint32 groupId = 2;
+    uint32 actorId = 3;
+    string logType = 4;
+    string logData = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
+}

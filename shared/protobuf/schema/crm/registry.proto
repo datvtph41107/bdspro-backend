@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package crmpb;
+
+option go_package = "pb/types/crm;crmpb";
+
+import "shared/common.proto";
+import "crm/internal.proto";
+import "google/api/annotations.proto";
+
+// Registry Service - Service registry for microservices
+service RegistryService {
+  rpc List(sharepb.Empty) returns (GetRegistryListResponse) {
+    option (google.api.http) = {
+      get: "/v2/feedback/registry"
+    };
+  }
+}
+
+message GetRegistryListResponse {
+  repeated FeedbackRegistry data = 1;
+}
+
+message RegisterServiceRequest {
+  uint32 registry_key = 1;
+  string registry_name = 2;
+  int32 port = 3;
+  string service = 4;
+}
+
+message RegisterServiceResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetServiceRequest {
+  string name = 1;
+}
+
+message GetServiceResponse {
+  bool found = 1;
+  string service_info = 2;
+}
+
+message GetAllServicesResponse {
+  repeated ServiceInfo services = 1;
+}
+
+message ServiceInfo {
+  string name = 1;
+  string service_info = 2;
+}
+
+message UnregisterServiceRequest {
+  string name = 1;
+}
+
+message UnregisterServiceResponse {
+  bool success = 1;
+  string message = 2;
+}

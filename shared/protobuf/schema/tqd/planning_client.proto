@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package tqdpb;
+option go_package = "pb/types/tqd;tqdpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
+
+message ListPlanningProjectsRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string search = 3;
+  string planning_type = 4;
+  string planning_level = 5;
+  string validity_status = 6;
+  string process_status = 7;
+  uint64 jurisdiction_id = 8;
+  string area = 9;
+  string legal_status = 10;
+  google.protobuf.BoolValue has_layer = 11;
+  string sort_by = 12;
+  string sort_order = 13;
+  string decision = 14;
+  string updated_from = 15;
+  string updated_to = 16;
+}
+
+message PlanningProjectIdRequest {
+  uint64 project_id = 1;
+}
+
+message ListPlanningDocumentsRequest {
+  uint64 project_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string keyword = 4;
+  string document_type = 5;
+  string status = 6;
+}
+
+message PlanningDocumentIdRequest {
+  uint64 document_id = 1;
+}
+
+message ListPlanningEventsRequest {
+  uint64 project_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message FollowPlanningProjectRequest {
+  uint64 project_id = 1;
+  string note = 2;
+}
+
+message ListFollowedPlanningProjectsRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string search = 3;
+}
+
+message ParcelQuickViewRequest {
+  uint64 parcel_id = 1;
+}
+
+// Canonical planning client contract. Gateway registers generated HTTP handlers; TQD exposes gRPC only.
+service PlanningClientService {
+  rpc ListPlanningProjects(ListPlanningProjectsRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects"
+    };
+  }
+  rpc GetPlanningProject(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}"
+    };
+  }
+  rpc ListPlanningDocuments(ListPlanningDocumentsRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/documents"
+      additional_bindings {
+        get: "/v2/tqd/client/planning-projects/{project_id}/planning-documents"
+      }
+    };
+  }
+  rpc GetPlanningDocument(PlanningDocumentIdRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-documents/{document_id}"
+    };
+  }
+  rpc ListPlanningEvents(ListPlanningEventsRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/events"
+    };
+  }
+  rpc FollowPlanningProject(FollowPlanningProjectRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      post: "/v2/tqd/client/planning-projects/{project_id}/follow"
+      body: "*"
+    };
+  }
+  rpc UnfollowPlanningProject(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/client/planning-projects/{project_id}/follow"
+    };
+  }
+  rpc GetPlanningProjectFollowStatus(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/follow-status"
+    };
+  }
+  rpc ListFollowedPlanningProjects(ListFollowedPlanningProjectsRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/followed"
+    };
+  }
+  // gRPC compatibility method. Public HTTP ownership belongs to
+  // TqdSeoProjectionService.GetParcelQuickViewPublic.
+  rpc GetParcelQuickView(ParcelQuickViewRequest) returns (google.protobuf.BytesValue);
+  rpc GetPlanningProjectProjection(google.protobuf.StringValue) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{value}/projection"
+    };
+  }
+  rpc ListPlanningProjectLayers(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/planning-projects/{project_id}/layers"
+    };
+  }
+}

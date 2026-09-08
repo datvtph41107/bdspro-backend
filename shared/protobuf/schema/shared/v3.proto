@@ -1,0 +1,288 @@
+syntax = "proto3";
+
+package sharepb;
+option go_package = "pb/types/shared;sharepb";
+
+import "google/protobuf/timestamp.proto";
+
+message RequestV3Proto {
+    uint64 id = 1;
+    string text = 2;
+    uint32 page = 3;
+    uint32 size = 4;
+    string access = 5; // p: public, s: private
+}
+message ItemV3Proto {
+    uint64 id = 1;
+    string name = 2;
+    // tag
+    uint32 itemType = 3;
+
+    // file upload
+    optional string fileName = 4;
+    optional string fileUrl = 5;
+    optional string fileType = 6;
+
+    // approved
+    optional uint32 status = 7;
+    optional uint64 issuer = 8;
+    optional string issuedAt = 9;
+}
+message ItemV3PageProto {
+    repeated ItemV3Proto data = 1;
+    uint32 total = 2;
+}
+
+message AddressV3Proto {
+    string detail = 1;
+    optional uint64 provinceId = 2;
+    string provinceName = 3;
+    optional uint64 districtId = 4;
+    string districtName = 5;
+    optional uint64 wardId = 6;
+    string wardName = 7;
+}
+
+message PriceV3Proto {
+    string currency = 1;
+    float salePrice = 2;
+    float saleCommission = 3;
+    uint32 saleCommissionType = 4;
+    float rentPrice = 5;
+    float rentCommission = 6;
+    uint32 rentCommissionType = 7;
+    uint32 rentPaymentCycle = 8;
+}
+
+message HouseInfoV3Proto {
+    int32 numBedroom = 1;
+    int32 numBathroom = 2;
+    int32 numFloor = 3;
+    float numFront = 4;
+    int32 numCarPark = 5;
+    string orientation = 6;
+    string furniture = 7;
+}
+
+message ProductV3Proto {
+    uint64 id = 1;
+    string name = 2;
+    string description = 3;
+    optional ItemV3Proto propertyType = 4;
+    optional ItemV3Proto docType = 5;
+    repeated ItemV3Proto amenities = 6;
+    AddressV3Proto address = 7;
+    float area = 8;
+    optional HouseInfoV3Proto houseInfo = 9;
+    ItemV3Proto transactionType = 10;
+    PriceV3Proto priceData = 11;
+    optional ItemV3Proto sourceType = 12;
+}
+
+message KYCV3Proto {
+    uint64 id = 1;
+    uint64 profileId = 2;
+    string fullName = 3;
+    string identityCard = 4;
+    string frontImage = 5;
+    string backImage = 6;
+    string selfieImage = 7;
+    uint32 status = 8;
+    string rejectReason = 9;
+    uint64 reviewedBy = 10;
+    string reviewedAt = 11;
+    string createdAt = 12;
+    string updatedAt = 13;
+    optional string idNumber = 14;      // Số CMND/CCCD (trả về nếu là owner)
+    optional string dateOfBirth = 15;   // Ngày sinh (trả về nếu là owner)
+    optional string expiryDate = 16;    // Ngày hết hạn (trả về nếu là owner)
+}
+
+message UserV3Proto {
+    uint64 profileId = 1;
+    string fullName = 2;
+    string avatar = 3;
+    uint32 roleRealEstate = 4;
+    repeated uint64 mainAreaIds = 5;
+    repeated uint64 purposeUseIds = 6;
+    repeated ItemV3Proto mainAreaNews = 7;
+    repeated ItemV3Proto mainAreas = 8;
+    repeated ItemV3Proto purposeUses = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+    string backgroundImage = 12;
+    uint32 gender = 13;
+    string birth = 14;
+    string phone = 15;
+    string email = 16;
+    AddressV3Proto address = 17;
+    uint32 visibility = 18;
+    uint32 profileVisibility = 19;
+    uint32 statusOnline = 20;
+    repeated ItemV3Proto tagSpecialities = 21;
+    repeated ItemV3Proto tagMainAreas = 22;
+    repeated ItemV3Proto tagProjects = 23;
+    repeated ItemV3Proto tagJobs = 24;
+    optional KYCV3Proto kyc = 25;
+    string phone2 = 26;
+    string zaloUrl = 27;
+    string facebookUrl = 28;
+    string instagramUrl = 29;
+    string twitterUrl = 30;
+    string linkedinUrl = 31;
+    string youtubeUrl = 32;
+    string websiteUrl = 33;
+    string blogUrl = 34;
+    string otherUrl = 35;
+    bool signatureVisible = 36;
+    string introduction = 37;
+
+    repeated ItemV3Proto tags = 38;
+    bool updateTags = 39;
+
+    repeated uint32 viewRoles = 40;
+    uint32 visibilityIntroduce = 41;
+    uint32 visibilityProfession = 42;
+    uint32 visibilityMainArea = 43;
+    uint32 visibilityFriends = 44;
+    uint32 visibilitySignature = 45;
+    repeated ItemV3Proto certifications = 46;
+    repeated ItemV3Proto medias = 47;
+    repeated string fieldSets = 48;
+    string workplace = 49;
+    string roleTitle = 50;
+    // sessionK — deprecated; dùng POST /v2/user/profile/session → sessionEncryptKey.
+    string sessionK = 51;
+}
+
+message OTPV3Proto {
+    string otp = 1;
+    string phone = 2;
+    string fullname = 3;
+    string mode = 4;
+    uint64 authId = 5;
+}
+
+message SessionV3Proto {
+    uint64 sessionId = 1;
+    uint64 authId = 2;
+    string deviceId = 3;
+    string platform = 4;
+    string version = 5;
+    string os = 6;
+    string deviceName = 7;
+    string createdDate = 8;
+    string finishedDate = 9;
+    string ipRequest = 10;
+    uint64 totalRequest = 11;
+    string userAgent = 12;
+    bool activate = 13;
+    string sessionKey = 14;
+    string clientId = 15;
+    string lastLogin = 16;
+    string logoutAt = 17;
+    string lastReq = 18;
+}
+
+message PersonConfigV3Proto {
+    uint64 id = 1;
+    string key = 2;
+    bool checked = 3;
+    bool is_default = 4;
+    uint64 userId = 5;
+    uint32 channel = 6;
+  }
+
+message PinV3Proto {
+    uint64 authId = 1;
+    string pin = 2;
+    uint32 pinCheckTime = 3;
+    string pinDate = 4;
+    bool isActive = 5;
+    string lockedUntil = 6;
+}
+
+message UserStatusV3Proto {
+    uint64 authId = 1;
+    bool active = 2;
+    bool verified = 3;
+    string lockedUntil = 4;
+    string updatedAt = 5;
+}
+
+message DeviceV3Proto {
+    uint64 id = 1;
+    string deviceId = 2;
+    string deviceName = 3;
+    string deviceType = 4;
+    string platform = 5;
+    string osVersion = 6;
+    string appVersion = 7;
+    string buildNumber = 8;
+    string manufacturer = 9;
+    string model = 10;
+    string locale = 11;
+    string timezone = 12;
+    string pushToken = 13;
+    string lastSeenAt = 14;
+    uint64 authId = 15;
+    uint64 profileId = 16;
+    uint64 organizationId = 17;
+    string ipAddress = 18;
+    string userAgent = 19;
+}
+
+message AuthDataV3Proto {
+    uint64 authId = 1;
+    optional UserStatusV3Proto status = 2;
+    optional PinV3Proto pin = 3;
+    repeated DeviceV3Proto devices = 4;
+    optional UserV3Proto user = 5;
+    repeated PersonConfigV3Proto personConfigs = 6;
+}
+
+message FriendV3Proto {
+    uint64 id = 1;
+    uint64 receiverId = 2;
+    optional uint64 createdBy = 3;
+    uint32 status = 4;
+}
+
+message ContactInfoV3Proto {
+    int64 numFriend = 1;
+    int64 numFollower = 2;
+    int64 numFollowing = 3;
+    optional uint64 contactId = 4;
+    optional uint64 blockId = 5;
+    optional uint64 reportId = 6;
+    optional uint64 followId = 7;
+    repeated UserV3Proto friendCommons = 8;
+    uint64 numFriendCommons = 9;
+}
+
+message RateStatsV3Proto {
+    uint64 totalReviews = 1;
+    float averageScore = 2;
+    uint64 star1Count = 3;
+    uint64 star2Count = 4;
+    uint64 star3Count = 5;
+    uint64 star4Count = 6;
+    uint64 star5Count = 7;
+}
+
+message BDSProDashboardProto {
+    uint64 totalProduct = 1;
+    uint64 totalAsset = 2;
+    uint64 totalPost = 3;
+    uint64 totalProject = 4;
+}
+
+message TotalResponseProto {
+    optional UserV3Proto user = 1;
+    optional KYCV3Proto kyc = 2;
+    optional ItemV3Proto province = 3;
+    optional FriendV3Proto friendStatus = 4;
+    optional RateStatsV3Proto rateStats = 5;
+    optional ContactInfoV3Proto contactInfo = 6;
+    optional BDSProDashboardProto bdsproInfo = 7;
+}

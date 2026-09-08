@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+message ProductV3Proto {
+  uint64 id = 1;
+  string name = 2;
+}

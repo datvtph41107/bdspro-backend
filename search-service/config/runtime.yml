@@ -1,0 +1,20 @@
+server:
+  port: 8008
+  tcp_port: 8211
+
+elastic:
+  search:
+    url: http://localhost:9200
+    user: ""
+    password: ""
+
+# Non-sensitive defaults shared by every deployment. Runtime endpoints and
+# secrets are supplied through environment variables.
+jwt:
+  key-generate: ""
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization

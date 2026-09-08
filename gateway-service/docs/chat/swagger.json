@@ -1,0 +1,1920 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API for chat service",
+        "title": "Chat Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/v2/chat",
+    "paths": {
+        "/conversation/add-user": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm thành viên vào đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Thêm thành viên",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và thành viên cần thêm",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.AddUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.AddUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/create-org": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo đoạn hội thoại tổ chức",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Tạo đoạn hội thoại tổ chức",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại tổ chức cần tạo",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.CreateOrgChannelRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.CreateOrgChannelResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/delete": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Xóa đoạn hội thoại",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại cần xóa",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.DeleteRoomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.DeleteRoomResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách thành viên trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách thành viên",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetListParticipantResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/mute": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ngưng thông báo trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Ngưng thông báo",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và thông báo cần ngưng",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.MuteConversationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.MuteConversationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/remove-member": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa thành viên khỏi đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Xóa thành viên",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và thành viên cần xóa",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.RemoveUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.RemoveUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/{conversationId}/edit": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chỉnh sửa đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Chỉnh sửa đoạn hội thoại",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại cần chỉnh sửa",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.EditChannelRequest"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID đoạn hội thoại",
+                        "name": "conversationId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.EditChannelResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy đoạn hội thoại theo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy đoạn hội thoại theo ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "include_members",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID đoạn hội thoại",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetConversationByIdResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversation/{id}/setting": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy cài đặt đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy cài đặt đoạn hội thoại",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID đoạn hội thoại",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetSettingResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách đoạn hội thoại theo các tiêu chí được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách đoạn hội thoại",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetConversationsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tạo đoạn hội thoại với các thành viên được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Tạo đoạn hội thoại",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại cần tạo",
+                        "name": "conversation",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.CreateConversationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.CreateConversationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tin nhắn theo các tiêu chí được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách tin nhắn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetMessagesResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gửi tin nhắn đến đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Gửi tin nhắn",
+                "parameters": [
+                    {
+                        "description": "Tin nhắn cần gửi",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.SendMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.SendMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/delete-violation": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Xóa vi phạm tin nhắn đã được gửi trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Xóa vi phạm",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần xóa vi phạm",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.DeleteViolationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.DeleteViolationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/edit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chỉnh sửa tin nhắn đã được gửi trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Chỉnh sửa tin nhắn",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần chỉnh sửa",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.EditMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.EditMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/files": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tệp tin trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách tệp tin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetFilesResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/forward": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Chuyển tiếp tin nhắn đến đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Chuyển tiếp tin nhắn",
+                "parameters": [
+                    {
+                        "description": "Tin nhắn cần chuyển tiếp",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.ForwardMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.ForwardMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/images": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách hình ảnh trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách hình ảnh",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetImagesResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/links": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách liên kết trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách liên kết",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetLinksResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/pin": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Đánh dấu tin nhắn đã đọc",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần đánh dấu",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.PinMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.PinMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/pinned": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách tin nhắn được đánh dấu trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách tin nhắn được đánh dấu",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "conversationId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetMessagesResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/reaction": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Thêm phản hồi vào tin nhắn đã được gửi trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Thêm phản hồi",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần thêm phản hồi",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.ReactionMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.ReactionMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/read": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Đánh dấu tin nhắn đã đọc trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Đánh dấu tin nhắn đã đọc",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần đánh dấu",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.MarkAsReadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.MarkAsReadResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/read-receipt": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lấy danh sách đọc tin nhắn trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Lấy danh sách đọc tin nhắn",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "messageId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.GetReadReceiptResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/recall": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gỡ tin nhắn đã được gửi trong đoạn hội thoại được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Gỡ tin nhắn",
+                "parameters": [
+                    {
+                        "description": "Đoạn hội thoại và tin nhắn cần gỡ",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.RecallMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.RecallMessageResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Tìm kiếm tin nhắn và đoạn hội thoại theo các tiêu chí được chỉ định",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Tìm kiếm",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "SearchTypeEnum_SearchTypeMessage",
+                            "SearchTypeEnum_SearchTypeConversation"
+                        ],
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/chatpb.SearchResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "chatpb.AddUserRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.AddUserResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.BackgroundImage": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imageType": {
+                    "$ref": "#/definitions/chatpb.ImageType"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "chatpb.Conversation": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "avatars": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
+                },
+                "conversationId": {
+                    "type": "integer"
+                },
+                "lastMessage": {
+                    "$ref": "#/definitions/chatpb.Message"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "participantIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/chatpb.ConversationTypeEnum"
+                },
+                "unreadCount": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "chatpb.ConversationTypeEnum": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "ConversationTypeEnum_ConversationTypePrivate",
+                "ConversationTypeEnum_ConversationTypeGroup",
+                "ConversationTypeEnum_ConversationTypeChannel"
+            ]
+        },
+        "chatpb.CreateConversationRequest": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "backgroundImageId": {
+                    "type": "integer"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "forbid_forward": {
+                    "type": "boolean"
+                },
+                "is_broadcast": {
+                    "type": "boolean"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/chatpb.ConversationTypeEnum"
+                }
+            }
+        },
+        "chatpb.CreateConversationResponse": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.CreateOrgChannelRequest": {
+            "type": "object",
+            "properties": {
+                "departmentId": {
+                    "type": "integer"
+                },
+                "forbid_forward": {
+                    "type": "boolean"
+                },
+                "is_broadcast": {
+                    "type": "boolean"
+                },
+                "orgId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.CreateOrgChannelResponse": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.DeleteRoomRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.DeleteRoomResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.DeleteViolationRequest": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.DeleteViolationResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.EditChannelRequest": {
+            "type": "object",
+            "properties": {
+                "backgroundImage": {
+                    "type": "string"
+                },
+                "conversationId": {
+                    "type": "integer"
+                },
+                "forbid_forward": {
+                    "type": "boolean"
+                },
+                "is_broadcast": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "chatpb.EditChannelResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.EditMessageRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "fileURL": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.EditMessageResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.ForwardMessageRequest": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "integer"
+                },
+                "senderId": {
+                    "type": "integer"
+                },
+                "targetConversationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.ForwardMessageResponse": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetConversationByIdResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "avatars": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
+                },
+                "conversationId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "forbid_forward": {
+                    "type": "boolean"
+                },
+                "is_broadcast": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Participant"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/chatpb.ConversationTypeEnum"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "chatpb.GetConversationsResponse": {
+            "type": "object",
+            "properties": {
+                "conversations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Conversation"
+                    }
+                }
+            }
+        },
+        "chatpb.GetFilesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Message"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetImagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Message"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetLinksResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Message"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetListParticipantResponse": {
+            "type": "object",
+            "properties": {
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Participant"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Message"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetReadReceiptResponse": {
+            "type": "object",
+            "properties": {
+                "readReceipts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.ReadReceipt"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.GetSettingResponse": {
+            "type": "object",
+            "properties": {
+                "backgroundImage": {
+                    "$ref": "#/definitions/chatpb.BackgroundImage"
+                },
+                "forbid_forward": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_broadcast": {
+                    "type": "boolean"
+                },
+                "is_deleted": {
+                    "type": "boolean"
+                },
+                "mute_notif": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/chatpb.ConversationTypeEnum"
+                }
+            }
+        },
+        "chatpb.ImageType": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "ImageType_IMAGE_TYPE_UNSPECIFIED",
+                "ImageType_JPEG",
+                "ImageType_PNG",
+                "ImageType_GIF"
+            ]
+        },
+        "chatpb.LeaveRoomRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.MarkAsReadRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                },
+                "messageIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.MarkAsReadResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.Message": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "isRecall": {
+                    "type": "boolean"
+                },
+                "messageId": {
+                    "type": "integer"
+                },
+                "reactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.MessageReaction"
+                    }
+                },
+                "replyMessage": {
+                    "$ref": "#/definitions/chatpb.Message"
+                },
+                "room_id": {
+                    "type": "string"
+                },
+                "senderId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.MessageReaction": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "messageId": {
+                    "type": "integer"
+                },
+                "reaction": {
+                    "type": "string"
+                },
+                "room_id": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.MuteConversationRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                },
+                "mute": {
+                    "type": "boolean"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.MuteConversationResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.Participant": {
+            "type": "object",
+            "properties": {
+                "joinedAt": {
+                    "type": "string"
+                },
+                "leftAt": {
+                    "type": "string"
+                },
+                "muteNotif": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/chatpb.ParticipantRoleEnum"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.ParticipantRoleEnum": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "ParticipantRoleEnum_RoleMember",
+                "ParticipantRoleEnum_RoleAdmin",
+                "ParticipantRoleEnum_RoleBanned"
+            ]
+        },
+        "chatpb.PinMessageRequest": {
+            "type": "object",
+            "properties": {
+                "conversationId": {
+                    "type": "integer"
+                },
+                "doPin": {
+                    "type": "boolean"
+                },
+                "messageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.PinMessageResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.ReactionMessageRequest": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "integer"
+                },
+                "reaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "chatpb.ReactionMessageResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.ReadReceipt": {
+            "type": "object",
+            "properties": {
+                "readAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.RecallMessageRequest": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.RecallMessageResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.RemoveUserRequest": {
+            "type": "object",
+            "properties": {
+                "adminUserId": {
+                    "type": "integer"
+                },
+                "conversationId": {
+                    "type": "integer"
+                },
+                "targetUserId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.RemoveUserResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "chatpb.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "conversations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Conversation"
+                    }
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chatpb.Message"
+                    }
+                }
+            }
+        },
+        "chatpb.SearchTypeEnum": {
+            "type": "integer",
+            "enum": [
+                0,
+                1
+            ],
+            "x-enum-varnames": [
+                "SearchTypeEnum_SearchTypeMessage",
+                "SearchTypeEnum_SearchTypeConversation"
+            ]
+        },
+        "chatpb.SendMessageRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "type": "string"
+                },
+                "conversationId": {
+                    "type": "integer"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "reply_id": {
+                    "type": "integer"
+                },
+                "senderId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "chatpb.SendMessageResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "timestamppb.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

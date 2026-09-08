@@ -1,0 +1,203 @@
+// proto/location.proto
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service LocationService {
+    // Tìm location gần nhất từ tọa độ
+    rpc GetNearestLocation(GetNearestLocationRequest) returns (LocationResponse) {
+        option (google.api.http) = {
+            get: "/v1/tqd/locations/nearest"
+        };
+    }
+    
+    // Batch tìm nhiều location cùng lúc
+    rpc BatchGetNearestLocations(BatchGetNearestLocationsRequest) returns (BatchLocationResponse) {
+        option (google.api.http) = {
+            post: "/v1/tqd/locations/nearest:batch"
+            body: "*"
+        };
+    }
+    
+    // Tìm kiếm location theo tên
+    rpc SearchLocations(SearchLocationsRequest) returns (SearchLocationsResponse) {
+        option (google.api.http) = {
+            get: "/v1/tqd/locations/search"
+        };
+    }
+    
+    // Lấy thông tin chi tiết của province
+    rpc GetProvince(GetProvinceRequest) returns (Province) {
+        option (google.api.http) = {
+            get: "/v1/tqd/provinces/{id}"
+        };
+    }
+
+    // Danh mục tỉnh công khai dùng để khởi tạo bản đồ trước khi đăng nhập.
+    // `scope` và `timestamp` được giữ trong contract để tương thích client;
+    // TQD vẫn là owner duy nhất của snapshot hành chính trả về.
+    rpc ListProvinces(ListProvincesRequest) returns (ListProvincesResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/provinces"
+        };
+    }
+    
+    // Lấy thông tin chi tiết của ward
+    rpc GetWard(GetWardRequest) returns (Ward) {
+        option (google.api.http) = {
+            get: "/v1/tqd/wards/{id}"
+        };
+    }
+    
+    // Lấy danh sách wards theo province
+    rpc ListWardsByProvince(ListWardsByProvinceRequest) returns (ListWardsResponse) {
+        option (google.api.http) = {
+            get: "/v1/tqd/provinces/{provinceId}/wards"
+        };
+    }
+
+    rpc SearchTxtClient(sharepb.RequestV3Proto) returns (SearchResponse) {
+        option (google.api.http) = {
+          get: "/v2/tqd/public/client/search"
+        };
+    }
+}
+
+
+message SearchItem {
+    string address = 1;
+    string title = 2;
+    double latitude = 3;
+    double longitude = 4;
+    uint64 poiId = 5;
+    uint64 parcelId = 6;
+}
+
+message SearchResponse {
+    repeated SearchItem data  = 1;
+}
+
+// Request/Response messages
+message GetNearestLocationRequest {
+    double latitude = 1;
+    double longitude = 2;
+    optional double maxDistanceKm = 3;  // Bán kính tìm kiếm (km), mặc định 100km
+    optional int32 limit = 4;            // Số lượng kết quả, mặc định 1
+    int64 timestamp = 5;
+}
+
+message BatchGetNearestLocationsRequest {
+    repeated Coordinate coordinates = 1;
+    optional double maxDistanceKm = 2;
+    optional int32 limit = 3;
+    int64 timestamp = 4;
+}
+
+message Coordinate {
+    double latitude = 1;
+    double longitude = 2;
+}
+
+message LocationResponse {
+    Province province = 1;
+    Ward ward = 2;
+    string fullAddress = 3;
+    double distanceKm = 4;      // Khoảng cách từ điểm đến center (km)
+    double confidence = 5;       // Độ tin cậy 0-1
+    int64 processingTimeMs = 6;  // Thời gian xử lý (ms)
+}
+
+message BatchLocationResponse {
+    repeated LocationResponse locations = 1;
+    int64 totalProcessingTimeMs = 2;
+}
+
+message SearchLocationsRequest {
+    string query = 1;
+    optional string type = 2;       // "province", "ward", "all" (mặc định "all")
+    optional int32 limit = 3;       // Số lượng kết quả, mặc định 20
+    optional string provinceId = 4;  // Lọc theo province (nếu tìm ward)
+    int64 timestamp = 5;
+}
+
+message SearchLocationsResponse {
+    repeated SearchResult results = 1;
+    int32 total = 2;
+}
+
+message SearchResult {
+    string type = 1;                 // "province" hoặc "ward"
+    Province province = 2;
+    Ward ward = 3;
+    string fullAddress = 4;
+    float relevanceScore = 5;        // Điểm relevance 0-1
+}
+
+message GetProvinceRequest {
+    string id = 1;                    // ID của province
+    optional string code = 2;         // Hoặc tìm theo code
+    int64 timestamp = 3;
+}
+
+message ListProvincesRequest {
+    int32 scope = 1;
+    int64 timestamp = 2;
+}
+
+message ListProvincesResponse {
+    repeated Province provinces = 1;
+}
+
+message GetWardRequest {
+    string id = 1;
+    optional string code = 2;
+    int64 timestamp = 3;
+}
+
+message ListWardsByProvinceRequest {
+    string provinceId = 1;
+    optional int32 page = 2;           // Phân trang, mặc định 1
+    optional int32 pageSize = 3;       // Mặc định 50
+    int64 timestamp = 4;
+}
+
+message ListWardsResponse {
+    repeated Ward wards = 1;
+    int32 total = 2;
+    int32 page = 3;
+    int32 pageSize = 4;
+}
+
+// Data models
+message Province {
+    string id = 1;
+    string code = 2;
+    string fullName = 3;
+    string shortName = 4;
+    double latitude = 5;
+    double longitude = 6;
+    string divisionType = 7;
+    string phoneCode = 8;
+    int32 wardCount = 9;
+    string createdAt = 10;  // ISO format: "2006-01-02T15:04:05Z07:00"
+    string updatedAt = 11;
+}
+
+message Ward {
+    string id = 1;
+    string code = 2;
+    string fullName = 3;
+    string shortName = 4;
+    double latitude = 5;
+    double longitude = 6;
+    string divisionType = 7;
+    string provinceId = 8;
+    string provinceCode = 9;
+    string createdAt = 10;
+    string updatedAt = 11;
+}

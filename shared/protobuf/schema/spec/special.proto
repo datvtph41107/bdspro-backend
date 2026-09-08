@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package pb_spec;
+option go_package = "types/spec";
+
+message Empty {}
+message FieldErrors {
+  map<string, string> errors = 1;
+}

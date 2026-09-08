@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+import "tqd/amenity.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service PoiService {
+  rpc CreatePoi(Poi) returns (Poi) {
+    option (google.api.http) = {
+      post: "/v2/tqd/pois"
+      body: "*"
+    };
+  }
+
+  rpc GetPoi(sharepb.IdRequest) returns (Poi) {
+    option (google.api.http) = {
+      get: "/v2/tqd/pois/{id}"
+    };
+  }
+
+  rpc GetPoiByCode(GetPoiByCodeRequest) returns (Poi) {
+    option (google.api.http) = {
+      get: "/v2/tqd/pois/code/{code}"
+    };
+  }
+
+  rpc GetNearbyPois(GetNearbyPoisRequest) returns (ListPoisResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/pois/nearby"
+    };
+  }
+
+  rpc GetPoisByCategory(GetPoisByCategoryRequest) returns (ListPoisResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/pois/category/{categoryId}"
+    };
+  }
+
+  // Update POI
+  rpc UpdatePoi(Poi) returns (Poi) {
+    option (google.api.http) = {
+      put: "/v2/tqd/pois/{id}"
+      body: "*"
+    };
+  }
+
+  rpc UpdatePoiRating(UpdatePoiRatingRequest) returns (Poi) {
+    option (google.api.http) = {
+      put: "/v2/tqd/pois/{id}/rating"
+      body: "*"
+    };
+  }
+
+  rpc DeletePoi(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/pois/{id}"
+    };
+  }
+
+  rpc ListPois(ListPoisRequest) returns (ListPoisResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/pois"
+    };
+  }
+}
+
+message Poi {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string address = 5;
+  string phone = 6;
+  string email = 7;
+  string website = 8;
+  double latitude = 9;
+  double longitude = 10;
+  uint64 categoryId = 11;
+  double rating = 12;
+  uint32 reviewCount = 13;
+  bool isVerified = 14;
+  bool isActive = 15;
+  bool isFeatured = 16;
+  string coverImage = 17;
+  repeated string images = 18;
+  repeated Amenity amenities = 19;
+  repeated string tags = 20;
+  int64 viewCount = 21;
+  int64 likeCount = 22;
+  string createdAt = 23;
+  string updatedAt = 24;
+  uint64 createdBy = 25;
+  uint64 updatedBy = 26;
+}
+
+
+message PoiMedia {
+  uint64 id = 1;
+  uint64 poiId = 2;
+  string mediaUrl = 3;
+  string mediaType = 4;
+  string description = 5;
+  bool isVerified = 6;
+  string uploadedAt = 7;
+}
+
+message GetPoiByCodeRequest {
+  string code = 1;
+}
+
+message GetNearbyPoisRequest {
+  double latitude = 1;
+  double longitude = 2;
+  double radius = 3; // in km
+  uint32 page = 4;
+  uint32 size = 5;
+  repeated uint64 categoryIds = 6;
+  int64 timestamp = 7;
+}
+
+message GetPoisByCategoryRequest {
+  uint64 categoryId = 1;
+  uint32 page = 2;
+  uint32 size = 3;
+  string search = 4;
+  int64 timestamp = 5;
+}
+
+message UpdatePoiRatingRequest {
+  uint64 id = 1;
+  double rating = 2;
+  uint32 reviewCount = 3;
+}
+
+message ListPoisRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  uint64 categoryId = 4;
+  repeated uint64 categoryIds = 5;
+  bool isActive = 6;
+  bool isVerified = 7;
+  double minRating = 8;
+  double maxRating = 9;
+  double latitude = 10;
+  double longitude = 11;
+  double radius = 12; // in km
+  string sortBy = 13; // rating, distance, newest
+  int64 timestamp = 14;
+}
+
+message ListPoisResponse {
+  repeated Poi data = 1;
+  int64 total = 2;
+}

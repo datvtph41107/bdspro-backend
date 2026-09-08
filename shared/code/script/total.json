@@ -1,0 +1,16 @@
+{
+  "host": "localhost:8081",
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "description": "Enter your token in the format: Bearer \u003ctoken\u003e",
+      "in": "header",
+      "name": "Authorization",
+      "type": "apiKey"
+    }
+  }
+}

@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// DirectorySupplier service
+service DirectorySupplierService {
+  // Create a new directory supplier
+  rpc CreateDirectorySupplier(DirectorySupplier) returns (DirectorySupplier) {
+    option (google.api.http) = {
+      post: "/v2/tqd/directory/suppliers"
+      body: "*"
+    };
+  }
+
+  // Get directory supplier by ID
+  rpc GetDirectorySupplier(sharepb.IdRequest) returns (DirectorySupplier) {
+    option (google.api.http) = {
+      get: "/v2/tqd/directory/suppliers/{id}"
+    };
+  }
+
+  // Update directory supplier
+  rpc UpdateDirectorySupplier(DirectorySupplier) returns (DirectorySupplier) {
+    option (google.api.http) = {
+      put: "/v2/tqd/directory/suppliers/{id}"
+      body: "*"
+    };
+  }
+
+  // Delete directory supplier
+  rpc DeleteDirectorySupplier(sharepb.IdRequest) returns (sharepb.SubmitResponse) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/directory/suppliers/{id}"
+    };
+  }
+
+  // List directory suppliers
+  rpc ListDirectorySuppliers(ListDirectorySuppliersRequest) returns (ListDirectorySuppliersResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/directory/suppliers"
+    };
+  }
+}
+
+// DirectorySupplier message
+message DirectorySupplier {
+  uint64 id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string contactPerson = 5;
+  string phone = 6;
+  string email = 7;
+  string address = 8;
+  string website = 9;
+  string taxCode = 10;
+  string businessLicense = 11;
+  double rating = 12;
+  bool isActive = 13;
+  uint32 serviceCount = 14;
+  uint32 contractCount = 15;
+  int64 totalValue = 16;
+  string joinDate = 17;
+  string lastContactDate = 18;
+  string notes = 19;
+  repeated string tags = 20;
+  repeated string categories = 21;
+  string createdAt = 22;
+  string updatedAt = 23;
+  uint64 createdBy = 24;
+  uint64 updatedBy = 25;
+}
+
+// Request/Response messages
+message ListDirectorySuppliersRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string search = 3;
+  repeated string categories = 4;
+  bool isActive = 5;
+  double minRating = 6;
+  double maxRating = 7;
+}
+
+message ListDirectorySuppliersResponse {
+  repeated DirectorySupplier data = 2;
+  int64 total = 3;
+}

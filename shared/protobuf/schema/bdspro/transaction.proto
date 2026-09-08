@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+import "google/api/annotations.proto";
+
+service TransactionService {
+  rpc ListTransactions(ListTransactionsRequest) returns (ListTransactionsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/transaction/list"
+    };
+  }
+
+  rpc GetTransactionDetail(GetTransactionDetailRequest) returns (Transaction) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/transaction/detail/{id}"
+    };
+  }
+
+  rpc CreateTransaction(CreateTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/create"
+      body: "*"
+    };
+  }
+
+  rpc UpdateTransaction(UpdateTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/transaction/update/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteTransaction(DeleteTransactionRequest) returns (DeleteTransactionResponse) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/transaction/delete/{id}"
+    };
+  }
+
+  rpc ApproveTransaction(ApproveTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/approve/{id}"
+    };
+  }
+
+  rpc RejectTransaction(RejectTransactionRequest) returns (Transaction) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/reject/{id}"
+    };
+  }
+
+  rpc GetTransactionTypes(GetTransactionTypesRequest) returns (GetTransactionTypesResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/transaction/types"
+    };
+  }
+
+  rpc CalculateTransferTaxFee(CalculateTransferTaxFeeRequest) returns (CalculateTransferTaxFeeResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/calculate-tax-fee"
+      body: "*"
+    };
+  }
+
+  rpc CalculateLoanPayment(CalculateLoanPaymentRequest) returns (CalculateLoanPaymentResponse) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/transaction/calculate-loan-payment"
+      body: "*"
+    };
+  }
+}
+
+message Transaction {
+  uint64 id = 1;
+  uint32 ownerId = 2;
+  optional uint32 organizationId = 3;
+  double amount = 4;
+  string currency = 5;
+  string transactionName = 6;
+  string description = 7;
+  string transactionType = 8;
+  uint32 categoryId = 9;
+  uint32 paymentMethodId = 10;
+  optional uint32 relatedDealId = 11;
+  optional uint32 relatedTransactionId = 12;
+  string approvalStatus = 13;
+  optional uint32 approvedBy = 14;
+  optional string approvalDate = 15;
+  uint32 transactionStatus = 16;
+  string transactionDate = 17;
+  bool isDeleted = 18;
+  string createdAt = 19;
+  string updatedAt = 20;
+  uint32 ownerType = 21;
+  optional uint32 productId = 22;
+  uint32 status = 23;
+  optional double depositeAmount = 24;
+  optional string depositeNote = 25;
+  optional uint64 contactId = 26;
+}
+
+message ListTransactionsRequest {
+  optional string transactionType = 1;
+  optional string approvalStatus = 2;
+  optional uint32 transactionStatus = 3;
+  optional string startDate = 4;
+  optional string endDate = 5;
+  optional int32 page = 6;
+  optional int32 size = 7;
+}
+
+message ListTransactionsResponse {
+  repeated Transaction data = 1;
+  int32 total = 2;
+}
+
+message GetTransactionDetailRequest {
+  uint32 id = 1;
+}
+
+message CreateTransactionRequest {
+  uint32 ownerId = 1;
+  optional uint32 organizationId = 2;
+  double amount = 3;
+  string currency = 4;
+  string transactionName = 5;
+  string description = 6;
+  uint32 transactionType = 7;
+  uint32 categoryId = 8;
+  uint32 paymentMethodId = 9;
+  optional uint32 relatedDealId = 10;
+  optional uint32 relatedTransactionId = 11;
+  string transactionDate = 12;
+}
+
+message UpdateTransactionRequest {
+  uint32 id = 1;
+  double amount = 2;
+  string currency = 3;
+  string transactionName = 4;
+  string description = 5;
+  uint32 categoryId = 6;
+  uint32 paymentMethodId = 7;
+  optional uint32 relatedDealId = 8;
+  optional uint32 relatedTransactionId = 9;
+  string transactionDate = 10;
+}
+
+message DeleteTransactionRequest {
+  uint32 id = 1;
+}
+
+message DeleteTransactionResponse {
+  uint32 id = 1;
+}
+
+message ApproveTransactionRequest {
+  uint32 id = 1;
+}
+
+message RejectTransactionRequest {
+  uint32 id = 1;
+}
+
+message GetTransactionTypesRequest {}
+
+message GetTransactionTypesResponse {
+  repeated string types = 1;
+}
+
+message CalculateTransferTaxFeeRequest {
+  double transferValue = 1; // Giá trị chuyển nhượng (VND)
+  bool isBusiness = 2; // true nếu là doanh nghiệp, false nếu là cá nhân
+  optional double originalPrice = 3; // Giá gốc mua vào (để tính thuế TNCN nếu có)
+  optional uint64 provinceId = 4; // ID tỉnh/thành phố (để tính lệ phí trước bạ theo từng địa phương)
+}
+
+message CalculateTransferTaxFeeResponse {
+  double transferValue = 1; // Giá trị chuyển nhượng
+  double personalIncomeTax = 2; // Thuế thu nhập cá nhân (TNCN) - 2% nếu là cá nhân
+  double corporateTax = 3; // Thuế thu nhập doanh nghiệp - 2% nếu là doanh nghiệp
+  double registrationFee = 4; // Lệ phí trước bạ - 0.5%
+  double notarizationFee = 5; // Phí công chứng
+  double dossierReviewFee = 6; // Phí thẩm định hồ sơ
+  double cadastralFee = 7; // Lệ phí địa chính
+  double certificateFee = 8; // Lệ phí cấp GCN (Giấy chứng nhận)
+  double surveyFee = 9; // Phí đo vẽ/địa chính
+  double totalTaxFee = 10; // Tổng thuế và phí
+  double netAmount = 11; // Số tiền thực nhận sau khi trừ thuế phí
+  TaxFeeBreakdown breakdown = 12; // Chi tiết từng khoản
+}
+
+message TaxFeeBreakdown {
+  string personalIncomeTaxNote = 1; // Ghi chú thuế TNCN
+  string corporateTaxNote = 2; // Ghi chú thuế doanh nghiệp
+  string registrationFeeNote = 3; // Ghi chú lệ phí trước bạ
+  string notarizationFeeNote = 4; // Ghi chú phí công chứng
+  string dossierReviewFeeNote = 5; // Ghi chú phí thẩm định hồ sơ
+  string cadastralFeeNote = 6; // Ghi chú lệ phí địa chính
+  string certificateFeeNote = 7; // Ghi chú lệ phí cấp GCN
+  string surveyFeeNote = 8; // Ghi chú phí đo vẽ/địa chính
+}
+
+message CalculateLoanPaymentRequest {
+  double interestRate = 1; // Lãi suất năm đầu (%/năm) - thường là lãi suất ưu đãi
+  double propertyValue = 2; // Giá trị tài sản (VND)
+  double loanAmount = 3; // Số tiền vay (VND)
+  uint32 term = 4; // Kỳ hạn (tháng)
+  uint32 paymentMethod = 5; // Phương thức trả nợ: 10=dư nợ giảm dần, 20=trả lãi định kỳ/gốc cuối kỳ
+  optional double floatingInterestRate = 6; // Lãi suất thả nổi từ năm 2 (%/năm) - thường 10-11%
+}
+
+message CalculateLoanPaymentResponse {
+  repeated LoanPaymentScheduleItem schedule = 1; // Lịch trả nợ theo tháng
+  double totalInterest = 2; // Tổng tiền lãi
+  double totalPayment = 3; // Tổng tiền trả
+}
+
+message LoanPaymentScheduleItem {
+  uint32 month = 1; // Tháng
+  double remainingPrincipal = 2; // Dư nợ còn lại
+  double principalPayment = 3; // Tiền gốc trả trong tháng
+  double interestPayment = 4; // Tiền lãi trả trong tháng
+  double totalPayment = 5; // Tổng trả trong tháng
+  double interestRate = 6; // Lãi suất áp dụng cho tháng này (%/năm)
+} 

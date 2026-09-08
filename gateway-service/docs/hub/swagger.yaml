@@ -1,0 +1,374 @@
+basePath: /v2/utility
+definitions:
+  hubpb.District:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      provinceId:
+        type: string
+      type:
+        type: integer
+      typeText:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  hubpb.EventQueueSaveDTO:
+    properties:
+      errorMessage:
+        type: string
+      eventData:
+        type: string
+      eventName:
+        type: string
+      eventType:
+        type: string
+      id:
+        type: integer
+      maxRetries:
+        type: integer
+      metadata:
+        type: string
+      organizationId:
+        type: integer
+      profileId:
+        type: integer
+      retryCount:
+        type: integer
+      scheduledAt:
+        type: string
+      status:
+        type: integer
+    type: object
+  hubpb.EventQueueStatusDTO:
+    properties:
+      errorMessage:
+        type: string
+      id:
+        type: integer
+      status:
+        type: integer
+    type: object
+  hubpb.GetDistrictsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/hubpb.District'
+        type: array
+      total:
+        type: integer
+    type: object
+  hubpb.GetProvincesResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/hubpb.Province'
+        type: array
+      total:
+        type: integer
+    type: object
+  hubpb.GetWardsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/hubpb.Ward'
+        type: array
+      total:
+        type: integer
+    type: object
+  hubpb.Province:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      type:
+        type: integer
+      typeText:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  hubpb.Ward:
+    properties:
+      createdAt:
+        type: string
+      districtId:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: integer
+      typeText:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API cho utility service, bao gồm event-queue và các tiện ích khác
+  title: Utility API
+  version: "1.0"
+paths:
+  /event-queue:
+    post:
+      consumes:
+      - application/json
+      description: Tạo mới một event queue
+      parameters:
+      - description: Thông tin event queue
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/hubpb.EventQueueSaveDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Tạo mới event queue
+      tags:
+      - Event Queue
+  /event-queue/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Xóa mềm event queue
+      parameters:
+      - description: ID của event queue
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Xóa event queue
+      tags:
+      - Event Queue
+  /event-queue/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Lấy thông tin chi tiết của một event queue
+      parameters:
+      - description: ID của event queue
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy chi tiết event queue
+      tags:
+      - Event Queue
+  /event-queue/edit/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật thông tin event queue
+      parameters:
+      - description: ID của event queue
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin event queue
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/hubpb.EventQueueSaveDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật event queue
+      tags:
+      - Event Queue
+  /event-queue/list:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách event queue với phân trang và filter
+      parameters:
+      - description: Trang
+        in: query
+        name: page
+        type: integer
+      - description: Kích thước trang
+        in: query
+        name: size
+        type: integer
+      - description: Tìm kiếm theo tên hoặc loại event
+        in: query
+        name: text
+        type: string
+      - description: Profile ID
+        in: query
+        name: profileId
+        type: integer
+      - description: Organization ID
+        in: query
+        name: organizationId
+        type: integer
+      - collectionFormat: csv
+        description: 'Trạng thái (10: Pending, 20: Processing, 30: Completed, 40:
+          Failed, 50: Cancelled)'
+        in: query
+        items:
+          type: integer
+        name: status
+        type: array
+      - collectionFormat: csv
+        description: Loại event
+        in: query
+        items:
+          type: string
+        name: eventType
+        type: array
+      - description: Từ ngày (YYYY-MM-DD)
+        in: query
+        name: fromDate
+        type: string
+      - description: Đến ngày (YYYY-MM-DD)
+        in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Lấy danh sách event queue
+      tags:
+      - Event Queue
+  /event-queue/status/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Cập nhật trạng thái của event queue
+      parameters:
+      - description: ID của event queue
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Thông tin trạng thái
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/hubpb.EventQueueStatusDTO'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Cập nhật trạng thái event queue
+      tags:
+      - Event Queue
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Kiểm tra trạng thái service
+      produces:
+      - application/json
+      responses: {}
+      summary: Health check
+      tags:
+      - Internal
+  /v2/hub/districts:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách quận/huyện, hỗ trợ lọc theo tỉnh và tìm kiếm theo
+        tên
+      parameters:
+      - description: Mã tỉnh/thành phố để lọc
+        in: query
+        name: provinceId
+        type: string
+      - description: Từ khóa tìm kiếm theo tên
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/hubpb.GetDistrictsResponse'
+      summary: Lấy danh sách quận/huyện
+      tags:
+      - Location
+  /v2/hub/provinces:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách tất cả các tỉnh/thành phố, hỗ trợ tìm kiếm theo tên
+      parameters:
+      - description: Từ khóa tìm kiếm theo tên
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/hubpb.GetProvincesResponse'
+      summary: Lấy danh sách tỉnh/thành phố
+      tags:
+      - Location
+  /v2/hub/wards:
+    get:
+      consumes:
+      - application/json
+      description: Lấy danh sách phường/xã, hỗ trợ lọc theo quận và tìm kiếm theo
+        tên
+      parameters:
+      - description: Mã quận/huyện để lọc
+        in: query
+        name: districtId
+        type: string
+      - description: Từ khóa tìm kiếm theo tên
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/hubpb.GetWardsResponse'
+      summary: Lấy danh sách phường/xã
+      tags:
+      - Location
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

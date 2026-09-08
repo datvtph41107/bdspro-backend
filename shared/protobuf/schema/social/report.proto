@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package pb_social;
+
+option go_package = "pb/types/social;pb_social";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service ReportService {
+    rpc SubmitReport(ReportRequest) returns (ReportResponse) {
+        option (google.api.http) = {
+            post: "/v2/social/report/submit"
+            body: "*"
+        };
+    }
+    rpc GetReportMe(ReportMessageRequest) returns (ReportMessageResponse) {
+        option (google.api.http) = {
+            get: "/v2/social/report/me"
+        };
+    }
+    rpc UpdateReportStatus(ReportStatusRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v2/social/report/status/{id}"
+            body: "*"
+        };
+    }
+}
+
+message ReportReason {
+    uint64 id = 1;
+    string reasonName = 2;
+    bool active = 3;
+}
+
+message ReportReasonRequest {
+    uint64 page = 1;
+    uint64 size = 2;
+    string reasonName = 3;
+}
+
+message ReportReasonResponse {
+    repeated ReportReason data = 1;
+    uint64 total = 2;
+}
+
+message ReportRequest {
+    uint64 id = 1;
+    uint64 reasonId = 2;
+    uint32 targetType = 3;
+    uint64 targetId = 4;
+    string content = 5;
+}
+
+message ReportResponse {
+    uint64 id = 1;
+    uint64 reasonId = 2;
+    uint64 targetId = 3;
+    uint32 targetType = 4;
+    string createdAt = 5;
+}
+
+message ReportMessage {
+    uint64 id = 1;
+    uint64 reasonId = 2;
+    uint64 targetId = 3;
+    uint32 targetType = 4;
+    string content = 5;
+    string createdAt = 6;
+    string reasonName = 7;
+    uint32 status = 8;
+    string statusName = 9;
+    string targetName = 10;
+}
+
+message ReportMessageResponse {
+    repeated ReportMessage data = 1;
+    uint64 total = 2;
+}
+
+message ReportMessageRequest {
+    uint64 id = 1;
+    string message = 2;
+    uint64 page = 3;
+    uint64 size = 4;
+}
+
+message ReportStatusRequest {
+    uint64 id = 1;
+    uint32 status = 2;
+}

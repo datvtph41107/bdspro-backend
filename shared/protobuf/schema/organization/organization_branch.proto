@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package organizationpb;
+
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+option go_package = "pb/types/organization;organizationpb";
+
+
+
+service OrganizationBranchService {
+    rpc CreateOrganizationBranch(CreateOrganizationBranchRequest) returns (CreateOrganizationBranchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/branch"
+            body: "*"
+        };
+    }
+    rpc UpdateOrganizationBranch(UpdateOrganizationBranchRequest) returns (UpdateOrganizationBranchResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/branch/{id}"
+            body: "*"
+        };
+    }
+    rpc DeleteOrganizationBranch(DeleteOrganizationBranchRequest) returns (DeleteOrganizationBranchResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/organization/branch/{id}"
+        };
+    }
+    rpc AddMemberToOrganizationBranch(AddMemberToOrganizationBranchRequest) returns (AddMemberToOrganizationBranchResponse) {
+        option (google.api.http) = {
+            post: "/v2/org/organization/branch/{id}/add-member"
+            body: "*"
+        };
+    }
+    rpc RemoveMemberFromOrganizationBranch(RemoveMemberFromOrganizationBranchRequest) returns (RemoveMemberFromOrganizationBranchResponse) {
+        option (google.api.http) = {
+            delete: "/v2/org/organization/branch/{id}/remove-member/{userId}"
+        };
+    }
+    rpc GetOrganizationBranchMembers(GetOrganizationBranchMembersRequest) returns (GetOrganizationBranchMembersResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/branch/{id}/members"
+        };
+    }
+    rpc GetOrganizationBranches(GetOrganizationBranchesRequest) returns (GetOrganizationBranchesResponse) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/branch"
+        };
+    }
+    rpc UpdateIsActive(UpdateIsActiveRequest) returns (UpdateIsActiveResponse) {
+        option (google.api.http) = {
+            put: "/v2/org/organization/branch/{id}/is-active"
+            body: "*"
+        };
+    }
+    rpc GetOrganizationBranchDetail(GetOrganizationBranchDetailRequest) returns (OrganizationBranchDetail) {
+        option (google.api.http) = {
+            get: "/v2/org/organization/branch/{id}"
+        };
+    }
+}
+
+message CreateOrganizationBranchRequest {
+    string name = 1;
+    string address = 2;
+    string phone = 3;
+    string email = 4;
+    uint32 managerId = 5;
+    uint32 organizationId = 6;
+    string type = 7; // branch, department, store
+
+}
+
+message CreateOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message UpdateOrganizationBranchRequest {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+    string type = 6; // branch, department, store
+}
+
+message UpdateOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message DeleteOrganizationBranchRequest {
+    uint32 id = 1;
+}
+
+message DeleteOrganizationBranchResponse {
+    bool success = 1;
+}
+
+message AddMemberToOrganizationBranchRequest {
+    uint32 id = 1;
+    uint32 userId = 2;
+}
+
+message AddMemberToOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message RemoveMemberFromOrganizationBranchRequest {
+    uint32 id = 1;
+    uint32 userId = 2;
+}
+
+message RemoveMemberFromOrganizationBranchResponse {
+    uint32 id = 1;
+}
+
+message GetOrganizationBranchMembersRequest {
+    uint32 id = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message OrganizationBranchMember {
+    uint32 id = 1;
+    uint32 userId = 2;
+    uint64 roleId = 3;
+    optional sharepb.ProfileItem user = 4;
+}
+
+message GetOrganizationBranchMembersResponse {
+    repeated OrganizationBranchMember data = 1;
+    uint32 total = 2;
+}
+
+message GetOrganizationBranchesRequest {
+    uint32 organizationId = 1;
+    optional uint32 page = 2;
+    optional uint32 size = 3;
+}
+
+message OrganizationBranch {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+    bool isActive = 6;
+    string type = 7; // branch, department, store
+    uint32 totalMember = 8;
+    uint32 totalAsset = 9;
+    uint32 totalDeal = 10;
+}
+
+message GetOrganizationBranchesResponse {
+    repeated OrganizationBranch data = 1;
+    uint32 total = 2;
+}
+
+
+message UpdateIsActiveRequest {
+    uint32 id = 1;
+    bool isActive = 2;
+}
+
+message UpdateIsActiveResponse {
+    bool success = 1;
+}
+
+message GetOrganizationBranchDetailRequest {
+    uint32 id = 1;
+}
+
+message GetOrganizationBranchDetailResponse {
+    OrganizationBranchDetail branch = 1;
+}
+
+message OrganizationBranchDetail {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    string phone = 4;
+    string email = 5;
+    uint32 managerId = 6;
+    bool isActive = 7;
+    string type = 8; // branch, department, store
+    uint32 totalMember = 9;
+    uint32 totalAsset = 10;
+    uint32 totalDeal = 11;
+    string createdAt = 12;
+    string updatedAt = 13;
+    uint32 createdBy = 14;
+    optional sharepb.ProfileItem managerUser = 15;
+    string description = 16;
+}

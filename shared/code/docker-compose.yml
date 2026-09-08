@@ -1,0 +1,399 @@
+version: '3.3'
+
+services:
+  # user:
+  #   build:
+  #     context: ./user-service
+  #     dockerfile: Dockerfile
+  #   container_name: user
+  #   command: ["./main", "http"]
+  #   networks:
+  #     - internal
+  auth:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+    volumes:
+      - ./logs:/app/logs
+    
+  user:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+    volumes:
+      - ./logs:/app/logs
+  
+  bdspro:
+    build:
+      context: ./bdspro-service
+      dockerfile: Dockerfile
+    container_name: bdspro
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+    volumes:
+      - ./logs/bdspro:/app/logs
+
+  file:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: file
+    command: ["./main", "http"]
+    ports:
+      - "8002:8002"
+    networks:
+      - internal
+    environment:
+      ENV_RUNTIME: ${FILE_ENV_RUNTIME:-develop}
+      SERVER_PORT: "8002"
+      DATABASE_DSN: ${FILE_DATABASE_DSN:-}
+      JWT_KEY_GENERATE: ${FILE_JWT_KEY_GENERATE:-}
+      FILE_SIGNATURE_KEY: ${FILE_SIGNATURE_KEY:-}
+      FILE_XOR_CRYPT_KEY: ${FILE_XOR_CRYPT_KEY:-}
+      FILE_STORAGE_ROOT: /files
+      FILE_CORS_ALLOWED_ORIGINS: ${FILE_CORS_ALLOWED_ORIGINS:-}
+      SERVICE_AUTH_KEY: ${FILE_SERVICE_AUTH_KEY:-}
+      AUTH_GRPC_ADDRESS: ${FILE_AUTH_GRPC_ADDRESS:-auth:8216}
+      HUB_GRPC_ADDRESS: ${FILE_HUB_GRPC_ADDRESS:-hub:8280}
+      QHPRO_SERVICE_ID: file-service
+      QHPRO_INTERNAL_METADATA_SECRET: ${FILE_INTERNAL_METADATA_SECRET:-}
+      QHPRO_TRUSTED_METADATA_MODE: enforce
+    volumes:
+      - ${PWD}/files:/files
+      - ./logs/file:/app/logs
+  
+
+  chat:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    container_name: chat
+    volumes:
+      - ${PWD}/config:/app/config
+      - ./logs/chat:/app/logs
+    environment:
+      - CONFIG_FILE=/app/config/develop.yml 
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+  # openai:
+  #   build:
+  #     context: ./openai-service
+  #     dockerfile: Dockerfile
+  #   container_name: openai
+  #   networks:
+  #     - internal
+  #   depends_on:
+  #     - redis
+  #     - eureka
+
+  gateway:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway
+    command: ["./main", "http"]
+    volumes:
+      - ./logs/gateway:/app/logs
+    networks:
+      - internal
+    ports:
+      - "8000:8000"
+
+  map:
+    build:
+      context: ./map-service
+      dockerfile: Dockerfile
+    container_name: map
+    networks:
+      - internal
+
+  notification:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    command: ["./main", "grpc"]
+    container_name: notification
+    volumes:
+      - ./logs/notification:/app/logs
+    networks:
+      - internal
+
+  payment:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment
+    command: ["./main", "grpc"]
+    volumes:
+      - ${PWD}/config:/app/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
+    networks:
+      - internal
+  
+  crm:
+    build:
+      context: ./crm-service
+      dockerfile: Dockerfile
+    container_name: crm
+    command: ["./main", "grpc"]
+    volumes:
+      - ./logs/crm:/app/logs
+    networks:
+      - internal
+  
+  membership:
+    build:
+      context: ./membership-service
+      dockerfile: Dockerfile
+    container_name: membership
+    networks:
+      - internal
+
+  # config:
+  #   build:
+  #     context: ./config-server
+  #     dockerfile: Dockerfile
+  #   container_name: config
+  #   networks:
+  #     - internal
+
+  organization:
+    build:
+      context: ./organization-service
+      dockerfile: Dockerfile
+    container_name: organization
+    volumes:
+      - ${PWD}/config:/app/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
+  appointment:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    container_name: appointment
+    volumes:
+      - ${PWD}/config:/config
+    environment:
+      - CONFIG_FILE=/app/config/docker_config.yaml 
+      - ENV_RUNTIME=release
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
+  http-server:
+    build: 
+      context: ./chat-service
+    container_name: http-server
+    ports:
+      - "8106:8081"
+    command: ["sh", "-c", "sleep 5 && /app/main http-serve --httpPort=8081 || sleep infinity"]
+    volumes:
+      - ${PWD}/configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+    networks:
+      - internal
+
+  relay:
+    build: ./relay-service
+    container_name: relay
+    ports:
+      - "8308:8308"
+    command: ["sh", "-c", "sleep 5 && ./main || sleep infinity"]
+    volumes:
+      - ${PWD}/config:/app/config
+      - ./logs/relay:/app/logs
+    environment:
+      - CONFIG_FILE=/app/config/release.yml 
+    networks:
+      - internal
+  
+  swagger-chat:
+    build: ./chat-service
+    container_name: swagger-chat
+    ports:
+      - "8107:3001"
+    command: ["sh", "-c", "sleep 5 && /app/main swagger-serve || sleep infinity"]
+    volumes:
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_FILE=/app/configs/docker_config.yaml 
+    networks:
+      - internal
+
+  social:
+    build: ./social-service
+    container_name: social
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
+  transaction:
+    build: ./transaction-service
+    container_name: transaction
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
+  tqd:
+    build: 
+      context: ./tqd-service
+      dockerfile: Dockerfile.tqd
+    container_name: tqd
+    command: ["./main", "--server=grpc"]
+    volumes:
+      - ${PWD}/files:/files
+      - ${PWD}/template:/template
+    networks:
+      - internal
+
+  feedback:
+    build: ./feedback-service
+    container_name: feedback
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+
+  marketing:
+    build: ./marketing-service
+    container_name: marketing
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+  
+  assistant:
+    build: ./assistant-service
+    container_name: assistant
+    command: ["./main", "grpc"]
+    networks:
+      - internal
+  
+  hub:
+    build: ./hub-service
+    container_name: hub
+    command: ["./main", "grpc"]
+    volumes:
+      - ./logs/hub:/app/logs
+    networks:
+      - internal
+
+      
+  # eureka:
+  #   build:
+  #     context: ./eureka-server
+  #     dockerfile: Dockerfile
+  #   container_name: eureka
+  #   networks:
+  #     - internal
+  #   ports:
+  #     - "8761:8761"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command: ["redis-server", "--requirepass", "protected_redis_secure_password", "--bind", "0.0.0.0"]
+    volumes:
+      - ./redis-data:/data  # Mount thư mục redis-data trên host vào /data trong container
+    networks:
+      - internal
+  
+  tileserver:
+    image: maptiler/tileserver-gl
+    container_name: tileserver
+    ports:
+      - "8031:8080"
+    volumes:
+      - ./pmtiles:/data  # .mbtiles hoặc .pmtiles
+    restart: unless-stopped
+  
+  pmtiles:
+    build:
+      context: ./tqd-service
+      dockerfile: Dockerfile
+    container_name: pmtiles
+    command: ["./main", "--server=pmtiles", "--port=8032"]
+    ports:
+      - "8032:8032"
+    volumes:
+      - ${PWD}/files:/files
+    networks:
+      - internal
+  
+  qhpro_app:
+    image: nginx:alpine
+    container_name: qhpro_app
+    ports:
+      - "3109:80"
+    environment:
+      - NODE_ENV=develop
+    volumes:
+      - ${PWD}/build:/usr/share/nginx/html:ro
+      - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: always
+
+  nextjs-website:
+    build:
+      context: ./nextjs-website
+      dockerfile: Dockerfile
+    container_name: nextjs-website
+    ports:
+      - "3103:3000"
+    volumes:
+      - ${PWD}:/app
+    restart: unless-stopped
+    networks:
+      - internal
+
+  qhpro_web:
+    image: node:20-alpine
+    container_name: qhpro_web
+    working_dir: /app
+    command: node ./standalone/server.js
+    ports:
+      - "3108:3000"
+    volumes:
+      - ${PWD}:/app
+      - ${PWD}/public:/app/standalone/public
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${PWD}/nginx/conf:/etc/nginx/conf.d
+      - ${PWD}/nginx/certs:/etc/letsencrypt
+      - ${PWD}/nginx/www:/var/www/certbot
+    restart: always
+    networks:
+      - internal
+  
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ${PWD}/nginx/certs:/etc/letsencrypt
+      - ${PWD}/nginx/www:/var/www/certbot
+
+networks:
+  internal:
+    driver: bridge

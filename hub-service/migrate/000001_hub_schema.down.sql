@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS update_data;
+DROP TABLE IF EXISTS error_logs;
+DROP TABLE IF EXISTS interactive_events;
+DROP TABLE IF EXISTS user_guide_steps;
+DROP TABLE IF EXISTS api_keys;
+DROP TABLE IF EXISTS versions;
+DROP TABLE IF EXISTS faqs;
+DROP TABLE IF EXISTS system_config;
+DROP TABLE IF EXISTS tb_user_guide;
+DROP TABLE IF EXISTS ward_v2;
+DROP TABLE IF EXISTS province_v2;
+DROP TABLE IF EXISTS wards;
+DROP TABLE IF EXISTS districts;
+DROP TABLE IF EXISTS provinces;
+DROP TABLE IF EXISTS tb_event_queue;
+DROP TABLE IF EXISTS applink;

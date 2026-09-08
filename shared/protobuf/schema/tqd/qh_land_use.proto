@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+service QHLandUseService {
+
+  rpc CreateLandUse(CreateLandUseRequest) returns (QHLandUseResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/qh/admin/land-use"
+      body: "*"
+    };
+  }
+
+  rpc GetLandUse(GetLandUseRequest) returns (QHLandUseResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/land-use/{id}"
+    };
+  }
+
+  rpc UpdateLandUse(UpdateLandUseRequest) returns (QHLandUseResponse) {
+    option (google.api.http) = {
+      put: "/v2/tqd/qh/admin/land-use/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteLandUse(DeleteLandUseRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/tqd/qh/admin/land-use/{id}"
+    };
+  }
+
+  rpc ListLandUses(ListLandUseRequest) returns (ListLandUseResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/qh/admin/land-use/list"
+    };
+  }
+
+  rpc ListClientLandUse(ListClientLandUseRequest) returns (ListLandUseResponse) {
+    option (google.api.http) = {
+      get: "/v2/tqd/client/layers/{layerId}/land-use"
+    };
+  }
+
+  rpc CreateClientLandUse(CreateClientLandUseRequest) returns (QHLandUseResponse) {
+    option (google.api.http) = {
+      post: "/v2/tqd/client/layers/{layerId}/land-use"
+      body: "*"
+    };
+  }
+}
+
+// Tạo liên kết layer ↔ loại đất.
+// Bắt buộc truyền một trong hai: landUseId (link loại đất đã có) hoặc name (tạo loại đất mới).
+message CreateLandUseRequest {
+  optional uint64 layerId   = 1;
+  optional uint64 landUseId = 2; // link loại đất đã có
+  optional string name      = 3; // tạo loại đất mới với tên này
+  string code              = 4;  // dùng khi tạo mới
+  string color             = 5;  // dùng khi tạo mới
+  string note              = 6;
+  int32  displayOrder      = 7;
+  bool   isVisible         = 8;
+}
+
+message GetLandUseRequest {
+  uint64 id = 1;
+}
+
+// Cập nhật cấu hình junction. Dùng landUseId để đổi sang loại đất khác.
+message UpdateLandUseRequest {
+  uint64 id           = 1;
+  string name         = 2;
+  string code         = 3;
+  string color        = 4;
+  string note         = 5;
+}
+
+message DeleteLandUseRequest {
+  uint64 id = 1;
+}
+
+message ListLandUseRequest {
+  uint32          page    = 1;
+  uint32          size    = 2;
+  optional uint64 layerId = 3;
+}
+
+message ListClientLandUseRequest {
+  uint64 layerId = 1;
+  uint32 page    = 2;
+  uint32 size    = 3;
+}
+
+message CreateClientLandUseRequest {
+  uint64 layerId   = 1;
+  uint64 landUseId = 2;
+}
+
+message LandUseInfo {
+  uint64 id       = 1;
+  string code     = 2;
+  string name     = 3;
+  string color    = 4;
+  string note     = 5;
+  bool   canBuild = 6;
+  int32  priority = 7;
+}
+
+// Giữ lại để các proto khác import vẫn compile được
+message LandUseGroupInfo {
+  uint64 id          = 1;
+  string code        = 2;
+  string name        = 3;
+  string description = 4;
+  string color       = 5;
+  bool   canBuild    = 6;
+  int32  priority    = 7;
+}
+
+message QHLandUseResponse {
+  uint64           id           = 1;
+  string           note         = 2;
+  string           color        = 3;
+  string           code         = 4;
+  string           name         = 5;
+  string           createdAt    = 6;
+  string           updatedAt    = 7;
+}
+
+message ListLandUseResponse {
+  repeated QHLandUseResponse data     = 1;
+  int64                      total    = 2;
+  int32                      page     = 3;
+  int32                      pageSize = 4;
+}

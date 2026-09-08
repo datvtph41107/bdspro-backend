@@ -1,0 +1,11 @@
+BEGIN;
+
+DELETE FROM role_permissions
+WHERE permission_id IN (
+    SELECT id FROM permissions WHERE key IN ('ORGANIZATION_VIEW', 'ORGANIZATION_MANAGE')
+);
+DELETE FROM permissions WHERE key IN ('ORGANIZATION_VIEW', 'ORGANIZATION_MANAGE');
+DROP TABLE IF EXISTS organization_members;
+DROP TABLE IF EXISTS organizations;
+
+COMMIT;

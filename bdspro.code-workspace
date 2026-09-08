@@ -1,0 +1,318 @@
+{
+  "folders": [
+    {
+      "name": "BACKEND",
+      "path": "."
+    },
+    {
+      "name": "ADMIN",
+      "path": "../react-js-admin-bds"
+    },
+    {
+      "name": "CLIENT",
+      "path": "../react-native-quy-hoach"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "files.exclude": {
+      "**/.git": true,
+      "**/.tools": true,
+      "**/.work": true,
+      "**/bin": true,
+      "**/dist": true,
+      "**/node_modules": true
+    },
+    "files.watcherExclude": {
+      "**/.git/**": true,
+      "**/.tools/**": true,
+      "**/.work/**": true,
+      "**/dist/**": true,
+      "**/node_modules/**": true
+    },
+    "search.exclude": {
+      "**/.tools/**": true,
+      "**/.work/**": true,
+      "**/dist/**": true,
+      "**/node_modules/**": true,
+      "**/*.pb.go": true,
+      "**/*_grpc.pb.go": true
+    },
+    "[go]": {
+      "editor.defaultFormatter": "golang.go",
+      "editor.formatOnSave": true
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "golang.go",
+      "ms-azuretools.vscode-docker",
+      "zxh404.vscode-proto3"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "BDSPro · Setup",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "setup"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Admin · Install",
+        "type": "process",
+        "command": "npm",
+        "args": [
+          "ci"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ADMIN}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Client · Install",
+        "type": "process",
+        "command": "yarn",
+        "args": [
+          "install",
+          "--frozen-lockfile"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:CLIENT}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Workspace · Setup",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "BDSPro · Setup",
+          "Admin · Install",
+          "Client · Install"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "label": "BDSPro · Doctor",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "doctor"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend · Up",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "up"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "group": "backend",
+          "panel": "dedicated",
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "Backend · Status",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "status"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend · Smoke",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "smoke"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend · QHPRO E2E",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "test-e2e"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": [
+          "$go"
+        ]
+      },
+      {
+        "label": "Backend · Verify",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "verify"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": [
+          "$go"
+        ]
+      },
+      {
+        "label": "Backend · Logs",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "logs"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "backend-logs",
+          "panel": "dedicated",
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "Backend · Down",
+        "type": "process",
+        "command": "make",
+        "args": [
+          "down"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:BACKEND}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Admin · Dev",
+        "type": "process",
+        "command": "npm",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5173",
+          "--strictPort"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ADMIN}"
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "admin",
+          "panel": "dedicated",
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "Admin · Verify Commercial",
+        "type": "process",
+        "command": "npm",
+        "args": [
+          "run",
+          "verify:commercial-admin"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ADMIN}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Admin · Accept Commercial",
+        "type": "process",
+        "command": "npm",
+        "args": [
+          "run",
+          "accept:commercial-admin"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ADMIN}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Client · Web",
+        "type": "process",
+        "command": "yarn",
+        "args": [
+          "web:local"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:CLIENT}",
+          "env": {
+            "QHPRO_WEB_DEV_PORT": "3001"
+          }
+        },
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "client",
+          "panel": "dedicated",
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "Client · Verify Commercial",
+        "type": "process",
+        "command": "yarn",
+        "args": [
+          "verify:commercial-flow"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:CLIENT}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Workspace · Verify QHPRO Flow",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "Backend · QHPRO E2E",
+          "Admin · Accept Commercial",
+          "Client · Verify Commercial"
+        ],
+        "problemMatcher": []
+      }
+    ]
+  }
+}

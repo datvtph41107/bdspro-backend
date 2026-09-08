@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package types.operation;
+
+option go_package = "pb/types/operation;operationpb";
+
+import "google/protobuf/descriptor.proto";
+
+// Operation xác định hành động nghiệp vụ ổn định mà RPC thực hiện.
+//
+// Ví dụ:
+//   RPC:  GenerateReport
+//   Path: POST /v1/workspaces/{id}/reports:generate
+//   Code: workspace.report.generate
+//
+// Code không phụ thuộc vào tên RPC hoặc HTTP path, vì các tên này có thể
+// thay đổi trong khi hành động nghiệp vụ vẫn giữ nguyên.
+message Operation {
+  string code = 1;
+}
+
+// operation binds an RPC to the semantic action owned by the server contract.
+extend google.protobuf.MethodOptions {
+  Operation operation = 50000;
+}

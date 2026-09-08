@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package hubpb;
+
+option go_package = "pb/types/hub;hubpb";
+import "google/api/annotations.proto";
+import "shared/common.proto";
+
+// ========== Messages ==========
+
+message Province {
+  uint64 id = 1;
+  string name = 2;
+  int32 type = 3;
+  string typeText = 4;
+  string slug = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message District {
+  uint64 id = 1;
+  string name = 2;
+  string provinceId = 3;
+  int32 type = 4;
+  string typeText = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message Ward {
+  uint64 id = 1;
+  string name = 2;
+  string districtId = 3;
+  int32 type = 4;
+  string typeText = 5;
+  string createdAt = 6;
+  string updatedAt = 7;
+}
+
+message LocationSearchResult {
+  uint64 districtId = 1;
+  string districtName = 2;
+  string districtType = 3;
+  uint64 provinceId = 4;
+  string provinceName = 5;
+  string provinceType = 6;
+  string fullAddress = 7; // "Quận Hai Bà Trưng, Thành phố Hà Nội"
+}
+
+// ========== Request/Response Messages ==========
+
+message GetProvincesRequest {
+  string keyword = 1; // Search by name (optional)
+}
+
+message GetProvincesResponse {
+  repeated Province data = 1;
+  int64 total = 2;
+}
+
+message GetDistrictsRequest {
+  string provinceId = 1; // Filter by province ID (optional)
+  string keyword = 2;    // Search by name (optional)
+}
+
+message GetDistrictsResponse {
+  repeated District data = 1;
+  int64 total = 2;
+}
+
+message GetWardsRequest {
+  string districtId = 1; // Filter by district ID (optional)
+  string keyword = 2;    // Search by name (optional)
+}
+
+message GetWardsResponse {
+  repeated Ward data = 1;
+  int64 total = 2;
+}
+
+message SearchLocationRequest {
+  string keyword = 1; // Search keyword (e.g., "hai bà hà nội")
+}
+
+message SearchLocationResponse {
+  repeated LocationSearchResult data = 1;
+  int64 total = 2;
+}
+
+// ========== Service Definition ==========
+
+service LocationService {
+  // Province APIs
+  rpc GetProvinces (GetProvincesRequest) returns (GetProvincesResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/provinces"
+    };
+  };
+
+  // District APIs
+  rpc GetDistricts (GetDistrictsRequest) returns (GetDistrictsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/districts"
+    };
+  };
+
+  // Ward APIs
+  rpc GetWards (GetWardsRequest) returns (GetWardsResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/wards"
+    };
+  };
+
+  // Search Location
+  rpc SearchLocation (SearchLocationRequest) returns (SearchLocationResponse) {
+    option (google.api.http) = {
+      get: "/v2/hub/location/search"
+    };
+  };
+}
+

@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package crmpb;
+
+import "google/protobuf/empty.proto";
+import "organization/organization.proto";
+import "bdspro/deal.proto";
+import "bdspro/deal_invitation.proto";
+import "bdspro/common.proto";
+import "shared/common.proto";
+import "bdspro/internal_tx.proto";
+import "bdspro/tx_contract_deal.proto";
+
+option go_package = "pb/types/crm;crmpb";
+
+import "google/api/annotations.proto";
+
+
+service AppointmentService {
+
+  rpc CreateAppointment(CreateAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        post: "/v2.1/appointment"
+        body: "*"
+    };
+  }
+  rpc GetAppointment(GetAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        get: "/v2.1/appointment/{id}"
+    };
+  }
+
+  rpc UpdateAppointment(UpdateAppointmentRequest) returns (Appointment) {
+    option (google.api.http) = {
+        put: "/v2.1/appointment/{id}"
+        body: "*"
+    };
+  }
+
+  rpc DeleteAppointment(DeleteAppointmentRequest) returns (DeleteAppointmentResponse) {
+    option (google.api.http) = {
+        delete: "/v2.1/appointment/{id}"
+    };
+  }
+  
+  rpc ListAppointments(ListAppointmentsRequest) returns (ListAppointmentsResponse) {
+    option (google.api.http) = {
+        get: "/v2.1/appointment"
+    };
+  }
+
+  rpc AdminListAppointments(AdminListAppointmentsRequest) returns (AdminListAppointmentsResponse) {
+    option (google.api.http) = {
+        get: "/v2.1/appointment/admin/list"
+    };
+  }
+
+  rpc GetAppointmentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
+    option (google.api.http) = {
+        get: "/v2.1/appointment/stats"
+    };
+  }
+
+  rpc GetAppointmentsByProduct (sharepb.SyncRequest) returns (ListAppointmentsResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/appointment/list/by-product/{id}"
+    };
+  }
+
+  rpc GetAppointmentsByDeal (sharepb.IdRequest) returns (ListAppointmentsResponse) {
+    option (google.api.http) = {
+      get: "/v2.1/appointment/list/by-deal/{id}"
+    };
+  }
+
+  rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (Appointment) {
+    option (google.api.http) = {
+      put: "/v2.1/appointment/{id}/status/{action}"
+      body: "*"
+    };
+  }
+}
+
+message Appointment {
+  uint32 id = 1;
+  string title = 2;
+  string startTime = 4;
+  string endTime = 5;
+  string place = 6;
+  repeated int64 participantIds = 7;
+  uint32 dealId = 8;
+  repeated int64 productIds = 9;
+  string description = 10;
+  uint32 reminderSchedule = 11;
+  uint32 mode = 12;
+  uint64 transactionId = 13;
+  repeated uint32 transactionSteps = 20;
+  bdspropb.GroupDeal deal = 14;
+  repeated bdspropb.DealContractResponse dealTransactions = 15;
+  repeated sharepb.ProfileItem participants = 16;
+  repeated bdspropb.ProductAttachment products = 17;
+  uint32 optionExtend = 18;
+  uint32 status = 19;
+  optional bdspropb.DealContractItem dealContract = 21;
+}
+
+message CreateAppointmentRequest {
+  string title = 1;
+  string startTime = 2;
+  string endTime = 3;
+  string place = 4;
+  repeated int64 participantIds = 5;
+  uint32 dealId = 6;
+  repeated int64 productIds = 7;
+  string description = 8;
+  uint32 reminderSchedule = 9;
+  uint32 mode = 10;
+  uint32 optionExtend = 11;
+  uint64 transactionId = 12;
+  repeated uint32 transactionSteps = 13;
+  uint32 status = 14;
+}
+
+message GetAppointmentRequest {
+  uint32 id = 1;
+}
+
+message UpdateAppointmentRequest {
+  uint32 id = 1;
+  string title = 2;
+  string startTime = 3;
+  string endTime = 4;
+  string place = 5;
+  repeated int64 participantIds = 6;
+  uint32 dealId = 7;
+  repeated int64 productIds = 8;
+  string description = 9;
+  uint32 reminderSchedule = 10;
+  uint32 mode = 11;
+  uint64 transactionId = 12;
+  repeated uint32 transactionSteps = 13;
+  uint32 optionExtend = 14;
+  uint32 status = 15;
+}
+
+message DeleteAppointmentRequest {
+  uint32 id = 1;
+}
+
+message DeleteAppointmentResponse {
+  uint32 id = 1;
+}
+
+message ListAppointmentsRequest {
+  string title = 1;
+  uint32 status = 2;
+  string startTime = 3;
+  string endTime = 4;
+  repeated uint32 dealIds = 5;
+  optional int32 page = 6;
+  optional int32 size = 7;
+  optional uint64 transactionId = 8;
+  optional string sort = 9; // Format: "field,order" ví dụ: "startTime,desc" hoặc "startTime,asc"
+  string participantIds = 10; // Filter theo user IDs của participants
+  optional string fromDate = 11; // Filter từ ngày (start_time >= fromDate)
+  optional string toDate = 12; // Filter đến ngày (start_time <= toDate)
+  optional bool containProduct = 13; // Filter theo có product (true = có, false = không có)
+  optional bool containDeal = 14; // Filter theo có deal (true = có, false = không có)
+  optional bool containTransaction = 15; // Filter theo có transaction (true = có, false = không có)
+  optional string statusFilters = 16; // Filter theo status (format: "10,20" - parse thành []int32)
+}
+
+message ListAppointmentsResponse {
+  repeated Appointment data = 1;
+  int32 total = 2;
+}
+
+message AdminListAppointmentsRequest {
+  optional string title = 1;
+  optional uint32 status = 2;
+  optional string startTime = 3;
+  optional string endTime = 4;
+  optional uint32 createdBy = 5;
+  optional int32 page = 6;
+  optional int32 size = 7;
+  optional string sort = 8; // Format: "field,order" ví dụ: "startTime,desc" hoặc "startTime,asc"
+}
+
+message AdminListAppointmentsResponse {
+  repeated Appointment data = 1;
+  int32 total = 2;
+}
+
+message UpdateAppointmentStatusRequest {
+  uint32 id = 1;
+  string action = 2; // "approve" hoặc "cancel"
+}

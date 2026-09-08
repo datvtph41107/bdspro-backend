@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+package bdspropb;
+
+import "bdspro/asset.proto";
+import "bdspro/common.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "shared/common.proto";
+import "shared/v3.proto";
+
+option go_package = "pb/types/bdspro;bdspropb";
+
+service PostService {
+  rpc GetPostByID (GetPostByIDRequest) returns (Post);
+  rpc OwnerPost(OwnerPostRequest) returns (OwnerPostResponse);
+  rpc GetPostByIDs(GetPostByIDsRequest) returns (GetPostByIDsResponse);
+  rpc CreatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/post"
+      body: "*"
+    };
+  };
+  rpc NewExpiredPost(PostExpiredRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/post/new-expired"
+      body: "*"
+    };
+  };
+  rpc GetDetail(IdRequest) returns (PostDetailResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/detail/{id}"
+    };
+  };
+  rpc UpdatePost(PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/post/{id}"
+      body: "*"
+    };
+  };
+  rpc Delete(IdRequest) returns (Response) {
+    option (google.api.http) = {
+      delete: "/v2/bdspro/v2/post/{id}"
+    };
+  };
+  rpc UpdateHidden(UpdateHiddenRequest) returns (Response) {
+    option (google.api.http) = {
+      put: "/v2/bdspro/v2/post/hidden"
+      body: "*"
+    };
+  };
+  rpc GetPersonalPost(PostSearchRequest) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/personal"
+    };
+  };
+  rpc GetPersonalPosts(sharepb.RequestV3Proto) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v3/bdspro/post/personal/{id}"
+    };
+  };
+  rpc GetGlobalPost(PostSearchRequest) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/global"
+    };
+  };
+  rpc GetPublish(PostPublishSearch) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/publish/{profileId}"
+    };
+  };
+  // rpc GetMarketing(GetMarketingRequest) returns (Post);
+  // rpc GetUpVip(GetUpVipRequest) returns (Post);
+  // rpc GetExport(GetExportRequest) returns (Post);
+  
+  // Post Management APIs for Organizations
+  rpc CreatePostOrganization (PostSaveRequest) returns (Post) {
+    option (google.api.http) = {
+      post: "/v2/bdspro/v2/post/organization"
+      body: "*"
+    };
+  };
+  rpc CurrentOrganizationPosts (PostSearchRequest) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/post/organization"
+    };
+  };
+  rpc GetTodayPost (sharepb.Empty) returns (PostListResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/v2/dashboard/today/post"
+    };
+  };
+}
+
+message OwnerPostRequest {
+  uint64 postId = 1;
+  uint64 profileId = 2;
+}
+
+message OwnerPostResponse {
+  bool success = 1;
+}
+
+message GetPostByIDRequest {
+  uint64 id = 1;
+}
+
+message GetPostByIDsRequest {
+  repeated uint64 ids = 1;
+}
+
+message GetPostByIDsResponse {
+  repeated Post posts = 1;
+}
+
+message Post {
+  uint64 id = 1;
+  uint64 productId = 2;
+  string expiredAt = 3;
+  uint32 status = 4;
+  uint32 visibility = 5;
+  bool hidden = 6;
+  string content = 7;
+  uint32 transactionType = 8;
+  string title = 9;
+  int32 numDate = 10;
+  string type = 11; // 1: normal, 2: feed, 3: share
+  double postPrice = 12;
+  uint32 priceType = 13; // 1: chính thức, 2: thỏa thuận
+  uint32 packageVisible = 14; // 1: thường, 2: VIP
+  uint64 like = 15;
+  uint64 comment = 16;
+  uint64 numView = 17;
+  uint64 ownerId = 18;
+  uint32 ownerType = 19; // 1: user, 2: admin
+  repeated PostMedia mediaList = 20;
+  string mediaUrl = 21;
+  string mediaType = 22;
+  string provinceName = 23;
+  string districtName = 24;
+  string wardName = 25;
+  optional sharepb.ProfileItem owner = 26;
+  optional ProductResponse product = 27;
+  uint32 transactionStatus = 28;
+  uint32 visibleStatus = 29;
+  optional uint64 provinceId = 30;
+  optional uint64 wardId = 31;
+  double area = 32;
+}
+
+message PostMedia {
+  uint64 id = 1;
+  string mediaUrl = 2;
+  string mediaType = 3;
+  bool isMain = 4;
+  int32 sortOrder = 5;
+}
+// message PostItem {
+//   uint64 id = 1;
+//   uint64 productId = 2;
+//   string expiredAt = 3;
+//   uint32 status = 4;
+//   string visibility = 5;
+//   bool hidden = 6;
+//   string content = 7;
+//   string transactionType = 8;
+//   string title = 9;
+//   string type = 10; // 1: normal, 2: feed, 3: share
+//   double price = 11;
+//   uint32 priceType = 12; // 1: chính thức, 2: thỏa thuận
+//   uint32 packageVisible = 13; // 1: thường, 2: VIP
+//   uint64 like = 14;
+//   uint64 comment = 15;
+//   uint64 numView = 16;
+//   uint64 address = 17;
+//   string provinceName = 18;
+//   string districtName = 19;
+//   string wardName = 20;
+// }
+
+message PostSearchRequest {
+	uint32 page = 1;
+	uint32 size = 2;
+	string content = 3;
+	uint32 transactionType = 4;
+	string text = 5;
+	string title = 6;
+	optional string expiredFrom = 7;
+	optional string expiredTo = 8;
+	optional bool hidden = 9;
+	repeated uint64 status = 10;
+	repeated uint64 types = 11; // 1: hiển thị, 2: hết hạn; 3: tạm ẩn
+	repeated uint64 packageVisibles = 12;
+}
+
+message PostListResponse {
+	repeated Post data = 1;
+	int32 total = 2;
+}
+
+message PostPublishSearch {
+	uint32 page = 1;
+	uint32 size = 2;
+	uint64 profileId = 3;
+}
+
+message UpdateHiddenRequest {
+  uint64 postId = 1;
+  bool hidden = 2;
+}
+
+message PostExpiredRequest {
+  uint64 postId = 1;
+  uint64 numDay = 2;
+}
+
+message PostSaveRequest {
+	uint64 productId = 1;
+	string title = 2;
+	string content = 3;
+	double price = 4;
+	uint32 transactionType = 5;
+	uint32 visibility = 6;
+	uint32 packageVisible = 7;
+	string expiredAt = 8;
+	uint32 numDate = 9;
+	optional bool hidden = 10;
+	repeated PostMedia mediaList = 11;
+	uint32 status = 12;
+	uint64 id = 13;
+	uint32 priceType = 14;
+}
+
+message PostDetailResponse {
+	Post post = 1;
+	ProductResponse productInfo = 2;
+	Asset assetInfo = 3;
+	sharepb.ProfileItem owner = 4;
+}

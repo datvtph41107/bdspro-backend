@@ -1,0 +1,34 @@
+rpc:
+  user:
+    address: "localhost:8201"
+
+server:
+  name: auth-service
+  tcp_port: 8216
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: ERROR
+
+
+service:
+  name: "auth service"
+  feature: "Enabled only for Service Auth"
+
+redis:
+  host: localhost:6379
+  pass: ""
+
+key:
+  jwt: ""
+
+jwt:
+  key-generate: ""
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 150 # access token hết hạn 100 giờ
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization

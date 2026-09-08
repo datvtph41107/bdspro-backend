@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package bdspropb;
+
+option go_package = "pb/types/bdspro;bdspropb";
+import "shared/common.proto";
+import "google/api/annotations.proto";
+import "bdspro/deal.proto";
+
+service InvestmentService {
+    rpc CreateInvestment(SubmitInvestRequest) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2.1/org/investment"
+            body: "*"
+        };
+    };
+    rpc UpdateInvestment(SubmitInvestRequest) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            put: "/v2.1/org/investment/{id}"
+            body: "*"
+        };
+    };
+    rpc DeleteInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            delete: "/v2.1/org/investment/{id}"
+        };
+    };
+    rpc DetailInvestment(sharepb.IdDTO) returns (Investment) {
+        option (google.api.http) = {
+            get: "/v2.1/org/investment/{id}"
+        };
+    };
+    rpc GetInvestments(InvestmentListRequest) returns (ListInvestment) {
+        option (google.api.http) = {
+            get: "/v2.1/org/investments/list/{dealId}"
+        };
+    };
+    rpc ApproveInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2.1/org/investment/{id}/approve"
+        };
+    };
+    rpc RejectInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2.1/org/investment/{id}/reject"
+        };
+    };
+    rpc ConfirmInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2.1/org/investment/{id}/confirm"
+        };
+    };
+    rpc UnconfirmInvestment(sharepb.IdDTO) returns (sharepb.IdDTO) {
+        option (google.api.http) = {
+            post: "/v2.1/org/investment/{id}/unconfirm"
+        };
+    };
+    rpc GetInvestmentHistories(GetInvestmentHistoriesRequest) returns (GetInvestmentHistoriesResponse) {
+        option (google.api.http) = {
+            get: "/v2.1/org/investment/member-histories/{dealId}/{memberId}"
+        };
+    };
+}
+
+message SubmitInvestRequest {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    uint64 memberId = 3;  // ID of the deal member making the investment
+    uint32 investType = 4;
+    double amount = 5;
+    string transferTime = 6;
+    string note = 7;
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    optional uint64 proxyUserId = 10;  // For proxy investments
+    bool doneInvestment = 11;  // Đánh dấu đã đủ vốn góp
+    uint32 status = 12;
+}
+
+message ListInvestment {
+    repeated Investment data = 1;
+    int32 total = 2;
+}
+
+message Investment {
+    uint64 id = 1;
+    uint64 dealId = 2;
+    uint64 memberId = 3;  // ID of the deal member
+    uint32 investType = 4;
+    double amount = 5;
+    string transferTime = 6;
+    string note = 7;
+    string transferProofImage = 8;  // URL to transfer proof image
+    repeated DocumentItem documents = 9;
+    uint32 status = 10;
+    string changedAt = 11;
+    optional uint64 createdBy = 12;
+    optional sharepb.ProfileItem createdUser = 13;
+    string statusName = 14;
+    bool confirmed = 15;
+    optional uint64 proxyUserId = 16;  // ID of admin who created on behalf
+    optional sharepb.ProfileItem proxyUser = 17;  // Profile of proxy user
+    bool doneInvestment = 18;  // Đánh dấu đã đủ vốn góp
+    repeated ApprovedInvestmentItem histories = 19;  // Danh sách các lần góp vốn đã được xác nhận
+    double totalInvestment = 20;  // Tổng số tiền các lần đã góp và được duyệt
+}
+
+message ApprovedInvestmentItem {
+    uint64 id = 1;
+    double amount = 2;
+    string transferTime = 3;
+    string note = 4;
+    string statusName = 5;
+    bool confirmed = 6;
+}
+
+message InvestmentListRequest {
+    uint64 dealId = 1;
+    uint32 investType = 2;
+    uint32 status = 3;
+    string transferTime = 4;
+    string note = 5;
+    repeated DocumentItem documents = 6;
+    optional uint64 memberId = 7;  // Filter by member ID
+}
+
+message GetInvestmentHistoriesRequest {
+    uint64 dealId = 1;
+    uint64 memberId = 2;
+}
+// Response trả về lịch sử đầu tư
+message GetInvestmentHistoriesResponse {
+    repeated ApprovedInvestmentItem data = 1;  // Danh sách lịch sử đầu tư
+    double totalInvestment = 2;  // Tổng số tiền các lần đã góp và được duyệt
+}
