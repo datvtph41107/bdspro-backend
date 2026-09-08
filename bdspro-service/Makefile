@@ -14,6 +14,6 @@ buf:
 help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
-	  'migrateup migratedown1 migrate-version new_migration buf clean'
+	  'migrate rollback migration name=<schema_change> migration-version buf clean'
 
 .PHONY: help buf

@@ -19,8 +19,25 @@ else
 MIGRATION_DATABASE := $${$(MIGRATION_URL_ENV):-$${$(MIGRATION_URL_FALLBACK_ENV):-$(DB_URL)}}
 endif
 
-migrateup:
+MIGRATION_NAME := $(strip $(if $(name),$(name),$(NAME)))
+
+# Public database developer API.
+migrate:
 	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" -verbose up)
+
+rollback:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" -verbose down 1)
+
+migration-version:
+	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" version)
+
+migration:
+	@test -n "$(MIGRATION_NAME)" || { echo 'usage: make migration name=<schema_change>' >&2; exit 2; }
+	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $(MIGRATION_NAME)
+
+# Compatibility-only targets. They are intentionally not advertised by service
+# help; keep them until external callers have migrated to the public API.
+migrateup: migrate
 
 migrateup1:
 	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" -verbose up 1)
@@ -28,20 +45,14 @@ migrateup1:
 migratedown:
 	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" -verbose down)
 
-migratedown1:
-	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" -verbose down 1)
+migratedown1: rollback
 
-migrate-version:
-	@$(call with_env,migrate -path $(MIGRATION_DIR) -database "$(MIGRATION_DATABASE)" version)
+migrate-version: migration-version
+new_migration: migration
+migrate-up: migrate
+migrate-down: rollback
+migrate-create: migration
 
-new_migration:
-	@test -n "$(name)" || { echo 'usage: make new_migration name=<schema_change>' >&2; exit 2; }
-	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $(name)
-
-# Compatibility aliases used by older scripts and muscle memory.
-migrate-up: migrateup
-migrate-down: migratedown1
-migrate-create: new_migration
-
-.PHONY: migrateup migrateup1 migratedown migratedown1 migrate-version new_migration \
+.PHONY: migrate rollback migration-version migration \
+	migrateup migrateup1 migratedown migratedown1 migrate-version new_migration \
 	migrate-up migrate-down migrate-create

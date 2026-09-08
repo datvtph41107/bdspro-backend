@@ -7,7 +7,10 @@
 #
 # Daily application lifecycle belongs to its service:
 #   make -C payment-service deps-up
-#   make -C payment-service migrateup   # only when schema input changed
+#   make -C payment-service migrate
+#   make -C payment-service rollback
+#   make -C payment-service migration name=add_schema_change
+#   make -C payment-service migration-version
 #   make -C payment-service dev
 #   make -C payment-service test
 #

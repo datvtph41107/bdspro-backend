@@ -46,7 +46,7 @@ acceptance-static: check
 help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
-	  'deps-up deps-down migrateup migratedown1 migrate-version new_migration' \
+	  'deps-up deps-down migrate rollback migration name=<schema_change> migration-version' \
 	  'seed bootstrap-admin buf wire generate docker-build compose-up compose-down compose-logs clean'
 
 .PHONY: help buf wire generate seed bootstrap-admin docker-build \

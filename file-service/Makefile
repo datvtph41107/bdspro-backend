@@ -25,7 +25,7 @@ acceptance-static: check
 help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
-	  'deps-up deps-down migrateup migratedown1 migrate-version new_migration' \
+	  'deps-up deps-down migrate rollback migration name=<schema_change> migration-version' \
 	  'buf docker-build compose-up compose-down clean'
 
 .PHONY: help buf docker-build compose-up compose-down acceptance-static

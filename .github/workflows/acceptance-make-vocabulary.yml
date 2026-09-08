@@ -1,0 +1,88 @@
+name: Acceptance Make Vocabulary
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-make-vocabulary-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  make-vocabulary:
+    name: Canonical Make vocabulary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify canonical database developer API
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          contract=shared/code/development/migration.mk
+          grep -Eq '^migrate:$' "$contract"
+          grep -Eq '^rollback:$' "$contract"
+          grep -Eq '^migration-version:$' "$contract"
+          grep -Eq '^migration:$' "$contract"
+
+          grep -Eq '^migrateup: migrate$' "$contract"
+          grep -Eq '^migratedown1: rollback$' "$contract"
+          grep -Eq '^migrate-version: migration-version$' "$contract"
+          grep -Eq '^new_migration: migration$' "$contract"
+          grep -Eq '^migrate-up: migrate$' "$contract"
+          grep -Eq '^migrate-down: rollback$' "$contract"
+          grep -Eq '^migrate-create: migration$' "$contract"
+
+          services=(user payment tqd notification file hub bdspro crm)
+          for service in "${services[@]}"; do
+            makefile="${service}-service/Makefile"
+            grep -Fq 'include ../shared/code/development/migration.mk' "$makefile"
+
+            help_output="$(make -s -C "${service}-service" help)"
+            grep -Eq '(^|[[:space:]])migrate([[:space:]]|$)' <<<"$help_output"
+            grep -Eq '(^|[[:space:]])rollback([[:space:]]|$)' <<<"$help_output"
+            grep -Eq '(^|[[:space:]])migration([[:space:]]|$)' <<<"$help_output"
+            grep -Eq '(^|[[:space:]])migration-version([[:space:]]|$)' <<<"$help_output"
+
+            if grep -Eq '(^|[[:space:]])(migrateup|migratedown1|migrate-version|new_migration)([[:space:]]|$)' <<<"$help_output"; then
+              echo "${service}-service help advertises legacy database vocabulary" >&2
+              echo "$help_output" >&2
+              exit 1
+            fi
+
+            make -n -C "${service}-service" migrate >/dev/null
+            make -n -C "${service}-service" rollback >/dev/null
+            make -n -C "${service}-service" migration-version >/dev/null
+            make -n -C "${service}-service" migration name=acceptance_probe >/dev/null
+
+            # Compatibility aliases remain parseable but are no longer public help.
+            make -n -C "${service}-service" migrateup >/dev/null
+            make -n -C "${service}-service" migratedown1 >/dev/null
+            make -n -C "${service}-service" migrate-version >/dev/null
+            make -n -C "${service}-service" new_migration NAME=compat_probe >/dev/null
+          done
+
+          grep -Fq 'make -C payment-service migrate' Makefile
+          grep -Fq 'make -C payment-service rollback' Makefile
+          grep -Fq 'make -C payment-service migration name=' Makefile
+          grep -Fq 'make -C payment-service migration-version' Makefile
+          if grep -Fq 'make -C payment-service migrateup' Makefile; then
+            echo 'root developer guidance advertises legacy migrateup' >&2
+            exit 1
+          fi
+
+          git diff --check

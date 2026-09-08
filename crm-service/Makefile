@@ -16,7 +16,7 @@ payment-completed-consumer:
 
 help:
 	@printf '%s\n' \
-	  'fmt vet test test-race build server check' \
-	  'migrateup migratedown1 migrate-version new_migration buf payment-completed-consumer clean'
+	  'fmt vet test test-race build server dev check' \
+	  'migrate rollback migration name=<schema_change> migration-version buf payment-completed-consumer clean'
 
 .PHONY: help buf payment-completed-consumer
