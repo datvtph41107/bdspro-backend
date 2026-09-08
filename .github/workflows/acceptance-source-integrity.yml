@@ -1,0 +1,74 @@
+name: Acceptance Source Integrity
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-source-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-integrity:
+    name: Source integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify protected repository invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -d shared/protobuf
+          test ! -e contracts
+          test -d organization-service
+          test -d map-service
+
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+
+          if git ls-files | grep -Eq '(^|/)\.env($|\.local$|\.runtime$)'; then
+            echo 'Tracked runtime .env file detected' >&2
+            git ls-files | grep -E '(^|/)\.env($|\.local$|\.runtime$)' >&2
+            exit 1
+          fi
+
+          git diff --check
+          make help >/dev/null
+
+      - name: Build tracked-source manifest evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git ls-files -z \
+            | grep -zv '^SOURCE-MANIFEST\.sha256$' \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > SOURCE-MANIFEST.ci.sha256
+
+          sha256sum SOURCE-MANIFEST.ci.sha256 \
+            > SOURCE-MANIFEST.ci.sha256.sha256
+
+      - name: Upload source manifest evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-manifest-${{ github.sha }}
+          path: |
+            SOURCE-MANIFEST.ci.sha256
+            SOURCE-MANIFEST.ci.sha256.sha256
+          if-no-files-found: error
+          retention-days: 30
