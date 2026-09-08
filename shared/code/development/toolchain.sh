@@ -70,6 +70,7 @@ Buf=$BUF_VERSION
 protoc=$PROTOC_VERSION
 protoc-gen-go=$PROTOC_GEN_GO_VERSION
 protoc-gen-go-grpc=$PROTOC_GEN_GO_GRPC_VERSION
+protoc-gen-grpc-gateway=$GRPC_GATEWAY_VERSION
 Wire=$WIRE_VERSION
 migrate=$MIGRATE_VERSION
 Air=$AIR_VERSION
@@ -162,6 +163,7 @@ verify() {
     verify_go_binary "buf" "github.com/bufbuild/buf" "$BUF_VERSION" "$tool_bin/buf" || status=1
     verify_go_binary "protoc-gen-go" "google.golang.org/protobuf" "$PROTOC_GEN_GO_VERSION" "$tool_bin/protoc-gen-go" || status=1
     verify_go_binary "protoc-gen-go-grpc" "google.golang.org/grpc/cmd/protoc-gen-go-grpc" "$PROTOC_GEN_GO_GRPC_VERSION" "$tool_bin/protoc-gen-go-grpc" || status=1
+    verify_go_binary "protoc-gen-grpc-gateway" "github.com/grpc-ecosystem/grpc-gateway/v2" "$GRPC_GATEWAY_VERSION" "$tool_bin/protoc-gen-grpc-gateway" || status=1
     verify_go_binary "wire" "github.com/google/wire" "$WIRE_VERSION" "$tool_bin/wire" || status=1
     verify_go_binary "migrate" "github.com/golang-migrate/migrate/v4" "$MIGRATE_VERSION" "$tool_bin/migrate" || status=1
     verify_migrate_drivers || status=1
@@ -211,6 +213,7 @@ install_go_tools() {
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+  GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install -tags postgres "github.com/golang-migrate/migrate/v4/cmd/migrate@v${MIGRATE_VERSION}"
   GOROOT="$go_root" GOTOOLCHAIN=local GOBIN="$tool_bin" "$go" install "github.com/air-verse/air@v${AIR_VERSION}"
