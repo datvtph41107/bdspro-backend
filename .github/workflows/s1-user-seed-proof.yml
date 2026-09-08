@@ -31,6 +31,7 @@ jobs:
       USER_DATABASE_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       MIGRATION_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       PGPASSWORD: postgres
+      QHPRO_TOOLCHAIN_ROOT: ${{ runner.temp }}/qhpro-toolchain
 
     steps:
       - name: Checkout exact acceptance candidate
@@ -68,6 +69,20 @@ jobs:
           go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
           go install -tags postgres "github.com/golang-migrate/migrate/v4/cmd/migrate@v${MIGRATE_VERSION}"
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+          # Service Makefiles intentionally reset GOROOT/PATH to the repository-owned
+          # canonical toolchain root. Present the exact pinned runner tools through
+          # that contract instead of bypassing it with a shell-only GOROOT.
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire migrate; do
+            test -x "$(go env GOPATH)/bin/$tool"
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+          test "$(GOROOT="$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}" GOTOOLCHAIN=local "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}/bin/go" env GOVERSION)" = "go${GO_VERSION}"
+          test -x "$QHPRO_TOOLCHAIN_ROOT/bin/wire"
+          test -x "$QHPRO_TOOLCHAIN_ROOT/bin/migrate"
+
           if ! command -v psql >/dev/null 2>&1 || ! command -v pg_dump >/dev/null 2>&1; then
             sudo apt-get update -qq
             sudo apt-get install -y postgresql-client
@@ -160,5 +175,6 @@ jobs:
             echo "- acceptance candidate: \`$TARGET_SHA\`"
             echo "- runner checkout: \`$(git rev-parse HEAD 2>/dev/null || echo unavailable)\`"
             echo '- protobuf outputs are generated from canonical schemas with repository-pinned generator versions before User compilation'
+            echo '- service Make targets execute through the repository-owned canonical toolchain-root contract'
             echo '- this proof does not move the acceptance branch and does not by itself imply FINAL ACCEPTED'
           } >> "$GITHUB_STEP_SUMMARY"
