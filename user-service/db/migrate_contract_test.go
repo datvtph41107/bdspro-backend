@@ -21,7 +21,7 @@ var (
 func TestCanonicalSQLCoversUserAutoMigrateRegistry(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "migrate", "000001_user_schema.up.sql"))
+	contents, err := os.ReadFile(filepath.Join("..", "database", "migrations", "000001_user_schema.up.sql"))
 	require.NoError(t, err)
 	tables := sqlTables(string(contents))
 
@@ -45,9 +45,9 @@ func TestCanonicalSQLCoversUserAutoMigrateRegistry(t *testing.T) {
 func TestCanonicalUserDownCoversEveryCreatedTable(t *testing.T) {
 	t.Parallel()
 
-	upContents, err := os.ReadFile(filepath.Join("..", "migrate", "000001_user_schema.up.sql"))
+	upContents, err := os.ReadFile(filepath.Join("..", "database", "migrations", "000001_user_schema.up.sql"))
 	require.NoError(t, err)
-	downContents, err := os.ReadFile(filepath.Join("..", "migrate", "000001_user_schema.down.sql"))
+	downContents, err := os.ReadFile(filepath.Join("..", "database", "migrations", "000001_user_schema.down.sql"))
 	require.NoError(t, err)
 
 	dropped := make(map[string]struct{})

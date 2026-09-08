@@ -13,7 +13,7 @@ import (
 func TestCommercialCatalogSeedChecksumsMatchDomainContract(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "migrate", "000003_seed_qhpro_commercial_catalog.up.sql"))
+	contents, err := os.ReadFile(filepath.Join("..", "database", "migrations", "000003_seed_qhpro_commercial_catalog.up.sql"))
 	require.NoError(t, err)
 	migration := string(contents)
 
