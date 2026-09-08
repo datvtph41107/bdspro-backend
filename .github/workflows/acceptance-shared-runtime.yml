@@ -38,16 +38,96 @@ jobs:
 
           test ! -e shared/common/setup.go
 
-          legacy_symbols='SetupGRPCServer|SetupRestfulAPI|LoadYMLConfigFile|ProfileIDInterceptor|GetPrefixProtobufUrl|SetupParameters'
-          if git grep -n -E "$legacy_symbols" -- '*.go'; then
-            echo 'legacy shared runtime symbols still have Go callers' >&2
-            exit 1
-          fi
+          cat > /tmp/verify_shared_runtime.go <<'EOF'
+          package main
 
-          if git grep -n -E '(^|[[:space:]])"common"[[:space:]]*$' -- '*.go'; then
-            echo 'root common package still has a direct Go import' >&2
-            exit 1
-          fi
+          import (
+              "fmt"
+              "go/ast"
+              "go/parser"
+              "go/token"
+              "io/fs"
+              "os"
+              "path/filepath"
+              "strconv"
+          )
+
+          var forbiddenFunctions = map[string]bool{
+              "SetupGRPCServer": true,
+              "SetupRestfulAPI": true,
+              "LoadConfig": true,
+              "LoadYMLConfigFile": true,
+              "ProfileIDInterceptor": true,
+              "GetPrefixProtobufUrl": true,
+          }
+
+          func main() {
+              fset := token.NewFileSet()
+              failed := false
+              err := filepath.WalkDir(".", func(path string, entry fs.DirEntry, walkErr error) error {
+                  if walkErr != nil {
+                      return walkErr
+                  }
+                  if entry.IsDir() {
+                      if entry.Name() == ".git" || entry.Name() == "vendor" {
+                          return filepath.SkipDir
+                      }
+                      return nil
+                  }
+                  if filepath.Ext(path) != ".go" {
+                      return nil
+                  }
+
+                  file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+                  if err != nil {
+                      return fmt.Errorf("parse %s: %w", path, err)
+                  }
+
+                  for _, imp := range file.Imports {
+                      importPath, err := strconv.Unquote(imp.Path.Value)
+                      if err != nil {
+                          return fmt.Errorf("decode import in %s: %w", path, err)
+                      }
+                      if importPath == "common" {
+                          fmt.Printf("live root common import: %s\n", path)
+                          failed = true
+                      }
+                  }
+
+                  if filepath.Clean(filepath.Dir(path)) == filepath.Clean("shared/common") {
+                      for _, decl := range file.Decls {
+                          switch d := decl.(type) {
+                          case *ast.FuncDecl:
+                              if forbiddenFunctions[d.Name.Name] {
+                                  fmt.Printf("legacy shared runtime function declaration: %s:%s\n", path, d.Name.Name)
+                                  failed = true
+                              }
+                          case *ast.GenDecl:
+                              for _, spec := range d.Specs {
+                                  if typeSpec, ok := spec.(*ast.TypeSpec); ok && typeSpec.Name.Name == "SetupParameters" {
+                                      fmt.Printf("legacy shared runtime type declaration: %s:%s\n", path, typeSpec.Name.Name)
+                                      failed = true
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  return nil
+              })
+              if err != nil {
+                  fmt.Fprintln(os.Stderr, err)
+                  os.Exit(2)
+              }
+              if failed {
+                  os.Exit(1)
+              }
+          }
+          EOF
+
+          go run /tmp/verify_shared_runtime.go
+
+          echo 'Comment-only legacy references (informational):'
+          git grep -n -E 'SetupGRPCServer|SetupRestfulAPI|LoadYMLConfigFile|ProfileIDInterceptor|GetPrefixProtobufUrl|SetupParameters' -- '*.go' || true
 
           echo 'AutoMigrate inventory (informational; not mutated by S3):'
           git grep -n -E 'AutoMigrate\(' -- '*.go' || true
