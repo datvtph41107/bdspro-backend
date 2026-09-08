@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 BINARY_NAME := file-service
 DB_URL ?= postgres://postgres:postgres@localhost:5432/file_service?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres
 
 include ../shared/code/development/service.mk

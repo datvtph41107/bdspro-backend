@@ -107,6 +107,22 @@ jobs:
           grep -Fq './notification-service/migrate:/migrations:ro' compose.yaml
           test -f notification-service/migrate/000002_payment_eventing.up.sql
 
+      - name: Verify File migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d file-service/database/migrations
+          test -L file-service/migrate
+          test "$(readlink file-service/migrate)" = 'database/migrations'
+          test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 4
+          test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 4
+          test -f file-service/database/migrations/000004_drop_physical_path_authority.up.sql
+          test -f file-service/database/migrations/000004_drop_physical_path_authority.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' file-service/Makefile
+          grep -Fq 'file:file-service/database/migrations' shared/code/development/verify-migrations.sh
+          grep -Fq './file-service/migrate:/migrations:ro' compose.yaml
+          test -f file-service/migrate/000004_drop_physical_path_authority.up.sql
+
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |
