@@ -121,7 +121,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./user-service/migrate:/migrations:ro]
+    volumes: [./user-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable", "up"]
     restart: on-failure
 

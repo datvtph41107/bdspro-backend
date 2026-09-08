@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$repo_root"
 
 authorities=(
-  "user:user-service/migrate"
+  "user:user-service/database/migrations"
   "organization:organization-service/migrate"
   "payment:payment-service/migrate"
   "tqd:tqd-service/migrate"

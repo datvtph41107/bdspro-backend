@@ -3,7 +3,7 @@ BINARY_NAME := user-service
 BUILD_PACKAGE := ./cmd/grpc
 RUN_PACKAGE := ./cmd/grpc
 DB_URL ?= postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres redis
 
 include ../shared/code/development/service.mk

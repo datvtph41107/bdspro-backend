@@ -49,6 +49,25 @@ jobs:
           git diff --check
           make help >/dev/null
 
+      - name: Verify User migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -d user-service/database/migrations
+          test ! -e user-service/migrate
+
+          up_count=$(find user-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)
+          down_count=$(find user-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)
+          test "$up_count" -eq 10
+          test "$down_count" -eq 10
+          test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.up.sql
+          test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.down.sql
+
+          grep -Fq 'MIGRATION_DIR := database/migrations' user-service/Makefile
+          grep -Fq './user-service/database/migrations:/migrations:ro' compose.yaml
+          grep -Fq 'user:user-service/database/migrations' shared/code/development/verify-migrations.sh
+
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |
