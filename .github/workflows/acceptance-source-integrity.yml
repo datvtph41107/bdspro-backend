@@ -94,14 +94,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          git ls-files -z \
-            | grep -zv '^SOURCE-MANIFEST\.sha256$' \
-            | sort -z \
-            | xargs -0 sha256sum \
-            > SOURCE-MANIFEST.ci.sha256
+          : > SOURCE-MANIFEST.ci.sha256
+          while IFS= read -r -d '' path; do
+            test "$path" = 'SOURCE-MANIFEST.sha256' && continue
+            digest=$(git show ":$path" | sha256sum | awk '{print $1}')
+            printf '%s  %s\n' "$digest" "$path" >> SOURCE-MANIFEST.ci.sha256
+          done < <(git ls-files -z | sort -z)
 
-          sha256sum SOURCE-MANIFEST.ci.sha256 \
-            > SOURCE-MANIFEST.ci.sha256.sha256
+          git ls-files -s \
+            | grep -v $'\tSOURCE-MANIFEST.sha256$' \
+            > SOURCE-MANIFEST.ci.git-index.txt
+
+          sha256sum SOURCE-MANIFEST.ci.sha256 SOURCE-MANIFEST.ci.git-index.txt \
+            > SOURCE-MANIFEST.ci.evidence.sha256
 
       - name: Upload source manifest evidence
         uses: actions/upload-artifact@v4
@@ -109,6 +114,7 @@ jobs:
           name: source-manifest-${{ github.sha }}
           path: |
             SOURCE-MANIFEST.ci.sha256
-            SOURCE-MANIFEST.ci.sha256.sha256
+            SOURCE-MANIFEST.ci.git-index.txt
+            SOURCE-MANIFEST.ci.evidence.sha256
           if-no-files-found: error
           retention-days: 30
