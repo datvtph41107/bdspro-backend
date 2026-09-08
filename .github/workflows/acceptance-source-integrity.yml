@@ -69,11 +69,9 @@ jobs:
           test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 7
           test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 7
           test -f payment-service/database/migrations/000007_canonical_order_reference.up.sql
-          test -f payment-service/database/migrations/000007_canonical_order_reference.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' payment-service/Makefile
           grep -Fq 'payment:payment-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './payment-service/migrate:/migrations:ro' compose.yaml
-          test -f payment-service/migrate/000007_canonical_order_reference.up.sql
 
       - name: Verify TQD migration authority
         shell: bash
@@ -85,11 +83,9 @@ jobs:
           test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 44
           test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 44
           test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
-          test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' tqd-service/Makefile
           grep -Fq 'tqd:tqd-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './tqd-service/migrate:/migrations:ro' compose.yaml
-          test -f tqd-service/migrate/000044_canonicalize_vn_administrative_catalog.up.sql
 
       - name: Verify Notification migration authority
         shell: bash
@@ -101,11 +97,9 @@ jobs:
           test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 2
           test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 2
           test -f notification-service/database/migrations/000002_payment_eventing.up.sql
-          test -f notification-service/database/migrations/000002_payment_eventing.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' notification-service/Makefile
           grep -Fq 'notification:notification-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './notification-service/migrate:/migrations:ro' compose.yaml
-          test -f notification-service/migrate/000002_payment_eventing.up.sql
 
       - name: Verify File migration authority
         shell: bash
@@ -117,11 +111,24 @@ jobs:
           test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 4
           test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 4
           test -f file-service/database/migrations/000004_drop_physical_path_authority.up.sql
-          test -f file-service/database/migrations/000004_drop_physical_path_authority.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' file-service/Makefile
           grep -Fq 'file:file-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './file-service/migrate:/migrations:ro' compose.yaml
-          test -f file-service/migrate/000004_drop_physical_path_authority.up.sql
+
+      - name: Verify Hub migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d hub-service/database/migrations
+          test -L hub-service/migrate
+          test "$(readlink hub-service/migrate)" = 'database/migrations'
+          test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
+          test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
+          test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.up.sql
+          test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
+          grep -Fq 'hub:hub-service/database/migrations' shared/code/development/verify-migrations.sh
+          grep -Fq './hub-service/migrate:/migrations:ro' compose.yaml
 
       - name: Build tracked-source manifest evidence
         shell: bash

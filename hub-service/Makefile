@@ -2,7 +2,7 @@ SHELL := /bin/sh
 BINARY_NAME := hub-service
 RUN_ARGS := grpc
 DB_URL ?= postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 MIGRATION_URL_FALLBACK_ENV := HUB_DATABASE_URL
 DEV_DEPENDENCIES := postgres redis
 

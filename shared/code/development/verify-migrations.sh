@@ -11,7 +11,7 @@ authorities=(
   "tqd:tqd-service/database/migrations"
   "notification:notification-service/database/migrations"
   "file:file-service/database/migrations"
-  "hub:hub-service/migrate"
+  "hub:hub-service/database/migrations"
   "bdspro:bdspro-service/infra/db/migrations/v2"
   "crm:crm-service/infra/db/migrate_v2"
 )
