@@ -1,0 +1,428 @@
+name: Build S4 BDSPro Redis Candidate
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s4-bdspro-redis-c8b2857
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s4-build-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      TARGET_SHA: c8b2857f6e88761ba7bd39470ffaa8487a3321e7
+      CANDIDATE_BRANCH: final-acceptance/s4-bdspro-redis-candidate
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+
+    steps:
+      - name: Checkout proof branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Build exact S4 source candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --detach "$TARGET_SHA"
+
+          cat > bdspro-service/infra/providers/redis_provider.go <<'EOF'
+          package providers
+
+          import (
+              "encoding/json"
+
+              redis_cli "bdspro/infra/redis"
+
+              "github.com/gin-gonic/gin"
+          )
+
+          // RedisProvider is a compatibility adapter over the process-owned Redis client.
+          // It must never construct or own a second Redis connection.
+          type RedisProvider struct {
+              client *redis_cli.RedisClient
+          }
+
+          func NewRedisProvider(client *redis_cli.RedisClient) *RedisProvider {
+              return &RedisProvider{client: client}
+          }
+
+          func GetValueWithRedis[T any](r *RedisProvider, ctx *gin.Context, key string) (*T, error) {
+              var result T
+              client, err := r.client.Client(ctx)
+              if err != nil {
+                  return &result, err
+              }
+              val, err := client.Get(ctx, key).Result()
+              if err != nil {
+                  return &result, err
+              }
+
+              err = json.Unmarshal([]byte(val), &result)
+              return &result, err
+          }
+          EOF
+
+          cat > bdspro-service/infra/redis/runtime.go <<'EOF'
+          package redis_cli
+
+          import (
+              "context"
+              "errors"
+              "time"
+
+              configs "bdspro/config"
+
+              "github.com/hyperledger/fabric/common/flogging"
+              "github.com/redis/go-redis/v9"
+          )
+
+          // RedisClient wraps the single process-owned Redis connection pool.
+          // go-redis owns pooling/reconnect behavior; this wrapper owns construction,
+          // primitive access, and deterministic process shutdown.
+          type RedisClient struct {
+              client *redis.Client
+              logger *flogging.FabricLogger
+          }
+
+          func NewClient() (*RedisClient, error) {
+              logger := flogging.MustGetLogger("redis")
+              client := redis.NewClient(&redis.Options{
+                  Addr:     configs.AppProperties.Redis.Host,
+                  Password: configs.AppProperties.Redis.Password,
+                  DB:       0,
+              })
+
+              rc := &RedisClient{client: client, logger: logger}
+              if err := client.Ping(context.Background()).Err(); err != nil {
+                  logger.Warnf("Failed to connect to Redis on startup: %v. App will continue and commands may retry through go-redis.", err)
+              } else {
+                  logger.Info("Connected to Redis")
+              }
+              return rc, nil
+          }
+
+          func (r *RedisClient) Client(context.Context) (*redis.Client, error) {
+              if r == nil || r.client == nil {
+                  return nil, errors.New("redis client is not initialized")
+              }
+              return r.client, nil
+          }
+
+          func (r *RedisClient) Close() error {
+              if r == nil || r.client == nil {
+                  return nil
+              }
+              return r.client.Close()
+          }
+
+          func (r *RedisClient) Get(ctx context.Context, key string) *redis.StringCmd {
+              return r.client.Get(ctx, key)
+          }
+
+          func (r *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+              return r.client.Set(ctx, key, value, expiration)
+          }
+
+          func (r *RedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd {
+              return r.client.Del(ctx, keys...)
+          }
+
+          func (r *RedisClient) HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd {
+              return r.client.HSet(ctx, key, values...)
+          }
+
+          func (r *RedisClient) HGet(ctx context.Context, key, field string) *redis.StringCmd {
+              return r.client.HGet(ctx, key, field)
+          }
+
+          func (r *RedisClient) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+              return r.client.HGetAll(ctx, key)
+          }
+
+          func (r *RedisClient) HMGet(ctx context.Context, key string, fields ...string) *redis.SliceCmd {
+              return r.client.HMGet(ctx, key, fields...)
+          }
+
+          func (r *RedisClient) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+              return r.client.HMSet(ctx, key, values...)
+          }
+
+          func (r *RedisClient) HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd {
+              return r.client.HDel(ctx, key, fields...)
+          }
+
+          func (r *RedisClient) ZRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.ZSliceCmd {
+              return r.client.ZRangeByScoreWithScores(ctx, key, opt)
+          }
+
+          func (r *RedisClient) ZRevRangeByScoreWithScores(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.ZSliceCmd {
+              return r.client.ZRevRangeByScoreWithScores(ctx, key, opt)
+          }
+
+          func (r *RedisClient) ExpireNX(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+              return r.client.ExpireNX(ctx, key, expiration)
+          }
+
+          func (r *RedisClient) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+              return r.client.SAdd(ctx, key, members...)
+          }
+
+          func (r *RedisClient) SMembers(ctx context.Context, key string) *redis.StringSliceCmd {
+              return r.client.SMembers(ctx, key)
+          }
+
+          func (r *RedisClient) SRem(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+              return r.client.SRem(ctx, key, members...)
+          }
+
+          func (r *RedisClient) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+              return r.client.ZAdd(ctx, key, members...)
+          }
+
+          func (r *RedisClient) ZRangeByScore(ctx context.Context, key string, opt *redis.ZRangeBy) *redis.StringSliceCmd {
+              return r.client.ZRangeByScore(ctx, key, opt)
+          }
+
+          func (r *RedisClient) ZRem(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+              return r.client.ZRem(ctx, key, members...)
+          }
+
+          func (r *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+              return r.client.Expire(ctx, key, expiration)
+          }
+
+          func (r *RedisClient) TTL(ctx context.Context, key string) *redis.DurationCmd {
+              return r.client.TTL(ctx, key)
+          }
+
+          func (r *RedisClient) Keys(ctx context.Context, pattern string) *redis.StringSliceCmd {
+              return r.client.Keys(ctx, pattern)
+          }
+
+          func (r *RedisClient) Pipeline() redis.Pipeliner {
+              return r.client.Pipeline()
+          }
+          EOF
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('bdspro-service/initial/runtime.go')
+          s = p.read_text()
+          s = s.replace('import (\n\t"bdspro/infra/handler"', 'import (\n\t"bdspro/infra/handler"\n\tredis_cli "bdspro/infra/redis"', 1)
+          s = s.replace('\tProductUsecase           *shared_usecase.ProductUsecase\n', '\tProductUsecase           *shared_usecase.ProductUsecase\n\tRedisClient              *redis_cli.RedisClient\n', 1)
+          s = s.replace('\tpropertyIdentifier *handler.PropertyIdentifierHandler,\n) *InitialApp {', '\tpropertyIdentifier *handler.PropertyIdentifierHandler,\n\tredisClient *redis_cli.RedisClient,\n) *InitialApp {', 1)
+          s = s.replace('\t\tProductUsecase:           productUsecase,\n', '\t\tProductUsecase:           productUsecase,\n\t\tRedisClient:              redisClient,\n', 1)
+          if s.count('RedisClient') < 3:
+              raise SystemExit('InitialApp Redis injection anchors missing')
+          p.write_text(s)
+
+          p = Path('bdspro-service/cmd/grpc/main.go')
+          s = p.read_text()
+          needle = '''\t\tif app == nil {\n\t\t\tlog.Fatal("app is nil after InitializeApp")\n\t\t}\n'''
+          repl = needle + '''\t\tif app.RedisClient != nil {\n\t\t\tdefer func() {\n\t\t\t\tif err := app.RedisClient.Close(); err != nil {\n\t\t\t\t\tlog.Printf("failed to close Redis client: %v", err)\n\t\t\t\t}\n\t\t\t}()\n\t\t}\n'''
+          if needle not in s:
+              raise SystemExit('grpc app nil-check anchor missing')
+          p.write_text(s.replace(needle, repl, 1))
+
+          p = Path('bdspro-service/internal/usecases/shared/product_usecase.go')
+          s = p.read_text()
+          anchor = '''func (uc *ProductUsecase) syncAllProducts(\n\tctx context.Context,\n\tprofileID uint64,\n\tlastSync int64,\n\tpageSize int,\n\tpageToken string,\n) (*dto.SyncProductsResponse, error) {\n\ttk, err := token.DecodeZSetPageToken(pageToken)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n'''
+          replacement = '''func (uc *ProductUsecase) ensureSyncCache(ctx context.Context, profileID uint64) error {\n\tclient, err := uc.redisClient.Client(ctx)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tready, err := client.Exists(ctx, cache.UserSyncTimeKey(profileID)).Result()\n\tif err != nil {\n\t\treturn err\n\t}\n\tif ready > 0 {\n\t\treturn nil\n\t}\n\n\treturn uc.seedFromDB(ctx, profileID)\n}\n\nfunc (uc *ProductUsecase) syncAllProducts(\n\tctx context.Context,\n\tprofileID uint64,\n\tlastSync int64,\n\tpageSize int,\n\tpageToken string,\n) (*dto.SyncProductsResponse, error) {\n\ttk, err := token.DecodeZSetPageToken(pageToken)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\tif pageToken == "" {\n\t\tif err := uc.ensureSyncCache(ctx, profileID); err != nil {\n\t\t\treturn nil, err\n\t\t}\n\t}\n'''
+          if anchor not in s:
+              raise SystemExit('syncAllProducts anchor missing')
+          s = s.replace(anchor, replacement, 1)
+
+          legacy = '''\n\tif len(results) == 0 && pageToken == "" && lastSync == 0 {\n\t\tif err := uc.seedFromDB(ctx, profileID); err != nil {\n\t\t\treturn nil, err\n\t\t}\n\t\treturn uc.syncAllProducts(ctx, profileID, lastSync, pageSize, pageToken)\n\t}\n'''
+          if legacy not in s:
+              raise SystemExit('legacy Redis empty-cache fallback missing')
+          s = s.replace(legacy, '\n', 1)
+
+          seed_tail = '''\t\tif len(items) < batchSize {\n\t\t\tbreak\n\t\t}\n\t}\n\n\treturn nil\n}\n'''
+          seed_repl = '''\t\tif len(items) < batchSize {\n\t\t\tbreak\n\t\t}\n\t}\n\n\tpipe := uc.redisClient.Pipeline()\n\tpipe.Expire(ctx, userHash, cache.TTLUserSync)\n\tpipe.Expire(ctx, changeZSet, cache.TTLUserSync)\n\tpipe.Set(ctx, cache.UserSyncTimeKey(profileID), time.Now().UnixMilli(), cache.TTLUserSync)\n\t_, err := pipe.Exec(ctx)\n\treturn err\n}\n'''
+          if seed_tail not in s:
+              raise SystemExit('seedFromDB tail anchor missing')
+          s = s.replace(seed_tail, seed_repl, 1)
+          p.write_text(s)
+          PY
+
+          cat > .github/workflows/acceptance-bdspro-redis.yml <<'EOF'
+          name: Acceptance BDSPro Redis Ownership
+
+          on:
+            push:
+              branches:
+                - final-acceptance/source-canonicalization
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          concurrency:
+            group: acceptance-bdspro-redis-${{ github.ref }}
+            cancel-in-progress: true
+
+          jobs:
+            bdspro-redis:
+              runs-on: ubuntu-24.04
+              timeout-minutes: 30
+              env:
+                QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+
+              steps:
+                - name: Checkout exact commit
+                  uses: actions/checkout@v4
+                  with:
+                    fetch-depth: 0
+
+                - name: Set up canonical Go patch version
+                  uses: actions/setup-go@v5
+                  with:
+                    go-version: '1.25.10'
+                    cache: false
+
+                - name: Install canonical generators
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    source shared/code/development/toolchain.versions
+                    test "$(go env GOVERSION)" = "go${GO_VERSION}"
+                    go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+                    go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+                    go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+                    go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+                    go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+                    mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+                    ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+                    for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+                      ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+                    done
+
+                - name: Verify single Redis construction and lifecycle ownership
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
+                    test "$count" = "1"
+                    git grep -n 'redis.NewClient(' -- bdspro-service/infra/redis/runtime.go
+                    ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
+                    grep -q 'func NewRedisProvider(client \*redis_cli.RedisClient)' bdspro-service/infra/providers/redis_provider.go
+                    grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' bdspro-service/initial/runtime.go
+                    grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+                    grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
+                    ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
+                    ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
+
+                - name: Verify Redis-loss rebuild semantics
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    grep -q 'UserSyncTimeKey(profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+                    grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+                    grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
+                    ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
+
+                - name: Generate protobuf and prove Wire cleanliness
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    make -C shared/code buf-all
+                    make -C bdspro-service wire
+                    git diff --exit-code -- bdspro-service/wire/wire_gen.go
+                    git diff --check
+
+                - name: Compile test and vet BDSPro
+                  shell: bash
+                  working-directory: bdspro-service
+                  run: |
+                    set -euo pipefail
+                    go test ./...
+                    go vet ./...
+                    go build ./...
+          EOF
+
+          gofmt -w \
+            bdspro-service/infra/providers/redis_provider.go \
+            bdspro-service/infra/redis/runtime.go \
+            bdspro-service/initial/runtime.go \
+            bdspro-service/cmd/grpc/main.go \
+            bdspro-service/internal/usecases/shared/product_usecase.go
+
+      - name: Generate canonical protobuf and Wire output
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C bdspro-service wire
+          git diff --check
+
+      - name: Verify S4 ownership invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
+          echo "redis.NewClient constructors=$count"
+          test "$count" = "1"
+          ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
+          grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+          grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
+
+      - name: Compile test and vet exact candidate
+        shell: bash
+        working-directory: bdspro-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go vet ./...
+          go build ./...
+
+      - name: Commit exact candidate from accepted parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'BDSPro Acceptance Proof'
+          git config user.email 'acceptance-proof@users.noreply.github.com'
+          git add \
+            .github/workflows/acceptance-bdspro-redis.yml \
+            bdspro-service/infra/providers/redis_provider.go \
+            bdspro-service/infra/redis/runtime.go \
+            bdspro-service/initial/runtime.go \
+            bdspro-service/cmd/grpc/main.go \
+            bdspro-service/internal/usecases/shared/product_usecase.go \
+            bdspro-service/wire/wire_gen.go
+          git commit -m 'refactor(bdspro): canonicalize Redis runtime ownership'
+          test "$(git rev-parse HEAD^)" = "$TARGET_SHA"
+          git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
