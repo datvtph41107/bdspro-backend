@@ -2,7 +2,7 @@ SHELL := /bin/sh
 BINARY_NAME := payment-service
 RUN_ARGS := grpc
 DB_URL ?= postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres rabbitmq
 
 include ../shared/code/development/service.mk

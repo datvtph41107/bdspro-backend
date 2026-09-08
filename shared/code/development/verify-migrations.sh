@@ -7,7 +7,7 @@ cd "$repo_root"
 authorities=(
   "user:user-service/database/migrations"
   "organization:organization-service/migrate"
-  "payment:payment-service/migrate"
+  "payment:payment-service/database/migrations"
   "tqd:tqd-service/migrate"
   "notification:notification-service/migrate"
   "file:file-service/migrate"
