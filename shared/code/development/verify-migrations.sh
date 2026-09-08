@@ -9,7 +9,7 @@ authorities=(
   "organization:organization-service/migrate"
   "payment:payment-service/database/migrations"
   "tqd:tqd-service/database/migrations"
-  "notification:notification-service/migrate"
+  "notification:notification-service/database/migrations"
   "file:file-service/migrate"
   "hub:hub-service/migrate"
   "bdspro:bdspro-service/infra/db/migrations/v2"

@@ -2,7 +2,7 @@ SHELL := /bin/sh
 BINARY_NAME := notification-service
 RUN_ARGS := grpc
 DB_URL ?= postgres://qhpro:qhpro@localhost:5432/qhpro_notification?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres redis rabbitmq
 EVENT_WORKER_BIN := bin/payment-event-worker
 DELIVERY_WORKER_BIN := bin/delivery-worker

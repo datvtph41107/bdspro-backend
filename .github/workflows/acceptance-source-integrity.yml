@@ -32,20 +32,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           test -d shared/protobuf
           test ! -e contracts
           test -d organization-service
           test -d map-service
-
           echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
-
           if git ls-files | grep -Eq '(^|/)\.env($|\.local$|\.runtime$)'; then
             echo 'Tracked runtime .env file detected' >&2
             git ls-files | grep -E '(^|/)\.env($|\.local$|\.runtime$)' >&2
             exit 1
           fi
-
           git diff --check
           make help >/dev/null
 
@@ -53,17 +49,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           test -d user-service/database/migrations
           test ! -e user-service/migrate
-
-          up_count=$(find user-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)
-          down_count=$(find user-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)
-          test "$up_count" -eq 10
-          test "$down_count" -eq 10
+          test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 10
+          test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 10
           test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.up.sql
           test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.down.sql
-
           grep -Fq 'MIGRATION_DIR := database/migrations' user-service/Makefile
           grep -Fq './user-service/database/migrations:/migrations:ro' compose.yaml
           grep -Fq 'user:user-service/database/migrations' shared/code/development/verify-migrations.sh
@@ -72,18 +63,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           test -d payment-service/database/migrations
           test -L payment-service/migrate
           test "$(readlink payment-service/migrate)" = 'database/migrations'
-
-          up_count=$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)
-          down_count=$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)
-          test "$up_count" -eq 7
-          test "$down_count" -eq 7
+          test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 7
+          test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 7
           test -f payment-service/database/migrations/000007_canonical_order_reference.up.sql
           test -f payment-service/database/migrations/000007_canonical_order_reference.down.sql
-
           grep -Fq 'MIGRATION_DIR := database/migrations' payment-service/Makefile
           grep -Fq 'payment:payment-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './payment-service/migrate:/migrations:ro' compose.yaml
@@ -93,41 +79,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           test -d tqd-service/database/migrations
           test -L tqd-service/migrate
           test "$(readlink tqd-service/migrate)" = 'database/migrations'
-
-          up_count=$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)
-          down_count=$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)
-          test "$up_count" -eq 44
-          test "$down_count" -eq 44
+          test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 44
+          test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 44
           test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
           test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.down.sql
-
           grep -Fq 'MIGRATION_DIR := database/migrations' tqd-service/Makefile
           grep -Fq 'tqd:tqd-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './tqd-service/migrate:/migrations:ro' compose.yaml
           test -f tqd-service/migrate/000044_canonicalize_vn_administrative_catalog.up.sql
 
+      - name: Verify Notification migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d notification-service/database/migrations
+          test -L notification-service/migrate
+          test "$(readlink notification-service/migrate)" = 'database/migrations'
+          test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 2
+          test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 2
+          test -f notification-service/database/migrations/000002_payment_eventing.up.sql
+          test -f notification-service/database/migrations/000002_payment_eventing.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' notification-service/Makefile
+          grep -Fq 'notification:notification-service/database/migrations' shared/code/development/verify-migrations.sh
+          grep -Fq './notification-service/migrate:/migrations:ro' compose.yaml
+          test -f notification-service/migrate/000002_payment_eventing.up.sql
+
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |
           set -euo pipefail
-
           : > SOURCE-MANIFEST.ci.sha256
           while IFS= read -r -d '' path; do
             test "$path" = 'SOURCE-MANIFEST.sha256' && continue
             digest=$(git show ":$path" | sha256sum | awk '{print $1}')
             printf '%s  %s\n' "$digest" "$path" >> SOURCE-MANIFEST.ci.sha256
           done < <(git ls-files -z | sort -z)
-
-          git ls-files -s \
-            | grep -v $'\tSOURCE-MANIFEST.sha256$' \
-            > SOURCE-MANIFEST.ci.git-index.txt
-
-          sha256sum SOURCE-MANIFEST.ci.sha256 SOURCE-MANIFEST.ci.git-index.txt \
-            > SOURCE-MANIFEST.ci.evidence.sha256
+          git ls-files -s | grep -v $'\tSOURCE-MANIFEST.sha256$' > SOURCE-MANIFEST.ci.git-index.txt
+          sha256sum SOURCE-MANIFEST.ci.sha256 SOURCE-MANIFEST.ci.git-index.txt > SOURCE-MANIFEST.ci.evidence.sha256
 
       - name: Upload source manifest evidence
         uses: actions/upload-artifact@v4
