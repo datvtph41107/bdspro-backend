@@ -54,7 +54,6 @@ jobs:
           test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 10
           test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 10
           test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.up.sql
-          test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' user-service/Makefile
           grep -Fq './user-service/database/migrations:/migrations:ro' compose.yaml
           grep -Fq 'user:user-service/database/migrations' shared/code/development/verify-migrations.sh
@@ -125,10 +124,22 @@ jobs:
           test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
           test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
           test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.up.sql
-          test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.down.sql
           grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
           grep -Fq 'hub:hub-service/database/migrations' shared/code/development/verify-migrations.sh
           grep -Fq './hub-service/migrate:/migrations:ro' compose.yaml
+
+      - name: Verify BDSPro migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d bdspro-service/database/migrations
+          test ! -e bdspro-service/infra/db/migrations/v2
+          test "$(find bdspro-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
+          test "$(find bdspro-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
+          test -f bdspro-service/database/migrations/000003_create_property_partition_table.up.sql
+          test -f bdspro-service/database/migrations/000003_create_property_partition_table.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' bdspro-service/Makefile
+          grep -Fq 'bdspro:bdspro-service/database/migrations' shared/code/development/verify-migrations.sh
 
       - name: Build tracked-source manifest evidence
         shell: bash

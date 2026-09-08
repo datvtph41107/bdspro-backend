@@ -12,7 +12,7 @@ authorities=(
   "notification:notification-service/database/migrations"
   "file:file-service/database/migrations"
   "hub:hub-service/database/migrations"
-  "bdspro:bdspro-service/infra/db/migrations/v2"
+  "bdspro:bdspro-service/database/migrations"
   "crm:crm-service/infra/db/migrate_v2"
 )
 
