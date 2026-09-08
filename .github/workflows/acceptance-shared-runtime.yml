@@ -17,7 +17,7 @@ jobs:
   shared-runtime:
     name: Shared runtime ownership
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout exact commit
@@ -133,6 +133,24 @@ jobs:
           git grep -n -E 'AutoMigrate\(' -- '*.go' || true
 
           git diff --check
+
+      - name: Generate canonical protobuf dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          export PATH="$(go env GOPATH)/bin:$PATH"
+
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/operation
+          git diff --exit-code -- shared/protobuf/schema
 
       - name: Prove shared common module after framework retirement
         shell: bash
