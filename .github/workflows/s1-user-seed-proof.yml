@@ -1,0 +1,149 @@
+name: S1 User Seed Exact SHA Proof
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s1-user-seed-29aaf8
+
+permissions:
+  contents: read
+
+jobs:
+  user-seed-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: user_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d user_service"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      TARGET_SHA: 29aaf8dc054ccb3e65b38de1afefe5dbdeb8fdfe
+      USER_DATABASE_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
+      MIGRATION_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
+      PGPASSWORD: postgres
+
+    steps:
+      - name: Checkout exact acceptance candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Assert exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "target=$TARGET_SHA"
+          echo "actual=$actual"
+          test "$actual" = "$TARGET_SHA"
+          test -z "$(git status --porcelain)"
+
+      - name: Set up Go from User module
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: user-service/go.mod
+          cache: false
+
+      - name: Install proof and generation tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          go version
+          go install github.com/bufbuild/buf/cmd/buf@v1.57.2
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.29.0
+          go install github.com/google/wire/cmd/wire@v0.7.0
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          if ! command -v psql >/dev/null 2>&1 || ! command -v pg_dump >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+
+      - name: Generate canonical protobuf dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          make -C shared/code buf-all
+
+      - name: Compile test and vet User
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test -count=1 ./...
+          go vet ./...
+          go build -o /tmp/bdspro-user-seed ./cmd/seed
+          go build -o /tmp/bdspro-bootstrap-admin ./cmd/bootstrap-admin
+
+      - name: Prove User Wire is reproducible
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(git diff --binary -- wire | sha256sum | awk '{print $1}')"
+          make wire
+          after="$(git diff --binary -- wire | sha256sum | awk '{print $1}')"
+          echo "wire diff digest before=$before"
+          echo "wire diff digest after=$after"
+          test "$before" = "$after"
+          git diff --exit-code -- wire
+
+      - name: Fresh PostgreSQL migrations from zero
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          until pg_isready -h localhost -p 5432 -U postgres -d user_service; do sleep 1; done
+          make migrateup
+          make migrate-version
+
+      - name: Prove DatabaseSeeder has zero scenario side effects
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          pre_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          echo "acceptance identities before seed=$pre_acceptance"
+          test "$pre_acceptance" = "0"
+
+          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-before-seed.sql
+          sha256sum /tmp/user-before-seed.sql
+
+          seed_output="$(make seed 2>&1)"
+          printf '%s\n' "$seed_output"
+          grep -q 'User DatabaseSeeder complete: seeders=0' <<<"$seed_output"
+
+          post_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          echo "acceptance identities after seed=$post_acceptance"
+          test "$post_acceptance" = "0"
+
+          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-after-seed.sql
+          sha256sum /tmp/user-after-seed.sql
+          cmp -s /tmp/user-before-seed.sql /tmp/user-after-seed.sql
+
+      - name: Record proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## S1 User Seed Exact-SHA Proof'
+            echo
+            echo "- acceptance candidate: \`$TARGET_SHA\`"
+            echo "- runner checkout: \`$(git rev-parse HEAD 2>/dev/null || echo unavailable)\`"
+            echo '- proof-control workflow is not part of the acceptance candidate'
+            echo '- this proof never implies FINAL ACCEPTED for the whole project'
+          } >> "$GITHUB_STEP_SUMMARY"
