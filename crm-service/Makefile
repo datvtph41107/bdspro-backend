@@ -2,7 +2,7 @@ SHELL := /bin/sh
 BINARY_NAME := crm-service
 RUN_ARGS := grpc
 DB_URL ?= postgres://postgres:postgres@localhost:5432/db_crm?sslmode=disable
-MIGRATION_DIR := infra/db/migrate_v2
+MIGRATION_DIR := database/migrations
 MIGRATION_URL_ENV := CRM_DATABASE_URL
 
 include ../shared/code/development/service.mk

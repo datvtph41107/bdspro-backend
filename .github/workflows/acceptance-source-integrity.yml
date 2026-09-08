@@ -141,6 +141,19 @@ jobs:
           grep -Fq 'MIGRATION_DIR := database/migrations' bdspro-service/Makefile
           grep -Fq 'bdspro:bdspro-service/database/migrations' shared/code/development/verify-migrations.sh
 
+      - name: Verify CRM migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d crm-service/database/migrations
+          test ! -e crm-service/infra/db/migrate_v2
+          test "$(find crm-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 25
+          test "$(find crm-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 25
+          test -f crm-service/database/migrations/000025_subscription_entitlements_order.up.sql
+          test -f crm-service/database/migrations/000025_subscription_entitlements_order.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' crm-service/Makefile
+          grep -Fq 'crm:crm-service/database/migrations' shared/code/development/verify-migrations.sh
+
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |

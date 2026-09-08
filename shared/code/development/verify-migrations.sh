@@ -13,7 +13,7 @@ authorities=(
   "file:file-service/database/migrations"
   "hub:hub-service/database/migrations"
   "bdspro:bdspro-service/database/migrations"
-  "crm:crm-service/infra/db/migrate_v2"
+  "crm:crm-service/database/migrations"
 )
 
 fail=0
