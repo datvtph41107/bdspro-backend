@@ -31,7 +31,7 @@ jobs:
       USER_DATABASE_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       MIGRATION_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
       PGPASSWORD: postgres
-      QHPRO_TOOLCHAIN_ROOT: ${{ runner.temp }}/qhpro-toolchain
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
 
     steps:
       - name: Checkout exact acceptance candidate
