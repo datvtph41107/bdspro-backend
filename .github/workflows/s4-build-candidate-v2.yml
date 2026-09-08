@@ -1,0 +1,146 @@
+name: Build S4 BDSPro Redis Candidate v2
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s4-bdspro-redis-c8b2857
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s4-build-candidate-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-candidate-v2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      TARGET_SHA: c8b2857f6e88761ba7bd39470ffaa8487a3321e7
+      CANDIDATE_BRANCH: final-acceptance/s4-bdspro-redis-candidate
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+
+    steps:
+      - name: Checkout proof branch and extract deterministic patch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract v1 candidate patch script
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/s4-build-candidate.yml').read_text()
+          marker = '      - name: Build exact S4 source candidate\n'
+          start = source.index(marker)
+          run_marker = '        run: |\n'
+          start = source.index(run_marker, start) + len(run_marker)
+          end = source.index('\n      - name: Generate canonical protobuf and Wire output', start)
+          block = source[start:end]
+          lines = []
+          for line in block.splitlines():
+              if line.startswith('          '):
+                  line = line[10:]
+              lines.append(line)
+          Path('/tmp/build_s4_candidate.sh').write_text('\n'.join(lines) + '\n')
+          PY
+          chmod +x /tmp/build_s4_candidate.sh
+          test "$(grep -c 'ensureSyncCache' /tmp/build_s4_candidate.sh)" -ge 2
+          test "$(grep -c 'NewRedisProvider(client' /tmp/build_s4_candidate.sh)" -ge 2
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Apply exact S4 candidate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/build_s4_candidate.sh
+          # v1 revealed that BDSPro does not own a service-local `wire` target.
+          # Canonical Wire generation is owned by shared/code/Makefile.
+          sed -i 's/make -C bdspro-service wire/make -C shared\/code wire bdspro/g' \
+            .github/workflows/acceptance-bdspro-redis.yml
+          gofmt -w \
+            bdspro-service/infra/providers/redis_provider.go \
+            bdspro-service/infra/redis/runtime.go \
+            bdspro-service/initial/runtime.go \
+            bdspro-service/cmd/grpc/main.go \
+            bdspro-service/internal/usecases/shared/product_usecase.go
+
+      - name: Generate canonical protobuf and BDSPro Wire output
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire bdspro
+          git diff --check
+          grep -q 'initial.NewInitialApp(.*redisClient)' bdspro-service/wire/wire_gen.go
+
+      - name: Verify S4 ownership and rebuild invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
+          echo "redis.NewClient constructors=$count"
+          test "$count" = "1"
+          ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
+          grep -q 'func NewRedisProvider(client \*redis_cli.RedisClient)' bdspro-service/infra/providers/redis_provider.go
+          grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+          grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
+          ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
+          ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
+          grep -q 'UserSyncTimeKey(profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
+          ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
+
+      - name: Compile test and vet exact candidate
+        shell: bash
+        working-directory: bdspro-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go vet ./...
+          go build ./...
+
+      - name: Commit exact candidate from accepted parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'BDSPro Acceptance Proof'
+          git config user.email 'acceptance-proof@users.noreply.github.com'
+          git add \
+            .github/workflows/acceptance-bdspro-redis.yml \
+            bdspro-service/infra/providers/redis_provider.go \
+            bdspro-service/infra/redis/runtime.go \
+            bdspro-service/initial/runtime.go \
+            bdspro-service/cmd/grpc/main.go \
+            bdspro-service/internal/usecases/shared/product_usecase.go \
+            bdspro-service/wire/wire_gen.go
+          git commit -m 'refactor(bdspro): canonicalize Redis runtime ownership'
+          test "$(git rev-parse HEAD^)" = "$TARGET_SHA"
+          git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
