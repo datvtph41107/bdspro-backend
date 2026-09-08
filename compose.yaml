@@ -79,7 +79,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./hub-service/migrate:/migrations:ro]
+    volumes: [./hub-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/hub_service?sslmode=disable", "up"]
     # A fresh PostgreSQL volume briefly exposes its bootstrap server before
     # switching to the final server. Retry the one-shot migration if it lands
@@ -299,7 +299,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./payment-service/migrate:/migrations:ro]
+    volumes: [./payment-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/payment_service?sslmode=disable", "up"]
     restart: on-failure
 
@@ -339,7 +339,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./tqd-service/migrate:/migrations:ro]
+    volumes: [./tqd-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_tqd?sslmode=disable", "up"]
     restart: on-failure
 
@@ -384,7 +384,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./notification-service/migrate:/migrations:ro]
+    volumes: [./notification-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_notification?sslmode=disable", "up"]
     restart: on-failure
 
@@ -424,7 +424,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./file-service/migrate:/migrations:ro]
+    volumes: [./file-service/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/file_service?sslmode=disable", "up"]
     restart: on-failure
 
