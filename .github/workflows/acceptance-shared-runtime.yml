@@ -1,0 +1,64 @@
+name: Acceptance Shared Runtime Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-shared-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shared-runtime:
+    name: Shared runtime ownership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify legacy shared runtime framework is retired
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test ! -e shared/common/setup.go
+
+          legacy_symbols='SetupGRPCServer|SetupRestfulAPI|LoadYMLConfigFile|ProfileIDInterceptor|GetPrefixProtobufUrl|SetupParameters'
+          if git grep -n -E "$legacy_symbols" -- '*.go'; then
+            echo 'legacy shared runtime symbols still have Go callers' >&2
+            exit 1
+          fi
+
+          if git grep -n -E '(^|[[:space:]])"common"[[:space:]]*$' -- '*.go'; then
+            echo 'root common package still has a direct Go import' >&2
+            exit 1
+          fi
+
+          echo 'AutoMigrate inventory (informational; not mutated by S3):'
+          git grep -n -E 'AutoMigrate\(' -- '*.go' || true
+
+          git diff --check
+
+      - name: Prove shared common module after framework retirement
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd shared/common
+          go test ./...
+          go vet ./...
+          go build ./...
