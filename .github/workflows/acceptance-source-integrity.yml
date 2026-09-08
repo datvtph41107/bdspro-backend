@@ -89,6 +89,27 @@ jobs:
           grep -Fq './payment-service/migrate:/migrations:ro' compose.yaml
           test -f payment-service/migrate/000007_canonical_order_reference.up.sql
 
+      - name: Verify TQD migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -d tqd-service/database/migrations
+          test -L tqd-service/migrate
+          test "$(readlink tqd-service/migrate)" = 'database/migrations'
+
+          up_count=$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)
+          down_count=$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)
+          test "$up_count" -eq 44
+          test "$down_count" -eq 44
+          test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
+          test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.down.sql
+
+          grep -Fq 'MIGRATION_DIR := database/migrations' tqd-service/Makefile
+          grep -Fq 'tqd:tqd-service/database/migrations' shared/code/development/verify-migrations.sh
+          grep -Fq './tqd-service/migrate:/migrations:ro' compose.yaml
+          test -f tqd-service/migrate/000044_canonicalize_vn_administrative_catalog.up.sql
+
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |

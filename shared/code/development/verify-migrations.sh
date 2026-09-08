@@ -8,7 +8,7 @@ authorities=(
   "user:user-service/database/migrations"
   "organization:organization-service/migrate"
   "payment:payment-service/database/migrations"
-  "tqd:tqd-service/migrate"
+  "tqd:tqd-service/database/migrations"
   "notification:notification-service/migrate"
   "file:file-service/migrate"
   "hub:hub-service/migrate"

@@ -2,7 +2,7 @@ SHELL := /bin/sh
 BINARY_NAME := tqd-service
 RUN_ARGS := -server=grpc
 DB_URL ?= postgres://qhpro:qhpro@localhost:5432/qhpro_tqd?sslmode=disable
-MIGRATION_DIR := migrate
+MIGRATION_DIR := database/migrations
 DEV_DEPENDENCIES := postgres redis
 
 include ../shared/code/development/service.mk
