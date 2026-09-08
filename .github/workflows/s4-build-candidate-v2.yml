@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract v1 candidate patch script
+      - name: Extract proven v1 patch script
         shell: bash
         run: |
           set -euo pipefail
@@ -50,7 +50,6 @@ jobs:
           PY
           chmod +x /tmp/build_s4_candidate.sh
           test "$(grep -c 'ensureSyncCache' /tmp/build_s4_candidate.sh)" -ge 2
-          test "$(grep -c 'NewRedisProvider(client' /tmp/build_s4_candidate.sh)" -ge 2
 
       - name: Set up canonical Go patch version
         uses: actions/setup-go@v5
@@ -75,48 +74,88 @@ jobs:
             ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
           done
 
-      - name: Apply exact S4 candidate patch
+      - name: Apply final bounded S4 correction
         shell: bash
         run: |
           set -euo pipefail
           /tmp/build_s4_candidate.sh
-          # v1 revealed that BDSPro does not own a service-local `wire` target.
-          # Canonical Wire generation is owned by shared/code/Makefile.
-          sed -i 's/make -C bdspro-service wire/make -C shared\/code wire bdspro/g' \
-            .github/workflows/acceptance-bdspro-redis.yml
-          gofmt -w \
-            bdspro-service/infra/providers/redis_provider.go \
-            bdspro-service/infra/redis/runtime.go \
-            bdspro-service/initial/runtime.go \
-            bdspro-service/cmd/grpc/main.go \
-            bdspro-service/internal/usecases/shared/product_usecase.go
 
-      - name: Generate canonical protobuf and BDSPro Wire output
+          # Keep lifecycle ownership at the composition root: Wire owns Redis cleanup.
+          git checkout "$TARGET_SHA" -- bdspro-service/initial/runtime.go bdspro-service/cmd/grpc/main.go
+          rm -f bdspro-service/infra/providers/redis_provider.go
+          rm -f .github/workflows/acceptance-bdspro-redis.yml
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('bdspro-service/wire/wire.go')
+          s = p.read_text()
+          needle = '\tbdspro_infra_providers.NewRedisProvider,\n'
+          if needle not in s:
+              raise SystemExit('dead Redis provider registration anchor missing')
+          p.write_text(s.replace(needle, '', 1))
+
+          p = Path('bdspro-service/infra/redis/runtime.go')
+          s = p.read_text()
+          old_sig = 'func NewClient() (*RedisClient, error) {'
+          if old_sig not in s:
+              raise SystemExit('Redis constructor signature anchor missing')
+          s = s.replace(old_sig, 'func NewClient() (*RedisClient, func(), error) {', 1)
+          old_return = '\treturn rc, nil\n}\n\nfunc (r *RedisClient) Client'
+          new_return = '''\tcleanup := func() {\n\t\tif err := rc.Close(); err != nil {\n\t\t\tlogger.Warnf("Failed to close Redis client: %v", err)\n\t\t}\n\t}\n\treturn rc, cleanup, nil\n}\n\nfunc (r *RedisClient) Client'''
+          if old_return not in s:
+              raise SystemExit('Redis constructor return anchor missing')
+          p.write_text(s.replace(old_return, new_return, 1))
+
+          p = Path('bdspro-service/internal/usecases/shared/product_usecase.go')
+          s = p.read_text()
+          guarded = '''\tif pageToken == "" {\n\t\tif err := uc.ensureSyncCache(ctx, profileID); err != nil {\n\t\t\treturn nil, err\n\t\t}\n\t}\n'''
+          unconditional = '''\tif err := uc.ensureSyncCache(ctx, profileID); err != nil {\n\t\treturn nil, err\n\t}\n'''
+          if guarded not in s:
+              raise SystemExit('page-scoped cache readiness anchor missing')
+          s = s.replace(guarded, unconditional, 1)
+
+          seed_anchor = '''\tuserHash := cache.UserSyncProductsKey(profileID)\n\tchangeZSet := cache.UserProductsChangeKey(profileID)\n\n\tvar lastID uint64\n'''
+          seed_repl = '''\tuserHash := cache.UserSyncProductsKey(profileID)\n\tchangeZSet := cache.UserProductsChangeKey(profileID)\n\n\tclient, err := uc.redisClient.Client(ctx)\n\tif err != nil {\n\t\treturn err\n\t}\n\t// A missing generation marker means Redis state is not authoritative.\n\t// Rebuild from PostgreSQL instead of merging with potentially stale cache keys.\n\tif err := client.Del(ctx, userHash, changeZSet).Err(); err != nil {\n\t\treturn err\n\t}\n\n\tvar lastID uint64\n'''
+          if seed_anchor not in s:
+              raise SystemExit('seedFromDB rebuild anchor missing')
+          p.write_text(s.replace(seed_anchor, seed_repl, 1))
+          PY
+
+          gofmt -w \
+            bdspro-service/infra/redis/runtime.go \
+            bdspro-service/internal/usecases/shared/product_usecase.go \
+            bdspro-service/wire/wire.go
+
+      - name: Generate canonical protobuf and Wire output
         shell: bash
         run: |
           set -euo pipefail
           make -C shared/code buf-all
           make -C shared/code wire bdspro
           git diff --check
-          grep -q 'initial.NewInitialApp(.*redisClient)' bdspro-service/wire/wire_gen.go
 
-      - name: Verify S4 ownership and rebuild invariants
+      - name: Verify final S4 ownership and recovery invariants
         shell: bash
         run: |
           set -euo pipefail
+          test ! -e bdspro-service/infra/providers/redis_provider.go
+          ! git grep -n 'NewRedisProvider' -- bdspro-service
           count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
           echo "redis.NewClient constructors=$count"
           test "$count" = "1"
-          ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
-          grep -q 'func NewRedisProvider(client \*redis_cli.RedisClient)' bdspro-service/infra/providers/redis_provider.go
-          grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+          grep -Fq 'func NewClient() (*RedisClient, func(), error)' bdspro-service/infra/redis/runtime.go
           grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
           ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
           ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
           grep -q 'UserSyncTimeKey(profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
           grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'client.Del(ctx, userHash, changeZSet)' bdspro-service/internal/usecases/shared/product_usecase.go
           grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
           ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
+          test "$(grep -c 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go)" -ge 1
+          grep -q 'redis_cli.NewClient()' bdspro-service/wire/wire_gen.go
+          grep -q 'func() {' bdspro-service/wire/wire_gen.go
 
       - name: Compile test and vet exact candidate
         shell: bash
@@ -127,20 +166,23 @@ jobs:
           go vet ./...
           go build ./...
 
-      - name: Commit exact candidate from accepted parent
+      - name: Commit exact source candidate from accepted parent
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'BDSPro Acceptance Proof'
           git config user.email 'acceptance-proof@users.noreply.github.com'
           git add \
-            .github/workflows/acceptance-bdspro-redis.yml \
             bdspro-service/infra/providers/redis_provider.go \
             bdspro-service/infra/redis/runtime.go \
-            bdspro-service/initial/runtime.go \
-            bdspro-service/cmd/grpc/main.go \
             bdspro-service/internal/usecases/shared/product_usecase.go \
+            bdspro-service/wire/wire.go \
             bdspro-service/wire/wire_gen.go
           git commit -m 'refactor(bdspro): canonicalize Redis runtime ownership'
           test "$(git rev-parse HEAD^)" = "$TARGET_SHA"
+          mapfile -t changed < <(git diff --name-only "$TARGET_SHA" HEAD | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" = "5"
+          remote_acceptance="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          test "$remote_acceptance" = "$TARGET_SHA"
           git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
