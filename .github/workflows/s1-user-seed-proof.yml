@@ -83,10 +83,13 @@ jobs:
           test -x "$QHPRO_TOOLCHAIN_ROOT/bin/wire"
           test -x "$QHPRO_TOOLCHAIN_ROOT/bin/migrate"
 
-          if ! command -v psql >/dev/null 2>&1 || ! command -v pg_dump >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y postgresql-client
-          fi
+          # The proof database is PostgreSQL 17. pg_dump refuses to dump a newer
+          # major server, so pin the matching client instead of relying on the
+          # runner image's default PostgreSQL client.
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump --version
+          /usr/lib/postgresql/17/bin/psql --version
 
       - name: Generate protobuf outputs from canonical schemas
         shell: bash
@@ -131,7 +134,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          until pg_isready -h localhost -p 5432 -U postgres -d user_service; do sleep 1; done
+          until /usr/lib/postgresql/17/bin/pg_isready -h localhost -p 5432 -U postgres -d user_service; do sleep 1; done
           make migrateup
           make migrate-version
 
@@ -140,23 +143,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          psql17=/usr/lib/postgresql/17/bin/psql
+          pg_dump17=/usr/lib/postgresql/17/bin/pg_dump
 
-          pre_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          pre_acceptance="$($psql17 "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
           echo "acceptance identities before seed=$pre_acceptance"
           test "$pre_acceptance" = "0"
 
-          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-before-seed.sql
+          "$pg_dump17" "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-before-seed.sql
           sha256sum /tmp/user-before-seed.sql
 
           seed_output="$(make seed 2>&1)"
           printf '%s\n' "$seed_output"
           grep -q 'User DatabaseSeeder complete: seeders=0' <<<"$seed_output"
 
-          post_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          post_acceptance="$($psql17 "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
           echo "acceptance identities after seed=$post_acceptance"
           test "$post_acceptance" = "0"
 
-          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-after-seed.sql
+          "$pg_dump17" "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-after-seed.sql
           sha256sum /tmp/user-after-seed.sql
 
           if ! cmp -s /tmp/user-before-seed.sql /tmp/user-after-seed.sql; then
@@ -176,5 +181,6 @@ jobs:
             echo "- runner checkout: \`$(git rev-parse HEAD 2>/dev/null || echo unavailable)\`"
             echo '- protobuf outputs are generated from canonical schemas with repository-pinned generator versions before User compilation'
             echo '- service Make targets execute through the repository-owned canonical toolchain-root contract'
+            echo '- PostgreSQL data comparison uses a server-major-matched v17 client'
             echo '- this proof does not move the acceptance branch and does not by itself imply FINAL ACCEPTED'
           } >> "$GITHUB_STEP_SUMMARY"
