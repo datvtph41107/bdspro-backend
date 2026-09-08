@@ -132,7 +132,7 @@ jobs:
           s = s.replace(guarded, unconditional, 1)
 
           seed_anchor = '''\tuserHash := cache.UserSyncProductsKey(profileID)\n\tchangeZSet := cache.UserProductsChangeKey(profileID)\n\n\tvar lastID uint64\n'''
-          seed_repl = '''\tuserHash := cache.UserSyncProductsKey(profileID)\n\tchangeZSet := cache.UserProductsChangeKey(profileID)\n\n\tclient, err := uc.redisClient.Client(ctx)\n\tif err != nil {\n\t\treturn err\n\t}\n\t// A missing generation marker means Redis state is not authoritative.\n\t// Rebuild from PostgreSQL instead of merging with potentially stale cache keys.\n\tif err := client.Del(ctx, userHash, changeZSet).Err(); err != nil {\n\t\treturn err\n\t}\n\n\tvar lastID uint64\n'''
+          seed_repl = '''\tuserHash := cache.UserSyncProductsKey(profileID)\n\tchangeZSet := cache.UserProductsChangeKey(profileID)\n\n\tclient, clientErr := uc.redisClient.Client(ctx)\n\tif clientErr != nil {\n\t\treturn clientErr\n\t}\n\t// A missing generation marker means Redis state is not authoritative.\n\t// Rebuild from PostgreSQL instead of merging with potentially stale cache keys.\n\tif err := client.Del(ctx, userHash, changeZSet).Err(); err != nil {\n\t\treturn err\n\t}\n\n\tvar lastID uint64\n'''
           if seed_anchor not in s:
               raise SystemExit('seedFromDB rebuild anchor missing')
           p.write_text(s.replace(seed_anchor, seed_repl, 1))
