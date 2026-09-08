@@ -1,0 +1,164 @@
+name: S1 User Seed Exact SHA Proof
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s1-user-seed-90b9b9
+
+permissions:
+  contents: read
+
+jobs:
+  user-seed-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: user_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d user_service"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      TARGET_SHA: 90b9b9ebe60e1f649eb987c595bff1a94380de76
+      USER_DATABASE_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
+      MIGRATION_URL: postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable
+      PGPASSWORD: postgres
+
+    steps:
+      - name: Checkout exact acceptance candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Assert exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          echo "target=$TARGET_SHA"
+          echo "actual=$actual"
+          test "$actual" = "$TARGET_SHA"
+          test -z "$(git status --porcelain)"
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install pinned generation and proof tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          go install -tags postgres "github.com/golang-migrate/migrate/v4/cmd/migrate@v${MIGRATE_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          if ! command -v psql >/dev/null 2>&1 || ! command -v pg_dump >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+
+      - name: Generate protobuf outputs from canonical schemas
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/user
+          test -d shared/protobuf/types/auth
+          test -d shared/protobuf/types/payment
+          test -d shared/protobuf/types/organization
+          test -d shared/protobuf/types/shared
+
+      - name: Compile test and vet User
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test -count=1 ./...
+          go vet ./...
+          go build -o /tmp/bdspro-user-seed ./cmd/seed
+          go build -o /tmp/bdspro-bootstrap-admin ./cmd/bootstrap-admin
+
+      - name: Prove User Wire is reproducible
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          make wire
+          if ! git diff --exit-code -- wire; then
+            echo "Wire generation changed tracked User Wire source" >&2
+            exit 1
+          fi
+          unexpected="$(git ls-files --others --exclude-standard wire)"
+          if [ -n "$unexpected" ]; then
+            echo "Wire generation created untracked User Wire files:" >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+
+      - name: Fresh PostgreSQL migrations from zero
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+          until pg_isready -h localhost -p 5432 -U postgres -d user_service; do sleep 1; done
+          make migrateup
+          make migrate-version
+
+      - name: Prove DatabaseSeeder has zero scenario side effects
+        working-directory: user-service
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          pre_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          echo "acceptance identities before seed=$pre_acceptance"
+          test "$pre_acceptance" = "0"
+
+          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-before-seed.sql
+          sha256sum /tmp/user-before-seed.sql
+
+          seed_output="$(make seed 2>&1)"
+          printf '%s\n' "$seed_output"
+          grep -q 'User DatabaseSeeder complete: seeders=0' <<<"$seed_output"
+
+          post_acceptance="$(psql "$USER_DATABASE_URL" -Atc "SELECT COUNT(*) FROM auth_method WHERE auth_name ILIKE 'qhpro_acceptance_%' OR email ILIKE 'qhpro-%@e.invalid';")"
+          echo "acceptance identities after seed=$post_acceptance"
+          test "$post_acceptance" = "0"
+
+          pg_dump "$USER_DATABASE_URL" --data-only --no-owner --no-privileges --inserts > /tmp/user-after-seed.sql
+          sha256sum /tmp/user-after-seed.sql
+
+          if ! cmp -s /tmp/user-before-seed.sql /tmp/user-after-seed.sql; then
+            echo "Database data changed across intentionally empty DatabaseSeeder run" >&2
+            diff -u /tmp/user-before-seed.sql /tmp/user-after-seed.sql >&2 || true
+            exit 1
+          fi
+
+      - name: Record proof summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## S1 User Seed Exact-SHA Proof'
+            echo
+            echo "- acceptance candidate: \`$TARGET_SHA\`"
+            echo "- runner checkout: \`$(git rev-parse HEAD 2>/dev/null || echo unavailable)\`"
+            echo '- protobuf outputs are generated from canonical schemas with repository-pinned generator versions before User compilation'
+            echo '- this proof does not move the acceptance branch and does not by itself imply FINAL ACCEPTED'
+          } >> "$GITHUB_STEP_SUMMARY"
