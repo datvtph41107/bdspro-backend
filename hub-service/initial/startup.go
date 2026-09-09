@@ -1,11 +1,11 @@
 package initial
 
 import (
+	"hub/config"
 	"hub/infra/handler"
 	"hub/internal/usecase"
 
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/spf13/viper"
 )
 
 type InitialApp struct {
@@ -43,6 +43,7 @@ func NewInitialApp(
 	interactiveEventHandler *handler.InteractiveEventHandler,
 	errorLogHandler *handler.ErrorLogHandler,
 	appLinkHandler *handler.ApplinkHandler,
+	runtime config.Runtime,
 ) *InitialApp {
 	return &InitialApp{
 		EventQueueService:       eventQueueService,
@@ -57,7 +58,7 @@ func NewInitialApp(
 		ApiKeyHandler:           apiKeyHandler,
 		SystemConfigUsecase:     systemConfigUsecase,
 		ApiKeyUsecase:           apiKeyUsecase,
-		Logger:                  flogging.MustGetLogger(viper.GetString("server.name")),
+		Logger:                  flogging.MustGetLogger(runtime.ServerName),
 		InteractiveEventHandler: interactiveEventHandler,
 		ErrorLogHandler:         errorLogHandler,
 		ApplinkHandler:          appLinkHandler,

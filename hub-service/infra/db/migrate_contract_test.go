@@ -7,7 +7,7 @@ import (
 )
 
 func TestCanonicalSQLCoversHubAutoMigrateRegistry(t *testing.T) {
-	sql, err := os.ReadFile("../../migrate/000001_hub_schema.up.sql")
+	sql, err := os.ReadFile("../../database/migrations/000001_hub_schema.up.sql")
 	if err != nil {
 		t.Fatal(err)
 	}
