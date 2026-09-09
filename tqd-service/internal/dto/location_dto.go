@@ -49,6 +49,10 @@ type ListWardsByProvinceRequest struct {
 	PageSize   *int32 `json:"pageSize,omitempty"`
 }
 
+type ListProvincesResponse struct {
+	Provinces []*ProvinceDTO `json:"provinces"`
+}
+
 // ==================== RESPONSE DTOs ====================
 
 type LocationResponse struct {

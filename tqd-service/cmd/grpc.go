@@ -233,6 +233,7 @@ func registerTQDServices(s *grpc.Server, app *initial.InitialApp) {
 	tqdpb.RegisterPlanningClientServiceServer(s, app.PlanningClientGrpcHandler)
 	tqdpb.RegisterLayerLegalServiceServer(s, app.LayerLegalGrpcHandler)
 	tqdpb.RegisterMapWorkspaceServiceServer(s, app.WorkspaceMapGrpcHandler)
+	tqdpb.RegisterMapPointServiceServer(s, app.MapPointGrpcHandler)
 	tqdpb.RegisterQHPlanningServiceServer(s, app.QHPlanningGrpcHandler)
 	tqdpb.RegisterDiscoveryServiceServer(s, app.DiscoveryGrpcHandler)
 	tqdpb.RegisterRelatedEntityServiceServer(s, app.RelatedEntityGrpcHandler)

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"relay/constants"
-	"relay/redis"
 	"relay/utils"
 
 	"github.com/gorilla/websocket"
@@ -28,6 +27,7 @@ type WebSocketHandler struct {
 	rooms              map[uint64][]uint64 // roomID -> list of userIDs: gửi socket tới room
 	users              map[uint64][]uint64 // userID -> list of roomIDs: check online
 	mu                 sync.Mutex
+	runners            sync.WaitGroup
 	chatClient         ChatClient
 	userClient         UserClient
 	notificationClient NotificationClient
@@ -38,7 +38,7 @@ type RedisMessage struct {
 	Data any    `json:"data"`
 }
 
-func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificationClient NotificationClient) *WebSocketHandler {
+func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificationClient NotificationClient, redisClient redisClient) *WebSocketHandler {
 	return &WebSocketHandler{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -47,7 +47,7 @@ func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificat
 				return true
 			},
 		},
-		redisClient: redis.NewRedisClient(),
+		redisClient: redisClient,
 		clients:     make(map[uint64]*websocket.Conn),
 		// rooms:       make(map[string]map[*websocket.Conn]bool),
 		rooms:              make(map[uint64][]uint64),
@@ -181,11 +181,19 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 
 	wsLogger.Infof("User %s connected", userId)
 
-	// Subscribe to notification channel for this user
-	go h.subscribeToNotificationChannel(conn, userId)
+	connectionCtx, cancelConnection := context.WithCancel(context.Background())
+	// Subscribe to notification channel for this user.
+	h.runners.Add(2)
+	go func() {
+		defer h.runners.Done()
+		h.subscribeToNotificationChannel(connectionCtx, conn, userId)
+	}()
 
 	// Xử lý message từ client và detect disconnect
-	go h.handleClientMessages(conn, userId)
+	go func() {
+		defer h.runners.Done()
+		h.handleClientMessages(conn, userId, cancelConnection)
+	}()
 }
 
 func (h *WebSocketHandler) roomsOfUser(userId uint64) []uint64 {
@@ -198,26 +206,33 @@ func (h *WebSocketHandler) roomsOfUser(userId uint64) []uint64 {
 	return rooms
 }
 
-func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
-	pubsub := h.redisClient.Subscribe(context.Background(), channel)
-	messages := pubsub.Channel()
-
-	go func() {
-		for msg := range messages {
-			wsLogger.Infof("Received message from channel %s: %s", channel, msg.Payload)
-			var redisMsg RedisMessage
-			if err := json.Unmarshal([]byte(msg.Payload), &redisMsg); err != nil {
-				wsLogger.Errorf("Invalid JSON format: %v", err)
-				continue
+func (h *WebSocketHandler) SubscribeToRedisChannel(ctx context.Context, channel string) error {
+	if h == nil || h.redisClient == nil {
+		return fmt.Errorf("Relay Redis dependency is not configured")
+	}
+	pubsub := h.redisClient.Subscribe(ctx, channel)
+	defer pubsub.Close()
+	for {
+		msg, err := pubsub.ReceiveMessage(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return nil
 			}
-			fmt.Printf("redisMsg REDIS MESSSAGEGEGEEGEGEGE  FFDDFF: %v", redisMsg)
-			h.broadcastMessage(redisMsg)
+			return fmt.Errorf("receive Relay channel %s: %w", channel, err)
 		}
-	}()
+		wsLogger.Infof("Received message from channel %s: %s", channel, msg.Payload)
+		var redisMsg RedisMessage
+		if err := json.Unmarshal([]byte(msg.Payload), &redisMsg); err != nil {
+			wsLogger.Errorf("Invalid JSON format: %v", err)
+			continue
+		}
+		h.broadcastMessage(redisMsg)
+	}
 }
 
 // handleClientMessages xử lý message từ client và detect disconnect
-func (h *WebSocketHandler) handleClientMessages(conn *websocket.Conn, userID uint64) {
+func (h *WebSocketHandler) handleClientMessages(conn *websocket.Conn, userID uint64, cancel context.CancelFunc) {
+	defer cancel()
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
@@ -556,14 +571,21 @@ func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
 }
 
 // subscribeToNotificationChannel subscribes to notification channel for a specific user
-func (h *WebSocketHandler) subscribeToNotificationChannel(conn *websocket.Conn, userID uint64) {
+func (h *WebSocketHandler) subscribeToNotificationChannel(ctx context.Context, conn *websocket.Conn, userID uint64) {
 	channel := "notification:" + strconv.FormatUint(userID, 10)
-	pubsub := h.redisClient.Subscribe(context.Background(), channel)
-	messages := pubsub.Channel()
+	pubsub := h.redisClient.Subscribe(ctx, channel)
+	defer pubsub.Close()
 
 	wsLogger.Infof("Subscribed to notification channel: %s for user: %d", channel, userID)
 
-	for msg := range messages {
+	for {
+		msg, err := pubsub.ReceiveMessage(ctx)
+		if err != nil {
+			if ctx.Err() == nil {
+				wsLogger.Errorf("Notification subscription failed for user %d: %v", userID, err)
+			}
+			return
+		}
 		wsLogger.Infof("Received notification from channel %s: %s", channel, msg.Payload)
 		// Send notification directly to the WebSocket connection
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
@@ -571,6 +593,26 @@ func (h *WebSocketHandler) subscribeToNotificationChannel(conn *websocket.Conn, 
 			return
 		}
 	}
+}
+
+// Close terminates active sockets so their reader/subscription goroutines can
+// observe cancellation before process-owned dependencies are closed.
+func (h *WebSocketHandler) Close() error {
+	if h == nil {
+		return nil
+	}
+	h.mu.Lock()
+	connections := make([]*websocket.Conn, 0, len(h.clients))
+	for _, connection := range h.clients {
+		connections = append(connections, connection)
+	}
+	h.clients = make(map[uint64]*websocket.Conn)
+	h.mu.Unlock()
+	for _, connection := range connections {
+		_ = connection.Close()
+	}
+	h.runners.Wait()
+	return nil
 }
 
 // saveUserOnlineStatus lưu trạng thái online/offline của user vào Redis

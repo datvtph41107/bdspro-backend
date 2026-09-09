@@ -2,6 +2,8 @@ package settlement
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"sync"
 	"testing"
@@ -51,6 +53,25 @@ func TestDecideActivationUsesOccurredAtAndTerm(t *testing.T) {
 	if d.Action != ActionActivated || !d.Subscription.StartedAt.Equal(e.OccurredAt) ||
 		!d.Subscription.CurrentPeriodEnd.Equal(e.OccurredAt.AddDate(0, 0, 30)) {
 		t.Fatalf("decision = %+v", d)
+	}
+	sum := sha256.Sum256([]byte(e.EffectKey))
+	wantKey := "sub_payment_" + hex.EncodeToString(sum[:])
+	if d.Subscription.SubscriptionKey != wantKey || d.Subscription.OrderReference != e.EffectKey {
+		t.Fatalf("subscription identity = %q, order reference = %q", d.Subscription.SubscriptionKey, d.Subscription.OrderReference)
+	}
+}
+
+func TestSubscriptionKeyDoesNotCollideWhenPaymentDatabaseReusesOrderID(t *testing.T) {
+	first := testEffect()
+	second := first
+	first.EffectKey = "payment.order.91.QHP-FIRST"
+	second.EffectKey = "payment.order.91.QHP-SECOND"
+
+	if first.SubscriptionKey() == second.SubscriptionKey() {
+		t.Fatalf("different durable Payment identities produced the same subscription key: %q", first.SubscriptionKey())
+	}
+	if len(first.SubscriptionKey()) > 128 {
+		t.Fatalf("subscription key exceeds catalog_subscriptions.subscription_key: %d", len(first.SubscriptionKey()))
 	}
 }
 

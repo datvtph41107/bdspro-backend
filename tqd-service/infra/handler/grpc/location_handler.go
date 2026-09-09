@@ -135,6 +135,19 @@ func (h *LocationHandler) GetProvince(ctx context.Context, req *tqdpb.GetProvinc
 	return h.mapper.ToProtoProvince(resp), nil
 }
 
+// ListProvinces exposes the read-only province catalog used by the guest map.
+// Always return the current snapshot: the province table currently has no
+// durable catalog-version authority, so treating a client timestamp as one
+// would make cache invalidation silently incorrect.
+func (h *LocationHandler) ListProvinces(ctx context.Context, _ *tqdpb.ListProvincesRequest) (*tqdpb.ListProvincesResponse, error) {
+	response, err := h.locationUsecase.ListProvinces(ctx)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+
+	return h.mapper.ToProtoListProvincesResponse(response), nil
+}
+
 // GetWard - Lấy thông tin chi tiết của ward
 func (h *LocationHandler) GetWard(ctx context.Context, req *tqdpb.GetWardRequest) (*tqdpb.Ward, error) {
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)

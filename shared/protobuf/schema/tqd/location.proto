@@ -37,6 +37,15 @@ service LocationService {
             get: "/v1/tqd/provinces/{id}"
         };
     }
+
+    // Danh mục tỉnh công khai dùng để khởi tạo bản đồ trước khi đăng nhập.
+    // `scope` và `timestamp` được giữ trong contract để tương thích client;
+    // TQD vẫn là owner duy nhất của snapshot hành chính trả về.
+    rpc ListProvinces(ListProvincesRequest) returns (ListProvincesResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/provinces"
+        };
+    }
     
     // Lấy thông tin chi tiết của ward
     rpc GetWard(GetWardRequest) returns (Ward) {
@@ -133,6 +142,15 @@ message GetProvinceRequest {
     string id = 1;                    // ID của province
     optional string code = 2;         // Hoặc tìm theo code
     int64 timestamp = 3;
+}
+
+message ListProvincesRequest {
+    int32 scope = 1;
+    int64 timestamp = 2;
+}
+
+message ListProvincesResponse {
+    repeated Province provinces = 1;
 }
 
 message GetWardRequest {

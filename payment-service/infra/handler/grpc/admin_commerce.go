@@ -77,6 +77,33 @@ func (h *AdminCommerceHandler) GetPaymentOrder(ctx context.Context, req *payment
 	return adminOrderToProto(item), nil
 }
 
+func (h *AdminCommerceHandler) ConfirmPaymentFunds(ctx context.Context, req *paymentpb.ConfirmAdminPaymentFundsRequest) (*paymentpb.ConfirmAdminPaymentFundsResponse, error) {
+	actorID, err := h.authorize(ctx, adminusecase.PermissionFundsConfirm)
+	if err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Unavailable, "payment operation is unavailable")
+	}
+	if req == nil || req.GetOrderId() == 0 || strings.TrimSpace(req.GetReason()) == "" {
+		return nil, status.Error(codes.InvalidArgument, "order id and confirmation reason are required")
+	}
+	commandKey, ok := request.IdempotencyKeyFromContext(ctx)
+	if !ok || strings.TrimSpace(commandKey) == "" {
+		return nil, status.Error(codes.InvalidArgument, "Idempotency-Key is required")
+	}
+	result, err := h.service.ConfirmFunds(ctx, adminusecase.ConfirmFundsCommand{
+		OrderID: req.GetOrderId(), CommandKey: commandKey,
+		ActorID: strconv.FormatUint(actorID, 10), Reason: req.GetReason(),
+	})
+	if err != nil {
+		return nil, adminPaymentError(err)
+	}
+	return &paymentpb.ConfirmAdminPaymentFundsResponse{
+		Order: adminOrderToProto(result.Order), Changed: result.Changed, Replay: result.Replay,
+	}, nil
+}
+
 func (h *AdminCommerceHandler) ListFulfillments(ctx context.Context, req *paymentpb.ListAdminFulfillmentsRequest) (*paymentpb.ListAdminFulfillmentsResponse, error) {
 	if _, err := h.authorize(ctx, adminusecase.PermissionFulfillmentView); err != nil {
 		return nil, err
@@ -152,6 +179,10 @@ func adminPaymentError(err error) error {
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, payment.ErrRedriveNotAllowed):
 		return status.Error(codes.FailedPrecondition, err.Error())
+	case errors.Is(err, payment.ErrFundsConfirmationNotAllowed):
+		return status.Error(codes.FailedPrecondition, err.Error())
+	case errors.Is(err, payment.ErrCommandEvidenceConflict), errors.Is(err, payment.ErrProviderEvidenceConflict):
+		return status.Error(codes.Aborted, err.Error())
 	default:
 		return status.Error(codes.Internal, "payment admin projection failed")
 	}
@@ -175,6 +206,13 @@ func adminOrderToProto(item payment.AdminOrder) *paymentpb.AdminPaymentOrder {
 	}
 	if item.Fulfillment != nil {
 		response.Fulfillment = fulfillmentToProto(*item.Fulfillment)
+	}
+	if item.ManualConfirmation != nil {
+		m := item.ManualConfirmation
+		response.ManualConfirmation = &paymentpb.AdminManualPaymentConfirmation{
+			ActorId: m.ActorID, Reason: m.Reason, CommandKey: m.CommandKey,
+			Outcome: m.Outcome, CreatedAt: timestampOrNil(m.CreatedAt),
+		}
 	}
 	return response
 }

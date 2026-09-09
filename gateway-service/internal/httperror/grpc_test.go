@@ -61,3 +61,29 @@ func TestWriteGRPCPreservesSemanticErrorInfo(t *testing.T) {
 		t.Fatalf("response = %+v", response)
 	}
 }
+
+func TestWriteGRPCDoesNotExposeUnavailableTransportDetails(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, status.Error(
+		codes.Unavailable,
+		`connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:8219: connect: connection refused"`,
+	))
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
+	}
+
+	var response struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != int(codes.Unavailable) {
+		t.Fatalf("response code = %d, want %d", response.Code, codes.Unavailable)
+	}
+	if response.Message != "service temporarily unavailable" {
+		t.Fatalf("response message = %q", response.Message)
+	}
+}

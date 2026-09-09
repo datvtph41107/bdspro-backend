@@ -8,7 +8,6 @@ import (
 
 	"common/identity"
 	"common/request"
-	"pb/clients"
 	organizationpb "pb/types/organization"
 	userpb "pb/types/user"
 	"user/internal/usecase/subscription/checkout"
@@ -27,8 +26,25 @@ type organizationCheckoutAuthorizer interface {
 	AuthorizeOrganizationAction(ctx context.Context, organizationID, actorProfileID uint64, action organizationpb.OrganizationAction) (bool, error)
 }
 
-func NewSubscriptionCheckoutHandler(service *checkout.Service, organizationClient *clients.OrganizationClient) *SubscriptionCheckoutHandler {
-	return &SubscriptionCheckoutHandler{service: service, organizationAuthorizer: organizationClient}
+func NewSubscriptionCheckoutHandler(service *checkout.Service, organizationAuthorizer organizationCheckoutAuthorizer) *SubscriptionCheckoutHandler {
+	return &SubscriptionCheckoutHandler{service: service, organizationAuthorizer: organizationAuthorizer}
+}
+
+func (h *SubscriptionCheckoutHandler) ListPaymentMethods(ctx context.Context, _ *userpb.ListPaymentMethodsRequest) (*userpb.ListPaymentMethodsResponse, error) {
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.FailedPrecondition, "payment methods unavailable")
+	}
+	available, err := h.service.ListPaymentMethods(ctx)
+	if err != nil {
+		return nil, checkoutAttemptError(err)
+	}
+	methods := make([]*userpb.PaymentMethodOption, 0, len(available.Methods))
+	for _, method := range available.Methods {
+		methods = append(methods, &userpb.PaymentMethodOption{
+			Method: method.Method, Provider: method.Provider, Enabled: method.Enabled, UnavailableReason: method.UnavailableReason,
+		})
+	}
+	return &userpb.ListPaymentMethodsResponse{Environment: available.Environment, Methods: methods}, nil
 }
 
 func checkoutSubjectFromContext(ctx context.Context, requested string, authorizer organizationCheckoutAuthorizer) (checkout.Subject, error) {
@@ -70,6 +86,21 @@ func checkoutCommandKey(ctx context.Context) (string, error) {
 		return "", status.Error(codes.InvalidArgument, "Idempotency-Key is required")
 	}
 	return v, nil
+}
+
+func (h *SubscriptionCheckoutHandler) UpdateCheckoutContact(ctx context.Context, req *userpb.UpdateCheckoutContactRequest) (*userpb.CheckoutContact, error) {
+	if h == nil || h.service == nil || req == nil {
+		return nil, status.Error(codes.FailedPrecondition, "checkout contact unavailable")
+	}
+	actor, ok := identity.ActorFromContext(ctx)
+	if !ok || actor.ProfileID == 0 {
+		return nil, status.Error(codes.Unauthenticated, "authenticated profile required")
+	}
+	contact, err := h.service.UpdateContact(ctx, actor.ProfileID, checkout.Contact{FullName: req.GetFullName(), Email: req.GetEmail()})
+	if err != nil {
+		return nil, checkoutError(err)
+	}
+	return &userpb.CheckoutContact{FullName: contact.FullName, Email: contact.Email, Phone: contact.Phone}, nil
 }
 
 func (h *SubscriptionCheckoutHandler) Checkout(ctx context.Context, req *userpb.CheckoutRequest) (*userpb.CheckoutResponse, error) {

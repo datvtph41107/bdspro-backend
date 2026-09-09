@@ -1,127 +1,181 @@
 # BDSPro Backend
 
-BDSPro Backend là workspace Go chứa các service nghiệp vụ của BDSPro. QHPro là
-capability quy hoạch thuộc TQD Service, không phải tên của toàn hệ thống.
+BDSPro Backend là workspace Go multi-service. QHPro chỉ là capability quy hoạch thuộc `tqd-service`; nó không phải namespace toàn hệ thống.
 
-Admin và ứng dụng mobile chỉ gửi command hoặc đọc dữ liệu qua Gateway. Giá,
-thanh toán, subscription, entitlement, quota và usage luôn do backend quyết
-định.
+Mục tiêu của repository là tạo một **golden path** ổn định: developer mới clone source, chuẩn bị máy, chạy đúng service, thay đổi business và chứng minh thay đổi mà không cần hiểu toàn bộ Docker/topology trước.
 
-## Bắt đầu
+## Quick start
 
-Yêu cầu: Linux/WSL2, Git, Make và Docker Engine có Docker Compose.
-
-```bash
-make setup
-make up
-make status
-make smoke
-```
-
-- `setup` tạo config local còn thiếu và cài đúng toolchain của repository.
-- `up` build image, chạy migration và khởi động backend.
-- `status` cho biết container nào đang chạy và health hiện tại.
-- `smoke` gọi public API thật qua Gateway.
-
-Xem toàn bộ lệnh dành cho developer:
+Yêu cầu host: Linux/WSL2, Git, Make, Python 3, FFmpeg, WeasyPrint và Docker
+Engine/Compose cho PostgreSQL/PostGIS, Redis và RabbitMQ. `make doctor` xác nhận
+cả toolchain lẫn runtime dependency trước khi start.
 
 ```bash
 make help
+make setup
+make doctor
+make up
+make status
+make logs service=gateway-service
 ```
 
-## Công việc hằng ngày
+Development login sau `make up`: Admin `admin/admin123`; Client
+`0900000000/client123` (hoặc username `client`). Mật khẩu được hash trong
+database User; không có authentication bypass trong application runtime.
+
+`make setup` cài WeasyPrint đã pin vào repository toolchain ở user cache, không
+ghi vào Python hệ thống. Nếu `doctor` báo thiếu sau một clone cũ, chạy lại:
+
+```bash
+make setup
+```
+
+Daily loop cho Payment:
+
+```bash
+make deps service=payment-service
+make dev service=payment-service
+# sửa/save source; Air build + restart native process
+make test service=payment-service
+```
+
+`make up` build rồi chạy toàn bộ application binary trực tiếp trên WSL/Linux;
+PID và log nằm trong ignored `.tmp/development/`. `make dev` dừng binary native
+của service đang sửa và chạy service đó bằng Air trong terminal hiện tại. Docker
+chỉ chạy PostgreSQL/PostGIS, Redis và RabbitMQ trong golden path này.
+
+Proof toàn hệ thống dùng chính các process native mà developer đang debug:
 
 ```bash
 make up
-make logs service=payment-service
-make test service=payment-service
+make status
+make smoke
 make test-e2e
-make down
 ```
 
-`down` giữ dữ liệu. `reset` xóa database/queue/file local và luôn yêu cầu xác
-nhận.
-
-Các lệnh dài cũ như `dev-up`, `test-backend` và
-`runtime-value-chain-acceptance` hiện chỉ là compatibility/internal targets.
-Developer không cần ghi nhớ chúng.
-
-## Tìm code theo nghiệp vụ
-
-| Cần sửa | Owner |
-| --- | --- |
-| HTTP public, JWT, routing, error mapping | `gateway-service` |
-| Profile, login, IAM, catalog, subscription, entitlement | `user-service` |
-| Thành viên và quyền trong tổ chức | `organization-service` |
-| Order, payment attempt, webhook, settlement, outbox | `payment-service` |
-| QHPro, planning, quota, usage, report | `tqd-service` |
-| File metadata, nội dung và signed access | `file-service` |
-| Notification inbox và delivery | `notification-service` |
-
-`auth-service` đang là compatibility boundary trong lúc chuyển authorization
-về User. Không thêm nghiệp vụ mới vào Auth.
-
-Khi đọc một service, bắt đầu từ `main.go` hoặc `cmd/<server>/main.go`, sau đó đi
-theo constructor tới package nghiệp vụ và repository tương ứng. Không sửa file
-generated `*.pb.go` hoặc `wire_gen.go` bằng tay.
-
-## Các lệnh chính
+Chỉ khi cần kiểm tra image/package Compose:
 
 ```bash
-make dev service=payment-service
-make test
-make test service=tqd-service
-make migrate
-make migrate service=user-service
-make generate
-make logs service=notification-service
+make rebuild service=payment-service   # một service
+make rebuild                           # toàn Compose candidate
+make integration-up
+make integration-status
 ```
 
-`make dev` rebuild và restart riêng image/container của service trong topology
-đang chạy. Full integration dùng `make up`. Native debugger cần host/container
-wiring hai chiều nên đang được chuẩn hóa lần lượt, bắt đầu từ Payment; README
-không tuyên bố mode đó đã sẵn sàng trước khi được kiểm chứng.
+Candidate cuối:
 
-## Local và production
+```bash
+make verify
+make accept
+```
 
-Source, binary và Dockerfile của application là một. Hai môi trường chỉ khác
-endpoint, secret, tài nguyên và số instance được inject từ bên ngoài.
+## Mental model
 
-- `compose.yaml` là topology development.
-- `<service>/config/runtime.yml` chứa default kỹ thuật không nhạy cảm.
-- `.env` bị ignore và chỉ cung cấp runtime values.
-- `<service>/migrate/` là migration authority của service.
-- Application log ra stdout/stderr.
+```text
+TASK
+  ↓
+OWNER SERVICE
+  ↓
+BUSINESS CAPABILITY
+  ↓
+HANDLER → BUSINESS/USECASE → STORE/CLIENT → STATE/EFFECT
+  ↓
+SMALLEST SUFFICIENT PROOF
+```
 
-Production hiện vẫn dùng semantics của `shared/code/deploy.sh`: operator chọn
-một service, build/chuyển artifact và restart service đó. Script này đang được
-giữ tương thích trong khi production Compose, config và selector được audit;
-không được dùng file `.env` development làm production config.
+Developer không bắt đầu từ container. Developer bắt đầu từ owner của business.
 
-## Trạng thái chuyển đổi
+## Source ownership
 
-Correctness của commercial/quota/report vẫn được giữ: integer money, database
-transaction, idempotency, webhook verification, outbox/inbox, durable jobs,
-quota durability và graceful shutdown.
+| Vùng                             | Sở hữu                                                                             |
+| -------------------------------- | ---------------------------------------------------------------------------------- |
+| Root                             | workspace UX: `README`, public `Makefile`, `compose.yaml`, `go.work`, IDE config   |
+| `*-service/`                     | product/application truth của service                                              |
+| `shared/code/`                   | repository engineering application: setup/dev/generate/build/verify/deploy/release |
+| `shared/common/`, `shared/base/` | generic runtime mechanics dùng lại                                                 |
+| `shared/protobuf/`               | communication contracts + generated contract code                                  |
+| `integration-test/`              | cross-owner runtime proof                                                          |
 
-Topology development dùng một PostgreSQL/PostGIS, một Redis và một RabbitMQ;
-database/Redis index/migration authority vẫn tách theo owner. Migration là
-one-shot container. Payment, Notification và TQD chạy actor bền vững trong
-lifecycle của default process, không tạo standing worker container riêng.
+Nguyên tắc: **Root tổ chức hệ thống. Service tổ chức application/business. Shared runtime tổ chức mechanics. Contracts tổ chức giao tiếp. `shared/code` tổ chức engineering workflow.**
 
-Fresh workspace, fresh database, recovery labs và commercial/quota E2E đã PASS.
-Whole backend vẫn chưa CLOSED vì Membership/Transaction/Marketing/Task,
-Chat/Chat-v1, AI, non-core runtime và production deployment parity còn gate.
+## Public command API
 
-Ba bản đồ current/target và deployment gap nằm tại
-[`documents/OPERATIONAL-MAPS.md`](documents/OPERATIONAL-MAPS.md).
+```text
+make setup                         config local + pinned toolchain
+make deps                          Postgres + Redis + RabbitMQ
+make deps service=payment-service dependencies tối thiểu + migration của owner
+make dev service=payment-service  native Air development
+make test service=payment-service service proof
+make migrate service=payment-service explicit schema operation
+make generate                      protobuf/Wire generation
 
-Đối chiếu 23 production deployable với source hiện tại nằm tại
-[`documents/PRODUCTION-COMPATIBILITY.md`](documents/PRODUCTION-COMPATIBILITY.md).
+make up                            infra Docker + toàn bộ application native
+make rebuild service=...          rebuild một integration image
+make rebuild                       rebuild toàn integration stack
+make status                        infra health + native process/port
+make logs service=...              native stdout/stderr trong .tmp/development
+make smoke                         public boundary smoke
+make test-e2e                      cross-service business proof
+make integration-up                explicit full Compose image/package proof
+make integration-down              dừng full Compose image/package topology
 
-Kiến trúc owner hiện tại nằm tại
-[`BACKEND-ARCHITECTURE.md`](BACKEND-ARCHITECTURE.md). Kết quả kiểm chứng và các
-gate chưa đóng được ghi tại [`BACKEND-ACCEPTANCE.md`](BACKEND-ACCEPTANCE.md).
+make verify                        source/code/repository proof
+make accept                        rebuild + runtime + E2E acceptance
+make down                          dừng native processes + infra, giữ data
+make reset                         xóa local volumes có xác nhận
+```
 
-Đọc [`CONTRIBUTING.md`](CONTRIBUTING.md) trước khi đổi public contract,
-transaction, migration, payment, entitlement, quota hoặc event liên service.
+Các target dài bên trong là implementation/compatibility API và không phải vocabulary developer phải học thuộc.
+
+## Cách đọc một service
+
+Ví dụ nhận task Payment settlement:
+
+```text
+payment-service/README.md
+  ↓
+main.go / cmd/<role>/main.go
+  ↓
+config/
+  ↓
+settlement/order/payment capability liên quan
+  ↓
+handler → usecase/business → store/client
+  ↓
+migrate/ nếu state schema đổi
+  ↓
+tests
+```
+
+Một service có thể sở hữu API, worker, outbox actor hoặc CLI role cùng lúc. **Process topology không tự động tạo thêm business/service owner.**
+
+## Docker và migration
+
+Development và local E2E:
+
+```text
+Docker: PostgreSQL/PostGIS + Redis + RabbitMQ
+WSL/Linux: toàn bộ Go services; service đang sửa có thể chạy bằng Air
+```
+
+Packaging/image integration tường minh:
+
+```text
+make integration-up: full application Compose topology
+```
+
+Các `*-migrate` container trong Compose là **one-shot jobs**: chờ database, chạy migration của service owner, exit. Chúng không phải microservice riêng.
+
+## Documentation map
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — luật thay đổi source/PR.
+- [`BACKEND-ARCHITECTURE.md`](BACKEND-ARCHITECTURE.md) — ownership và dependency boundaries.
+- [`BACKEND-ACCEPTANCE.md`](BACKEND-ACCEPTANCE.md) — proof ladder và final gate.
+- [`shared/code/README.md`](shared/code/README.md) — engineering application.
+- [`documents/DEVELOPER-OPERATING-GUIDE.md`](documents/DEVELOPER-OPERATING-GUIDE.md) — clone → first change → integration.
+- [`documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md`](documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md) — quy chuẩn dài hạn.
+- [`documents/SERVICE-MAP.md`](documents/SERVICE-MAP.md) — service owners/entrypoints.
+- [`documents/MIGRATIONS.md`](documents/MIGRATIONS.md) — migration authorities.
+- [`documents/THREE-SOURCE-ONBOARDING.md`](documents/THREE-SOURCE-ONBOARDING.md) — fresh clone → config → ba runtime → quota proof.
+- [`documents/QHPRO-COMMERCIAL-OPERATIONS.md`](documents/QHPRO-COMMERCIAL-OPERATIONS.md) — vận hành Admin/Client từ gói đến quota và report.
+- [`documents/FINAL-ACCEPTANCE-20260904.md`](documents/FINAL-ACCEPTANCE-20260904.md) — trạng thái proof của artifact này.

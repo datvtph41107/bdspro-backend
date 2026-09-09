@@ -1,43 +1,57 @@
-# Notification Service
+# notification-service
 
-Notification owns logical notifications and external delivery responsibility. Payment eventing uses a durable responsibility chain:
+## Role
 
-```text
-Payment Outbox -> RabbitMQ -> Notification Inbox -> logical Notification -> DeliveryIntent -> Delivery Worker -> provider
-```
+Payment event Inbox dedupe, logical notification và delivery intent/effect.
 
-## Processes
+RabbitMQ connection/channel thuộc payment-consumer supervisor. Broker restart
+không được kéo gRPC API xuống; supervisor reconnect với bounded backoff, còn
+durable queue + Inbox giữ recovery authority.
 
-- `notification-service grpc`: synchronous Notification RPC/API surface.
-- `payment-event-worker`: consumes `payment.completed.v1`, validates envelope identity, writes Inbox + logical reaction + DeliveryIntent in one PostgreSQL transaction, then ACKs.
-- `delivery-worker`: claims durable DeliveryIntent rows with lease + `claim_version` fencing and performs push delivery.
+## Runtime status
 
-## Authority
+Canonical default Compose service. Payment consumer/delivery actor thuộc owner process; compatibility binaries vẫn build được nhưng không có standing worker containers.
 
-- `migrate/` is the only schema evolution authority.
-- RabbitMQ is transport responsibility, not Notification business truth.
-- `payment_event_inbox.event_id` is the durable dedupe identity.
-- ACK is sent only after Notification DB commit.
-- Provider response loss is modeled as `unknown` and can retry with at-least-once external-effect semantics.
+## Entrypoint / lifecycle
 
-## Local operation
+`main.go` -> Cobra `grpc` -> `cmd/grpc_server.go`.
+
+`make server`; compatibility: `make event-worker`, `make delivery-worker` khi điều tra/recovery.
+
+## Developer commands
 
 ```bash
-# Makefile tự nạp notification-service/.env, không dùng .env.local.
-make doctor
-make deps-up
-make migrate-up
-make generate
+make help
+make test
 make build
-make run-grpc
+make server
+make dev
 ```
 
-Run eventing in separate terminals:
+Nếu thay schema:
 
 ```bash
-make run-event-worker
-# Firebase credentials are required only for the delivery worker:
-make run-delivery-worker
+make migrateup
+make migrate-version
+make new_migration name=<schema_change>
 ```
 
-The committed repository contains only `config/example.firebase.json`; real Firebase service-account material must be supplied through `NOTIFICATION_FIREBASE_CREDENTIAL_FILE` and must never be committed.
+Root có thể gọi `make migrate service=notification-service`.
+
+## Dependencies / durable state
+
+PostgreSQL `qhpro_notification`, Redis DB 2, RabbitMQ, User RPC. Canonical migration: `migrate/`.
+
+## Read source from here
+
+`cmd/grpc_server.go`, `infra/postgres/eventing/`, `infra/worker/`, `internal/usecase/`, `migrate/`.
+
+Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
+
+## Repository rules
+
+- Root orchestration không sở hữu business của service này.
+- Cross-service behavior đi qua contract/client; không đọc database owner khác.
+- Worker/actor là component của owner trước khi là process/container riêng.
+
+Xem [`../documents/SERVICE-MAP.md`](../documents/SERVICE-MAP.md) và [`../documents/DEVELOPER-OPERATING-GUIDE.md`](../documents/DEVELOPER-OPERATING-GUIDE.md).

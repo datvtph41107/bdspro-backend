@@ -49,6 +49,7 @@ type InitialApp struct {
 	ImportGrpcHandler              *handler_grpc.ImportGrpcHandler
 	LayerLegalGrpcHandler          *handler_grpc.LayerLegalGrpcHandler
 	WorkspaceMapGrpcHandler        *handler_grpc.MapWorkspaceGrpcHandler
+	MapPointGrpcHandler            *handler_grpc.MapPointGrpcHandler
 	QHPlanningGrpcHandler          *handler_grpc.QHPlanningGrpcHandler
 	DiscoveryGrpcHandler           *handler_grpc.DiscoveryGrpcHandler
 	RelatedEntityGrpcHandler       *handler_grpc.RelatedEntityGrpcHandler
@@ -101,6 +102,7 @@ func NewApp(
 	importGrpcHandler *handler_grpc.ImportGrpcHandler,
 	layerLegalGrpcHandler *handler_grpc.LayerLegalGrpcHandler,
 	workspaceMapGrpcHandler *handler_grpc.MapWorkspaceGrpcHandler,
+	mapPointGrpcHandler *handler_grpc.MapPointGrpcHandler,
 	qhPlanningGrpcHandler *handler_grpc.QHPlanningGrpcHandler,
 	discoveryGrpcHandler *handler_grpc.DiscoveryGrpcHandler,
 	relatedEntityGrpcHandler *handler_grpc.RelatedEntityGrpcHandler,
@@ -149,6 +151,7 @@ func NewApp(
 		ImportGrpcHandler:              importGrpcHandler,
 		LayerLegalGrpcHandler:          layerLegalGrpcHandler,
 		WorkspaceMapGrpcHandler:        workspaceMapGrpcHandler,
+		MapPointGrpcHandler:            mapPointGrpcHandler,
 		QHPlanningGrpcHandler:          qhPlanningGrpcHandler,
 		DiscoveryGrpcHandler:           discoveryGrpcHandler,
 		RelatedEntityGrpcHandler:       relatedEntityGrpcHandler,

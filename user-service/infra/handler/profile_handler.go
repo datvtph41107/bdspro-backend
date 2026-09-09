@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"pb/clients"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strconv"
@@ -19,6 +18,7 @@ import (
 	"user/infra/mapper"
 	"user/internal/interface/repo"
 	"user/internal/job"
+	organizationusecase "user/internal/usecase/organization"
 	"user/internal/usecases"
 
 	"github.com/patrickmn/go-cache"
@@ -33,7 +33,7 @@ type GrpcProfileService struct {
 	ProfileUsecase        *usecases.ProfileUsecase
 	KYCUsecase            usecases.IKYCUsecase
 	cache                 *cache.Cache
-	OrgClient             *clients.OrganizationClient
+	OrganizationService   *organizationusecase.Service
 	ProfileMapper         *mapper.ProfileMapper
 	KYCMapper             *mapper.KYCMapper
 	CrmClient             _provider.CrmProvider
@@ -51,8 +51,7 @@ func NewGrpcProfileService(
 	adminUsecase *usecases.AdminUsecase,
 	profileUsecase *usecases.ProfileUsecase,
 	kycUsecase usecases.IKYCUsecase,
-	orgClient *clients.OrganizationClient,
-	// groupClient *clients.OrganizationClient,
+	organizationService *organizationusecase.Service,
 	profileMapper *mapper.ProfileMapper,
 	kycMapper *mapper.KYCMapper,
 	crmClient _provider.CrmProvider,
@@ -63,13 +62,12 @@ func NewGrpcProfileService(
 	redis *_redis.RedisService,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
-		ProfileRepo:    profileRepo,
-		ProfileUsecase: profileUsecase,
-		AdminUsecase:   adminUsecase,
-		KYCUsecase:     kycUsecase,
-		cache:          cache.New(5*time.Minute, 10*time.Minute),
-		OrgClient:      orgClient,
-		// GroupClient:           groupClient,
+		ProfileRepo:           profileRepo,
+		ProfileUsecase:        profileUsecase,
+		AdminUsecase:          adminUsecase,
+		KYCUsecase:            kycUsecase,
+		cache:                 cache.New(5*time.Minute, 10*time.Minute),
+		OrganizationService:   organizationService,
 		ProfileMapper:         profileMapper,
 		KYCMapper:             kycMapper,
 		CrmClient:             crmClient,
@@ -333,7 +331,10 @@ func (s *GrpcProfileService) GenTileSessionToken(ctx context.Context, _ *sharepb
 func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Empty) (*userpb.AccountInfoResponse, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
-	orgs, _ := s.OrgClient.GetOrganizationsByUserId(ctx, profileId)
+	orgs, err := s.OrganizationService.ListForProfile(ctx, profileId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list profile organizations: %v", err)
+	}
 
 	// groups, _ := s.GroupClient.GetGroupByUserId(ctx, &organizationpb.GetGroupByUserIdRequest{
 	// 	UserId: uint32(profileId),
@@ -360,14 +361,11 @@ func (s *GrpcProfileService) ListAccountMe(ctx context.Context, req *sharepb.Emp
 		for _, org := range orgs {
 			ownerType := uint32(30)
 			accountInfos = append(accountInfos, &userpb.AccountInfo{
-				// Id:              uint64(org.Id),
-				FullName:        &org.Name,
-				Avatar:          org.LogoUrl,
-				Phone:           org.Phone,
-				Email:           org.Email,
-				BackgroundImage: org.LogoUrl,
-				OwnerType:       &ownerType,
-				OrganizationId:  &org.Id,
+				FullName:       &org.Name,
+				Phone:          &org.Phone,
+				Email:          &org.Email,
+				OwnerType:      &ownerType,
+				OrganizationId: &org.ID,
 			})
 		}
 	}

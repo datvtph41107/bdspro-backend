@@ -7,6 +7,18 @@ option go_package = "pb/types/user;userpb";
 import "google/api/annotations.proto";
 
 service CheckoutService {
+  rpc ListPaymentMethods(ListPaymentMethodsRequest)
+      returns (ListPaymentMethodsResponse) {
+    option (google.api.http) = {
+      get: "/v2/user/checkout/payment-methods"
+    };
+  }
+  rpc UpdateCheckoutContact(UpdateCheckoutContactRequest) returns (CheckoutContact) {
+    option (google.api.http) = {
+      put: "/v2/user/checkout/contact"
+      body: "*"
+    };
+  }
   rpc Checkout(CheckoutRequest) returns (CheckoutResponse) {
     option (google.api.http) = {
       post: "/v2/user/checkout"
@@ -21,6 +33,31 @@ service CheckoutService {
       body: "*"
     };
   }
+}
+
+message ListPaymentMethodsRequest {}
+
+message PaymentMethodOption {
+  string method = 1;
+  string provider = 2;
+  bool enabled = 3;
+  string unavailableReason = 4;
+}
+
+message ListPaymentMethodsResponse {
+  string environment = 1;
+  repeated PaymentMethodOption methods = 2;
+}
+
+message UpdateCheckoutContactRequest {
+  string full_name = 1;
+  string email = 2;
+}
+
+message CheckoutContact {
+  string full_name = 1;
+  string email = 2;
+  string phone = 3;
 }
 
 message CheckoutRequest {

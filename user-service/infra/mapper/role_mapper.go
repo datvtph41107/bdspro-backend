@@ -56,6 +56,14 @@ func (m *RoleMapper) MapRoleToPb(role *access.Role) *sharepb.Role {
 		CreatedAt:       _utils.FormatTimeToString(role.CreatedAt),
 		UpdatedAt:       _utils.FormatTimeToString(role.UpdatedAt),
 	}
+	if len(pbRole.PermissionIds) == 0 && len(role.Permissions) > 0 {
+		pbRole.PermissionIds = make([]uint64, 0, len(role.Permissions))
+		for _, permission := range role.Permissions {
+			if permission != nil {
+				pbRole.PermissionIds = append(pbRole.PermissionIds, permission.ID)
+			}
+		}
+	}
 
 	if role.RoleGroup != nil {
 		pbRole.RoleGroupName = &role.RoleGroup.GroupName

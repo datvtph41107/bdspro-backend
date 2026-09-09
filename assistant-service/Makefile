@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 BINARY_NAME := assistant-service
 
-include ../tools/development/service.mk
+include ../shared/code/development/service.mk
 
 buf:
 	$(MAKE) -C ../shared/code buf-assistant
@@ -12,4 +12,4 @@ docker-build:
 help:
 	@printf '%s\n' 'fmt vet test test-race build server buf docker-build clean check'
 
-.PHONY: buf docker-build help
+.PHONY: help buf docker-build

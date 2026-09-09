@@ -33,12 +33,6 @@ type DeleteAdminRequest struct {
 	AuthID uint64 `json:"authId" binding:"required" validate:"required"`
 }
 
-// AssignRoleRequest DTO cho gán quyền admin
-type AssignRoleRequest struct {
-	AuthID  uint64 `json:"authId" binding:"required" validate:"required"`
-	RoleKey string `json:"roleKey" binding:"required" validate:"required"`
-}
-
 // AdminListRequest DTO cho danh sách admin
 type AdminListRequest struct {
 	_dto.Pagable
@@ -88,13 +82,6 @@ type AdminResponse struct {
 	Phone     string `json:"phone"`
 	Avatar    string `json:"avatar"`
 	Role      string `json:"role"`
-}
-
-// AdminRoleDTO DTO cho role admin từ organization service
-type AdminRoleDTO struct {
-	ID   uint32 `json:"id"`
-	Name string `json:"name"`
-	Key  string `json:"key"`
 }
 
 // ChangePasswordRequest DTO cho thay đổi mật khẩu admin

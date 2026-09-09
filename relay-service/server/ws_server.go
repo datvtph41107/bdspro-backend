@@ -14,6 +14,7 @@ import (
 	"relay/config"
 	"relay/constants"
 	middlewares "relay/middleware"
+	relayredis "relay/redis"
 	"relay/wshandler"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -31,8 +32,10 @@ func parseTimeout(timeoutStr string) time.Duration {
 var wsLogger = flogging.MustGetLogger("ws_server")
 
 type WSServer struct {
-	server  *http.Server
-	cleanup func()
+	server     *http.Server
+	handler    *wshandler.WebSocketHandler
+	redisActor func(context.Context) error
+	cleanup    func()
 }
 
 func NewWSServer(port string) (*WSServer, error) {
@@ -53,11 +56,24 @@ func NewWSServer(port string) (*WSServer, error) {
 		userCleanup()
 		return nil, fmt.Errorf("configure relay notification RPC: %w", err)
 	}
-	cleanup := func() { notificationCleanup(); chatCleanup(); userCleanup() }
 	chatClient := client.NewChatClient(chatRPC)
 	userClient := client.NewUserClient(userRPC)
 	notificationClient := client.NewNotificationClient(notificationRPC)
-	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient, notificationClient)
+	redisClient, err := relayredis.NewRedisClient()
+	if err != nil {
+		notificationCleanup()
+		chatCleanup()
+		userCleanup()
+		return nil, err
+	}
+	wsHandler := wshandler.NewWebSocketHandler(chatClient, userClient, notificationClient, redisClient)
+	cleanup := func() {
+		_ = wsHandler.Close()
+		_ = redisClient.Close()
+		notificationCleanup()
+		chatCleanup()
+		userCleanup()
+	}
 
 	mux := http.NewServeMux()
 
@@ -71,9 +87,14 @@ func NewWSServer(port string) (*WSServer, error) {
 		WriteTimeout:   parseTimeout(config.AppProperties.Timeout.Write),
 		MaxHeaderBytes: 1 << 20,
 	}
-	// start runner wshandle
-	go wsHandler.SubscribeToRedisChannel(constants.API_WS_CHANNEL)
-	return &WSServer{server: server, cleanup: cleanup}, nil
+	return &WSServer{
+		server:  server,
+		handler: wsHandler,
+		redisActor: func(ctx context.Context) error {
+			return wsHandler.SubscribeToRedisChannel(ctx, constants.API_WS_CHANNEL)
+		},
+		cleanup: cleanup,
+	}, nil
 }
 
 func setupHandlers(mux *http.ServeMux, wsHandler *wshandler.WebSocketHandler) http.Handler {
@@ -91,24 +112,48 @@ func (s *WSServer) Start() error {
 	if s.cleanup != nil {
 		defer s.cleanup()
 	}
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	signalCtx, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+	ctx, cancel := context.WithCancel(signalCtx)
+	defer cancel()
+	errCh := make(chan error, 2)
 
 	go func() {
 		wsLogger.Infof("WebSocket server is running on %s", s.server.Addr)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			wsLogger.Fatalf("WebSocket server error: %v", err)
+			errCh <- fmt.Errorf("serve Relay WebSocket: %w", err)
+		}
+	}()
+	redisDone := make(chan struct{})
+	go func() {
+		defer close(redisDone)
+		if s.redisActor != nil {
+			if err := s.redisActor(ctx); err != nil {
+				errCh <- err
+			}
 		}
 	}()
 
-	<-stop
+	var runtimeErr error
+	select {
+	case <-ctx.Done():
+	case runtimeErr = <-errCh:
+		cancel()
+	}
 	wsLogger.Info("Shutting down WebSocket server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
 
-	if err := s.server.Shutdown(ctx); err != nil {
-		wsLogger.Errorf("WebSocket server shutdown error: %v", err)
+	if err := s.server.Shutdown(shutdownCtx); err != nil && runtimeErr == nil {
+		runtimeErr = fmt.Errorf("shutdown Relay WebSocket: %w", err)
 	}
-	return nil
+	select {
+	case <-redisDone:
+	case <-shutdownCtx.Done():
+		if runtimeErr == nil {
+			runtimeErr = fmt.Errorf("stop Relay Redis actor: %w", shutdownCtx.Err())
+		}
+	}
+	return runtimeErr
 }

@@ -4,10 +4,11 @@ package domain
 // Payment-service là canonical owner nên admin không cần ghép dữ liệu từ DB
 // của service khác và cũng không được sửa trực tiếp các bảng này.
 type AdminOrder struct {
-	Order       Order
-	Attempts    []PaymentAttempt
-	Settlement  *Settlement
-	Fulfillment *Fulfillment
+	Order              Order
+	Attempts           []PaymentAttempt
+	Settlement         *Settlement
+	Fulfillment        *Fulfillment
+	ManualConfirmation *CommandEffect
 }
 
 // AdminFulfillment gắn fulfillment với order để admin có đủ ngữ cảnh xử lý

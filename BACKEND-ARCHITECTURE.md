@@ -1,105 +1,101 @@
 # BDSPro Backend Architecture
 
-Tài liệu này mô tả source truth đang chạy. `bdspro-golang-microservices-r2f0-i21`
-là source được phát triển; `used/bdspro-golang-microservices` chỉ là bằng chứng
-production để kiểm tra compatibility.
+## Architectural intent
 
-## 1. System và capability
+BDSPro là nhiều application/service độc lập về business nhưng thống nhất về developer experience.
 
-- BDSPro là system/product boundary.
-- QHPro là capability quy hoạch do TQD Service sở hữu.
-- React Admin và React Native không sở hữu giá, entitlement, quota hoặc usage.
-- Gateway là HTTP edge; business authority luôn nằm trong service owner.
+> **Độc lập ở business. Thống nhất ở cách developer làm việc.**
 
-## 2. Canonical owner map
-
-| Owner | Trách nhiệm |
-| --- | --- |
-| Gateway | HTTP ingress, JWT verification, route auth, metadata, error/response mapping |
-| User | Profile, public Auth/OAuth, IAM, catalog, checkout intent, subscription, entitlement |
-| Auth | `AuthInternal` compatibility và permission snapshot; không nhận business capability mới |
-| Organization | Organization, membership và quyền hành động trong organization |
-| Payment | Order, attempt, provider evidence, settlement, fulfillment và Outbox |
-| TQD | QHPro, planning, quota, durable usage, report acceptance/job/rendering |
-| File | File metadata/content và signed access |
-| Notification | Inbox dedupe, logical notification, delivery intent/effect |
-| Hub | Location/system configuration/API key/version capabilities hiện hữu |
-| Assistant | AI provider boundary dùng bởi TQD |
-
-## 3. Runtime flow đã được chứng minh
+## Five ownership zones
 
 ```text
-React Native / Admin
-        |
-        v
-     Gateway
-        |
-        +--> User --------> Organization (organization action authority)
-        |      |
-        |      +--> Payment --> provider webhook
-        |                        |
-        |                        +--> User settlement/Subscription
-        |                        +--> Payment Outbox
-        |                                  |
-        |                                  v
-        |                              RabbitMQ
-        |                                  |
-        |                                  v
-        |                        Notification Inbox/effect
-        |
-        +--> TQD --> User Entitlement
-               |       |
-               |       +--> subscription authority
-               +--> Redis admission + PostgreSQL durable quota/usage
-               +--> Report + UsageEvent + Job transaction
-               +--> report actor --> File --> signed PDF
+ROOT
+  public workspace UX and system orchestration
+
+SHARED/CODE
+  repository engineering application
+
+SERVICE
+  product/application owner
+
+SHARED RUNTIME
+  reusable technical mechanics
+
+CONTRACTS
+  cross-owner communication truth
 ```
 
-Payment Outbox publisher và fulfillment worker là component trong lifecycle
-của Payment process. Consumer của Payment events và delivery worker là
-component trong lifecycle của Notification process. TQD report actor cũng
-thuộc TQD process. Chúng có thể còn binary compatibility trong source, nhưng
-Compose mặc định không tạo standing container riêng.
+### Root
 
-## 4. Data rules
+Root cố ý ít file có semantics toàn workspace: `README.md`, `Makefile`, `compose.yaml`, `go.work`, `.vscode/`, docs index. Root Makefile là front door và include implementation từ `shared/code/development/root.mk`.
 
-- Money dùng `int64` minor units.
-- Provider webhook là boundary riêng, không dùng JWT Admin/User.
-- Checkout/order/report command có idempotency identity và conflict semantics.
-- Payment settlement, Outbox và fulfillment lưu durable state trước retry.
-- Notification Inbox dùng event ID làm dedupe identity và chỉ ACK sau DB commit.
-- Report acceptance ghi Report + UsageEvent + Job trong transaction.
-- PostgreSQL là durable usage truth; Redis chỉ là admission/runtime projection.
-- Migration versioned tại `<service>/migrate`; application schema mode phải tắt
-  ở môi trường deploy.
+### `shared/code`
 
-## 5. Process rules
+Sở hữu engineering workflows: pinned toolchain, local config generation, native dev mechanics, protobuf/Wire generation, verification, integration orchestration helpers, deployment/release compatibility. Không sở hữu product business.
 
-- Một service có một default process/container.
-- Composition root mở DB/Redis/RPC/broker và sở hữu close order.
-- Component chạy cùng cancellation domain với server.
-- Log ra stdout/stderr; Docker/runtime platform sở hữu retention.
-- Local và production dùng cùng binary, Dockerfile và config schema. Khác biệt
-  chỉ đến từ runtime values/secrets/topology do operator inject.
-- Development dùng một PostgreSQL/PostGIS, một Redis và một RabbitMQ. Logical
-  database, Redis DB index và migration authority vẫn thuộc từng service.
+### Services
 
-## 6. Production comparison
+Mỗi service sở hữu business, runtime configuration semantics, database migration history, composition, API implementation, workers/actors và tests của mình.
 
-Production Auth đăng ký Auth/OAuth/AuthInternal/Permission/Role/RoleGroup/
-UserInfo trong `auth-service/cmd/grpc.go`. Source mới đăng ký public Auth/OAuth/
-IAM tại `user-service/cmd/grpc/main.go` và chỉ đăng ký AuthInternal tại
-`auth-service/main.go`. Gateway trỏ Auth public tới `user:8201`. Customer và
-Admin runtime acceptance đã chứng minh cutover này hoạt động.
+User Service sở hữu identity/IAM nên cũng sở hữu one-time root-operator
+bootstrap. Đây là một explicit CLI role của cùng service, không phải seed/startup
+side effect hay service mới. Sau bootstrap, mọi administrator/role mutation đi
+qua authenticated IAM API; `QHPRO_SYSTEM_ROOT` không thể gán, sửa hoặc xóa qua
+API và được cấp toàn bộ permission identity hiện hành trong User catalog.
 
-Appointment có canonical serving owner tại CRM
-(`crm-service/cmd/grpc/main.go`). Các deployable production bị thiếu khỏi source
-mới gồm `appointment-service`, `marketing-service`, `membership-service`,
-`task-service`, `transaction-service`; chỉ Appointment đã có owner replacement
-được chứng minh. Các service còn lại chưa được phép coi là retired nếu chưa có
-endpoint/data/deployment reachability proof.
+### Shared runtime
 
-Chi tiết workflow, topology và deployment gap nằm tại
-[`documents/OPERATIONAL-MAPS.md`](documents/OPERATIONAL-MAPS.md).
-Ma trận parity và blocker có source evidence nằm tại
-[`documents/PRODUCTION-COMPATIBILITY.md`](documents/PRODUCTION-COMPATIBILITY.md).
+`shared/common`/`shared/base` chỉ nhận logic generic thực sự reusable. Không dùng shared để né ownership decision.
+
+### Contracts
+
+`shared/protobuf/schema` là communication source of truth; generated files là artifact.
+
+## Source vs process vs container
+
+Ba topology không đồng nghĩa:
+
+```text
+SOURCE OWNERSHIP ≠ PROCESS TOPOLOGY ≠ CONTAINER TOPOLOGY
+```
+
+Một Payment service có thể chạy API + outbox/fulfillment actors trong một hay nhiều process mà vẫn là một business owner. Migration container là one-shot process, không phải service.
+
+## Development topology
+
+Default local runtime:
+
+```text
+Postgres/Redis/RabbitMQ (Docker)
+           ↑ host ports
+all application services (native binaries)
+           ↑ focused edit loop
+one selected service (native Air in IDE terminal)
+```
+
+Image/package integration (explicit only):
+
+```text
+make integration-up → Compose full topology
+→ health
+→ smoke
+→ E2E
+```
+
+Production packaging có thể dùng Docker images mà không buộc daily edit loop phải build image.
+
+## Dependency rule
+
+Business dependency phải hướng vào owner-local abstractions hoặc explicit contracts. Root/engineering không được trở thành global service locator/business kernel.
+
+Boundary test: “Nếu Payment biến mất, file này còn có ý nghĩa không?”
+
+- không → Payment;
+- có và là generic runtime mechanic → shared runtime;
+- có và thao tác/generate/build/verify repo → `shared/code`;
+- là communication surface → contracts;
+- là whole-workspace UX/topology → root.
+
+## Correctness that must survive simplification
+
+Không đánh đổi các invariant sau để lấy source đẹp hơn: int64 minor-unit money, DB transaction boundaries, idempotency/unique keys, webhook verification, durable outbox/inbox/jobs, quota correctness, fail-closed auth/authz, graceful shutdown, versioned migrations.

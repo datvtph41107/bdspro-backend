@@ -507,7 +507,9 @@ func (s *ContactService) ContactListWithMember(ctx context.Context, req *sharepb
 		s.BdsproClient.MapDealMemberToContacts(ctx, *req.DealId, contactPbs)
 	}
 	if req.OrganizationId != nil {
-		s.OrganizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, contactPbs)
+		if err := s.UserClient.MapOrganizationMembersToContacts(ctx, *req.OrganizationId, contactPbs); err != nil {
+			return nil, err
+		}
 	}
 	if req.GroupId != nil {
 		s.OrganizationClient.MapGroupMemberToContact(ctx, *req.GroupId, contactPbs)

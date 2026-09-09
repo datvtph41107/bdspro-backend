@@ -17,12 +17,34 @@ import (
 
 type Handler struct {
 	paymentpb.UnimplementedInternalCommerceServiceServer
-	orders   *order.Service
-	attempts *attempt.Service
+	orders      *order.Service
+	attempts    *attempt.Service
+	environment string
 }
 
-func NewCommerceHandler(o *order.Service, a *attempt.Service) *Handler {
-	return &Handler{orders: o, attempts: a}
+func NewCommerceHandler(o *order.Service, a *attempt.Service, environment string) *Handler {
+	return &Handler{orders: o, attempts: a, environment: environment}
+}
+
+func (h *Handler) ListCheckoutPaymentMethods(ctx context.Context, _ *paymentpb.ListCheckoutPaymentMethodsRequest) (*paymentpb.ListCheckoutPaymentMethodsResponse, error) {
+	if err := requireUser(ctx); err != nil {
+		return nil, err
+	}
+	if h == nil || h.attempts == nil {
+		return nil, status.Error(codes.FailedPrecondition, "checkout payment methods unavailable")
+	}
+	methods := make([]*paymentpb.CheckoutPaymentMethodOption, 0, 2)
+	for _, method := range []payment.PaymentMethod{payment.PaymentMethodBankTransfer, payment.PaymentMethodCard} {
+		provider, enabled := h.attempts.Supports(method)
+		reason := ""
+		if !enabled {
+			reason = "Merchant chưa bật phương thức thanh toán này"
+		}
+		methods = append(methods, &paymentpb.CheckoutPaymentMethodOption{
+			Method: string(method), Provider: provider, Enabled: enabled, UnavailableReason: reason,
+		})
+	}
+	return &paymentpb.ListCheckoutPaymentMethodsResponse{Environment: h.environment, Methods: methods}, nil
 }
 func requireUser(ctx context.Context) error {
 	caller, ok := identity.ServiceCallerFromContext(ctx)

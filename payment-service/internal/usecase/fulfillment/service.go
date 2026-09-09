@@ -3,7 +3,6 @@ package fulfillment
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	payment "payment/internal/domain/payment"
@@ -46,7 +45,7 @@ func (s *Service) ProcessClaim(ctx context.Context, claim payment.FulfillmentCla
 	}
 
 	effect := payment.SettlementEffect{
-		EffectKey:            fmt.Sprintf("payment.order.%d", claim.Order.ID),
+		EffectKey:            claim.Order.SettlementEffectKey(),
 		OrderID:              claim.Order.ID,
 		Subject:              claim.Order.Subject,
 		ProductCode:          claim.Order.Terms.ProductCode,

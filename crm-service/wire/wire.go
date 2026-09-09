@@ -33,13 +33,14 @@ import (
 
 // Inject dependencies
 var wireSet = wire.NewSet(
-	_db.NewDB,
+	OpenDatabase,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
 	wire.Bind(new(crm_internal_interface_provider.BdsproProvider), new(*crm_infra_client.BdsproClient)),
 	wire.Bind(new(crm_internal_interface_provider.ITransaction), new(*crm_infra_impl.TransactionGorm)),
 	wire.Bind(new(crm_internal_interface_provider.TqdProvider), new(*crm_infra_client.TqdClient)),
 	wire.Bind(new(crm_internal_interface_provider.UserClient), new(*crm_infra_client.UserClient)),
+	wire.Bind(new(crm_internal_modules_contentcatalog_application.Repository), new(*crm_infra_postgre_contentcatalog.Repository)),
 	wire.Bind(new(crm_internal_repo.BlockRepo), new(*crm_infra_postgre.BlockRepo)),
 	wire.Bind(new(crm_internal_repo.ContactProductRepo), new(*crm_infra_postgre.ContactProductPostgre)),
 	wire.Bind(new(crm_internal_repo.ContactRepo), new(*crm_infra_postgre.PostgreContact)),

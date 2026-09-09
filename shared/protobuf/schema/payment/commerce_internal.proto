@@ -6,8 +6,23 @@ option go_package = "pb/types/payment;paymentpb";
 // InternalCommerceService receives server-owned commercial commands. It is not
 // a public checkout API and never accepts client-authoritative pricing terms.
 service InternalCommerceService {
+  rpc ListCheckoutPaymentMethods(ListCheckoutPaymentMethodsRequest) returns (ListCheckoutPaymentMethodsResponse);
   rpc CreateCommercialOrder(CreateCommercialOrderRequest) returns (CreateCommercialOrderResponse);
   rpc CreatePaymentAttempt(CreatePaymentAttemptRequest) returns (CreatePaymentAttemptResponse);
+}
+
+message ListCheckoutPaymentMethodsRequest {}
+
+message CheckoutPaymentMethodOption {
+  string method = 1;
+  string provider = 2;
+  bool enabled = 3;
+  string unavailableReason = 4;
+}
+
+message ListCheckoutPaymentMethodsResponse {
+  string environment = 1;
+  repeated CheckoutPaymentMethodOption methods = 2;
 }
 
 message CreateCommercialOrderRequest {

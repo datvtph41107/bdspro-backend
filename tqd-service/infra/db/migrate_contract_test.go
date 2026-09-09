@@ -19,6 +19,7 @@ var lineCommentPattern = regexp.MustCompile(`(?m)--[^\n]*$`)
 
 func TestCanonicalMigrationSequence(t *testing.T) {
 	t.Parallel()
+	const latestMigration = 44
 
 	entries, err := os.ReadDir(filepath.Join("..", "..", "migrate"))
 	require.NoError(t, err)
@@ -38,8 +39,8 @@ func TestCanonicalMigrationSequence(t *testing.T) {
 		pairs[version][direction] = entry.Name()
 	}
 
-	require.Len(t, pairs, 41)
-	for version := 1; version <= 41; version++ {
+	require.Len(t, pairs, latestMigration)
+	for version := 1; version <= latestMigration; version++ {
 		key := fmt.Sprintf("%06d", version)
 		require.Contains(t, pairs, key, "migration history has a version gap")
 		require.NotEmpty(t, pairs[key]["up"], "version %s has no up migration", key)
@@ -73,6 +74,7 @@ func TestCanonicalSQLCoversRuntimeSchemaRegistry(t *testing.T) {
 		"directory_sources",
 		"directory_suppliers",
 		"features",
+		"map_points",
 		"open_hours",
 		"parcels",
 		"poi_amenities",
@@ -185,4 +187,36 @@ func TestSchemaCompletionRollbackIsNonDestructive(t *testing.T) {
 	sql := strings.ToLower(string(contents))
 	require.NotContains(t, sql, "drop table")
 	require.NotContains(t, sql, "cascade")
+}
+
+func TestLayerFamilySortOrderIsVersioned(t *testing.T) {
+	t.Parallel()
+
+	contents, err := os.ReadFile(filepath.Join("..", "..", "migrate", "000043_add_qh_layer_family_sort_number.up.sql"))
+	require.NoError(t, err)
+	sql := strings.ToLower(string(contents))
+	require.Contains(t, sql, "add column if not exists sort_number integer not null default 0")
+	require.Contains(t, sql, "idx_qh_layer_families_active_sort")
+}
+
+func TestAdministrativeCatalogCutoverIsVersioned(t *testing.T) {
+	t.Parallel()
+
+	contents, err := os.ReadFile(filepath.Join("..", "..", "migrate", "000044_canonicalize_vn_administrative_catalog.up.sql"))
+	if err != nil {
+		t.Fatalf("read administrative catalog migration: %v", err)
+	}
+	sql := string(contents)
+	for _, fragment := range []string{
+		"INSERT INTO province_v2",
+		"FROM provinces",
+		"INSERT INTO ward_v2",
+		"FROM wards AS legacy_ward",
+		"ward_count = counts.ward_count",
+		"ON CONFLICT DO NOTHING",
+	} {
+		if !strings.Contains(sql, fragment) {
+			t.Fatalf("administrative catalog migration missing %q", fragment)
+		}
+	}
 }

@@ -58,7 +58,7 @@ services:
     ports: ["${POSTGRES_PORT:-5432}:5432"]
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./tools/development/postgres-init.sql:/docker-entrypoint-initdb.d/10-bdspro-databases.sql:ro
+      - ./shared/code/development/postgres-init.sql:/docker-entrypoint-initdb.d/10-bdspro-databases.sql:ro
 
   redis:
     <<: *service-defaults
@@ -135,7 +135,7 @@ services:
       postgres: {condition: service_healthy}
       user-migrate: {condition: service_completed_successfully}
     environment:
-      QHPRO_ACCEPTANCE_ADMIN_PASSWORD: ${QHPRO_ACCEPTANCE_ADMIN_PASSWORD:?QHPRO_ACCEPTANCE_ADMIN_PASSWORD is required}
+      QHPRO_ACCEPTANCE_ADMIN_PASSWORD: ${QHPRO_ACCEPTANCE_ADMIN_PASSWORD:-}
     networks: [backend]
     volumes:
       - ./integration-test/fixtures/acceptance_commercial_admin.sql:/fixture/acceptance_commercial_admin.sql:ro
@@ -158,10 +158,10 @@ services:
       postgres: {condition: service_healthy}
       user-migrate: {condition: service_completed_successfully}
     environment:
-      QHPRO_ACCEPTANCE_USER_PASSWORD: ${QHPRO_ACCEPTANCE_USER_PASSWORD:?QHPRO_ACCEPTANCE_USER_PASSWORD is required}
+      QHPRO_ACCEPTANCE_USER_PASSWORD: ${QHPRO_ACCEPTANCE_USER_PASSWORD:-}
       QHPRO_ACCEPTANCE_USERNAME: ${QHPRO_ACCEPTANCE_USERNAME:-qhpro_acceptance_0000000000}
       QHPRO_ACCEPTANCE_PHONE: ${QHPRO_ACCEPTANCE_PHONE:-0390000000}
-      QHPRO_ACCEPTANCE_EMAIL: ${QHPRO_ACCEPTANCE_EMAIL:-qhpro-acceptance-0000000000@example.invalid}
+      QHPRO_ACCEPTANCE_EMAIL: ${QHPRO_ACCEPTANCE_EMAIL:-qhpro-0000000000@e.invalid}
     networks: [backend]
     volumes:
       - ./integration-test/fixtures/acceptance_commercial_user.sql:/fixture/acceptance_commercial_user.sql:ro

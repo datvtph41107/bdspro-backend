@@ -124,6 +124,18 @@ func (s *Store) loadAdminOrder(ctx context.Context, row orderModel) (payment.Adm
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return payment.AdminOrder{}, fmt.Errorf("load settlement for order %d: %w", row.ID, err)
 	}
+	var manual commandEffectModel
+	err = s.db.WithContext(ctx).
+		Where("effect_type = ? AND scope_id = ?", payment.CommandEffectManualFundsConfirmation, row.ID).
+		Order("created_at DESC, id DESC").First(&manual).Error
+	if err == nil {
+		projection.ManualConfirmation = &payment.CommandEffect{
+			EffectType: manual.EffectType, ScopeID: manual.ScopeID, CommandKey: manual.CommandKey,
+			ActorID: manual.ActorID, Reason: manual.Reason, Outcome: manual.Outcome, CreatedAt: manual.CreatedAt,
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return payment.AdminOrder{}, fmt.Errorf("load manual confirmation for order %d: %w", row.ID, err)
+	}
 	var fulfillment fulfillmentModel
 	err = s.db.WithContext(ctx).Where("order_id = ?", row.ID).First(&fulfillment).Error
 	if err == nil {

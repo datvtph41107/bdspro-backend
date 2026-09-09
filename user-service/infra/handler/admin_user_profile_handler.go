@@ -4,6 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/identity"
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
@@ -14,6 +15,7 @@ import (
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/job"
+	"user/internal/usecase/useradmin"
 	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
@@ -26,6 +28,7 @@ type AdminUserProfileHandler struct {
 	ProfileUsecase        *usecases.ProfileUsecase
 	NotificationClient    providers.NotificationProvider
 	UserDashboardStatsJob *job.UserDashboardStatsJob
+	Authorizer            useradmin.PermissionAuthorizer
 }
 
 func NewAdminUserProfileHandler(
@@ -33,12 +36,14 @@ func NewAdminUserProfileHandler(
 	profileUsecase *usecases.ProfileUsecase,
 	notificationClient providers.NotificationProvider,
 	UserDashboardStatsJob *job.UserDashboardStatsJob,
+	authorizer useradmin.PermissionAuthorizer,
 ) *AdminUserProfileHandler {
 	return &AdminUserProfileHandler{
 		AdminUsecase:          adminUsecase,
 		ProfileUsecase:        profileUsecase,
 		NotificationClient:    notificationClient,
 		UserDashboardStatsJob: UserDashboardStatsJob,
+		Authorizer:            authorizer,
 	}
 }
 
@@ -48,7 +53,11 @@ func (h *AdminUserProfileHandler) createAdminHistory(ctx context.Context, action
 		return
 	}
 
-	profileID := _utils.GetProfileIdWithContext(ctx)
+	actor, ok := identity.ActorFromContext(ctx)
+	if !ok || actor.ProfileID == 0 {
+		return
+	}
+	profileID := actor.ProfileID
 
 	historyDTO := &_dto.HistoryDTO{
 		Title:      title,
@@ -89,6 +98,9 @@ func (h *AdminUserProfileHandler) createAdminHistory(ctx context.Context, action
 // @Failure 500 {object} userpb.ListAllUsersResponse
 // @Router /v2/user/admin/users [get]
 func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.ListAllUsersRequest) (*userpb.ListAllUsersResponse, error) {
+	if err := requireUserAdminPermission(ctx, s.Authorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 	// Convert proto request to DTO
 	sort := req.GetSort()
 	if sort == "" && req.SortBy != "" {
@@ -240,11 +252,9 @@ func (s *AdminUserProfileHandler) ListAllUsers(ctx context.Context, req *userpb.
 // @Failure 500 {object} sharepb.Empty
 // @Router /v2/user/admin/users/{profileId}/lock [post]
 func (s *AdminUserProfileHandler) LockUser(ctx context.Context, req *userpb.LockUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
+	if err := requireUserAdminPermission(ctx, s.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 
 	lockType := _enum.EUserStatus(req.LockType)
 	if lockType != _enum.EUserStatusPermanentlyLocked && lockType != _enum.EUserStatusTemporaryLocked {
@@ -279,11 +289,9 @@ func (s *AdminUserProfileHandler) LockUser(ctx context.Context, req *userpb.Lock
 // @Failure 500 {object} sharepb.Empty
 // @Router /v2/user/admin/users/{profileId}/unlock [post]
 func (s *AdminUserProfileHandler) UnLockUser(ctx context.Context, req *userpb.UnLockUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
+	if err := requireUserAdminPermission(ctx, s.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 
 	// Convert proto request to DTO
 	dtoReq := &dto.UnLockUserRequest{
@@ -313,11 +321,9 @@ func (s *AdminUserProfileHandler) UnLockUser(ctx context.Context, req *userpb.Un
 // @Failure 500 {object} sharepb.Empty
 // @Router /v2/user/admin/users/{profileId}/approve [post]
 func (s *AdminUserProfileHandler) ApproveUser(ctx context.Context, req *userpb.ApproveUserRequest) (*sharepb.Empty, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
+	if err := requireUserAdminPermission(ctx, s.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 
 	// Convert proto request to DTO
 	dtoReq := &dto.ApproveUserRequest{
@@ -345,6 +351,9 @@ func (s *AdminUserProfileHandler) ApproveUser(ctx context.Context, req *userpb.A
 // @Success 200 {object} sharepb.GetStatsResponse "Thành công"
 // @Router /v2/user/stats [get]
 func (s *AdminUserProfileHandler) GetUserStats(ctx context.Context, req *sharepb.GetStatsRequest) (*sharepb.GetStatsResponse, error) {
+	if err := requireUserAdminPermission(ctx, s.Authorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 	firstDate, err := time.Parse(time.DateOnly, req.FirstDate)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid firstDate format")
@@ -380,6 +389,9 @@ func (s *AdminUserProfileHandler) GetUserStats(ctx context.Context, req *sharepb
 // @Failure 500 {object} userpb.CreateUserResponse
 // @Router /v2/user/admin/user/new [post]
 func (h *AdminUserProfileHandler) CreateUser(ctx context.Context, req *userpb.CreateUserRequest) (*userpb.CreateUserResponse, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	// Parse birth date if provided
 	var birthTime *time.Time
 	if req.Birth != "" {
@@ -442,6 +454,9 @@ func (h *AdminUserProfileHandler) CreateUser(ctx context.Context, req *userpb.Cr
 // @Failure 500 {object} userpb.UpdateUserResponse
 // @Router /v2/user/admin/users/{profileId} [put]
 func (h *AdminUserProfileHandler) UpdateUser(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	// Parse birth date if provided
 	var birthTime *time.Time
 	if req.Birth != "" {
@@ -513,6 +528,9 @@ func (h *AdminUserProfileHandler) UpdateUser(ctx context.Context, req *userpb.Up
 // @Failure 500 {object} sharepb.Empty
 // @Router /v2/user/admin/users/{profileId} [delete]
 func (h *AdminUserProfileHandler) DeleteUser(ctx context.Context, req *userpb.DeleteUserRequest) (*sharepb.Empty, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	// Convert proto request to DTO
 	dtoReq := &dto.DeleteUserRequest{
 		ProfileID: req.ProfileId,
@@ -546,6 +564,9 @@ func (h *AdminUserProfileHandler) DeleteUser(ctx context.Context, req *userpb.De
 // @Failure 500 {object} userpb.GetUserDetailResponse
 // @Router /v2/user/admin/users/{profileId} [get]
 func (h *AdminUserProfileHandler) GetUserDetail(ctx context.Context, req *userpb.GetUserDetailRequest) (*userpb.GetUserDetailResponse, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 	// Call usecase
 	result, err := h.AdminUsecase.GetUserDetail(ctx, req.ProfileId)
 	if err != nil {

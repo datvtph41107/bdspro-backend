@@ -78,22 +78,18 @@ func startGRPCServer() error {
 	}
 	defer cleanup()
 
-	var paymentConsumer *brokerrabbit.PaymentCompletedConsumer
-	var closeRabbit func()
+	var paymentConsumer *brokerrabbit.PaymentCompletedSupervisor
 	if cfg.RabbitURL != "" {
-		connection, err := brokerrabbit.OpenConnection(cfg.RabbitURL, "notification-service")
-		if err != nil {
-			return fmt.Errorf("open Notification RabbitMQ: %w", err)
-		}
-		closeRabbit = func() { _ = connection.Close() }
 		paymentService := paymentcompleted.NewService(postgres_eventing.NewPaymentCompletedStore(database))
-		paymentConsumer, err = brokerrabbit.NewPaymentCompletedConsumer(connection, cfg.BusinessEventsExchange, paymentService)
+		paymentConsumer, err = brokerrabbit.NewPaymentCompletedSupervisor(
+			cfg.RabbitURL,
+			"notification-service",
+			cfg.BusinessEventsExchange,
+			paymentService,
+		)
 		if err != nil {
-			closeRabbit()
-			return fmt.Errorf("create payment completed consumer: %w", err)
+			return fmt.Errorf("create payment completed supervisor: %w", err)
 		}
-		defer paymentConsumer.Close()
-		defer closeRabbit()
 	} else {
 		log.Printf("service=notification-service component=payment-consumer status=disabled reason=rabbitmq-not-configured")
 	}

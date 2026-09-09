@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,7 +21,7 @@ const runtimeSmokeEnabled = "QHPRO_RUNTIME_SMOKE"
 
 const (
 	acceptanceAdminUsername = "qhpro.acceptance.admin"
-	acceptanceUserUsername  = "qhpro.acceptance.user"
+	acceptanceUserUsername  = "qhpro_acceptance_0000000000"
 )
 
 // TestQHPROCommercialRuntime verifies an already-provisioned commercial state
@@ -146,8 +147,123 @@ func TestQHPROCommercialAdminRuntime(t *testing.T) {
 		t.Fatalf("admin login response is incomplete: %v", login)
 	}
 	permissionStatus, permissions := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/auth/permission/me", token)
-	if permissionStatus != http.StatusOK || len(jsonArray(permissions, "keys")) != 8 {
+	if permissionStatus != http.StatusOK || len(jsonArray(permissions, "keys")) < 10 {
 		t.Fatalf("admin permission snapshot: status=%d body=%v", permissionStatus, permissions)
+	}
+
+	t.Run("IAM role permission matrix", func(t *testing.T) {
+		statusCode, roles := runtimeJSONRequestAny(
+			t,
+			client,
+			gatewayURL+"/v2/auth/role/list?page=0&size=100",
+			token,
+		)
+		if statusCode != http.StatusOK {
+			t.Fatalf("list IAM roles: status=%d body=%v", statusCode, roles)
+		}
+		var acceptanceRole map[string]any
+		for _, raw := range jsonArray(roles, "data") {
+			role, ok := raw.(map[string]any)
+			if ok && jsonString(role, "key") == "QHPRO_ACCEPTANCE_COMMERCIAL_ADMIN" {
+				acceptanceRole = role
+				break
+			}
+		}
+		if acceptanceRole == nil {
+			t.Fatalf("acceptance IAM role is absent: %v", roles)
+		}
+		roleID := jsonNumber(acceptanceRole, "id")
+		permissionIDs := jsonArray(acceptanceRole, "permissionIds")
+		if len(permissionIDs) == 0 {
+			permissionIDs = jsonArray(acceptanceRole, "permission_ids")
+		}
+		if roleID == 0 || len(permissionIDs) < 15 {
+			t.Fatalf("acceptance IAM role is incomplete: %v", acceptanceRole)
+		}
+		statusCode, saved := runtimeJSONPostAny(
+			t,
+			client,
+			gatewayURL+"/v2/auth/role/permissions",
+			map[string]any{"roleId": roleID, "permissionIds": permissionIDs},
+			token,
+		)
+		if statusCode != http.StatusOK || jsonNumber(saved, "id") != roleID {
+			t.Fatalf("replace IAM role permissions: role_id=%d permission_count=%d status=%d body=%v role=%v", roleID, len(permissionIDs), statusCode, saved, acceptanceRole)
+		}
+
+		groupListStatus, groups := runtimeJSONRequestAny(
+			t, client, gatewayURL+"/v2/auth/role-group/list?page=0&size=1000", token,
+		)
+		if groupListStatus != http.StatusOK {
+			t.Fatalf("list IAM role groups: status=%d body=%v", groupListStatus, groups)
+		}
+		// Deleted groups are soft-deleted and therefore still hold their unique
+		// key in PostgreSQL. Start from wall-clock seconds so repeated acceptance
+		// runs do not reuse a key hidden from the normal list query.
+		groupKeyValue := time.Now().Unix()
+		for _, raw := range jsonArray(groups, "data") {
+			group, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			if key := jsonNumber(group, "key"); key >= groupKeyValue {
+				groupKeyValue = key + 1
+			}
+		}
+		if groupKeyValue > int64(^uint32(0)) {
+			t.Fatalf("no role-group key remains in uint32 range")
+		}
+		groupKey := uint32(groupKeyValue)
+		groupName := fmt.Sprintf("NT %d", groupKey)
+		statusCode, createdGroup := runtimeJSONPostAny(
+			t, client, gatewayURL+"/v2/auth/role-group",
+			map[string]any{"groupName": groupName, "description": "Nhom quyen runtime", "key": groupKey}, token,
+		)
+		groupID := jsonNumber(createdGroup, "id")
+		if statusCode != http.StatusOK || groupID == 0 {
+			t.Fatalf("create IAM role group: status=%d body=%v", statusCode, createdGroup)
+		}
+		defer func() {
+			if groupID != 0 {
+				_, _ = runtimeJSONMethod(client, http.MethodDelete, fmt.Sprintf("%s/v2/auth/role-group/%d", gatewayURL, groupID), nil, token)
+			}
+		}()
+
+		updatedName := fmt.Sprintf("Sua %d", groupKey)
+		statusCode, updatedGroup := runtimeJSONMethodAny(
+			t, client, http.MethodPut, fmt.Sprintf("%s/v2/auth/role-group/%d", gatewayURL, groupID),
+			map[string]any{"id": groupID, "groupName": updatedName, "description": "Da kiem chung", "key": groupKey}, token,
+		)
+		if statusCode != http.StatusOK || jsonString(updatedGroup, "groupName", "group_name") != updatedName {
+			t.Fatalf("update IAM role group: status=%d body=%v", statusCode, updatedGroup)
+		}
+
+		statusCode, savedGroupPermissions := runtimeJSONMethodAny(
+			t, client, http.MethodPut, gatewayURL+"/v2/auth/role-group/permissions",
+			map[string]any{"groupId": groupID, "permissionIds": permissionIDs[:2]}, token,
+		)
+		if statusCode != http.StatusOK || jsonNumber(savedGroupPermissions, "id") != groupID {
+			t.Fatalf("replace IAM role group permissions: status=%d body=%v", statusCode, savedGroupPermissions)
+		}
+		statusCode, groupPermissions := runtimeJSONRequestAny(
+			t, client, fmt.Sprintf("%s/v2/auth/role-group/%d/permissions", gatewayURL, groupKey), token,
+		)
+		if statusCode != http.StatusOK || len(jsonArray(groupPermissions, "data")) != 2 {
+			t.Fatalf("read IAM role group permissions: status=%d body=%v", statusCode, groupPermissions)
+		}
+		statusCode, deletedGroup := runtimeJSONMethodAny(
+			t, client, http.MethodDelete, fmt.Sprintf("%s/v2/auth/role-group/%d", gatewayURL, groupID), nil, token,
+		)
+		if statusCode != http.StatusOK || jsonNumber(deletedGroup, "id") != groupID {
+			t.Fatalf("delete IAM role group: status=%d body=%v", statusCode, deletedGroup)
+		}
+		groupID = 0
+	})
+
+	if strings.TrimSpace(os.Getenv("QHPRO_CATALOG_LIFECYCLE_SMOKE")) == "1" {
+		t.Run("catalog draft publish retire lifecycle", func(t *testing.T) {
+			runtimeCatalogLifecycle(t, client, gatewayURL, token)
+		})
 	}
 
 	checks := []struct {
@@ -162,6 +278,7 @@ func TestQHPROCommercialAdminRuntime(t *testing.T) {
 		{name: "reports", path: "/v2/tqd/admin/commercial/generated-reports?page=1&pageSize=20", arrayKey: "reports", requireRow: true},
 		{name: "orders", path: "/v2/payment/admin/commercial/orders?page=1&pageSize=20", arrayKey: "orders", requireRow: true},
 		{name: "fulfillments", path: "/v2/payment/admin/commercial/fulfillments?page=1&pageSize=20", arrayKey: "fulfillments", requireRow: true},
+		{name: "users", path: "/v2/user/admin/users?page=1&size=20", arrayKey: "data", requireRow: true},
 	}
 	for _, check := range checks {
 		t.Run(check.name, func(t *testing.T) {
@@ -222,6 +339,12 @@ func TestQHPROCommercialAdminRuntime(t *testing.T) {
 		t.Fatalf("payment progress fixture is incomplete: order=%v jwt_key_present=%t", ownerOrder, secret != "")
 	}
 	ownerToken := signRuntimeAccessToken(t, secret, ownerProfileID)
+	userAdminStatus, userAdminBody := runtimeJSONRequestAny(
+		t, client, gatewayURL+"/v2/user/admin/users?page=1&size=1", ownerToken,
+	)
+	if userAdminStatus != http.StatusForbidden {
+		t.Fatalf("ordinary user reached User Admin boundary: status=%d body=%v", userAdminStatus, userAdminBody)
+	}
 	progressStatus, progress := runtimeJSONRequestAny(
 		t,
 		client,
@@ -238,6 +361,59 @@ func TestQHPROCommercialAdminRuntime(t *testing.T) {
 	if projectionStatus != http.StatusOK || jsonNumber(projection, "profileId", "profile_id") != int64(ownerProfileID) {
 		t.Fatalf("user commercial projection: status=%d body=%v", projectionStatus, projection)
 	}
+	userDetailStatus, userDetail := runtimeJSONRequestAny(
+		t, client, fmt.Sprintf("%s/v2/user/admin/users/%d", gatewayURL, ownerProfileID), token,
+	)
+	if userDetailStatus != http.StatusOK || jsonNumber(userDetail, "profileId", "profile_id") != int64(ownerProfileID) {
+		t.Fatalf("user admin detail: status=%d body=%v", userDetailStatus, userDetail)
+	}
+
+	t.Run("user lifecycle", func(t *testing.T) {
+		suffix := strconv.FormatInt(time.Now().UnixNano(), 36)
+		username := "qhpro.admin.created." + suffix
+		password := "Qhpro-Admin-Created-" + suffix
+		createStatus, created := runtimeJSONMethodAny(t, client, http.MethodPost,
+			gatewayURL+"/v2/user/admin/user/new", map[string]any{
+				"username": username,
+				"password": password,
+				"fullName": "QHPRO Admin-created User",
+				"email":    username + "@example.invalid",
+			}, token)
+		profileID := jsonNumber(created, "profileId", "profile_id")
+		if createStatus != http.StatusOK || profileID == 0 || jsonNumber(created, "authId", "auth_id") == 0 {
+			t.Fatalf("create user: status=%d body=%v", createStatus, created)
+		}
+
+		loginStatus, createdLogin := runtimeJSONPostAny(t, client, gatewayURL+"/v2/auth/password/login", map[string]any{
+			"username": username, "password": password, "version": "runtime-smoke",
+			"platform": "WEB", "os": "Linux", "deviceName": "Admin User Lifecycle",
+		}, "")
+		if loginStatus != http.StatusOK || jsonString(createdLogin, "accessToken", "access_token") == "" || jsonNumber(createdLogin, "profileId", "profile_id") != profileID {
+			t.Fatalf("created user credential: status=%d body=%v", loginStatus, createdLogin)
+		}
+
+		updateStatus, updated := runtimeJSONMethodAny(t, client, http.MethodPut,
+			fmt.Sprintf("%s/v2/user/admin/users/%d", gatewayURL, profileID), map[string]any{
+				"profileId": profileID,
+				"fullName":  "QHPRO Admin-updated User",
+				"email":     username + "@example.invalid",
+				"status":    10,
+			}, token)
+		if updateStatus != http.StatusOK || jsonString(updated, "fullName", "full_name") != "QHPRO Admin-updated User" {
+			t.Fatalf("update user: status=%d body=%v", updateStatus, updated)
+		}
+
+		deleteStatus, deleted := runtimeJSONMethodAny(t, client, http.MethodDelete,
+			fmt.Sprintf("%s/v2/user/admin/users/%d?reason=acceptance-cleanup", gatewayURL, profileID), nil, token)
+		if deleteStatus != http.StatusOK {
+			t.Fatalf("delete user: status=%d body=%v", deleteStatus, deleted)
+		}
+		detailStatus, detail := runtimeJSONRequestAny(t, client,
+			fmt.Sprintf("%s/v2/user/admin/users/%d", gatewayURL, profileID), token)
+		if detailStatus == http.StatusOK {
+			t.Fatalf("deleted user remained visible: body=%v", detail)
+		}
+	})
 }
 
 // TestQHPROCommercialClientLoginRuntime proves that the acceptance identity
@@ -255,8 +431,9 @@ func TestQHPROCommercialClientLoginRuntime(t *testing.T) {
 		t.Fatal("QHPRO_ACCEPTANCE_USER_PASSWORD is required")
 	}
 	client := &http.Client{Timeout: 15 * time.Second}
+	username := envOrDefault("QHPRO_ACCEPTANCE_USERNAME", acceptanceUserUsername)
 	loginPayload := map[string]any{
-		"username":   acceptanceUserUsername,
+		"username":   username,
 		"password":   password,
 		"version":    "runtime-smoke",
 		"platform":   "WEB",
@@ -317,34 +494,194 @@ func runtimeJSONRequestAny(t *testing.T, client *http.Client, url, token string)
 }
 
 func runtimeJSONPostAny(t *testing.T, client *http.Client, url string, value map[string]any, token string) (int, map[string]any) {
+	return runtimeJSONMethodAny(t, client, http.MethodPost, url, value, token)
+}
+
+func runtimeJSONMethodAny(t *testing.T, client *http.Client, method, url string, value map[string]any, token string) (int, map[string]any) {
 	t.Helper()
-	raw, err := json.Marshal(value)
+	var requestBody io.Reader
+	if value != nil {
+		raw, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		requestBody = bytes.NewReader(raw)
+	}
+	req, err := http.NewRequestWithContext(t.Context(), method, url, requestBody)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, url, bytes.NewReader(raw))
-	if err != nil {
-		t.Fatal(err)
+	if value != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("POST %s: %v", url, err)
+		t.Fatalf("%s %s: %v", method, url, err)
 	}
 	defer resp.Body.Close()
 
-	var body map[string]any
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 4<<20)).Decode(&body); err != nil {
-		t.Fatalf("POST %s: decode status %d: %v", url, resp.StatusCode, err)
+	var responseBody map[string]any
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 4<<20)).Decode(&responseBody); err != nil && !errors.Is(err, io.EOF) {
+		t.Fatalf("%s %s: decode status %d: %v", method, url, resp.StatusCode, err)
 	}
-	payload := body
-	if data, ok := body["data"].(map[string]any); ok {
+	if responseBody == nil {
+		responseBody = map[string]any{}
+	}
+	payload := responseBody
+	if data, ok := responseBody["data"].(map[string]any); ok {
 		payload = data
 	}
 	return resp.StatusCode, payload
+}
+
+// runtimeCatalogLifecycle proves the exact browser contract: draft is Admin
+// only, publication makes the version discoverable by clients, and retirement
+// removes it from new sales without deleting its durable record.
+func runtimeCatalogLifecycle(t *testing.T, client *http.Client, gatewayURL, token string) {
+	t.Helper()
+	suffix := strconv.FormatInt(time.Now().UnixNano(), 36)
+	planCode := "qhpro.acceptance." + suffix
+	priceCode := planCode + ".monthly"
+	draft := map[string]any{
+		"productCode": "qhpro", "productDisplayName": "QHPro",
+		"planCode": planCode, "version": "1.0.0", "displayName": "Gói nghiệm thu " + suffix,
+		"subjectScope": "profile", "tierRank": 900, "subscriptionTermDays": 30,
+		"entitlements": []map[string]any{
+			{"code": "workspace.report.feature", "kind": "feature_access", "featureCode": "workspace.report.generate", "amount": 0, "unlimited": false, "period": "none"},
+			{"code": "workspace.report.allowance", "kind": "usage_allowance", "meterCode": "workspace.report_generation.accepted", "amount": 7, "unlimited": false, "period": "subscription_cycle"},
+		},
+		"operations": []map[string]any{{"code": "workspace.report.generate", "featureCode": "workspace.report.generate", "meterCode": "workspace.report_generation.accepted", "unitsPerAction": 1}},
+		"prices":     []map[string]any{{"code": priceCode, "kind": "recurring", "currency": "VND", "amountMinor": 125000, "billingUnit": "subscription_cycle", "quantity": 1}},
+	}
+	statusCode, created := runtimeJSONMethodAny(t, client, http.MethodPost, gatewayURL+"/v2/user/admin/catalog/plan-versions", map[string]any{"draft": draft}, token)
+	planVersionID := jsonNumber(created, "id")
+	if statusCode != http.StatusOK || planVersionID == 0 || jsonString(created, "status") != "draft" {
+		t.Fatalf("create catalog draft: status=%d body=%v", statusCode, created)
+	}
+	completed := false
+	defer func() {
+		if completed {
+			return
+		}
+		// Best-effort cleanup: delete if it is still a draft, otherwise retire
+		// it before leaving the failed acceptance run.
+		_, _ = runtimeJSONMethod(client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:retire", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID}, token)
+		_, _ = runtimeJSONMethod(client, http.MethodDelete, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d", gatewayURL, planVersionID), nil, token)
+	}()
+	assertPublicPlanVisibility(t, client, gatewayURL, planCode, false, 0, 0)
+
+	// Stable product/plan metadata comes back from the owner. A draft version
+	// may only replace its own terms, never mutate that shared parent state.
+	draft["productDisplayName"] = jsonString(created, "productDisplayName", "product_display_name")
+	draft["tierRank"] = jsonNumber(created, "tierRank", "tier_rank")
+	draft["displayName"] = "Gói nghiệm thu đã cập nhật " + suffix
+	draft["entitlements"].([]map[string]any)[1]["amount"] = 12
+	draft["prices"].([]map[string]any)[0]["amountMinor"] = 149000
+	statusCode, updated := runtimeJSONMethodAny(t, client, http.MethodPut, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID, "draft": draft}, token)
+	if statusCode != http.StatusOK || jsonString(updated, "displayName", "display_name") != draft["displayName"] {
+		t.Fatalf("update catalog draft: status=%d body=%v", statusCode, updated)
+	}
+	statusCode, validated := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:validate", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID}, token)
+	if statusCode != http.StatusOK || !jsonBool(validated, "valid") || len(jsonString(validated, "termsChecksum", "terms_checksum")) != 64 {
+		t.Fatalf("validate catalog draft: status=%d body=%v", statusCode, validated)
+	}
+
+	effectiveFrom := time.Now().UTC().Add(2 * time.Second)
+	statusCode, published := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:publish", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID, "effectiveFrom": effectiveFrom.Format(time.RFC3339Nano)}, token)
+	publishedVersion := jsonMap(published, "planVersion", "plan_version")
+	if statusCode != http.StatusOK || jsonString(publishedVersion, "status") != "active" {
+		t.Fatalf("publish catalog version: status=%d body=%v", statusCode, published)
+	}
+	time.Sleep(time.Until(effectiveFrom) + 150*time.Millisecond)
+	assertPublicPlanVisibility(t, client, gatewayURL, planCode, true, 149000, 12)
+
+	statusCode, retired := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:retire", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID}, token)
+	if statusCode != http.StatusOK || jsonString(retired, "status") != "retired" {
+		t.Fatalf("retire catalog version: status=%d body=%v", statusCode, retired)
+	}
+	assertPublicPlanVisibility(t, client, gatewayURL, planCode, false, 0, 0)
+
+	// Deletion is deliberately a different rule: only a never-published draft
+	// may be removed. This second version proves that bounded cleanup path.
+	draft["version"] = "1.0.1"
+	draft["displayName"] = "Bản nháp có thể xóa " + suffix
+	statusCode, removable := runtimeJSONMethodAny(t, client, http.MethodPost, gatewayURL+"/v2/user/admin/catalog/plan-versions", map[string]any{"draft": draft}, token)
+	removableID := jsonNumber(removable, "id")
+	if statusCode != http.StatusOK || removableID == 0 {
+		t.Fatalf("create removable catalog draft: status=%d body=%v", statusCode, removable)
+	}
+	statusCode, deleted := runtimeJSONMethodAny(t, client, http.MethodDelete, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d", gatewayURL, removableID), nil, token)
+	if statusCode != http.StatusOK {
+		t.Fatalf("delete catalog draft: status=%d body=%v", statusCode, deleted)
+	}
+	statusCode, deleted = runtimeJSONRequestAny(t, client, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d", gatewayURL, removableID), token)
+	if statusCode == http.StatusOK {
+		t.Fatalf("deleted catalog draft remained visible: %v", deleted)
+	}
+	completed = true
+}
+
+func assertPublicPlanVisibility(t *testing.T, client *http.Client, gatewayURL, planCode string, wantVisible bool, wantPrice, wantQuota int64) {
+	t.Helper()
+	statusCode, payload := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/user/commercial/plans?productCode=qhpro&subjectKind=profile", "")
+	if statusCode != http.StatusOK {
+		t.Fatalf("public catalog: status=%d body=%v", statusCode, payload)
+	}
+	for _, raw := range jsonArray(payload, "plans") {
+		item, ok := raw.(map[string]any)
+		if !ok || jsonString(item, "planCode", "plan_code") != planCode {
+			continue
+		}
+		if !wantVisible {
+			t.Fatalf("plan %s unexpectedly visible to client: %v", planCode, item)
+		}
+		prices := jsonArray(item, "prices")
+		entitlements := jsonArray(item, "entitlements")
+		if len(prices) == 0 || jsonNumber(prices[0].(map[string]any), "amountMinor", "amount_minor") != wantPrice {
+			t.Fatalf("published price mismatch: %v", item)
+		}
+		for _, entitlementRaw := range entitlements {
+			entitlement, ok := entitlementRaw.(map[string]any)
+			if ok && jsonString(entitlement, "meterCode", "meter_code") == "workspace.report_generation.accepted" && jsonNumber(entitlement, "amount") == wantQuota {
+				return
+			}
+		}
+		t.Fatalf("published quota mismatch: %v", item)
+	}
+	if wantVisible {
+		t.Fatalf("plan %s is not visible in client catalog: %v", planCode, payload)
+	}
+}
+
+func runtimeJSONMethod(client *http.Client, method, url string, value map[string]any, token string) (int, error) {
+	var requestBody io.Reader
+	if value != nil {
+		raw, err := json.Marshal(value)
+		if err != nil {
+			return 0, err
+		}
+		requestBody = bytes.NewReader(raw)
+	}
+	req, err := http.NewRequest(method, url, requestBody)
+	if err != nil {
+		return 0, err
+	}
+	if value != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
+	return resp.StatusCode, nil
 }
 
 func signRuntimeAccessToken(t *testing.T, secret string, profileID uint64) string {
@@ -437,6 +774,15 @@ func jsonString(value map[string]any, keys ...string) string {
 		}
 	}
 	return ""
+}
+
+func jsonMap(value map[string]any, keys ...string) map[string]any {
+	for _, key := range keys {
+		if result, ok := value[key].(map[string]any); ok {
+			return result
+		}
+	}
+	return map[string]any{}
 }
 
 func Example_runtimeSmoke() {

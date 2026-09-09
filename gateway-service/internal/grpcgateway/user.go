@@ -19,6 +19,7 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		userpb.RegisterAdminUserProfileServiceHandler,
 		userpb.RegisterAdminCatalogServiceHandler,
 		userpb.RegisterAdminCommercialServiceHandler,
+		userpb.RegisterAdminOrganizationServiceHandler,
 		userpb.RegisterCommercialProfileServiceHandler,
 		userpb.RegisterMainAreaServiceHandler,
 		userpb.RegisterPurposeUseServiceHandler,

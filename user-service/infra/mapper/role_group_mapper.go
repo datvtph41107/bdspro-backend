@@ -2,6 +2,7 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"fmt"
 	authpb "pb/types/auth"
 	"user/internal/domain/access"
 	"user/internal/dto"
@@ -20,6 +21,10 @@ func (m *RoleGroupMapper) MapToDomain(req *authpb.RoleGroupRequest) *access.Role
 		GroupName:   req.GroupName,
 		Description: req.Description,
 		Key:         enums.GroupRoleKeyEnum(req.Key),
+		// Code is a persisted unique identity used by the legacy role schema.
+		// The public contract exposes Key as that identity, so derive Code from
+		// Key instead of writing the same empty string for every new group.
+		Code: fmt.Sprintf("RG_%d", req.Key),
 	}
 
 	if req.Id != 0 {

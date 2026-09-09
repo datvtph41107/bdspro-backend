@@ -1,0 +1,51 @@
+BDSPro Static Acceptance Log - 2026-09-03
+========================================
+
+Baseline archive SHA-256: 6c6804e875d43fca07a5cb6744ba3d022948df3f0c88dec2997e48de040b5943
+
+[1] verify-backend
+root/service .env contract PASS
+runtime config isolation verification PASS
+user: migration contract checked (4 versions)
+organization: migration contract checked (3 versions)
+payment: migration contract checked (7 versions)
+tqd: migration contract checked (41 versions)
+notification: migration contract checked (2 versions)
+file: migration contract checked (4 versions)
+hub: migration contract checked (3 versions)
+bdspro: migration contract checked (3 versions)
+crm: migration contract checked (25 versions)
+migration contract PASS
+source layout verification PASS
+backend owner verification PASS
+
+[2] source docs
+canonical markdown links PASS (31 docs checked)
+
+[3] non-Go source
+ai-service Python syntax PASS (16 files)
+
+[4] Go parser syntax
+Go parser syntax PASS (3653 files)
+
+[5] deployment frozen-boundary byte compare
+UNCHANGED ai-service/deploy.sh
+UNCHANGED ai-service/docker-compose.yml
+UNCHANGED shared/code/deploy.sh
+UNCHANGED shared/code/docker-compose.yml
+shared/code/deploy.sh SHA-256: 80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e
+
+[6] fresh-source lab
+env_before=0
+env_after=11
+root/service .env contract PASS
+runtime config isolation verification PASS
+migration contract PASS (9 authorities)
+source layout verification PASS
+canonical markdown links PASS (31 docs checked)
+ai-service Python syntax PASS (16 files)
+FRESH_SOURCE_LAB_PASS
+
+[limitation]
+Docker runtime and pinned Go 1.25.10 test/race/build were not rerun in this execution environment.
+Run make accept after import on the intended local WSL/Docker environment.

@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -26,6 +27,25 @@ type PlanVersionAdminHandler struct {
 /** NewHandler creates an Admin catalog gRPC handler. */
 func NewPlanVersionAdminHandler(service *admin.Service, authorizer admin.PermissionAuthorizer) *PlanVersionAdminHandler {
 	return &PlanVersionAdminHandler{service: service, authorizer: authorizer}
+}
+
+func (h *PlanVersionAdminHandler) CreatePlanVersionDraft(ctx context.Context, req *userpb.CreateCatalogPlanVersionDraftRequest) (*userpb.CatalogPlanVersion, error) {
+	actorID, err := h.authorize(ctx, admin.PermissionPlanManage)
+	if err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Internal, "plan version administration is not configured")
+	}
+	command, err := planDraftCommand(actorID, req.GetDraft())
+	if err != nil {
+		return nil, err
+	}
+	aggregate, err := h.service.CreateDraft(ctx, command)
+	if err != nil {
+		return nil, planServiceError(err)
+	}
+	return planVersionToProto(aggregate), nil
 }
 
 /** ListPlanVersions returns terms and quota evidence; it never changes policy. */
@@ -83,6 +103,62 @@ func (h *PlanVersionAdminHandler) GetPlanVersion(
 	return planVersionToProto(aggregate), nil
 }
 
+func (h *PlanVersionAdminHandler) UpdatePlanVersionDraft(ctx context.Context, req *userpb.UpdateCatalogPlanVersionDraftRequest) (*userpb.CatalogPlanVersion, error) {
+	actorID, err := h.authorize(ctx, admin.PermissionPlanManage)
+	if err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Internal, "plan version administration is not configured")
+	}
+	if req == nil || req.GetPlanVersionId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
+	}
+	command, err := planDraftCommand(actorID, req.GetDraft())
+	if err != nil {
+		return nil, err
+	}
+	aggregate, err := h.service.UpdateDraft(ctx, req.GetPlanVersionId(), command)
+	if err != nil {
+		return nil, planServiceError(err)
+	}
+	return planVersionToProto(aggregate), nil
+}
+
+func (h *PlanVersionAdminHandler) ValidatePlanVersionDraft(ctx context.Context, req *userpb.ValidateCatalogPlanVersionDraftRequest) (*userpb.ValidateCatalogPlanVersionDraftResponse, error) {
+	if _, err := h.authorize(ctx, admin.PermissionPlanManage); err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Internal, "plan version administration is not configured")
+	}
+	if req == nil || req.GetPlanVersionId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
+	}
+	checksum, err := h.service.ValidateDraft(ctx, req.GetPlanVersionId())
+	if err != nil {
+		return nil, planServiceError(err)
+	}
+	return &userpb.ValidateCatalogPlanVersionDraftResponse{Valid: true, TermsChecksum: checksum}, nil
+}
+
+func (h *PlanVersionAdminHandler) DeletePlanVersionDraft(ctx context.Context, req *userpb.DeleteCatalogPlanVersionDraftRequest) (*emptypb.Empty, error) {
+	actorID, err := h.authorize(ctx, admin.PermissionPlanManage)
+	if err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Internal, "plan version administration is not configured")
+	}
+	if req == nil || req.GetPlanVersionId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
+	}
+	if err := h.service.DeleteDraft(ctx, req.GetPlanVersionId(), actorID); err != nil {
+		return nil, planServiceError(err)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 /** PublishPlanVersion executes the only allowed state transition: draft to active. */
 func (h *PlanVersionAdminHandler) PublishPlanVersion(
 	ctx context.Context,
@@ -98,9 +174,16 @@ func (h *PlanVersionAdminHandler) PublishPlanVersion(
 	if req == nil || req.GetPlanVersionId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
 	}
-	effectiveFrom, err := planRequiredTimestamp(req.EffectiveFrom, "effective_from")
-	if err != nil {
-		return nil, err
+	// Publishing immediately is a server-owned clock decision. Requiring the
+	// browser to submit "now" makes a valid request stale while it is in flight.
+	// An explicit value is still accepted for scheduled publication.
+	publishedAt := time.Now().UTC()
+	effectiveFrom := publishedAt
+	if req.EffectiveFrom != nil {
+		effectiveFrom, err = planRequiredTimestamp(req.EffectiveFrom, "effective_from")
+		if err != nil {
+			return nil, err
+		}
 	}
 	effectiveUntil, err := planOptionalTimestamp(req.EffectiveUntil, "effective_until")
 	if err != nil {
@@ -111,6 +194,7 @@ func (h *PlanVersionAdminHandler) PublishPlanVersion(
 		ActorID:        actorID,
 		EffectiveFrom:  effectiveFrom,
 		EffectiveUntil: effectiveUntil,
+		PublishedAt:    publishedAt,
 	})
 	if err != nil {
 		return nil, planServiceError(err)
@@ -124,6 +208,25 @@ func (h *PlanVersionAdminHandler) PublishPlanVersion(
 		TermsChecksum: result.TermsChecksum,
 		PublishedAt:   timestamppb.New(result.PublishedAt),
 	}, nil
+}
+
+// RetirePlanVersion stops future sales while preserving historical terms.
+func (h *PlanVersionAdminHandler) RetirePlanVersion(ctx context.Context, req *userpb.RetireCatalogPlanVersionRequest) (*userpb.CatalogPlanVersion, error) {
+	actorID, err := h.authorize(ctx, admin.PermissionPlanPublish)
+	if err != nil {
+		return nil, err
+	}
+	if h == nil || h.service == nil {
+		return nil, status.Error(codes.Internal, "plan version administration is not configured")
+	}
+	if req == nil || req.GetPlanVersionId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
+	}
+	aggregate, err := h.service.Retire(ctx, req.GetPlanVersionId(), actorID)
+	if err != nil {
+		return nil, planServiceError(err)
+	}
+	return planVersionToProto(aggregate), nil
 }
 
 func (h *PlanVersionAdminHandler) authorize(ctx context.Context, permissionCode string) (uint64, error) {
@@ -177,6 +280,13 @@ func planServiceError(err error) error {
 	case errors.Is(err, admin.ErrPlanVersionNotFound),
 		errors.Is(err, publish.ErrPlanVersionNotFound):
 		return status.Error(codes.NotFound, "plan version was not found")
+	case errors.Is(err, admin.ErrPlanVersionConflict):
+		return status.Error(codes.AlreadyExists, "plan version already exists")
+	case errors.Is(err, admin.ErrPlanVersionNotDraft):
+		return status.Error(codes.FailedPrecondition, err.Error())
+	case errors.Is(err, admin.ErrPlanVersionNotActive),
+		errors.Is(err, admin.ErrStablePlanFieldsImmutable):
+		return status.Error(codes.FailedPrecondition, err.Error())
 	case errors.Is(err, publish.ErrPlanVersionNotDraft),
 		errors.Is(err, publish.ErrParentRetired):
 		return status.Error(codes.FailedPrecondition, err.Error())
@@ -191,6 +301,39 @@ func planServiceError(err error) error {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	return status.Error(codes.Internal, "plan version administration failed")
+}
+
+func planDraftCommand(actorID uint64, draft *userpb.CatalogPlanVersionDraft) (admin.DraftCommand, error) {
+	if draft == nil {
+		return admin.DraftCommand{}, status.Error(codes.InvalidArgument, "draft is required")
+	}
+	command := admin.DraftCommand{
+		ActorID:            actorID,
+		ProductDisplayName: draft.GetProductDisplayName(),
+		TierRank:           draft.GetTierRank(),
+		Terms: plan.PlanVersion{
+			ProductCode:          draft.GetProductCode(),
+			PlanCode:             draft.GetPlanCode(),
+			Version:              draft.GetVersion(),
+			DisplayName:          draft.GetDisplayName(),
+			Status:               plan.StatusDraft,
+			SubjectScope:         plan.SubjectScope(draft.GetSubjectScope()),
+			SubscriptionTermDays: draft.GetSubscriptionTermDays(),
+			Entitlements:         make([]plan.Entitlement, 0, len(draft.GetEntitlements())),
+			Prices:               make([]plan.PriceItem, 0, len(draft.GetPrices())),
+			Operations:           make([]plan.OperationBinding, 0, len(draft.GetOperations())),
+		},
+	}
+	for _, item := range draft.GetEntitlements() {
+		command.Terms.Entitlements = append(command.Terms.Entitlements, plan.Entitlement{Code: item.GetCode(), Kind: plan.EntitlementKind(item.GetKind()), FeatureCode: item.GetFeatureCode(), MeterCode: item.GetMeterCode(), Amount: item.GetAmount(), Unlimited: item.GetUnlimited(), Period: plan.PeriodKind(item.GetPeriod())})
+	}
+	for _, item := range draft.GetPrices() {
+		command.Terms.Prices = append(command.Terms.Prices, plan.PriceItem{Code: item.GetCode(), Kind: plan.PriceKind(item.GetKind()), Currency: item.GetCurrency(), AmountMinor: item.GetAmountMinor(), BillingUnit: item.GetBillingUnit(), MeterCode: item.GetMeterCode(), Quantity: item.GetQuantity()})
+	}
+	for _, item := range draft.GetOperations() {
+		command.Terms.Operations = append(command.Terms.Operations, plan.OperationBinding{Code: item.GetCode(), FeatureCode: item.GetFeatureCode(), MeterCode: item.GetMeterCode(), UnitsPerAction: item.GetUnitsPerAction()})
+	}
+	return command, nil
 }
 
 func planVersionToProto(aggregate plan.PlanVersionAggregate) *userpb.CatalogPlanVersion {

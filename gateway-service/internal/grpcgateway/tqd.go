@@ -39,6 +39,7 @@ func RegisterTqdService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.C
 		tqdpb.RegisterQHLandUseServiceHandler,
 		tqdpb.RegisterRegionExtendServiceHandler,
 		tqdpb.RegisterMapWorkspaceServiceHandler,
+		tqdpb.RegisterMapPointServiceHandler,
 		tqdpb.RegisterQHPlanningServiceHandler,
 		tqdpb.RegisterDiscoveryServiceHandler,
 		tqdpb.RegisterRelatedEntityServiceHandler,

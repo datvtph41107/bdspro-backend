@@ -30,6 +30,9 @@ func TestQHPROValueChainRuntime(t *testing.T) {
 	}
 
 	client := &http.Client{Timeout: 15 * time.Second}
+	planCode, amountMinor, retirePlan := publishValueChainPlan(t, client, gatewayURL)
+	defer retirePlan()
+
 	loginStatus, login := runtimeJSONPostWithHeaders(t, client, gatewayURL+"/v2/auth/password/login", map[string]any{
 		"username": username, "password": password, "version": "acceptance",
 		"platform": "WEB", "os": "Linux", "deviceName": "QHPRO Value Chain Acceptance",
@@ -41,13 +44,27 @@ func TestQHPROValueChainRuntime(t *testing.T) {
 	}
 	auth := map[string]string{"Authorization": "Bearer " + token}
 
+	methodsStatus, methodsPayload := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/user/checkout/payment-methods", token)
+	bankTransferReady := false
+	for _, raw := range jsonArray(methodsPayload, "methods") {
+		method, _ := raw.(map[string]any)
+		if jsonString(method, "method") == "bank_transfer" &&
+			jsonString(method, "provider") == "sepay" && jsonBool(method, "enabled") {
+			bankTransferReady = true
+			break
+		}
+	}
+	if methodsStatus != http.StatusOK || !bankTransferReady {
+		t.Fatalf("checkout payment methods: status=%d body=%v", methodsStatus, methodsPayload)
+	}
+
 	plansStatus, plansPayload := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/user/commercial/plans?productCode=qhpro&subjectKind=profile", "")
 	if plansStatus != http.StatusOK {
 		t.Fatalf("catalog: status=%d body=%v", plansStatus, plansPayload)
 	}
-	planCode, amountMinor := paidPlan(plansPayload, "qhpro.basic")
-	if planCode == "" || amountMinor <= 0 {
-		t.Fatalf("canonical paid plan is unavailable: %v", plansPayload)
+	publicPlanCode, publicAmountMinor := paidPlan(plansPayload, planCode)
+	if publicPlanCode != planCode || publicAmountMinor != amountMinor {
+		t.Fatalf("Admin-published paid plan is unavailable: plan=%s amount=%d catalog=%v", planCode, amountMinor, plansPayload)
 	}
 
 	runKey := "accept-" + strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
@@ -151,7 +168,89 @@ func TestQHPROValueChainRuntime(t *testing.T) {
 		return false, fmt.Sprintf("status=%d body=%v", status, notifications)
 	})
 
-	t.Logf("PASS value chain: profile=%d plan=%s order=%d report=%d used=%d pdf=%s", profileID, planCode, orderID, reportID, usedBefore+1, pdfURL)
+	cancelStatus, cancellation := runtimeJSONPostWithHeaders(t, client, gatewayURL+"/v2/user/commercial/subscription:cancel", map[string]any{
+		"productCode": "qhpro", "reason": "acceptance lifecycle completed",
+	}, auth)
+	canceledSubscription := jsonObject(cancellation, "subscription")
+	if cancelStatus != http.StatusOK || !jsonBool(cancellation, "changed") || jsonString(canceledSubscription, "status") != "canceled" {
+		t.Fatalf("cancel subscription: status=%d body=%v", cancelStatus, cancellation)
+	}
+
+	freeStatus, freeProfile := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/user/commercial/profile", token)
+	if freeStatus != http.StatusOK || jsonBool(freeProfile, "hasSubscription", "has_subscription") {
+		t.Fatalf("free profile after cancellation: status=%d body=%v", freeStatus, freeProfile)
+	}
+	usageAfterCancelStatus, usageAfterCancel := runtimeJSONRequestAny(t, client, gatewayURL+"/v2/tqd/commercial/generated-report-usage", token)
+	if usageAfterCancelStatus != http.StatusOK || jsonBool(usageAfterCancel, "allowed") {
+		t.Fatalf("quota remained active after cancellation: status=%d body=%v", usageAfterCancelStatus, usageAfterCancel)
+	}
+
+	replayStatus, replayCancellation := runtimeJSONPostWithHeaders(t, client, gatewayURL+"/v2/user/commercial/subscription:cancel", map[string]any{
+		"productCode": "qhpro", "reason": "acceptance response-loss replay",
+	}, auth)
+	if replayStatus != http.StatusOK || jsonBool(replayCancellation, "changed") || jsonString(jsonObject(replayCancellation, "subscription"), "status") != "canceled" {
+		t.Fatalf("cancel subscription replay: status=%d body=%v", replayStatus, replayCancellation)
+	}
+
+	t.Logf("PASS value chain: profile=%d plan=%s order=%d report=%d used=%d canceled=true pdf=%s", profileID, planCode, orderID, reportID, usedBefore+1, pdfURL)
+}
+
+// publishValueChainPlan deliberately enters the sellable catalog through the
+// same Admin HTTP contracts used by React Admin. Fresh development databases
+// therefore remain commercially empty until an operator publishes a plan;
+// acceptance owns and retires only the uniquely named plan it creates.
+func publishValueChainPlan(t *testing.T, client *http.Client, gatewayURL string) (string, int64, func()) {
+	t.Helper()
+	adminPassword := strings.TrimSpace(os.Getenv("QHPRO_ACCEPTANCE_ADMIN_PASSWORD"))
+	if adminPassword == "" {
+		t.Fatal("QHPRO_ACCEPTANCE_ADMIN_PASSWORD is required")
+	}
+	loginStatus, login := runtimeJSONPostAny(t, client, gatewayURL+"/v2/auth/admin/login", map[string]any{
+		"username": acceptanceAdminUsername, "password": adminPassword,
+		"version": "acceptance", "platform": "WEB", "os": "Linux",
+		"deviceName": "QHPRO Value Chain Admin",
+	}, "")
+	adminToken := jsonString(login, "accessToken", "access_token")
+	if loginStatus != http.StatusOK || adminToken == "" {
+		t.Fatalf("Admin login for catalog publication: status=%d body=%v", loginStatus, login)
+	}
+
+	suffix := strconv.FormatInt(time.Now().UTC().UnixNano(), 36)
+	planCode := "qhpro.valuechain." + suffix
+	const amountMinor int64 = 99000
+	draft := map[string]any{
+		"productCode": "qhpro", "productDisplayName": "QHPro",
+		"planCode": planCode, "version": "1.0.0", "displayName": "Gói chuỗi giá trị " + suffix,
+		"subjectScope": "profile", "tierRank": 100, "subscriptionTermDays": 30,
+		"entitlements": []map[string]any{
+			{"code": "workspace.report.feature", "kind": "feature_access", "featureCode": "workspace.report.generate", "amount": 0, "unlimited": false, "period": "none"},
+			{"code": "workspace.report.allowance", "kind": "usage_allowance", "meterCode": "workspace.report_generation.accepted", "amount": 3, "unlimited": false, "period": "subscription_cycle"},
+		},
+		"operations": []map[string]any{{"code": "workspace.report.generate", "featureCode": "workspace.report.generate", "meterCode": "workspace.report_generation.accepted", "unitsPerAction": 1}},
+		"prices":     []map[string]any{{"code": planCode + ".monthly", "kind": "recurring", "currency": "VND", "amountMinor": amountMinor, "billingUnit": "subscription_cycle", "quantity": 1}},
+	}
+	createStatus, created := runtimeJSONMethodAny(t, client, http.MethodPost, gatewayURL+"/v2/user/admin/catalog/plan-versions", map[string]any{"draft": draft}, adminToken)
+	planVersionID := jsonNumber(created, "id")
+	if createStatus != http.StatusOK || planVersionID == 0 || jsonString(created, "status") != "draft" {
+		t.Fatalf("create value-chain plan: status=%d body=%v", createStatus, created)
+	}
+	retire := func() {
+		_, _ = runtimeJSONMethod(client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:retire", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID}, adminToken)
+	}
+
+	validateStatus, validation := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:validate", gatewayURL, planVersionID), map[string]any{"planVersionId": planVersionID}, adminToken)
+	if validateStatus != http.StatusOK || !jsonBool(validation, "valid") {
+		retire()
+		t.Fatalf("validate value-chain plan: status=%d body=%v", validateStatus, validation)
+	}
+	publishStatus, publication := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:publish", gatewayURL, planVersionID), map[string]any{
+		"planVersionId": planVersionID,
+	}, adminToken)
+	if publishStatus != http.StatusOK || jsonString(jsonMap(publication, "planVersion", "plan_version"), "status") != "active" {
+		retire()
+		t.Fatalf("publish value-chain plan: status=%d body=%v", publishStatus, publication)
+	}
+	return planCode, amountMinor, retire
 }
 
 func runtimeJSONPostWithHeaders(t *testing.T, client *http.Client, url string, value map[string]any, headers map[string]string) (int, map[string]any) {

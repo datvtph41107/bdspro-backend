@@ -4,6 +4,7 @@ import (
 	"common/configloader"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -45,8 +46,33 @@ type RabbitConfig struct {
 }
 
 type ProviderConfig struct {
+	// SepayAPIKey authenticates the legacy bank-transaction webhook. It is
+	// deliberately separate from Payment Gateway merchant credentials.
 	SepayAPIKey string
+	Sepay       SepayGatewayConfig
 }
+
+type SepayGatewayConfig struct {
+	Environment         string
+	BankTransferFlow    string
+	MerchantID          string
+	SecretKey           string
+	CheckoutURL         string
+	BridgeURL           string
+	SuccessURL          string
+	ErrorURL            string
+	CancelURL           string
+	IPNSecret           string
+	BankTransferEnabled bool
+	CardEnabled         bool
+	BankBIN             string
+	BankAccountNumber   string
+}
+
+const (
+	SepayBankTransferHosted = "hosted_checkout"
+	SepayBankTransferVietQR = "vietqr"
+)
 
 type Config struct {
 	Environment  string
@@ -120,13 +146,115 @@ func Load() (Config, error) {
 			PublisherPoll:  durationEnv("PAYMENT_OUTBOX_POLL_INTERVAL", time.Second),
 			PublisherRetry: durationEnv("PAYMENT_OUTBOX_RETRY_DELAY", 5*time.Second),
 		},
-		Provider: ProviderConfig{SepayAPIKey: strings.TrimSpace(os.Getenv("SEPAY_API_KEY"))},
+		Provider: ProviderConfig{
+			SepayAPIKey: strings.TrimSpace(os.Getenv("SEPAY_API_KEY")),
+			Sepay: SepayGatewayConfig{
+				Environment:      envOr("SEPAY_GATEWAY_ENVIRONMENT", "", "sandbox"),
+				BankTransferFlow: strings.ToLower(envOr("SEPAY_BANK_TRANSFER_FLOW", "", SepayBankTransferHosted)),
+				MerchantID:       strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_ID")),
+				SecretKey:        strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_SECRET_KEY")),
+				CheckoutURL:      strings.TrimSpace(os.Getenv("SEPAY_CHECKOUT_URL")),
+				BridgeURL: envOr(
+					"SEPAY_CHECKOUT_BRIDGE_URL",
+					"",
+					"http://127.0.0.1:8000/v2/payment/sepay/checkout",
+				),
+				SuccessURL: strings.TrimSpace(os.Getenv("SEPAY_SUCCESS_URL")),
+				ErrorURL:   strings.TrimSpace(os.Getenv("SEPAY_ERROR_URL")),
+				CancelURL:  strings.TrimSpace(os.Getenv("SEPAY_CANCEL_URL")),
+				IPNSecret:  strings.TrimSpace(os.Getenv("SEPAY_IPN_SECRET_KEY")),
+				// Availability is operator-owned. Bank transfer keeps the
+				// historical default; international cards require an explicit
+				// opt-in after the SePay merchant has been approved for CARD.
+				BankTransferEnabled: boolEnv("SEPAY_BANK_TRANSFER_ENABLED", true),
+				CardEnabled:         boolEnv("SEPAY_CARD_ENABLED", false),
+				BankBIN:             strings.TrimSpace(os.Getenv("SEPAY_QR_BANK_BIN")),
+				BankAccountNumber:   strings.TrimSpace(os.Getenv("SEPAY_QR_ACCOUNT_NUMBER")),
+			},
+		},
 	}
 	if cfg.Server.Address == "" || cfg.Database.MaxOpenConns <= 0 || cfg.Database.MaxIdleConns < 0 ||
 		cfg.Commerce.OrderTTL <= 0 || cfg.Commerce.FulfillmentLease <= 0 || cfg.Commerce.FulfillmentPoll <= 0 {
 		return Config{}, fmt.Errorf("invalid Payment runtime configuration")
 	}
+	if err := validateProvider(cfg.Provider); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+func validateProvider(cfg ProviderConfig) error {
+	if err := validateSepayGateway(cfg.Sepay); err != nil {
+		return err
+	}
+	if strings.EqualFold(strings.TrimSpace(cfg.Sepay.BankTransferFlow), SepayBankTransferVietQR) {
+		if strings.EqualFold(cfg.Sepay.Environment, "sandbox") {
+			return errors.New("SEPAY_BANK_TRANSFER_FLOW=vietqr is a real bank transfer and cannot run as SePay sandbox; use hosted_checkout for fake-money development")
+		}
+		if strings.TrimSpace(cfg.SepayAPIKey) == "" {
+			return errors.New("SEPAY_API_KEY is required for authenticated bank webhook settlement when SEPAY_BANK_TRANSFER_FLOW=vietqr")
+		}
+	}
+	return nil
+}
+
+func validateSepayGateway(cfg SepayGatewayConfig) error {
+	environment := strings.ToLower(strings.TrimSpace(cfg.Environment))
+	if environment != "sandbox" && environment != "production" {
+		return fmt.Errorf("SEPAY_GATEWAY_ENVIRONMENT must be sandbox or production")
+	}
+	flow := strings.ToLower(strings.TrimSpace(cfg.BankTransferFlow))
+	if flow == "" {
+		flow = SepayBankTransferHosted
+	}
+	if flow != SepayBankTransferHosted && flow != SepayBankTransferVietQR {
+		return fmt.Errorf("SEPAY_BANK_TRANSFER_FLOW must be hosted_checkout or vietqr")
+	}
+
+	configured := cfg.MerchantID != "" || cfg.SecretKey != "" || cfg.IPNSecret != ""
+	usesHostedCheckout := flow == SepayBankTransferHosted || cfg.CardEnabled
+	if usesHostedCheckout && (configured || cfg.CardEnabled) {
+		if cfg.MerchantID == "" || cfg.SecretKey == "" || cfg.IPNSecret == "" {
+			return fmt.Errorf("SEPAY_MERCHANT_ID, SEPAY_MERCHANT_SECRET_KEY and SEPAY_IPN_SECRET_KEY must be configured together")
+		}
+		bridge, err := url.Parse(strings.TrimSpace(cfg.BridgeURL))
+		if err != nil || bridge.Scheme == "" || bridge.Host == "" {
+			return fmt.Errorf("SEPAY_CHECKOUT_BRIDGE_URL must be an absolute HTTP(S) URL")
+		}
+		if environment == "production" && bridge.Scheme != "https" {
+			return fmt.Errorf("SEPAY_CHECKOUT_BRIDGE_URL must use HTTPS in production")
+		}
+	}
+
+	if flow == SepayBankTransferVietQR {
+		if !cfg.BankTransferEnabled {
+			return fmt.Errorf("SEPAY_BANK_TRANSFER_ENABLED must be true when SEPAY_BANK_TRANSFER_FLOW=vietqr")
+		}
+		if !fixedDigits(cfg.BankBIN, 6) {
+			return fmt.Errorf("SEPAY_QR_BANK_BIN must contain exactly 6 digits")
+		}
+		if !digitsBetween(cfg.BankAccountNumber, 5, 19) {
+			return fmt.Errorf("SEPAY_QR_ACCOUNT_NUMBER must contain 5 to 19 digits")
+		}
+	}
+	return nil
+}
+
+func fixedDigits(value string, length int) bool {
+	return digitsBetween(value, length, length)
+}
+
+func digitsBetween(value string, minimum, maximum int) bool {
+	value = strings.TrimSpace(value)
+	if len(value) < minimum || len(value) > maximum {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // resolveConfigFile uses one committed runtime default. CONFIG_FILE is the
@@ -176,6 +304,18 @@ func intEnv(key string, fallback int) int {
 	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil || parsed < 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func boolEnv(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
 		return fallback
 	}
 	return parsed

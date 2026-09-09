@@ -49,6 +49,27 @@ func TestOrderFingerprintChangesForAnyImmutableCommercialInput(t *testing.T) {
 	}
 }
 
+func TestCrossOwnerIdentitiesIncludeImmutableOrderReference(t *testing.T) {
+	first := Order{ID: 1, Reference: "QHP-AAAAAAAAAAAAAAAA"}
+	second := Order{ID: 1, Reference: "QHP-BBBBBBBBBBBBBBBB"}
+
+	if first.SettlementEffectKey() == second.SettlementEffectKey() {
+		t.Fatal("settlement effect identity collides after Payment database recreation")
+	}
+	if first.CompletedEventID() == second.CompletedEventID() {
+		t.Fatal("completed event identity collides after Payment database recreation")
+	}
+	if got := first.SettlementEffectKey(); got != "payment.order.1.QHP-AAAAAAAAAAAAAAAA" {
+		t.Fatalf("settlement effect key = %q", got)
+	}
+	if got := first.CompletedEventID(); got != "payment.completed.order.1.QHP-AAAAAAAAAAAAAAAA" {
+		t.Fatalf("completed event id = %q", got)
+	}
+	if got := (Order{ID: 1}).SettlementEffectKey(); got != "" {
+		t.Fatalf("incomplete order produced effect key %q", got)
+	}
+}
+
 func TestProviderEvidenceHashUsesExplicitEvidenceWhenPresent(t *testing.T) {
 	event := ProviderEvent{
 		Provider: "sepay", TransactionID: "tx-1", Reference: "QHP-1",

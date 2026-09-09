@@ -105,8 +105,9 @@ func (s *Store) CompleteFulfillment(ctx context.Context, fulfillmentID uint64, w
 			return domain.ErrClaimLost
 		}
 
+		domainOrder := orderFromModel(order)
 		event := paymentcompleted.V1{
-			EventID: fmt.Sprintf("payment.completed.order.%d", order.ID), OrderID: order.ID,
+			EventID: domainOrder.CompletedEventID(), OrderID: order.ID,
 			SubjectKind: order.SubjectKind, SubjectID: order.SubjectID,
 			ProductCode: order.ProductCode, PlanCode: order.PlanCode,
 			PlanVersionID: order.PlanVersionID, PlanVersion: order.PlanVersion,

@@ -4,6 +4,8 @@ import (
 	"common/identity"
 	"common/rpc"
 	"context"
+	authpb "pb/types/auth"
+	userpb "pb/types/user"
 	"testing"
 	"time"
 
@@ -231,6 +233,47 @@ func TestTrustedIdentityMethodIncludesAllAdminCommercialRPCs(
 				"AdminCommercial method is not strict identity routed: %s",
 				method,
 			)
+		}
+	}
+}
+
+func TestTrustedIdentityMethodIncludesAllUserAdminRPCs(t *testing.T) {
+	methods := []string{
+		userpb.AdminUserProfileService_ListAllUsers_FullMethodName,
+		userpb.AdminUserProfileService_LockUser_FullMethodName,
+		userpb.AdminUserProfileService_UnLockUser_FullMethodName,
+		userpb.AdminUserProfileService_ApproveUser_FullMethodName,
+		userpb.AdminUserProfileService_SendWarningToUser_FullMethodName,
+		userpb.AdminUserProfileService_GetUserStats_FullMethodName,
+		userpb.AdminUserProfileService_CreateUser_FullMethodName,
+		userpb.AdminUserProfileService_UpdateUser_FullMethodName,
+		userpb.AdminUserProfileService_DeleteUser_FullMethodName,
+		userpb.AdminUserProfileService_GetUserDetail_FullMethodName,
+		userpb.AdminProfileService_ListAdmins_FullMethodName,
+		userpb.AdminProfileService_CreateAdmin_FullMethodName,
+		userpb.AdminProfileService_UpdateAdmin_FullMethodName,
+		userpb.AdminProfileService_DeleteAdmin_FullMethodName,
+		userpb.AdminProfileService_GetDetail_FullMethodName,
+		authpb.AuthService_ListAdmins_FullMethodName,
+	}
+	for _, method := range methods {
+		if !trustedIdentityMethod(method) {
+			t.Fatalf("User Admin method is not strict identity routed: %s", method)
+		}
+	}
+}
+
+func TestTrustedIdentityMethodIncludesAdminOrganizationRPCs(t *testing.T) {
+	methods := []string{
+		"/userpb.AdminOrganizationService/ListOrganizations",
+		"/userpb.AdminOrganizationService/GetOrganization",
+		"/userpb.AdminOrganizationService/CreateOrganization",
+		"/userpb.AdminOrganizationService/UpdateOrganization",
+		"/userpb.AdminOrganizationService/ArchiveOrganization",
+	}
+	for _, method := range methods {
+		if !trustedIdentityMethod(method) {
+			t.Fatalf("Admin Organization method is not strict identity routed: %s", method)
 		}
 	}
 }

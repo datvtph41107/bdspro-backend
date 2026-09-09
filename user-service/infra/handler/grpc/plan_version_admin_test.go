@@ -33,6 +33,24 @@ func (r *planHandlerRepository) ListPlanVersions(
 	return admin.Page{PlanVersions: []catalogdomain.PlanVersionAggregate{r.aggregate}, Total: 1}, nil
 }
 
+func (r *planHandlerRepository) CreatePlanVersionDraft(_ context.Context, record admin.DraftRecord) (uint64, error) {
+	r.aggregate = handlerAggregateFromDraft(9, record)
+	return 9, nil
+}
+
+func (r *planHandlerRepository) UpdatePlanVersionDraft(_ context.Context, id uint64, record admin.DraftRecord) error {
+	r.aggregate = handlerAggregateFromDraft(id, record)
+	return nil
+}
+
+func (r *planHandlerRepository) DeletePlanVersionDraft(context.Context, uint64) error { return nil }
+
+func (r *planHandlerRepository) RetirePlanVersion(_ context.Context, _ uint64, _ uint64, retiredAt time.Time) error {
+	r.aggregate.Status = catalogdomain.StatusRetired
+	r.aggregate.EffectiveUntil = &retiredAt
+	return nil
+}
+
 type fakePermissionAuthorizer struct {
 	allowed map[string]bool
 	err     error
@@ -67,7 +85,10 @@ func (planHandlerPublisher) Publish(
 	_ context.Context,
 	command publish.Command,
 ) (publish.Result, error) {
-	return publish.Result{PlanVersionID: command.PlanVersionID}, nil
+	return publish.Result{
+		PlanVersionID: command.PlanVersionID,
+		PublishedAt:   command.PublishedAt,
+	}, nil
 }
 
 func TestListPlanVersionsRequiresTrustedAdminAndMapsTerms(t *testing.T) {
@@ -88,13 +109,16 @@ func TestListPlanVersionsRequiresTrustedAdminAndMapsTerms(t *testing.T) {
 	}
 }
 
-func TestPublishPlanVersionValidatesEffectiveFrom(t *testing.T) {
+func TestPublishPlanVersionUsesServerTimeWhenEffectiveFromIsOmitted(t *testing.T) {
 	handler := NewPlanVersionAdminHandler(planVersionService(), allowPermissions(admin.PermissionPlanPublish))
-	_, err := handler.PublishPlanVersion(trustedAdminContext(t), &userpb.PublishCatalogPlanVersionRequest{
+	response, err := handler.PublishPlanVersion(trustedAdminContext(t), &userpb.PublishCatalogPlanVersionRequest{
 		PlanVersionId: 9,
 	})
-	if status.Code(err) != codes.InvalidArgument {
-		t.Fatalf("error = %v", err)
+	if err != nil {
+		t.Fatalf("PublishPlanVersion() error = %v", err)
+	}
+	if response.GetPublishedAt() == nil || response.GetPublishedAt().AsTime().IsZero() {
+		t.Fatalf("published_at = %v", response.GetPublishedAt())
 	}
 }
 
@@ -200,4 +224,15 @@ func trustedActorContext(t *testing.T, role string) context.Context {
 		t.Fatal(err)
 	}
 	return ctx
+}
+
+func handlerAggregateFromDraft(id uint64, record admin.DraftRecord) catalogdomain.PlanVersionAggregate {
+	return catalogdomain.PlanVersionAggregate{
+		ID: id, ProductCode: record.Terms.ProductCode, ProductDisplayName: record.ProductDisplayName,
+		PlanCode: record.Terms.PlanCode, Version: record.Terms.Version, DisplayName: record.Terms.DisplayName,
+		Status: catalogdomain.StatusDraft, SubjectScope: record.Terms.SubjectScope,
+		SubscriptionTermDays: record.Terms.SubscriptionTermDays, TierRank: record.TierRank,
+		TermsChecksum: record.TermsChecksum, Entitlements: record.Terms.Entitlements,
+		Operations: record.Terms.Operations, Prices: record.Terms.Prices,
+	}
 }

@@ -29,6 +29,7 @@ import (
 	tqd_infra_postgres_generatedreport_job "tqd/infra/postgres/generatedreport/job"
 	tqd_infra_postgres_generatedreport_render "tqd/infra/postgres/generatedreport/render"
 	tqd_infra_postgres_generatedreport_report "tqd/infra/postgres/generatedreport/report"
+	tqd_infra_postgres_mappoint "tqd/infra/postgres/mappoint"
 	tqd_infra_postgres_planningclient "tqd/infra/postgres/planningclient"
 	tqd_infra_postgres_publiccontent "tqd/infra/postgres/publiccontent"
 	tqd_infra_postgres_quota "tqd/infra/postgres/quota"
@@ -51,6 +52,7 @@ import (
 	tqd_internal_usecase_generatedreport_memoryjob "tqd/internal/usecase/generatedreport/memoryjob"
 	tqd_internal_usecase_generatedreport_processing "tqd/internal/usecase/generatedreport/processing"
 	tqd_internal_usecase_generatedreport_rendering "tqd/internal/usecase/generatedreport/rendering"
+	tqd_internal_usecase_mappoint "tqd/internal/usecase/mappoint"
 	tqd_internal_usecase_planningclient_application "tqd/internal/usecase/planningclient/application"
 	tqd_internal_usecase_qh "tqd/internal/usecase/qh"
 	tqd_internal_usecase_quota "tqd/internal/usecase/quota"
@@ -316,6 +318,10 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase_quota_memory.NewStore,
 	tqd_internal_usecase_usage_memory.NewStore,
 	tqd_infra_handler_grpc.NewSubscriptionGrpcHandler,
+	tqd_infra_handler_grpc.NewMapPointGrpcHandler,
+	tqd_infra_postgres_mappoint.NewRepository,
+	tqd_internal_usecase_mappoint.NewService,
+	wire.Bind(new(tqd_internal_usecase_mappoint.Repository), new(*tqd_infra_postgres_mappoint.Repository)),
 	tqd_infra_postgres.NewSubscriptionRepository,
 	tqd_internal_usecase.NewSubscriptionUsecase,
 	tqd_internal_usecase_resolver_layer_resolver_rule.NewTimelineEngine,

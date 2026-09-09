@@ -166,6 +166,24 @@ func (u *LocationUsecase) GetProvince(ctx context.Context, req *dto.GetProvinceR
 	return u.toProvinceDTO(province), nil
 }
 
+// ListProvinces returns the canonical administrative province snapshot owned
+// by TQD. Scope is intentionally a transport compatibility concern: the
+// current database contains one province catalog and must not pretend to own
+// multiple scope-specific truths.
+func (u *LocationUsecase) ListProvinces(ctx context.Context) (*dto.ListProvincesResponse, error) {
+	provinces, err := u.repo.ListAllProvinces(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list provinces: %w", err)
+	}
+
+	provinceDTOs := make([]*dto.ProvinceDTO, len(provinces))
+	for i, province := range provinces {
+		provinceDTOs[i] = u.toProvinceDTO(province)
+	}
+
+	return &dto.ListProvincesResponse{Provinces: provinceDTOs}, nil
+}
+
 // GetWard - Lấy ward theo ID hoặc code
 func (u *LocationUsecase) GetWard(ctx context.Context, req *dto.GetWardRequest) (*dto.WardDTO, error) {
 	var ward *domain.Ward

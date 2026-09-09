@@ -3,7 +3,7 @@ package handler
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	_utils "common/utils"
+	"common/identity"
 	"context"
 	"fmt"
 	sharepb "pb/types/shared"
@@ -11,6 +11,7 @@ import (
 	"time"
 	"user/infra/mapper"
 	"user/internal/interface/providers"
+	"user/internal/usecase/useradmin"
 	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
@@ -22,16 +23,20 @@ type AdminHandler struct {
 	AdminUsecase       *usecases.AdminUsecase
 	AdminMapper        *mapper.AdminMapper
 	NotificationClient providers.NotificationProvider
+	Authorizer         useradmin.PermissionAuthorizer
 }
 
 func NewAdminHandler(
 	adminUsecase *usecases.AdminUsecase,
 	adminMapper *mapper.AdminMapper,
-	notificationClient providers.NotificationProvider) *AdminHandler {
+	notificationClient providers.NotificationProvider,
+	authorizer useradmin.PermissionAuthorizer,
+) *AdminHandler {
 	return &AdminHandler{
 		AdminUsecase:       adminUsecase,
 		AdminMapper:        adminMapper,
 		NotificationClient: notificationClient,
+		Authorizer:         authorizer,
 	}
 }
 
@@ -41,7 +46,11 @@ func (h *AdminHandler) createAdminHistory(ctx context.Context, actionType _enum.
 		return
 	}
 
-	profileID := _utils.GetProfileIdWithContext(ctx)
+	actor, ok := identity.ActorFromContext(ctx)
+	if !ok || actor.ProfileID == 0 {
+		return
+	}
+	profileID := actor.ProfileID
 
 	historyDTO := &_dto.HistoryDTO{
 		Title:      title,
@@ -77,11 +86,9 @@ func (h *AdminHandler) createAdminHistory(ctx context.Context, actionType _enum.
 // @Param endDate query string false "Lọc đến ngày tạo (format: 2006-01-02T15:04:05)"
 // @Router /admin/list [get]
 func (h *AdminHandler) ListAdmins(ctx context.Context, req *userpb.AdminListRequest) (*userpb.AdminListResponse, error) {
-	// TODO: Kiểm tra quyền admin
-	// profileID := _utils.GetProfileIdWithContext(ctx)
-	// if !h.isAdmin(profileID) {
-	//     return nil, status.Errorf(codes.PermissionDenied, "unauthorized: admin access required")
-	// }
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 
 	// Convert proto request to DTO using mapper
 	dtoReq := h.AdminMapper.ListAdminRequestToDTO(req)
@@ -109,6 +116,9 @@ func (h *AdminHandler) ListAdmins(ctx context.Context, req *userpb.AdminListRequ
 // @Param body body userpb.AdminProfile true "Thông tin tạo admin"
 // @Router /admin/create [post]
 func (h *AdminHandler) CreateAdmin(ctx context.Context, req *userpb.AdminProfile) (*userpb.AdminProfile, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	// Convert proto request to model using mapper
 	payload := h.AdminMapper.PbToDomain(req)
 
@@ -137,6 +147,9 @@ func (h *AdminHandler) CreateAdmin(ctx context.Context, req *userpb.AdminProfile
 // @Failure 500 {object} authpb.AuthSuccessResponse
 // @Router /admin/update [put]
 func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *userpb.AdminProfile) (*userpb.AdminProfile, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	// Convert proto request to DTO using mapper
 	dtoReq := h.AdminMapper.PbToDomain(req)
 
@@ -162,6 +175,9 @@ func (h *AdminHandler) UpdateAdmin(ctx context.Context, req *userpb.AdminProfile
 // @Param body body sharepb.IdRequest true "Thông tin xóa admin"
 // @Router /admin/delete [delete]
 func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*userpb.DeleteAdminResponse, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionManage); err != nil {
+		return nil, err
+	}
 	err := h.AdminUsecase.DeleteAdmin(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -178,6 +194,9 @@ func (h *AdminHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) 
 }
 
 func (h *AdminHandler) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*userpb.AdminProfile, error) {
+	if err := requireUserAdminPermission(ctx, h.Authorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 	// Convert proto request to DTO using mapper
 
 	result, err := h.AdminUsecase.GetDetail(ctx, req.Id)
@@ -187,27 +206,3 @@ func (h *AdminHandler) GetDetail(ctx context.Context, req *sharepb.IdRequest) (*
 
 	return h.AdminMapper.AdminProfileResponseToProto(result), nil
 }
-
-// // @Summary Assign Role
-// // @Description Gán quyền cho admin
-// // @Tags Admin
-// // @Accept json
-// // @Produce json
-// // @Param body body authpb.AssignRoleRequest true "Thông tin gán quyền"
-// // @Success 200 {object} authpb.AssignRoleResponse
-// // @Failure 400 {object} authpb.AssignRoleResponse
-// // @Failure 500 {object} authpb.AssignRoleResponse
-// // @Router /admin/assign-role [post]
-// func (h *AdminHandler) AssignRole(ctx context.Context, req *authpb.AssignRoleRequest) (*authpb.AssignRoleResponse, error) {
-// 	// Convert proto request to DTO using mapper
-// 	dtoReq := h.AdminMapper.AssignRoleRequestToDTO(req)
-
-// 	err := h.AdminUsecase.AssignRole(ctx, *dtoReq)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &authpb.AssignRoleResponse{
-// 		Message: "Gán quyền thành công",
-// 	}, nil
-// }

@@ -3,6 +3,7 @@ package subscriptionpostgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 	subscriptiondomain "user/internal/domain/subscription"
@@ -37,10 +38,12 @@ func (s *AdminProjectionStore) ListEffectiveByProfiles(ctx context.Context, prof
 	if len(profileIDs) == 0 {
 		return []subscriptiondomain.AdminUserProjection{}, nil
 	}
+	now := time.Now().UTC()
 	rows := make([]subscriptiondomain.AdminProjection, 0)
 	base := projectionBase(s.db.WithContext(ctx).Table("catalog_subscriptions AS s")).
 		Where("s.subject_kind = ? AND s.subject_id IN ?", "profile", uint64Strings(profileIDs)).
-		Where("s.status IN ?", []string{"pending", "active", "past_due"})
+		Where("s.status IN ?", []string{"pending", "active", "past_due"}).
+		Where("s.started_at <= ? AND COALESCE(s.access_until, s.current_period_end) > ?", now, now)
 	if err := projectionSelect(base).
 		Order("s.subject_id ASC, CASE s.status WHEN 'active' THEN 0 WHEN 'past_due' THEN 1 ELSE 2 END, s.updated_at DESC").
 		Scan(&rows).Error; err != nil {
@@ -86,7 +89,8 @@ func projectionSelect(db *gorm.DB) *gorm.DB {
 			plan.code AS plan_code, pv.display_name AS plan_display_name,
 			s.plan_version_id, pv.version AS plan_version, s.status, s.started_at,
 			s.current_period_start, s.current_period_end, s.access_until,
-			s.pending_plan_version_id, s.pending_effective_at, s.order_reference, s.updated_at`)
+			s.pending_plan_version_id, s.pending_effective_at, s.order_reference,
+			s.canceled_at, s.ended_at, s.auto_renew, s.updated_at`)
 }
 
 func projectionBase(db *gorm.DB) *gorm.DB {

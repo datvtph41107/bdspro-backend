@@ -13,6 +13,7 @@ import (
 	"user/infra/mapper"
 	"user/internal/dto"
 	"user/internal/usecase"
+	"user/internal/usecase/useradmin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,6 +31,7 @@ type AuthHandler struct {
 	DeviceMapper        *mapper.DeviceMapper
 	AuthSecurityUsecase *usecase.AuthSecurityUsecase
 	AuthSecurityMapper  *mapper.AuthSecurityMapper
+	UserAdminAuthorizer useradmin.PermissionAuthorizer
 }
 
 func NewAuthHandler(service *usecase.AuthUsecase,
@@ -42,6 +44,7 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 	deviceMapper *mapper.DeviceMapper,
 	authSecurityUsecase *usecase.AuthSecurityUsecase,
 	authSecurityMapper *mapper.AuthSecurityMapper,
+	userAdminAuthorizer useradmin.PermissionAuthorizer,
 ) *AuthHandler {
 	return &AuthHandler{
 		AuthUsecase:         service,
@@ -54,6 +57,7 @@ func NewAuthHandler(service *usecase.AuthUsecase,
 		DeviceMapper:        deviceMapper,
 		AuthSecurityUsecase: authSecurityUsecase,
 		AuthSecurityMapper:  authSecurityMapper,
+		UserAdminAuthorizer: userAdminAuthorizer,
 	}
 }
 
@@ -825,6 +829,9 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpb.AdminLoginRequ
 // @Failure 500 {object} authpb.AdminListResponse
 // @Router /v2/auth/admin/list [get]
 func (h *AuthHandler) ListAdmins(ctx context.Context, req *authpb.AdminListRequest) (*authpb.AdminListResponse, error) {
+	if err := requireUserAdminPermission(ctx, h.UserAdminAuthorizer, useradmin.PermissionView); err != nil {
+		return nil, err
+	}
 	page := req.Page
 	if page < 1 {
 		page = 1

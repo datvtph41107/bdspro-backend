@@ -16,6 +16,7 @@ import (
 
 	"gateway/config"
 	_authroutes "gateway/internal/authroutes"
+	_checkoutbridge "gateway/internal/checkoutbridge"
 	_grpcgateway "gateway/internal/grpcgateway"
 	_grpcmetadata "gateway/internal/grpcmetadata"
 	_httpauth "gateway/internal/httpauth"
@@ -178,6 +179,7 @@ var HttpCmd = &cobra.Command{
 			_httpmiddleware.
 				IdempotencyKey(),
 		)
+		r.Use(_checkoutbridge.Middleware())
 
 		// Operational health is process-local; readiness flips before drain.
 		readiness := newReadinessState()

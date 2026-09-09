@@ -2,6 +2,7 @@ package initial
 
 import (
 	"crm/infra/handler"
+	handlergrpc "crm/infra/handler/grpc"
 	"crm/internal/usecase"
 
 	"github.com/hyperledger/fabric/common/flogging"
@@ -39,6 +40,9 @@ type InitialApp struct {
 
 	Logger           *flogging.FabricLogger
 	SeoDomainHandler *handler.SeoDomainHandler
+	// PublicContentHandler is part of the same CRM dependency graph and shares
+	// the process-owned database and client lifecycle created by Wire.
+	PublicContentHandler *handlergrpc.PublicContentGrpcHandler
 }
 
 func NewInitialApp(
@@ -70,6 +74,7 @@ func NewInitialApp(
 	supportTicketHandler *handler.SupportTicketHandler,
 	adminSalesHandler *handler.AdminSalesHandler,
 	seoDomainHandler *handler.SeoDomainHandler,
+	publicContentHandler *handlergrpc.PublicContentGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -100,7 +105,8 @@ func NewInitialApp(
 		SupportTicketHandler: supportTicketHandler,
 		AdminSalesHandler:    adminSalesHandler,
 
-		SeoDomainHandler: seoDomainHandler,
-		Logger:           flogging.MustGetLogger(viper.GetString("server.name")),
+		SeoDomainHandler:     seoDomainHandler,
+		PublicContentHandler: publicContentHandler,
+		Logger:               flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

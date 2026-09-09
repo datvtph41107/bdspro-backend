@@ -1,7 +1,6 @@
 package settlement
 
 import (
-	"fmt"
 	"time"
 
 	subscriptiondomain "user/internal/domain/subscription"
@@ -18,7 +17,7 @@ func Decide(effect Effect, target Target, current Current, now time.Time) (Decis
 	if !current.Found {
 		end := effect.OccurredAt.UTC().AddDate(0, 0, int(effect.SubscriptionTermDays))
 		aggregate := subscriptiondomain.Aggregate{
-			SubscriptionKey:    fmt.Sprintf("sub_payment_order_%d", effect.OrderID),
+			SubscriptionKey:    effect.SubscriptionKey(),
 			SubjectKind:        effect.SubjectKind,
 			SubjectID:          effect.SubjectID,
 			ProductID:          target.ProductID,
@@ -33,7 +32,7 @@ func Decide(effect Effect, target Target, current Current, now time.Time) (Decis
 			CurrentPeriodStart: effect.OccurredAt.UTC(),
 			CurrentPeriodEnd:   end,
 			AccessUntil:        &end,
-			OrderReference:     fmt.Sprintf("%d", effect.OrderID),
+			OrderReference:     effect.EffectKey,
 			CreatedAt:          now.UTC(),
 			UpdatedAt:          now.UTC(),
 		}
@@ -58,7 +57,7 @@ func Decide(effect Effect, target Target, current Current, now time.Time) (Decis
 		upgraded.PlanVersion = effect.PlanVersion
 		upgraded.PlanTermsChecksum = effect.TermsChecksum
 		upgraded.PlanStatus = target.PlanStatus
-		upgraded.OrderReference = fmt.Sprintf("%d", effect.OrderID)
+		upgraded.OrderReference = effect.EffectKey
 		upgraded.UpdatedAt = now.UTC()
 		// Upgrade changes commercial authority immediately but preserves the
 		// already-running subscription period. Usage/quota therefore do not reset.

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -85,6 +86,30 @@ func (o Order) IsValid() bool {
 	return o.Subject.IsValid() && o.Terms.IsValid() && strings.TrimSpace(o.CommandKey) != "" &&
 		strings.TrimSpace(o.CommandFingerprint) != "" && strings.TrimSpace(o.Reference) != "" &&
 		o.Status != "" && !o.CreatedAt.IsZero()
+}
+
+// SettlementEffectKey is the durable cross-owner command identity sent to
+// User. A database sequence is only unique for the lifetime of one Payment
+// database; including the immutable public reference prevents a restored or
+// recreated Payment database from colliding with receipts retained by User.
+func (o Order) SettlementEffectKey() string {
+	reference := strings.TrimSpace(o.Reference)
+	if o.ID == 0 || reference == "" {
+		return ""
+	}
+	return fmt.Sprintf("payment.order.%d.%s", o.ID, reference)
+}
+
+// CompletedEventID is the durable integration-event identity consumed by
+// Notification. It follows the same cross-database identity rule as the
+// settlement effect so Inbox dedupe remains correct across independent owner
+// backup/restore cycles.
+func (o Order) CompletedEventID() string {
+	reference := strings.TrimSpace(o.Reference)
+	if o.ID == 0 || reference == "" {
+		return ""
+	}
+	return fmt.Sprintf("payment.completed.order.%d.%s", o.ID, reference)
 }
 
 type ProviderEventType string
@@ -184,6 +209,27 @@ type RedriveCommand struct {
 	CommandKey    string
 	ActorID       string
 	Reason        string
+}
+
+const CommandEffectManualFundsConfirmation = "payment.settlement.manual_confirmation"
+
+// CommandEffect is the durable operator evidence attached to a state-changing
+// Payment command. The command key protects retries; actor and reason make the
+// operation reviewable without allowing the Admin UI to edit Payment rows.
+type CommandEffect struct {
+	EffectType string
+	ScopeID    uint64
+	CommandKey string
+	ActorID    string
+	Reason     string
+	Outcome    string
+	CreatedAt  time.Time
+}
+
+func (e CommandEffect) IsValid() bool {
+	return strings.TrimSpace(e.EffectType) != "" && e.ScopeID != 0 &&
+		strings.TrimSpace(e.CommandKey) != "" && strings.TrimSpace(e.ActorID) != "" &&
+		strings.TrimSpace(e.Reason) != "" && strings.TrimSpace(e.Outcome) != "" && !e.CreatedAt.IsZero()
 }
 
 type PaymentMethod string

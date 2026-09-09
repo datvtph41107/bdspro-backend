@@ -37,6 +37,15 @@ func (s *Store) AcceptSettlement(ctx context.Context, decision settlement.Decisi
 	var accepted settlement.Result
 	var outcomeErr error
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if decision.CommandEffect != nil {
+			replay, err := consumeCommandEffect(tx, *decision.CommandEffect)
+			if err != nil {
+				return err
+			}
+			if replay {
+				accepted.Replay = true
+			}
+		}
 		row := settlementToModel(decision.Settlement)
 		create := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "provider"}, {Name: "provider_transaction_id"}},
@@ -140,6 +149,34 @@ func (s *Store) AcceptSettlement(ctx context.Context, decision settlement.Decisi
 		return accepted, outcomeErr
 	}
 	return accepted, nil
+}
+
+func consumeCommandEffect(tx *gorm.DB, effect domain.CommandEffect) (bool, error) {
+	if tx == nil || !effect.IsValid() {
+		return false, domain.ErrInvalidCommand
+	}
+	row := commandEffectModel{
+		EffectType: effect.EffectType, ScopeID: effect.ScopeID, CommandKey: effect.CommandKey,
+		ActorID: effect.ActorID, Reason: effect.Reason, Outcome: effect.Outcome, CreatedAt: effect.CreatedAt,
+	}
+	insert := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "effect_type"}, {Name: "scope_id"}, {Name: "command_key"}},
+		DoNothing: true,
+	}).Create(&row)
+	if insert.Error != nil {
+		return false, fmt.Errorf("consume settlement operator command: %w", insert.Error)
+	}
+	if insert.RowsAffected != 0 {
+		return false, nil
+	}
+	var existing commandEffectModel
+	if err := tx.Where("effect_type = ? AND scope_id = ? AND command_key = ?", effect.EffectType, effect.ScopeID, effect.CommandKey).First(&existing).Error; err != nil {
+		return false, fmt.Errorf("load settlement operator command winner: %w", err)
+	}
+	if existing.ActorID != effect.ActorID || existing.Reason != effect.Reason || existing.Outcome != effect.Outcome {
+		return false, domain.ErrCommandEvidenceConflict
+	}
+	return true, nil
 }
 
 func (s *Store) MarkSettlementRequiresReview(ctx context.Context, settlementID uint64, reason string) error {

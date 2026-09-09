@@ -19,7 +19,7 @@ import (
 const defaultTimeout = 30 * time.Second
 
 var supported = map[string]struct{}{
-	"file": {}, "search": {}, "map": {}, "bdspro": {}, "chat": {},
+	"file": {}, "search": {}, "bdspro": {}, "chat": {},
 }
 
 type Proxy struct {

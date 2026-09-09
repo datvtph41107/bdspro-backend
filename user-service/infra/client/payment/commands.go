@@ -60,6 +60,25 @@ func (c *Commands) CreateOrder(ctx context.Context, command checkout.CreatePayme
 	return checkout.PaymentOrder{ID: r.GetOrderId(), Reference: r.GetReference(), Status: r.GetStatus()}, r.GetCreated(), nil
 }
 
+func (c *Commands) ListMethods(ctx context.Context) (checkout.PaymentMethods, error) {
+	if c == nil || c.client == nil {
+		return checkout.PaymentMethods{}, checkout.ErrInvalidCommand
+	}
+	callCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+	r, err := c.client.ListCheckoutPaymentMethods(callCtx, &paymentpb.ListCheckoutPaymentMethodsRequest{})
+	if err != nil {
+		return checkout.PaymentMethods{}, fmt.Errorf("list payment methods: %w", err)
+	}
+	out := checkout.PaymentMethods{Environment: r.GetEnvironment(), Methods: make([]checkout.PaymentMethodOption, 0, len(r.GetMethods()))}
+	for _, method := range r.GetMethods() {
+		out.Methods = append(out.Methods, checkout.PaymentMethodOption{
+			Method: method.GetMethod(), Provider: method.GetProvider(), Enabled: method.GetEnabled(), UnavailableReason: method.GetUnavailableReason(),
+		})
+	}
+	return out, nil
+}
+
 func (c *Commands) CreateAttempt(ctx context.Context, command checkout.CreatePaymentAttemptCommand) (checkout.PaymentAttempt, error) {
 	if c == nil || c.client == nil || !command.Subject.IsValid() || command.OrderID == 0 || strings.TrimSpace(command.Method) == "" || strings.TrimSpace(command.CommandKey) == "" {
 		return checkout.PaymentAttempt{}, checkout.ErrInvalidCommand
@@ -89,3 +108,4 @@ func (c *Commands) CreateAttempt(ctx context.Context, command checkout.CreatePay
 
 var _ checkout.PaymentOrderPort = (*Commands)(nil)
 var _ checkout.PaymentAttemptPort = (*Commands)(nil)
+var _ checkout.PaymentMethodReader = (*Commands)(nil)

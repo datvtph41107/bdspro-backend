@@ -28,6 +28,18 @@ type Effect struct {
 	OccurredAt           time.Time
 }
 
+// SubscriptionKey returns the durable aggregate identity derived from the
+// cross-owner settlement identity. Payment's numeric order ID is only unique
+// inside one Payment database lifetime, while EffectKey also contains the
+// immutable order reference and survives independent database restore/reset.
+func (e Effect) SubscriptionKey() string {
+	if strings.TrimSpace(e.EffectKey) == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(e.EffectKey))
+	return "sub_payment_" + hex.EncodeToString(sum[:])
+}
+
 func (e Effect) Validate() error {
 	if strings.TrimSpace(e.EffectKey) == "" || e.OrderID == 0 ||
 		(e.SubjectKind != models.SubscriptionSubjectProfile && e.SubjectKind != models.SubscriptionSubjectOrganization) ||

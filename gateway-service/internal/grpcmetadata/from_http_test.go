@@ -4,6 +4,8 @@ import (
 	"common/identity"
 	"common/request"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"testing"
 )
@@ -69,5 +71,24 @@ func TestFromHTTPRequestUsesCanonicalContextOnly(t *testing.T) {
 		if values := md.Get(forbidden); len(values) != 0 {
 			t.Fatalf("%s must not be forwarded: %v", forbidden, values)
 		}
+	}
+}
+
+func TestFromHTTPRequestProtectsSepayIPNSecret(t *testing.T) {
+	request, err := http.NewRequest(http.MethodPost, "http://gateway.local/v2/payment/sepay/ipn", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("X-Secret-Key", "provider-secret")
+	md := FromHTTPRequest(context.Background(), request)
+
+	wantRaw := sha256.Sum256([]byte("provider-secret"))
+	want := hex.EncodeToString(wantRaw[:])
+	values := md.Get("x-qhpro-provider-credential-sha256")
+	if len(values) != 1 || values[0] != want {
+		t.Fatalf("provider digest = %v, want %q", values, want)
+	}
+	if values := md.Get("x-secret-key"); len(values) != 0 {
+		t.Fatalf("raw provider secret must not be forwarded: %v", values)
 	}
 }

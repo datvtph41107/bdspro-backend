@@ -126,7 +126,7 @@ func subscriptionProjectionToProto(item subscriptiondomain.AdminProjection) *use
 		ProductCode: item.ProductCode, ProductDisplayName: item.ProductDisplayName,
 		PlanCode: item.PlanCode, PlanDisplayName: item.PlanDisplayName,
 		PlanVersionId: item.PlanVersionID, PlanVersion: item.PlanVersion, Status: item.Status,
-		OrderReference: item.OrderReference,
+		OrderReference: item.OrderReference, AutoRenew: item.AutoRenew,
 	}
 	if !item.StartedAt.IsZero() {
 		response.StartedAt = timestamppb.New(item.StartedAt)
@@ -145,6 +145,12 @@ func subscriptionProjectionToProto(item subscriptiondomain.AdminProjection) *use
 	}
 	if item.PendingEffectiveAt != nil {
 		response.PendingEffectiveAt = timestamppb.New(*item.PendingEffectiveAt)
+	}
+	if item.CanceledAt != nil {
+		response.CanceledAt = timestamppb.New(*item.CanceledAt)
+	}
+	if item.EndedAt != nil {
+		response.EndedAt = timestamppb.New(*item.EndedAt)
 	}
 	if !item.UpdatedAt.IsZero() {
 		response.UpdatedAt = timestamppb.New(item.UpdatedAt)

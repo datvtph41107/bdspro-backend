@@ -10,6 +10,8 @@ import (
 
 // Checker evaluates durable User IAM role assignments by permission code.
 // It intentionally bypasses role-name shortcuts and hardcoded numeric permission IDs.
+//
+// @bind: user/internal/usecase/useradmin.PermissionAuthorizer
 type Checker struct {
 	db *gorm.DB
 }
@@ -39,16 +41,30 @@ SELECT EXISTS (
       JOIN roles r
         ON r.id = rp.role_id
        AND r.deleted_at IS NULL
-      JOIN role_permissions rperm
-        ON rperm.role_id = r.id
-      JOIN permissions p
-        ON p.id = rperm.permission_id
-       AND p.deleted_at IS NULL
      WHERE rp.profile_id = ?
        AND rp.deleted_at IS NULL
-       AND p.key = ?
+       AND (
+           (
+               r.organization_id = 0
+               AND r.key = 'QHPRO_SYSTEM_ROOT'
+               AND EXISTS (
+                   SELECT 1 FROM permissions root_permission
+                    WHERE root_permission.key = ?
+                      AND root_permission.deleted_at IS NULL
+               )
+           )
+           OR EXISTS (
+               SELECT 1
+                 FROM role_permissions rperm
+                 JOIN permissions permission
+                   ON permission.id = rperm.permission_id
+                  AND permission.deleted_at IS NULL
+                WHERE rperm.role_id = r.id
+                  AND permission.key = ?
+           )
+       )
 )
-`, actorID, permissionCode).Scan(&allowed)
+`, actorID, permissionCode, permissionCode).Scan(&allowed)
 	if result.Error != nil {
 		return false, result.Error
 	}
