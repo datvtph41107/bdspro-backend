@@ -135,6 +135,12 @@ jobs:
             exit 1
           fi
 
+          grep -Fq '"notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub"' shared/code/script.sh
+          if grep -Fq '_provider.SyncProviderSet' hub-service/wire/wire.go; then
+            echo 'Hub authored Wire graph still imports legacy shared Redis provider set' >&2
+            exit 1
+          fi
+
           git diff --check
 
       - name: Generate canonical protobuf and Wire graph
