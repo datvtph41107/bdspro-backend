@@ -1,0 +1,171 @@
+name: Audit S6 ProductAsset Unlink Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/audit-s6-product-asset-unlink
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unlink-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact accepted source SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 516d82f678c8ddd3b02a81ae6857fff99a6dfa50
+          fetch-depth: 0
+
+      - name: Verify source authority and current ownership shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          test "$canonical_remote" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test -d shared/protobuf
+          test -d organization-service
+          test -d map-service
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+
+          grep -Fq 'Code:    500,' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'Message: "Lỗi kiểm tra liên kết",' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'Code:    404,' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'Message: "Liên kết không tồn tại",' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'Message: "Lỗi hủy liên kết",' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'return nil, status.Errorf(codes.InvalidArgument, "productId and assetId are required")' bdspro-service/infra/handler/product_handler.go
+          grep -Fq 'err := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)' bdspro-service/infra/handler/product_handler.go
+          grep -A3 -F 'err := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)' bdspro-service/infra/handler/product_handler.go | grep -Fq 'return nil, err'
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical protobuf generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf reproducibly
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/bdspro
+          git diff --exit-code
+
+      - name: Prove raw ProductAsset Except gRPC behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > bdspro-service/infra/handler/product_asset_unlink_audit_test.go <<'EOF'
+          package handler
+
+          import (
+            "testing"
+
+            _routes "common/routes"
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+
+          func TestAuditProductAssetUnlinkLegacyExceptWire(t *testing.T) {
+            cases := []struct {
+              name string
+              err error
+              wantMessage string
+            }{
+              {"check failure", &_routes.Except{Code: 500, Message: "Lỗi kiểm tra liên kết"}, "500: Lỗi kiểm tra liên kết"},
+              {"not found", &_routes.Except{Code: 404, Message: "Liên kết không tồn tại"}, "404: Liên kết không tồn tại"},
+              {"unlink failure", &_routes.Except{Code: 500, Message: "Lỗi hủy liên kết"}, "500: Lỗi hủy liên kết"},
+            }
+            for _, tc := range cases {
+              t.Run(tc.name, func(t *testing.T) {
+                got := status.Convert(tc.err)
+                if got.Code() != codes.Unknown {
+                  t.Fatalf("code=%s want=%s", got.Code(), codes.Unknown)
+                }
+                if got.Message() != tc.wantMessage {
+                  t.Fatalf("message=%q want=%q", got.Message(), tc.wantMessage)
+                }
+                if len(got.Details()) != 0 {
+                  t.Fatalf("details=%d want=0", len(got.Details()))
+                }
+              })
+            }
+          }
+          EOF
+          trap 'rm -f bdspro-service/infra/handler/product_asset_unlink_audit_test.go' EXIT
+          go test ./bdspro-service/infra/handler -run TestAuditProductAssetUnlinkLegacyExceptWire -count=1 -v
+          rm bdspro-service/infra/handler/product_asset_unlink_audit_test.go
+          trap - EXIT
+
+      - name: Prove Gateway compatibility for legacy Unknown errors
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > gateway-service/internal/httperror/product_asset_unlink_audit_test.go <<'EOF'
+          package httperror
+
+          import (
+            "encoding/json"
+            "net/http"
+            "net/http/httptest"
+            "testing"
+
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+
+          func TestAuditProductAssetUnlinkLegacyGatewayContract(t *testing.T) {
+            messages := []string{
+              "500: Lỗi kiểm tra liên kết",
+              "404: Liên kết không tồn tại",
+              "500: Lỗi hủy liên kết",
+            }
+            for _, message := range messages {
+              t.Run(message, func(t *testing.T) {
+                recorder := httptest.NewRecorder()
+                WriteGRPC(recorder, status.Error(codes.Unknown, message))
+                if recorder.Code != http.StatusInternalServerError {
+                  t.Fatalf("status=%d want=%d", recorder.Code, http.StatusInternalServerError)
+                }
+                var body struct {
+                  Code int32 `json:"code"`
+                  Message string `json:"message"`
+                }
+                if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+                  t.Fatal(err)
+                }
+                if body.Code != int32(codes.Unknown) || body.Message != message {
+                  t.Fatalf("body=%+v want code=%d message=%q", body, codes.Unknown, message)
+                }
+              })
+            }
+          }
+          EOF
+          trap 'rm -f gateway-service/internal/httperror/product_asset_unlink_audit_test.go' EXIT
+          go test ./gateway-service/internal/httperror -run TestAuditProductAssetUnlinkLegacyGatewayContract -count=1 -v
+          rm gateway-service/internal/httperror/product_asset_unlink_audit_test.go
+          trap - EXIT
+
+      - name: Final immutability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
