@@ -4,6 +4,7 @@ import (
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
+	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
@@ -13,6 +14,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"errors"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"strconv"
@@ -1346,12 +1348,29 @@ func (s *ProductHandler) UnlinkProductAsset(ctx context.Context, req *bdspropb.U
 
 	err := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)
 	if err != nil {
-		return nil, err
+		return nil, mapProductAssetUnlinkError(err)
 	}
 
 	return &bdspropb.Response{
 		Message: "success",
 	}, nil
+}
+
+func mapProductAssetUnlinkError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch {
+	case errors.Is(err, domain.ErrProductAssetLinkCheckFailed):
+		return status.Error(codes.Unknown, "500: Lỗi kiểm tra liên kết")
+	case errors.Is(err, domain.ErrProductAssetLinkNotFound):
+		return status.Error(codes.Unknown, "404: Liên kết không tồn tại")
+	case errors.Is(err, domain.ErrProductAssetUnlinkFailed):
+		return status.Error(codes.Unknown, "500: Lỗi hủy liên kết")
+	default:
+		return err
+	}
 }
 
 // @Summary Lấy danh sách tài sản theo sản phẩm

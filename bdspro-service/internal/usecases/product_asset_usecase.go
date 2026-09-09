@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
 	_routes "common/routes"
@@ -114,25 +115,16 @@ func (uc *ProductAssetUsecase) UnlinkProductAsset(ctx context.Context, req *dto.
 	// Kiểm tra liên kết tồn tại
 	exists, err := uc.ProductAssetRepo.CheckExists(ctx, req.ProductID, req.AssetID)
 	if err != nil {
-		return &_routes.Except{
-			Code:    500,
-			Message: "Lỗi kiểm tra liên kết",
-		}
+		return fmt.Errorf("%w: %v", domain.ErrProductAssetLinkCheckFailed, err)
 	}
 	if !exists {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Liên kết không tồn tại",
-		}
+		return domain.ErrProductAssetLinkNotFound
 	}
 
 	// Hủy liên kết
 	err = uc.ProductAssetRepo.Unlink(ctx, req.ProductID, req.AssetID)
 	if err != nil {
-		return &_routes.Except{
-			Code:    500,
-			Message: "Lỗi hủy liên kết",
-		}
+		return fmt.Errorf("%w: %v", domain.ErrProductAssetUnlinkFailed, err)
 	}
 
 	// Cập nhật AssetCount cho product sau khi hủy liên kết
