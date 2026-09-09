@@ -1,0 +1,69 @@
+name: Audit S6 Error Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/audit-s6-error-ownership
+
+permissions:
+  contents: read
+
+jobs:
+  exact-sha-caller-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact accepted boundary
+        uses: actions/checkout@v4
+        with:
+          ref: 4d40fa37945c9dda541d12397dba9afb5a5ad97d
+          fetch-depth: 1
+
+      - name: Verify immutable audit source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          test -z "$(git status --porcelain)"
+          printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
+
+      - name: Inventory shared error and response consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== IMPORT CALLERS: common/errors ==='
+          git grep -n -F '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== IMPORT CALLERS: common/routes ==='
+          git grep -n -F '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== IMPORT CALLERS: validate/grpcerror ==='
+          git grep -n -F '"common/pkg/validate/grpcerror"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== SYMBOL CALLERS: shared legacy errors ==='
+          git grep -n -E '(ReturnErrorWithSecond|ReturnError|InvalidRequest|ThrowError|BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException|NewAppError|ErrorHandlerMiddleware|RouteResult)' -- '*.go' ':!shared/common/errors/**' ':!shared/common/routes/**' ':!organization-service/**' ':!map-service/**' || true
+
+      - name: Inventory transport leakage candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== SHARED HTTP/GIN IMPORTS ==='
+          git grep -n -E '"net/http"|"github.com/gin-gonic/gin"' -- 'shared/common/**/*.go' || true
+          echo '=== SHARED GRPC STATUS/CODES IMPORTS ==='
+          git grep -n -E '"google.golang.org/grpc/(codes|status)"' -- 'shared/common/**/*.go' || true
+          echo '=== SHARED PROTO ERROR CARRIER REFERENCES ==='
+          git grep -n -E 'sharepb\.ErrorResponse|pb/types/shared' -- 'shared/common/**/*.go' || true
+          echo '=== GRPC STATUS/CODES IN NON-TRANSPORT SERVICE LAYERS ==='
+          { git grep -n -E '"google.golang.org/grpc/(codes|status)"' -- '*-service/**/*.go' ':!organization-service/**' ':!map-service/**' || true; } | grep -E '/(domain|usecase|biz|application|repository|service)/' || true
+          echo '=== HTTP/GIN IN NON-GATEWAY SERVICE LAYERS ==='
+          { git grep -n -E '"net/http"|"github.com/gin-gonic/gin"' -- '*-service/**/*.go' ':!gateway-service/**' ':!organization-service/**' ':!map-service/**' || true; } | grep -E '/(domain|usecase|biz|application|repository|service)/' || true
+
+      - name: Inventory compatibility carrier ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ErrorResponse PROTO CARRIER CALLERS ==='
+          git grep -n -E 'ErrorResponse' -- '*.go' ':!shared/protobuf/**' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== GATEWAY HTTP 200 BODY-CODE COMPATIBILITY ==='
+          git grep -n -E 'WriteHeader\(http\.StatusOK\)|http\.StatusOK' -- 'gateway-service/internal/**/*.go' || true
+          echo '=== RESPONSE/FILTER/MAPPER NAMED SURFACES ==='
+          find . -type f \( -name '*.go' -o -name '*.yml' \) \
+            | grep -Ev '^\./(organization-service|map-service|shared/protobuf)/' \
+            | grep -Ei '/(error|errors|response|responses|filter|filters|middleware|interceptor|mapper|mapping)(/|\.|_)' \
+            | sort || true
