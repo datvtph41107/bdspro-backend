@@ -6,7 +6,6 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -394,7 +393,7 @@ func (s *chatHandler) invalidateConversationsListSyncKeyForParticipants(ctx cont
 func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
 	receiverID := req.ReceiverId
 	if receiverID == nil {
-		return nil, _errors.NewAppError(http.StatusBadRequest, "receiverId is required")
+		return nil, fmt.Errorf("receiverId is required")
 	}
 	message, err := s.messageUsecases.SendToReceiver(ctx, &models.MessageModel{
 		ConversationID: uint64(req.ConversationId),
@@ -869,7 +868,7 @@ func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharep
 
 	vals, err := s.syncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.NewAppError(http.StatusInternalServerError, err.Error())
+		return nil, fmt.Errorf("%s", err.Error())
 	}
 
 	names := []string{
