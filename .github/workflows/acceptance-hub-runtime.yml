@@ -67,7 +67,6 @@ jobs:
           escaped="$(
             printf '%s\n' "$readers" \
             | grep -v '^hub-service/config/' \
-            | grep -v '^hub-service/internal/usecase/system_config_usecase.go:' \
             || true
           )"
           if [ -n "$escaped" ]; then
@@ -76,15 +75,11 @@ jobs:
             exit 1
           fi
 
-          deferred="$(
-            printf '%s\n' "$readers" \
-            | grep '^hub-service/internal/usecase/system_config_usecase.go:' \
-            || true
-          )"
-          test -n "$deferred"
-          printf '%s\n' "$deferred" | grep -Eq 'CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled'
-          if printf '%s\n' "$deferred" | grep -Ev 'CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled'; then
-            echo 'Unexpected deferred SystemConfig runtime reader' >&2
+          if grep -nE \
+            'GetEncryptedSystemConfigByKey|GetEncryptedUserSettingsByGroup|CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled|GetGlobalKeyManager|InitializeWithPassphrase' \
+            hub-service/internal/usecase/system_config_usecase.go
+          then
+            echo 'Dormant Hub system-config encryption ownership reappeared' >&2
             exit 1
           fi
 
