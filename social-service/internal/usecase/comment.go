@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -62,7 +61,7 @@ func (u *CommentUsecase) CreateComment(ctx context.Context, comment *domain.Comm
 		return nil, err
 	}
 	if exist == nil {
-		return nil, _errors.ReturnError(400, "bài viết không tồn tại hoặc bị giới hạn bình luận")
+		return nil, domain.ErrCommentNewsFeedUnavailable
 	}
 
 	result, err := u.commentRepo.Create(ctx, comment)

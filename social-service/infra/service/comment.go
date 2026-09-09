@@ -6,6 +6,7 @@ import (
 	_models "common/models"
 	_utils "common/utils"
 	"context"
+	stderrors "errors"
 
 	"social/infra/client"
 	"social/internal/domain"
@@ -31,6 +32,13 @@ func NewCommentService(
 	}
 }
 
+func mapCommentError(err error) error {
+	if stderrors.Is(err, domain.ErrCommentNewsFeedUnavailable) {
+		return _errors.ReturnError(400, "bài viết không tồn tại hoặc bị giới hạn bình luận")
+	}
+	return err
+}
+
 // @Tags Comment
 // @Accept json
 // @Produce json
@@ -45,7 +53,7 @@ func (s *CommentService) CreateComment(ctx context.Context, req *pb_social.Comme
 	}
 	comment, err := s.commentUsecase.CreateComment(ctx, comment)
 	if err != nil {
-		return nil, err
+		return nil, mapCommentError(err)
 	}
 	return s.DomainCommentToPb(comment), nil
 }

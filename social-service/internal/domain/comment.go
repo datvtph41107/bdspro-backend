@@ -2,8 +2,11 @@ package domain
 
 import (
 	_models "common/models"
+	"errors"
 	"time"
 )
+
+var ErrCommentNewsFeedUnavailable = errors.New("bài viết không tồn tại hoặc bị giới hạn bình luận")
 
 type Comment struct {
 	_models.BaseEntity
