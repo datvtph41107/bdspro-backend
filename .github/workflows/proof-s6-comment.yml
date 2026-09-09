@@ -1,0 +1,174 @@
+name: Proof S6 Comment Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-comment-harness
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  comment-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact clean semantic source SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 516d82f678c8ddd3b02a81ae6857fff99a6dfa50
+          fetch-depth: 0
+
+      - name: Verify immutable proof authority and bounded delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test "$(git rev-parse HEAD^)" = "0196c514f018b4aad5f49cabc8dbdfb0a28abc82"
+          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-comment-error | awk '{print $1}')"
+          test "$canonical_remote" = "0196c514f018b4aad5f49cabc8dbdfb0a28abc82"
+          test "$proof_remote" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test -d shared/protobuf
+          test -d organization-service
+          test -d map-service
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check 0196c514f018b4aad5f49cabc8dbdfb0a28abc82..HEAD
+          changed="$(git diff --name-only 0196c514f018b4aad5f49cabc8dbdfb0a28abc82..HEAD | sort)"
+          expected="$(printf '%s\n' \
+            social-service/infra/service/comment.go \
+            social-service/infra/service/comment_error_test.go \
+            social-service/internal/domain/comment.go \
+            social-service/internal/usecase/comment.go | sort)"
+          test "$changed" = "$expected"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'Protected path changed' >&2
+            exit 1
+          fi
+          test -z "$(git grep -n '_errors.ReturnError(400, \"bài viết không tồn tại hoặc bị giới hạn bình luận\")' -- social-service/internal/usecase/comment.go || true)"
+          grep -Fq 'return nil, domain.ErrCommentNewsFeedUnavailable' social-service/internal/usecase/comment.go
+          grep -Fq 'return _errors.ReturnError(400, "bài viết không tồn tại hoặc bị giới hạn bình luận")' social-service/infra/service/comment.go
+          grep -Fq 'return nil, mapCommentError(err)' social-service/infra/service/comment.go
+          # Existing request validation remains transport-owned and untouched.
+          grep -Fq 'ReturnError(400, "content and news feed id are required")' social-service/infra/service/comment.go
+          grep -Fq 'ReturnError(400, "content, news feed id and id are required")' social-service/infra/service/comment.go
+          grep -Fq 'ReturnError(400, "id is required")' social-service/infra/service/comment.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="social-service/infra/service/comment.go social-service/infra/service/comment_error_test.go social-service/internal/domain/comment.go social-service/internal/usecase/comment.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Install canonical protobuf generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf reproducibly
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/social
+          git diff --exit-code
+
+      - name: Test Comment owner-local mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./social-service/infra/service -run 'TestMapCommentError' -count=1 -v
+
+      - name: Materialize canonical Go toolchain path
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          actual_goroot="$(go env GOROOT)"
+          canonical_root="$HOME/.cache/qhpro/toolchain"
+          mkdir -p "$canonical_root"
+          rm -rf "$canonical_root/go${GO_VERSION}"
+          ln -s "$actual_goroot" "$canonical_root/go${GO_VERSION}"
+          test "$("$canonical_root/go${GO_VERSION}/bin/go" env GOVERSION)" = "go${GO_VERSION}"
+
+      - name: Test race vet and build Social through canonical Make API
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C social-service test
+          make -C social-service test-race
+          make -C social-service vet
+          make -C social-service build
+          make -C social-service clean
+
+      - name: Prove Gateway HTTP compatibility from Comment mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd gateway-service
+          cat > internal/httperror/comment_proof_test.go <<'EOF'
+          package httperror
+
+          import (
+            "encoding/json"
+            "net/http"
+            "net/http/httptest"
+            "testing"
+
+            sharepb "pb/types/shared"
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+
+          func TestProofCommentLegacyErrorResponseContract(t *testing.T) {
+            const message = "bài viết không tồn tại hoặc bị giới hạn bình luận"
+            st := status.New(codes.Internal, message)
+            withDetails, err := st.WithDetails(&sharepb.ErrorResponse{Code: 400, Message: message})
+            if err != nil {
+              t.Fatal(err)
+            }
+            recorder := httptest.NewRecorder()
+            WriteGRPC(recorder, withDetails.Err())
+            if recorder.Code != http.StatusOK {
+              t.Fatalf("status=%d want=%d", recorder.Code, http.StatusOK)
+            }
+            var body struct {
+              Code int32 `json:"code"`
+              Message string `json:"message"`
+              Second *int32 `json:"second"`
+            }
+            if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+              t.Fatal(err)
+            }
+            if body.Code != 400 || body.Message != message || body.Second != nil {
+              t.Fatalf("body=%+v want code=400 message=%q second=nil", body, message)
+            }
+          }
+          EOF
+          trap 'rm -f internal/httperror/comment_proof_test.go' EXIT
+          go test ./internal/httperror -run TestProofCommentLegacyErrorResponseContract -count=1 -v
+          rm internal/httperror/comment_proof_test.go
+          trap - EXIT
+
+      - name: Final source immutability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
