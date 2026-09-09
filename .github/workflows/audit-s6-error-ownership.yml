@@ -6,84 +6,120 @@ on:
       - final-acceptance/audit-s6-error-ownership
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize-bounded-proof-candidate:
+  prove-bounded-chat-app-error-retirement:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Checkout exact accepted boundary
+      - name: Checkout exact proof source SHA
         uses: actions/checkout@v4
         with:
-          ref: 4d40fa37945c9dda541d12397dba9afb5a5ad97d
+          ref: 1c341ff2a1473eae1ec397c98d0962dda76a64e6
           fetch-depth: 0
 
-      - name: Guard canonical and proof branch authority
+      - name: Verify immutable proof authority
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          test "$(git rev-parse HEAD)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
           canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
           proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-chat-app-error | awk '{print $1}')"
           test "$canonical_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          test "$proof_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          test "$proof_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
+          test "$(git rev-parse HEAD^)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
 
-      - name: Apply exact bounded source change
+      - name: Verify bounded ownership delta
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          handler = Path('chat-v1-service/infrastructure/handlers/chat_handler.go')
-          text = handler.read_text()
-
-          old_import = '\t"net/http"\n'
-          old_bad = 'return nil, _errors.NewAppError(http.StatusBadRequest, "receiverId is required")'
-          old_internal = 'return nil, _errors.NewAppError(http.StatusInternalServerError, err.Error())'
-
-          assert text.count(old_import) == 1, text.count(old_import)
-          assert text.count(old_bad) == 1, text.count(old_bad)
-          assert text.count(old_internal) == 1, text.count(old_internal)
-
-          text = text.replace(old_import, '')
-          text = text.replace(old_bad, 'return nil, fmt.Errorf("receiverId is required")')
-          text = text.replace(old_internal, 'return nil, fmt.Errorf("%s", err.Error())')
-          handler.write_text(text)
-
-          legacy = Path('shared/common/errors/exception.go')
-          legacy_text = legacy.read_text()
-          assert 'type AppError struct {' in legacy_text
-          assert 'func NewAppError(' in legacy_text
-          assert 'func ErrorHandlerMiddleware() gin.HandlerFunc' in legacy_text
-          legacy.unlink()
-          PY
-
-          gofmt -w chat-v1-service/infrastructure/handlers/chat_handler.go
-          git diff --check
-
           test ! -f shared/common/errors/exception.go
-          ! git grep -n -E 'AppError|NewAppError|ErrorHandlerMiddleware' -- '*.go'
+          if git grep -n -E 'AppError|NewAppError|ErrorHandlerMiddleware' -- '*.go'; then
+            echo 'Retired shared AppError ownership reappeared' >&2
+            exit 1
+          fi
           ! grep -Fq '"net/http"' chat-v1-service/infrastructure/handlers/chat_handler.go
           grep -Fq 'fmt.Errorf("receiverId is required")' chat-v1-service/infrastructure/handlers/chat_handler.go
           grep -Fq 'fmt.Errorf("%s", err.Error())' chat-v1-service/infrastructure/handlers/chat_handler.go
 
-          changed="$(git diff --name-only | sort)"
+          changed="$(git diff --name-only 4d40fa37945c9dda541d12397dba9afb5a5ad97d..HEAD | sort)"
           expected="$(printf '%s\n' chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go | sort)"
           test "$changed" = "$expected"
-          git diff --stat
-          git diff -- chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go
+          git diff --check 4d40fa37945c9dda541d12397dba9afb5a5ad97d..HEAD
 
-      - name: Create one semantic commit on proof branch
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical protobuf generators
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'BDSPro Acceptance'
-          git config user.email '116329073+datvtph41107@users.noreply.github.com'
-          git add chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go
-          git commit -m 'refactor(chat): retire shared AppError surface'
-          test "$(git rev-parse HEAD^)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-chat-app-error | awk '{print $1}')"
-          test "$proof_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          git push origin HEAD:refs/heads/final-acceptance/proof-s6-chat-app-error
-          printf 'PROOF_SOURCE_SHA=%s\n' "$(git rev-parse HEAD)"
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          git diff --exit-code
+
+      - name: Prove preserved generic gRPC wire semantics
+        shell: bash
+        working-directory: chat-v1-service
+        run: |
+          set -euo pipefail
+          cat > /tmp/generic_error_probe.go <<'EOF'
+          package main
+          import (
+            "fmt"
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+          func verify(err error, want string) {
+            s := status.Convert(err)
+            if s.Code() != codes.Unknown || s.Message() != want || len(s.Details()) != 0 {
+              panic(fmt.Sprintf("unexpected wire semantics: code=%d name=%s message=%q details=%d", int32(s.Code()), s.Code(), s.Message(), len(s.Details())))
+            }
+            fmt.Printf("CODE=%d CODE_NAME=%s MESSAGE=%q DETAILS=%d\n", int32(s.Code()), s.Code(), s.Message(), len(s.Details()))
+          }
+          func main() {
+            verify(fmt.Errorf("receiverId is required"), "receiverId is required")
+            verify(fmt.Errorf("%s", "redis failed"), "redis failed")
+          }
+          EOF
+          go run /tmp/generic_error_probe.go
+
+      - name: Test shared errors package
+        shell: bash
+        working-directory: shared/common
+        run: |
+          set -euo pipefail
+          go test ./errors
+          go vet ./errors
+
+      - name: Test and compile chat-v1
+        shell: bash
+        working-directory: chat-v1-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go test -race ./...
+          go vet ./...
+          go build ./...
+
+      - name: Final source immutability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
+          git diff --exit-code
