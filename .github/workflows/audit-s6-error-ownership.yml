@@ -6,85 +6,84 @@ on:
       - final-acceptance/audit-s6-error-ownership
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  exact-sha-chat-v1-wire-semantics:
+  materialize-bounded-proof-candidate:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact accepted boundary
         uses: actions/checkout@v4
         with:
           ref: 4d40fa37945c9dda541d12397dba9afb5a5ad97d
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Verify immutable audit source
+      - name: Guard canonical and proof branch authority
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          test -z "$(git status --porcelain)"
-          printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
+          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-chat-app-error | awk '{print $1}')"
+          test "$canonical_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          test "$proof_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
 
-      - name: Set up canonical Go patch version
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25.10'
-          cache: false
-
-      - name: Install canonical protobuf generators
+      - name: Apply exact bounded source change
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
-          test "$(go env GOVERSION)" = "go${GO_VERSION}"
-          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
-          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
-          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
-          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Generate canonical protobuf
+          handler = Path('chat-v1-service/infrastructure/handlers/chat_handler.go')
+          text = handler.read_text()
+
+          old_import = '\t"net/http"\n'
+          old_bad = 'return nil, _errors.NewAppError(http.StatusBadRequest, "receiverId is required")'
+          old_internal = 'return nil, _errors.NewAppError(http.StatusInternalServerError, err.Error())'
+
+          assert text.count(old_import) == 1, text.count(old_import)
+          assert text.count(old_bad) == 1, text.count(old_bad)
+          assert text.count(old_internal) == 1, text.count(old_internal)
+
+          text = text.replace(old_import, '')
+          text = text.replace(old_bad, 'return nil, fmt.Errorf("receiverId is required")')
+          text = text.replace(old_internal, 'return nil, fmt.Errorf("%s", err.Error())')
+          handler.write_text(text)
+
+          legacy = Path('shared/common/errors/exception.go')
+          legacy_text = legacy.read_text()
+          assert 'type AppError struct {' in legacy_text
+          assert 'func NewAppError(' in legacy_text
+          assert 'func ErrorHandlerMiddleware() gin.HandlerFunc' in legacy_text
+          legacy.unlink()
+          PY
+
+          gofmt -w chat-v1-service/infrastructure/handlers/chat_handler.go
+          git diff --check
+
+          test ! -f shared/common/errors/exception.go
+          ! git grep -n -E 'AppError|NewAppError|ErrorHandlerMiddleware' -- '*.go'
+          ! grep -Fq '"net/http"' chat-v1-service/infrastructure/handlers/chat_handler.go
+          grep -Fq 'fmt.Errorf("receiverId is required")' chat-v1-service/infrastructure/handlers/chat_handler.go
+          grep -Fq 'fmt.Errorf("%s", err.Error())' chat-v1-service/infrastructure/handlers/chat_handler.go
+
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go | sort)"
+          test "$changed" = "$expected"
+          git diff --stat
+          git diff -- chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go
+
+      - name: Create one semantic commit on proof branch
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
-          test -d shared/protobuf/types/shared
-
-      - name: Determine exact AppError wire semantics
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd chat-v1-service
-          cat > /tmp/app_error_probe.go <<'EOF'
-          package main
-          import (
-            "fmt"
-            "net/http"
-            _errors "common/errors"
-            "google.golang.org/grpc/status"
-          )
-          func main() {
-            for _, e := range []error{
-              _errors.NewAppError(http.StatusBadRequest, "receiverId is required"),
-              _errors.NewAppError(http.StatusInternalServerError, "redis failed"),
-              _errors.BadRequestException("receiverId is required"),
-              _errors.InternalServerException("redis failed"),
-            } {
-              s := status.Convert(e)
-              fmt.Printf("TYPE=%T CODE=%d CODE_NAME=%s MESSAGE=%q DETAILS=%d\n", e, int32(s.Code()), s.Code(), s.Message(), len(s.Details()))
-            }
-          }
-          EOF
-          go run /tmp/app_error_probe.go
-
-      - name: Prove generated files only and source remained immutable
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          changed="$(git status --porcelain)"
-          printf '%s\n' "$changed"
-          if printf '%s\n' "$changed" | grep -Ev '^[? ][? ] shared/protobuf/|^.. shared/protobuf/' | grep -q .; then
-            echo 'Audit unexpectedly modified non-generated source' >&2
-            exit 1
-          fi
+          git config user.name 'BDSPro Acceptance'
+          git config user.email '116329073+datvtph41107@users.noreply.github.com'
+          git add chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go
+          git commit -m 'refactor(chat): retire shared AppError surface'
+          test "$(git rev-parse HEAD^)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-chat-app-error | awk '{print $1}')"
+          test "$proof_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          git push origin HEAD:refs/heads/final-acceptance/proof-s6-chat-app-error
+          printf 'PROOF_SOURCE_SHA=%s\n' "$(git rev-parse HEAD)"
