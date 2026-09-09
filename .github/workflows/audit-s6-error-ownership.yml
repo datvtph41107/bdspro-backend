@@ -1,4 +1,4 @@
-name: Prove S6 Social Share Error Ownership
+name: Audit S6 Batch 3 Ownership Candidates
 
 on:
   push:
@@ -9,155 +9,155 @@ permissions:
   contents: read
 
 jobs:
-  prove-social-share-error-ownership:
+  exact-sha-candidate-inventory:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
     steps:
-      - name: Checkout exact proof source SHA
+      - name: Checkout exact accepted boundary
         uses: actions/checkout@v4
         with:
           ref: 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b
           fetch-depth: 0
 
-      - name: Verify immutable proof authority
+      - name: Verify immutable audit authority
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
-          test "$(git rev-parse HEAD^)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
           canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
-          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-social-share-errors | awk '{print $1}')"
-          test "$canonical_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          test "$proof_remote" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
+          test "$canonical_remote" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
           test -z "$(git status --porcelain)"
+          printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
 
-      - name: Verify bounded ownership delta
+      - name: Rank transport leakage in application and usecase layers
         shell: bash
         run: |
           set -euo pipefail
-          changed="$(git diff --name-only 1c341ff2a1473eae1ec397c98d0962dda76a64e6..HEAD | sort)"
-          expected="$(printf '%s\n' \
-            social-service/infra/service/news_feed.go \
-            social-service/infra/service/news_feed_share_error_test.go \
-            social-service/internal/domain/news_feed_share.go \
-            social-service/internal/usecase/news_feed_share.go | sort)"
-          test "$changed" = "$expected"
-          git diff --check 1c341ff2a1473eae1ec397c98d0962dda76a64e6..HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
-          test -z "$(git grep -n -E '\"net/http\"|\"common/routes\"|http\.Status(NotFound|Forbidden)|_routes\.Except' -- social-service/internal/usecase/news_feed_share.go || true)"
-          grep -Fq 'ErrShareNewsFeedNotFound' social-service/internal/domain/news_feed_share.go
-          grep -Fq 'ErrShareNewsFeedNotPublic' social-service/internal/domain/news_feed_share.go
-          grep -Fq 'return nil, domain.ErrShareNewsFeedNotFound' social-service/internal/usecase/news_feed_share.go
-          grep -Fq 'return nil, domain.ErrShareNewsFeedNotPublic' social-service/internal/usecase/news_feed_share.go
-          grep -Fq 'status.Error(codes.Unknown, "404: Bài viết không tồn tại")' social-service/infra/service/news_feed.go
-          grep -Fq 'status.Error(codes.Unknown, "403: Bài viết không thể chia sẻ do không phải công khai")' social-service/infra/service/news_feed.go
-          grep -Fq 'return nil, mapShareNewsFeedError(err)' social-service/infra/service/news_feed.go
-
-          # Existing transport-owned request validation remains intentionally untouched.
-          grep -Fq 'Message: "newsFeedId or shareType is required"' social-service/infra/service/news_feed.go
-
-      - name: Set up canonical Go patch version
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25.10'
-          cache: false
-
-      - name: Install canonical protobuf generators
-        shell: bash
-        run: |
-          set -euo pipefail
-          source shared/code/development/toolchain.versions
-          test "$(go env GOVERSION)" = "go${GO_VERSION}"
-          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
-          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
-          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
-          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
-
-      - name: Generate canonical protobuf reproducibly
-        shell: bash
-        run: |
-          set -euo pipefail
-          make -C shared/code buf-all
-          test -d shared/protobuf/types/shared
-          test -d shared/protobuf/types/social
-          git diff --exit-code
-
-      - name: Test Social owner-local mapping
-        shell: bash
-        run: |
-          set -euo pipefail
-          go test ./social-service/infra/service -run 'TestMapShareNewsFeedError' -count=1 -v
-
-      - name: Materialize canonical Go toolchain path
-        shell: bash
-        run: |
-          set -euo pipefail
-          source shared/code/development/toolchain.versions
-          actual_goroot="$(go env GOROOT)"
-          canonical_root="$HOME/.cache/qhpro/toolchain"
-          mkdir -p "$canonical_root"
-          ln -s "$actual_goroot" "$canonical_root/go${GO_VERSION}"
-          test "$("$canonical_root/go${GO_VERSION}/bin/go" env GOVERSION)" = "go${GO_VERSION}"
-
-      - name: Test race vet and build Social through canonical Make API
-        shell: bash
-        run: |
-          set -euo pipefail
-          make -C social-service test
-          make -C social-service test-race
-          make -C social-service vet
-          make -C social-service build
-          make -C social-service clean
-
-      - name: Prove Gateway HTTP compatibility from proof mapping
-        shell: bash
-        working-directory: gateway-service
-        run: |
-          set -euo pipefail
-          cat > internal/httperror/social_share_proof_test.go <<'EOF'
-          package httperror
-
-          import (
-            "encoding/json"
-            "net/http"
-            "net/http/httptest"
-            "testing"
-
-            "google.golang.org/grpc/codes"
-            "google.golang.org/grpc/status"
-          )
-
-          func TestProofSocialShareLegacyUnknownContract(t *testing.T) {
-            cases := []string{
-              "404: Bài viết không tồn tại",
-              "403: Bài viết không thể chia sẻ do không phải công khai",
-            }
-            for _, message := range cases {
-              recorder := httptest.NewRecorder()
-              WriteGRPC(recorder, status.Error(codes.Unknown, message))
-              if recorder.Code != http.StatusInternalServerError {
-                t.Fatalf("status=%d want=%d", recorder.Code, http.StatusInternalServerError)
-              }
-              var body struct {
-                Code int32 `json:"code"`
-                Message string `json:"message"`
-              }
-              if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
-                t.Fatal(err)
-              }
-              if body.Code != int32(codes.Unknown) || body.Message != message {
-                t.Fatalf("body=%+v want code=%d message=%q", body, int32(codes.Unknown), message)
-              }
-              t.Logf("HTTP=%d BODY_CODE=%d MESSAGE=%q", recorder.Code, body.Code, body.Message)
-            }
+          roots = [p for p in Path('.').iterdir() if p.is_dir() and p.name.endswith('-service')]
+          excluded = {'organization-service', 'map-service'}
+          patterns = {
+              'net/http': re.compile(r'"net/http"'),
+              'common/routes': re.compile(r'"common/routes"'),
+              'common/errors': re.compile(r'"common/errors"'),
+              'http.Status': re.compile(r'\bhttp\.Status[A-Za-z]+'),
+              '_routes.Except': re.compile(r'\b_routes\.Except\b'),
+              'HTTP-named shared exception': re.compile(r'\b_errors\.(?:BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException)\b'),
+              'grpc status/codes': re.compile(r'"google\.golang\.org/grpc/(?:status|codes)"'),
           }
-          EOF
-          trap 'rm -f internal/httperror/social_share_proof_test.go' EXIT
-          go test ./internal/httperror -run TestProofSocialShareLegacyUnknownContract -count=1 -v
-          rm internal/httperror/social_share_proof_test.go
-          trap - EXIT
+          rows = []
+          for root in roots:
+              if root.name in excluded:
+                  continue
+              for p in root.rglob('*.go'):
+                  s = p.as_posix()
+                  if not re.search(r'/(?:internal/)?(?:usecase|usecases|application|biz)/', s):
+                      continue
+                  text = p.read_text(errors='replace')
+                  hits = {name: len(rx.findall(text)) for name, rx in patterns.items()}
+                  score = sum(hits.values())
+                  if score:
+                      rows.append((score, s, hits, len(text.splitlines())))
+          print('=== RANKED APPLICATION/USECASE TRANSPORT COUPLING ===')
+          for score, path, hits, lines in sorted(rows, key=lambda x: (-x[0], x[1])):
+              hitstr = ', '.join(f'{k}={v}' for k,v in hits.items() if v)
+              print(f'SCORE={score:02d} LINES={lines:04d} {path} :: {hitstr}')
+          PY
 
-      - name: Final source immutability check
+      - name: Compare Social and BDSPro narrow candidate files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== SOCIAL USECASE TRANSPORT-SHAPED FILES ==='
+          git grep -n -E '"net/http"|"common/routes"|"common/errors"|http\.Status[A-Za-z]+|_routes\.Except|_errors\.(BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException)' \
+            -- 'social-service/internal/usecase/*.go' || true
+
+          echo '=== BDSPRO USECASE TRANSPORT-SHAPED FILES ==='
+          git grep -n -E '"net/http"|"common/routes"|"common/errors"|http\.Status[A-Za-z]+|_routes\.Except|_errors\.(BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException)' \
+            -- 'bdspro-service/internal/usecase/*.go' 'bdspro-service/internal/usecases/*.go' || true
+
+          echo '=== SOCIAL OWNER-LOCAL ERROR MAPPERS / DOMAIN ERRORS ==='
+          git grep -n -E 'func .*([Mm]ap.*[Ee]rror|[Ee]rror.*[Gg][Rr][Pp][Cc])|errors\.Is\(|var Err|errors\.New\(' \
+            -- 'social-service/infra/**/*.go' 'social-service/internal/domain/*.go' || true
+
+          echo '=== BDSPRO OWNER-LOCAL ERROR MAPPERS / DOMAIN ERRORS ==='
+          git grep -n -E 'func .*([Mm]ap.*[Ee]rror|[Ee]rror.*[Gg][Rr][Pp][Cc])|errors\.Is\(|var Err|errors\.New\(' \
+            -- 'bdspro-service/infra/**/*.go' 'bdspro-service/internal/domain/*.go' || true
+
+      - name: Inventory shared response filter middleware surfaces and exact import callers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          excluded_prefixes = ('organization-service/', 'map-service/', 'shared/protobuf/')
+          go_files = [p for p in Path('.').rglob('*.go') if not p.as_posix().startswith(excluded_prefixes)]
+          packages = {
+              'common/routes': re.compile(r'"common/routes"'),
+              'common/errors': re.compile(r'"common/errors"'),
+              'common/pkg/validate/grpcerror': re.compile(r'"common/pkg/validate/grpcerror"'),
+          }
+          print('=== EXACT IMPORT CALLER COUNTS ===')
+          for pkg, rx in packages.items():
+              callers = []
+              for p in go_files:
+                  if rx.search(p.read_text(errors='replace')):
+                      callers.append(p.as_posix())
+              print(f'{pkg}: callers={len(callers)}')
+              for c in sorted(callers):
+                  print(f'  {c}')
+
+          print('=== SHARED TRANSPORT-SHAPED SURFACES ===')
+          for p in sorted(Path('shared/common').rglob('*.go')):
+              s = p.as_posix().lower()
+              text = p.read_text(errors='replace')
+              named = any(k in s for k in ('error', 'response', 'filter', 'middleware', 'interceptor', 'route'))
+              coupled = bool(re.search(r'"net/http"|"github.com/gin-gonic/gin"|"google\.golang\.org/grpc/(?:status|codes)"|pb/types/shared', text))
+              if named or coupled:
+                  markers = []
+                  for label, rx in [
+                      ('http', r'"net/http"'), ('gin', r'"github.com/gin-gonic/gin"'),
+                      ('grpc', r'"google\.golang\.org/grpc/(?:status|codes)"'), ('sharepb', r'pb/types/shared')]:
+                      if re.search(rx, text): markers.append(label)
+                  print(f'{p.as_posix()} lines={len(text.splitlines())} markers={",".join(markers) or "name-only"}')
+          PY
+
+      - name: Find smallest legacy exception and route-result symbol surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          excluded = ('organization-service/', 'map-service/', 'shared/protobuf/', 'shared/common/errors/', 'shared/common/routes/')
+          symbols = [
+              'BadRequestException','UnauthorizedException','ForbiddenException','NotFoundException',
+              'ConflictException','TooManyRequestsException','InternalServerException',
+              'ReturnErrorWithSecond','ReturnError','InvalidRequest','ThrowError','RouteResult'
+          ]
+          files = [p for p in Path('.').rglob('*.go') if not p.as_posix().startswith(excluded)]
+          print('=== LEGACY SYMBOL CALLER COUNTS ===')
+          for sym in symbols:
+              rx = re.compile(r'\b'+re.escape(sym)+r'\b')
+              callers=[]
+              occurrences=0
+              for p in files:
+                  text=p.read_text(errors='replace')
+                  n=len(rx.findall(text))
+                  if n:
+                      callers.append((p.as_posix(),n))
+                      occurrences += n
+              print(f'{sym}: files={len(callers)} occurrences={occurrences}')
+              if len(callers) <= 8:
+                  for path,n in sorted(callers): print(f'  {path} x{n}')
+          PY
+
+      - name: Final audit immutability check
         shell: bash
         run: |
           set -euo pipefail
