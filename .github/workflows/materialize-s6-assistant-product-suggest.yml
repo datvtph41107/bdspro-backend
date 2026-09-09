@@ -1,0 +1,186 @@
+name: Materialize S6 Assistant Product Suggest Candidate
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/materialize-s6-assistant-product-suggest.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CANONICAL_SHA: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
+      CANDIDATE_BRANCH: final-acceptance/proof-s6-assistant-product-suggest
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANONICAL_SHA }}
+          fetch-depth: 0
+
+      - name: Authority and branch guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$CANONICAL_SHA"
+          if git ls-remote --exit-code --heads origin "refs/heads/$CANDIDATE_BRANCH" >/dev/null 2>&1; then
+            echo "candidate branch already exists" >&2
+            exit 1
+          fi
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Materialize bounded Assistant source change
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          usecase_path = Path('assistant-service/internal/usecases/assistant_usecase.go')
+          text = usecase_path.read_text()
+          assert text.count('\t_errors "common/errors"\n') == 1
+          text = text.replace('\t_errors "common/errors"\n', '')
+          assert text.count('\t"context"\n') == 1
+          text = text.replace('\t"context"\n', '\t"context"\n\t"errors"\n')
+          marker = 'type AssistantUsecase struct {'
+          assert text.count(marker) == 1
+          text = text.replace(marker, 'var ErrProductSuggestUnavailable = errors.New("failed to get product suggest")\n\n' + marker)
+          old_return = 'return nil, "", 0, _errors.ReturnError(500, "failed to get product suggest")'
+          assert text.count(old_return) == 1
+          text = text.replace(old_return, 'return nil, "", 0, ErrProductSuggestUnavailable')
+          usecase_path.write_text(text)
+
+          handler_path = Path('assistant-service/infra/handler/assistant_handler.go')
+          text = handler_path.read_text()
+          assert text.count('\t"context"\n') == 1
+          text = text.replace('\t"context"\n', '\t"context"\n\t"errors"\n')
+          insertion = '''func mapAnalyzeProductTextError(prefix string, err error) error {
+\tif errors.Is(err, usecases.ErrProductSuggestUnavailable) {
+\t\terr = status.Error(codes.Internal, "failed to get product suggest")
+\t}
+\treturn status.Errorf(codes.Internal, "%s: %v", prefix, err)
+}
+
+'''
+          marker = '// AnalyzeProductText - Phân tích văn bản sản phẩm BĐS\n'
+          assert text.count(marker) == 1
+          text = text.replace(marker, insertion + marker)
+          old = 'return nil, status.Errorf(codes.Internal, "failed to analyze: %v", err)'
+          assert text.count(old) == 1
+          text = text.replace(old, 'return nil, mapAnalyzeProductTextError("failed to analyze", err)')
+          old = 'return nil, status.Errorf(codes.Internal, "failed to analyze with deepseek: %v", err)'
+          assert text.count(old) == 1
+          text = text.replace(old, 'return nil, mapAnalyzeProductTextError("failed to analyze with deepseek", err)')
+          handler_path.write_text(text)
+
+          test_path = Path('assistant-service/infra/handler/assistant_product_suggest_error_test.go')
+          test_path.write_text(r'''package handler
+
+import (
+	stderrors "errors"
+	"testing"
+
+	"assistant/internal/usecases"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+func TestMapAnalyzeProductTextErrorProductSuggestUnavailable(t *testing.T) {
+	cases := []struct {
+		name   string
+		prefix string
+		want   string
+	}{
+		{
+			name:   "primary analyze rpc",
+			prefix: "failed to analyze",
+			want:   "failed to analyze: rpc error: code = Internal desc = failed to get product suggest",
+		},
+		{
+			name:   "deepseek alias rpc",
+			prefix: "failed to analyze with deepseek",
+			want:   "failed to analyze with deepseek: rpc error: code = Internal desc = failed to get product suggest",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := mapAnalyzeProductTextError(tc.prefix, usecases.ErrProductSuggestUnavailable)
+			st, ok := status.FromError(got)
+			if !ok {
+				t.Fatalf("expected gRPC status, got %T: %v", got, got)
+			}
+			if st.Code() != codes.Internal {
+				t.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+			}
+			if st.Message() != tc.want {
+				t.Fatalf("message = %q, want %q", st.Message(), tc.want)
+			}
+			if len(st.Details()) != 0 {
+				t.Fatalf("details = %d, want 0", len(st.Details()))
+			}
+		})
+	}
+}
+
+func TestMapAnalyzeProductTextErrorGenericWrapping(t *testing.T) {
+	got := mapAnalyzeProductTextError("failed to analyze", stderrors.New("boom"))
+	st, ok := status.FromError(got)
+	if !ok {
+		t.Fatalf("expected gRPC status, got %T: %v", got, got)
+	}
+	if st.Code() != codes.Internal {
+		t.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+	}
+	if st.Message() != "failed to analyze: boom" {
+		t.Fatalf("message = %q", st.Message())
+	}
+	if len(st.Details()) != 0 {
+		t.Fatalf("details = %d, want 0", len(st.Details()))
+	}
+}
+''')
+          PY
+
+          gofmt -w \
+            assistant-service/internal/usecases/assistant_usecase.go \
+            assistant-service/infra/handler/assistant_handler.go \
+            assistant-service/infra/handler/assistant_product_suggest_error_test.go
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            assistant-service/infra/handler/assistant_handler.go
+            assistant-service/infra/handler/assistant_product_suggest_error_test.go
+            assistant-service/internal/usecases/assistant_usecase.go
+          )
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do
+            test "${changed[$i]}" = "${expected[$i]}"
+          done
+          ! git diff --name-only | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Create one semantic commit and push non-force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name datvtph41107
+          git config user.email 116329073+datvtph41107@users.noreply.github.com
+          git add \
+            assistant-service/internal/usecases/assistant_usecase.go \
+            assistant-service/infra/handler/assistant_handler.go \
+            assistant-service/infra/handler/assistant_product_suggest_error_test.go
+          git commit -m 'refactor(assistant): localize product suggest error mapping'
+          test "$(git rev-parse HEAD^)" = "$CANONICAL_SHA"
+          test "$(git rev-list --count "$CANONICAL_SHA"..HEAD)" = "1"
+          test -z "$(git status --porcelain)"
+          git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
+          echo "candidate=$(git rev-parse HEAD)"
