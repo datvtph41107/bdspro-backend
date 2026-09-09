@@ -1,0 +1,62 @@
+name: Proof S6 Report Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-report-errors
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Verify protected invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d shared/protobuf
+          test -d organization-service
+          test -d map-service
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD
+          changed="$(git diff --name-only 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD | grep -v '^.github/workflows/proof-s6-report.yml$' || true)"
+          expected="$(printf '%s\n' social-service/infra/service/report.go social-service/infra/service/report_error_test.go social-service/internal/domain/report.go social-service/internal/usecase/report.go)"
+          test "$(printf '%s\n' "$changed" | sort)" = "$(printf '%s\n' "$expected" | sort)"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'Protected path changed' >&2
+            exit 1
+          fi
+
+      - name: Verify formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="social-service/infra/service/report.go social-service/infra/service/report_error_test.go social-service/internal/domain/report.go social-service/internal/usecase/report.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Social test
+        run: make -C social-service test
+
+      - name: Social race test
+        run: make -C social-service test-race
+
+      - name: Social vet
+        run: make -C social-service vet
+
+      - name: Social build
+        run: make -C social-service build
