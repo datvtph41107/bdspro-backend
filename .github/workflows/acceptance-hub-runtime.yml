@@ -117,6 +117,8 @@ jobs:
 
           grep -Fq 'common_db.Open(common_db.DatabaseConfig{' hub-service/infra/db/provider.go
           grep -Fq 'common_redis.Open(common_redis.Config{' hub-service/infra/redis/provider.go
+          grep -Fq 'func NewRedisService(runtime config.Runtime)' hub-service/infra/redis/provider.go
+          grep -Fq 'func NewRedisProvider(service *common_redis.RedisService)' hub-service/infra/redis/provider.go
           grep -Fq 'runtime.BDSProRPCTarget' hub-service/infra/rpc/providers.go
           grep -Fq 'runtime.NotificationRPCTarget' hub-service/infra/rpc/providers.go
           grep -Fq 'runtime.UserRPCTarget' hub-service/infra/rpc/user.go
@@ -136,6 +138,8 @@ jobs:
           fi
 
           grep -Fq '"notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub"' shared/code/script.sh
+          grep -Fq 'hub_infra_redis.NewRedisService' hub-service/wire/wire.go
+          grep -Fq 'hub_infra_redis.NewRedisProvider' hub-service/wire/wire.go
           if grep -Fq '_provider.SyncProviderSet' hub-service/wire/wire.go; then
             echo 'Hub authored Wire graph still imports legacy shared Redis provider set' >&2
             exit 1
@@ -160,7 +164,8 @@ jobs:
           grep -Fq 'NewBdsproRPCClient(runtime)' hub-service/wire/wire_gen.go
           grep -Fq 'NewNotificationRPCClient(runtime)' hub-service/wire/wire_gen.go
           grep -Fq 'NewAdminUserProfileClient(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewRedisProvider(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewRedisService(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewRedisProvider(' hub-service/wire/wire_gen.go
           grep -Fq 'NewInitialApp(' hub-service/wire/wire_gen.go
 
           wire_source_first="$(sha256sum hub-service/wire/wire.go | awk '{print $1}')"
