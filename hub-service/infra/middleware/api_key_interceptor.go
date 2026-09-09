@@ -1,21 +1,10 @@
 package middleware
 
-// ─────────────────────────────────────────────────────────────────────────────
-// hub/infra/middleware/apikey_interceptor.go
-//
-// Middleware này dùng config.AppProperties.Security.ProtectedMethods
-// để quyết định method nào cần kiểm tra ApiKey.
-//
-// ApplinkService KHÔNG có trong ProtectedMethods
-// → tự động bypass → không cần thêm logic gì đặc biệt.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import (
 	"context"
 	"strings"
 
 	_enum "common/domain/enum"
-	"hub/config"
 	_usecase "hub/internal/usecase"
 
 	"google.golang.org/grpc"
@@ -24,19 +13,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// NewAPIKeyUnaryServerInterceptor tạo interceptor kiểm tra API key.
-//
-// Logic:
-//  1. Đọc danh sách protected methods từ config (whitelist)
-//  2. Nếu method KHÔNG có trong protected → bypass (public)
-//  3. Nếu method CÓ trong protected → yêu cầu x-api-key header hợp lệ
-//
-// ApplinkService/CreateApplink và ApplinkService/GetApplinkByCode
-// là public — KHÔNG thêm vào config.Security.ProtectedMethods.
-func NewAPIKeyUnaryServerInterceptor(apiKeyUsecase _usecase.IApiKeyUsecase) grpc.UnaryServerInterceptor {
-	// Build protected methods map một lần khi khởi động
+// NewAPIKeyUnaryServerInterceptor builds the protected-method lookup once from
+// the process-owned runtime snapshot. Request handling never reads global
+// configuration.
+func NewAPIKeyUnaryServerInterceptor(
+	apiKeyUsecase _usecase.IApiKeyUsecase,
+	protectedMethods []string,
+) grpc.UnaryServerInterceptor {
 	protected := make(map[string]struct{})
-	for _, method := range config.AppProperties.Security.ProtectedMethods {
+	for _, method := range protectedMethods {
 		method = strings.TrimSpace(method)
 		if method == "" {
 			continue
@@ -50,22 +35,17 @@ func NewAPIKeyUnaryServerInterceptor(apiKeyUsecase _usecase.IApiKeyUsecase) grpc
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		// Không có protected method nào được config → bypass tất cả
 		if len(protected) == 0 {
 			return handler(ctx, req)
 		}
-
-		// Method không nằm trong whitelist → public, bypass
 		if _, ok := protected[info.FullMethod]; !ok {
 			return handler(ctx, req)
 		}
 
-		// ── Method yêu cầu ApiKey ─────────────────────────────────────────
 		apiKey := extractAPIKey(ctx)
 		if apiKey == "" {
 			return nil, status.Error(codes.Unauthenticated, "missing api key")
 		}
-
 		if apiKeyUsecase == nil {
 			return nil, status.Error(codes.Internal, "api key usecase not initialized")
 		}
@@ -88,24 +68,18 @@ func NewAPIKeyUnaryServerInterceptor(apiKeyUsecase _usecase.IApiKeyUsecase) grpc
 	}
 }
 
-// extractAPIKey lấy api key từ context value hoặc gRPC metadata header x-api-key
 func extractAPIKey(ctx context.Context) string {
 	if ctx == nil {
 		return ""
 	}
-
-	// Ưu tiên lấy từ context value (đã được set bởi lần trước)
 	if val, ok := ctx.Value(_enum.APIKeyKey).(string); ok && strings.TrimSpace(val) != "" {
 		return strings.TrimSpace(val)
 	}
-
-	// Fallback: lấy từ gRPC metadata
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		values := md.Get("x-api-key")
 		if len(values) > 0 {
 			return strings.TrimSpace(values[0])
 		}
 	}
-
 	return ""
 }

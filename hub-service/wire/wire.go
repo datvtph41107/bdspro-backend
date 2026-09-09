@@ -9,10 +9,11 @@ import (
 	_provider "common/provider"
 	common_utils "common/utils"
 	"github.com/google/wire"
+	"hub/config"
 	hub_infra_client "hub/infra/client"
+	hub_infra_db "hub/infra/db"
 	hub_infra_handler "hub/infra/handler"
 	hub_infra_mapper "hub/infra/mapper"
-	hub_infra_middleware "hub/infra/middleware"
 	hub_infra_postgre "hub/infra/postgre"
 	hub_infra_provider "hub/infra/provider"
 	hub_infra_redis "hub/infra/redis"
@@ -26,7 +27,7 @@ import (
 
 // Inject dependencies
 var wireSet = wire.NewSet(
-	_db.NewDB,
+	hub_infra_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
 	wire.Bind(new(hub_internal_interface.INotificationClient), new(*hub_infra_client.NotificationClient)),
@@ -35,7 +36,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(hub_internal_repo.IUpdateDataRepo), new(*hub_infra_postgre.UpdateDataRepo)),
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
-	hub_infra_middleware.NewAPIKeyUnaryServerInterceptor,
 	hub_infra_rpc.NewAdminUserProfileClient,
 	hub_infra_handler.NewApiKeyHandler,
 	hub_infra_mapper.NewApiKeyMapper,
@@ -98,7 +98,7 @@ var wireSet = wire.NewSet(
 	hub_infra_postgre.NewWardV2Repo,
 )
 
-func InitializeApp() (*hub_initial.InitialApp, func(), error) {
+func InitializeApp(runtime config.Runtime) (*hub_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
 	return nil, nil, nil
 }
