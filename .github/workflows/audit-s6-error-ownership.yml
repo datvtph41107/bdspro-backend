@@ -1,4 +1,4 @@
-name: Materialize S6 Social Share Error Ownership Proof
+name: Prove S6 Social Share Error Ownership
 
 on:
   push:
@@ -6,233 +6,149 @@ on:
       - final-acceptance/audit-s6-error-ownership
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize-proof-source:
+  prove-social-share-error-ownership:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
-      - name: Checkout exact accepted source
+      - name: Checkout exact proof source SHA
         uses: actions/checkout@v4
         with:
-          ref: 1c341ff2a1473eae1ec397c98d0962dda76a64e6
+          ref: 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b
           fetch-depth: 0
 
-      - name: Guard canonical and proof branch authority
+      - name: Verify immutable proof authority
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
+          test "$(git rev-parse HEAD)" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
+          test "$(git rev-parse HEAD^)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
           canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
           proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-social-share-errors | awk '{print $1}')"
           test "$canonical_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          test "$proof_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
+          test "$proof_remote" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
           test -z "$(git status --porcelain)"
 
-      - name: Apply exact bounded source change
+      - name: Verify bounded ownership delta
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          domain = Path('social-service/internal/domain/news_feed_share.go')
-          text = domain.read_text()
-          old_import = '''import (
-          \t_models "common/models"
-          \t"social/internal/enums"
-          )'''
-          new_import = '''import (
-          \t_models "common/models"
-          \t"errors"
-          \t"social/internal/enums"
-          )'''
-          assert text.count(old_import) == 1, text.count(old_import)
-          text = text.replace(old_import, new_import, 1)
-          marker = 'type NewsFeedShare struct {'
-          sentinels = '''var (
-          \tErrShareNewsFeedNotFound  = errors.New("share news feed not found")
-          \tErrShareNewsFeedNotPublic = errors.New("share news feed is not public")
-          )
-
-          '''
-          assert text.count(marker) == 1, text.count(marker)
-          text = text.replace(marker, sentinels + marker, 1)
-          domain.write_text(text)
-
-          usecase = Path('social-service/internal/usecase/news_feed_share.go')
-          text = usecase.read_text()
-          assert text.count('\t_routes "common/routes"\n') == 1
-          assert text.count('\t"net/http"\n') == 1
-          text = text.replace('\t_routes "common/routes"\n', '', 1)
-          text = text.replace('\t"net/http"\n', '', 1)
-          old_not_found = '''\tif newsFeed.ID == 0 {
-          \t\treturn nil, &_routes.Except{
-          \t\t\tCode:    http.StatusNotFound,
-          \t\t\tMessage: "Bài viết không tồn tại",
-          \t\t}
-          \t}'''
-          old_not_public = '''\tif newsFeed.Visibility != enums.VisibilityPublic {
-          \t\treturn nil, &_routes.Except{
-          \t\t\tCode:    http.StatusForbidden,
-          \t\t\tMessage: "Bài viết không thể chia sẻ do không phải công khai",
-          \t\t}
-          \t}'''
-          assert text.count(old_not_found) == 1, text.count(old_not_found)
-          assert text.count(old_not_public) == 1, text.count(old_not_public)
-          text = text.replace(old_not_found, '''\tif newsFeed.ID == 0 {
-          \t\treturn nil, domain.ErrShareNewsFeedNotFound
-          \t}''', 1)
-          text = text.replace(old_not_public, '''\tif newsFeed.Visibility != enums.VisibilityPublic {
-          \t\treturn nil, domain.ErrShareNewsFeedNotPublic
-          \t}''', 1)
-          usecase.write_text(text)
-
-          service = Path('social-service/infra/service/news_feed.go')
-          text = service.read_text()
-          assert text.count('\t"context"\n') == 1
-          assert 'stderrors "errors"' not in text
-          text = text.replace('\t"context"\n', '\t"context"\n\tstderrors "errors"\n', 1)
-          import_marker = '\t"golang.org/x/sync/errgroup"\n'
-          assert text.count(import_marker) == 1, text.count(import_marker)
-          text = text.replace(import_marker, import_marker + '\t"google.golang.org/grpc/codes"\n\t"google.golang.org/grpc/status"\n', 1)
-
-          share_comment = '// @Summary Share news feed\n'
-          assert text.count(share_comment) == 1, text.count(share_comment)
-          helper = '''// mapShareNewsFeedError keeps the established Social share wire contract while
-          // moving business-state ownership out of the usecase. The Unknown code and
-          // exact legacy messages are compatibility behavior, not domain semantics.
-          func mapShareNewsFeedError(err error) error {
-          \tswitch {
-          \tcase stderrors.Is(err, domain.ErrShareNewsFeedNotFound):
-          \t\treturn status.Error(codes.Unknown, "404: Bài viết không tồn tại")
-          \tcase stderrors.Is(err, domain.ErrShareNewsFeedNotPublic):
-          \t\treturn status.Error(codes.Unknown, "403: Bài viết không thể chia sẻ do không phải công khai")
-          \tdefault:
-          \t\treturn err
-          \t}
-          }
-
-          '''
-          text = text.replace(share_comment, helper + share_comment, 1)
-
-          old_call = '''\tnewsFeedShare, err := s.newsFeedShareUsecase.ShareNewsFeed(ctx,
-          \t\treq.NewsFeedId,
-          \t\treq.TargetId,
-          \t\treq.Content,
-          \t\tenums.ShareType(req.ShareType),
-          \t)
-          \tif err != nil {
-          \t\treturn nil, err
-          \t}'''
-          new_call = '''\tnewsFeedShare, err := s.newsFeedShareUsecase.ShareNewsFeed(ctx,
-          \t\treq.NewsFeedId,
-          \t\treq.TargetId,
-          \t\treq.Content,
-          \t\tenums.ShareType(req.ShareType),
-          \t)
-          \tif err != nil {
-          \t\treturn nil, mapShareNewsFeedError(err)
-          \t}'''
-          assert text.count(old_call) == 1, text.count(old_call)
-          text = text.replace(old_call, new_call, 1)
-          service.write_text(text)
-
-          test = Path('social-service/infra/service/news_feed_share_error_test.go')
-          assert not test.exists()
-          test.write_text('''package service
-
-          import (
-          \t"errors"
-          \t"testing"
-
-          \t"social/internal/domain"
-
-          \t"google.golang.org/grpc/codes"
-          \t"google.golang.org/grpc/status"
-          )
-
-          func TestMapShareNewsFeedErrorPreservesLegacyWireContract(t *testing.T) {
-          \ttests := []struct {
-          \t\tname    string
-          \t\terr     error
-          \t\tmessage string
-          \t}{
-          \t\t{name: "not found", err: domain.ErrShareNewsFeedNotFound, message: "404: Bài viết không tồn tại"},
-          \t\t{name: "not public", err: domain.ErrShareNewsFeedNotPublic, message: "403: Bài viết không thể chia sẻ do không phải công khai"},
-          \t}
-
-          \tfor _, tt := range tests {
-          \t\tt.Run(tt.name, func(t *testing.T) {
-          \t\t\tgot := status.Convert(mapShareNewsFeedError(tt.err))
-          \t\t\tif got.Code() != codes.Unknown {
-          \t\t\t\tt.Fatalf("code = %s, want %s", got.Code(), codes.Unknown)
-          \t\t\t}
-          \t\t\tif got.Message() != tt.message {
-          \t\t\t\tt.Fatalf("message = %q, want %q", got.Message(), tt.message)
-          \t\t\t}
-          \t\t\tif len(got.Details()) != 0 {
-          \t\t\t\tt.Fatalf("details = %d, want 0", len(got.Details()))
-          \t\t\t}
-          \t\t})
-          \t}
-          }
-
-          func TestMapShareNewsFeedErrorPassesThroughUnrelatedError(t *testing.T) {
-          \twant := errors.New("repository failure")
-          \tif got := mapShareNewsFeedError(want); got != want {
-          \t\tt.Fatalf("got %v, want original error", got)
-          \t}
-          }
-          ''')
-          PY
-
-          gofmt -w \
-            social-service/internal/domain/news_feed_share.go \
-            social-service/internal/usecase/news_feed_share.go \
-            social-service/infra/service/news_feed.go \
-            social-service/infra/service/news_feed_share_error_test.go
-
-          git diff --check
-          test -z "$(git grep -n -E '"'"'"net/http"'"'"|"'"'"common/routes"'"'"|http\.Status(NotFound|Forbidden)|_routes\.Except' -- social-service/internal/usecase/news_feed_share.go || true)"
-          grep -Fq 'domain.ErrShareNewsFeedNotFound' social-service/internal/usecase/news_feed_share.go
-          grep -Fq 'domain.ErrShareNewsFeedNotPublic' social-service/internal/usecase/news_feed_share.go
-          grep -Fq 'status.Error(codes.Unknown, "404: Bài viết không tồn tại")' social-service/infra/service/news_feed.go
-          grep -Fq 'status.Error(codes.Unknown, "403: Bài viết không thể chia sẻ do không phải công khai")' social-service/infra/service/news_feed.go
-          grep -Fq 'return nil, mapShareNewsFeedError(err)' social-service/infra/service/news_feed.go
-
-          changed="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
+          changed="$(git diff --name-only 1c341ff2a1473eae1ec397c98d0962dda76a64e6..HEAD | sort)"
           expected="$(printf '%s\n' \
             social-service/infra/service/news_feed.go \
             social-service/infra/service/news_feed_share_error_test.go \
             social-service/internal/domain/news_feed_share.go \
             social-service/internal/usecase/news_feed_share.go | sort)"
-          printf 'CHANGED_PATHS=\n%s\n' "$changed"
           test "$changed" = "$expected"
-          git diff --stat
-          git diff -- \
-            social-service/infra/service/news_feed.go \
-            social-service/internal/domain/news_feed_share.go \
-            social-service/internal/usecase/news_feed_share.go
-          git diff --no-index /dev/null social-service/infra/service/news_feed_share_error_test.go || test "$?" = 1
+          git diff --check 1c341ff2a1473eae1ec397c98d0962dda76a64e6..HEAD
 
-      - name: Create one semantic commit on proof branch
+          test -z "$(git grep -n -E '"'"'"net/http"'"'"|"'"'"common/routes"'"'"|http\.Status(NotFound|Forbidden)|_routes\.Except' -- social-service/internal/usecase/news_feed_share.go || true)"
+          grep -Fq 'ErrShareNewsFeedNotFound' social-service/internal/domain/news_feed_share.go
+          grep -Fq 'ErrShareNewsFeedNotPublic' social-service/internal/domain/news_feed_share.go
+          grep -Fq 'return nil, domain.ErrShareNewsFeedNotFound' social-service/internal/usecase/news_feed_share.go
+          grep -Fq 'return nil, domain.ErrShareNewsFeedNotPublic' social-service/internal/usecase/news_feed_share.go
+          grep -Fq 'status.Error(codes.Unknown, "404: Bài viết không tồn tại")' social-service/infra/service/news_feed.go
+          grep -Fq 'status.Error(codes.Unknown, "403: Bài viết không thể chia sẻ do không phải công khai")' social-service/infra/service/news_feed.go
+          grep -Fq 'return nil, mapShareNewsFeedError(err)' social-service/infra/service/news_feed.go
+
+          # Existing transport-owned request validation remains intentionally untouched.
+          grep -Fq 'Message: "newsFeedId or shareType is required"' social-service/infra/service/news_feed.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical protobuf generators
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'BDSPro Acceptance'
-          git config user.email '116329073+datvtph41107@users.noreply.github.com'
-          git add \
-            social-service/infra/service/news_feed.go \
-            social-service/infra/service/news_feed_share_error_test.go \
-            social-service/internal/domain/news_feed_share.go \
-            social-service/internal/usecase/news_feed_share.go
-          git commit -m 'refactor(social): localize share error transport mapping'
-          test "$(git rev-parse HEAD^)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-social-share-errors | awk '{print $1}')"
-          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
-          test "$proof_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          test "$canonical_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          git push origin HEAD:refs/heads/final-acceptance/proof-s6-social-share-errors
-          printf 'PROOF_SOURCE_SHA=%s\n' "$(git rev-parse HEAD)"
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf reproducibly
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/social
+          git diff --exit-code
+
+      - name: Test Social owner-local mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./social-service/infra/service -run 'TestMapShareNewsFeedError' -count=1 -v
+
+      - name: Test race vet and build Social
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C social-service test
+          make -C social-service test-race
+          make -C social-service vet
+          make -C social-service build
+
+      - name: Prove Gateway HTTP compatibility from proof mapping
+        shell: bash
+        working-directory: gateway-service
+        run: |
+          set -euo pipefail
+          cat > internal/httperror/social_share_proof_test.go <<'EOF'
+          package httperror
+
+          import (
+            "encoding/json"
+            "net/http"
+            "net/http/httptest"
+            "testing"
+
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+
+          func TestProofSocialShareLegacyUnknownContract(t *testing.T) {
+            cases := []string{
+              "404: Bài viết không tồn tại",
+              "403: Bài viết không thể chia sẻ do không phải công khai",
+            }
+            for _, message := range cases {
+              recorder := httptest.NewRecorder()
+              WriteGRPC(recorder, status.Error(codes.Unknown, message))
+              if recorder.Code != http.StatusInternalServerError {
+                t.Fatalf("status=%d want=%d", recorder.Code, http.StatusInternalServerError)
+              }
+              var body struct {
+                Code int32 `json:"code"`
+                Message string `json:"message"`
+              }
+              if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+                t.Fatal(err)
+              }
+              if body.Code != int32(codes.Unknown) || body.Message != message {
+                t.Fatalf("body=%+v want code=%d message=%q", body, int32(codes.Unknown), message)
+              }
+              t.Logf("HTTP=%d BODY_CODE=%d MESSAGE=%q", recorder.Code, body.Code, body.Message)
+            }
+          }
+          EOF
+          trap 'rm -f internal/httperror/social_share_proof_test.go' EXIT
+          go test ./internal/httperror -run TestProofSocialShareLegacyUnknownContract -count=1 -v
+          rm internal/httperror/social_share_proof_test.go
+          trap - EXIT
+
+      - name: Final source immutability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
