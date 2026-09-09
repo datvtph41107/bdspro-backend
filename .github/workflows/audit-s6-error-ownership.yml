@@ -11,7 +11,7 @@ permissions:
 jobs:
   prove-social-share-legacy-contract:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout exact accepted source
         uses: actions/checkout@v4
@@ -50,6 +50,25 @@ jobs:
         with:
           go-version: '1.25.10'
           cache: false
+
+      - name: Install canonical protobuf generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          git diff --exit-code
 
       - name: Prove current Except to gRPC semantics
         shell: bash
@@ -129,8 +148,10 @@ jobs:
             }
           }
           EOF
+          trap 'rm -f internal/httperror/social_share_audit_test.go' EXIT
           go test ./internal/httperror -run TestAuditSocialShareLegacyUnknownContract -count=1 -v
           rm internal/httperror/social_share_audit_test.go
+          trap - EXIT
 
       - name: Verify no source mutation
         shell: bash
