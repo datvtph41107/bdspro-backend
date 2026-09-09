@@ -96,13 +96,6 @@ jobs:
 
           git diff --check
 
-      - name: Prove typed runtime behavior
-        shell: bash
-        working-directory: assistant-service
-        run: |
-          set -euo pipefail
-          go test ./config ./infra/client
-
       - name: Generate canonical protobuf and Wire graph
         shell: bash
         run: |
@@ -137,6 +130,13 @@ jobs:
           # Canonical generation must not mutate tracked source.
           git diff --exit-code
           git diff --check
+
+      - name: Prove typed runtime behavior
+        shell: bash
+        working-directory: assistant-service
+        run: |
+          set -euo pipefail
+          go test ./config ./infra/client
 
       - name: Compile Assistant
         shell: bash
