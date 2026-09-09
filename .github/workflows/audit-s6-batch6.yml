@@ -20,7 +20,7 @@ jobs:
           ref: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
           fetch-depth: 0
 
-      - name: Exact-SHA ownership archaeology
+      - name: Exact-SHA Assistant versus Intent trace
         shell: bash
         run: |
           set -euo pipefail
@@ -28,24 +28,29 @@ jobs:
           echo '=== EXACT SHA ==='
           git rev-parse HEAD
 
-          echo '=== PRODUCT ASSET LIST METHOD DEFINITIONS / CALLERS ==='
-          echo '-- GetAssetsByProductID all occurrences --'
-          git grep -n 'GetAssetsByProductID' -- '*.go' || true
-          echo '-- GetProductsByAssetID all occurrences --'
-          git grep -n 'GetProductsByAssetID' -- '*.go' || true
-          echo '-- ProductAssetUC production calls --'
-          git grep -n 'ProductAssetUC\.' -- '*.go' || true
+          echo '=== ASSISTANT ANALYZE CALL/REGISTRATION SURFACE ==='
+          git grep -n 'AnalyzeProductText' -- '*.go' '*.proto' '*.yaml' '*.yml' || true
+          echo '-- BdsproInternal.GetSuggest --'
+          git grep -n 'BdsproInternal.GetSuggest\|GetSuggest(ctx' -- '*.go' || true
+          echo '-- exact legacy assistant message --'
+          git grep -n 'failed to get product suggest\|failed to analyze:' -- '*.go' || true
+          echo '-- Assistant handler registration/server construction --'
+          git grep -n 'NewAssistantHandler\|RegisterAssistantServiceServer\|AssistantHandler' -- 'assistant-service/**/*.go' || true
 
-          echo '=== BDSPro USECASE ROUTES OWNERSHIP DEBT ==='
-          git grep -n '_routes\.Except' -- 'bdspro-service/internal/usecases/*.go' 'bdspro-service/internal/usecases/**/*.go' || true
+          echo '=== BDSPRO INTENT CALL/REGISTRATION SURFACE ==='
+          git grep -n 'DetectIntent' -- '*.go' '*.proto' '*.yaml' '*.yml' || true
+          echo '-- IntentUsecase all occurrences --'
+          git grep -n 'IntentUsecase' -- '*.go' || true
+          echo '-- intent protobuf/service/http route symbols --'
+          git grep -niE 'intent(service|handler)|/.*intent|DetectIntent|ExecuteIntent|GetIntentHistory|GetSuggestions' -- 'shared/protobuf/**/*.proto' 'bdspro-service/**/*.go' || true
+          echo '-- exact legacy intent validation message --'
+          git grep -n 'User input không được rỗng' -- '*.go' || true
 
-          echo '=== SHARED ERROR/ROUTE/RESPONSE/FILTER SURFACES ==='
-          git ls-files 'shared/**' | grep -Ei '/(error|errors|route|routes|response|filter|middleware|handler|exception)[^/]*\.go$' || true
-          echo '-- Shared routes/errors symbols referenced outside shared --'
-          git grep -nE 'common/(errors|routes)' -- '*.go' ':!shared/**' || true
+          echo '=== GATEWAY ERROR PRESENTATION SURFACE ==='
+          git grep -n 'ErrorResponse\|runtime.HTTPStatusFromCode\|HTTPStatusFromCode\|ForwardResponse' -- 'gateway-service/**/*.go' 'gateway-service/**/*.yaml' 'gateway-service/**/*.yml' || true
 
-          echo '=== SERVICE-LOCAL USECASE TRANSPORT IMPORTS / RETURNS ==='
-          git grep -nE 'common/(errors|routes)|_routes\.Except|_errors\.' -- '*-service/internal/usecase/*.go' '*-service/internal/usecase/**/*.go' '*-service/internal/usecases/*.go' '*-service/internal/usecases/**/*.go' || true
+          echo '=== SHARED RETURNERROR CONTRACT ==='
+          git grep -n 'func ReturnError\|status.New(codes.Internal' -- 'shared/common/errors/*.go' || true
 
           echo '=== PROTECTED HASH ==='
           sha256sum shared/code/deploy.sh
