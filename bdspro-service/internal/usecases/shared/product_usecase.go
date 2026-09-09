@@ -436,10 +436,8 @@ func (uc *ProductUsecase) syncAllProducts(
 		return nil, err
 	}
 
-	if pageToken == "" {
-		if err := uc.ensureSyncCache(ctx, profileID); err != nil {
-			return nil, err
-		}
+	if err := uc.ensureSyncCache(ctx, profileID); err != nil {
+		return nil, err
 	}
 
 	startScore := lastSync
@@ -521,6 +519,16 @@ func (uc *ProductUsecase) seedFromDB(
 
 	userHash := cache.UserSyncProductsKey(profileID)
 	changeZSet := cache.UserProductsChangeKey(profileID)
+
+	client, clientErr := uc.redisClient.Client(ctx)
+	if clientErr != nil {
+		return clientErr
+	}
+	// A missing generation marker means Redis state is not authoritative.
+	// Rebuild from PostgreSQL instead of merging with potentially stale cache keys.
+	if err := client.Del(ctx, userHash, changeZSet).Err(); err != nil {
+		return err
+	}
 
 	var lastID uint64
 	for {

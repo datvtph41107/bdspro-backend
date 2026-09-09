@@ -19,7 +19,7 @@ type RedisClient struct {
 	logger *flogging.FabricLogger
 }
 
-func NewClient() (*RedisClient, error) {
+func NewClient() (*RedisClient, func(), error) {
 	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     configs.AppProperties.Redis.Host,
@@ -33,7 +33,12 @@ func NewClient() (*RedisClient, error) {
 	} else {
 		logger.Info("Connected to Redis")
 	}
-	return rc, nil
+	cleanup := func() {
+		if err := rc.Close(); err != nil {
+			logger.Warnf("Failed to close Redis client: %v", err)
+		}
+	}
+	return rc, cleanup, nil
 }
 
 func (r *RedisClient) Client(context.Context) (*redis.Client, error) {

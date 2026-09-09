@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - final-acceptance/source-canonicalization
+      - 'final-acceptance/proof-s4-bdspro-redis-*'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,18 @@ jobs:
     timeout-minutes: 30
     env:
       QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      S4_REDIS_ADDR: 127.0.0.1:6379
+
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
 
     steps:
       - name: Checkout exact commit
@@ -49,29 +62,24 @@ jobs:
             ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
           done
 
-      - name: Verify single Redis construction and lifecycle ownership
+      - name: Verify canonical Redis ownership invariants
         shell: bash
         run: |
           set -euo pipefail
           count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
           test "$count" = "1"
           git grep -n 'redis.NewClient(' -- bdspro-service/infra/redis/runtime.go
-          ! git grep -n 'redis.NewClient(' -- bdspro-service/infra/providers
-          grep -q 'func NewRedisProvider(client \*redis_cli.RedisClient)' bdspro-service/infra/providers/redis_provider.go
-          grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' bdspro-service/initial/runtime.go
-          grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
+          test ! -e bdspro-service/infra/providers/redis_provider.go
+          ! git grep -n 'NewRedisProvider' -- bdspro-service
+          grep -Fq 'func NewClient() (*RedisClient, func(), error)' bdspro-service/infra/redis/runtime.go
           grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
           ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
           ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
-
-      - name: Verify Redis-loss rebuild semantics
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -q 'UserSyncTimeKey(profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          ! grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' bdspro-service/initial/runtime.go
+          ! grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
           grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
+          grep -q 'client.Del(ctx, userHash, changeZSet)' bdspro-service/internal/usecases/shared/product_usecase.go
           grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
-          ! grep -q 'len(results) == 0 && pageToken == "" && lastSync == 0' bdspro-service/internal/usecases/shared/product_usecase.go
 
       - name: Generate protobuf and prove Wire cleanliness
         shell: bash
@@ -81,8 +89,264 @@ jobs:
           make -C shared/code wire bdspro
           git diff --exit-code -- bdspro-service/wire/wire_gen.go
           git diff --check
+          grep -q 'redis_cli.NewClient()' bdspro-service/wire/wire_gen.go
 
-      - name: Compile test and vet BDSPro
+      - name: Prove Redis lifecycle and cache-loss recovery at runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > bdspro-service/infra/redis/s4_acceptance_test.go <<'GOEOF'
+          package redis_cli
+
+          import (
+              configs "bdspro/config"
+              "context"
+              "os"
+              "testing"
+          )
+
+          func TestS4RedisLifecycleCleanup(t *testing.T) {
+              addr := os.Getenv("S4_REDIS_ADDR")
+              if addr == "" {
+                  t.Fatal("S4_REDIS_ADDR is required")
+              }
+              configs.AppProperties.Redis.Host = addr
+              configs.AppProperties.Redis.Password = ""
+
+              rc, cleanup, err := NewClient()
+              if err != nil {
+                  t.Fatalf("NewClient: %v", err)
+              }
+              client, err := rc.Client(context.Background())
+              if err != nil {
+                  t.Fatalf("Client: %v", err)
+              }
+              if err := client.Ping(context.Background()).Err(); err != nil {
+                  t.Fatalf("ping before cleanup: %v", err)
+              }
+
+              cleanup()
+
+              if err := client.Ping(context.Background()).Err(); err == nil {
+                  t.Fatal("Redis pool still accepts commands after Wire-owned cleanup")
+              }
+          }
+          GOEOF
+
+          cat > bdspro-service/internal/usecases/shared/s4_redis_recovery_acceptance_test.go <<'GOEOF'
+          package shared_usecase
+
+          import (
+              configs "bdspro/config"
+              redis_cli "bdspro/infra/redis"
+              "bdspro/infra/redis/cache"
+              "bdspro/internal/domain"
+              "bdspro/internal/repo"
+              _models "common/models"
+              "context"
+              "os"
+              "sort"
+              "strconv"
+              "testing"
+              "time"
+
+              "github.com/redis/go-redis/v9"
+          )
+
+          type s4ProductRepo struct {
+              repo.ProductRepo
+              items []domain.ProductUser
+              calls int
+          }
+
+          func (r *s4ProductRepo) GetAllTimestampsForSync(
+              ctx context.Context,
+              profileID uint64,
+              lastID uint64,
+              limit int,
+          ) ([]domain.ProductUser, error) {
+              r.calls++
+              items := append([]domain.ProductUser(nil), r.items...)
+              sort.Slice(items, func(i, j int) bool { return items[i].ID < items[j].ID })
+              out := make([]domain.ProductUser, 0, limit)
+              for _, item := range items {
+                  if item.ProfileID != profileID || item.ID <= lastID {
+                      continue
+                  }
+                  out = append(out, item)
+                  if len(out) == limit {
+                      break
+                  }
+              }
+              return out, nil
+          }
+
+          func s4Product(id, profileID uint64, updated time.Time) domain.ProductUser {
+              return domain.ProductUser{
+                  BaseEntity: _models.BaseEntity{
+                      ID:        id,
+                      UpdatedAt: &updated,
+                  },
+                  ProfileID: profileID,
+                  ProductID: id,
+              }
+          }
+
+          func s4Redis(t *testing.T) (*redis_cli.RedisClient, func(), *redis.Client) {
+              t.Helper()
+              addr := os.Getenv("S4_REDIS_ADDR")
+              if addr == "" {
+                  t.Fatal("S4_REDIS_ADDR is required")
+              }
+              configs.AppProperties.Redis.Host = addr
+              configs.AppProperties.Redis.Password = ""
+              rc, cleanup, err := redis_cli.NewClient()
+              if err != nil {
+                  t.Fatalf("NewClient: %v", err)
+              }
+              client, err := rc.Client(context.Background())
+              if err != nil {
+                  cleanup()
+                  t.Fatalf("Client: %v", err)
+              }
+              if err := client.Ping(context.Background()).Err(); err != nil {
+                  cleanup()
+                  t.Fatalf("ping: %v", err)
+              }
+              if err := client.FlushDB(context.Background()).Err(); err != nil {
+                  cleanup()
+                  t.Fatalf("flush: %v", err)
+              }
+              t.Cleanup(func() {
+                  _ = client.FlushDB(context.Background()).Err()
+                  cleanup()
+              })
+              return rc, cleanup, client
+          }
+
+          func TestS4MissingMarkerRebuildsCleanCache(t *testing.T) {
+              ctx := context.Background()
+              rc, _, client := s4Redis(t)
+              profileID := uint64(42)
+              t1 := time.UnixMilli(1000)
+              t2 := time.UnixMilli(2000)
+              t3 := time.UnixMilli(3000)
+
+              store := &s4ProductRepo{items: []domain.ProductUser{
+                  s4Product(1, profileID, t1),
+                  s4Product(2, profileID, t2),
+              }}
+              uc := &ProductUsecase{ProductRepo: store, redisClient: rc}
+              userHash := cache.UserSyncProductsKey(profileID)
+              changeKey := cache.UserProductsChangeKey(profileID)
+              markerKey := cache.UserSyncTimeKey(profileID)
+
+              if err := client.HSet(ctx, userHash, "999", "stale").Err(); err != nil {
+                  t.Fatal(err)
+              }
+              if err := client.ZAdd(ctx, changeKey, redis.Z{Score: 999, Member: uint64(999)}).Err(); err != nil {
+                  t.Fatal(err)
+              }
+
+              if err := uc.ensureSyncCache(ctx, profileID); err != nil {
+                  t.Fatalf("initial rebuild: %v", err)
+              }
+              if exists, _ := client.HExists(ctx, userHash, "999").Result(); exists {
+                  t.Fatal("stale hash entry survived clean rebuild")
+              }
+              if ready, _ := client.Exists(ctx, markerKey).Result(); ready != 1 {
+                  t.Fatal("generation marker was not recreated")
+              }
+              firstCalls := store.calls
+              if err := uc.ensureSyncCache(ctx, profileID); err != nil {
+                  t.Fatalf("ready cache check: %v", err)
+              }
+              if store.calls != firstCalls {
+                  t.Fatal("ready marker did not prevent unnecessary DB reseed")
+              }
+
+              store.items = []domain.ProductUser{
+                  s4Product(2, profileID, t2),
+                  s4Product(3, profileID, t3),
+              }
+              if err := client.Del(ctx, markerKey).Err(); err != nil {
+                  t.Fatal(err)
+              }
+              if err := client.HSet(ctx, userHash, "777", "stale-again").Err(); err != nil {
+                  t.Fatal(err)
+              }
+              if err := client.ZAdd(ctx, changeKey, redis.Z{Score: 777, Member: uint64(777)}).Err(); err != nil {
+                  t.Fatal(err)
+              }
+
+              if err := uc.ensureSyncCache(ctx, profileID); err != nil {
+                  t.Fatalf("rebuild after marker loss: %v", err)
+              }
+              for _, staleID := range []uint64{1, 777} {
+                  exists, err := client.HExists(ctx, userHash, strconv.FormatUint(staleID, 10)).Result()
+                  if err != nil {
+                      t.Fatal(err)
+                  }
+                  if exists {
+                      t.Fatalf("stale product %d survived marker-loss rebuild", staleID)
+                  }
+              }
+              if exists, _ := client.HExists(ctx, userHash, "3").Result(); !exists {
+                  t.Fatal("authoritative DB product 3 missing after rebuild")
+              }
+          }
+
+          func TestS4CacheLossBetweenPagesRecovers(t *testing.T) {
+              ctx := context.Background()
+              rc, _, client := s4Redis(t)
+              profileID := uint64(84)
+              store := &s4ProductRepo{items: []domain.ProductUser{
+                  s4Product(1, profileID, time.UnixMilli(1000)),
+                  s4Product(2, profileID, time.UnixMilli(2000)),
+                  s4Product(3, profileID, time.UnixMilli(3000)),
+              }}
+              uc := &ProductUsecase{ProductRepo: store, redisClient: rc}
+
+              page1, err := uc.syncAllProducts(ctx, profileID, 0, 1, "")
+              if err != nil {
+                  t.Fatalf("page 1: %v", err)
+              }
+              if len(page1.ProductIDs) != 1 || page1.ProductIDs[0].ID != 1 || page1.NextToken == "" {
+                  t.Fatalf("unexpected page 1: %+v", page1)
+              }
+
+              callsBeforeLoss := store.calls
+              if err := client.FlushDB(ctx).Err(); err != nil {
+                  t.Fatal(err)
+              }
+
+              page2, err := uc.syncAllProducts(ctx, profileID, 0, 1, page1.NextToken)
+              if err != nil {
+                  t.Fatalf("page 2 after Redis loss: %v", err)
+              }
+              if store.calls <= callsBeforeLoss {
+                  t.Fatal("continuation page did not rebuild cache after Redis loss")
+              }
+              if len(page2.ProductIDs) != 1 || page2.ProductIDs[0].ID != 2 {
+                  t.Fatalf("unexpected page 2 after recovery: %+v", page2)
+              }
+          }
+          GOEOF
+
+          (
+            cd bdspro-service
+            go test ./infra/redis -run '^TestS4RedisLifecycleCleanup$' -count=1 -v
+            go test ./internal/usecases/shared -run '^TestS4' -count=1 -v
+          )
+
+          rm -f \
+            bdspro-service/infra/redis/s4_acceptance_test.go \
+            bdspro-service/internal/usecases/shared/s4_redis_recovery_acceptance_test.go
+
+          git diff --check
+
+      - name: Compile test vet and build BDSPro
         shell: bash
         working-directory: bdspro-service
         run: |

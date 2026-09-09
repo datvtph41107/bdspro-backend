@@ -335,7 +335,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_public.NewPublicRouter,
 	bdspro_infra_postgres_audit.NewPushRepo,
 	bdspro_internal_usecases.NewRecordHistoryUsecase,
-	bdspro_infra_providers.NewRedisProvider,
 	bdspro_infra_mapper.NewRegionMapper,
 	bdspro_internal_usecases_admin.NewRegionUsecase,
 	bdspro_internal_usecases_shared.NewRequestUsecase,
