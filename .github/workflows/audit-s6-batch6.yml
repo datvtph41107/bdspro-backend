@@ -1,0 +1,52 @@
+name: Audit S6 Batch 6 Ownership Candidates
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
+          fetch-depth: 0
+
+      - name: Exact-SHA ownership archaeology
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "0e7ff07db4d61d0b26f5f792237270fdadf52a7f"
+          echo '=== EXACT SHA ==='
+          git rev-parse HEAD
+
+          echo '=== PRODUCT ASSET LIST METHOD DEFINITIONS / CALLERS ==='
+          echo '-- GetAssetsByProductID all occurrences --'
+          git grep -n 'GetAssetsByProductID' -- '*.go' || true
+          echo '-- GetProductsByAssetID all occurrences --'
+          git grep -n 'GetProductsByAssetID' -- '*.go' || true
+          echo '-- ProductAssetUC production calls --'
+          git grep -n 'ProductAssetUC\.' -- '*.go' || true
+
+          echo '=== BDSPro USECASE ROUTES OWNERSHIP DEBT ==='
+          git grep -n '_routes\.Except' -- 'bdspro-service/internal/usecases/*.go' 'bdspro-service/internal/usecases/**/*.go' || true
+
+          echo '=== SHARED ERROR/ROUTE/RESPONSE/FILTER SURFACES ==='
+          git ls-files 'shared/**' | grep -Ei '/(error|errors|route|routes|response|filter|middleware|handler|exception)[^/]*\.go$' || true
+          echo '-- Shared routes/errors symbols referenced outside shared --'
+          git grep -nE 'common/(errors|routes)' -- '*.go' ':!shared/**' || true
+
+          echo '=== SERVICE-LOCAL USECASE TRANSPORT IMPORTS / RETURNS ==='
+          git grep -nE 'common/(errors|routes)|_routes\.Except|_errors\.' -- '*-service/internal/usecase/*.go' '*-service/internal/usecase/**/*.go' '*-service/internal/usecases/*.go' '*-service/internal/usecases/**/*.go' || true
+
+          echo '=== PROTECTED HASH ==='
+          sha256sum shared/code/deploy.sh
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
