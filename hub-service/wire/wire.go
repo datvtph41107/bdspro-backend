@@ -6,7 +6,6 @@ package wire
 import (
 	_db "common/db"
 	common_injection "common/injection"
-	_provider "common/provider"
 	common_utils "common/utils"
 	"github.com/google/wire"
 	"hub/config"
@@ -29,7 +28,6 @@ import (
 var wireSet = wire.NewSet(
 	hub_infra_db.NewDB,
 	_db.NewTransactionRepo,
-	_provider.SyncProviderSet,
 	wire.Bind(new(hub_internal_interface.INotificationClient), new(*hub_infra_client.NotificationClient)),
 	wire.Bind(new(hub_internal_interface.IUserClient), new(*hub_infra_client.UserClient)),
 	wire.Bind(new(hub_internal_repo.IEventQueueRepo), new(*hub_infra_postgre.EventQueueRepo)),
