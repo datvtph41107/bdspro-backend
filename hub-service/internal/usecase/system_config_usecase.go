@@ -2,24 +2,18 @@ package usecase
 
 import (
 	_errors "common/errors"
-	"common/pkg/crypto"
 	"context"
 	"fmt"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
 	"hub/internal/repo"
-	"os"
-	"sync"
-
-	"github.com/spf13/viper"
 )
 
 type SystemConfigUsecase struct {
 	persistData dto.SystemConfigPersist
 	defaultData dto.SystemConfigPersist
 	repo        repo.ISystemConfigRepo
-	encryptor   crypto.Encryptor
 }
 
 func NewSystemConfigUsecase(persistData dto.SystemConfigPersist, repo repo.ISystemConfigRepo) *SystemConfigUsecase {
@@ -27,130 +21,7 @@ func NewSystemConfigUsecase(persistData dto.SystemConfigPersist, repo repo.ISyst
 		persistData: persistData,
 		defaultData: persistData,
 		repo:        repo,
-		encryptor:   getEncryptor(),
 	}
-}
-
-var (
-	globalEncryptor     crypto.Encryptor
-	globalEncryptorOnce sync.Once
-)
-
-func getEncryptor() crypto.Encryptor {
-	globalEncryptorOnce.Do(func() {
-		// Initialize key manager
-		keyManager := crypto.GetGlobalKeyManager()
-
-		// Try to initialize from config
-		ctx := context.Background()
-		if err := keyManager.InitializeFromConfig(ctx); err != nil {
-			// Fallback to env if config fails
-			passphrase := os.Getenv("CONFIG_ENCRYPTION_PASSPHRASE")
-			if passphrase == "" {
-				// Log warning but don't crash - encryption will be disabled
-				// In production, you might want to panic here
-				globalEncryptor = nil
-				return
-			}
-			keyManager.InitializeWithPassphrase(ctx, passphrase)
-		}
-
-		// Create encryptor
-		encryptor, err := keyManager.GetActiveEncryptor(ctx)
-		if err != nil {
-			globalEncryptor = nil
-			return
-		}
-		globalEncryptor = encryptor
-	})
-	return globalEncryptor
-}
-
-// GetEncryptedSystemConfigByKey lấy config theo key và trả về giá trị đã mã hóa
-func (uc *SystemConfigUsecase) GetEncryptedSystemConfigByKey(ctx context.Context, key string) (*dto.SystemConfigResponse, error) {
-	// Validate key
-	if key == "" {
-		return nil, _errors.BadRequestException("key is required")
-	}
-
-	// Lấy config từ DB
-	config, err := uc.repo.GetByKey(ctx, key)
-	if err != nil {
-		return nil, _errors.NotFoundException(fmt.Sprintf("config not found: %s", key))
-	}
-
-	// Kiểm tra encryption có enabled không
-	if !viper.GetBool("encryption.enabled") {
-		return &dto.SystemConfigResponse{
-			Key:   config.Key,
-			Value: config.Value,
-			// Encrypted: false,
-			// KeyID:     "",
-			// Version:   "none",
-		}, nil
-	}
-
-	// Kiểm tra encryptor có sẵn sàng không
-	if uc.encryptor == nil {
-		// Encryption enabled but encryptor not available - return error
-		return nil, _errors.InternalServerException("encryption service not available")
-	}
-
-	// Mã hóa value
-	encryptedValue, err := uc.encryptor.Encrypt(ctx, config.Value)
-	if err != nil {
-		return nil, _errors.InternalServerException(fmt.Sprintf("encryption failed: %v", err))
-	}
-
-	return &dto.SystemConfigResponse{
-		Key:   config.Key,
-		Value: encryptedValue,
-		// Encrypted: true,
-		// KeyID:     uc.encryptor.GetKeyID(),
-		// Version:   "v1",
-	}, nil
-}
-
-// GetEncryptedUserSettingsByGroup lấy settings đã mã hóa theo group
-func (uc *SystemConfigUsecase) GetEncryptedUserSettingsByGroup(ctx context.Context, groupKey string) (map[string]string, string, bool, error) {
-	// Parse groupKey
-	configGroup, err := enums.GetSystemConfigGroup(groupKey)
-	if err != nil {
-		return nil, "", false, _errors.BadRequestException(fmt.Sprintf("invalid group key: %s", groupKey))
-	}
-
-	// Lấy configs từ DB
-	configs, err := uc.repo.GetByGroup(ctx, configGroup)
-	if err != nil {
-		return nil, "", false, _errors.InternalServerException("failed to get settings")
-	}
-
-	// Kiểm tra encryption
-	encryptionEnabled := viper.GetBool("encryption.enabled")
-
-	// Convert sang map key-value
-	settings := make(map[string]string)
-	for _, cfg := range configs {
-		if encryptionEnabled && uc.encryptor != nil {
-			// Mã hóa value
-			encrypted, err := uc.encryptor.Encrypt(ctx, cfg.Value)
-			if err != nil {
-				// Log error, use empty string
-				settings[cfg.Key] = ""
-				continue
-			}
-			settings[cfg.Key] = encrypted
-		} else {
-			settings[cfg.Key] = cfg.Value
-		}
-	}
-
-	keyID := ""
-	if uc.encryptor != nil {
-		keyID = uc.encryptor.GetKeyID()
-	}
-
-	return settings, keyID, encryptionEnabled && uc.encryptor != nil, nil
 }
 
 // GetSystemConfigsByGroup lấy danh sách system config theo groupKey
