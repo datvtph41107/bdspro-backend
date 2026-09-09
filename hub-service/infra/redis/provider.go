@@ -1,21 +1,37 @@
 package redis
 
 import (
-	_redis "common/redis"
+	common_redis "common/redis"
 	"context"
+	"fmt"
+	"hub/config"
 	providers "hub/internal/provider"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type RedisProvider struct {
-	*_redis.RedisService
+	*common_redis.RedisService
 }
 
-func NewRedisProvider() providers.CacheProvider {
-	return &RedisProvider{
-		RedisService: _redis.NewRedisService(),
+func NewRedisService(runtime config.Runtime) (*common_redis.RedisService, func(), error) {
+	service, err := common_redis.Open(common_redis.Config{
+		Address:  runtime.Redis.Address,
+		Password: runtime.Redis.Password,
+		DB:       runtime.Redis.DB,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("open hub redis: %w", err)
 	}
+
+	cleanup := func() {
+		_ = service.Close()
+	}
+	return service, cleanup, nil
+}
+
+func NewRedisProvider(service *common_redis.RedisService) providers.CacheProvider {
+	return &RedisProvider{RedisService: service}
 }
 
 func (r *RedisProvider) LRange(c context.Context, key string, start, stop int64) ([]string, error) {
@@ -53,6 +69,7 @@ func (r *RedisProvider) Get(c context.Context, key string) (string, error) {
 	}
 	return result, err
 }
+
 func (r *RedisProvider) Set(c context.Context, key string, value string) error {
 	client, err := r.Instance()
 	if err != nil {

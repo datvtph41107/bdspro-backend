@@ -1,0 +1,200 @@
+name: Acceptance Hub Runtime Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+      - 'final-acceptance/proof-s5-hub-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-hub-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hub-runtime:
+    name: Hub runtime ownership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+
+      - name: Verify Hub typed runtime ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f hub-service/config/runtime.go
+          test -f hub-service/config/runtime_test.go
+          test -f hub-service/infra/db/provider.go
+
+          readers="$(
+            grep -RInE \
+              'os\.(Getenv|LookupEnv)|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)|configloader\.RequiredString|rpcenv\.LoadTransportConfig' \
+              hub-service \
+              --include='*.go' \
+              --exclude='*_test.go' \
+              --exclude='wire_gen.go' \
+            || true
+          )"
+          printf '%s\n' "$readers"
+
+          escaped="$(
+            printf '%s\n' "$readers" \
+            | grep -v '^hub-service/config/' \
+            | grep -v '^hub-service/internal/usecase/system_config_usecase.go:' \
+            || true
+          )"
+          if [ -n "$escaped" ]; then
+            echo 'Hub runtime reader escaped canonical config ownership:' >&2
+            printf '%s\n' "$escaped" >&2
+            exit 1
+          fi
+
+          deferred="$(
+            printf '%s\n' "$readers" \
+            | grep '^hub-service/internal/usecase/system_config_usecase.go:' \
+            || true
+          )"
+          test -n "$deferred"
+          printf '%s\n' "$deferred" | grep -Eq 'CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled'
+          if printf '%s\n' "$deferred" | grep -Ev 'CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled'; then
+            echo 'Unexpected deferred SystemConfig runtime reader' >&2
+            exit 1
+          fi
+
+          test "$(
+            grep -RIl 'rpcenv\.LoadTransportConfig' hub-service \
+              --include='*.go' --exclude='*_test.go' --exclude='wire_gen.go' \
+            | sort
+          )" = 'hub-service/config/runtime.go'
+
+          grep -Fq 'type Runtime struct {' hub-service/config/runtime.go
+          grep -Fq 'Transport             qhprorpc.TransportConfig' hub-service/config/runtime.go
+          grep -Fq 'runtime, err := config.NewRuntime()' hub-service/cmd/grpc/main.go
+          grep -Fq 'wire.InitializeApp(runtime)' hub-service/cmd/grpc/main.go
+          grep -Fq 'runtime.GRPCPort' hub-service/cmd/grpc/main.go
+          grep -Fq 'qhprorpc.ServerTransport(runtime.Transport)' hub-service/cmd/grpc/main.go
+
+          if grep -Eq 'viper\.|configloader\.|rpcenv\.LoadTransportConfig|os\.(Getenv|LookupEnv)' \
+            hub-service/main.go \
+            hub-service/cmd/grpc/main.go \
+            hub-service/initial/startup.go \
+            hub-service/infra/rpc/providers.go \
+            hub-service/infra/rpc/user.go \
+            hub-service/infra/db/provider.go \
+            hub-service/infra/redis/provider.go \
+            hub-service/infra/middleware/api_key_interceptor.go
+          then
+            echo 'Hub composition/infra reads process runtime directly' >&2
+            exit 1
+          fi
+
+          grep -Fq 'common_db.Open(common_db.DatabaseConfig{' hub-service/infra/db/provider.go
+          grep -Fq 'common_redis.Open(common_redis.Config{' hub-service/infra/redis/provider.go
+          grep -Fq 'func NewRedisService(runtime config.Runtime)' hub-service/infra/redis/provider.go
+          grep -Fq 'func NewRedisProvider(service *common_redis.RedisService)' hub-service/infra/redis/provider.go
+          grep -Fq 'runtime.BDSProRPCTarget' hub-service/infra/rpc/providers.go
+          grep -Fq 'runtime.NotificationRPCTarget' hub-service/infra/rpc/providers.go
+          grep -Fq 'runtime.UserRPCTarget' hub-service/infra/rpc/user.go
+          grep -Fq 'runtime.Transport' hub-service/infra/rpc/providers.go
+          grep -Fq 'runtime.Transport' hub-service/infra/rpc/user.go
+
+          grep -Fq 'protectedMethods []string' hub-service/infra/middleware/api_key_interceptor.go
+          if grep -Fq 'config.AppProperties' hub-service/infra/middleware/api_key_interceptor.go; then
+            echo 'Hub API-key middleware still reads global AppProperties' >&2
+            exit 1
+          fi
+
+          grep -Fq 'flogging.MustGetLogger(runtime.ServerName)' hub-service/initial/startup.go
+          if grep -Fq 'viper.AutomaticEnv()' hub-service/main.go; then
+            echo 'Hub root duplicates configloader Viper setup' >&2
+            exit 1
+          fi
+
+          grep -Fq '"notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub"' shared/code/script.sh
+          grep -Fq 'hub_infra_redis.NewRedisService' hub-service/wire/wire.go
+          grep -Fq 'hub_infra_redis.NewRedisProvider' hub-service/wire/wire.go
+          if grep -Fq '_provider.SyncProviderSet' hub-service/wire/wire.go; then
+            echo 'Hub authored Wire graph still imports legacy shared Redis provider set' >&2
+            exit 1
+          fi
+
+          git diff --check
+
+      - name: Generate canonical protobuf and Wire graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+
+          rm -f hub-service/wire/wire_gen.go
+          make -C shared/code wire hub
+
+          test -f hub-service/wire/wire_gen.go
+          git check-ignore -q hub-service/wire/wire_gen.go
+
+          grep -Fq 'func InitializeApp(runtime config.Runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewDB(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewBdsproRPCClient(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewNotificationRPCClient(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewAdminUserProfileClient(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewRedisService(runtime)' hub-service/wire/wire_gen.go
+          grep -Fq 'NewRedisProvider(' hub-service/wire/wire_gen.go
+          grep -Fq 'NewInitialApp(' hub-service/wire/wire_gen.go
+
+          wire_source_first="$(sha256sum hub-service/wire/wire.go | awk '{print $1}')"
+          wire_gen_first="$(sha256sum hub-service/wire/wire_gen.go | awk '{print $1}')"
+
+          make -C shared/code wire hub
+
+          wire_source_second="$(sha256sum hub-service/wire/wire.go | awk '{print $1}')"
+          wire_gen_second="$(sha256sum hub-service/wire/wire_gen.go | awk '{print $1}')"
+
+          test "$wire_source_first" = "$wire_source_second"
+          test "$wire_gen_first" = "$wire_gen_second"
+
+          git diff --exit-code
+          git diff --check
+
+      - name: Prove Hub runtime behavior
+        shell: bash
+        working-directory: hub-service
+        run: |
+          set -euo pipefail
+          go test ./config ./infra/db ./infra/rpc ./infra/redis ./infra/middleware
+
+      - name: Compile Hub
+        shell: bash
+        working-directory: hub-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go test -race ./...
+          go vet ./...
+          go build ./...
