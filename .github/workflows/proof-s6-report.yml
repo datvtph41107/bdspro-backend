@@ -14,24 +14,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout exact proof commit
+      - name: Checkout exact clean semantic source SHA
         uses: actions/checkout@v4
         with:
+          ref: 0196c514f018b4aad5f49cabc8dbdfb0a28abc82
           fetch-depth: 0
 
-      - name: Verify immutable proof authority and bounded delta
+      - name: Verify immutable clean proof authority and bounded delta
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD)" = "0196c514f018b4aad5f49cabc8dbdfb0a28abc82"
+          test "$(git rev-parse HEAD^)" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
           canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          clean_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-report-clean | awk '{print $1}')"
           test "$canonical_remote" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
+          test "$clean_remote" = "0196c514f018b4aad5f49cabc8dbdfb0a28abc82"
           test -d shared/protobuf
           test -d organization-service
           test -d map-service
           echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
-          git diff --check 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD
-          changed="$(git diff --name-only 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD | grep -v '^.github/workflows/proof-s6-report.yml$' | sort || true)"
+          git diff --check 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b..HEAD
+          changed="$(git diff --name-only 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b..HEAD | sort)"
           expected="$(printf '%s\n' \
             social-service/infra/service/report.go \
             social-service/infra/service/report_error_test.go \
@@ -162,6 +166,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD)" = "0196c514f018b4aad5f49cabc8dbdfb0a28abc82"
           git diff --exit-code
           test -z "$(git status --porcelain)"
