@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	"context"
-	"errors"
+	stderrors "errors"
 	pb_social "pb/types/social"
 
 	"social/infra/mapper"
@@ -13,6 +13,8 @@ import (
 	"social/internal/enums"
 	"social/internal/usecase"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -27,10 +29,23 @@ func NewReportService(reportReasonUsecase *usecase.ReportReasonUsecase, reportUs
 	return &ReportService{reportReasonUsecase: reportReasonUsecase, reportUsecase: reportUsecase, reportMapper: mapper.NewReportMapper()}
 }
 
+func mapReportError(err error) error {
+	switch {
+	case stderrors.Is(err, domain.ErrReportReasonNotFound):
+		return status.Error(codes.Unknown, "lý do báo cáo không tồn tại")
+	case stderrors.Is(err, domain.ErrReportAlreadySubmitted):
+		return status.Error(codes.Unknown, "bạn đã gửi báo cáo")
+	case stderrors.Is(err, domain.ErrReportTargetUnavailable):
+		return status.Error(codes.Unknown, "bài viết không tồn tại hoặc không thể báo cáo")
+	default:
+		return err
+	}
+}
+
 func (s *ReportService) CreateReportReason(ctx context.Context, req *pb_social.ReportReason) (*pb_social.ReportReason, error) {
 	reportReason := s.reportMapper.PbReportReasonToDomain(req)
 	if reportReason.ReasonName == "" {
-		return nil, errors.New("name is required")
+		return nil, stderrors.New("name is required")
 	}
 	_, err := s.reportReasonUsecase.CreateReportReason(ctx, reportReason)
 	if err != nil {
@@ -42,7 +57,7 @@ func (s *ReportService) CreateReportReason(ctx context.Context, req *pb_social.R
 func (s *ReportService) UpdateReportReason(ctx context.Context, req *pb_social.ReportReason) (*pb_social.ReportReason, error) {
 	reportReason := s.reportMapper.PbReportReasonToDomain(req)
 	if reportReason.ReasonName == "" {
-		return nil, errors.New("name is required")
+		return nil, stderrors.New("name is required")
 	}
 	_, err := s.reportReasonUsecase.UpdateReportReason(ctx, reportReason)
 	if err != nil {
@@ -116,7 +131,7 @@ func (s *ReportService) GetAllReportReason(ctx context.Context, req *emptypb.Emp
 // @Router /report/submit [post]
 func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportRequest) (*pb_social.ReportResponse, error) {
 	if req.TargetId == 0 || req.ReasonId == 0 {
-		return nil, errors.New("targetId, reasonId are required")
+		return nil, stderrors.New("targetId, reasonId are required")
 	}
 	report := &domain.Report{
 		Content:  req.Content,
@@ -125,7 +140,7 @@ func (s *ReportService) SubmitReport(ctx context.Context, req *pb_social.ReportR
 	}
 	report, err := s.reportUsecase.CreateReport(ctx, report)
 	if err != nil {
-		return nil, err
+		return nil, mapReportError(err)
 	}
 	return &pb_social.ReportResponse{
 		Id:         report.ID,
