@@ -81,6 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(go list -m)" = "chat"
+          test "$(go env GOVERSION)" = "go1.25.10"
           cat > /tmp/generic_error_probe.go <<'EOF'
           package main
           import (
@@ -110,7 +111,7 @@ jobs:
           go test ./errors
           go vet ./errors
 
-      - name: Test and compile chat-v1 through canonical Make vocabulary
+      - name: Test race vet and build chat-v1 as isolated module
         shell: bash
         working-directory: chat-v1-service
         env:
@@ -118,12 +119,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(go list -m)" = "chat"
-          make test
-          make test-race
-          make vet
-          make build
-          test -x bin/chat-v1-service
-          make clean
+          test "$(go env GOVERSION)" = "go1.25.10"
+          go test -count=1 ./...
+          go test -race -count=1 ./...
+          go vet ./...
+          go build ./...
 
       - name: Final source immutability check
         shell: bash
