@@ -75,11 +75,12 @@ jobs:
           test_path.write_text(test_content)
           PY
           gofmt -w assistant-service/internal/usecases/assistant_usecase.go assistant-service/infra/handler/assistant_handler.go assistant-service/infra/handler/assistant_product_suggest_error_test.go
-          mapfile -t changed < <(git diff --name-only | sort)
+          mapfile -t changed < <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)
           expected=(assistant-service/infra/handler/assistant_handler.go assistant-service/infra/handler/assistant_product_suggest_error_test.go assistant-service/internal/usecases/assistant_usecase.go)
+          printf 'candidate paths:\n%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq "${#expected[@]}"
           for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
-          ! git diff --name-only | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
+          ! printf '%s\n' "${changed[@]}" | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
 
       - name: Create one semantic commit and push non-force
