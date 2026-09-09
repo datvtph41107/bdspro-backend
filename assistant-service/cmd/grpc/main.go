@@ -10,35 +10,29 @@ import (
 
 	assistantpb "pb/types/assistant"
 
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func RunGRPCServer() {
-	// Composition root resolve environment/topology đúng một lần. Business
-	// provider chỉ đọc giá trị đã được Viper nạp từ profile này.
+	// Composition root resolves environment/topology and loads runtime.yml once.
+	// The Wire graph then materializes typed Assistant config from that loaded state.
 	selection, err := configloader.LoadRuntimeYML()
 	if err != nil {
 		log.Fatalf("load assistant runtime config: %v", err)
 	}
-	// Get port from config
-	grpcPort := viper.GetString("app.port.grpc")
-	if grpcPort == "" {
-		grpcPort = "50061"
-	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
-	if err != nil {
-		log.Fatalf("Failed to listen on port %s: %v", grpcPort, err)
-	}
-
-	// Initialize dependencies
 	assistantHandler, cleanup, err := wire.InitializeApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize dependencies: %v", err)
 	}
 	defer cleanup()
+
+	grpcPort := assistantHandler.Runtime.GRPCPort
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
+	if err != nil {
+		log.Fatalf("Failed to listen on port %s: %v", grpcPort, err)
+	}
 
 	// Create gRPC server — max msg đủ cho ClassifyDocumentWithGemini (file inline ~15MB).
 	const grpcMaxMsgBytes = 32 << 20

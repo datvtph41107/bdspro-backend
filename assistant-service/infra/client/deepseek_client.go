@@ -1,6 +1,7 @@
 package client
 
 import (
+	"assistant/config"
 	"assistant/internal/dto"
 	"bytes"
 	_dto "common/domain/dto"
@@ -9,56 +10,31 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
-	"time"
-
-	"github.com/spf13/viper"
 )
 
 // ++@bind: assistant/internal/interface/provider.DeepseekProvider
 
 // @bind: assistant/internal/interface/provider.DeepseekProvider
 type DeepseekClient struct {
-	apiKey     string
-	baseURL    string
-	model      string
-	maxTokens  int
-	httpClient *http.Client
+	apiKey       string
+	baseURL      string
+	model        string
+	maxTokens    int
+	providerMode string
+	httpClient   *http.Client
 }
 
-func NewDeepseekClient() *DeepseekClient {
-	apiKey := os.Getenv("DEEPSEEK_API_KEY")
-	if apiKey == "" {
-		apiKey = viper.GetString("deepseek.api_key")
-	}
-
-	baseURL := viper.GetString("deepseek.base_url")
-	if baseURL == "" {
-		baseURL = "https://api.deepseek.com/v1"
-	}
-
-	model := viper.GetString("deepseek.model")
-	if model == "" {
-		model = "deepseek-chat"
-	}
-
-	timeoutSeconds := viper.GetInt("deepseek.timeout_seconds")
-	if timeoutSeconds == 0 {
-		timeoutSeconds = 30
-	}
-	maxTokens := viper.GetInt("deepseek.max_tokens")
-	if maxTokens <= 0 {
-		maxTokens = 4000
-	}
-
+func NewDeepseekClient(runtime config.Runtime) *DeepseekClient {
+	cfg := runtime.Deepseek
 	return &DeepseekClient{
-		apiKey:    apiKey,
-		baseURL:   baseURL,
-		model:     model,
-		maxTokens: maxTokens,
+		apiKey:       cfg.APIKey,
+		baseURL:      cfg.BaseURL,
+		model:        cfg.Model,
+		maxTokens:    cfg.MaxTokens,
+		providerMode: runtime.ProviderMode,
 		httpClient: &http.Client{
-			Timeout: time.Duration(timeoutSeconds) * time.Second,
+			Timeout: cfg.Timeout,
 		},
 	}
 }
@@ -139,7 +115,7 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *DeepseekClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
-	if err := validateProviderCall("deepseek", c.apiKey); err != nil {
+	if err := validateProviderCall("deepseek", c.providerMode, c.apiKey); err != nil {
 		return "", err
 	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
@@ -219,7 +195,7 @@ func (c *DeepseekClient) GenerateContent(ctx context.Context, prompt string, max
 
 // sendRequest - Helper để gửi request đến DeepSeek API
 func (c *DeepseekClient) sendRequest(ctx context.Context, systemPrompt, userMessage string, maxTokens int, temperature float32) (*dto.DeepseekResponse, error) {
-	if err := validateProviderCall("deepseek", c.apiKey); err != nil {
+	if err := validateProviderCall("deepseek", c.providerMode, c.apiKey); err != nil {
 		return nil, err
 	}
 	messages := []dto.DeepseekMessage{}

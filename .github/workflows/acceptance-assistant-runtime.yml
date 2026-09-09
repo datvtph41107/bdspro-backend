@@ -1,0 +1,149 @@
+name: Acceptance Assistant Runtime Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+      - 'final-acceptance/proof-s5-assistant-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-assistant-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assistant-runtime:
+    name: Assistant runtime ownership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+
+      - name: Verify Assistant typed runtime ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f assistant-service/config/runtime.go
+          test -f assistant-service/config/runtime_test.go
+
+          escaped="$(
+            grep -RInE               'os\.Getenv|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)'               assistant-service               --include='*.go'               --exclude='wire_gen.go'             | grep -v '^assistant-service/config/runtime.go:'             || true
+          )"
+          if [ -n "$escaped" ]; then
+            echo 'Assistant runtime config reader escaped assistant/config:' >&2
+            printf '%s\n' "$escaped" >&2
+            exit 1
+          fi
+
+          test "$(grep -RIl 'QHPRO_AI_PROVIDER_MODE' assistant-service --include='*.go' --exclude='wire_gen.go' | wc -l)" -eq 1
+          grep -Fq 'const providerModeEnv = "QHPRO_AI_PROVIDER_MODE"' assistant-service/config/runtime.go
+
+          grep -Fq 'func NewDeepseekClient(runtime config.Runtime)' assistant-service/infra/client/deepseek_client.go
+          grep -Fq 'func NewOpenAIClient(runtime config.Runtime)' assistant-service/infra/client/openai_client.go
+          grep -Fq 'func NewGeminiClient(runtime config.Runtime)' assistant-service/infra/client/gemini_client.go
+
+          if grep -REn 'func New(Deepseek|OpenAI|Gemini)Client\(\)' assistant-service/infra/client; then
+            echo 'Legacy zero-argument AI constructor detected' >&2
+            exit 1
+          fi
+
+          grep -Fq 'func validateProviderCall(provider, mode, apiKey string) error' assistant-service/infra/client/provider_mode.go
+          if grep -Eq 'os\.Getenv|viper\.' assistant-service/infra/client/provider_mode.go; then
+            echo 'Provider validator reads process configuration directly' >&2
+            exit 1
+          fi
+
+          grep -Eq '^[[:space:]]*Runtime[[:space:]]+config\.Runtime$' assistant-service/initial/runtime.go
+          grep -Fq 'assistant_config.NewRuntime' assistant-service/wire/wire.go
+
+          grep -Fq '$(MAKE) -C ../shared/code wire assistant' assistant-service/Makefile
+          if grep -Fq 'wire-assistant' assistant-service/Makefile; then
+            echo 'Retired wire-assistant vocabulary detected' >&2
+            exit 1
+          fi
+
+          grep -Fq 'assistantHandler.Runtime.GRPCPort' assistant-service/cmd/grpc/main.go
+          if grep -Eq 'viper\.|os\.Getenv' assistant-service/cmd/grpc/main.go; then
+            echo 'Assistant process entrypoint reads runtime values directly' >&2
+            exit 1
+          fi
+
+          git diff --check
+
+      - name: Prove typed runtime behavior
+        shell: bash
+        working-directory: assistant-service
+        run: |
+          set -euo pipefail
+          go test ./config ./infra/client
+
+      - name: Generate canonical protobuf and Wire graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+
+          rm -f assistant-service/wire/wire_gen.go
+          make -C shared/code wire assistant
+
+          test -f assistant-service/wire/wire_gen.go
+          git check-ignore -q assistant-service/wire/wire_gen.go
+
+          grep -Fq 'runtime, err := config.NewRuntime()' assistant-service/wire/wire_gen.go
+          grep -Fq 'client.NewDeepseekClient(runtime)' assistant-service/wire/wire_gen.go
+          grep -Fq 'client.NewOpenAIClient(runtime)' assistant-service/wire/wire_gen.go
+          grep -Fq 'client.NewGeminiClient(runtime)' assistant-service/wire/wire_gen.go
+          grep -Fq 'handler.NewAssistantHandler(assistantUsecase, runtime)' assistant-service/wire/wire_gen.go
+          grep -Fq 'initial.NewInitialApp(assistantHandler, runtime)' assistant-service/wire/wire_gen.go
+
+          wire_go_first="$(sha256sum assistant-service/wire/wire.go | awk '{print $1}')"
+          wire_gen_first="$(sha256sum assistant-service/wire/wire_gen.go | awk '{print $1}')"
+
+          make -C shared/code wire assistant
+
+          wire_go_second="$(sha256sum assistant-service/wire/wire.go | awk '{print $1}')"
+          wire_gen_second="$(sha256sum assistant-service/wire/wire_gen.go | awk '{print $1}')"
+
+          test "$wire_go_first" = "$wire_go_second"
+          test "$wire_gen_first" = "$wire_gen_second"
+
+          # Generated protobuf and Assistant wire_gen are intentionally ignored.
+          # Canonical generation must not mutate tracked source.
+          git diff --exit-code
+          git diff --check
+
+      - name: Compile Assistant
+        shell: bash
+        working-directory: assistant-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go test -race ./...
+          go vet ./...
+          go build ./...

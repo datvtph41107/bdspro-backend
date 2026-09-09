@@ -4,6 +4,7 @@
 package wire
 
 import (
+	assistant_config "assistant/config"
 	assistant_infra_client "assistant/infra/client"
 	assistant_infra_handler "assistant/infra/handler"
 	assistant_infra_rpc "assistant/infra/rpc"
@@ -39,6 +40,7 @@ var wireSet = wire.NewSet(
 	assistant_infra_rpc.NewHubRPCClient,
 	assistant_initial.NewInitialApp,
 	assistant_infra_client.NewOpenAIClient,
+	assistant_config.NewRuntime,
 )
 
 func InitializeApp() (*assistant_initial.InitialApp, func(), error) {

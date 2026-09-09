@@ -1,6 +1,7 @@
 package client
 
 import (
+	"assistant/config"
 	"assistant/internal/dto"
 	"bytes"
 	"context"
@@ -8,53 +9,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"time"
-
-	"github.com/spf13/viper"
 )
 
 // @bind: assistant/internal/interface/provider.OpenAIProvider
 type OpenAIClient struct {
-	apiKey     string
-	baseURL    string
-	model      string
-	maxTokens  int
-	httpClient *http.Client
+	apiKey       string
+	baseURL      string
+	model        string
+	maxTokens    int
+	providerMode string
+	httpClient   *http.Client
 }
 
-func NewOpenAIClient() *OpenAIClient {
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		apiKey = viper.GetString("openai.api_key")
-	}
-
-	baseURL := viper.GetString("openai.base_url")
-	if baseURL == "" {
-		baseURL = "https://api.openai.com/v1"
-	}
-
-	model := viper.GetString("openai.model")
-	if model == "" {
-		model = "gpt-4o-mini"
-	}
-
-	timeoutSeconds := viper.GetInt("openai.timeout_seconds")
-	if timeoutSeconds == 0 {
-		timeoutSeconds = 60
-	}
-	maxTokens := viper.GetInt("openai.max_tokens")
-	if maxTokens <= 0 {
-		maxTokens = 4000
-	}
-
+func NewOpenAIClient(runtime config.Runtime) *OpenAIClient {
+	cfg := runtime.OpenAI
 	return &OpenAIClient{
-		apiKey:    apiKey,
-		baseURL:   baseURL,
-		model:     model,
-		maxTokens: maxTokens,
+		apiKey:       cfg.APIKey,
+		baseURL:      cfg.BaseURL,
+		model:        cfg.Model,
+		maxTokens:    cfg.MaxTokens,
+		providerMode: runtime.ProviderMode,
 		httpClient: &http.Client{
-			Timeout: time.Duration(timeoutSeconds) * time.Second,
+			Timeout: cfg.Timeout,
 		},
 	}
 }
@@ -132,7 +108,7 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *OpenAIClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
-	if err := validateProviderCall("openai", c.apiKey); err != nil {
+	if err := validateProviderCall("openai", c.providerMode, c.apiKey); err != nil {
 		return "", err
 	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
@@ -212,7 +188,7 @@ func (c *OpenAIClient) GenerateContent(ctx context.Context, prompt string, maxTo
 
 // sendRequest - Helper để gửi request đến OpenAI API
 func (c *OpenAIClient) sendRequest(ctx context.Context, systemPrompt, userMessage string, maxTokens int, temperature float32) (*dto.DeepseekResponse, error) {
-	if err := validateProviderCall("openai", c.apiKey); err != nil {
+	if err := validateProviderCall("openai", c.providerMode, c.apiKey); err != nil {
 		return nil, err
 	}
 	messages := []dto.DeepseekMessage{}

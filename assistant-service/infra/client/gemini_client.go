@@ -1,6 +1,7 @@
 package client
 
 import (
+	"assistant/config"
 	"assistant/internal/dto"
 	"bytes"
 	_dto "common/domain/dto"
@@ -10,20 +11,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
-	"time"
-
-	"github.com/spf13/viper"
 )
 
 // @bind: assistant/internal/interface/provider.GeminiProvider
 type GeminiClient struct {
-	apiKey     string
-	baseURL    string
-	model      string
-	maxTokens  int
-	httpClient *http.Client
+	apiKey       string
+	baseURL      string
+	model        string
+	maxTokens    int
+	providerMode string
+	httpClient   *http.Client
 }
 
 // GeminiRequest - Request structure for Gemini API
@@ -91,38 +89,16 @@ type GeminiPromptFeedback struct {
 	SafetyRatings []GeminiSafetyRating `json:"safetyRatings,omitempty"`
 }
 
-func NewGeminiClient() *GeminiClient {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		apiKey = viper.GetString("gemini.api_key")
-	}
-
-	baseURL := viper.GetString("gemini.base_url")
-	if baseURL == "" {
-		baseURL = "https://generativelanguage.googleapis.com/v1beta"
-	}
-
-	model := viper.GetString("gemini.model")
-	if model == "" {
-		model = "gemini-1.5-flash"
-	}
-
-	timeoutSeconds := viper.GetInt("gemini.timeout_seconds")
-	if timeoutSeconds == 0 {
-		timeoutSeconds = 60
-	}
-	maxTokens := viper.GetInt("gemini.max_tokens")
-	if maxTokens <= 0 {
-		maxTokens = 4000
-	}
-
+func NewGeminiClient(runtime config.Runtime) *GeminiClient {
+	cfg := runtime.Gemini
 	return &GeminiClient{
-		apiKey:    apiKey,
-		baseURL:   baseURL,
-		model:     model,
-		maxTokens: maxTokens,
+		apiKey:       cfg.APIKey,
+		baseURL:      cfg.BaseURL,
+		model:        cfg.Model,
+		maxTokens:    cfg.MaxTokens,
+		providerMode: runtime.ProviderMode,
 		httpClient: &http.Client{
-			Timeout: time.Duration(timeoutSeconds) * time.Second,
+			Timeout: cfg.Timeout,
 		},
 	}
 }
@@ -207,7 +183,7 @@ Lưu ý:
 
 // Chat - Thực hiện conversation với AI
 func (c *GeminiClient) Chat(ctx context.Context, message string, history []dto.DeepseekMessage) (string, error) {
-	if err := validateProviderCall("gemini", c.apiKey); err != nil {
+	if err := validateProviderCall("gemini", c.providerMode, c.apiKey); err != nil {
 		return "", err
 	}
 	systemPrompt := `Bạn là trợ lý AI thông minh, nhiệt tình và hữu ích. 
@@ -343,7 +319,7 @@ func (c *GeminiClient) sendRequest(ctx context.Context, userMessage string, maxT
 
 // sendRequestWithParts - Helper gửi request với nhiều part (text + inlineData) đến Gemini API
 func (c *GeminiClient) sendRequestWithParts(ctx context.Context, parts []GeminiPart, maxTokens int, temperature float32) (*GeminiResponse, error) {
-	if err := validateProviderCall("gemini", c.apiKey); err != nil {
+	if err := validateProviderCall("gemini", c.providerMode, c.apiKey); err != nil {
 		return nil, err
 	}
 	if maxTokens <= 0 {
