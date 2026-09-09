@@ -44,7 +44,7 @@ jobs:
           test "$changed" = "$expected"
           git diff --check 1c341ff2a1473eae1ec397c98d0962dda76a64e6..HEAD
 
-          test -z "$(git grep -n -E '"'"'"net/http"'"'"|"'"'"common/routes"'"'"|http\.Status(NotFound|Forbidden)|_routes\.Except' -- social-service/internal/usecase/news_feed_share.go || true)"
+          test -z "$(git grep -n -E '\"net/http\"|\"common/routes\"|http\.Status(NotFound|Forbidden)|_routes\.Except' -- social-service/internal/usecase/news_feed_share.go || true)"
           grep -Fq 'ErrShareNewsFeedNotFound' social-service/internal/domain/news_feed_share.go
           grep -Fq 'ErrShareNewsFeedNotPublic' social-service/internal/domain/news_feed_share.go
           grep -Fq 'return nil, domain.ErrShareNewsFeedNotFound' social-service/internal/usecase/news_feed_share.go
@@ -88,7 +88,18 @@ jobs:
           set -euo pipefail
           go test ./social-service/infra/service -run 'TestMapShareNewsFeedError' -count=1 -v
 
-      - name: Test race vet and build Social
+      - name: Materialize canonical Go toolchain path
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          actual_goroot="$(go env GOROOT)"
+          canonical_root="$HOME/.cache/qhpro/toolchain"
+          mkdir -p "$canonical_root"
+          ln -s "$actual_goroot" "$canonical_root/go${GO_VERSION}"
+          test "$("$canonical_root/go${GO_VERSION}/bin/go" env GOVERSION)" = "go${GO_VERSION}"
+
+      - name: Test race vet and build Social through canonical Make API
         shell: bash
         run: |
           set -euo pipefail
@@ -96,6 +107,7 @@ jobs:
           make -C social-service test-race
           make -C social-service vet
           make -C social-service build
+          make -C social-service clean
 
       - name: Prove Gateway HTTP compatibility from proof mapping
         shell: bash
