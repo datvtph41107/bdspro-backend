@@ -7,6 +7,7 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	stderrors "errors"
 	"net/http"
 	sharepb "pb/types/shared"
 	socialpb "pb/types/social"
@@ -19,6 +20,8 @@ import (
 	"social/internal/usecase"
 
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type NewsFeedService struct {
@@ -218,6 +221,20 @@ func (s *NewsFeedService) DeleteNewsFeed(ctx context.Context, req *sharepb.IdReq
 	return &sharepb.Empty{}, nil
 }
 
+// mapShareNewsFeedError keeps the established Social share wire contract while
+// moving business-state ownership out of the usecase. The Unknown code and
+// exact legacy messages are compatibility behavior, not domain semantics.
+func mapShareNewsFeedError(err error) error {
+	switch {
+	case stderrors.Is(err, domain.ErrShareNewsFeedNotFound):
+		return status.Error(codes.Unknown, "404: Bài viết không tồn tại")
+	case stderrors.Is(err, domain.ErrShareNewsFeedNotPublic):
+		return status.Error(codes.Unknown, "403: Bài viết không thể chia sẻ do không phải công khai")
+	default:
+		return err
+	}
+}
+
 // @Summary Share news feed
 // @Description Share news feed
 // @Security BearerAuth
@@ -242,7 +259,7 @@ func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *socialpb.Share
 		enums.ShareType(req.ShareType),
 	)
 	if err != nil {
-		return nil, err
+		return nil, mapShareNewsFeedError(err)
 	}
 	return &socialpb.ShareResponse{
 		Id:      newsFeedShare.ID,

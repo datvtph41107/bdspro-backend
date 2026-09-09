@@ -1,10 +1,8 @@
 package usecase
 
 import (
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"net/http"
 	"social/internal/domain"
 	"social/internal/enums"
 	iusecase "social/internal/interface"
@@ -146,16 +144,10 @@ func (u *NewsFeedShareUsecase) RequiredBeforeShare(ctx context.Context, newsFeed
 		return nil, err
 	}
 	if newsFeed.ID == 0 {
-		return nil, &_routes.Except{
-			Code:    http.StatusNotFound,
-			Message: "Bài viết không tồn tại",
-		}
+		return nil, domain.ErrShareNewsFeedNotFound
 	}
 	if newsFeed.Visibility != enums.VisibilityPublic {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bài viết không thể chia sẻ do không phải công khai",
-		}
+		return nil, domain.ErrShareNewsFeedNotPublic
 	}
 	return newsFeed, nil
 }

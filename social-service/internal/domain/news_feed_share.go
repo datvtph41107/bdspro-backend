@@ -2,7 +2,13 @@ package domain
 
 import (
 	_models "common/models"
+	"errors"
 	"social/internal/enums"
+)
+
+var (
+	ErrShareNewsFeedNotFound  = errors.New("share news feed not found")
+	ErrShareNewsFeedNotPublic = errors.New("share news feed is not public")
 )
 
 type NewsFeedShare struct {
