@@ -1,4 +1,4 @@
-name: Audit S6 Error Ownership
+name: Audit S6 Social Error Ownership
 
 on:
   push:
@@ -9,123 +9,81 @@ permissions:
   contents: read
 
 jobs:
-  prove-bounded-chat-app-error-retirement:
+  inventory-social-error-ownership:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
-      - name: Checkout exact proof source SHA
+      - name: Checkout exact accepted source
         uses: actions/checkout@v4
         with:
           ref: 1c341ff2a1473eae1ec397c98d0962dda76a64e6
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Verify immutable proof authority
+      - name: Verify immutable audit authority
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
           canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
-          proof_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-chat-app-error | awk '{print $1}')"
-          test "$canonical_remote" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
-          test "$proof_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
-          test "$(git rev-parse HEAD^)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          test "$canonical_remote" = "1c341ff2a1473eae1ec397c98d0962dda76a64e6"
+          test -z "$(git status --porcelain)"
+          printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
 
-      - name: Verify bounded ownership delta
+      - name: Inventory Social direct transport ownership
         shell: bash
         run: |
           set -euo pipefail
-          test ! -f shared/common/errors/exception.go
-          if git grep -n -E 'AppError|NewAppError|ErrorHandlerMiddleware' -- '*.go'; then
-            echo 'Retired shared AppError ownership reappeared' >&2
-            exit 1
-          fi
-          ! grep -Fq '"net/http"' chat-v1-service/infrastructure/handlers/chat_handler.go
-          grep -Fq 'fmt.Errorf("receiverId is required")' chat-v1-service/infrastructure/handlers/chat_handler.go
-          grep -Fq 'fmt.Errorf("%s", err.Error())' chat-v1-service/infrastructure/handlers/chat_handler.go
+          echo '=== SOCIAL net/http IMPORTS ==='
+          git grep -n -F '"net/http"' -- 'social-service/**/*.go' || true
+          echo '=== SOCIAL http.Status REFERENCES ==='
+          git grep -n -E 'http\.Status[A-Za-z0-9_]+' -- 'social-service/**/*.go' || true
+          echo '=== SOCIAL common/routes IMPORTS AND USAGE ==='
+          git grep -n -E '"common/routes"|_routes\.(Except|RouteResult|ResponseDTO)|routes\.(Except|RouteResult|ResponseDTO)' -- 'social-service/**/*.go' || true
+          echo '=== SOCIAL common/errors IMPORTS AND TRANSPORT-SHAPED HELPERS ==='
+          git grep -n -E '"common/errors"|_errors\.(BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException|ReturnError|ReturnErrorWithSecond|ThrowError|InvalidRequest)' -- 'social-service/**/*.go' || true
+          echo '=== SOCIAL gRPC STATUS/CODES DIRECT USE ==='
+          git grep -n -E '"google.golang.org/grpc/(codes|status)"|codes\.[A-Za-z]+|status\.(New|Error|Errorf)' -- 'social-service/**/*.go' || true
 
-          changed="$(git diff --name-only 4d40fa37945c9dda541d12397dba9afb5a5ad97d..HEAD | sort)"
-          expected="$(printf '%s\n' chat-v1-service/infrastructure/handlers/chat_handler.go shared/common/errors/exception.go | sort)"
-          test "$changed" = "$expected"
-          git diff --check 4d40fa37945c9dda541d12397dba9afb5a5ad97d..HEAD
-
-      - name: Set up canonical Go patch version
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25.10'
-          cache: false
-
-      - name: Install canonical protobuf generators
+      - name: Rank narrow Social leakage candidates
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
-          test "$(go env GOVERSION)" = "go${GO_VERSION}"
-          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
-          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
-          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
-          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          echo '=== FILE COUNTS: http.Status ==='
+          { git grep -l -E 'http\.Status[A-Za-z0-9_]+' -- 'social-service/**/*.go' || true; } | sort | uniq -c | sort -n
+          echo '=== FILE COUNTS: routes.Except ==='
+          { git grep -l -E '_routes\.Except|routes\.Except' -- 'social-service/**/*.go' || true; } | sort | uniq -c | sort -n
+          echo '=== CANDIDATE FILE LINE COUNTS / FUNCTIONS ==='
+          files="$({ git grep -l -E 'http\.Status[A-Za-z0-9_]+|_routes\.Except|routes\.Except' -- 'social-service/**/*.go' || true; } | sort -u)"
+          for f in $files; do
+            printf '\n--- %s ---\n' "$f"
+            wc -l "$f"
+            grep -nE '^func |^func \(' "$f" || true
+            grep -nE 'http\.Status[A-Za-z0-9_]+|_routes\.Except|routes\.Except' "$f" || true
+          done
 
-      - name: Generate canonical protobuf
+      - name: Trace Social transport and presenter surfaces
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
-          test -d shared/protobuf/types/shared
-          git diff --exit-code
+          echo '=== SOCIAL HANDLER / DELIVERY / TRANSPORT FILES ==='
+          find social-service -type f -name '*.go' \
+            | grep -Ei '/(handler|handlers|delivery|transport|grpc|http|route|router|presenter|adapter|middleware)/' \
+            | sort || true
+          echo '=== TRANSPORT MAPPING SYMBOLS ==='
+          git grep -n -E 'RouteResult\(|Except\{|errors\.As\(|status\.(New|Error|Errorf)|codes\.[A-Za-z]+|Register.*Server|Register.*Handler|HandleFunc|gin\.' -- 'social-service/**/*.go' || true
+          echo '=== USECASE CONSTRUCTORS / HANDLER CALLS ==='
+          git grep -n -E 'New[A-Za-z0-9_]*Usecase|New[A-Za-z0-9_]*Handler|Usecase\)|UseCase\)|\.Create|\.Update|\.Delete|\.Get' -- 'social-service/internal/**/*.go' | head -n 800 || true
 
-      - name: Prove preserved generic gRPC wire semantics
+      - name: Inventory Social tests around errors and transport
         shell: bash
-        working-directory: chat-v1-service
-        env:
-          GOWORK: off
         run: |
           set -euo pipefail
-          test "$(go list -m)" = "chat"
-          test "$(go env GOVERSION)" = "go1.25.10"
-          cat > /tmp/generic_error_probe.go <<'EOF'
-          package main
-          import (
-            "fmt"
-            "google.golang.org/grpc/codes"
-            "google.golang.org/grpc/status"
-          )
-          func verify(err error, want string) {
-            s := status.Convert(err)
-            if s.Code() != codes.Unknown || s.Message() != want || len(s.Details()) != 0 {
-              panic(fmt.Sprintf("unexpected wire semantics: code=%d name=%s message=%q details=%d", int32(s.Code()), s.Code(), s.Message(), len(s.Details())))
-            }
-            fmt.Printf("CODE=%d CODE_NAME=%s MESSAGE=%q DETAILS=%d\n", int32(s.Code()), s.Code(), s.Message(), len(s.Details()))
-          }
-          func main() {
-            verify(fmt.Errorf("receiverId is required"), "receiverId is required")
-            verify(fmt.Errorf("%s", "redis failed"), "redis failed")
-          }
-          EOF
-          go run /tmp/generic_error_probe.go
+          echo '=== SOCIAL TEST FILES ==='
+          find social-service -type f -name '*_test.go' | sort || true
+          echo '=== SOCIAL TEST NAMES / ERROR ASSERTIONS ==='
+          git grep -n -E '^func Test|require\.(Error|ErrorIs|Equal)|assert\.(Error|ErrorIs|Equal)|http\.Status|codes\.|status\.' -- 'social-service/**/*_test.go' || true
 
-      - name: Test shared errors package
-        shell: bash
-        working-directory: shared/common
-        run: |
-          set -euo pipefail
-          go test ./errors
-          go vet ./errors
-
-      - name: Test race vet and build chat-v1 as isolated module
-        shell: bash
-        working-directory: chat-v1-service
-        env:
-          GOWORK: off
-        run: |
-          set -euo pipefail
-          test "$(go list -m)" = "chat"
-          test "$(go env GOVERSION)" = "go1.25.10"
-          go test -count=1 ./...
-          go test -race -count=1 ./...
-          go vet ./...
-          go build ./...
-
-      - name: Final source immutability check
+      - name: Verify no source mutation
         shell: bash
         run: |
           set -euo pipefail
