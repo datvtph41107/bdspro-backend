@@ -73,6 +73,7 @@ var wireSet = wire.NewSet(
 	hub_infra_rpc.NewNotificationRPCClient,
 	hub_infra_postgre.NewProvinceRepo,
 	hub_infra_postgre.NewProvinceV2Repo,
+	hub_infra_redis.NewRedisService,
 	hub_infra_redis.NewRedisProvider,
 	hub_infra_handler.NewSystemConfigHandler,
 	hub_infra_setting.NewSystemConfigPersist,
