@@ -9,7 +9,6 @@ import (
 	_ "common/models"
 	process "common/process"
 	qhprorpc "common/rpc"
-	"common/rpcenv"
 	"context"
 	"fmt"
 	"log"
@@ -21,7 +20,6 @@ import (
 
 	authpb "pb/types/auth"
 
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -49,21 +47,36 @@ func run() error {
 	if err := config.LoadProperties(); err != nil {
 		return fmt.Errorf("load auth config: %w", err)
 	}
+	runtime, err := config.NewRuntime()
+	if err != nil {
+		return fmt.Errorf("materialize auth runtime: %w", err)
+	}
 
-	userRPC, userCleanup, err := authrpc.NewUserRPCClient()
+	userRPC, userCleanup, err := authrpc.NewUserRPCClient(
+		runtime.UserRPCTarget,
+		runtime.Transport,
+	)
 	if err != nil {
 		return fmt.Errorf("configure auth user RPC: %w", err)
 	}
 	defer userCleanup()
 
-	permissionService := services.NewPermissionService(userRPC)
+	permissionService := services.NewPermissionService(
+		userRPC,
+		services.PermissionConfig{
+			RefreshInterval: runtime.Permission.RefreshInterval,
+			MaxStaleness:    runtime.Permission.MaxStaleness,
+			RoleCacheTTL:    runtime.Permission.RoleCacheTTL,
+			RequestTimeout:  runtime.Permission.RequestTimeout,
+		},
+	)
 	authInternalHandler := handler.NewAuthInternalHandler(permissionService, userRPC)
 	if err := os.Setenv("TZ", "Europe/London"); err != nil {
 		return fmt.Errorf("set auth timezone: %w", err)
 	}
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
+	port := fmt.Sprintf(":%d", runtime.GRPCPort)
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("listen auth gRPC on %s: %w", port, err)
@@ -72,7 +85,7 @@ func run() error {
 
 	// Auth Service chỉ phục vụ AuthInternal. Vì vậy mọi RPC đi vào đây phải
 	// mang service assertion đã ký; Auth không tự tin tưởng metadata từ client.
-	transport := qhprorpc.ServerTransport(rpcenv.LoadTransportConfig())
+	transport := qhprorpc.ServerTransport(runtime.Transport)
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,

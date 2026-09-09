@@ -32,3 +32,9 @@ jwt:
   refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
   listPermit:
   authorizationHeader: Authorization
+
+permission:
+  refresh_interval: 30s
+  max_staleness: 2m
+  role_cache_ttl: 15s
+  request_timeout: 2s

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -55,6 +54,13 @@ type roleCacheEntry struct {
 	expiresAt time.Time
 }
 
+type PermissionConfig struct {
+	RefreshInterval time.Duration
+	MaxStaleness    time.Duration
+	RoleCacheTTL    time.Duration
+	RequestTimeout  time.Duration
+}
+
 /**
  * PermissionService is the authorization decision owner.
  */
@@ -77,29 +83,18 @@ type PermissionService struct {
  * NewPermissionService constructs permission authority state without starting
  * process work. The Auth process root owns Run(ctx).
  */
-func NewPermissionService(userClient *clients.UserGrpcClient) *PermissionService {
-	svc := &PermissionService{
+func NewPermissionService(
+	userClient *clients.UserGrpcClient,
+	cfg PermissionConfig,
+) *PermissionService {
+	return &PermissionService{
 		userClient:      userClient,
 		roleCache:       make(map[uint64]roleCacheEntry),
-		refreshInterval: durationFromEnv("QHPRO_PERMISSION_REFRESH_INTERVAL", 30*time.Second),
-		maxStaleness:    durationFromEnv("QHPRO_PERMISSION_MAX_STALENESS", 2*time.Minute),
-		roleCacheTTL:    durationFromEnv("QHPRO_PERMISSION_ROLE_CACHE_TTL", 15*time.Second),
-		requestTimeout:  durationFromEnv("QHPRO_PERMISSION_REQUEST_TIMEOUT", 2*time.Second),
+		refreshInterval: cfg.RefreshInterval,
+		maxStaleness:    cfg.MaxStaleness,
+		roleCacheTTL:    cfg.RoleCacheTTL,
+		requestTimeout:  cfg.RequestTimeout,
 	}
-	return svc
-}
-
-func durationFromEnv(key string, fallback time.Duration) time.Duration {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return fallback
-	}
-	parsed, err := time.ParseDuration(value)
-	if err != nil || parsed <= 0 {
-		log.Printf("[PermissionService] invalid %s=%q, using %s", key, value, fallback)
-		return fallback
-	}
-	return parsed
 }
 
 func (s *PermissionService) Run(ctx context.Context) {

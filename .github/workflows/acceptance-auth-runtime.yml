@@ -1,0 +1,127 @@
+name: Acceptance Auth Runtime Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/source-canonicalization
+      - 'final-acceptance/proof-s5-auth-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: acceptance-auth-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  auth-runtime:
+    name: Auth runtime ownership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Verify Auth typed runtime ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f auth-service/config/runtime.go
+          test -f auth-service/config/runtime_test.go
+
+          escaped="$(
+            grep -RInE               'os\.(Getenv|LookupEnv)|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)|configloader\.RequiredString|rpcenv\.LoadTransportConfig'               auth-service               --include='*.go'               --exclude='*_test.go'             | grep -v '^auth-service/config/'             || true
+          )"
+          if [ -n "$escaped" ]; then
+            echo 'Auth runtime reader escaped auth/config:' >&2
+            printf '%s\n' "$escaped" >&2
+            exit 1
+          fi
+
+          test "$(
+            grep -RIl               'rpcenv\.LoadTransportConfig'               auth-service               --include='*.go'               --exclude='*_test.go'             | sort
+          )" = 'auth-service/config/runtime.go'
+
+          test "$(
+            grep -RIl               'QHPRO_PERMISSION_'               auth-service               --include='*.go'               --exclude='*_test.go'             | sort
+          )" = 'auth-service/config/runtime.go'
+
+          grep -Fq 'type Runtime struct {' auth-service/config/runtime.go
+          grep -Fq 'type PermissionRuntime struct {' auth-service/config/runtime.go
+          grep -Fq 'Transport     qhprorpc.TransportConfig' auth-service/config/runtime.go
+
+          grep -Fq 'runtime, err := config.NewRuntime()' auth-service/main.go
+          grep -Fq 'runtime.UserRPCTarget' auth-service/main.go
+          grep -Fq 'runtime.Transport' auth-service/main.go
+          grep -Fq 'runtime.Permission.RefreshInterval' auth-service/main.go
+
+          grep -Fq 'transport qhprorpc.TransportConfig' auth-service/infra/rpc/providers.go
+          grep -Fq 'type PermissionConfig struct {' auth-service/infra/services/permission_service.go
+
+          if grep -Eq             'viper\.|configloader\.|rpcenv\.LoadTransportConfig|os\.(Getenv|LookupEnv)'             auth-service/main.go             auth-service/infra/rpc/providers.go             auth-service/infra/services/permission_service.go
+          then
+            echo 'Auth composition or infra reads process runtime directly' >&2
+            exit 1
+          fi
+
+          if grep -Fq 'durationFromEnv(' auth-service/infra/services/permission_service.go; then
+            echo 'PermissionService still owns process environment timing' >&2
+            exit 1
+          fi
+
+          grep -Fq 'refresh_interval: 30s' auth-service/config/runtime.yml
+          grep -Fq 'max_staleness: 2m' auth-service/config/runtime.yml
+          grep -Fq 'role_cache_ttl: 15s' auth-service/config/runtime.yml
+          grep -Fq 'request_timeout: 2s' auth-service/config/runtime.yml
+
+          git diff --check
+
+      - name: Generate canonical protobuf
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+
+          # Generated protobuf is intentionally ignored. Canonical generation
+          # must not mutate tracked candidate source.
+          git diff --exit-code
+          git diff --check
+
+      - name: Prove Auth runtime behavior
+        shell: bash
+        working-directory: auth-service
+        run: |
+          set -euo pipefail
+          go test ./config ./infra/rpc ./infra/services ./internal/permissioncatalog
+
+      - name: Compile Auth
+        shell: bash
+        working-directory: auth-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go test -race ./...
+          go vet ./...
+          go build ./...
