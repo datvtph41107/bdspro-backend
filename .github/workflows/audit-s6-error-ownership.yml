@@ -26,44 +26,46 @@ jobs:
           test -z "$(git status --porcelain)"
           printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
 
-      - name: Inventory shared error and response consumers
+      - name: Trace canonical semantic error slices
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== IMPORT CALLERS: common/errors ==='
-          git grep -n -F '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
-          echo '=== IMPORT CALLERS: common/routes ==='
-          git grep -n -F '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
-          echo '=== IMPORT CALLERS: validate/grpcerror ==='
-          git grep -n -F '"common/pkg/validate/grpcerror"' -- '*.go' ':!organization-service/**' ':!map-service/**' || true
-          echo '=== SYMBOL CALLERS: shared legacy errors ==='
-          git grep -n -E '(ReturnErrorWithSecond|ReturnError|InvalidRequest|ThrowError|BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException|NewAppError|ErrorHandlerMiddleware|RouteResult)' -- '*.go' ':!shared/common/errors/**' ':!shared/common/routes/**' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== TQD QUOTA DOMAIN ERROR CALLERS ==='
+          git grep -n -E 'ErrAccessDenied|ErrQuotaExceeded|ErrInvalidInput|ErrReservationNotFound|ErrReservationCommitted|ErrReservationCanceled|ExhaustedError|AccessDeniedError' -- 'tqd-service/**/*.go' || true
+          echo '=== PAYMENT DOMAIN ERROR CALLERS ==='
+          git grep -n -E 'ErrInvalidCommercialTerms|ErrInvalidCommand|ErrOrderNotFound|ErrOrderCommandConflict|ErrProviderEvidenceConflict|ErrUnsupportedProviderEvent|ErrFulfillmentNotFound|ErrClaimLost|ErrSubscriptionTransient|ErrSubscriptionPermanent|ErrSubscriptionEffectConflict|ErrAttemptNotFound|ErrAttemptCommandConflict|ErrAttemptNotAllowed|ErrFundsConfirmationNotAllowed|ErrCommandEvidenceConflict|ErrUnsupportedPaymentMethod|ErrProviderUnavailable' -- 'payment-service/**/*.go' || true
+          echo '=== BDSPRO DOMAIN ERROR CALLERS ==='
+          git grep -n -E 'domain\.(ErrInvalidInput|ErrNotFound|ErrUnauthorized|ErrForbidden|ErrDuplicate|ErrConcurrentUpdate)' -- 'bdspro-service/**/*.go' || true
 
-      - name: Inventory transport leakage candidates
+      - name: Trace transport presenters around canonical slices
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== SHARED HTTP/GIN IMPORTS ==='
-          git grep -n -E '"net/http"|"github.com/gin-gonic/gin"' -- 'shared/common/**/*.go' || true
-          echo '=== SHARED GRPC STATUS/CODES IMPORTS ==='
-          git grep -n -E '"google.golang.org/grpc/(codes|status)"' -- 'shared/common/**/*.go' || true
-          echo '=== SHARED PROTO ERROR CARRIER REFERENCES ==='
-          git grep -n -E 'sharepb\.ErrorResponse|pb/types/shared' -- 'shared/common/**/*.go' || true
-          echo '=== GRPC STATUS/CODES IN NON-TRANSPORT SERVICE LAYERS ==='
-          { git grep -n -E '"google.golang.org/grpc/(codes|status)"' -- '*-service/**/*.go' ':!organization-service/**' ':!map-service/**' || true; } | grep -E '/(domain|usecase|biz|application|repository|service)/' || true
-          echo '=== HTTP/GIN IN NON-GATEWAY SERVICE LAYERS ==='
-          { git grep -n -E '"net/http"|"github.com/gin-gonic/gin"' -- '*-service/**/*.go' ':!gateway-service/**' ':!organization-service/**' ':!map-service/**' || true; } | grep -E '/(domain|usecase|biz|application|repository|service)/' || true
+          echo '=== TQD QUOTA ERRORS NEAR TRANSPORT ==='
+          git grep -n -E 'quota\.(Err|ExhaustedError|AccessDeniedError)|errors\.Is\([^\n]*quota\.' -- 'tqd-service/infra/**/*.go' 'tqd-service/internal/**/*.go' || true
+          echo '=== PAYMENT ERRORS NEAR TRANSPORT ==='
+          git grep -n -E 'paymentdomain\.Err|domain\.Err' -- 'payment-service/infra/**/*.go' 'payment-service/internal/**/*.go' || true
+          echo '=== ERROR MAPPING FUNCTIONS ==='
+          git grep -n -E 'func .*([Mm]ap|[Pp]resent|[Tt]oGRPC|[Tt]oHTTP|[Ee]rror).*error|status\.(Error|New)|codes\.' -- 'tqd-service/**/*.go' 'payment-service/**/*.go' 'bdspro-service/**/*.go' ':!**/*_test.go' || true
 
-      - name: Inventory compatibility carrier ownership
+      - name: Trace legacy shared coupling by layer
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== ErrorResponse PROTO CARRIER CALLERS ==='
-          git grep -n -E 'ErrorResponse' -- '*.go' ':!shared/protobuf/**' ':!organization-service/**' ':!map-service/**' || true
-          echo '=== GATEWAY HTTP 200 BODY-CODE COMPATIBILITY ==='
-          git grep -n -E 'WriteHeader\(http\.StatusOK\)|http\.StatusOK' -- 'gateway-service/internal/**/*.go' || true
-          echo '=== RESPONSE/FILTER/MAPPER NAMED SURFACES ==='
-          find . -type f \( -name '*.go' -o -name '*.yml' \) \
-            | grep -Ev '^\./(organization-service|map-service|shared/protobuf)/' \
-            | grep -Ei '/(error|errors|response|responses|filter|filters|middleware|interceptor|mapper|mapping)(/|\.|_)' \
-            | sort || true
+          echo '=== COMMON ERRORS IN USECASE/DOMAIN ==='
+          git grep -n -F '"common/errors"' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== COMMON ROUTES IN USECASE/DOMAIN ==='
+          git grep -n -F '"common/routes"' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
+          echo '=== DIRECT HTTP STATUS IN USECASE/DOMAIN ==='
+          git grep -n -E 'http\.Status(BadRequest|Unauthorized|Forbidden|NotFound|Conflict|UnprocessableEntity|InternalServerError|ServiceUnavailable)' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
+
+      - name: Trace narrow shared error symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== NewAppError CALLERS ==='
+          git grep -n -E 'NewAppError\(' -- '*.go' ':!shared/common/errors/**' || true
+          echo '=== ErrorHandlerMiddleware CALLERS ==='
+          git grep -n -E 'ErrorHandlerMiddleware' -- '*.go' ':!shared/common/errors/**' || true
+          echo '=== common/errors exception.go API CALLERS ==='
+          git grep -n -E '(BadRequestException|UnauthorizedException|ForbiddenException|NotFoundException|ConflictException|TooManyRequestsException|InternalServerException)\(' -- '*.go' ':!shared/common/errors/**' ':!organization-service/**' ':!map-service/**' || true
