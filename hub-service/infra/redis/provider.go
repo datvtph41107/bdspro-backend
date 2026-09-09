@@ -14,7 +14,7 @@ type RedisProvider struct {
 	*common_redis.RedisService
 }
 
-func NewRedisProvider(runtime config.Runtime) (providers.CacheProvider, func(), error) {
+func NewRedisService(runtime config.Runtime) (*common_redis.RedisService, func(), error) {
 	service, err := common_redis.Open(common_redis.Config{
 		Address:  runtime.Redis.Address,
 		Password: runtime.Redis.Password,
@@ -24,11 +24,14 @@ func NewRedisProvider(runtime config.Runtime) (providers.CacheProvider, func(), 
 		return nil, nil, fmt.Errorf("open hub redis: %w", err)
 	}
 
-	provider := &RedisProvider{RedisService: service}
 	cleanup := func() {
 		_ = service.Close()
 	}
-	return provider, cleanup, nil
+	return service, cleanup, nil
+}
+
+func NewRedisProvider(service *common_redis.RedisService) providers.CacheProvider {
+	return &RedisProvider{RedisService: service}
 }
 
 func (r *RedisProvider) LRange(c context.Context, key string, start, stop int64) ([]string, error) {
