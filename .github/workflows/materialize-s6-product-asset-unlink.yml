@@ -53,8 +53,9 @@ jobs:
           set -euo pipefail
           gofmt -w bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go bdspro-service/infra/handler/product_handler.go bdspro-service/infra/handler/product_asset_unlink_error_test.go
           git diff --check
-          changed="$(git diff --name-only | sort)"
+          changed="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
           expected="$(printf '%s\n' bdspro-service/infra/handler/product_asset_unlink_error_test.go bdspro-service/infra/handler/product_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go | sort)"
+          printf 'changed paths:\n%s\n' "$changed"
           test "$changed" = "$expected"
           test -z "$(git grep -n 'Message: \"Lỗi kiểm tra liên kết\"' -- bdspro-service/internal/usecases/product_asset_usecase.go || true)"
           test -z "$(git grep -n 'Message: \"Liên kết không tồn tại\"' -- bdspro-service/internal/usecases/product_asset_usecase.go || true)"
