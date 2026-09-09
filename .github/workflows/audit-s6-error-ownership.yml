@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  exact-sha-chat-v1-error-trace:
+  exact-sha-chat-v1-presenter-trace:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact accepted boundary
@@ -26,47 +26,68 @@ jobs:
           test -z "$(git status --porcelain)"
           printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
 
-      - name: Locate AppError definition and all consumers
+      - name: Locate and print chat-v1 presenter middleware
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== APPERROR DEFINITIONS ==='
-          git grep -n -E 'type AppError|func NewAppError|ErrorHandlerMiddleware' -- '*.go' || true
-          echo '=== APPERROR / NEWAPPERROR ALL REFERENCES ==='
-          git grep -n -E 'AppError|NewAppError' -- '*.go' || true
-          echo '=== SHARED ERRORS FILES ==='
-          find shared/common/errors -maxdepth 2 -type f -name '*.go' -print | sort
+          echo '=== PRESENTER MIDDLEWARE REFERENCES ==='
+          git grep -n -E 'PresenterMiddleware|AppError|NewAppError|ErrorHandlerMiddleware' -- 'chat-v1-service/**/*.go' 'shared/common/**/*.go' || true
+          echo '=== MIDDLEWARE FILES ==='
+          find chat-v1-service/infrastructure/middleware -type f -name '*.go' -print | sort
+          for f in chat-v1-service/infrastructure/middleware/*.go; do
+            echo "=== $f ==="
+            nl -ba "$f"
+          done
 
-      - name: Show chat-v1 NewAppError surrounding context
+      - name: Inspect chat-v1 delivery error adapters
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== CHAT-V1 CALLSITE WINDOWS ==='
-          f=chat-v1-service/infrastructure/handlers/chat_handler.go
-          nl -ba "$f" | sed -n '360,425p'
-          echo '--- second ---'
-          nl -ba "$f" | sed -n '835,900p'
-          echo '=== CHAT-V1 ERROR IMPORTS / STATUS USAGE ==='
-          git grep -n -E 'common/errors|status\.|codes\.|NewAppError|BadRequestException|InternalServerException|ReturnError' -- 'chat-v1-service/**/*.go' || true
+          echo '=== DELIVERY ERROR FILES ==='
+          find chat-v1-service/infrastructure/delivery -type f -path '*errors*' -name '*.go' -print | sort || true
+          for f in $(find chat-v1-service/infrastructure/delivery -type f -path '*errors*' -name '*.go' | sort); do
+            echo "=== $f ==="
+            nl -ba "$f"
+          done
+          echo '=== CALLERS OF DELIVERY ERROR PACKAGE ==='
+          git grep -n -E 'delivery/errors|errors\.(New|From|To|Map|GRPC|Status)' -- 'chat-v1-service/**/*.go' || true
 
-      - name: Trace return path and transport registration
+      - name: Inspect gateway Chat registration and error path
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== CHAT-V1 HANDLER TYPES / RPC METHODS ==='
-          git grep -n -E '^func \(.*Handler.*\)|Register.*Server|grpc\.NewServer|UnaryInterceptor|ErrorHandler' -- 'chat-v1-service/**/*.go' || true
-          echo '=== CHAT-V1 TESTS AROUND ERROR CASES ==='
-          git grep -n -E 'receiverId is required|receiverId|NewAppError|BadRequest|InternalServer|codes\.(InvalidArgument|Internal)|status\.Code' -- 'chat-v1-service/**/*_test.go' || true
-          echo '=== GATEWAY ROUTES/CLIENTS FOR CHAT V1 ==='
-          git grep -n -Ei 'chat[-_]?v1|ChatService|chat service' -- 'gateway-service/**/*.go' 'gateway-service/**/*.yml' 'gateway-service/**/*.yaml' || true
-
-      - name: Inspect shared AppError source bytes
-        shell: bash
-        run: |
-          set -euo pipefail
-          for f in shared/common/errors/*.go; do
-            if grep -Eq 'type AppError|func NewAppError|ErrorHandlerMiddleware' "$f"; then
+          for f in gateway-service/internal/grpcgateway/chat.go gateway-service/internal/httperror/grpc.go gateway-service/internal/httpresponse/marshaler.go; do
+            if test -f "$f"; then
               echo "=== $f ==="
               nl -ba "$f"
             fi
           done
+          echo '=== GATEWAY ERROR/PRESENTER OPTIONS ==='
+          git grep -n -E 'WithErrorHandler|WithForwardResponseOption|WithMarshalerOption|httperror|httpresponse|WriteGRPC' -- 'gateway-service/**/*.go' || true
+
+      - name: Determine AppError wire semantics with grpc status conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd chat-v1-service
+          cat > /tmp/app_error_probe.go <<'EOF'
+          package main
+          import (
+            "fmt"
+            "net/http"
+            _errors "common/errors"
+            "google.golang.org/grpc/status"
+          )
+          func main() {
+            for _, e := range []error{
+              _errors.NewAppError(http.StatusBadRequest, "receiverId is required"),
+              _errors.NewAppError(http.StatusInternalServerError, "redis failed"),
+              _errors.BadRequestException("receiverId is required"),
+              _errors.InternalServerException("redis failed"),
+            } {
+              s := status.Convert(e)
+              fmt.Printf("TYPE=%T CODE=%s MESSAGE=%q DETAILS=%d\n", e, s.Code(), s.Message(), len(s.Details()))
+            }
+          }
+          EOF
+          go run /tmp/app_error_probe.go
