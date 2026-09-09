@@ -145,6 +145,9 @@ jobs:
             exit 1
           fi
 
+          grep -Fq '../../database/migrations/000001_hub_schema.up.sql' hub-service/infra/db/migrate_contract_test.go
+          grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
+
           git diff --check
 
       - name: Generate canonical protobuf and Wire graph
