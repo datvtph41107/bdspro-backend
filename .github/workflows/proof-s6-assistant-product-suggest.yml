@@ -1,0 +1,157 @@
+name: Proof S6 Assistant Product Suggest Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/proof-s6-assistant-product-suggest.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CANONICAL_SHA: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
+      CANDIDATE_SHA: 97ec02d6e676cb060b70e40fb953be3013b99d87
+      CANDIDATE_BRANCH: final-acceptance/proof-s6-assistant-product-suggest
+    steps:
+      - name: Checkout exact clean candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 97ec02d6e676cb060b70e40fb953be3013b99d87
+          fetch-depth: 0
+
+      - name: Exact authority and bounded delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git rev-parse HEAD^)" = "$CANONICAL_SHA"
+          test "$(git merge-base "$CANONICAL_SHA" "$CANDIDATE_SHA")" = "$CANONICAL_SHA"
+          test "$(git rev-list --count "$CANONICAL_SHA".."$CANDIDATE_SHA")" = "1"
+          test "$(git rev-list --count "$CANDIDATE_SHA".."$CANONICAL_SHA")" = "0"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin "refs/heads/$CANDIDATE_BRANCH" | awk '{print $1}')" = "$CANDIDATE_SHA"
+          mapfile -t changed < <(git diff --name-only "$CANONICAL_SHA" "$CANDIDATE_SHA" | sort)
+          expected=(assistant-service/infra/handler/assistant_handler.go assistant-service/infra/handler/assistant_product_suggest_error_test.go assistant-service/internal/usecases/assistant_usecase.go)
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+          ! printf '%s\n' "${changed[@]}" | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+          git diff --check "$CANONICAL_SHA" "$CANDIDATE_SHA"
+          ! grep -Fq 'common/errors' assistant-service/internal/usecases/assistant_usecase.go
+          grep -Fq 'var ErrProductSuggestUnavailable = errors.New("failed to get product suggest")' assistant-service/internal/usecases/assistant_usecase.go
+          grep -Fq 'return nil, "", 0, ErrProductSuggestUnavailable' assistant-service/internal/usecases/assistant_usecase.go
+          grep -Fq 'mapAnalyzeProductTextError("failed to analyze", err)' assistant-service/infra/handler/assistant_handler.go
+          grep -Fq 'mapAnalyzeProductTextError("failed to analyze with deepseek", err)' assistant-service/infra/handler/assistant_handler.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+
+      - name: Canonical protobuf and Assistant Wire reproducibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          rm -f assistant-service/wire/wire_gen.go
+          make -C shared/code wire assistant
+          test -f assistant-service/wire/wire_gen.go
+          git check-ignore -q assistant-service/wire/wire_gen.go
+          git diff --exit-code
+          git diff --check
+
+      - name: Targeted Assistant transport mapping
+        shell: bash
+        working-directory: assistant-service
+        run: |
+          set -euo pipefail
+          go test ./infra/handler -run 'TestMapAnalyzeProductTextError' -count=1
+          go test -race ./infra/handler -run 'TestMapAnalyzeProductTextError' -count=1
+
+      - name: Gateway compatibility for preserved Assistant wire
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > gateway-service/internal/httperror/assistant_product_suggest_compat_test.go <<'EOF'
+          package httperror
+
+          import (
+              "encoding/json"
+              "net/http"
+              "net/http/httptest"
+              "testing"
+
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestAssistantProductSuggestLegacyCompatibility(t *testing.T) {
+              messages := []string{
+                  "failed to analyze: rpc error: code = Internal desc = failed to get product suggest",
+                  "failed to analyze with deepseek: rpc error: code = Internal desc = failed to get product suggest",
+              }
+              for _, message := range messages {
+                  rr := httptest.NewRecorder()
+                  WriteGRPC(rr, status.Error(codes.Internal, message))
+                  if rr.Code != http.StatusInternalServerError {
+                      t.Fatalf("http status = %d, want %d", rr.Code, http.StatusInternalServerError)
+                  }
+                  var body struct {
+                      Code int32 `json:"code"`
+                      Message string `json:"message"`
+                  }
+                  if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+                      t.Fatal(err)
+                  }
+                  if body.Code != int32(codes.Internal) {
+                      t.Fatalf("body code = %d, want %d", body.Code, codes.Internal)
+                  }
+                  if body.Message != message {
+                      t.Fatalf("message = %q, want %q", body.Message, message)
+                  }
+              }
+          }
+          EOF
+          gofmt -w gateway-service/internal/httperror/assistant_product_suggest_compat_test.go
+          (cd gateway-service && go test ./internal/httperror -run TestAssistantProductSuggestLegacyCompatibility -count=1)
+          rm gateway-service/internal/httperror/assistant_product_suggest_compat_test.go
+
+      - name: Full Assistant regression
+        shell: bash
+        working-directory: assistant-service
+        run: |
+          set -euo pipefail
+          go test ./...
+          go test -race ./...
+          go vet ./...
+          go build ./...
+
+      - name: Final source immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --exit-code
+          git diff --check
+          test -z "$(git status --porcelain)"
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
