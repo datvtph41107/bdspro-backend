@@ -1,0 +1,64 @@
+name: Audit S5 Shared Crypto
+
+on:
+  push:
+    branches:
+      - final-acceptance/audit-s5-shared-crypto-54930e5
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closure:
+    name: Shared crypto caller closure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout audit commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit exact accepted source
+        shell: bash
+        env:
+          BASE: 54930e50fe1618d283f60796207b38a5d7b5d7e1
+        run: |
+          set -euo pipefail
+
+          echo '=== AUDIT LINEAGE ==='
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "PARENT=$(git rev-parse HEAD^)"
+          echo "BASE=$BASE"
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git diff --name-only "$BASE"..HEAD)" = '.github/workflows/audit-s5-shared-crypto.yml'
+
+          echo
+          echo '=== COMMON/PKG/CRYPTO IMPORTERS ==='
+          git grep -n -E 'common/pkg/crypto' "$BASE" -- '*.go' || true
+
+          echo
+          echo '=== CRYPTO API CALLERS ==='
+          git grep -n -E 'GetGlobalKeyManager|InitializeFromConfig|InitializeWithPassphrase|GetActiveEncryptor|NewAESEncryptorFromPassphrase|NewAESEncryptorFromKey|EncryptBytesCTR|DecryptBytesCTR|crypto\.Encryptor|crypto\.KeyManager' "$BASE" -- '*.go' || true
+
+          echo
+          echo '=== ENCRYPTION PROCESS CONFIG READERS ==='
+          git grep -n -E 'CONFIG_ENCRYPTION_PASSPHRASE|encryption\.(enabled|aes_passphrase)' "$BASE" -- '*.go' '*.yml' '*.yaml' '*.env' '*.env.*' || true
+
+          echo
+          echo '=== SHARED CRYPTO PROCESS/TRANSPORT COUPLING ==='
+          git grep -n -E 'os\.(Getenv|LookupEnv)|viper\.|grpc|gin|http|metadata' "$BASE" -- 'shared/common/pkg/crypto/*.go' || true
+
+          echo
+          echo '=== DH / AUTH-KEY CALLERS ==='
+          git grep -n -E 'GenerateDHKeyPair|ComputeSharedSecret|EncodePublicKey|DecodePublicKey|EncodePrivateKey|DecodePrivateKey|GenerateAuthKey|DeriveEncryptionKey|EncryptAuthKeyXOR|DecryptAuthKeyXOR' "$BASE" -- '*.go' || true
+
+          echo
+          echo '=== OTHER STANDARD CRYPTO IMPORTS IN SERVICES/SHARED ==='
+          git grep -n -E '"crypto/(aes|cipher|ecdh|elliptic|hmac|rand|rsa|sha256|sha512|subtle)"|golang\.org/x/crypto' "$BASE" -- '*.go' || true
+
+          echo
+          echo 'S5.4 SHARED CRYPTO READ-ONLY CLOSURE AUDIT: PASS'
+          echo 'ACCEPTANCE SOURCE MUTATION: NONE'
