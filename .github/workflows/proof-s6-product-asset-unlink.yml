@@ -1,0 +1,177 @@
+name: Proof S6 ProductAsset Unlink Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-asset-unlink-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      S4_REDIS_ADDR: 127.0.0.1:6379
+
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: Checkout proof harness controls
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+
+      - name: Checkout exact clean semantic source SHA
+        uses: actions/checkout@v4
+        with:
+          ref: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
+          fetch-depth: 0
+          path: source
+
+      - name: Verify immutable proof authority and bounded delta
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "0e7ff07db4d61d0b26f5f792237270fdadf52a7f"
+          test "$(git rev-parse HEAD^)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test "$(git ls-remote origin refs/heads/final-acceptance/proof-s6-product-asset-unlink | awk '{print $1}')" = "0e7ff07db4d61d0b26f5f792237270fdadf52a7f"
+          test -d shared/protobuf
+          test -d organization-service
+          test -d map-service
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check 516d82f678c8ddd3b02a81ae6857fff99a6dfa50..HEAD
+          changed="$(git diff --name-only 516d82f678c8ddd3b02a81ae6857fff99a6dfa50..HEAD | sort)"
+          expected="$(printf '%s\n' bdspro-service/infra/handler/product_asset_unlink_error_test.go bdspro-service/infra/handler/product_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go | sort)"
+          test "$changed" = "$expected"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'Protected path changed' >&2
+            exit 1
+          fi
+          grep -Fq 'ErrProductAssetLinkCheckFailed' bdspro-service/internal/domain/errors.go
+          grep -Fq 'ErrProductAssetLinkNotFound' bdspro-service/internal/domain/errors.go
+          grep -Fq 'ErrProductAssetUnlinkFailed' bdspro-service/internal/domain/errors.go
+          grep -Fq 'return fmt.Errorf("%w: %v", domain.ErrProductAssetLinkCheckFailed, err)' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'return domain.ErrProductAssetLinkNotFound' bdspro-service/internal/usecases/product_asset_usecase.go
+          grep -Fq 'return fmt.Errorf("%w: %v", domain.ErrProductAssetUnlinkFailed, err)' bdspro-service/internal/usecases/product_asset_usecase.go
+          if sed -n '/func (uc \*ProductAssetUsecase) UnlinkProductAsset/,/func (uc \*ProductAssetUsecase) GetAssetsByProductID/p' bdspro-service/internal/usecases/product_asset_usecase.go | grep -Fq '_routes.Except'; then
+            echo 'UnlinkProductAsset still owns common/routes transport policy' >&2
+            exit 1
+          fi
+          grep -Fq 'return nil, status.Errorf(codes.InvalidArgument, "productId and assetId are required")' bdspro-service/infra/handler/product_handler.go
+          grep -Fq 'return nil, mapProductAssetUnlinkError(err)' bdspro-service/infra/handler/product_handler.go
+          grep -Fq 'status.Error(codes.Unknown, "500: Lỗi kiểm tra liên kết")' bdspro-service/infra/handler/product_handler.go
+          grep -Fq 'status.Error(codes.Unknown, "404: Liên kết không tồn tại")' bdspro-service/infra/handler/product_handler.go
+          grep -Fq 'status.Error(codes.Unknown, "500: Lỗi hủy liên kết")' bdspro-service/infra/handler/product_handler.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify formatting
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          files="bdspro-service/infra/handler/product_asset_unlink_error_test.go bdspro-service/infra/handler/product_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Install canonical generators and materialize Make toolchain
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Generate canonical protobuf and prove Wire cleanliness
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire bdspro
+          git diff --exit-code -- bdspro-service/wire/wire_gen.go
+          git diff --check
+          git diff --exit-code
+
+      - name: Prove ProductAsset unlink application semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp harness/.github/proof/s6_product_asset_unlink_usecase_test.go source/bdspro-service/internal/usecases/product_asset_unlink_proof_test.go
+          trap 'rm -f source/bdspro-service/internal/usecases/product_asset_unlink_proof_test.go' EXIT
+          gofmt -w source/bdspro-service/internal/usecases/product_asset_unlink_proof_test.go
+          cd source/bdspro-service
+          go test ./internal/usecases -run '^TestProofProductAssetUnlinkSemanticErrors$' -count=1 -v
+          cd ../..
+          rm source/bdspro-service/internal/usecases/product_asset_unlink_proof_test.go
+          trap - EXIT
+
+      - name: Test Product transport mapping and targeted race
+        shell: bash
+        working-directory: source/bdspro-service
+        run: |
+          set -euo pipefail
+          go test ./infra/handler -run '^TestMapProductAssetUnlinkError' -count=1 -v
+          go test -race ./infra/handler -run '^TestMapProductAssetUnlinkError' -count=1 -v
+
+      - name: Prove Gateway HTTP compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp harness/.github/proof/s6_product_asset_unlink_gateway_test.go source/gateway-service/internal/httperror/product_asset_unlink_proof_test.go
+          trap 'rm -f source/gateway-service/internal/httperror/product_asset_unlink_proof_test.go' EXIT
+          gofmt -w source/gateway-service/internal/httperror/product_asset_unlink_proof_test.go
+          cd source/gateway-service
+          go test ./internal/httperror -run '^TestProofProductAssetUnlinkLegacyGatewayContract$' -count=1 -v
+          cd ../..
+          rm source/gateway-service/internal/httperror/product_asset_unlink_proof_test.go
+          trap - EXIT
+
+      - name: Test vet and build BDSPro through canonical Make API
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C bdspro-service test
+          make -C bdspro-service vet
+          make -C bdspro-service build
+          make -C bdspro-service clean
+
+      - name: Final source immutability check
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "0e7ff07db4d61d0b26f5f792237270fdadf52a7f"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
