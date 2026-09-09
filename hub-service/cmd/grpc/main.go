@@ -4,6 +4,7 @@ import (
 	common_db "common/db"
 	_middleware "common/middleware"
 	process "common/process"
+	qhprorpc "common/rpc"
 	"context"
 	"fmt"
 	"hub/config"
@@ -19,7 +20,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -30,12 +30,16 @@ var GrpcCmd = &cobra.Command{
 		if err := config.LoadConfig(); err != nil {
 			return fmt.Errorf("load hub config: %w", err)
 		}
+		runtime, err := config.NewRuntime()
+		if err != nil {
+			return fmt.Errorf("materialize hub runtime: %w", err)
+		}
 
 		// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 		os.Setenv("TZ", "Europe/London")
 		time.Local = time.FixedZone("Europe/London", 7*60*60)
 
-		app, cleanup, err := wire.InitializeApp()
+		app, cleanup, err := wire.InitializeApp(runtime)
 		if err != nil {
 			return fmt.Errorf("initialize hub app: %w", err)
 		}
@@ -54,15 +58,21 @@ var GrpcCmd = &cobra.Command{
 		processCtx, processCancel := context.WithCancel(signalCtx)
 		defer processCancel()
 
-		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
+		port := fmt.Sprintf(":%d", runtime.GRPCPort)
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
 			return fmt.Errorf("listen hub gRPC on %s: %w", port, err)
 		}
 		defer func() { _ = lis.Close() }()
+
+		transport := qhprorpc.ServerTransport(runtime.Transport)
 		interceptors := grpc.ChainUnaryInterceptor(
+			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
-			hubMiddleware.NewAPIKeyUnaryServerInterceptor(app.ApiKeyUsecase),
+			hubMiddleware.NewAPIKeyUnaryServerInterceptor(
+				app.ApiKeyUsecase,
+				runtime.Security.ProtectedMethods,
+			),
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
 
@@ -76,6 +86,7 @@ var GrpcCmd = &cobra.Command{
 		s := grpc.NewServer(
 			interceptors,
 			grpc.ChainStreamInterceptor(
+				transport.Stream,
 				_middleware.ParseGrpcMetadataContextStreamMiddleware,
 			),
 		)

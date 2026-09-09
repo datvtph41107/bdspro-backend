@@ -8,7 +8,6 @@ import (
 	cmd_grpc "hub/cmd/grpc"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // Hub is an internal gRPC service. gateway-service owns the public HTTP boundary
@@ -20,7 +19,6 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(cmd_grpc.GrpcCmd)
-	viper.AutomaticEnv()
 }
 
 func main() {
