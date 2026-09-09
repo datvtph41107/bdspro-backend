@@ -2,7 +2,14 @@ package domain
 
 import (
 	_models "common/models"
+	"errors"
 	"social/internal/enums"
+)
+
+var (
+	ErrReportReasonNotFound    = errors.New("lý do báo cáo không tồn tại")
+	ErrReportAlreadySubmitted  = errors.New("bạn đã gửi báo cáo")
+	ErrReportTargetUnavailable = errors.New("bài viết không tồn tại hoặc không thể báo cáo")
 )
 
 type Report struct {

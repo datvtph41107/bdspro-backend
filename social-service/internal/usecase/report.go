@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
@@ -37,7 +36,7 @@ func (u *ReportUsecase) CreateReport(ctx context.Context, report *domain.Report)
 		return nil, err
 	}
 	if !exist {
-		return nil, errors.New("lý do báo cáo không tồn tại")
+		return nil, domain.ErrReportReasonNotFound
 	}
 
 	exist, err = u.reportRepo.ExistByTargetIdAndUserIdAndTargetType(ctx, report.TargetID, report.UserID, report.TargetType)
@@ -45,7 +44,7 @@ func (u *ReportUsecase) CreateReport(ctx context.Context, report *domain.Report)
 		return nil, err
 	}
 	if exist {
-		return nil, errors.New("bạn đã gửi báo cáo")
+		return nil, domain.ErrReportAlreadySubmitted
 	}
 	if report.TargetType == enums.TargetTypeNewsFeed {
 
@@ -54,7 +53,7 @@ func (u *ReportUsecase) CreateReport(ctx context.Context, report *domain.Report)
 			return nil, err
 		}
 		if !exist {
-			return nil, errors.New("bài viết không tồn tại hoặc không thể báo cáo")
+			return nil, domain.ErrReportTargetUnavailable
 		}
 	}
 
