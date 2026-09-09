@@ -2,14 +2,16 @@ package usecases
 
 import (
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"assistant/internal/dto"
 	"assistant/internal/interface/provider"
 )
+
+var ErrProductSuggestUnavailable = errors.New("failed to get product suggest")
 
 type AssistantUsecase struct {
 	DeepseekClient provider.DeepseekProvider
@@ -63,7 +65,7 @@ func (u *AssistantUsecase) AnalyzeProductText(ctx context.Context, content strin
 
 	productV3_bdspro, err := u.BdsproInternal.GetSuggest(ctx, content)
 	if err != nil {
-		return nil, "", 0, _errors.ReturnError(500, "failed to get product suggest")
+		return nil, "", 0, ErrProductSuggestUnavailable
 	}
 
 	productV3.Address = addressV3

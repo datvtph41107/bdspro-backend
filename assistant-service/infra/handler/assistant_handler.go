@@ -5,6 +5,7 @@ import (
 	"assistant/internal/dto"
 	"assistant/internal/usecases"
 	"context"
+	"errors"
 	"time"
 
 	assistantpb "pb/types/assistant"
@@ -29,6 +30,13 @@ func NewAssistantHandler(usecase *usecases.AssistantUsecase, runtime config.Runt
 	}
 }
 
+func mapAnalyzeProductTextError(prefix string, err error) error {
+	if errors.Is(err, usecases.ErrProductSuggestUnavailable) {
+		err = status.Error(codes.Internal, "failed to get product suggest")
+	}
+	return status.Errorf(codes.Internal, "%s: %v", prefix, err)
+}
+
 // AnalyzeProductText - Phân tích văn bản sản phẩm BĐS
 // @Summary Phân tích văn bản sản phẩm BĐS sử dụng AI
 // @Description Sử dụng AI để phân tích và trích xuất thông tin từ văn bản mô tả sản phẩm
@@ -46,7 +54,7 @@ func (h *AssistantHandler) AnalyzeProductText(ctx context.Context, req *assistan
 
 	productV3, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to analyze: %v", err)
+		return nil, mapAnalyzeProductTextError("failed to analyze", err)
 	}
 
 	productInfo := &sharepb.ProductV3Proto{
@@ -264,7 +272,7 @@ func (h *AssistantHandler) AnalyzeProductTextWithDeepSeek(ctx context.Context, r
 	// Gọi usecase để phân tích với DeepSeek
 	result, modelName, processingTime, err := h.Usecase.AnalyzeProductText(ctx, req.Content, req.Context)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to analyze with deepseek: %v", err)
+		return nil, mapAnalyzeProductTextError("failed to analyze with deepseek", err)
 	}
 
 	// Map kết quả sang protobuf
