@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  exact-sha-chat-v1-presenter-trace:
-    runs-on: ubuntu-latest
+  exact-sha-chat-v1-wire-semantics:
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact accepted boundary
         uses: actions/checkout@v4
@@ -26,46 +26,31 @@ jobs:
           test -z "$(git status --porcelain)"
           printf 'AUDIT_SHA=%s\n' "$(git rev-parse HEAD)"
 
-      - name: Locate and print chat-v1 presenter middleware
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical protobuf generators
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== PRESENTER MIDDLEWARE REFERENCES ==='
-          git grep -n -E 'PresenterMiddleware|AppError|NewAppError|ErrorHandlerMiddleware' -- 'chat-v1-service/**/*.go' 'shared/common/**/*.go' || true
-          echo '=== MIDDLEWARE FILES ==='
-          find chat-v1-service/infrastructure/middleware -type f -name '*.go' -print | sort
-          for f in chat-v1-service/infrastructure/middleware/*.go; do
-            echo "=== $f ==="
-            nl -ba "$f"
-          done
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
 
-      - name: Inspect chat-v1 delivery error adapters
+      - name: Generate canonical protobuf
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== DELIVERY ERROR FILES ==='
-          find chat-v1-service/infrastructure/delivery -type f -path '*errors*' -name '*.go' -print | sort || true
-          for f in $(find chat-v1-service/infrastructure/delivery -type f -path '*errors*' -name '*.go' | sort); do
-            echo "=== $f ==="
-            nl -ba "$f"
-          done
-          echo '=== CALLERS OF DELIVERY ERROR PACKAGE ==='
-          git grep -n -E 'delivery/errors|errors\.(New|From|To|Map|GRPC|Status)' -- 'chat-v1-service/**/*.go' || true
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
 
-      - name: Inspect gateway Chat registration and error path
-        shell: bash
-        run: |
-          set -euo pipefail
-          for f in gateway-service/internal/grpcgateway/chat.go gateway-service/internal/httperror/grpc.go gateway-service/internal/httpresponse/marshaler.go; do
-            if test -f "$f"; then
-              echo "=== $f ==="
-              nl -ba "$f"
-            fi
-          done
-          echo '=== GATEWAY ERROR/PRESENTER OPTIONS ==='
-          git grep -n -E 'WithErrorHandler|WithForwardResponseOption|WithMarshalerOption|httperror|httpresponse|WriteGRPC' -- 'gateway-service/**/*.go' || true
-
-      - name: Determine AppError wire semantics with grpc status conversion
+      - name: Determine exact AppError wire semantics
         shell: bash
         run: |
           set -euo pipefail
@@ -86,8 +71,20 @@ jobs:
               _errors.InternalServerException("redis failed"),
             } {
               s := status.Convert(e)
-              fmt.Printf("TYPE=%T CODE=%s MESSAGE=%q DETAILS=%d\n", e, s.Code(), s.Message(), len(s.Details()))
+              fmt.Printf("TYPE=%T CODE=%d CODE_NAME=%s MESSAGE=%q DETAILS=%d\n", e, int32(s.Code()), s.Code(), s.Message(), len(s.Details()))
             }
           }
           EOF
           go run /tmp/app_error_probe.go
+
+      - name: Prove generated files only and source remained immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "4d40fa37945c9dda541d12397dba9afb5a5ad97d"
+          changed="$(git status --porcelain)"
+          printf '%s\n' "$changed"
+          if printf '%s\n' "$changed" | grep -Ev '^[? ][? ] shared/protobuf/|^.. shared/protobuf/' | grep -q .; then
+            echo 'Audit unexpectedly modified non-generated source' >&2
+            exit 1
+          fi
