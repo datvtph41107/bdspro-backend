@@ -10,6 +10,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// The legacy Report surface emits plain errors over gRPC: Unknown, exact
+// message text, and no status details. Ownership may move; this wire contract
+// must not.
 func TestMapReportErrorPreservesLegacyWireContract(t *testing.T) {
 	tests := []struct {
 		name    string
