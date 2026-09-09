@@ -12,44 +12,47 @@ permissions:
 jobs:
   report-proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout exact proof commit
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up canonical Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25.10'
-          cache: false
-
-      - name: Materialize canonical toolchain path
+      - name: Verify immutable proof authority and bounded delta
         shell: bash
         run: |
           set -euo pipefail
-          actual_goroot="$(go env GOROOT)"
-          mkdir -p "$HOME/.cache/qhpro/toolchain"
-          ln -s "$actual_goroot" "$HOME/.cache/qhpro/toolchain/go1.25.10"
-          test -x "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go"
-
-      - name: Verify protected invariants
-        shell: bash
-        run: |
-          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
+          test "$canonical_remote" = "7c9d5c3bd85bb110e5207c36a9dd8de27b98804b"
           test -d shared/protobuf
           test -d organization-service
           test -d map-service
           echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
           git diff --check 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD
-          changed="$(git diff --name-only 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD | grep -v '^.github/workflows/proof-s6-report.yml$' || true)"
-          expected="$(printf '%s\n' social-service/infra/service/report.go social-service/infra/service/report_error_test.go social-service/internal/domain/report.go social-service/internal/usecase/report.go)"
-          test "$(printf '%s\n' "$changed" | sort)" = "$(printf '%s\n' "$expected" | sort)"
+          changed="$(git diff --name-only 7c9d5c3bd85bb110e5207c36a9dd8de27b98804b...HEAD | grep -v '^.github/workflows/proof-s6-report.yml$' | sort || true)"
+          expected="$(printf '%s\n' \
+            social-service/infra/service/report.go \
+            social-service/infra/service/report_error_test.go \
+            social-service/internal/domain/report.go \
+            social-service/internal/usecase/report.go | sort)"
+          test "$changed" = "$expected"
           if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
             echo 'Protected path changed' >&2
             exit 1
           fi
+          test -z "$(git grep -n 'errors.New("lý do báo cáo không tồn tại")\|errors.New("bạn đã gửi báo cáo")\|errors.New("bài viết không tồn tại hoặc không thể báo cáo")' -- social-service/internal/usecase/report.go || true)"
+          grep -Fq 'return nil, domain.ErrReportReasonNotFound' social-service/internal/usecase/report.go
+          grep -Fq 'return nil, domain.ErrReportAlreadySubmitted' social-service/internal/usecase/report.go
+          grep -Fq 'return nil, domain.ErrReportTargetUnavailable' social-service/internal/usecase/report.go
+          grep -Fq 'return nil, mapReportError(err)' social-service/infra/service/report.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
 
       - name: Verify formatting
         shell: bash
@@ -58,14 +61,107 @@ jobs:
           files="social-service/infra/service/report.go social-service/infra/service/report_error_test.go social-service/internal/domain/report.go social-service/internal/usecase/report.go"
           test -z "$(gofmt -l $files)"
 
-      - name: Social test
-        run: make -C social-service test
+      - name: Install canonical protobuf generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
 
-      - name: Social race test
-        run: make -C social-service test-race
+      - name: Generate canonical protobuf reproducibly
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/social
+          git diff --exit-code
 
-      - name: Social vet
-        run: make -C social-service vet
+      - name: Test Report owner-local mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./social-service/infra/service -run 'TestMapReportError' -count=1 -v
 
-      - name: Social build
-        run: make -C social-service build
+      - name: Materialize canonical Go toolchain path
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          actual_goroot="$(go env GOROOT)"
+          canonical_root="$HOME/.cache/qhpro/toolchain"
+          mkdir -p "$canonical_root"
+          rm -rf "$canonical_root/go${GO_VERSION}"
+          ln -s "$actual_goroot" "$canonical_root/go${GO_VERSION}"
+          test "$("$canonical_root/go${GO_VERSION}/bin/go" env GOVERSION)" = "go${GO_VERSION}"
+
+      - name: Test race vet and build Social through canonical Make API
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C social-service test
+          make -C social-service test-race
+          make -C social-service vet
+          make -C social-service build
+          make -C social-service clean
+
+      - name: Prove Gateway HTTP compatibility from Report mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd gateway-service
+          cat > internal/httperror/report_proof_test.go <<'EOF'
+          package httperror
+
+          import (
+            "encoding/json"
+            "net/http"
+            "net/http/httptest"
+            "testing"
+
+            "google.golang.org/grpc/codes"
+            "google.golang.org/grpc/status"
+          )
+
+          func TestProofReportLegacyUnknownContract(t *testing.T) {
+            cases := []string{
+              "lý do báo cáo không tồn tại",
+              "bạn đã gửi báo cáo",
+              "bài viết không tồn tại hoặc không thể báo cáo",
+            }
+            for _, message := range cases {
+              recorder := httptest.NewRecorder()
+              WriteGRPC(recorder, status.Error(codes.Unknown, message))
+              if recorder.Code != http.StatusInternalServerError {
+                t.Fatalf("status=%d want=%d", recorder.Code, http.StatusInternalServerError)
+              }
+              var body struct {
+                Code int32 `json:"code"`
+                Message string `json:"message"`
+              }
+              if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+                t.Fatal(err)
+              }
+              if body.Code != int32(codes.Unknown) || body.Message != message {
+                t.Fatalf("body=%+v want code=%d message=%q", body, int32(codes.Unknown), message)
+              }
+              t.Logf("HTTP=%d BODY_CODE=%d MESSAGE=%q", recorder.Code, body.Code, body.Message)
+            }
+          }
+          EOF
+          trap 'rm -f internal/httperror/report_proof_test.go' EXIT
+          go test ./internal/httperror -run TestProofReportLegacyUnknownContract -count=1 -v
+          rm internal/httperror/report_proof_test.go
+          trap - EXIT
+
+      - name: Final source immutability check
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
