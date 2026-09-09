@@ -14,248 +14,64 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Checkout harness controls
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+
       - name: Checkout exact accepted source SHA
         uses: actions/checkout@v4
         with:
           ref: 516d82f678c8ddd3b02a81ae6857fff99a6dfa50
           fetch-depth: 0
+          path: source
           persist-credentials: true
 
       - name: Guard source and candidate authority
         shell: bash
+        working-directory: source
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
-          canonical_remote="$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')"
-          candidate_remote="$(git ls-remote origin refs/heads/final-acceptance/proof-s6-product-asset-unlink | awk '{print $1}')"
-          test "$canonical_remote" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
-          test "$candidate_remote" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
+          test "$(git ls-remote origin refs/heads/final-acceptance/proof-s6-product-asset-unlink | awk '{print $1}')" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
           test -d shared/protobuf
           test -d organization-service
           test -d map-service
           echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
 
-      - name: Apply bounded ProductAsset unlink ownership change
+      - name: Apply bounded ownership patch
         shell: bash
+        run: python3 harness/.github/scripts/materialize_s6_product_asset_unlink.py source
+
+      - name: Format and verify bounded delta
+        shell: bash
+        working-directory: source
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path, old, new):
-              p = Path(path)
-              text = p.read_text()
-              if text.count(old) != 1:
-                  raise SystemExit(f"{path}: expected exactly one replacement target, got {text.count(old)}")
-              p.write_text(text.replace(old, new, 1))
-
-          # Domain owns transport-neutral failure semantics.
-          replace_once(
-              "bdspro-service/internal/domain/errors.go",
-              '\tErrConcurrentUpdate = errors.New("ErrConcurrentUpdate")\n',
-              '\tErrConcurrentUpdate              = errors.New("ErrConcurrentUpdate")\n'
-              '\tErrProductAssetLinkCheckFailed   = errors.New("product asset link check failed")\n'
-              '\tErrProductAssetLinkNotFound      = errors.New("product asset link not found")\n'
-              '\tErrProductAssetUnlinkFailed      = errors.New("product asset unlink failed")\n',
-          )
-
-          # Application stops constructing common/routes transport policy for Unlink only.
-          replace_once(
-              "bdspro-service/internal/usecases/product_asset_usecase.go",
-              'import (\n\t"bdspro/internal/dto"\n',
-              'import (\n\t"bdspro/internal/domain"\n\t"bdspro/internal/dto"\n',
-          )
-          old_unlink = '''func (uc *ProductAssetUsecase) UnlinkProductAsset(ctx context.Context, req *dto.UnlinkProductAssetRequest) error {
-\t// Kiểm tra liên kết tồn tại
-\texists, err := uc.ProductAssetRepo.CheckExists(ctx, req.ProductID, req.AssetID)
-\tif err != nil {
-\t\treturn &_routes.Except{
-\t\t\tCode:    500,
-\t\t\tMessage: "Lỗi kiểm tra liên kết",
-\t\t}
-\t}
-\tif !exists {
-\t\treturn &_routes.Except{
-\t\t\tCode:    404,
-\t\t\tMessage: "Liên kết không tồn tại",
-\t\t}
-\t}
-
-\t// Hủy liên kết
-\terr = uc.ProductAssetRepo.Unlink(ctx, req.ProductID, req.AssetID)
-\tif err != nil {
-\t\treturn &_routes.Except{
-\t\t\tCode:    500,
-\t\t\tMessage: "Lỗi hủy liên kết",
-\t\t}
-\t}
-
-\t// Cập nhật AssetCount cho product sau khi hủy liên kết
-\tuc.updateAssetCountForProducts(ctx, []uint64{req.ProductID})
-
-\treturn nil
-}
-'''
-          new_unlink = '''func (uc *ProductAssetUsecase) UnlinkProductAsset(ctx context.Context, req *dto.UnlinkProductAssetRequest) error {
-\t// Kiểm tra liên kết tồn tại
-\texists, err := uc.ProductAssetRepo.CheckExists(ctx, req.ProductID, req.AssetID)
-\tif err != nil {
-\t\treturn fmt.Errorf("%w: %v", domain.ErrProductAssetLinkCheckFailed, err)
-\t}
-\tif !exists {
-\t\treturn domain.ErrProductAssetLinkNotFound
-\t}
-
-\t// Hủy liên kết
-\terr = uc.ProductAssetRepo.Unlink(ctx, req.ProductID, req.AssetID)
-\tif err != nil {
-\t\treturn fmt.Errorf("%w: %v", domain.ErrProductAssetUnlinkFailed, err)
-\t}
-
-\t// Cập nhật AssetCount cho product sau khi hủy liên kết
-\tuc.updateAssetCountForProducts(ctx, []uint64{req.ProductID})
-
-\treturn nil
-}
-'''
-          replace_once("bdspro-service/internal/usecases/product_asset_usecase.go", old_unlink, new_unlink)
-
-          # Product transport owns exact legacy gRPC mapping; unrelated errors pass through.
-          replace_once(
-              "bdspro-service/infra/handler/product_handler.go",
-              '\t"bdspro/internal/dto"\n',
-              '\t"bdspro/internal/domain"\n\t"bdspro/internal/dto"\n',
-          )
-          replace_once(
-              "bdspro-service/infra/handler/product_handler.go",
-              '\t"context"\n',
-              '\t"context"\n\t"errors"\n',
-          )
-          replace_once(
-              "bdspro-service/infra/handler/product_handler.go",
-              '''\terr := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)
-\tif err != nil {
-\t\treturn nil, err
-\t}
-''',
-              '''\terr := s.ProductAssetUC.UnlinkProductAsset(ctx, unlinkReq)
-\tif err != nil {
-\t\treturn nil, mapProductAssetUnlinkError(err)
-\t}
-''',
-          )
-          marker = '\n// @Summary Lấy danh sách tài sản theo sản phẩm\n'
-          mapper = '''
-func mapProductAssetUnlinkError(err error) error {
-\tif err == nil {
-\t\treturn nil
-\t}
-
-\tswitch {
-\tcase errors.Is(err, domain.ErrProductAssetLinkCheckFailed):
-\t\treturn status.Error(codes.Unknown, "500: Lỗi kiểm tra liên kết")
-\tcase errors.Is(err, domain.ErrProductAssetLinkNotFound):
-\t\treturn status.Error(codes.Unknown, "404: Liên kết không tồn tại")
-\tcase errors.Is(err, domain.ErrProductAssetUnlinkFailed):
-\t\treturn status.Error(codes.Unknown, "500: Lỗi hủy liên kết")
-\tdefault:
-\t\treturn err
-\t}
-}
-'''
-          replace_once("bdspro-service/infra/handler/product_handler.go", marker, '\n' + mapper + marker)
-
-          Path("bdspro-service/infra/handler/product_asset_unlink_error_test.go").write_text('''package handler
-
-import (
-\t"errors"
-\t"fmt"
-\t"testing"
-
-\t"bdspro/internal/domain"
-\t"google.golang.org/grpc/codes"
-\t"google.golang.org/grpc/status"
-)
-
-func TestMapProductAssetUnlinkErrorLegacyContract(t *testing.T) {
-\tcases := []struct {
-\t\tname        string
-\t\terr         error
-\t\twantMessage string
-\t}{
-\t\t{"check failure", fmt.Errorf("repo check: %w", domain.ErrProductAssetLinkCheckFailed), "500: Lỗi kiểm tra liên kết"},
-\t\t{"not found", domain.ErrProductAssetLinkNotFound, "404: Liên kết không tồn tại"},
-\t\t{"unlink failure", fmt.Errorf("repo unlink: %w", domain.ErrProductAssetUnlinkFailed), "500: Lỗi hủy liên kết"},
-\t}
-
-\tfor _, tc := range cases {
-\t\tt.Run(tc.name, func(t *testing.T) {
-\t\t\tgot := status.Convert(mapProductAssetUnlinkError(tc.err))
-\t\t\tif got.Code() != codes.Unknown {
-\t\t\t\tt.Fatalf("code=%s want=%s", got.Code(), codes.Unknown)
-\t\t\t}
-\t\t\tif got.Message() != tc.wantMessage {
-\t\t\t\tt.Fatalf("message=%q want=%q", got.Message(), tc.wantMessage)
-\t\t\t}
-\t\t\tif len(got.Details()) != 0 {
-\t\t\t\tt.Fatalf("details=%d want=0", len(got.Details()))
-\t\t\t}
-\t\t})
-\t}
-}
-
-func TestMapProductAssetUnlinkErrorPassthrough(t *testing.T) {
-\tother := errors.New("unrelated")
-\tif got := mapProductAssetUnlinkError(other); got != other {
-\t\tt.Fatalf("got=%v want same unrelated error", got)
-\t}
-\tif got := mapProductAssetUnlinkError(nil); got != nil {
-\t\tt.Fatalf("got=%v want nil", got)
-\t}
-}
-''')
-          PY
-
-          gofmt -w \
-            bdspro-service/internal/domain/errors.go \
-            bdspro-service/internal/usecases/product_asset_usecase.go \
-            bdspro-service/infra/handler/product_handler.go \
-            bdspro-service/infra/handler/product_asset_unlink_error_test.go
-
-      - name: Verify bounded semantic delta
-        shell: bash
-        run: |
-          set -euo pipefail
+          gofmt -w bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go bdspro-service/infra/handler/product_handler.go bdspro-service/infra/handler/product_asset_unlink_error_test.go
           git diff --check
           changed="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' \
-            bdspro-service/infra/handler/product_asset_unlink_error_test.go \
-            bdspro-service/infra/handler/product_handler.go \
-            bdspro-service/internal/domain/errors.go \
-            bdspro-service/internal/usecases/product_asset_usecase.go | sort)"
+          expected="$(printf '%s\n' bdspro-service/infra/handler/product_asset_unlink_error_test.go bdspro-service/infra/handler/product_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go | sort)"
           test "$changed" = "$expected"
-          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
-            echo 'Protected path changed' >&2
-            exit 1
-          fi
           test -z "$(git grep -n 'Message: \"Lỗi kiểm tra liên kết\"' -- bdspro-service/internal/usecases/product_asset_usecase.go || true)"
           test -z "$(git grep -n 'Message: \"Liên kết không tồn tại\"' -- bdspro-service/internal/usecases/product_asset_usecase.go || true)"
           test -z "$(git grep -n 'Message: \"Lỗi hủy liên kết\"' -- bdspro-service/internal/usecases/product_asset_usecase.go || true)"
           grep -Fq 'return nil, mapProductAssetUnlinkError(err)' bdspro-service/infra/handler/product_handler.go
           grep -Fq 'status.Error(codes.Unknown, "404: Liên kết không tồn tại")' bdspro-service/infra/handler/product_handler.go
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
 
       - name: Commit and push clean semantic candidate
         shell: bash
+        working-directory: source
         run: |
           set -euo pipefail
-          git config user.name 'datvtph41107'
-          git config user.email '116329073+datvtph41107@users.noreply.github.com'
+          git config user.name datvtph41107
+          git config user.email 116329073+datvtph41107@users.noreply.github.com
           git checkout -B final-acceptance/proof-s6-product-asset-unlink
-          git add \
-            bdspro-service/internal/domain/errors.go \
-            bdspro-service/internal/usecases/product_asset_usecase.go \
-            bdspro-service/infra/handler/product_handler.go \
-            bdspro-service/infra/handler/product_asset_unlink_error_test.go
+          git add bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/product_asset_usecase.go bdspro-service/infra/handler/product_handler.go bdspro-service/infra/handler/product_asset_unlink_error_test.go
           git commit -m 'refactor(bdspro): localize product asset unlink error mapping'
           test "$(git rev-parse HEAD^)" = "516d82f678c8ddd3b02a81ae6857fff99a6dfa50"
           git push origin HEAD:refs/heads/final-acceptance/proof-s6-product-asset-unlink
