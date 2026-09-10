@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
           test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$CANONICAL_SHA"
-          test "$(git ls-remote origin "refs/heads/$CANDIDATE_BRANCH" | awk '{print $1}')" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin refs/heads/$CANDIDATE_BRANCH | awk '{print $1}')" = "$CANONICAL_SHA"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
 
       - name: Materialize bounded User source change
@@ -39,6 +39,7 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import textwrap
 
           domain_path = Path('user-service/internal/domain/access/role_group.go')
           text = domain_path.read_text()
@@ -66,100 +67,95 @@ jobs:
           text = text.replace('\t"context"\n', '\t"context"\n\t"errors"\n')
           marker = '// @Summary Lấy danh sách role theo module code\n'
           assert text.count(marker) == 1
-          mapper = '''func mapGetRolesByModuleCodeError(err error) error {
-\tif !errors.Is(err, access.ErrRoleGroupNotFound) {
-\t\treturn err
-\t}
+          mapper = textwrap.dedent('''
+              func mapGetRolesByModuleCodeError(err error) error {
+                  if !errors.Is(err, access.ErrRoleGroupNotFound) {
+                      return err
+                  }
 
-\tconst message = "Role group not found"
-\tst := status.New(codes.Internal, message)
-\twithDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
-\t\tCode:    404,
-\t\tMessage: message,
-\t})
-\tif detailsErr != nil {
-\t\treturn st.Err()
-\t}
-\treturn withDetails.Err()
-}
+                  const message = "Role group not found"
+                  st := status.New(codes.Internal, message)
+                  withDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
+                      Code:    404,
+                      Message: message,
+                  })
+                  if detailsErr != nil {
+                      return st.Err()
+                  }
+                  return withDetails.Err()
+              }
 
-'''
+          ''').lstrip()
           text = text.replace(marker, mapper + marker)
-          old = '''\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
-\tif err != nil {
-\t\treturn nil, err
-\t}
-'''
-          new = '''\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
-\tif err != nil {
-\t\treturn nil, mapGetRolesByModuleCodeError(err)
-\t}
-'''
+          old = '\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n'
+          new = '\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)\n\tif err != nil {\n\t\treturn nil, mapGetRolesByModuleCodeError(err)\n\t}\n'
           assert text.count(old) == 1
           text = text.replace(old, new)
           handler_path.write_text(text)
 
           test_path = Path('user-service/infra/handler/role_group_registry_error_test.go')
-          test_path.write_text('''package handler
+          test_content = textwrap.dedent('''
+              package handler
 
-import (
-\tstderrors "errors"
-\t"testing"
+              import (
+                  stderrors "errors"
+                  "testing"
 
-\tsharepb "pb/types/shared"
-\t"user/internal/domain/access"
-\t"user/internal/usecase"
+                  sharepb "pb/types/shared"
+                  "user/internal/domain/access"
+                  "user/internal/usecase"
 
-\t"google.golang.org/grpc/codes"
-\t"google.golang.org/grpc/status"
-)
+                  "google.golang.org/grpc/codes"
+                  "google.golang.org/grpc/status"
+              )
 
-func TestRoleGroupRegistryMissIsSemantic(t *testing.T) {
-\tregistry := usecase.NewRoleGroupRegistry(nil)
-\tgroup, err := registry.GetByCode("__missing__")
-\tif group != nil {
-\t\tt.Fatalf("group = %+v, want nil", group)
-\t}
-\tif !stderrors.Is(err, access.ErrRoleGroupNotFound) {
-\t\tt.Fatalf("err = %v, want ErrRoleGroupNotFound", err)
-\t}
-\tif _, ok := status.FromError(err); ok {
-\t\tt.Fatalf("semantic error must not already be a gRPC status: %v", err)
-\t}
-}
+              func TestRoleGroupRegistryMissIsSemantic(t *testing.T) {
+                  registry := usecase.NewRoleGroupRegistry(nil)
+                  group, err := registry.GetByCode("__missing__")
+                  if group != nil {
+                      t.Fatalf("group = %+v, want nil", group)
+                  }
+                  if !stderrors.Is(err, access.ErrRoleGroupNotFound) {
+                      t.Fatalf("err = %v, want ErrRoleGroupNotFound", err)
+                  }
+                  if _, ok := status.FromError(err); ok {
+                      t.Fatalf("semantic error must not already be a gRPC status: %v", err)
+                  }
+              }
 
-func TestMapGetRolesByModuleCodeErrorRoleGroupNotFound(t *testing.T) {
-\tgot := mapGetRolesByModuleCodeError(access.ErrRoleGroupNotFound)
-\tst, ok := status.FromError(got)
-\tif !ok {
-\t\tt.Fatalf("expected gRPC status, got %T: %v", got, got)
-\t}
-\tif st.Code() != codes.Internal {
-\t\tt.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
-\t}
-\tif st.Message() != "Role group not found" {
-\t\tt.Fatalf("message = %q", st.Message())
-\t}
-\tdetails := st.Details()
-\tif len(details) != 1 {
-\t\tt.Fatalf("details = %d, want 1", len(details))
-\t}
-\tdetail, ok := details[0].(*sharepb.ErrorResponse)
-\tif !ok {
-\t\tt.Fatalf("detail type = %T, want *sharepb.ErrorResponse", details[0])
-\t}
-\tif detail.Code != 404 || detail.Message != "Role group not found" || detail.Second != nil {
-\t\tt.Fatalf("detail = %+v", detail)
-\t}
-}
+              func TestMapGetRolesByModuleCodeErrorRoleGroupNotFound(t *testing.T) {
+                  got := mapGetRolesByModuleCodeError(access.ErrRoleGroupNotFound)
+                  st, ok := status.FromError(got)
+                  if !ok {
+                      t.Fatalf("expected gRPC status, got %T: %v", got, got)
+                  }
+                  if st.Code() != codes.Internal {
+                      t.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+                  }
+                  if st.Message() != "Role group not found" {
+                      t.Fatalf("message = %q", st.Message())
+                  }
+                  details := st.Details()
+                  if len(details) != 1 {
+                      t.Fatalf("details = %d, want 1", len(details))
+                  }
+                  detail, ok := details[0].(*sharepb.ErrorResponse)
+                  if !ok {
+                      t.Fatalf("detail type = %T, want *sharepb.ErrorResponse", details[0])
+                  }
+                  if detail.Code != 404 || detail.Message != "Role group not found" || detail.Second != nil {
+                      t.Fatalf("detail = %+v", detail)
+                  }
+              }
 
-func TestMapGetRolesByModuleCodeErrorPassthrough(t *testing.T) {
-\tboom := stderrors.New("boom")
-\tif got := mapGetRolesByModuleCodeError(boom); got != boom {
-\t\tt.Fatalf("got = %v, want original error", got)
-\t}
-}
-''')
+              func TestMapGetRolesByModuleCodeErrorPassthrough(t *testing.T) {
+                  boom := stderrors.New("boom")
+                  if got := mapGetRolesByModuleCodeError(boom); got != boom {
+                      t.Fatalf("got = %v, want original error", got)
+                  }
+              }
+          ''').lstrip()
+          test_path.write_text(test_content)
           PY
           gofmt -w user-service/internal/domain/access/role_group.go user-service/internal/usecase/role_group_registry.go user-service/infra/handler/role_handler.go user-service/infra/handler/role_group_registry_error_test.go
           mapfile -t changed < <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)
