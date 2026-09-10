@@ -1,4 +1,4 @@
-name: Audit S6 Batch 7 Ownership Debt
+name: Audit S6 Batch 8 Closure Candidates
 
 on:
   push:
@@ -17,90 +17,82 @@ jobs:
       - name: Checkout exact canonical source
         uses: actions/checkout@v4
         with:
-          ref: 97ec02d6e676cb060b70e40fb953be3013b99d87
+          ref: c7084b4752ba2345f9b3e370aa5e229f9a74c104
           fetch-depth: 0
 
       - name: Exact authority and protected guards
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test "$(git rev-parse HEAD)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
           git fetch origin final-acceptance/source-canonicalization --quiet
-          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
           echo "EXACT_SHA=$(git rev-parse HEAD)"
-          echo "DEPLOY_SHA=$(sha256sum shared/code/deploy.sh | awk '{print $1}')"
 
-      - name: Inventory application-layer transport ownership
+      - name: Rank small internal transport-shaped files
         shell: bash
         run: |
           set -euo pipefail
+          echo '=== FILES WITH <=3 LIVE TRANSPORT-SHAPED CALLS ==='
+          while IFS= read -r f; do
+            count=$(git grep -nE 'ReturnError\(|ReturnErrorWithSecond\(|_(errors|routes)\.(UnauthorizedException|BadRequestException|ConflictException|ForbiddenException|InternalServerException|NotFoundException)|&_routes\.Except\{' -- "$f" | grep -v '^[^:]*:[0-9]*:[[:space:]]*//' | wc -l || true)
+            if [ "$count" -gt 0 ] && [ "$count" -le 3 ]; then
+              printf '%s\t%s\n' "$count" "$f"
+            fi
+          done < <(git grep -lE '"common/(errors|routes)"' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' | sort) | sort -n -k1,1 -k2,2
 
-          echo '=== INTERNAL FILES IMPORTING COMMON ERRORS/ROUTES ==='
-          git grep -nE '"common/(errors|routes)"' -- '*-service/internal/**/*.go' \
-            ':!organization-service/**' ':!map-service/**' || true
+          echo '=== REMAINING RAW INTERNAL GRPC STATUS ==='
+          git grep -nE 'status\.(Error|Errorf|New)\(codes\.' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
 
-          echo '=== INTERNAL RETURNERROR / EXCEPT CALL SITES ==='
-          git grep -nE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
-            ':!organization-service/**' ':!map-service/**' || true
-
-          echo '=== UNIQUE INTERNAL FILES WITH TRANSPORT-SHAPED HELPERS ==='
-          git grep -lE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
-            ':!organization-service/**' ':!map-service/**' | sort || true
-
-          echo '=== COUNTS BY SERVICE ==='
-          git grep -lE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
-            ':!organization-service/**' ':!map-service/**' \
-            | awk -F/ '{count[$1]++} END {for (s in count) print count[s], s}' \
-            | sort -nr || true
-
-          echo '=== INTERNAL RAW GRPC STATUS CONSTRUCTION ==='
-          git grep -nE 'status\.(Error|Errorf|New)\(codes\.' -- '*-service/internal/**/*.go' \
-            ':!organization-service/**' ':!map-service/**' || true
-
-      - name: Inventory shared response filter caller breadth
+      - name: Trace three smallest candidate classes
         shell: bash
         run: |
           set -euo pipefail
+          echo '=== HUB UpdateBundleVersion callers / handlers / proto ==='
+          git grep -nE 'UpdateBundleVersion' -- 'hub-service/**/*.go' 'shared/protobuf/schema/hub/**/*.proto' || true
+          echo '=== CRM OwnerUsecase GetOwnerInfo callers ==='
+          git grep -nE 'GetOwnerInfo\(' -- 'crm-service/**/*.go' || true
+          echo '=== USER RoleGroupRegistry GetByCode callers ==='
+          git grep -nE 'RoleGroupRegistry|GetByCode\(' -- 'user-service/**/*.go' || true
 
-          echo '=== SHARED COMMON SURFACE FILES ==='
-          find shared/common -maxdepth 3 -type f -name '*.go' | sort
-
-          echo '=== COMMON ERRORS IMPORTING FILES ==='
-          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | sort || true
-          echo 'COUNT common/errors:'
-          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l || true
-
-          echo '=== COMMON ROUTES IMPORTING FILES ==='
-          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | sort || true
-          echo 'COUNT common/routes:'
-          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l || true
-
-          echo '=== SHARED COMMON FILTER/RESPONSE SYMBOLS ==='
-          git grep -nEi 'filter|response|error|except|returnerror' -- 'shared/common/**/*.go' || true
-
-      - name: Inventory likely live vertical entrypoints
+      - name: Classify service-local candidate breadth
         shell: bash
         run: |
           set -euo pipefail
+          echo '=== TRANSPORT-SHAPED FILE COUNT BY SERVICE ==='
+          git grep -lE 'ReturnError\(|ReturnErrorWithSecond\(|&_routes\.Except\{' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' \
+            | awk -F/ '{c[$1]++} END {for (s in c) print c[s], s}' | sort -n || true
 
-          echo '=== SERVICE HANDLER/SERVICE FILES USING INTERNAL USECASES ==='
-          for svc in assistant auth bdspro chat crm file hub notification payment social tqd user; do
-            d="${svc}-service"
-            test -d "$d" || continue
-            echo "--- $d ---"
-            git grep -lE 'Usecase|UseCase|UC\.' -- "$d/infra/**/*.go" "$d/cmd/**/*.go" 2>/dev/null | sort | head -80 || true
+          echo '=== SPECIFIC SMALL FILE CONTENT SITES ==='
+          for f in \
+            hub-service/internal/usecase/version_usecase.go \
+            crm-service/internal/usecase/owner_usecase.go \
+            user-service/internal/usecase/role_group_registry.go \
+            notification-service/internal/usecase/person_config_usecase.go \
+            notification-service/internal/usecase/property_history_usecase.go \
+            crm-service/internal/usecase/rate_usecase.go; do
+              test -f "$f" || continue
+              echo "--- $f ---"
+              git grep -nE 'ReturnError\(|ReturnErrorWithSecond\(|UnauthorizedException|BadRequestException|ConflictException|ForbiddenException|InternalServerException|NotFoundException|&_routes\.Except\{' -- "$f" || true
           done
 
-          echo '=== PROTO RPC NAMES BY SERVICE (READ ONLY) ==='
-          for svc in assistant auth bdspro chat crm file hub notification payment social tqd user; do
-            echo "--- $svc ---"
-            git grep -nE '^[[:space:]]*rpc[[:space:]]+' -- "shared/protobuf/$svc/**/*.proto" 2>/dev/null | head -120 || true
-          done
+      - name: Verify prior broad classifications still hold
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo -n 'common/errors files excluding protected: '
+          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
+          echo -n 'common/routes files excluding protected: '
+          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
+          echo -n 'BDSPro ProductAsset Link policy sites: '
+          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}'
+          echo -n 'Social Like policy sites: '
+          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l
 
       - name: Final immutability
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test "$(git rev-parse HEAD)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
           test -z "$(git status --porcelain)"
