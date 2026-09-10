@@ -8,6 +8,7 @@ var (
 	ErrUnauthorized                = errors.New("unauthorized")
 	ErrForbidden                   = errors.New("forbidden")
 	ErrDuplicate                   = errors.New("duplicate")
+	ErrDealInvitationAlreadyExists = errors.New("deal invitation already exists")
 	ErrConcurrentUpdate            = errors.New("ErrConcurrentUpdate")
 	ErrProductAssetLinkCheckFailed = errors.New("product asset link check failed")
 	ErrProductAssetLinkNotFound    = errors.New("product asset link not found")

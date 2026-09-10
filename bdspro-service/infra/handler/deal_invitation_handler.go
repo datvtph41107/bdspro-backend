@@ -2,11 +2,17 @@ package handler
 
 import (
 	"context"
+	"errors"
 	bdspropb "pb/types/bdspro"
+	sharepb "pb/types/shared"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
+	"bdspro/internal/domain"
 	"bdspro/internal/usecases"
 )
 
@@ -53,10 +59,30 @@ func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *bds
 
 	createdInvitation, err := h.dealInvitationUsecase.SendInvitation(ctx, invitation)
 	if err != nil {
-		return nil, err
+		return nil, mapDealInvitationSendError(err)
 	}
 
 	return h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil
+}
+
+func mapDealInvitationSendError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, domain.ErrDealInvitationAlreadyExists) {
+		return err
+	}
+
+	const message = "invitation already exists for this user"
+	st := status.New(codes.Internal, message)
+	stWithDetails, detailErr := st.WithDetails(&sharepb.ErrorResponse{
+		Code:    400,
+		Message: message,
+	})
+	if detailErr != nil {
+		return st.Err()
+	}
+	return stWithDetails.Err()
 }
 
 // @Summary Xác nhận lời mời

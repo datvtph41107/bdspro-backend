@@ -14,7 +14,6 @@ import (
 	"bdspro/internal/repo"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	_errors "common/errors"
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 )
@@ -106,7 +105,7 @@ func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *
 		return nil, err
 	}
 	if exists {
-		return nil, _errors.ReturnError(400, "invitation already exists for this user")
+		return nil, domain.ErrDealInvitationAlreadyExists
 		// return nil, custom_error.InvalidRequest(&errdetails.BadRequest{
 		// 	FieldViolations: []*errdetails.BadRequest_FieldViolation{
 		// 		{
