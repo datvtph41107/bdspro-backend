@@ -1,0 +1,162 @@
+name: Proof S6 Deal Invitation Duplicate Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/proof-s6-deal-invitation-duplicate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deal-invitation-duplicate-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      CANDIDATE_SHA: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+      PARENT_SHA: 97ec02d6e676cb060b70e40fb953be3013b99d87
+      GATEWAY_TEST_B64: cGFja2FnZSBodHRwZXJyb3IKCmltcG9ydCAoCgkiZW5jb2RpbmcvanNvbiIKCSJuZXQvaHR0cCIKCSJuZXQvaHR0cC9odHRwdGVzdCIKCSJ0ZXN0aW5nIgoKCXNoYXJlcGIgInBiL3R5cGVzL3NoYXJlZCIKCSJnb29nbGUuZ29sYW5nLm9yZy9ncnBjL2NvZGVzIgoJImdvb2dsZS5nb2xhbmcub3JnL2dycGMvc3RhdHVzIgopCgpmdW5jIFRlc3RQcm9vZkRlYWxJbnZpdGF0aW9uRHVwbGljYXRlTGVnYWN5R2F0ZXdheUNvbnRyYWN0KHQgKnRlc3RpbmcuVCkgewoJY29uc3QgbXNnID0gImludml0YXRpb24gYWxyZWFkeSBleGlzdHMgZm9yIHRoaXMgdXNlciIKCXN0IDo9IHN0YXR1cy5OZXcoY29kZXMuSW50ZXJuYWwsIG1zZykKCXdpdGhEZXRhaWxzLCBlcnIgOj0gc3QuV2l0aERldGFpbHMoJnNoYXJlcGIuRXJyb3JSZXNwb25zZXtDb2RlOiA0MDAsIE1lc3NhZ2U6IG1zZ30pCglpZiBlcnIgIT0gbmlsIHsKCQl0LkZhdGFsKGVycikKCX0KCglyciA6PSBodHRwdGVzdC5OZXdSZWNvcmRlcigpCglXcml0ZUdSUEMocnIsIHdpdGhEZXRhaWxzLkVycigpKQoJaWYgcnIuQ29kZSAhPSBodHRwLlN0YXR1c09LIHsKCQl0LkZhdGFsZigiaHR0cCA9ICVkLCB3YW50IDIwMDsgYm9keT0lcyIsIHJyLkNvZGUsIHJyLkJvZHkuU3RyaW5nKCkpCgl9Cgl2YXIgYm9keSBzdHJ1Y3QgewoJCUNvZGUgaW50MzIgYGpzb246ImNvZGUiYAoJCU1lc3NhZ2Ugc3RyaW5nIGBqc29uOiJtZXNzYWdlImAKCQlTZWNvbmQgKmludDMyIGBqc29uOiJzZWNvbmQiYAoJfQoJaWYgZXJyIDo9IGpzb24uVW5tYXJzaGFsKHJyLkJvZHkuQnl0ZXMoKSwgJmJvZHkpOyBlcnIgIT0gbmlsIHsKCQl0LkZhdGFsKGVycikKCX0KCWlmIGJvZHkuQ29kZSAhPSA0MDAgfHwgYm9keS5NZXNzYWdlICE9IG1zZyB8fCBib2R5LlNlY29uZCAhPSBuaWwgewoJCXQuRmF0YWxmKCJib2R5ID0gJSt2IiwgYm9keSkKCX0KfQo=
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: Checkout proof harness controls
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+
+      - name: Checkout exact semantic candidate
+        uses: actions/checkout@v4
+        with:
+          ref: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+          fetch-depth: 0
+          path: source
+
+      - name: Verify authority bounded delta and ownership
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git rev-parse HEAD^)" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/proof-s6-deal-invitation-duplicate | awk '{print $1}')" = "$CANDIDATE_SHA"
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check "$PARENT_SHA"..HEAD
+          changed="$(git diff --name-only "$PARENT_SHA"..HEAD | sort)"
+          expected="$(printf '%s\n' bdspro-service/infra/handler/deal_invitation_error_test.go bdspro-service/infra/handler/deal_invitation_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/deal_invitation_usecase.go | sort)"
+          test "$changed" = "$expected"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'protected path changed' >&2
+            exit 1
+          fi
+          grep -Fq 'ErrDealInvitationAlreadyExists = errors.New("deal invitation already exists")' bdspro-service/internal/domain/errors.go
+          grep -Fq 'return nil, domain.ErrDealInvitationAlreadyExists' bdspro-service/internal/usecases/deal_invitation_usecase.go
+          ! grep -Fq '_errors "common/errors"' bdspro-service/internal/usecases/deal_invitation_usecase.go
+          ! grep -Fq '_errors.ReturnError(400, "invitation already exists for this user")' bdspro-service/internal/usecases/deal_invitation_usecase.go
+          grep -Fq 'ValidateSendInvitationRequest(req)' bdspro-service/infra/handler/deal_invitation_handler.go
+          grep -Fq 'return nil, mapDealInvitationSendError(err)' bdspro-service/infra/handler/deal_invitation_handler.go
+          grep -Fq 'errors.Is(err, domain.ErrDealInvitationAlreadyExists)' bdspro-service/infra/handler/deal_invitation_handler.go
+          grep -Fq 'status.New(codes.Internal, message)' bdspro-service/infra/handler/deal_invitation_handler.go
+          grep -Fq 'Code:    400' bdspro-service/infra/handler/deal_invitation_handler.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify formatting
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          files="bdspro-service/infra/handler/deal_invitation_error_test.go bdspro-service/infra/handler/deal_invitation_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/deal_invitation_usecase.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Install canonical generators and materialize Make toolchain
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Generate canonical protobuf and prove Wire cleanliness
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire bdspro
+          git diff --exit-code -- bdspro-service/wire/wire_gen.go
+          git diff --check
+          git diff --exit-code
+
+      - name: Test Deal Invitation transport mapping and targeted race
+        shell: bash
+        working-directory: source/bdspro-service
+        run: |
+          set -euo pipefail
+          go test ./infra/handler -run '^TestMapDealInvitationSendError' -count=1 -v
+          go test -race ./infra/handler -run '^TestMapDealInvitationSendError' -count=1 -v
+
+      - name: Prove Gateway HTTP compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          Path('source/gateway-service/internal/httperror/deal_invitation_duplicate_proof_test.go').write_bytes(base64.b64decode(os.environ['GATEWAY_TEST_B64']))
+          PY
+          trap 'rm -f source/gateway-service/internal/httperror/deal_invitation_duplicate_proof_test.go' EXIT
+          gofmt -w source/gateway-service/internal/httperror/deal_invitation_duplicate_proof_test.go
+          cd source/gateway-service
+          go test ./internal/httperror -run '^TestProofDealInvitationDuplicateLegacyGatewayContract$' -count=1 -v
+          cd ../..
+          rm source/gateway-service/internal/httperror/deal_invitation_duplicate_proof_test.go
+          trap - EXIT
+
+      - name: Test vet and build BDSPro through canonical Make API
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C bdspro-service test
+          make -C bdspro-service vet
+          make -C bdspro-service build
+          make -C bdspro-service clean
+
+      - name: Final source immutability check
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
