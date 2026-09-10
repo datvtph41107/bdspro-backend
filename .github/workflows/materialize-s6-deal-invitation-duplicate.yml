@@ -38,9 +38,13 @@ jobs:
 
       - name: Materialize bounded Deal Invitation source change
         shell: bash
+        env:
+          MAPPER_B64: ZnVuYyBtYXBEZWFsSW52aXRhdGlvblNlbmRFcnJvcihlcnIgZXJyb3IpIGVycm9yIHsKCWlmIGVyciA9PSBuaWwgewoJCXJldHVybiBuaWwKCX0KCWlmICFlcnJvcnMuSXMoZXJyLCBkb21haW4uRXJyRGVhbEludml0YXRpb25BbHJlYWR5RXhpc3RzKSB7CgkJcmV0dXJuIGVycgoJfQoKCWNvbnN0IG1lc3NhZ2UgPSAiaW52aXRhdGlvbiBhbHJlYWR5IGV4aXN0cyBmb3IgdGhpcyB1c2VyIgoJc3QgOj0gc3RhdHVzLk5ldyhjb2Rlcy5JbnRlcm5hbCwgbWVzc2FnZSkKCXN0V2l0aERldGFpbHMsIGRldGFpbEVyciA6PSBzdC5XaXRoRGV0YWlscygmc2hhcmVwYi5FcnJvclJlc3BvbnNlewoJCUNvZGU6ICAgIDQwMCwKCQlNZXNzYWdlOiBtZXNzYWdlLAoJfSkKCWlmIGRldGFpbEVyciAhPSBuaWwgewoJCXJldHVybiBzdC5FcnIoKQoJfQoJcmV0dXJuIHN0V2l0aERldGFpbHMuRXJyKCkKfQoK
+          TEST_B64: cGFja2FnZSBoYW5kbGVyCgppbXBvcnQgKAoJc3RkZXJyb3JzICJlcnJvcnMiCgkidGVzdGluZyIKCgkiYmRzcHJvL2ludGVybmFsL2RvbWFpbiIKCXNoYXJlcGIgInBiL3R5cGVzL3NoYXJlZCIKCgkiZ29vZ2xlLmdvbGFuZy5vcmcvZ3JwYy9jb2RlcyIKCSJnb29nbGUuZ29sYW5nLm9yZy9ncnBjL3N0YXR1cyIKKQoKZnVuYyBUZXN0TWFwRGVhbEludml0YXRpb25TZW5kRXJyb3JBbHJlYWR5RXhpc3RzKHQgKnRlc3RpbmcuVCkgewoJY29uc3Qgd2FudE1lc3NhZ2UgPSAiaW52aXRhdGlvbiBhbHJlYWR5IGV4aXN0cyBmb3IgdGhpcyB1c2VyIgoJZ290IDo9IG1hcERlYWxJbnZpdGF0aW9uU2VuZEVycm9yKGRvbWFpbi5FcnJEZWFsSW52aXRhdGlvbkFscmVhZHlFeGlzdHMpCglzdCwgb2sgOj0gc3RhdHVzLkZyb21FcnJvcihnb3QpCglpZiAhb2sgewoJCXQuRmF0YWxmKCJleHBlY3RlZCBnUlBDIHN0YXR1cywgZ290ICVUOiAldiIsIGdvdCwgZ290KQoJfQoJaWYgc3QuQ29kZSgpICE9IGNvZGVzLkludGVybmFsIHsKCQl0LkZhdGFsZigiY29kZSA9ICV2LCB3YW50ICV2Iiwgc3QuQ29kZSgpLCBjb2Rlcy5JbnRlcm5hbCkKCX0KCWlmIHN0Lk1lc3NhZ2UoKSAhPSB3YW50TWVzc2FnZSB7CgkJdC5GYXRhbGYoIm1lc3NhZ2UgPSAlcSwgd2FudCAlcSIsIHN0Lk1lc3NhZ2UoKSwgd2FudE1lc3NhZ2UpCgl9CglkZXRhaWxzIDo9IHN0LkRldGFpbHMoKQoJaWYgbGVuKGRldGFpbHMpICE9IDEgewoJCXQuRmF0YWxmKCJkZXRhaWxzID0gJWQsIHdhbnQgMSIsIGxlbihkZXRhaWxzKSkKCX0KCWRldGFpbCwgb2sgOj0gZGV0YWlsc1swXS4oKnNoYXJlcGIuRXJyb3JSZXNwb25zZSkKCWlmICFvayB7CgkJdC5GYXRhbGYoImRldGFpbCB0eXBlID0gJVQiLCBkZXRhaWxzWzBdKQoJfQoJaWYgZGV0YWlsLkNvZGUgIT0gNDAwIHx8IGRldGFpbC5NZXNzYWdlICE9IHdhbnRNZXNzYWdlIHx8IGRldGFpbC5TZWNvbmQgIT0gbmlsIHsKCQl0LkZhdGFsZigiZGV0YWlsID0gJSt2IiwgZGV0YWlsKQoJfQp9CgpmdW5jIFRlc3RNYXBEZWFsSW52aXRhdGlvblNlbmRFcnJvclBhc3N0aHJvdWdoKHQgKnRlc3RpbmcuVCkgewoJYm9vbSA6PSBzdGRlcnJvcnMuTmV3KCJib29tIikKCWlmIGdvdCA6PSBtYXBEZWFsSW52aXRhdGlvblNlbmRFcnJvcihib29tKTsgZ290ICE9IGJvb20gewoJCXQuRmF0YWxmKCJnb3QgJXYsIHdhbnQgb3JpZ2luYWwgZXJyb3IiLCBnb3QpCgl9CglpZiBnb3QgOj0gbWFwRGVhbEludml0YXRpb25TZW5kRXJyb3IobmlsKTsgZ290ICE9IG5pbCB7CgkJdC5GYXRhbGYoImdvdCAldiwgd2FudCBuaWwiLCBnb3QpCgl9Cn0K
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64, os
           from pathlib import Path
 
           domain_path = Path('bdspro-service/internal/domain/errors.go')
@@ -53,9 +57,10 @@ jobs:
           usecase_path = Path('bdspro-service/internal/usecases/deal_invitation_usecase.go')
           text = usecase_path.read_text()
           assert text.count('\t_errors "common/errors"\n') == 1
-          assert text.count('_errors.ReturnError(400, "invitation already exists for this user")') == 1
+          old_error = '_errors.ReturnError(400, "invitation already exists for this user")'
+          assert text.count(old_error) == 1
           text = text.replace('\t_errors "common/errors"\n', '')
-          text = text.replace('_errors.ReturnError(400, "invitation already exists for this user")', 'domain.ErrDealInvitationAlreadyExists')
+          text = text.replace(old_error, 'domain.ErrDealInvitationAlreadyExists')
           usecase_path.write_text(text)
 
           handler_path = Path('bdspro-service/infra/handler/deal_invitation_handler.go')
@@ -68,99 +73,19 @@ jobs:
           text = text.replace('\tbdspropb "pb/types/bdspro"\n', '\tbdspropb "pb/types/bdspro"\n\tsharepb "pb/types/shared"\n\n\t"google.golang.org/grpc/codes"\n\t"google.golang.org/grpc/status"\n')
           old = '\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\treturn h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil\n'
           assert text.count(old) == 1
-          new = '\tif err != nil {\n\t\treturn nil, mapDealInvitationSendError(err)\n\t}\n\n\treturn h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil\n'
-          text = text.replace(old, new, 1)
+          text = text.replace(old, '\tif err != nil {\n\t\treturn nil, mapDealInvitationSendError(err)\n\t}\n\n\treturn h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil\n', 1)
           marker = '// @Summary Xác nhận lời mời\n'
           assert text.count(marker) == 1
-          mapper = '''func mapDealInvitationSendError(err error) error {
-\tif err == nil {
-\t\treturn nil
-\t}
-\tif !errors.Is(err, domain.ErrDealInvitationAlreadyExists) {
-\t\treturn err
-\t}
-
-\tconst message = "invitation already exists for this user"
-\tst := status.New(codes.Internal, message)
-\tstWithDetails, detailErr := st.WithDetails(&sharepb.ErrorResponse{
-\t\tCode:    400,
-\t\tMessage: message,
-\t})
-\tif detailErr != nil {
-\t\treturn st.Err()
-\t}
-\treturn stWithDetails.Err()
-}
-
-'''
+          mapper = base64.b64decode(os.environ['MAPPER_B64']).decode()
           text = text.replace(marker, mapper + marker)
           handler_path.write_text(text)
 
-          test_path = Path('bdspro-service/infra/handler/deal_invitation_error_test.go')
-          test_path.write_text('''package handler
-
-import (
-\tstderrors "errors"
-\t"testing"
-
-\t"bdspro/internal/domain"
-\tsharepb "pb/types/shared"
-
-\t"google.golang.org/grpc/codes"
-\t"google.golang.org/grpc/status"
-)
-
-func TestMapDealInvitationSendErrorAlreadyExists(t *testing.T) {
-\tconst wantMessage = "invitation already exists for this user"
-\tgot := mapDealInvitationSendError(domain.ErrDealInvitationAlreadyExists)
-\tst, ok := status.FromError(got)
-\tif !ok {
-\t\tt.Fatalf("expected gRPC status, got %T: %v", got, got)
-\t}
-\tif st.Code() != codes.Internal {
-\t\tt.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
-\t}
-\tif st.Message() != wantMessage {
-\t\tt.Fatalf("message = %q, want %q", st.Message(), wantMessage)
-\t}
-\tdetails := st.Details()
-\tif len(details) != 1 {
-\t\tt.Fatalf("details = %d, want 1", len(details))
-\t}
-\tdetail, ok := details[0].(*sharepb.ErrorResponse)
-\tif !ok {
-\t\tt.Fatalf("detail type = %T", details[0])
-\t}
-\tif detail.Code != 400 || detail.Message != wantMessage || detail.Second != nil {
-\t\tt.Fatalf("detail = %+v", detail)
-\t}
-}
-
-func TestMapDealInvitationSendErrorPassthrough(t *testing.T) {
-\tboom := stderrors.New("boom")
-\tif got := mapDealInvitationSendError(boom); got != boom {
-\t\tt.Fatalf("got %v, want original error", got)
-\t}
-\tif got := mapDealInvitationSendError(nil); got != nil {
-\t\tt.Fatalf("got %v, want nil", got)
-\t}
-}
-''')
+          Path('bdspro-service/infra/handler/deal_invitation_error_test.go').write_bytes(base64.b64decode(os.environ['TEST_B64']))
           PY
 
-          gofmt -w \
-            bdspro-service/internal/domain/errors.go \
-            bdspro-service/internal/usecases/deal_invitation_usecase.go \
-            bdspro-service/infra/handler/deal_invitation_handler.go \
-            bdspro-service/infra/handler/deal_invitation_error_test.go
-
+          gofmt -w bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/deal_invitation_usecase.go bdspro-service/infra/handler/deal_invitation_handler.go bdspro-service/infra/handler/deal_invitation_error_test.go
           mapfile -t changed < <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)
-          expected=(
-            bdspro-service/infra/handler/deal_invitation_error_test.go
-            bdspro-service/infra/handler/deal_invitation_handler.go
-            bdspro-service/internal/domain/errors.go
-            bdspro-service/internal/usecases/deal_invitation_usecase.go
-          )
+          expected=(bdspro-service/infra/handler/deal_invitation_error_test.go bdspro-service/infra/handler/deal_invitation_handler.go bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/deal_invitation_usecase.go)
           printf 'candidate paths:\n%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq "${#expected[@]}"
           for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
@@ -173,11 +98,7 @@ func TestMapDealInvitationSendErrorPassthrough(t *testing.T) {
           set -euo pipefail
           git config user.name datvtph41107
           git config user.email 116329073+datvtph41107@users.noreply.github.com
-          git add \
-            bdspro-service/internal/domain/errors.go \
-            bdspro-service/internal/usecases/deal_invitation_usecase.go \
-            bdspro-service/infra/handler/deal_invitation_handler.go \
-            bdspro-service/infra/handler/deal_invitation_error_test.go
+          git add bdspro-service/internal/domain/errors.go bdspro-service/internal/usecases/deal_invitation_usecase.go bdspro-service/infra/handler/deal_invitation_handler.go bdspro-service/infra/handler/deal_invitation_error_test.go
           git commit -m 'refactor(bdspro): localize duplicate deal invitation error mapping'
           test "$(git rev-parse HEAD^)" = "$CANONICAL_SHA"
           test "$(git rev-list --count "$CANONICAL_SHA"..HEAD)" = "1"
