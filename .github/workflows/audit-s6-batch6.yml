@@ -14,9 +14,10 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 25
     env:
       CANONICAL_SHA: 391cc2608cfdf48a6361741333d3144f7f53e0e6
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
     steps:
       - name: Checkout exact canonical source
         uses: actions/checkout@v4
@@ -41,11 +42,31 @@ jobs:
           go-version: '1.25.10'
           cache: false
 
-      - name: Materialize audit-only User legacy contract test
+      - name: Install pinned protobuf generators and materialize pb
         shell: bash
         run: |
           set -euo pipefail
-          cat > user-service/internal/usecase/role_group_permissions_legacy_contract_test.go <<'EOF'
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+          make -C shared/code buf-all
+          git diff --exit-code
+
+      - name: Prove User missing-group legacy gRPC contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          testfile=user-service/internal/usecase/role_group_permissions_legacy_contract_test.go
+          trap 'rm -f "$testfile"' EXIT
+          cat > "$testfile" <<'EOF'
           package usecase
 
           import (
@@ -109,10 +130,10 @@ jobs:
               }
           }
           EOF
-          cd user-service
-          go test ./internal/usecase -run TestLegacyUpdateGroupPermissionsMissingGroupContract -count=1
-          rm internal/usecase/role_group_permissions_legacy_contract_test.go
-          cd ..
+          gofmt -w "$testfile"
+          (cd user-service && go test ./internal/usecase -run '^TestLegacyUpdateGroupPermissionsMissingGroupContract$' -count=1 -v)
+          rm "$testfile"
+          trap - EXIT
 
       - name: Prove handler passes selected legacy error unchanged
         shell: bash
@@ -126,11 +147,13 @@ jobs:
           print('handler passthrough contract: SUCCESS')
           PY
 
-      - name: Materialize audit-only Gateway compatibility test
+      - name: Prove Gateway HTTP compatibility
         shell: bash
         run: |
           set -euo pipefail
-          cat > gateway-service/internal/httperror/role_group_permissions_legacy_contract_test.go <<'EOF'
+          testfile=gateway-service/internal/httperror/role_group_permissions_legacy_contract_test.go
+          trap 'rm -f "$testfile"' EXIT
+          cat > "$testfile" <<'EOF'
           package httperror
 
           import (
@@ -170,16 +193,16 @@ jobs:
               }
           }
           EOF
-          cd gateway-service
-          go test ./internal/httperror -run TestLegacyRoleGroupPermissionsGatewayContract -count=1
-          rm internal/httperror/role_group_permissions_legacy_contract_test.go
-          cd ..
+          gofmt -w "$testfile"
+          (cd gateway-service && go test ./internal/httperror -run '^TestLegacyRoleGroupPermissionsGatewayContract$' -count=1 -v)
+          rm "$testfile"
+          trap - EXIT
 
       - name: Reconfirm candidate boundedness against alternatives
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git grep -nE 'UpdateGroupPermissions\(' -- 'user-service/**/*.go' | grep -c 'RoleGroupUsecase.UpdateGroupPermissions(ctx')" -eq 1
+          test "$(git grep -nE 'RoleGroupUsecase\.UpdateGroupPermissions\(' -- 'user-service/**/*.go' | wc -l)" -eq 1
           test "$(git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l)" -eq 0
           test "$(git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}')" -eq 8
           test "$(git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l)" -eq 5
@@ -190,4 +213,5 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
+          git diff --exit-code
           test -z "$(git status --porcelain)"
