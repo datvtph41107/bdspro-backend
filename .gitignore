@@ -19,6 +19,7 @@ shared/protobuf/docs
 **/.env
 **/.env.local
 **/.env.runtime
+**/config/local.yml
 
 # Repository-managed developer state and pinned tools.
 /.work/
