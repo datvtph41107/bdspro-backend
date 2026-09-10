@@ -1,0 +1,95 @@
+name: Audit S6 Batch 7 Deal Invitation Contract
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: 97ec02d6e676cb060b70e40fb953be3013b99d87
+          fetch-depth: 0
+
+      - name: Exact authority guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          git fetch origin final-acceptance/source-canonicalization --quiet
+          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Trace exact Deal Invitation vertical
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== DUPLICATE INVITATION ERROR SITE ==='
+          git grep -nF 'invitation already exists for this user' -- '*.go' || true
+          echo '=== SEND INVITATION SYMBOLS ==='
+          git grep -nE 'SendDealInvitation|SendInvitation\(' -- 'bdspro-service/**/*.go' 'shared/protobuf/**/*.proto' || true
+          echo '=== DEAL MEMBER RPC / HTTP CONTRACT ==='
+          git grep -n -B4 -A8 -E 'rpc[[:space:]]+SendDealInvitation|SendDealInvitation' -- 'shared/protobuf/**/*.proto' || true
+          echo '=== HANDLER REGISTRATION ==='
+          git grep -nE 'RegisterDealMemberServiceServer|NewDealInvitationHandler' -- 'bdspro-service/**/*.go' || true
+
+      - name: Trace ReturnError and Gateway presentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== RETURNERROR IMPLEMENTATION ==='
+          git grep -n -A18 -F 'func ReturnError(' -- 'shared/common/errors/*.go' || true
+          echo '=== GATEWAY ERROR RESPONSE DETAIL CONSUMERS ==='
+          git grep -nE 'ErrorResponse|status\.FromError|Details\(\)|HTTPStatusFromCode|runtime\.HTTPStatusFromCode' -- '*gateway*' 'gateway/**' 'gateway-service/**' 'shared/**/*.go' 2>/dev/null || true
+          echo '=== GATEWAY TREE CANDIDATES ==='
+          find . -maxdepth 3 -type f -name '*.go' | grep -Ei 'gateway|error|response' | sort | head -200 || true
+
+      - name: Prove raw legacy gRPC contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > shared/common/errors/s6_batch7_audit_test.go <<'EOF'
+          package _errors
+
+          import (
+              "testing"
+              sharepb "pb/types/shared"
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestAuditDuplicateInvitationLegacyContract(t *testing.T) {
+              const msg = "invitation already exists for this user"
+              err := ReturnError(400, msg)
+              st, ok := status.FromError(err)
+              if !ok { t.Fatal("expected gRPC status") }
+              if st.Code() != codes.Internal { t.Fatalf("code=%v", st.Code()) }
+              if st.Message() != msg { t.Fatalf("message=%q", st.Message()) }
+              ds := st.Details()
+              if len(ds) != 1 { t.Fatalf("details=%d", len(ds)) }
+              d, ok := ds[0].(*sharepb.ErrorResponse)
+              if !ok { t.Fatalf("detail type=%T", ds[0]) }
+              if d.Code != 400 || d.Message != msg || d.Second != nil {
+                  t.Fatalf("detail=%+v", d)
+              }
+          }
+          EOF
+          trap 'rm -f shared/common/errors/s6_batch7_audit_test.go' EXIT
+          (cd shared && go test ./common/errors -run TestAuditDuplicateInvitationLegacyContract -count=1)
+
+      - name: Final immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f shared/common/errors/s6_batch7_audit_test.go
+          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test -z "$(git status --porcelain)"
