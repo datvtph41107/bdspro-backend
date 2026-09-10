@@ -12,7 +12,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout exact canonical source
         uses: actions/checkout@v4
@@ -49,19 +49,46 @@ jobs:
           echo '=== RETURNERROR IMPLEMENTATION ==='
           git grep -n -A18 -F 'func ReturnError(' -- 'shared/common/errors/*.go' || true
           echo '=== GATEWAY ERROR RESPONSE DETAIL CONSUMERS ==='
-          git grep -nE 'ErrorResponse|status\.FromError|Details\(\)|HTTPStatusFromCode|runtime\.HTTPStatusFromCode' -- '*gateway*' 'gateway/**' 'gateway-service/**' 'shared/**/*.go' 2>/dev/null || true
-          echo '=== GATEWAY TREE CANDIDATES ==='
-          find . -maxdepth 3 -type f -name '*.go' | grep -Ei 'gateway|error|response' | sort | head -200 || true
+          git grep -nE 'ErrorResponse|status\.FromError|Details\(\)|HTTPStatusFromCode|runtime\.HTTPStatusFromCode' -- 'gateway-service/**/*.go' 'shared/**/*.go' || true
 
-      - name: Prove raw legacy gRPC contract
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install canonical protobuf generators
         shell: bash
         run: |
           set -euo pipefail
-          cat > shared/common/errors/s6_batch7_audit_test.go <<'EOF'
-          package _errors
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+
+      - name: Generate canonical protobuf
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          git diff --exit-code
+
+      - name: Prove legacy gRPC and Gateway contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > gateway-service/internal/httperror/s6_batch7_audit_test.go <<'EOF'
+          package httperror
 
           import (
+              "encoding/json"
+              "net/http"
+              "net/http/httptest"
               "testing"
+
+              commonerrors "common/errors"
               sharepb "pb/types/shared"
               "google.golang.org/grpc/codes"
               "google.golang.org/grpc/status"
@@ -69,7 +96,8 @@ jobs:
 
           func TestAuditDuplicateInvitationLegacyContract(t *testing.T) {
               const msg = "invitation already exists for this user"
-              err := ReturnError(400, msg)
+              err := commonerrors.ReturnError(400, msg)
+
               st, ok := status.FromError(err)
               if !ok { t.Fatal("expected gRPC status") }
               if st.Code() != codes.Internal { t.Fatalf("code=%v", st.Code()) }
@@ -81,15 +109,28 @@ jobs:
               if d.Code != 400 || d.Message != msg || d.Second != nil {
                   t.Fatalf("detail=%+v", d)
               }
+
+              rr := httptest.NewRecorder()
+              WriteGRPC(rr, err)
+              if rr.Code != http.StatusOK { t.Fatalf("http=%d body=%s", rr.Code, rr.Body.String()) }
+              var body struct {
+                  Code int32 `json:"code"`
+                  Message string `json:"message"`
+                  Second *int32 `json:"second"`
+              }
+              if decodeErr := json.Unmarshal(rr.Body.Bytes(), &body); decodeErr != nil { t.Fatal(decodeErr) }
+              if body.Code != 400 || body.Message != msg || body.Second != nil {
+                  t.Fatalf("body=%+v", body)
+              }
           }
           EOF
-          trap 'rm -f shared/common/errors/s6_batch7_audit_test.go' EXIT
-          (cd shared && go test ./common/errors -run TestAuditDuplicateInvitationLegacyContract -count=1)
+          trap 'rm -f gateway-service/internal/httperror/s6_batch7_audit_test.go' EXIT
+          (cd gateway-service && go test ./internal/httperror -run TestAuditDuplicateInvitationLegacyContract -count=1)
 
       - name: Final immutability
         shell: bash
         run: |
           set -euo pipefail
-          rm -f shared/common/errors/s6_batch7_audit_test.go
+          rm -f gateway-service/internal/httperror/s6_batch7_audit_test.go
           test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
           test -z "$(git status --porcelain)"
