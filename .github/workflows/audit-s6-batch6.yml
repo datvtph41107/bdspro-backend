@@ -1,9 +1,11 @@
-name: Audit S6 Batch 8 Closure Candidates
+name: Audit S6 Closure Candidates
 
 on:
   push:
     branches:
       - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/audit-s6-batch6.yml
   workflow_dispatch:
 
 permissions:
@@ -13,24 +15,35 @@ jobs:
   audit:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      CANONICAL_SHA: 391cc2608cfdf48a6361741333d3144f7f53e0e6
     steps:
       - name: Checkout exact canonical source
         uses: actions/checkout@v4
         with:
-          ref: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+          ref: 391cc2608cfdf48a6361741333d3144f7f53e0e6
           fetch-depth: 0
 
       - name: Exact authority and protected guards
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
+          test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
           git fetch origin final-acceptance/source-canonicalization --quiet
-          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
+          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "$CANONICAL_SHA"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
           echo "EXACT_SHA=$(git rev-parse HEAD)"
 
-      - name: Rank small internal transport-shaped files
+      - name: Verify Batch 8 ownership is closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'var ErrRoleGroupNotFound = errors.New("role group not found")' user-service/internal/domain/access/role_group.go
+          grep -Fq 'return nil, access.ErrRoleGroupNotFound' user-service/internal/usecase/role_group_registry.go
+          ! grep -Fq '"common/errors"' user-service/internal/usecase/role_group_registry.go
+          grep -Fq 'mapGetRolesByModuleCodeError' user-service/infra/handler/role_handler.go
+
+      - name: Rank residual small internal transport-shaped files
         shell: bash
         run: |
           set -euo pipefail
@@ -45,39 +58,39 @@ jobs:
           echo '=== REMAINING RAW INTERNAL GRPC STATUS ==='
           git grep -nE 'status\.(Error|Errorf|New)\(codes\.' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
 
-      - name: Trace three smallest candidate classes
+      - name: Trace smallest residual candidate classes
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== HUB UpdateBundleVersion callers / handlers / proto ==='
+          echo '=== HUB UpdateBundleVersion ==='
           git grep -nE 'UpdateBundleVersion' -- 'hub-service/**/*.go' 'shared/protobuf/schema/hub/**/*.proto' || true
-          echo '=== CRM OwnerUsecase GetOwnerInfo callers ==='
+          echo '=== CRM Owner GetOwnerInfo ==='
           git grep -nE 'GetOwnerInfo\(' -- 'crm-service/**/*.go' || true
-          echo '=== USER RoleGroupRegistry GetByCode callers ==='
-          git grep -nE 'RoleGroupRegistry|GetByCode\(' -- 'user-service/**/*.go' || true
+          echo '=== Notification PersonConfig ==='
+          git grep -nE 'PersonConfig|person_config' -- 'notification-service/**/*.go' 'shared/protobuf/schema/notification/**/*.proto' || true
+          echo '=== Notification PropertyHistory ==='
+          git grep -nE 'PropertyHistory|property_history' -- 'notification-service/**/*.go' 'shared/protobuf/schema/notification/**/*.proto' || true
+          echo '=== CRM Rate ==='
+          git grep -nE 'RateUsecase|GetRate|CreateRate|UpdateRate' -- 'crm-service/**/*.go' || true
 
-      - name: Classify service-local candidate breadth
+      - name: Show residual small-file policy sites
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== TRANSPORT-SHAPED FILE COUNT BY SERVICE ==='
-          git grep -lE 'ReturnError\(|ReturnErrorWithSecond\(|&_routes\.Except\{' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' \
-            | awk -F/ '{c[$1]++} END {for (s in c) print c[s], s}' | sort -n || true
-
-          echo '=== SPECIFIC SMALL FILE CONTENT SITES ==='
           for f in \
             hub-service/internal/usecase/version_usecase.go \
             crm-service/internal/usecase/owner_usecase.go \
-            user-service/internal/usecase/role_group_registry.go \
             notification-service/internal/usecase/person_config_usecase.go \
             notification-service/internal/usecase/property_history_usecase.go \
-            crm-service/internal/usecase/rate_usecase.go; do
+            crm-service/internal/usecase/rate_usecase.go \
+            social-service/internal/usecase/like.go \
+            bdspro-service/internal/usecases/product_asset_usecase.go; do
               test -f "$f" || continue
               echo "--- $f ---"
               git grep -nE 'ReturnError\(|ReturnErrorWithSecond\(|UnauthorizedException|BadRequestException|ConflictException|ForbiddenException|InternalServerException|NotFoundException|&_routes\.Except\{' -- "$f" || true
           done
 
-      - name: Verify prior broad classifications still hold
+      - name: Verify broad and prior residual classifications
         shell: bash
         run: |
           set -euo pipefail
@@ -89,10 +102,14 @@ jobs:
           git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}'
           echo -n 'Social Like policy sites: '
           git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l
+          echo -n 'BDSPro Intent transport-shaped sites: '
+          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/intent_usecase.go | wc -l || true
+          echo -n 'BDSPro Intent production callers: '
+          git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l || true
 
       - name: Final immutability
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "c7084b4752ba2345f9b3e370aa5e229f9a74c104"
+          test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
           test -z "$(git status --porcelain)"
