@@ -1,4 +1,4 @@
-name: Audit S6 Final Closure Candidate
+name: Audit S6 Role Group Permissions Legacy Contract
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       CANONICAL_SHA: 391cc2608cfdf48a6361741333d3144f7f53e0e6
     steps:
@@ -32,70 +32,158 @@ jobs:
           git fetch origin final-acceptance/source-canonicalization --quiet
           test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "$CANONICAL_SHA"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+          grep -Fq 'return _errors.ReturnError(404, "Group không tồn tại")' user-service/internal/usecase/role_group_usecase.go
+          grep -Fq 'err := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)' user-service/infra/handler/role_group_handler.go
 
-      - name: Trace User UpdateGroupPermissions exact callers
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Materialize audit-only User legacy contract test
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== METHOD DEFINITION AND ALL CALLERS ==='
-          git grep -nE 'UpdateGroupPermissions\(' -- 'user-service/**/*.go' || true
-          echo '=== ROLE GROUP HANDLERS / RPC REGISTRATION ==='
-          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions' -- 'user-service/infra/handler/**/*.go' 'user-service/cmd/**/*.go' 'user-service/initial/**/*.go' || true
-          echo '=== PROTO CONTRACT REFERENCES ==='
-          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions' -- 'shared/protobuf/schema/**/*.proto' || true
-          echo '=== GATEWAY ROUTES / CLIENT REFERENCES ==='
-          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions|role-group|role_group' -- 'gateway-service/**/*.go' 'gateway-service/**/*.yaml' 'gateway-service/**/*.yml' || true
+          cat > user-service/internal/usecase/role_group_permissions_legacy_contract_test.go <<'EOF'
+          package usecase
 
-      - name: Inspect User selected method neighborhood and transport owner
+          import (
+              "context"
+              "testing"
+
+              sharepb "pb/types/shared"
+              "user/internal/domain/access"
+              "user/internal/interface/repo"
+
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          type legacyRoleGroupRepo struct {
+              repo.RoleGroupRepository
+              group *access.RoleGroup
+              getErr error
+              updateCalled bool
+          }
+
+          func (r *legacyRoleGroupRepo) GetByID(context.Context, uint64) (*access.RoleGroup, error) {
+              return r.group, r.getErr
+          }
+
+          func (r *legacyRoleGroupRepo) UpdateGroupPermissions(context.Context, uint64, []uint64) error {
+              r.updateCalled = true
+              return nil
+          }
+
+          func TestLegacyUpdateGroupPermissionsMissingGroupContract(t *testing.T) {
+              fake := &legacyRoleGroupRepo{}
+              uc := NewRoleGroupUsecase(fake, nil)
+              err := uc.UpdateGroupPermissions(context.Background(), 999, []uint64{1, 2})
+              if err == nil {
+                  t.Fatal("expected missing-group error")
+              }
+              if fake.updateCalled {
+                  t.Fatal("update must not run after missing group")
+              }
+              st, ok := status.FromError(err)
+              if !ok {
+                  t.Fatalf("expected gRPC status, got %T: %v", err, err)
+              }
+              if st.Code() != codes.Internal {
+                  t.Fatalf("code=%v want=%v", st.Code(), codes.Internal)
+              }
+              if st.Message() != "Group không tồn tại" {
+                  t.Fatalf("message=%q", st.Message())
+              }
+              details := st.Details()
+              if len(details) != 1 {
+                  t.Fatalf("details=%d want=1", len(details))
+              }
+              d, ok := details[0].(*sharepb.ErrorResponse)
+              if !ok {
+                  t.Fatalf("detail type=%T", details[0])
+              }
+              if d.Code != 404 || d.Message != "Group không tồn tại" || d.Second != nil {
+                  t.Fatalf("detail=%+v", d)
+              }
+          }
+          EOF
+          cd user-service
+          go test ./internal/usecase -run TestLegacyUpdateGroupPermissionsMissingGroupContract -count=1
+          rm internal/usecase/role_group_permissions_legacy_contract_test.go
+          cd ..
+
+      - name: Prove handler passes selected legacy error unchanged
         shell: bash
         run: |
           set -euo pipefail
-          sed -n '1,100p' user-service/internal/usecase/role_group_usecase.go
-          for f in user-service/infra/handler/*.go; do
-            if grep -qE 'UpdateGroupPermissions|RoleGroupUsecase' "$f"; then
-              echo "--- $f ---"
-              grep -nE -C 12 'UpdateGroupPermissions|RoleGroupUsecase' "$f" || true
-            fi
-          done
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('user-service/infra/handler/role_group_handler.go').read_text()
+          block = '''\terr := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n'''
+          assert text.count(block) == 1, 'handler must pass UpdateGroupPermissions error unchanged'
+          print('handler passthrough contract: SUCCESS')
+          PY
 
-      - name: Classify BDSPro AssetCost generic fanout
+      - name: Materialize audit-only Gateway compatibility test
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== ASSET COST HANDLER CALLS ==='
-          git grep -nE 'AssetCostUsecase|\.AssetCost|GetByID\(|Detail\(|Update\(|Delete\(' -- bdspro-service/infra/handler/asset_cost_handler.go || true
-          echo '=== ASSET COST TYPE HANDLER CALLS ==='
-          git grep -nE 'AssetCostTypeUsecase|\.AssetCostType|GetByID\(|Detail\(|Update\(|Delete\(' -- bdspro-service/infra/handler/asset_cost_type_handler.go || true
-          echo '=== GENERIC OWNER METHODS USING CheckPermission ==='
-          grep -nE -C 4 'CheckPermission\(' bdspro-service/internal/common/owner_usecase.go
-          echo '=== REGISTRATION / PROTO REFERENCES ==='
-          git grep -nE 'AssetCost|AssetCostType' -- 'bdspro-service/cmd/**/*.go' 'shared/protobuf/schema/bdspro/**/*.proto' || true
+          cat > gateway-service/internal/httperror/role_group_permissions_legacy_contract_test.go <<'EOF'
+          package httperror
 
-      - name: Classify other one-site residuals
+          import (
+              "encoding/json"
+              "net/http"
+              "net/http/httptest"
+              "testing"
+
+              sharepb "pb/types/shared"
+
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestLegacyRoleGroupPermissionsGatewayContract(t *testing.T) {
+              const message = "Group không tồn tại"
+              st := status.New(codes.Internal, message)
+              withDetails, err := st.WithDetails(&sharepb.ErrorResponse{Code: 404, Message: message})
+              if err != nil {
+                  t.Fatal(err)
+              }
+              rr := httptest.NewRecorder()
+              WriteGRPC(rr, withDetails.Err())
+              if rr.Code != http.StatusOK {
+                  t.Fatalf("HTTP=%d want=200 body=%s", rr.Code, rr.Body.String())
+              }
+              var body struct {
+                  Code int32 `json:"code"`
+                  Message string `json:"message"`
+                  Second *int32 `json:"second"`
+              }
+              if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+                  t.Fatal(err)
+              }
+              if body.Code != 404 || body.Message != message || body.Second != nil {
+                  t.Fatalf("body=%+v", body)
+              }
+          }
+          EOF
+          cd gateway-service
+          go test ./internal/httperror -run TestLegacyRoleGroupPermissionsGatewayContract -count=1
+          rm internal/httperror/role_group_permissions_legacy_contract_test.go
+          cd ..
+
+      - name: Reconfirm candidate boundedness against alternatives
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== USER ROLE GROUP SITE ==='
-          git grep -nE 'ReturnError\(|UpdateGroupPermissions\(' -- user-service/internal/usecase/role_group_usecase.go || true
-          echo '=== NOTIFICATION PERSON CONFIG SITE ==='
-          git grep -nE 'ReturnError\(|ListByUserID\(' -- notification-service/internal/usecase/person_config_usecase.go notification-service/infra/handler/internal_handler.go || true
-          echo '=== HUB USER GUIDE SITE ==='
-          git grep -nE 'ReturnError\(|NotFoundException|GetByKey\(' -- hub-service/internal/usecase/user_guide_usecase.go hub-service/infra/handler/*.go || true
-          echo '=== INTENT CALLER COUNT ==='
-          git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l || true
-
-      - name: Closure invariants census
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo -n 'common/errors files excluding protected: '
-          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
-          echo -n 'common/routes files excluding protected: '
-          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
-          echo -n 'ProductAsset Link policy sites: '
-          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}'
-          echo -n 'Social Like policy sites: '
-          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l
+          test "$(git grep -nE 'UpdateGroupPermissions\(' -- 'user-service/**/*.go' | grep -c 'RoleGroupUsecase.UpdateGroupPermissions(ctx')" -eq 1
+          test "$(git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l)" -eq 0
+          test "$(git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}')" -eq 8
+          test "$(git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l)" -eq 5
+          echo 'candidate boundedness: SUCCESS'
 
       - name: Final immutability
         shell: bash
