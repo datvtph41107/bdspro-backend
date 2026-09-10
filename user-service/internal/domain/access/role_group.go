@@ -1,9 +1,13 @@
 package access
 
 import (
+	"errors"
+
 	_models "common/models"
 	"user/internal/enums"
 )
+
+var ErrRoleGroupNotFound = errors.New("role group not found")
 
 // RoleGroup đại diện cho nhóm vai trò
 type RoleGroup struct {

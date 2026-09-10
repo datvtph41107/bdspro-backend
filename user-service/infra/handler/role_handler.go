@@ -3,6 +3,7 @@ package handler
 import (
 	_dto "common/domain/dto"
 	"context"
+	"errors"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 
@@ -281,6 +282,23 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 	}, nil
 }
 
+func mapGetRolesByModuleCodeError(err error) error {
+	if !errors.Is(err, access.ErrRoleGroupNotFound) {
+		return err
+	}
+
+	const message = "Role group not found"
+	st := status.New(codes.Internal, message)
+	withDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
+		Code:    404,
+		Message: message,
+	})
+	if detailsErr != nil {
+		return st.Err()
+	}
+	return withDetails.Err()
+}
+
 // @Summary Lấy danh sách role theo module code
 // @Description Lấy danh sách role theo module code
 // @Tags Role
@@ -296,7 +314,7 @@ func (h *RoleHandler) GetRolesByModuleCode(ctx context.Context, req *authpb.GetR
 	}
 	roles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
 	if err != nil {
-		return nil, err
+		return nil, mapGetRolesByModuleCodeError(err)
 	}
 
 	pbRoles := h.roleMapper.MapRoleListToItemPb(roles)

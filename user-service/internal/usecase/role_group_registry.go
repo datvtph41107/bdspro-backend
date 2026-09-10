@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	_errors "common/errors"
 	"context"
 	"sync"
 
@@ -48,7 +47,7 @@ func (s *RoleGroupRegistry) Load(ctx context.Context) error {
 func (s *RoleGroupRegistry) GetByCode(code string) (*access.RoleGroup, error) {
 	module, ok := s.moduleMap[code]
 	if !ok {
-		return nil, _errors.ReturnError(404, "Role group not found")
+		return nil, access.ErrRoleGroupNotFound
 	}
 	return module, nil
 }
