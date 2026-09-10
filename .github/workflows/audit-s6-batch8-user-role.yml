@@ -1,0 +1,198 @@
+name: Audit S6 Batch 8 User Role Group Contract
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/audit-s6-batch8-user-role.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      EXACT_SHA: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+          fetch-depth: 0
+
+      - name: Verify authority and protected invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$EXACT_SHA"
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+
+      - name: Trace User RoleGroupRegistry public vertical
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ROLE GROUP REGISTRY ERROR SITE ==='
+          git grep -nF '_errors.ReturnError(404, "Role group not found")' -- user-service/internal/usecase/role_group_registry.go
+          echo '=== GET BY CODE CALLERS ==='
+          git grep -nF 'RoleGroupRegistry.GetByCode' -- user-service || true
+          git grep -nF '.GetByCode(code)' -- user-service || true
+          echo '=== ROLE USECASE / HANDLER / PROTO ==='
+          git grep -nE 'GetListByModuleCode|GetRolesByModuleCode|/v2/auth/role/by-module' -- user-service shared/protobuf/schema/auth/role.proto
+          echo '=== REDUNDANT NIL BRANCH ==='
+          git grep -nF '_errors.ReturnError(404, "Module không đúng")' -- user-service/internal/usecase/role_usecase.go
+          echo '=== REGISTRY LOAD OWNERS ==='
+          git grep -nE 'RoleGroupRegistry\.Load|\.Load\(ctx\)' -- user-service/initial user-service/internal || true
+
+      - name: Classify RoleGroup UpdatePermissions reachability
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -nF 'return _errors.ReturnError(404, "Group không tồn tại")' user-service/internal/usecase/role_group_usecase.go
+          grep -nF 'First(&entity)' shared/common/case/crud/repo.go
+          grep -nF 'return nil, err' shared/common/case/crud/repo.go
+          git grep -nE 'UpdateGroupPermissions' -- user-service shared/protobuf/schema/auth/role_group.proto
+          echo 'Classification: production CrudRepo.GetByID returns GORM First error on not-found before group==nil branch.'
+
+      - name: Trace BDSPro AssetCost permission mechanics
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ASSET COST TYPES / CONSTRUCTORS ==='
+          git grep -nE 'AssetCostUsecase|AssetCostTypeUsecase|NewAssetCostUsecase|NewAssetCostTypeUsecase' -- bdspro-service || true
+          echo '=== GENERIC OWNER USECASE CALLS CHECKPERMISSION ==='
+          git grep -nE 'UC\.CheckPermission|func \(uc \*OwnerUsecase.*(GetByID|Detail|Update|Delete)' -- bdspro-service/internal/common/owner_usecase.go
+          echo '=== ASSET COST PUBLIC HANDLER / PROTO REFERENCES ==='
+          git grep -nEi 'AssetCost|asset-cost|asset_cost' -- bdspro-service/infra bdspro-service/internal shared/protobuf/schema/bdspro || true
+
+      - name: Set up canonical Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Install pinned protobuf generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Generate canonical protobuf
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          git diff --exit-code
+
+      - name: Execute RoleGroupRegistry legacy error contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > user-service/internal/usecase/role_group_registry_contract_audit_test.go <<'EOF'
+          package usecase
+
+          import (
+              "testing"
+              sharepb "pb/types/shared"
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestAuditRoleGroupRegistryLegacyMissContract(t *testing.T) {
+              registry := NewRoleGroupRegistry(nil)
+              got, err := registry.GetByCode("__missing__")
+              if got != nil || err == nil {
+                  t.Fatalf("got=%v err=%v", got, err)
+              }
+              st, ok := status.FromError(err)
+              if !ok {
+                  t.Fatalf("not grpc status: %v", err)
+              }
+              if st.Code() != codes.Internal {
+                  t.Fatalf("code=%v want Internal", st.Code())
+              }
+              if st.Message() != "Role group not found" {
+                  t.Fatalf("message=%q", st.Message())
+              }
+              details := st.Details()
+              if len(details) != 1 {
+                  t.Fatalf("details=%d", len(details))
+              }
+              d, ok := details[0].(*sharepb.ErrorResponse)
+              if !ok || d.Code != 404 || d.Message != "Role group not found" || d.Second != nil {
+                  t.Fatalf("detail=%T %+v", details[0], details[0])
+              }
+          }
+          EOF
+          trap 'rm -f user-service/internal/usecase/role_group_registry_contract_audit_test.go' EXIT
+          gofmt -w user-service/internal/usecase/role_group_registry_contract_audit_test.go
+          cd user-service
+          go test ./internal/usecase -run '^TestAuditRoleGroupRegistryLegacyMissContract$' -count=1 -v
+          cd ..
+          rm user-service/internal/usecase/role_group_registry_contract_audit_test.go
+          trap - EXIT
+
+      - name: Execute Gateway legacy presentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > gateway-service/internal/httperror/role_group_registry_contract_audit_test.go <<'EOF'
+          package httperror
+
+          import (
+              "encoding/json"
+              "net/http"
+              "net/http/httptest"
+              "testing"
+              sharepb "pb/types/shared"
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestAuditRoleGroupRegistryLegacyGatewayContract(t *testing.T) {
+              const msg = "Role group not found"
+              st := status.New(codes.Internal, msg)
+              withDetails, err := st.WithDetails(&sharepb.ErrorResponse{Code: 404, Message: msg})
+              if err != nil { t.Fatal(err) }
+              rr := httptest.NewRecorder()
+              WriteGRPC(rr, withDetails.Err())
+              if rr.Code != http.StatusOK { t.Fatalf("http=%d body=%s", rr.Code, rr.Body.String()) }
+              var body struct {
+                  Code int32 `json:"code"`
+                  Message string `json:"message"`
+                  Second *int32 `json:"second"`
+              }
+              if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil { t.Fatal(err) }
+              if body.Code != 404 || body.Message != msg || body.Second != nil { t.Fatalf("body=%+v", body) }
+          }
+          EOF
+          trap 'rm -f gateway-service/internal/httperror/role_group_registry_contract_audit_test.go' EXIT
+          gofmt -w gateway-service/internal/httperror/role_group_registry_contract_audit_test.go
+          cd gateway-service
+          go test ./internal/httperror -run '^TestAuditRoleGroupRegistryLegacyGatewayContract$' -count=1 -v
+          cd ..
+          rm gateway-service/internal/httperror/role_group_registry_contract_audit_test.go
+          trap - EXIT
+
+      - name: Final immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
