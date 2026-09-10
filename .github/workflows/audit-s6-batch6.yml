@@ -1,4 +1,4 @@
-name: Audit S6 Closure Candidates
+name: Audit S6 Final Closure Candidate
 
 on:
   push:
@@ -32,65 +32,59 @@ jobs:
           git fetch origin final-acceptance/source-canonicalization --quiet
           test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "$CANONICAL_SHA"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
-          echo "EXACT_SHA=$(git rev-parse HEAD)"
 
-      - name: Verify Batch 8 ownership is closed
+      - name: Trace User UpdateGroupPermissions exact callers
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'var ErrRoleGroupNotFound = errors.New("role group not found")' user-service/internal/domain/access/role_group.go
-          grep -Fq 'return nil, access.ErrRoleGroupNotFound' user-service/internal/usecase/role_group_registry.go
-          ! grep -Fq '"common/errors"' user-service/internal/usecase/role_group_registry.go
-          grep -Fq 'mapGetRolesByModuleCodeError' user-service/infra/handler/role_handler.go
+          echo '=== METHOD DEFINITION AND ALL CALLERS ==='
+          git grep -nE 'UpdateGroupPermissions\(' -- 'user-service/**/*.go' || true
+          echo '=== ROLE GROUP HANDLERS / RPC REGISTRATION ==='
+          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions' -- 'user-service/infra/handler/**/*.go' 'user-service/cmd/**/*.go' 'user-service/initial/**/*.go' || true
+          echo '=== PROTO CONTRACT REFERENCES ==='
+          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions' -- 'shared/protobuf/schema/**/*.proto' || true
+          echo '=== GATEWAY ROUTES / CLIENT REFERENCES ==='
+          git grep -nE 'RoleGroup|GroupPermissions|Update.*Permissions|role-group|role_group' -- 'gateway-service/**/*.go' 'gateway-service/**/*.yaml' 'gateway-service/**/*.yml' || true
 
-      - name: Rank residual small internal transport-shaped files
+      - name: Inspect User selected method neighborhood and transport owner
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== FILES WITH <=3 LIVE TRANSPORT-SHAPED CALLS ==='
-          while IFS= read -r f; do
-            count=$(git grep -nE 'ReturnError\(|ReturnErrorWithSecond\(|_(errors|routes)\.(UnauthorizedException|BadRequestException|ConflictException|ForbiddenException|InternalServerException|NotFoundException)|&_routes\.Except\{' -- "$f" | grep -v '^[^:]*:[0-9]*:[[:space:]]*//' | wc -l || true)
-            if [ "$count" -gt 0 ] && [ "$count" -le 3 ]; then
-              printf '%s\t%s\n' "$count" "$f"
-            fi
-          done < <(git grep -lE '"common/(errors|routes)"' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' | sort) | sort -n -k1,1 -k2,2
-
-          echo '=== REMAINING RAW INTERNAL GRPC STATUS ==='
-          git grep -nE 'status\.(Error|Errorf|New)\(codes\.' -- '*-service/internal/**/*.go' ':!organization-service/**' ':!map-service/**' || true
-
-      - name: Trace smallest residual candidate classes
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo '=== HUB UpdateBundleVersion ==='
-          git grep -nE 'UpdateBundleVersion' -- 'hub-service/**/*.go' 'shared/protobuf/schema/hub/**/*.proto' || true
-          echo '=== CRM Owner GetOwnerInfo ==='
-          git grep -nE 'GetOwnerInfo\(' -- 'crm-service/**/*.go' || true
-          echo '=== Notification PersonConfig ==='
-          git grep -nE 'PersonConfig|person_config' -- 'notification-service/**/*.go' 'shared/protobuf/schema/notification/**/*.proto' || true
-          echo '=== Notification PropertyHistory ==='
-          git grep -nE 'PropertyHistory|property_history' -- 'notification-service/**/*.go' 'shared/protobuf/schema/notification/**/*.proto' || true
-          echo '=== CRM Rate ==='
-          git grep -nE 'RateUsecase|GetRate|CreateRate|UpdateRate' -- 'crm-service/**/*.go' || true
-
-      - name: Show residual small-file policy sites
-        shell: bash
-        run: |
-          set -euo pipefail
-          for f in \
-            hub-service/internal/usecase/version_usecase.go \
-            crm-service/internal/usecase/owner_usecase.go \
-            notification-service/internal/usecase/person_config_usecase.go \
-            notification-service/internal/usecase/property_history_usecase.go \
-            crm-service/internal/usecase/rate_usecase.go \
-            social-service/internal/usecase/like.go \
-            bdspro-service/internal/usecases/product_asset_usecase.go; do
-              test -f "$f" || continue
+          sed -n '1,100p' user-service/internal/usecase/role_group_usecase.go
+          for f in user-service/infra/handler/*.go; do
+            if grep -qE 'UpdateGroupPermissions|RoleGroupUsecase' "$f"; then
               echo "--- $f ---"
-              git grep -nE 'ReturnError\(|ReturnErrorWithSecond\(|UnauthorizedException|BadRequestException|ConflictException|ForbiddenException|InternalServerException|NotFoundException|&_routes\.Except\{' -- "$f" || true
+              grep -nE -C 12 'UpdateGroupPermissions|RoleGroupUsecase' "$f" || true
+            fi
           done
 
-      - name: Verify broad and prior residual classifications
+      - name: Classify BDSPro AssetCost generic fanout
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ASSET COST HANDLER CALLS ==='
+          git grep -nE 'AssetCostUsecase|\.AssetCost|GetByID\(|Detail\(|Update\(|Delete\(' -- bdspro-service/infra/handler/asset_cost_handler.go || true
+          echo '=== ASSET COST TYPE HANDLER CALLS ==='
+          git grep -nE 'AssetCostTypeUsecase|\.AssetCostType|GetByID\(|Detail\(|Update\(|Delete\(' -- bdspro-service/infra/handler/asset_cost_type_handler.go || true
+          echo '=== GENERIC OWNER METHODS USING CheckPermission ==='
+          grep -nE -C 4 'CheckPermission\(' bdspro-service/internal/common/owner_usecase.go
+          echo '=== REGISTRATION / PROTO REFERENCES ==='
+          git grep -nE 'AssetCost|AssetCostType' -- 'bdspro-service/cmd/**/*.go' 'shared/protobuf/schema/bdspro/**/*.proto' || true
+
+      - name: Classify other one-site residuals
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== USER ROLE GROUP SITE ==='
+          git grep -nE 'ReturnError\(|UpdateGroupPermissions\(' -- user-service/internal/usecase/role_group_usecase.go || true
+          echo '=== NOTIFICATION PERSON CONFIG SITE ==='
+          git grep -nE 'ReturnError\(|ListByUserID\(' -- notification-service/internal/usecase/person_config_usecase.go notification-service/infra/handler/internal_handler.go || true
+          echo '=== HUB USER GUIDE SITE ==='
+          git grep -nE 'ReturnError\(|NotFoundException|GetByKey\(' -- hub-service/internal/usecase/user_guide_usecase.go hub-service/infra/handler/*.go || true
+          echo '=== INTENT CALLER COUNT ==='
+          git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l || true
+
+      - name: Closure invariants census
         shell: bash
         run: |
           set -euo pipefail
@@ -98,14 +92,10 @@ jobs:
           git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
           echo -n 'common/routes files excluding protected: '
           git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l
-          echo -n 'BDSPro ProductAsset Link policy sites: '
+          echo -n 'ProductAsset Link policy sites: '
           git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/product_asset_usecase.go | awk -F: '$2 < 120 {c++} END {print c+0}'
           echo -n 'Social Like policy sites: '
           git grep -nE 'ReturnError\(|&_routes\.Except\{' -- social-service/internal/usecase/like.go | wc -l
-          echo -n 'BDSPro Intent transport-shaped sites: '
-          git grep -nE 'ReturnError\(|&_routes\.Except\{' -- bdspro-service/internal/usecases/intent_usecase.go | wc -l || true
-          echo -n 'BDSPro Intent production callers: '
-          git grep -n 'DetectIntent(' -- ':!bdspro-service/internal/usecases/intent_usecase.go' '*.go' | wc -l || true
 
       - name: Final immutability
         shell: bash
