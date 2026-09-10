@@ -1,0 +1,186 @@
+name: Materialize S6 Deal Invitation Duplicate Candidate
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/materialize-s6-deal-invitation-duplicate.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CANONICAL_SHA: 97ec02d6e676cb060b70e40fb953be3013b99d87
+      CANDIDATE_BRANCH: final-acceptance/proof-s6-deal-invitation-duplicate
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: 97ec02d6e676cb060b70e40fb953be3013b99d87
+          fetch-depth: 0
+
+      - name: Authority and branch guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$CANONICAL_SHA"
+          if git ls-remote --exit-code --heads origin "refs/heads/$CANDIDATE_BRANCH" >/dev/null 2>&1; then
+            echo "candidate branch already exists" >&2
+            exit 1
+          fi
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Materialize bounded Deal Invitation source change
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          domain_path = Path('bdspro-service/internal/domain/errors.go')
+          text = domain_path.read_text()
+          marker = '\tErrDuplicate                   = errors.New("duplicate")\n'
+          assert text.count(marker) == 1
+          text = text.replace(marker, marker + '\tErrDealInvitationAlreadyExists = errors.New("deal invitation already exists")\n')
+          domain_path.write_text(text)
+
+          usecase_path = Path('bdspro-service/internal/usecases/deal_invitation_usecase.go')
+          text = usecase_path.read_text()
+          assert text.count('\t_errors "common/errors"\n') == 1
+          assert text.count('_errors.ReturnError(400, "invitation already exists for this user")') == 1
+          text = text.replace('\t_errors "common/errors"\n', '')
+          text = text.replace('_errors.ReturnError(400, "invitation already exists for this user")', 'domain.ErrDealInvitationAlreadyExists')
+          usecase_path.write_text(text)
+
+          handler_path = Path('bdspro-service/infra/handler/deal_invitation_handler.go')
+          text = handler_path.read_text()
+          assert text.count('\t"context"\n') == 1
+          text = text.replace('\t"context"\n', '\t"context"\n\t"errors"\n')
+          assert text.count('\t"bdspro/internal/usecases"\n') == 1
+          text = text.replace('\t"bdspro/internal/usecases"\n', '\t"bdspro/internal/domain"\n\t"bdspro/internal/usecases"\n')
+          assert text.count('\tbdspropb "pb/types/bdspro"\n') == 1
+          text = text.replace('\tbdspropb "pb/types/bdspro"\n', '\tbdspropb "pb/types/bdspro"\n\tsharepb "pb/types/shared"\n\n\t"google.golang.org/grpc/codes"\n\t"google.golang.org/grpc/status"\n')
+          old = '\tif err != nil {\n\t\treturn nil, err\n\t}\n\n\treturn h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil\n'
+          assert text.count(old) == 1
+          new = '\tif err != nil {\n\t\treturn nil, mapDealInvitationSendError(err)\n\t}\n\n\treturn h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil\n'
+          text = text.replace(old, new, 1)
+          marker = '// @Summary Xác nhận lời mời\n'
+          assert text.count(marker) == 1
+          mapper = '''func mapDealInvitationSendError(err error) error {
+\tif err == nil {
+\t\treturn nil
+\t}
+\tif !errors.Is(err, domain.ErrDealInvitationAlreadyExists) {
+\t\treturn err
+\t}
+
+\tconst message = "invitation already exists for this user"
+\tst := status.New(codes.Internal, message)
+\tstWithDetails, detailErr := st.WithDetails(&sharepb.ErrorResponse{
+\t\tCode:    400,
+\t\tMessage: message,
+\t})
+\tif detailErr != nil {
+\t\treturn st.Err()
+\t}
+\treturn stWithDetails.Err()
+}
+
+'''
+          text = text.replace(marker, mapper + marker)
+          handler_path.write_text(text)
+
+          test_path = Path('bdspro-service/infra/handler/deal_invitation_error_test.go')
+          test_path.write_text('''package handler
+
+import (
+\tstderrors "errors"
+\t"testing"
+
+\t"bdspro/internal/domain"
+\tsharepb "pb/types/shared"
+
+\t"google.golang.org/grpc/codes"
+\t"google.golang.org/grpc/status"
+)
+
+func TestMapDealInvitationSendErrorAlreadyExists(t *testing.T) {
+\tconst wantMessage = "invitation already exists for this user"
+\tgot := mapDealInvitationSendError(domain.ErrDealInvitationAlreadyExists)
+\tst, ok := status.FromError(got)
+\tif !ok {
+\t\tt.Fatalf("expected gRPC status, got %T: %v", got, got)
+\t}
+\tif st.Code() != codes.Internal {
+\t\tt.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+\t}
+\tif st.Message() != wantMessage {
+\t\tt.Fatalf("message = %q, want %q", st.Message(), wantMessage)
+\t}
+\tdetails := st.Details()
+\tif len(details) != 1 {
+\t\tt.Fatalf("details = %d, want 1", len(details))
+\t}
+\tdetail, ok := details[0].(*sharepb.ErrorResponse)
+\tif !ok {
+\t\tt.Fatalf("detail type = %T", details[0])
+\t}
+\tif detail.Code != 400 || detail.Message != wantMessage || detail.Second != nil {
+\t\tt.Fatalf("detail = %+v", detail)
+\t}
+}
+
+func TestMapDealInvitationSendErrorPassthrough(t *testing.T) {
+\tboom := stderrors.New("boom")
+\tif got := mapDealInvitationSendError(boom); got != boom {
+\t\tt.Fatalf("got %v, want original error", got)
+\t}
+\tif got := mapDealInvitationSendError(nil); got != nil {
+\t\tt.Fatalf("got %v, want nil", got)
+\t}
+}
+''')
+          PY
+
+          gofmt -w \
+            bdspro-service/internal/domain/errors.go \
+            bdspro-service/internal/usecases/deal_invitation_usecase.go \
+            bdspro-service/infra/handler/deal_invitation_handler.go \
+            bdspro-service/infra/handler/deal_invitation_error_test.go
+
+          mapfile -t changed < <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)
+          expected=(
+            bdspro-service/infra/handler/deal_invitation_error_test.go
+            bdspro-service/infra/handler/deal_invitation_handler.go
+            bdspro-service/internal/domain/errors.go
+            bdspro-service/internal/usecases/deal_invitation_usecase.go
+          )
+          printf 'candidate paths:\n%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+          ! printf '%s\n' "${changed[@]}" | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Create one semantic commit and push non-force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name datvtph41107
+          git config user.email 116329073+datvtph41107@users.noreply.github.com
+          git add \
+            bdspro-service/internal/domain/errors.go \
+            bdspro-service/internal/usecases/deal_invitation_usecase.go \
+            bdspro-service/infra/handler/deal_invitation_handler.go \
+            bdspro-service/infra/handler/deal_invitation_error_test.go
+          git commit -m 'refactor(bdspro): localize duplicate deal invitation error mapping'
+          test "$(git rev-parse HEAD^)" = "$CANONICAL_SHA"
+          test "$(git rev-list --count "$CANONICAL_SHA"..HEAD)" = "1"
+          test -z "$(git status --porcelain)"
+          git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
+          echo "candidate=$(git rev-parse HEAD)"
