@@ -1,0 +1,190 @@
+name: Materialize S6 User Role Group Miss Candidate
+
+on:
+  push:
+    branches:
+      - final-acceptance/proof-s6-product-asset-unlink-harness
+    paths:
+      - .github/workflows/materialize-s6-user-role-group-miss.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CANONICAL_SHA: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+      CANDIDATE_BRANCH: final-acceptance/proof-s6-user-role-group-miss
+    steps:
+      - name: Checkout exact canonical source
+        uses: actions/checkout@v4
+        with:
+          ref: c7084b4752ba2345f9b3e370aa5e229f9a74c104
+          fetch-depth: 0
+
+      - name: Authority and branch guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$CANONICAL_SHA"
+          test "$(git ls-remote origin "refs/heads/$CANDIDATE_BRANCH" | awk '{print $1}')" = "$CANONICAL_SHA"
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+
+      - name: Materialize bounded User source change
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          domain_path = Path('user-service/internal/domain/access/role_group.go')
+          text = domain_path.read_text()
+          old_import = 'import (\n\t_models "common/models"\n\t"user/internal/enums"\n)'
+          new_import = 'import (\n\t"errors"\n\n\t_models "common/models"\n\t"user/internal/enums"\n)'
+          assert text.count(old_import) == 1
+          text = text.replace(old_import, new_import)
+          marker = '// RoleGroup đại diện cho nhóm vai trò\n'
+          assert text.count(marker) == 1
+          text = text.replace(marker, 'var ErrRoleGroupNotFound = errors.New("role group not found")\n\n' + marker)
+          domain_path.write_text(text)
+
+          registry_path = Path('user-service/internal/usecase/role_group_registry.go')
+          text = registry_path.read_text()
+          assert text.count('\t_errors "common/errors"\n') == 1
+          text = text.replace('\t_errors "common/errors"\n', '')
+          old_return = 'return nil, _errors.ReturnError(404, "Role group not found")'
+          assert text.count(old_return) == 1
+          text = text.replace(old_return, 'return nil, access.ErrRoleGroupNotFound')
+          registry_path.write_text(text)
+
+          handler_path = Path('user-service/infra/handler/role_handler.go')
+          text = handler_path.read_text()
+          assert text.count('\t"context"\n') == 1
+          text = text.replace('\t"context"\n', '\t"context"\n\t"errors"\n')
+          marker = '// @Summary Lấy danh sách role theo module code\n'
+          assert text.count(marker) == 1
+          mapper = '''func mapGetRolesByModuleCodeError(err error) error {
+\tif !errors.Is(err, access.ErrRoleGroupNotFound) {
+\t\treturn err
+\t}
+
+\tconst message = "Role group not found"
+\tst := status.New(codes.Internal, message)
+\twithDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
+\t\tCode:    404,
+\t\tMessage: message,
+\t})
+\tif detailsErr != nil {
+\t\treturn st.Err()
+\t}
+\treturn withDetails.Err()
+}
+
+'''
+          text = text.replace(marker, mapper + marker)
+          old = '''\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
+\tif err != nil {
+\t\treturn nil, err
+\t}
+'''
+          new = '''\troles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
+\tif err != nil {
+\t\treturn nil, mapGetRolesByModuleCodeError(err)
+\t}
+'''
+          assert text.count(old) == 1
+          text = text.replace(old, new)
+          handler_path.write_text(text)
+
+          test_path = Path('user-service/infra/handler/role_group_registry_error_test.go')
+          test_path.write_text('''package handler
+
+import (
+\tstderrors "errors"
+\t"testing"
+
+\tsharepb "pb/types/shared"
+\t"user/internal/domain/access"
+\t"user/internal/usecase"
+
+\t"google.golang.org/grpc/codes"
+\t"google.golang.org/grpc/status"
+)
+
+func TestRoleGroupRegistryMissIsSemantic(t *testing.T) {
+\tregistry := usecase.NewRoleGroupRegistry(nil)
+\tgroup, err := registry.GetByCode("__missing__")
+\tif group != nil {
+\t\tt.Fatalf("group = %+v, want nil", group)
+\t}
+\tif !stderrors.Is(err, access.ErrRoleGroupNotFound) {
+\t\tt.Fatalf("err = %v, want ErrRoleGroupNotFound", err)
+\t}
+\tif _, ok := status.FromError(err); ok {
+\t\tt.Fatalf("semantic error must not already be a gRPC status: %v", err)
+\t}
+}
+
+func TestMapGetRolesByModuleCodeErrorRoleGroupNotFound(t *testing.T) {
+\tgot := mapGetRolesByModuleCodeError(access.ErrRoleGroupNotFound)
+\tst, ok := status.FromError(got)
+\tif !ok {
+\t\tt.Fatalf("expected gRPC status, got %T: %v", got, got)
+\t}
+\tif st.Code() != codes.Internal {
+\t\tt.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+\t}
+\tif st.Message() != "Role group not found" {
+\t\tt.Fatalf("message = %q", st.Message())
+\t}
+\tdetails := st.Details()
+\tif len(details) != 1 {
+\t\tt.Fatalf("details = %d, want 1", len(details))
+\t}
+\tdetail, ok := details[0].(*sharepb.ErrorResponse)
+\tif !ok {
+\t\tt.Fatalf("detail type = %T, want *sharepb.ErrorResponse", details[0])
+\t}
+\tif detail.Code != 404 || detail.Message != "Role group not found" || detail.Second != nil {
+\t\tt.Fatalf("detail = %+v", detail)
+\t}
+}
+
+func TestMapGetRolesByModuleCodeErrorPassthrough(t *testing.T) {
+\tboom := stderrors.New("boom")
+\tif got := mapGetRolesByModuleCodeError(boom); got != boom {
+\t\tt.Fatalf("got = %v, want original error", got)
+\t}
+}
+''')
+          PY
+          gofmt -w user-service/internal/domain/access/role_group.go user-service/internal/usecase/role_group_registry.go user-service/infra/handler/role_handler.go user-service/infra/handler/role_group_registry_error_test.go
+          mapfile -t changed < <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)
+          expected=(user-service/infra/handler/role_group_registry_error_test.go user-service/infra/handler/role_handler.go user-service/internal/domain/access/role_group.go user-service/internal/usecase/role_group_registry.go)
+          printf 'candidate paths:\n%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+          ! printf '%s\n' "${changed[@]}" | grep -Eq '^(shared/protobuf|organization-service|map-service|shared/code/deploy\.sh)($|/)'
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+          grep -Fq 'var ErrRoleGroupNotFound = errors.New("role group not found")' user-service/internal/domain/access/role_group.go
+          grep -Fq 'return nil, access.ErrRoleGroupNotFound' user-service/internal/usecase/role_group_registry.go
+          ! grep -Fq '_errors "common/errors"' user-service/internal/usecase/role_group_registry.go
+          grep -Fq 'return nil, mapGetRolesByModuleCodeError(err)' user-service/infra/handler/role_handler.go
+          git diff --check
+
+      - name: Create one semantic commit and push non-force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name datvtph41107
+          git config user.email 116329073+datvtph41107@users.noreply.github.com
+          git add user-service/internal/domain/access/role_group.go user-service/internal/usecase/role_group_registry.go user-service/infra/handler/role_handler.go user-service/infra/handler/role_group_registry_error_test.go
+          git commit -m 'refactor(user): localize role group registry miss mapping'
+          test "$(git rev-parse HEAD^)" = "$CANONICAL_SHA"
+          test "$(git rev-list --count "$CANONICAL_SHA"..HEAD)" = "1"
+          test -z "$(git status --porcelain)"
+          git push origin "HEAD:refs/heads/$CANDIDATE_BRANCH"
+          echo "candidate=$(git rev-parse HEAD)"
