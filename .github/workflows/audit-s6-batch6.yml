@@ -1,4 +1,4 @@
-name: Audit S6 Batch 6 Ownership Candidates
+name: Audit S6 Batch 7 Ownership Debt
 
 on:
   push:
@@ -17,41 +17,90 @@ jobs:
       - name: Checkout exact canonical source
         uses: actions/checkout@v4
         with:
-          ref: 0e7ff07db4d61d0b26f5f792237270fdadf52a7f
+          ref: 97ec02d6e676cb060b70e40fb953be3013b99d87
           fetch-depth: 0
 
-      - name: Exact-SHA Assistant versus Intent trace
+      - name: Exact authority and protected guards
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "0e7ff07db4d61d0b26f5f792237270fdadf52a7f"
-          echo '=== EXACT SHA ==='
-          git rev-parse HEAD
-
-          echo '=== ASSISTANT ANALYZE CALL/REGISTRATION SURFACE ==='
-          git grep -n 'AnalyzeProductText' -- '*.go' '*.proto' '*.yaml' '*.yml' || true
-          echo '-- BdsproInternal.GetSuggest --'
-          git grep -n 'BdsproInternal.GetSuggest\|GetSuggest(ctx' -- '*.go' || true
-          echo '-- exact legacy assistant message --'
-          git grep -n 'failed to get product suggest\|failed to analyze:' -- '*.go' || true
-          echo '-- Assistant handler registration/server construction --'
-          git grep -n 'NewAssistantHandler\|RegisterAssistantServiceServer\|AssistantHandler' -- 'assistant-service/**/*.go' || true
-
-          echo '=== BDSPRO INTENT CALL/REGISTRATION SURFACE ==='
-          git grep -n 'DetectIntent' -- '*.go' '*.proto' '*.yaml' '*.yml' || true
-          echo '-- IntentUsecase all occurrences --'
-          git grep -n 'IntentUsecase' -- '*.go' || true
-          echo '-- intent protobuf/service/http route symbols --'
-          git grep -niE 'intent(service|handler)|/.*intent|DetectIntent|ExecuteIntent|GetIntentHistory|GetSuggestions' -- 'shared/protobuf/**/*.proto' 'bdspro-service/**/*.go' || true
-          echo '-- exact legacy intent validation message --'
-          git grep -n 'User input không được rỗng' -- '*.go' || true
-
-          echo '=== GATEWAY ERROR PRESENTATION SURFACE ==='
-          git grep -n 'ErrorResponse\|runtime.HTTPStatusFromCode\|HTTPStatusFromCode\|ForwardResponse' -- 'gateway-service/**/*.go' 'gateway-service/**/*.yaml' 'gateway-service/**/*.yml' || true
-
-          echo '=== SHARED RETURNERROR CONTRACT ==='
-          git grep -n 'func ReturnError\|status.New(codes.Internal' -- 'shared/common/errors/*.go' || true
-
-          echo '=== PROTECTED HASH ==='
-          sha256sum shared/code/deploy.sh
+          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          git fetch origin final-acceptance/source-canonicalization --quiet
+          test "$(git rev-parse origin/final-acceptance/source-canonicalization)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e"
+          echo "EXACT_SHA=$(git rev-parse HEAD)"
+          echo "DEPLOY_SHA=$(sha256sum shared/code/deploy.sh | awk '{print $1}')"
+
+      - name: Inventory application-layer transport ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo '=== INTERNAL FILES IMPORTING COMMON ERRORS/ROUTES ==='
+          git grep -nE '"common/(errors|routes)"' -- '*-service/internal/**/*.go' \
+            ':!organization-service/**' ':!map-service/**' || true
+
+          echo '=== INTERNAL RETURNERROR / EXCEPT CALL SITES ==='
+          git grep -nE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
+            ':!organization-service/**' ':!map-service/**' || true
+
+          echo '=== UNIQUE INTERNAL FILES WITH TRANSPORT-SHAPED HELPERS ==='
+          git grep -lE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
+            ':!organization-service/**' ':!map-service/**' | sort || true
+
+          echo '=== COUNTS BY SERVICE ==='
+          git grep -lE 'ReturnError\(|Except\{' -- '*-service/internal/**/*.go' \
+            ':!organization-service/**' ':!map-service/**' \
+            | awk -F/ '{count[$1]++} END {for (s in count) print count[s], s}' \
+            | sort -nr || true
+
+          echo '=== INTERNAL RAW GRPC STATUS CONSTRUCTION ==='
+          git grep -nE 'status\.(Error|Errorf|New)\(codes\.' -- '*-service/internal/**/*.go' \
+            ':!organization-service/**' ':!map-service/**' || true
+
+      - name: Inventory shared response filter caller breadth
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo '=== SHARED COMMON SURFACE FILES ==='
+          find shared/common -maxdepth 3 -type f -name '*.go' | sort
+
+          echo '=== COMMON ERRORS IMPORTING FILES ==='
+          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | sort || true
+          echo 'COUNT common/errors:'
+          git grep -l '"common/errors"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l || true
+
+          echo '=== COMMON ROUTES IMPORTING FILES ==='
+          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | sort || true
+          echo 'COUNT common/routes:'
+          git grep -l '"common/routes"' -- '*.go' ':!organization-service/**' ':!map-service/**' | wc -l || true
+
+          echo '=== SHARED COMMON FILTER/RESPONSE SYMBOLS ==='
+          git grep -nEi 'filter|response|error|except|returnerror' -- 'shared/common/**/*.go' || true
+
+      - name: Inventory likely live vertical entrypoints
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo '=== SERVICE HANDLER/SERVICE FILES USING INTERNAL USECASES ==='
+          for svc in assistant auth bdspro chat crm file hub notification payment social tqd user; do
+            d="${svc}-service"
+            test -d "$d" || continue
+            echo "--- $d ---"
+            git grep -lE 'Usecase|UseCase|UC\.' -- "$d/infra/**/*.go" "$d/cmd/**/*.go" 2>/dev/null | sort | head -80 || true
+          done
+
+          echo '=== PROTO RPC NAMES BY SERVICE (READ ONLY) ==='
+          for svc in assistant auth bdspro chat crm file hub notification payment social tqd user; do
+            echo "--- $svc ---"
+            git grep -nE '^[[:space:]]*rpc[[:space:]]+' -- "shared/protobuf/$svc/**/*.proto" 2>/dev/null | head -120 || true
+          done
+
+      - name: Final immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "97ec02d6e676cb060b70e40fb953be3013b99d87"
+          test -z "$(git status --porcelain)"
