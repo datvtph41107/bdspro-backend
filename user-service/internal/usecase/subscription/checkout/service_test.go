@@ -107,7 +107,9 @@ func newCheckoutFixture() (*Service, *fakePlanResolver, *fakeSubscriptions, *fak
 	commands := newFakeCommands()
 	payment := &fakePayment{order: PaymentOrder{ID: 9, Reference: "QHP9", Status: "pending_funds"}, created: true}
 	now := func() time.Time { return time.Date(2026, 8, 19, 10, 30, 0, 0, time.UTC) }
-	return NewService(plans, subs, commands, payment, noopAttemptPort{}, now), plans, subs, commands, payment
+	service := NewService(plans, subs, commands, payment, noopAttemptPort{})
+	service.now = now
+	return service, plans, subs, commands, payment
 }
 
 func TestCheckoutInitialPurchaseFreezesServerTermsBeforePayment(t *testing.T) {

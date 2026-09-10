@@ -44,10 +44,11 @@ func NewAuthRPCClient(
 	return bindDependency(
 		"rpc.auth.address",
 		func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
-			return clients.BindAuthGrpcClient(
-				conn,
-				userClient.RoleClient,
-			)
+			client := clients.BindAuthGrpcClient(conn)
+			if userClient != nil {
+				client.RoleClient = userClient.RoleClient
+			}
+			return client
 		},
 	)
 }

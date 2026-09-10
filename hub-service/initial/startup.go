@@ -6,9 +6,13 @@ import (
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"gorm.io/gorm"
 )
 
 type InitialApp struct {
+	DB                        *gorm.DB
+	ApiKeyInterceptor         grpc.UnaryServerInterceptor
 	EventQueueService         *handler.EventQueueService
 	InternalHandler           *handler.InternalHandler
 	UpdateDataHandler         *handler.UpdateDataHandler
@@ -20,7 +24,6 @@ type InitialApp struct {
 	VersionHandler            *handler.VersionHandler
 	ApiKeyHandler             *handler.ApiKeyHandler
 	SystemConfigUsecase       *usecase.SystemConfigUsecase
-	ApiKeyUsecase             usecase.IApiKeyUsecase
 	Logger                    *flogging.FabricLogger
 	InteractiveEventHandler   *handler.InteractiveEventHandler
 	ClickURLHandler           *handler.ClickURLHandler
@@ -32,6 +35,8 @@ type InitialApp struct {
 }
 
 func NewInitialApp(
+	db *gorm.DB,
+	apiKeyInterceptor grpc.UnaryServerInterceptor,
 	eventQueueService *handler.EventQueueService,
 	internalHandler *handler.InternalHandler,
 	updateDataHandler *handler.UpdateDataHandler,
@@ -43,7 +48,6 @@ func NewInitialApp(
 	versionHandler *handler.VersionHandler,
 	apiKeyHandler *handler.ApiKeyHandler,
 	systemConfigUsecase *usecase.SystemConfigUsecase,
-	apiKeyUsecase usecase.IApiKeyUsecase,
 	interactiveEventHandler *handler.InteractiveEventHandler,
 	clickURLHandler *handler.ClickURLHandler,
 	errorLogHandler *handler.ErrorLogHandler,
@@ -53,6 +57,8 @@ func NewInitialApp(
 	searchLatencyStatsHandler *handler.SearchLatencyStatsHandler,
 ) *InitialApp {
 	return &InitialApp{
+		DB:                        db,
+		ApiKeyInterceptor:         apiKeyInterceptor,
 		EventQueueService:         eventQueueService,
 		InternalHandler:           internalHandler,
 		UpdateDataHandler:         updateDataHandler,
@@ -64,7 +70,6 @@ func NewInitialApp(
 		VersionHandler:            versionHandler,
 		ApiKeyHandler:             apiKeyHandler,
 		SystemConfigUsecase:       systemConfigUsecase,
-		ApiKeyUsecase:             apiKeyUsecase,
 		Logger:                    flogging.MustGetLogger(viper.GetString("server.name")),
 		InteractiveEventHandler:   interactiveEventHandler,
 		ClickURLHandler:           clickURLHandler,

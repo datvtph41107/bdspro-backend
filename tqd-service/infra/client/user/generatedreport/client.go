@@ -19,6 +19,7 @@ var ErrAccessUnavailable = errors.New("entitlement access is unavailable")
  *
  * Không truyền profile ID. user-service lấy Actor từ trusted context.
  */
+// @bind: tqd/internal/usecase/quota.ProfileAccessReader
 type Client struct {
 	grpc userpb.InternalAccessServiceClient
 }

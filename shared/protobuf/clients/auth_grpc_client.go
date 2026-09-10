@@ -16,13 +16,12 @@ type AuthGrpcClient struct {
 	RoleClient authpb.RoleServiceClient
 }
 
-func BindAuthGrpcClient(
-	conn grpc.ClientConnInterface,
-	roleClient authpb.RoleServiceClient,
-) *AuthGrpcClient {
+// BindAuthGrpcClient binds AuthInternalService stubs onto one auth-service channel.
+// RoleClient is attached by the composition owner (injection.NewAuthClient) from the
+// user-service channel because RoleService is hosted there.
+func BindAuthGrpcClient(conn grpc.ClientConnInterface) *AuthGrpcClient {
 	return &AuthGrpcClient{
 		AuthInternalServiceClient: authpb.NewAuthInternalServiceClient(conn),
-		RoleClient:                roleClient,
 	}
 }
 

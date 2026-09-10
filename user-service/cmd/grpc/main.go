@@ -12,7 +12,6 @@ import (
 	_db "common/db"
 	_middleware "common/middleware"
 	"common/process"
-	_redis "common/redis"
 	"common/rpcenv"
 	authpb "pb/types/auth"
 	userpb "pb/types/user"
@@ -47,45 +46,23 @@ func runGRPC() error {
 		runtimePolicy.ZNSScheduler,
 	)
 
-	database, err := _db.Open(_db.DatabaseConfig{
-		DSN:             runtimeConfig.Database.DSN,
-		MaxOpenConns:    runtimeConfig.Database.MaxOpenConns,
-		MaxIdleConns:    runtimeConfig.Database.MaxIdleConns,
-		ConnMaxLifetime: runtimeConfig.Database.ConnMaxLifetime,
-	})
+	app, cleanup, err := wire.InitializeApp()
 	if err != nil {
-		return fmt.Errorf("open User database: %w", err)
+		return fmt.Errorf("initialize User app: %w", err)
 	}
-	sqlDB, err := database.DB()
-	if err != nil {
-		return fmt.Errorf("get User database pool: %w", err)
+	defer cleanup()
+	if app == nil || app.DB == nil {
+		return fmt.Errorf("initialize User app: app or database is nil")
 	}
-	defer sqlDB.Close()
 
 	schemaPolicy, err := _db.LoadSchemaPolicy("user")
 	if err != nil {
 		return fmt.Errorf("load User schema policy: %w", err)
 	}
 	log.Printf("User database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := _db.ApplySchemaPolicy(database, schemaPolicy, userdb.AutoMigrate); err != nil {
+	if err := _db.ApplySchemaPolicy(app.DB, schemaPolicy, userdb.AutoMigrate); err != nil {
 		return fmt.Errorf("apply User schema policy: %w", err)
 	}
-
-	redisService, err := _redis.Open(_redis.Config{
-		Address:  runtimeConfig.Redis.Address,
-		Password: runtimeConfig.Redis.Password,
-		DB:       runtimeConfig.Redis.DB,
-	})
-	if err != nil {
-		return fmt.Errorf("open User Redis: %w", err)
-	}
-	defer redisService.Close()
-
-	app, cleanup, err := wire.InitializeApp(database, redisService)
-	if err != nil {
-		return fmt.Errorf("initialize User app: %w", err)
-	}
-	defer cleanup()
 
 	lis, err := net.Listen("tcp", runtimeConfig.GRPCAddress)
 	if err != nil {
@@ -108,11 +85,12 @@ func runGRPC() error {
 	userpb.RegisterProfileServiceServer(server, app.ProfileService)
 	userpb.RegisterBookmarkUserServiceServer(server, app.BookmarkUserHandler)
 	userpb.RegisterInternalUserServiceServer(server, app.InternalHandler)
-	targetCleanup, err := registerTargetServices(server, database, app.OrganizationClient)
-	if err != nil {
-		return targetRegistrationError(err)
-	}
-	defer targetCleanup()
+	userpb.RegisterInternalAccessServiceServer(server, app.InternalAccessHandler)
+	userpb.RegisterCommercialProfileServiceServer(server, app.CommercialProfileHandler)
+	userpb.RegisterCheckoutServiceServer(server, app.SubscriptionCheckoutHandler)
+	userpb.RegisterInternalSubscriptionServiceServer(server, app.SubscriptionSettlementHandler)
+	userpb.RegisterAdminCommercialServiceServer(server, app.SubscriptionAdminHandler)
+	userpb.RegisterAdminCatalogServiceServer(server, app.PlanVersionAdminHandler)
 	userpb.RegisterMainAreaServiceServer(server, app.MainAreaHandler)
 	userpb.RegisterPurposeUseServiceServer(server, app.PurposeUseHandler)
 	userpb.RegisterProfessionServiceServer(server, app.ProfessionHandler)

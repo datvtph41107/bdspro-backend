@@ -38,7 +38,8 @@ func TestListAvailablePlansReturnsOnlyEffectiveTermsInTierOrder(t *testing.T) {
 	future := now.Add(time.Hour)
 	service := NewService(catalogStub{page: planadmin.Page{PlanVersions: []plandomain.PlanVersionAggregate{
 		activePlan(2, "pro", 20, &past, nil), activePlan(1, "basic", 10, &past, nil), activePlan(3, "future", 30, &future, nil),
-	}}}, subscriptionStub{}, func() time.Time { return now })
+	}}}, subscriptionStub{})
+	service.now = func() time.Time { return now }
 
 	plans, err := service.ListAvailablePlans(context.Background(), "qhpro", "profile")
 	if err != nil {
@@ -54,7 +55,8 @@ func TestListAvailablePlansFailsClosedOnOverlappingVersions(t *testing.T) {
 	past := now.Add(-time.Hour)
 	service := NewService(catalogStub{page: planadmin.Page{PlanVersions: []plandomain.PlanVersionAggregate{
 		activePlan(1, "pro", 20, &past, nil), activePlan(2, "pro", 20, &past, nil),
-	}}}, subscriptionStub{}, func() time.Time { return now })
+	}}}, subscriptionStub{})
+	service.now = func() time.Time { return now }
 	_, err := service.ListAvailablePlans(context.Background(), "qhpro", "profile")
 	if !errors.Is(err, ErrAmbiguousActiveTerms) {
 		t.Fatalf("error = %v", err)

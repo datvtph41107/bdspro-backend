@@ -75,6 +75,66 @@ func TestLoadYMLFileLoadsPresentConfig(t *testing.T) {
 	})
 }
 
+func TestLoadRuntimeYMLMergesLocalOverlay(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "config"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "config", "runtime.yml"), []byte("database:\n  dsn: runtime-dsn\nredis:\n  host: runtime-redis\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "config", "local.yml"), []byte("database:\n  dsn: local-dsn\njwt:\n  key-generate: local-jwt-key-at-least-32-characters\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	withWorkingDir(t, root, func() {
+		t.Setenv(EnvironmentKey, "")
+		t.Setenv(ExecutionModeKey, "")
+		t.Setenv(legacyProfileKey, "")
+		t.Setenv("QHPRO_CONFIG_FILE", "")
+		t.Setenv("CONFIG_FILE", "")
+		t.Setenv("JWT_KEY_GENERATE", "")
+		t.Setenv("DATABASE_DSN", "")
+		t.Setenv("DATABASE_URL", "")
+		viper.Reset()
+		if _, err := LoadRuntimeYML(); err != nil {
+			t.Fatalf("LoadRuntimeYML() error = %v", err)
+		}
+		if got := viper.GetString("database.dsn"); got != "local-dsn" {
+			t.Fatalf("database.dsn = %q, want local-dsn", got)
+		}
+		if got := viper.GetString("redis.host"); got != "runtime-redis" {
+			t.Fatalf("redis.host = %q, want runtime-redis", got)
+		}
+		if got := viper.GetString("jwt.key-generate"); got != "local-jwt-key-at-least-32-characters" {
+			t.Fatalf("jwt.key-generate = %q", got)
+		}
+	})
+}
+
+func TestLoadRuntimeYMLSkipsMissingLocalOverlay(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "config"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "config", "runtime.yml"), []byte("database:\n  dsn: runtime-dsn\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	withWorkingDir(t, root, func() {
+		t.Setenv(EnvironmentKey, "")
+		t.Setenv(ExecutionModeKey, "")
+		t.Setenv(legacyProfileKey, "")
+		t.Setenv("QHPRO_CONFIG_FILE", "")
+		t.Setenv("CONFIG_FILE", "")
+		viper.Reset()
+		if _, err := LoadRuntimeYML(); err != nil {
+			t.Fatalf("LoadRuntimeYML() error = %v", err)
+		}
+		if got := viper.GetString("database.dsn"); got != "runtime-dsn" {
+			t.Fatalf("database.dsn = %q, want runtime-dsn", got)
+		}
+	})
+}
+
 func withWorkingDir(t *testing.T, dir string, run func()) {
 	t.Helper()
 	old, err := os.Getwd()

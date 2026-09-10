@@ -5,133 +5,138 @@ rpc:
     address: "localhost:8216"
   notification:
     address: "localhost:8204"
+  hub:
+    address: "localhost:8280"
 
 server:
-    port: 8230
-    tcp_port: 8219
+  port: 8230
+  tcp_port: 8219
 
 eureka:
-    url: localhost
-    port: 8761
+  url: localhost
+  port: 8761
 
 database:
-    dsn: ""
-    # dsn example intentionally omitted; use an untracked local configuration
+  # Để trống trong repo; host-mode lấy từ TQD_DATABASE_URL trong tqd-service/.env
+  dsn: host=103.172.239.89 user=tqd_admin password=tqd_admin.1905 dbname=db_tqd port=5433 sslmode=disable
 key:
-    jwt: ""
+  jwt: key-generate-jwt-token-authentication
 
 jwt:
-    key-generate: ""
-    tokenPrefix: Bearer
-    tokenExpirationAfterDays: 14
-    accessExpAfterMinutes: 15 # access token hết hạn 15 phút
-    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
-    listPermit:
-    authorizationHeader: Authorization
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 15 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
 
 redis:
-    host: localhost:6379
-    pass: ""
+  host: localhost:6379
+  pass: ""
+
+qh_planning_classify:
+  enabled: false
 
 config-app:
-    qhpro:
-        domain_api: "http://localhost:8000"
-        domain_file: "http://localhost:8002"
-        domain_pmtile: "http://localhost:8000"
-        domain_style: "http://localhost:8000"
+  qhpro:
+    domain_api: "http://103.172.239.89:8000"
+    domain_file: "http://103.172.239.89:8002"
+    domain_pmtile: "http://103.172.239.89:8000"
+    domain_style: "http://103.172.239.89:8000"
 
 # Layer configuration
 layer:
-    # Base URL configuration
-    base_url: "ciproto://localhost:8000"
+  # Base URL configuration
+  base_url: "ciproto://103.172.239.89:8000"
 
-    # Default style templates
-    default_styles:
-        vector:
-            - id: "{sourceCode}_fill"
-              type: "fill"
-              maxzoom: 22
-              paint:
-                  fill-color: ["get", "color"]
-                  fill-opacity: 0.8
-              source: "{sourceCode}"
-              source-layer: "{sourceCode}"
-            - id: "{sourceCode}_outline"
-              type: "line"
-              minzoom: 16
-              paint:
-                  line-color: ["get", "color"]
-                  line-width: 1
-              source: "{sourceCode}"
-              source-layer: "{sourceCode}"
-            - id: "{sourceCode}_label"
-              type: "symbol"
-              minzoom: 16
-              layout:
-                  text-field: ["get", "name"]
-                  text-size: 13
-                  text-allow-overlap: false
-                  text-padding: 12
-              paint:
-                  text-color: "#ff0000"
-                  text-halo-color: "#ffffff"
-                  text-halo-width: 2
-              source: "{sourceCode}"
-              source-layer: "{sourceCode}"
+  # Default style templates
+  default_styles:
+    vector:
+      - id: "{sourceCode}_fill"
+        type: "fill"
+        maxzoom: 22
+        paint:
+          fill-color: ["get", "color"]
+          fill-opacity: 0.8
+        source: "{sourceCode}"
+        source-layer: "{sourceCode}"
+      - id: "{sourceCode}_outline"
+        type: "line"
+        minzoom: 16
+        paint:
+          line-color: ["get", "color"]
+          line-width: 1
+        source: "{sourceCode}"
+        source-layer: "{sourceCode}"
+      - id: "{sourceCode}_label"
+        type: "symbol"
+        minzoom: 16
+        layout:
+          text-field: ["get", "name"]
+          text-size: 13
+          text-allow-overlap: false
+          text-padding: 12
+        paint:
+          text-color: "#ff0000"
+          text-halo-color: "#ffffff"
+          text-halo-width: 2
+        source: "{sourceCode}"
+        source-layer: "{sourceCode}"
 
-        raster:
-            - id: "{sourceCode}"
-              type: "raster"
-              paint:
-                  raster-opacity: 1.0
-              source: "{sourceCode}"
+    raster:
+      - id: "{sourceCode}"
+        type: "raster"
+        paint:
+          raster-opacity: 1.0
+        source: "{sourceCode}"
 
-    # Override configurations per layer (optional)
-    overrides:
-        # "1":
-        #     url_pattern: "/qhsdd_hn/{z}/{x}/{y}.pbf"
-        #     style_config: |
-        #         [
-        #           {
-        #             "id": "qhsdd_hn",
-        #             "type": "fill",
-        #             "paint": {
-        #               "fill-color": ["get", "hex_color"],
-        #               "fill-opacity": 0.3
-        #             },
-        #             "source": "qhsdd_hn",
-        #             "source-layer": "qhsdd_hn"
-        #           }
-        #         ]
+  # Override configurations per layer (optional)
+  overrides:
+    # "1":
+    #     url_pattern: "/qhsdd_hn/{z}/{x}/{y}.pbf"
+    #     style_config: |
+    #         [
+    #           {
+    #             "id": "qhsdd_hn",
+    #             "type": "fill",
+    #             "paint": {
+    #               "fill-color": ["get", "hex_color"],
+    #               "fill-opacity": 0.3
+    #             },
+    #             "source": "qhsdd_hn",
+    #             "source-layer": "qhsdd_hn"
+    #           }
+    #         ]
 
-        # "2":
-        #     url_pattern: "/layer2/{z}/{x}/{y}.pbf"
+    # "2":
+    #     url_pattern: "/layer2/{z}/{x}/{y}.pbf"
 
-        # "67":
-        #     url_pattern: "/layer67/{z}/{x}/{y}.pbf"
-        #     style_config: |
-        #         [
-        #           {
-        #             "id": "layer67_fill",
-        #             "type": "fill",
-        #             "paint": {
-        #               "fill-color": ["match", ["get", "quyhoach"], "dtvt", "#22c55e", "phan_khu", "#f97316", "rgba(0,0,255,0.2)"],
-        #               "fill-opacity": 0.2
-        #             },
-        #             "source": "layer67",
-        #             "source-layer": "layer67"
-        #           },
-        #           {
-        #             "id": "layer67_outline",
-        #             "type": "line",
-        #             "paint": {
-        #               "line-color": ["match", ["get", "quyhoach"], "dtvt", "#16a34a", "qh_chung", "#1d4ed8", "phan_khu", "#ea580c", "rgba(0,0,255,0.8)"],
-        #               "line-width": 2
-        #             },
-        #             "source": "layer67",
-        #             "source-layer": "layer67"
-        #           }
-        #         ]
+    # "67":
+    #     url_pattern: "/layer67/{z}/{x}/{y}.pbf"
+    #     style_config: |
+    #         [
+    #           {
+    #             "id": "layer67_fill",
+    #             "type": "fill",
+    #             "paint": {
+    #               "fill-color": ["match", ["get", "quyhoach"], "dtvt", "#22c55e", "phan_khu", "#f97316", "rgba(0,0,255,0.2)"],
+    #               "fill-opacity": 0.2
+    #             },
+    #             "source": "layer67",
+    #             "source-layer": "layer67"
+    #           },
+    #           {
+    #             "id": "layer67_outline",
+    #             "type": "line",
+    #             "paint": {
+    #               "line-color": ["match", ["get", "quyhoach"], "dtvt", "#16a34a", "qh_chung", "#1d4ed8", "phan_khu", "#ea580c", "rgba(0,0,255,0.8)"],
+    #               "line-width": 2
+    #             },
+    #             "source": "layer67",
+    #             "source-layer": "layer67"
+    #           }
+    #         ]
 
 # gRPC internal metadata signing (env QHPRO_* vẫn ưu tiên hơn khi set)
 trusted_metadata:

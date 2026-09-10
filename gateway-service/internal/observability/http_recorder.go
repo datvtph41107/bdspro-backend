@@ -164,10 +164,10 @@ func levelForResult(
 	statusLevel := levelForStatus(
 		result.StatusCode,
 	)
-	// Successful requests stay at Debug so local consoles are not flooded;
-	// use gin.Logger for human-readable access lines instead.
-	if statusLevel == slog.LevelInfo {
-		return slog.LevelDebug
+	// Access lines belong to gin.Logger. Keep structured completion off the
+	// default Info console for 2xx/4xx; only surface 5xx as Error.
+	if statusLevel == slog.LevelError {
+		return slog.LevelError
 	}
-	return statusLevel
+	return slog.LevelDebug
 }

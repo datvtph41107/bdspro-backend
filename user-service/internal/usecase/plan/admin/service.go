@@ -39,6 +39,7 @@ type Publisher interface {
 }
 
 /** Service exposes bounded PlanVersion read/publish operations. */
+// @bind: user/internal/usecase/commercialprofile.CatalogReader
 type Service struct {
 	repository Repository
 	publisher  Publisher

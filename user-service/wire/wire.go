@@ -5,11 +5,10 @@ package wire
 
 import (
 	_db "common/db"
-	common_injection "common/injection"
-	_redis "common/redis"
+	injection "common/injection"
+	_provider "common/provider"
 	common_utils "common/utils"
 	"github.com/google/wire"
-	"gorm.io/gorm"
 	user_infra_client "user/infra/client"
 	user_infra_client_payment "user/infra/client/payment"
 	user_infra_cookie "user/infra/cookie"
@@ -25,20 +24,17 @@ import (
 	user_infra_postgres_subscription "user/infra/postgres/subscription"
 	user_infra_properties "user/infra/properties"
 	user_infra_provider "user/infra/provider"
+	user_infra_providers "user/infra/providers"
 	user_infra_redis "user/infra/redis"
-	user_infra_rpc "user/infra/rpc"
 	user_infra_scheduler "user/infra/scheduler"
 	user_infra_sms "user/infra/sms"
 	user_infra_zns "user/infra/zns"
 	user_initial "user/initial"
-	user_internal_domain_plan "user/internal/domain/plan"
-	user_internal_dto "user/internal/dto"
 	user_internal_interface "user/internal/interface"
 	user_internal_interface_factory "user/internal/interface/factory"
 	user_internal_interface_providers "user/internal/interface/providers"
 	user_internal_interface_repo "user/internal/interface/repo"
 	user_internal_job "user/internal/job"
-	user_internal_models "user/internal/models"
 	user_internal_usecase "user/internal/usecase"
 	user_internal_usecase_commercialprofile "user/internal/usecase/commercialprofile"
 	user_internal_usecase_entitlement "user/internal/usecase/entitlement"
@@ -53,7 +49,9 @@ import (
 
 // Inject dependencies
 var wireSet = wire.NewSet(
+	_db.NewDB,
 	_db.NewTransactionRepo,
+	_provider.SyncProviderSet,
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
 	wire.Bind(new(user_internal_interface_factory.IFactory), new(*user_infra_properties.RuntimeProperties)),
 	wire.Bind(new(user_internal_interface_providers.BdsproProvider), new(*user_infra_client.BdsproClient)),
@@ -74,7 +72,24 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_interface_repo.SessionRepository), new(*user_infra_postgres.SessionPostgres)),
 	wire.Bind(new(user_internal_interface_repo.StatusRepository), new(*user_infra_postgres.StatusPostgres)),
 	wire.Bind(new(user_internal_usecase.AccessTokenIssuer), new(*user_internal_usecase.AuthUsecase)),
-	common_injection.NewHttpClient,
+	wire.Bind(new(user_internal_usecase_commercialprofile.CatalogReader), new(*user_internal_usecase_plan_admin.Service)),
+	wire.Bind(new(user_internal_usecase_commercialprofile.SubscriptionReader), new(*user_internal_usecase_subscription.AdminService)),
+	wire.Bind(new(user_internal_usecase_entitlement.PlanAccessStore), new(*user_infra_postgres_entitlement.PlanAccessStore)),
+	wire.Bind(new(user_internal_usecase_entitlement.SubscriptionStore), new(*user_infra_postgres_entitlement.SubscriptionStore)),
+	wire.Bind(new(user_internal_usecase_plan_admin.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
+	wire.Bind(new(user_internal_usecase_plan_admin.Publisher), new(*user_internal_usecase_plan_publish.Service)),
+	wire.Bind(new(user_internal_usecase_plan_admin.Repository), new(*user_infra_postgres.PlanVersionRepo)),
+	wire.Bind(new(user_internal_usecase_plan_publish.Repository), new(*user_infra_postgres.PlanVersionRepo)),
+	wire.Bind(new(user_internal_usecase_subscription.AdminRepository), new(*user_infra_postgres_subscription.AdminProjectionStore)),
+	wire.Bind(new(user_internal_usecase_subscription.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.CommandStore), new(*user_infra_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.PaymentAttemptPort), new(*user_infra_client_payment.Commands)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.PaymentOrderPort), new(*user_infra_client_payment.Commands)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.PlanResolver), new(*user_infra_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.SubscriptionReader), new(*user_infra_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_settlement.Store), new(*user_infra_postgres_subscription.SettlementStore)),
+	injection.RPCClientSet,
+	injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	user_infra_postgres.NewAdminAccessPostgresRepo,
 	user_internal_usecase.NewAdminAccessUsecase,
@@ -93,22 +108,18 @@ var wireSet = wire.NewSet(
 	user_infra_postgres.NewAuthConfigRepository,
 	user_infra_handler.NewAuthHandler,
 	user_infra_mapper.NewAuthMethodMapper,
-	user_infra_rpc.NewAuthRPCClient,
 	user_infra_postgres.NewAuthRepository,
 	user_infra_mapper.NewAuthSecurityMapper,
 	user_internal_usecase.NewAuthSecurityUsecase,
 	user_internal_usecase.NewAuthService,
 	user_infra_client.NewBdsproClient,
-	user_infra_rpc.NewBdsproRPCClient,
 	user_infra_postgres.NewBlockPostgres,
 	user_internal_usecases.NewBlockUsecase,
 	user_infra_handler.NewBookmarkUserHandler,
 	user_infra_postgres.NewBookmarkUserPostgres,
 	user_internal_usecases.NewBookmarkUserUsecase,
-	user_infra_rpc.NewCRMRPCClient,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
-	user_infra_rpc.NewChatRPCClient,
 	user_infra_postgres_iampermission.NewChecker,
 	user_infra_postgres_checkout.NewCheckoutStore,
 	user_infra_client_payment.NewCommands,
@@ -128,7 +139,6 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewGrpcProfileService,
 	user_infra_handler_grpc_entitlement.NewHandler,
 	user_infra_client.NewHubClient,
-	user_infra_rpc.NewHubRPCClient,
 	user_initial.NewInitialApp,
 	user_infra_handler.NewInternalHandler,
 	user_infra_handler.NewKYCHandler,
@@ -139,12 +149,10 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewMainAreaMapper,
 	user_infra_postgres.NewMainAreaPostgres,
 	user_infra_client.NewNotificationClient,
-	user_infra_rpc.NewNotificationRPCClient,
 	user_infra_handler.NewOAuthRouter,
 	user_internal_usecase.NewOAuthUsecase,
 	user_infra_postgres.NewOTPRepository,
 	user_infra_client.NewOrganizationProviderClient,
-	user_infra_rpc.NewOrganizationRPCClient,
 	user_internal_usecase.NewOtpUsecase,
 	user_infra_postgres.NewPINRepository,
 	user_internal_usecase.NewPINUsecase,
@@ -152,6 +160,7 @@ var wireSet = wire.NewSet(
 	user_infra_postgres.NewPermissionRepo,
 	user_internal_usecase.NewPermissionUsecase,
 	user_infra_postgres_entitlement.NewPlanAccessStore,
+	user_infra_providers.NewPlanPublishTransaction,
 	user_infra_handler_grpc.NewPlanVersionAdminHandler,
 	user_infra_postgres.NewPlanVersionRepo,
 	user_infra_handler.NewPriceTableHandler,
@@ -162,7 +171,6 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewProfessionMapper,
 	user_infra_postgres.NewProfessionPostgres,
 	user_internal_usecases.NewProfessionUsecase,
-	user_internal_models.NewProfileDeleted,
 	user_infra_postgres.NewProfileDeletedPostgres,
 	user_infra_mapper.NewProfileMapper,
 	user_infra_postgres.NewProfileMediaPostgres,
@@ -173,8 +181,6 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewPurposeUseMapper,
 	user_infra_postgres.NewPurposeUseRepo,
 	user_infra_redis.NewRedisProvider,
-	user_internal_dto.NewRefreshResponse,
-	user_internal_domain_plan.NewRegistry,
 	user_infra_handler.NewRoleGroupHandler,
 	user_infra_mapper.NewRoleGroupMapper,
 	user_internal_usecase.NewRoleGroupRegistry,
@@ -211,15 +217,13 @@ var wireSet = wire.NewSet(
 	user_infra_mapper.NewUserInfoMapper,
 	user_infra_postgres.NewUserInfoRepository,
 	user_internal_usecase.NewUserInfoUsecase,
-	user_internal_models.NewUserProfileEntityWithRequest,
-	user_infra_rpc.NewUserRPCClient,
 	user_internal_usecases.NewUserUsecase,
 	user_infra_oauth.NewZaloAuthService,
 	user_infra_zns.NewZnsProvider,
 	user_infra_scheduler.NewZnsScheduler,
 )
 
-func InitializeApp(database *gorm.DB, redisService *_redis.RedisService) (*user_initial.InitialApp, func(), error) {
+func InitializeApp() (*user_initial.InitialApp, func(), error) {
 	wire.Build(wireSet)
 	return nil, nil, nil
 }

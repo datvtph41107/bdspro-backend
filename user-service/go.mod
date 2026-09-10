@@ -14,6 +14,7 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/wire v0.7.0
+	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -24,7 +25,7 @@ require (
 	golang.org/x/crypto v0.51.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
-	gorm.io/gorm v1.31.0
+	gorm.io/gorm v1.31.2
 	pb v0.0.0-00010101000000-000000000000
 )
 
@@ -81,6 +82,7 @@ require (
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 	golang.org/x/arch v0.23.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect

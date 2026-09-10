@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"common/injection"
 	_middleware "common/middleware"
 	"crm/config"
 	catalogapp "crm/internal/modules/contentcatalog/application"
@@ -45,13 +44,14 @@ func NewPublicContentGrpcHandler(
 	sitemap *usecase.SeoSitemapUsecase,
 	catalog *catalogapp.Service,
 	seoCount *usecase.SeoCountUsecase,
+	hubClient *clients.HubGrpcClient,
 ) *PublicContentGrpcHandler {
 	return &PublicContentGrpcHandler{
 		seoPublic: seoPublic,
 		sitemap:   sitemap,
 		catalog:   catalog,
 		seoCount:  seoCount,
-		hubClient: injection.NewHubClient(),
+		hubClient: hubClient,
 	}
 }
 

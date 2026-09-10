@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"common/injection"
 	_middleware "common/middleware"
 	"pb/clients"
-	planningapp "tqd/internal/modules/planningclient/application"
-	planningdomain "tqd/internal/modules/planningclient/domain"
+	planningapp "tqd/internal/usecase/planningclient/application"
+	planningdomain "tqd/internal/domain/planningclient/model"
 	tqdutils "tqd/internal/utils"
 
 	tqdpb "pb/types/tqd"
@@ -35,11 +34,12 @@ type PlanningClientGrpcHandler struct {
 	hubClient                  *clients.HubGrpcClient
 }
 
-func NewPlanningClientGrpcHandler(service *planningapp.Service) *PlanningClientGrpcHandler {
+func NewPlanningClientGrpcHandler(service *planningapp.Service,
+	hubClient *clients.HubGrpcClient) *PlanningClientGrpcHandler {
 	return &PlanningClientGrpcHandler{
 		service:                    service,
 		provinceScopeListStartTime: time.Now().UnixMilli(),
-		hubClient:                  injection.NewHubClient(),
+		hubClient:                  hubClient,
 	}
 }
 

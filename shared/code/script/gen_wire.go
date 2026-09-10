@@ -75,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cleanupEnabled := false
+	cleanupEnabled := injectionProvidesCleanup(injections)
 	for _, constructor := range constructors {
 		if constructor.ReturnsCleanup {
 			cleanupEnabled = true
@@ -148,6 +148,11 @@ func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, e
 		for _, declaration := range file.Decls {
 			function, ok := declaration.(*ast.FuncDecl)
 			if !ok || function.Recv != nil || !strings.HasPrefix(function.Name.Name, "New") {
+				continue
+			}
+			// Shared RPC clients live in common/injection. Skip per-service
+			// New*RPCClient duplicates so Wire does not see two providers.
+			if isSharedRPCClientConstructor(function.Name.Name) {
 				continue
 			}
 			item := NewFunc{
@@ -370,6 +375,29 @@ func loadGenerationConfig(service string) ([]InjectionPackage, []string, Process
 	), normalizeScanExclude(config.ScanExclude[service]), config.ProcessInputs[service], nil
 }
 
+func isSharedRPCClientConstructor(name string) bool {
+	return strings.HasPrefix(name, "New") && strings.HasSuffix(name, "RPCClient")
+}
+
+func injectionProvidesCleanup(injections []InjectionPackage) bool {
+	for _, injection := range injections {
+		if strings.TrimSpace(injection.Import) != "common/injection" {
+			continue
+		}
+		for _, constructor := range injection.Constructors {
+			constructor = strings.TrimSpace(constructor)
+			if constructor == "RPCClientSet" || strings.HasPrefix(constructor, "New") {
+				// RPCClientSet and client New* return (T, func(), error).
+				if constructor == "NewHttpClient" {
+					continue
+				}
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func normalizeScanExclude(items []string) []string {
 	seen := make(map[string]struct{}, len(items))
 	result := make([]string, 0, len(items))
@@ -496,6 +524,8 @@ import (
 	}
 
 	packages := make(map[string]string)
+	// Prefer the package name "injection" so generated wire matches common/injection.
+	packages["common/injection"] = "injection"
 	for _, function := range functions {
 		packages[function.FullPackage] = function.Alias
 	}
@@ -506,6 +536,10 @@ import (
 	for _, injection := range injections {
 		packagePath := strings.TrimSpace(injection.Import)
 		if packagePath == "" {
+			continue
+		}
+		if packagePath == "common/injection" {
+			packages[packagePath] = "injection"
 			continue
 		}
 		packages[packagePath] = generateAlias(packagePath)

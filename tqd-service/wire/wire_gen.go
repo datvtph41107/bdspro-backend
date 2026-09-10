@@ -14,49 +14,82 @@ import (
 	"github.com/google/wire"
 	"tqd/config"
 	"tqd/infra/client"
+	"tqd/infra/client/file/generatedreport"
+	"tqd/infra/client/user/generatedreport"
 	"tqd/infra/handler/grpc"
+	"tqd/infra/handler/grpc/generatedreport"
 	"tqd/infra/handler/http"
 	discovery2 "tqd/infra/handler/http/discovery"
-	"tqd/infra/handler/http/publiccontent"
+	publiccontent2 "tqd/infra/handler/http/publiccontent"
 	"tqd/infra/mapper"
 	"tqd/infra/postgres"
 	"tqd/infra/postgres/discovery"
+	"tqd/infra/postgres/generatedreport/job"
+	"tqd/infra/postgres/generatedreport/render"
+	"tqd/infra/postgres/generatedreport/report"
 	"tqd/infra/postgres/planningclient"
-	publiccontent2 "tqd/infra/postgres/publiccontent"
+	"tqd/infra/postgres/publiccontent"
+	"tqd/infra/postgres/quota"
 	"tqd/infra/postgres/relatedentity"
+	"tqd/infra/postgres/usage"
 	"tqd/infra/providers"
+	"tqd/infra/redis/quota"
 	"tqd/infra/validator"
 	"tqd/infra/worker"
+	"tqd/infra/worker/generatedreport/generator"
+	"tqd/infra/worker/generatedreport/weasyprintpdf"
 	"tqd/initial"
 	"tqd/internal/dto"
-	"tqd/internal/modules/discovery/application"
-	"tqd/internal/modules/discovery/domain"
-	application3 "tqd/internal/modules/planningclient/application"
-	application2 "tqd/internal/modules/relatedentity/application"
-	"tqd/internal/modules/resolver/layer_resolver"
-	"tqd/internal/modules/resolver/layer_resolver/builder"
-	"tqd/internal/modules/resolver/layer_resolver/db"
-	"tqd/internal/modules/resolver/layer_resolver/engine"
-	"tqd/internal/modules/resolver/layer_resolver/engine/parcel_engine"
-	"tqd/internal/modules/resolver/layer_resolver/rule"
 	"tqd/internal/usecase"
+	"tqd/internal/usecase/discovery/application"
+	"tqd/internal/usecase/generatedreport/admin"
+	application4 "tqd/internal/usecase/generatedreport/application"
+	"tqd/internal/usecase/generatedreport/processing"
+	"tqd/internal/usecase/generatedreport/rendering"
+	application3 "tqd/internal/usecase/planningclient/application"
 	"tqd/internal/usecase/qh"
+	quota2 "tqd/internal/usecase/quota"
+	"tqd/internal/usecase/quota/reconciliation/reservationcleanup"
+	"tqd/internal/usecase/quota/reconciliation/usageprojection"
+	application2 "tqd/internal/usecase/relatedentity/application"
+	"tqd/internal/usecase/resolver/layer_resolver"
+	"tqd/internal/usecase/resolver/layer_resolver/builder"
+	"tqd/internal/usecase/resolver/layer_resolver/db"
+	"tqd/internal/usecase/resolver/layer_resolver/engine"
+	"tqd/internal/usecase/resolver/layer_resolver/engine/parcel_engine"
+	"tqd/internal/usecase/resolver/layer_resolver/rule"
+	"tqd/internal/usecase/usage"
 	"tqd/map"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp() (*initial.InitialApp, error) {
+func InitializeApp() (*initial.InitialApp, func(), error) {
 	db, err := _db.NewDB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	redisService := _provider.NewRedisService()
+	userGrpcClient, cleanup, err := injection.NewUserClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	runtimeConfig, err := config.NewRuntimeConfig()
+	if err != nil {
+		cleanup()
+		return nil, nil, err
 	}
 	regionExtendRepository := postgres.NewRegionExtendRepository(db)
 	regionExtendUsecase := usecase.NewRegionExtendUsecase(regionExtendRepository)
 	regionExtendGrpcHandler := handler_grpc.NewRegionExtendGrpcHandler(regionExtendUsecase)
 	contactLabelRepository := postgres.NewContactLabelPostgresRepo(db)
-	userProvider := client.NewUserClient()
-	permissionProvider := client.NewPermissionClient()
+	userProvider := client.NewUserClient(userGrpcClient)
+	authGrpcClient, cleanup2, err := injection.NewAuthClient(userGrpcClient)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	permissionProvider := client.NewPermissionClient(authGrpcClient)
 	contactLabelMapper := mapper.NewContactLabelMapper()
 	contactLabelUsecase := usecase.NewContactLabelUsecase(contactLabelRepository, userProvider, permissionProvider, contactLabelMapper)
 	contactLabelValidator := validator.NewContactLabelValidator()
@@ -107,9 +140,14 @@ func InitializeApp() (*initial.InitialApp, error) {
 	directorySourceGrpcHandler := handler_grpc.NewDirectorySourceGrpcHandler(directorySourceUsecase, directorySourceMapper, directorySourceValidator)
 	directorySupplierGrpcHandler := handler_grpc.NewDirectorySupplierGrpcHandler(directorySupplierUsecase, directorySupplierMapper)
 	poiCategoryGrpcHandler := handler_grpc.NewPoiCategoryGrpcHandler(poiCategoryUsecase, poiCategoryMapper)
-	redisService := _provider.NewRedisService()
 	syncUtil := _utils.NewSyncUtil(redisService)
-	poiGrpcHandler := handler_grpc.NewPoiGrpcHandler(poiUsecase, poiMapper, syncUtil)
+	hubGrpcClient, cleanup3, err := injection.NewHubClient()
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	poiGrpcHandler := handler_grpc.NewPoiGrpcHandler(poiUsecase, poiMapper, syncUtil, hubGrpcClient)
 	openHourGrpcHandler := handler_grpc.NewOpenHourGrpcHandler(openHourUsecase, openHourMapper)
 	amenityGrpcHandlerImpl := handler_grpc.NewAmenityGrpcHandlerImpl(amenityUsecase, amenityMapper)
 	locationRepository := postgres.NewLocationRepository(db)
@@ -149,9 +187,9 @@ func InitializeApp() (*initial.InitialApp, error) {
 	parcelGrpcHandler := handler_grpc.NewParcelGrpcHandler(parcelUsecase, parcelMapper, syncUtil)
 	regionGrpcHandler := handler_grpc.NewRegionGrpcHandler(regionUsecase, qhLabelUsecase, syncUtil)
 	reportRepository := postgres.NewReportRepository(db)
-	reportUsecase := usecase.NewReportUsecase(reportRepository, userProvider)
-	reportGrpcHandler := handler_grpc.NewReportGrpcHandler(reportUsecase, syncUtil)
-	gisReportAdminGrpcHandler := handler_grpc.NewGisReportAdminGrpcHandler(reportUsecase)
+	reportUsecase := usecase.NewReportUsecase(reportRepository, userProvider, authGrpcClient, userGrpcClient)
+	reportGrpcHandler := handler_grpc.NewReportGrpcHandler(reportUsecase, syncUtil, authGrpcClient)
+	gisReportAdminGrpcHandler := handler_grpc.NewGisReportAdminGrpcHandler(reportUsecase, authGrpcClient)
 	notificationRepository := postgres.NewNotificationRepository(db)
 	notificationUsecase := usecase.NewNotificationUsecase(notificationRepository)
 	subscriptionGrpcHandler := handler_grpc.NewSubscriptionGrpcHandler(subscriptionUsecase, notificationUsecase, regionUsecase, parcelUsecase, userProvider, syncUtil)
@@ -169,7 +207,8 @@ func InitializeApp() (*initial.InitialApp, error) {
 	iqhPlanningProjectUsecase := qh_usecase.NewQHPlanningProjectUsecase(iqhPlanningProjectRepo, iqhPlanningDocumentRepo, iqhPlanningEventRepo, iProAIJobRepo, crmSeoProvider)
 	iqhPlanningDocumentUsecase := qh_usecase.NewQHPlanningDocumentUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, crmSeoProvider)
 	iqhPlanningEventUsecase := qh_usecase.NewQHPlanningEventUsecase(iqhPlanningEventRepo)
-	fileProvider := client.NewFileClient()
+	fileConfig := providers.NewFileConfig(runtimeConfig)
+	fileProvider := client.NewFileClient(fileConfig)
 	iqhPlanningFolderUsecase := qh_usecase.NewQHPlanningFolderUsecase(iqhPlanningProjectRepo, iqhPlanningDocumentRepo, iProAIJobRepo, fileProvider, transactionRepo)
 	iProAIJobUsecase := qh_usecase.NewProAIJobUsecase(iProAIJobRepo)
 	qhPlanningMapper := mapper.NewQHPlanningMapper()
@@ -178,19 +217,51 @@ func InitializeApp() (*initial.InitialApp, error) {
 	repository := discovery.NewDiscoveryRepository(db)
 	service := application.NewService(repository)
 	discoveryMapper := mapper.NewDiscoveryMapper()
-	discoveryGrpcHandler := handler_grpc.NewDiscoveryGrpcHandler(service, discoveryMapper)
+	discoveryGrpcHandler := handler_grpc.NewDiscoveryGrpcHandler(service, discoveryMapper, hubGrpcClient)
 	entityReader := relatedentity.NewEntityReader(repository)
 	portsRepository := relatedentity.NewRepository(db, entityReader)
 	applicationService := application2.NewService(portsRepository)
 	relatedEntityGrpcHandler := handler_grpc.NewRelatedEntityGrpcHandler(applicationService, discoveryMapper)
-	assistantProvider := client.NewAssistantClient()
-	iqhPlanningClassifyUsecase := qh_usecase.NewQHPlanningClassifyUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, assistantProvider, fileProvider)
-	qhPlanningClassifyWorker := worker.NewQHPlanningClassifyWorker(iqhPlanningClassifyUsecase)
-	initialApp := initial.NewApp(regionExtendGrpcHandler, contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, gisReportAdminGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler, mapWorkspaceGrpcHandler, qhPlanningGrpcHandler, discoveryGrpcHandler, relatedEntityGrpcHandler, qhPlanningClassifyWorker)
-	return initialApp, nil
+	publiccontentRepository := publiccontent.NewRepository(db)
+	seoProjectionGrpcHandler := handler_grpc.NewSeoProjectionGrpcHandler(publiccontentRepository)
+	planningclientRepository := planningclient.NewRepository(db)
+	service2 := application3.NewService(planningclientRepository, publiccontentRepository)
+	planningClientGrpcHandler := handler_grpc.NewPlanningClientGrpcHandler(service2, hubGrpcClient)
+	adminUsageStore := quota.NewAdminUsageStore(db)
+	redisClient := providers.NewRedisClient(redisService)
+	store := redisquota.NewStore(redisClient)
+	adminUsageService := quota2.NewAdminUsageService(adminUsageStore, store)
+	reportStore := postgresreport.NewReportStore(db)
+	adminService := admin.NewService(reportStore)
+	usagePermissionAuthorizer := providers.NewUsagePermissionAuthorizer(authGrpcClient)
+	postgresusageStore := postgresusage.NewStore(db)
+	usageprojectionService := usageprojection.NewService(store, postgresusageStore)
+	adminUsageGrpcHandler := handler_grpc.NewAdminUsageGrpcHandler(adminUsageService, adminService, usagePermissionAuthorizer, usageprojectionService)
+	internalAccessServiceClient := providers.NewInternalAccessClient(userGrpcClient)
+	useraccessClient := useraccess.NewClient(internalAccessServiceClient)
+	profileUsageService := quota2.NewProfileUsageService(useraccessClient, postgresusageStore, store)
+	profileUsageGrpcHandler := handler_grpc.NewProfileUsageGrpcHandler(profileUsageService)
+	assistantProvider, cleanup4, err := client.NewAssistantClient()
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	classifyPolicy := providers.NewClassifyPolicy(runtimeConfig)
+	iqhPlanningClassifyUsecase := qh_usecase.NewQHPlanningClassifyUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, assistantProvider, fileProvider, classifyPolicy)
+	classifyWorkerConfig := providers.NewClassifyWorkerConfig(runtimeConfig)
+	qhPlanningClassifyWorker := worker.NewQHPlanningClassifyWorker(iqhPlanningClassifyUsecase, classifyWorkerConfig)
+	initialApp := initial.NewApp(db, redisService, userGrpcClient, runtimeConfig, regionExtendGrpcHandler, contactLabelHandler, directoryCategoryHandler, directorySourceHandler, directorySupplierHandler, poiCategoryHandler, poihttpHandler, openHourHandler, amenityHandler, qhLabelHandler, regionHttpHandler, importHTTPHandler, contactLabelGrpcHandler, directoryCategoryGrpcHandler, directorySourceGrpcHandler, directorySupplierGrpcHandler, poiCategoryGrpcHandler, poiGrpcHandler, openHourGrpcHandler, amenityGrpcHandlerImpl, locationHandler, featureGrpcHandler, oneHouseGrpcHandler, layerGrpcHandler, qhLabelGrpcHandler, qhAuthorityIssuringGrpcHandler, qhLayerFamilyGrpcHandler, qhLayerLegendGrpcHandler, qhLandUseGrpcHandler, parcelGrpcHandler, regionGrpcHandler, reportGrpcHandler, gisReportAdminGrpcHandler, subscriptionGrpcHandler, tqdPublicService, importGrpcHandler, layerLegalGrpcHandler, mapWorkspaceGrpcHandler, qhPlanningGrpcHandler, discoveryGrpcHandler, relatedEntityGrpcHandler, seoProjectionGrpcHandler, planningClientGrpcHandler, adminUsageGrpcHandler, profileUsageGrpcHandler, qhPlanningClassifyWorker)
+	return initialApp, func() {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
 }
 
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, injection.NewAuthClient, injection.NewBDSProClient, injection.NewCRMClient, injection.NewChatClient, injection.NewHubClient, injection.NewNotification, injection.NewOrganizationClient, injection.NewPaymentClient, injection.NewTQClient, injection.NewTransactionClient, injection.NewUserClient, injection.NewHttpClient, _utils.NewSyncUtil, handler_grpc.NewAmenityGrpcHandlerImpl, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, rule.NewAssessEngine, client.NewAssistantClient, rule.NewAuditEngine, usecase.NewBaseUsecase, handler_grpc.NewBdsproPublicService, providers.NewCacheProvider, builder.NewCandidateBuilder, rule.NewCompareEngine, db.NewConfigLoader, db.NewConfigPostgres, rule.NewConflictClassifier, rule.NewConflictEngine, handler_grpc.NewContactLabelGrpcHandler, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, client.NewCrmSeoClient, handler_grpc.NewDirectoryCategoryGrpcHandler, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_grpc.NewDirectorySourceGrpcHandler, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_grpc.NewDirectorySupplierGrpcHandler, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, handler_grpc.NewDiscoveryGrpcHandler, mapper.NewDiscoveryMapper, discovery.NewDiscoveryRepository, relatedentity.NewEntityReader, domain.NewEntityRef, handler_grpc.NewFeatureGrpcHandler, postgres.NewFeatureRepository, usecase.NewFeatureUsecase, client.NewFileClient, providers.NewGeoProvider, dto.NewGeometryParser, handler_grpc.NewGisReportAdminGrpcHandler, discovery2.NewHandler, publiccontent.NewHandler, rule.NewHistoricalRiskEngine, handler_grpc.NewImportGrpcHandler, handler_http.NewImportHTTPHandler, mapper.NewImportMapper, usecase.NewImportUsecase, mapper.NewLabelMapper, handler_grpc.NewLayerGrpcHandler, handler_grpc.NewLayerLegalGrpcHandler, postgres.NewLayerLegalPostgres, usecase.NewLayerLegalUsecase, postgres.NewLayerRepository, config.NewLayerResolver, postgres.NewLayerResolverConfigPostgres, usecase.NewLayerUsecase, postgres.NewLegalDocumentPostgres, rule.NewLegalStatusResolver, rule.NewLifecycleEngine, handler_grpc.NewLocationHandler, mapper.NewLocationMapper, postgres.NewLocationRepository, usecase.NewLocationUsecase, validator.NewLocationValidator, _map.NewMapManager, handler_grpc.NewMapWorkspaceGrpcHandler, postgres.NewMapWorkspacePostgres, usecase.NewMapWorkspaceUsecase, client.NewNotificationClient, postgres.NewNotificationRepository, usecase.NewNotificationUsecase, handler_grpc.NewOneHouseGrpcHandler, postgres.NewOneHouseRepo, usecase.NewOneHouseUsecase, handler_grpc.NewOpenHourGrpcHandler, handler_http.NewOpenHourHandler, mapper.NewOpenHourMapper, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, parcel_engine.NewParcelEngine, handler_grpc.NewParcelGrpcHandler, mapper.NewParcelMapper, postgres.NewParcelPostgres, usecase.NewParcelUsecase, client.NewPermissionClient, handler_grpc.NewPlanningClientGrpcHandler, handler_grpc.NewPoiCategoryGrpcHandler, handler_http.NewPoiCategoryHandler, mapper.NewPoiCategoryMapper, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, handler_grpc.NewPoiGrpcHandler, mapper.NewPoiMapper, usecase.NewPoiUsecase, rule.NewPriorityEngine, postgres.NewProAIJobRepo, qh_usecase.NewProAIJobUsecase, postgres.NewQHAuditPostgres, handler_grpc.NewQHAuthorityIssuringGrpcHandler, postgres.NewQHAuthorityIssuringRepository, usecase.NewQHAuthorityIssuringUsecase, handler_grpc.NewQHLabelGrpcHandler, handler_http.NewQHLabelHandler, postgres.NewQHLabelRepository, usecase.NewQHLabelUsecase, handler_grpc.NewQHLandUseGrpcHandler, handler_grpc.NewQHLayerFamilyGrpcHandler, postgres.NewQHLayerFamilyRepository, usecase.NewQHLayerFamilyUsecase, usecase.NewQHLayerLandUseGroupUsecase, postgres.NewQHLayerLandUseRepository, handler_grpc.NewQHLayerLegendGrpcHandler, postgres.NewQHLayerLegendRepository, usecase.NewQHLayerLegendUsecase, postgres.NewQHLayerLifecyclePostgres, qh_usecase.NewQHPlanningClassifyUsecase, worker.NewQHPlanningClassifyWorker, postgres.NewQHPlanningDocumentRepo, qh_usecase.NewQHPlanningDocumentUsecase, postgres.NewQHPlanningEventRepo, qh_usecase.NewQHPlanningEventUsecase, qh_usecase.NewQHPlanningFolderUsecase, handler_grpc.NewQHPlanningGrpcHandler, mapper.NewQHPlanningMapper, postgres.NewQHPlanningProjectRepo, qh_usecase.NewQHPlanningProjectUsecase, validator.NewQHPlanningValidator, handler_grpc.NewRegionExtendGrpcHandler, postgres.NewRegionExtendRepository, usecase.NewRegionExtendUsecase, handler_grpc.NewRegionGrpcHandler, handler_http.NewRegionHttpHandler, mapper.NewRegionMapper, postgres.NewRegionRepository, usecase.NewRegionUsecase, handler_grpc.NewRelatedEntityGrpcHandler, handler_grpc.NewReportGrpcHandler, postgres.NewReportRepository, usecase.NewReportUsecase, planningclient.NewRepository, publiccontent2.NewRepository, relatedentity.NewRepository, rule.NewResolutionPipeline, layer_resolver.NewResolver, engine.NewResolverEngine, layer_resolver.NewResolverWithDB, handler_grpc.NewSeoProjectionGrpcHandler, application.NewService, application3.NewService, application2.NewService, handler_grpc.NewSubscriptionGrpcHandler, postgres.NewSubscriptionRepository, usecase.NewSubscriptionUsecase, rule.NewTimelineEngine, providers.NewTransactionProvider, client.NewUserClient, mapper.NewWorkspaceMapper)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(admin.Repository), new(*postgresreport.ReportStore)), wire.Bind(new(application3.PlanningRepository), new(*planningclient.Repository)), wire.Bind(new(application3.ProjectionRepository), new(*publiccontent.Repository)), wire.Bind(new(quota2.AdminUsageRepository), new(*quota.AdminUsageStore)), wire.Bind(new(quota2.DurableUsageReader), new(*postgresusage.Store)), wire.Bind(new(quota2.ProfileAccessReader), new(*useraccess.Client)), wire.Bind(new(quota2.RuntimeUsageReader), new(*redisquota.Store)), wire.Bind(new(usageprojection.QuotaStore), new(*redisquota.Store)), wire.Bind(new(usage.Store), new(*postgresusage.Store)), injection.RPCClientSet, injection.NewHttpClient, _utils.NewSyncUtil, filehttp.New, weasyprintpdf.New, grpcadapter.NewAdapter, handler_grpc.NewAdminUsageGrpcHandler, quota2.NewAdminUsageService, quota.NewAdminUsageStore, handler_grpc.NewAmenityGrpcHandlerImpl, handler_http.NewAmenityHandler, mapper.NewAmenityMapper, postgres.NewAmenityRepo, usecase.NewAmenityUsecase, initial.NewApp, rule.NewAssessEngine, client.NewAssistantClient, rule.NewAuditEngine, usecase.NewBaseUsecase, handler_grpc.NewBdsproPublicService, builder.NewCandidateBuilder, providers.NewClassifyPolicy, providers.NewClassifyWorkerConfig, useraccess.NewClient, rule.NewCompareEngine, db.NewConfigLoader, db.NewConfigPostgres, rule.NewConflictClassifier, rule.NewConflictEngine, handler_grpc.NewContactLabelGrpcHandler, handler_http.NewContactLabelHandler, mapper.NewContactLabelMapper, postgres.NewContactLabelPostgresRepo, usecase.NewContactLabelUsecase, validator.NewContactLabelValidator, client.NewCrmSeoClient, handler_grpc.NewDirectoryCategoryGrpcHandler, handler_http.NewDirectoryCategoryHandler, mapper.NewDirectoryCategoryMapper, postgres.NewDirectoryCategoryPostgresRepo, usecase.NewDirectoryCategoryUsecase, validator.NewDirectoryCategoryValidator, handler_grpc.NewDirectorySourceGrpcHandler, handler_http.NewDirectorySourceHandler, mapper.NewDirectorySourceMapper, postgres.NewDirectorySourcePostgres, usecase.NewDirectorySourceUsecase, validator.NewDirectorySourceValidator, handler_grpc.NewDirectorySupplierGrpcHandler, handler_http.NewDirectorySupplierHandler, mapper.NewDirectorySupplierMapper, postgres.NewDirectorySupplierPostgres, usecase.NewDirectorySupplierUsecase, handler_grpc.NewDiscoveryGrpcHandler, mapper.NewDiscoveryMapper, discovery.NewDiscoveryRepository, relatedentity.NewEntityReader, handler_grpc.NewFeatureGrpcHandler, postgres.NewFeatureRepository, usecase.NewFeatureUsecase, client.NewFileClient, providers.NewFileConfig, providers.NewGeoProvider, dto.NewGeometryParser, handler_grpc.NewGisReportAdminGrpcHandler, discovery2.NewHandler, publiccontent2.NewHandler, rule.NewHistoricalRiskEngine, handler_grpc.NewImportGrpcHandler, handler_http.NewImportHTTPHandler, mapper.NewImportMapper, usecase.NewImportUsecase, providers.NewInternalAccessClient, mapper.NewLabelMapper, handler_grpc.NewLayerGrpcHandler, handler_grpc.NewLayerLegalGrpcHandler, postgres.NewLayerLegalPostgres, usecase.NewLayerLegalUsecase, postgres.NewLayerRepository, config.NewLayerResolver, postgres.NewLayerResolverConfigPostgres, usecase.NewLayerUsecase, postgres.NewLegalDocumentPostgres, rule.NewLegalStatusResolver, rule.NewLifecycleEngine, handler_grpc.NewLocationHandler, mapper.NewLocationMapper, postgres.NewLocationRepository, usecase.NewLocationUsecase, validator.NewLocationValidator, _map.NewMapManager, handler_grpc.NewMapWorkspaceGrpcHandler, postgres.NewMapWorkspacePostgres, usecase.NewMapWorkspaceUsecase, postgres.NewNotificationRepository, usecase.NewNotificationUsecase, handler_grpc.NewOneHouseGrpcHandler, postgres.NewOneHouseRepo, usecase.NewOneHouseUsecase, handler_grpc.NewOpenHourGrpcHandler, handler_http.NewOpenHourHandler, mapper.NewOpenHourMapper, postgres.NewOpenHourPostgres, usecase.NewOpenHourUsecase, handler_http.NewPOIHTTPHandler, postgres.NewPOIRepo, parcel_engine.NewParcelEngine, handler_grpc.NewParcelGrpcHandler, mapper.NewParcelMapper, postgres.NewParcelPostgres, usecase.NewParcelUsecase, validator.NewParcelValidator, client.NewPermissionClient, handler_grpc.NewPlanningClientGrpcHandler, handler_grpc.NewPoiCategoryGrpcHandler, handler_http.NewPoiCategoryHandler, mapper.NewPoiCategoryMapper, postgres.NewPoiCategoryPostgres, usecase.NewPoiCategoryUsecase, handler_grpc.NewPoiGrpcHandler, mapper.NewPoiMapper, usecase.NewPoiUsecase, rule.NewPriorityEngine, postgres.NewProAIJobRepo, qh_usecase.NewProAIJobUsecase, handler_grpc.NewProfileUsageGrpcHandler, quota2.NewProfileUsageService, postgres.NewQHAuditPostgres, handler_grpc.NewQHAuthorityIssuringGrpcHandler, postgres.NewQHAuthorityIssuringRepository, usecase.NewQHAuthorityIssuringUsecase, handler_grpc.NewQHLabelGrpcHandler, handler_http.NewQHLabelHandler, postgres.NewQHLabelRepository, usecase.NewQHLabelUsecase, handler_grpc.NewQHLandUseGrpcHandler, handler_grpc.NewQHLayerFamilyGrpcHandler, postgres.NewQHLayerFamilyRepository, usecase.NewQHLayerFamilyUsecase, usecase.NewQHLayerLandUseGroupUsecase, postgres.NewQHLayerLandUseRepository, handler_grpc.NewQHLayerLegendGrpcHandler, postgres.NewQHLayerLegendRepository, usecase.NewQHLayerLegendUsecase, postgres.NewQHLayerLifecyclePostgres, qh_usecase.NewQHPlanningClassifyUsecase, worker.NewQHPlanningClassifyWorker, postgres.NewQHPlanningDocumentRepo, qh_usecase.NewQHPlanningDocumentUsecase, postgres.NewQHPlanningEventRepo, qh_usecase.NewQHPlanningEventUsecase, qh_usecase.NewQHPlanningFolderUsecase, handler_grpc.NewQHPlanningGrpcHandler, mapper.NewQHPlanningMapper, postgres.NewQHPlanningProjectRepo, qh_usecase.NewQHPlanningProjectUsecase, validator.NewQHPlanningValidator, providers.NewRedisClient, handler_grpc.NewRegionExtendGrpcHandler, postgres.NewRegionExtendRepository, usecase.NewRegionExtendUsecase, handler_grpc.NewRegionGrpcHandler, handler_http.NewRegionHttpHandler, mapper.NewRegionMapper, postgres.NewRegionRepository, usecase.NewRegionUsecase, handler_grpc.NewRelatedEntityGrpcHandler, handler_grpc.NewReportGrpcHandler, postgres.NewReportRepository, postgresreport.NewReportStore, usecase.NewReportUsecase, planningclient.NewRepository, publiccontent.NewRepository, relatedentity.NewRepository, rule.NewResolutionPipeline, layer_resolver.NewResolver, engine.NewResolverEngine, layer_resolver.NewResolverWithDB, processing.NewRunner, reservationcleanup.NewRunner, usageprojection.NewRunner, config.NewRuntimeConfig, handler_grpc.NewSeoProjectionGrpcHandler, application.NewService, admin.NewService, application4.NewService, rendering.NewService, application3.NewService, quota2.NewService, reservationcleanup.NewService, usageprojection.NewService, application2.NewService, generator.NewSmokeGenerator, postgresrender.NewSource, postgresreport.NewSourceStore, postgresjob.NewStore, postgresusage.NewStore, redisquota.NewStore, handler_grpc.NewSubscriptionGrpcHandler, postgres.NewSubscriptionRepository, usecase.NewSubscriptionUsecase, rule.NewTimelineEngine, providers.NewTransactionProvider, providers.NewUsagePermissionAuthorizer, client.NewUserClient, processing.NewWorker, mapper.NewWorkspaceMapper)

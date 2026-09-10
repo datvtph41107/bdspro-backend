@@ -34,11 +34,8 @@ type Service struct {
 	now           func() time.Time
 }
 
-func NewService(catalog CatalogReader, subscriptions SubscriptionReader, now func() time.Time) *Service {
-	if now == nil {
-		now = time.Now
-	}
-	return &Service{catalog: catalog, subscriptions: subscriptions, now: now}
+func NewService(catalog CatalogReader, subscriptions SubscriptionReader) *Service {
+	return &Service{catalog: catalog, subscriptions: subscriptions, now: time.Now}
 }
 
 func (s *Service) ListAvailablePlans(ctx context.Context, productCode, subjectKind string) ([]plandomain.PlanVersionAggregate, error) {

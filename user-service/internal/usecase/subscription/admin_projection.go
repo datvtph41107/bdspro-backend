@@ -68,6 +68,7 @@ type AdminRepository interface {
 	ListEffectiveByProfiles(context.Context, []uint64) ([]subscriptiondomain.AdminUserProjection, error)
 }
 
+// @bind: user/internal/usecase/commercialprofile.SubscriptionReader
 type AdminService struct{ repository AdminRepository }
 
 func NewAdminService(repository AdminRepository) *AdminService {

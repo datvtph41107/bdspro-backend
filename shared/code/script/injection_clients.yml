@@ -1,14 +1,15 @@
 # Shared constructors intentionally available to generated Wire graphs.
-# RPC transport ownership is process-local under each service's infra/rpc.
+# RPC clients are owned by common/injection (RPCClientSet). gen_wire skips
+# per-service New*RPCClient constructors so Wire sees a single provider graph.
 packages:
   - import: common/injection
     constructors:
+      - RPCClientSet
       - NewHttpClient
 
   - import: common/utils
     constructors:
       - NewSyncUtil
-
 
 # Packages below are operational transition code, not serving process dependencies.
 # They remain executable through their dedicated cmd entrypoints until cutover is proven,
@@ -20,10 +21,19 @@ scan_exclude:
     - internal/modules/subscription/cutover
     - internal/modules/subscription/read
     - internal/modules/subscription/shadow
+    # Domain/DTO factories are not DI constructors.
+    - internal/domain/plan
+    - internal/dto
+    - internal/models
+  tqd:
+    # Domain factories (NewEvent/NewEntityRef) are not DI constructors.
+    - internal/domain/usage
+    - internal/domain/discovery/model
+    # In-memory stores compete with postgres/redis implementations in Wire.
+    - internal/usecase/quota/memory
+    - internal/usecase/usage/memory
+    - internal/usecase/generatedreport/memoryjob
 
 # Process-owned resources are opt-in. Services not listed preserve the legacy
 # generator behavior until their composition lifecycle is migrated.
-process_inputs:
-  user:
-    database: true
-    redis: true
+process_inputs: {}

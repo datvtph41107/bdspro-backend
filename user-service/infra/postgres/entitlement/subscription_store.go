@@ -29,6 +29,7 @@ type subscriptionRow struct {
 /**
  * SubscriptionStore đọc catalog_subscriptions và plan version từ PostgreSQL.
  */
+// @bind: user/internal/usecase/entitlement.SubscriptionStore
 type SubscriptionStore struct {
 	db *gorm.DB
 }

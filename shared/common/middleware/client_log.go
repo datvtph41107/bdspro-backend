@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -121,7 +123,12 @@ func outgoingContextWithTrust(
 func MonitorConnection(ctx context.Context, name string, conn *grpc.ClientConn) {
 	for {
 		state := conn.GetState()
-		log.Printf("[gRPC] Connection state of %s: %v", name, state)
+		target := ""
+		if conn != nil {
+			target = conn.Target()
+		}
+		log.Printf("[gRPC] Connection state of %s: %v target=%s", name, state, target)
+		logDNSLookup(name, target)
 
 		// Wait until the state changes before continuing the loop
 		if !conn.WaitForStateChange(ctx, state) {
@@ -129,4 +136,48 @@ func MonitorConnection(ctx context.Context, name string, conn *grpc.ClientConn) 
 			return
 		}
 	}
+}
+
+// logDNSLookup resolves the host from a gRPC dial target for debugging TRANSIENT_FAILURE.
+func logDNSLookup(name, target string) {
+	host := dialHost(target)
+	if host == "" {
+		log.Printf("[gRPC] DNS lookup of %s: skipped (empty host from target=%q)", name, target)
+		return
+	}
+	ips, err := net.LookupHost(host)
+	if err != nil {
+		log.Printf("[gRPC] DNS lookup of %s host=%s: error=%v", name, host, err)
+		return
+	}
+	log.Printf("[gRPC] DNS lookup of %s host=%s ips=%v", name, host, ips)
+}
+
+func dialHost(target string) string {
+	raw := strings.TrimSpace(target)
+	if raw == "" {
+		return ""
+	}
+	// Strip common gRPC URI schemes: dns:///host:port, passthrough:///host:port, unix:///...
+	for _, prefix := range []string{"dns:///", "passthrough:///", "unix:///", "dns://", "passthrough://"} {
+		if strings.HasPrefix(raw, prefix) {
+			raw = strings.TrimPrefix(raw, prefix)
+			break
+		}
+	}
+	host, _, err := net.SplitHostPort(raw)
+	if err == nil {
+		return host
+	}
+	// Bare hostname or IPv6 without port
+	if strings.HasPrefix(raw, "[") {
+		if end := strings.Index(raw, "]"); end > 1 {
+			return raw[1:end]
+		}
+	}
+	if i := strings.LastIndex(raw, ":"); i > 0 && !strings.Contains(raw[i:], "]") {
+		// host:port without brackets
+		return raw[:i]
+	}
+	return raw
 }

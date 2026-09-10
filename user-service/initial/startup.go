@@ -5,6 +5,8 @@ import (
 	"context"
 	"pb/clients"
 	"user/infra/handler"
+	usergrpc "user/infra/handler/grpc"
+	accessgrpc "user/infra/handler/grpc/entitlement"
 	"user/infra/scheduler"
 	"user/internal/job"
 	"user/internal/usecase"
@@ -12,9 +14,12 @@ import (
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
 )
 
 type InitialApp struct {
+	DB *gorm.DB
+
 	ProfileService *handler.GrpcProfileService
 	ProfileUsecase *usecases.ProfileUsecase
 	// Admin Services
@@ -35,7 +40,6 @@ type InitialApp struct {
 
 	AuthHandler     *handler.AuthHandler
 	UserInfoHandler *handler.AuthUserProfileHandler
-	// InternalHandler   *handler.InternalHandler
 	OAuthHandler      *handler.OAuthHandler
 	PermissionHandler *handler.PermissionHandler
 	RoleGroupHandler  *handler.RoleGroupHandler
@@ -44,6 +48,14 @@ type InitialApp struct {
 	// Role-group lookup used by role resolution.
 	RoleGroupRegistry *usecase.RoleGroupRegistry
 
+	// Trusted commercial / entitlement gRPC handlers (Wire-owned).
+	InternalAccessHandler         *accessgrpc.Handler
+	CommercialProfileHandler      *usergrpc.CommercialProfileHandler
+	SubscriptionCheckoutHandler   *usergrpc.SubscriptionCheckoutHandler
+	SubscriptionSettlementHandler *usergrpc.SubscriptionSettlementHandler
+	SubscriptionAdminHandler      *usergrpc.SubscriptionAdminHandler
+	PlanVersionAdminHandler       *usergrpc.PlanVersionAdminHandler
+
 	// Scheduler để chạy background jobs
 	ZnsScheduler *scheduler.ZnsScheduler
 
@@ -51,6 +63,7 @@ type InitialApp struct {
 }
 
 func NewInitialApp(
+	db *gorm.DB,
 	profileService *handler.GrpcProfileService,
 	adminHandler *handler.AdminHandler,
 	adminUserProfileHandler *handler.AdminUserProfileHandler,
@@ -68,15 +81,22 @@ func NewInitialApp(
 
 	authHandler *handler.AuthHandler,
 	oauthHandler *handler.OAuthHandler,
-	// internalHandler *handler.InternalHandler,
 	permissionHandler *handler.PermissionHandler,
 	roleGroupHandler *handler.RoleGroupHandler,
 	roleHandler *handler.RoleHandler,
 	userInfoHandler *handler.AuthUserProfileHandler,
 	roleGroupRegistry *usecase.RoleGroupRegistry,
 	znsScheduler *scheduler.ZnsScheduler,
+
+	internalAccessHandler *accessgrpc.Handler,
+	commercialProfileHandler *usergrpc.CommercialProfileHandler,
+	subscriptionCheckoutHandler *usergrpc.SubscriptionCheckoutHandler,
+	subscriptionSettlementHandler *usergrpc.SubscriptionSettlementHandler,
+	subscriptionAdminHandler *usergrpc.SubscriptionAdminHandler,
+	planVersionAdminHandler *usergrpc.PlanVersionAdminHandler,
 ) *InitialApp {
 	app := &InitialApp{
+		DB:                      db,
 		ProfileService:          profileService,
 		AdminHandler:            adminHandler,
 		AdminUserProfileHandler: adminUserProfileHandler,
@@ -100,6 +120,13 @@ func NewInitialApp(
 		RoleHandler:       roleHandler,
 		RoleGroupRegistry: roleGroupRegistry,
 		ZnsScheduler:      znsScheduler,
+
+		InternalAccessHandler:         internalAccessHandler,
+		CommercialProfileHandler:      commercialProfileHandler,
+		SubscriptionCheckoutHandler:   subscriptionCheckoutHandler,
+		SubscriptionSettlementHandler: subscriptionSettlementHandler,
+		SubscriptionAdminHandler:      subscriptionAdminHandler,
+		PlanVersionAdminHandler:       planVersionAdminHandler,
 	}
 
 	loggerName := viper.GetString("server.name")

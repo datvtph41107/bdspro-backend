@@ -9,6 +9,9 @@ import (
 	"user/internal/usecase/subscription/checkout"
 )
 
+// @bind: user/internal/usecase/subscription/checkout.PlanResolver
+// @bind: user/internal/usecase/subscription/checkout.SubscriptionReader
+// @bind: user/internal/usecase/subscription/checkout.CommandStore
 type CheckoutStore struct {
 	db *_db.TransactionRepo
 }

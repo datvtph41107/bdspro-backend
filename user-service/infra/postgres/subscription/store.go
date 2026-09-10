@@ -11,6 +11,7 @@ import (
 	"user/internal/usecase/subscription/settlement"
 )
 
+// @bind: user/internal/usecase/subscription/settlement.Store
 type SettlementStore struct {
 	db  *_db.TransactionRepo
 	now func() time.Time

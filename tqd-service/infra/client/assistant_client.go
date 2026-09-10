@@ -3,25 +3,45 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	assistantpb "pb/types/assistant"
+	"tqd/infra/rpc"
 	"tqd/internal/interface/provider"
+
+	"github.com/spf13/viper"
 )
 
-// AssistantClient adapts the process-owned assistant gRPC client to the narrow
-// capability required by TQD classification. It does not own connection
-// lifecycle; cmd/grpc closes the underlying connection after actors stop.
+// AssistantClient adapts assistant gRPC to the narrow classify capability.
 type AssistantClient struct {
 	client assistantpb.AssistantServiceClient
+	close  func()
 }
 
-func NewAssistantClient(client assistantpb.AssistantServiceClient) provider.AssistantProvider {
-	return &AssistantClient{client: client}
+// NewAssistantClient dials assistant when classify is enabled; otherwise returns
+// a no-op adapter so Wire can compose the graph without a process-owned dial.
+func NewAssistantClient() (provider.AssistantProvider, func(), error) {
+	if !viper.GetBool("qh_planning_classify.enabled") {
+		return &AssistantClient{}, func() {}, nil
+	}
+	target := strings.TrimSpace(viper.GetString("rpc.assistant.address"))
+	if target == "" {
+		target = "127.0.0.1:8218"
+	}
+	rpcClient, cleanup, err := rpc.OpenAssistantRPCClient(target)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open assistant gRPC client: %w", err)
+	}
+	return &AssistantClient{client: rpcClient, close: cleanup}, cleanup, nil
 }
 
-// Close is retained only for the legacy provider contract. Resource ownership
-// is at process composition, therefore the adapter has nothing to close.
-func (c *AssistantClient) Close() error { return nil }
+func (c *AssistantClient) Close() error {
+	if c != nil && c.close != nil {
+		c.close()
+		c.close = nil
+	}
+	return nil
+}
 
 func (c *AssistantClient) ready() error {
 	if c == nil || c.client == nil {

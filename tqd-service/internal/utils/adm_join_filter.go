@@ -25,14 +25,14 @@ func PlanningProjectAdmJoinClause(admID uint64, projectIDExpr string) (clause st
 			SELECT 1 FROM qh_planning_project_provinces ppp
 			WHERE ppp.planning_project_id = %s
 			  AND ppp.deleted_at IS NULL
-			  AND ppp.province_id = ?
+			  AND CAST(ppp.province_id AS text) = ?
 		)`, projectIDExpr), idStr, true
 	case _utils.LocationIDKindWard:
 		return fmt.Sprintf(`EXISTS (
 			SELECT 1 FROM qh_planning_project_wards ppw
 			WHERE ppw.planning_project_id = %s
 			  AND ppw.deleted_at IS NULL
-			  AND ppw.ward_id = ?
+			  AND CAST(ppw.ward_id AS text) = ?
 		)`, projectIDExpr), idStr, true
 	default:
 		return "", "", false

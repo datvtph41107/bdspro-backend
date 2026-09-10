@@ -35,9 +35,7 @@ func OpenUserRPCClient(target string) (*clients.UserGrpcClient, func(), error) {
 }
 
 func OpenAuthRPCClient(target string) (*clients.AuthGrpcClient, func(), error) {
-	return openBound(target, func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
-		return clients.BindAuthGrpcClient(conn, nil)
-	})
+	return openBound(target, clients.BindAuthGrpcClient)
 }
 
 func OpenAssistantRPCClient(target string) (assistantpb.AssistantServiceClient, func(), error) {

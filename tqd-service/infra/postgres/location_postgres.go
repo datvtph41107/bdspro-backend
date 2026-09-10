@@ -286,13 +286,13 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 	argsWard := make([]interface{}, 0, 8)
 
 	if req.PlanningProjectID != 0 {
-		// Join-table *id vẫn VARCHAR; province_v2/ward_v2.id là bigint.
+		// Join-table province_id/ward_id có thể bigint hoặc varchar; cast về text để so khớp.
 		provinceSQL += `
 			AND EXISTS (
 				SELECT 1 FROM qh_planning_project_provinces ppp
 				WHERE ppp.deleted_at IS NULL
 				  AND ppp.planning_project_id = ?
-				  AND ppp.province_id = p.id::text
+				  AND CAST(ppp.province_id AS text) = CAST(p.id AS text)
 			)
 		`
 		wardSQL += `
@@ -300,7 +300,7 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 				SELECT 1 FROM qh_planning_project_wards ppw
 				WHERE ppw.deleted_at IS NULL
 				  AND ppw.planning_project_id = ?
-				  AND ppw.ward_id = w.id::text
+				  AND CAST(ppw.ward_id AS text) = CAST(w.id AS text)
 			)
 		`
 		argsProvince = append(argsProvince, req.PlanningProjectID)

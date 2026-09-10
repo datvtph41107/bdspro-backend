@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"tqd/internal/enums"
-	planningdomain "tqd/internal/modules/planningclient/domain"
-	publicdomain "tqd/internal/modules/publiccontent/domain"
+	planningdomain "tqd/internal/domain/planningclient/model"
+	publicdomain "tqd/internal/domain/publiccontent/model"
 )
 
 // PlanningRepository contains persistence operations used by client-facing

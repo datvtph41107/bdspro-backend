@@ -46,6 +46,6 @@ func NewChatRPCClient() (*clients.ChatGrpcClient, func(), error) {
 }
 func NewAuthRPCClient() (*clients.AuthGrpcClient, func(), error) {
 	return bindDependency("auth", func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
-		return clients.BindAuthGrpcClient(conn, nil)
+		return clients.BindAuthGrpcClient(conn)
 	})
 }

@@ -2,8 +2,6 @@ package seo_domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 const (
@@ -51,7 +49,7 @@ type SeoInternalLink struct {
 	// UpdatedAt là thời điểm cập nhật liên kết gần nhất.
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 	// DeletedAt hỗ trợ xóa mềm liên kết.
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+	DeletedAt time.Time `gorm:"column:deleted_at;index"`
 }
 
 func (SeoInternalLink) TableName() string {

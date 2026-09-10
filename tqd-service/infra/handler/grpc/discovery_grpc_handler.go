@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"common/injection"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -37,11 +36,12 @@ type DiscoveryGrpcHandler struct {
 func NewDiscoveryGrpcHandler(
 	service *application.Service,
 	discoveryMapper *mapper.DiscoveryMapper,
+	hubClient *clients.HubGrpcClient,
 ) *DiscoveryGrpcHandler {
 	return &DiscoveryGrpcHandler{
 		service:   service,
 		mapper:    discoveryMapper,
-		hubClient: injection.NewHubClient(),
+		hubClient: hubClient,
 	}
 }
 

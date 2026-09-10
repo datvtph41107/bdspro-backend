@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	paymentconsumer "crm/internal/integrations/paymentcompleted"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

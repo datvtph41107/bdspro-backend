@@ -17,6 +17,8 @@ rpc:
     address: "localhost:8207"
   chat:
     address: "localhost:8208"
+  hub:
+    address: "localhost:8280"
 
 server:
   port: 8006

@@ -9,7 +9,6 @@ import (
 	"common/rpcenv"
 	"pb/clients"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -22,7 +21,5 @@ func NewRPCClientAt(target string) (*clients.AuthGrpcClient, func(), error) {
 	return qhprorpc.NewBoundClient(qhprorpc.ClientConfig{
 		Target: target, BackoffMaxDelay: 5 * time.Second,
 		Credentials: insecure.NewCredentials(), Transport: rpcenv.LoadTransportConfig(),
-	}, func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
-		return clients.BindAuthGrpcClient(conn, nil)
-	})
+	}, clients.BindAuthGrpcClient)
 }

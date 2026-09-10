@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// @bind: tqd/internal/usecase/planningclient/application.ProjectionRepository
 type Repository struct {
 	db *gorm.DB
 }

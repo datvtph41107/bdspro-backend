@@ -1,9 +1,12 @@
 package configloader
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -49,6 +52,9 @@ func ResolveRuntimeSelection() (RuntimeSelection, error) {
 }
 
 // LoadRuntimeYML resolve environment đúng một lần rồi nạp YAML tương ứng.
+// Canonical defaults sống trong config/runtime.yml. Nếu developer có
+// config/local.yml thì file đó được merge đè lên (secrets/DSN local) mà không
+// cần export .env khi chạy air/make run-dev.
 func LoadRuntimeYML() (RuntimeSelection, error) {
 	selection, err := ResolveRuntimeSelection()
 	if err != nil {
@@ -57,7 +63,32 @@ func LoadRuntimeYML() (RuntimeSelection, error) {
 	if err := LoadYMLFile("runtime"); err != nil {
 		return RuntimeSelection{}, err
 	}
+	if err := mergeLocalYMLIfPresent(); err != nil {
+		return RuntimeSelection{}, err
+	}
 	return selection, nil
+}
+
+const localConfigPath = "config/local.yml"
+
+// mergeLocalYMLIfPresent overlays optional workstation overrides onto the
+// already-loaded runtime.yml. Missing local.yml is normal for CI/production.
+func mergeLocalYMLIfPresent() error {
+	// Operator-mounted config is already the single source of truth.
+	if strings.TrimSpace(os.Getenv("QHPRO_CONFIG_FILE")) != "" || strings.TrimSpace(os.Getenv("CONFIG_FILE")) != "" {
+		return nil
+	}
+	data, err := os.ReadFile(localConfigPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read config %s: %w", localConfigPath, err)
+	}
+	if err := viper.MergeConfig(bytes.NewReader(data)); err != nil {
+		return fmt.Errorf("merge config %s: %w", localConfigPath, err)
+	}
+	return nil
 }
 
 func normalizeEnvironment(value string) string {

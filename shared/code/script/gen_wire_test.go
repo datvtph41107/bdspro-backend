@@ -42,3 +42,40 @@ func TestIsScanExcludedMatchesSubtreeOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestIsSharedRPCClientConstructor(t *testing.T) {
+	for _, name := range []string{
+		"NewAuthRPCClient",
+		"NewUserRPCClient",
+		"NewTQDRPCClient",
+	} {
+		if !isSharedRPCClientConstructor(name) {
+			t.Fatalf("expected %q to be treated as shared RPC constructor", name)
+		}
+	}
+	for _, name := range []string{
+		"NewAuthClient",
+		"NewAdminUserProfileClient",
+		"NewHttpClient",
+		"NewPoiGrpcHandler",
+	} {
+		if isSharedRPCClientConstructor(name) {
+			t.Fatalf("did not expect %q to be skipped as shared RPC constructor", name)
+		}
+	}
+}
+
+func TestInjectionProvidesCleanup(t *testing.T) {
+	if !injectionProvidesCleanup([]InjectionPackage{{
+		Import:       "common/injection",
+		Constructors: []string{"RPCClientSet", "NewHttpClient"},
+	}}) {
+		t.Fatal("RPCClientSet should enable cleanup")
+	}
+	if injectionProvidesCleanup([]InjectionPackage{{
+		Import:       "common/injection",
+		Constructors: []string{"NewHttpClient"},
+	}}) {
+		t.Fatal("NewHttpClient alone should not enable cleanup")
+	}
+}

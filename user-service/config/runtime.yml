@@ -34,15 +34,11 @@ database:
   max_idle_conns: 10
   conn_max_lifetime: 5m
 
-
 logging:
   level:
     root: INFO
     org.springframework.web: DEBUG
     org.hibernate: ERROR
-
-
-    
 
 service:
   name: "user service"
@@ -54,28 +50,27 @@ redis:
   pass: ""
   db: 0
 
-
 oauth:
   google:
     client_id: 768102211675-0d4sd4dpormuo2n2gn1vgvs3h8ag5kr9.apps.googleusercontent.com
-    client_secret: ""
+    client_secret: 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
     redirect_uri: http://localhost:3001/ban-do/oauth-callback
-  
+
   facebook:
     client_id: 2029655954220379
-    client_secret: ""
-    redirect_uri: http://localhost:8000/user/oauth/facebook/callback
-  
+    client_secret: a00ffdf676394cb22b4af98bfe1dac3b
+    redirect_uri: http://localhost:3000/oauth-callback
+
   zalo:
     app_id: 2829833978864922978
-    secret_key: ""
-    redirect_uri: http://localhost:8000/user/oauth/zalo/callback
+    secret_key: sSOl1rT294QeKLkHIGMQ
+    redirect_uri: http://localhost:3000/oauth-callback
     permission_url: https://oauth.zaloapp.com/v4/permission?
 
 key:
-  jwt: ""
+  jwt: key-generate-jwt-token-authentication
 jwt:
-  key-generate: ""
+  key-generate: key-generate-jwt-token-authentication
   tokenPrefix: Bearer
   tokenExpirationAfterDays: 14
   accessExpAfterMinutes: 150 # access token hết hạn 100 giờ
@@ -85,7 +80,7 @@ jwt:
 
 sms:
   endpoint: "https://api.yoursales.vn/api/public/sms/send"
-  provider: "twilio"  # or other SMS providers
+  provider: "twilio" # or other SMS providers
   account_sid: "your_twilio_account_sid"
   auth_token: ""
   from_number: "+1234567890"
@@ -96,7 +91,7 @@ outbound_messaging:
 
 zns:
   template_id: 497058
-  otp_template_id: 497058  # Template ID riêng cho OTP
+  otp_template_id: 497058 # Template ID riêng cho OTP
   access_token: ""
   refresh_token: ""
 
@@ -133,4 +128,4 @@ admin:
 cskh:
   # Danh sách profile ID của đội chăm sóc khách hàng BDSPro
   # Những user này sẽ được thêm vào nhóm chat "Hỗ trợ khách hàng" khi user mới đăng ký
-  team_ids: []  # Ví dụ: [1, 2, 3] - cần cập nhật với ID thực tế của đội CSKH
+  team_ids: [] # Ví dụ: [1, 2, 3] - cần cập nhật với ID thực tế của đội CSKH

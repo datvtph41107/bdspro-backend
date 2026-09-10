@@ -75,6 +75,7 @@ server:
 	@$(call with_env,go run . -server=grpc)
 
 dev:
+	@mkdir -p .tmp/air
 	@$(call with_env,air -c .air.toml)
 
 pmtiles:

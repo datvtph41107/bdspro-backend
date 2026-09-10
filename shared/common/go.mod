@@ -13,15 +13,11 @@ require (
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.31.0
+	gorm.io/gorm v1.31.2
 )
 
 require (
-	github.com/creasty/defaults v1.8.0
-	github.com/fsnotify/fsnotify v1.9.0
-	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
-	github.com/paulmach/orb v0.13.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.51.0
 	golang.org/x/text v0.37.0
@@ -40,6 +36,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect

@@ -13,6 +13,8 @@ import (
 type TQDGrpcClient struct {
 	Client              tqdpb.LocationServiceClient
 	ParcelClient        tqdpb.ParcelServiceClient
+	LayerClient         tqdpb.LayerServiceClient
+	PlanningClient      tqdpb.QHPlanningServiceClient
 	SeoProjectionClient tqdpb.TqdSeoProjectionServiceClient
 }
 
@@ -20,6 +22,8 @@ func BindTQDClient(conn grpc.ClientConnInterface) *TQDGrpcClient {
 	return &TQDGrpcClient{
 		Client:              tqdpb.NewLocationServiceClient(conn),
 		ParcelClient:        tqdpb.NewParcelServiceClient(conn),
+		LayerClient:         tqdpb.NewLayerServiceClient(conn),
+		PlanningClient:      tqdpb.NewQHPlanningServiceClient(conn),
 		SeoProjectionClient: tqdpb.NewTqdSeoProjectionServiceClient(conn),
 	}
 }

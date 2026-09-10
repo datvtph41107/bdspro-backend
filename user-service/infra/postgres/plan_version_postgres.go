@@ -17,6 +17,8 @@ import (
 
 // PlanVersionRepo persists serving Product/PlanVersion state. It intentionally does
 // not implement transition/shadow contracts.
+// @bind: user/internal/usecase/plan/admin.Repository
+// @bind: user/internal/usecase/plan/publish.Repository
 type PlanVersionRepo struct {
 	transactionRepo *_db.TransactionRepo
 }

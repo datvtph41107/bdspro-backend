@@ -13,6 +13,7 @@ import (
 
 	"auth/internal/permissioncatalog"
 
+	_algorithm "common/algorithm"
 	_errors "common/errors"
 	"common/identity"
 	_utils "common/utils"

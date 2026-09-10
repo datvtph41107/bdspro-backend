@@ -39,7 +39,8 @@ service:
         search: 8008
 
 jwt:
-    key-generate: ""
+    # Local default; Compose/runtime có thể override bằng JWT_KEY_GENERATE.
+    key-generate: key-generate-jwt-token-authentication
 
 http:
     allowed_origins:

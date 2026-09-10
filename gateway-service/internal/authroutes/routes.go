@@ -123,6 +123,8 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Prefix("/v2/tqd/public/parcels"),
 	_httpauth.Prefix("/v2/tqd/public"),
 	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/client/planning-projects"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/poi/categories/icons"),
+	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/client/provinces"),
 }
 
 var providerCredentialRoutes = []_httpauth.Route{

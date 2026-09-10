@@ -9,6 +9,7 @@ import (
 	subscriptionusecase "user/internal/usecase/subscription"
 )
 
+// @bind: user/internal/usecase/subscription.AdminRepository
 type AdminProjectionStore struct{ db *gorm.DB }
 
 func NewAdminProjectionStore(db *gorm.DB) *AdminProjectionStore { return &AdminProjectionStore{db: db} }

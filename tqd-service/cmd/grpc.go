@@ -12,13 +12,10 @@ import (
 	_db "common/db"
 	_middleware "common/middleware"
 	process "common/process"
-	_redis "common/redis"
 	"common/rpcenv"
-	assistantpb "pb/types/assistant"
 	tqdpb "pb/types/tqd"
 	"tqd/config"
 	tqddb "tqd/infra/db"
-	infra_rpc "tqd/infra/rpc"
 	"tqd/initial"
 	"tqd/wire"
 
@@ -54,6 +51,8 @@ func RunGRPCServer() error { return runGRPCServer() }
 func runGRPCServer() error {
 	log.Println("Starting TQD gRPC Server...")
 
+	// Load config first so shared Wire providers (_db.NewDB, Redis, RPCClientSet)
+	// read the same Viper values. Wire owns construction of New* dependencies.
 	cfg, err := config.LoadRuntimeConfig()
 	if err != nil {
 		return fmt.Errorf("load TQD runtime config: %w", err)
@@ -65,74 +64,22 @@ func runGRPCServer() error {
 		cfg.Properties.Server.GrpcPort = GrpcPort
 	}
 
-	// Process root owns all long-lived resources. Wire composes only business
-	// adapters/usecases/handlers from these already-open resources.
-	database, err := _db.Open(_db.DatabaseConfig{DSN: cfg.DatabaseDSN})
-	if err != nil {
-		return fmt.Errorf("open TQD postgres: %w", err)
-	}
-	sqlDB, err := database.DB()
-	if err != nil {
-		return fmt.Errorf("access TQD postgres pool: %w", err)
-	}
-	defer sqlDB.Close()
-
-	schemaPolicy, err := _db.LoadSchemaPolicy("tqd")
-	if err != nil {
-		return fmt.Errorf("load TQD schema policy: %w", err)
-	}
-	log.Printf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := _db.ApplySchemaPolicy(database, schemaPolicy, tqddb.AutoMigrate); err != nil {
-		return fmt.Errorf("apply TQD schema policy: %w", err)
-	}
-
-	redisService, err := _redis.Open(_redis.Config{
-		Address: cfg.Redis.Address, Password: cfg.Redis.Password, DB: cfg.Redis.DB,
-	})
-	if err != nil {
-		return fmt.Errorf("open TQD redis: %w", err)
-	}
-	defer redisService.Close()
-	if redisService.Client == nil {
-		return errors.New("TQD redis client is unavailable")
-	}
-
-	userRPC, closeUser, err := infra_rpc.OpenUserRPCClient(cfg.RPC.User)
-	if err != nil {
-		return fmt.Errorf("open User gRPC client: %w", err)
-	}
-	defer closeUser()
-
-	authRPC, closeAuth, err := infra_rpc.OpenAuthRPCClient(cfg.RPC.Auth)
-	if err != nil {
-		return fmt.Errorf("open Auth gRPC client: %w", err)
-	}
-	defer closeAuth()
-
-	var assistantRPC assistantpb.AssistantServiceClient
-	closeAssistant := func() {}
-	if cfg.Classify.Enabled {
-		assistantRPC, closeAssistant, err = infra_rpc.OpenAssistantRPCClient(cfg.RPC.Assistant)
-		if err != nil {
-			return fmt.Errorf("open Assistant gRPC client: %w", err)
-		}
-	}
-	defer closeAssistant()
-
-	app, cleanup, err := wire.InitializeApp(
-		database,
-		redisService,
-		userRPC,
-		authRPC,
-		assistantRPC,
-		cfg,
-	)
+	app, cleanup, err := wire.InitializeApp()
 	if err != nil {
 		return fmt.Errorf("initialize TQD app: %w", err)
 	}
 	defer cleanup()
 	if app == nil {
 		return errors.New("TQD app is nil after InitializeApp")
+	}
+
+	schemaPolicy, err := _db.LoadSchemaPolicy("tqd")
+	if err != nil {
+		return fmt.Errorf("load TQD schema policy: %w", err)
+	}
+	log.Printf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	if err := _db.ApplySchemaPolicy(app.DB, schemaPolicy, tqddb.AutoMigrate); err != nil {
+		return fmt.Errorf("apply TQD schema policy: %w", err)
 	}
 
 	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Properties.Server.GrpcPort)
@@ -158,18 +105,20 @@ func runGRPCServer() error {
 	defer processCancel()
 
 	closeReportTarget := func() {}
-	if userRPC != nil && userRPC.AccessClient != nil {
+	if app.UserRPC != nil && app.UserRPC.AccessClient != nil && app.Redis != nil && app.Redis.Client != nil {
+		reportCfg := cfg.Report
+		if app.RuntimeConfig != nil {
+			reportCfg = app.RuntimeConfig.Report
+		}
 		if closeTarget, targetErr := startReportTarget(
 			processCtx,
-			database,
-			redisService.Client,
-			userRPC.AccessClient,
+			app.DB,
+			app.Redis.Client,
+			app.UserRPC.AccessClient,
 			app.WorkspaceMapGrpcHandler,
-			cfg.Report,
+			reportCfg,
 			nil,
 		); targetErr != nil {
-			// Generated Report is capability-local. Planning/GIS/discovery remain
-			// available while report creation fails closed.
 			log.Printf("[REPORT-TARGET] capability unavailable: %v", targetErr)
 		} else {
 			closeReportTarget = closeTarget
@@ -191,8 +140,6 @@ func runGRPCServer() error {
 		process.Config{GracefulStopTimeout: cfg.Shutdown},
 	)
 
-	// process.Run cancels and joins registered actors. Report owns additional
-	// runners and exposes its own join barrier before process resources close.
 	closeReportTarget()
 	log.Println("TQD gRPC server exited")
 	if lifecycleErr != nil {

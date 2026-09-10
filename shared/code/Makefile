@@ -12,7 +12,8 @@ AIR_EXE ?= air
 SERVICE := $(word 2, $(MAKECMDGOALS))
 ARGS    := $(wordlist 3, 99, $(MAKECMDGOALS))
 PRIMARY_GOAL := $(firstword $(MAKECMDGOALS))
-PORT = $(shell yq e ".service.port.$(SERVICE)" ../../gateway-service/config/local.yml)
+# Port map sống trong gateway runtime.yml; workstation secrets nằm ở config/local.yml.
+PORT = $(shell yq e ".service.port.$(SERVICE)" ../../gateway-service/config/runtime.yml)
 
 # Debug info
 debug-info:
@@ -21,8 +22,10 @@ debug-info:
 	@echo "AIR_EXE = $(AIR_EXE)"
 
 run-dev:
+	@test -n "$(PORT)" -a "$(PORT)" != "null" || (echo "Port not found for service '$(SERVICE)' in gateway-service/config/runtime.yml" >&2; exit 2)
 	@export PATH=$$PATH:$$HOME/go/bin && \
 	lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
+	@mkdir -p $(ROOT_DIR)/$(SERVICE)-service/.tmp/air
 	@export PATH=$$PATH:$$HOME/go/bin && \
 	cd $(ROOT_DIR)/$(SERVICE)-service && $(AIR_EXE) $(ARGS)
 

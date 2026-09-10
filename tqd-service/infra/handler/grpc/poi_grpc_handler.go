@@ -7,7 +7,6 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	"common/injection"
 	_utils "common/utils"
 	"pb/clients"
 	sharepb "pb/types/shared"
@@ -33,12 +32,13 @@ func NewPoiGrpcHandler(
 	usecase usecase.PoiUsecase,
 	mapper *mapper.PoiMapper,
 	syncProvider *_utils.SyncUtil,
+	hubClient *clients.HubGrpcClient,
 ) *PoiGrpcHandler {
 	return &PoiGrpcHandler{
 		usecase:      usecase,
 		mapper:       mapper,
 		SyncProvider: syncProvider,
-		hubClient:    injection.NewHubClient(),
+		hubClient:    hubClient,
 	}
 }
 

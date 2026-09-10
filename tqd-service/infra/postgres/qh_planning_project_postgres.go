@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 	qh_domain "tqd/internal/domain/qh"
@@ -307,11 +306,11 @@ func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSource(ctx context.Context,
 				COALESCE(NULLIF(p.slug, ''), NULLIF(p.name, ''), '') AS slug,
 				p.seo_id AS seo_id,
 				(
-					SELECT NULLIF(pp.province_id, '')::bigint
+					SELECT CAST(NULLIF(TRIM(CAST(pp.province_id AS text)), '') AS bigint)
 					FROM qh_planning_project_provinces pp
 					WHERE pp.planning_project_id = p.id
 					  AND pp.deleted_at IS NULL
-					  AND pp.province_id ~ '^[0-9]+$'
+					  AND TRIM(CAST(pp.province_id AS text)) ~ '^[0-9]+$'
 					ORDER BY pp.id ASC
 					LIMIT 1
 				) AS province_id
@@ -344,11 +343,11 @@ func (r *QHPlanningProjectRepo) GetPlanningProjectSeoSourcesByIDs(ctx context.Co
 				COALESCE(NULLIF(p.slug, ''), NULLIF(p.name, ''), '') AS slug,
 				p.seo_id AS seo_id,
 				(
-					SELECT NULLIF(pp.province_id, '')::bigint
+					SELECT CAST(NULLIF(TRIM(CAST(pp.province_id AS text)), '') AS bigint)
 					FROM qh_planning_project_provinces pp
 					WHERE pp.planning_project_id = p.id
 					  AND pp.deleted_at IS NULL
-					  AND pp.province_id ~ '^[0-9]+$'
+					  AND TRIM(CAST(pp.province_id AS text)) ~ '^[0-9]+$'
 					ORDER BY pp.id ASC
 					LIMIT 1
 				) AS province_id
@@ -383,10 +382,9 @@ func (r *QHPlanningProjectRepo) AssignProvinces(ctx context.Context, planningPro
 		if pid == 0 {
 			continue
 		}
-		// Cột province_id là VARCHAR — lưu text của bigint id.
 		rows = append(rows, map[string]any{
 			"planning_project_id": planningProjectID,
-			"province_id":         strconv.FormatUint(pid, 10),
+			"province_id":         pid,
 			"created_at":          now,
 			"updated_at":          now,
 			"deleted_at":          nil,
@@ -405,12 +403,12 @@ func (r *QHPlanningProjectRepo) UnassignProvinces(ctx context.Context, planningP
 	if planningProjectID == 0 || len(provinceIDs) == 0 {
 		return nil
 	}
-	ids := make([]string, 0, len(provinceIDs))
+	ids := make([]uint64, 0, len(provinceIDs))
 	for _, pid := range provinceIDs {
 		if pid == 0 {
 			continue
 		}
-		ids = append(ids, strconv.FormatUint(pid, 10))
+		ids = append(ids, pid)
 	}
 	if len(ids) == 0 {
 		return nil
@@ -433,7 +431,7 @@ func (r *QHPlanningProjectRepo) AssignWards(ctx context.Context, planningProject
 		}
 		rows = append(rows, map[string]any{
 			"planning_project_id": planningProjectID,
-			"ward_id":             strconv.FormatUint(wid, 10),
+			"ward_id":             wid,
 			"created_at":          now,
 			"updated_at":          now,
 			"deleted_at":          nil,
@@ -452,12 +450,12 @@ func (r *QHPlanningProjectRepo) UnassignWards(ctx context.Context, planningProje
 	if planningProjectID == 0 || len(wardIDs) == 0 {
 		return nil
 	}
-	ids := make([]string, 0, len(wardIDs))
+	ids := make([]uint64, 0, len(wardIDs))
 	for _, wid := range wardIDs {
 		if wid == 0 {
 			continue
 		}
-		ids = append(ids, strconv.FormatUint(wid, 10))
+		ids = append(ids, wid)
 	}
 	if len(ids) == 0 {
 		return nil

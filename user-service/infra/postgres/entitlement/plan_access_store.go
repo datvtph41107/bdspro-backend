@@ -15,6 +15,7 @@ import (
 /**
  * PlanAccessStore đọc feature access và usage allowance của một operation.
  */
+// @bind: user/internal/usecase/entitlement.PlanAccessStore
 type PlanAccessStore struct {
 	db *gorm.DB
 }

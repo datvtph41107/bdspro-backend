@@ -33,12 +33,7 @@ func NewUserRPCClient() (*clients.UserGrpcClient, func(), error) {
 }
 
 func NewAuthRPCClient() (*clients.AuthGrpcClient, func(), error) {
-	return bindDependency(
-		"rpc.auth.address",
-		func(conn grpc.ClientConnInterface) *clients.AuthGrpcClient {
-			return clients.BindAuthGrpcClient(conn, nil)
-		},
-	)
+	return bindDependency("rpc.auth.address", clients.BindAuthGrpcClient)
 }
 
 func NewNotificationRPCClient() (*clients.NotificationClient, func(), error) {

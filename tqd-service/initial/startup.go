@@ -1,13 +1,24 @@
 package initial
 
 import (
+	_redis "common/redis"
+	"pb/clients"
+	"tqd/config"
 	handler_grpc "tqd/infra/handler/grpc"
 	handler_http "tqd/infra/handler/http"
 	"tqd/infra/worker"
+
+	"gorm.io/gorm"
 )
 
 // InitialApp holds all application dependencies
 type InitialApp struct {
+	// Process resources (for cmd lifecycle extras such as report target)
+	DB            *gorm.DB
+	Redis         *_redis.RedisService
+	UserRPC       *clients.UserGrpcClient
+	RuntimeConfig *config.RuntimeConfig
+
 	// HTTP Handlers
 	ContactLabelHandler      *handler_http.ContactLabelHandler
 	DirectoryCategoryHandler *handler_http.DirectoryCategoryHandler
@@ -63,6 +74,10 @@ type InitialApp struct {
 
 // NewApp creates a new App instance
 func NewApp(
+	db *gorm.DB,
+	redisService *_redis.RedisService,
+	userRPC *clients.UserGrpcClient,
+	runtimeConfig *config.RuntimeConfig,
 	regionExtendGrpcHandler *handler_grpc.RegionExtendGrpcHandler,
 	contactLabelHandler *handler_http.ContactLabelHandler,
 	directoryCategoryHandler *handler_http.DirectoryCategoryHandler,
@@ -111,6 +126,10 @@ func NewApp(
 	qhPlanningClassifyWorker *worker.QHPlanningClassifyWorker,
 ) *InitialApp {
 	return &InitialApp{
+		DB:                             db,
+		Redis:                          redisService,
+		UserRPC:                        userRPC,
+		RuntimeConfig:                  runtimeConfig,
 		RegionExtendGrpcHandler:        regionExtendGrpcHandler,
 		ContactLabelHandler:            contactLabelHandler,
 		DirectoryCategoryHandler:       directoryCategoryHandler,

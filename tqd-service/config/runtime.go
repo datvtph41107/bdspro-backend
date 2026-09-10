@@ -134,7 +134,33 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 	if cfg.Report.GeneratorMode != "disabled" && cfg.Report.GeneratorMode != "none" && strings.TrimSpace(cfg.File.ServiceAuthKey) == "" {
 		return nil, fmt.Errorf("QHPRO_FILE_HTTP_SERVICE_AUTH_KEY is required when report generation is enabled")
 	}
+
+	// Sync process-resolved values into Viper so shared Wire providers
+	// (_db.NewDB, SyncProviderSet, injection.RPCClientSet) see the same truth.
+	viper.Set("database.dsn", cfg.DatabaseDSN)
+	viper.Set("redis.host", cfg.Redis.Address)
+	viper.Set("redis.pass", cfg.Redis.Password)
+	viper.Set("redis.db", cfg.Redis.DB)
+	viper.Set("rpc.user.address", cfg.RPC.User)
+	viper.Set("rpc.auth.address", cfg.RPC.Auth)
+	if strings.TrimSpace(cfg.RPC.Assistant) != "" {
+		viper.Set("rpc.assistant.address", cfg.RPC.Assistant)
+	}
+	viper.Set("file_service.base_url", cfg.File.BaseURL)
+	viper.Set("file_service.service_auth_key", cfg.File.ServiceAuthKey)
+	viper.Set("file_service.timeout_seconds", int(cfg.File.Timeout/time.Second))
+	viper.Set("qh_planning_classify.enabled", cfg.Classify.Enabled)
+	viper.Set("qh_planning_classify.interval_sec", int(cfg.Classify.Interval/time.Second))
+	viper.Set("qh_planning_classify.batch_size", cfg.Classify.BatchSize)
+	viper.Set("qh_planning_classify.read_content", cfg.Classify.ReadContent)
+	viper.Set("qh_planning_classify.max_inline_bytes", cfg.Classify.MaxInlineBytes)
+
 	return cfg, nil
+}
+
+// NewRuntimeConfig is the Wire constructor for process runtime config.
+func NewRuntimeConfig() (*RuntimeConfig, error) {
+	return LoadRuntimeConfig()
 }
 
 func parseRedisDBOverride(raw string, fallback int) (int, error) {

@@ -108,7 +108,7 @@ type Product struct {
 	// SalePricePerM2       *float64                `gorm:"type:DECIMAL(15,2)" json:"sale_price_per_m2,omitempty"`                                                     // Giá bán/m² (công khai)
 	// SaleCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"sale_commission,omitempty"`                                                       // Hoa hồng bán (nội bộ)
 	// SaleCommissionType   *string                 `gorm:"type:VARCHAR(10);check:sale_commission_type IN ('percent', 'fixed')" json:"sale_commission_type,omitempty"` // "percent" hoặc "fixed"
-	// RentPrice  *float64 `gorm:"type:DECIMAL(15,0)" json:"rent_price,omitempty"`      // Giá thuê/tháng (công khai)
+	// RentPrice  			*float64 				`gorm:"type:DECIMAL(15,0)" json:"rent_price,omitempty"`      // Giá thuê/tháng (công khai)
 	// RentCommission       *float64                `gorm:"type:DECIMAL(10,2)" json:"rent_commission,omitempty"`                                                       // Hoa hồng thuê (nội bộ)
 	// RentCommissionType   *string                 `gorm:"type:VARCHAR(10);check:rent_commission_type IN ('percent', 'fixed')" json:"rent_commission_type,omitempty"` // "percent" hoặc "fixed"
 	// GhiChuNoiBo    *string            `gorm:"type:TEXT" json:"ghi_chu_noi_bo,omitempty"`              // Ghi chú nội bộ (môi giới)

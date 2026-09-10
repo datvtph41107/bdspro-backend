@@ -16,6 +16,8 @@ import (
 /**
  * Store lưu usage events trong PostgreSQL.
  */
+// @bind: tqd/internal/usecase/usage.Store
+// @bind: tqd/internal/usecase/quota.DurableUsageReader
 type Store struct {
 	db *gorm.DB
 }

@@ -9,6 +9,7 @@ import (
 	quotausecase "tqd/internal/usecase/quota"
 )
 
+// @bind: tqd/internal/usecase/quota.AdminUsageRepository
 type AdminUsageStore struct{ db *gorm.DB }
 
 func NewAdminUsageStore(db *gorm.DB) *AdminUsageStore { return &AdminUsageStore{db: db} }

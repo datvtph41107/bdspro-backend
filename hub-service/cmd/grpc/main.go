@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"hub/config"
 	"hub/infra/db"
-	hubMiddleware "hub/infra/middleware"
 	"hub/wire"
 	"log"
 	"net"
@@ -40,12 +39,13 @@ var GrpcCmd = &cobra.Command{
 			return fmt.Errorf("initialize hub app: %w", err)
 		}
 		defer cleanup()
+
 		schemaPolicy, err := common_db.LoadSchemaPolicy("hub")
 		if err != nil {
 			return fmt.Errorf("load Hub schema policy: %w", err)
 		}
 		log.Printf("Hub database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-		if err := common_db.ApplySchemaPolicy(common_db.DB, schemaPolicy, db.AutoMigrate); err != nil {
+		if err := common_db.ApplySchemaPolicy(app.DB, schemaPolicy, db.AutoMigrate); err != nil {
 			return fmt.Errorf("apply Hub schema policy: %w", err)
 		}
 
@@ -60,9 +60,10 @@ var GrpcCmd = &cobra.Command{
 			return fmt.Errorf("listen hub gRPC on %s: %w", port, err)
 		}
 		defer func() { _ = lis.Close() }()
+
 		interceptors := grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
-			hubMiddleware.NewAPIKeyUnaryServerInterceptor(app.ApiKeyUsecase),
+			app.ApiKeyInterceptor,
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)
 

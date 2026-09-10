@@ -66,6 +66,7 @@ type Result struct {
 }
 
 /** Service validates and publishes plan versions. */
+// @bind: user/internal/usecase/plan/admin.Publisher
 type Service struct {
 	transaction Transaction
 	repository  Repository

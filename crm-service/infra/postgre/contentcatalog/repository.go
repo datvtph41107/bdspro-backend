@@ -14,9 +14,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// @bind: crm/internal/modules/contentcatalog/application.Repository
 type Repository struct{ db *gorm.DB }
 
-func NewRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
+func NewContentRepository(db *gorm.DB) *Repository { return &Repository{db: db} }
 
 // Client/public seo/news: chỉ trả trang có published = true.
 const planningNewsWhere = `
@@ -96,18 +97,18 @@ const planningNewsSelectBrief = `
 	sd.province_id AS province_id`
 
 type planningNewsRow struct {
-	ID                                                                                                                             uint64
-	SEOPageID                                                                                                                      uint64
+	ID                                                                                                                                       uint64
+	SEOPageID                                                                                                                                uint64
 	Slug, Title, Description, Summary, Content, RenderedHTML, CanonicalURL, PublicURL, DeepLink, ImageURL, RefSource, RefLabel, SourceStatus string
-	VisibleOn                                                                                                                      uint32
-	RefType                                                                                                                        uint32
-	RefID                                                                                                                          *uint64
-	PublishedAt, UpdatedAt                                                                                                         *time.Time
-	SavedAt                                                                                                                        *time.Time
-	CategoryID                                                                                                                     *uint64
-	CategoryCode, CategoryName                                                                                                     string
-	ProvinceID                                                                                                                     *uint64
-	MetadataJSON, RefSnapshotRaw                                                                                                   []byte
+	VisibleOn                                                                                                                                uint32
+	RefType                                                                                                                                  uint32
+	RefID                                                                                                                                    *uint64
+	PublishedAt, UpdatedAt                                                                                                                   *time.Time
+	SavedAt                                                                                                                                  *time.Time
+	CategoryID                                                                                                                               *uint64
+	CategoryCode, CategoryName                                                                                                               string
+	ProvinceID                                                                                                                               *uint64
+	MetadataJSON, RefSnapshotRaw                                                                                                             []byte
 }
 
 func decodeJSONObject(raw []byte) map[string]any {

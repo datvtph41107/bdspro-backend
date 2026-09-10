@@ -91,7 +91,7 @@ func Open(config Config) (*RedisService, error) {
 	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
 	defer cancel()
 	if _, err := rdb.Ping(pingCtx).Result(); err != nil {
-		svc.logger.Warnf("Redis unavailable at startup: %v", err)
+		svc.logger.Printf("Redis unavailable at startup: %v", err)
 		return svc, nil
 	}
 	svc.connected = true
@@ -117,7 +117,7 @@ func NewRedisService() *RedisService {
 	return &RedisService{
 		Client: redis.NewClient(&redis.Options{}),
 		Ctx:    context.Background(),
-		logger: flogging.MustGetLogger("redis"),
+		logger: log.New(os.Stdout, "redis: ", log.LstdFlags),
 	}
 }
 

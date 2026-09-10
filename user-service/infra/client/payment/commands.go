@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// @bind: user/internal/usecase/subscription/checkout.PaymentOrderPort
+// @bind: user/internal/usecase/subscription/checkout.PaymentAttemptPort
 type Commands struct {
 	client  paymentpb.InternalCommerceServiceClient
 	timeout time.Duration

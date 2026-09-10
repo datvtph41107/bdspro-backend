@@ -81,6 +81,9 @@ var HttpCmd = &cobra.Command{
 				)
 
 		r := gin.New() // custom logging, recovery with req_identity
+		// Human-readable access lines for local/dev consoles. Structured
+		// http.request.completed stays on slog at Debug (see HTTPRecorder).
+		r.Use(gin.LoggerWithWriter(logOutput))
 
 		// Tránh 301/307 redirect tự thêm/xóa "/" cuối path (httprouter/Gin mặc định bật).
 		r.RedirectTrailingSlash = false

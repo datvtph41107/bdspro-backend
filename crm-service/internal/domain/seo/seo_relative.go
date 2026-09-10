@@ -2,8 +2,6 @@ package seo_domain
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 const (
@@ -42,7 +40,7 @@ type SeoRelative struct {
 	// UpdatedAt là thời điểm cập nhật quan hệ gần nhất.
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 	// DeletedAt hỗ trợ xóa mềm quan hệ.
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+	DeletedAt time.Time `gorm:"column:deleted_at;index"`
 }
 
 func (SeoRelative) TableName() string {

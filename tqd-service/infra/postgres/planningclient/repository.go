@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"tqd/internal/enums"
-	planningdomain "tqd/internal/modules/planningclient/domain"
+	planningdomain "tqd/internal/domain/planningclient/model"
 	tqdutils "tqd/internal/utils"
 
 	"github.com/lib/pq"
@@ -18,6 +18,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// @bind: tqd/internal/usecase/planningclient/application.PlanningRepository
 type Repository struct {
 	db *gorm.DB
 }
@@ -172,7 +173,7 @@ func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *
 			  AND ppt.tag_id IN ?
 		)`, values)
 	}
-	if values := parseCSV(filter.ProvinceIDs); len(values) > 0 {
+	if values := parseUintCSV(filter.ProvinceIDs); len(values) > 0 {
 		db = db.Where(`EXISTS (
 			SELECT 1 FROM qh_planning_project_provinces ppp
 			WHERE ppp.planning_project_id = p.id
@@ -401,14 +402,14 @@ func (r *Repository) attachProjectProvincesOpt(ctx context.Context, items []plan
 		geometrySelect = "CASE WHEN pv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(pv.geometry, 6) END AS geometry"
 	}
 	rows := []projectProvinceRow{}
-	// province_v2.id là bigint; qh_planning_project_provinces.province_id vẫn VARCHAR(50)
-	// (lưu dạng text của id). Cast để tránh SQLSTATE 42883 bigint = character varying.
+	// province_v2.id là bigint; join-table province_id có thể là bigint hoặc varchar tùy DB.
+	// Cast cả hai về text để tránh SQLSTATE 42883 (text = bigint / bigint = varchar).
 	err := r.db.WithContext(ctx).
 		Table("qh_planning_project_provinces ppp").
-		Joins("JOIN province_v2 pv ON pv.id::text = ppp.province_id").
+		Joins("JOIN province_v2 pv ON CAST(pv.id AS text) = CAST(ppp.province_id AS text)").
 		Where("ppp.deleted_at IS NULL AND ppp.planning_project_id IN ?", projectIDs).
 		Select(fmt.Sprintf(`ppp.planning_project_id,
-			pv.id::text AS id,
+			CAST(pv.id AS text) AS id,
 			pv.full_name,
 			COALESCE(pv.short_name,'') AS short_name,
 			COALESCE(pv.code,'') AS code,
@@ -475,16 +476,17 @@ func (r *Repository) attachProjectWardsOpt(ctx context.Context, items []planning
 		geometrySelect = "CASE WHEN wv.geometry IS NULL THEN NULL ELSE ST_AsGeoJSON(wv.geometry, 6) END AS geometry"
 	}
 	rows := []projectWardRow{}
+	// ward_v2.id là bigint; join-table ward_id có thể là bigint hoặc varchar tùy DB.
 	err := r.db.WithContext(ctx).
 		Table("qh_planning_project_wards ppw").
-		Joins("JOIN ward_v2 wv ON wv.id::text = ppw.ward_id").
+		Joins("JOIN ward_v2 wv ON CAST(wv.id AS text) = CAST(ppw.ward_id AS text)").
 		Where("ppw.deleted_at IS NULL AND ppw.planning_project_id IN ?", projectIDs).
 		Select(fmt.Sprintf(`ppw.planning_project_id,
-			wv.id::text AS id,
+			CAST(wv.id AS text) AS id,
 			wv.full_name,
 			COALESCE(wv.short_name,'') AS short_name,
 			COALESCE(wv.code,'') AS code,
-			COALESCE(wv.province_id::text,'') AS province_id,
+			COALESCE(CAST(wv.province_id AS text),'') AS province_id,
 			COALESCE(wv.lat,0) AS lat,
 			COALESCE(wv.lng,0) AS lng,
 			%s`, geometrySelect)).

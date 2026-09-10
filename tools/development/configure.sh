@@ -309,6 +309,72 @@ install_missing_value hub-service/.env HUB_BDSPRO_GRPC_ADDRESS localhost:8202
 install_missing_value hub-service/.env HUB_NOTIFICATION_GRPC_ADDRESS localhost:8204
 install_env assistant-service/.env assistant_env
 
+# Optional YAML overlay for host-mode air/run-dev (no .env sourcing required).
+# Kept create-once like .env so developer DSN/JWT edits are preserved.
+install_local_yml() {
+  local path="$1"
+  shift
+  if [[ -f "$path" ]]; then
+    printf '[KEEP]   %s\n' "$path"
+    return
+  fi
+  mkdir -p "$(dirname "$path")"
+  local tmp
+  tmp="$(mktemp "${path}.tmp.XXXXXX")"
+  cat >"$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$path"
+  printf '[CREATE] %s\n' "$path"
+}
+
+install_local_yml user-service/config/local.yml <<'EOF'
+database:
+  dsn: "postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable"
+redis:
+  host: "localhost:6379"
+  pass: ""
+  db: 0
+jwt:
+  # Keep in sync with gateway-service/config/runtime.yml jwt.key-generate
+  key-generate: "key-generate-jwt-token-authentication"
+EOF
+
+install_local_yml hub-service/config/local.yml <<'EOF'
+database:
+  dsn: "postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable"
+redis:
+  host: "localhost:6379"
+  pass: ""
+  db: 3
+jwt:
+  key-generate: "key-generate-jwt-token-authentication"
+security:
+  api_key: "qhpro-development-local-hub-api-key"
+EOF
+
+install_local_yml tqd-service/config/local.yml <<'EOF'
+database:
+  dsn: "postgres://postgres:postgres@localhost:5432/tqd_service?sslmode=disable"
+redis:
+  host: "localhost:6379"
+  pass: ""
+  db: 1
+jwt:
+  key-generate: "key-generate-jwt-token-authentication"
+qh_planning_classify:
+  enabled: false
+EOF
+
+install_local_yml crm-service/config/local.yml <<'EOF'
+database:
+  dsn: "host=localhost user=postgres password=postgres dbname=db_crm port=5432 sslmode=disable"
+redis:
+  host: "localhost:6379"
+  pass: ""
+jwt:
+  key-generate: "key-generate-jwt-token-authentication"
+EOF
+
 echo
 echo 'Development configuration is ready.'
 echo 'Existing files were preserved; no credential was printed.'

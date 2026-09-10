@@ -369,11 +369,11 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSource(ctx context.Contex
 				COALESCE(d.thumbnail, '') AS thumbnail,
 				COALESCE(d.ext, '') AS ext,
 				(
-					SELECT NULLIF(pp.province_id, '')::bigint
+					SELECT CAST(NULLIF(TRIM(CAST(pp.province_id AS text)), '') AS bigint)
 					FROM qh_planning_project_provinces pp
 					WHERE pp.planning_project_id = d.planning_project_id
 					  AND pp.deleted_at IS NULL
-					  AND pp.province_id ~ '^[0-9]+$'
+					  AND TRIM(CAST(pp.province_id AS text)) ~ '^[0-9]+$'
 					ORDER BY pp.id ASC
 					LIMIT 1
 				) AS province_id
@@ -409,11 +409,11 @@ func (r *QHPlanningDocumentRepo) GetPlanningDocumentSeoSourcesByIDs(ctx context.
 				COALESCE(d.thumbnail, '') AS thumbnail,
 				COALESCE(d.ext, '') AS ext,
 				(
-					SELECT NULLIF(pp.province_id, '')::bigint
+					SELECT CAST(NULLIF(TRIM(CAST(pp.province_id AS text)), '') AS bigint)
 					FROM qh_planning_project_provinces pp
 					WHERE pp.planning_project_id = d.planning_project_id
 					  AND pp.deleted_at IS NULL
-					  AND pp.province_id ~ '^[0-9]+$'
+					  AND TRIM(CAST(pp.province_id AS text)) ~ '^[0-9]+$'
 					ORDER BY pp.id ASC
 					LIMIT 1
 				) AS province_id

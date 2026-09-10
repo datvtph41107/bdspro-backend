@@ -3,6 +3,7 @@ package checkout
 import (
 	"context"
 	"strings"
+	"time"
 )
 
 type Service struct {
@@ -20,7 +21,6 @@ func NewService(
 	commands CommandStore,
 	payment PaymentOrderPort,
 	attempts PaymentAttemptPort,
-	now Clock,
 ) *Service {
 	return &Service{
 		plans:         plans,
@@ -28,7 +28,7 @@ func NewService(
 		commands:      commands,
 		payment:       payment,
 		attempts:      attempts,
-		now:           now,
+		now:           time.Now,
 	}
 }
 

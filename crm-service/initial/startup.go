@@ -2,6 +2,7 @@ package initial
 
 import (
 	"crm/infra/handler"
+	handler_grpc "crm/infra/handler/grpc"
 	"crm/internal/usecase"
 
 	_middleware "common/middleware"
@@ -40,6 +41,8 @@ type InitialApp struct {
 
 	Logger           _middleware.StdLogger
 	SeoDomainHandler *handler.SeoDomainHandler
+
+	PublicContentGrpcHandler *handler_grpc.PublicContentGrpcHandler
 }
 
 func NewInitialApp(
@@ -71,6 +74,7 @@ func NewInitialApp(
 	supportTicketHandler *handler.SupportTicketHandler,
 	adminSalesHandler *handler.AdminSalesHandler,
 	seoDomainHandler *handler.SeoDomainHandler,
+	publicContentGrpcHandler *handler_grpc.PublicContentGrpcHandler,
 ) *InitialApp {
 	return &InitialApp{
 		RuleUsecase:              ruleUsecase,
@@ -100,6 +104,8 @@ func NewInitialApp(
 		AppointmentService:   appointmentService,
 		SupportTicketHandler: supportTicketHandler,
 		AdminSalesHandler:    adminSalesHandler,
+
+		PublicContentGrpcHandler: publicContentGrpcHandler,
 
 		SeoDomainHandler: seoDomainHandler,
 		Logger:           _middleware.NewStdLogger(viper.GetString("server.name")),

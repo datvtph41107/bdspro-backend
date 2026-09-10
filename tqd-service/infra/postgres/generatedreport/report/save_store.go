@@ -18,6 +18,7 @@ import (
 /**
  * ReportStore giữ durable state của generated report trong PostgreSQL.
  */
+// @bind: tqd/internal/usecase/generatedreport/admin.Repository
 type ReportStore struct {
 	db *gorm.DB
 }

@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	_db "common/db"
+
+	"gorm.io/gorm"
 )
 
 //go:embed migrations/v3/*.up.sql
@@ -638,7 +640,7 @@ func ensureProAIJobs() {
 	}
 }
 
-func AutoMigrate() {
+func AutoMigrate(gorm *gorm.DB) error {
 	// Chạy file SQL v3 chưa apply (tracked qua schema_migrations).
 	runPendingV3Migrations()
 
@@ -663,4 +665,5 @@ func AutoMigrate() {
 	// ensureDiscoveryParcelSearchIndexes()
 	// province_v2 / ward_v2 là bảng legacy — chỉ cập nhật schema qua ensure*() ở trên,
 	// không dùng GORM AutoMigrate (GORM cố DROP uni_*_code không tồn tại).
+	return nil
 }

@@ -1,18 +1,12 @@
 package cmd_grpc
 
 import (
-	_db "common/db"
 	_middleware "common/middleware"
 	process "common/process"
 	"context"
 	"crm/config"
 	"crm/infra/db"
-	handler_grpc "crm/infra/handler/grpc"
-	"crm/infra/postgre"
-	catalog_postgres "crm/infra/postgre/contentcatalog"
 	"crm/initial"
-	catalog_application "crm/internal/modules/contentcatalog/application"
-	"crm/internal/usecase"
 	"crm/wire"
 	"fmt"
 	"log"
@@ -41,7 +35,6 @@ func runGRPC() error {
 	if err := config.LoadConfig(); err != nil {
 		return fmt.Errorf("load CRM config: %w", err)
 	}
-	// _db.NewDB()
 
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 	os.Setenv("TZ", "Europe/London")
@@ -65,18 +58,6 @@ func runGRPC() error {
 	}
 	defer cleanup()
 	db.AutoMigrate()
-
-	// Public SEO/content remains CRM-owned but is exposed only over gRPC.
-	publicDB, publicDBErr := _db.NewDB()
-	if publicDBErr != nil {
-		return fmt.Errorf("initialize CRM public gRPC database: %w", publicDBErr)
-	}
-	seoDomainRepository := postgre.NewSeoDomainPostgres(publicDB)
-	seoPublicUsecase := usecase.NewSeoPublicUsecase(seoDomainRepository)
-	seoSitemapUsecase := usecase.NewSeoSitemapUsecase(seoDomainRepository)
-	catalogRepository := catalog_postgres.NewRepository(publicDB)
-	catalogService := catalog_application.NewService(catalogRepository)
-	publicContentGrpcHandler := handler_grpc.NewPublicContentGrpcHandler(seoPublicUsecase, seoSitemapUsecase, catalogService)
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 	lis, err := net.Listen("tcp", port)
@@ -117,7 +98,7 @@ func runGRPC() error {
 	crmpb.RegisterAdminSalesServiceServer(s, app.AdminSalesHandler)
 	crmpb.RegisterAppointmentServiceServer(s, app.AppointmentService)
 	crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
-	crmpb.RegisterCRMPublicContentServiceServer(s, publicContentGrpcHandler)
+	crmpb.RegisterCRMPublicContentServiceServer(s, app.PublicContentGrpcHandler)
 	// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
 
 	log.Printf("Listen: %v", port)
