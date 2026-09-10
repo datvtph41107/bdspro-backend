@@ -45,13 +45,9 @@ func LoadRuntime() (Runtime, error) {
 		grpcAddress = fmt.Sprintf(":%d", Properties.Server.TCPPort)
 	}
 
-	dsn := firstNonEmpty(
-		os.Getenv("USER_DATABASE_URL"),
-		os.Getenv("DATABASE_URL"),
-		Properties.Database.DSN,
-	)
-	if dsn == "" || strings.HasPrefix(dsn, "CHANGE_ME") {
-		return Runtime{}, errors.New("database URL is required")
+	database, err := databaseRuntimeFromLoadedProperties()
+	if err != nil {
+		return Runtime{}, err
 	}
 
 	redisAddress := firstNonEmpty(
@@ -70,17 +66,39 @@ func LoadRuntime() (Runtime, error) {
 
 	return Runtime{
 		GRPCAddress: grpcAddress,
-		Database: DatabaseRuntime{
-			DSN:             dsn,
-			MaxOpenConns:    Properties.Database.MaxOpenConns,
-			MaxIdleConns:    Properties.Database.MaxIdleConns,
-			ConnMaxLifetime: Properties.Database.ConnMaxLifetime,
-		},
+		Database:    database,
 		Redis: RedisRuntime{
 			Address:  redisAddress,
 			Password: firstNonEmpty(os.Getenv("USER_REDIS_PASSWORD"), os.Getenv("REDIS_PASSWORD"), Properties.Redis.Password),
 			DB:       Properties.Redis.DB,
 		},
+	}, nil
+}
+
+// LoadDatabaseRuntime loads only the dependency needed by an explicit
+// database command. It deliberately does not require Redis, JWT or a listening
+// address because bootstrap/migration processes do not own those resources.
+func LoadDatabaseRuntime() (DatabaseRuntime, error) {
+	if err := LoadProperties(); err != nil {
+		return DatabaseRuntime{}, err
+	}
+	return databaseRuntimeFromLoadedProperties()
+}
+
+func databaseRuntimeFromLoadedProperties() (DatabaseRuntime, error) {
+	dsn := firstNonEmpty(
+		os.Getenv("USER_DATABASE_URL"),
+		os.Getenv("DATABASE_URL"),
+		Properties.Database.DSN,
+	)
+	if dsn == "" || strings.HasPrefix(dsn, "CHANGE_ME") {
+		return DatabaseRuntime{}, errors.New("database URL is required")
+	}
+	return DatabaseRuntime{
+		DSN:             dsn,
+		MaxOpenConns:    Properties.Database.MaxOpenConns,
+		MaxIdleConns:    Properties.Database.MaxIdleConns,
+		ConnMaxLifetime: Properties.Database.ConnMaxLifetime,
 	}, nil
 }
 

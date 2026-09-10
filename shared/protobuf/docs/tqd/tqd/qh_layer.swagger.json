@@ -1,0 +1,1373 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/qh_layer.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LayerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/tqd/client/layers": {
+      "get": {
+        "summary": "ListClientLayers - Danh sách layers public (chỉ active và có hiệu lực)",
+        "operationId": "LayerService_ListClientLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListLayersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "description": "Lọc theo type",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "description": "Tìm kiếm",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "docId",
+            "description": "docId: lọc layer liên quan tài liệu quy hoạch (layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/client/layers/{id}": {
+      "get": {
+        "summary": "GetClientLayer - Chi tiết layer public",
+        "operationId": "LayerService_GetClientLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/client/layers/{layerId}/build-tile": {
+      "post": {
+        "summary": "BuildPMTiles - Build file PMTiles từ dữ liệu của layer (server streaming)",
+        "operationId": "LayerService_BuildPMTiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/tqdpbBuildPMTilesProgress"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of tqdpbBuildPMTilesProgress"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "layerId",
+            "description": "ID của layer",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "minZoom": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "Zoom tối thiểu (mặc định 0)"
+                },
+                "maxZoom": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "Zoom tối đa (mặc định 14, tối đa 18)"
+                },
+                "outputDir": {
+                  "type": "string",
+                  "title": "Thư mục output (mặc định ./files/tiles)"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/layers/{id}/seo-source": {
+      "get": {
+        "operationId": "LayerService_GetLayerSeoSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerSeoSourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/layers/{layerId}/seo-id": {
+      "put": {
+        "operationId": "LayerService_UpdateLayerSeoID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers": {
+      "get": {
+        "summary": "ListLayers - Danh sách layers (có filter, phân trang)",
+        "operationId": "LayerService_ListLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListLayersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "description": "Lọc theo status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "type",
+            "description": "Lọc theo type",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "visible",
+            "description": "Lọc theo visible (0/1)",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "description": "Tìm kiếm theo name/displayName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "orderBy",
+            "description": "displayOrder, createdAt, name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "orderDir",
+            "description": "asc, desc",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      },
+      "post": {
+        "summary": "CreateLayer - Tạo layer mới",
+        "operationId": "LayerService_CreateLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbCreateLayerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers/gen-seo": {
+      "post": {
+        "operationId": "LayerService_AdminGenLayerSeo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenLayerSeoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenLayerSeoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers/{id}": {
+      "get": {
+        "summary": "GetLayer - Lấy chi tiết layer",
+        "operationId": "LayerService_GetLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteLayer - Xóa mềm layer",
+        "operationId": "LayerService_DeleteLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      },
+      "put": {
+        "summary": "UpdateLayer - Cập nhật layer",
+        "operationId": "LayerService_UpdateLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "status": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "visible": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "minZoom": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "maxZoom": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "layerUrl": {
+                  "type": "string"
+                },
+                "avatar": {
+                  "type": "string"
+                },
+                "imageUrl": {
+                  "type": "string"
+                },
+                "thumbnailUrl": {
+                  "type": "string"
+                },
+                "styleConfig": {
+                  "type": "string"
+                },
+                "legalDoc": {
+                  "type": "string"
+                },
+                "legalDocUrl": {
+                  "type": "string"
+                },
+                "documentNumber": {
+                  "type": "string"
+                },
+                "issuingAuthority": {
+                  "type": "string"
+                },
+                "effectiveDate": {
+                  "type": "string"
+                },
+                "expiryDate": {
+                  "type": "string"
+                },
+                "updateMask": {
+                  "type": "string"
+                },
+                "sourceType": {
+                  "type": "string"
+                },
+                "sourceCode": {
+                  "type": "string"
+                },
+                "legalStatus": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "trustValue": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "familyId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Gán đổi nhóm; gửi 0 để gỡ gán (NULL)"
+                },
+                "publishScopes": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                },
+                "replacedByLayerId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "int64"
+                },
+                "provinceId": {
+                  "type": "string"
+                },
+                "wardId": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers/{id}/delete": {
+      "delete": {
+        "summary": "HardDeleteLayer - Xóa thật layer và toàn bộ dữ liệu liên quan (regions, labels)",
+        "operationId": "LayerService_HardDeleteLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbEmpty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers/{id}/status": {
+      "patch": {
+        "summary": "UpdateLayerStatus - Cập nhật trạng thái layer",
+        "operationId": "LayerService_UpdateLayerStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "1=draft, 10=active, 20=expired, 30=archived"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/admin/layers/{id}/toggle-basic-visibility": {
+      "post": {
+        "summary": "ToggleLayerBasicVisibility - Ẩn/hiện layer cơ bản: đảo dấu displayOrder (âm ↔ dương)",
+        "operationId": "LayerService_ToggleLayerBasicVisibility",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LayerService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbEmpty": {
+      "type": "object"
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenLayerSeoItem": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canonicalUrl": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAdminGenLayerSeoRequest": {
+      "type": "object",
+      "properties": {
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenLayerSeoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminGenLayerSeoItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbBuildPMTilesProgress": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "\"processing\", \"done\", \"error\""
+        },
+        "message": {
+          "type": "string"
+        },
+        "currentZoom": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tilesWritten": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalTiles": {
+          "type": "string",
+          "format": "int64"
+        },
+        "outputPath": {
+          "type": "string",
+          "title": "Đường dẫn file output khi hoàn thành"
+        }
+      }
+    },
+    "tqdpbCreateLayerRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Tên kỹ thuật (unique)"
+        },
+        "displayName": {
+          "type": "string",
+          "title": "Tên hiển thị"
+        },
+        "description": {
+          "type": "string",
+          "title": "Mô tả"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Loại layer: 1=landUse, 2=infrastructure, 3=planning"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "1=draft, 10=active, 20=expired, 30=archived"
+        },
+        "visible": {
+          "type": "integer",
+          "format": "int32",
+          "title": "0=ẩn, 1=hiển thị"
+        },
+        "displayOrder": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Thứ tự hiển thị (số càng nhỏ càng ở dưới)"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Zoom tối thiểu (0-22)"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64",
+          "title": "Zoom tối đa (0-22)"
+        },
+        "layerUrl": {
+          "type": "string",
+          "title": "URL dữ liệu (PMTiles/GeoJSON/WMS)"
+        },
+        "avatar": {
+          "type": "string",
+          "title": "URL ảnh đại diện"
+        },
+        "imageUrl": {
+          "type": "string",
+          "title": "URL ảnh preview"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "title": "URL ảnh thumbnail"
+        },
+        "styleConfig": {
+          "type": "string",
+          "title": "Cấu hình style (JSON string)"
+        },
+        "legalDoc": {
+          "type": "string",
+          "title": "Văn bản pháp lý"
+        },
+        "legalDocUrl": {
+          "type": "string",
+          "title": "URL văn bản pháp lý"
+        },
+        "documentNumber": {
+          "type": "string",
+          "title": "Số hiệu văn bản"
+        },
+        "issuingAuthority": {
+          "type": "string",
+          "title": "Cơ quan ban hành"
+        },
+        "effectiveDate": {
+          "type": "string",
+          "title": "Ngày hiệu lực (YYYY-MM-DD)"
+        },
+        "expiryDate": {
+          "type": "string",
+          "title": "Ngày hết hiệu lực (YYYY-MM-DD)"
+        },
+        "sourceType": {
+          "type": "string",
+          "title": "raster, vector, pmtiles"
+        },
+        "sourceCode": {
+          "type": "string",
+          "title": "Mã nguồn (tự sinh)"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "trustValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "replaceLayerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          },
+          "title": "Các layer cũ sẽ được đánh dấu legalStatus=replaced và lưu id layer mới (replacedByLayerId) để truy vết"
+        },
+        "familyId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "FK → qh_layer_families (nhóm layer)"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        },
+        "publishScopes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": "phạm vi áp dụng"
+        },
+        "provinceId": {
+          "type": "string",
+          "title": "FK → province_v2.id"
+        },
+        "wardId": {
+          "type": "string",
+          "title": "FK → ward_v2.id"
+        }
+      }
+    },
+    "tqdpbLayerAttachedDoc": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "filepath": {
+          "type": "string"
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        },
+        "relativePath": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "documentType": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerPlanningProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visible": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "displayOrder": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "layerUrl": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "styleConfig": {
+          "type": "string",
+          "title": "JSON string"
+        },
+        "legalDoc": {
+          "type": "string"
+        },
+        "legalDocUrl": {
+          "type": "string"
+        },
+        "documentNumber": {
+          "type": "string"
+        },
+        "issuingAuthority": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string",
+          "title": "YYYY-MM-DD"
+        },
+        "expiryDate": {
+          "type": "string",
+          "title": "YYYY-MM-DD"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "RFC3339"
+        },
+        "updatedAt": {
+          "type": "string",
+          "title": "RFC3339"
+        },
+        "sourceType": {
+          "type": "string"
+        },
+        "sourceCode": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "trustValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "replacedByLayerId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Chỉ có giá trị khi layer này đã bị thay thế bởi layer khác (truy vết)"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "familyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "family": {
+          "$ref": "#/definitions/tqdpbQHLayerFamilyResponse",
+          "title": "Họ lớp (qh_layer_families); chỉ có khi load chi tiết kèm preload Family"
+        },
+        "publishScopes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "defaultVisible": {
+          "type": "boolean"
+        },
+        "subscriberCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerAttachedDoc"
+          }
+        },
+        "provinceId": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "planningProject": {
+          "$ref": "#/definitions/tqdpbLayerPlanningProject"
+        }
+      }
+    },
+    "tqdpbLayerSeoSourceResponse": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbListLayersResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbQHLayerFamilyResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "sortNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "familyUrl": {
+          "type": "string"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "layerUrl": {
+          "type": "string"
+        },
+        "styleConfig": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "string"
+        },
+        "sourceCode": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

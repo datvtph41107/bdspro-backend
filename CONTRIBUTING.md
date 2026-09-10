@@ -1,88 +1,135 @@
-# Contributing to QHPRO Backend
+# Contributing to BDSPro Backend
 
-## Một workflow cho toàn đội
+## 1. Decision loop trước khi code
 
-Mọi developer dùng cùng public commands:
+Mọi change bắt đầu bằng 6 câu:
+
+1. **Owner nào?** Service/business, engineering, contract hay root workspace?
+2. **Capability nào?** Đặt change gần business vocabulary thay vì global helper.
+3. **Execution flow nào đổi?** Handler → business → store/client → state/effect.
+4. **State/contract/config có đổi không?** Nếu có, owner phải mang migration/contract/config proof tương ứng.
+5. **Proof nhỏ nhất đủ trả lời là gì?** Service test trước, integration chỉ khi boundary cần.
+6. **Change có tăng global complexity/coupling không?** Nếu có, phải chứng minh giá trị vận hành.
+
+## 2. Ownership rules
+
+```text
+business/application truth     → <owner>-service/
+generic runtime mechanics      → shared/common hoặc shared/base
+communication contract         → shared/protobuf
+repository engineering         → shared/code
+whole-workspace public UX      → root
+cross-owner runtime proof      → integration-test
+```
+
+Admission test cho `shared/code`: nếu thay toàn business BDSPro bằng một Go microservice product khác mà logic vẫn có nghĩa (generate/build/verify/deploy/toolchain), nó có thể thuộc engineering. Payment settlement, TQD quota, entitlement... thì không.
+
+## 3. Daily development
 
 ```bash
-make configure
-make doctor
-make dev-up
-make dev-status
-make dev-smoke
+make setup
+make deps service=<owner>-service
+make dev service=<owner>-service
 ```
 
-IDE tasks phải gọi các command này, không sao chép một workflow riêng vào IDE.
+`make up` chạy toàn bộ application native; `make dev` chuyển riêng owner đang sửa
+sang Air trong terminal. Không thêm Docker build vào edit loop chỉ để “đồng bộ
+production”. Nếu cần proof image/package, dùng `make integration-up` hoặc
+`make rebuild` tường minh.
 
-## Trước khi sửa code
+Service Makefile là local application API và dùng shared contract tại `shared/code/development/service.mk`/`migration.mk`.
 
-Trả lời các câu hỏi phù hợp:
+## 4. Service design
 
-1. User outcome là gì?
-2. Service nào sở hữu business state?
-3. Invariant nào phải luôn đúng?
-4. Actor và subject là ai?
-5. Durable identity/idempotency key là gì?
-6. Transaction kết thúc ở đâu?
-7. Response loss, retry, duplicate và concurrency sẽ ra sao?
-8. Client/server cũ có còn tương thích không?
-9. Log, metric và test nào chứng minh kết quả?
-
-Không bắt đầu bằng việc chọn folder hoặc tạo abstraction.
-
-## Dependency direction
+Một service phải đọc được như một application độc lập:
 
 ```text
-handler -> usecase -> domain
-adapter -> consumer-owned interface
-composition root -> concrete dependencies
+entrypoint/composition
+→ config
+→ transport handler
+→ business/usecase
+→ store/client
+→ database/outbox/job/effect
 ```
 
-Không cho phép:
+Ưu tiên business/capability locality. Không tạo abstraction, process, container hoặc service mới chỉ vì “có thể cần sau này”.
 
-- domain import transport, SQL, Redis hoặc broker;
-- service đọc database của service khác;
-- Gateway quyết định business policy;
-- Shared sở hữu commercial, payment, quota hoặc report policy;
-- constructor tự đọc environment hoặc mở hidden connection;
-- detached goroutine, deep `log.Fatal` hoặc `os.Exit`.
+Một process role mới không tự động là service mới. Nếu API/worker/cron/outbox actor vẫn cùng business owner và cùng lifecycle correctness, giữ trong service; chỉ tách khi có lý do ownership/deployment/scaling/failure isolation rõ.
 
-## Contract và migration
-
-- Sửa source `.proto`, sau đó chạy `make generate-backend`.
-- Không sửa generated file.
-- Thay đổi contract theo hướng additive.
-- Không tái sử dụng protobuf field number.
-- Mỗi schema chỉ có một migration authority.
-- Migration dữ liệu đang dùng theo expand, backfill, switch, constrain, retire.
-- Serving process không chạy schema mutation mặc định.
-
-## Proof ladder
+## 5. Config
 
 ```text
-format/compiler
--> package unit test
--> service integration test
--> runtime flow smoke
--> backend verification
--> acceptance checkpoint
+safe structural defaults → config/runtime.yml hoặc code
+runtime/deploy topology   → ENV
+secrets                   → ENV/secret store
+business data/rules       → domain/DB
 ```
 
-Thay đổi money, quota, queue/worker hoặc shared state phải xem xét concurrency,
-idempotency và restart recovery.
+Application components nhận typed config; business code không tự tìm ENV rải rác.
 
-## Definition of Done
+## 6. Database changes
 
-- owner và invariant rõ ràng;
-- code nằm đúng responsibility;
-- contract compatible;
-- database constraint/transaction phù hợp;
-- retry và duplicate an toàn;
-- context/deadline được truyền;
-- resource được đóng;
-- log không lộ secret;
-- test và smoke liên quan pass;
-- tài liệu/runbook được cập nhật khi behavior vận hành thay đổi;
-- `git diff --check` pass.
+Mỗi database owner có một canonical migration history. Không sửa schema production bằng startup side effect/ORM auto-update.
 
-Không `git add`, commit hoặc push thay cho người sở hữu worktree.
+```bash
+make migrate service=payment-service
+make verify-migrations
+```
+
+Migration Compose containers chỉ là one-shot executor của cùng authority.
+
+## 7. Contracts
+
+Cross-service communication phải đi qua contract owner. Khi đổi protobuf:
+
+```bash
+make generate
+make test service=<producer-or-consumer>-service
+make verify
+```
+
+Generated code không phải source of truth; schema mới là truth.
+
+## 8. Proof ladder
+
+```text
+service/unit test → local code/business proof
+verify            → source/repository/tooling proof
+smoke             → public runtime boundary alive
+E2E               → cross-service business flow
+accept            → final local candidate proof
+```
+
+Luôn chạy proof nhỏ nhất trước. `make accept` không thay thế fast feedback hằng ngày.
+
+## 9. Review standard
+
+Review không chỉ nhìn syntax. Reviewer phải kiểm:
+
+- đúng owner/capability;
+- dependency direction có rõ;
+- business có leak vào `shared`/engineering không;
+- config/migration/contract có đi cùng change;
+- test chứng minh behavior thực, không assertion giả;
+- change có giảm hoặc ít nhất không làm xấu code health;
+- docs/public commands còn đúng.
+
+## 10. Definition of Done
+
+Tối thiểu cho service-local change:
+
+```bash
+make test service=<owner>-service
+```
+
+Cross-service/shared/config/migration change:
+
+```bash
+make verify
+```
+
+Release candidate/local acceptance:
+
+```bash
+make accept
+```

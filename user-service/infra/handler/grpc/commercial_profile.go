@@ -8,6 +8,7 @@ import (
 	"common/identity"
 	userpb "pb/types/user"
 	"user/internal/usecase/commercialprofile"
+	cancelapp "user/internal/usecase/subscription/cancel"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,11 +16,46 @@ import (
 
 type CommercialProfileHandler struct {
 	userpb.UnimplementedCommercialProfileServiceServer
-	service *commercialprofile.Service
+	service      *commercialprofile.Service
+	cancellation *cancelapp.Service
 }
 
-func NewCommercialProfileHandler(service *commercialprofile.Service) *CommercialProfileHandler {
-	return &CommercialProfileHandler{service: service}
+func NewCommercialProfileHandler(service *commercialprofile.Service, cancellation *cancelapp.Service) *CommercialProfileHandler {
+	return &CommercialProfileHandler{service: service, cancellation: cancellation}
+}
+
+func (h *CommercialProfileHandler) CancelMySubscription(ctx context.Context, req *userpb.CancelMySubscriptionRequest) (*userpb.CancelMySubscriptionResponse, error) {
+	if h == nil || h.cancellation == nil {
+		return nil, status.Error(codes.Unavailable, "subscription cancellation is unavailable")
+	}
+	actor, ok := identity.ActorFromContext(ctx)
+	if !ok || actor.ProfileID == 0 || !strings.EqualFold(actor.TokenType, "ACCESS") {
+		return nil, status.Error(codes.Unauthenticated, "authenticated profile is required")
+	}
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "cancellation request is required")
+	}
+	result, err := h.cancellation.Cancel(ctx, actor.ProfileID, req.GetProductCode(), req.GetReason())
+	if err != nil {
+		switch {
+		case errors.Is(err, cancelapp.ErrInvalid):
+			return nil, status.Error(codes.InvalidArgument, "product code and cancellation reason are required")
+		case errors.Is(err, cancelapp.ErrNotFound):
+			return nil, status.Error(codes.FailedPrecondition, "active paid subscription was not found")
+		case errors.Is(err, cancelapp.ErrAmbiguous):
+			return nil, status.Error(codes.FailedPrecondition, "multiple active paid subscriptions require operator review")
+		case errors.Is(err, context.Canceled):
+			return nil, status.Error(codes.Canceled, "subscription cancellation canceled")
+		case errors.Is(err, context.DeadlineExceeded):
+			return nil, status.Error(codes.DeadlineExceeded, "subscription cancellation timed out")
+		default:
+			return nil, status.Error(codes.Internal, "subscription cancellation failed")
+		}
+	}
+	return &userpb.CancelMySubscriptionResponse{
+		Subscription: subscriptionProjectionToProto(result.Subscription),
+		Changed:      result.Changed,
+	}, nil
 }
 
 func (h *CommercialProfileHandler) ListAvailablePlans(ctx context.Context, req *userpb.ListAvailablePlansRequest) (*userpb.ListAvailablePlansResponse, error) {

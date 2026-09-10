@@ -1,0 +1,31 @@
+server:
+  port: 8007
+
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_membership
+  user: membership
+  password: d6a2f9b8e3c7d0a5f1b6
+  dsn: host=103.172.239.89 user=membership password=d6a2f9b8e3c7d0a5f1b6 dbname=db_membership port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: 103.172.239.89:6379
+  pass: protected_redis_secure_password
+
+payment:
+  secretKey: key-to-generate-signature-for-call-hook
+  url: localhost:8005
+  path: payment/payos/create

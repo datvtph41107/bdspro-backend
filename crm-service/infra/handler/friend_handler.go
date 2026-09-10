@@ -4,10 +4,9 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	"errors"
-	"fmt"
 	crmpb "pb/types/crm"
-	organizationpb "pb/types/organization"
 	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 	"strings"
 
 	"crm/data"
@@ -79,22 +78,18 @@ func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListR
 		for _, user := range userPbs {
 			userIds = append(userIds, user.Id)
 		}
-		checkUsers, err := s.organizationClient.CheckUsersInOrganization(ctx, uint32(*req.OrganizationId), userIds)
+		checkUsers, err := s.userClient.CheckOrganizationMembers(ctx, *req.OrganizationId, userIds)
 		if err != nil {
 			return nil, err
 		}
-		userMap := make(map[uint32]*organizationpb.CheckUserInOrganization)
+		userMap := make(map[uint64]*userpb.OrganizationMemberCheck)
 		for _, user := range checkUsers {
-			userMap[uint32(user.UserId)] = user
+			userMap[user.ProfileId] = user
 		}
 		for _, user := range userPbs {
-			if u, ok := userMap[uint32(user.Id)]; ok && u != nil {
-				fmt.Println("check", u)
-				fmt.Println("user", user)
-				user.IsMember = u.IsExist
+			if u, ok := userMap[user.Id]; ok && u != nil {
+				user.IsMember = u.IsMember
 				user.JoinedAt = u.JoinedAt
-			} else {
-				fmt.Printf("❌ user %d not in userMap\n", user.Id)
 			}
 		}
 	}
@@ -139,16 +134,6 @@ func (s *FriendService) FriendListWithMember(ctx context.Context, req *sharepb.F
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
 	s.userClient.PbUserToReceiverFriends(ctx, pbs)
-	// deprecated:
-	// if req.DealId != nil {
-	// 	s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
-	// }
-	// if req.OrganizationId != nil {
-	// 	s.organizationClient.GetOrganizationMemberByIds(ctx, *req.OrganizationId, pbs)
-	// }
-	// if req.GroupId != nil {
-	// 	s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, pbs)
-	// }
 
 	return &crmpb.FriendListResponse{
 		Data:  pbs,

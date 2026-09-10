@@ -1,175 +1,58 @@
-# 🚀 Deployment Scripts
+# BDSPro Repository Engineering Application
 
-Scripts để deploy microservices lên production server.
+`shared/code` là owner của **engineering workflow**, không phải global business layer.
 
-## 📖 Quick Reference
+## Owns
 
-### 🔨 Development Scripts
+- pinned Go/Buf/protoc/Wire/migrate/Air/grpcurl toolchain;
+- local `.env` generation và config guards;
+- shared service Make contracts;
+- protobuf/Wire/Swagger/source generation mechanics;
+- repository verification/build helpers;
+- native application-process supervision and local backing-infrastructure mechanics;
+- explicit Compose image/package integration mechanics;
+- deployment/release scripts that are still part of repository operations;
+- legacy/manual engineering utilities kept outside the root.
 
-```bash
-# Generate tất cả protobuf files (buf/protoc)
-./buf-all.sh
+## Does not own
 
-# Generate protobuf cho specific modules
-./buf-all.sh --modules="auth,user,bdspro"
+- Payment/TQD/User/Organization business rules;
+- service database schema ownership;
+- service runtime config semantics;
+- protobuf contract semantics;
+- cross-service authorization/business policy.
 
-# Generate protobuf với clean trước
-./buf-all.sh --clean
+## Public vs internal API
 
-# Wire dependency injection cho tất cả services
-./wire-all.sh
-
-# Wire chỉ một số services
-./wire-all.sh --services="auth,user,gateway"
-
-# Go mod tidy tất cả services
-./tidy-all.sh
-
-# Go mod tidy chỉ một số services
-./tidy-all.sh --services="auth,user,gateway"
-
-# Go mod tidy bỏ qua shared modules
-./tidy-all.sh --skip-shared
-```
-
-### 🚀 Deployment Scripts
+Normal developer starts at repository root:
 
 ```bash
-# Pre-deployment validation (recommended)
-./pre-deploy-check.sh
-
-# Deploy tất cả services (sequential - an toàn)
-# Note: Tự động chạy pre-deploy-check trước khi deploy
-./deploy-all.sh
-
-# Deploy tất cả services (parallel - nhanh)
-./deploy-all.sh --parallel
-
-# Deploy chỉ core services
-./deploy-core.sh
-
-# Deploy chỉ business services
-./deploy-business.sh --parallel
-
-# Deploy services cụ thể
-./deploy-all.sh --services="auth,user,gateway"
-
-# Deploy một service đơn lẻ
-./release.sh <service-name>
-
-# Check status các services trên server
-./check-services.sh
-
-# Restart services
-./restart-service.sh <service-name> [service-name2 ...]
-
-# Stop tất cả services
-./stop-all.sh
+make setup
+make deps service=payment-service
+make dev service=payment-service
+make test service=payment-service
+make verify
 ```
 
-## 📚 Documentation
+Root `Makefile` is intentionally a tiny front door and includes `shared/code/development/root.mk`. Service Makefiles reuse `shared/code/development/service.mk` and `migration.mk`.
 
-Xem file [DEPLOYMENT.md](./DEPLOYMENT.md) để biết thêm chi tiết về:
-- Deployment flow
-- Troubleshooting
-- Best practices
-- Rollback procedures
+Repository maintainers may work here directly for generation/release compatibility targets, but there must be only **one implementation** behind root/service wrappers.
 
-## 🔄 Development Workflow
+## Layout
 
-Quy trình phát triển chuẩn khi thay đổi proto hoặc code:
-
-```bash
-# 1. Chỉnh sửa proto files trong shared/protobuf/schema/
-# 2. Generate protobuf
-./buf-all.sh --clean
-
-# 3. Implement code trong services (handler, usecase, repo...)
-# 4. Generate wire dependency injection
-./wire-all.sh
-
-# 5. Tidy dependencies
-./tidy-all.sh
-
-# 6. Test local...
-# 7. Deploy to production
-./deploy-all.sh
+```text
+shared/code/
+├── development/    root/service Make implementation, toolchain, config, verification
+├── script/         generation helpers
+├── gen/            engineering generators
+├── monitor/        development process utility
+├── legacy/         retired compatibility utilities
+├── manual/         manually-invoked diagnostic utilities
+├── Makefile        generation/engineering targets
+├── deploy.sh
+└── release.sh
 ```
 
-**Quick workflow cho một service:**
-```bash
-# Generate proto cho module cụ thể
-./buf-all.sh --modules="bdspro" --clean
+## Admission rule
 
-# Generate wire cho service cụ thể  
-./wire-all.sh --services="bdspro"
-
-# Tidy cho service cụ thể
-./tidy-all.sh --services="bdspro,gateway"
-
-# Deploy service cụ thể
-./release.sh bdspro
-```
-
-## 🎯 Available Services
-
-### Core Services
-- `auth` - Authentication
-- `user` - User profile  
-- `user-grpc` - User gRPC
-- `gateway` - API Gateway
-
-### Business Services
-- `bdspro` - Real estate
-- `crm` - CRM
-- `notification` - Notifications
-- `social` - Social features
-- `chat`, `chathttp` - Messaging
-- `file` - File storage
-- `map` - Maps
-- `tqd` - TQD (Directory/POI service)
-- `payment` - Payments
-- `membership` - Memberships
-- `relay` - WebSocket relay
-- `appointment` - Appointments
-- `org` - Organizations
-- `transaction` - Transactions
-- `marketing` - Marketing campaigns
-- `feedback` - Feedback & reports
-
-## 📁 Available Scripts
-
-### Development Scripts
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `buf-all.sh` | Generate protobuf cho tất cả modules | `./buf-all.sh [--options]` |
-| `wire-all.sh` | Wire DI cho tất cả services | `./wire-all.sh [--options]` |
-| `tidy-all.sh` | Go mod tidy tất cả services | `./tidy-all.sh [--options]` |
-
-### Deployment Scripts
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `pre-deploy-check.sh` | Validate trước khi deploy | `./pre-deploy-check.sh [service]` |
-| `deploy-all.sh` | Deploy tất cả services | `./deploy-all.sh [--options]` |
-| `deploy-core.sh` | Deploy core services | `./deploy-core.sh` |
-| `deploy-business.sh` | Deploy business services | `./deploy-business.sh [--parallel]` |
-| `release.sh` | Deploy một service | `./release.sh <service-name>` |
-| `check-services.sh` | Check status trên server | `./check-services.sh` |
-| `restart-service.sh` | Restart services | `./restart-service.sh <services...>` |
-| `stop-all.sh` | Stop tất cả services | `./stop-all.sh [--remove]` |
-
-## 🔧 Server Info
-
-- **Host**: 103.172.239.89
-- **User**: root
-- **Path**: /root/golang-microservice
-- **ENV**: production (ENV_RUNTIME=release)
-
-## 📝 Notes
-
-- Sequential deployment: ~30-45 phút
-- Parallel deployment: ~15-20 phút
-- Logs được lưu trong `logs/` directory
-- Core services phải deploy trước business services
-- `deploy-all.sh` tự động chạy `pre-deploy-check.sh`
-
+Nếu thay BDSPro bằng một Go microservice product khác mà logic vẫn có ý nghĩa (build/generate/dev/verify/release), nó có thể thuộc engineering. Nếu logic nói về order, quota, entitlement, settlement, organization permission... nó phải ở business owner.

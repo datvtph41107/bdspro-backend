@@ -102,13 +102,20 @@ BEGIN
      WHERE permission.deleted_at IS NULL
        AND permission.key IN (
            'CATALOG_PLAN_VIEW',
+           'CATALOG_PLAN_MANAGE',
            'CATALOG_PLAN_PUBLISH',
            'COMMERCIAL_SUBSCRIPTION_VIEW',
            'COMMERCIAL_USAGE_VIEW',
            'COMMERCIAL_USAGE_RECONCILE',
            'PAYMENT_ORDER_VIEW',
            'PAYMENT_FULFILLMENT_VIEW',
-           'PAYMENT_FULFILLMENT_REDRIVE'
+           'PAYMENT_FULFILLMENT_REDRIVE',
+           'USER_ADMIN_VIEW',
+           'USER_ADMIN_MANAGE',
+           'IAM_ROLE_VIEW',
+           'IAM_ROLE_MANAGE',
+           'ORGANIZATION_VIEW',
+           'ORGANIZATION_MANAGE'
        )
     ON CONFLICT (role_id, permission_id) DO NOTHING;
 

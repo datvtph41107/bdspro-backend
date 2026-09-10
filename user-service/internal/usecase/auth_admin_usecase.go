@@ -24,23 +24,20 @@ import (
 // - Tất cả logic liên quan đến authentication và authorization của admin
 
 type AuthAdminUsecase struct {
-	AuthMethodRepo     repo.AuthMethodRepository
-	AdminRepo          repo.IAdminRepo
-	ProfileProvider    providers.ProfileProvider
-	OrganizationClient providers.OrganizationProvider
+	AuthMethodRepo  repo.AuthMethodRepository
+	AdminRepo       repo.IAdminRepo
+	ProfileProvider providers.ProfileProvider
 }
 
 func NewAdminUsecase(
 	authMethodRepo repo.AuthMethodRepository,
 	adminRepo repo.IAdminRepo,
 	profileProvider providers.ProfileProvider,
-	organizationClient providers.OrganizationProvider,
 ) *AuthAdminUsecase {
 	return &AuthAdminUsecase{
-		AuthMethodRepo:     authMethodRepo,
-		AdminRepo:          adminRepo,
-		ProfileProvider:    profileProvider,
-		OrganizationClient: organizationClient,
+		AuthMethodRepo:  authMethodRepo,
+		AdminRepo:       adminRepo,
+		ProfileProvider: profileProvider,
 	}
 }
 
@@ -276,56 +273,6 @@ func (u *AuthAdminUsecase) DeleteAllAuthMethodsByUserId(ctx context.Context, use
 	}
 
 	fmt.Printf("Deleted all auth methods for userId: %d\n", userId)
-	return nil
-}
-
-// AssignRole gán quyền cho admin
-func (u *AuthAdminUsecase) AssignRole(ctx context.Context, req dto.AssignRoleRequest) error {
-	// Kiểm tra quyền admin
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
-	}
-
-	// Tìm admin cần gán quyền
-	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
-	if err != nil || authMethod == nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
-	}
-
-	// Kiểm tra provider phải là ADMIN
-	if authMethod.Provider != "ADMIN" {
-		return _errors.ReturnError(int32(400), "Tài khoản không phải admin")
-	}
-
-	// Lấy danh sách role admin từ organization service
-	adminRoles, err := u.OrganizationClient.GetAdminRoles(ctx)
-	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi lấy danh sách role")
-	}
-
-	// Kiểm tra role key có hợp lệ không
-	validRole := false
-	for _, role := range adminRoles {
-		if role.Key == req.RoleKey {
-			validRole = true
-			break
-		}
-	}
-
-	if !validRole {
-		return _errors.ReturnError(int32(400), "Role key không hợp lệ")
-	}
-
-	// Cập nhật role trong profile
-	profile, err := u.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
-	if err == nil && profile != nil {
-		// Có thể cần thêm logic để map role key với RoleType
-		// Hiện tại chỉ set mặc định là ERoleAdmin
-		profile.RoleType = enums.ERoleAdmin
-		u.ProfileProvider.UpdateProfile(ctx, profile)
-	}
-
 	return nil
 }
 

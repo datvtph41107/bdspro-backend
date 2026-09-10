@@ -1,0 +1,36 @@
+server:
+  port: 8308
+
+# database:
+#   dsn: host=103.172.239.89 user=chat password=chat123 dbname=db_chat port=5432 sslmode=disable
+
+database:
+  type: "POSTGRES"
+  host: 103.172.239.89
+  port: 5432
+  name: db_chat
+  user: chat
+  password: a3d9c6e5b0f4a7d2c8e3
+  dns: "host=103.172.239.89 user=chat password=a3d9c6e5b0f4a7d2c8e3 dbname=db_chat port=5432 sslmode=disable"
+
+timeout:
+  transaction: 30s
+  idle: 120s
+  read: 30s
+  write: 60s
+
+redis:
+  host: "103.172.239.89:6379"
+  password: protected_redis_secure_password
+
+swagger:
+  path: "./proto/docs/chat/chat.swagger.json"
+
+worker:
+  number: 10
+
+max_participant: 10
+environment:
+  - FABRIC_LOGGING_SPEC=debug
+
+  

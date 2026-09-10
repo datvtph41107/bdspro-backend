@@ -1,0 +1,914 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/planning_client.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PlanningClientService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/tqd/client/nearby-areas": {
+      "get": {
+        "summary": "Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).",
+        "operationId": "PlanningClientService_ListNearbyAreas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "admId",
+            "description": "admId: composite ID của đơn vị hành chính cần tìm địa bàn lân cận",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-documents/by-adm": {
+      "get": {
+        "summary": "Danh sách tài liệu đồ án quy hoạch theo đơn vị hành chính (cross-project).",
+        "operationId": "PlanningClientService_ListPlanningDocumentsByAdm",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "admId",
+            "description": "admId: composite ID của đơn vị hành chính, lọc tài liệu thuộc đồ án trong khu vực",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-documents/relation-layer/{parcelId}": {
+      "get": {
+        "summary": "Danh sách tài liệu QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation.",
+        "operationId": "PlanningClientService_ListLayerPlanDocRelations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "docType",
+            "description": "docType: CSV document_type, lọc OR (vd. \"30,50\"). Không truyền = bỏ lọc.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-documents/view/{documentId}": {
+      "get": {
+        "operationId": "PlanningClientService_GetPlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects": {
+      "get": {
+        "operationId": "PlanningClientService_ListPlanningProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningLevel",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "validityStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "processStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "jurisdictionId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "legalStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "hasLayer",
+            "description": "has_layer: 1 = có layer, 0 = không có layer. Không truyền = bỏ lọc.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "updatedFrom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "updatedTo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "tagIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "admId",
+            "description": "admId: administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "description": "parcelId: lọc đồ án liên quan thửa (parcel → regions → layers → layer_plan_doc_relation → documents).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerIds",
+            "description": "layerIds: CSV layer id, lọc OR qua layer_plan_doc_relation (vd. \"1,2,3\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "layerId",
+            "description": "layerId: lọc theo 1 layer; gộp vào layerIds. Đồ án qua tài liệu (layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "keyword",
+            "description": "keyword: alias của search (query ?keyword=...)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/followed": {
+      "get": {
+        "operationId": "PlanningClientService_ListFollowedPlanningProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/relation-parcel": {
+      "get": {
+        "summary": "Danh sách đồ án QH liên quan thửa: parcel → regions → layers → layer_plan_doc_relation → documents.",
+        "operationId": "PlanningClientService_ListParcelPlanningRelations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}": {
+      "get": {
+        "operationId": "PlanningClientService_GetPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/documents": {
+      "get": {
+        "operationId": "PlanningClientService_ListPlanningDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningProjectId",
+            "description": "Alias cho admin list: ?planningProjectId=5 (gateway bind JSON name planningProjectId).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerId",
+            "description": "Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "description": "parcelId: lọc tài liệu liên quan thửa (parcel → regions → layers → layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerIds",
+            "description": "layerIds: CSV layer id, lọc OR (vd. \"1,2,3\"). Gộp với layerId nếu có.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/events": {
+      "get": {
+        "operationId": "PlanningClientService_ListPlanningEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/follow": {
+      "delete": {
+        "operationId": "PlanningClientService_UnfollowPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      },
+      "post": {
+        "operationId": "PlanningClientService_FollowPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/follow-status": {
+      "get": {
+        "operationId": "PlanningClientService_GetPlanningProjectFollowStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/layers": {
+      "get": {
+        "operationId": "PlanningClientService_ListPlanningProjectLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{value}/projection": {
+      "get": {
+        "operationId": "PlanningClientService_GetPlanningProjectProjection",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "value",
+            "description": "The string value.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    },
+    "/v2/tqd/client/provinces": {
+      "get": {
+        "operationId": "PlanningClientService_ListProvinces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "PlanningClientService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

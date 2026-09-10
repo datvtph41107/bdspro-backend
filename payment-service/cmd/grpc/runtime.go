@@ -143,7 +143,25 @@ func run(parent context.Context) error {
 	)
 	now := time.Now
 	orderService := order.NewService(store, reference.New(), now, cfg.Commerce.OrderTTL)
-	provider := sepay.New("sepay")
+	checkoutURL := cfg.Provider.Sepay.CheckoutURL
+	if strings.TrimSpace(checkoutURL) == "" {
+		if strings.EqualFold(cfg.Provider.Sepay.Environment, "production") {
+			checkoutURL = "https://pay.sepay.vn/v1/checkout/init"
+		} else {
+			checkoutURL = "https://pay-sandbox.sepay.vn/v1/checkout/init"
+		}
+	}
+	provider := sepay.New("sepay", sepay.CheckoutConfig{
+		MerchantID: cfg.Provider.Sepay.MerchantID, SecretKey: cfg.Provider.Sepay.SecretKey,
+		CheckoutURL: checkoutURL, BridgeURL: cfg.Provider.Sepay.BridgeURL,
+		SuccessURL: cfg.Provider.Sepay.SuccessURL,
+		ErrorURL:   cfg.Provider.Sepay.ErrorURL, CancelURL: cfg.Provider.Sepay.CancelURL,
+		BankTransferDisabled: !cfg.Provider.Sepay.BankTransferEnabled,
+		CardDisabled:         !cfg.Provider.Sepay.CardEnabled,
+		BankTransferFlow:     cfg.Provider.Sepay.BankTransferFlow,
+		BankBIN:              cfg.Provider.Sepay.BankBIN,
+		BankAccountNumber:    cfg.Provider.Sepay.BankAccountNumber,
+	})
 	attemptService := attempt.NewService(store, store, []attempt.Provider{provider}, now)
 	settlementService := settlement.NewService(store, store, now)
 	userClient, closeUser, err := newUserClient(cfg.User.Address, cfg.User.Timeout)
@@ -166,10 +184,10 @@ func run(parent context.Context) error {
 		now,
 	)
 
-	paymentHandler := wallethandler.NewPaymentHandler(paymentUsecase, paymentDashboardJob, settlementService, cfg.Provider.SepayAPIKey)
-	commerceHandler := commercegrpc.NewCommerceHandler(orderService, attemptService)
+	paymentHandler := wallethandler.NewPaymentHandler(paymentUsecase, paymentDashboardJob, settlementService, cfg.Provider.SepayAPIKey, cfg.Provider.Sepay.IPNSecret)
+	commerceHandler := commercegrpc.NewCommerceHandler(orderService, attemptService, cfg.Provider.Sepay.Environment)
 	commercialProfileHandler := commercialprofilegrpc.New(commercialprofileusecase.NewService(store))
-	adminCommerceHandler := commercegrpc.NewAdminCommerceHandler(adminusecase.NewService(store), authClient)
+	adminCommerceHandler := commercegrpc.NewAdminCommerceHandler(adminusecase.NewService(store, settlementService, now), authClient)
 
 	grpcServer, listener, err := buildServer(
 		cfg.Server.Address,

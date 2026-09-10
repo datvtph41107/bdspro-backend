@@ -1,0 +1,26 @@
+server:
+  port: 8101
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_map
+  user: map
+  password: e3b9a6c5f0d4e7b2a8c3
+  dsn: host=103.172.239.89 user=map password=e3b9a6c5f0d4e7b2a8c3 dbname=db_map port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization

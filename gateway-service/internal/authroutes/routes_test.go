@@ -51,7 +51,9 @@ func TestAuthenticationRoutes_EncodePrivilegeScopeExplicitly(t *testing.T) {
 	assert.Contains(t, routes.TemporaryToken, _httpauth.Exact("/v2/auth/fullname"))
 	assert.Contains(t, routes.Public, _httpauth.ExactMethod("GET", "/v2/feedback/report-reason"))
 	assert.Contains(t, routes.ProviderCredential, _httpauth.ExactMethod("POST", "/v2/payment/sepay/webhook"))
+	assert.Contains(t, routes.ProviderCredential, _httpauth.ExactMethod("POST", "/v2/payment/sepay/ipn"))
 	assert.NotContains(t, routes.Public, _httpauth.Exact("/v2/payment/sepay/webhook"))
+	assert.NotContains(t, routes.Public, _httpauth.Exact("/v2/payment/sepay/ipn"))
 	assert.Contains(t, routes.Public, _httpauth.PrefixMethod("GET", "/v2/hub/user-guides"))
 	assert.NotContains(t, routes.Public, _httpauth.Exact("/v2/hub/user-guides"))
 
@@ -113,5 +115,15 @@ func TestCommercialCatalogIsPublicButProfileAndCheckoutStayAuthenticated(t *test
 		assert.False(t, _httpauth.MatchRequest(route, "POST", "/v2/user/commercial/plans"))
 		assert.False(t, _httpauth.MatchRequest(route, "GET", "/v2/user/commercial/profile"))
 		assert.False(t, _httpauth.MatchRequest(route, "POST", "/v2/user/checkout"))
+	}
+}
+
+func TestProvinceCatalogIsPublicReadOnly(t *testing.T) {
+	routes := AuthenticationRoutes()
+	assert.Contains(t, routes.Public, _httpauth.ExactMethod("GET", "/v2/tqd/client/provinces"))
+
+	for _, route := range routes.Public {
+		assert.False(t, _httpauth.MatchRequest(route, "POST", "/v2/tqd/client/provinces"))
+		assert.False(t, _httpauth.MatchRequest(route, "GET", "/v2/tqd/client/provinces/anything"))
 	}
 }

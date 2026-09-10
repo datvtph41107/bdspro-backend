@@ -1,0 +1,3628 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/qh_planning.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "QHPlanningService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/tqd/admin/ai-jobs": {
+      "get": {
+        "summary": "Pro AI Jobs — tiến trình AI (type Đồ án gắn planning_project_id).",
+        "operationId": "QHPlanningService_ListProAIJobs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListProAIJobsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "jobType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "processStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/ai-jobs/{id}": {
+      "get": {
+        "operationId": "QHPlanningService_GetProAIJob",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbProAIJob"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/layer-docs/assign": {
+      "post": {
+        "summary": "AssignPlanningDocumentsToLayer gán tài liệu vào layer (cartesian layerIds × docIds trên layer_plan_doc_relation).",
+        "operationId": "QHPlanningService_AssignPlanningDocumentsToLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAssignPlanningDocumentsToLayerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/layer-docs/unassign": {
+      "post": {
+        "summary": "UnassignPlanningDocumentsFromLayer gỡ tài liệu khỏi layer: xóa cứng bản ghi layer_plan_doc_relation.",
+        "operationId": "QHPlanningService_UnassignPlanningDocumentsFromLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAssignPlanningDocumentsToLayerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningDocumentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningProjectId",
+            "description": "Alias cho admin list: ?planningProjectId=5 (gateway bind JSON name planningProjectId).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerId",
+            "description": "Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "description": "parcelId: lọc tài liệu liên quan thửa (parcel → regions → layers → layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerIds",
+            "description": "layerIds: CSV layer id, lọc OR (vd. \"1,2,3\"). Gộp với layerId nếu có.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "post": {
+        "summary": "QHPlanningDocument APIs",
+        "operationId": "QHPlanningService_CreatePlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/gen-seo": {
+      "post": {
+        "operationId": "QHPlanningService_AdminGenPlanningDocumentSeo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenPlanningDocumentSeoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenPlanningDocumentSeoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/{id}": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "delete": {
+        "operationId": "QHPlanningService_DeletePlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "put": {
+        "summary": "UpdatePlanningDocument cập nhật toàn bộ thông tin tài liệu (loại, số liệu, ngày, cơ quan, ngành, lĩnh vực, người ký, ...).",
+        "operationId": "QHPlanningService_UpdatePlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "planningProjectId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "documentType": {
+                  "type": "string",
+                  "description": "Loại tài liệu (ví dụ: Bản đồ, Pháp lý, Thuyết minh)."
+                },
+                "code": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "filepath": {
+                  "type": "string"
+                },
+                "versionNo": {
+                  "type": "string"
+                },
+                "validityStatus": {
+                  "type": "string",
+                  "description": "Tình trạng hiệu lực (còn hiệu lực / hết hiệu lực / ...)."
+                },
+                "issueDate": {
+                  "type": "string",
+                  "description": "Ngày ban hành."
+                },
+                "issuedDate": {
+                  "type": "string",
+                  "description": "Alias JSON issuedDate (cùng nghĩa issueDate)."
+                },
+                "effectiveDate": {
+                  "type": "string",
+                  "description": "Ngày hiệu lực."
+                },
+                "metadata": {
+                  "type": "string",
+                  "title": "JSON string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                },
+                "thumbnail": {
+                  "type": "string"
+                },
+                "relativePath": {
+                  "type": "string"
+                },
+                "processStatus": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "processStatusName": {
+                  "type": "string"
+                },
+                "classifyError": {
+                  "type": "string"
+                },
+                "ext": {
+                  "type": "string"
+                },
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "indicators": {
+                  "type": "string",
+                  "description": "Số liệu / chỉ tiêu của tài liệu, JSON array."
+                },
+                "authority": {
+                  "type": "string",
+                  "description": "Cơ quan ban hành."
+                },
+                "sector": {
+                  "type": "string",
+                  "description": "Ngành (phân loại chuyên môn của tài liệu)."
+                },
+                "field": {
+                  "type": "string",
+                  "description": "Lĩnh vực (phân loại nội dung của tài liệu)."
+                },
+                "signer": {
+                  "type": "string",
+                  "description": "Người ký."
+                },
+                "status": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "10=Thường, 20=Quan trọng."
+                },
+                "statusName": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/{id}/approve": {
+      "post": {
+        "summary": "ApprovePlanningDocument phê duyệt 1 tài liệu đã được AI phân loại (chỉ khi đang Classified).",
+        "operationId": "QHPlanningService_ApprovePlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/{id}/retry": {
+      "post": {
+        "summary": "RetryPlanningDocument đưa 1 tài liệu Failed về Pending để job classify chạy lại.",
+        "operationId": "QHPlanningService_RetryPlanningDocument",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocument"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/{planningDocumentId}/histories": {
+      "post": {
+        "summary": "Planning document legal histories.",
+        "operationId": "QHPlanningService_CreatePlanningDocumentHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocumentHistory"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningDocumentId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "eventType": {
+                  "type": "string"
+                },
+                "eventName": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "eventDate": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-documents/{planningDocumentId}/histories/{id}": {
+      "delete": {
+        "operationId": "QHPlanningService_DeletePlanningDocumentHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningDocumentId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-events": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningEventsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "post": {
+        "summary": "QHPlanningEvent APIs — lịch sử pháp lý / timeline đồ án.",
+        "operationId": "QHPlanningService_CreatePlanningEvent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningEvent"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-events/{id}": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningEvent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "delete": {
+        "operationId": "QHPlanningService_DeletePlanningEvent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "put": {
+        "operationId": "QHPlanningService_UpdatePlanningEvent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "planningProjectId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "eventName": {
+                  "type": "string"
+                },
+                "eventDate": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "docs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/tqdpbPlanningDocument"
+                  }
+                },
+                "docIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  }
+                },
+                "verNo": {
+                  "type": "string"
+                },
+                "legalStatus": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "legalStatusName": {
+                  "type": "string"
+                },
+                "eventType": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningProjectsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningLevel",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "validityStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "processStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "jurisdictionId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "legalStatus",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "hasLayer",
+            "description": "has_layer: 1 = có layer, 0 = không có layer. Không truyền = bỏ lọc.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "updatedFrom",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "updatedTo",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "tagIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceIds",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "admId",
+            "description": "admId: administrative unit composite ID ({sourceId}{1=tỉnh|2=phường})",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "description": "parcelId: lọc đồ án liên quan thửa (parcel → regions → layers → layer_plan_doc_relation → documents).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerIds",
+            "description": "layerIds: CSV layer id, lọc OR qua layer_plan_doc_relation (vd. \"1,2,3\").",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "layerId",
+            "description": "layerId: lọc theo 1 layer; gộp vào layerIds. Đồ án qua tài liệu (layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "keyword",
+            "description": "keyword: alias của search (query ?keyword=...)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "post": {
+        "summary": "QHPlanningProject APIs",
+        "operationId": "QHPlanningService_CreatePlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/from-folder": {
+      "post": {
+        "summary": "CreatePlanningProjectFromFolder tạo đồ án + toàn bộ tài liệu từ 1 folder admin chọn.\nMỗi file trong folder trở thành 1 PlanningDocument (trạng thái Pending, chờ job AI phân loại).",
+        "operationId": "QHPlanningService_CreatePlanningProjectFromFolder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbCreatePlanningProjectFromFolderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbCreatePlanningProjectFromFolderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/gen-seo": {
+      "post": {
+        "operationId": "QHPlanningService_AdminGenPlanningProjectSeo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenPlanningProjectSeoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenPlanningProjectSeoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{id}": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "delete": {
+        "operationId": "QHPlanningService_DeletePlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "put": {
+        "operationId": "QHPlanningService_UpdatePlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "planningType": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "planningTypeName": {
+                  "type": "string"
+                },
+                "planningLevel": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "planningLevelName": {
+                  "type": "string"
+                },
+                "authority": {
+                  "type": "string"
+                },
+                "jurisdictionId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "jurisdiction": {
+                  "$ref": "#/definitions/tqdpbJurisdiction"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "approvalDate": {
+                  "type": "string"
+                },
+                "effectiveDate": {
+                  "type": "string"
+                },
+                "expiryDate": {
+                  "type": "string"
+                },
+                "validityStatus": {
+                  "type": "string"
+                },
+                "currentVersion": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "string",
+                  "title": "JSON string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                },
+                "legalStatus": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "legalStatusName": {
+                  "type": "string"
+                },
+                "layers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/tqdpbLayerResponse"
+                  }
+                },
+                "sourceFolderName": {
+                  "type": "string"
+                },
+                "sourceFolderPath": {
+                  "type": "string"
+                },
+                "processStatus": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "processStatusName": {
+                  "type": "string"
+                },
+                "researchScope": {
+                  "type": "string",
+                  "description": "Phạm vi nghiên cứu hiển thị trên hồ sơ đồ án công khai."
+                },
+                "indicators": {
+                  "type": "string",
+                  "description": "JSON array chỉ tiêu quy hoạch hiển thị trên hồ sơ đồ án công khai."
+                },
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "clientView": {
+                  "type": "boolean",
+                  "description": "clientView=false ẩn đồ án khỏi API client. Không truyền khi tạo = mặc định true."
+                },
+                "documentCount": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "Số hồ sơ (qh_planning_documents) chưa xóa của đồ án."
+                },
+                "legalBasisId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "legalBasisId — id plan_doc (qh_planning_documents) làm căn cứ pháp lý."
+                },
+                "legalBasis": {
+                  "$ref": "#/definitions/tqdpbPlanningDocument",
+                  "description": "legalBasis — chi tiết plan_doc (preload ở API chi tiết)."
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{id}/approve": {
+      "post": {
+        "summary": "ApprovePlanningProject phê duyệt đồ án (chỉ khi đã Classified), đồng thời phê duyệt các tài liệu đã Classified.",
+        "operationId": "QHPlanningService_ApprovePlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{id}/count": {
+      "get": {
+        "operationId": "QHPlanningService_CountPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProjectCountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{id}/retry-failed": {
+      "post": {
+        "summary": "RetryFailedPlanningDocuments đưa tất cả tài liệu Failed của đồ án về Pending để job classify chạy lại.",
+        "operationId": "QHPlanningService_RetryFailedPlanningDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProject"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/layers": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningProjectLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListLayersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/layers/{layerId}": {
+      "delete": {
+        "summary": "UnassignPlanningProjectLayer gỡ layer khỏi đồ án: chỉ xóa layer_plan_doc_relation, không xóa layer.",
+        "operationId": "QHPlanningService_UnassignPlanningProjectLayer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/provinces": {
+      "post": {
+        "summary": "Assign provinces to planning project",
+        "operationId": "QHPlanningService_AdminAssignProvinces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "provinceIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  },
+                  "title": "stored as string composite ids"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/provinces:remove": {
+      "post": {
+        "summary": "Unassign provinces (delete relations)",
+        "operationId": "QHPlanningService_AdminUnassignProvinces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "provinceIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/wards": {
+      "post": {
+        "summary": "Assign wards to planning project",
+        "operationId": "QHPlanningService_AdminAssignWards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "wardIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-projects/{planningId}/wards:remove": {
+      "post": {
+        "summary": "Unassign wards (delete relations)",
+        "operationId": "QHPlanningService_AdminUnassignWards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "wardIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-relations": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningRelations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningRelationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "post": {
+        "summary": "QHPlanningRelation APIs — quan hệ đồ án (parent/child/peer).",
+        "operationId": "QHPlanningService_CreatePlanningRelation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningRelation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningRelation"
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/planning-relations/{id}": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningRelation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningRelation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "delete": {
+        "operationId": "QHPlanningService_DeletePlanningRelation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      },
+      "put": {
+        "operationId": "QHPlanningService_UpdatePlanningRelation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningRelation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "parent": {
+                  "$ref": "#/definitions/tqdpbPlanningProject"
+                },
+                "child": {
+                  "$ref": "#/definitions/tqdpbPlanningProject"
+                },
+                "peer": {
+                  "$ref": "#/definitions/tqdpbPlanningProject"
+                },
+                "fromId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "toId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "isPeer": {
+                  "type": "boolean"
+                },
+                "relationType": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-documents": {
+      "get": {
+        "summary": "Flat list (legacy client): ?planningProjectId=… — nested path remains on PlanningClientService.",
+        "operationId": "QHPlanningService_ClientListPlanningDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningDocumentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningProjectId",
+            "description": "Alias cho admin list: ?planningProjectId=5 (gateway bind JSON name planningProjectId).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerId",
+            "description": "Admin: lọc tài liệu gắn với layer qua layer_plan_doc_relation.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "description": "parcelId: lọc tài liệu liên quan thửa (parcel → regions → layers → layer_plan_doc_relation).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerIds",
+            "description": "layerIds: CSV layer id, lọc OR (vd. \"1,2,3\"). Gộp với layerId nếu có.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-documents/{planningDocumentId}/histories": {
+      "get": {
+        "operationId": "QHPlanningService_ListPlanningDocumentHistories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningDocumentHistoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningDocumentId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects": {
+      "get": {
+        "summary": "List planning projects filtered by administrative unit (admId = compositeId)\nadmId is the composite ID ({sourceId}{1=tỉnh|2=phường})",
+        "operationId": "QHPlanningService_ClientListPlanningProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningProjectsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "admId",
+            "description": "compositeId: {sourceId}{1=tỉnh|2=phường}",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/count": {
+      "get": {
+        "operationId": "QHPlanningService_ClientCountPlanningProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProjectCountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/relations": {
+      "get": {
+        "operationId": "QHPlanningService_ClientListPlanningRelations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningRelationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/client/planning-projects/{projectId}/timeline": {
+      "get": {
+        "operationId": "QHPlanningService_ClientListPlanningEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListPlanningEventsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/planning-documents/{id}/seo-source": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningDocumentSeoSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningDocumentSeoSourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/planning-documents/{planningDocumentId}/seo-id": {
+      "put": {
+        "operationId": "QHPlanningService_UpdatePlanningDocumentSeoID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningDocumentId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/planning-projects/{id}/seo-source": {
+      "get": {
+        "operationId": "QHPlanningService_GetPlanningProjectSeoSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPlanningProjectSeoSourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/planning-projects/{planningProjectId}/seo-id": {
+      "put": {
+        "operationId": "QHPlanningService_UpdatePlanningProjectSeoID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "planningProjectId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "QHPlanningService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningDocumentSeoItem": {
+      "type": "object",
+      "properties": {
+        "planningDocumentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canonicalUrl": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningDocumentSeoRequest": {
+      "type": "object",
+      "properties": {
+        "docIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningDocumentSeoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminGenPlanningDocumentSeoItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningProjectSeoItem": {
+      "type": "object",
+      "properties": {
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canonicalUrl": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningProjectSeoRequest": {
+      "type": "object",
+      "properties": {
+        "planningProjectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenPlanningProjectSeoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminGenPlanningProjectSeoItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbAssignPlanningDocumentsToLayerRequest": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "vẫn nhận 1 layer; gộp vào layerIds"
+        },
+        "docIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbCreatePlanningProjectFromFolderRequest": {
+      "type": "object",
+      "properties": {
+        "folderName": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "planningType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "planningLevel": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "validityStatus": {
+          "type": "string"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "jurisdictionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbFolderFileEntry"
+          }
+        },
+        "jobType": {
+          "type": "integer",
+          "format": "int64",
+          "description": "job_type: 10 = Đồ án (mặc định). Chỉ type Đồ án được hỗ trợ hiện tại."
+        }
+      }
+    },
+    "tqdpbCreatePlanningProjectFromFolderResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/tqdpbPlanningProject"
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningDocument"
+          }
+        },
+        "aiJob": {
+          "$ref": "#/definitions/tqdpbProAIJob"
+        }
+      }
+    },
+    "tqdpbFolderFileEntry": {
+      "type": "object",
+      "properties": {
+        "relativePath": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string",
+          "format": "byte"
+        },
+        "contentType": {
+          "type": "string"
+        }
+      },
+      "description": "FolderFileEntry — 1 file trong folder admin chọn để tạo đồ án."
+    },
+    "tqdpbJurisdiction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerAttachedDoc": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "filepath": {
+          "type": "string"
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        },
+        "relativePath": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "documentType": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerPlanningProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visible": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "displayOrder": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "layerUrl": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "styleConfig": {
+          "type": "string",
+          "title": "JSON string"
+        },
+        "legalDoc": {
+          "type": "string"
+        },
+        "legalDocUrl": {
+          "type": "string"
+        },
+        "documentNumber": {
+          "type": "string"
+        },
+        "issuingAuthority": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string",
+          "title": "YYYY-MM-DD"
+        },
+        "expiryDate": {
+          "type": "string",
+          "title": "YYYY-MM-DD"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "RFC3339"
+        },
+        "updatedAt": {
+          "type": "string",
+          "title": "RFC3339"
+        },
+        "sourceType": {
+          "type": "string"
+        },
+        "sourceCode": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "trustValue": {
+          "type": "number",
+          "format": "double"
+        },
+        "replacedByLayerId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Chỉ có giá trị khi layer này đã bị thay thế bởi layer khác (truy vết)"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "familyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "family": {
+          "$ref": "#/definitions/tqdpbQHLayerFamilyResponse",
+          "title": "Họ lớp (qh_layer_families); chỉ có khi load chi tiết kèm preload Family"
+        },
+        "publishScopes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "defaultVisible": {
+          "type": "boolean"
+        },
+        "subscriberCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerAttachedDoc"
+          }
+        },
+        "provinceId": {
+          "type": "string"
+        },
+        "wardId": {
+          "type": "string"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "planningProject": {
+          "$ref": "#/definitions/tqdpbLayerPlanningProject"
+        }
+      }
+    },
+    "tqdpbListLayersResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerResponse"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListPlanningDocumentHistoriesResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningDocumentHistory"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListPlanningDocumentsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningDocument"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListPlanningEventsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningEvent"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListPlanningProjectsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningProject"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListPlanningRelationsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningRelation"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListProAIJobsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbProAIJob"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbPlanningDocument": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "documentType": {
+          "type": "string",
+          "description": "Loại tài liệu (ví dụ: Bản đồ, Pháp lý, Thuyết minh)."
+        },
+        "code": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "filepath": {
+          "type": "string"
+        },
+        "versionNo": {
+          "type": "string"
+        },
+        "validityStatus": {
+          "type": "string",
+          "description": "Tình trạng hiệu lực (còn hiệu lực / hết hiệu lực / ...)."
+        },
+        "issueDate": {
+          "type": "string",
+          "description": "Ngày ban hành."
+        },
+        "issuedDate": {
+          "type": "string",
+          "description": "Alias JSON issuedDate (cùng nghĩa issueDate)."
+        },
+        "effectiveDate": {
+          "type": "string",
+          "description": "Ngày hiệu lực."
+        },
+        "metadata": {
+          "type": "string",
+          "title": "JSON string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "relativePath": {
+          "type": "string"
+        },
+        "processStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "processStatusName": {
+          "type": "string"
+        },
+        "classifyError": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "indicators": {
+          "type": "string",
+          "description": "Số liệu / chỉ tiêu của tài liệu, JSON array."
+        },
+        "authority": {
+          "type": "string",
+          "description": "Cơ quan ban hành."
+        },
+        "sector": {
+          "type": "string",
+          "description": "Ngành (phân loại chuyên môn của tài liệu)."
+        },
+        "field": {
+          "type": "string",
+          "description": "Lĩnh vực (phân loại nội dung của tài liệu)."
+        },
+        "signer": {
+          "type": "string",
+          "description": "Người ký."
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "description": "10=Thường, 20=Quan trọng."
+        },
+        "statusName": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbPlanningDocumentHistory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "planningDocumentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "eventDate": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbPlanningDocumentSeoSourceResponse": {
+      "type": "object",
+      "properties": {
+        "planningDocumentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "filepath": {
+          "type": "string"
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbPlanningEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "eventDate": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "docs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningDocument"
+          }
+        },
+        "docIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "verNo": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "eventType": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbPlanningProject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "planningType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "planningTypeName": {
+          "type": "string"
+        },
+        "planningLevel": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "planningLevelName": {
+          "type": "string"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "jurisdictionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "jurisdiction": {
+          "$ref": "#/definitions/tqdpbJurisdiction"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "approvalDate": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "expiryDate": {
+          "type": "string"
+        },
+        "validityStatus": {
+          "type": "string"
+        },
+        "currentVersion": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "string",
+          "title": "JSON string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerResponse"
+          }
+        },
+        "sourceFolderName": {
+          "type": "string"
+        },
+        "sourceFolderPath": {
+          "type": "string"
+        },
+        "processStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "processStatusName": {
+          "type": "string"
+        },
+        "researchScope": {
+          "type": "string",
+          "description": "Phạm vi nghiên cứu hiển thị trên hồ sơ đồ án công khai."
+        },
+        "indicators": {
+          "type": "string",
+          "description": "JSON array chỉ tiêu quy hoạch hiển thị trên hồ sơ đồ án công khai."
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "clientView": {
+          "type": "boolean",
+          "description": "clientView=false ẩn đồ án khỏi API client. Không truyền khi tạo = mặc định true."
+        },
+        "documentCount": {
+          "type": "string",
+          "format": "int64",
+          "description": "Số hồ sơ (qh_planning_documents) chưa xóa của đồ án."
+        },
+        "legalBasisId": {
+          "type": "string",
+          "format": "uint64",
+          "description": "legalBasisId — id plan_doc (qh_planning_documents) làm căn cứ pháp lý."
+        },
+        "legalBasis": {
+          "$ref": "#/definitions/tqdpbPlanningDocument",
+          "description": "legalBasis — chi tiết plan_doc (preload ở API chi tiết)."
+        }
+      }
+    },
+    "tqdpbPlanningProjectCountResponse": {
+      "type": "object",
+      "properties": {
+        "timeline": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tin": {
+          "type": "string",
+          "format": "int64"
+        },
+        "relation": {
+          "type": "string",
+          "format": "int64"
+        },
+        "doc": {
+          "type": "string",
+          "format": "int64"
+        },
+        "layer": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbPlanningProjectSeoSourceResponse": {
+      "type": "object",
+      "properties": {
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbPlanningRelation": {
+      "type": "object",
+      "properties": {
+        "parent": {
+          "$ref": "#/definitions/tqdpbPlanningProject"
+        },
+        "child": {
+          "$ref": "#/definitions/tqdpbPlanningProject"
+        },
+        "peer": {
+          "$ref": "#/definitions/tqdpbPlanningProject"
+        },
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "fromId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "toId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isPeer": {
+          "type": "boolean"
+        },
+        "relationType": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbProAIJob": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "jobType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "jobTypeName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sourceFolderName": {
+          "type": "string"
+        },
+        "processStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "processStatusName": {
+          "type": "string"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "classifyError": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "completedAt": {
+          "type": "string",
+          "title": "thời gian hoàn thành job (phân loại xong / lỗi)"
+        },
+        "approvedAt": {
+          "type": "string",
+          "title": "thời gian phê duyệt"
+        }
+      }
+    },
+    "tqdpbQHLayerFamilyResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "sortNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "familyUrl": {
+          "type": "string"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "layerUrl": {
+          "type": "string"
+        },
+        "styleConfig": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "string"
+        },
+        "sourceCode": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

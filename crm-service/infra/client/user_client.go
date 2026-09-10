@@ -5,6 +5,7 @@ import (
 	"context"
 	"crm/internal/domain"
 	"crm/internal/enums"
+	"errors"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -21,6 +22,77 @@ type UserClient struct {
 func NewUserClient(rpcClient *clients.UserGrpcClient) *UserClient {
 	return &UserClient{
 		UserGrpcClient: rpcClient,
+	}
+}
+
+func (c *UserClient) CheckOrganizationMembers(ctx context.Context, organizationID uint64, profileIDs []uint64) ([]*userpb.OrganizationMemberCheck, error) {
+	if c == nil || c.OrganizationMembershipClient == nil {
+		return nil, errors.New("user organization membership client not available")
+	}
+	response, err := c.OrganizationMembershipClient.CheckMembers(ctx, &userpb.CheckOrganizationMembersRequest{
+		OrganizationId: organizationID,
+		ProfileIds:     profileIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Data, nil
+}
+
+// MapOrganizationMembersToContacts enriches CRM contacts from the
+// User-owned organization membership projection. CRM no longer needs to ask
+// the legacy Organization service for organization identity or membership.
+func (c *UserClient) MapOrganizationMembersToContacts(ctx context.Context, organizationID uint64, contacts []*sharepb.ContactDTO) error {
+	profileIDs := make([]uint64, 0, len(contacts))
+	seen := make(map[uint64]struct{}, len(contacts))
+	for _, contact := range contacts {
+		if contact == nil || contact.ProfileId == nil || *contact.ProfileId == 0 {
+			continue
+		}
+		if _, exists := seen[*contact.ProfileId]; exists {
+			continue
+		}
+		seen[*contact.ProfileId] = struct{}{}
+		profileIDs = append(profileIDs, *contact.ProfileId)
+	}
+	checks, err := c.CheckOrganizationMembers(ctx, organizationID, profileIDs)
+	if err != nil {
+		return err
+	}
+	byProfile := make(map[uint64]*userpb.OrganizationMemberCheck, len(checks))
+	for _, check := range checks {
+		if check != nil && check.IsMember {
+			byProfile[check.ProfileId] = check
+		}
+	}
+	for _, contact := range contacts {
+		if contact == nil || contact.ProfileId == nil {
+			continue
+		}
+		check := byProfile[*contact.ProfileId]
+		if check == nil {
+			continue
+		}
+		roleKey, roleName := legacyOrganizationRole(check.RoleKey)
+		contact.OrganizationMember = &sharepb.OrganizationMember{
+			Id: uint32(check.MemberId), UserId: check.ProfileId,
+			Role: roleKey, RoleKey: roleKey, RoleName: roleName,
+			Status: 10, Profile: contact.ProfileInfo,
+		}
+	}
+	return nil
+}
+
+func legacyOrganizationRole(role string) (uint32, string) {
+	switch role {
+	case "owner":
+		return 510, "Chủ sở hữu"
+	case "admin":
+		return 520, "Quản trị viên"
+	case "billing":
+		return 520, "Quản lý thanh toán"
+	default:
+		return 530, "Thành viên"
 	}
 }
 

@@ -5,11 +5,21 @@ package userpb;
 option go_package = "pb/types/user;userpb";
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 // AdminCatalogService quản trị bản hợp đồng catalog đã được version hoá.
 // API này không thay đổi quota runtime hoặc usage lịch sử.
 service AdminCatalogService {
+  // CreateDraft creates a new immutable-version candidate. Stable product and
+  // plan identities may already exist; terms belong only to the new version.
+  rpc CreatePlanVersionDraft(CreateCatalogPlanVersionDraftRequest) returns (CatalogPlanVersion) {
+    option (google.api.http) = {
+      post: "/v2/user/admin/catalog/plan-versions"
+      body: "*"
+    };
+  }
+
   rpc ListPlanVersions(ListCatalogPlanVersionsRequest) returns (ListCatalogPlanVersionsResponse) {
     option (google.api.http) = {
       get: "/v2/user/admin/catalog/plan-versions"
@@ -22,6 +32,28 @@ service AdminCatalogService {
     };
   }
 
+  // UpdateDraft replaces the complete draft terms atomically. Published terms
+  // are deliberately immutable and must be superseded by another version.
+  rpc UpdatePlanVersionDraft(UpdateCatalogPlanVersionDraftRequest) returns (CatalogPlanVersion) {
+    option (google.api.http) = {
+      put: "/v2/user/admin/catalog/plan-versions/{plan_version_id}"
+      body: "*"
+    };
+  }
+
+  rpc ValidatePlanVersionDraft(ValidateCatalogPlanVersionDraftRequest) returns (ValidateCatalogPlanVersionDraftResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/admin/catalog/plan-versions/{plan_version_id}:validate"
+      body: "*"
+    };
+  }
+
+  rpc DeletePlanVersionDraft(DeleteCatalogPlanVersionDraftRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v2/user/admin/catalog/plan-versions/{plan_version_id}"
+    };
+  }
+
   // Publish chỉ chuyển draft hợp lệ sang active và lưu publisher/checksum.
   rpc PublishPlanVersion(PublishCatalogPlanVersionRequest) returns (PublishCatalogPlanVersionResponse) {
     option (google.api.http) = {
@@ -29,6 +61,55 @@ service AdminCatalogService {
       body: "*"
     };
   }
+
+  // Retire removes an active version from the selling catalog. Existing
+  // orders, subscriptions and usage keep their immutable version snapshot.
+  rpc RetirePlanVersion(RetireCatalogPlanVersionRequest) returns (CatalogPlanVersion) {
+    option (google.api.http) = {
+      post: "/v2/user/admin/catalog/plan-versions/{plan_version_id}:retire"
+      body: "*"
+    };
+  }
+}
+
+message CatalogPlanVersionDraft {
+  string product_code = 1;
+  string product_display_name = 2;
+  string plan_code = 3;
+  string version = 4;
+  string display_name = 5;
+  string subject_scope = 6;
+  int32 tier_rank = 7;
+  int32 subscription_term_days = 8;
+  repeated CatalogEntitlement entitlements = 9;
+  repeated CatalogPriceItem prices = 10;
+  repeated CatalogOperationPolicy operations = 11;
+}
+
+message CreateCatalogPlanVersionDraftRequest {
+  CatalogPlanVersionDraft draft = 1;
+}
+
+message UpdateCatalogPlanVersionDraftRequest {
+  uint64 plan_version_id = 1;
+  CatalogPlanVersionDraft draft = 2;
+}
+
+message ValidateCatalogPlanVersionDraftRequest {
+  uint64 plan_version_id = 1;
+}
+
+message ValidateCatalogPlanVersionDraftResponse {
+  bool valid = 1;
+  string terms_checksum = 2;
+}
+
+message DeleteCatalogPlanVersionDraftRequest {
+  uint64 plan_version_id = 1;
+}
+
+message RetireCatalogPlanVersionRequest {
+  uint64 plan_version_id = 1;
 }
 
 message ListCatalogPlanVersionsRequest {

@@ -1,110 +1,66 @@
-# User Service
+# user-service
 
-User Service is an independently buildable QHPRO backend service. It owns User
-business/data state and consumes Shared only for reusable technical mechanisms
-and cross-service contracts.
+## Role
 
-## Requirements
+Profile, public Auth/OAuth, IAM, commercial catalog, checkout intent, subscription và entitlement.
 
-- Go 1.25+
-- Docker + Docker Compose for local dependencies / image verification
-- `golang-migrate` for schema operations
-- Buf and Wire through the repository Shared generation workflow
+## Runtime status
 
-## Local configuration
+Canonical default Compose service; business owner của public auth/IAM và commercial entitlement.
 
-Committed YAML profiles contain non-secret defaults only. User runtime dùng
-`user-service/.env`; root `.env` chỉ dành cho full Compose:
+## Entrypoint / lifecycle
 
-```bash
-make -C .. env-check
-```
+`cmd/grpc/main.go`.
 
-The serving process accepts canonical resource variables such as
-`USER_DATABASE_URL`, `GRPC_ADDRESS`, `USER_REDIS_ADDRESS` and
-`JWT_KEY_GENERATE`.
-Historical YAML/env keys remain compatibility inputs while old providers are
-being retired.
+`make server` chạy native gRPC entrypoint.
 
-## Daily development
-
-Keep backing services in containers and run the active Go process on the host:
+## Developer commands
 
 ```bash
-make deps-up
-make migrate-up
+make help
 make test
-make server
-```
-
-Stop local dependencies with:
-
-```bash
-make deps-down
-```
-
-## Schema
-
-`migrate/` is the only production schema-evolution authority for User Service.
-Historical replacement/backfill/cutover SQL that is useful for an existing
-deployment is recovered from source-control history; it is never part of the serving
-startup path and never competes with fresh-schema migration history.
-
-```bash
-make migrate-up
-make migrate-down            # one version only
-make migrate-version
-make migrate-create name=add_example_state
-```
-
-Serving runtime does not execute schema mutation. Schema changes are authored
-as ordered SQL under `migrate/`; model/schema inspection tooling must remain
-operator/developer-only and outside the serving process.
-
-## Generation
-
-User provides the local command vocabulary; Shared remains generation
-authority:
-
-```bash
-make buf
-make wire
-make generate
-```
-
-## Build and container verification
-
-```bash
 make build
-make docker-build
+make server
+make dev
 ```
 
-The Dockerfile builds from repository-root context because `go.mod` uses local
-Shared module replacements.
-
-For a bounded production-shaped lab:
+Nếu thay schema:
 
 ```bash
-make compose-up
-make compose-logs
-make compose-down
+make migrateup
+make migrate-version
+make new_migration name=<schema_change>
 ```
 
-The Compose flow waits for PostgreSQL/Redis health, runs migration as a one-shot
-process, then starts the actual User image. Optional background actors are off
-in this local image lab so that it tests the serving artifact rather than
-unrelated scheduled work.
+Root có thể gọi `make migrate service=user-service`.
 
-## Verification
+Database mới hoàn toàn cần đúng một root operator. Cấp input qua biến
+`QHPRO_BOOTSTRAP_*` rồi chạy `make bootstrap-admin` ở repository root; command
+ghi IAM atomically và từ chối chạy lại. Không đặt credential bootstrap trong
+`.env`. Chi tiết nằm trong
+[`../documents/THREE-SOURCE-ONBOARDING.md`](../documents/THREE-SOURCE-ONBOARDING.md).
 
-Fast service-local gate:
+Trong `QHPRO_ENVIRONMENT=development`, root `make up` còn khởi tạo idempotent
+hai identity dùng để thao tác bằng UI thật: Admin `admin/admin123` và client
+`0900000000/client123` (cũng có thể dùng username `client`). Credential được
+hash trong PostgreSQL `user_service`; file khởi tạo nằm tại
+`shared/code/development/identities.sql`, ngoài production migrations. Mỗi lần
+provision ở development đưa hai mật khẩu về đúng giá trị công bố.
 
-```bash
-make architecture-check
-make acceptance-static
-```
+## Dependencies / durable state
 
-Full closure additionally requires a real PostgreSQL migration up/down/up lab,
-Gateway -> User integration, User <-> Payment commercial flow, Docker image
-execution, graceful shutdown proof, and retirement of competing legacy
-commercial authority.
+PostgreSQL `user_service`, Redis DB 0, RPC clients. Canonical migration: `migrate/`.
+
+## Read source from here
+
+`cmd/grpc/`, `config/`, `infra/handler/grpc/`, `internal/`, `db/`, `migrate/`.
+
+Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
+
+## Repository rules
+
+- Root orchestration không sở hữu business của service này.
+- Cross-service behavior đi qua contract/client; không đọc database owner khác.
+- Worker/actor là component của owner trước khi là process/container riêng.
+
+Xem [`../documents/SERVICE-MAP.md`](../documents/SERVICE-MAP.md) và [`../documents/DEVELOPER-OPERATING-GUIDE.md`](../documents/DEVELOPER-OPERATING-GUIDE.md).

@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package tqdpb;
+
+import "google/api/annotations.proto";
+
+option go_package = "pb/types/tqd;tqdpb";
+
+// MapPointService keeps the historical /v1/map/locations HTTP contract while
+// TQD becomes the canonical owner of spatial point data.
+service MapPointService {
+  rpc CreateMapPoint(CreateMapPointRequest) returns (MapPoint) {
+    option (google.api.http) = {
+      post: "/v1/map/locations/new"
+      body: "*"
+    };
+  }
+
+  rpc GetMapPoint(GetMapPointRequest) returns (MapPoint) {
+    option (google.api.http) = { get: "/v1/map/locations/{id}" };
+  }
+
+  rpc UpdateMapPoint(UpdateMapPointRequest) returns (MapPoint) {
+    option (google.api.http) = {
+      put: "/v1/map/locations/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteMapPoint(DeleteMapPointRequest) returns (DeleteMapPointResponse) {
+    option (google.api.http) = { delete: "/v1/map/locations/{id}" };
+  }
+
+  rpc FindNearbyMapPoints(FindNearbyMapPointsRequest) returns (MapPointList) {
+    option (google.api.http) = { get: "/v1/map/locations/nearby" };
+  }
+
+  rpc FindMapPointsByPolygon(FindMapPointsByPolygonRequest) returns (MapPointList) {
+    option (google.api.http) = {
+      post: "/v1/map/locations/find-by-polygon"
+      body: "*"
+    };
+  }
+}
+
+message MapPoint {
+  uint64 id = 1;
+  double lat = 2;
+  double lng = 3;
+  string name = 4;
+}
+
+message MapCoordinate {
+  double lat = 1;
+  double lng = 2;
+}
+
+message CreateMapPointRequest {
+  double lat = 1;
+  double lng = 2;
+  string name = 3;
+}
+
+message GetMapPointRequest { uint64 id = 1; }
+
+message UpdateMapPointRequest {
+  uint64 id = 1;
+  double lat = 2;
+  double lng = 3;
+  string name = 4;
+}
+
+message DeleteMapPointRequest { uint64 id = 1; }
+
+message DeleteMapPointResponse { string message = 1; }
+
+message FindNearbyMapPointsRequest {
+  double lat = 1;
+  double lng = 2;
+  double radius = 3;
+}
+
+message FindMapPointsByPolygonRequest {
+  repeated MapCoordinate coordinates = 1;
+}
+
+message MapPointList { repeated MapPoint data = 1; }

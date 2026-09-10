@@ -29,17 +29,15 @@ import (
 // and registered only by gateway-service.
 type PlanningClientGrpcHandler struct {
 	tqdpb.UnimplementedPlanningClientServiceServer
-	service                    *planningapp.Service
-	provinceScopeListStartTime int64
-	hubClient                  *clients.HubGrpcClient
+	service   *planningapp.Service
+	hubClient *clients.HubGrpcClient
 }
 
 func NewPlanningClientGrpcHandler(service *planningapp.Service,
 	hubClient *clients.HubGrpcClient) *PlanningClientGrpcHandler {
 	return &PlanningClientGrpcHandler{
-		service:                    service,
-		provinceScopeListStartTime: time.Now().UnixMilli(),
-		hubClient:                  hubClient,
+		service:   service,
+		hubClient: hubClient,
 	}
 }
 
@@ -412,41 +410,4 @@ func (h *PlanningClientGrpcHandler) ListPlanningProjectLayers(ctx context.Contex
 	}
 	setPlanningHTTPMetadata(ctx, 200, "public, max-age=30, stale-while-revalidate=120")
 	return bytesResponse(map[string]any{"data": result, "total": len(result)})
-}
-
-func (h *PlanningClientGrpcHandler) ListProvinces(ctx context.Context, req *tqdpb.ListProvincesRequest) (*wrapperspb.BytesValue, error) {
-	if req == nil {
-		req = &tqdpb.ListProvincesRequest{}
-	}
-	setPlanningHTTPMetadata(ctx, 200, "public, max-age=300, stale-while-revalidate=600")
-
-	if req.GetScope() > 0 {
-		if req.GetTimestamp() > 0 && req.GetTimestamp() < h.provinceScopeListStartTime {
-			return bytesResponse(map[string]any{
-				"timestamp": h.provinceScopeListStartTime,
-				"lastest":   false,
-				"data":      []any{},
-				"total":     0,
-			})
-		}
-	}
-
-	filter := planningdomain.ProvinceListFilter{
-		Scope:  req.GetScope(),
-		Search: strings.ToLower(strings.TrimSpace(req.GetSearch())),
-	}
-	result, err := h.service.ListProvinces(ctx, filter)
-	if err != nil {
-		return nil, repositoryError(err)
-	}
-
-	response := map[string]any{
-		"data":  result,
-		"total": len(result),
-	}
-	if req.GetScope() > 0 {
-		response["timestamp"] = h.provinceScopeListStartTime
-		response["lastest"] = true
-	}
-	return bytesResponse(response)
 }

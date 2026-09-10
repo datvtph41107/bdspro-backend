@@ -1,0 +1,2093 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/location.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LocationService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/tqd/locations/nearest": {
+      "get": {
+        "summary": "Tìm location gần nhất từ tọa độ",
+        "operationId": "LocationService_GetNearestLocation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLocationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "maxDistanceKm",
+            "description": "Bán kính tìm kiếm (km), mặc định 100km",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "limit",
+            "description": "Số lượng kết quả, mặc định 1",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v1/tqd/locations/nearest:batch": {
+      "post": {
+        "summary": "Batch tìm nhiều location cùng lúc",
+        "operationId": "LocationService_BatchGetNearestLocations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbBatchLocationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbBatchGetNearestLocationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v1/tqd/locations/search": {
+      "get": {
+        "summary": "Tìm kiếm location theo tên",
+        "operationId": "LocationService_SearchLocations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSearchLocationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "description": "\"province\", \"ward\", \"all\" (mặc định \"all\")",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "description": "Số lượng kết quả, mặc định 20",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "provinceId",
+            "description": "Public ID: {sourceId}{1=tỉnh|2=phường}",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v1/tqd/provinces/{id}": {
+      "get": {
+        "summary": "Lấy thông tin chi tiết của province",
+        "operationId": "LocationService_GetProvince",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbProvince"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID: {sourceId}1",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "code",
+            "description": "Hoặc tìm theo code",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v1/tqd/provinces/{provinceId}/wards": {
+      "get": {
+        "summary": "Lấy danh sách wards theo province",
+        "operationId": "LocationService_ListWardsByProvince",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListWardsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provinceId",
+            "description": "Public ID: {sourceId}1",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "description": "Phân trang, mặc định 1",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "description": "Mặc định 50",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v1/tqd/wards/{id}": {
+      "get": {
+        "summary": "Lấy thông tin chi tiết của ward",
+        "operationId": "LocationService_GetWard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbWard"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID: {sourceId}2",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/administrative-units": {
+      "get": {
+        "summary": "Admin: danh sách đơn vị hành chính dùng chung (tỉnh + phường)",
+        "operationId": "LocationService_AdminListAdministrativeUnits",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListAdministrativeUnitsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/administrative-units/area-sync-geometry": {
+      "post": {
+        "summary": "Admin: đồng bộ diện tích tự nhiên từ geometry",
+        "operationId": "LocationService_AdminSyncAreaFromGeometry",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminSyncAreaFromGeometryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminSyncAreaFromGeometryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/administrative-units/seo/generate": {
+      "post": {
+        "operationId": "LocationService_AdminGenAdministrativeUnitSeo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenAdministrativeUnitSeoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenAdministrativeUnitSeoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/administrative-units/{compositeId}": {
+      "get": {
+        "summary": "Admin: danh sách tỉnh/thành",
+        "operationId": "LocationService_AdminGetAdministrativeUnitDetailByCompositeId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGetAdministrativeUnitDetailByCompositeIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "compositeId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/provinces": {
+      "get": {
+        "operationId": "LocationService_AdminListProvinces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminListProvincesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      },
+      "post": {
+        "operationId": "LocationService_AdminCreateProvince",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbProvince"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbProvince"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/provinces/{compositeId}": {
+      "get": {
+        "operationId": "LocationService_AdminGetProvinceDetailByCompositeId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbProvince"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "compositeId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/provinces/{id}": {
+      "delete": {
+        "operationId": "LocationService_AdminDeleteProvince",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID: {sourceId}1",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      },
+      "put": {
+        "operationId": "LocationService_AdminUpdateProvince",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbProvince"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "shortName": {
+                  "type": "string"
+                },
+                "latitude": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "longitude": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "divisionType": {
+                  "type": "string"
+                },
+                "phoneCode": {
+                  "type": "string"
+                },
+                "wardCount": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "title": "ISO format: \"2006-01-02T15:04:05Z07:00\""
+                },
+                "updatedAt": {
+                  "type": "string"
+                },
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "officialName": {
+                  "type": "string"
+                },
+                "officialOperationDate": {
+                  "type": "string"
+                },
+                "naturalAreaKm2": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "population": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "populationDensity": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "unitType": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "unitTypeName": {
+                  "type": "string"
+                },
+                "dataSource": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "dataSourceName": {
+                  "type": "string"
+                },
+                "planDocId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "compositeId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131; không lưu DB"
+                },
+                "geometry": {
+                  "type": "string",
+                  "title": "GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints"
+                },
+                "officialRole": {
+                  "type": "string",
+                  "title": "Vai trò chính thức (ví dụ: Tỉnh ủy, UBND tỉnh...)"
+                },
+                "officialAddress": {
+                  "type": "string",
+                  "title": "Địa chỉ cơ quan chính quyền"
+                }
+              },
+              "title": "Data models"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/wards": {
+      "get": {
+        "summary": "Admin: danh sách phường/xã",
+        "operationId": "LocationService_AdminListWards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminListWardsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "provinceId",
+            "description": "Public ID: {sourceId}1",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      },
+      "post": {
+        "operationId": "LocationService_AdminCreateWard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbWard"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbWard"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/wards/{id}": {
+      "delete": {
+        "operationId": "LocationService_AdminDeleteWard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID: {sourceId}2",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      },
+      "put": {
+        "operationId": "LocationService_AdminUpdateWard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbWard"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Public ID = {sourceId}2, ví dụ 142 -\u003e 1422",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "shortName": {
+                  "type": "string"
+                },
+                "latitude": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "longitude": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "divisionType": {
+                  "type": "string"
+                },
+                "provinceId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131"
+                },
+                "provinceCode": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                },
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "officialName": {
+                  "type": "string"
+                },
+                "officialOperationDate": {
+                  "type": "string"
+                },
+                "naturalAreaKm2": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "population": {
+                  "type": "string",
+                  "format": "uint64"
+                },
+                "populationDensity": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "compositeId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Public ID = {sourceId}2, ví dụ 142 -\u003e 1422; không lưu DB"
+                },
+                "geometry": {
+                  "type": "string",
+                  "title": "GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints"
+                },
+                "unitType": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "unitTypeName": {
+                  "type": "string"
+                },
+                "dataSource": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "dataSourceName": {
+                  "type": "string"
+                },
+                "officialRole": {
+                  "type": "string",
+                  "title": "Vai trò chính thức (ví dụ: Đảng ủy phường, UBND phường...)"
+                },
+                "officialAddress": {
+                  "type": "string",
+                  "title": "Địa chỉ cơ quan chính quyền"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/wards/{wardId}/neighbors": {
+      "get": {
+        "summary": "Admin: list neighbors of a ward",
+        "operationId": "LocationService_AdminListWardNeighbors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminListWardNeighborsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wardId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      },
+      "post": {
+        "summary": "Admin: create neighbor relation between wards",
+        "operationId": "LocationService_AdminCreateWardNeighbor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wardId",
+            "description": "source ward id (not composite)",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "neighborWardId": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "neighbor ward id (not composite)"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/wards/{wardId}/neighbors/{neighborWardId}": {
+      "delete": {
+        "summary": "Admin: delete neighbor relation between wards",
+        "operationId": "LocationService_AdminDeleteWardNeighbor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wardId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "neighborWardId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/client/administrative-units": {
+      "get": {
+        "summary": "Client: danh sách đơn vị hành chính dùng chung (tỉnh + phường)",
+        "operationId": "LocationService_ClientListAdministrativeUnits",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListAdministrativeUnitsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "planningProjectId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/client/administrative-units/{compositeId}": {
+      "get": {
+        "operationId": "LocationService_ClientGetAdministrativeUnitDetailByCompositeId",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbClientGetAdministrativeUnitDetailByCompositeIdResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "compositeId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/client/administrative-units/{compositeId}/neighbors": {
+      "get": {
+        "summary": "Client: danh sách địa bàn lân cận (phường/xã) theo compositeId",
+        "operationId": "LocationService_ClientListAdministrativeUnitNeighbors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbClientListAdministrativeUnitNeighborsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "compositeId",
+            "description": "Public ID: {sourceId}{1=tỉnh|2=phường}",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/administrative-units/seo-id": {
+      "put": {
+        "operationId": "LocationService_UpdateAdministrativeUnitSeoID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbUpdateAdministrativeUnitSeoIDRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/administrative-units/seo-source": {
+      "get": {
+        "operationId": "LocationService_GetAdministrativeUnitSeoSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdministrativeUnitSeoSourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identity",
+            "description": "Public ID: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    },
+    "/v2/tqd/public/client/search": {
+      "get": {
+        "operationId": "LocationService_SearchTxtClient",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbSearchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LocationService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenAdministrativeUnitSeoItem": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canonicalUrl": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB"
+        }
+      }
+    },
+    "tqdpbAdminGenAdministrativeUnitSeoRequest": {
+      "type": "object",
+      "properties": {
+        "compositeIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          },
+          "title": "Public ID: {sourceId}{1=tỉnh|2=phường}, ví dụ 131 | 1422"
+        }
+      }
+    },
+    "tqdpbAdminGenAdministrativeUnitSeoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminGenAdministrativeUnitSeoItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGetAdministrativeUnitDetailByCompositeIdResponse": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "$ref": "#/definitions/tqdpbProvince"
+        },
+        "ward": {
+          "$ref": "#/definitions/tqdpbWard"
+        }
+      }
+    },
+    "tqdpbAdminListProvincesResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbProvince"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminListWardNeighborsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbWard"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminListWardsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbWard"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminSyncAreaFromGeometryRequest": {
+      "type": "object",
+      "properties": {
+        "compositeIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          },
+          "title": "danh sách composite ID cần sync; nếu rỗng thì sync toàn bộ có geometry"
+        }
+      }
+    },
+    "tqdpbAdminSyncAreaFromGeometryResponse": {
+      "type": "object",
+      "properties": {
+        "updated": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbAdministrativeUnitListItem": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "$ref": "#/definitions/tqdpbProvince"
+        },
+        "ward": {
+          "$ref": "#/definitions/tqdpbWard"
+        }
+      }
+    },
+    "tqdpbAdministrativeUnitSeoSourceResponse": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "unitType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "canonicalPath": {
+          "type": "string"
+        },
+        "administrativeCode": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB"
+        }
+      }
+    },
+    "tqdpbBatchGetNearestLocationsRequest": {
+      "type": "object",
+      "properties": {
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbCoordinate"
+          }
+        },
+        "maxDistanceKm": {
+          "type": "number",
+          "format": "double"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbBatchLocationResponse": {
+      "type": "object",
+      "properties": {
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLocationResponse"
+          }
+        },
+        "totalProcessingTimeMs": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbClientGetAdministrativeUnitDetailByCompositeIdResponse": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "$ref": "#/definitions/tqdpbProvince"
+        },
+        "ward": {
+          "$ref": "#/definitions/tqdpbWard"
+        }
+      }
+    },
+    "tqdpbClientListAdministrativeUnitNeighborsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbWard"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbCoordinate": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbListAdministrativeUnitsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdministrativeUnitListItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListWardsResponse": {
+      "type": "object",
+      "properties": {
+        "wards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbWard"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdpbLocationResponse": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "$ref": "#/definitions/tqdpbProvince"
+        },
+        "ward": {
+          "$ref": "#/definitions/tqdpbWard"
+        },
+        "fullAddress": {
+          "type": "string"
+        },
+        "distanceKm": {
+          "type": "number",
+          "format": "double",
+          "title": "Khoảng cách từ điểm đến center (km)"
+        },
+        "confidence": {
+          "type": "number",
+          "format": "double",
+          "title": "Độ tin cậy 0-1"
+        },
+        "processingTimeMs": {
+          "type": "string",
+          "format": "int64",
+          "title": "Thời gian xử lý (ms)"
+        }
+      }
+    },
+    "tqdpbProvince": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131"
+        },
+        "code": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "shortName": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "divisionType": {
+          "type": "string"
+        },
+        "phoneCode": {
+          "type": "string"
+        },
+        "wardCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "ISO format: \"2006-01-02T15:04:05Z07:00\""
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "officialName": {
+          "type": "string"
+        },
+        "officialOperationDate": {
+          "type": "string"
+        },
+        "naturalAreaKm2": {
+          "type": "number",
+          "format": "double"
+        },
+        "population": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "populationDensity": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "unitType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "unitTypeName": {
+          "type": "string"
+        },
+        "dataSource": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceName": {
+          "type": "string"
+        },
+        "planDocId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131; không lưu DB"
+        },
+        "geometry": {
+          "type": "string",
+          "title": "GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints"
+        },
+        "officialRole": {
+          "type": "string",
+          "title": "Vai trò chính thức (ví dụ: Tỉnh ủy, UBND tỉnh...)"
+        },
+        "officialAddress": {
+          "type": "string",
+          "title": "Địa chỉ cơ quan chính quyền"
+        }
+      },
+      "title": "Data models"
+    },
+    "tqdpbSearchItem": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "poiId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB"
+        }
+      }
+    },
+    "tqdpbSearchLocationsResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbSearchResult"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdpbSearchResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbSearchItem"
+          }
+        }
+      }
+    },
+    "tqdpbSearchResult": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "\"province\" hoặc \"ward\""
+        },
+        "province": {
+          "$ref": "#/definitions/tqdpbProvince"
+        },
+        "ward": {
+          "$ref": "#/definitions/tqdpbWard"
+        },
+        "fullAddress": {
+          "type": "string"
+        },
+        "relevanceScore": {
+          "type": "number",
+          "format": "float",
+          "title": "Điểm relevance 0-1"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID: {sourceId}{1=tỉnh|2=phường}, không lưu DB"
+        }
+      }
+    },
+    "tqdpbUpdateAdministrativeUnitSeoIDRequest": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbWard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID = {sourceId}2, ví dụ 142 -\u003e 1422"
+        },
+        "code": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "shortName": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "divisionType": {
+          "type": "string"
+        },
+        "provinceId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID = {sourceId}1, ví dụ 13 -\u003e 131"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "officialName": {
+          "type": "string"
+        },
+        "officialOperationDate": {
+          "type": "string"
+        },
+        "naturalAreaKm2": {
+          "type": "number",
+          "format": "double"
+        },
+        "population": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "populationDensity": {
+          "type": "number",
+          "format": "double"
+        },
+        "description": {
+          "type": "string"
+        },
+        "compositeId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "Public ID = {sourceId}2, ví dụ 142 -\u003e 1422; không lưu DB"
+        },
+        "geometry": {
+          "type": "string",
+          "title": "GeoJSON geometry (MultiPolygon); chỉ trả trong detail endpoints"
+        },
+        "unitType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "unitTypeName": {
+          "type": "string"
+        },
+        "dataSource": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceName": {
+          "type": "string"
+        },
+        "officialRole": {
+          "type": "string",
+          "title": "Vai trò chính thức (ví dụ: Đảng ủy phường, UBND phường...)"
+        },
+        "officialAddress": {
+          "type": "string",
+          "title": "Địa chỉ cơ quan chính quyền"
+        }
+      }
+    }
+  }
+}

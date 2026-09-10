@@ -21,6 +21,9 @@ type AdminProjection struct {
 	PendingPlanVersionID *uint64
 	PendingEffectiveAt   *time.Time
 	OrderReference       string
+	CanceledAt           *time.Time
+	EndedAt              *time.Time
+	AutoRenew            bool
 	UpdatedAt            time.Time
 }
 

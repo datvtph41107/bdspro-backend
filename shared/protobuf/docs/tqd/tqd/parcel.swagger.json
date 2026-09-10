@@ -1,0 +1,4694 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/parcel.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ParcelService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/tqd/admin/parcels": {
+      "get": {
+        "summary": "AdminListParcels — danh sách thửa đất cho admin (phân trang + followerCount).",
+        "operationId": "ParcelService_AdminListParcels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminListParcelsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/parcels/gen-seo": {
+      "post": {
+        "operationId": "ParcelService_AdminGenParcelSeo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenParcelSeoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGenParcelSeoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/parcels/{parcelId}": {
+      "get": {
+        "summary": "AdminGetParcel — chi tiết thửa đất cho admin.",
+        "operationId": "ParcelService_AdminGetParcel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminParcelDetail"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      },
+      "put": {
+        "summary": "AdminUpdateParcel — sửa thông tin thửa đất cho admin.",
+        "operationId": "ParcelService_AdminUpdateParcel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminParcelDetail"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "lat": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "lon": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "areaSqm": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "mapNumber": {
+                  "type": "string"
+                },
+                "landNumber": {
+                  "type": "string"
+                },
+                "propertyCode": {
+                  "type": "string"
+                },
+                "provinceCode": {
+                  "type": "string"
+                },
+                "wardCode": {
+                  "type": "string"
+                },
+                "isSeo": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/parcels/{parcelId}/neighbors": {
+      "get": {
+        "summary": "AdminGetParcelNeighbors — thửa lân cận theo geometry (tạm thời, tối đa 10).",
+        "operationId": "ParcelService_AdminGetParcelNeighbors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbAdminGetParcelNeighborsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/client/administrative-units/{compositeId}/quick-layers": {
+      "get": {
+        "summary": "GetWardQuickLayers — tìm giao geometry đơn vị hành chính (tỉnh/phường) với qh_regions → trả quick-layers",
+        "operationId": "ParcelService_GetWardQuickLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerQuickInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "compositeId",
+            "description": "Public ID: {sourceId}{1=tỉnh|2=phường}",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/client/parcels/search": {
+      "get": {
+        "operationId": "ParcelService_SearchTxtClientParcels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListParcelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/parcels/seo-sources": {
+      "post": {
+        "operationId": "ParcelService_ListParcelSeoSourcesForGenerate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListParcelSeoSourcesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbListParcelSeoSourcesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/parcels/{parcelId}/seo-id": {
+      "put": {
+        "operationId": "ParcelService_UpdateParcelSeoID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/sharepbSubmitResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "seoId": {
+                  "type": "string",
+                  "format": "uint64"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/internal/parcels/{parcelId}/seo-source": {
+      "get": {
+        "operationId": "ParcelService_GetParcelSeoSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelSeoSourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/layers/{layerId}/history": {
+      "get": {
+        "operationId": "ParcelService_GetLayerHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/map-target/by-location": {
+      "post": {
+        "operationId": "ParcelService_ResolveMapTargetByLocation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbResolveMapTargetByLocationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbResolveMapTargetByLocationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/map-target/by-poi/{poiId}": {
+      "get": {
+        "summary": "ResolveMapTargetByPoi — resolve parcel/region từ tọa độ của POI (ưu tiên parcel, fallback region).",
+        "operationId": "ParcelService_ResolveMapTargetByPoi",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbResolveMapTargetByLocationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "poiId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/around/{parcelId}": {
+      "get": {
+        "summary": "GetParcelsAround — khoảng 5 thửa quanh thửa hiện tại (ưu tiên tiếp giáp, rồi gần nhất).",
+        "operationId": "ParcelService_GetParcelsAround",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbGetParcelsAroundResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "description": "mặc định 5",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/batch": {
+      "post": {
+        "operationId": "ParcelService_CreateBatchParcels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelListDTO"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelListDTO"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/by-location": {
+      "post": {
+        "operationId": "ParcelService_FindParcelByLocation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcel"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbFindParcelByLocationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/by-polygon": {
+      "post": {
+        "operationId": "ParcelService_FindParcelsByPolygon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbFindParcelsByPolygonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbFindParcelsByPolygonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/preview/{id}": {
+      "get": {
+        "operationId": "ParcelService_PreviewParcelsById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelInfo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/public/{id}": {
+      "get": {
+        "operationId": "ParcelService_PublicParcelsById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelInfo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/detail": {
+      "get": {
+        "summary": "============================================================\nPHASE 1: CORE API — Lấy tổng quan thửa đất\n============================================================",
+        "operationId": "ParcelService_GetParcelDetail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelDetailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/history": {
+      "get": {
+        "summary": "Lịch sử thửa đất — shape giống ListPlanningEvents (Đồ án quy hoạch).\nEventType: CREATE | UPDATE_INFO | UPDATE_GEOMETRY | OWNERSHIP | STATUS | NOTE | OTHER",
+        "operationId": "ParcelService_GetParcelHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbGetParcelHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/info": {
+      "get": {
+        "operationId": "ParcelService_GetParcelInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/layers": {
+      "get": {
+        "summary": "============================================================\nPHASE 2: LAYERS API — Lấy chi tiết các layer\n============================================================",
+        "operationId": "ParcelService_GetParcelLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelLayersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/layers/{layerId}/zones/{zoneId}/geometry": {
+      "get": {
+        "summary": "============================================================\nPHASE 3: GEOMETRY API — Lấy GeoJSON của zone\n============================================================",
+        "operationId": "ParcelService_GetZoneGeometry",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbZoneGeometryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "zoneId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/legal-documents": {
+      "get": {
+        "summary": "============================================================\nPHASE 4: LEGAL DOCUMENTS API\n============================================================",
+        "operationId": "ParcelService_GetParcelLegalDocuments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelLegalDocumentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "type",
+            "description": "10=PLANNING_DECISION, 20=LAND_CERTIFICATE, ...",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "description": "10=ACTIVE, 20=SUPERSEDED, 30=EXPIRED, 40=DRAFT",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/planning": {
+      "get": {
+        "summary": "============================================================\nLEGACY — GIỮ LẠI ĐỂ TƯƠNG THÍCH NGƯỢC\n============================================================",
+        "operationId": "ParcelService_GetParcelPlanning",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelPlanningResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "preset",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "asOfDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "includeOverview",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeAssessment",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/planning-eval": {
+      "get": {
+        "summary": "GetParcelPlanningEval — tạm thời: mức kiểm tra + đánh giá chính + gợi ý kiểm tra.",
+        "operationId": "ParcelService_GetParcelPlanningEval",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelPlanningEvalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/parcels/{parcelId}/timeline": {
+      "get": {
+        "operationId": "ParcelService_GetParcelTimeline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbParcelTimelineResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/public/parcels/search": {
+      "get": {
+        "operationId": "ParcelService_SearchPublicParcels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListParcelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "access",
+            "description": "p: public, s: private",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/public/qh/checking-polygon": {
+      "post": {
+        "operationId": "ParcelService_CheckingPolygon",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbFindParcelsByPolygonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbFindParcelsByPolygonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    },
+    "/v2/tqd/qh/public/parcels/{parcelId}/quick-layers": {
+      "get": {
+        "operationId": "ParcelService_GetParcelQuickLayers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbLayerQuickInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "preset",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "asOfDate",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "includeOverview",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeAssessment",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ParcelService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "sharepbItemV3Proto": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "itemType": {
+          "type": "integer",
+          "format": "int64",
+          "title": "tag"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "file upload"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "approved"
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "issuedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "sharepbSubmitResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdditionalConstraint": {
+      "type": "object",
+      "properties": {
+        "constraintType": {
+          "type": "string",
+          "title": "\"CONVERSION_REQUIRED\", \"BUFFER_ZONE\", \"HEIGHT_RESTRICTION\", \"DENSITY_RESTRICTION\""
+        },
+        "description": {
+          "type": "string"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authority": {
+          "type": "string"
+        },
+        "processingDays": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminGenParcelSeoItem": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "canonicalUrl": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAdminGenParcelSeoRequest": {
+      "type": "object",
+      "properties": {
+        "parcelIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGenParcelSeoResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminGenParcelSeoItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "skipped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "failed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbAdminGetParcelNeighborsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminParcelNeighbor"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminListParcelsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdminParcelListItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbAdminParcelDetail": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "propertyCode": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isSeo": {
+          "type": "boolean"
+        },
+        "followerCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "propertyUuid": {
+          "type": "string"
+        },
+        "districtCode": {
+          "type": "string"
+        },
+        "geometry": {
+          "type": "string",
+          "title": "GeoJSON geometry"
+        }
+      }
+    },
+    "tqdpbAdminParcelListItem": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "propertyCode": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isSeo": {
+          "type": "boolean"
+        },
+        "followerCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAdminParcelNeighbor": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "distanceMeters": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometry": {
+          "type": "string",
+          "title": "GeoJSON"
+        }
+      }
+    },
+    "tqdpbAdministrativeUnitSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "code": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "shortName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAffectsEntities": {
+      "type": "object",
+      "properties": {
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "zoneIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "tqdpbAlert": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "integer",
+          "format": "int64",
+          "title": "0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH"
+        },
+        "score": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAssessmentResponse": {
+      "type": "object",
+      "properties": {
+        "buildability": {
+          "$ref": "#/definitions/tqdpbBuildabilityResponse"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAuthorityDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbAuthorityIssuingInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbBuildabilityResponse": {
+      "type": "object",
+      "properties": {
+        "canBuild": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "recommendation": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbCentroid": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lng": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbCompareChange": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "changeType": {
+          "type": "string"
+        },
+        "oldValue": {
+          "type": "string"
+        },
+        "newValue": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbCompareResult": {
+      "type": "object",
+      "properties": {
+        "totalLayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbCompareChange"
+          }
+        }
+      }
+    },
+    "tqdpbConflictDetail": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "recommendation": {
+          "type": "string"
+        },
+        "actionRequired": {
+          "type": "string"
+        },
+        "affectedPercent": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbCurrentUse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        },
+        "legalDocumentId": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbFailedLayer": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerCode": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbFindParcelByLocationRequest": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "radius": {
+          "type": "number",
+          "format": "double"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbFindParcelsByPolygonRequest": {
+      "type": "object",
+      "properties": {
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPoint"
+          }
+        },
+        "maxAreaHa": {
+          "type": "number",
+          "format": "double"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "allowAutoShrink": {
+          "type": "boolean"
+        },
+        "intersect": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        },
+        "z": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "labelIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "landUseIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "landUseCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "canBuild": {
+          "type": "boolean"
+        },
+        "keyword": {
+          "type": "string"
+        },
+        "includeAnalysis": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbFindParcelsByPolygonResponse": {
+      "type": "object",
+      "properties": {
+        "parcels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbParcel"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "adjustedGeoJson": {
+          "type": "string"
+        },
+        "adjustmentReason": {
+          "type": "string"
+        },
+        "originalAreaKm2": {
+          "type": "number",
+          "format": "double"
+        },
+        "adjustedAreaKm2": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxAllowedAreaKm2": {
+          "type": "number",
+          "format": "double"
+        },
+        "warning": {
+          "type": "string"
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbRegionInfoResponse"
+          }
+        },
+        "resultType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "z": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "analysis": {
+          "$ref": "#/definitions/tqdpbPolygonAnalysisSummary"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerQuickInfo"
+          }
+        },
+        "quickWarnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbGetParcelHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbParcelHistoryItem"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbGetParcelsAroundResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbNearbyParcelItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbGuidance": {
+      "type": "object",
+      "properties": {
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbWarning"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbRecommendation"
+          }
+        }
+      }
+    },
+    "tqdpbHistoricalRisk": {
+      "type": "object",
+      "properties": {
+        "trend": {
+          "type": "string"
+        },
+        "trendDetail": {
+          "type": "string"
+        },
+        "activeLayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "expiringLayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "analyzedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbIssuingAuthority": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLabel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "fontWeight": {
+          "type": "string"
+        },
+        "minZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "maxZoom": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbRegion"
+          }
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalPercent": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbLabelDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbRegionDetail"
+          }
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalPct": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbLandUseQuickInfo": {
+      "type": "object",
+      "properties": {
+        "landUseId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "intersectAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "percent": {
+          "type": "number",
+          "format": "double"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "warnLevel": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "canBuild": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbLayer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "legalDoc": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLabel"
+          }
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalDocs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerLegalDocInfo"
+          }
+        },
+        "authorityIssuing": {
+          "$ref": "#/definitions/tqdpbAuthorityIssuingInfo"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "layerAvatar": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLabelDetail"
+          }
+        },
+        "legalDocs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLegalDocDetail"
+          }
+        },
+        "authority": {
+          "$ref": "#/definitions/tqdpbAuthorityDetail"
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalPct": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbLayerDetailItem": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerCode": {
+          "type": "string"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "layerDisplayName": {
+          "type": "string"
+        },
+        "layerType": {
+          "type": "string"
+        },
+        "layerDescription": {
+          "type": "string"
+        },
+        "legalStatus": {
+          "$ref": "#/definitions/tqdpbLayerLegalStatus"
+        },
+        "issuingAuthority": {
+          "$ref": "#/definitions/tqdpbIssuingAuthority"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "zones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbZoneItem"
+          }
+        },
+        "zoneCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalPercent": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbLayerHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "familyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerVersionInfo"
+          }
+        },
+        "currentId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbLayerLegalDocInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerLegalStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "title": "\"ACTIVE\", \"SUPERSEDED\", \"EXPIRED\""
+        },
+        "label": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "expiryDate": {
+          "type": "string"
+        },
+        "issuedDate": {
+          "type": "string"
+        },
+        "legalDocumentId": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLayerQuickInfo": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "relationType": {
+          "type": "string"
+        },
+        "landUses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLandUseQuickInfo"
+          }
+        },
+        "intersectAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalStatus": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "legalStatusName": {
+          "type": "string"
+        },
+        "layerAvatar": {
+          "type": "string"
+        },
+        "layerDisplayName": {
+          "type": "string"
+        },
+        "layerOrder": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "layerType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "planningProjectId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerImage": {
+          "type": "string",
+          "title": "ảnh lớp cho client (alias của layerAvatar)"
+        }
+      }
+    },
+    "tqdpbLayerQuickInfoResponse": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerQuickInfo"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "─── Compare \u0026 Historical Risk messages ───"
+    },
+    "tqdpbLayerVersionInfo": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "state": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "isLatest": {
+          "type": "boolean"
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLifecycleTransitionInfo"
+          }
+        }
+      }
+    },
+    "tqdpbLayersMeta": {
+      "type": "object",
+      "properties": {
+        "partialData": {
+          "type": "boolean"
+        },
+        "failedLayers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbFailedLayer"
+          }
+        },
+        "responseTimeMs": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbLegalBasis": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbLegalDocDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "fileUrl": {
+          "type": "string"
+        },
+        "fileType": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLegalDocumentItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=PLANNING_DECISION, 20=LAND_CERTIFICATE, 30=LAW, 40=DECREE, 50=REGULATION, 60=CIRCULAR, 99=OTHER"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "typeIcon": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "issuedBy": {
+          "type": "string"
+        },
+        "issuedAt": {
+          "type": "string"
+        },
+        "effectiveDate": {
+          "type": "string"
+        },
+        "expiryDate": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ACTIVE, 20=SUPERSEDED, 30=EXPIRED, 40=DRAFT"
+        },
+        "statusLabel": {
+          "type": "string"
+        },
+        "statusColor": {
+          "type": "string"
+        },
+        "supersededBy": {
+          "type": "string"
+        },
+        "supersedes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relevantArticles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "file": {
+          "$ref": "#/definitions/tqdpbLegalFile"
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "requiresAuth": {
+          "type": "boolean"
+        },
+        "affectsEntities": {
+          "$ref": "#/definitions/tqdpbAffectsEntities"
+        }
+      }
+    },
+    "tqdpbLegalDocumentSummary": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "byType": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "byStatus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "hasSupersededDocs": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbLegalDocumentsSummary": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLegalDocumentItem"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/tqdpbLegalDocumentSummary"
+        }
+      }
+    },
+    "tqdpbLegalFile": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "\"PDF\", \"DOCX\", \"XLSX\", \"JPG\""
+        },
+        "sizeKb": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "pages": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "url": {
+          "type": "string"
+        },
+        "previewUrl": {
+          "type": "string"
+        },
+        "downloadUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLegalFilters": {
+      "type": "object",
+      "properties": {
+        "applied": {
+          "$ref": "#/definitions/tqdpbLegalFiltersApplied"
+        },
+        "availableTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "availableStatuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbLegalFiltersApplied": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbLifecycleTransitionInfo": {
+      "type": "object",
+      "properties": {
+        "fromState": {
+          "type": "string"
+        },
+        "toState": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "legalDoc": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbLinks": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string"
+        },
+        "layers": {
+          "type": "string"
+        },
+        "legalDocuments": {
+          "type": "string"
+        },
+        "shareUrl": {
+          "type": "string"
+        },
+        "next": {
+          "type": "string"
+        },
+        "prev": {
+          "type": "string"
+        },
+        "reportError": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbListParcelResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbParcelInfo"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListParcelSeoSourcesRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbListParcelSeoSourcesResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbParcelSeoSourceResponse"
+          }
+        }
+      }
+    },
+    "tqdpbLocation": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        },
+        "ward": {
+          "type": "string"
+        },
+        "provinceInfo": {
+          "$ref": "#/definitions/tqdpbAdministrativeUnitSummary"
+        },
+        "wardInfo": {
+          "$ref": "#/definitions/tqdpbAdministrativeUnitSummary"
+        }
+      }
+    },
+    "tqdpbNearbyParcelItem": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        },
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "distanceMeters": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbOwnership": {
+      "type": "object",
+      "properties": {
+        "certificateNumber": {
+          "type": "string"
+        },
+        "issuedAt": {
+          "type": "string"
+        },
+        "issuedBy": {
+          "type": "string"
+        },
+        "holderName": {
+          "type": "string"
+        },
+        "legalDocumentId": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbPagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hasMore": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbParcel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        },
+        "minLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "minLng": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLng": {
+          "type": "number",
+          "format": "double"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbParcelAssessmentResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "currentPlan": {
+          "$ref": "#/definitions/tqdpbPlanDetailInfo"
+        },
+        "otherPlans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanDetailInfo"
+          }
+        },
+        "hasConflict": {
+          "type": "boolean"
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbConflictDetail"
+          }
+        },
+        "assessment": {
+          "$ref": "#/definitions/tqdpbAssessmentResponse"
+        },
+        "metadata": {
+          "$ref": "#/definitions/tqdpbResponseMetadataInfo"
+        },
+        "riskScore": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "riskLevel": {
+          "type": "string"
+        },
+        "riskReasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolutionStatus": {
+          "type": "string"
+        },
+        "infoConflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbConflictDetail"
+          }
+        },
+        "compareResult": {
+          "$ref": "#/definitions/tqdpbCompareResult"
+        },
+        "historicalRisk": {
+          "$ref": "#/definitions/tqdpbHistoricalRisk"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerDetail"
+          }
+        }
+      }
+    },
+    "tqdpbParcelCheckLevel": {
+      "type": "string",
+      "enum": [
+        "PARCEL_CHECK_LEVEL_UNSPECIFIED",
+        "PARCEL_CHECK_LEVEL_LOW",
+        "PARCEL_CHECK_LEVEL_HIGH"
+      ],
+      "default": "PARCEL_CHECK_LEVEL_UNSPECIFIED",
+      "title": "Mức cần kiểm tra: 90 = cao, 10 = thấp"
+    },
+    "tqdpbParcelDetailResponse": {
+      "type": "object",
+      "properties": {
+        "parcel": {
+          "$ref": "#/definitions/tqdpbParcelIdentity"
+        },
+        "currentUse": {
+          "$ref": "#/definitions/tqdpbCurrentUse"
+        },
+        "planningConclusion": {
+          "$ref": "#/definitions/tqdpbPlanningConclusion"
+        },
+        "primaryUse": {
+          "$ref": "#/definitions/tqdpbPrimaryUse"
+        },
+        "guidance": {
+          "$ref": "#/definitions/tqdpbGuidance"
+        },
+        "legalDocuments": {
+          "$ref": "#/definitions/tqdpbLegalDocumentsSummary"
+        },
+        "meta": {
+          "$ref": "#/definitions/tqdpbResponseMetadata"
+        },
+        "links": {
+          "$ref": "#/definitions/tqdpbLinks"
+        }
+      }
+    },
+    "tqdpbParcelHistoryItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "eventDate": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceUrl": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbParcelIdentity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "mapSheetNumber": {
+          "type": "string"
+        },
+        "landParcelNumber": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "totalAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdpbCentroid"
+        },
+        "ownership": {
+          "$ref": "#/definitions/tqdpbOwnership"
+        },
+        "location": {
+          "$ref": "#/definitions/tqdpbLocation"
+        }
+      }
+    },
+    "tqdpbParcelInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "addressStr": {
+          "type": "string"
+        },
+        "mapNumber": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "landNumber": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lng": {
+          "type": "number",
+          "format": "double"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "shape": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        },
+        "facade": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "landType": {
+          "$ref": "#/definitions/sharepbItemV3Proto"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        },
+        "directions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/sharepbItemV3Proto"
+          }
+        },
+        "isSeo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbParcelInfoResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        },
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "propertyCode": {
+          "type": "string"
+        },
+        "propertyUuid": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "isSeo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbParcelLayersResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayerDetailItem"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/tqdpbPagination"
+        },
+        "meta": {
+          "$ref": "#/definitions/tqdpbLayersMeta"
+        },
+        "links": {
+          "$ref": "#/definitions/tqdpbLinks"
+        }
+      }
+    },
+    "tqdpbParcelLegalDocumentsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLegalDocumentItem"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/tqdpbLegalDocumentSummary"
+        },
+        "filters": {
+          "$ref": "#/definitions/tqdpbLegalFilters"
+        },
+        "meta": {
+          "$ref": "#/definitions/tqdpbResponseMetadata"
+        },
+        "links": {
+          "$ref": "#/definitions/tqdpbLinks"
+        }
+      }
+    },
+    "tqdpbParcelListDTO": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbParcel"
+          }
+        }
+      }
+    },
+    "tqdpbParcelOverviewResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "summary": {
+          "$ref": "#/definitions/tqdpbParcelSummary"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbLayer"
+          }
+        },
+        "totalOverlapArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalOverlapPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "layersAffected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labelsAffected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "regionsAffected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "hasConflict": {
+          "type": "boolean"
+        },
+        "warning": {
+          "type": "string"
+        },
+        "riskLevel": {
+          "type": "string"
+        },
+        "riskScore": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "canBuild": {
+          "type": "boolean"
+        },
+        "riskReasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendation": {
+          "type": "string"
+        },
+        "dataSource": {
+          "type": "string"
+        },
+        "queriedAt": {
+          "type": "string"
+        },
+        "responseTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "spatialDataAvailable": {
+          "type": "boolean"
+        },
+        "concludeLabel": {
+          "$ref": "#/definitions/tqdpbRegion"
+        },
+        "info": {
+          "$ref": "#/definitions/tqdpbParcelInfoResponse"
+        },
+        "primaryPlan": {
+          "$ref": "#/definitions/tqdpbPlanDetailInfo"
+        },
+        "landUseGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanLandUseGroupDetail"
+          }
+        }
+      }
+    },
+    "tqdpbParcelPlanningEvalResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "checkLevel": {
+          "$ref": "#/definitions/tqdpbParcelCheckLevel",
+          "title": "Mức cần kiểm tra (90-cao / 10-thấp)"
+        },
+        "mainAssessment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Đánh giá chính"
+        },
+        "checkSuggestions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Gợi ý kiểm tra"
+        }
+      }
+    },
+    "tqdpbParcelPlanningResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "view": {
+          "type": "string"
+        },
+        "overview": {
+          "$ref": "#/definitions/tqdpbParcelOverviewResponse"
+        },
+        "assessment": {
+          "$ref": "#/definitions/tqdpbParcelAssessmentResponse"
+        },
+        "metadata": {
+          "$ref": "#/definitions/tqdpbResponseMetadataInfo"
+        }
+      }
+    },
+    "tqdpbParcelSeoSourceResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "adrSearch": {
+          "type": "string"
+        },
+        "seoId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbParcelSummary": {
+      "type": "object",
+      "properties": {
+        "dominantLandUse": {
+          "type": "string"
+        },
+        "dominantPercentage": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalAffectedPercentage": {
+          "type": "number",
+          "format": "double"
+        },
+        "topLayerName": {
+          "type": "string"
+        },
+        "buildable": {
+          "type": "boolean"
+        },
+        "dominantLandUseCode": {
+          "type": "string"
+        },
+        "dominantLandUseColor": {
+          "type": "string"
+        },
+        "dominantLandUseGroupCode": {
+          "type": "string"
+        },
+        "dominantLandUseGroupName": {
+          "type": "string"
+        },
+        "dominantAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "dominantCanBuild": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbParcelTimelineResponse": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbTimelineEvent"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/tqdpbTimelineSummary"
+        }
+      }
+    },
+    "tqdpbPlanDetailInfo": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "groupCode": {
+          "type": "string"
+        },
+        "impactPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "impactAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "landUseGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanLandUseGroupDetail"
+          }
+        },
+        "legalCanonical": {
+          "type": "string"
+        },
+        "legalConfidence": {
+          "type": "string"
+        },
+        "legalActiveState": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "canBuild": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbPlanLandUseGroupDetail": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "canBuild": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "overlapPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "overlapAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "warnLevel": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdpbPlanningBreakdown": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "groupCode": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "percent": {
+          "type": "number",
+          "format": "double"
+        },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        },
+        "alertLevel": {
+          "type": "integer",
+          "format": "int64",
+          "title": "0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbPlanningConclusion": {
+      "type": "object",
+      "properties": {
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        },
+        "hasConflict": {
+          "type": "boolean"
+        },
+        "alert": {
+          "$ref": "#/definitions/tqdpbAlert"
+        },
+        "legalBasis": {
+          "$ref": "#/definitions/tqdpbLegalBasis"
+        },
+        "breakdown": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPlanningBreakdown"
+          }
+        },
+        "statistics": {
+          "$ref": "#/definitions/tqdpbPlanningStatistics"
+        }
+      }
+    },
+    "tqdpbPlanningStatistics": {
+      "type": "object",
+      "properties": {
+        "totalLayersAffected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalZonesAffected": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalOverlapAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalOverlapPercent": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbPoint": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lng": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbPolygonAnalysisSummary": {
+      "type": "object",
+      "properties": {
+        "resultType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "z": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "queryAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalMatchedAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "regionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "parcelCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "landUseStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPolygonLandUseStat"
+          }
+        },
+        "layerStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPolygonLayerStat"
+          }
+        },
+        "buildabilityStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPolygonBuildabilityStat"
+          }
+        },
+        "legalKnownPct": {
+          "type": "number",
+          "format": "double"
+        },
+        "legalUnknownPct": {
+          "type": "number",
+          "format": "double"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbPolygonAnalysisWarning"
+          }
+        }
+      }
+    },
+    "tqdpbPolygonAnalysisWarning": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbPolygonBuildabilityStat": {
+      "type": "object",
+      "properties": {
+        "canBuild": {
+          "type": "boolean"
+        },
+        "regionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaPct": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbPolygonLandUseStat": {
+      "type": "object",
+      "properties": {
+        "landUseId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "canBuild": {
+          "type": "boolean"
+        },
+        "regionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaPct": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbPolygonLayerStat": {
+      "type": "object",
+      "properties": {
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "layerDisplayName": {
+          "type": "string"
+        },
+        "regionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaPct": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbPrimaryUse": {
+      "type": "object",
+      "properties": {
+        "rule": {
+          "type": "string",
+          "title": "\"LARGEST_AREA\""
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "percent": {
+          "type": "number",
+          "format": "double"
+        },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        }
+      }
+    },
+    "tqdpbRecommendation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "\"ALLOWED\" | \"FORBIDDEN\" | \"INFO\""
+        },
+        "message": {
+          "type": "string"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbRegion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseGroup": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "overlapArea": {
+          "type": "number",
+          "format": "double"
+        },
+        "overlapPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "centerLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "centerLng": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        },
+        "warnLevel": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "canBuild": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbRegionBounds": {
+      "type": "object",
+      "properties": {
+        "minLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "minLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLat": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdpbRegionDetail": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "overlapAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "overlapPct": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometry": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "tqdpbRegionInfoResponse": {
+      "type": "object",
+      "properties": {
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "labelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "landUseId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "legendId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "layerDisplayName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "canBuild": {
+          "type": "boolean"
+        },
+        "labelName": {
+          "type": "string"
+        },
+        "labelColor": {
+          "type": "string"
+        },
+        "legendColor": {
+          "type": "string"
+        },
+        "legendType": {
+          "type": "string"
+        },
+        "geometryType": {
+          "type": "string"
+        },
+        "legalDoc": {
+          "type": "string"
+        },
+        "planningName": {
+          "type": "string"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "areaHa": {
+          "type": "number",
+          "format": "double"
+        },
+        "perimeterM": {
+          "type": "number",
+          "format": "double"
+        },
+        "centerLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "centerLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "bounds": {
+          "$ref": "#/definitions/tqdpbRegionBounds"
+        },
+        "geoJson": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbResolveMapTargetByLocationRequest": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "radius": {
+          "type": "number",
+          "format": "double"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdpbResolveMapTargetByLocationResponse": {
+      "type": "object",
+      "properties": {
+        "targetType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcel": {
+          "$ref": "#/definitions/tqdpbParcelInfoResponse"
+        },
+        "region": {
+          "$ref": "#/definitions/tqdpbRegionInfoResponse"
+        }
+      }
+    },
+    "tqdpbResponseMetadata": {
+      "type": "object",
+      "properties": {
+        "dataVersion": {
+          "type": "string"
+        },
+        "dataQuality": {
+          "type": "string"
+        },
+        "queriedAt": {
+          "type": "string"
+        },
+        "responseTimeMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "partialData": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdpbResponseMetadataInfo": {
+      "type": "object",
+      "properties": {
+        "responseTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "dataVersion": {
+          "type": "string"
+        },
+        "isCached": {
+          "type": "boolean"
+        },
+        "disclaimer": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbTimelineEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "layerName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdpbTimelineSummary": {
+      "type": "object",
+      "properties": {
+        "totalEvents": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "firstEventAt": {
+          "type": "string"
+        },
+        "lastEventAt": {
+          "type": "string"
+        },
+        "majorChanges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbWarning": {
+      "type": "object",
+      "properties": {
+        "alertLevel": {
+          "type": "integer",
+          "format": "int64",
+          "title": "0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "affectedAreaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "affectedPercent": {
+          "type": "number",
+          "format": "double"
+        },
+        "title": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "legalBasis": {
+          "$ref": "#/definitions/tqdpbLegalBasis"
+        }
+      }
+    },
+    "tqdpbZoneGeometryProperties": {
+      "type": "object",
+      "properties": {
+        "zoneId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "zoneName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        },
+        "alertLevel": {
+          "type": "integer",
+          "format": "int64",
+          "title": "0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbZoneGeometryResponse": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "\"Feature\""
+        },
+        "properties": {
+          "$ref": "#/definitions/tqdpbZoneGeometryProperties"
+        },
+        "geometry": {
+          "type": "string",
+          "title": "GeoJSON string"
+        }
+      }
+    },
+    "tqdpbZoneItem": {
+      "type": "object",
+      "properties": {
+        "zoneId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "zoneName": {
+          "type": "string"
+        },
+        "zoneDisplayName": {
+          "type": "string"
+        },
+        "landUseCode": {
+          "type": "string"
+        },
+        "landUseName": {
+          "type": "string"
+        },
+        "landUseColor": {
+          "type": "string"
+        },
+        "groupCode": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        },
+        "percent": {
+          "type": "number",
+          "format": "double"
+        },
+        "buildStatus": {
+          "type": "integer",
+          "format": "int64",
+          "title": "10=ALLOWED, 20=FORBIDDEN, 30=RESTRICTED, 99=UNKNOWN"
+        },
+        "alertLevel": {
+          "type": "integer",
+          "format": "int64",
+          "title": "0=NONE, 10=LOW, 20=MEDIUM, 30=HIGH"
+        },
+        "legalDocumentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "additionalConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbAdditionalConstraint"
+          }
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdpbCentroid"
+        },
+        "links": {
+          "$ref": "#/definitions/tqdpbZoneLinks"
+        }
+      }
+    },
+    "tqdpbZoneLinks": {
+      "type": "object",
+      "properties": {
+        "geometry": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

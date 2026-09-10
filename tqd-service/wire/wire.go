@@ -24,6 +24,7 @@ import (
 	tqd_infra_postgres_generatedreport_job "tqd/infra/postgres/generatedreport/job"
 	tqd_infra_postgres_generatedreport_render "tqd/infra/postgres/generatedreport/render"
 	tqd_infra_postgres_generatedreport_report "tqd/infra/postgres/generatedreport/report"
+	tqd_infra_postgres_mappoint "tqd/infra/postgres/mappoint"
 	tqd_infra_postgres_planningclient "tqd/infra/postgres/planningclient"
 	tqd_infra_postgres_publiccontent "tqd/infra/postgres/publiccontent"
 	tqd_infra_postgres_quota "tqd/infra/postgres/quota"
@@ -43,6 +44,7 @@ import (
 	tqd_internal_usecase_generatedreport_application "tqd/internal/usecase/generatedreport/application"
 	tqd_internal_usecase_generatedreport_processing "tqd/internal/usecase/generatedreport/processing"
 	tqd_internal_usecase_generatedreport_rendering "tqd/internal/usecase/generatedreport/rendering"
+	tqd_internal_usecase_mappoint "tqd/internal/usecase/mappoint"
 	tqd_internal_usecase_planningclient_application "tqd/internal/usecase/planningclient/application"
 	tqd_internal_usecase_qh "tqd/internal/usecase/qh"
 	tqd_internal_usecase_quota "tqd/internal/usecase/quota"
@@ -65,6 +67,7 @@ var wireSet = wire.NewSet(
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
 	wire.Bind(new(tqd_internal_usecase_generatedreport_admin.Repository), new(*tqd_infra_postgres_generatedreport_report.ReportStore)),
+	wire.Bind(new(tqd_internal_usecase_mappoint.Repository), new(*tqd_infra_postgres_mappoint.Repository)),
 	wire.Bind(new(tqd_internal_usecase_planningclient_application.PlanningRepository), new(*tqd_infra_postgres_planningclient.Repository)),
 	wire.Bind(new(tqd_internal_usecase_planningclient_application.ProjectionRepository), new(*tqd_infra_postgres_publiccontent.Repository)),
 	wire.Bind(new(tqd_internal_usecase_quota.AdminUsageRepository), new(*tqd_infra_postgres_quota.AdminUsageStore)),
@@ -164,6 +167,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase.NewLocationUsecase,
 	tqd_infra_validator.NewLocationValidator,
 	tqd_map.NewMapManager,
+	tqd_infra_handler_grpc.NewMapPointGrpcHandler,
 	tqd_infra_handler_grpc.NewMapWorkspaceGrpcHandler,
 	tqd_infra_postgres.NewMapWorkspacePostgres,
 	tqd_internal_usecase.NewMapWorkspaceUsecase,
@@ -244,6 +248,7 @@ var wireSet = wire.NewSet(
 	tqd_infra_postgres.NewReportRepository,
 	tqd_infra_postgres_generatedreport_report.NewReportStore,
 	tqd_internal_usecase.NewReportUsecase,
+	tqd_infra_postgres_mappoint.NewRepository,
 	tqd_infra_postgres_planningclient.NewRepository,
 	tqd_infra_postgres_publiccontent.NewRepository,
 	tqd_infra_postgres_relatedentity.NewRepository,
@@ -260,6 +265,7 @@ var wireSet = wire.NewSet(
 	tqd_internal_usecase_generatedreport_admin.NewService,
 	tqd_internal_usecase_generatedreport_application.NewService,
 	tqd_internal_usecase_generatedreport_rendering.NewService,
+	tqd_internal_usecase_mappoint.NewService,
 	tqd_internal_usecase_planningclient_application.NewService,
 	tqd_internal_usecase_quota.NewService,
 	tqd_internal_usecase_quota_reconciliation_reservationcleanup.NewService,

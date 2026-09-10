@@ -1,0 +1,23 @@
+server:
+  port: 8002
+
+eureka:
+  url: localhost
+  port: 8761
+  
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_file
+  user: file_owner
+  password: d2a8f5b4e9c3d6a1f7b2
+  dsn: host=103.172.239.89 user=file_owner password=d2a8f5b4e9c3d6a1f7b2 dbname=db_file port=5432 sslmode=disable
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization

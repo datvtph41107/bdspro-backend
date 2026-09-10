@@ -16,6 +16,12 @@ service AdminCommerceService {
   rpc GetPaymentOrder(GetAdminPaymentOrderRequest) returns (AdminPaymentOrder) {
     option (google.api.http) = { get: "/v2/payment/admin/commercial/orders/{order_id}" };
   }
+  rpc ConfirmPaymentFunds(ConfirmAdminPaymentFundsRequest) returns (ConfirmAdminPaymentFundsResponse) {
+    option (google.api.http) = {
+      post: "/v2/payment/admin/commercial/orders/{order_id}:confirm-funds"
+      body: "*"
+    };
+  }
   rpc ListFulfillments(ListAdminFulfillmentsRequest) returns (ListAdminFulfillmentsResponse) {
     option (google.api.http) = { get: "/v2/payment/admin/commercial/fulfillments" };
   }
@@ -67,6 +73,26 @@ message AdminPaymentOrder {
   repeated AdminPaymentAttempt attempts = 19;
   AdminSettlement settlement = 20;
   AdminFulfillment fulfillment = 21;
+  AdminManualPaymentConfirmation manual_confirmation = 22;
+}
+
+message AdminManualPaymentConfirmation {
+  string actor_id = 1;
+  string reason = 2;
+  string command_key = 3;
+  string outcome = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ConfirmAdminPaymentFundsRequest {
+  uint64 order_id = 1;
+  string reason = 2;
+}
+
+message ConfirmAdminPaymentFundsResponse {
+  AdminPaymentOrder order = 1;
+  bool changed = 2;
+  bool replay = 3;
 }
 
 message AdminPaymentAttempt {

@@ -39,15 +39,33 @@ func (r *RoleRepo) ExistProfileIdWithKeys(ctx context.Context, profileId uint64,
             SELECT 1
             FROM role_profiles rp
             JOIN roles r ON r.id = rp.role_id
-            JOIN role_permissions rp2 ON rp2.role_id = r.id
-            JOIN permissions p ON p.id = rp2.permission_id
             WHERE rp.profile_id = ?
-              AND p.key IN (?)
+              AND rp.deleted_at IS NULL
+              AND r.deleted_at IS NULL
+              AND (
+                  (
+                      r.organization_id = 0
+                      AND r.key = 'QHPRO_SYSTEM_ROOT'
+                      AND EXISTS (
+                          SELECT 1 FROM permissions root_permission
+                           WHERE root_permission.deleted_at IS NULL
+                             AND root_permission.key IN (?)
+                      )
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                        FROM role_permissions rp2
+                        JOIN permissions p ON p.id = rp2.permission_id
+                       WHERE rp2.role_id = r.id
+                         AND p.deleted_at IS NULL
+                         AND p.key IN (?)
+                  )
+              )
         )
     `
 	tx := r.GetDB(ctx).
 		Debug().
-		Raw(query, profileId, keys).
+		Raw(query, profileId, keys, keys).
 		Scan(&exists)
 	if tx.Error != nil {
 		return false, tx.Error
@@ -170,7 +188,8 @@ func (r *RoleRepo) GetList(ctx context.Context, pagable _dto.IPagable) ([]access
 
 	query := r.GetDB(ctx).
 		Model(&access.Role{}).
-		Preload("RoleGroup")
+		Preload("RoleGroup").
+		Preload("Permissions")
 	query = r.AddCondition(query, param)
 
 	err := query.Count(&total).Error
@@ -277,13 +296,31 @@ func (r *RoleRepo) GetPermissionKeysByUserId(ctx context.Context, userId uint64)
 	var permissionKeys []string
 
 	err := r.GetDB(ctx).
-		Debug().
-		Table("role_profiles p").
-		Select("DISTINCT perm.key").
-		Joins("INNER JOIN role_permissions rperm ON p.role_id = rperm.role_id").
-		Joins("INNER JOIN permissions perm ON rperm.permission_id = perm.id").
-		Where("p.profile_id = ? AND p.deleted_at IS NULL AND perm.key IS NOT NULL AND perm.key != ''", userId).
-		Pluck("perm.key", &permissionKeys).
+		Raw(`
+SELECT DISTINCT permission.key
+  FROM permissions permission
+ WHERE permission.deleted_at IS NULL
+   AND permission.key IS NOT NULL
+   AND permission.key != ''
+   AND EXISTS (
+       SELECT 1
+         FROM role_profiles assignment
+         JOIN roles role ON role.id = assignment.role_id
+        WHERE assignment.profile_id = ?
+          AND assignment.deleted_at IS NULL
+          AND role.deleted_at IS NULL
+          AND (
+              (role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT')
+              OR EXISTS (
+                  SELECT 1 FROM role_permissions mapping
+                   WHERE mapping.role_id = role.id
+                     AND mapping.permission_id = permission.id
+              )
+          )
+   )
+ORDER BY permission.key
+`, userId).
+		Scan(&permissionKeys).
 		Error
 	if err != nil {
 		return nil, err

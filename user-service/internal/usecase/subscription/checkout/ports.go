@@ -7,6 +7,10 @@ import (
 
 type Clock func() time.Time
 
+type ContactStore interface {
+	UpdateCheckoutContact(ctx context.Context, profileID uint64, contact Contact) (Contact, error)
+}
+
 type PlanResolver interface {
 	ResolveCheckoutTerms(ctx context.Context, planCode string, at time.Time) (PlanTerms, error)
 }
@@ -58,4 +62,20 @@ type PaymentAttempt struct {
 
 type PaymentAttemptPort interface {
 	CreateAttempt(ctx context.Context, command CreatePaymentAttemptCommand) (PaymentAttempt, error)
+}
+
+type PaymentMethodOption struct {
+	Method            string
+	Provider          string
+	Enabled           bool
+	UnavailableReason string
+}
+
+type PaymentMethods struct {
+	Environment string
+	Methods     []PaymentMethodOption
+}
+
+type PaymentMethodReader interface {
+	ListMethods(ctx context.Context) (PaymentMethods, error)
 }

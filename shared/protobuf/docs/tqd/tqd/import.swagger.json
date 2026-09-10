@@ -1,0 +1,552 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/import.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ImportService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/form/tqd/admin/import/geojson": {
+      "post": {
+        "summary": "ImportGeoJson - Upload file JSON/GeoJSON/NDJSON.\nTrả về ngay ImportGeoJsonResponse (batchId, status=processing, message) sau khi ghi file tạm + gắn batch;\nphần đọc feature và INSERT region/label chạy nền (không block response).\nKết quả cuối (completed / failed, số lượng, lỗi): gọi GetImportBatchStatus với batchId.",
+        "operationId": "ImportService_ImportGeoJson",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbImportGeoJsonResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Chuẩn upload file (giống file-service): REST trên **tqd-service HTTP** (POST /v2/tqd/admin/import/geojson) dùng\n  Content-Type: multipart/form-data\n  - file (bắt buộc): file .json / .geojson / .ndjson — stream vào file tạm, xóa sau khi job xong\n  - file_format: auto | geojson | ndjson\n  - layer_id (bắt buộc)\n  - label_field, default_label_id, source_file_name (tuỳ chọn)\n  - label_mappings: chuỗi JSON object map name -\u003e id, ví dụ {\"a\":1,\"b\":2}\n  - validate_geometry, auto_fix_geometry, skip_invalid: true / false\n\nGRPC / gateway JSON (transcoding): điền file_content (bytes, JSON base64).",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbImportGeoJsonRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/import/batches/{batchId}": {
+      "get": {
+        "summary": "GetImportBatchStatus - Kiểm tra trạng thái batch import",
+        "operationId": "ImportService_GetImportBatchStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbImportBatchStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "batchId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      },
+      "delete": {
+        "summary": "RollbackImport - Rollback batch import",
+        "operationId": "ImportService_RollbackImport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbRollbackImportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "batchId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/import/errors/{errorId}/retry": {
+      "post": {
+        "summary": "RetryImportError - Retry một bản ghi lỗi theo id: insert lần lượt từng region trong regions_payload; lỗi insert vẫn ghi log mới (CreateBatch)",
+        "operationId": "ImportService_RetryImportError",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbRetryImportErrorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "errorId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/import/preview": {
+      "post": {
+        "summary": "PreviewImport - Phân tích file GeoJSON trước khi import",
+        "operationId": "ImportService_PreviewImport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbPreviewImportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdpbPreviewImportRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      }
+    },
+    "/v2/tqd/admin/layers/{layerId}/import/errors": {
+      "get": {
+        "summary": "ListImportRegionErrors - Danh sách bản ghi lỗi import (qh_region_import_error_logs) theo layer, có phân trang",
+        "operationId": "ImportService_ListImportRegionErrors",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdpbListImportRegionErrorsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "ImportService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "PreviewImportResponseFeatureSample": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "geometryType": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "object"
+        }
+      }
+    },
+    "PreviewImportResponseFieldStat": {
+      "type": "object",
+      "properties": {
+        "fieldName": {
+          "type": "string"
+        },
+        "coverage": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "distinctValues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tqdpbImportBatchStatusResponse": {
+      "type": "object",
+      "properties": {
+        "batchId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "title": "\"completed\", \"failed\", \"processing\""
+        },
+        "totalFeatures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "successCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "failedCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "completedAt": {
+          "type": "string"
+        },
+        "errorMessages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tqdpbImportError": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "importBatchId": {
+          "type": "string"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "regionsPayload": {
+          "type": "string",
+          "title": "JSON: mảng RegionSnapshot đã lưu khi batch insert lỗi"
+        },
+        "batchSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "retryCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
+          "type": "string",
+          "title": "pending | resolved | ignored"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "ImportError — khớp bảng qh_region_import_error_logs (regions_payload là chuỗi JSON)"
+    },
+    "tqdpbImportGeoJsonRequest": {
+      "type": "object",
+      "properties": {
+        "fileContent": {
+          "type": "string",
+          "format": "byte"
+        },
+        "fileFormat": {
+          "type": "string"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "labelField": {
+          "type": "string"
+        },
+        "labelMappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uint64"
+          }
+        },
+        "defaultLabelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "sourceFileName": {
+          "type": "string"
+        },
+        "validateGeometry": {
+          "type": "boolean"
+        },
+        "autoFixGeometry": {
+          "type": "boolean"
+        },
+        "skipInvalid": {
+          "type": "boolean"
+        }
+      },
+      "description": "Chuẩn upload file (giống file-service): REST trên **tqd-service HTTP** (POST /v2/tqd/admin/import/geojson) dùng\n  Content-Type: multipart/form-data\n  - file (bắt buộc): file .json / .geojson / .ndjson — stream vào file tạm, xóa sau khi job xong\n  - file_format: auto | geojson | ndjson\n  - layer_id (bắt buộc)\n  - label_field, default_label_id, source_file_name (tuỳ chọn)\n  - label_mappings: chuỗi JSON object map name -\u003e id, ví dụ {\"a\":1,\"b\":2}\n  - validate_geometry, auto_fix_geometry, skip_invalid: true / false\n\nGRPC / gateway JSON (transcoding): điền file_content (bytes, JSON base64).",
+      "title": "ImportGeoJsonRequest"
+    },
+    "tqdpbImportGeoJsonResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "batchId": {
+          "type": "string",
+          "title": "dùng với GetImportBatchStatus để lấy kết quả sau khi job nền xong"
+        },
+        "status": {
+          "type": "string",
+          "title": "processing tại thời điểm trả về (đồng bộ qh_layers.import_status)"
+        },
+        "message": {
+          "type": "string",
+          "title": "hướng dẫn: poll GetImportBatchStatus(batchId) cho completed/failed + thống kê"
+        }
+      }
+    },
+    "tqdpbListImportRegionErrorsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdpbImportError"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdpbPreviewImportRequest": {
+      "type": "object",
+      "properties": {
+        "geoJson": {
+          "type": "string"
+        },
+        "layerId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdpbPreviewImportResponse": {
+      "type": "object",
+      "properties": {
+        "totalFeatures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "availableFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fieldStats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PreviewImportResponseFieldStat"
+          }
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PreviewImportResponseFeatureSample"
+          }
+        }
+      }
+    },
+    "tqdpbRetryImportErrorResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "totalItems": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "successCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "failedCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdpbRollbackImportResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "deletedCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}

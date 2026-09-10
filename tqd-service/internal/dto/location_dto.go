@@ -95,6 +95,10 @@ type AdministrativeUnitRef struct {
 	WardID     uint64 `json:"wardId"`
 }
 
+type ListProvincesResponse struct {
+	Provinces []*ProvinceDTO `json:"provinces"`
+}
+
 // ==================== RESPONSE DTOs ====================
 
 type LocationResponse struct {

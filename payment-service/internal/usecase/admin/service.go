@@ -8,12 +8,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	payment "payment/internal/domain/payment"
+	"payment/internal/usecase/settlement"
 )
 
 const (
 	PermissionOrderView          = "PAYMENT_ORDER_VIEW"
+	PermissionFundsConfirm       = "PAYMENT_FUNDS_CONFIRM"
 	PermissionFulfillmentView    = "PAYMENT_FULFILLMENT_VIEW"
 	PermissionFulfillmentRedrive = "PAYMENT_FULFILLMENT_REDRIVE"
 )
@@ -55,6 +58,25 @@ type RedriveCommand struct {
 	Reason        string
 }
 
+type ConfirmFundsCommand struct {
+	OrderID    uint64
+	CommandKey string
+	ActorID    string
+	Reason     string
+}
+
+type ConfirmFundsResult struct {
+	Order   payment.AdminOrder
+	Changed bool
+	Replay  bool
+}
+
+type OperatorSettlement interface {
+	RecordOperatorFundsConfirmation(context.Context, payment.ProviderEvent, payment.CommandEffect) (settlement.Result, error)
+}
+
+type Clock func() time.Time
+
 // Repository là boundary duy nhất tới Payment commercial projection.
 type Repository interface {
 	ListAdminOrders(context.Context, OrderQuery) (OrderPage, error)
@@ -63,9 +85,15 @@ type Repository interface {
 	RedriveAdminFulfillment(context.Context, payment.RedriveCommand) (changed bool, replay bool, status payment.FulfillmentStatus, err error)
 }
 
-type Service struct{ repository Repository }
+type Service struct {
+	repository Repository
+	settlement OperatorSettlement
+	now        Clock
+}
 
-func NewService(repository Repository) *Service { return &Service{repository: repository} }
+func NewService(repository Repository, operatorSettlement OperatorSettlement, now Clock) *Service {
+	return &Service{repository: repository, settlement: operatorSettlement, now: now}
+}
 
 func (s *Service) ListOrders(ctx context.Context, query OrderQuery) (OrderPage, error) {
 	if s == nil || s.repository == nil {
@@ -122,6 +150,55 @@ func (s *Service) Redrive(ctx context.Context, command RedriveCommand) (bool, bo
 		ActorID:       strings.TrimSpace(command.ActorID),
 		Reason:        strings.TrimSpace(command.Reason),
 	})
+}
+
+// ConfirmFunds records an operator-reviewed bank receipt. Amount, currency and
+// reference always come from the immutable Order; Admin never submits money
+// terms or writes status directly.
+func (s *Service) ConfirmFunds(ctx context.Context, command ConfirmFundsCommand) (ConfirmFundsResult, error) {
+	command.CommandKey = strings.TrimSpace(command.CommandKey)
+	command.ActorID = strings.TrimSpace(command.ActorID)
+	command.Reason = strings.TrimSpace(command.Reason)
+	if s == nil || s.repository == nil || s.settlement == nil || s.now == nil ||
+		command.OrderID == 0 || command.CommandKey == "" || command.ActorID == "" || command.Reason == "" {
+		return ConfirmFundsResult{}, payment.ErrInvalidCommand
+	}
+	if err := ctx.Err(); err != nil {
+		return ConfirmFundsResult{}, err
+	}
+	order, err := s.repository.GetAdminOrder(ctx, command.OrderID)
+	if err != nil {
+		return ConfirmFundsResult{}, err
+	}
+	if order.Order.Status == payment.OrderFundsConfirmed {
+		return ConfirmFundsResult{Order: order, Replay: true}, nil
+	}
+	now := s.now().UTC()
+	if order.Order.Status != payment.OrderPendingFunds || len(order.Attempts) == 0 || !now.Before(order.Order.ExpiresAt) {
+		return ConfirmFundsResult{}, payment.ErrFundsConfirmationNotAllowed
+	}
+
+	evidence := strings.Join([]string{
+		payment.CommandEffectManualFundsConfirmation, fmt.Sprintf("%d", command.OrderID),
+		command.CommandKey, command.ActorID, command.Reason, order.Order.Reference,
+	}, "\x00")
+	result, err := s.settlement.RecordOperatorFundsConfirmation(ctx, payment.ProviderEvent{
+		Provider: "manual_admin", TransactionID: fmt.Sprintf("order.%d.%s", command.OrderID, command.CommandKey),
+		Reference: order.Order.Reference, Amount: order.Order.Terms.Price, OccurredAt: now,
+		Type: payment.ProviderFundsConfirmed, EvidenceHash: evidence,
+	}, payment.CommandEffect{
+		EffectType: payment.CommandEffectManualFundsConfirmation, ScopeID: command.OrderID,
+		CommandKey: command.CommandKey, ActorID: command.ActorID, Reason: command.Reason,
+		Outcome: "submitted", CreatedAt: now,
+	})
+	if err != nil {
+		return ConfirmFundsResult{}, err
+	}
+	updated, err := s.repository.GetAdminOrder(ctx, command.OrderID)
+	if err != nil {
+		return ConfirmFundsResult{}, err
+	}
+	return ConfirmFundsResult{Order: updated, Changed: !result.Replay, Replay: result.Replay}, nil
 }
 
 func normalizePage(page, pageSize uint32) (uint32, uint32, error) {

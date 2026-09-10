@@ -38,17 +38,16 @@ func run() error {
 		return err
 	}
 	defer sqlDB.Close()
-	conn, err := brokerrabbit.OpenConnection(cfg.RabbitURL, "notification-payment-completed")
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
 	service := paymentcompleted.NewService(postgres_eventing.NewPaymentCompletedStore(database))
-	consumer, err := brokerrabbit.NewPaymentCompletedConsumer(conn, cfg.Exchange, service)
+	consumer, err := brokerrabbit.NewPaymentCompletedSupervisor(
+		cfg.RabbitURL,
+		"notification-payment-completed",
+		cfg.Exchange,
+		service,
+	)
 	if err != nil {
 		return err
 	}
-	defer consumer.Close()
 	if err := consumer.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}

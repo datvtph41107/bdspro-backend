@@ -1,0 +1,32 @@
+server:
+  port: 8006
+  tcp_port: 8215
+  name: transaction-service
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_transaction
+  user: transaction
+  password: c5f1e8a7d2b6c9f4e0a5
+  dsn: host=103.172.239.89 user=transaction password=c5f1e8a7d2b6c9f4e0a5 dbname=db_transaction port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: 103.172.239.89:6379
+  pass: protected_redis_secure_password

@@ -1,128 +1,109 @@
-# QHPRO Developer Operating Guide
+# Developer Operating Guide
 
-## Workspace
+## 1. Clone → ready
 
-Ba repository là ba Git source độc lập nhưng được mở trong một IDE workspace:
+```bash
+git clone <repository>
+cd bdspro-backend
+make help
+make setup
+make up
+make status
+```
+
+`setup` tạo local env còn thiếu và bootstrap pinned engineering toolchain.
+`up` chạy PostgreSQL/PostGIS, Redis, RabbitMQ bằng Docker rồi build/migrate/start
+toàn bộ Go service trực tiếp từ source. Không có application container trong
+vòng lặp này.
+
+Trong environment `development`, `make up` tạo hai identity idempotent trong
+User PostgreSQL để developer vào thẳng UI mà không cần nhà cung cấp SMS:
 
 ```text
-QHPRO
-├── BACKEND
-├── ADMIN
-└── CLIENT
+Admin:  admin / admin123
+Client: 0900000000 (hoặc client) / client123
 ```
 
-Backend phải ready trước khi chạy hai UI.
+Chúng chỉ là identity; plan, payment, subscription, quota và report vẫn phải
+được tạo qua API/state machine thật.
 
-## First-day flow
+## 2. Nhận task
 
-```bash
-git clone <backend-repository> bdspro-golang-microservices-r2f0-i21
-git clone <admin-repository> react-js-admin-bds
-git clone <client-repository> react-native-quy-hoach
-
-cd bdspro-golang-microservices-r2f0-i21
-make bootstrap
-make dev-up
-make dev-status
-make dev-smoke
-```
-
-`configure` là idempotent và không ghi đè file hiện có. `bootstrap` dùng
-version/checksum trong `tools/development/toolchain.versions`.
-
-## Manual IDE flow
+Ví dụ “Payment settlement retry”:
 
 ```text
-Ctrl+Shift+P
--> Tasks: Run Task
--> QHPRO · Configure
--> QHPRO · Doctor
--> Backend · Up
--> Backend · Status
--> Backend · Smoke
+TASK → Payment owner → settlement capability → execution flow → change → proof
 ```
 
-Các terminal được tách thành:
+Mở `payment-service/README.md`, entrypoint/config và capability liên quan; không đọc toàn repository.
 
-```text
-CONTROL       lệnh ngắn, status, smoke, verify
-BACKEND       build/start output
-BACKEND LOGS  log theo dõi dài hạn
-ADMIN         Vite
-CLIENT        React Native/Web
-```
-
-## Quan sát runtime
+## 3. Daily edit loop
 
 ```bash
-make dev-status
-make dev-logs
-make dev-logs SERVICE=payment ROLE=api
-make dev-logs SERVICE=payment ROLE=outbox-publisher SINCE=10m
-make dev-logs SERVICE=notification ROLE=payment-consumer FOLLOW=0
+make deps service=payment-service
+make dev service=payment-service
 ```
 
-Docker Desktop hiển thị một project `qhpro-backend`. Image được đặt theo owner
-(`qhpro/payment`, `qhpro/notification`); container được đặt theo process role
-(`payment`, `payment-publisher`, `notification-payment-worker`).
-Compose giới hạn mỗi container ở 5 file log, tối đa 10 MiB/file; ứng dụng vẫn
-chỉ ghi stdout/stderr để image không phụ thuộc môi trường chạy.
+`make dev` chạy native Air. Logs nằm ngay terminal. Save source → Go build → process restart. Đây là loop mặc định vì tối ưu feedback/debug.
 
-| Business service | Role | Compose process |
-| --- | --- | --- |
-| Payment | `api` | `payment` |
-| Payment | `outbox-publisher` | `payment-publisher` |
-| Notification | `api` | `notification` |
-| Notification | `payment-consumer` | `notification-payment-worker` |
-| Notification | `delivery-worker` | `notification-delivery-worker` |
+VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → `BDSPro · Dev · <Service>`.
 
-Runtime log phải có service, role, operation, outcome và correlation identity
-khi request có cung cấp. Không log password, token, signing key hoặc DSN chứa
-credential.
-
-## Daily loop
+## 4. Proof
 
 ```bash
-make dev-up
-make dev-status
-make -C user-service test
-make dev-smoke
-make verify-backend
-make dev-down
+make test service=payment-service
 ```
 
-`dev-down` giữ dữ liệu. Reset là thao tác riêng:
+Nếu schema đổi:
 
 ```bash
-make dev-reset
+make migrate service=payment-service
+make verify-migrations
 ```
 
-Non-interactive automation phải xác nhận rõ:
+Nếu contract/shared/cross-service behavior đổi:
 
 ```bash
-make dev-reset CONFIRM=reset-development-data
+make verify
 ```
 
-## Production-like boundary
+## 5. Whole-system local runtime
 
-Development và production dùng cùng domain, use case, contract, migration,
-database constraint, handler, adapter và process lifecycle. Những input được
-phép khác là endpoint, credential, replica count, resource và telemetry sink.
+Chỉ khi cần chứng minh phối hợp/packaging:
 
-Code và default `config/runtime.yml` không đổi theo môi trường. Host/container
-khác nhau ở biến wiring và secret được inject; root `compose.yaml` là một cách
-cung cấp các input đó cho development, không phải một phiên bản business khác.
+```bash
+make up
+make status
+make smoke
+make test-e2e
+```
 
-Không đặt development account, fake settlement, quota grant hoặc report result
-trong product UI/serving code. Test provisioning thuộc integration tooling và
-phải đi qua public business boundary nơi cần chứng minh behavior.
+Source vừa đổi và muốn refresh một process native ổn định:
 
-## Troubleshooting order
+```bash
+make native-restart service=payment-service
+```
 
-1. `make doctor`
-2. `make config-check`
-3. `make dev-status`
-4. Xem log đúng service/role.
-5. Lấy request ID, command key hoặc aggregate ID.
-6. Đi theo owner thay vì restart toàn stack.
-7. Sau fix, thêm regression proof hoặc runbook.
+Hoặc dùng `make dev service=payment-service` để xem log và hot reload ngay trong
+terminal. `make logs service=payment-service` đọc stdout/stderr của process do
+root supervisor quản lý.
+
+Full Compose chỉ còn là proof riêng cho image/package:
+
+```bash
+make integration-up
+make integration-status
+make integration-down
+```
+
+## 6. Final acceptance
+
+```bash
+make accept
+```
+
+Đây là gate đắt nhất: full source proof + image rebuild/runtime + E2E.
+
+## 7. Stop condition
+
+Không refactor global structure chỉ để đẹp. Chỉ thay architecture khi task thực chứng minh ownership ambiguity, duplicate workflow, hidden dependency, slow feedback hoặc correctness risk.

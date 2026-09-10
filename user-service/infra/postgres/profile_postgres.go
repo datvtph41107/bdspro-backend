@@ -3,6 +3,7 @@ package postgres
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	"common/identity"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -190,8 +191,12 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	var users []models.UserProfileEntity
 	var total int64
 
-	// Lấy adminID từ context nếu có
-	adminID := _utils.GetProfileIdWithContext(ctx)
+	// Admin routes use only the canonical actor promoted by strict ingress.
+	// A missing actor cannot match any bookmark owner.
+	adminID := uint64(0)
+	if actor, ok := identity.ActorFromContext(ctx); ok {
+		adminID = actor.ProfileID
+	}
 
 	// Luôn JOIN bookmark table để trả về thông tin bookmark
 	needBookmarkInfo := true
@@ -309,10 +314,16 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 	query = query.Order(orderClause)
 
 	// Apply pagination
+	page := req.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := req.GetLimit()
+	offset := int(page-1) * limit
 	err = query.
 		Debug().
-		Offset(req.GetOffset()).
-		Limit(req.GetLimit()).
+		Offset(offset).
+		Limit(limit).
 		Find(&users).Error
 
 	if err != nil {
@@ -401,6 +412,25 @@ func (r *ProfilePostgres) UpdateUserProfile(ctx context.Context, profile *models
 		return nil, err
 	}
 	return profile, nil
+}
+
+// IsSystemRootProfile identifies the one bootstrap-owned IAM principal. This
+// is queried by administrative mutations so ordinary USER_ADMIN_MANAGE access
+// cannot disable or rewrite the root operator.
+func (r *ProfilePostgres) IsSystemRootProfile(ctx context.Context, profileID uint64) (bool, error) {
+	var exists bool
+	err := r.DB.WithContext(ctx).Raw(`
+SELECT EXISTS (
+    SELECT 1
+      FROM role_profiles assignment
+      JOIN roles role ON role.id = assignment.role_id
+     WHERE assignment.profile_id = ?
+       AND assignment.deleted_at IS NULL
+       AND role.organization_id = 0
+       AND role.key = 'QHPRO_SYSTEM_ROOT'
+       AND role.deleted_at IS NULL
+)`, profileID).Scan(&exists).Error
+	return exists, err
 }
 
 // DeleteUserProfile xóa vĩnh viễn user profile (hard delete)

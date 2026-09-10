@@ -27,19 +27,6 @@ func loadSettlementReceipt(db *gorm.DB, effectKey string) (settlementReceiptRow,
 	return rows[0], true, nil
 }
 
-func loadSettlementReceiptByOrder(db *gorm.DB, orderID uint64) (settlementReceiptRow, bool, error) {
-	var rows []settlementReceiptRow
-	err := db.Raw(`SELECT effect_key, fingerprint, action, subscription_id
-		FROM subscription_settlement_receipts WHERE order_id = ? LIMIT 1`, orderID).Scan(&rows).Error
-	if err != nil {
-		return settlementReceiptRow{}, false, fmt.Errorf("load subscription settlement receipt by order: %w", err)
-	}
-	if len(rows) == 0 {
-		return settlementReceiptRow{}, false, nil
-	}
-	return rows[0], true, nil
-}
-
 func insertSettlementReceipt(db *gorm.DB, input settlement.Acceptance, action settlement.Action, subscriptionID uint64) error {
 	e := input.Effect
 	if err := db.Exec(`INSERT INTO subscription_settlement_receipts

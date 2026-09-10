@@ -16,6 +16,26 @@ func (noopAttemptPort) CreateAttempt(context.Context, CreatePaymentAttemptComman
 	return PaymentAttempt{}, nil
 }
 
+type fakePaymentMethodReader struct {
+	value PaymentMethods
+	err   error
+}
+
+func (f fakePaymentMethodReader) ListMethods(context.Context) (PaymentMethods, error) {
+	return f.value, f.err
+}
+
+func (noopAttemptPort) ListMethods(context.Context) (PaymentMethods, error) {
+	return PaymentMethods{}, nil
+}
+
+type noopContactStore struct{}
+
+func (noopContactStore) UpdateCheckoutContact(_ context.Context, _ uint64, contact Contact) (Contact, error) {
+	contact.Phone = "0900000000"
+	return contact, nil
+}
+
 type fakePlanResolver struct {
 	terms PlanTerms
 	err   error
@@ -107,9 +127,35 @@ func newCheckoutFixture() (*Service, *fakePlanResolver, *fakeSubscriptions, *fak
 	commands := newFakeCommands()
 	payment := &fakePayment{order: PaymentOrder{ID: 9, Reference: "QHP9", Status: "pending_funds"}, created: true}
 	now := func() time.Time { return time.Date(2026, 8, 19, 10, 30, 0, 0, time.UTC) }
-	service := NewService(plans, subs, commands, payment, noopAttemptPort{})
-	service.now = now
-	return service, plans, subs, commands, payment
+	return NewService(plans, subs, commands, payment, noopAttemptPort{}, noopAttemptPort{}, noopContactStore{}, now), plans, subs, commands, payment
+}
+
+func TestUpdateCheckoutContactNormalizesAndPersists(t *testing.T) {
+	service, _, _, _, _ := newCheckoutFixture()
+	contact, err := service.UpdateContact(context.Background(), 42, Contact{FullName: " Nguyễn Văn A ", Email: " USER@Example.com "})
+	if err != nil {
+		t.Fatalf("UpdateContact() error = %v", err)
+	}
+	if contact.FullName != "Nguyễn Văn A" || contact.Email != "user@example.com" || contact.Phone != "0900000000" {
+		t.Fatalf("UpdateContact() = %+v", contact)
+	}
+}
+
+func TestListPaymentMethodsDelegatesToPaymentOwner(t *testing.T) {
+	expected := PaymentMethods{
+		Environment: "sandbox",
+		Methods: []PaymentMethodOption{{
+			Method: "card", Provider: "sepay", Enabled: true,
+		}},
+	}
+	service := NewService(nil, nil, nil, nil, noopAttemptPort{}, fakePaymentMethodReader{value: expected}, nil, time.Now)
+	actual, err := service.ListPaymentMethods(context.Background())
+	if err != nil {
+		t.Fatalf("ListPaymentMethods() error = %v", err)
+	}
+	if actual.Environment != expected.Environment || len(actual.Methods) != 1 || !actual.Methods[0].Enabled {
+		t.Fatalf("ListPaymentMethods() = %+v", actual)
+	}
 }
 
 func TestCheckoutInitialPurchaseFreezesServerTermsBeforePayment(t *testing.T) {

@@ -49,7 +49,7 @@ func WriteGRPC(w http.ResponseWriter, err error) {
 	w.WriteHeader(statusFromCode(grpcErr.Code()))
 	response := map[string]interface{}{
 		"code":    grpcErr.Code(),
-		"message": grpcErr.Message(),
+		"message": publicMessage(grpcErr.Code(), grpcErr.Message()),
 	}
 	for _, detail := range grpcErr.Details() {
 		switch value := detail.(type) {
@@ -72,6 +72,23 @@ func WriteGRPC(w http.ResponseWriter, err error) {
 		}
 	}
 	_ = json.NewEncoder(w).Encode(response)
+}
+
+// publicMessage preserves actionable business failures while preventing edge
+// responses from exposing internal service addresses, transport details, or
+// implementation failures. The complete error remains in the Gateway log with
+// the request identity added by middleware.
+func publicMessage(code codes.Code, message string) string {
+	switch code {
+	case codes.Unavailable:
+		return "service temporarily unavailable"
+	case codes.DeadlineExceeded:
+		return "upstream request timed out"
+	case codes.Internal, codes.Unknown, codes.DataLoss:
+		return "internal server error"
+	default:
+		return message
+	}
 }
 
 func statusFromCode(code codes.Code) int {

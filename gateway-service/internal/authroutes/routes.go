@@ -106,6 +106,7 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Exact("/v2/tqd/parcels/by-polygon"),
 	_httpauth.Prefix("/v2/tqd/properties"),
 	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/client/layers"),
+	_httpauth.ExactMethod(http.MethodGet, "/v2/tqd/client/provinces"),
 	_httpauth.Exact("/v2/tqd/client/parcels/search"),
 	_httpauth.Exact("/v2/tqd/client/qh/layer-families/list"),
 	_httpauth.Prefix("/v2/tqd/parcels/public"),
@@ -129,6 +130,7 @@ var publicRoutes = []_httpauth.Route{
 
 var providerCredentialRoutes = []_httpauth.Route{
 	_httpauth.ExactMethod(http.MethodPost, "/v2/payment/sepay/webhook"),
+	_httpauth.ExactMethod(http.MethodPost, "/v2/payment/sepay/ipn"),
 }
 
 var temporaryTokenRoutes = []_httpauth.Route{

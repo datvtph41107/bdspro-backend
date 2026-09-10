@@ -30,8 +30,11 @@ func FromHTTPRequest(_ context.Context, r *http.Request) metadata.MD {
 	appendText(md, "if-none-match", r.Header.Get("If-None-Match"))
 	appendText(md, "x-qhpro-telemetry-key", r.Header.Get("X-QHPro-Telemetry-Key"))
 	appendText(md, "method", r.Method)
-	if r.URL != nil && r.URL.Path == "/v2/payment/sepay/webhook" {
+	if r.URL != nil && (r.URL.Path == "/v2/payment/sepay/webhook" || r.URL.Path == "/v2/payment/sepay/ipn") {
 		raw := strings.TrimSpace(r.Header.Get("Authorization"))
+		if r.URL.Path == "/v2/payment/sepay/ipn" {
+			raw = strings.TrimSpace(r.Header.Get("X-Secret-Key"))
+		}
 		if raw != "" {
 			sum := sha256.Sum256([]byte(raw))
 			md.Set(_rpc.ProviderCredentialDigestMetadataKey, hex.EncodeToString(sum[:]))

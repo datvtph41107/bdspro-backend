@@ -45,15 +45,6 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 			}
 			return nil
 		}
-		if err := advisoryLock(db, fmt.Sprintf("subscription-order:%d", input.Effect.OrderID)); err != nil {
-			return err
-		}
-		if _, found, err := loadSettlementReceiptByOrder(db, input.Effect.OrderID); err != nil {
-			return err
-		} else if found {
-			return settlement.ErrEffectConflict
-		}
-
 		target, err := loadTarget(db, input.Effect.PlanVersionID)
 		if err != nil {
 			return err

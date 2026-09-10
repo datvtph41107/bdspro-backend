@@ -1,0 +1,1424 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "tqd/map_workspace.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "MapWorkspaceService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v2/tqd/map-workspace/followed-parcels": {
+      "get": {
+        "operationId": "MapWorkspaceService_ListFollowedParcels",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdListFollowedParcelsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      },
+      "post": {
+        "operationId": "MapWorkspaceService_FollowParcel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdFollowParcelRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/followed-parcels/by-parcel/{parcelId}": {
+      "delete": {
+        "operationId": "MapWorkspaceService_RemoveFollowedParcel2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parcelId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "followId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/followed-parcels/{followId}": {
+      "delete": {
+        "operationId": "MapWorkspaceService_RemoveFollowedParcel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "followId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "parcelId",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/reports": {
+      "get": {
+        "operationId": "MapWorkspaceService_ListGeneratedReports",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdListGeneratedReportsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      },
+      "post": {
+        "operationId": "MapWorkspaceService_CreateGeneratedReport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdCreateGeneratedReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdCreateGeneratedReportRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/reports/{reportId}": {
+      "get": {
+        "operationId": "MapWorkspaceService_GetGeneratedReport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdGeneratedReportPreview"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      },
+      "delete": {
+        "operationId": "MapWorkspaceService_RemoveGeneratedReport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/reports/{reportId}:regenerate": {
+      "post": {
+        "operationId": "MapWorkspaceService_RegenerateReport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/reports/{reportId}:share": {
+      "post": {
+        "operationId": "MapWorkspaceService_ShareReport",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdShareReportResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/view-history": {
+      "get": {
+        "operationId": "MapWorkspaceService_ListViewHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdListViewHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      },
+      "delete": {
+        "operationId": "MapWorkspaceService_ClearViewHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      },
+      "post": {
+        "operationId": "MapWorkspaceService_AddViewHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdAddViewHistoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/view-history/{historyId}": {
+      "delete": {
+        "operationId": "MapWorkspaceService_RemoveViewHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdWorkspaceMutationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "historyId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    },
+    "/v2/tqd/map-workspace/view-history:track": {
+      "post": {
+        "operationId": "MapWorkspaceService_TrackViewHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tqdTrackViewHistoryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tqdTrackViewHistoryRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MapWorkspaceService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tqdAddViewHistoryRequest": {
+      "type": "object",
+      "properties": {
+        "entityType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "source": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "zoom": {
+          "type": "number",
+          "format": "double"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdCreateGeneratedReportRequest": {
+      "type": "object",
+      "properties": {
+        "reportType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/tqdWorkspaceLocation"
+        },
+        "spatial": {
+          "$ref": "#/definitions/tqdReportSpatialPreview"
+        },
+        "comparison": {
+          "$ref": "#/definitions/tqdReportComparison"
+        },
+        "clientRequestId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "metadataJson": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdCreateGeneratedReportResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "item": {
+          "$ref": "#/definitions/tqdGeneratedReportPreview"
+        }
+      }
+    },
+    "tqdFollowParcelRequest": {
+      "type": "object",
+      "properties": {
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "note": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdFollowedParcelActions": {
+      "type": "object",
+      "properties": {
+        "focus": {
+          "type": "boolean"
+        },
+        "remove": {
+          "type": "boolean"
+        },
+        "compare": {
+          "type": "boolean"
+        },
+        "createReport": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdFollowedParcelPreview": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "followId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "parcel": {
+          "$ref": "#/definitions/tqdWorkspaceParcelMeta"
+        },
+        "location": {
+          "$ref": "#/definitions/tqdWorkspaceLocation"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometryPreview": {
+          "$ref": "#/definitions/tqdGeometryPreview"
+        },
+        "preview": {
+          "$ref": "#/definitions/tqdPreviewHint"
+        },
+        "focusTarget": {
+          "$ref": "#/definitions/tqdSpatialFocusTarget"
+        },
+        "followedAt": {
+          "type": "string"
+        },
+        "actions": {
+          "$ref": "#/definitions/tqdFollowedParcelActions"
+        }
+      }
+    },
+    "tqdGeneratedReportPreview": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "reportId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "reportType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/tqdWorkspaceLocation"
+        },
+        "spatial": {
+          "$ref": "#/definitions/tqdReportSpatialPreview"
+        },
+        "assets": {
+          "$ref": "#/definitions/tqdReportAssets"
+        },
+        "reportMeta": {
+          "$ref": "#/definitions/tqdReportMeta"
+        },
+        "comparison": {
+          "$ref": "#/definitions/tqdReportComparison"
+        },
+        "actions": {
+          "$ref": "#/definitions/tqdReportActions"
+        },
+        "entityType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdGeometryPreview": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "geoJson": {
+          "type": "string"
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdSpatialPoint"
+        },
+        "bounds": {
+          "$ref": "#/definitions/tqdSpatialBounds"
+        },
+        "srid": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdListFollowedParcelsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdFollowedParcelPreview"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdListGeneratedReportsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdGeneratedReportPreview"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdListViewHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/tqdViewHistoryPreview"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        },
+        "total": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "size": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "tqdPreviewHint": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "bounds": {
+          "$ref": "#/definitions/tqdSpatialBounds"
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdSpatialPoint"
+        },
+        "fitPaddingRatio": {
+          "type": "number",
+          "format": "double"
+        },
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "highlightLayer": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdReportActions": {
+      "type": "object",
+      "properties": {
+        "focus": {
+          "type": "boolean"
+        },
+        "downloadImage": {
+          "type": "boolean"
+        },
+        "downloadPdf": {
+          "type": "boolean"
+        },
+        "share": {
+          "type": "boolean"
+        },
+        "regenerate": {
+          "type": "boolean"
+        },
+        "remove": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdReportAssets": {
+      "type": "object",
+      "properties": {
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        },
+        "pdfUrl": {
+          "type": "string"
+        },
+        "shareUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdReportComparison": {
+      "type": "object",
+      "properties": {
+        "fromPlanName": {
+          "type": "string"
+        },
+        "toPlanName": {
+          "type": "string"
+        },
+        "fromYear": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "toYear": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdReportMeta": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "fileSize": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "format": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdReportSpatialPreview": {
+      "type": "object",
+      "properties": {
+        "bounds": {
+          "$ref": "#/definitions/tqdSpatialBounds"
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdSpatialPoint"
+        }
+      }
+    },
+    "tqdShareReportResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "shareUrl": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdSpatialBounds": {
+      "type": "object",
+      "properties": {
+        "minLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "minLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLat": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdSpatialFocusTarget": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "bounds": {
+          "$ref": "#/definitions/tqdSpatialBounds"
+        },
+        "centroid": {
+          "$ref": "#/definitions/tqdSpatialPoint"
+        },
+        "geoJson": {
+          "type": "string"
+        },
+        "srid": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "tqdSpatialPoint": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdTrackViewHistoryRequest": {
+      "type": "object",
+      "properties": {
+        "clientEventId": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "entityType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "source": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sourceRef": {
+          "type": "string"
+        },
+        "routeName": {
+          "type": "string"
+        },
+        "zoom": {
+          "type": "number",
+          "format": "double"
+        },
+        "center": {
+          "$ref": "#/definitions/tqdSpatialPoint"
+        },
+        "viewportBounds": {
+          "$ref": "#/definitions/tqdSpatialBounds"
+        },
+        "visibleMs": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "countIntent": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "metadataJson": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdTrackViewHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "historyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "counted": {
+          "type": "boolean"
+        },
+        "viewCount": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdViewHistoryActions": {
+      "type": "object",
+      "properties": {
+        "focus": {
+          "type": "boolean"
+        },
+        "remove": {
+          "type": "boolean"
+        },
+        "follow": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tqdViewHistoryContext": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "zoom": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "tqdViewHistoryPreview": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "historyId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "entityType": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "entityId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "parcelId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "parcel": {
+          "$ref": "#/definitions/tqdWorkspaceParcelMeta"
+        },
+        "location": {
+          "$ref": "#/definitions/tqdWorkspaceLocation"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double"
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "geometryPreview": {
+          "$ref": "#/definitions/tqdGeometryPreview"
+        },
+        "preview": {
+          "$ref": "#/definitions/tqdPreviewHint"
+        },
+        "focusTarget": {
+          "$ref": "#/definitions/tqdSpatialFocusTarget"
+        },
+        "viewedAt": {
+          "type": "string"
+        },
+        "viewContext": {
+          "$ref": "#/definitions/tqdViewHistoryContext"
+        },
+        "actions": {
+          "$ref": "#/definitions/tqdViewHistoryActions"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "viewCount": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "countedViewCount": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdWorkspaceLocation": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "wardCode": {
+          "type": "string"
+        }
+      }
+    },
+    "tqdWorkspaceMutationResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "tqdWorkspaceParcelMeta": {
+      "type": "object",
+      "properties": {
+        "mapNumber": {
+          "type": "string"
+        },
+        "landNumber": {
+          "type": "string"
+        },
+        "areaSqm": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    }
+  }
+}

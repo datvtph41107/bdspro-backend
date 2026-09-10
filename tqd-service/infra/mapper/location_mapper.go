@@ -289,6 +289,19 @@ func (m *LocationMapper) FromProtoClientListAdministrativeUnitsRequest(req *tqdp
 	}
 }
 
+func (m *LocationMapper) ToProtoListProvincesResponse(response *dto.ListProvincesResponse) *tqdpb.ListProvincesResponse {
+	if response == nil {
+		return nil
+	}
+
+	provinces := make([]*tqdpb.Province, len(response.Provinces))
+	for i, province := range response.Provinces {
+		provinces[i] = m.ToProtoProvince(province)
+	}
+
+	return &tqdpb.ListProvincesResponse{Provinces: provinces}
+}
+
 // ==================== PROTO -> DTO ====================
 
 func (m *LocationMapper) FromProtoGetNearestLocationRequest(req *tqdpb.GetNearestLocationRequest) *dto.GetNearestLocationRequest {

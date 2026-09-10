@@ -5,7 +5,6 @@ import (
 
 	"bytes"
 	_configloader "common/configloader"
-	_db "common/db"
 	"context"
 	"fmt"
 	"log"
@@ -75,7 +74,6 @@ func ProfileIDInterceptor(
 
 func SetupGRPCServer(parameters SetupParameters, setup func(*grpc.Server)) {
 	LoadConfig(parameters.ConfigFile)
-	// _db.NewDB()
 	if !parameters.IgnoreSwagger {
 		parameters.Engine.GET(parameters.Prefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
 	}
@@ -121,7 +119,6 @@ func SetupGRPCServer(parameters SetupParameters, setup func(*grpc.Server)) {
 
 func SetupRestfulAPI(parameters SetupParameters, setup func()) {
 	LoadConfig(parameters.ConfigFile)
-	_db.NewDB()
 	parameters.Engine.GET(parameters.Prefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
 	// models.AutoMigrate()
 	// parameters.Engine.Use(cors.New(cors.Config{

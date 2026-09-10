@@ -20,6 +20,7 @@ type Decision struct {
 	ConfirmOrderID    uint64
 	FundsConfirmedAt  *time.Time
 	CreateFulfillment bool
+	CommandEffect     *payment.CommandEffect
 }
 
 type Result struct {
@@ -45,6 +46,20 @@ func NewService(orders OrderStore, settlements Store, now Clock) *Service {
 }
 
 func (s *Service) RecordProviderEvent(ctx context.Context, event payment.ProviderEvent) (Result, error) {
+	return s.recordProviderEvent(ctx, event, nil)
+}
+
+// RecordOperatorFundsConfirmation enters manually reconciled bank evidence
+// through the same settlement theorem used by provider webhooks. The audit
+// effect is committed atomically with settlement/order/fulfillment state.
+func (s *Service) RecordOperatorFundsConfirmation(ctx context.Context, event payment.ProviderEvent, effect payment.CommandEffect) (Result, error) {
+	if !effect.IsValid() || effect.EffectType != payment.CommandEffectManualFundsConfirmation {
+		return Result{}, payment.ErrInvalidCommand
+	}
+	return s.recordProviderEvent(ctx, event, &effect)
+}
+
+func (s *Service) recordProviderEvent(ctx context.Context, event payment.ProviderEvent, effect *payment.CommandEffect) (Result, error) {
 	if s == nil || s.orders == nil || s.settlements == nil || s.now == nil || !event.IsValid() {
 		return Result{}, payment.ErrInvalidCommand
 	}
@@ -87,7 +102,7 @@ func (s *Service) RecordProviderEvent(ctx context.Context, event payment.Provide
 		EvidenceHash:          evidenceHash,
 		CreatedAt:             s.now().UTC(),
 	}
-	decision := Decision{Settlement: value}
+	decision := Decision{Settlement: value, CommandEffect: effect}
 
 	if !orderFound {
 		decision.Settlement.Status = payment.SettlementUnmatched
@@ -109,6 +124,9 @@ func (s *Service) RecordProviderEvent(ctx context.Context, event payment.Provide
 
 	occurredAt := event.OccurredAt.UTC()
 	decision.Settlement.Status = payment.SettlementFundsConfirmed
+	if decision.CommandEffect != nil {
+		decision.CommandEffect.Outcome = string(decision.Settlement.Status)
+	}
 	decision.ConfirmOrderID = order.ID
 	decision.FundsConfirmedAt = &occurredAt
 	decision.CreateFulfillment = true

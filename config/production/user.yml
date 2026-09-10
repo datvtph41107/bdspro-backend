@@ -1,0 +1,57 @@
+server:
+  port: 8001
+  tcp_port: 8201
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_user
+  user: user_owner
+  password: b8e4d1f0c5a9b2e7d3f8
+  dsn: host=103.172.239.89 user=user_owner password=b8e4d1f0c5a9b2e7d3f8 dbname=db_user port=5432 sslmode=disable
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: ERROR
+
+service:
+  name: "user service"
+  feature: "Enabled only for Service User"
+
+redis:
+  host: 103.172.239.89:6379
+  pass: protected_redis_secure_password
+  
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL9Dialect
+  datasource:
+    url: jdbc:postgresql://14.225.205.222:5432/db_user
+    username: user
+    password: znodVcrXdFtaOLdPaTQr3lmV
+    driver-class-name: org.postgresql.Driver
+
+
+grpc:
+  organization:
+    host: :8207
+  group:
+    host: :8207
+  payment:
+    host: :8205
+  auth:
+    host: :8202
+  notification:
+    host: :8208

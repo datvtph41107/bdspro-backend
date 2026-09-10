@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	"relay/config"
 
@@ -14,7 +15,7 @@ type RedisClient struct {
 	logger *flogging.FabricLogger
 }
 
-func NewRedisClient() *RedisClient {
+func NewRedisClient() (*RedisClient, error) {
 	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.AppProperties.Redis.Host,
@@ -22,13 +23,21 @@ func NewRedisClient() *RedisClient {
 		DB:       0,
 	})
 
-	_, err := client.Ping(client.Context()).Result()
+	_, err := client.Ping(context.Background()).Result()
 	if err != nil {
-		logger.Fatalf("Failed to connect to Redis: %v", err)
+		_ = client.Close()
+		return nil, fmt.Errorf("connect Relay Redis: %w", err)
 	}
 
 	logger.Info("Connected to Redis")
-	return &RedisClient{client: client, logger: logger}
+	return &RedisClient{client: client, logger: logger}, nil
+}
+
+func (r *RedisClient) Close() error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	return r.client.Close()
 }
 
 // Push message to list

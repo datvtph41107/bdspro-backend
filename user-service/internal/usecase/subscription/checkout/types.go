@@ -3,12 +3,28 @@ package checkout
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
 
 	plan "user/internal/domain/plan"
 )
+
+type Contact struct {
+	FullName string
+	Email    string
+	Phone    string
+}
+
+func (c Contact) IsValidInput() bool {
+	name, email := strings.TrimSpace(c.FullName), strings.TrimSpace(c.Email)
+	if len(name) < 2 || len(name) > 160 || len(email) > 254 {
+		return false
+	}
+	address, err := mail.ParseAddress(email)
+	return err == nil && strings.EqualFold(address.Address, email)
+}
 
 type SubjectKind string
 

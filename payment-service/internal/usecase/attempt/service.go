@@ -40,6 +40,17 @@ type Service struct {
 	now       Clock
 }
 
+// Supports is the canonical availability query used by checkout consumers.
+// It has no provider side effect and deliberately shares provider selection
+// with Create so the UI cannot advertise a method that Payment rejects.
+func (s *Service) Supports(method payment.PaymentMethod) (string, bool) {
+	provider := s.selectProvider(method)
+	if provider == nil {
+		return "", false
+	}
+	return provider.Code(), true
+}
+
 func NewService(orders OrderStore, attempts Store, providers []Provider, now Clock) *Service {
 	ordered := make([]Provider, 0, len(providers))
 	for _, provider := range providers {

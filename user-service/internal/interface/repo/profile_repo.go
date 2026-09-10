@@ -19,6 +19,7 @@ type IProfileRepo interface {
 	GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error)
 	ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error)
 	GetUserDetailByID(ctx context.Context, profileID uint64) (*models.UserProfileEntity, error)
+	IsSystemRootProfile(ctx context.Context, profileID uint64) (bool, error)
 	CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
 	UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error)
 	DeleteUserProfile(ctx context.Context, profileID uint64, deletedBy *uint64, reason string) error

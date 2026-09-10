@@ -20,6 +20,15 @@ service CommercialProfileService {
   rpc GetMyCommercialProfile(GetMyCommercialProfileRequest) returns (MyCommercialProfile) {
     option (google.api.http) = { get: "/v2/user/commercial/profile" };
   }
+
+  // CancelMySubscription immediately revokes the caller's paid QHPro access.
+  // It never mutates payment evidence or performs an implicit refund.
+  rpc CancelMySubscription(CancelMySubscriptionRequest) returns (CancelMySubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v2/user/commercial/subscription:cancel"
+      body: "*"
+    };
+  }
 }
 
 message ListAvailablePlansRequest {
@@ -34,4 +43,14 @@ message MyCommercialProfile {
   uint64 profile_id = 1;
   bool has_subscription = 2;
   AdminSubscriptionProjection effective_subscription = 3;
+}
+
+message CancelMySubscriptionRequest {
+  string product_code = 1;
+  string reason = 2;
+}
+
+message CancelMySubscriptionResponse {
+  AdminSubscriptionProjection subscription = 1;
+  bool changed = 2;
 }

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "pb/types/user;userpb";
+
+// InternalOrganizationMembershipService exposes only the User-owned
+// membership projection required by other bounded contexts. It has no HTTP
+// annotation and is protected by signed service trust.
+service InternalOrganizationMembershipService {
+  rpc CheckMembers(CheckOrganizationMembersRequest) returns (CheckOrganizationMembersResponse);
+}
+
+message CheckOrganizationMembersRequest {
+  uint64 organization_id = 1 [json_name = "organizationId"];
+  repeated uint64 profile_ids = 2 [json_name = "profileIds"];
+}
+
+message OrganizationMemberCheck {
+  uint64 profile_id = 1 [json_name = "profileId"];
+  bool is_member = 2 [json_name = "isMember"];
+  string joined_at = 3 [json_name = "joinedAt"];
+  uint64 member_id = 4 [json_name = "memberId"];
+  string role_key = 5 [json_name = "roleKey"];
+  string status = 6;
+}
+
+message CheckOrganizationMembersResponse {
+  repeated OrganizationMemberCheck data = 1;
+}

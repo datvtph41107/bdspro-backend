@@ -69,4 +69,7 @@ message AdminSubscriptionProjection {
   google.protobuf.Timestamp pending_effective_at = 16;
   string order_reference = 17;
   google.protobuf.Timestamp updated_at = 18;
+  google.protobuf.Timestamp canceled_at = 19;
+  google.protobuf.Timestamp ended_at = 20;
+  bool auto_renew = 21;
 }

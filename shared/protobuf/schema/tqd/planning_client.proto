@@ -99,12 +99,6 @@ message ParcelQuickViewRequest {
   uint64 parcel_id = 1;
 }
 
-message ListProvincesRequest {
-  uint32 scope = 1;
-  string search = 2;
-  int64 timestamp = 3;
-}
-
 message ListNearbyAreasRequest {
   // admId: composite ID của đơn vị hành chính cần tìm địa bàn lân cận
   uint64 admId = 1;
@@ -193,11 +187,6 @@ service PlanningClientService {
   rpc ListPlanningProjectLayers(PlanningProjectIdRequest) returns (google.protobuf.BytesValue) {
     option (google.api.http) = {
       get: "/v2/tqd/client/planning-projects/{project_id}/layers"
-    };
-  }
-  rpc ListProvinces(ListProvincesRequest) returns (google.protobuf.BytesValue) {
-    option (google.api.http) = {
-      get: "/v2/tqd/client/provinces"
     };
   }
   // Danh sách địa bàn lân cận của một đơn vị hành chính (dựa trên ward_neighbors).

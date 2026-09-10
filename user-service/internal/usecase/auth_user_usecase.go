@@ -56,7 +56,16 @@ type organizationMembershipProvider interface {
 	GetOrganizationMember(ctx context.Context, organizationID uint64, profileID uint64) (*dto.OrganizationMember, error)
 }
 
-const organizationMemberStatusActive uint32 = 10
+const (
+	organizationMemberStatusActive uint32 = 10
+	// CRM origin is compatibility enrichment, not login authority. A missing CRM
+	// must not consume the entire HTTP deadline or prevent token issuance.
+	optionalCRMOriginTimeout = 750 * time.Millisecond
+	// Login history is best-effort until it has a durable local outbox. Keep the
+	// synchronous compatibility call bounded and never delay authentication by
+	// the remote provider timeout.
+	loginHistoryTimeout = time.Second
+)
 
 func NewAuthService(cookieProvider providers.CookieProvider,
 	cacheProvider providers.CacheProvider,
@@ -474,7 +483,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	// Ghi log admin history
 	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, loginHistoryTimeout)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -2269,7 +2278,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	// Ghi log admin history
 	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(c, 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(c, loginHistoryTimeout)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -2796,7 +2805,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	// Ghi log admin history
 	func() {
 		// Tạo context mới với timeout riêng, không dùng context gốc
-		contextTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+		contextTimeout, cancel := context.WithTimeout(ctx, loginHistoryTimeout)
 		defer cancel()
 
 		// Lấy IP address và User Agent từ context gốc trước khi vào goroutine
@@ -3281,7 +3290,9 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 	}
 
 	var originID uint64
-	originID, err = s.CrmProvider.GetOriginID(ctx, authMethod.UserID)
+	originCtx, cancelOriginLookup := context.WithTimeout(ctx, optionalCRMOriginTimeout)
+	originID, err = s.CrmProvider.GetOriginID(originCtx, authMethod.UserID)
+	cancelOriginLookup()
 	if err != nil {
 		log.Printf("Warning: Cannot get origin ID from CRM (service may be down), using 0: %v", err)
 		originID = 0

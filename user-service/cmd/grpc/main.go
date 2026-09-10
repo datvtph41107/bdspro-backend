@@ -17,7 +17,6 @@ import (
 	userpb "pb/types/user"
 	"user/config"
 	userdb "user/db"
-	admin_middleware "user/infra/middleware"
 	"user/wire"
 
 	"google.golang.org/grpc"
@@ -73,7 +72,6 @@ func runGRPC() error {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			accessIngress(transportConfig),
-			admin_middleware.AdminAuthInterceptor,
 		),
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,

@@ -17,6 +17,7 @@ type RoleGroupHandler struct {
 	Mapper             *mapper.RoleGroupMapper
 	RoleMapper         *mapper.RoleMapper
 	RoleGroupValidator *validator.RoleGroupValidator
+	InternalHandler    *InternalHandler
 }
 
 func NewRoleGroupHandler(
@@ -24,12 +25,14 @@ func NewRoleGroupHandler(
 	mapper *mapper.RoleGroupMapper,
 	roleMapper *mapper.RoleMapper,
 	roleGroupValidator *validator.RoleGroupValidator,
+	internalHandler *InternalHandler,
 ) *RoleGroupHandler {
 	return &RoleGroupHandler{
 		RoleGroupUsecase:   roleGroupUsecase,
 		Mapper:             mapper,
 		RoleMapper:         roleMapper,
 		RoleGroupValidator: roleGroupValidator,
+		InternalHandler:    internalHandler,
 	}
 }
 
@@ -43,6 +46,9 @@ func NewRoleGroupHandler(
 // @Success 200 {object} authpb.RoleGroupListResponse
 // @Router /role-group/list [get]
 func (h *RoleGroupHandler) GetListRoleGroup(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleGroupListResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleView}); err != nil {
+		return nil, err
+	}
 	result, total, err := h.RoleGroupUsecase.GetList(ctx, &_dto.Pagable{
 		Page: req.Page,
 		Size: req.Size,
@@ -69,6 +75,9 @@ func (h *RoleGroupHandler) GetListRoleGroup(ctx context.Context, req *sharepb.Id
 // @Success 200 {object} authpb.RoleGroup
 // @Router /role-group [post]
 func (h *RoleGroupHandler) CreateRoleGroup(ctx context.Context, req *authpb.RoleGroupRequest) (*authpb.RoleGroup, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleManage}); err != nil {
+		return nil, err
+	}
 	domain := h.Mapper.MapToDomain(req)
 
 	err := h.RoleGroupValidator.ValidateCreateRoleGroup(req)
@@ -94,6 +103,9 @@ func (h *RoleGroupHandler) CreateRoleGroup(ctx context.Context, req *authpb.Role
 // @Success 200 {object} authpb.RoleGroup
 // @Router /role-group/{id} [put]
 func (h *RoleGroupHandler) UpdateRoleGroup(ctx context.Context, req *authpb.RoleGroupRequest) (*authpb.RoleGroup, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleManage}); err != nil {
+		return nil, err
+	}
 	domain := h.Mapper.MapToDomain(req)
 
 	err := h.RoleGroupValidator.ValidateUpdateRoleGroup(req)
@@ -118,6 +130,9 @@ func (h *RoleGroupHandler) UpdateRoleGroup(ctx context.Context, req *authpb.Role
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /role-group/{id} [delete]
 func (h *RoleGroupHandler) DeleteRoleGroup(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleManage}); err != nil {
+		return nil, err
+	}
 	_, err := h.RoleGroupUsecase.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -138,6 +153,9 @@ func (h *RoleGroupHandler) DeleteRoleGroup(ctx context.Context, req *sharepb.IdR
 // @Success 200 {object} authpb.RoleGroup
 // @Router /role-group/detail/{id} [get]
 func (h *RoleGroupHandler) GetRoleGroupById(ctx context.Context, req *sharepb.IdRequest) (*authpb.RoleGroup, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleView}); err != nil {
+		return nil, err
+	}
 	result, err := h.RoleGroupUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -156,6 +174,9 @@ func (h *RoleGroupHandler) GetRoleGroupById(ctx context.Context, req *sharepb.Id
 // @Success 200 {object} sharepb.SubmitResponse
 // @Router /role-group/permissions [put]
 func (h *RoleGroupHandler) UpdateGroupPermissions(ctx context.Context, req *authpb.UpdateGroupPermissionsRequest) (*sharepb.SubmitResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleManage}); err != nil {
+		return nil, err
+	}
 	err := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)
 	if err != nil {
 		return nil, err
@@ -179,6 +200,9 @@ func (h *RoleGroupHandler) UpdateGroupPermissions(ctx context.Context, req *auth
 // @Success 200 {object} authpb.PermissionListResponse
 // @Router /role-group/{groupKey}/permissions [get]
 func (h *RoleGroupHandler) GetPermissionsByGroupKey(ctx context.Context, req *authpb.GetPermissionsByGroupKeyRequest) (*authpb.PermissionListResponse, error) {
+	if err := h.InternalHandler.HasPermissions(ctx, []string{permissionIAMRoleView}); err != nil {
+		return nil, err
+	}
 	permissions, err := h.RoleGroupUsecase.GetPermissionsByGroupKey(ctx, enums.GroupRoleKeyEnum(req.GroupKey))
 	if err != nil {
 		return nil, err

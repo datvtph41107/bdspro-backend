@@ -64,3 +64,15 @@ func TestPaymentRedriveRequiresDedicatedPermissionBeforeCommand(t *testing.T) {
 		t.Fatalf("requested permissions = %v", authorizer.requested)
 	}
 }
+
+func TestPaymentConfirmationRequiresDedicatedPermissionBeforeCommand(t *testing.T) {
+	authorizer := &adminPermissionStub{err: errors.New("denied")}
+	handler := NewAdminCommerceHandler(nil, authorizer)
+	_, err := handler.ConfirmPaymentFunds(paymentAdminContext(t), &paymentpb.ConfirmAdminPaymentFundsRequest{OrderId: 3, Reason: "bank receipt checked"})
+	if status.Code(err) != codes.PermissionDenied {
+		t.Fatalf("ConfirmPaymentFunds() code = %v", status.Code(err))
+	}
+	if len(authorizer.requested) != 1 || authorizer.requested[0] != adminusecase.PermissionFundsConfirm {
+		t.Fatalf("requested permissions = %v", authorizer.requested)
+	}
+}

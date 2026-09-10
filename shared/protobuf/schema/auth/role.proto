@@ -107,6 +107,7 @@ service RoleService {
   rpc AddPermissionToRole(AddPermissionToRoleRequest) returns (sharepb.SubmitResponse) {
     option (google.api.http) = {
       post: "/v2/auth/role/permissions"
+      body: "*"
     };
   };
   rpc GetRolesByGroupKey(GetRolesByGroupKeyRequest) returns (RoleListResponse) {

@@ -1,0 +1,24 @@
+server:
+  name: feedback-service
+  tcp_port: 8217
+
+database:
+  host: 103.172.239.89
+  port: 5432
+  name: db_feedback
+  user: feedback
+  password: a9d5c2e1b6f0a3d8c4e9
+  dsn: host=103.172.239.89 user=feedback password=a9d5c2e1b6f0a3d8c4e9 dbname=db_feedback port=5432 sslmode=disable
+
+redis:
+  # host: 103.172.239.89:6379
+  host: localhost:6379
+  pass: protected_redis_secure_password
+
+grpc:
+  user:
+    host: :8201
+  organization:
+    host: :8207
+  social:
+    host: :8203

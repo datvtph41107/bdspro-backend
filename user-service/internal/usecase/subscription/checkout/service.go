@@ -3,16 +3,17 @@ package checkout
 import (
 	"context"
 	"strings"
-	"time"
 )
 
 type Service struct {
-	plans         PlanResolver
-	subscriptions SubscriptionReader
-	commands      CommandStore
-	payment       PaymentOrderPort
-	attempts      PaymentAttemptPort
-	now           Clock
+	plans          PlanResolver
+	subscriptions  SubscriptionReader
+	commands       CommandStore
+	payment        PaymentOrderPort
+	attempts       PaymentAttemptPort
+	paymentMethods PaymentMethodReader
+	contacts       ContactStore
+	now            Clock
 }
 
 func NewService(
@@ -21,15 +22,42 @@ func NewService(
 	commands CommandStore,
 	payment PaymentOrderPort,
 	attempts PaymentAttemptPort,
+	paymentMethods PaymentMethodReader,
+	contacts ContactStore,
+	now Clock,
 ) *Service {
 	return &Service{
-		plans:         plans,
-		subscriptions: subscriptions,
-		commands:      commands,
-		payment:       payment,
-		attempts:      attempts,
-		now:           time.Now,
+		plans:          plans,
+		subscriptions:  subscriptions,
+		commands:       commands,
+		payment:        payment,
+		attempts:       attempts,
+		paymentMethods: paymentMethods,
+		contacts:       contacts,
+		now:            now,
 	}
+}
+
+func (s *Service) ListPaymentMethods(ctx context.Context) (PaymentMethods, error) {
+	if s == nil || s.paymentMethods == nil {
+		return PaymentMethods{}, ErrInvalidCommand
+	}
+	if err := ctx.Err(); err != nil {
+		return PaymentMethods{}, err
+	}
+	return s.paymentMethods.ListMethods(ctx)
+}
+
+func (s *Service) UpdateContact(ctx context.Context, profileID uint64, contact Contact) (Contact, error) {
+	contact.FullName = strings.TrimSpace(contact.FullName)
+	contact.Email = strings.ToLower(strings.TrimSpace(contact.Email))
+	if s == nil || s.contacts == nil || profileID == 0 || !contact.IsValidInput() {
+		return Contact{}, ErrInvalidCommand
+	}
+	if err := ctx.Err(); err != nil {
+		return Contact{}, err
+	}
+	return s.contacts.UpdateCheckoutContact(ctx, profileID, contact)
 }
 
 func (s *Service) Checkout(ctx context.Context, subject Subject, planCode, commandKey string) (Result, error) {

@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_db "common/db"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"user/internal/domain/plan"
@@ -22,6 +24,246 @@ import (
 type PlanVersionRepo struct {
 	transactionRepo *_db.TransactionRepo
 }
+
+/** CreatePlanVersionDraft persists one complete draft aggregate atomically. */
+func (r *PlanVersionRepo) CreatePlanVersionDraft(ctx context.Context, input admin.DraftRecord) (uint64, error) {
+	if r == nil || r.transactionRepo == nil {
+		return 0, fmt.Errorf("plan repository is not configured")
+	}
+	var versionID uint64
+	err := r.transactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
+		db := r.transactionRepo.GetDB(txCtx)
+		product, err := r.findOrCreateProduct(db, input)
+		if err != nil {
+			return err
+		}
+		planRow, err := r.findOrCreatePlan(db, product.ID, input)
+		if err != nil {
+			return err
+		}
+		version := models.CatalogPlanVersion{
+			PlanID:               planRow.ID,
+			Version:              input.Terms.Version,
+			DisplayName:          input.Terms.DisplayName,
+			Status:               plan.StatusDraft,
+			SubjectScope:         input.Terms.SubjectScope,
+			SubscriptionTermDays: int32Pointer(input.Terms.SubscriptionTermDays),
+			Source:               models.CatalogSourceNative,
+			TermsChecksum:        input.TermsChecksum,
+			CreatedBy:            uint64Pointer(input.ActorID),
+			UpdatedBy:            uint64Pointer(input.ActorID),
+		}
+		if err := db.Create(&version).Error; err != nil {
+			return catalogMutationError(err)
+		}
+		if err := createDraftTerms(db, version.ID, input); err != nil {
+			return err
+		}
+		versionID = version.ID
+		return nil
+	})
+	return versionID, err
+}
+
+/** UpdatePlanVersionDraft replaces all editable terms while holding the version lock. */
+func (r *PlanVersionRepo) UpdatePlanVersionDraft(ctx context.Context, planVersionID uint64, input admin.DraftRecord) error {
+	if r == nil || r.transactionRepo == nil {
+		return fmt.Errorf("plan repository is not configured")
+	}
+	return r.transactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
+		db := r.transactionRepo.GetDB(txCtx)
+		var version models.CatalogPlanVersion
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&version, planVersionID).Error; err != nil {
+			return catalogNotFoundError(err)
+		}
+		if version.Status != plan.StatusDraft || version.PublishedAt != nil {
+			return admin.ErrPlanVersionNotDraft
+		}
+		var planRow models.CatalogPlan
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&planRow, version.PlanID).Error; err != nil {
+			return catalogNotFoundError(err)
+		}
+		var product models.CatalogProduct
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&product, planRow.ProductID).Error; err != nil {
+			return catalogNotFoundError(err)
+		}
+		if product.Code != input.Terms.ProductCode || planRow.Code != input.Terms.PlanCode || version.Version != input.Terms.Version {
+			return fmt.Errorf("product code, plan code and version are immutable")
+		}
+		if product.DisplayName != input.ProductDisplayName || int32Value(planRow.TierRank) != input.TierRank {
+			return admin.ErrStablePlanFieldsImmutable
+		}
+		if err := db.Model(&version).Updates(map[string]any{
+			"display_name":           input.Terms.DisplayName,
+			"subject_scope":          input.Terms.SubjectScope,
+			"subscription_term_days": input.Terms.SubscriptionTermDays,
+			"terms_checksum":         input.TermsChecksum,
+			"updated_by":             input.ActorID,
+			"updated_at":             gorm.Expr("NOW()"),
+		}).Error; err != nil {
+			return err
+		}
+		for _, model := range []any{&models.CatalogPlanEntitlement{}, &models.CatalogPlanOperationPolicy{}, &models.CatalogPriceItem{}} {
+			if err := db.Where("plan_version_id = ?", planVersionID).Delete(model).Error; err != nil {
+				return err
+			}
+		}
+		return createDraftTerms(db, planVersionID, input)
+	})
+}
+
+// RetirePlanVersion closes the selling window without deleting the immutable
+// terms referenced by historical orders and subscriptions.
+func (r *PlanVersionRepo) RetirePlanVersion(ctx context.Context, planVersionID, actorID uint64, retiredAt time.Time) error {
+	if r == nil || r.transactionRepo == nil {
+		return fmt.Errorf("plan repository is not configured")
+	}
+	if retiredAt.IsZero() {
+		return fmt.Errorf("retired at is required")
+	}
+	return r.transactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
+		db := r.transactionRepo.GetDB(txCtx)
+		result := db.Model(&models.CatalogPlanVersion{}).
+			Where("id = ? AND status = ? AND published_at IS NOT NULL", planVersionID, plan.StatusActive).
+			Updates(map[string]any{
+				"status":          plan.StatusRetired,
+				"effective_until": retiredAt.UTC(),
+				"updated_by":      actorID,
+				"updated_at":      gorm.Expr("NOW()"),
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 1 {
+			return nil
+		}
+		var count int64
+		if err := db.Model(&models.CatalogPlanVersion{}).Where("id = ?", planVersionID).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return admin.ErrPlanVersionNotFound
+		}
+		return admin.ErrPlanVersionNotActive
+	})
+}
+
+/** DeletePlanVersionDraft removes only a never-published candidate and its terms. */
+func (r *PlanVersionRepo) DeletePlanVersionDraft(ctx context.Context, planVersionID uint64) error {
+	if r == nil || r.transactionRepo == nil {
+		return fmt.Errorf("plan repository is not configured")
+	}
+	return r.transactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
+		db := r.transactionRepo.GetDB(txCtx)
+		var version models.CatalogPlanVersion
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).First(&version, planVersionID).Error; err != nil {
+			return catalogNotFoundError(err)
+		}
+		if version.Status != plan.StatusDraft || version.PublishedAt != nil {
+			return admin.ErrPlanVersionNotDraft
+		}
+		var subscriptions int64
+		if err := db.Model(&models.CatalogSubscription{}).Where("plan_version_id = ? OR pending_plan_version_id = ?", planVersionID, planVersionID).Count(&subscriptions).Error; err != nil {
+			return err
+		}
+		if subscriptions != 0 {
+			return admin.ErrPlanVersionNotDraft
+		}
+		for _, model := range []any{&models.CatalogPlanEntitlement{}, &models.CatalogPlanOperationPolicy{}, &models.CatalogPriceItem{}} {
+			if err := db.Where("plan_version_id = ?", planVersionID).Delete(model).Error; err != nil {
+				return err
+			}
+		}
+		return db.Delete(&models.CatalogPlanVersion{}, planVersionID).Error
+	})
+}
+
+func (r *PlanVersionRepo) findOrCreateProduct(db *gorm.DB, input admin.DraftRecord) (models.CatalogProduct, error) {
+	var product models.CatalogProduct
+	err := db.Where("code = ?", input.Terms.ProductCode).First(&product).Error
+	if err == nil {
+		return product, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return models.CatalogProduct{}, err
+	}
+	product = models.CatalogProduct{Code: input.Terms.ProductCode, DisplayName: input.ProductDisplayName, Status: plan.StatusDraft, CreatedBy: uint64Pointer(input.ActorID), UpdatedBy: uint64Pointer(input.ActorID)}
+	if err := db.Create(&product).Error; err != nil {
+		return models.CatalogProduct{}, catalogMutationError(err)
+	}
+	return product, nil
+}
+
+func (r *PlanVersionRepo) findOrCreatePlan(db *gorm.DB, productID uint64, input admin.DraftRecord) (models.CatalogPlan, error) {
+	var planRow models.CatalogPlan
+	err := db.Where("code = ?", input.Terms.PlanCode).First(&planRow).Error
+	if err == nil {
+		if planRow.ProductID != productID {
+			return models.CatalogPlan{}, admin.ErrPlanVersionConflict
+		}
+		return planRow, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return models.CatalogPlan{}, err
+	}
+	planRow = models.CatalogPlan{ProductID: productID, Code: input.Terms.PlanCode, TierRank: int32Pointer(input.TierRank), Status: plan.StatusDraft, CreatedBy: uint64Pointer(input.ActorID), UpdatedBy: uint64Pointer(input.ActorID)}
+	if err := db.Create(&planRow).Error; err != nil {
+		return models.CatalogPlan{}, catalogMutationError(err)
+	}
+	return planRow, nil
+}
+
+func createDraftTerms(db *gorm.DB, planVersionID uint64, input admin.DraftRecord) error {
+	for _, value := range input.Terms.Entitlements {
+		row := models.CatalogPlanEntitlement{PlanVersionID: planVersionID, Code: value.Code, Kind: value.Kind, FeatureCode: stringPointer(value.FeatureCode), MeterCode: stringPointer(value.MeterCode), Amount: value.Amount, Unlimited: value.Unlimited, Period: value.Period, CreatedBy: uint64Pointer(input.ActorID)}
+		if err := db.Create(&row).Error; err != nil {
+			return catalogMutationError(err)
+		}
+	}
+	for _, value := range input.Terms.Operations {
+		row := models.CatalogPlanOperationPolicy{PlanVersionID: planVersionID, OperationCode: value.Code, FeatureCode: value.FeatureCode, MeterCode: stringPointer(value.MeterCode), UnitsPerAction: value.UnitsPerAction, CreatedBy: uint64Pointer(input.ActorID)}
+		if err := db.Create(&row).Error; err != nil {
+			return catalogMutationError(err)
+		}
+	}
+	for _, value := range input.Terms.Prices {
+		row := models.CatalogPriceItem{PlanVersionID: planVersionID, Code: value.Code, Kind: value.Kind, Currency: value.Currency, AmountMinor: value.AmountMinor, BillingUnit: value.BillingUnit, MeterCode: stringPointer(value.MeterCode), Quantity: value.Quantity, CreatedBy: uint64Pointer(input.ActorID)}
+		if err := db.Create(&row).Error; err != nil {
+			return catalogMutationError(err)
+		}
+	}
+	return nil
+}
+
+func catalogNotFoundError(err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return admin.ErrPlanVersionNotFound
+	}
+	return err
+}
+
+func catalogMutationError(err error) error {
+	var pqError *pq.Error
+	if errors.As(err, &pqError) && pqError.Code == "23505" {
+		return admin.ErrPlanVersionConflict
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "duplicate key") {
+		return admin.ErrPlanVersionConflict
+	}
+	return err
+}
+
+func stringPointer(value string) *string {
+	if value == "" {
+		return nil
+	}
+	copy := value
+	return &copy
+}
+
+func uint64Pointer(value uint64) *uint64 { return &value }
+
+func int32Pointer(value int32) *int32 { return &value }
 
 var (
 	_ publish.Repository = (*PlanVersionRepo)(nil)

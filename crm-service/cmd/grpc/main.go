@@ -5,7 +5,6 @@ import (
 	process "common/process"
 	"context"
 	"crm/config"
-	"crm/infra/db"
 	"crm/initial"
 	"crm/wire"
 	"fmt"
@@ -35,7 +34,6 @@ func runGRPC() error {
 	if err := config.LoadConfig(); err != nil {
 		return fmt.Errorf("load CRM config: %w", err)
 	}
-
 	// Đặt múi giờ mặc định (VD: Asia/Ho_Chi_Minh)
 	os.Setenv("TZ", "Europe/London")
 	time.Local = time.FixedZone("Europe/London", 7*60*60)
@@ -57,7 +55,6 @@ func runGRPC() error {
 		return fmt.Errorf("initialize CRM app: %w", err)
 	}
 	defer cleanup()
-	db.AutoMigrate()
 
 	port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 	lis, err := net.Listen("tcp", port)

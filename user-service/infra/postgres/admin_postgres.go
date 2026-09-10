@@ -279,6 +279,26 @@ func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfil
 	return req, nil
 }
 
+// IsSystemRootAdmin accepts either the historical admin-profile ID or auth ID
+// because the compatibility DeleteAdmin contract has used both identities.
+func (r *AdminPostgres) IsSystemRootAdmin(ctx context.Context, id uint64) (bool, error) {
+	var exists bool
+	err := r.DB.WithContext(ctx).Raw(`
+SELECT EXISTS (
+    SELECT 1
+      FROM admin_profiles administrator
+      JOIN role_profiles assignment ON assignment.profile_id = administrator.profile_id
+      JOIN roles role ON role.id = assignment.role_id
+     WHERE (administrator.id = ? OR administrator.auth_id = ?)
+       AND administrator.deleted_at IS NULL
+       AND assignment.deleted_at IS NULL
+       AND role.organization_id = 0
+       AND role.key = 'QHPRO_SYSTEM_ROOT'
+       AND role.deleted_at IS NULL
+)`, id, id).Scan(&exists).Error
+	return exists, err
+}
+
 // DeleteAdmin xóa admin profile (soft delete)
 func (r *AdminPostgres) DeleteAdmin(ctx context.Context, authID uint64) error {
 	err := r.DB.WithContext(ctx).
@@ -287,20 +307,6 @@ func (r *AdminPostgres) DeleteAdmin(ctx context.Context, authID uint64) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to delete admin: %v", err)
-	}
-
-	return nil
-}
-
-// AssignRole gán quyền cho admin
-func (r *AdminPostgres) AssignRole(ctx context.Context, authID uint64, roleKey string) error {
-	err := r.DB.WithContext(ctx).
-		Model(&models.AdminProfile{}).
-		Where("auth_id = ?", authID).
-		Update("role_key", roleKey).Error
-
-	if err != nil {
-		return fmt.Errorf("failed to assign role: %v", err)
 	}
 
 	return nil

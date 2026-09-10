@@ -153,6 +153,15 @@ service PaymentService {
       body: "*"
     };
   }
+
+  // Hosted Payment Gateway callback. Card fields sent by the provider are
+  // intentionally discarded at Gateway and never enter the QHPRO contract.
+  rpc SepayGatewayIPN(SepayGatewayIPNRequest) returns (Empty) {
+    option (google.api.http) = {
+      post: "/v2/payment/sepay/ipn"
+      body: "*"
+    };
+  }
   
   // Dashboard API - Lấy thống kê số lượng giao dịch đang xử lý
   rpc GetPaymentStats(sharepb.GetStatsRequest) returns (sharepb.GetStatsResponse) {
@@ -428,6 +437,41 @@ message SepayWebhookRequest {
   string reference_code = 10;
   double accumulated = 11;
   uint32 id = 12;
+}
+
+message SepayGatewayIPNRequest {
+  int64 timestamp = 1;
+  string notification_type = 2;
+  SepayGatewayOrder order = 3;
+  SepayGatewayTransaction transaction = 4;
+  SepayGatewayCustomer customer = 5;
+}
+
+message SepayGatewayOrder {
+  string id = 1;
+  string order_id = 2;
+  string order_status = 3;
+  string order_currency = 4;
+  string order_amount = 5;
+  string order_invoice_number = 6;
+  string order_description = 7;
+}
+
+message SepayGatewayTransaction {
+  string id = 1;
+  string payment_method = 2;
+  string transaction_id = 3;
+  string transaction_type = 4;
+  string transaction_date = 5;
+  string transaction_status = 6;
+  string transaction_amount = 7;
+  string transaction_currency = 8;
+  string authentication_status = 9;
+}
+
+message SepayGatewayCustomer {
+  string id = 1;
+  string customer_id = 2;
 }
 
 message GetDashboardMetricsRequest {

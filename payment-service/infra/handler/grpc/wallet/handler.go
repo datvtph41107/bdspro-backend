@@ -30,6 +30,7 @@ type PaymentHandler struct {
 	PaymentDashboardStatsJob *job.PaymentDashboardStatsJob
 	commerceSettlement       *settlementuc.Service
 	sepayAPIKey              string
+	sepayGatewayIPNSecret    string
 }
 
 func NewPaymentHandler(
@@ -37,12 +38,14 @@ func NewPaymentHandler(
 	paymentDashboardStatsJob *job.PaymentDashboardStatsJob,
 	commerceSettlement *settlementuc.Service,
 	sepayAPIKey string,
+	sepayGatewayIPNSecret string,
 ) *PaymentHandler {
 	return &PaymentHandler{
 		paymentUsecase:           paymentUsecase,
 		PaymentDashboardStatsJob: paymentDashboardStatsJob,
 		commerceSettlement:       commerceSettlement,
 		sepayAPIKey:              strings.TrimSpace(sepayAPIKey),
+		sepayGatewayIPNSecret:    strings.TrimSpace(sepayGatewayIPNSecret),
 	}
 }
 
@@ -293,17 +296,10 @@ func (h *PaymentHandler) GetWalletByWalletId(ctx context.Context, req *paymentpb
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /sepay/webhook [post]
 func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayWebhookRequest) (*paymentpb.Empty, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "missing metadata")
-	}
-	digestValues := md.Get("x-qhpro-provider-credential-sha256")
-	if len(digestValues) != 1 || h.sepayAPIKey == "" {
-		return nil, status.Error(codes.Unauthenticated, "invalid provider credential")
-	}
-	expectedRaw := sha256.Sum256([]byte(h.sepayAPIKey))
-	expected := hex.EncodeToString(expectedRaw[:])
-	if subtle.ConstantTimeCompare([]byte(digestValues[0]), []byte(expected)) != 1 {
+	// SePay sends the complete value "Authorization: Apikey <key>". Runtime
+	// config stores only <key>; Gateway forwards only its SHA-256 digest, never
+	// the raw credential.
+	if !validSepayAPIKeyCredential(ctx, h.sepayAPIKey) {
 		return nil, status.Error(codes.Unauthenticated, "invalid provider credential")
 	}
 	if h.commerceSettlement != nil {
@@ -332,6 +328,101 @@ func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayW
 		return nil, err
 	}
 	return &paymentpb.Empty{}, nil
+}
+
+func validSepayAPIKeyCredential(ctx context.Context, apiKey string) bool {
+	apiKey = strings.TrimSpace(apiKey)
+	if apiKey == "" {
+		return false
+	}
+	return validProviderCredential(ctx, "Apikey "+apiKey)
+}
+
+// SepayGatewayIPN is the sole money-truth ingress for SePay hosted checkout.
+// Redirect URLs are UX only; subscription activation happens only after this
+// authenticated, durable provider event is accepted.
+func (h *PaymentHandler) SepayGatewayIPN(ctx context.Context, req *paymentpb.SepayGatewayIPNRequest) (*paymentpb.Empty, error) {
+	if !validProviderCredential(ctx, h.sepayGatewayIPNSecret) {
+		return nil, status.Error(codes.Unauthenticated, "invalid provider credential")
+	}
+	if h.commerceSettlement == nil || req == nil || req.GetOrder() == nil || req.GetTransaction() == nil {
+		return nil, status.Error(codes.FailedPrecondition, "payment settlement unavailable")
+	}
+	if strings.EqualFold(strings.TrimSpace(req.GetNotificationType()), "TRANSACTION_VOID") {
+		// Voids never grant entitlement. Acknowledge them so the provider does
+		// not retry an event that has no supported positive-money effect.
+		return &paymentpb.Empty{}, nil
+	}
+	if !strings.EqualFold(strings.TrimSpace(req.GetNotificationType()), "ORDER_PAID") ||
+		!strings.EqualFold(strings.TrimSpace(req.GetOrder().GetOrderStatus()), "CAPTURED") ||
+		!strings.EqualFold(strings.TrimSpace(req.GetTransaction().GetTransactionStatus()), "APPROVED") ||
+		!strings.EqualFold(strings.TrimSpace(req.GetTransaction().GetTransactionType()), "PAYMENT") {
+		return nil, status.Error(codes.InvalidArgument, "unsupported SePay gateway event")
+	}
+	reference, ok := ExtractCommercialOrderReference(req.GetOrder().GetOrderInvoiceNumber())
+	if !ok {
+		return nil, status.Error(codes.InvalidArgument, "invalid commercial order reference")
+	}
+	amount, err := parseVNDMinor(req.GetTransaction().GetTransactionAmount())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid VND amount")
+	}
+	orderAmount, err := parseVNDMinor(req.GetOrder().GetOrderAmount())
+	if err != nil || orderAmount != amount ||
+		!strings.EqualFold(strings.TrimSpace(req.GetOrder().GetOrderCurrency()), "VND") ||
+		!strings.EqualFold(strings.TrimSpace(req.GetTransaction().GetTransactionCurrency()), "VND") {
+		return nil, status.Error(codes.InvalidArgument, "inconsistent SePay gateway amount or currency")
+	}
+	transactionID := strings.TrimSpace(req.GetTransaction().GetTransactionId())
+	if transactionID == "" {
+		transactionID = strings.TrimSpace(req.GetTransaction().GetId())
+	}
+	if transactionID == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing provider transaction identity")
+	}
+	occurred, err := time.ParseInLocation("2006-01-02 15:04:05", req.GetTransaction().GetTransactionDate(), time.FixedZone("Asia/Ho_Chi_Minh", 7*3600))
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid transaction date")
+	}
+	_, err = h.commerceSettlement.RecordProviderEvent(ctx, commercedomain.ProviderEvent{
+		Provider: "sepay", TransactionID: transactionID, Reference: reference,
+		Amount:     commercedomain.Money{Currency: commercedomain.CurrencyVND, AmountMinor: amount},
+		OccurredAt: occurred, Type: commercedomain.ProviderFundsConfirmed,
+		EvidenceHash: "sepay-gateway:" + transactionID,
+	})
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+	return &paymentpb.Empty{}, nil
+}
+
+func validProviderCredential(ctx context.Context, secret string) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok || strings.TrimSpace(secret) == "" {
+		return false
+	}
+	digestValues := md.Get("x-qhpro-provider-credential-sha256")
+	if len(digestValues) != 1 {
+		return false
+	}
+	expectedRaw := sha256.Sum256([]byte(strings.TrimSpace(secret)))
+	expected := hex.EncodeToString(expectedRaw[:])
+	return subtle.ConstantTimeCompare([]byte(digestValues[0]), []byte(expected)) == 1
+}
+
+func parseVNDMinor(raw string) (int64, error) {
+	parts := strings.Split(strings.TrimSpace(raw), ".")
+	if len(parts) == 0 || len(parts) > 2 || parts[0] == "" {
+		return 0, fmt.Errorf("invalid VND amount")
+	}
+	if len(parts) == 2 && strings.Trim(parts[1], "0") != "" {
+		return 0, fmt.Errorf("VND fractional amount is not supported")
+	}
+	amount, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil || amount <= 0 {
+		return 0, fmt.Errorf("invalid VND amount")
+	}
+	return amount, nil
 }
 
 func ExtractDepositCode(content string) string {

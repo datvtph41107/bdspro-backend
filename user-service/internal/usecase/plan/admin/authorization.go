@@ -12,6 +12,7 @@ var ErrUnauthorized = errors.New("trusted catalog actor identity is required")
 
 const (
 	PermissionPlanView    = "CATALOG_PLAN_VIEW"
+	PermissionPlanManage  = "CATALOG_PLAN_MANAGE"
 	PermissionPlanPublish = "CATALOG_PLAN_PUBLISH"
 )
 
