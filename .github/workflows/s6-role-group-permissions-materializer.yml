@@ -1,0 +1,223 @@
+name: S6 Role Group Permissions Materializer
+
+on:
+  push:
+    branches:
+      - final-acceptance/harness-s6-role-group-permissions-materializer
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout immutable accepted parent
+        uses: actions/checkout@v4
+        with:
+          ref: 391cc2608cfdf48a6361741333d3144f7f53e0e6
+          fetch-depth: 0
+
+      - name: Guard live authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=391cc2608cfdf48a6361741333d3144f7f53e0e6
+          canonical=$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')
+          working=$(git ls-remote origin refs/heads/final-acceptance/proof-s6-role-group-permissions | awk '{print $1}')
+          test "$canonical" = "$expected"
+          test "$working" = "$expected"
+          test "$(git rev-parse HEAD)" = "$expected"
+
+      - name: Materialize bounded Batch 9 mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          usecase = Path('user-service/internal/usecase/role_group_usecase.go')
+          text = usecase.read_text()
+          old = '\t_errors "common/errors"\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'usecase import anchor count={text.count(old)}')
+          text = text.replace(old, '', 1)
+          old = '\t\treturn _errors.ReturnError(404, "Group không tồn tại")\n'
+          new = '\t\treturn access.ErrRoleGroupNotFound\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'usecase missing-group anchor count={text.count(old)}')
+          usecase.write_text(text.replace(old, new, 1))
+
+          handler = Path('user-service/infra/handler/role_group_handler.go')
+          text = handler.read_text()
+          old = 'import (\n\t_dto "common/domain/dto"\n\t"context"\n'
+          new = 'import (\n\t_dto "common/domain/dto"\n\t"context"\n\t"errors"\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'handler stdlib import anchor count={text.count(old)}')
+          text = text.replace(old, new, 1)
+          old = '\t"user/infra/mapper"\n\t"user/internal/enums"\n'
+          new = '\t"user/infra/mapper"\n\t"user/internal/domain/access"\n\t"user/internal/enums"\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'handler access import anchor count={text.count(old)}')
+          text = text.replace(old, new, 1)
+          old = '\t"user/internal/usecase"\n\t"user/validator"\n)\n'
+          new = '\t"user/internal/usecase"\n\t"user/validator"\n\n\t"google.golang.org/grpc/codes"\n\t"google.golang.org/grpc/status"\n)\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'handler grpc import anchor count={text.count(old)}')
+          text = text.replace(old, new, 1)
+          marker = '// @Summary Cập nhật permission cho group\n'
+          mapper = '''func mapUpdateGroupPermissionsError(err error) error {
+\tif !errors.Is(err, access.ErrRoleGroupNotFound) {
+\t\treturn err
+\t}
+
+\tconst message = "Group không tồn tại"
+\tst := status.New(codes.Internal, message)
+\twithDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
+\t\tCode:    404,
+\t\tMessage: message,
+\t})
+\tif detailsErr != nil {
+\t\treturn st.Err()
+\t}
+\treturn withDetails.Err()
+}
+
+'''
+          if text.count(marker) != 1:
+              raise SystemExit(f'handler mapper marker count={text.count(marker)}')
+          text = text.replace(marker, mapper + marker, 1)
+          old = '\terr := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n'
+          new = '\terr := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)\n\tif err != nil {\n\t\treturn nil, mapUpdateGroupPermissionsError(err)\n\t}\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'handler call-site anchor count={text.count(old)}')
+          handler.write_text(text.replace(old, new, 1))
+          PY
+
+          cat > user-service/infra/handler/role_group_permissions_error_test.go <<'EOF'
+          package handler
+
+          import (
+              "context"
+              stderrors "errors"
+              "testing"
+
+              sharepb "pb/types/shared"
+              "user/internal/domain/access"
+              "user/internal/interface/repo"
+              "user/internal/usecase"
+
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          type roleGroupPermissionsRepoStub struct {
+              repo.RoleGroupRepository
+              group       *access.RoleGroup
+              getErr      error
+              updateErr   error
+              updateCalls int
+          }
+
+          func (r *roleGroupPermissionsRepoStub) GetByID(ctx context.Context, id uint64) (*access.RoleGroup, error) {
+              return r.group, r.getErr
+          }
+
+          func (r *roleGroupPermissionsRepoStub) UpdateGroupPermissions(ctx context.Context, groupID uint64, permissionIDs []uint64) error {
+              r.updateCalls++
+              return r.updateErr
+          }
+
+          func TestUpdateGroupPermissionsMissingGroupIsSemantic(t *testing.T) {
+              repository := &roleGroupPermissionsRepoStub{}
+              uc := usecase.NewRoleGroupUsecase(repository, nil)
+
+              err := uc.UpdateGroupPermissions(context.Background(), 42, []uint64{1, 2})
+              if !stderrors.Is(err, access.ErrRoleGroupNotFound) {
+                  t.Fatalf("err = %v, want ErrRoleGroupNotFound", err)
+              }
+              if _, ok := status.FromError(err); ok {
+                  t.Fatalf("semantic error must not already be a gRPC status: %v", err)
+              }
+              if repository.updateCalls != 0 {
+                  t.Fatalf("UpdateGroupPermissions calls = %d, want 0", repository.updateCalls)
+              }
+          }
+
+          func TestMapUpdateGroupPermissionsErrorRoleGroupNotFound(t *testing.T) {
+              got := mapUpdateGroupPermissionsError(access.ErrRoleGroupNotFound)
+              st, ok := status.FromError(got)
+              if !ok {
+                  t.Fatalf("expected gRPC status, got %T: %v", got, got)
+              }
+              if st.Code() != codes.Internal {
+                  t.Fatalf("code = %v, want %v", st.Code(), codes.Internal)
+              }
+              if st.Message() != "Group không tồn tại" {
+                  t.Fatalf("message = %q", st.Message())
+              }
+              details := st.Details()
+              if len(details) != 1 {
+                  t.Fatalf("details = %d, want 1", len(details))
+              }
+              detail, ok := details[0].(*sharepb.ErrorResponse)
+              if !ok {
+                  t.Fatalf("detail type = %T, want *sharepb.ErrorResponse", details[0])
+              }
+              if detail.Code != 404 || detail.Message != "Group không tồn tại" || detail.Second != nil {
+                  t.Fatalf("detail = %+v", detail)
+              }
+          }
+
+          func TestMapUpdateGroupPermissionsErrorPassthrough(t *testing.T) {
+              boom := stderrors.New("boom")
+              if got := mapUpdateGroupPermissionsError(boom); got != boom {
+                  t.Fatalf("got = %v, want original error", got)
+              }
+          }
+          EOF
+
+          gofmt -w \
+            user-service/internal/usecase/role_group_usecase.go \
+            user-service/infra/handler/role_group_handler.go \
+            user-service/infra/handler/role_group_permissions_error_test.go
+
+      - name: Guard exact semantic delta and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=391cc2608cfdf48a6361741333d3144f7f53e0e6
+          cat > /tmp/expected-paths <<'EOF'
+          user-service/infra/handler/role_group_handler.go
+          user-service/infra/handler/role_group_permissions_error_test.go
+          user-service/internal/usecase/role_group_usecase.go
+          EOF
+          git diff --name-only | sort > /tmp/actual-paths
+          diff -u /tmp/expected-paths /tmp/actual-paths
+          git diff --check
+          git add -- \
+            user-service/internal/usecase/role_group_usecase.go \
+            user-service/infra/handler/role_group_handler.go \
+            user-service/infra/handler/role_group_permissions_error_test.go
+          git diff --cached --name-only | sort > /tmp/staged-paths
+          diff -u /tmp/expected-paths /tmp/staged-paths
+          git config user.name datvtph41107
+          git config user.email 116329073+datvtph41107@users.noreply.github.com
+          git commit -m 'refactor(user): localize role group permissions miss mapping'
+          test "$(git rev-parse HEAD^)" = "$expected"
+          git diff --name-only "$expected"..HEAD | sort > /tmp/commit-paths
+          diff -u /tmp/expected-paths /tmp/commit-paths
+
+      - name: Fresh race guard and non-force proof-branch push
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=391cc2608cfdf48a6361741333d3144f7f53e0e6
+          canonical=$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')
+          working=$(git ls-remote origin refs/heads/final-acceptance/proof-s6-role-group-permissions | awk '{print $1}')
+          test "$canonical" = "$expected"
+          test "$working" = "$expected"
+          test "$(git rev-parse HEAD^)" = "$expected"
+          git push origin HEAD:refs/heads/final-acceptance/proof-s6-role-group-permissions
+          echo "candidate_sha=$(git rev-parse HEAD)"
