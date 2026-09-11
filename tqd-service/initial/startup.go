@@ -4,6 +4,7 @@ import (
 	handler_grpc "tqd/infra/handler/grpc"
 	handler_http "tqd/infra/handler/http"
 	"tqd/infra/worker"
+	quotausecase "tqd/internal/usecase/quota"
 )
 
 // InitialApp holds all application dependencies
@@ -57,6 +58,7 @@ type InitialApp struct {
 	PlanningClientGrpcHandler      *handler_grpc.PlanningClientGrpcHandler
 	AdminUsageGrpcHandler          *handler_grpc.AdminUsageGrpcHandler
 	ProfileUsageGrpcHandler        *handler_grpc.ProfileUsageGrpcHandler
+	CommercialActionService        *quotausecase.ActionService
 
 	// Background workers
 	QHPlanningClassifyWorker *worker.QHPlanningClassifyWorker
@@ -110,6 +112,7 @@ func NewApp(
 	planningClientGrpcHandler *handler_grpc.PlanningClientGrpcHandler,
 	adminUsageGrpcHandler *handler_grpc.AdminUsageGrpcHandler,
 	profileUsageGrpcHandler *handler_grpc.ProfileUsageGrpcHandler,
+	commercialActionService *quotausecase.ActionService,
 	qhPlanningClassifyWorker *worker.QHPlanningClassifyWorker,
 ) *InitialApp {
 	return &InitialApp{
@@ -159,6 +162,7 @@ func NewApp(
 		PlanningClientGrpcHandler:      planningClientGrpcHandler,
 		AdminUsageGrpcHandler:          adminUsageGrpcHandler,
 		ProfileUsageGrpcHandler:        profileUsageGrpcHandler,
+		CommercialActionService:        commercialActionService,
 		QHPlanningClassifyWorker:       qhPlanningClassifyWorker,
 	}
 }

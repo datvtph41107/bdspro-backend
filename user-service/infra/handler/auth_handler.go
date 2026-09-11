@@ -436,7 +436,7 @@ func (h *AuthHandler) ResendOTP(ctx context.Context, req *authpb.ResendOTPReques
 func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpb.RefreshTokenRequest) (*authpb.RefreshTokenResponse, error) {
 	result, err := h.AuthUsecase.RefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "lỗi khi refresh token: %v", err)
+		return nil, mapRefreshTokenError(err)
 	}
 
 	return &authpb.RefreshTokenResponse{

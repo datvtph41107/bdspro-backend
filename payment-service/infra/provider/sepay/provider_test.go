@@ -46,6 +46,10 @@ func TestUnconfiguredGatewayKeepsLegacyBankWebhookFlow(t *testing.T) {
 func TestVietQRAttemptRendersPaymentInstructionInsidePaymentService(t *testing.T) {
 	t.Parallel()
 	p := New("sepay", CheckoutConfig{
+		// Existing hosted credentials must not override the selected QR flow.
+		MerchantID: "merchant", SecretKey: "secret",
+		CheckoutURL:       "https://pay-sandbox.sepay.vn/v1/checkout/init",
+		BridgeURL:         "http://127.0.0.1:8000/v2/payment/sepay/checkout",
 		BankTransferFlow:  BankTransferFlowVietQR,
 		BankBIN:           "970422",
 		BankAccountNumber: "0123456789",

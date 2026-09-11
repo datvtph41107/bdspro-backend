@@ -87,29 +87,66 @@ Payment owns one explicit switch; code must not guess from `localhost` or from
 the presence of a bank account:
 
 ```dotenv
-# Safe development: fake money and SePay's sandbox transaction simulator.
+# Hosted Payment Gateway sandbox (optional, separate from Bank Webhooks).
 SEPAY_GATEWAY_ENVIRONMENT=sandbox
 SEPAY_BANK_TRANSFER_FLOW=hosted_checkout
 ```
 
-This mode keeps the hosted SePay page. The redirect is part of the sandbox
-simulation protocol, not an equivalent of a local bank QR.
+This mode keeps the hosted SePay page. To show the QR inside QHPRO instead,
+select `vietqr` and configure Bank Webhooks in either Test mode or Live.
+
+### Inline QR with Bank Webhooks Test mode
+
+Create a bank account in **my.sepay.vn → Test mode → Tài khoản ngân hàng**.
+Run the VS Code task **BDSPro · Payment · Configure Webhook Test** and enter
+that account's bank BIN and number. The task changes only the payment settings
+in `payment-service/.env`, preserves the webhook key (generates one if empty),
+and disables card checkout. It does not register the account or webhook on SePay.
+The equivalent configuration is:
+
+```dotenv
+SEPAY_GATEWAY_ENVIRONMENT=sandbox
+SEPAY_BANK_TRANSFER_FLOW=vietqr
+SEPAY_WEBHOOK_ENVIRONMENT=test
+SEPAY_BANK_TRANSFER_ENABLED=true
+SEPAY_CARD_ENABLED=false
+SEPAY_QR_BANK_BIN=<six-digit-bank-BIN>
+SEPAY_QR_ACCOUNT_NUMBER=<account-created-in-Test-mode>
+SEPAY_API_KEY=<webhook-key>
+```
+
+Restart Payment and Gateway, then create a new payment attempt. Previously
+created attempts retain their original QR or hosted URL for idempotent replay.
+The app displays the QR with a Test mode notice; **do not scan it to send real
+money**. Test mode does not change the bank-transfer data encoded in a VietQR.
+In SePay Test mode, create a JSON webhook for incoming funds using API Key
+authentication and the public Gateway URL below. Simulate an incoming transaction
+with exactly the order amount and reference. A successful callback returns
+`{"success":true}`; the app polls until settlement and fulfillment activate the plan.
+
+Test and Live must use separate application databases and webhook secrets.
+The webhook payload itself does not identify its environment. The configuration
+therefore requires the explicit pairs `sandbox + test` or `production + live`
+when using `vietqr`; it never infers Test mode from a local hostname.
+
+Official guide: [SePay Webhooks Test mode](https://developer.sepay.vn/vi/sepay-webhooks/test-mode/bat-dau-nhanh).
+
+### Inline QR with a live bank account
 
 For a linked real bank account, operators may instead select an inline VietQR:
 
 ```dotenv
 SEPAY_GATEWAY_ENVIRONMENT=production
 SEPAY_BANK_TRANSFER_FLOW=vietqr
+SEPAY_WEBHOOK_ENVIRONMENT=live
 SEPAY_QR_BANK_BIN=970422
 SEPAY_QR_ACCOUNT_NUMBER=
 SEPAY_API_KEY=
 ```
 
-`vietqr` always represents a real transfer, even when the application itself
-runs on a developer machine. Payment therefore rejects `sandbox + vietqr` to
-prevent accidental real-money tests. The BIN, account, amount and order
-reference are rendered to a PNG inside Payment Service and returned as a data
-URI; no transaction data is sent to a public QR-image API.
+The BIN, account, amount and order reference are rendered to a PNG inside
+Payment Service and returned as a data URI; no transaction data is sent to a
+public QR-image API. Live QR represents a real transfer even on a developer machine.
 
 For this flow, create the SePay bank webhook at
 `https://<public-gateway>/v2/payment/sepay/webhook`, choose JSON and API Key,
@@ -121,8 +158,9 @@ production hardening step because it requires verification against the raw
 HTTP body at the Gateway boundary.
 
 Neither QR display, browser return nor a client-side polling response activates
-a subscription. Only an authenticated webhook whose reference and frozen VND
-amount match the Order can create settlement and fulfillment.
+a subscription. Provider settlement requires an authenticated webhook whose
+reference and frozen VND amount match the Order. The separate audited operator
+confirmation command remains available for manual reconciliation.
 
 ## Read source from here
 

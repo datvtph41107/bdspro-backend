@@ -2,6 +2,25 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "BDSPro · Payment · Webhook Test Tunnel",
+      "type": "process",
+      "command": "python3",
+      "args": ["${workspaceFolder}/gateway-service/scripts/sepay-webhook-tunnel.py"],
+      "problemMatcher": [],
+      "presentation": {"panel": "dedicated", "reveal": "always"}
+    },
+    {
+      "label": "BDSPro · Payment · Configure Webhook Test",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/payment-service/scripts/configure-webhook-test.py",
+        "--bank-bin", "${input:sepayTestBankBin}",
+        "--account-number", "${input:sepayTestAccountNumber}"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "BDSPro · Setup",
       "type": "process",
       "command": "make",
@@ -211,6 +230,18 @@
         "down"
       ],
       "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sepayTestBankBin",
+      "type": "promptString",
+      "description": "Mã BIN 6 chữ số của ngân hàng đã tạo trong SePay Webhooks Test mode"
+    },
+    {
+      "id": "sepayTestAccountNumber",
+      "type": "promptString",
+      "description": "Số tài khoản trong SePay Webhooks Test mode (không dùng để chuyển tiền thật)"
     }
   ]
 }

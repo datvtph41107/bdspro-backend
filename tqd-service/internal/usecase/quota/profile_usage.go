@@ -9,8 +9,6 @@ import (
 	"tqd/internal/access"
 )
 
-const GeneratedReportOperation commonoperation.Code = "workspace.report.generate"
-
 type ProfileAccessReader interface {
 	GetAccess(context.Context, commonoperation.Code) (access.Result, error)
 }
@@ -42,10 +40,18 @@ func NewProfileUsageService(accessReader ProfileAccessReader, durable DurableUsa
 // GetGeneratedReportUsage projects entitlement, durable accounting and
 // runtime admission without collapsing their distinct authorities.
 func (s *ProfileUsageService) GetGeneratedReportUsage(ctx context.Context) (ProfileUsageProjection, error) {
+	return s.GetUsage(ctx, GeneratedReportOperation)
+}
+
+// GetUsage projects one contract-owned TQD operation.
+func (s *ProfileUsageService) GetUsage(ctx context.Context, operationCode commonoperation.Code) (ProfileUsageProjection, error) {
 	if s == nil || s.access == nil || s.durable == nil {
 		return ProfileUsageProjection{}, errors.New("profile usage projection is not configured")
 	}
-	decision, err := s.access.GetAccess(ctx, GeneratedReportOperation)
+	if !operationCode.IsValid() {
+		return ProfileUsageProjection{}, errors.New("profile usage operation is invalid")
+	}
+	decision, err := s.access.GetAccess(ctx, operationCode)
 	if err != nil {
 		return ProfileUsageProjection{}, err
 	}
@@ -82,4 +88,18 @@ func (s *ProfileUsageService) GetGeneratedReportUsage(ctx context.Context) (Prof
 		projection.Reconciliation = "drift"
 	}
 	return projection, nil
+}
+
+// ListUsage returns every customer-visible TQD quota independently. A denied
+// operation is still returned so the Client can explain which plan unlocks it.
+func (s *ProfileUsageService) ListUsage(ctx context.Context) ([]ProfileUsageProjection, error) {
+	result := make([]ProfileUsageProjection, 0, len(ProfileOperations))
+	for _, operationCode := range ProfileOperations {
+		projection, err := s.GetUsage(ctx, operationCode)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, projection)
+	}
+	return result, nil
 }

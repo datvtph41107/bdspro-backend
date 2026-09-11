@@ -55,6 +55,7 @@ type ProviderConfig struct {
 type SepayGatewayConfig struct {
 	Environment         string
 	BankTransferFlow    string
+	WebhookEnvironment  string
 	MerchantID          string
 	SecretKey           string
 	CheckoutURL         string
@@ -72,6 +73,8 @@ type SepayGatewayConfig struct {
 const (
 	SepayBankTransferHosted = "hosted_checkout"
 	SepayBankTransferVietQR = "vietqr"
+	SepayWebhookTest        = "test"
+	SepayWebhookLive        = "live"
 )
 
 type Config struct {
@@ -149,11 +152,12 @@ func Load() (Config, error) {
 		Provider: ProviderConfig{
 			SepayAPIKey: strings.TrimSpace(os.Getenv("SEPAY_API_KEY")),
 			Sepay: SepayGatewayConfig{
-				Environment:      envOr("SEPAY_GATEWAY_ENVIRONMENT", "", "sandbox"),
-				BankTransferFlow: strings.ToLower(envOr("SEPAY_BANK_TRANSFER_FLOW", "", SepayBankTransferHosted)),
-				MerchantID:       strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_ID")),
-				SecretKey:        strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_SECRET_KEY")),
-				CheckoutURL:      strings.TrimSpace(os.Getenv("SEPAY_CHECKOUT_URL")),
+				Environment:        envOr("SEPAY_GATEWAY_ENVIRONMENT", "", "sandbox"),
+				BankTransferFlow:   strings.ToLower(envOr("SEPAY_BANK_TRANSFER_FLOW", "", SepayBankTransferHosted)),
+				WebhookEnvironment: strings.ToLower(envOr("SEPAY_WEBHOOK_ENVIRONMENT", "", SepayWebhookLive)),
+				MerchantID:         strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_ID")),
+				SecretKey:          strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_SECRET_KEY")),
+				CheckoutURL:        strings.TrimSpace(os.Getenv("SEPAY_CHECKOUT_URL")),
 				BridgeURL: envOr(
 					"SEPAY_CHECKOUT_BRIDGE_URL",
 					"",
@@ -188,8 +192,18 @@ func validateProvider(cfg ProviderConfig) error {
 		return err
 	}
 	if strings.EqualFold(strings.TrimSpace(cfg.Sepay.BankTransferFlow), SepayBankTransferVietQR) {
-		if strings.EqualFold(cfg.Sepay.Environment, "sandbox") {
-			return errors.New("SEPAY_BANK_TRANSFER_FLOW=vietqr is a real bank transfer and cannot run as SePay sandbox; use hosted_checkout for fake-money development")
+		webhookEnvironment := strings.ToLower(strings.TrimSpace(cfg.Sepay.WebhookEnvironment))
+		if webhookEnvironment == "" {
+			webhookEnvironment = SepayWebhookLive
+		}
+		if webhookEnvironment != SepayWebhookTest && webhookEnvironment != SepayWebhookLive {
+			return errors.New("SEPAY_WEBHOOK_ENVIRONMENT must be test or live")
+		}
+		// Bank Webhooks Test mode is independent of Payment Gateway sandbox.
+		// Require an explicit selection before treating an inline QR as a test.
+		sandbox := strings.EqualFold(strings.TrimSpace(cfg.Sepay.Environment), "sandbox")
+		if sandbox != (webhookEnvironment == SepayWebhookTest) {
+			return errors.New("VietQR requires sandbox + SEPAY_WEBHOOK_ENVIRONMENT=test or production + SEPAY_WEBHOOK_ENVIRONMENT=live")
 		}
 		if strings.TrimSpace(cfg.SepayAPIKey) == "" {
 			return errors.New("SEPAY_API_KEY is required for authenticated bank webhook settlement when SEPAY_BANK_TRANSFER_FLOW=vietqr")

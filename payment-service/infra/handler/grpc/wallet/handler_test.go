@@ -11,6 +11,7 @@ import (
 	settlementuc "payment/internal/usecase/settlement"
 	paymentpb "pb/types/payment"
 
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -105,21 +106,67 @@ func TestSepayGatewayIPNAcceptsOnlyAuthenticatedCapturedPayment(t *testing.T) {
 }
 
 type gatewaySettlementStore struct {
-	order    domain.Order
-	accepted settlementuc.Decision
+	order       domain.Order
+	accepted    settlementuc.Decision
+	acceptCount int
 }
 
 func (s *gatewaySettlementStore) FindOrderByReference(_ context.Context, reference string) (domain.Order, bool, error) {
 	return s.order, reference == s.order.Reference, nil
 }
 
-func (s *gatewaySettlementStore) FindSettlementByProviderTransaction(context.Context, string, string) (domain.Settlement, bool, error) {
+func (s *gatewaySettlementStore) FindSettlementByProviderTransaction(_ context.Context, provider, transactionID string) (domain.Settlement, bool, error) {
+	if s.acceptCount > 0 && s.accepted.Settlement.Provider == provider && s.accepted.Settlement.ProviderTransactionID == transactionID {
+		return s.accepted.Settlement, true, nil
+	}
 	return domain.Settlement{}, false, nil
 }
 
 func (s *gatewaySettlementStore) AcceptSettlement(_ context.Context, decision settlementuc.Decision) (settlementuc.Result, error) {
 	s.accepted = decision
+	s.acceptCount++
 	return settlementuc.Result{Settlement: decision.Settlement}, nil
+}
+
+func TestBankWebhookSettlesMatchingFundsOnce(t *testing.T) {
+	for _, tc := range []struct {
+		name                       string
+		amount                     float64
+		credential, direction      string
+		wantError, wantFulfillment bool
+	}{
+		{"matching", 99000, "Apikey webhook-key", "in", false, true},
+		{"wrong amount", 98000, "Apikey webhook-key", "in", false, false},
+		{"wrong credential", 99000, "Apikey wrong", "in", true, false},
+		{"outgoing", 99000, "Apikey webhook-key", "out", true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			now := time.Date(2026, 9, 8, 8, 0, 0, 0, time.UTC)
+			store := &gatewaySettlementStore{order: domain.Order{
+				ID: 41, Reference: "QHP-0123456789ABCDEF", Status: domain.OrderPendingFunds,
+				ExpiresAt: now.Add(time.Hour),
+				Terms:     domain.CommercialTerms{Price: domain.Money{Currency: domain.CurrencyVND, AmountMinor: 99000}},
+			}}
+			handler := NewPaymentHandler(nil, nil, settlementuc.NewService(store, store, func() time.Time { return now }), "webhook-key", "")
+			digest := sha256.Sum256([]byte(tc.credential))
+			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-qhpro-provider-credential-sha256", hex.EncodeToString(digest[:])))
+			request := &paymentpb.SepayWebhookRequest{
+				Id: 123, Content: "Thanh toan QHP-0123456789ABCDEF", TransferAmount: tc.amount,
+				TransferType: tc.direction, TransactionDate: "2026-09-08 15:00:00",
+			}
+			_, err := handler.SepayWebhook(ctx, request)
+			if tc.wantError {
+				require.Error(t, err)
+				require.Zero(t, store.acceptCount)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantFulfillment, store.accepted.CreateFulfillment)
+			_, err = handler.SepayWebhook(ctx, request)
+			require.NoError(t, err)
+			require.Equal(t, 1, store.acceptCount, "provider retry must not create another settlement")
+		})
+	}
 }
 
 func (s *gatewaySettlementStore) MarkSettlementRequiresReview(context.Context, uint64, string) error {

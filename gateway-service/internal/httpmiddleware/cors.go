@@ -60,6 +60,23 @@ func WithIdempotencyKeyCORS(
 	return config
 }
 
+// WithBrowserCacheCORS authorizes the standard cache-bypass headers used by
+// browser clients when they explicitly refresh server-owned catalog data.
+func WithBrowserCacheCORS(
+	config cors.Config,
+) cors.Config {
+	config.AllowHeaders = appendUniqueHeader(
+		config.AllowHeaders,
+		"Cache-Control",
+	)
+	config.AllowHeaders = appendUniqueHeader(
+		config.AllowHeaders,
+		"Pragma",
+	)
+
+	return config
+}
+
 func appendUniqueHeader(
 	headers []string,
 	header string,

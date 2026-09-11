@@ -178,4 +178,5 @@ Các `*-migrate` container trong Compose là **one-shot jobs**: chờ database, 
 - [`documents/MIGRATIONS.md`](documents/MIGRATIONS.md) — migration authorities.
 - [`documents/THREE-SOURCE-ONBOARDING.md`](documents/THREE-SOURCE-ONBOARDING.md) — fresh clone → config → ba runtime → quota proof.
 - [`documents/QHPRO-COMMERCIAL-OPERATIONS.md`](documents/QHPRO-COMMERCIAL-OPERATIONS.md) — vận hành Admin/Client từ gói đến quota và report.
+- [`documents/RUN-THREE-SOURCE-LOCALLY.md`](documents/RUN-THREE-SOURCE-LOCALLY.md) — hướng dẫn terminal và browser đầy đủ cho Backend, Admin và React Native Web.
 - [`documents/FINAL-ACCEPTANCE-20260904.md`](documents/FINAL-ACCEPTANCE-20260904.md) — trạng thái proof của artifact này.

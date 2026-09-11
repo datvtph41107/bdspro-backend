@@ -161,6 +161,7 @@ QHPRO_NOTIFICATION_GRPC_ADDRESS=localhost:8204
 SEPAY_API_KEY=qhpro-development-$(random_hex)
 SEPAY_GATEWAY_ENVIRONMENT=sandbox
 SEPAY_BANK_TRANSFER_FLOW=hosted_checkout
+SEPAY_WEBHOOK_ENVIRONMENT=live
 SEPAY_BANK_TRANSFER_ENABLED=true
 SEPAY_CARD_ENABLED=false
 SEPAY_MERCHANT_ID=
@@ -309,6 +310,7 @@ install_missing_value payment-service/.env QHPRO_AUTH_GRPC_ADDRESS localhost:821
 install_missing_value payment-service/.env QHPRO_NOTIFICATION_GRPC_ADDRESS localhost:8204
 install_missing_value payment-service/.env SEPAY_GATEWAY_ENVIRONMENT sandbox
 install_missing_value payment-service/.env SEPAY_BANK_TRANSFER_FLOW hosted_checkout
+install_missing_value payment-service/.env SEPAY_WEBHOOK_ENVIRONMENT live
 install_missing_value payment-service/.env SEPAY_BANK_TRANSFER_ENABLED true
 install_missing_value payment-service/.env SEPAY_CARD_ENABLED false
 install_missing_value payment-service/.env SEPAY_MERCHANT_ID ''
