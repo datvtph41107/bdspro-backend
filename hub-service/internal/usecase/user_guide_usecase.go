@@ -73,10 +73,15 @@ func (u *UserGuideUsecase) GetSimpleList(ctx context.Context, text string, group
 	return data, total, nil
 }
 
-// GetByKey retrieves user guide by key
+// GetByKey retrieves user guide by key.
+// Repository absence becomes the existing business 404; unrelated repository
+// failures pass through instead of being misclassified as not found.
 func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error) {
 	data, err := u.Repo.GetByKey(ctx, key)
 	if err != nil {
+		return nil, err
+	}
+	if data == nil {
 		return nil, _errors.ReturnError(404, "Không tìm thấy user guide với key: "+key)
 	}
 	return data, nil
