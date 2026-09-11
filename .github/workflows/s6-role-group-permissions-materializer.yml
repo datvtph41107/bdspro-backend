@@ -176,7 +176,7 @@ jobs:
           user-service/infra/handler/role_group_permissions_error_test.go
           user-service/internal/usecase/role_group_usecase.go
           EOF
-          git diff --name-only | sort > /tmp/actual-paths
+          { git diff --name-only; git ls-files --others --exclude-standard; } | sort > /tmp/actual-paths
           diff -u /tmp/expected-paths /tmp/actual-paths
           git diff --check
           git add -- \
