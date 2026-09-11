@@ -1,0 +1,152 @@
+name: Proof S6 User Role Group Permissions Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/harness-s6-role-group-permissions-proof
+    paths:
+      - .github/workflows/proof-s6-role-group-permissions.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  user-role-group-permissions-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      CANDIDATE_SHA: fc7e2cbc2d0013f3b72c0cf1dabe1d4e4e40430d
+      PARENT_SHA: 391cc2608cfdf48a6361741333d3144f7f53e0e6
+      GATEWAY_TEST_B64: cGFja2FnZSBodHRwZXJyb3IKCmltcG9ydCAoCiAgICAiZW5jb2RpbmcvanNvbiIKICAgICJuZXQvaHR0cCIKICAgICJuZXQvaHR0cC9odHRwdGVzdCIKICAgICJ0ZXN0aW5nIgoKICAgIHNoYXJlcGIgInBiL3R5cGVzL3NoYXJlZCIKICAgICJnb29nbGUuZ29sYW5nLm9yZy9ncnBjL2NvZGVzIgogICAgImdvb2dsZS5nb2xhbmcub3JnL2dycGMvc3RhdHVzIgopCgpmdW5jIFRlc3RQcm9vZlJvbGVHcm91cFBlcm1pc3Npb25zTWlzc0xlZ2FjeUdhdGV3YXlDb250cmFjdCh0ICp0ZXN0aW5nLlQpIHsKICAgIGNvbnN0IG1zZyA9ICJHcm91cCBraMO0bmcgdOG7k24gdOG6oWkiCiAgICBzdCA6PSBzdGF0dXMuTmV3KGNvZGVzLkludGVybmFsLCBtc2cpCiAgICB3aXRoRGV0YWlscywgZXJyIDo9IHN0LldpdGhEZXRhaWxzKCZzaGFyZXBiLkVycm9yUmVzcG9uc2V7Q29kZTogNDA0LCBNZXNzYWdlOiBtc2d9KQogICAgaWYgZXJyICE9IG5pbCB7CiAgICAgICAgdC5GYXRhbChlcnIpCiAgICB9CiAgICByciA6PSBodHRwdGVzdC5OZXdSZWNvcmRlcigpCiAgICBXcml0ZUdSUEMocnIsIHdpdGhEZXRhaWxzLkVycigpKQogICAgaWYgcnIuQ29kZSAhPSBodHRwLlN0YXR1c09LIHsKICAgICAgICB0LkZhdGFsZigiaHR0cCA9ICVkLCB3YW50IDIwMDsgYm9keT0lcyIsIHJyLkNvZGUsIHJyLkJvZHkuU3RyaW5nKCkpCiAgICB9CiAgICB2YXIgYm9keSBzdHJ1Y3QgewogICAgICAgIENvZGUgaW50MzIgYGpzb246ImNvZGUiYAogICAgICAgIE1lc3NhZ2Ugc3RyaW5nIGBqc29uOiJtZXNzYWdlImAKICAgICAgICBTZWNvbmQgKmludDMyIGBqc29uOiJzZWNvbmQiYAogICAgfQogICAgaWYgZXJyIDo9IGpzb24uVW5tYXJzaGFsKHJyLkJvZHkuQnl0ZXMoKSwgJmJvZHkpOyBlcnIgIT0gbmlsIHsKICAgICAgICB0LkZhdGFsKGVycikKICAgIH0KICAgIGlmIGJvZHkuQ29kZSAhPSA0MDQgfHwgYm9keS5NZXNzYWdlICE9IG1zZyB8fCBib2R5LlNlY29uZCAhPSBuaWwgewogICAgICAgIHQuRmF0YWxmKCJib2R5ID0gJSt2IiwgYm9keSkKICAgIH0KfQo=
+    steps:
+      - name: Checkout proof harness controls
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+
+      - name: Checkout exact semantic candidate
+        uses: actions/checkout@v4
+        with:
+          ref: fc7e2cbc2d0013f3b72c0cf1dabe1d4e4e40430d
+          fetch-depth: 0
+          path: source
+
+      - name: Verify authority bounded delta and ownership
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git rev-parse HEAD^)" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/proof-s6-role-group-permissions | awk '{print $1}')" = "$CANDIDATE_SHA"
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check "$PARENT_SHA"..HEAD
+          changed="$(git diff --name-only "$PARENT_SHA"..HEAD | sort)"
+          expected="$(printf '%s\n' user-service/infra/handler/role_group_handler.go user-service/infra/handler/role_group_permissions_error_test.go user-service/internal/usecase/role_group_usecase.go | sort)"
+          test "$changed" = "$expected"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'protected path changed' >&2
+            exit 1
+          fi
+          grep -Fq 'var ErrRoleGroupNotFound = errors.New("role group not found")' user-service/internal/domain/access/role_group.go
+          grep -Fq 'return access.ErrRoleGroupNotFound' user-service/internal/usecase/role_group_usecase.go
+          ! grep -Fq '_errors "common/errors"' user-service/internal/usecase/role_group_usecase.go
+          ! grep -Fq '_errors.ReturnError(404, "Group không tồn tại")' user-service/internal/usecase/role_group_usecase.go
+          grep -Fq 'func mapUpdateGroupPermissionsError(err error) error' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'errors.Is(err, access.ErrRoleGroupNotFound)' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'status.New(codes.Internal, message)' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'const message = "Group không tồn tại"' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'Code:    404' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'return nil, mapUpdateGroupPermissionsError(err)' user-service/infra/handler/role_group_handler.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify formatting
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          files="user-service/infra/handler/role_group_handler.go user-service/infra/handler/role_group_permissions_error_test.go user-service/internal/usecase/role_group_usecase.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Install canonical generators and materialize Make toolchain
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Generate canonical protobuf and prove User Wire cleanliness
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire user
+          git diff --exit-code -- user-service/wire/wire_gen.go
+          git diff --check
+          git diff --exit-code
+
+      - name: Test User semantic and transport mapping with race
+        shell: bash
+        working-directory: source/user-service
+        run: |
+          set -euo pipefail
+          go test ./infra/handler -run '^(TestUpdateGroupPermissionsMissingGroupIsSemantic|TestMapUpdateGroupPermissionsError.*)$' -count=1 -v
+          go test -race ./infra/handler -run '^(TestUpdateGroupPermissionsMissingGroupIsSemantic|TestMapUpdateGroupPermissionsError.*)$' -count=1 -v
+
+      - name: Prove Gateway HTTP compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          Path('source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go').write_bytes(base64.b64decode(os.environ['GATEWAY_TEST_B64']))
+          PY
+          trap 'rm -f source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go' EXIT
+          gofmt -w source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go
+          cd source/gateway-service
+          go test ./internal/httperror -run '^TestProofRoleGroupPermissionsMissLegacyGatewayContract$' -count=1 -v
+          cd ../..
+          rm source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go
+          trap - EXIT
+
+      - name: Test vet and build User through canonical Make API
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C user-service test
+          make -C user-service vet
+          make -C user-service build
+          make -C user-service clean
+
+      - name: Final source immutability check
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
