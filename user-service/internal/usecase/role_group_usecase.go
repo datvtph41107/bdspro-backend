@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"common/case/crud"
-	_errors "common/errors"
 	"context"
 	"user/internal/domain/access"
 	"user/internal/enums"
@@ -34,7 +33,7 @@ func (uc *RoleGroupUsecase) UpdateGroupPermissions(ctx context.Context, groupID 
 		return err
 	}
 	if group == nil {
-		return _errors.ReturnError(404, "Group không tồn tại")
+		return access.ErrRoleGroupNotFound
 	}
 
 	// Cập nhật permission cho group
