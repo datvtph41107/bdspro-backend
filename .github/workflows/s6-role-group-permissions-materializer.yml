@@ -67,24 +67,7 @@ jobs:
               raise SystemExit(f'handler grpc import anchor count={text.count(old)}')
           text = text.replace(old, new, 1)
           marker = '// @Summary Cập nhật permission cho group\n'
-          mapper = '''func mapUpdateGroupPermissionsError(err error) error {
-\tif !errors.Is(err, access.ErrRoleGroupNotFound) {
-\t\treturn err
-\t}
-
-\tconst message = "Group không tồn tại"
-\tst := status.New(codes.Internal, message)
-\twithDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
-\t\tCode:    404,
-\t\tMessage: message,
-\t})
-\tif detailsErr != nil {
-\t\treturn st.Err()
-\t}
-\treturn withDetails.Err()
-}
-
-'''
+          mapper = 'func mapUpdateGroupPermissionsError(err error) error {\n\tif !errors.Is(err, access.ErrRoleGroupNotFound) {\n\t\treturn err\n\t}\n\n\tconst message = "Group không tồn tại"\n\tst := status.New(codes.Internal, message)\n\twithDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{\n\t\tCode:    404,\n\t\tMessage: message,\n\t})\n\tif detailsErr != nil {\n\t\treturn st.Err()\n\t}\n\treturn withDetails.Err()\n}\n\n'
           if text.count(marker) != 1:
               raise SystemExit(f'handler mapper marker count={text.count(marker)}')
           text = text.replace(marker, mapper + marker, 1)
