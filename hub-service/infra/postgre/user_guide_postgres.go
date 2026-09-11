@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	_db "common/db"
@@ -10,6 +11,7 @@ import (
 	_repo "hub/internal/repo"
 
 	_dto "common/domain/dto"
+	"gorm.io/gorm"
 )
 
 type UserGuideRepo struct {
@@ -123,12 +125,17 @@ func (r *UserGuideRepo) GetSimpleListWithText(ctx context.Context, text string, 
 	return data, total, nil
 }
 
-// GetByKey retrieves user guide by key
+// GetByKey retrieves user guide by key.
+// A missing row is normalized to absence so the application layer owns
+// the business meaning; unrelated database failures remain infrastructure errors.
 func (r *UserGuideRepo) GetByKey(ctx context.Context, key string) (*domain.UserGuideEntity, error) {
 	var entity domain.UserGuideEntity
 	err := r.GetDB(ctx).
 		Where("key = ? AND deleted_at IS NULL", key).
 		First(&entity).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
