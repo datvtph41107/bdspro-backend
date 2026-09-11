@@ -1,0 +1,199 @@
+name: Proof S6 User Role Group Permissions Live Ownership
+
+on:
+  push:
+    branches:
+      - final-acceptance/harness-s6-role-group-permissions-proof
+    paths:
+      - .github/workflows/proof-s6-role-group-permissions-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  user-role-group-permissions-live-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      QHPRO_TOOLCHAIN_ROOT: /tmp/qhpro-toolchain
+      CANDIDATE_SHA: 597d816f32974a9572ca7532c58b597ac00af2f0
+      PARENT_SHA: 391cc2608cfdf48a6361741333d3144f7f53e0e6
+    steps:
+      - name: Checkout proof harness controls
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+
+      - name: Checkout exact semantic candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 597d816f32974a9572ca7532c58b597ac00af2f0
+          fetch-depth: 0
+          path: source
+
+      - name: Verify authority bounded delta and protected paths
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git rev-parse HEAD^)" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/source-canonicalization | awk '{print $1}')" = "$PARENT_SHA"
+          test "$(git ls-remote origin refs/heads/final-acceptance/proof-s6-role-group-permissions-live | awk '{print $1}')" = "$CANDIDATE_SHA"
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          git diff --check "$PARENT_SHA"..HEAD
+          changed="$(git diff --name-only "$PARENT_SHA"..HEAD | sort)"
+          expected="$(printf '%s\n' user-service/infra/handler/role_group_handler.go user-service/infra/handler/role_group_permissions_error_test.go user-service/internal/usecase/role_group_usecase.go | sort)"
+          test "$changed" = "$expected"
+          if printf '%s\n' "$changed" | grep -Eq '^(shared/protobuf/|organization-service/|map-service/|shared/code/deploy.sh$)'; then
+            echo 'protected path changed' >&2
+            exit 1
+          fi
+
+      - name: Prove production reachability and ownership chain
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          grep -Fq 'var ErrRoleGroupNotFound = errors.New("role group not found")' user-service/internal/domain/access/role_group.go
+          grep -Fq 'group, err := uc.Repo.GetDetail(ctx, groupID)' user-service/internal/usecase/role_group_usecase.go
+          grep -Fq 'return access.ErrRoleGroupNotFound' user-service/internal/usecase/role_group_usecase.go
+          ! grep -Fq '_errors "common/errors"' user-service/internal/usecase/role_group_usecase.go
+          ! grep -Fq '_errors.ReturnError(404, "Group không tồn tại")' user-service/internal/usecase/role_group_usecase.go
+          grep -Fq '*crud.CrudRepo[access.RoleGroup]' user-service/infra/postgres/role_group_postgres.go
+          ! grep -Fq 'func (r *RoleGroupRepo) GetDetail' user-service/infra/postgres/role_group_postgres.go
+          grep -Fq 'func (r *CrudRepo[T]) GetDetail' shared/common/case/crud/repo.go
+          grep -Fq 'if errors.Is(err, gorm.ErrRecordNotFound)' shared/common/case/crud/repo.go
+          grep -Fq 'return nil, nil' shared/common/case/crud/repo.go
+          grep -Fq 'roleGroupRepository := postgres.NewRoleGroupRepo(transactionRepo)' user-service/wire/wire_gen.go
+          grep -Fq 'roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository, permissionUsecase)' user-service/wire/wire_gen.go
+          grep -Fq 'func mapUpdateGroupPermissionsError(err error) error' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'errors.Is(err, access.ErrRoleGroupNotFound)' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'const message = "Group không tồn tại"' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'status.New(codes.Internal, message)' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'Code:    404' user-service/infra/handler/role_group_handler.go
+          grep -Fq 'return nil, mapUpdateGroupPermissionsError(err)' user-service/infra/handler/role_group_handler.go
+
+      - name: Set up canonical Go patch version
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+          cache: false
+
+      - name: Verify formatting
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          files="user-service/infra/handler/role_group_handler.go user-service/infra/handler/role_group_permissions_error_test.go user-service/internal/usecase/role_group_usecase.go"
+          test -z "$(gofmt -l $files)"
+
+      - name: Install canonical generators and materialize Make toolchain
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          go install "github.com/google/wire/cmd/wire@v${WIRE_VERSION}"
+          mkdir -p "$QHPRO_TOOLCHAIN_ROOT/bin"
+          ln -sfn "$(go env GOROOT)" "$QHPRO_TOOLCHAIN_ROOT/go${GO_VERSION}"
+          for tool in buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-gateway wire; do
+            ln -sfn "$(go env GOPATH)/bin/$tool" "$QHPRO_TOOLCHAIN_ROOT/bin/$tool"
+          done
+
+      - name: Generate canonical protobuf and prove User Wire cleanliness
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C shared/code buf-all
+          make -C shared/code wire user
+          git diff --exit-code -- user-service/wire/wire_gen.go
+          git diff --check
+          git diff --exit-code
+
+      - name: Test User semantic and transport mapping with race
+        shell: bash
+        working-directory: source/user-service
+        run: |
+          set -euo pipefail
+          go test ./infra/handler -run '^(TestUpdateGroupPermissionsMissingGroupIsSemantic|TestMapUpdateGroupPermissionsError.*)$' -count=1 -v
+          go test -race ./infra/handler -run '^(TestUpdateGroupPermissionsMissingGroupIsSemantic|TestMapUpdateGroupPermissionsError.*)$' -count=1 -v
+
+      - name: Prove Gateway HTTP compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go <<'EOF'
+          package httperror
+
+          import (
+              "encoding/json"
+              "net/http"
+              "net/http/httptest"
+              "testing"
+
+              sharepb "pb/types/shared"
+              "google.golang.org/grpc/codes"
+              "google.golang.org/grpc/status"
+          )
+
+          func TestProofRoleGroupPermissionsMissLegacyGatewayContract(t *testing.T) {
+              const msg = "Group không tồn tại"
+              st := status.New(codes.Internal, msg)
+              withDetails, err := st.WithDetails(&sharepb.ErrorResponse{Code: 404, Message: msg})
+              if err != nil {
+                  t.Fatal(err)
+              }
+              rr := httptest.NewRecorder()
+              WriteGRPC(rr, withDetails.Err())
+              if rr.Code != http.StatusOK {
+                  t.Fatalf("http = %d, want 200; body=%s", rr.Code, rr.Body.String())
+              }
+              var body struct {
+                  Code    int32  `json:"code"`
+                  Message string `json:"message"`
+                  Second  *int32 `json:"second"`
+              }
+              if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+                  t.Fatal(err)
+              }
+              if body.Code != 404 || body.Message != msg || body.Second != nil {
+                  t.Fatalf("body = %+v", body)
+              }
+          }
+          EOF
+          trap 'rm -f source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go' EXIT
+          gofmt -w source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go
+          cd source/gateway-service
+          go test ./internal/httperror -run '^TestProofRoleGroupPermissionsMissLegacyGatewayContract$' -count=1 -v
+          cd ../..
+          rm source/gateway-service/internal/httperror/role_group_permissions_miss_proof_test.go
+          trap - EXIT
+
+      - name: Test vet and build User through canonical Make API
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          make -C user-service test
+          make -C user-service vet
+          make -C user-service build
+          make -C user-service clean
+
+      - name: Final source immutability check
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
