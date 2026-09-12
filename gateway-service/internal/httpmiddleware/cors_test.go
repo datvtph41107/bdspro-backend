@@ -40,6 +40,7 @@ func newCORSTestRouter() *gin.Engine {
 
 	config = WithOperationIDCORS(config)
 	config = WithIdempotencyKeyCORS(config)
+	config = WithBrowserCacheCORS(config)
 
 	router.Use(
 		cors.New(config),
@@ -256,5 +257,36 @@ func TestCORSDoesNotExposeIdempotencyKeyResponseHeader(t *testing.T) {
 		strings.ToLower(IdempotencyKeyHeader),
 	) {
 		t.Fatalf("idempotency key unexpectedly exposed: %q", exposedHeaders)
+	}
+}
+
+func TestCORSAllowsBrowserCacheHeaders(t *testing.T) {
+	router := newCORSTestRouter()
+	request := httptest.NewRequest(http.MethodOptions, "/ok", nil)
+	request.Header.Set("Origin", "https://app.example.test")
+	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	request.Header.Set(
+		"Access-Control-Request-Headers",
+		"Cache-Control, Pragma",
+	)
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf(
+			"preflight status = %d, want %d",
+			response.Code,
+			http.StatusNoContent,
+		)
+	}
+
+	allowedHeaders := strings.ToLower(
+		response.Header().Get("Access-Control-Allow-Headers"),
+	)
+	for _, header := range []string{"cache-control", "pragma"} {
+		if !strings.Contains(allowedHeaders, header) {
+			t.Fatalf("allowed headers = %q, missing %q", allowedHeaders, header)
+		}
 	}
 }

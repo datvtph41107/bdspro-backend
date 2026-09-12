@@ -49,6 +49,37 @@ func TestReportTargetOperationInterceptorBindsCanonicalSelection(t *testing.T) {
 	}
 }
 
+func TestCommercialOperationInterceptorBindsTQDQuotaActions(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		method string
+		want   operation.Code
+	}{
+		{tqdpb.ParcelService_FindParcelsByPolygon_FullMethodName, "workspace.area.analyze"},
+		{tqdpb.ParcelService_GetParcelDetail_FullMethodName, "workspace.parcel.detail.view"},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(string(test.want), func(t *testing.T) {
+			t.Parallel()
+			_, err := buildReportTargetOperationInterceptor()(
+				context.Background(), nil, &grpc.UnaryServerInfo{FullMethod: test.method},
+				func(ctx context.Context, _ interface{}) (interface{}, error) {
+					got, ok := operation.FromContext(ctx)
+					if !ok || got != test.want {
+						t.Fatalf("operation = %q, %v; want %q", got, ok, test.want)
+					}
+					return nil, nil
+				},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func TestReportTargetOperationInterceptorLeavesOtherRPCsUntouched(t *testing.T) {
 	t.Parallel()
 

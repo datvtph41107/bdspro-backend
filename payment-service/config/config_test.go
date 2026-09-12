@@ -58,7 +58,36 @@ func TestValidateProviderRejectsRealBankQRInSandbox(t *testing.T) {
 			BankTransferEnabled: true, BankBIN: "970422", BankAccountNumber: "0123456789",
 		},
 	})
-	require.ErrorContains(t, err, "real bank transfer")
+	require.ErrorContains(t, err, "SEPAY_WEBHOOK_ENVIRONMENT=test")
+}
+
+func TestValidateProviderAllowsExplicitBankWebhookTestMode(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		gateway, webhook string
+		valid            bool
+	}{
+		{"sandbox", "test", true},
+		{"production", "live", true},
+		{"production", "test", false},
+		{"sandbox", "live", false},
+		{"sandbox", "unknown", false},
+	} {
+		t.Run(tc.gateway+"/"+tc.webhook, func(t *testing.T) {
+			cfg := ProviderConfig{SepayAPIKey: "webhook-key", Sepay: SepayGatewayConfig{
+				Environment: tc.gateway, WebhookEnvironment: tc.webhook,
+				BankTransferFlow: SepayBankTransferVietQR, BankTransferEnabled: true,
+				BankBIN: "970422", BankAccountNumber: "0123456789",
+			}}
+			if tc.valid {
+				require.NoError(t, validateProvider(cfg))
+				cfg.SepayAPIKey = ""
+				require.ErrorContains(t, validateProvider(cfg), "SEPAY_API_KEY")
+			} else {
+				require.Error(t, validateProvider(cfg))
+			}
+		})
+	}
 }
 
 func TestValidateProviderRequiresWebhookAuthenticationForVietQR(t *testing.T) {

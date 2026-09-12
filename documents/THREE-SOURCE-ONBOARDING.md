@@ -157,8 +157,9 @@ ghi thẳng business table.
 3. User đăng ký/đăng nhập Client, làm mới catalog và checkout plan đã publish.
 4. Provider xác nhận giao dịch bằng webhook; Payment ghi evidence và settlement.
 5. Fulfillment kích hoạt subscription trong User; Client đọc entitlement/quota.
-6. User chọn dữ liệu quy hoạch đã import và yêu cầu report.
-7. TQD ghi `Report + UsageEvent + Job` cùng transaction; worker tạo PDF và File
+6. User phân tích vùng, mở hồ sơ thửa chi tiết và yêu cầu report; TQD kiểm tra
+   ba entitlement/quota độc lập và ghi durable usage sau thao tác thành công.
+7. Với report, TQD ghi `Report + UsageEvent + Job` cùng transaction; worker tạo PDF và File
    trả artifact URL.
 8. Admin đối chiếu Payment, Subscription, Usage, Report và Notification.
 
@@ -205,7 +206,8 @@ phải một cách chạy sản phẩm.
 - Gateway liveness/readiness và public catalog PASS.
 - Order có frozen terms và exact money.
 - Provider evidence tạo đúng một settlement/subscription.
-- Entitlement cho phép report đúng subject.
+- Entitlement cho phép phân tích vùng, hồ sơ thửa và report đúng subject.
+- Phân tích vùng/hồ sơ thành công tạo usage; lỗi đọc trả reservation.
 - Một accepted report tạo đúng một durable usage event/job.
 - Retry cùng command không tiêu thụ quota lần hai.
 - PDF mở qua File URL.

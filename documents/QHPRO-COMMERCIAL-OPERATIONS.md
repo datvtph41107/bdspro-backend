@@ -75,12 +75,14 @@ Trong production, ngân hàng/provider gửi callback đến:
 
 ```text
 POST /v2/payment/sepay/webhook
-Authorization: <provider credential>
+Authorization: Apikey <provider credential>
 ```
 
-Local development muốn kiểm tra thanh toán phải dùng sandbox/provider callback
-đi vào đúng endpoint trên. Không có lệnh Admin đổi thẳng order thành `paid` và
-không có settlement shortcut trong public Make API.
+Local development có hai boundary hợp lệ: sandbox/provider callback đi vào
+đúng endpoint, hoặc operator dùng tác vụ Admin `ConfirmPaymentFunds` sau khi
+đối chiếu mã tham chiếu/chứng từ. Tác vụ Admin có permission, idempotency và
+durable audit evidence; nó không phải form ghi trực tiếp order status. Không có
+settlement shortcut trong public Make API.
 
 Sau khi callback được xác minh:
 
@@ -94,13 +96,29 @@ Payment records provider evidence
   -> Notification inbox/effect
 ```
 
-Response loss hoặc callback lặp lại không được tạo settlement/subscription thứ
-hai. Admin chỉ quan sát evidence và redrive fulfillment theo permission.
+Response loss, callback lặp lại hoặc command Admin retry không được tạo
+settlement/subscription thứ hai. Admin quan sát evidence, xác nhận đối soát thủ
+công khi có căn cứ và redrive fulfillment theo permission.
 
 ## 5. Quota, usage và báo cáo
 
-Client tạo report bằng command identity ổn định. TQD kiểm tra entitlement và
-quota của subject trước khi chấp nhận lệnh.
+Catalog QHPRO cấu hình ba quyền lợi được TQD thực thi thật:
+
+| Quyền lợi trên Admin/Client | Operation owner | Durable meter |
+| --- | --- | --- |
+| Phân tích khu vực vẽ trên bản đồ | `workspace.area.analyze` | `workspace.area_analysis.accepted` |
+| Xem hồ sơ thửa đất chi tiết | `workspace.parcel.detail.view` | `workspace.parcel_detail.viewed` |
+| Xuất báo cáo quy hoạch PDF | `workspace.report.generate` | `workspace.report_generation.accepted` |
+
+Gợi ý tìm kiếm, bản đồ nền/PMTiles và quick-view công khai không tiêu hao
+quota. Hai thao tác đọc nâng cao chỉ ghi usage sau khi handler trả dữ liệu thành
+công. Client gửi `Idempotency-Key` ổn định trong một cửa sổ thao tác, nên React
+render lại, HTTP retry hoặc refresh ngay không trừ lần hai. Nếu handler lỗi,
+reservation được hủy. TQD kiểm tra entitlement và quota của đúng subject trước
+khi chạy action.
+
+Riêng report là command tạo business state. Client tạo report bằng command
+identity ổn định và TQD ghi:
 
 ```text
 Report + UsageEvent + Job
@@ -203,6 +221,17 @@ payload:
 curl -sS 'http://127.0.0.1:8000/v2/user/commercial/plans?productCode=qhpro&subjectKind=profile'
 ```
 
+Màn “Thiết kế gói mới” có ba mẫu vận hành để tạo nhanh nhưng không seed dữ liệu:
+
+| Mẫu | Giá tham chiếu | Phân tích khu vực | Hồ sơ chi tiết | Báo cáo |
+| --- | ---: | ---: | ---: | ---: |
+| QHPRO Khởi đầu | 49.000đ / 30 ngày | 20 | 30 | 3 |
+| QHPRO Tiêu chuẩn | 149.000đ / 30 ngày | 100 | 150 | 15 |
+| QHPRO Chuyên nghiệp | 399.000đ / 30 ngày | Không giới hạn | Không giới hạn | 100 |
+
+Mỗi mẫu vẫn đi qua draft → validate → publish. Admin có thể đổi giá và hạn mức
+trước khi publish; Client không hard-code ba con số này.
+
 Client gửi `planCode`, không gửi giá/quota có tính authority. Dùng một command
 key mới cho mỗi ý định mua và giữ nguyên key khi retry do mất response:
 
@@ -239,7 +268,7 @@ AMOUNT_MINOR='paste-order-amount-minor'
 PROVIDER_TRANSACTION_ID='202609060001'
 
 curl -sS -X POST http://127.0.0.1:8000/v2/payment/sepay/webhook \
-  -H "Authorization: $PROVIDER_KEY" \
+  -H "Authorization: Apikey $PROVIDER_KEY" \
   -H 'Content-Type: application/json' \
   -d "{\"gateway\":\"LOCAL_PROVIDER\",\"transactionDate\":\"2026-09-06 12:00:00\",\"accountNumber\":\"LOCAL\",\"content\":\"$PAYMENT_REFERENCE\",\"transferType\":\"in\",\"description\":\"QHPRO purchase\",\"transferAmount\":$AMOUNT_MINOR,\"referenceCode\":\"$PAYMENT_REFERENCE\",\"id\":$PROVIDER_TRANSACTION_ID}"
 ```
@@ -282,7 +311,27 @@ curl -sS http://127.0.0.1:8000/v2/tqd/commercial/generated-report-usage \
   -H "Authorization: Bearer $USER_TOKEN"
 ```
 
-### 8.4 Tiêu thụ quota và PDF
+### 8.4 Tiêu thụ ba quota và PDF
+
+Sau khi gói `ACTIVE`, mở Client `http://localhost:3001/ban-do`:
+
+1. Bật công cụ khoanh vùng, vẽ một polygon và chạy phân tích. Một kết quả thành
+   công tăng `workspace.area_analysis.accepted` đúng một đơn vị.
+2. Chọn một thửa và mở “Hồ sơ chi tiết”. Một response chi tiết thành công tăng
+   `workspace.parcel_detail.viewed` đúng một đơn vị.
+3. Trong hồ sơ thửa chọn xuất báo cáo. Report được chấp nhận tăng
+   `workspace.report_generation.accepted` và worker tạo PDF.
+
+Mở lại cùng vùng/thửa ngay hoặc để HTTP retry phải giữ nguyên số đã dùng. Kiểm
+tra cả ba projection từ cùng endpoint Client đang dùng:
+
+```bash
+curl -sS http://127.0.0.1:8000/v2/tqd/commercial/usage \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+Admin quan sát từng meter bằng tên nghiệp vụ tại
+`http://127.0.0.1:5173/admin/commercial/usage`.
 
 `REPORT_KEY` đại diện một ý định tạo báo cáo. Gửi lại cùng body + key phải trả
 cùng report và không tăng `durableUsed` lần hai:
@@ -318,7 +367,7 @@ Không sửa trạng thái bằng tay. Mở lần lượt:
 /admin/user/<PROFILE_ID>
 ```
 
-Phải thấy cùng order reference, subject profile, subscription active, usage
-tăng đúng một đơn vị, report/PDF và notification thanh toán. Nếu fulfillment ở
+Phải thấy cùng order reference, subject profile, subscription active, ba usage
+meter tăng theo đúng thao tác thành công, report/PDF và notification thanh toán. Nếu fulfillment ở
 `requires_review`, Admin chỉ được redrive command; settlement evidence không bị
 viết lại.

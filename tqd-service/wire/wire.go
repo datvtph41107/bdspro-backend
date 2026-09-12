@@ -81,6 +81,7 @@ var wireSet = wire.NewSet(
 	common_utils.NewSyncUtil,
 	tqd_infra_client_file_generatedreport.New,
 	tqd_infra_worker_generatedreport_weasyprintpdf.New,
+	tqd_internal_usecase_quota.NewActionService,
 	tqd_infra_handler_grpc_generatedreport.NewAdapter,
 	tqd_infra_handler_grpc.NewAdminUsageGrpcHandler,
 	tqd_internal_usecase_quota.NewAdminUsageService,

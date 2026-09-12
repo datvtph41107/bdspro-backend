@@ -1189,11 +1189,10 @@ func (h *ParcelGrpcHandler) GetWardQuickLayers(
 }
 
 func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
-	log.Printf("[GetParcelDetail] ParcelID: %d", req.ParcelId)
-
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
 	}
+	log.Printf("[GetParcelDetail] ParcelID: %d", req.ParcelId)
 
 	data, err := h.usecase.GetParcelDetail(ctx, req.ParcelId)
 	if err != nil {
@@ -1206,7 +1205,6 @@ func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetP
 
 	return h.mapper.ToProtoParcelDetail(data), nil
 }
-
 func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelLayersRequest) (*tqdpb.ParcelLayersResponse, error) {
 	log.Printf("[GetParcelLayers] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit)
 

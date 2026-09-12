@@ -7,6 +7,7 @@ import "google/protobuf/empty.proto";
 import "shared/common.proto";
 import "tqd/features.proto";
 import "shared/v3.proto";
+import "operation/operation.proto";
 
 option go_package = "pb/types/tqd;tqdpb";
 
@@ -43,6 +44,9 @@ service ParcelService {
     option (google.api.http) = {
       post: "/v2/tqd/parcels/by-polygon"
       body: "*"
+    };
+    option (types.operation.operation) = {
+      code: "workspace.area.analyze"
     };
   }
 
@@ -96,6 +100,9 @@ service ParcelService {
   rpc GetParcelDetail(GetParcelDetailRequest) returns (ParcelDetailResponse) {
     option (google.api.http) = {
       get: "/v2/tqd/parcels/{parcelId}/detail"
+    };
+    option (types.operation.operation) = {
+      code: "workspace.parcel.detail.view"
     };
   }
 

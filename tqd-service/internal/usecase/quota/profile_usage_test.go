@@ -148,3 +148,32 @@ func TestProfileUsageProjection(t *testing.T) {
 		})
 	}
 }
+
+func TestProfileUsageListKeepsEveryOperationIndependent(t *testing.T) {
+	t.Parallel()
+
+	accessReader := new(mockProfileAccessReader)
+	durable := new(mockDurableUsageReader)
+	runtime := new(mockRuntimeUsageReader)
+	accessReader.Test(t)
+	durable.Test(t)
+	runtime.Test(t)
+
+	for _, operationCode := range ProfileOperations {
+		decision := access.Result{
+			Subject:   access.Subject{Type: access.SubjectProfile, ID: "42"},
+			Operation: operationCode,
+			Allowed:   false,
+		}
+		accessReader.On("GetAccess", mock.Anything, operationCode).Return(decision, nil).Once()
+	}
+
+	projections, err := NewProfileUsageService(accessReader, durable, runtime).
+		ListUsage(context.Background())
+	require.NoError(t, err)
+	require.Len(t, projections, len(ProfileOperations))
+	for index, operationCode := range ProfileOperations {
+		require.Equal(t, operationCode, projections[index].Access.Operation)
+		require.Equal(t, "not_required", projections[index].Reconciliation)
+	}
+}

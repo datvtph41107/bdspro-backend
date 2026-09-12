@@ -89,11 +89,12 @@ func runGRPCServer() error {
 	}
 
 	reportTargetOperationInterceptor := buildReportTargetOperationInterceptor()
+	commercialActionInterceptor := buildCommercialActionInterceptor(app.CommercialActionService)
 	transportConfig := rpcenv.LoadTransportConfig()
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
-		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), reportTargetOperationInterceptor),
+		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), reportTargetOperationInterceptor, commercialActionInterceptor),
 		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 	registerTQDServices(s, app)

@@ -167,6 +167,12 @@ var HttpCmd = &cobra.Command{
 				WithIdempotencyKeyCORS(
 					corsConfig,
 				)
+
+		corsConfig =
+			_httpmiddleware.
+				WithBrowserCacheCORS(
+					corsConfig,
+				)
 		r.Use(
 			cors.New(
 				corsConfig,
@@ -193,6 +199,7 @@ var HttpCmd = &cobra.Command{
 			runtime.WithMetadata(_grpcmetadata.FromHTTPRequest),
 			runtime.WithErrorHandler(_httperror.HandleGRPC),
 			runtime.WithMarshalerOption(runtime.MIMEWildcard, &_httpresponse.Marshaler{}),
+			runtime.WithForwardResponseRewriter(_httpresponse.SepayWebhookResponse),
 			runtime.WithForwardResponseOption(_httpresponse.ForwardMetadata),
 			runtime.WithForwardResponseOption(_httpresponse.ForwardCommon),
 		)

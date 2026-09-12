@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"common/operation"
 	operationgrpc "common/operation/grpc"
 	"context"
+	"errors"
+	quotausecase "tqd/internal/usecase/quota"
 
 	tqdpb "pb/types/tqd"
 
@@ -17,11 +20,73 @@ func usesReportTargetRuntime(fullMethod string) bool {
 	return fullMethod == tqdpb.MapWorkspaceService_CreateGeneratedReport_FullMethodName
 }
 
-func usesCanonicalTargetRuntime(fullMethod string) bool {
+func usesCommercialQuotaRuntime(fullMethod string) bool {
 	return usesReportTargetRuntime(fullMethod) ||
+		fullMethod == tqdpb.ParcelService_FindParcelsByPolygon_FullMethodName ||
+		fullMethod == tqdpb.ParcelService_GetParcelDetail_FullMethodName
+}
+
+func usesActionQuotaRuntime(fullMethod string) bool {
+	return fullMethod == tqdpb.ParcelService_FindParcelsByPolygon_FullMethodName ||
+		fullMethod == tqdpb.ParcelService_GetParcelDetail_FullMethodName
+}
+
+func usesCanonicalTargetRuntime(fullMethod string) bool {
+	return usesCommercialQuotaRuntime(fullMethod) ||
 		fullMethod == tqdpb.AdminUsageService_ListUsage_FullMethodName ||
 		fullMethod == tqdpb.AdminUsageService_ReconcileUsage_FullMethodName ||
-		fullMethod == tqdpb.ProfileUsageService_GetMyGeneratedReportUsage_FullMethodName
+		fullMethod == tqdpb.ProfileUsageService_GetMyGeneratedReportUsage_FullMethodName ||
+		fullMethod == tqdpb.ProfileUsageService_ListMyUsage_FullMethodName
+}
+
+// buildCommercialActionInterceptor accounts successful customer-facing TQD
+// reads. Generated Report keeps its stronger transactional acceptance theorem
+// and is therefore deliberately excluded here.
+func buildCommercialActionInterceptor(service *quotausecase.ActionService) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if info == nil {
+			return nil, status.Error(codes.Internal, "gRPC method info is missing")
+		}
+		if !usesActionQuotaRuntime(info.FullMethod) {
+			return handler(ctx, req)
+		}
+		if service == nil {
+			return nil, status.Error(codes.Unavailable, "commercial quota is unavailable")
+		}
+		operationCode, ok := operation.FromContext(ctx)
+		if !ok {
+			return nil, status.Error(codes.Internal, "commercial operation is missing")
+		}
+
+		var response interface{}
+		err := service.Run(ctx, operationCode, func(actionCtx context.Context) error {
+			var actionErr error
+			response, actionErr = handler(actionCtx, req)
+			return actionErr
+		})
+		if err != nil {
+			return nil, commercialActionStatus(err)
+		}
+		return response, nil
+	}
+}
+
+func commercialActionStatus(err error) error {
+	var denied *quotausecase.AccessDeniedError
+	var exhausted *quotausecase.ExhaustedError
+	switch {
+	case errors.As(err, &denied), errors.Is(err, quotausecase.ErrAccessDenied):
+		return status.Error(codes.PermissionDenied, "gói hiện tại không bao gồm tính năng này")
+	case errors.As(err, &exhausted), errors.Is(err, quotausecase.ErrQuotaExceeded):
+		return status.Error(codes.ResourceExhausted, "đã sử dụng hết lượt trong chu kỳ hiện tại")
+	case errors.Is(err, quotausecase.ErrActionIdentity), errors.Is(err, quotausecase.ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, "Idempotency-Key hợp lệ là bắt buộc cho thao tác tính quota")
+	case errors.Is(err, quotausecase.ErrActionUnavailable):
+		return status.Error(codes.Unavailable, "không thể xác minh hoặc ghi nhận quota")
+	default:
+		// Preserve business statuses returned by the wrapped TQD handler.
+		return err
+	}
 }
 
 // buildReportTargetOperationInterceptor binds the contract-owned operation only
@@ -40,7 +105,7 @@ func buildReportTargetOperationInterceptor() grpc.UnaryServerInterceptor {
 				"gRPC method info is missing",
 			)
 		}
-		if !usesReportTargetRuntime(info.FullMethod) {
+		if !usesCommercialQuotaRuntime(info.FullMethod) {
 			return handler(ctx, req)
 		}
 
