@@ -13,6 +13,9 @@ __debug_bin*
 **/*.rdb
 **/app/logs/
 
+# Generated source reconstructed from canonical repository contracts.
+/shared/protobuf/types/
+
 # Legacy binaries previously written beside source. Canonical builds use bin/.
 /*-service/*-service
 /user-service/user
