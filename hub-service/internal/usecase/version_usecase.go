@@ -162,13 +162,13 @@ func (u *VersionUsecase) CreateBundleVersion(ctx context.Context, bundleVersion 
 		}
 	}
 
-	latest, _ := u.Repo.GetLatestByAppAndPlatform(ctx, bundleVersion.AppName, bundleVersion.Platform, bundleVersion.VersionName, false)
-	// if err != nil {
-	// 	return nil, &_err.ErrorDTO{
-	// 		Code:    500,
-	// 		Message: "Không thể lấy thông tin phiên bản gần nhất: " + err.Error(),
-	// 	}
-	// }
+	latest, err := u.Repo.GetLatestByAppAndPlatform(ctx, bundleVersion.AppName, bundleVersion.Platform, bundleVersion.VersionName, false)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Không thể lấy thông tin phiên bản gần nhất: " + err.Error(),
+		}
+	}
 
 	if latest == nil {
 		bundleVersion.BuildNumber = 1
