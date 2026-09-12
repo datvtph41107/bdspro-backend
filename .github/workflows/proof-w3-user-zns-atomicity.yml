@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
           test "$(git hash-object user-service/internal/interface/repo/auth_config_repo.go)" = "ee80dce77ddf983be28f71982ccffe5886e7c692"
           test "$(git hash-object user-service/infra/postgres/auth_config_postgres.go)" = "7ced58804cf615c1b354ef328daf54b5725375f6"
-          test "$(git hash-object user-service/infra/postgres/auth_config_postgres_test.go)" = "bd5a3b7a6f402e594a47801efc9aaa48ffe27270"
+          test "$(git hash-object user-service/infra/postgres/auth_config_postgres_test.go)" = "0e11df48bcf9681a7c2a8281d616322240f14a55"
           test "$(git hash-object user-service/infra/zns/zns_provider.go)" = "8fe76d62d431fe7a10be64b9ad5cfcf131e1700e"
           test "$(git hash-object user-service/infra/zns/zns_provider_test.go)" = "27db5fea604dea1458a84b2245ee575892f618ef"
           git diff --check HEAD^
