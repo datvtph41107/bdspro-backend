@@ -138,9 +138,13 @@ func (uc *SystemConfigUsecase) GetSystemConfigByKey(ctx context.Context, key str
 		return nil, _errors.ReturnError(400, "Key không được để trống")
 	}
 
-	// Lấy config từ DB
+	// Repository technical failures pass through. Only normalized absence owns
+	// the legacy business not-found mapping at the application boundary.
 	config, err := uc.repo.GetByKey(ctx, key)
 	if err != nil {
+		return nil, err
+	}
+	if config == nil {
 		return nil, _errors.ReturnError(404, fmt.Sprintf("Không tìm thấy config với key: %s", key))
 	}
 

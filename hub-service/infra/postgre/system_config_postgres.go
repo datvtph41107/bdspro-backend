@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hub/internal/domain"
 	"hub/internal/dto"
@@ -64,12 +65,19 @@ func (r *SystemConfigPostgres) GetByID(ctx context.Context, id uint64) (*domain.
 	return &config, nil
 }
 
+// GetByKey normalizes only record-not-found to absence. Unrelated database
+// failures stay infrastructure errors so callers cannot mistake them for a
+// missing configuration.
 func (r *SystemConfigPostgres) GetByKey(ctx context.Context, key string) (*domain.SystemConfigEntity, error) {
 	var config domain.SystemConfigEntity
-	if err := r.DB.WithContext(ctx).
+	err := r.DB.WithContext(ctx).
 		Where("key = ?", key).
-		First(&config).Error; err != nil {
-		return nil, fmt.Errorf("system config not found: %w", err)
+		First(&config).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system config by key %s: %w", key, err)
 	}
 	return &config, nil
 }
@@ -141,30 +149,34 @@ func (r *SystemConfigPostgres) BulkUpsert(ctx context.Context, configs []*domain
 
 	// Process each config
 	for _, config := range configs {
-		// Check if key exists
+		// Check if key exists. Only semantic absence may enter the create path;
+		// technical lookup failures must stop before any write.
 		existing, err := r.GetByKey(ctx, config.Key)
-
 		if err != nil {
-			// Key doesn't exist, create new
+			return nil, 0, 0, fmt.Errorf("failed to lookup config %s before upsert: %w", config.Key, err)
+		}
+
+		if existing == nil {
 			created, err := r.Create(ctx, config)
 			if err != nil {
 				return nil, 0, 0, fmt.Errorf("failed to create config %s: %w", config.Key, err)
 			}
 			results = append(results, created)
 			createdCount++
-		} else {
-			// Key exists, update
-			existing.Name = config.Name
-			existing.Value = config.Value
-			existing.GroupConfig = config.GroupConfig
-
-			updated, err := r.Update(ctx, existing)
-			if err != nil {
-				return nil, 0, 0, fmt.Errorf("failed to update config %s: %w", config.Key, err)
-			}
-			results = append(results, updated)
-			updatedCount++
+			continue
 		}
+
+		// Key exists, update
+		existing.Name = config.Name
+		existing.Value = config.Value
+		existing.GroupConfig = config.GroupConfig
+
+		updated, err := r.Update(ctx, existing)
+		if err != nil {
+			return nil, 0, 0, fmt.Errorf("failed to update config %s: %w", config.Key, err)
+		}
+		results = append(results, updated)
+		updatedCount++
 	}
 
 	return results, createdCount, updatedCount, nil
