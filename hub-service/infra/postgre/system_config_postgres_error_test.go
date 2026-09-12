@@ -20,8 +20,9 @@ func newSystemConfigDryRunDB(t *testing.T) *gorm.DB {
 			PreferSimpleProtocol: true,
 		}),
 		&gorm.Config{
-			DryRun:               true,
-			DisableAutomaticPing: true,
+			DryRun:                 true,
+			DisableAutomaticPing:   true,
+			SkipDefaultTransaction: true,
 		},
 	)
 	if err != nil {
