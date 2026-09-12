@@ -14,12 +14,12 @@ import (
 )
 
 type adminPermissionStub struct {
-	requested []string
+	requested []uint32
 	err       error
 }
 
-func (s *adminPermissionStub) HasPermissions(_ context.Context, codes []string) error {
-	s.requested = append([]string(nil), codes...)
+func (s *adminPermissionStub) RequiredPermissions(_ context.Context, ids []uint32) error {
+	s.requested = append([]uint32(nil), ids...)
 	return s.err
 }
 

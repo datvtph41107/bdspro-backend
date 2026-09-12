@@ -21,7 +21,7 @@ import (
 // PaymentPermissionAuthorizer là boundary hẹp tới Auth-service. Payment không
 // đọc bảng role/permission và không tự suy diễn quyền từ role name.
 type PaymentPermissionAuthorizer interface {
-	HasPermissions(context.Context, []string) error
+	RequiredPermissions(context.Context, []uint32) error
 }
 
 type AdminCommerceHandler struct {
@@ -152,7 +152,7 @@ func (h *AdminCommerceHandler) RedriveFulfillment(ctx context.Context, req *paym
 	return &paymentpb.RedriveAdminFulfillmentResponse{FulfillmentId: req.GetFulfillmentId(), Changed: changed, Replay: replay, Status: string(current)}, nil
 }
 
-func (h *AdminCommerceHandler) authorize(ctx context.Context, permission string) (uint64, error) {
+func (h *AdminCommerceHandler) authorize(ctx context.Context, permissionID uint32) (uint64, error) {
 	if h == nil || h.authorizer == nil {
 		return 0, status.Error(codes.Unavailable, "payment permission authority unavailable")
 	}
@@ -163,10 +163,28 @@ func (h *AdminCommerceHandler) authorize(ctx context.Context, permission string)
 	if !ok || actor.ProfileID == 0 || !strings.EqualFold(actor.TokenType, "ACCESS") {
 		return 0, status.Error(codes.Unauthenticated, "trusted admin actor identity is required")
 	}
-	if err := h.authorizer.HasPermissions(ctx, []string{permission}); err != nil {
-		return 0, status.Error(codes.PermissionDenied, permission+" permission is required")
+	if permissionID == 0 {
+		return 0, status.Error(codes.Internal, "payment permission id is required")
+	}
+	if err := h.authorizer.RequiredPermissions(ctx, []uint32{permissionID}); err != nil {
+		return 0, status.Error(codes.PermissionDenied, paymentPermissionCode(permissionID)+" permission is required")
 	}
 	return actor.ProfileID, nil
+}
+
+func paymentPermissionCode(permissionID uint32) string {
+	switch permissionID {
+	case adminusecase.PermissionOrderView:
+		return "PAYMENT_ORDER_VIEW"
+	case adminusecase.PermissionFundsConfirm:
+		return "PAYMENT_FUNDS_CONFIRM"
+	case adminusecase.PermissionFulfillmentView:
+		return "PAYMENT_FULFILLMENT_VIEW"
+	case adminusecase.PermissionFulfillmentRedrive:
+		return "PAYMENT_FULFILLMENT_REDRIVE"
+	default:
+		return strconv.FormatUint(uint64(permissionID), 10)
+	}
 }
 
 func adminPaymentError(err error) error {

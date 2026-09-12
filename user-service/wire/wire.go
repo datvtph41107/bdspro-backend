@@ -100,7 +100,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_usecase_subscription_checkout.PlanResolver), new(*user_infra_postgres_checkout.CheckoutStore)),
 	wire.Bind(new(user_internal_usecase_subscription_checkout.SubscriptionReader), new(*user_infra_postgres_checkout.CheckoutStore)),
 	wire.Bind(new(user_internal_usecase_subscription_settlement.Store), new(*user_infra_postgres_subscription.SettlementStore)),
-	wire.Bind(new(user_internal_usecase_useradmin.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
+	wire.Bind(new(user_internal_usecase_useradmin.PermissionAuthorizer), new(*user_infra_client_authpermission.CatalogAuthorizer)),
 	injection.RPCClientSet,
 	injection.NewHttpClient,
 	common_utils.NewSyncUtil,

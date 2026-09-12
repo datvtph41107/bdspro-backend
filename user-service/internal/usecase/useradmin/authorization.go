@@ -5,12 +5,15 @@ import (
 	"errors"
 	"strings"
 
+	_enum "common/domain/enum"
 	"common/identity"
 )
 
-const (
-	PermissionView   = "USER_ADMIN_VIEW"
-	PermissionManage = "USER_ADMIN_MANAGE"
+// User Admin permissions are owned by the shared IAM enum. Auth/IAM evaluates
+// them by durable ID; User never treats role names as authority.
+var (
+	PermissionView   = _enum.USER_ADMIN_VIEW
+	PermissionManage = _enum.USER_ADMIN_MANAGE
 )
 
 var (
@@ -22,7 +25,7 @@ var (
 // PermissionAuthorizer is the User Admin consumer's narrow IAM boundary.
 // Role names and UI visibility are never treated as durable authority.
 type PermissionAuthorizer interface {
-	HasPermission(ctx context.Context, actorID uint64, permissionCode string) (bool, error)
+	HasPermission(ctx context.Context, actorID uint64, permissionID uint32) (bool, error)
 }
 
 // RequirePermission binds three independent facts: a verified service hop, a
@@ -30,18 +33,17 @@ type PermissionAuthorizer interface {
 func RequirePermission(
 	ctx context.Context,
 	authorizer PermissionAuthorizer,
-	permissionCode string,
+	permissionID uint32,
 ) (uint64, error) {
 	actorID, err := ActorIDFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	permissionCode = strings.TrimSpace(permissionCode)
-	if authorizer == nil || permissionCode == "" {
+	if authorizer == nil || permissionID == 0 {
 		return 0, ErrPermissionAuthorityUnavailable
 	}
-	allowed, err := authorizer.HasPermission(ctx, actorID, permissionCode)
+	allowed, err := authorizer.HasPermission(ctx, actorID, permissionID)
 	if err != nil {
 		return 0, errors.Join(ErrPermissionAuthorityUnavailable, err)
 	}

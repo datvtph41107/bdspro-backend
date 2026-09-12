@@ -12,12 +12,12 @@ type authorizerStub struct {
 	allowed bool
 	err     error
 	actorID uint64
-	code    string
+	id      uint32
 }
 
-func (s *authorizerStub) HasPermission(_ context.Context, actorID uint64, code string) (bool, error) {
+func (s *authorizerStub) HasPermission(_ context.Context, actorID uint64, permissionID uint32) (bool, error) {
 	s.actorID = actorID
-	s.code = code
+	s.id = permissionID
 	return s.allowed, s.err
 }
 
@@ -27,8 +27,8 @@ func TestRequirePermissionUsesDurableAssignmentNotRoleName(t *testing.T) {
 	if err != nil || actorID != 42 {
 		t.Fatalf("explicit permission rejected: actor=%d err=%v", actorID, err)
 	}
-	if allowed.actorID != 42 || allowed.code != PermissionView {
-		t.Fatalf("authorizer call = actor:%d code:%q", allowed.actorID, allowed.code)
+	if allowed.actorID != 42 || allowed.id != PermissionView {
+		t.Fatalf("authorizer call = actor:%d id:%d", allowed.actorID, allowed.id)
 	}
 
 	_, err = RequirePermission(trustedContext(t, "ROLE_SUPER_ADMIN"), &authorizerStub{}, PermissionManage)

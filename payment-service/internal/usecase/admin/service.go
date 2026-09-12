@@ -7,18 +7,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
+	_enum "common/domain/enum"
 	payment "payment/internal/domain/payment"
 	"payment/internal/usecase/settlement"
 )
 
-const (
-	PermissionOrderView          = "PAYMENT_ORDER_VIEW"
-	PermissionFundsConfirm       = "PAYMENT_FUNDS_CONFIRM"
-	PermissionFulfillmentView    = "PAYMENT_FULFILLMENT_VIEW"
-	PermissionFulfillmentRedrive = "PAYMENT_FULFILLMENT_REDRIVE"
+// Payment commercial permissions are owned by the shared IAM enum. Auth
+// PermissionService evaluates them by durable ID; Payment never treats role
+// names as authority.
+var (
+	PermissionOrderView          = _enum.PAYMENT_ORDER_VIEW
+	PermissionFundsConfirm       = _enum.PAYMENT_FUNDS_CONFIRM
+	PermissionFulfillmentView    = _enum.PAYMENT_FULFILLMENT_VIEW
+	PermissionFulfillmentRedrive = _enum.PAYMENT_FULFILLMENT_REDRIVE
 )
 
 type OrderQuery struct {
@@ -174,7 +179,8 @@ func (s *Service) ConfirmFunds(ctx context.Context, command ConfirmFundsCommand)
 		return ConfirmFundsResult{Order: order, Replay: true}, nil
 	}
 	now := s.now().UTC()
-	if order.Order.Status != payment.OrderPendingFunds || len(order.Attempts) == 0 || !now.Before(order.Order.ExpiresAt) {
+	if order.Order.Status != payment.OrderPendingFunds || !now.Before(order.Order.ExpiresAt) {
+		log.Println("FundsConfirmationNotAllowed", order.Order.Status, len(order.Attempts), now.Before(order.Order.ExpiresAt))
 		return ConfirmFundsResult{}, payment.ErrFundsConfirmationNotAllowed
 	}
 

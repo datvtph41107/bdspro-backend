@@ -83,7 +83,30 @@ func TestWriteGRPCDoesNotExposeUnavailableTransportDetails(t *testing.T) {
 	if response.Code != int(codes.Unavailable) {
 		t.Fatalf("response code = %d, want %d", response.Code, codes.Unavailable)
 	}
-	if response.Message != "service temporarily unavailable" {
+	if response.Message != "máy chủ đang bận vui lòng thử lại sau (8219)" {
+		t.Fatalf("response message = %q", response.Message)
+	}
+}
+
+func TestWriteGRPCUnavailableWithoutTransportDetails(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, status.Error(codes.Unavailable, "admin usage projection unavailable"))
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
+	}
+
+	var response struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != int(codes.Unavailable) {
+		t.Fatalf("response code = %d, want %d", response.Code, codes.Unavailable)
+	}
+	if response.Message != "admin usage projection unavailable" {
 		t.Fatalf("response message = %q", response.Message)
 	}
 }

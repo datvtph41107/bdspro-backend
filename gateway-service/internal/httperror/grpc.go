@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 
 	sharepb "pb/types/shared"
 
@@ -15,6 +17,11 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+var (
+	dialTCPPortRe           = regexp.MustCompile(`(?i)dial tcp (?:\[[^\]]+\]|[^:\s]+):(\d{2,5})`)
+	connectionRefusedPortRe = regexp.MustCompile(`:(\d{2,5}): connect: connection refused`)
 )
 
 // WriteGRPC translates one downstream gRPC error into the Gateway HTTP contract.
@@ -79,9 +86,14 @@ func WriteGRPC(w http.ResponseWriter, err error) {
 // implementation failures. The complete error remains in the Gateway log with
 // the request identity added by middleware.
 func publicMessage(code codes.Code, message string) string {
+	if friendly, ok := friendlyUpstreamBusyMessage(message); ok {
+		return friendly
+	}
 	switch code {
 	case codes.Unavailable:
-		return "service temporarily unavailable"
+		// Owner-provided Unavailable messages stay visible. Only dial/transport
+		// failures are rewritten to the busy contract above.
+		return message
 	case codes.DeadlineExceeded:
 		return "upstream request timed out"
 	case codes.Internal, codes.Unknown, codes.DataLoss:
@@ -89,6 +101,35 @@ func publicMessage(code codes.Code, message string) string {
 	default:
 		return message
 	}
+}
+
+func isUpstreamConnectionError(msg string) bool {
+	lower := strings.ToLower(msg)
+	return strings.Contains(lower, "error while dialing") ||
+		strings.Contains(lower, "connection refused") ||
+		strings.Contains(lower, "dial tcp") ||
+		strings.Contains(lower, "all subconns are in transientfailure") ||
+		(strings.Contains(lower, "connection error") && strings.Contains(lower, "transport"))
+}
+
+func extractUpstreamPort(msg string) string {
+	if m := dialTCPPortRe.FindStringSubmatch(msg); len(m) == 2 {
+		return m[1]
+	}
+	if m := connectionRefusedPortRe.FindStringSubmatch(msg); len(m) == 2 {
+		return m[1]
+	}
+	return ""
+}
+
+func friendlyUpstreamBusyMessage(msg string) (string, bool) {
+	if !isUpstreamConnectionError(msg) {
+		return msg, false
+	}
+	if port := extractUpstreamPort(msg); port != "" {
+		return fmt.Sprintf("máy chủ đang bận vui lòng thử lại sau (%s)", port), true
+	}
+	return "máy chủ đang bận vui lòng thử lại sau", true
 }
 
 func statusFromCode(code codes.Code) int {

@@ -2,7 +2,8 @@ server:
   port: 8002
 
 database:
-  dsn: "" # inject DATABASE_DSN from secret storage
+  # Workstation: set in config/local.yml. Deploy: CONFIG_FILE or DATABASE_DSN.
+  dsn: ""
 
 jwt:
   key-generate: "" # inject JWT_KEY_GENERATE from secret storage

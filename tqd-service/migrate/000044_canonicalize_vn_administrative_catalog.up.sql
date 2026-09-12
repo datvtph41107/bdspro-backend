@@ -1,6 +1,11 @@
 -- Move the versioned Vietnamese administrative reference catalog from the
 -- historical tables into the tables owned by the current Location runtime.
 -- This is a source-data cutover, not a development/demo fixture.
+--
+-- Legacy `provinces` rows on some workstations only populate `name` and leave
+-- `full_name` / `code` empty. Prefer non-empty display names and skip rows that
+-- cannot satisfy province_v2 constraints. Legacy `wards` may be absent when
+-- ward_v2 is already the live catalog — skip that half in that case.
 
 INSERT INTO province_v2 (
     id,
@@ -14,75 +19,114 @@ INSERT INTO province_v2 (
 )
 SELECT
     id,
-    full_name,
-    short_name,
+    COALESCE(NULLIF(btrim(full_name), ''), NULLIF(btrim(name), '')),
+    COALESCE(NULLIF(btrim(short_name), ''), NULLIF(btrim(name), ''), ''),
     lat,
     lng,
-    code,
+    NULLIF(btrim(code::text), ''),
     COALESCE(created_at, CURRENT_TIMESTAMP),
     COALESCE(created_at, CURRENT_TIMESTAMP)
 FROM provinces
+WHERE COALESCE(NULLIF(btrim(full_name), ''), NULLIF(btrim(name), '')) IS NOT NULL
 ON CONFLICT DO NOTHING;
 
--- Keep an already-canonical identity when a deployment previously imported
--- the same province code under another ID, while refreshing its public data.
+-- Never overwrite a populated canonical name with a null/blank legacy value.
 UPDATE province_v2 AS canonical
 SET
-    full_name = legacy.full_name,
-    short_name = legacy.short_name,
-    lat = legacy.lat,
-    lng = legacy.lng,
+    full_name = COALESCE(
+        NULLIF(btrim(legacy.full_name), ''),
+        NULLIF(btrim(legacy.name), ''),
+        canonical.full_name
+    ),
+    short_name = COALESCE(
+        NULLIF(btrim(legacy.short_name), ''),
+        NULLIF(btrim(legacy.name), ''),
+        canonical.short_name
+    ),
+    lat = COALESCE(legacy.lat, canonical.lat),
+    lng = COALESCE(legacy.lng, canonical.lng),
     updated_at = CURRENT_TIMESTAMP
 FROM provinces AS legacy
-WHERE canonical.code = legacy.code;
+WHERE NULLIF(btrim(legacy.code::text), '') IS NOT NULL
+  AND canonical.code = NULLIF(btrim(legacy.code::text), '');
 
-INSERT INTO ward_v2 (
-    id,
-    full_name,
-    short_name,
-    lat,
-    lng,
-    code,
-    province_id,
-    province_code,
-    created_at,
-    updated_at
-)
-SELECT
-    legacy_ward.id,
-    legacy_ward.full_name,
-    legacy_ward.short_name,
-    legacy_ward.lat,
-    legacy_ward.lng,
-    legacy_ward.code,
-    canonical_province.id,
-    canonical_province.code,
-    COALESCE(legacy_ward.created_at, CURRENT_TIMESTAMP),
-    COALESCE(legacy_ward.created_at, CURRENT_TIMESTAMP)
-FROM wards AS legacy_ward
-JOIN provinces AS legacy_province
-    ON legacy_province.id = legacy_ward.province_id
-JOIN province_v2 AS canonical_province
-    ON canonical_province.code = legacy_province.code
-ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+    IF to_regclass('public.wards') IS NULL THEN
+        RAISE NOTICE 'legacy wards table missing; skipping ward cutover';
+        RETURN;
+    END IF;
 
--- Refresh an existing canonical ward by its stable public code without
--- changing its identity or breaking downstream foreign keys.
-UPDATE ward_v2 AS canonical
-SET
-    full_name = legacy_ward.full_name,
-    short_name = legacy_ward.short_name,
-    lat = legacy_ward.lat,
-    lng = legacy_ward.lng,
-    province_id = canonical_province.id,
-    province_code = canonical_province.code,
-    updated_at = CURRENT_TIMESTAMP
-FROM wards AS legacy_ward
-JOIN provinces AS legacy_province
-    ON legacy_province.id = legacy_ward.province_id
-JOIN province_v2 AS canonical_province
-    ON canonical_province.code = legacy_province.code
-WHERE canonical.code = legacy_ward.code;
+    EXECUTE $ward$
+        INSERT INTO ward_v2 (
+            id,
+            full_name,
+            short_name,
+            lat,
+            lng,
+            code,
+            province_id,
+            province_code,
+            created_at,
+            updated_at
+        )
+        SELECT
+            legacy_ward.id,
+            COALESCE(
+                NULLIF(btrim(legacy_ward.full_name), ''),
+                NULLIF(btrim(legacy_ward.name), '')
+            ),
+            COALESCE(
+                NULLIF(btrim(legacy_ward.short_name), ''),
+                NULLIF(btrim(legacy_ward.name), ''),
+                ''
+            ),
+            legacy_ward.lat,
+            legacy_ward.lng,
+            NULLIF(btrim(legacy_ward.code::text), ''),
+            canonical_province.id,
+            canonical_province.code,
+            COALESCE(legacy_ward.created_at, CURRENT_TIMESTAMP),
+            COALESCE(legacy_ward.created_at, CURRENT_TIMESTAMP)
+        FROM wards AS legacy_ward
+        JOIN provinces AS legacy_province
+            ON legacy_province.id = legacy_ward.province_id
+        JOIN province_v2 AS canonical_province
+            ON canonical_province.code = NULLIF(btrim(legacy_province.code::text), '')
+        WHERE COALESCE(
+                NULLIF(btrim(legacy_ward.full_name), ''),
+                NULLIF(btrim(legacy_ward.name), '')
+            ) IS NOT NULL
+        ON CONFLICT DO NOTHING
+    $ward$;
+
+    EXECUTE $ward$
+        UPDATE ward_v2 AS canonical
+        SET
+            full_name = COALESCE(
+                NULLIF(btrim(legacy_ward.full_name), ''),
+                NULLIF(btrim(legacy_ward.name), ''),
+                canonical.full_name
+            ),
+            short_name = COALESCE(
+                NULLIF(btrim(legacy_ward.short_name), ''),
+                NULLIF(btrim(legacy_ward.name), ''),
+                canonical.short_name
+            ),
+            lat = COALESCE(legacy_ward.lat, canonical.lat),
+            lng = COALESCE(legacy_ward.lng, canonical.lng),
+            province_id = canonical_province.id,
+            province_code = canonical_province.code,
+            updated_at = CURRENT_TIMESTAMP
+        FROM wards AS legacy_ward
+        JOIN provinces AS legacy_province
+            ON legacy_province.id = legacy_ward.province_id
+        JOIN province_v2 AS canonical_province
+            ON canonical_province.code = NULLIF(btrim(legacy_province.code::text), '')
+        WHERE NULLIF(btrim(legacy_ward.code::text), '') IS NOT NULL
+          AND canonical.code = NULLIF(btrim(legacy_ward.code::text), '')
+    $ward$;
+END $$;
 
 UPDATE province_v2 AS province
 SET

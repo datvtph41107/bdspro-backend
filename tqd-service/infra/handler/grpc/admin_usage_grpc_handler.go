@@ -111,7 +111,7 @@ func (h *AdminUsageGrpcHandler) ListUsage(ctx context.Context, req *tqdpb.ListAd
 		if err.Error() == "page size must be between 1 and 100" {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		return nil, status.Error(codes.Internal, "admin usage projection failed")
+		return nil, status.Errorf(codes.FailedPrecondition, "admin usage projection unavailable: %v", err)
 	}
 	response := &tqdpb.ListAdminUsageResponse{Total: page.Total, Page: page.Page, PageSize: page.PageSize}
 	for _, item := range page.Usage {
@@ -159,7 +159,7 @@ func (h *AdminUsageGrpcHandler) ListGeneratedReports(ctx context.Context, req *t
 		case "page size must be between 1 and 100", "invalid report job status":
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		default:
-			return nil, status.Error(codes.Internal, "generated report projection failed")
+			return nil, status.Errorf(codes.FailedPrecondition, "generated report projection unavailable: %v", err)
 		}
 	}
 	response := &tqdpb.ListAdminGeneratedReportsResponse{

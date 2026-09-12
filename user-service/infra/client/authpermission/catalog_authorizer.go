@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// CatalogAuthorizer evaluates catalog-plan IAM through Auth PermissionService.
-// User does not read role_permissions for this boundary.
+// CatalogAuthorizer evaluates catalog-plan / user-admin IAM through Auth PermissionService.
+// User does not read role_permissions for these boundaries.
 // @bind: user/internal/usecase/plan/admin.PermissionAuthorizer
+// @bind: user/internal/usecase/useradmin.PermissionAuthorizer
 type CatalogAuthorizer struct {
 	auth *clients.AuthGrpcClient
 }

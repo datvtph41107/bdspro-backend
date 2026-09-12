@@ -285,6 +285,12 @@ var (
 	CATALOG_PLAN_VIEW                          uint32 = 302
 	CATALOG_PLAN_MANAGE                        uint32 = 303
 	CATALOG_PLAN_PUBLISH                       uint32 = 304
+	PAYMENT_ORDER_VIEW                         uint32 = 305
+	PAYMENT_FULFILLMENT_VIEW                   uint32 = 306
+	PAYMENT_FULFILLMENT_REDRIVE                uint32 = 307
+	PAYMENT_FUNDS_CONFIRM                      uint32 = 308
+	USER_ADMIN_VIEW                            uint32 = 309
+	USER_ADMIN_MANAGE                          uint32 = 310
 )
 
-var PermissionIDMax = 304
+var PermissionIDMax = 310

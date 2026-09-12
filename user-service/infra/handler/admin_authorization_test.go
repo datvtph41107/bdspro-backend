@@ -20,7 +20,7 @@ type userAdminAuthorizerStub struct {
 	err     error
 }
 
-func (s userAdminAuthorizerStub) HasPermission(context.Context, uint64, string) (bool, error) {
+func (s userAdminAuthorizerStub) HasPermission(context.Context, uint64, uint32) (bool, error) {
 	return s.allowed, s.err
 }
 

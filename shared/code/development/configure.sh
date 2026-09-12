@@ -194,8 +194,9 @@ EOF
 file_env() {
   cat <<EOF
 QHPRO_SERVICE_ID=file-service
+# Process DSN/topology: config/runtime.yml + config/local.yml (or CONFIG_FILE).
+# Keep MIGRATION_URL for make migrate*; file secrets below stay in .env.
 MIGRATION_URL=postgres://postgres:postgres@localhost:5432/file_service?sslmode=disable
-DATABASE_DSN="host=localhost user=postgres password=postgres dbname=file_service port=5432 sslmode=disable"
 FILE_SIGNATURE_KEY=qhpro-development-$(random_hex)
 FILE_XOR_CRYPT_KEY=$(random_hex)
 AUTH_GRPC_ADDRESS=localhost:8216
@@ -310,7 +311,8 @@ install_missing_value notification-service/.env NOTIFICATION_GRPC_PORT 8204
 install_missing_value notification-service/.env QHPRO_USER_GRPC_ADDR localhost:8201
 install_env file-service/.env file_env
 install_value file-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/file_service?sslmode=disable'
-install_value file-service/.env DATABASE_DSN '"host=localhost user=postgres password=postgres dbname=file_service port=5432 sslmode=disable"'
+remove_value file-service/.env DATABASE_DSN
+remove_value file-service/.env FILE_DATABASE_DSN
 install_missing_value file-service/.env AUTH_GRPC_ADDRESS localhost:8216
 install_missing_value file-service/.env HUB_GRPC_ADDRESS localhost:8280
 install_env gateway-service/.env gateway_env
@@ -412,6 +414,27 @@ sepay:
   success_url: http://localhost:3001/dashboard/pricing?payment=success
   error_url: http://localhost:3001/dashboard/pricing?payment=error
   cancel_url: http://localhost:3001/dashboard/pricing?payment=cancel
+EOF
+
+install_local_yml file-service/config/local.yml <<'EOF'
+database:
+  dsn: host=localhost user=postgres password=postgres dbname=file_service port=5432 sslmode=disable
+jwt:
+  # Overridden by root .env JWT_KEY_GENERATE when make run-dev sources it.
+  key-generate: "qhpro-development-local-file-jwt-key"
+file:
+  storage_root: "./files"
+  signature_key: "qhpro-development-local-file-signature-key"
+  xor_crypt_key: "qhpro-development-local-file-xor-crypt-key"
+  signature_expire: 5m
+service:
+  auth_key: "qhpro-development-local-file-service-auth-key"
+auth:
+  grpc_address: "localhost:8216"
+  timeout: 2s
+hub:
+  grpc_address: "localhost:8280"
+  timeout: 5s
 EOF
 
 echo
