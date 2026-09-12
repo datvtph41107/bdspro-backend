@@ -21,17 +21,12 @@ func NewUserDashboardStatsJob(
 	db *gorm.DB,
 ) *UserDashboardStatsJob {
 
-	// Tạo dashboard stats job với table name và function lấy count
-	dashboardJob := dashboard.NewDashboardStatsJob(
+	// Preserve technical CountCurrent failures instead of materializing them as count=0.
+	dashboardJob := dashboard.NewDashboardStatsJobWithError(
 		db,
-		"user_stats", // table name
-		func(ctx context.Context) int64 {
-			// Lấy count từ user usecase
-			count, err := userUsecase.CountCurrent(ctx)
-			if err != nil {
-				return 0
-			}
-			return count
+		"user_stats",
+		func(ctx context.Context) (int64, error) {
+			return userUsecase.CountCurrent(ctx)
 		},
 	)
 

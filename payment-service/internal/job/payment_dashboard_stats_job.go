@@ -21,17 +21,12 @@ func NewPaymentDashboardStatsJob(
 	db *gorm.DB,
 ) *PaymentDashboardStatsJob {
 
-	// Tạo dashboard stats job với table name và function lấy count
-	dashboardJob := dashboard.NewDashboardStatsJob(
+	// Preserve technical CountProcessingTransactions failures instead of materializing them as count=0.
+	dashboardJob := dashboard.NewDashboardStatsJobWithError(
 		db,
-		"payment_stats", // table name
-		func(ctx context.Context) int64 {
-			// Lấy count từ payment usecase (giao dịch đang xử lý)
-			count, err := paymentUsecase.CountProcessingTransactions(ctx)
-			if err != nil {
-				return 0
-			}
-			return count
+		"payment_stats",
+		func(ctx context.Context) (int64, error) {
+			return paymentUsecase.CountProcessingTransactions(ctx)
 		},
 	)
 

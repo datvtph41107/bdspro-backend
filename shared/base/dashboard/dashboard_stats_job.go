@@ -17,10 +17,16 @@ type DashboardStatsJob interface {
 type dashboardStatsJob struct {
 	Usecase   DashboardStatsUsecase
 	TableName string
-	GetValue  func(context.Context) int64 // Function để lấy giá trị cần lưu
+	GetValue  func(context.Context) (int64, error)
 }
 
 func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func(context.Context) int64) DashboardStatsJob {
+	return NewDashboardStatsJobWithError(db, tableName, func(ctx context.Context) (int64, error) {
+		return getValue(ctx), nil
+	})
+}
+
+func NewDashboardStatsJobWithError(db *gorm.DB, tableName string, getValue func(context.Context) (int64, error)) DashboardStatsJob {
 	// Auto migrate table trước khi tạo job
 	// err := db.Table(tableName).AutoMigrate(&DashboardStats{})
 	// if err != nil {
@@ -39,8 +45,11 @@ func NewDashboardStatsJob(db *gorm.DB, tableName string, getValue func(context.C
 }
 
 func (j *dashboardStatsJob) Run(ctx context.Context) error {
-	// Lấy giá trị từ function
-	count := j.GetValue(ctx)
+	// Lấy giá trị từ function. A technical read failure is not a valid metric.
+	count, err := j.GetValue(ctx)
+	if err != nil {
+		return err
+	}
 
 	// Tạo thời gian hiện tại (ngày hiện tại)
 	now := time.Now()
@@ -53,7 +62,7 @@ func (j *dashboardStatsJob) Run(ctx context.Context) error {
 	}
 
 	// Lưu hoặc cập nhật vào database
-	_, err := j.Usecase.UpdateOrCreate(ctx, j.TableName, stats)
+	_, err = j.Usecase.UpdateOrCreate(ctx, j.TableName, stats)
 	if err != nil {
 		return err
 	}
