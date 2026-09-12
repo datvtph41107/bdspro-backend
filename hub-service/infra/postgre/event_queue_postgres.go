@@ -5,10 +5,13 @@ import (
 	_provider "common/provider"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // @bind: hub/internal/repo.IEventQueueRepo
@@ -20,6 +23,23 @@ func NewEventQueueRepo(db *_db.TransactionRepo) *EventQueueRepo {
 	repo := &EventQueueRepo{}
 	repo.Init(repo, db)
 	return repo
+}
+
+// GetByID normalizes only record-not-found to absence so the application layer
+// owns the business meaning; unrelated database failures remain infrastructure errors.
+func (r *EventQueueRepo) GetByID(c context.Context, id uint64) (*domain.EventQueueEntity, error) {
+	var entity domain.EventQueueEntity
+	err := r.GetDB(c).
+		Where("id = ? and deleted_at is null", id).
+		First(&entity).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
 }
 
 func (r *EventQueueRepo) Search(c context.Context, searchDTO dto.EventQueueSearchDTO) ([]domain.EventQueueEntity, int64, error) {

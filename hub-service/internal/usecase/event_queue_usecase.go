@@ -38,6 +38,12 @@ func (uc *EventQueueUsecase) Detail(ctx context.Context, id uint64) (*domain.Eve
 	event, err := uc.eventQueueRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Lỗi khi lấy chi tiết event queue: " + err.Error(),
+		}
+	}
+	if event == nil {
+		return nil, &_err.ErrorDTO{
 			Code:    404,
 			Message: "Không tìm thấy event queue",
 		}
@@ -100,6 +106,12 @@ func (uc *EventQueueUsecase) Update(ctx context.Context, id uint64, saveDTO dto.
 	existingEvent, err := uc.eventQueueRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Lỗi khi lấy event queue trước khi cập nhật: " + err.Error(),
+		}
+	}
+	if existingEvent == nil {
+		return nil, &_err.ErrorDTO{
 			Code:    404,
 			Message: "Không tìm thấy event queue",
 		}
@@ -152,6 +164,12 @@ func (uc *EventQueueUsecase) Delete(ctx context.Context, id uint64) *_err.ErrorD
 	// Check if exists
 	existingEvent, err := uc.eventQueueRepo.GetByID(ctx, id)
 	if err != nil {
+		return &_err.ErrorDTO{
+			Code:    500,
+			Message: "Lỗi khi lấy event queue trước khi xóa: " + err.Error(),
+		}
+	}
+	if existingEvent == nil {
 		return &_err.ErrorDTO{
 			Code:    404,
 			Message: "Không tìm thấy event queue",
