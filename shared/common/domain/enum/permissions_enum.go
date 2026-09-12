@@ -279,6 +279,12 @@ var (
 	ADMIN_KD_XOA                               uint32 = 296
 	ADMIN_HT_SUA                               uint32 = 297
 	ADMIN_HT_XOA                               uint32 = 298
+	COMMERCIAL_USAGE_VIEW                      uint32 = 299
+	COMMERCIAL_USAGE_RECONCILE                 uint32 = 300
+	COMMERCIAL_SUBSCRIPTION_VIEW               uint32 = 301
+	CATALOG_PLAN_VIEW                          uint32 = 302
+	CATALOG_PLAN_MANAGE                        uint32 = 303
+	CATALOG_PLAN_PUBLISH                       uint32 = 304
 )
 
-var PermissionIDMax = 298
+var PermissionIDMax = 304

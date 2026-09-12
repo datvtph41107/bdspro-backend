@@ -260,6 +260,17 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	funcStart := time.Now()
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
+	if h.adminUsecase != nil {
+		superAdmin, err := h.adminUsecase.IsSuperAdmin(ctx, profileId)
+		if err != nil {
+			return err
+		}
+		if superAdmin {
+			log.Printf("[HasPermissions] Super admin bypass for profileId %d, took %s total", profileId, time.Since(funcStart))
+			return nil
+		}
+	}
+
 	// -------------------
 	// 1. Lấy roleIds từ Redis
 	stage1Start := time.Now()
@@ -720,7 +731,19 @@ func (h *InternalHandler) GetRoleIdsByProfileId(ctx context.Context, req *sharep
 		return nil, err
 	}
 
+	var superAdmin uint32
+	if h.adminUsecase != nil {
+		isSuperAdmin, err := h.adminUsecase.IsSuperAdmin(ctx, req.Id)
+		if err != nil {
+			return nil, err
+		}
+		if isSuperAdmin {
+			superAdmin = 1
+		}
+	}
+
 	return &userpb.GetRoleIdsByProfileIdResponse{
-		RoleIds: roleIds,
+		RoleIds:    roleIds,
+		SuperAdmin: superAdmin,
 	}, nil
 }

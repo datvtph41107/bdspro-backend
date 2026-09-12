@@ -103,15 +103,15 @@ func (c *UserGrpcClient) GetRolePermissions(ctx context.Context, req *sharepb.Id
 	return c.InternalClient.GetRolePermissions(ctx, req)
 }
 
-func (c *UserGrpcClient) GetRoleIdsByProfileId(ctx context.Context, profileId uint64) ([]uint64, error) {
+func (c *UserGrpcClient) GetRoleIdsByProfileId(ctx context.Context, profileId uint64) ([]uint64, uint32, error) {
 	if c.InternalClient == nil {
-		return nil, errors.New("user internal client not avaiable")
+		return nil, 0, errors.New("user internal client not avaiable")
 	}
 	resp, err := c.InternalClient.GetRoleIdsByProfileId(ctx, &sharepb.IdRequest{Id: profileId})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return resp.GetRoleIds(), nil
+	return resp.GetRoleIds(), resp.GetSuperAdmin(), nil
 }
 
 func (c *UserGrpcClient) GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error) {

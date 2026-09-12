@@ -52,29 +52,29 @@ func (r *planHandlerRepository) RetirePlanVersion(_ context.Context, _ uint64, _
 }
 
 type fakePermissionAuthorizer struct {
-	allowed map[string]bool
+	allowed map[uint32]bool
 	err     error
 	actorID uint64
-	code    string
+	permissionID uint32
 }
 
 func (f *fakePermissionAuthorizer) HasPermission(
 	_ context.Context,
 	actorID uint64,
-	permissionCode string,
+	permissionID uint32,
 ) (bool, error) {
 	f.actorID = actorID
-	f.code = permissionCode
+	f.permissionID = permissionID
 	if f.err != nil {
 		return false, f.err
 	}
-	return f.allowed[permissionCode], nil
+	return f.allowed[permissionID], nil
 }
 
-func allowPermissions(codes ...string) *fakePermissionAuthorizer {
-	allowed := make(map[string]bool, len(codes))
-	for _, code := range codes {
-		allowed[code] = true
+func allowPermissions(ids ...uint32) *fakePermissionAuthorizer {
+	allowed := make(map[uint32]bool, len(ids))
+	for _, id := range ids {
+		allowed[id] = true
 	}
 	return &fakePermissionAuthorizer{allowed: allowed}
 }
@@ -133,8 +133,8 @@ func TestCatalogAuthorizationUsesPermissionNotRoleName(t *testing.T) {
 	); err != nil {
 		t.Fatalf("explicit permission rejected because of role name: %v", err)
 	}
-	if view.actorID != 42 || view.code != admin.PermissionPlanView {
-		t.Fatalf("authorization call = actor:%d code:%q", view.actorID, view.code)
+	if view.actorID != 42 || view.permissionID != admin.PermissionPlanView {
+		t.Fatalf("authorization call = actor:%d permission:%d", view.actorID, view.permissionID)
 	}
 
 	// A SUPER_ADMIN role name without the durable assignment does not bypass IAM.

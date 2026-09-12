@@ -17,7 +17,7 @@ eureka:
   port: 8761
 
 database:
-  # Để trống trong repo; host-mode lấy từ TQD_DATABASE_URL trong tqd-service/.env
+  # Workstation overlay: config/local.yml. Deploy: CONFIG_FILE / QHPRO_CONFIG_FILE.
   dsn: host=14.225.210.29 user=db_tqd password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
 key:
   jwt: key-generate-jwt-token-authentication

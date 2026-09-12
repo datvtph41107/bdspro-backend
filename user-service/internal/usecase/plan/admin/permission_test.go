@@ -12,16 +12,16 @@ type permissionAuthorizerStub struct {
 	allowed bool
 	err     error
 	actorID uint64
-	code    string
+	permissionID uint32
 }
 
 func (s *permissionAuthorizerStub) HasPermission(
 	_ context.Context,
 	actorID uint64,
-	permissionCode string,
+	permissionID uint32,
 ) (bool, error) {
 	s.actorID = actorID
-	s.code = permissionCode
+	s.permissionID = permissionID
 	return s.allowed, s.err
 }
 
@@ -35,8 +35,8 @@ func TestRequirePermissionUsesAssignmentNotRoleName(t *testing.T) {
 	if err != nil || actorID != 42 {
 		t.Fatalf("explicit permission rejected: actor=%d err=%v", actorID, err)
 	}
-	if allowed.actorID != 42 || allowed.code != PermissionPlanView {
-		t.Fatalf("authorizer call = actor:%d code:%q", allowed.actorID, allowed.code)
+	if allowed.actorID != 42 || allowed.permissionID != PermissionPlanView {
+		t.Fatalf("authorizer call = actor:%d permission:%d", allowed.actorID, allowed.permissionID)
 	}
 
 	denied := &permissionAuthorizerStub{}

@@ -52,8 +52,9 @@ type permissionSnapshot struct {
 }
 
 type roleCacheEntry struct {
-	roleIDs   []uint64
-	expiresAt time.Time
+	roleIDs    []uint64
+	superAdmin uint32
+	expiresAt  time.Time
 }
 
 /**
@@ -197,15 +198,24 @@ func buildPermissionSnapshot(
 	permissions []*sharepb.Permission,
 ) (permissionSnapshot, error) {
 	catalogPermissions := make([]permissioncatalog.Permission, 0, len(permissions))
-	for _, permission := range permissions {
-		if permission == nil || permission.Id == 0 {
-			continue
+	var collect func([]*sharepb.Permission)
+	collect = func(nodes []*sharepb.Permission) {
+		for _, permission := range nodes {
+			if permission == nil {
+				continue
+			}
+			if permission.Id != 0 {
+				catalogPermissions = append(catalogPermissions, permissioncatalog.Permission{
+					ID:   permission.Id,
+					Code: permission.Key,
+				})
+			}
+			if len(permission.Children) > 0 {
+				collect(permission.Children)
+			}
 		}
-		catalogPermissions = append(catalogPermissions, permissioncatalog.Permission{
-			ID:   permission.Id,
-			Code: permission.Key,
-		})
 	}
+	collect(permissions)
 
 	rolePermissions := make([]permissioncatalog.RolePermissions, 0, len(items))
 	for _, item := range items {
@@ -302,31 +312,36 @@ func profileIDFromContext(ctx context.Context) uint64 {
 	return _utils.GetProfileIdWithContext(ctx)
 }
 
-func (s *PermissionService) resolveRoleIDs(ctx context.Context, profileID uint64) ([]uint64, error) {
+func (s *PermissionService) resolveRoleIDs(ctx context.Context, profileID uint64) ([]uint64, uint32, error) {
 	now := time.Now()
 	s.roleMu.Lock()
 	cached, ok := s.roleCache[profileID]
 	if ok && now.Before(cached.expiresAt) {
 		roleIDs := append([]uint64(nil), cached.roleIDs...)
+		superAdmin := cached.superAdmin
 		s.roleMu.Unlock()
-		return roleIDs, nil
+		return roleIDs, superAdmin, nil
 	}
 	s.roleMu.Unlock()
 
 	callCtx, cancel := context.WithTimeout(ctx, s.requestTimeout)
 	defer cancel()
-	roleIDs, err := s.userClient.GetRoleIdsByProfileId(callCtx, profileID)
+	roleIDs, superAdmin, err := s.userClient.GetRoleIdsByProfileId(callCtx, profileID)
 	if err != nil {
-		return nil, _errors.ReturnError(503, "không thể xác minh role assignment hiện tại")
+		return nil, 0, _errors.ReturnError(503, "không thể xác minh role assignment hiện tại")
 	}
 	roleIDs = normalizeRoleIDs(roleIDs)
+	if superAdmin != 0 {
+		superAdmin = 1
+	}
 	s.roleMu.Lock()
 	s.roleCache[profileID] = roleCacheEntry{
-		roleIDs:   append([]uint64(nil), roleIDs...),
-		expiresAt: now.Add(s.roleCacheTTL),
+		roleIDs:    append([]uint64(nil), roleIDs...),
+		superAdmin: superAdmin,
+		expiresAt:  now.Add(s.roleCacheTTL),
 	}
 	s.roleMu.Unlock()
-	return roleIDs, nil
+	return roleIDs, superAdmin, nil
 }
 
 func normalizeRoleIDs(roleIDs []uint64) []uint64 {
@@ -368,9 +383,12 @@ func (s *PermissionService) RequiredPermissions(
 	if profileID == 0 {
 		return _errors.ReturnError(401, "Unauthorized")
 	}
-	roleIDs, err := s.resolveRoleIDs(ctx, profileID)
+	roleIDs, superAdmin, err := s.resolveRoleIDs(ctx, profileID)
 	if err != nil {
 		return err
+	}
+	if superAdmin == 1 {
+		return nil
 	}
 	if len(roleIDs) == 0 {
 		return _errors.ReturnError(403, "Bạn không có quyền truy cập")

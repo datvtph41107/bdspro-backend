@@ -10,7 +10,6 @@ import (
 
 // Checker evaluates durable User IAM role assignments by permission code.
 // It intentionally bypasses role-name shortcuts and hardcoded numeric permission IDs.
-// @bind: user/internal/usecase/plan/admin.PermissionAuthorizer
 // @bind: user/internal/usecase/subscription.PermissionAuthorizer
 // @bind: user/internal/usecase/useradmin.PermissionAuthorizer
 type Checker struct {
@@ -32,6 +31,14 @@ func (c *Checker) HasPermission(
 	}
 	if actorID == 0 || permissionCode == "" {
 		return false, nil
+	}
+
+	superAdmin, err := c.isSuperAdmin(ctx, actorID)
+	if err != nil {
+		return false, err
+	}
+	if superAdmin {
+		return true, nil
 	}
 
 	var allowed bool
@@ -70,4 +77,20 @@ SELECT EXISTS (
 		return false, result.Error
 	}
 	return allowed, nil
+}
+
+func (c *Checker) isSuperAdmin(ctx context.Context, profileID uint64) (bool, error) {
+	var exists bool
+	result := c.db.WithContext(ctx).Raw(`
+SELECT EXISTS (
+    SELECT 1
+      FROM admin_profiles
+     WHERE profile_id = ?
+       AND super_admin = 1
+       AND deleted_at IS NULL
+)`, profileID).Scan(&exists)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return exists, nil
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -86,13 +87,12 @@ func LoadDatabaseRuntime() (DatabaseRuntime, error) {
 }
 
 func databaseRuntimeFromLoadedProperties() (DatabaseRuntime, error) {
-	dsn := firstNonEmpty(
-		os.Getenv("USER_DATABASE_URL"),
-		os.Getenv("DATABASE_URL"),
-		Properties.Database.DSN,
-	)
+	// Database DSN is owned by the environment YAML:
+	// - workstation: config/runtime.yml merged with config/local.yml
+	// - deploy: CONFIG_FILE / QHPRO_CONFIG_FILE (develop.yml, release.yml, …)
+	dsn := strings.TrimSpace(Properties.Database.DSN)
 	if dsn == "" || strings.HasPrefix(dsn, "CHANGE_ME") {
-		return DatabaseRuntime{}, errors.New("database URL is required")
+		return DatabaseRuntime{}, errors.New("database.dsn is required in the environment config YAML")
 	}
 	return DatabaseRuntime{
 		DSN:             dsn,
@@ -109,4 +109,42 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+// DescribeDatabaseDSN returns a password-free host/db summary for startup logs.
+func DescribeDatabaseDSN(dsn string) string {
+	dsn = strings.TrimSpace(dsn)
+	if dsn == "" {
+		return "dsn=<empty>"
+	}
+
+	host, port, user, dbname := "", "", "", ""
+	for _, part := range strings.Fields(dsn) {
+		key, value, ok := strings.Cut(part, "=")
+		if !ok {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(key)) {
+		case "host":
+			host = strings.TrimSpace(value)
+		case "port":
+			port = strings.TrimSpace(value)
+		case "user":
+			user = strings.TrimSpace(value)
+		case "dbname", "database":
+			dbname = strings.TrimSpace(value)
+		}
+	}
+	if host == "" && strings.Contains(dsn, "://") {
+		if u, err := url.Parse(dsn); err == nil {
+			host = u.Hostname()
+			port = u.Port()
+			user = u.User.Username()
+			dbname = strings.TrimPrefix(u.Path, "/")
+		}
+	}
+	if port == "" {
+		port = "5432"
+	}
+	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s", host, port, user, dbname)
 }

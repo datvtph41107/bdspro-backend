@@ -62,6 +62,7 @@ func (r *AdminPostgres) ListAdmin(ctx context.Context, req *dto.AdminListRequest
 		up.attachments,
 		up.internal_notes,
 		up.send_notification,
+		COALESCE(up.super_admin, 0) as super_admin,
 		NULL as last_login_at,
 		0 as total_login`
 
@@ -265,6 +266,7 @@ func (r *AdminPostgres) UpdateAdmin(ctx context.Context, req *models.AdminProfil
 		"attachments":       attachments,
 		"internal_notes":    req.InternalNotes,
 		"send_notification": req.SendNotification,
+		"super_admin":       normalizeSuperAdminFlag(req.SuperAdmin),
 	}
 
 	err := r.DB.WithContext(ctx).
@@ -297,6 +299,30 @@ SELECT EXISTS (
        AND role.deleted_at IS NULL
 )`, id, id).Scan(&exists).Error
 	return exists, err
+}
+
+// IsSuperAdminByProfileID reports whether the admin profile carries durable super_admin=1.
+func (r *AdminPostgres) IsSuperAdminByProfileID(ctx context.Context, profileID uint64) (bool, error) {
+	if profileID == 0 {
+		return false, nil
+	}
+	var exists bool
+	err := r.DB.WithContext(ctx).Raw(`
+SELECT EXISTS (
+    SELECT 1
+      FROM admin_profiles
+     WHERE profile_id = ?
+       AND super_admin = 1
+       AND deleted_at IS NULL
+)`, profileID).Scan(&exists).Error
+	return exists, err
+}
+
+func normalizeSuperAdminFlag(value uint8) uint8 {
+	if value != 0 {
+		return 1
+	}
+	return 0
 }
 
 // DeleteAdmin xóa admin profile (soft delete)

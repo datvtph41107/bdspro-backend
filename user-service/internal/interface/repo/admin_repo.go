@@ -17,6 +17,7 @@ type IAdminRepo interface {
 	UpdateAdmin(ctx context.Context, req *models.AdminProfile) (*models.AdminProfile, error)
 	UpdateAuthID(ctx context.Context, adminID, authID uint64) error
 	IsSystemRootAdmin(ctx context.Context, id uint64) (bool, error)
+	IsSuperAdminByProfileID(ctx context.Context, profileID uint64) (bool, error)
 	DeleteAdmin(ctx context.Context, authID uint64) error
 	GetDetail(ctx context.Context, req uint64) (*models.AdminProfile, error)
 	GetMapByAuthIDs(ctx context.Context, authIDs []uint64) (map[uint64]*models.AdminProfile, error)

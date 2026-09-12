@@ -36,13 +36,14 @@ func (w *OutboxPublisher) Run(ctx context.Context) error {
 	for {
 		processed, err := w.service.RunOne(ctx, w.workerID, w.lease)
 		if err != nil && !errors.Is(err, context.Canceled) {
-			// A closed Rabbit channel cannot recover inside the current process.
-			// Returning restarts the whole Payment service; the durable outbox row
-			// remains available for the next process instance.
+			// Broker may be down at start or drop later. Keep the gRPC process up;
+			// the reconnecting publisher dials again on the next outbox attempt and
+			// durable rows stay claimed/retried until publish succeeds.
 			if errors.Is(err, rabbit.ErrPublisherUnavailable) {
-				return err
+				log.Printf("service=payment-service component=outbox status=broker_unavailable error=%q", err)
+			} else {
+				log.Printf("service=payment-service component=outbox status=retry error=%q", err)
 			}
-			log.Printf("service=payment-service component=outbox status=retry error=%q", err)
 		}
 		if ctx.Err() != nil {
 			return nil

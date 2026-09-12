@@ -1,7 +1,6 @@
 // Package rabbitmq implements only the Payment integration-event publisher.
-// The caller/process root owns the AMQP connection lifetime. This adapter owns
-// its channel and publisher-confirm protocol; business retry remains in the
-// durable Payment outbox owner.
+// The publisher owns dial/reconnect: process start does not require a live
+// broker. Durable outbox rows remain the source of truth until publish succeeds.
 package rabbitmq
 
 import (
@@ -19,47 +18,34 @@ import (
 
 var ErrPublisherUnavailable = errors.New("rabbitmq publisher unavailable")
 
+// Publisher publishes Payment outbox events with lazy dial and reconnect.
+// A missing broker at process start is normal; Publish reconnects on demand.
 type Publisher struct {
 	mu       sync.Mutex
-	channel  *amqp.Channel
+	url      string
 	exchange string
+	conn     *amqp.Connection
+	channel  *amqp.Channel
 	returns  <-chan amqp.Return
 	closed   <-chan *amqp.Error
 }
 
-func NewPublisher(conn *amqp.Connection, exchange string) (*Publisher, error) {
-	if conn == nil || strings.TrimSpace(exchange) == "" {
-		return nil, errors.New("rabbitmq publisher requires connection and exchange")
+// NewPublisher builds a publisher that dials only when Publish is called.
+func NewPublisher(url, exchange string) (*Publisher, error) {
+	url = strings.TrimSpace(url)
+	exchange = strings.TrimSpace(exchange)
+	if url == "" || exchange == "" {
+		return nil, errors.New("rabbitmq publisher requires url and exchange")
 	}
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, fmt.Errorf("open rabbitmq publisher channel: %w", err)
-	}
-	if err := ch.ExchangeDeclare(strings.TrimSpace(exchange), "topic", true, false, false, false, nil); err != nil {
-		_ = ch.Close()
-		return nil, fmt.Errorf("declare payment event exchange: %w", err)
-	}
-	if err := ch.Confirm(false); err != nil {
-		_ = ch.Close()
-		return nil, fmt.Errorf("enable rabbitmq publisher confirms: %w", err)
-	}
-	returns := ch.NotifyReturn(make(chan amqp.Return, 1))
-	closed := ch.NotifyClose(make(chan *amqp.Error, 1))
-	return &Publisher{channel: ch, exchange: strings.TrimSpace(exchange), returns: returns, closed: closed}, nil
+	return &Publisher{url: url, exchange: exchange}, nil
 }
 
 func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
-	if p == nil || p.channel == nil || message.ID == 0 || strings.TrimSpace(message.EventType) == "" ||
+	if p == nil || message.ID == 0 || strings.TrimSpace(message.EventType) == "" ||
 		strings.TrimSpace(message.RoutingKey) == "" || strings.TrimSpace(message.EventID) == "" || len(message.Payload) == 0 {
 		return errors.New("invalid payment outbox message")
 	}
-	if p.channel.IsClosed() {
-		return ErrPublisherUnavailable
-	}
 	if err := ctx.Err(); err != nil {
-		return err
-	}
-	if err := p.unavailable(); err != nil {
 		return err
 	}
 
@@ -68,6 +54,10 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 	// and the durable Outbox retries; consumer Inbox absorbs duplicates.
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
+	if err := p.ensureLocked(); err != nil {
+		return fmt.Errorf("%w: %v", ErrPublisherUnavailable, err)
+	}
 
 	// There should be no stale return because only one publish is in flight.
 	// Drain defensively so an earlier caller cancellation cannot poison the
@@ -97,15 +87,17 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 		},
 	)
 	if err != nil {
+		p.resetLocked()
 		if errors.Is(err, amqp.ErrClosed) {
 			return fmt.Errorf("%w: publish channel closed: %v", ErrPublisherUnavailable, err)
 		}
-		return fmt.Errorf("publish payment event: %w", err)
+		return fmt.Errorf("%w: publish payment event: %v", ErrPublisherUnavailable, err)
 	}
 
 	acked, err := deferred.WaitContext(ctx)
 	if err != nil {
-		if unavailable := p.unavailable(); unavailable != nil {
+		if unavailable := p.unavailableLocked(); unavailable != nil {
+			p.resetLocked()
 			return unavailable
 		}
 		return fmt.Errorf("payment event confirmation unknown: %w", err)
@@ -128,7 +120,41 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 	}
 }
 
-func (p *Publisher) unavailable() error {
+func (p *Publisher) ensureLocked() error {
+	if p.channel != nil && !p.channel.IsClosed() {
+		if err := p.unavailableLocked(); err == nil {
+			return nil
+		}
+		p.resetLocked()
+	}
+
+	conn, err := amqp.Dial(p.url)
+	if err != nil {
+		return fmt.Errorf("dial: %w", err)
+	}
+	ch, err := conn.Channel()
+	if err != nil {
+		_ = conn.Close()
+		return fmt.Errorf("open channel: %w", err)
+	}
+	if err := ch.ExchangeDeclare(p.exchange, "topic", true, false, false, false, nil); err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
+		return fmt.Errorf("declare payment event exchange: %w", err)
+	}
+	if err := ch.Confirm(false); err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
+		return fmt.Errorf("enable publisher confirms: %w", err)
+	}
+	p.conn = conn
+	p.channel = ch
+	p.returns = ch.NotifyReturn(make(chan amqp.Return, 1))
+	p.closed = ch.NotifyClose(make(chan *amqp.Error, 1))
+	return nil
+}
+
+func (p *Publisher) unavailableLocked() error {
 	if p == nil || p.channel == nil {
 		return ErrPublisherUnavailable
 	}
@@ -143,11 +169,27 @@ func (p *Publisher) unavailable() error {
 	}
 }
 
+func (p *Publisher) resetLocked() {
+	if p.channel != nil {
+		_ = p.channel.Close()
+		p.channel = nil
+	}
+	if p.conn != nil {
+		_ = p.conn.Close()
+		p.conn = nil
+	}
+	p.returns = nil
+	p.closed = nil
+}
+
 func (p *Publisher) Close() error {
-	if p == nil || p.channel == nil {
+	if p == nil {
 		return nil
 	}
-	return p.channel.Close()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.resetLocked()
+	return nil
 }
 
 var _ outbox.Publisher = (*Publisher)(nil)

@@ -1,4 +1,4 @@
-ROOT_DIR := ../..
+ROOT_DIR := $(abspath ../..)
 CD_ROOT := cd $(ROOT_DIR)
 SCHEMA := cd ../protobuf/schema
 
@@ -30,7 +30,7 @@ run-dev:
 	cd $(ROOT_DIR)/$(SERVICE)-service && \
 	set -a; \
 	if [ -f "$(ROOT_DIR)/.env" ]; then . "$(ROOT_DIR)/.env"; fi; \
-	if [ -f ".env" ]; then . "./.env"; fi; \
+	if [ -f "$(ROOT_DIR)/$(SERVICE)-service/.env" ]; then . "$(ROOT_DIR)/$(SERVICE)-service/.env"; fi; \
 	set +a; \
 	QHPRO_EXECUTION_MODE=host $(AIR_EXE) $(ARGS)
 

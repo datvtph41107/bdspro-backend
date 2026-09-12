@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-const PermissionReportView = "COMMERCIAL_USAGE_VIEW"
-
 type Query struct {
 	Page      uint32
 	PageSize  uint32

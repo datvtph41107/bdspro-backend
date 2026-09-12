@@ -229,19 +229,19 @@ func (h *PlanVersionAdminHandler) RetirePlanVersion(ctx context.Context, req *us
 	return planVersionToProto(aggregate), nil
 }
 
-func (h *PlanVersionAdminHandler) authorize(ctx context.Context, permissionCode string) (uint64, error) {
+func (h *PlanVersionAdminHandler) authorize(ctx context.Context, permissionID uint32) (uint64, error) {
 	var authorizer admin.PermissionAuthorizer
 	if h != nil {
 		authorizer = h.authorizer
 	}
-	actorID, err := admin.RequirePermission(ctx, authorizer, permissionCode)
+	actorID, err := admin.RequirePermission(ctx, authorizer, permissionID)
 	switch {
 	case err == nil:
 		return actorID, nil
 	case errors.Is(err, admin.ErrUnauthorized):
 		return 0, planAuthorizationError(err)
 	case errors.Is(err, admin.ErrPermissionDenied):
-		return 0, status.Errorf(codes.PermissionDenied, "permission %s is required", permissionCode)
+		return 0, status.Errorf(codes.PermissionDenied, "permission %d is required", permissionID)
 	default:
 		return 0, status.Error(codes.Unavailable, "plan permission authority failed")
 	}

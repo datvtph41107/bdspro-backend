@@ -286,7 +286,9 @@ CREATE TABLE IF NOT EXISTS admin_profiles (
     last_login_at TIMESTAMPTZ,
     total_login INTEGER DEFAULT 0,
     verified_at TIMESTAMPTZ,
-    locked_at TIMESTAMPTZ
+    locked_at TIMESTAMPTZ,
+    super_admin SMALLINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_admin_profiles_super_admin CHECK (super_admin IN (0, 1))
 );
 
 -- BlockEntity (internal/models/block.go)

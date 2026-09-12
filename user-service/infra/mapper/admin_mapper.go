@@ -68,6 +68,7 @@ func (m *AdminMapper) ModelToPb(item models.AdminProfile) *userpb.AdminProfile {
 		InternalNotes:    item.InternalNotes,
 		SendNotification: item.SendNotification,
 		Username:         item.Username,
+		SuperAdmin:       uint32(item.SuperAdmin),
 	}
 
 	// Map roleId nếu có
@@ -110,6 +111,7 @@ func (m *AdminMapper) PbToDomain(req *userpb.AdminProfile) *models.AdminProfile 
 		SendNotification: req.SendNotification,
 		Username:         req.Username,
 		Password:         req.Password,
+		SuperAdmin:       normalizeSuperAdmin(req.SuperAdmin),
 	}
 
 	// Map roleId nếu có
@@ -146,6 +148,7 @@ func (m *AdminMapper) AdminProfileResponseToProto(result *models.AdminProfile) *
 		InternalNotes:    result.InternalNotes,
 		SendNotification: result.SendNotification,
 		Username:         result.Username,
+		SuperAdmin:       uint32(result.SuperAdmin),
 	}
 
 	// Map roleId nếu có
@@ -164,6 +167,13 @@ func (m *AdminMapper) AdminProfileResponseToProto(result *models.AdminProfile) *
 	}
 
 	return pbAdmin
+}
+
+func normalizeSuperAdmin(value uint32) uint8 {
+	if value != 0 {
+		return 1
+	}
+	return 0
 }
 
 // DeleteAdminRequestToDTO chuyển đổi từ proto request sang DTO

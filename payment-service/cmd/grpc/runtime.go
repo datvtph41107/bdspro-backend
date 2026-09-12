@@ -46,7 +46,6 @@ import (
 	paymentpb "pb/types/payment"
 
 	"github.com/hyperledger/fabric/common/flogging"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -122,14 +121,10 @@ func run(parent context.Context) error {
 	// Canonical durable commercial state machine uses the same process DB.
 	store := paymentpg.NewStore(db)
 	if strings.TrimSpace(cfg.Rabbit.URL) == "" {
-		return errors.New("PAYMENT_RABBIT_URL is required")
+		return errors.New("rabbit.url is required in the environment config YAML (or PAYMENT_RABBIT_URL)")
 	}
-	rabbitConnection, err := amqp.Dial(cfg.Rabbit.URL)
-	if err != nil {
-		return fmt.Errorf("connect Payment RabbitMQ: %w", err)
-	}
-	defer rabbitConnection.Close()
-	rabbitPublisher, err := rabbit.NewPublisher(rabbitConnection, cfg.Rabbit.Exchange)
+	// Dial is deferred until outbox publish; a missing broker must not block gRPC start.
+	rabbitPublisher, err := rabbit.NewPublisher(cfg.Rabbit.URL, cfg.Rabbit.Exchange)
 	if err != nil {
 		return fmt.Errorf("create Payment event publisher: %w", err)
 	}

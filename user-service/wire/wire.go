@@ -10,6 +10,7 @@ import (
 	common_utils "common/utils"
 	"github.com/google/wire"
 	user_infra_client "user/infra/client"
+	user_infra_client_authpermission "user/infra/client/authpermission"
 	user_infra_client_payment "user/infra/client/payment"
 	user_infra_cookie "user/infra/cookie"
 	user_infra_handler "user/infra/handler"
@@ -84,7 +85,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_usecase_entitlement.PlanAccessStore), new(*user_infra_postgres_entitlement.PlanAccessStore)),
 	wire.Bind(new(user_internal_usecase_entitlement.SubscriptionStore), new(*user_infra_postgres_entitlement.SubscriptionStore)),
 	wire.Bind(new(user_internal_usecase_organization.Repository), new(*user_infra_postgres_organization.Repository)),
-	wire.Bind(new(user_internal_usecase_plan_admin.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
+	wire.Bind(new(user_internal_usecase_plan_admin.PermissionAuthorizer), new(*user_infra_client_authpermission.CatalogAuthorizer)),
 	wire.Bind(new(user_internal_usecase_plan_admin.Publisher), new(*user_internal_usecase_plan_publish.Service)),
 	wire.Bind(new(user_internal_usecase_plan_admin.Repository), new(*user_infra_postgres.PlanVersionRepo)),
 	wire.Bind(new(user_internal_usecase_plan_publish.Repository), new(*user_infra_postgres.PlanVersionRepo)),
@@ -133,6 +134,7 @@ var wireSet = wire.NewSet(
 	user_internal_usecases.NewBookmarkUserUsecase,
 	user_infra_providers.NewCancelClock,
 	user_infra_postgres_subscription.NewCancellationStore,
+	user_infra_client_authpermission.NewCatalogAuthorizer,
 	user_infra_postgres.NewCertificationPostgres,
 	user_internal_usecases.NewCertificationUsecase,
 	user_infra_postgres_iampermission.NewChecker,

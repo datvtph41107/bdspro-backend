@@ -347,6 +347,14 @@ func (u *AdminUsecase) GetDetail(ctx context.Context, req uint64) (*models.Admin
 	return detail, nil
 }
 
+// IsSuperAdmin reports whether the admin profile for profileID has durable super_admin=1.
+func (u *AdminUsecase) IsSuperAdmin(ctx context.Context, profileID uint64) (bool, error) {
+	if u == nil || u.adminRepo == nil || profileID == 0 {
+		return false, nil
+	}
+	return u.adminRepo.IsSuperAdminByProfileID(ctx, profileID)
+}
+
 // CreateUser tạo user mới giống với tài khoản admin
 func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserRequest) (*dto.CreateUserResponse, error) {
 	// Kiểm tra quyền admin

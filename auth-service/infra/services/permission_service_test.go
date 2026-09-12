@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"auth/internal/permissioncatalog"
+	sharepb "pb/types/shared"
+	userpb "pb/types/user"
 )
 
 func testPermissionService() *PermissionService {
@@ -68,9 +70,32 @@ func TestNormalizeRoleIDs(t *testing.T) {
 	}
 }
 
-func TestResolvePermissionIDMustExistInSnapshot(t *testing.T) {
-	svc := testPermissionService()
-	if _, err := svc.resolvePermissionIDs([]uint32{999}, nil); err == nil {
-		t.Fatal("unknown numeric permission ID must fail closed")
+func TestBuildPermissionSnapshotFlattensChildren(t *testing.T) {
+	parentID := uint64(90)
+	snapshot, err := buildPermissionSnapshot(
+		[]*userpb.RolePermissionItem{
+			{
+				Role:          &sharepb.Role{Id: 27},
+				PermissionIds: []uint64{91},
+			},
+		},
+		[]*sharepb.Permission{
+			{
+				Id:  parentID,
+				Key: "THANH_VIEN_THUONG_VU",
+				Children: []*sharepb.Permission{
+					{Id: 91, Key: "THANH_VIEN_THUONG_VU_THEM", ParentId: &parentID},
+				},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatalf("buildPermissionSnapshot() error = %v", err)
+	}
+	if !snapshot.catalog.ContainsID(91) {
+		t.Fatal("child permission id must be present in durable catalog")
+	}
+	if !snapshot.catalog.RoleHas(27, 91) {
+		t.Fatal("role grant for nested permission must be accepted")
 	}
 }

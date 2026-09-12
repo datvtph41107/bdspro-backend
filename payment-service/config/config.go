@@ -89,91 +89,94 @@ type Config struct {
 	Provider     ProviderConfig
 }
 
+// Load reads process config from the environment YAML contract:
+// runtime.yml merged with optional config/local.yml (workstation), or
+// CONFIG_FILE / QHPRO_CONFIG_FILE when deploy mounts an operator file.
+// Database DSN is owned by that YAML; PAYMENT_DATABASE_URL must not fight it.
 func Load() (Config, error) {
-	selection, err := configloader.ResolveRuntimeSelection()
+	selection, err := configloader.LoadRuntimeYML()
 	if err != nil {
 		return Config{}, err
 	}
-	v := viper.New()
-	v.SetConfigType("yaml")
-	file := resolveConfigFile(os.Getenv("CONFIG_FILE"))
-	v.SetConfigFile(file)
-	// YAML là default không nhạy cảm; environment là override/secret. Thiếu hoặc
-	// lỗi YAML phải fail sớm để dev và container dùng cùng một contract.
-	if err := v.ReadInConfig(); err != nil {
-		return Config{}, fmt.Errorf("load Payment config %s: %w", file, err)
-	}
 
-	host := envOr("PAYMENT_GRPC_HOST", v.GetString("host"), "0.0.0.0")
-	port := envOr("PAYMENT_GRPC_PORT", v.GetString("port"), "8205")
-	address := envOr("PAYMENT_GRPC_ADDRESS", "", host+":"+port)
-	dsn := firstNonBlank(os.Getenv("PAYMENT_DATABASE_URL"), os.Getenv("PAYMENT_DATABASE_DSN"), v.GetString("database.url"))
+	host := setting("PAYMENT_GRPC_HOST", "host", "0.0.0.0")
+	port := setting("PAYMENT_GRPC_PORT", "port", "8205")
+	address := firstNonBlank(
+		os.Getenv("PAYMENT_GRPC_ADDRESS"),
+		host+":"+port,
+	)
+
+	// Database DSN is owned by the environment YAML:
+	// - workstation: config/runtime.yml merged with config/local.yml
+	// - deploy: CONFIG_FILE / QHPRO_CONFIG_FILE
+	// Accept legacy database.url overlays that predate database.dsn.
+	dsn := firstNonBlank(viper.GetString("database.dsn"), viper.GetString("database.url"))
 	if strings.TrimSpace(dsn) == "" || strings.Contains(strings.ToUpper(dsn), "CHANGE_ME") {
-		return Config{}, errors.New("PAYMENT_DATABASE_URL is required")
+		return Config{}, errors.New("database.dsn is required in the environment config YAML")
 	}
 
 	cfg := Config{
 		Environment: selection.Environment,
 		Server: ServerConfig{
 			Address:         address,
-			ShutdownTimeout: durationEnv("PAYMENT_SHUTDOWN_TIMEOUT", 15*time.Second),
+			ShutdownTimeout: durationSetting("PAYMENT_SHUTDOWN_TIMEOUT", "shutdown_timeout", 15*time.Second),
 		},
 		Database: DatabaseConfig{
 			DSN:             dsn,
-			MaxOpenConns:    intEnv("PAYMENT_DATABASE_MAX_OPEN_CONNS", 30),
-			MaxIdleConns:    intEnv("PAYMENT_DATABASE_MAX_IDLE_CONNS", 10),
-			ConnMaxLifetime: durationEnv("PAYMENT_DATABASE_CONN_MAX_LIFETIME", 5*time.Minute),
+			MaxOpenConns:    intSetting("PAYMENT_DATABASE_MAX_OPEN_CONNS", "database.max_open_conns", 30),
+			MaxIdleConns:    intSetting("PAYMENT_DATABASE_MAX_IDLE_CONNS", "database.max_idle_conns", 10),
+			ConnMaxLifetime: durationSetting("PAYMENT_DATABASE_CONN_MAX_LIFETIME", "database.conn_max_lifetime", 5*time.Minute),
 		},
 		User: ClientConfig{
-			Address: envOr("QHPRO_USER_GRPC_ADDRESS", "", "localhost:8201"),
-			Timeout: durationEnv("PAYMENT_USER_RPC_TIMEOUT", 5*time.Second),
+			Address: setting("QHPRO_USER_GRPC_ADDRESS", "rpc.user.address", "localhost:8201"),
+			Timeout: durationSetting("PAYMENT_USER_RPC_TIMEOUT", "rpc.user.timeout", 5*time.Second),
 		},
 		Auth: ClientConfig{
-			Address: envOr("QHPRO_AUTH_GRPC_ADDRESS", "", "localhost:8216"),
-			Timeout: durationEnv("PAYMENT_AUTH_RPC_TIMEOUT", 5*time.Second),
+			Address: setting("QHPRO_AUTH_GRPC_ADDRESS", "rpc.auth.address", "localhost:8216"),
+			Timeout: durationSetting("PAYMENT_AUTH_RPC_TIMEOUT", "rpc.auth.timeout", 5*time.Second),
 		},
 		Notification: ClientConfig{
-			Address: envOr("QHPRO_NOTIFICATION_GRPC_ADDRESS", "", "localhost:8204"),
-			Timeout: durationEnv("PAYMENT_NOTIFICATION_RPC_TIMEOUT", 5*time.Second),
+			Address: notificationAddress(),
+			Timeout: durationSetting("PAYMENT_NOTIFICATION_RPC_TIMEOUT", "rpc.notification.timeout", 5*time.Second),
 		},
 		Commerce: CommerceConfig{
-			OrderTTL:         durationEnv("PAYMENT_ORDER_TTL", 30*time.Minute),
-			FulfillmentRetry: durationEnv("PAYMENT_FULFILLMENT_RETRY_DELAY", 5*time.Second),
-			FulfillmentLease: durationEnv("PAYMENT_FULFILLMENT_CLAIM_LEASE", 30*time.Second),
-			FulfillmentPoll:  durationEnv("PAYMENT_FULFILLMENT_POLL_INTERVAL", time.Second),
+			OrderTTL:         durationSetting("PAYMENT_ORDER_TTL", "commerce.order_ttl", 30*time.Minute),
+			FulfillmentRetry: durationSetting("PAYMENT_FULFILLMENT_RETRY_DELAY", "commerce.fulfillment_retry", 5*time.Second),
+			FulfillmentLease: durationSetting("PAYMENT_FULFILLMENT_CLAIM_LEASE", "commerce.fulfillment_lease", 30*time.Second),
+			FulfillmentPoll:  durationSetting("PAYMENT_FULFILLMENT_POLL_INTERVAL", "commerce.fulfillment_poll", time.Second),
 		},
 		Rabbit: RabbitConfig{
-			URL:            strings.TrimSpace(os.Getenv("PAYMENT_RABBIT_URL")),
-			Exchange:       envOr("PAYMENT_EVENT_EXCHANGE", "", "qhpro.payment.events"),
-			PublisherLease: durationEnv("PAYMENT_OUTBOX_CLAIM_LEASE", 30*time.Second),
-			PublisherPoll:  durationEnv("PAYMENT_OUTBOX_POLL_INTERVAL", time.Second),
-			PublisherRetry: durationEnv("PAYMENT_OUTBOX_RETRY_DELAY", 5*time.Second),
+			URL:            setting("PAYMENT_RABBIT_URL", "rabbit.url", ""),
+			Exchange:       setting("PAYMENT_EVENT_EXCHANGE", "rabbit.exchange", "qhpro.payment.events"),
+			PublisherLease: durationSetting("PAYMENT_OUTBOX_CLAIM_LEASE", "rabbit.publisher_lease", 30*time.Second),
+			PublisherPoll:  durationSetting("PAYMENT_OUTBOX_POLL_INTERVAL", "rabbit.publisher_poll", time.Second),
+			PublisherRetry: durationSetting("PAYMENT_OUTBOX_RETRY_DELAY", "rabbit.publisher_retry", 5*time.Second),
 		},
 		Provider: ProviderConfig{
-			SepayAPIKey: strings.TrimSpace(os.Getenv("SEPAY_API_KEY")),
+			SepayAPIKey: setting("SEPAY_API_KEY", "sepay.api_key", ""),
 			Sepay: SepayGatewayConfig{
-				Environment:        envOr("SEPAY_GATEWAY_ENVIRONMENT", "", "sandbox"),
-				BankTransferFlow:   strings.ToLower(envOr("SEPAY_BANK_TRANSFER_FLOW", "", SepayBankTransferHosted)),
-				WebhookEnvironment: strings.ToLower(envOr("SEPAY_WEBHOOK_ENVIRONMENT", "", SepayWebhookLive)),
-				MerchantID:         strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_ID")),
-				SecretKey:          strings.TrimSpace(os.Getenv("SEPAY_MERCHANT_SECRET_KEY")),
-				CheckoutURL:        strings.TrimSpace(os.Getenv("SEPAY_CHECKOUT_URL")),
-				BridgeURL: envOr(
+				Environment:        setting("SEPAY_GATEWAY_ENVIRONMENT", "sepay.gateway_environment", "sandbox"),
+				BankTransferFlow:   strings.ToLower(setting("SEPAY_BANK_TRANSFER_FLOW", "sepay.bank_transfer_flow", SepayBankTransferHosted)),
+				WebhookEnvironment: strings.ToLower(setting("SEPAY_WEBHOOK_ENVIRONMENT", "sepay.webhook_environment", SepayWebhookLive)),
+				MerchantID:         setting("SEPAY_MERCHANT_ID", "sepay.merchant_id", ""),
+				SecretKey:          setting("SEPAY_MERCHANT_SECRET_KEY", "sepay.merchant_secret_key", ""),
+				CheckoutURL:        setting("SEPAY_CHECKOUT_URL", "sepay.checkout_url", ""),
+				BridgeURL: setting(
 					"SEPAY_CHECKOUT_BRIDGE_URL",
-					"",
+					"sepay.checkout_bridge_url",
 					"http://127.0.0.1:8000/v2/payment/sepay/checkout",
 				),
-				SuccessURL: strings.TrimSpace(os.Getenv("SEPAY_SUCCESS_URL")),
-				ErrorURL:   strings.TrimSpace(os.Getenv("SEPAY_ERROR_URL")),
-				CancelURL:  strings.TrimSpace(os.Getenv("SEPAY_CANCEL_URL")),
-				IPNSecret:  strings.TrimSpace(os.Getenv("SEPAY_IPN_SECRET_KEY")),
+				SuccessURL: setting("SEPAY_SUCCESS_URL", "sepay.success_url", ""),
+				ErrorURL:   setting("SEPAY_ERROR_URL", "sepay.error_url", ""),
+				CancelURL:  setting("SEPAY_CANCEL_URL", "sepay.cancel_url", ""),
+				IPNSecret:  setting("SEPAY_IPN_SECRET_KEY", "sepay.ipn_secret_key", ""),
 				// Availability is operator-owned. Bank transfer keeps the
 				// historical default; international cards require an explicit
 				// opt-in after the SePay merchant has been approved for CARD.
-				BankTransferEnabled: boolEnv("SEPAY_BANK_TRANSFER_ENABLED", true),
-				CardEnabled:         boolEnv("SEPAY_CARD_ENABLED", false),
-				BankBIN:             strings.TrimSpace(os.Getenv("SEPAY_QR_BANK_BIN")),
-				BankAccountNumber:   strings.TrimSpace(os.Getenv("SEPAY_QR_ACCOUNT_NUMBER")),
+				BankTransferEnabled: boolSetting("SEPAY_BANK_TRANSFER_ENABLED", "sepay.bank_transfer_enabled", true),
+				CardEnabled:         boolSetting("SEPAY_CARD_ENABLED", "sepay.card_enabled", false),
+				BankBIN:             setting("SEPAY_QR_BANK_BIN", "sepay.qr_bank_bin", ""),
+				BankAccountNumber:   setting("SEPAY_QR_ACCOUNT_NUMBER", "sepay.qr_account_number", ""),
 			},
 		},
 	}
@@ -185,6 +188,19 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	return cfg, nil
+}
+
+func notificationAddress() string {
+	if value := setting("QHPRO_NOTIFICATION_GRPC_ADDRESS", "rpc.notification.address", ""); value != "" {
+		return value
+	}
+	// Legacy overlays used grpc.notification.host/port instead of rpc.notification.address.
+	host := strings.TrimSpace(viper.GetString("grpc.notification.host"))
+	port := strings.TrimSpace(viper.GetString("grpc.notification.port"))
+	if host != "" && port != "" {
+		return host + ":" + port
+	}
+	return "localhost:8204"
 }
 
 func validateProvider(cfg ProviderConfig) error {
@@ -271,15 +287,6 @@ func digitsBetween(value string, minimum, maximum int) bool {
 	return true
 }
 
-// resolveConfigFile uses one committed runtime default. CONFIG_FILE is the
-// explicit operator escape hatch for an externally mounted configuration.
-func resolveConfigFile(override string) string {
-	if file := strings.TrimSpace(override); file != "" {
-		return file
-	}
-	return "config/runtime.yml"
-}
-
 func firstNonBlank(values ...string) string {
 	for _, value := range values {
 		if v := strings.TrimSpace(value); v != "" {
@@ -289,48 +296,54 @@ func firstNonBlank(values ...string) string {
 	return ""
 }
 
-func envOr(key, compatibility, fallback string) string {
-	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+// setting prefers an explicit process env override, then the YAML key, then fallback.
+// AutomaticEnv already maps many YAML keys; the env key here covers historical PAYMENT_*/QHPRO_* names.
+func setting(envKey, yamlKey, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
 		return value
 	}
-	if value := strings.TrimSpace(compatibility); value != "" && !strings.Contains(strings.ToUpper(value), "CHANGE_ME") {
+	if value := strings.TrimSpace(viper.GetString(yamlKey)); value != "" && !strings.Contains(strings.ToUpper(value), "CHANGE_ME") {
 		return value
 	}
 	return fallback
 }
 
-func durationEnv(key string, fallback time.Duration) time.Duration {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return fallback
+func durationSetting(envKey, yamlKey string, fallback time.Duration) time.Duration {
+	if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
+		if parsed, err := time.ParseDuration(value); err == nil && parsed > 0 {
+			return parsed
+		}
 	}
-	parsed, err := time.ParseDuration(value)
-	if err != nil || parsed <= 0 {
-		return fallback
+	if raw := strings.TrimSpace(viper.GetString(yamlKey)); raw != "" {
+		if parsed, err := time.ParseDuration(raw); err == nil && parsed > 0 {
+			return parsed
+		}
 	}
-	return parsed
+	return fallback
 }
 
-func intEnv(key string, fallback int) int {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return fallback
+func intSetting(envKey, yamlKey string, fallback int) int {
+	if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil && parsed >= 0 {
+			return parsed
+		}
 	}
-	parsed, err := strconv.Atoi(value)
-	if err != nil || parsed < 0 {
-		return fallback
+	if viper.IsSet(yamlKey) {
+		if parsed := viper.GetInt(yamlKey); parsed >= 0 {
+			return parsed
+		}
 	}
-	return parsed
+	return fallback
 }
 
-func boolEnv(key string, fallback bool) bool {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return fallback
+func boolSetting(envKey, yamlKey string, fallback bool) bool {
+	if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
+		if parsed, err := strconv.ParseBool(value); err == nil {
+			return parsed
+		}
 	}
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return fallback
+	if viper.IsSet(yamlKey) {
+		return viper.GetBool(yamlKey)
 	}
-	return parsed
+	return fallback
 }

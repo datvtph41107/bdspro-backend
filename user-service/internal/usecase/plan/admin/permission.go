@@ -3,7 +3,6 @@ package admin
 import (
 	"context"
 	"errors"
-	"strings"
 )
 
 var (
@@ -11,22 +10,21 @@ var (
 	ErrPermissionAuthorityUnavailable = errors.New("catalog permission authority unavailable")
 )
 
-// RequirePermission combines trusted actor identity with the current durable IAM assignment.
-// It never infers authority from a role name and fails closed if the authority is unavailable.
+// RequirePermission combines trusted actor identity with Auth PermissionService.
+// It never infers authority from a role name and fails closed if Auth is unavailable.
 func RequirePermission(
 	ctx context.Context,
 	authorizer PermissionAuthorizer,
-	permissionCode string,
+	permissionID uint32,
 ) (uint64, error) {
 	actorID, err := ActorIDFromContext(ctx)
 	if err != nil {
 		return 0, err
 	}
-	permissionCode = strings.TrimSpace(permissionCode)
-	if authorizer == nil || permissionCode == "" {
+	if authorizer == nil || permissionID == 0 {
 		return 0, ErrPermissionAuthorityUnavailable
 	}
-	allowed, err := authorizer.HasPermission(ctx, actorID, permissionCode)
+	allowed, err := authorizer.HasPermission(ctx, actorID, permissionID)
 	if err != nil {
 		return 0, errors.Join(ErrPermissionAuthorityUnavailable, err)
 	}

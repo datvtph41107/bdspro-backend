@@ -7,7 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// LoadProperties đọc cấu hình từ file config.yml
+// LoadProperties đọc cấu hình từ YAML theo môi trường (runtime.yml + local.yml,
+// hoặc CONFIG_FILE khi deploy). DSN/topology DB lấy từ file, không bị .env đè.
 func LoadProperties() error {
 	_, err := configloader.LoadRuntimeYML()
 	if err != nil {
@@ -17,7 +18,6 @@ func LoadProperties() error {
 		key  string
 		envs []string
 	}{
-		{key: "database.dsn", envs: []string{"USER_DATABASE_URL", "DATABASE_URL", "DATABASE_DSN"}},
 		{key: "redis.host", envs: []string{"USER_REDIS_ADDRESS", "REDIS_ADDRESS", "REDIS_HOST"}},
 		{key: "redis.pass", envs: []string{"USER_REDIS_PASSWORD", "REDIS_PASSWORD"}},
 		{key: "redis.db", envs: []string{"USER_REDIS_DB", "REDIS_DB"}},

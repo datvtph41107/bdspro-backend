@@ -12,8 +12,6 @@ import (
 	quotadomain "tqd/internal/domain/quota"
 )
 
-const PermissionUsageView = "COMMERCIAL_USAGE_VIEW"
-
 type AdminUsageQuery struct {
 	Page      uint32
 	PageSize  uint32

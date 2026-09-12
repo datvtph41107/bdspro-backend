@@ -33,6 +33,10 @@ func runGRPC() error {
 	if err != nil {
 		return fmt.Errorf("load User runtime config: %w", err)
 	}
+	log.Printf(
+		"User database target: %s",
+		config.DescribeDatabaseDSN(runtimeConfig.Database.DSN),
+	)
 
 	runtimePolicy, err := loadRuntimePolicy()
 	if err != nil {

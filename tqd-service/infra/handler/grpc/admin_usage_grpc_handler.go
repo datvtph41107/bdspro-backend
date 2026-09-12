@@ -1,6 +1,7 @@
 package handler_grpc
 
 import (
+	_enum "common/domain/enum"
 	commonmetering "common/metering"
 	"common/request"
 	"context"
@@ -18,8 +19,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var (
+	permCommercialUsageView      = []uint32{_enum.COMMERCIAL_USAGE_VIEW}
+	permCommercialUsageReconcile = []uint32{_enum.COMMERCIAL_USAGE_RECONCILE}
+)
+
 type UsagePermissionAuthorizer interface {
-	HasPermissions(context.Context, []string) error
+	RequiredPermissions(ctx context.Context, permissionIds []uint32) error
 }
 
 type AdminUsageGrpcHandler struct {
@@ -38,7 +44,7 @@ func (h *AdminUsageGrpcHandler) ReconcileUsage(ctx context.Context, req *tqdpb.R
 	if h == nil || h.authorizer == nil {
 		return nil, status.Error(codes.Unavailable, "usage permission authority unavailable")
 	}
-	if err := h.authorizer.HasPermissions(ctx, []string{"COMMERCIAL_USAGE_RECONCILE"}); err != nil {
+	if err := h.authorizer.RequiredPermissions(ctx, permCommercialUsageReconcile); err != nil {
 		return nil, status.Error(codes.PermissionDenied, "COMMERCIAL_USAGE_RECONCILE permission is required")
 	}
 	if _, ok := request.IdempotencyKeyFromContext(ctx); !ok {
@@ -91,7 +97,7 @@ func (h *AdminUsageGrpcHandler) ListUsage(ctx context.Context, req *tqdpb.ListAd
 	if h == nil || h.authorizer == nil {
 		return nil, status.Error(codes.Unavailable, "usage permission authority unavailable")
 	}
-	if err := h.authorizer.HasPermissions(ctx, []string{quotausecase.PermissionUsageView}); err != nil {
+	if err := h.authorizer.RequiredPermissions(ctx, permCommercialUsageView); err != nil {
 		return nil, status.Error(codes.PermissionDenied, "COMMERCIAL_USAGE_VIEW permission is required")
 	}
 	if h.service == nil {
@@ -135,7 +141,7 @@ func (h *AdminUsageGrpcHandler) ListGeneratedReports(ctx context.Context, req *t
 	if h == nil || h.authorizer == nil {
 		return nil, status.Error(codes.Unavailable, "report permission authority unavailable")
 	}
-	if err := h.authorizer.HasPermissions(ctx, []string{reportadmin.PermissionReportView}); err != nil {
+	if err := h.authorizer.RequiredPermissions(ctx, permCommercialUsageView); err != nil {
 		return nil, status.Error(codes.PermissionDenied, "COMMERCIAL_USAGE_VIEW permission is required")
 	}
 	if h.reports == nil {
@@ -167,11 +173,13 @@ func (h *AdminUsageGrpcHandler) ListGeneratedReports(ctx context.Context, req *t
 			Title: item.Title, Subtitle: item.Subtitle,
 			ParcelId: item.ParcelID, RegionId: item.RegionID, Format: item.Format,
 			ThumbnailUrl: item.ThumbnailURL, ImageUrl: item.ImageURL,
-			PdfUrl: item.PDFURL, ShareUrl: item.ShareURL,
-			FileSize: item.FileSize, ErrorMessage: item.ErrorMessage,
-			JobId: item.JobID, JobStatus: item.JobStatus,
+			PdfUrl: item.PDFURL, ShareUrl: item.ShareURL, FileSize: item.FileSize,
+			ErrorMessage: item.ErrorMessage, JobId: item.JobID, JobStatus: item.JobStatus,
 			JobAttempts: item.JobAttempts, JobLockedBy: item.JobLockedBy,
 			JobClaimVersion: item.JobClaimVersion, JobLastError: item.JobLastError,
+		}
+		if item.JobAvailableAt != nil {
+			projection.JobAvailableAt = timestamppb.New(*item.JobAvailableAt)
 		}
 		if !item.CreatedAt.IsZero() {
 			projection.CreatedAt = timestamppb.New(item.CreatedAt)
@@ -181,9 +189,6 @@ func (h *AdminUsageGrpcHandler) ListGeneratedReports(ctx context.Context, req *t
 		}
 		if item.ExpiresAt != nil {
 			projection.ExpiresAt = timestamppb.New(*item.ExpiresAt)
-		}
-		if item.JobAvailableAt != nil {
-			projection.JobAvailableAt = timestamppb.New(*item.JobAvailableAt)
 		}
 		response.Reports = append(response.Reports, projection)
 	}

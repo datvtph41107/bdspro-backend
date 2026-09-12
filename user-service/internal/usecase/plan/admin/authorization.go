@@ -5,21 +5,23 @@ import (
 	"errors"
 	"strings"
 
+	_enum "common/domain/enum"
 	"common/identity"
 )
 
 var ErrUnauthorized = errors.New("trusted catalog actor identity is required")
 
-const (
-	PermissionPlanView    = "CATALOG_PLAN_VIEW"
-	PermissionPlanManage  = "CATALOG_PLAN_MANAGE"
-	PermissionPlanPublish = "CATALOG_PLAN_PUBLISH"
+// Catalog plan permissions are owned by the shared IAM enum. Auth PermissionService
+// evaluates them; User never treats role names as authority.
+var (
+	PermissionPlanView    = _enum.CATALOG_PLAN_VIEW
+	PermissionPlanManage  = _enum.CATALOG_PLAN_MANAGE
+	PermissionPlanPublish = _enum.CATALOG_PLAN_PUBLISH
 )
 
-// PermissionAuthorizer evaluates the current IAM assignment for one actor.
-// The Catalog consumer owns this semantic boundary; role names are not authority.
+// PermissionAuthorizer evaluates the current IAM assignment through Auth.
 type PermissionAuthorizer interface {
-	HasPermission(ctx context.Context, actorID uint64, permissionCode string) (bool, error)
+	HasPermission(ctx context.Context, actorID uint64, permissionID uint32) (bool, error)
 }
 
 /** ActorIDFromContext returns only a verified user access-token identity. */

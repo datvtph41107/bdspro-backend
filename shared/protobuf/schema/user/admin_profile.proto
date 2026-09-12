@@ -83,6 +83,8 @@ message AdminProfile {
     optional authpb.Role role = 29;
     string username = 30;
     string password = 31;
+    // Durable 0/1 flag. When 1, permission checks for this admin always pass.
+    uint32 superAdmin = 32;
 }
 
 message ListAdminRequest {

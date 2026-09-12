@@ -1,8 +1,38 @@
 host: 0.0.0.0
 port: 8205
+
 database:
   type: postgres
-  url: ""
+  # Workstation overlay: config/local.yml. Deploy: CONFIG_FILE / QHPRO_CONFIG_FILE.
+  dsn: ""
+  max_open_conns: 30
+  max_idle_conns: 10
+  conn_max_lifetime: 5m
+
+rpc:
+  user:
+    address: localhost:8201
+  auth:
+    address: localhost:8216
+  notification:
+    address: localhost:8204
+
+rabbit:
+  # Workstation default; override in config/local.yml when needed.
+  url: amqp://guest:guest@localhost:5672/
+  exchange: qhpro.payment.events
+  publisher_lease: 30s
+  publisher_poll: 1s
+  publisher_retry: 5s
+
+commerce:
+  order_ttl: 30m
+  fulfillment_retry: 5s
+  fulfillment_lease: 30s
+  fulfillment_poll: 1s
+
+shutdown_timeout: 15s
+
 whitelist:
   - /pb_payment.PaymentService/CreateWallet
   - /pb_payment.PaymentService/SepayWebhook
@@ -11,9 +41,21 @@ whitelist:
   - /pb_payment.PaymentService/GetWalletByUserId
   - /pb_payment.PaymentService/GetWalletByWalletId
   - /pb_payment.BankService/GetAll
+
 sepay:
   api_key: ""
-grpc:
-  notification:
-    host: localhost
-    port: 8204
+  gateway_environment: sandbox
+  bank_transfer_flow: hosted_checkout
+  webhook_environment: live
+  merchant_id: ""
+  merchant_secret_key: ""
+  checkout_url: ""
+  checkout_bridge_url: http://127.0.0.1:8000/v2/payment/sepay/checkout
+  success_url: http://localhost:3001/dashboard/pricing?payment=success
+  error_url: http://localhost:3001/dashboard/pricing?payment=error
+  cancel_url: http://localhost:3001/dashboard/pricing?payment=cancel
+  ipn_secret_key: ""
+  bank_transfer_enabled: true
+  card_enabled: false
+  qr_bank_bin: ""
+  qr_account_number: ""

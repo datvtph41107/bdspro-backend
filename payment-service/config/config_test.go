@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -99,14 +101,53 @@ func TestValidateProviderRequiresWebhookAuthenticationForVietQR(t *testing.T) {
 	require.ErrorContains(t, err, "SEPAY_API_KEY")
 }
 
-func TestResolveConfigFileUsesCanonicalRuntimeProfile(t *testing.T) {
-	t.Parallel()
+func TestLoadDatabaseDSNFromLocalYMLIgnoresEnv(t *testing.T) {
+	serviceRoot, err := filepath.Abs("..")
+	require.NoError(t, err)
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(serviceRoot))
+	t.Cleanup(func() { _ = os.Chdir(wd) })
 
-	require.Equal(t, "config/runtime.yml", resolveConfigFile(""))
+	for _, key := range []string{"QHPRO_CONFIG_FILE", "CONFIG_FILE"} {
+		t.Setenv(key, "")
+	}
+	const envOverride = "postgres://env-override-must-not-win@127.0.0.1:65432/env_payment?sslmode=disable"
+	t.Setenv("PAYMENT_DATABASE_URL", envOverride)
+	t.Setenv("PAYMENT_DATABASE_DSN", envOverride)
+
+	if _, err := os.Stat("config/local.yml"); err != nil {
+		t.Skip("config/local.yml missing; workstation overlay required for this evidence")
+	}
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	require.NotContains(t, cfg.Database.DSN, "env-override-must-not-win", "DSN must come from YAML, not PAYMENT_DATABASE_URL")
+	require.NotEmpty(t, cfg.Database.DSN)
 }
 
-func TestResolveConfigFileAllowsExplicitOperatorOverride(t *testing.T) {
-	t.Parallel()
+func TestLoadUsesMountedConfigFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "payment.yml")
+	require.NoError(t, os.WriteFile(path, []byte(`
+host: 127.0.0.1
+port: "9205"
+database:
+  dsn: "postgres://payment:secret@db:5432/db_payment?sslmode=disable"
+sepay:
+  gateway_environment: sandbox
+  bank_transfer_flow: hosted_checkout
+`), 0o600))
 
-	require.Equal(t, "/run/secrets/payment.yml", resolveConfigFile(" /run/secrets/payment.yml "))
+	t.Setenv("CONFIG_FILE", path)
+	t.Setenv("QHPRO_CONFIG_FILE", "")
+	t.Setenv("PAYMENT_DATABASE_URL", "postgres://ignored@localhost/payment_service")
+	t.Setenv("PAYMENT_GRPC_ADDRESS", "")
+	t.Setenv("PAYMENT_GRPC_HOST", "")
+	t.Setenv("PAYMENT_GRPC_PORT", "")
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	require.Equal(t, "postgres://payment:secret@db:5432/db_payment?sslmode=disable", cfg.Database.DSN)
+	require.Equal(t, "127.0.0.1:9205", cfg.Server.Address)
 }

@@ -76,9 +76,18 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 		return nil, err
 	}
 
+	// Database DSN is owned by the environment YAML:
+	// - workstation: config/runtime.yml merged with config/local.yml
+	// - deploy: CONFIG_FILE / QHPRO_CONFIG_FILE
+	// Do not prefer TQD_DATABASE_URL — that .env value fights local.yml overlays.
+	databaseDSN := strings.TrimSpace(props.Database.DSN)
+	if databaseDSN == "" {
+		return nil, fmt.Errorf("database.dsn is required in the environment config YAML")
+	}
+
 	cfg := &RuntimeConfig{
 		Properties:  props,
-		DatabaseDSN: firstNonEmpty(os.Getenv("TQD_DATABASE_URL"), props.Database.DSN),
+		DatabaseDSN: databaseDSN,
 		Redis: RedisRuntimeConfig{
 			Address:  firstNonEmpty(os.Getenv("TQD_REDIS_ADDR"), viper.GetString("redis.host")),
 			Password: firstNonEmpty(os.Getenv("TQD_REDIS_PASSWORD"), viper.GetString("redis.pass")),
@@ -116,9 +125,6 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 		WorkerID:         firstNonEmpty(os.Getenv("QHPRO_REPORT_WORKER_ID"), "tqd-report-worker"),
 	}
 
-	if strings.TrimSpace(cfg.DatabaseDSN) == "" {
-		return nil, fmt.Errorf("TQD database DSN is required")
-	}
 	if strings.TrimSpace(cfg.Redis.Address) == "" {
 		return nil, fmt.Errorf("TQD Redis address is required")
 	}

@@ -190,4 +190,6 @@ message GetRolePermissionsResponse {
 
 message GetRoleIdsByProfileIdResponse {
     repeated uint64 roleIds = 1;
+    // Durable admin_profiles.super_admin (0/1). Auth uses this to bypass grants.
+    uint32 superAdmin = 2;
 }

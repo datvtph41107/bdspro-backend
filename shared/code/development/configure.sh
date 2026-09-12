@@ -151,28 +151,11 @@ EOF
 payment_env() {
   cat <<EOF
 QHPRO_SERVICE_ID=payment-service
-PAYMENT_DATABASE_URL=postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable
+# Process DSN/topology: config/runtime.yml + config/local.yml (or CONFIG_FILE).
+# Keep MIGRATION_URL for make migrate*; PAYMENT_* below are optional overrides.
 MIGRATION_URL=postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable
 PAYMENT_RABBIT_URL=amqp://guest:guest@localhost:5672/
-PAYMENT_GRPC_ADDRESS=0.0.0.0:8205
-QHPRO_USER_GRPC_ADDRESS=localhost:8201
-QHPRO_AUTH_GRPC_ADDRESS=localhost:8216
-QHPRO_NOTIFICATION_GRPC_ADDRESS=localhost:8204
 SEPAY_API_KEY=qhpro-development-$(random_hex)
-SEPAY_GATEWAY_ENVIRONMENT=sandbox
-SEPAY_BANK_TRANSFER_FLOW=hosted_checkout
-SEPAY_WEBHOOK_ENVIRONMENT=live
-SEPAY_BANK_TRANSFER_ENABLED=true
-SEPAY_CARD_ENABLED=false
-SEPAY_MERCHANT_ID=
-SEPAY_MERCHANT_SECRET_KEY=
-SEPAY_IPN_SECRET_KEY=
-SEPAY_QR_BANK_BIN=
-SEPAY_QR_ACCOUNT_NUMBER=
-SEPAY_CHECKOUT_BRIDGE_URL=http://127.0.0.1:8000/v2/payment/sepay/checkout
-SEPAY_SUCCESS_URL=http://localhost:3001/dashboard/pricing?payment=success
-SEPAY_ERROR_URL=http://localhost:3001/dashboard/pricing?payment=error
-SEPAY_CANCEL_URL=http://localhost:3001/dashboard/pricing?payment=cancel
 EOF
 }
 
@@ -301,27 +284,8 @@ install_missing_value organization-service/.env ORGANIZATION_CHAT_GRPC_ADDRESS l
 install_missing_value organization-service/.env ORGANIZATION_TRANSACTION_GRPC_ADDRESS localhost:8215
 install_missing_value organization-service/.env ORGANIZATION_AUTH_GRPC_ADDRESS localhost:8216
 install_env payment-service/.env payment_env
-install_value payment-service/.env PAYMENT_DATABASE_URL 'postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable'
 install_value payment-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable'
 install_value payment-service/.env PAYMENT_RABBIT_URL 'amqp://guest:guest@localhost:5672/'
-install_missing_value payment-service/.env PAYMENT_GRPC_ADDRESS 0.0.0.0:8205
-install_missing_value payment-service/.env QHPRO_USER_GRPC_ADDRESS localhost:8201
-install_missing_value payment-service/.env QHPRO_AUTH_GRPC_ADDRESS localhost:8216
-install_missing_value payment-service/.env QHPRO_NOTIFICATION_GRPC_ADDRESS localhost:8204
-install_missing_value payment-service/.env SEPAY_GATEWAY_ENVIRONMENT sandbox
-install_missing_value payment-service/.env SEPAY_BANK_TRANSFER_FLOW hosted_checkout
-install_missing_value payment-service/.env SEPAY_WEBHOOK_ENVIRONMENT live
-install_missing_value payment-service/.env SEPAY_BANK_TRANSFER_ENABLED true
-install_missing_value payment-service/.env SEPAY_CARD_ENABLED false
-install_missing_value payment-service/.env SEPAY_MERCHANT_ID ''
-install_missing_value payment-service/.env SEPAY_MERCHANT_SECRET_KEY ''
-install_missing_value payment-service/.env SEPAY_IPN_SECRET_KEY ''
-install_missing_value payment-service/.env SEPAY_QR_BANK_BIN ''
-install_missing_value payment-service/.env SEPAY_QR_ACCOUNT_NUMBER ''
-install_missing_value payment-service/.env SEPAY_CHECKOUT_BRIDGE_URL http://127.0.0.1:8000/v2/payment/sepay/checkout
-install_missing_value payment-service/.env SEPAY_SUCCESS_URL 'http://localhost:3001/dashboard/pricing?payment=success'
-install_missing_value payment-service/.env SEPAY_ERROR_URL 'http://localhost:3001/dashboard/pricing?payment=error'
-install_missing_value payment-service/.env SEPAY_CANCEL_URL 'http://localhost:3001/dashboard/pricing?payment=cancel'
 install_env tqd-service/.env tqd_env
 install_value tqd-service/.env TQD_DATABASE_URL 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable'
 install_value tqd-service/.env MIGRATION_URL 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable'
@@ -424,6 +388,30 @@ redis:
   pass: ""
 jwt:
   key-generate: "key-generate-jwt-token-authentication"
+EOF
+
+install_local_yml payment-service/config/local.yml <<'EOF'
+database:
+  dsn: "postgres://postgres:postgres@localhost:5432/payment_service?sslmode=disable"
+rabbit:
+  url: "amqp://guest:guest@localhost:5672/"
+rpc:
+  user:
+    address: "localhost:8201"
+  auth:
+    address: "localhost:8216"
+  notification:
+    address: "localhost:8204"
+sepay:
+  gateway_environment: sandbox
+  bank_transfer_flow: hosted_checkout
+  webhook_environment: live
+  bank_transfer_enabled: true
+  card_enabled: false
+  checkout_bridge_url: http://127.0.0.1:8000/v2/payment/sepay/checkout
+  success_url: http://localhost:3001/dashboard/pricing?payment=success
+  error_url: http://localhost:3001/dashboard/pricing?payment=error
+  cancel_url: http://localhost:3001/dashboard/pricing?payment=cancel
 EOF
 
 echo

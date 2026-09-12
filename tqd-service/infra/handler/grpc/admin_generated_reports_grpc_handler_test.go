@@ -25,7 +25,7 @@ func (s *reportAdminRepositoryStub) ListAdminGeneratedReports(_ context.Context,
 
 type usageAuthorizerStub struct{ err error }
 
-func (s usageAuthorizerStub) HasPermissions(_ context.Context, _ []string) error { return s.err }
+func (s usageAuthorizerStub) RequiredPermissions(_ context.Context, _ []uint32) error { return s.err }
 
 func TestListGeneratedReportsAuthorizesFiltersAndMapsEvidence(t *testing.T) {
 	now := time.Date(2026, 8, 31, 10, 0, 0, 0, time.UTC)

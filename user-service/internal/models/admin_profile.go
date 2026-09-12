@@ -34,6 +34,8 @@ type AdminProfile struct {
 	TotalLogin       uint32            `gorm:"default:0" json:"totalLogin"`
 	VerifiedAt       *time.Time        `gorm:"column:verified_at" json:"verifiedAt"`
 	LockedAt         *time.Time        `gorm:"column:locked_at" json:"lockedAt"`
+	// SuperAdmin is durable 0/1. When 1, HasPermission checks pass without role grants.
+	SuperAdmin uint8 `gorm:"column:super_admin;not null;default:0" json:"superAdmin"`
 
 	// Transient fields (không lưu vào DB)
 	Role *RoleDTO `gorm:"-" json:"role,omitempty"`
