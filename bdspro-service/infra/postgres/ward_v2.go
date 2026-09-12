@@ -63,7 +63,7 @@ func (r *WardV2Repo) GetByCode(ctx context.Context, code string) (*domain.WardV2
 	return &entity, err
 }
 
-func (r *WardV2Repo) GetByTQDID(ctx context.Context, tqdID string) (*domain.WardV2, error) {
+func (r *WardV2Repo) GetByTQDID(ctx context.Context, tqdID uint64) (*domain.WardV2, error) {
 	var entity domain.WardV2
 	err := GetDB(ctx, r.DB).
 		Where("tqd_id = ?", tqdID).First(&entity).Error

@@ -41,3 +41,4 @@ __debug_bin*
 /research/
 /tqd-service/files/
 **/main
+config/production/**

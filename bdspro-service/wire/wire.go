@@ -18,7 +18,6 @@ import (
 	bdspro_infra_router_org "bdspro/infra/router/org"
 	bdspro_infra_router_public "bdspro/infra/router/public"
 	bdspro_infra_router_user "bdspro/infra/router/user"
-	bdspro_infra_rpc "bdspro/infra/rpc"
 	bdspro_infra_validator "bdspro/infra/validator"
 	bdspro_initial "bdspro/initial"
 	bdspro_internal_job "bdspro/internal/job"
@@ -31,7 +30,7 @@ import (
 	bdspro_internal_usecases_property "bdspro/internal/usecases/property"
 	bdspro_internal_usecases_shared "bdspro/internal/usecases/shared"
 	_db "common/db"
-	common_injection "common/injection"
+	injection "common/injection"
 	_provider "common/provider"
 	common_utils "common/utils"
 	"github.com/google/wire"
@@ -90,7 +89,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(bdspro_internal_repo_admin.AdminProjectRepo), new(*bdspro_infra_postgres_admin.AdminProjectPostgres)),
 	wire.Bind(new(bdspro_internal_repo_admin.AdminPropertyTypeRepo), new(*bdspro_infra_postgres_admin.AdminPropertyTypePostgres)),
 	wire.Bind(new(bdspro_internal_usecases.PlanUsecase), new(*bdspro_infra_handler.MemberPlanUsecase)),
-	common_injection.NewHttpClient,
+	injection.RPCClientSet,
+	injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	bdspro_infra_postgres.NewActionRepo,
 	bdspro_infra_handler.NewAdminAreaRegionHandler,
@@ -145,7 +145,6 @@ var wireSet = wire.NewSet(
 	bdspro_internal_usecases.NewAssetShareUC,
 	bdspro_infra_postgres_audit.NewAuditLogRepository,
 	bdspro_infra_client.NewAuthClient,
-	bdspro_infra_rpc.NewAuthRPCClient,
 	bdspro_infra_mapper.NewBankAccountMapper,
 	bdspro_infra_postgres.NewBankAccountPostgresRepository,
 	bdspro_infra_handler.NewBdsDomainHandler,
@@ -156,8 +155,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewBdsproPublicService,
 	bdspro_infra_mapper.NewBuildMapper,
 	bdspro_infra_postgres.NewBuildingInfoRepo,
-	bdspro_infra_rpc.NewCRMRPCClient,
-	bdspro_infra_rpc.NewChatRPCClient,
 	bdspro_infra_redis.NewClient,
 	bdspro_infra_providers.NewCodeDataUsecase,
 	bdspro_infra_mapper.NewCommonMapper,
@@ -229,7 +226,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_handler.NewGrpcPostService,
 	bdspro_infra_mapper.NewHistoryMapper,
 	bdspro_infra_client.NewHubClient,
-	bdspro_infra_rpc.NewHubRPCClient,
 	bdspro_infra_handler.NewIdentifierHandler,
 	bdspro_infra_mapper.NewIdentifierMapper,
 	bdspro_infra_postgres.NewIdentifierRepository,
@@ -262,7 +258,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_providers.NewMemberPlanService,
 	bdspro_infra_handler.NewMemberPlanUsecase,
 	bdspro_infra_client.NewNotificationClient,
-	bdspro_infra_rpc.NewNotificationRPCClient,
 	bdspro_infra_router_org.NewOrgAssetCostRouter,
 	bdspro_infra_router_org.NewOrgAssetExploitationRouter,
 	bdspro_infra_router_org.NewOrgAssetRouter,
@@ -270,9 +265,7 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_org.NewOrgPostRoute,
 	bdspro_infra_router_org.NewOrgProductChildRouter,
 	bdspro_infra_client.NewOrganizationClient,
-	bdspro_infra_rpc.NewOrganizationRPCClient,
 	bdspro_infra_client.NewPaymentClient,
-	bdspro_infra_rpc.NewPaymentRPCClient,
 	bdspro_internal_job.NewPostDashboardStatsJob,
 	bdspro_infra_mapper.NewPostMapper,
 	bdspro_infra_router_user.NewPostMediaRoute,
@@ -350,7 +343,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_validator.NewSharingAccessValidator,
 	bdspro_internal_modules.NewSnapshotComparator,
 	bdspro_infra_postgres.NewSnapshotRepository,
-	bdspro_infra_rpc.NewTQDRPCClient,
 	bdspro_infra_postgres.NewTransactionActionPostgresRepository,
 	bdspro_infra_validator.NewTransactionActionValidator,
 	bdspro_infra_postgres.NewTransactionGorm,
@@ -376,7 +368,6 @@ var wireSet = wire.NewSet(
 	bdspro_infra_router_user.NewUserProductChildRouter,
 	bdspro_infra_router_user.NewUserProductRouter,
 	bdspro_infra_router_user.NewUserProjectBuildRouter,
-	bdspro_infra_rpc.NewUserRPCClient,
 	bdspro_infra_postgres_audit.NewVersionRepo,
 	bdspro_infra_postgres.NewWardV2Repository,
 )

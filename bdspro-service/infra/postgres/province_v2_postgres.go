@@ -51,7 +51,7 @@ func (r *ProvinceV2Repo) GetByFullName(ctx context.Context, name string) (*domai
 	return &entity, err
 }
 
-func (r *ProvinceV2Repo) GetByTQDID(ctx context.Context, tqdID string) (*domain.ProvinceV2, error) {
+func (r *ProvinceV2Repo) GetByTQDID(ctx context.Context, tqdID uint64) (*domain.ProvinceV2, error) {
 	var province domain.ProvinceV2
 	err := r.DB.WithContext(ctx).
 		Where("tqd_id = ?", tqdID).
@@ -114,7 +114,7 @@ func (r *ProvinceV2Repo) FirstOrCreate(ctx context.Context, province *domain.Pro
 }
 
 // Thêm method GetByTQDIDWithLock nếu cần
-func (r *ProvinceV2Repo) GetByTQDIDWithLock(ctx context.Context, tqdID string) (*domain.ProvinceV2, error) {
+func (r *ProvinceV2Repo) GetByTQDIDWithLock(ctx context.Context, tqdID uint64) (*domain.ProvinceV2, error) {
 	var province domain.ProvinceV2
 	err := r.DB.WithContext(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).

@@ -27,7 +27,12 @@ run-dev:
 	lsof -ti tcp:$(PORT) | xargs kill -9 2>/dev/null || true
 	@mkdir -p $(ROOT_DIR)/$(SERVICE)-service/.tmp/air
 	@export PATH=$$PATH:$$HOME/go/bin && \
-	cd $(ROOT_DIR)/$(SERVICE)-service && $(AIR_EXE) $(ARGS)
+	cd $(ROOT_DIR)/$(SERVICE)-service && \
+	set -a; \
+	if [ -f "$(ROOT_DIR)/.env" ]; then . "$(ROOT_DIR)/.env"; fi; \
+	if [ -f ".env" ]; then . "./.env"; fi; \
+	set +a; \
+	QHPRO_EXECUTION_MODE=host $(AIR_EXE) $(ARGS)
 
 %:
 	@:	

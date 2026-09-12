@@ -7,7 +7,7 @@ import (
 type WardV2 struct {
 	_models.BaseEntity
 
-	TQDID         string  `gorm:"column:tqd_id;type:varchar(50);index:idx_ward_tqd_id" json:"tqdId"`
+	TQDID         uint64  `gorm:"column:tqd_id;index:idx_ward_tqd_id" json:"tqdId"`
 	Name          string  `gorm:"column:name;type:varchar(255);not null" json:"name"`
 	Code          string  `gorm:"column:code;type:varchar(20);not null;uniqueIndex:uk_ward_code" json:"code"`
 	Codename      string  `gorm:"column:codename;type:varchar(100)" json:"codename"`

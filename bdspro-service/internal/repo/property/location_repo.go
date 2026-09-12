@@ -19,7 +19,7 @@ type ProvinceV2Repository interface {
 	UpdateFields(ctx context.Context, id uint64, fields map[string]any) error
 	FirstOrCreate(ctx context.Context, province *domain.ProvinceV2) error
 	GetByFullName(ctx context.Context, name string) (*domain.ProvinceV2, error)
-	GetByTQDID(ctx context.Context, tqdID string) (*domain.ProvinceV2, error)
+	GetByTQDID(ctx context.Context, tqdID uint64) (*domain.ProvinceV2, error)
 }
 
 type WardV2Repository interface {
@@ -28,5 +28,5 @@ type WardV2Repository interface {
 	Create(ctx context.Context, ward *domain.WardV2) error
 	UpdateFields(ctx context.Context, id uint64, fields map[string]any) error
 	FirstOrCreate(ctx context.Context, ward *domain.WardV2) error
-	GetByTQDID(ctx context.Context, tqdID string) (*domain.WardV2, error)
+	GetByTQDID(ctx context.Context, tqdID uint64) (*domain.WardV2, error)
 }

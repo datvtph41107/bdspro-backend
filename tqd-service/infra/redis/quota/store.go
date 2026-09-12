@@ -14,6 +14,7 @@ const defaultKeepAfterPeriod = 48 * time.Hour
  *
  * Lua scripts được dùng để Reserve/Commit/Cancel không bị race giữa nhiều request.
  */
+// @bind: tqd/internal/usecase/quota.Store
 // @bind: tqd/internal/usecase/quota.RuntimeUsageReader
 // @bind: tqd/internal/usecase/quota/reconciliation/usageprojection.QuotaStore
 type Store struct {
