@@ -37,6 +37,16 @@ type deliveryRow struct {
 
 func (deliveryRow) TableName() string { return "notification_delivery_intents" }
 
+func (s *DeliveryStore) claimCandidateQuery(ctx context.Context, tx *gorm.DB, now time.Time) *gorm.DB {
+	return tx.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+		Where(`channel = ? AND available_at <= ? AND (
+			(status IN ? AND (lease_until IS NULL OR lease_until <= ?))
+			OR (status = ? AND lease_until IS NOT NULL AND lease_until <= ?)
+		)`, "push", now, []string{"pending", "retry", "unknown"}, now, "running", now).
+		Order("available_at ASC, id ASC")
+}
+
 func (s *DeliveryStore) ClaimNext(ctx context.Context, workerID string, now time.Time, lease time.Duration) (*domain.Intent, error) {
 	if s == nil || s.db == nil {
 		return nil, errors.New("delivery store database is nil")
@@ -44,9 +54,7 @@ func (s *DeliveryStore) ClaimNext(ctx context.Context, workerID string, now time
 	var claimed deliveryRow
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var row deliveryRow
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-			Where("channel = ? AND status IN ? AND available_at <= ? AND (lease_until IS NULL OR lease_until <= ?)", "push", []string{"pending", "retry", "unknown"}, now, now).
-			Order("available_at ASC, id ASC").First(&row).Error
+		err := s.claimCandidateQuery(ctx, tx, now).First(&row).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
