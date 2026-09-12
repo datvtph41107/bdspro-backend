@@ -100,28 +100,24 @@ func (z *ZnsProvider) reloadConfigFromDB(ctx context.Context) error {
 	return nil
 }
 
-// saveTokensToDB lưu access token và refresh token mới vào DB
+// saveTokensToDB persists the access/refresh credential pair atomically before
+// publishing the new values to process memory. A split durable pair is not a
+// valid ZNS credential state.
 func (z *ZnsProvider) saveTokensToDB(ctx context.Context, accessToken, refreshToken string) error {
 	z.mu.Lock()
 	defer z.mu.Unlock()
 
-	// Lưu access token vào DB
-	err := z.authConfigRepo.UpdateValue(ctx, auth.ConfigKeyZNSToken, accessToken)
-	if err != nil {
-		return fmt.Errorf("lỗi khi lưu access token vào DB: %w", err)
+	if err := z.authConfigRepo.UpdateValuesAtomically(ctx, map[string]string{
+		auth.ConfigKeyZNSToken:   accessToken,
+		auth.ConfigKeyZNSRefresh: refreshToken,
+	}); err != nil {
+		return fmt.Errorf("lỗi khi lưu cặp token mới vào DB: %w", err)
 	}
 
-	// Lưu refresh token vào DB
-	err = z.authConfigRepo.UpdateValue(ctx, auth.ConfigKeyZNSRefresh, refreshToken)
-	if err != nil {
-		return fmt.Errorf("lỗi khi lưu refresh token vào DB: %w", err)
-	}
-
-	// Cập nhật token trong memory luôn
 	z.accessToken = accessToken
 	z.refreshToken = refreshToken
 
-	fmt.Println("💾 [ZNS] Saved new tokens to DB and updated in memory successfully")
+	fmt.Println("💾 [ZNS] Saved new token pair to DB and updated memory successfully")
 	return nil
 }
 

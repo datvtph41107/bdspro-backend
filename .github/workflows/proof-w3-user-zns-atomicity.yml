@@ -6,315 +6,25 @@ on:
       - proof/w3-zns-token-atomicity
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   prove-user-zns-token-atomicity:
-    if: "${{ github.event.head_commit.message != 'proof(w3): apply zns token atomicity candidate' }}"
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout proof branch
+      - name: Checkout proof candidate
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up canonical Go patch version
+      - name: Set up canonical Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25.10'
           cache: false
 
-      - name: Materialize exact W3 candidate
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          cat > user-service/internal/interface/repo/auth_config_repo.go <<'EOF'
-          package repo
-
-          import (
-           "context"
-           "user/internal/domain/auth"
-          )
-
-          // IAuthConfigRepo is the persistence capability required by the ZNS provider.
-          // Dynamic auth configuration is addressed by stable config keys; broader CRUD/type
-          // queries are intentionally not part of the serving contract.
-          type IAuthConfigRepo interface {
-           GetByKey(ctx context.Context, key string) (*auth.AuthConfig, error)
-           UpdateValue(ctx context.Context, key string, value string) error
-           UpdateValuesAtomically(ctx context.Context, values map[string]string) error
-          }
-          EOF
-
-          cat > user-service/infra/postgres/auth_config_postgres.go <<'EOF'
-          package postgres
-
-          import (
-           "context"
-           "fmt"
-           "sort"
-
-           "gorm.io/gorm"
-           "user/internal/domain/auth"
-          )
-
-          // AuthConfigPostgres implements the dynamic auth configuration persistence used
-          // by integration providers such as ZNS.
-          // @bind: user/internal/interface/repo.IAuthConfigRepo
-          type AuthConfigPostgres struct {
-           db *gorm.DB
-          }
-
-          func NewAuthConfigRepository(db *gorm.DB) *AuthConfigPostgres {
-           return &AuthConfigPostgres{db: db}
-          }
-
-          func (r *AuthConfigPostgres) GetByKey(ctx context.Context, key string) (*auth.AuthConfig, error) {
-           var config auth.AuthConfig
-           err := r.db.WithContext(ctx).
-            Where("config_key = ? AND is_active = ?", key, true).
-            First(&config).Error
-           if err != nil {
-            return nil, err
-           }
-           return &config, nil
-          }
-
-          func (r *AuthConfigPostgres) UpdateValue(ctx context.Context, key string, value string) error {
-           return r.db.WithContext(ctx).
-            Model(&auth.AuthConfig{}).
-            Where("config_key = ?", key).
-            Update("config_value", value).Error
-          }
-
-          // UpdateValuesAtomically commits a related set of dynamic configuration values
-          // in one transaction. Sorting keys gives concurrent writers one lock order.
-          func (r *AuthConfigPostgres) UpdateValuesAtomically(ctx context.Context, values map[string]string) error {
-           keys := make([]string, 0, len(values))
-           for key := range values {
-            keys = append(keys, key)
-           }
-           sort.Strings(keys)
-
-           return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-            for _, key := range keys {
-             result := tx.Model(&auth.AuthConfig{}).
-              Where("config_key = ?", key).
-              Update("config_value", values[key])
-             if result.Error != nil {
-              return fmt.Errorf("update auth config %q: %w", key, result.Error)
-             }
-             if result.RowsAffected != 1 {
-              return fmt.Errorf("update auth config %q: expected 1 row, got %d", key, result.RowsAffected)
-             }
-            }
-            return nil
-           })
-          }
-          EOF
-
-          cat > user-service/infra/postgres/auth_config_postgres_test.go <<'EOF'
-          package postgres
-
-          import (
-           "context"
-           "errors"
-           "strings"
-           "testing"
-
-           "gorm.io/driver/postgres"
-           "gorm.io/gorm"
-          )
-
-          func newAuthConfigDryRunDB(t *testing.T) *gorm.DB {
-           t.Helper()
-           db, err := gorm.Open(
-            postgres.New(postgres.Config{
-             DSN:                  "host=localhost user=test dbname=test sslmode=disable",
-             PreferSimpleProtocol: true,
-            }),
-            &gorm.Config{
-             DryRun:                 true,
-             DisableAutomaticPing:   true,
-             SkipDefaultTransaction: true,
-            },
-           )
-           if err != nil {
-            t.Fatalf("gorm.Open() error = %v", err)
-           }
-           return db
-          }
-
-          func TestUpdateValuesAtomicallyPropagatesSecondWriteFailure(t *testing.T) {
-           db := newAuthConfigDryRunDB(t)
-           writeErr := errors.New("second update failed")
-           calls := 0
-           if err := db.Callback().Update().After("gorm:update").Register("test:auth-config-fail-second", func(tx *gorm.DB) {
-            calls++
-            tx.RowsAffected = 1
-            if calls == 2 {
-             tx.AddError(writeErr)
-            }
-           }); err != nil {
-            t.Fatalf("register callback: %v", err)
-           }
-
-           repo := NewAuthConfigRepository(db)
-           err := repo.UpdateValuesAtomically(context.Background(), map[string]string{
-            "ZNS_TOKEN":   "new-access",
-            "ZNS_REFRESH": "new-refresh",
-           })
-           if !errors.Is(err, writeErr) {
-            t.Fatalf("UpdateValuesAtomically() error = %v, want wrapped %v", err, writeErr)
-           }
-           if calls != 2 {
-            t.Fatalf("update calls = %d, want 2", calls)
-           }
-          }
-
-          func TestUpdateValuesAtomicallyRejectsMissingConfigRow(t *testing.T) {
-           db := newAuthConfigDryRunDB(t)
-           if err := db.Callback().Update().After("gorm:update").Register("test:auth-config-no-row", func(tx *gorm.DB) {
-            tx.RowsAffected = 0
-           }); err != nil {
-            t.Fatalf("register callback: %v", err)
-           }
-
-           repo := NewAuthConfigRepository(db)
-           err := repo.UpdateValuesAtomically(context.Background(), map[string]string{
-            "ZNS_TOKEN": "new-access",
-           })
-           if err == nil || !strings.Contains(err.Error(), "expected 1 row, got 0") {
-            t.Fatalf("UpdateValuesAtomically() error = %v, want missing-row failure", err)
-           }
-          }
-          EOF
-
-          cat > user-service/infra/zns/zns_provider_test.go <<'EOF'
-          package zns
-
-          import (
-           "context"
-           "errors"
-           "reflect"
-           "testing"
-
-           "user/internal/domain/auth"
-          )
-
-          type authConfigRepoStub struct {
-           atomicErr   error
-           atomicCalls int
-           values      map[string]string
-          }
-
-          func (s *authConfigRepoStub) GetByKey(context.Context, string) (*auth.AuthConfig, error) {
-           panic("unexpected GetByKey call")
-          }
-
-          func (s *authConfigRepoStub) UpdateValue(context.Context, string, string) error {
-           panic("unexpected UpdateValue call")
-          }
-
-          func (s *authConfigRepoStub) UpdateValuesAtomically(_ context.Context, values map[string]string) error {
-           s.atomicCalls++
-           s.values = make(map[string]string, len(values))
-           for key, value := range values {
-            s.values[key] = value
-           }
-           return s.atomicErr
-          }
-
-          func TestSaveTokensToDBPublishesMemoryOnlyAfterAtomicDurableWrite(t *testing.T) {
-           repo := &authConfigRepoStub{}
-           provider := &ZnsProvider{
-            accessToken:    "old-access",
-            refreshToken:   "old-refresh",
-            authConfigRepo: repo,
-           }
-
-           if err := provider.saveTokensToDB(context.Background(), "new-access", "new-refresh"); err != nil {
-            t.Fatalf("saveTokensToDB() error = %v", err)
-           }
-
-           want := map[string]string{
-            auth.ConfigKeyZNSToken:   "new-access",
-            auth.ConfigKeyZNSRefresh: "new-refresh",
-           }
-           if repo.atomicCalls != 1 {
-            t.Fatalf("atomic calls = %d, want 1", repo.atomicCalls)
-           }
-           if !reflect.DeepEqual(repo.values, want) {
-            t.Fatalf("atomic values = %#v, want %#v", repo.values, want)
-           }
-           if provider.accessToken != "new-access" || provider.refreshToken != "new-refresh" {
-            t.Fatalf("memory pair = (%q, %q), want new pair", provider.accessToken, provider.refreshToken)
-           }
-          }
-
-          func TestSaveTokensToDBKeepsPreviousMemoryWhenAtomicDurableWriteFails(t *testing.T) {
-           writeErr := errors.New("database unavailable")
-           repo := &authConfigRepoStub{atomicErr: writeErr}
-           provider := &ZnsProvider{
-            accessToken:    "old-access",
-            refreshToken:   "old-refresh",
-            authConfigRepo: repo,
-           }
-
-           err := provider.saveTokensToDB(context.Background(), "new-access", "new-refresh")
-           if !errors.Is(err, writeErr) {
-            t.Fatalf("saveTokensToDB() error = %v, want wrapped %v", err, writeErr)
-           }
-           if provider.accessToken != "old-access" || provider.refreshToken != "old-refresh" {
-            t.Fatalf("memory pair changed on durable failure: (%q, %q)", provider.accessToken, provider.refreshToken)
-           }
-          }
-          EOF
-
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path('user-service/infra/zns/zns_provider.go')
-          source = path.read_text()
-          start_marker = '// saveTokensToDB lưu access token và refresh token mới vào DB\n'
-          end_marker = '// ZNSRequest định nghĩa cấu trúc payload gửi đến ZNS API\n'
-          if source.count(start_marker) != 1:
-              raise SystemExit(f'expected one saveTokensToDB marker, found {source.count(start_marker)}')
-          if source.count(end_marker) != 1:
-              raise SystemExit(f'expected one ZNSRequest marker, found {source.count(end_marker)}')
-          before, rest = source.split(start_marker, 1)
-          _, after = rest.split(end_marker, 1)
-          new_method = '''// saveTokensToDB persists the access/refresh credential pair atomically before
-          // publishing the new values to process memory. A split durable pair is not a
-          // valid ZNS credential state.
-          func (z *ZnsProvider) saveTokensToDB(ctx context.Context, accessToken, refreshToken string) error {
-              z.mu.Lock()
-              defer z.mu.Unlock()
-
-              if err := z.authConfigRepo.UpdateValuesAtomically(ctx, map[string]string{
-                  auth.ConfigKeyZNSToken:   accessToken,
-                  auth.ConfigKeyZNSRefresh: refreshToken,
-              }); err != nil {
-                  return fmt.Errorf("lỗi khi lưu cặp token mới vào DB: %w", err)
-              }
-
-              z.accessToken = accessToken
-              z.refreshToken = refreshToken
-
-              fmt.Println("💾 [ZNS] Saved new token pair to DB and updated memory successfully")
-              return nil
-          }
-
-          '''
-          path.write_text(before + new_method + end_marker + after)
-          PY
-
-          gofmt -w user-service/internal/interface/repo/auth_config_repo.go user-service/infra/postgres/auth_config_postgres.go user-service/infra/postgres/auth_config_postgres_test.go user-service/infra/zns/zns_provider.go user-service/infra/zns/zns_provider_test.go
-
-      - name: Verify exact staged blob identities
+      - name: Verify exact W3 source blobs
         shell: bash
         run: |
           set -euo pipefail
@@ -323,8 +33,24 @@ jobs:
           test "$(git hash-object user-service/infra/postgres/auth_config_postgres_test.go)" = "bd5a3b7a6f402e594a47801efc9aaa48ffe27270"
           test "$(git hash-object user-service/infra/zns/zns_provider.go)" = "8fe76d62d431fe7a10be64b9ad5cfcf131e1700e"
           test "$(git hash-object user-service/infra/zns/zns_provider_test.go)" = "27db5fea604dea1458a84b2245ee575892f618ef"
-          git diff --check
-          git diff --name-only
+          git diff --check HEAD^
+
+      - name: Generate canonical protobuf dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          test "$(go env GOVERSION)" = "go${GO_VERSION}"
+          go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
+          go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${PROTOC_GEN_GO_GRPC_VERSION}"
+          go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION}"
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          make -C shared/code buf-all
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/auth
+          test -d shared/protobuf/types/user
+          git diff --exit-code -- shared/protobuf/schema
 
       - name: Prove focused W3 behavior
         shell: bash
@@ -341,14 +67,3 @@ jobs:
           go test ./...
           go vet ./...
           go build ./...
-
-      - name: Commit exact W3 source candidate to proof branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add user-service/internal/interface/repo/auth_config_repo.go user-service/infra/postgres/auth_config_postgres.go user-service/infra/postgres/auth_config_postgres_test.go user-service/infra/zns/zns_provider.go user-service/infra/zns/zns_provider_test.go
-          test "$(git diff --cached --name-only | wc -l)" -eq 5
-          git commit -m "proof(w3): apply zns token atomicity candidate"
-          git push origin HEAD:proof/w3-zns-token-atomicity

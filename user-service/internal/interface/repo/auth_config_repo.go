@@ -11,4 +11,5 @@ import (
 type IAuthConfigRepo interface {
 	GetByKey(ctx context.Context, key string) (*auth.AuthConfig, error)
 	UpdateValue(ctx context.Context, key string, value string) error
+	UpdateValuesAtomically(ctx context.Context, values map[string]string) error
 }
