@@ -1,9 +1,10 @@
 package usecase
 
 import (
+	"context"
+
 	_err "common/domain/err"
 	_utils "common/utils"
-	"context"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
@@ -18,6 +19,23 @@ func NewEventQueueUsecase(eventQueueRepo repo.IEventQueueRepo) *EventQueueUsecas
 	return &EventQueueUsecase{
 		eventQueueRepo: eventQueueRepo,
 	}
+}
+
+func (uc *EventQueueUsecase) getByID(ctx context.Context, id uint64) (*domain.EventQueueEntity, *_err.ErrorDTO) {
+	event, err := uc.eventQueueRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, &_err.ErrorDTO{
+			Code:    500,
+			Message: "Lỗi khi lấy event queue: " + err.Error(),
+		}
+	}
+	if event == nil {
+		return nil, &_err.ErrorDTO{
+			Code:    404,
+			Message: "Không tìm thấy event queue",
+		}
+	}
+	return event, nil
 }
 
 // Search tìm kiếm event queue với phân trang
@@ -35,15 +53,7 @@ func (uc *EventQueueUsecase) Search(ctx context.Context, searchDTO dto.EventQueu
 
 // Detail lấy chi tiết event queue
 func (uc *EventQueueUsecase) Detail(ctx context.Context, id uint64) (*domain.EventQueueEntity, *_err.ErrorDTO) {
-	event, err := uc.eventQueueRepo.GetByID(ctx, id)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy event queue",
-		}
-	}
-
-	return event, nil
+	return uc.getByID(ctx, id)
 }
 
 // Create tạo mới event queue
@@ -97,12 +107,9 @@ func (uc *EventQueueUsecase) Create(ctx context.Context, saveDTO dto.EventQueueS
 // Update cập nhật event queue
 func (uc *EventQueueUsecase) Update(ctx context.Context, id uint64, saveDTO dto.EventQueueSaveDTO) (*domain.EventQueueEntity, *_err.ErrorDTO) {
 	// Check if exists
-	existingEvent, err := uc.eventQueueRepo.GetByID(ctx, id)
-	if err != nil {
-		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy event queue",
-		}
+	existingEvent, lookupErr := uc.getByID(ctx, id)
+	if lookupErr != nil {
+		return nil, lookupErr
 	}
 
 	// Update fields
@@ -150,12 +157,9 @@ func (uc *EventQueueUsecase) Update(ctx context.Context, id uint64, saveDTO dto.
 // Delete xóa mềm event queue
 func (uc *EventQueueUsecase) Delete(ctx context.Context, id uint64) *_err.ErrorDTO {
 	// Check if exists
-	existingEvent, err := uc.eventQueueRepo.GetByID(ctx, id)
-	if err != nil {
-		return &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy event queue",
-		}
+	existingEvent, lookupErr := uc.getByID(ctx, id)
+	if lookupErr != nil {
+		return lookupErr
 	}
 
 	deleteErr := uc.eventQueueRepo.Delete(ctx, existingEvent.ID)

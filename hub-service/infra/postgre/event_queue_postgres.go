@@ -1,14 +1,18 @@
 package postgres
 
 import (
+	"context"
+	"errors"
+	"time"
+
 	_db "common/db"
 	_provider "common/provider"
 	_utils "common/utils"
-	"context"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
-	"time"
+
+	"gorm.io/gorm"
 )
 
 // @bind: hub/internal/repo.IEventQueueRepo
@@ -20,6 +24,24 @@ func NewEventQueueRepo(db *_db.TransactionRepo) *EventQueueRepo {
 	repo := &EventQueueRepo{}
 	repo.Init(repo, db)
 	return repo
+}
+
+// GetByID retrieves an event queue by ID.
+// Storage-specific record-not-found is normalized to absence so application
+// code can distinguish business absence from unrelated database failures.
+func (r *EventQueueRepo) GetByID(c context.Context, id uint64) (*domain.EventQueueEntity, error) {
+	var event domain.EventQueueEntity
+	err := r.GetDB(c).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&event).
+		Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &event, nil
 }
 
 func (r *EventQueueRepo) Search(c context.Context, searchDTO dto.EventQueueSearchDTO) ([]domain.EventQueueEntity, int64, error) {
