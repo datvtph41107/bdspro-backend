@@ -142,7 +142,7 @@ settlement/order/payment capability liên quan
   ↓
 handler → usecase/business → store/client
   ↓
-migrate/ nếu state schema đổi
+database/migrations/ nếu state schema đổi
   ↓
 tests
 ```
