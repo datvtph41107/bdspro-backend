@@ -26,10 +26,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read canonical Go patch version
+        id: toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          source shared/code/development/toolchain.versions
+          printf 'go_version=%s\n' "$GO_VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Set up canonical Go patch version
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.10'
+          go-version: ${{ steps.toolchain.outputs.go_version }}
           cache: false
 
       - name: Install canonical generators
