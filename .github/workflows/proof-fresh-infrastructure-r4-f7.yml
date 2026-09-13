@@ -1,0 +1,293 @@
+name: Proof Fresh Infrastructure R4 F7
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4-f7-full-chain
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-f7-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-infrastructure:
+    name: Full fresh infrastructure after generation fixes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      QHPRO_BOOTSTRAP_CONFIRM: CREATE_ROOT_OPERATOR
+      QHPRO_BOOTSTRAP_ADMIN_USERNAME: qhpro.root.acceptance
+      QHPRO_BOOTSTRAP_ADMIN_FULL_NAME: QHPro Fresh Root Acceptance
+      QHPRO_BOOTSTRAP_ADMIN_EMAIL: fresh-root@acceptance.invalid
+      QHPRO_BOOTSTRAP_ADMIN_PHONE: "0391111111"
+
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate ephemeral proof credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          proof_credential="F7-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-Aa9!$(openssl rand -hex 8)"
+          echo "::add-mask::$proof_credential"
+          printf 'QHPRO_BOOTSTRAP_ADMIN_PASSWORD=%s\n' "$proof_credential" >> "$GITHUB_ENV"
+
+      - name: Verify exact R4 ancestry, candidate identity and protected paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=f599b533b48c15ff90793200edc6354133c6b20c
+          test "$(git merge-base "$base" HEAD)" = "$base"
+
+          actual="$(git diff --name-only "$base" HEAD | sort)"
+          expected="$(printf '%s\n' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f2.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f3.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f4.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f5.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f6.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f6b.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f7.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4.yml' \
+            'README.md' \
+            'bdspro-service/database/migrations/000001_create_property_table.up.sql' \
+            'crm-service/database/migrations/000022_admin_opportunity_fields.up.sql' \
+            'shared/code/development/root.mk' \
+            'shared/code/development/toolchain.sh' \
+            'shared/code/script.sh' | sort)"
+          test "$actual" = "$expected"
+          git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+
+          test "$(git hash-object README.md)" = '2ad287b7c3e543963954312e5de5e7a0e2b2218e'
+          test "$(git hash-object bdspro-service/database/migrations/000001_create_property_table.up.sql)" = '58a65579065f7965648522f3c198cbca1b3d0aee'
+          test "$(git hash-object crm-service/database/migrations/000022_admin_opportunity_fields.up.sql)" = 'b28c811f64b0d763290bbeab4cf732846891c71e'
+          test "$(git hash-object shared/code/development/root.mk)" = '512b05d16e0a9927a3fb01a889162a25ac11d386'
+          test "$(git hash-object shared/code/development/toolchain.sh)" = '7e095391e97a7024735e88770ba664e32efe5b7b'
+          test "$(git hash-object shared/code/script.sh)" = 'cdd72926025e908cb3cad7126b6db015360ac892'
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
+
+          grep -Fq 'Ripgrep (`rg`)' README.md
+          grep -Fq 'ripgrep (rg) is required' shared/code/development/toolchain.sh
+          grep -Fq 'setup: bootstrap' shared/code/development/root.mk
+          grep -Fq '@$(MAKE) generate-backend' shared/code/development/root.mk
+          grep -Fq '@$(MAKE) -C shared/code buf-transaction' shared/code/development/root.mk
+          grep -Fq 'WIRE_SERVICES := user organization tqd notification assistant' shared/code/development/root.mk
+          grep -Fq '"$SERVICE" == "notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub" || "$SERVICE" == "assistant"' shared/code/script.sh
+          echo 'F7 exact source identity and protected-path gate PASS'
+
+      - name: Prove missing ripgrep fails at canonical host preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          for command in bash dirname uname sha256sum tar unzip python3 curl; do
+            ln -s "$(command -v "$command")" "$tmp/$command"
+          done
+          set +e
+          PATH="$tmp" /usr/bin/bash shared/code/development/toolchain.sh bootstrap >/tmp/no-rg.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'ripgrep (rg) is required' /tmp/no-rg.log
+          echo 'Missing ripgrep preflight PASS'
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize canonical setup and generated code
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git ls-files 'shared/protobuf/types/**')"
+          test ! -e shared/protobuf/types/shared
+          test ! -e shared/protobuf/types/transaction
+          test ! -e assistant-service/wire/wire_gen.go
+
+          sha256sum \
+            user-service/wire/wire_gen.go \
+            organization-service/wire/wire_gen.go \
+            tqd-service/wire/wire_gen.go \
+            notification-service/wire/wire_gen.go \
+            > /tmp/wire-before.sha256
+          cp assistant-service/wire/wire.go /tmp/assistant-wire-before.go
+
+          make setup
+
+          test -n "$(find shared/protobuf/types/shared -type f -name '*.pb.go' -print -quit)"
+          test -f shared/protobuf/types/transaction/transaction.pb.go
+          test -f shared/protobuf/types/transaction/transaction_grpc.pb.go
+          test -f assistant-service/wire/wire_gen.go
+          sha256sum -c /tmp/wire-before.sha256
+          cmp -s /tmp/assistant-wire-before.go assistant-service/wire/wire.go
+          git diff --exit-code -- \
+            user-service/wire/wire_gen.go \
+            organization-service/wire/wire_gen.go \
+            tqd-service/wire/wire_gen.go \
+            notification-service/wire/wire_gen.go \
+            assistant-service/wire/wire.go \
+            shared/code/development/root.mk \
+            shared/code/script.sh
+          make -C assistant-service build
+          make doctor
+          echo 'Fresh setup + protobuf + Wire + Assistant build PASS'
+
+      - name: Reset to fresh infrastructure and migrate canonical schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          make reset CONFIRM=reset-development-data
+          make deps
+          make migrate
+
+          bdspro_psql() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/db_bdspro?sslmode=disable' -Atc "$1"
+          }
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property'::regclass);")" = 'LIST (source_type)'
+          test "$(bdspro_psql "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'property'::regclass AND contype = 'p';")" = 'PRIMARY KEY (id, source_type, created_at)'
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property_system'::regclass);")" = 'RANGE (created_at)'
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property_user'::regclass);")" = 'RANGE (created_at)'
+          test "$(bdspro_psql "SELECT count(*) FROM pg_inherits WHERE inhparent = 'property'::regclass AND inhrelid IN ('property_system'::regclass, 'property_user'::regclass);")" = 2
+          echo 'BDSPro property partition hierarchy PASS'
+
+          crm_psql() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/db_crm?sslmode=disable' -Atc "$1"
+          }
+          test "$(crm_psql "SELECT to_regclass('public.customers') IS NOT NULL;")" = 't'
+          test "$(crm_psql "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'customers'::regclass AND contype = 'p';")" = 'PRIMARY KEY (id)'
+          for column in id created_by updated_by created_at updated_at deleted_at contact_id source assign_note pipeline_id stage_id priority charge_person_id charge_person_type stage_note note code opportunity_status next_follow_up_at; do
+            test "$(crm_psql "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = '$column';")" = 1
+          done
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'id';")" = 'bigint'
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'contact_id';")" = 'bigint'
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'created_at';")" = 'timestamp with time zone'
+          test "$(crm_psql "SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'customers' AND indexname IN ('idx_customers_deleted_at','idx_customers_opportunity_status','idx_customers_next_follow_up_at','idx_customers_code');")" = 4
+          echo 'CRM customers reconstruction schema PASS'
+
+          root_count="$(docker compose --env-file .env -f compose.yaml exec -T postgres \
+            psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc \
+            "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;")"
+          test "$root_count" = 0
+          echo 'Fresh canonical migrations PASS'
+
+      - name: Bootstrap first root operator and verify durable state
+        shell: bash
+        run: |
+          set -euo pipefail
+          make bootstrap-admin 2>&1 | tee /tmp/bootstrap-first.log
+          grep -Fq 'root operator created:' /tmp/bootstrap-first.log
+
+          psql_scalar() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc "$1"
+          }
+          test "$(psql_scalar "SELECT count(*) FROM roles WHERE organization_id = 0 AND key = 'QHPRO_SYSTEM_ROOT' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM auth_method WHERE provider = 'ADMIN' AND lower(auth_name) = lower('qhpro.root.acceptance') AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM admin_profiles WHERE role_key = 'QHPRO_SYSTEM_ROOT' AND role_type = 'ROLE_SUPER_ADMIN' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;")" = 1
+          permission_count="$(psql_scalar "SELECT count(*) FROM role_permissions rp JOIN roles role ON role.id = rp.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL;")"
+          test "$permission_count" -gt 0
+          echo "Root bootstrap durable state PASS permissions=$permission_count"
+
+      - name: Start canonical native stack and prove runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          make up
+          make status
+          make smoke
+
+      - name: Login bootstrapped root through Gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          request = urllib.request.Request(
+              'http://localhost:8000/v2/auth/admin/login',
+              data=json.dumps({
+                  'username': os.environ['QHPRO_BOOTSTRAP_ADMIN_USERNAME'],
+                  'password': os.environ['QHPRO_BOOTSTRAP_ADMIN_PASSWORD'],
+                  'version': 'fresh-infrastructure-proof-f7',
+                  'platform': 'WEB',
+                  'os': 'Linux',
+                  'deviceName': 'Fresh Infrastructure Proof F7',
+              }).encode(),
+              headers={'Content-Type': 'application/json'},
+              method='POST',
+          )
+          with urllib.request.urlopen(request, timeout=20) as response:
+              if response.status != 200:
+                  raise SystemExit(f'admin login HTTP status={response.status}')
+              body = json.load(response)
+          data = body.get('data') if isinstance(body.get('data'), dict) else body
+          token = data.get('accessToken') or data.get('access_token')
+          profile_id = data.get('profileId') or data.get('profile_id')
+          if not token or not profile_id:
+              raise SystemExit('bootstrap root login missing access token/profile id')
+          print(f'Gateway root login PASS profile_id={profile_id}')
+          PY
+
+      - name: Refuse second root bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          make bootstrap-admin >/tmp/bootstrap-second.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'root operator already exists' /tmp/bootstrap-second.log
+          echo 'Second root bootstrap correctly refused'
+
+      - name: Collect failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          make status || true
+          if test -f .env; then
+            docker compose --env-file .env -f compose.yaml logs --no-color postgres redis rabbitmq > /tmp/dependency-logs.txt 2>&1 || true
+          fi
+          find .tmp/development -maxdepth 1 -type f -print -exec tail -n 180 {} \; > /tmp/native-logs.txt 2>&1 || true
+
+      - name: Upload F7 proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-infrastructure-r4-f7-${{ github.sha }}
+          path: |
+            /tmp/no-rg.log
+            /tmp/bootstrap-first.log
+            /tmp/bootstrap-second.log
+            /tmp/dependency-logs.txt
+            /tmp/native-logs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f .env; then
+            make down || true
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
