@@ -11,6 +11,7 @@ include ../shared/code/development/deps.mk
 include ../shared/code/development/migration.mk
 
 buf:
+	$(MAKE) -C ../shared/code buf-shared
 	$(MAKE) -C ../shared/code buf-user-service
 
 wire:
@@ -26,7 +27,7 @@ seed:
 
 # One-time empty-installation operation. Inputs are supplied by the operator;
 # this target never invents or persists default credentials.
-bootstrap-admin:
+bootstrap-admin: buf
 	@$(call with_env,go run ./cmd/bootstrap-admin)
 
 docker-build:
