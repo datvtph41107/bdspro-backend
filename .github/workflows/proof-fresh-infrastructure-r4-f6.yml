@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: proof-fresh-infrastructure-r4-f6-${{ github.ref }}
@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify proof ancestry and protected scope
+      - name: Verify exact F6 ancestry, scope and protected paths
         shell: bash
         run: |
           set -euo pipefail
@@ -32,60 +32,6 @@ jobs:
           test "$(git merge-base "$base" HEAD)" = "$base"
           git diff --check "$base" HEAD
           test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
-          echo 'F6 ancestry/protected scope PASS'
-
-      - name: Materialize bounded source candidate
-        id: materialize
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          replacements = [
-              (
-                  Path('shared/code/development/root.mk'),
-                  'WIRE_SERVICES := user organization tqd notification',
-                  'WIRE_SERVICES := user organization tqd notification assistant',
-              ),
-              (
-                  Path('shared/code/script.sh'),
-                  'if [[ "$SERVICE" == "notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub" ]]; then',
-                  'if [[ "$SERVICE" == "notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub" || "$SERVICE" == "assistant" ]]; then',
-              ),
-          ]
-
-          for path, old, new in replacements:
-              text = path.read_text()
-              if new in text:
-                  continue
-              if text.count(old) != 1:
-                  raise SystemExit(f'{path}: expected exactly one bounded replacement owner')
-              path.write_text(text.replace(old, new, 1))
-          PY
-
-          git diff --check -- shared/code/development/root.mk shared/code/script.sh
-          changed="$(git diff --name-only -- shared/code/development/root.mk shared/code/script.sh)"
-          if test -n "$changed"; then
-            test "$changed" = $'shared/code/development/root.mk\nshared/code/script.sh'
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add shared/code/development/root.mk shared/code/script.sh
-            git commit -m 'fix(setup): generate Assistant Wire from canonical owner'
-            git push origin HEAD:proof/fresh-infrastructure-r4-f6-assistant-wire-owner
-            echo 'pushed=true' >> "$GITHUB_OUTPUT"
-            echo 'F6 bounded source candidate pushed; exact-SHA proof will run on the new commit.'
-          else
-            echo 'pushed=false' >> "$GITHUB_OUTPUT"
-            echo 'F6 source candidate already materialized on this exact SHA.'
-          fi
-
-      - name: Verify exact F6 source scope
-        if: steps.materialize.outputs.pushed == 'false'
-        shell: bash
-        run: |
-          set -euo pipefail
-          base=65449ee2d11743b028f9e55aeb27294689f5d460
           actual="$(git diff --name-only "$base" HEAD | sort)"
           expected="$(printf '%s\n' \
             '.github/workflows/proof-fresh-infrastructure-r4-f6.yml' \
@@ -98,10 +44,9 @@ jobs:
           }
           grep -Fxq 'WIRE_SERVICES := user organization tqd notification assistant' shared/code/development/root.mk
           grep -Fq '"$SERVICE" == "assistant"' shared/code/script.sh
-          echo 'F6 exact source scope PASS'
+          echo 'F6 exact source/protected scope PASS'
 
       - name: Install host runtime prerequisites
-        if: steps.materialize.outputs.pushed == 'false'
         shell: bash
         run: |
           set -euo pipefail
@@ -111,7 +56,6 @@ jobs:
             libpango-1.0-0 libpangoft2-1.0-0
 
       - name: Prove Assistant Wire generation and build
-        if: steps.materialize.outputs.pushed == 'false'
         shell: bash
         run: |
           set -euo pipefail
