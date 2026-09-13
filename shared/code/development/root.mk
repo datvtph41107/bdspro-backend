@@ -95,6 +95,7 @@ help:
 # Public developer interface. The longer targets below remain implementation
 # details and compatibility aliases; developers do not need to memorize them.
 setup: bootstrap
+	@$(MAKE) generate-backend
 
 # This is an explicit operator action, not setup/seed behavior. The command is
 # transactionally refused after the first active root operator exists.
