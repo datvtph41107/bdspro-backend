@@ -45,6 +45,8 @@ export COMPOSE_PARALLEL_LIMIT := $(QHPRO_COMPOSE_PARALLEL_LIMIT)
 CORE_SERVICES := auth user organization payment tqd notification file gateway hub
 DOCKER_SERVICES := $(CORE_SERVICES) assistant
 NATIVE_SERVICES := assistant notification organization payment file user auth hub tqd gateway
+WIRE_SERVICES := user organization tqd notification
+TRACKED_WIRE_OUTPUTS := $(foreach service,$(WIRE_SERVICES),$(service)-service/wire/wire_gen.go)
 CONFIG_SERVICES := $(CORE_SERVICES) assistant bdspro chat chat-v1 crm map relay search social
 REPOSITORY_MODULES := assistant-service bdspro-service chat-service chat-v1-service \
 	crm-service map-service relay-service search-service social-service \
@@ -482,7 +484,7 @@ generate-backend:
 	@$(MAKE) -C shared/code buf-tqd
 	@$(MAKE) -C shared/code buf-notification
 	@$(MAKE) -C shared/code buf-file
-	@for service in user organization tqd notification; do $(MAKE) -C shared/code wire $$service || exit; done
+	@for service in $(WIRE_SERVICES); do $(MAKE) -C shared/code wire $$service || exit; done
 
 build-backend:
 	@for service in $(CORE_SERVICES); do $(MAKE) -C "$$service-service" build || exit; done
@@ -502,8 +504,13 @@ race-backend:
 diff-check-backend:
 	@if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
 	  git diff --check; \
+	  if ! git diff --quiet -- $(TRACKED_WIRE_OUTPUTS); then \
+	    echo 'Tracked Wire outputs differ from the Git index after generation:' >&2; \
+	    git diff --name-only -- $(TRACKED_WIRE_OUTPUTS) >&2; \
+	    exit 1; \
+	  fi; \
 	else \
-	  echo 'git metadata unavailable; diff-only whitespace check skipped'; \
+	  echo 'git metadata unavailable; diff-only checks skipped'; \
 	fi
 
 verify-non-go-source:
