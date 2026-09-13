@@ -1,0 +1,266 @@
+name: Proof Fresh Infrastructure R4 F4
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4-f4-bootstrap-generation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-f4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-infrastructure:
+    name: Fresh bootstrap with owned protobuf reconstruction
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      QHPRO_BOOTSTRAP_CONFIRM: CREATE_ROOT_OPERATOR
+      QHPRO_BOOTSTRAP_ADMIN_USERNAME: qhpro.root.acceptance
+      QHPRO_BOOTSTRAP_ADMIN_FULL_NAME: QHPro Fresh Root Acceptance
+      QHPRO_BOOTSTRAP_ADMIN_EMAIL: fresh-root@acceptance.invalid
+      QHPRO_BOOTSTRAP_ADMIN_PHONE: "0391111111"
+
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate ephemeral proof credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          proof_credential="F4-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-Aa9!$(openssl rand -hex 8)"
+          echo "::add-mask::$proof_credential"
+          printf 'QHPRO_BOOTSTRAP_ADMIN_PASSWORD=%s\n' "$proof_credential" >> "$GITHUB_ENV"
+
+      - name: Verify exact R4 proof ancestry and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=f599b533b48c15ff90793200edc6354133c6b20c
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          actual="$(git diff --name-only "$base" HEAD | sort)"
+          expected="$(printf '%s\n' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f2.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f3.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f4.yml' \
+            '.github/workflows/proof-fresh-infrastructure-r4.yml' \
+            'README.md' \
+            'bdspro-service/database/migrations/000001_create_property_table.up.sql' \
+            'crm-service/database/migrations/000022_admin_opportunity_fields.up.sql' \
+            'shared/code/development/toolchain.sh' \
+            'user-service/Makefile' | sort)"
+          test "$actual" = "$expected"
+          git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+          test "$(git hash-object README.md)" = '2ad287b7c3e543963954312e5de5e7a0e2b2218e'
+          test "$(git hash-object shared/code/development/toolchain.sh)" = '7e095391e97a7024735e88770ba664e32efe5b7b'
+          test "$(git hash-object .github/workflows/proof-fresh-infrastructure-r4.yml)" = '16cb21b8a1a8d757134b5482b91936c20e346bd2'
+          test "$(git hash-object .github/workflows/proof-fresh-infrastructure-r4-f2.yml)" = '2d2249a3ecdba1eadb4d0f24593afa6e14f3b9c8'
+          test "$(git hash-object bdspro-service/database/migrations/000001_create_property_table.up.sql)" = '58a65579065f7965648522f3c198cbca1b3d0aee'
+          test "$(git hash-object crm-service/database/migrations/000022_admin_opportunity_fields.up.sql)" = 'b28c811f64b0d763290bbeab4cf732846891c71e'
+          test "$(git hash-object user-service/Makefile)" = '02be5fe74e52b7e228aef4d4f5ca033ff2705e3e'
+          grep -Fxq 'bootstrap-admin: buf' user-service/Makefile
+          awk '/^buf:$$/{getline; a=$0; getline; b=$0} END{exit !(a ~ /buf-shared/ && b ~ /buf-user-service/)}' user-service/Makefile
+          echo 'Fresh F4 proof source scope PASS'
+
+      - name: Prove missing ripgrep fails at canonical host preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Ripgrep (`rg`)' README.md
+          grep -Fq 'ripgrep (rg) is required' shared/code/development/toolchain.sh
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          for command in bash dirname uname sha256sum tar unzip; do
+            ln -s "$(command -v "$command")" "$tmp/$command"
+          done
+          set +e
+          PATH="$tmp" /usr/bin/bash shared/code/development/toolchain.sh bootstrap >/tmp/no-rg.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'ripgrep (rg) is required' /tmp/no-rg.log
+          echo 'Missing ripgrep preflight PASS'
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize canonical config and pinned toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          make setup
+          make doctor
+          test ! -e shared/protobuf/types/shared
+          echo 'Clean setup leaves ignored protobuf output unmaterialized PASS'
+
+      - name: Reset to fresh infrastructure and migrate canonical schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          make reset CONFIRM=reset-development-data
+          make deps
+          make migrate
+
+          bdspro_psql() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/db_bdspro?sslmode=disable' -Atc "$1"
+          }
+
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property'::regclass);")" = 'LIST (source_type)'
+          test "$(bdspro_psql "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'property'::regclass AND contype = 'p';")" = 'PRIMARY KEY (id, source_type, created_at)'
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property_system'::regclass);")" = 'RANGE (created_at)'
+          test "$(bdspro_psql "SELECT pg_get_partkeydef('property_user'::regclass);")" = 'RANGE (created_at)'
+          test "$(bdspro_psql "SELECT count(*) FROM pg_inherits WHERE inhparent = 'property'::regclass AND inhrelid IN ('property_system'::regclass, 'property_user'::regclass);")" = 2
+          echo 'BDSPro property partition hierarchy PASS'
+
+          crm_psql() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/db_crm?sslmode=disable' -Atc "$1"
+          }
+
+          test "$(crm_psql "SELECT to_regclass('public.customers') IS NOT NULL;")" = 't'
+          test "$(crm_psql "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'customers'::regclass AND contype = 'p';")" = 'PRIMARY KEY (id)'
+          for column in id created_by updated_by created_at updated_at deleted_at contact_id source assign_note pipeline_id stage_id priority charge_person_id charge_person_type stage_note note code opportunity_status next_follow_up_at; do
+            test "$(crm_psql "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = '$column';")" = 1
+          done
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'id';")" = 'bigint'
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'contact_id';")" = 'bigint'
+          test "$(crm_psql "SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'created_at';")" = 'timestamp with time zone'
+          test "$(crm_psql "SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'customers' AND indexname IN ('idx_customers_deleted_at','idx_customers_opportunity_status','idx_customers_next_follow_up_at','idx_customers_code');")" = 4
+          echo 'CRM customers baseline and IV.10.9 schema PASS'
+
+          test ! -e shared/protobuf/types/shared
+          root_count="$(
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc \
+              "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;"
+          )"
+          test "$root_count" = 0
+
+      - name: Bootstrap first root operator and verify generated prerequisites and durable state
+        shell: bash
+        run: |
+          set -euo pipefail
+          make bootstrap-admin 2>&1 | tee /tmp/bootstrap-first.log
+          grep -Fq 'root operator created:' /tmp/bootstrap-first.log
+          test -d shared/protobuf/types/shared
+          test -d shared/protobuf/types/auth
+          test -d shared/protobuf/types/user
+          test "$(git diff --name-only -- shared/protobuf user-service/wire/wire_gen.go organization-service/wire/wire_gen.go tqd-service/wire/wire_gen.go notification-service/wire/wire_gen.go)" = ''
+          echo 'User bootstrap generated prerequisites without tracked source drift PASS'
+
+          psql_scalar() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc "$1"
+          }
+
+          test "$(psql_scalar "SELECT count(*) FROM roles WHERE organization_id = 0 AND key = 'QHPRO_SYSTEM_ROOT' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM auth_method WHERE provider = 'ADMIN' AND lower(auth_name) = lower('qhpro.root.acceptance') AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM admin_profiles WHERE role_key = 'QHPRO_SYSTEM_ROOT' AND role_type = 'ROLE_SUPER_ADMIN' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;")" = 1
+          permission_count="$(psql_scalar "SELECT count(*) FROM role_permissions rp JOIN roles role ON role.id = rp.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL;")"
+          test "$permission_count" -gt 0
+          echo "Root bootstrap durable state PASS permissions=$permission_count"
+
+      - name: Start canonical native stack and prove runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          make up
+          make status
+          make smoke
+
+      - name: Login bootstrapped root through Gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = 'http://localhost:8000/v2/auth/admin/login'
+          payload = {
+              'username': os.environ['QHPRO_BOOTSTRAP_ADMIN_USERNAME'],
+              'password': os.environ['QHPRO_BOOTSTRAP_ADMIN_PASSWORD'],
+              'version': 'fresh-infrastructure-proof-f4',
+              'platform': 'WEB',
+              'os': 'Linux',
+              'deviceName': 'Fresh Infrastructure Proof F4',
+          }
+          request = urllib.request.Request(
+              url,
+              data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json'},
+              method='POST',
+          )
+          with urllib.request.urlopen(request, timeout=20) as response:
+              if response.status != 200:
+                  raise SystemExit(f'admin login HTTP status={response.status}')
+              body = json.load(response)
+          data = body.get('data') if isinstance(body.get('data'), dict) else body
+          token = data.get('accessToken') or data.get('access_token')
+          profile_id = data.get('profileId') or data.get('profile_id')
+          if not token or not profile_id:
+              raise SystemExit(f'bootstrap root login missing credential/profile: {body}')
+          print(f'Gateway root login PASS profile_id={profile_id}')
+          PY
+
+      - name: Refuse second root bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          make bootstrap-admin >/tmp/bootstrap-second.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'root operator already exists' /tmp/bootstrap-second.log
+          echo 'Second root bootstrap correctly refused'
+
+      - name: Collect failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          make status || true
+          if test -f .env; then
+            docker compose --env-file .env -f compose.yaml logs --no-color postgres redis rabbitmq > /tmp/dependency-logs.txt 2>&1 || true
+          fi
+          find .tmp/development -maxdepth 1 -type f -print -exec tail -n 120 {} \; > /tmp/native-logs.txt 2>&1 || true
+
+      - name: Upload proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-infrastructure-r4-f4-${{ github.sha }}
+          path: |
+            /tmp/no-rg.log
+            /tmp/bootstrap-first.log
+            /tmp/bootstrap-second.log
+            /tmp/dependency-logs.txt
+            /tmp/native-logs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f .env; then
+            make down || true
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
