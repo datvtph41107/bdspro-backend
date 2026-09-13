@@ -1,0 +1,180 @@
+name: Proof Fresh Infrastructure R4
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-infrastructure:
+    name: Fresh infrastructure and root bootstrap
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      QHPRO_BOOTSTRAP_CONFIRM: CREATE_ROOT_OPERATOR
+      QHPRO_BOOTSTRAP_ADMIN_USERNAME: qhpro.root.acceptance
+      QHPRO_BOOTSTRAP_ADMIN_PASSWORD: Fresh-Root-Operator-2026!
+      QHPRO_BOOTSTRAP_ADMIN_FULL_NAME: QHPro Fresh Root Acceptance
+      QHPRO_BOOTSTRAP_ADMIN_EMAIL: fresh-root@acceptance.invalid
+      QHPRO_BOOTSTRAP_ADMIN_PHONE: "0391111111"
+
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact R4 proof ancestry and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=f599b533b48c15ff90793200edc6354133c6b20c
+          test "$(git rev-parse HEAD^)" = "$base"
+          test "$(git diff --name-only "$base" HEAD)" = '.github/workflows/proof-fresh-infrastructure-r4.yml'
+          git diff --check "$base" HEAD
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize canonical config and pinned toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          make setup
+          make doctor
+
+      - name: Reset to fresh infrastructure and migrate canonical schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          make reset CONFIRM=reset-development-data
+          make deps
+          make migrate
+
+          root_count="$(
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc \
+              "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;"
+          )"
+          test "$root_count" = 0
+
+      - name: Bootstrap first root operator and verify durable state
+        shell: bash
+        run: |
+          set -euo pipefail
+          make bootstrap-admin 2>&1 | tee /tmp/bootstrap-first.log
+          grep -Fq 'root operator created:' /tmp/bootstrap-first.log
+
+          psql_scalar() {
+            docker compose --env-file .env -f compose.yaml exec -T postgres \
+              psql 'postgres://postgres:postgres@localhost:5432/user_service?sslmode=disable' -Atc "$1"
+          }
+
+          test "$(psql_scalar "SELECT count(*) FROM roles WHERE organization_id = 0 AND key = 'QHPRO_SYSTEM_ROOT' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM auth_method WHERE provider = 'ADMIN' AND lower(auth_name) = lower('qhpro.root.acceptance') AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM admin_profiles WHERE role_key = 'QHPRO_SYSTEM_ROOT' AND role_type = 'ROLE_SUPER_ADMIN' AND deleted_at IS NULL;")" = 1
+          test "$(psql_scalar "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;")" = 1
+          permission_count="$(psql_scalar "SELECT count(*) FROM role_permissions rp JOIN roles role ON role.id = rp.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL;")"
+          test "$permission_count" -gt 0
+
+      - name: Start canonical native stack and prove runtime smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          make up
+          make status
+          make smoke
+
+      - name: Login bootstrapped root through Gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = 'http://localhost:8000/v2/auth/admin/login'
+          payload = {
+              'username': os.environ['QHPRO_BOOTSTRAP_ADMIN_USERNAME'],
+              'password': os.environ['QHPRO_BOOTSTRAP_ADMIN_PASSWORD'],
+              'version': 'fresh-infrastructure-proof',
+              'platform': 'WEB',
+              'os': 'Linux',
+              'deviceName': 'Fresh Infrastructure Proof',
+          }
+          request = urllib.request.Request(
+              url,
+              data=json.dumps(payload).encode(),
+              headers={'Content-Type': 'application/json'},
+              method='POST',
+          )
+          with urllib.request.urlopen(request, timeout=20) as response:
+              if response.status != 200:
+                  raise SystemExit(f'admin login HTTP status={response.status}')
+              body = json.load(response)
+          data = body.get('data') if isinstance(body.get('data'), dict) else body
+          token = data.get('accessToken') or data.get('access_token')
+          profile_id = data.get('profileId') or data.get('profile_id')
+          if not token or not profile_id:
+              raise SystemExit(f'bootstrap root login missing credential/profile: {body}')
+          print(f'Gateway root login PASS profile_id={profile_id}')
+          PY
+
+      - name: Refuse second root bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          make bootstrap-admin >/tmp/bootstrap-second.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'root operator already exists' /tmp/bootstrap-second.log
+          echo 'Second root bootstrap correctly refused'
+
+      - name: Collect failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          make status || true
+          if test -f .env; then
+            docker compose --env-file .env -f compose.yaml logs --no-color postgres redis rabbitmq > /tmp/dependency-logs.txt 2>&1 || true
+          fi
+          find .tmp/development -maxdepth 1 -type f -print -exec tail -n 120 {} \; > /tmp/native-logs.txt 2>&1 || true
+
+      - name: Upload proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-infrastructure-r4-${{ github.sha }}
+          path: |
+            /tmp/bootstrap-first.log
+            /tmp/bootstrap-second.log
+            /tmp/dependency-logs.txt
+            /tmp/native-logs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f .env; then
+            make down || true
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
