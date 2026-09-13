@@ -37,9 +37,35 @@ jobs:
         run: |
           set -euo pipefail
           base=f599b533b48c15ff90793200edc6354133c6b20c
-          test "$(git rev-parse HEAD^)" = "$base"
-          test "$(git diff --name-only "$base" HEAD)" = '.github/workflows/proof-fresh-infrastructure-r4.yml'
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          actual="$(git diff --name-only "$base" HEAD | sort)"
+          expected="$(printf '%s\n' \
+            '.github/workflows/proof-fresh-infrastructure-r4.yml' \
+            'README.md' \
+            'shared/code/development/toolchain.sh' | sort)"
+          test "$actual" = "$expected"
           git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+          echo 'Fresh proof source scope PASS'
+
+      - name: Prove missing ripgrep fails at canonical host preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Ripgrep (`rg`)' README.md
+          grep -Fq 'ripgrep (rg) is required' shared/code/development/toolchain.sh
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          for command in bash dirname uname sha256sum tar unzip; do
+            ln -s "$(command -v "$command")" "$tmp/$command"
+          done
+          set +e
+          PATH="$tmp" /usr/bin/bash shared/code/development/toolchain.sh bootstrap >/tmp/no-rg.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'ripgrep (rg) is required' /tmp/no-rg.log
+          echo 'Missing ripgrep preflight PASS'
 
       - name: Install host runtime prerequisites
         shell: bash
@@ -47,7 +73,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            python3-venv ffmpeg curl \
+            python3-venv ffmpeg curl ripgrep \
             libpango-1.0-0 libpangoft2-1.0-0
 
       - name: Materialize canonical config and pinned toolchain
@@ -90,6 +116,7 @@ jobs:
           test "$(psql_scalar "SELECT count(*) FROM role_profiles assignment JOIN roles role ON role.id = assignment.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL AND assignment.deleted_at IS NULL;")" = 1
           permission_count="$(psql_scalar "SELECT count(*) FROM role_permissions rp JOIN roles role ON role.id = rp.role_id WHERE role.organization_id = 0 AND role.key = 'QHPRO_SYSTEM_ROOT' AND role.deleted_at IS NULL;")"
           test "$permission_count" -gt 0
+          echo "Root bootstrap durable state PASS permissions=$permission_count"
 
       - name: Start canonical native stack and prove runtime smoke
         shell: bash
@@ -163,6 +190,7 @@ jobs:
         with:
           name: fresh-infrastructure-r4-${{ github.sha }}
           path: |
+            /tmp/no-rg.log
             /tmp/bootstrap-first.log
             /tmp/bootstrap-second.log
             /tmp/dependency-logs.txt
