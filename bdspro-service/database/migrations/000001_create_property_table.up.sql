@@ -43,7 +43,7 @@ CREATE TABLE property (
     district_id BIGINT,
     ward_id BIGINT,
     region_id BIGINT,
-    PRIMARY KEY (id, source_type)
+    PRIMARY KEY (id, source_type, created_at)
 ) PARTITION BY LIST (source_type);
 
 CREATE INDEX idx_property_identifier ON property (identifier, source_type);
