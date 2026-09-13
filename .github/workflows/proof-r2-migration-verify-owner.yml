@@ -1,0 +1,53 @@
+name: Proof R2 Migration Verify Owner
+
+on:
+  push:
+    branches:
+      - proof/r2-migration-verify-owner
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    name: R2 focused proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gate exact R2 candidate blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object shared/code/development/root.mk)" = "ce1c34751e6a658790cdddf4f19b73938537a6d6"
+
+      - name: Prove canonical migration authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash shared/code/development/verify-migrations.sh
+          grep -Fq 'verify-backend: env-check verify-config-isolation verify-migrations' shared/code/development/root.mk
+          grep -Fq "user-service/database/migrations \"$(COMPOSE_FILE)\" user-service/config" shared/code/development/root.mk || \
+            grep -Fq 'user-service/database/migrations "$(COMPOSE_FILE)" user-service/config' shared/code/development/root.mk
+          ! grep -Fq 'migration_dir="$$service-service/migrate"' shared/code/development/root.mk
+          ! grep -Fq "'admin123|client123' user-service/migrate" shared/code/development/root.mk
+          grep -Fq "if rg -n '\\.AutoMigrate[[:space:]]*\\('" shared/code/development/root.mk
+
+      - name: Parse root Make verification plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          make -n verify-backend >/tmp/r2-verify-plan.txt
+          grep -Fq 'shared/code/development/verify-migrations.sh' /tmp/r2-verify-plan.txt
+
+      - name: Verify protected candidate scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check 8bbd6ab6d8cb9be0e88d5a15276aa8a5c9a11d6b..8e5b1446515893c714631fe6a6385544bf9c7821
+          test "$(git diff --name-only 8bbd6ab6d8cb9be0e88d5a15276aa8a5c9a11d6b..8e5b1446515893c714631fe6a6385544bf9c7821 | wc -l)" -eq 1
+          test "$(git diff --name-only 8bbd6ab6d8cb9be0e88d5a15276aa8a5c9a11d6b..8e5b1446515893c714631fe6a6385544bf9c7821)" = "shared/code/development/root.mk"
