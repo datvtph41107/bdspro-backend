@@ -1,0 +1,156 @@
+name: Proof Fresh Infrastructure R4 F6b
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4-f6b-transaction-generation
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-f6b-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  transaction-generation:
+    name: Canonical setup owns Transaction protobuf generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact F6b ancestry, bounded scope and protected paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=4b0f93c1c1694593d621509d80bb9eadbc86bfcd
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+
+          actual="$(git diff --name-only "$base" HEAD | sort)"
+          workflow_only=".github/workflows/proof-fresh-infrastructure-r4-f6b.yml"
+          source_scope="$(printf '%s\n' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f6b.yml' \
+            'shared/code/development/root.mk' | sort)"
+          if test "$actual" = "$workflow_only"; then
+            echo 'F6b materialization scope PASS'
+          elif test "$actual" = "$source_scope"; then
+            grep -Fxq $'\t@$(MAKE) -C shared/code buf-transaction' shared/code/development/root.mk
+            echo 'F6b exact source/protected scope PASS'
+          else
+            echo 'Unexpected F6b scope:' >&2
+            printf '%s\n' "$actual" >&2
+            exit 4
+          fi
+
+      - name: Materialize bounded Transaction generation owner fix
+        id: materialize
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          target='shared/code/development/root.mk'
+          expected=$'\t@$(MAKE) -C shared/code buf-transaction'
+
+          if grep -Fxq "$expected" "$target"; then
+            echo 'created=false' >> "$GITHUB_OUTPUT"
+            echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo 'Transaction generation owner already materialized'
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('shared/code/development/root.mk')
+          text = path.read_text()
+          needle = "\t@$(MAKE) -C shared/code buf-notification\n\t@$(MAKE) -C shared/code buf-file\n"
+          replacement = "\t@$(MAKE) -C shared/code buf-notification\n\t@$(MAKE) -C shared/code buf-transaction\n\t@$(MAKE) -C shared/code buf-file\n"
+          if text.count(needle) != 1:
+              raise SystemExit('canonical generate-backend insertion point is not unique')
+          path.write_text(text.replace(needle, replacement, 1))
+          PY
+
+          git diff --check
+          test "$(git diff --name-only)" = "$target"
+          grep -Fxq "$expected" "$target"
+          test "$(grep -Fxc "$expected" "$target")" = 1
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          git commit -m 'chore(generate): include transaction protobuf'
+          candidate_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${{ github.ref_name }}"
+
+          echo 'created=true' >> "$GITHUB_OUTPUT"
+          echo "candidate_sha=$candidate_sha" >> "$GITHUB_OUTPUT"
+          echo "Materialized F6b candidate: $candidate_sha"
+
+          gh workflow run proof-fresh-infrastructure-r4-f6b.yml \
+            --repo datvtph41107/bdspro-backend \
+            --ref "${{ github.ref_name }}"
+
+      - name: Install host runtime prerequisites
+        if: steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Prove Transaction protobuf generation and Assistant build
+        if: steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e shared/protobuf/types/transaction
+          test ! -e assistant-service/wire/wire_gen.go
+          cp assistant-service/wire/wire.go /tmp/assistant-wire-before.go
+
+          make setup
+
+          test -f shared/protobuf/types/transaction/transaction.pb.go
+          test -f shared/protobuf/types/transaction/transaction_grpc.pb.go
+          test -f assistant-service/wire/wire_gen.go
+          cmp -s /tmp/assistant-wire-before.go assistant-service/wire/wire.go || {
+            echo 'Assistant wire.go changed during canonical generation' >&2
+            diff -u /tmp/assistant-wire-before.go assistant-service/wire/wire.go || true
+            exit 3
+          }
+          make -C assistant-service build
+          git diff --exit-code -- \
+            shared/code/development/root.mk \
+            shared/code/script.sh \
+            assistant-service/wire/wire.go
+          echo 'Transaction protobuf generation + Assistant build PASS'
+
+      - name: Capture F6b evidence
+        if: always() && steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          mkdir -p /tmp/f6b
+          printf '%s\n' "$(git rev-parse HEAD)" > /tmp/f6b/HEAD.txt
+          git diff --name-only 4b0f93c1c1694593d621509d80bb9eadbc86bfcd HEAD > /tmp/f6b/scope.txt
+          find shared/protobuf/types/transaction -maxdepth 1 -type f -print | sort > /tmp/f6b/transaction-files.txt 2>/dev/null || true
+          cp assistant-service/wire/wire_gen.go /tmp/f6b/wire_gen.go 2>/dev/null || true
+          git status --short > /tmp/f6b/git-status.txt || true
+          sha256sum /tmp/f6b/* > /tmp/f6b/SHA256SUMS 2>/dev/null || true
+
+      - name: Upload F6b evidence
+        if: always() && steps.materialize.outputs.created == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f6b-transaction-generation-${{ github.sha }}
+          path: /tmp/f6b
+          if-no-files-found: warn
+          retention-days: 14
