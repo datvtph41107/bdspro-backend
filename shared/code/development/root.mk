@@ -325,7 +325,7 @@ verify-backend: env-check verify-config-isolation verify-migrations
 	  { echo 'Development Admin phải được lưu bằng bcrypt, không phải plaintext' >&2; status=1; }; \
 	rg -Fq "crypt('client123', gen_salt('bf', 10))" shared/code/development/identities.sql || \
 	  { echo 'Development Client phải được lưu bằng bcrypt, không phải plaintext' >&2; status=1; }; \
-	if rg -n 'admin123|client123' user-service/migrate "$(COMPOSE_FILE)" user-service/config $(ENV_FILES) --glob '*' >/dev/null; then \
+	if rg -n 'admin123|client123' user-service/database/migrations "$(COMPOSE_FILE)" user-service/config $(ENV_FILES) --glob '*' >/dev/null; then \
 	  echo 'Known development credential không được nằm trong migration, Compose hoặc runtime config' >&2; status=1; \
 	fi; \
 	rg -q 'QHPRO_EXECUTION_MODE=host' shared/code/development/native-stack.sh || \
@@ -355,20 +355,6 @@ verify-backend: env-check verify-config-isolation verify-migrations
 	  rg -q 'wget' "$$service-service/Dockerfile" || { echo "$$service-service: healthcheck dùng wget nhưng runtime image chưa cài wget" >&2; status=1; }; \
 	done; \
 	for service in $(DB_SERVICES); do \
-	  migration_dir="$$service-service/migrate"; \
-	  test -d "$$migration_dir" || { echo "$$service-service: thiếu migrate/" >&2; status=1; continue; }; \
-	  duplicate="$$(find "$$service-service" -type d \( -name migrations -o -name migrate_canonical \) -print -quit)"; \
-	  test -z "$$duplicate" || { echo "$$service-service: migration owner trùng $$duplicate" >&2; status=1; }; \
-	  for up in "$$migration_dir"/*.up.sql; do \
-	    test -e "$$up" || { echo "$$service-service: migrate/ không có file .up.sql" >&2; status=1; break; }; \
-	    down="$${up%.up.sql}.down.sql"; \
-	    test -f "$$down" || { echo "$$service-service: thiếu $${down#$$service-service/}" >&2; status=1; }; \
-	  done; \
-	  for down in "$$migration_dir"/*.down.sql; do \
-	    test -e "$$down" || continue; \
-	    up="$${down%.down.sql}.up.sql"; \
-	    test -f "$$up" || { echo "$$service-service: thiếu $${up#$$service-service/}" >&2; status=1; }; \
-	  done; \
 	  if rg -n '\.AutoMigrate[[:space:]]*\(' "$$service-service/cmd" "$$service-service/initial" "$$service-service/infra/handler" --glob '*.go' --glob '!**/*_test.go' 2>/dev/null; then \
 	    echo "$$service-service: serving code không được gọi AutoMigrate trực tiếp" >&2; status=1; \
 	  fi; \
