@@ -24,23 +24,24 @@ make server
 make dev
 ```
 
-Nếu thay schema:
+Canonical database commands:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migration name=<schema_change>
+make migrate
+make migration-version
+make rollback
 ```
 
 Root có thể gọi `make migrate service=payment-service`.
 
 ## Dependencies / durable state
 
-PostgreSQL `payment_service`, RabbitMQ, User/Auth/Notification RPC. Canonical migration: `migrate/`.
+PostgreSQL `payment_service`, RabbitMQ, User/Auth/Notification RPC. Canonical migration: `database/migrations/`.
 
 ## Read source from here
 
-`cmd/grpc/runtime.go`, `internal/`, `infra/`, `config/`, `migrate/`. Theo flow settlement/fulfillment/outbox thay vì học layer trước.
+`cmd/grpc/runtime.go`, `internal/`, `infra/`, `config/`, `database/migrations/`. Theo flow settlement/fulfillment/outbox thay vì học layer trước.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

@@ -27,20 +27,21 @@ make dev
 Nếu thay schema:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migrate
+make rollback
+make migration name=<schema_change>
+make migration-version
 ```
 
 Root có thể gọi `make migrate service=hub-service`.
 
 ## Dependencies / durable state
 
-PostgreSQL `hub_service`, Redis DB 3, User/Notification RPC. Canonical migration: `migrate/`.
+PostgreSQL `hub_service`, Redis DB 3, User/Notification RPC. Canonical migration: `database/migrations/`.
 
 ## Read source from here
 
-`cmd/grpc/`, `internal/`, `infra/`, `config/`, `migrate/`.
+`cmd/grpc/`, `internal/`, `infra/`, `config/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

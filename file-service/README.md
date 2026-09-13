@@ -27,20 +27,21 @@ make dev
 Nếu thay schema:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migrate
+make rollback
+make migration name=<schema_change>
+make migration-version
 ```
 
 Root có thể gọi `make migrate service=file-service`.
 
 ## Dependencies / durable state
 
-PostgreSQL `file_service`, Auth/Hub RPC và local file volume. Canonical migration: `migrate/`.
+PostgreSQL `file_service`, Auth/Hub RPC và local file volume. Canonical migration: `database/migrations/`.
 
 ## Read source from here
 
-`main.go`, `internal/file*`, `infra/handler/filehttp/`, `repositories/`, `migrate/`.
+`main.go`, `internal/file*`, `infra/handler/filehttp/`, `repositories/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

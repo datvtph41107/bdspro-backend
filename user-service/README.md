@@ -24,12 +24,13 @@ make server
 make dev
 ```
 
-Nếu thay schema:
+Canonical database commands:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migration name=<schema_change>
+make migrate
+make migration-version
+make rollback
 ```
 
 Root có thể gọi `make migrate service=user-service`.
@@ -49,11 +50,11 @@ provision ở development đưa hai mật khẩu về đúng giá trị công b�
 
 ## Dependencies / durable state
 
-PostgreSQL `user_service`, Redis DB 0, RPC clients. Canonical migration: `migrate/`.
+PostgreSQL `user_service`, Redis DB 0, RPC clients. Canonical migration: `database/migrations/`.
 
 ## Read source from here
 
-`cmd/grpc/`, `config/`, `infra/handler/grpc/`, `internal/`, `db/`, `migrate/`.
+`cmd/grpc/`, `config/`, `infra/handler/grpc/`, `internal/`, `db/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

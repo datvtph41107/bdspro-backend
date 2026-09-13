@@ -26,20 +26,21 @@ make server
 Nếu thay schema:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migrate
+make rollback
+make migration name=<schema_change>
+make migration-version
 ```
 
 Root có thể gọi `make migrate service=crm-service`.
 
 ## Dependencies / durable state
 
-Local DB fallback `db_crm`; canonical migration authority `infra/db/migrate_v2/`.
+Local DB fallback `db_crm`; canonical migration authority `database/migrations/`.
 
 ## Read source from here
 
-`cmd/grpc/`, `internal/`, `infra/`, `config/`, `infra/db/migrate_v2/`.
+`cmd/grpc/`, `internal/`, `infra/`, `config/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

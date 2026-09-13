@@ -5,14 +5,14 @@
 | Service | Owner | Entrypoint | Default mode | DB migration |
 | --- | --- | --- | --- | --- |
 | `gateway-service` | HTTP ingress/JWT/routing/error mapping | `main.go` | `http` | none |
-| `user-service` | profile, Auth/OAuth/IAM, catalog, subscription, entitlement | `cmd/grpc/main.go` | gRPC | `migrate/` |
+| `user-service` | profile, Auth/OAuth/IAM, catalog, subscription, entitlement | `cmd/grpc/main.go` | gRPC | `database/migrations/` |
 | `auth-service` | `AuthInternal` compatibility/permission snapshot | `main.go` | gRPC | none |
 | `organization-service` | organization/membership/action rights | `main.go` | `grpc` | `migrate/` |
-| `payment-service` | order/attempt/settlement/fulfillment/outbox | `main.go` | `grpc` | `migrate/` |
-| `tqd-service` | QHPro planning/quota/usage/report | `main.go` | `-server=grpc` | `migrate/` |
-| `notification-service` | inbox/logical notification/delivery | `main.go` | `grpc` | `migrate/` |
-| `file-service` | file content/metadata/signed access | `main.go` | HTTP | `migrate/` |
-| `hub-service` | location/system/config/API-key capabilities | `main.go` | `grpc` | `migrate/` |
+| `payment-service` | order/attempt/settlement/fulfillment/outbox | `main.go` | `grpc` | `database/migrations/` |
+| `tqd-service` | QHPro planning/quota/usage/report | `main.go` | `-server=grpc` | `database/migrations/` |
+| `notification-service` | inbox/logical notification/delivery | `main.go` | `grpc` | `database/migrations/` |
+| `file-service` | file content/metadata/signed access | `main.go` | HTTP | `database/migrations/` |
+| `hub-service` | location/system/config/API-key capabilities | `main.go` | `grpc` | `database/migrations/` |
 | `assistant-service` | AI provider boundary used by TQD | `main.go` | gRPC | none |
 
 ## Repository modules outside default Compose

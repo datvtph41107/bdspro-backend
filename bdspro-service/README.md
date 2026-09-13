@@ -27,20 +27,21 @@ make dev
 Nếu thay schema:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migrate
+make rollback
+make migration name=<schema_change>
+make migration-version
 ```
 
 Root có thể gọi `make migrate service=bdspro-service`.
 
 ## Dependencies / durable state
 
-Local DB fallback `db_bdspro`. Canonical source migration authority: `infra/db/migrations/v2/`.
+Local DB fallback `db_bdspro`. Canonical source migration authority: `database/migrations/`.
 
 ## Read source from here
 
-`main.go`, `cmd/`, `internal/`, `infra/`, `config/`, `infra/db/migrations/v2/`.
+`main.go`, `cmd/`, `internal/`, `infra/`, `config/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 

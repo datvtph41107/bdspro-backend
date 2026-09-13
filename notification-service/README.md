@@ -28,23 +28,24 @@ make server
 make dev
 ```
 
-Nếu thay schema:
+Canonical database commands:
 
 ```bash
-make migrateup
-make migrate-version
-make new_migration name=<schema_change>
+make migration name=<schema_change>
+make migrate
+make migration-version
+make rollback
 ```
 
 Root có thể gọi `make migrate service=notification-service`.
 
 ## Dependencies / durable state
 
-PostgreSQL `qhpro_notification`, Redis DB 2, RabbitMQ, User RPC. Canonical migration: `migrate/`.
+PostgreSQL `qhpro_notification`, Redis DB 2, RabbitMQ, User RPC. Canonical migration: `database/migrations/`.
 
 ## Read source from here
 
-`cmd/grpc_server.go`, `infra/postgres/eventing/`, `infra/worker/`, `internal/usecase/`, `migrate/`.
+`cmd/grpc_server.go`, `infra/postgres/eventing/`, `infra/worker/`, `internal/usecase/`, `database/migrations/`.
 
 Đọc theo flow **entrypoint -> config -> business/usecase -> store/client -> actor -> test**.
 
