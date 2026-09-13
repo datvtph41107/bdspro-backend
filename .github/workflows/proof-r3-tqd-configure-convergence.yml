@@ -1,0 +1,75 @@
+name: Proof R3 TQD Configure Convergence
+
+on:
+  push:
+    branches:
+      - proof/r3-tqd-configure-convergence
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    name: R3 focused proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gate exact R3 source candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object shared/code/development/configure.sh)" = "53ed04c807aeee1e24a4bb7abc2b0c173a6dbc64"
+          changed="$(git diff --name-only 7764ce884bebf204d03dbb65222e4fc1989af8be..34b2ab780f67ce8fc56ed35996eaba120c119bde)"
+          test "$changed" = "shared/code/development/configure.sh"
+          git diff --check 7764ce884bebf204d03dbb65222e4fc1989af8be..34b2ab780f67ce8fc56ed35996eaba120c119bde
+          test "$(git diff --numstat 7764ce884bebf204d03dbb65222e4fc1989af8be..34b2ab780f67ce8fc56ed35996eaba120c119bde -- shared/code/development/configure.sh)" = $'1\t1\tshared/code/development/configure.sh'
+
+      - name: Prove canonical source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n shared/code/development/configure.sh
+          grep -Fq 'QHPRO_REPORT_GENERATOR_MODE=production' shared/code/development/configure.sh
+          grep -Fq 'install_value tqd-service/.env QHPRO_REPORT_GENERATOR_MODE production' shared/code/development/configure.sh
+          ! grep -Fq 'install_missing_value tqd-service/.env QHPRO_REPORT_GENERATOR_MODE disabled' shared/code/development/configure.sh
+          grep -Fq 'QHPRO_REPORT_GENERATOR_MODE: production' compose.yaml
+
+      - name: Prove fresh configuration convergence
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash shared/code/development/configure.sh >/tmp/r3-fresh.log
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=production$' tqd-service/.env)" -eq 1
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=' tqd-service/.env)" -eq 1
+
+      - name: Prove existing disabled value is normalized
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/^QHPRO_REPORT_GENERATOR_MODE=.*/QHPRO_REPORT_GENERATOR_MODE=disabled/' tqd-service/.env
+          grep -Fqx 'QHPRO_REPORT_GENERATOR_MODE=disabled' tqd-service/.env
+          bash shared/code/development/configure.sh >/tmp/r3-upgrade-disabled.log
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=production$' tqd-service/.env)" -eq 1
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=' tqd-service/.env)" -eq 1
+
+      - name: Prove missing value is restored canonically
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i '/^QHPRO_REPORT_GENERATOR_MODE=/d' tqd-service/.env
+          ! grep -q '^QHPRO_REPORT_GENERATOR_MODE=' tqd-service/.env
+          bash shared/code/development/configure.sh >/tmp/r3-upgrade-missing.log
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=production$' tqd-service/.env)" -eq 1
+          test "$(grep -c '^QHPRO_REPORT_GENERATOR_MODE=' tqd-service/.env)" -eq 1
+
+      - name: Verify protected source scope remains clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git diff --name-only 7764ce884bebf204d03dbb65222e4fc1989af8be..34b2ab780f67ce8fc56ed35996eaba120c119bde -- shared/protobuf organization-service map-service shared/code/deploy.sh)"
+          git diff --exit-code -- shared/code/development/configure.sh
