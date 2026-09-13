@@ -1,0 +1,108 @@
+name: Proof R4 Candidate
+
+on:
+  push:
+    branches:
+      - proof/r4-generation-consistency
+
+permissions:
+  contents: write
+
+concurrency:
+  group: proof-r4-candidate
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    name: Build and prove scoped generation consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout proof branch
+        uses: actions/checkout@v4
+        with:
+          ref: proof/r4-generation-consistency
+          fetch-depth: 0
+
+      - name: Patch candidate owner idempotently
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('shared/code/development/root.mk')
+          s = p.read_text()
+          if 'TRACKED_WIRE_OUTPUTS :=' in s:
+              print('candidate already present')
+              raise SystemExit(0)
+          old = 'NATIVE_SERVICES := assistant notification organization payment file user auth hub tqd gateway\nCONFIG_SERVICES :='
+          new = ('NATIVE_SERVICES := assistant notification organization payment file user auth hub tqd gateway\n'
+                 'WIRE_SERVICES := user organization tqd notification\n'
+                 'TRACKED_WIRE_OUTPUTS := $(foreach service,$(WIRE_SERVICES),$(service)-service/wire/wire_gen.go)\n'
+                 'CONFIG_SERVICES :=')
+          if old not in s:
+              raise SystemExit('service owner anchor not found')
+          s = s.replace(old, new, 1)
+          old = '@for service in user organization tqd notification; do $(MAKE) -C shared/code wire $$service || exit; done'
+          new = '@for service in $(WIRE_SERVICES); do $(MAKE) -C shared/code wire $$service || exit; done'
+          if old not in s:
+              raise SystemExit('wire generation loop anchor not found')
+          s = s.replace(old, new, 1)
+          old = "diff-check-backend:\n\t@if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then \\\n\t  git diff --check; \\\n\telse \\\n\t  echo 'git metadata unavailable; diff-only whitespace check skipped'; \\\n\tfi"
+          new = "diff-check-backend:\n\t@if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then \\\n\t  git diff --check; \\\n\t  if ! git diff --quiet -- $(TRACKED_WIRE_OUTPUTS); then \\\n\t    echo 'Tracked Wire outputs differ from the Git index after generation:' >&2; \\\n\t    git diff --name-only -- $(TRACKED_WIRE_OUTPUTS) >&2; \\\n\t    exit 1; \\\n\t  fi; \\\n\telse \\\n\t  echo 'git metadata unavailable; diff-only checks skipped'; \\\n\tfi"
+          if old not in s:
+              raise SystemExit('diff gate anchor not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          make -n diff-check-backend >/dev/null
+          git diff --check -- shared/code/development/root.mk
+
+      - name: Prove clean generated outputs pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --quiet -- user-service/wire/wire_gen.go organization-service/wire/wire_gen.go tqd-service/wire/wire_gen.go notification-service/wire/wire_gen.go
+          make diff-check-backend
+
+      - name: Prove stale generated output fails
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '\n// proof-r4-stale-generated-output\n' >> user-service/wire/wire_gen.go
+          if make diff-check-backend; then
+            echo 'candidate failed to reject stale tracked Wire output' >&2
+            exit 1
+          fi
+          git checkout -- user-service/wire/wire_gen.go
+          make diff-check-backend
+
+      - name: Prove unrelated source edits are not globally blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '\n' >> README.md
+          make diff-check-backend
+          git checkout -- README.md
+
+      - name: Verify candidate source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only 34b2ab780f67ce8fc56ed35996eaba120c119bde -- shared/code/development/root.mk)"
+          test "$changed" = 'shared/code/development/root.mk'
+          test -z "$(git diff --name-only -- shared/protobuf organization-service map-service shared/code/deploy.sh)"
+
+      - name: Commit candidate root owner if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- shared/code/development/root.mk; then
+            echo 'candidate commit already present'
+            exit 0
+          fi
+          git config user.name 'datvtph41107'
+          git config user.email '116329073+datvtph41107@users.noreply.github.com'
+          git add shared/code/development/root.mk
+          git commit -m 'chore(verify): enforce generated Wire consistency'
+          git push origin HEAD:proof/r4-generation-consistency
