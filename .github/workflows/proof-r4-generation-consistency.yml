@@ -1,0 +1,49 @@
+name: Proof R4 Generation Consistency
+
+on:
+  push:
+    branches:
+      - proof/r4-generation-consistency
+
+permissions:
+  contents: read
+
+jobs:
+  prove-gap:
+    name: Prove current generation-consistency gap
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+
+      - name: Prove tracked Wire output exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files --error-unmatch user-service/wire/wire_gen.go >/dev/null
+
+      - name: Simulate stale tracked generated output
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '\n// proof-r4-stale-generated-output\n' >> user-service/wire/wire_gen.go
+          git diff -- user-service/wire/wire_gen.go
+
+      - name: Prove current whitespace gate misses generated drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --exit-code -- user-service/wire/wire_gen.go >/dev/null; then
+            echo 'expected tracked generated drift was not detected' >&2
+            exit 1
+          fi
+          echo 'Current git diff --check passes while tracked generated output differs: defect reproduced.'
+
+      - name: Verify proof changed no protected source
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = 'user-service/wire/wire_gen.go'
