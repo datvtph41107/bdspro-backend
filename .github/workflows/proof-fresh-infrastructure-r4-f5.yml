@@ -1,0 +1,83 @@
+name: Proof Fresh Infrastructure R4 F5
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4-f5-assistant-wire
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-f5-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assistant-wire:
+    name: Fresh setup materializes Assistant Wire
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify proof ancestry and protected scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=3b57a62ef7199f3247a0395400422ba1d394ed44
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+          echo 'F5 ancestry/protected scope PASS'
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Prove Assistant Wire generation and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e assistant-service/wire/wire_gen.go
+          cp assistant-service/wire/wire.go /tmp/assistant-wire-before.go
+
+          make setup
+
+          test -f assistant-service/wire/wire_gen.go
+          cmp -s /tmp/assistant-wire-before.go assistant-service/wire/wire.go || {
+            echo 'Assistant wire.go changed during canonical generation' >&2
+            diff -u /tmp/assistant-wire-before.go assistant-service/wire/wire.go || true
+            exit 3
+          }
+          make -C assistant-service build
+          echo 'Assistant generated Wire build PASS'
+
+      - name: Capture Assistant Wire evidence
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/f5-wire
+          cp /tmp/assistant-wire-before.go /tmp/f5-wire/wire-before.go 2>/dev/null || true
+          cp assistant-service/wire/wire.go /tmp/f5-wire/wire-after.go 2>/dev/null || true
+          cp assistant-service/wire/wire_gen.go /tmp/f5-wire/wire_gen.go 2>/dev/null || true
+          git status --short -- assistant-service/wire > /tmp/f5-wire/git-status.txt || true
+          git diff -- assistant-service/wire > /tmp/f5-wire/tracked-diff.txt || true
+          sha256sum /tmp/f5-wire/* > /tmp/f5-wire/SHA256SUMS 2>/dev/null || true
+
+      - name: Upload Assistant Wire evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f5-assistant-wire-${{ github.sha }}
+          path: /tmp/f5-wire
+          if-no-files-found: warn
+          retention-days: 14
