@@ -6,7 +6,7 @@ Mục tiêu của repository là tạo một **golden path** ổn định: devel
 
 ## Quick start
 
-Yêu cầu host: Linux/WSL2, Git, Make, Python 3, FFmpeg, WeasyPrint và Docker
+Yêu cầu host: Linux/WSL2, Git, Make, Python 3, Ripgrep (`rg`), FFmpeg, WeasyPrint và Docker
 Engine/Compose cho PostgreSQL/PostGIS, Redis và RabbitMQ. `make doctor` xác nhận
 cả toolchain lẫn runtime dependency trước khi start.
 
