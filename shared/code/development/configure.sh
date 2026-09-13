@@ -305,7 +305,7 @@ install_missing_value tqd-service/.env QHPRO_AUTH_GRPC_ADDR localhost:8216
 install_missing_value tqd-service/.env QHPRO_ASSISTANT_GRPC_ADDR localhost:8218
 install_missing_value tqd-service/.env QHPRO_FILE_HTTP_BASE_URL http://localhost:8002
 install_missing_value tqd-service/.env QHPRO_FILE_PUBLIC_BASE_URL http://localhost:8002
-install_missing_value tqd-service/.env QHPRO_REPORT_GENERATOR_MODE disabled
+install_value tqd-service/.env QHPRO_REPORT_GENERATOR_MODE production
 install_missing_value tqd-service/.env TQD_CLASSIFY_ENABLED false
 install_env notification-service/.env notification_env
 install_value notification-service/.env NOTIFICATION_DATABASE_DSN 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_notification?sslmode=disable'
