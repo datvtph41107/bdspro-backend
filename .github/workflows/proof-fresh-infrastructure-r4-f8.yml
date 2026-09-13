@@ -1,0 +1,154 @@
+name: Proof Fresh Infrastructure R4 F8
+
+on:
+  push:
+    branches:
+      - proof/fresh-infrastructure-r4-f8-hub-wire-owner
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: proof-fresh-infrastructure-r4-f8-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  hub-wire-owner:
+    name: Canonical setup owns Hub Wire generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact F7 ancestry, bounded scope and protected paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=6e7e8182aa8469808e835bc60be6cb0fa3a6ae0c
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --check "$base" HEAD
+          test "$(git diff --name-only "$base" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+
+          actual="$(git diff --name-only "$base" HEAD | sort)"
+          workflow_only=".github/workflows/proof-fresh-infrastructure-r4-f8.yml"
+          source_scope="$(printf '%s\n' \
+            '.github/workflows/proof-fresh-infrastructure-r4-f8.yml' \
+            'shared/code/development/root.mk' | sort)"
+          if test "$actual" = "$workflow_only"; then
+            echo 'F8 materialization scope PASS'
+          elif test "$actual" = "$source_scope"; then
+            grep -Fxq 'WIRE_SERVICES := user organization tqd notification assistant hub' shared/code/development/root.mk
+            echo 'F8 exact source/protected scope PASS'
+          else
+            echo 'Unexpected F8 scope:' >&2
+            printf '%s\n' "$actual" >&2
+            exit 4
+          fi
+
+      - name: Materialize bounded Hub Wire owner fix
+        id: materialize
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          target='shared/code/development/root.mk'
+          old='WIRE_SERVICES := user organization tqd notification assistant'
+          new='WIRE_SERVICES := user organization tqd notification assistant hub'
+
+          if grep -Fxq "$new" "$target"; then
+            echo 'created=false' >> "$GITHUB_OUTPUT"
+            echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo 'Hub Wire owner already materialized'
+            exit 0
+          fi
+
+          test "$(grep -Fxc "$old" "$target")" = 1
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('shared/code/development/root.mk')
+          text = path.read_text()
+          old = 'WIRE_SERVICES := user organization tqd notification assistant\n'
+          new = 'WIRE_SERVICES := user organization tqd notification assistant hub\n'
+          if text.count(old) != 1:
+              raise SystemExit('canonical WIRE_SERVICES line is not unique')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+          git diff --check
+          test "$(git diff --name-only)" = "$target"
+          grep -Fxq "$new" "$target"
+          test "$(grep -Fxc "$new" "$target")" = 1
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          git commit -m 'chore(generate): include hub wire graph'
+          candidate_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${{ github.ref_name }}"
+
+          echo 'created=true' >> "$GITHUB_OUTPUT"
+          echo "candidate_sha=$candidate_sha" >> "$GITHUB_OUTPUT"
+          echo "Materialized F8 candidate: $candidate_sha"
+
+          gh workflow run proof-fresh-infrastructure-r4-f8.yml \
+            --repo datvtph41107/bdspro-backend \
+            --ref "${{ github.ref_name }}"
+
+      - name: Install host runtime prerequisites
+        if: steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Prove Hub Wire generation and build
+        if: steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e hub-service/wire/wire_gen.go
+          cp hub-service/wire/wire.go /tmp/hub-wire-before.go
+
+          make setup
+
+          test -f hub-service/wire/wire_gen.go
+          cmp -s /tmp/hub-wire-before.go hub-service/wire/wire.go || {
+            echo 'Hub wire.go changed during canonical generation' >&2
+            diff -u /tmp/hub-wire-before.go hub-service/wire/wire.go || true
+            exit 3
+          }
+          make -C hub-service build
+          git diff --exit-code -- \
+            shared/code/development/root.mk \
+            shared/code/script.sh \
+            hub-service/wire/wire.go
+          echo 'Hub Wire generation + Hub build PASS'
+
+      - name: Capture F8 evidence
+        if: always() && steps.materialize.outputs.created == 'false'
+        shell: bash
+        run: |
+          mkdir -p /tmp/f8
+          printf '%s\n' "$(git rev-parse HEAD)" > /tmp/f8/HEAD.txt
+          git diff --name-only 6e7e8182aa8469808e835bc60be6cb0fa3a6ae0c HEAD > /tmp/f8/scope.txt
+          cp hub-service/wire/wire_gen.go /tmp/f8/wire_gen.go 2>/dev/null || true
+          git status --short > /tmp/f8/git-status.txt || true
+          sha256sum /tmp/f8/* > /tmp/f8/SHA256SUMS 2>/dev/null || true
+
+      - name: Upload F8 evidence
+        if: always() && steps.materialize.outputs.created == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: f8-hub-wire-${{ github.sha }}
+          path: /tmp/f8
+          if-no-files-found: warn
+          retention-days: 14
