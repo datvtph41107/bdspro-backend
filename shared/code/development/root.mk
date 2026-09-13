@@ -484,6 +484,7 @@ generate-backend:
 	@$(MAKE) -C shared/code buf-payment
 	@$(MAKE) -C shared/code buf-tqd
 	@$(MAKE) -C shared/code buf-notification
+	@$(MAKE) -C shared/code buf-transaction
 	@$(MAKE) -C shared/code buf-file
 	@for service in $(WIRE_SERVICES); do $(MAKE) -C shared/code wire $$service || exit; done
 
