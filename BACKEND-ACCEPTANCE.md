@@ -72,4 +72,13 @@ make verify-migrations
 
 ## Artifact rule
 
-Mọi artifact ZIP final phải có `SOURCE-MANIFEST.sha256` được regenerate sau cùng và checksum ZIP bên ngoài. Nếu source đổi sau khi đóng gói, checksum/manifest cũ không còn đại diện candidate mới.
+Mọi artifact ZIP final phải tạo `SOURCE-MANIFEST.sha256` ngay trước khi đóng gói bằng:
+
+```bash
+bash shared/code/development/source-manifest.sh
+```
+
+Manifest là generated/untracked evidence của đúng Git index: chỉ hash tracked source,
+không đưa `.tmp`, local `.env`, generated protobuf output hay machine cache vào source
+identity. Sau khi ZIP được tạo, lưu checksum ZIP ở bên ngoài artifact. Nếu source đổi
+sau khi đóng gói, checksum/manifest cũ không còn đại diện candidate mới.

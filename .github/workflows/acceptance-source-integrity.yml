@@ -168,13 +168,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          : > SOURCE-MANIFEST.ci.sha256
-          while IFS= read -r -d '' path; do
-            test "$path" = 'SOURCE-MANIFEST.sha256' && continue
-            digest=$(git show ":$path" | sha256sum | awk '{print $1}')
-            printf '%s  %s\n' "$digest" "$path" >> SOURCE-MANIFEST.ci.sha256
-          done < <(git ls-files -z | sort -z)
-          git ls-files -s | grep -v $'\tSOURCE-MANIFEST.sha256$' > SOURCE-MANIFEST.ci.git-index.txt
+          bash shared/code/development/source-manifest.sh SOURCE-MANIFEST.ci.sha256
+          git ls-files -s > SOURCE-MANIFEST.ci.git-index.txt
           sha256sum SOURCE-MANIFEST.ci.sha256 SOURCE-MANIFEST.ci.git-index.txt > SOURCE-MANIFEST.ci.evidence.sha256
 
       - name: Upload source manifest evidence

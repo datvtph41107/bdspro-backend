@@ -16,6 +16,9 @@ __debug_bin*
 # Generated source reconstructed from canonical repository contracts.
 /shared/protobuf/types/
 
+# Generated acceptance evidence. Recreate from the Git index immediately before packaging.
+/SOURCE-MANIFEST.sha256
+
 # Legacy binaries previously written beside source. Canonical builds use bin/.
 /*-service/*-service
 /user-service/user
