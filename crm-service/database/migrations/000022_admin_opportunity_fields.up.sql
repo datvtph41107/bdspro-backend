@@ -1,3 +1,26 @@
+-- Fresh reconstruction baseline formerly materialized by legacy CRM startup AutoMigrate.
+CREATE TABLE IF NOT EXISTS customers (
+    id BIGSERIAL PRIMARY KEY,
+    created_by BIGINT,
+    updated_by BIGINT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ,
+    contact_id BIGINT,
+    source BIGINT,
+    assign_note TEXT,
+    pipeline_id BIGINT,
+    stage_id BIGINT,
+    priority BIGINT,
+    charge_person_id BIGINT,
+    charge_person_type BIGINT,
+    stage_note TEXT,
+    note TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_customers_deleted_at
+    ON customers (deleted_at);
+
 -- IV.10.9 opportunity fields on customers (LeadEntity)
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS code VARCHAR(64);
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS title VARCHAR(255);
