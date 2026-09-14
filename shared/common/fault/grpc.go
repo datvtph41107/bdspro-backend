@@ -24,15 +24,26 @@ func ToGRPC(err error) error {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return status.Error(codes.DeadlineExceeded, "request deadline exceeded")
 	}
+	if failure, ok := As(err); ok {
+		return grpcStatus(failure).Err()
+	}
 	if _, ok := status.FromError(err); ok {
 		return err
 	}
+	return status.Error(codes.Internal, "internal server error")
+}
 
-	failure, ok := As(err)
-	if !ok {
-		return status.Error(codes.Internal, "internal server error")
+// GRPCStatus is a bounded migration bridge. It lets existing handlers that
+// already call status.FromError preserve a typed fault without adding another
+// mapper. New handlers should call ToGRPC at their transport boundary.
+func (e *Error) GRPCStatus() *status.Status {
+	if e == nil {
+		return status.New(codes.Internal, "internal server error")
 	}
+	return grpcStatus(e)
+}
 
+func grpcStatus(failure *Error) *status.Status {
 	message := failure.PublicMessage()
 	if message == "" {
 		message = defaultMessage(failure.Kind())
@@ -47,13 +58,15 @@ func ToGRPC(err error) error {
 		metadata["error_code"] = failure.Code()
 	}
 
-	details := []any{
-		&errdetails.ErrorInfo{
-			Reason:   reasonForKind(failure.Kind()),
-			Domain:   errorDomain,
-			Metadata: metadata,
-		},
+	info := &errdetails.ErrorInfo{
+		Reason:   reasonForKind(failure.Kind()),
+		Domain:   errorDomain,
+		Metadata: metadata,
 	}
+	if updated, detailErr := grpcStatus.WithDetails(info); detailErr == nil {
+		grpcStatus = updated
+	}
+
 	if violations := failure.Violations(); len(violations) > 0 {
 		badRequest := &errdetails.BadRequest{FieldViolations: make([]*errdetails.BadRequest_FieldViolation, 0, len(violations))}
 		for _, violation := range violations {
@@ -62,23 +75,11 @@ func ToGRPC(err error) error {
 				Description: violation.Description,
 			})
 		}
-		details = append(details, badRequest)
-	}
-
-	withDetails := grpcStatus
-	for _, detail := range details {
-		switch value := detail.(type) {
-		case *errdetails.ErrorInfo:
-			if updated, detailErr := withDetails.WithDetails(value); detailErr == nil {
-				withDetails = updated
-			}
-		case *errdetails.BadRequest:
-			if updated, detailErr := withDetails.WithDetails(value); detailErr == nil {
-				withDetails = updated
-			}
+		if updated, detailErr := grpcStatus.WithDetails(badRequest); detailErr == nil {
+			grpcStatus = updated
 		}
 	}
-	return withDetails.Err()
+	return grpcStatus
 }
 
 func grpcCode(kind Kind) codes.Code {
