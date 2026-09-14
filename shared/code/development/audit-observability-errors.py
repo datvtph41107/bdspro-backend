@@ -2,8 +2,8 @@
 """Inventory backend observability/error-response debt without changing source.
 
 This is deliberately a measurement tool first. It emits stable TSV + JSON
-artifacts that can later become a ratchet guard after each migration category
-has an explicit owner and zero/approved baseline.
+artifacts and supports narrow zero-debt ratchets only after a migration scope
+has a canonical owner and has actually reached zero.
 """
 
 from __future__ import annotations
@@ -37,6 +37,12 @@ SKIP_SUFFIXES = (
     ".pb.go",
     ".pb.gw.go",
     "wire_gen.go",
+)
+
+# Ratchets are intentionally narrow. Do not baseline arbitrary legacy debt here:
+# add a scope only after its canonical migration has reached zero.
+ZERO_RATCHETS = (
+    ("go.direct_http_error_writer", "gateway-service"),
 )
 
 
@@ -181,6 +187,27 @@ def excerpt_at(text: str, line: int) -> str:
     return " ".join(lines[line - 1].strip().split())[:240]
 
 
+def match_is_comment(path: Path, text: str, index: int) -> bool:
+    """Ignore comment-only historical examples while preserving source line numbers.
+
+    This is intentionally conservative rather than a language parser. It removes
+    the common false positives produced by commented-out Go/Python statements;
+    executable-looking text in strings is still reviewable inventory.
+    """
+    line_start = text.rfind("\n", 0, index) + 1
+    prefix = text[line_start:index].lstrip()
+
+    if path.suffix == ".go":
+        if prefix.startswith("//"):
+            return True
+        if text.rfind("/*", 0, index) > text.rfind("*/", 0, index):
+            return True
+    elif path.suffix == ".py" and prefix.startswith("#"):
+        return True
+
+    return False
+
+
 def scan() -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     for path in sorted(ROOT.rglob("*")):
@@ -196,6 +223,8 @@ def scan() -> list[dict[str, object]]:
                 continue
             seen_lines: set[int] = set()
             for match in rule.pattern.finditer(text):
+                if match_is_comment(path, text, match.start()):
+                    continue
                 line = line_number(text, match.start())
                 if line in seen_lines:
                     continue
@@ -225,6 +254,20 @@ def write_tsv(path: Path, findings: list[dict[str, object]]) -> None:
             )
 
 
+def ratchet_counts(findings: list[dict[str, object]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for category, owner in ZERO_RATCHETS:
+        key = f"{category}@{owner}"
+        counts[key] = sum(
+            1
+            for item in findings
+            if item["severity"] == "debt"
+            and item["category"] == category
+            and item["owner"] == owner
+        )
+    return counts
+
+
 def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
     by_category = collections.Counter(str(item["category"]) for item in findings)
     debt_by_category = collections.Counter(
@@ -243,12 +286,14 @@ def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
         "debt_by_category": dict(sorted(debt_by_category.items())),
         "by_owner": dict(sorted(by_owner.items())),
         "debt_by_owner": dict(sorted(debt_by_owner.items())),
+        "ratchets": ratchet_counts(findings),
         "policy": {
             "canonical_go_logging_api": "log/slog",
             "canonical_go_logging_owner": "shared/common/logging",
             "canonical_error_identity_owner": "shared/common/fault",
             "canonical_gateway_error_serializer": "gateway-service/internal/httpresponse.WriteProblem",
             "legacy_findings_fail_ci": False,
+            "ratchets_fail_ci": True,
         },
     }
 
@@ -263,6 +308,9 @@ def print_summary(summary: dict[str, object]) -> None:
     print("\nDebt by owner:")
     for owner, count in summary["debt_by_owner"].items():
         print(f"  {owner:42} {count:5}")
+    print("\nZero-debt ratchets:")
+    for scope, count in summary["ratchets"].items():
+        print(f"  {scope:60} {count:5}")
 
 
 def main() -> int:
@@ -270,6 +318,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
     parser.add_argument("--fail-on-debt", action="store_true")
+    parser.add_argument("--enforce-ratchets", action="store_true")
     args = parser.parse_args()
 
     findings = scan()
@@ -280,6 +329,14 @@ def main() -> int:
     print_summary(summary)
     print(f"\nTSV:     {args.output.relative_to(ROOT)}")
     print(f"Summary: {args.summary.relative_to(ROOT)}")
+
+    if args.enforce_ratchets:
+        violations = {scope: count for scope, count in summary["ratchets"].items() if count}
+        if violations:
+            print("\nRatchet violation(s):")
+            for scope, count in violations.items():
+                print(f"  {scope}: {count}")
+            return 1
 
     if args.fail_on_debt and summary["total_debt_findings"]:
         return 1
