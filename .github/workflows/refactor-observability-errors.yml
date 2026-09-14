@@ -8,6 +8,7 @@ on:
     paths:
       - 'shared/common/fault/**'
       - 'shared/common/logging/**'
+      - 'shared/code/development/audit-observability-errors.py'
       - 'gateway-service/**'
       - 'user-service/**'
       - '.github/workflows/refactor-observability-errors.yml'
@@ -15,7 +16,27 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: refactor-observability-errors-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build full-repository migration inventory
+        run: python3 shared/code/development/audit-observability-errors.py
+      - name: Upload migration inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: observability-error-inventory-${{ github.sha }}
+          path: |
+            .tmp/observability-errors/inventory.tsv
+            .tmp/observability-errors/summary.json
+          if-no-files-found: error
+          retention-days: 30
+
   common-contracts:
     runs-on: ubuntu-latest
     steps:
