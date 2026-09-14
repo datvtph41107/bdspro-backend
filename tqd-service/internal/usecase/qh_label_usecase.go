@@ -420,10 +420,10 @@ func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLa
 			return nil, fmt.Errorf("get source label %d: %w", id, err)
 		}
 		if lbl == nil {
-			return nil, fmt.Errorf("source label %d not found", id)
+			return nil, qhLabelSourceNotFound(id)
 		}
 		if lbl.LayerID != layerID {
-			return nil, fmt.Errorf("source label %d belongs to another layer", id)
+			return nil, qhLabelSourceLayerMismatch(id, layerID)
 		}
 	}
 
@@ -433,7 +433,7 @@ func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLa
 	}
 	if byName != nil {
 		if _, inSources := seen[byName.ID]; !inSources {
-			return nil, fmt.Errorf("label name %q already exists in layer", name)
+			return nil, qhLabelNameConflict(layerID)
 		}
 	}
 
