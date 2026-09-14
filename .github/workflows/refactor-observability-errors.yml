@@ -35,6 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install repository setup prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
       - name: Materialize canonical toolchain and generated contracts
         run: make setup
       - name: Test gateway response and observability boundaries
@@ -53,6 +57,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install repository setup prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
       - name: Materialize canonical toolchain and generated contracts
         run: make setup
       - name: Test typed PlanVersion faults through gRPC boundary
