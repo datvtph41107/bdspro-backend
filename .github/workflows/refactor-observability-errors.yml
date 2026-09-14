@@ -91,10 +91,10 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/admin \
             ./infra/handler/grpc
-      - name: Test TQD typed authority faults through gRPC boundary
+      - name: Test TQD typed faults through gRPC boundary
         working-directory: tqd-service
         env:
           GOWORK: 'off'
         run: |
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^TestQHAuthorityIssuring'
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^TestQHAuthorityIssuring'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^(TestQHAuthorityIssuring|TestQHLayerFamily)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^(TestQHAuthorityIssuring|TestQHLayerFamily)'
