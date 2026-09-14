@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
+	"common/fault"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -362,16 +363,7 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 
 	result, err := h.labelUsecase.Merge(ctx, req.LayerId, req.SourceLabelIds, label)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "another layer") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, qhLabelError(err)
 	}
 
 	t := time.Now()
@@ -531,6 +523,21 @@ func (h *QHLabelGrpcHandler) GetClientLabel(ctx context.Context, req *tqdpb.GetL
 // =====================================================
 // HELPER FUNCTIONS
 // =====================================================
+
+func qhLabelError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
+	}
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.qh_label.internal",
+		"label operation failed",
+	))
+}
 
 func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {
 	if l == nil {
