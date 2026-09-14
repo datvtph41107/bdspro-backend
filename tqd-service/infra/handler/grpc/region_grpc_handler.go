@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
+	"common/fault"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -42,6 +43,23 @@ func NewRegionGrpcHandler(
 		regionMapper:  mapper.NewRegionMapper(),
 		SyncProvider:  syncProvider,
 	}
+}
+
+func mapRegionError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
+	}
+
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.region.internal",
+		"region operation failed",
+	))
 }
 
 func buildAdminRegionFilter(
@@ -126,16 +144,15 @@ func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateR
 
 	log.Printf("[CreateRegion] LayerID: %d, Name: %s", req.LayerId, req.Name)
 
-	region, err := h.regionUsecase.Create(ctx, req.LayerId, req.Name, req.Geometry, req.LabelId)
+	region, err := h.regionUsecase.Create(
+		ctx,
+		req.LayerId,
+		req.Name,
+		req.Geometry,
+		req.LabelId,
+	)
 	if err != nil {
-		if errors.Is(err, usecase.ErrLayerNotFound) {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		msg := err.Error()
-		if strings.Contains(msg, "create region failed") || strings.Contains(msg, "reload region failed") {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, mapRegionError(err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.Internal, "create region returned nil")
@@ -181,14 +198,7 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 
 	region, err := h.regionUsecase.Update(ctx, patch)
 	if err != nil {
-		msg := err.Error()
-		if strings.Contains(msg, "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(msg, "update region failed") {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, mapRegionError(err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.Internal, "update region returned nil")
@@ -327,12 +337,13 @@ func (h *RegionGrpcHandler) SyncRegion(ctx context.Context, req *tqdpb.SyncRegio
 
 	log.Printf("[SyncRegion] LayerID: %d, LabelID: %d", req.LayerId, req.LabelId)
 
-	result, err := h.regionUsecase.SyncRegion(ctx, req.LayerId, req.LabelId)
+	result, err := h.regionUsecase.SyncRegion(
+		ctx,
+		req.LayerId,
+		req.LabelId,
+	)
 	if err != nil {
-		if errors.Is(err, usecase.ErrLayerNotFound) || strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapRegionError(err)
 	}
 
 	t := time.Now()

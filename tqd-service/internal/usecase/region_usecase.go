@@ -105,33 +105,46 @@ func extractGeometryObjectFromBytes(raw []byte) (map[string]interface{}, error) 
 	}
 }
 
-func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name string, geometryBytes []byte, labelID uint64) (*qh_domain.QHRegion, error) {
+func (u *regionUsecaseImpl) Create(
+	ctx context.Context,
+	layerID uint64,
+	name string,
+	geometryBytes []byte,
+	labelID uint64,
+) (*qh_domain.QHRegion, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, regionLayerIDRequired()
 	}
+
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return nil, errors.New("name is required")
+		return nil, regionNameRequired()
 	}
+
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
-		return nil, fmt.Errorf("get layer failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.layer_lookup_failed",
+		)
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
+		return nil, regionLayerNotFound(layerID)
 	}
 
 	geomObj, err := extractGeometryObjectFromBytes(geometryBytes)
 	if err != nil {
-		return nil, err
+		return nil, regionGeometryInvalid(err)
 	}
+
 	geomBytes, err := geometry.ToMultiPolygonGeoJSONBytes(geomObj)
 	if err != nil {
-		return nil, err
+		return nil, regionGeometryInvalid(err)
 	}
+
 	geoInfo, err := geometry.ParseGeometry(string(geomBytes))
 	if err != nil {
-		return nil, fmt.Errorf("invalid geometry: %w", err)
+		return nil, regionGeometryInvalid(err)
 	}
 
 	areaSqm := 0.0
@@ -139,7 +152,12 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 		areaSqm = geoInfo.Area
 	}
 
-	propsBytes, _ := json.Marshal(map[string]interface{}{"source": "admin_create"})
+	propsBytes, _ := json.Marshal(
+		map[string]interface{}{
+			"source": "admin_create",
+		},
+	)
+
 	region := &qh_domain.QHRegion{
 		LayerID:            layerID,
 		Name:               name,
@@ -154,82 +172,156 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 		Version:            1,
 		IsLatest:           true,
 	}
+
 	if err := u.regionRepo.Create(ctx, region); err != nil {
-		return nil, fmt.Errorf("create region failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.create_failed",
+		)
 	}
+
 	if region.ID == 0 {
-		return nil, errors.New("create region failed: missing id")
+		return nil, regionInternal(
+			nil,
+			"tqd.region.create_failed",
+		)
 	}
+
 	created, err := u.regionRepo.GetByID(ctx, region.ID)
 	if err != nil {
-		return nil, fmt.Errorf("reload region failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.reload_failed",
+		)
 	}
+	if created == nil {
+		return nil, regionInternal(
+			nil,
+			"tqd.region.reload_failed",
+		)
+	}
+
 	return created, nil
 }
 
-func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch) (*qh_domain.QHRegion, error) {
+func (u *regionUsecaseImpl) Update(
+	ctx context.Context,
+	patch RegionUpdatePatch,
+) (*qh_domain.QHRegion, error) {
 	if patch.RegionID == 0 {
-		return nil, errors.New("id is required")
-	}
-	has := patch.Name != nil || patch.DisplayName != nil || patch.Description != nil ||
-		patch.Status != nil || patch.LabelID != nil
-	if !has {
-		return nil, errors.New("at least one field to update is required")
+		return nil, regionIDRequired()
 	}
 
-	region, err := u.regionRepo.GetByID(ctx, patch.RegionID)
+	has := patch.Name != nil ||
+		patch.DisplayName != nil ||
+		patch.Description != nil ||
+		patch.Status != nil ||
+		patch.LabelID != nil
+
+	if !has {
+		return nil, regionUpdateRequired()
+	}
+
+	region, err := u.regionRepo.GetByID(
+		ctx,
+		patch.RegionID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("get region failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.lookup_failed",
+		)
 	}
 	if region == nil {
-		return nil, fmt.Errorf("region %d not found", patch.RegionID)
+		return nil, regionNotFound(patch.RegionID)
 	}
 
 	if patch.Name != nil {
-		v := strings.TrimSpace(*patch.Name)
-		if v == "" {
-			return nil, errors.New("name cannot be empty")
+		value := strings.TrimSpace(*patch.Name)
+		if value == "" {
+			return nil, regionNameEmpty()
 		}
-		region.Name = v
+		region.Name = value
 	}
+
 	if patch.DisplayName != nil {
-		region.DisplayName = strings.TrimSpace(*patch.DisplayName)
+		region.DisplayName = strings.TrimSpace(
+			*patch.DisplayName,
+		)
 	}
+
 	if patch.Description != nil {
 		region.Description = *patch.Description
 	}
+
 	if patch.Status != nil {
 		if !patch.Status.IsValid() {
-			return nil, fmt.Errorf("invalid status: %d", *patch.Status)
+			return nil, regionStatusInvalid(
+				uint32(*patch.Status),
+			)
 		}
 		region.Status = *patch.Status
 	}
+
 	if patch.LabelID != nil {
-		lid := *patch.LabelID
-		if lid == 0 {
+		labelID := *patch.LabelID
+
+		if labelID == 0 {
 			region.LabelID = nil
 		} else {
-			label, lerr := u.labelRepo.GetByID(ctx, lid)
-			if lerr != nil {
-				return nil, fmt.Errorf("get label failed: %w", lerr)
+			label, lookupErr := u.labelRepo.GetByID(
+				ctx,
+				labelID,
+			)
+			if lookupErr != nil {
+				return nil, regionInternal(
+					lookupErr,
+					"tqd.region.label_lookup_failed",
+				)
 			}
 			if label == nil {
-				return nil, fmt.Errorf("label %d not found", lid)
+				return nil, regionLabelNotFound(
+					labelID,
+				)
 			}
-			// if label.LayerID != region.LayerID {
-			// 	return nil, errors.New("label does not belong to region layer")
-			// }
-			region.LabelID = &lid
+
+			region.LabelID = &labelID
 		}
 	}
 
 	if err := u.regionRepo.Update(ctx, region); err != nil {
-		return nil, fmt.Errorf("update region failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.update_failed",
+		)
 	}
+
 	if region.LabelID != nil {
-		u.labelRepo.EnsureLayerLink(ctx, *region.LabelID, region.LayerID)
+		u.labelRepo.EnsureLayerLink(
+			ctx,
+			*region.LabelID,
+			region.LayerID,
+		)
 	}
-	return u.regionRepo.GetByID(ctx, patch.RegionID)
+
+	updated, err := u.regionRepo.GetByID(
+		ctx,
+		patch.RegionID,
+	)
+	if err != nil {
+		return nil, regionInternal(
+			err,
+			"tqd.region.reload_failed",
+		)
+	}
+	if updated == nil {
+		return nil, regionInternal(
+			nil,
+			"tqd.region.reload_failed",
+		)
+	}
+
+	return updated, nil
 }
 
 func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.QHRegion, error) {
@@ -274,41 +366,71 @@ func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 	return u.regionRepo.Delete(ctx, id)
 }
 
-func (u *regionUsecaseImpl) SyncRegion(ctx context.Context, layerID, labelID uint64) (*RegionSyncResult, error) {
+func (u *regionUsecaseImpl) SyncRegion(
+	ctx context.Context,
+	layerID uint64,
+	labelID uint64,
+) (*RegionSyncResult, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, regionLayerIDRequired()
 	}
 	if labelID == 0 {
-		return nil, errors.New("labelId is required")
+		return nil, regionLabelIDRequired()
 	}
 
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
-		return nil, fmt.Errorf("get layer failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.layer_lookup_failed",
+		)
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
+		return nil, regionLayerNotFound(layerID)
 	}
 
 	label, err := u.labelRepo.GetByID(ctx, labelID)
 	if err != nil {
-		return nil, fmt.Errorf("get label failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.label_lookup_failed",
+		)
 	}
 	if label == nil {
-		return nil, fmt.Errorf("label %d not found", labelID)
+		return nil, regionLabelNotFound(labelID)
 	}
 
-	ref, err := u.regionRepo.GetSyncReferenceByLayerLabel(ctx, layerID, labelID)
+	ref, err := u.regionRepo.GetSyncReferenceByLayerLabel(
+		ctx,
+		layerID,
+		labelID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("get region sync reference failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.sync_reference_lookup_failed",
+		)
 	}
 	if ref == nil {
-		return nil, fmt.Errorf("legend with landUse not found for layerId=%d labelId=%d", layerID, labelID)
+		return nil, regionSyncReferenceNotFound(
+			layerID,
+			labelID,
+		)
 	}
 
-	total, err := u.regionRepo.SyncLandUseAndLegendByLayerLabel(ctx, layerID, labelID, ref.LandUseID, ref.LegendID)
+	total, err :=
+		u.regionRepo.SyncLandUseAndLegendByLayerLabel(
+			ctx,
+			layerID,
+			labelID,
+			ref.LandUseID,
+			ref.LegendID,
+		)
 	if err != nil {
-		return nil, fmt.Errorf("sync region failed: %w", err)
+		return nil, regionInternal(
+			err,
+			"tqd.region.sync_failed",
+		)
 	}
 
 	return &RegionSyncResult{
