@@ -174,7 +174,7 @@ func run(parent context.Context) error {
 
 	paymentHandler := wallethandler.NewPaymentHandler(paymentUsecase, paymentDashboardJob, settlementService, cfg.Provider.SepayAPIKey)
 	commerceHandler := commercegrpc.NewCommerceHandler(orderService, attemptService)
-	commercialProfileHandler := commercialprofilegrpc.NewCommercialProfileHandler(commercialprofileusecase.NewService(store))
+	commercialProfileHandler := commercialprofilegrpc.New(commercialprofileusecase.NewService(store))
 	adminCommerceHandler := commercegrpc.NewAdminCommerceHandler(adminusecase.NewService(store, settlementService, now), authClient)
 
 	grpcServer, listener, err := buildServer(
