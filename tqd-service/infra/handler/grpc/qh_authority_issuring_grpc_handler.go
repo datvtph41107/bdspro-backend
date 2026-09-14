@@ -8,8 +8,6 @@ import (
 	"common/fault"
 	_utils "common/utils"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	tqdpb "pb/types/tqd"
@@ -152,7 +150,12 @@ func qhAuthorityIssuringError(err error) error {
 	if _, ok := fault.As(err); ok {
 		return fault.ToGRPC(err)
 	}
-	return status.Error(codes.Internal, "authority issuring operation failed")
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.qh_authority_issuring.internal",
+		"authority issuring operation failed",
+	))
 }
 
 func toQHAuthorityIssuringPB(e *qh_domain.QHAuthorityIssuring) *tqdpb.QHAuthorityIssuringResponse {
