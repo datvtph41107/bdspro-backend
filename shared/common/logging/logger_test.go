@@ -48,7 +48,8 @@ func TestFileRoutingUsesOneRecordSchemaWithChannelProjections(t *testing.T) {
 	for _, required := range []string{
 		`"service.name":"user-service"`,
 		`"service.namespace":"bdspro"`,
-		`"deployment.environment":"test"`,
+		`"service.instance.id":"instance-1"`,
+		`"deployment.environment.name":"test"`,
 		`"msg":"http request completed"`,
 		`"request_id":"req-123"`,
 		`"password":"[REDACTED]"`,
@@ -56,6 +57,9 @@ func TestFileRoutingUsesOneRecordSchemaWithChannelProjections(t *testing.T) {
 		if !strings.Contains(runtime, required) {
 			t.Fatalf("runtime log missing %q:\n%s", required, runtime)
 		}
+	}
+	if strings.Contains(runtime, `"deployment.environment":`) {
+		t.Fatalf("runtime log contains deprecated deployment.environment key: %s", runtime)
 	}
 	if strings.Contains(runtime, "must-not-leak") {
 		t.Fatalf("runtime log leaked secret: %s", runtime)
