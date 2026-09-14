@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"common/fault"
+
 	"tqd/internal/domain/discovery/model"
 	"tqd/internal/usecase/discovery/application"
 
@@ -24,14 +26,34 @@ func (h *Handler) Identify(c *gin.Context) {
 	}
 	response, err := h.service.Identify(c.Request.Context(), req)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "invalid latitude") {
-			status = http.StatusBadRequest
-		}
-		c.JSON(status, gin.H{"code": "DISCOVERY_IDENTIFY_FAILED", "message": err.Error()})
+		statusCode, payload := identifyHTTPProblem(err)
+		c.JSON(statusCode, payload)
 		return
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+func identifyHTTPProblem(err error) (int, gin.H) {
+	failure, ok := fault.As(err)
+	if !ok {
+		failure = fault.Wrap(
+			err,
+			fault.KindInternal,
+			"tqd.discovery.identify_internal",
+			"discovery identify failed",
+		)
+	}
+
+	statusCode := http.StatusInternalServerError
+	if failure.Kind() == fault.KindValidation {
+		statusCode = http.StatusBadRequest
+	}
+
+	return statusCode, gin.H{
+		"code":       "DISCOVERY_IDENTIFY_FAILED",
+		"message":    failure.PublicMessage(),
+		"error_code": failure.Code(),
+	}
 }
 
 func parseViewport(raw string) (*domain.Bounds, error) {

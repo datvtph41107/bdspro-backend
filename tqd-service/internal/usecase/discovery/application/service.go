@@ -31,7 +31,7 @@ func NewService(repo ports.Repository) *Service { return &Service{repo: repo} }
 
 func validatePoint(p domain.Point) error {
 	if p.Latitude < -90 || p.Latitude > 90 || p.Longitude < -180 || p.Longitude > 180 {
-		return fmt.Errorf("invalid latitude/longitude")
+		return invalidCoordinateFault()
 	}
 	return nil
 }
