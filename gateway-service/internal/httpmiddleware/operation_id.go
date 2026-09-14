@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	_httpresponse "gateway/internal/httpresponse"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,10 +41,18 @@ func operationID(prepare operationIDPreparer) gin.HandlerFunc {
 }
 
 func abortOperationIDFailure(ctx *gin.Context, err error) {
-	switch {
-	case errors.Is(err, _request.ErrInvalidOperationID), errors.Is(err, _request.ErrMultipleOperationIDs):
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid X-Operation-ID header"})
-	default:
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	problem := _httpresponse.NewProblem(
+		http.StatusInternalServerError,
+		"request.operation_id.unavailable",
+		"internal server error",
+	)
+	if errors.Is(err, _request.ErrInvalidOperationID) || errors.Is(err, _request.ErrMultipleOperationIDs) {
+		problem = _httpresponse.NewProblem(
+			http.StatusBadRequest,
+			"request.operation_id.invalid",
+			"invalid X-Operation-ID header",
+		)
 	}
+	_httpresponse.WriteProblem(ctx.Request.Context(), ctx.Writer, problem)
+	ctx.Abort()
 }
