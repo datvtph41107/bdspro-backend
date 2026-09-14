@@ -13,15 +13,16 @@ import (
 type Kind string
 
 const (
-	KindValidation       Kind = "validation"
-	KindUnauthenticated  Kind = "unauthenticated"
-	KindPermissionDenied Kind = "permission_denied"
-	KindNotFound         Kind = "not_found"
-	KindConflict         Kind = "conflict"
-	KindPrecondition     Kind = "precondition"
+	KindValidation        Kind = "validation"
+	KindUnauthenticated   Kind = "unauthenticated"
+	KindPermissionDenied  Kind = "permission_denied"
+	KindNotFound          Kind = "not_found"
+	KindConflict          Kind = "conflict"
+	KindPrecondition      Kind = "precondition"
+	KindAborted           Kind = "aborted"
 	KindResourceExhausted Kind = "resource_exhausted"
-	KindUnavailable      Kind = "unavailable"
-	KindInternal         Kind = "internal"
+	KindUnavailable       Kind = "unavailable"
+	KindInternal          Kind = "internal"
 )
 
 type FieldViolation struct {
