@@ -33,6 +33,42 @@ type Problem struct {
 	Metadata    map[string]string `json:"metadata,omitempty"`
 }
 
+// NewProblem constructs the canonical public error identity. Callers supply
+// semantics (status, stable code and public detail); this package owns the
+// RFC 9457 shape and type URI convention.
+func NewProblem(status int, code, detail string) Problem {
+	return Problem{
+		Type:   TypeForCode(code),
+		Title:  http.StatusText(status),
+		Status: status,
+		Detail: strings.TrimSpace(detail),
+		Code:   strings.TrimSpace(code),
+	}
+}
+
+// TypeForCode maps a stable application error code to the repository-owned
+// problem type namespace. Unknown/empty codes intentionally fall back to
+// about:blank instead of inventing an unstable identifier.
+func TypeForCode(code string) string {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return "about:blank"
+	}
+	var result strings.Builder
+	for _, value := range code {
+		switch {
+		case value >= 'a' && value <= 'z',
+			value >= 'A' && value <= 'Z',
+			value >= '0' && value <= '9',
+			value == '.', value == '-', value == '_', value == ':':
+			result.WriteRune(value)
+		default:
+			result.WriteByte('-')
+		}
+	}
+	return "urn:qhpro:error:" + result.String()
+}
+
 // WriteProblem is the only canonical HTTP problem serializer. Callers decide
 // semantics; this boundary owns correlation enrichment, media type and status.
 func WriteProblem(ctx context.Context, w http.ResponseWriter, problem Problem) {
@@ -40,7 +76,7 @@ func WriteProblem(ctx context.Context, w http.ResponseWriter, problem Problem) {
 		problem.Status = http.StatusInternalServerError
 	}
 	if strings.TrimSpace(problem.Type) == "" {
-		problem.Type = "about:blank"
+		problem.Type = TypeForCode(problem.Code)
 	}
 	if strings.TrimSpace(problem.Title) == "" {
 		problem.Title = http.StatusText(problem.Status)
