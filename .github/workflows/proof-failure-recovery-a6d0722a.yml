@@ -32,14 +32,18 @@ jobs:
           canonical=a6d0722a36090148829ca5ff02f03f409d753bad
           workflow=.github/workflows/proof-failure-recovery-a6d0722a.yml
           recovery=shared/code/development/recovery-notification-broker.sh
+          payment_runtime=payment-service/cmd/grpc/runtime.go
+          payment_outbox=payment-service/worker/outbox.go
 
           test "$(git merge-base "$canonical" HEAD)" = "$canonical"
-          test "$(git diff --name-only "$canonical" HEAD | sort)" = "$(printf '%s\n' "$workflow" "$recovery" | sort)"
+          test "$(git diff --name-only "$canonical" HEAD | sort)" = "$(printf '%s\n' "$workflow" "$recovery" "$payment_runtime" "$payment_outbox" | sort)"
           git diff --check "$canonical" HEAD
           test "$(git diff --name-only "$canonical" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
           test "$(git hash-object shared/code/development/root.mk)" = 'a7ec870107c6d68807006c02a9d270ef14133429'
           test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'eca73df300fd2abe56f1b34fcc5fce40430dd541'
+          test "$(git hash-object payment-service/cmd/grpc/runtime.go)" = 'cdba8aaacbb9b943d70b1e0679ce2f8bb91cb356'
+          test "$(git hash-object payment-service/worker/outbox.go)" = '340b03a8bb06677ceccdc25389dc3c06adae4410'
           test "$(git hash-object shared/code/development/native-stack.sh)" = 'b1d2444dba9e1902052764e1d6429ea745f2210b'
           test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
           grep -Fq 'runtime-notification-broker-recovery: env-check' shared/code/development/root.mk
@@ -78,13 +82,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          before_pid="$(bash shared/code/development/native-stack.sh pid notification)"
-          test -n "$before_pid"
+          notification_before_pid="$(bash shared/code/development/native-stack.sh pid notification)"
+          payment_before_pid="$(bash shared/code/development/native-stack.sh pid payment)"
+          test -n "$notification_before_pid"
+          test -n "$payment_before_pid"
           make runtime-notification-broker-recovery 2>&1 | tee /tmp/recovery-broker.log
-          after_pid="$(bash shared/code/development/native-stack.sh pid notification)"
-          test "$after_pid" = "$before_pid"
+          notification_after_pid="$(bash shared/code/development/native-stack.sh pid notification)"
+          payment_after_pid="$(bash shared/code/development/native-stack.sh pid payment)"
+          test "$notification_after_pid" = "$notification_before_pid"
+          test "$payment_after_pid" = "$payment_before_pid"
+          kill -0 "$payment_after_pid"
           grep -Fq 'Notification broker recovery PASS (native API stayed alive; consumer reconnected)' /tmp/recovery-broker.log
-          echo "Notification PID preserved across RabbitMQ restart: $before_pid"
+          echo "Notification PID preserved across RabbitMQ restart: $notification_before_pid"
+          echo "Payment PID preserved across RabbitMQ restart: $payment_before_pid"
 
       - name: Prove durable event flow after broker recovery
         shell: bash
