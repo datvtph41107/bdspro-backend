@@ -130,9 +130,9 @@ func New(cfg Config) (*slog.Logger, func() error, error) {
 				return nil, nil, fmt.Errorf("open %s log: %w", channel, openErr)
 			}
 			closers = append(closers, channelFile)
-			handlers = append(handlers, filterHandler{
+			handlers = append(handlers, channelProjectionHandler{
 				handler: slog.NewJSONHandler(channelFile, options),
-				accept:  channelFilter(channel),
+				target:  channel,
 			})
 		}
 
