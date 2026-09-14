@@ -38,7 +38,7 @@ func TestQHAuthorityIssuringCreateReturnsCanonicalValidationFault(t *testing.T) 
 
 func TestQHAuthorityIssuringCreateReturnsCanonicalConflictFault(t *testing.T) {
 	service := NewQHAuthorityIssuringUsecase(&qhAuthorityIssuringRepoStub{
-		byCode: &qh_domain.QHAuthorityIssuring{ID: 2, Code: "dup"},
+		byCode: &qh_domain.QHAuthorityIssuring{Code: "dup"},
 	})
 	_, err := service.Create(context.Background(), &qh_domain.QHAuthorityIssuring{Name: "Authority", Code: "dup"})
 	assertQHAuthorityIssuringFault(t, err, fault.KindConflict, "tqd.qh_authority_issuring.code_conflict")
