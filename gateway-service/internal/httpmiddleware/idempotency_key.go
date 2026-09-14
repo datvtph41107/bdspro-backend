@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	_httpresponse "gateway/internal/httpresponse"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,12 +32,20 @@ func IdempotencyKey() gin.HandlerFunc {
 			}
 			err = bindErr
 		}
-		statusCode := http.StatusInternalServerError
-		message := idempotencyKeyUnavailableMessage
+
+		problem := _httpresponse.NewProblem(
+			http.StatusInternalServerError,
+			"request.idempotency_key.unavailable",
+			idempotencyKeyUnavailableMessage,
+		)
 		if errors.Is(err, _request.ErrInvalidIdempotencyKey) || errors.Is(err, _request.ErrMultipleIdempotencyKeys) {
-			statusCode = http.StatusBadRequest
-			message = invalidIdempotencyKeyMessage
+			problem = _httpresponse.NewProblem(
+				http.StatusBadRequest,
+				"request.idempotency_key.invalid",
+				invalidIdempotencyKeyMessage,
+			)
 		}
-		ctx.AbortWithStatusJSON(statusCode, gin.H{"error": message})
+		_httpresponse.WriteProblem(ctx.Request.Context(), ctx.Writer, problem)
+		ctx.Abort()
 	}
 }
