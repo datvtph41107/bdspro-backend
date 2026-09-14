@@ -2,9 +2,9 @@ package handler_grpc
 
 import (
 	"context"
-	"strings"
 
 	_dto "common/domain/dto"
+	"common/fault"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -260,17 +260,18 @@ func (h *QHLayerLegendGrpcHandler) GetAllLayerLegends(ctx context.Context, req *
 }
 
 func mapLegendError(err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "already has legend") {
-		return status.Error(codes.AlreadyExists, msg)
+	if err == nil {
+		return nil
 	}
-	if strings.Contains(msg, "not found") {
-		return status.Error(codes.NotFound, msg)
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
 	}
-	if strings.Contains(msg, "required") || strings.Contains(msg, "invalid") {
-		return status.Error(codes.InvalidArgument, msg)
-	}
-	return status.Error(codes.Internal, msg)
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.legend.internal",
+		"legend operation failed",
+	))
 }
 
 func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse {

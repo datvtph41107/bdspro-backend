@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -63,24 +62,24 @@ func NewQHLayerLegendUsecase(
 
 func (u *qhLayerLegendUsecase) validateLayerAndLabel(ctx context.Context, layerID, labelID uint64) error {
 	if layerID == 0 {
-		return errors.New("layerId is required")
+		return qhLegendLayerIDRequired()
 	}
 	if labelID == 0 {
-		return errors.New("labelId is required")
+		return qhLegendLabelIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return fmt.Errorf("layer %d not found", layerID)
+		return qhLegendLayerNotFound(layerID)
 	}
 	label, err := u.labelRepo.GetByID(ctx, labelID)
 	if err != nil {
 		return fmt.Errorf("get label: %w", err)
 	}
 	if label == nil || label.DeletedAt != nil {
-		return fmt.Errorf("label %d not found", labelID)
+		return qhLegendLabelNotFound(labelID)
 	}
 	return nil
 }
@@ -91,7 +90,7 @@ func (u *qhLayerLegendUsecase) checkDuplicate(ctx context.Context, layerID, labe
 		return fmt.Errorf("check duplicate: %w", err)
 	}
 	if dup != nil && dup.ID != excludeID {
-		return fmt.Errorf("layer %d already has legend for label %d", layerID, labelID)
+		return qhLegendDuplicate(layerID, labelID)
 	}
 	return nil
 }
@@ -112,17 +111,17 @@ func (u *qhLayerLegendUsecase) validateLandUseGroupID(ctx context.Context, group
 
 func (u *qhLayerLegendUsecase) validateLegendTypes(legendType, geometryType string) error {
 	if legendType != "" && !qh_domain.IsValidLegendType(legendType) {
-		return fmt.Errorf("invalid legendType: %s", legendType)
+		return qhLegendInvalidLegendType(legendType)
 	}
 	if geometryType != "" && !qh_domain.IsValidGeometryType(geometryType) {
-		return fmt.Errorf("invalid geometryType: %s", geometryType)
+		return qhLegendInvalidGeometryType(geometryType)
 	}
 	return nil
 }
 
 func (u *qhLayerLegendUsecase) Create(ctx context.Context, row *qh_domain.QHLayerLegend) (*qh_domain.QHLayerLegend, error) {
 	if row == nil {
-		return nil, errors.New("payload is required")
+		return nil, qhLegendPayloadRequired()
 	}
 	// if err := u.validateLayerAndLabel(ctx, row.LayerID, row.LabelID); err != nil {
 	// 	return nil, err
@@ -149,14 +148,14 @@ func (u *qhLayerLegendUsecase) Create(ctx context.Context, row *qh_domain.QHLaye
 
 func (u *qhLayerLegendUsecase) BatchCreate(ctx context.Context, layerID uint64, items []qh_domain.QHLayerLegend) ([]qh_domain.QHLayerLegend, []uint64, error) {
 	if layerID == 0 {
-		return nil, nil, errors.New("layerId is required")
+		return nil, nil, qhLegendLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return nil, nil, fmt.Errorf("layer %d not found", layerID)
+		return nil, nil, qhLegendLayerNotFound(layerID)
 	}
 
 	var created []qh_domain.QHLayerLegend
@@ -218,17 +217,17 @@ func (u *qhLayerLegendUsecase) BatchCreate(ctx context.Context, layerID uint64, 
 
 func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLayerLegendUpdateInput) (*qh_domain.QHLayerLegend, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, qhLegendIDRequired()
 	}
 	if in == nil {
-		return nil, errors.New("payload is required")
+		return nil, qhLegendPayloadRequired()
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLegendRecordNotFound(id)
 	}
 
 	layerID := existing.LayerID
@@ -260,13 +259,13 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 	}
 	if in.LegendType != nil {
 		if !qh_domain.IsValidLegendType(*in.LegendType) {
-			return nil, fmt.Errorf("invalid legendType: %s", *in.LegendType)
+			return nil, qhLegendInvalidLegendType(*in.LegendType)
 		}
 		existing.LegendType = *in.LegendType
 	}
 	if in.GeometryType != nil {
 		if !qh_domain.IsValidGeometryType(*in.GeometryType) {
-			return nil, fmt.Errorf("invalid geometryType: %s", *in.GeometryType)
+			return nil, qhLegendInvalidGeometryType(*in.GeometryType)
 		}
 		existing.GeometryType = *in.GeometryType
 	}
@@ -297,28 +296,28 @@ func (u *qhLayerLegendUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 
 func (u *qhLayerLegendUsecase) Delete(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return errors.New("id is required")
+		return qhLegendIDRequired()
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("record %d not found", id)
+		return qhLegendRecordNotFound(id)
 	}
 	return u.repo.Delete(ctx, id)
 }
 
 func (u *qhLayerLegendUsecase) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerLegend, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, qhLegendIDRequired()
 	}
 	row, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if row == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLegendRecordNotFound(id)
 	}
 	return row, nil
 }
@@ -340,14 +339,14 @@ func (u *qhLayerLegendUsecase) ListAllByLayer(ctx context.Context, layerID uint6
 
 func (u *qhLayerLegendUsecase) ListClientByLayer(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLayerLegend, int64, error) {
 	if layerID == 0 {
-		return nil, 0, errors.New("layerId is required")
+		return nil, 0, qhLegendLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return nil, 0, fmt.Errorf("layer %d not found", layerID)
+		return nil, 0, qhLegendLayerNotFound(layerID)
 	}
 	offset := 0
 	limit := 50
