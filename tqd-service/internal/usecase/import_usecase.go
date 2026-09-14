@@ -157,17 +157,17 @@ func (u *importUsecaseImpl) Preview(ctx context.Context, geoJSON string, layerID
 
 func (u *importUsecaseImpl) validateLayerForImport(ctx context.Context, layerID uint64) (*qh_domain.QHLayer, error) {
 	if layerID == 0 {
-		return nil, fmt.Errorf("layerId is required")
+		return nil, importLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, err
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("layer %d not found", layerID)
+		return nil, importLayerNotFound(layerID)
 	}
 	if layer.ImportStatus == enums.LayerImportStatusProcessing {
-		return nil, fmt.Errorf("layer %d already has an import in progress", layerID)
+		return nil, importAlreadyInProgress(layerID)
 	}
 	return layer, nil
 }
@@ -786,14 +786,14 @@ func (u *importUsecaseImpl) Rollback(ctx context.Context, batchID string) (int, 
 // ListImportRegionErrors — danh sách bản ghi qh_region_import_error_logs theo layer (phân trang SQL).
 func (u *importUsecaseImpl) ListImportRegionErrors(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHRegionImportErrorLog, int64, error) {
 	if layerID == 0 {
-		return nil, 0, fmt.Errorf("layerId is required")
+		return nil, 0, importLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, 0, err
 	}
 	if layer == nil {
-		return nil, 0, fmt.Errorf("layer %d not found", layerID)
+		return nil, 0, importLayerNotFound(layerID)
 	}
 	if pagable == nil {
 		pagable = _dto.NewPagableFromGrpc(nil, nil, nil)
@@ -806,20 +806,20 @@ func (u *importUsecaseImpl) ListImportRegionErrors(ctx context.Context, layerID 
 // RetryImportError — đọc log lỗi theo id, CAS pending→processing, insert từng region; cuối cùng resolved hoặc pending.
 func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64) (*dto.RetryImportErrorResult, error) {
 	if errorID == 0 {
-		return nil, fmt.Errorf("errorId is required")
+		return nil, importErrorIDRequired()
 	}
 	row, err := u.regionRepo.GetImportErrorLogByID(ctx, errorID)
 	if err != nil {
 		return nil, err
 	}
 	if row == nil {
-		return nil, fmt.Errorf("import error %d not found", errorID)
+		return nil, importErrorNotFound(errorID)
 	}
 	if row.Status == qh_domain.ImportErrorStatusProcessing {
-		return nil, fmt.Errorf("import error %d retry is already in progress", errorID)
+		return nil, importRetryInProgress(errorID)
 	}
 	if row.Status != qh_domain.ImportErrorStatusPending {
-		return nil, fmt.Errorf("import error %d cannot be retried (status=%s)", errorID, row.Status)
+		return nil, importRetryNotAllowed(errorID, row.Status)
 	}
 
 	locked, err := u.regionRepo.TryBeginImportErrorRetry(ctx, errorID)
@@ -827,7 +827,7 @@ func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64
 		return nil, err
 	}
 	if !locked {
-		return nil, fmt.Errorf("import error %d could not be locked for retry", errorID)
+		return nil, importRetryLockConflict(errorID)
 	}
 
 	retryCommitted := false
@@ -844,7 +844,7 @@ func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64
 		return nil, err
 	}
 	if row == nil {
-		return nil, fmt.Errorf("import error %d not found after lock", errorID)
+		return nil, importErrorNotFound(errorID)
 	}
 
 	var snapshots []qh_domain.RegionSnapshot
@@ -860,7 +860,7 @@ func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64
 		return nil, err
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("layer %d not found", row.LayerID)
+		return nil, importLayerNotFound(row.LayerID)
 	}
 	lc := newLabelCache()
 	retryBatchID := generateBatchID()

@@ -96,5 +96,6 @@ jobs:
         env:
           GOWORK: 'off'
         run: |
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel)'
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestImportRegion)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestImportRegion)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/http -run '^TestImportRegion'

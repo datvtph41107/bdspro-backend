@@ -3,10 +3,10 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/fault"
 	_utils "common/utils"
 	"context"
 	"log"
-	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status" // Đây là package status của gRPC
@@ -84,13 +84,7 @@ func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.Import
 	result, err := h.importUsecase.EnqueueImportFromFile(ctx, importReq)
 	if err != nil {
 		log.Printf("[ImportGeoJson] Error: %v", err)
-		if strings.Contains(err.Error(), "already has an import") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, importGRPCError(err)
 	}
 
 	log.Printf("[ImportGeoJson] Enqueued batchId=%s status=%s", result.BatchID, result.Status)
@@ -144,10 +138,7 @@ func (h *ImportGrpcHandler) ListImportRegionErrors(ctx context.Context, req *tqd
 
 	rows, total, err := h.importUsecase.ListImportRegionErrors(ctx, req.LayerId, pagable)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, importGRPCError(err)
 	}
 
 	return h.importMapper.ToProtoImportErrors(rows, total, int32(pagable.GetPage()), int32(pagable.GetSize())), nil
@@ -164,19 +155,22 @@ func (h *ImportGrpcHandler) RetryImportError(ctx context.Context, req *tqdpb.Ret
 	}
 	res, err := h.importUsecase.RetryImportError(ctx, req.ErrorId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already in progress") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "cannot be retried") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "could not be locked") {
-			return nil, status.Error(codes.Aborted, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, importGRPCError(err)
 	}
 	return h.importMapper.ToProtoRetryImportErrorResponse(res), nil
+}
+
+func importGRPCError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
+	}
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.import.internal",
+		"import operation failed",
+	))
 }

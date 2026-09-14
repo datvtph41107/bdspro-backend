@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"common/fault"
 	_utils "common/utils"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
@@ -106,13 +107,8 @@ func (h *ImportHTTPHandler) PostImportGeoJSONMultipart(c *gin.Context) {
 
 	result, err := h.importUsecase.EnqueueImportFromReader(c.Request.Context(), src, fh.Filename, fileFormat, job)
 	if err != nil {
-		status := http.StatusBadRequest
-		if strings.Contains(err.Error(), "already has an import") {
-			status = http.StatusConflict
-		} else if strings.Contains(err.Error(), "not found") {
-			status = http.StatusNotFound
-		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		statusCode, payload := importHTTPProblem(err)
+		c.JSON(statusCode, payload)
 		return
 	}
 
@@ -154,4 +150,41 @@ func parseLabelMappingsForm(c *gin.Context) (map[string]uint64, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func importHTTPProblem(err error) (int, gin.H) {
+	failure, ok := fault.As(err)
+	if !ok {
+		failure = fault.Wrap(
+			err,
+			fault.KindInternal,
+			"tqd.import.internal",
+			"import operation failed",
+		)
+	}
+	return importHTTPStatus(failure.Kind()), gin.H{
+		"error":      failure.PublicMessage(),
+		"error_code": failure.Code(),
+	}
+}
+
+func importHTTPStatus(kind fault.Kind) int {
+	switch kind {
+	case fault.KindValidation:
+		return http.StatusBadRequest
+	case fault.KindUnauthenticated:
+		return http.StatusUnauthorized
+	case fault.KindPermissionDenied:
+		return http.StatusForbidden
+	case fault.KindNotFound:
+		return http.StatusNotFound
+	case fault.KindConflict, fault.KindPrecondition, fault.KindAborted:
+		return http.StatusConflict
+	case fault.KindResourceExhausted:
+		return http.StatusTooManyRequests
+	case fault.KindUnavailable:
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusInternalServerError
+	}
 }
