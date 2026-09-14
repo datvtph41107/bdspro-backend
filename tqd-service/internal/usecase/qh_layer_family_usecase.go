@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -51,11 +50,11 @@ func NewQHLayerFamilyUsecase(
 
 func (u *qhLayerFamilyUsecase) Create(ctx context.Context, row *qh_domain.QHLayerFamily) (*qh_domain.QHLayerFamily, error) {
 	if row == nil {
-		return nil, errors.New("payload is required")
+		return nil, ErrQHLayerFamilyPayloadRequired
 	}
 	row.Name = strings.TrimSpace(row.Name)
 	if row.Name == "" {
-		return nil, errors.New("name is required")
+		return nil, ErrQHLayerFamilyNameRequired
 	}
 	if err := u.repo.Create(ctx, row); err != nil {
 		return nil, fmt.Errorf("create layer family: %w", err)
@@ -65,23 +64,23 @@ func (u *qhLayerFamilyUsecase) Create(ctx context.Context, row *qh_domain.QHLaye
 
 func (u *qhLayerFamilyUsecase) Update(ctx context.Context, id uint64, in *QHLayerFamilyUpdateInput) (*qh_domain.QHLayerFamily, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, ErrQHLayerFamilyIDRequired
 	}
 	if in == nil {
-		return nil, errors.New("payload is required")
+		return nil, ErrQHLayerFamilyPayloadRequired
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLayerFamilyNotFound(id)
 	}
 
 	if in.Name != nil {
 		s := strings.TrimSpace(*in.Name)
 		if s == "" {
-			return nil, errors.New("name cannot be empty")
+			return nil, ErrQHLayerFamilyNameRequired
 		}
 		existing.Name = s
 	}
@@ -98,28 +97,28 @@ func (u *qhLayerFamilyUsecase) Update(ctx context.Context, id uint64, in *QHLaye
 
 func (u *qhLayerFamilyUsecase) Delete(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return errors.New("id is required")
+		return ErrQHLayerFamilyIDRequired
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("record %d not found", id)
+		return qhLayerFamilyNotFound(id)
 	}
 	return u.repo.Delete(ctx, id)
 }
 
 func (u *qhLayerFamilyUsecase) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLayerFamily, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, ErrQHLayerFamilyIDRequired
 	}
 	row, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if row == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLayerFamilyNotFound(id)
 	}
 	return row, nil
 }
@@ -161,8 +160,11 @@ func (u *qhLayerFamilyUsecase) BuildFamilyPMTiles(ctx context.Context, familyID 
 	defer u.buildTracker.finish(familyID, gen)
 
 	family, err := u.repo.GetByID(ctx, familyID)
-	if err != nil || family == nil {
-		return fmt.Errorf("family %d not found", familyID)
+	if err != nil {
+		return fmt.Errorf("get family %d: %w", familyID, err)
+	}
+	if family == nil {
+		return qhLayerFamilyNotFound(familyID)
 	}
 
 	familyMinZoom, familyMaxZoom, err := u.layerRepo.GetZoomRangeByFamilyID(ctx, familyID)
