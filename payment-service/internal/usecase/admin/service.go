@@ -209,7 +209,7 @@ func normalizePage(page, pageSize uint32) (uint32, uint32, error) {
 		pageSize = 20
 	}
 	if pageSize > 100 {
-		return 0, 0, fmt.Errorf("page size must be between 1 and 100")
+		return 0, 0, ErrPageSizeOutOfRange
 	}
 	return page, pageSize, nil
 }
