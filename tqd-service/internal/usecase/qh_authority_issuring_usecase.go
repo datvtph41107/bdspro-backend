@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -37,22 +36,22 @@ func NewQHAuthorityIssuringUsecase(r repo.QHAuthorityIssuringRepository) QHAutho
 
 func (u *qhAuthorityIssuringUsecase) Create(ctx context.Context, row *qh_domain.QHAuthorityIssuring) (*qh_domain.QHAuthorityIssuring, error) {
 	if row == nil {
-		return nil, errors.New("payload is required")
+		return nil, ErrQHAuthorityIssuringPayloadRequired
 	}
 	row.Name = strings.TrimSpace(row.Name)
 	row.Code = strings.TrimSpace(row.Code)
 	if row.Name == "" {
-		return nil, errors.New("name is required")
+		return nil, ErrQHAuthorityIssuringNameRequired
 	}
 	if row.Code == "" {
-		return nil, errors.New("code is required")
+		return nil, ErrQHAuthorityIssuringCodeRequired
 	}
 	dup, err := u.repo.GetByCode(ctx, row.Code)
 	if err != nil {
 		return nil, fmt.Errorf("check code: %w", err)
 	}
 	if dup != nil {
-		return nil, fmt.Errorf("code %q already exists", row.Code)
+		return nil, qhAuthorityIssuringCodeConflict(row.Code)
 	}
 	if err := u.repo.Create(ctx, row); err != nil {
 		return nil, fmt.Errorf("create authority issuring: %w", err)
@@ -62,30 +61,30 @@ func (u *qhAuthorityIssuringUsecase) Create(ctx context.Context, row *qh_domain.
 
 func (u *qhAuthorityIssuringUsecase) Update(ctx context.Context, id uint64, in *QHAuthorityIssuringUpdateInput) (*qh_domain.QHAuthorityIssuring, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, ErrQHAuthorityIssuringIDRequired
 	}
 	if in == nil {
-		return nil, errors.New("payload is required")
+		return nil, ErrQHAuthorityIssuringPayloadRequired
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhAuthorityIssuringNotFound(id)
 	}
 
 	if in.Name != nil {
 		s := strings.TrimSpace(*in.Name)
 		if s == "" {
-			return nil, errors.New("name cannot be empty")
+			return nil, ErrQHAuthorityIssuringNameRequired
 		}
 		existing.Name = s
 	}
 	if in.Code != nil {
 		s := strings.TrimSpace(*in.Code)
 		if s == "" {
-			return nil, errors.New("code cannot be empty")
+			return nil, ErrQHAuthorityIssuringCodeRequired
 		}
 		if s != existing.Code {
 			dup, err := u.repo.GetByCode(ctx, s)
@@ -93,7 +92,7 @@ func (u *qhAuthorityIssuringUsecase) Update(ctx context.Context, id uint64, in *
 				return nil, fmt.Errorf("check code: %w", err)
 			}
 			if dup != nil && dup.ID != id {
-				return nil, fmt.Errorf("code %q already exists", s)
+				return nil, qhAuthorityIssuringCodeConflict(s)
 			}
 			existing.Code = s
 		}
@@ -110,28 +109,28 @@ func (u *qhAuthorityIssuringUsecase) Update(ctx context.Context, id uint64, in *
 
 func (u *qhAuthorityIssuringUsecase) Delete(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return errors.New("id is required")
+		return ErrQHAuthorityIssuringIDRequired
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("record %d not found", id)
+		return qhAuthorityIssuringNotFound(id)
 	}
 	return u.repo.Delete(ctx, id)
 }
 
 func (u *qhAuthorityIssuringUsecase) GetByID(ctx context.Context, id uint64) (*qh_domain.QHAuthorityIssuring, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, ErrQHAuthorityIssuringIDRequired
 	}
 	row, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if row == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhAuthorityIssuringNotFound(id)
 	}
 	return row, nil
 }
