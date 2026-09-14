@@ -241,7 +241,7 @@ func validateDraftCommand(command DraftCommand) (DraftRecord, error) {
 		return DraftRecord{}, errors.New("product display name is required")
 	}
 	if command.TierRank <= 0 {
-		return DraftRecord{}, errors.New("tier rank must be positive")
+		return DraftRecord{}, ErrTierRankMustBePositive
 	}
 	command.Terms.ProductCode = strings.TrimSpace(command.Terms.ProductCode)
 	command.Terms.PlanCode = strings.TrimSpace(command.Terms.PlanCode)
