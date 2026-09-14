@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -53,17 +52,17 @@ func NewQHLayerLandUseGroupUsecase(
 
 func (u *qhLayerLandUseGroupUsecase) validateLayerAndGroup(ctx context.Context, layerID, groupID uint64) error {
 	if layerID == 0 {
-		return errors.New("layerId is required")
+		return qhLandUseLayerIDRequired()
 	}
 	if groupID == 0 {
-		return errors.New("landUseGroupId is required")
+		return qhLandUseGroupIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return fmt.Errorf("layer %d not found", layerID)
+		return qhLandUseLayerNotFound(layerID)
 	}
 	// group, err := u.groupRepo.GetByID(ctx, groupID)
 	// if err != nil {
@@ -88,7 +87,7 @@ func (u *qhLayerLandUseGroupUsecase) checkDuplicate(ctx context.Context, layerID
 
 func (u *qhLayerLandUseGroupUsecase) Create(ctx context.Context, row *qh_domain.QHLandUse) (*qh_domain.QHLandUse, error) {
 	if row == nil {
-		return nil, errors.New("payload is required")
+		return nil, qhLandUsePayloadRequired()
 	}
 	row.Note = strings.TrimSpace(row.Note)
 	row.Color = strings.TrimSpace(row.Color)
@@ -106,7 +105,7 @@ func (u *qhLayerLandUseGroupUsecase) Create(ctx context.Context, row *qh_domain.
 			return nil, fmt.Errorf("get layer: %w", err)
 		}
 		if layer == nil || layer.DeletedAt != nil {
-			return nil, fmt.Errorf("layer %d not found", layerID)
+			return nil, qhLandUseLayerNotFound(layerID)
 		}
 	}
 
@@ -125,7 +124,7 @@ func (u *qhLayerLandUseGroupUsecase) Create(ctx context.Context, row *qh_domain.
 		return nil, fmt.Errorf("check duplicate layer land use: %w", err)
 	}
 	if dup != nil {
-		return nil, fmt.Errorf("layer %d already has land use %d", layerID, landUse.ID)
+		return nil, qhLandUseDuplicate(layerID, landUse.ID)
 	}
 
 	row.Layers = []*qh_domain.QHLayer{{ID: layerID}}
@@ -137,10 +136,10 @@ func (u *qhLayerLandUseGroupUsecase) Create(ctx context.Context, row *qh_domain.
 
 func (u *qhLayerLandUseGroupUsecase) CreateLayerLandUse(ctx context.Context, layerID, landUseID uint64) (*qh_domain.QHLandUse, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, qhLandUseLayerIDRequired()
 	}
 	if landUseID == 0 {
-		return nil, errors.New("landUseId is required")
+		return nil, qhLandUseIDValueRequired()
 	}
 
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
@@ -148,7 +147,7 @@ func (u *qhLayerLandUseGroupUsecase) CreateLayerLandUse(ctx context.Context, lay
 		return nil, fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return nil, fmt.Errorf("layer %d not found", layerID)
+		return nil, qhLandUseLayerNotFound(layerID)
 	}
 
 	landUse, err := u.repo.GetByID(ctx, landUseID)
@@ -156,7 +155,7 @@ func (u *qhLayerLandUseGroupUsecase) CreateLayerLandUse(ctx context.Context, lay
 		return nil, fmt.Errorf("get land use: %w", err)
 	}
 	if landUse == nil {
-		return nil, fmt.Errorf("land use %d not found", landUseID)
+		return nil, qhLandUseNotFound(landUseID)
 	}
 
 	dup, err := u.repo.GetByLayerAndLandUse(ctx, layerID, landUseID)
@@ -164,7 +163,7 @@ func (u *qhLayerLandUseGroupUsecase) CreateLayerLandUse(ctx context.Context, lay
 		return nil, fmt.Errorf("check duplicate layer land use: %w", err)
 	}
 	if dup != nil {
-		return nil, fmt.Errorf("layer %d already has land use %d", layerID, landUseID)
+		return nil, qhLandUseDuplicate(layerID, landUseID)
 	}
 
 	if err := u.repo.LinkLayerLandUse(ctx, layerID, landUseID); err != nil {
@@ -180,13 +179,13 @@ func (u *qhLayerLandUseGroupUsecase) resolveLandUse(ctx context.Context, row *qh
 			return nil, fmt.Errorf("get land use: %w", err)
 		}
 		if landUse == nil {
-			return nil, fmt.Errorf("land use %d not found", row.ID)
+			return nil, qhLandUseNotFound(row.ID)
 		}
 		return landUse, nil
 	}
 
 	if row.Name == "" {
-		return nil, errors.New("name is required")
+		return nil, qhLandUseNameRequired()
 	}
 
 	landUse := &qh_domain.QHLandUse{
@@ -229,14 +228,14 @@ func (u *qhLayerLandUseGroupUsecase) syncFromLandUse(row *qh_domain.QHLandUse, l
 
 func (u *qhLayerLandUseGroupUsecase) BatchCreate(ctx context.Context, layerID uint64, items []qh_domain.QHLandUse) ([]qh_domain.QHLandUse, []uint64, error) {
 	if layerID == 0 {
-		return nil, nil, errors.New("layerId is required")
+		return nil, nil, qhLandUseLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return nil, nil, fmt.Errorf("layer %d not found", layerID)
+		return nil, nil, qhLandUseLayerNotFound(layerID)
 	}
 
 	var created []qh_domain.QHLandUse
@@ -287,17 +286,17 @@ func (u *qhLayerLandUseGroupUsecase) BatchCreate(ctx context.Context, layerID ui
 
 func (u *qhLayerLandUseGroupUsecase) Update(ctx context.Context, id uint64, in *qh_domain.QHLandUse) (*qh_domain.QHLandUse, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, qhLandUseIDRequired()
 	}
 	if in == nil {
-		return nil, errors.New("payload is required")
+		return nil, qhLandUsePayloadRequired()
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLandUseRecordNotFound(id)
 	}
 
 	existing.Name = strings.TrimSpace(in.Name)
@@ -313,28 +312,28 @@ func (u *qhLayerLandUseGroupUsecase) Update(ctx context.Context, id uint64, in *
 
 func (u *qhLayerLandUseGroupUsecase) Delete(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return errors.New("id is required")
+		return qhLandUseIDRequired()
 	}
 	existing, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get by id: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("record %d not found", id)
+		return qhLandUseRecordNotFound(id)
 	}
 	return u.repo.Delete(ctx, id)
 }
 
 func (u *qhLayerLandUseGroupUsecase) GetByID(ctx context.Context, id uint64) (*qh_domain.QHLandUse, error) {
 	if id == 0 {
-		return nil, errors.New("id is required")
+		return nil, qhLandUseIDRequired()
 	}
 	row, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("get by id: %w", err)
 	}
 	if row == nil {
-		return nil, fmt.Errorf("record %d not found", id)
+		return nil, qhLandUseRecordNotFound(id)
 	}
 	return row, nil
 }
@@ -351,14 +350,14 @@ func (u *qhLayerLandUseGroupUsecase) List(ctx context.Context, pagable *_dto.Pag
 
 func (u *qhLayerLandUseGroupUsecase) ListClientByLayer(ctx context.Context, layerID uint64, pagable *_dto.Pagable) ([]qh_domain.QHLandUse, int64, error) {
 	if layerID == 0 {
-		return nil, 0, errors.New("layerId is required")
+		return nil, 0, qhLandUseLayerIDRequired()
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("get layer: %w", err)
 	}
 	if layer == nil || layer.DeletedAt != nil {
-		return nil, 0, fmt.Errorf("layer %d not found", layerID)
+		return nil, 0, qhLandUseLayerNotFound(layerID)
 	}
 	offset := 0
 	limit := 50

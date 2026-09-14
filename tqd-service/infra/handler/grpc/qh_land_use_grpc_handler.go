@@ -2,9 +2,9 @@ package handler_grpc
 
 import (
 	"context"
-	"strings"
 
 	_dto "common/domain/dto"
+	"common/fault"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -138,7 +138,7 @@ func (h *QHLandUseGrpcHandler) ListLandUses(ctx context.Context, req *tqdpb.List
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	rows, total, err := h.uc.List(ctx, pagable, layerID, nil)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, mapLandUseGroupError(err)
 	}
 	data := make([]*tqdpb.QHLandUseResponse, len(rows))
 	for i := range rows {
@@ -176,20 +176,18 @@ func (h *QHLandUseGrpcHandler) ListClientLandUse(ctx context.Context, req *tqdpb
 }
 
 func mapLandUseGroupError(err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "already has land use group") {
-		return status.Error(codes.AlreadyExists, msg)
+	if err == nil {
+		return nil
 	}
-	if strings.Contains(msg, "already has land use") {
-		return status.Error(codes.AlreadyExists, msg)
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
 	}
-	if strings.Contains(msg, "not found") {
-		return status.Error(codes.NotFound, msg)
-	}
-	if strings.Contains(msg, "required") {
-		return status.Error(codes.InvalidArgument, msg)
-	}
-	return status.Error(codes.Internal, msg)
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.land_use.internal",
+		"land use operation failed",
+	))
 }
 
 func toQHLandUsePB(e *qh_domain.QHLandUse) *tqdpb.QHLandUseResponse {
