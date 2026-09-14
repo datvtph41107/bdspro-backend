@@ -21,7 +21,7 @@ fi
 for _ in $(seq 1 60); do
   current_pid=$("$native_stack" pid notification 2>/dev/null || true)
   if [[ "$current_pid" == "$notification_pid" ]] && kill -0 "$current_pid" 2>/dev/null && \
-    "${compose[@]}" exec -T rabbitmq rabbitmqctl -q list_connections name 2>/dev/null | rg -q 'notification-service'; then
+    "${compose[@]}" exec -T rabbitmq rabbitmqctl -q list_connections client_properties 2>/dev/null | rg -q 'connection_name.*notification-service'; then
     echo 'Notification broker recovery PASS (native API stayed alive; consumer reconnected)'
     exit 0
   fi
