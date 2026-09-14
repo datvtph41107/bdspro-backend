@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
+	"common/fault"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -29,7 +30,11 @@ func NewQHAuthorityIssuringGrpcHandler(uc usecase.QHAuthorityIssuringUsecase) *Q
 // CreateAuthorityIssuring — POST /v2/tqd/qh/admin/authority-issuring
 func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Context, req *tqdpb.CreateAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request is required")
+		return nil, qhAuthorityIssuringValidation(
+			"tqd.qh_authority_issuring.request_required",
+			"request is required",
+			"",
+		)
 	}
 	row := &qh_domain.QHAuthorityIssuring{
 		Name:        strings.TrimSpace(req.Name),
@@ -38,13 +43,7 @@ func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Con
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, qhAuthorityIssuringError(err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -52,17 +51,15 @@ func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Con
 // GetAuthorityIssuring — GET /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) GetAuthorityIssuring(ctx context.Context, req *tqdpb.GetAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, qhAuthorityIssuringValidation(
+			"tqd.qh_authority_issuring.id_required",
+			"id is required",
+			"id",
+		)
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, qhAuthorityIssuringError(err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -70,7 +67,11 @@ func (h *QHAuthorityIssuringGrpcHandler) GetAuthorityIssuring(ctx context.Contex
 // UpdateAuthorityIssuring — PUT /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Context, req *tqdpb.UpdateAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, qhAuthorityIssuringValidation(
+			"tqd.qh_authority_issuring.id_required",
+			"id is required",
+			"id",
+		)
 	}
 	in := &usecase.QHAuthorityIssuringUpdateInput{}
 	if req.Name != nil {
@@ -83,20 +84,15 @@ func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Con
 		in.Description = req.Description
 	}
 	if in.Name == nil && in.Code == nil && in.Description == nil {
-		return nil, status.Error(codes.InvalidArgument, "at least one field to update is required")
+		return nil, qhAuthorityIssuringValidation(
+			"tqd.qh_authority_issuring.update_fields_required",
+			"at least one field to update is required",
+			"",
+		)
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "empty") || strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, qhAuthorityIssuringError(err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -104,13 +100,14 @@ func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Con
 // DeleteAuthorityIssuring — DELETE /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) DeleteAuthorityIssuring(ctx context.Context, req *tqdpb.DeleteAuthorityIssuringRequest) (*emptypb.Empty, error) {
 	if req == nil || req.Id == 0 {
-		return nil, status.Error(codes.InvalidArgument, "id is required")
+		return nil, qhAuthorityIssuringValidation(
+			"tqd.qh_authority_issuring.id_required",
+			"id is required",
+			"id",
+		)
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, qhAuthorityIssuringError(err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -126,7 +123,7 @@ func (h *QHAuthorityIssuringGrpcHandler) ListAuthorityIssuring(ctx context.Conte
 	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
 	rows, total, err := h.uc.List(ctx, pagable)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, qhAuthorityIssuringError(err)
 	}
 	data := make([]*tqdpb.QHAuthorityIssuringResponse, len(rows))
 	for i := range rows {
@@ -138,6 +135,24 @@ func (h *QHAuthorityIssuringGrpcHandler) ListAuthorityIssuring(ctx context.Conte
 		Page:     int32(pagable.GetPage()),
 		PageSize: int32(pagable.GetSize()),
 	}, nil
+}
+
+func qhAuthorityIssuringValidation(code, message, field string) error {
+	violations := make([]fault.FieldViolation, 0, 1)
+	if field != "" {
+		violations = append(violations, fault.FieldViolation{Field: field, Description: message})
+	}
+	return fault.ToGRPC(fault.Validation(code, message, violations...))
+}
+
+func qhAuthorityIssuringError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
+	}
+	return status.Error(codes.Internal, "authority issuring operation failed")
 }
 
 func toQHAuthorityIssuringPB(e *qh_domain.QHAuthorityIssuring) *tqdpb.QHAuthorityIssuringResponse {
