@@ -25,8 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build full-repository migration inventory
-        run: python3 shared/code/development/audit-observability-errors.py
+      - name: Build full-repository migration inventory and enforce ratchets
+        run: python3 shared/code/development/audit-observability-errors.py --enforce-ratchets
       - name: Upload migration inventory
         uses: actions/upload-artifact@v4
         with:
