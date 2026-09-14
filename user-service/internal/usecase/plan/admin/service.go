@@ -3,7 +3,6 @@ package admin
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -101,7 +100,7 @@ func (s *Service) GetPlanVersion(
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, ErrPlanVersionIDRequired
 	}
 	aggregate, err := s.repository.GetPlanVersion(ctx, planVersionID)
 	if errors.Is(err, publish.ErrPlanVersionNotFound) {
@@ -135,7 +134,7 @@ func (s *Service) UpdateDraft(ctx context.Context, planVersionID uint64, command
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, ErrPlanVersionIDRequired
 	}
 	record, err := validateDraftCommand(command)
 	if err != nil {
@@ -158,9 +157,13 @@ func (s *Service) ValidateDraft(ctx context.Context, planVersionID uint64) (stri
 		return "", ErrPlanVersionNotDraft
 	}
 	if aggregate.SubscriptionTermDays <= 0 {
-		return "", fmt.Errorf("plan %q requires subscription_term_days", aggregate.PlanCode)
+		return "", subscriptionTermRequiredFault(aggregate.PlanCode)
 	}
-	return catalogdomain.TermsChecksum(aggregate.CurrentContract())
+	checksum, err := catalogdomain.TermsChecksum(aggregate.CurrentContract())
+	if err != nil {
+		return "", invalidPlanTermsFault(err)
+	}
+	return checksum, nil
 }
 
 // DeleteDraft removes only a never-published candidate. Active or retired
@@ -170,10 +173,10 @@ func (s *Service) DeleteDraft(ctx context.Context, planVersionID, actorID uint64
 		return errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return errors.New("plan version id is required")
+		return ErrPlanVersionIDRequired
 	}
 	if actorID == 0 {
-		return errors.New("actor id is required")
+		return ErrActorIDRequired
 	}
 	return s.repository.DeletePlanVersionDraft(ctx, planVersionID)
 }
@@ -185,10 +188,10 @@ func (s *Service) Retire(ctx context.Context, planVersionID, actorID uint64) (ca
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, ErrPlanVersionIDRequired
 	}
 	if actorID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("actor id is required")
+		return catalogdomain.PlanVersionAggregate{}, ErrActorIDRequired
 	}
 	if err := s.repository.RetirePlanVersion(ctx, planVersionID, actorID, time.Now().UTC()); err != nil {
 		return catalogdomain.PlanVersionAggregate{}, err
@@ -215,13 +218,13 @@ func normalizeQuery(query Query) (Query, error) {
 		query.PageSize = 20
 	}
 	if query.PageSize > 100 {
-		return Query{}, fmt.Errorf("page size must be between 1 and 100")
+		return Query{}, ErrPageSizeOutOfRange
 	}
 	query.ProductCode = strings.TrimSpace(query.ProductCode)
 	query.PlanCode = strings.TrimSpace(query.PlanCode)
 	query.Status = strings.TrimSpace(query.Status)
 	if query.Status != "" && !validStatus(catalogdomain.Status(query.Status)) {
-		return Query{}, fmt.Errorf("invalid plan status %q", query.Status)
+		return Query{}, invalidPlanStatusFault(query.Status)
 	}
 	return query, nil
 }
@@ -234,11 +237,11 @@ func validStatus(status catalogdomain.Status) bool {
 
 func validateDraftCommand(command DraftCommand) (DraftRecord, error) {
 	if command.ActorID == 0 {
-		return DraftRecord{}, errors.New("actor id is required")
+		return DraftRecord{}, ErrActorIDRequired
 	}
 	command.ProductDisplayName = strings.TrimSpace(command.ProductDisplayName)
 	if command.ProductDisplayName == "" {
-		return DraftRecord{}, errors.New("product display name is required")
+		return DraftRecord{}, ErrProductDisplayNameRequired
 	}
 	if command.TierRank <= 0 {
 		return DraftRecord{}, ErrTierRankMustBePositive
@@ -252,7 +255,7 @@ func validateDraftCommand(command DraftCommand) (DraftRecord, error) {
 	command.Terms.EffectiveUntil = nil
 	checksum, err := catalogdomain.TermsChecksum(command.Terms)
 	if err != nil {
-		return DraftRecord{}, err
+		return DraftRecord{}, invalidPlanTermsFault(err)
 	}
 	return DraftRecord{
 		ActorID:            command.ActorID,
