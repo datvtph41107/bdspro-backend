@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	defaultNamespace = "bdspro"
-	defaultLogRoot   = ".tmp/development/logs"
+	defaultNamespace      = "bdspro"
+	defaultLogRoot        = ".tmp/development/logs"
+	canonicalEnvironmentKey = "QHPRO_ENVIRONMENT"
 )
 
 type Config struct {
@@ -43,7 +44,7 @@ func FromEnv(serviceName string) Config {
 	return Config{
 		ServiceName:   strings.TrimSpace(serviceName),
 		Namespace:     envOr("QHPRO_LOG_SERVICE_NAMESPACE", defaultNamespace),
-		Environment:   envOr("ENVIRONMENT", "development"),
+		Environment:   envOr(canonicalEnvironmentKey, "development"),
 		InstanceID:    envOr("QHPRO_SERVICE_INSTANCE_ID", defaultInstanceID()),
 		Level:         parseLevel(os.Getenv("QHPRO_LOG_LEVEL")),
 		Output:        envOr("QHPRO_LOG_OUTPUT", "both"),
