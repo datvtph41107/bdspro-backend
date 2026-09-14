@@ -11,6 +11,7 @@ on:
       - 'shared/code/development/audit-observability-errors.py'
       - 'gateway-service/**'
       - 'user-service/**'
+      - 'payment-service/**'
       - '.github/workflows/refactor-observability-errors.yml'
 
 permissions:
@@ -91,4 +92,23 @@ jobs:
         run: |
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/plan/admin \
+            ./infra/handler/grpc
+
+  payment-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install repository setup prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+      - name: Materialize canonical toolchain and generated contracts
+        run: make setup
+      - name: Test typed Payment admin faults through gRPC boundary
+        working-directory: payment-service
+        env:
+          GOWORK: 'off'
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
+            ./internal/usecase/admin \
             ./infra/handler/grpc
