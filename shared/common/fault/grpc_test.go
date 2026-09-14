@@ -45,6 +45,37 @@ func TestToGRPCMapsValidationIdentityAndFieldViolation(t *testing.T) {
 	}
 }
 
+func TestToGRPCMapsAbortedIdentity(t *testing.T) {
+	err := New(
+		KindAborted,
+		"tqd.import.retry_lock_conflict",
+		"import retry could not acquire lock",
+	)
+
+	st, ok := status.FromError(ToGRPC(err))
+	if !ok {
+		t.Fatal("ToGRPC did not return a gRPC status")
+	}
+	if st.Code() != codes.Aborted {
+		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.Aborted)
+	}
+	if st.Message() != "import retry could not acquire lock" {
+		t.Fatalf("message = %q", st.Message())
+	}
+
+	var foundInfo bool
+	for _, detail := range st.Details() {
+		if info, ok := detail.(*errdetails.ErrorInfo); ok {
+			foundInfo = info.Reason == "ABORTED" &&
+				info.Domain == errorDomain &&
+				info.Metadata["error_code"] == "tqd.import.retry_lock_conflict"
+		}
+	}
+	if !foundInfo {
+		t.Fatalf("missing canonical aborted ErrorInfo: details=%v", st.Details())
+	}
+}
+
 func TestToGRPCHidesUnknownInternalFailure(t *testing.T) {
 	st, _ := status.FromError(ToGRPC(assertionError("database password leaked here")))
 	if st.Code() != codes.Internal || st.Message() != "internal server error" {
