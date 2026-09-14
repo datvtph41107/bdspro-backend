@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"common/jwtverify"
+	_logging "common/logging"
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -46,33 +47,35 @@ var HttpCmd = &cobra.Command{
 		}
 		port := strconv.Itoa(runtimeConfig.Server.Port)
 		env := runtimeConfig.Environment
-		// Containers and native processes share one logging contract: stdout
-		// and stderr. Retention/rotation belongs to the runtime platform, never
-		// to a hidden file under the application working directory.
-		logOutput := os.Stdout
 
-		gin.DefaultWriter = logOutput
+		loggingConfig := _logging.FromEnv("gateway-service")
+		loggingConfig.Environment = env
+		// Local development keeps console output plus service-scoped JSONL
+		// projections. Runtime platforms own production retention and rotation,
+		// so non-development environments default to stdout unless explicitly
+		// overridden by QHPRO_LOG_OUTPUT.
+		if strings.TrimSpace(os.Getenv("QHPRO_LOG_OUTPUT")) == "" &&
+			!strings.EqualFold(env, "development") &&
+			!strings.EqualFold(env, "dev") &&
+			!strings.EqualFold(env, "local") {
+			loggingConfig.Output = "stdout"
+		}
+		logger, closeLogger, err := _logging.New(loggingConfig)
+		if err != nil {
+			return fmt.Errorf("configure gateway logging: %w", err)
+		}
+		defer func() { _ = closeLogger() }()
+		slog.SetDefault(logger)
+
+		// Gin's own framework output remains stdout. Application/runtime events
+		// are emitted by the canonical structured logger above.
+		gin.DefaultWriter = os.Stdout
 
 		configureGinMode(
 			os.Getenv(
 				gin.EnvGinMode,
 			),
 		)
-
-		logger :=
-			slog.New(
-				slog.NewJSONHandler(
-					logOutput,
-					&slog.HandlerOptions{
-						Level: slog.LevelInfo,
-					},
-				),
-			).With(
-				"service_name",
-				"gateway-service",
-				"environment",
-				env,
-			)
 
 		httpRecorder :=
 			_observability.
@@ -212,7 +215,7 @@ var HttpCmd = &cobra.Command{
 
 		apiKeyVerifier, verifierErr := _httpauth.NewHubAPIKeyVerifier(connections.Hub)
 		if verifierErr != nil {
-			log.Printf("Gateway API key verifier unavailable: %v", verifierErr)
+			logger.Warn("Gateway API key verifier unavailable", "error", verifierErr)
 		}
 
 		tokenVerifier, tokenVerifierErr := jwtverify.NewHMACVerifier(runtimeConfig.JWT.VerificationKey)
@@ -354,7 +357,7 @@ var HttpCmd = &cobra.Command{
 			return fmt.Errorf("listen gateway HTTP on %s: %w", server.Addr, err)
 		}
 
-		log.Printf("Gateway server starting on port: %s", port)
+		logger.Info("gateway HTTP server starting", "port", port)
 
 		return serveHTTP(
 			processCtx,
