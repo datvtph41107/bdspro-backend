@@ -153,7 +153,7 @@ func New(cfg Config) (*slog.Logger, func() error, error) {
 		slog.String("service.namespace", cfg.Namespace),
 		slog.String("service.name", cfg.ServiceName),
 		slog.String("service.instance.id", cfg.InstanceID),
-		slog.String("deployment.environment", cfg.Environment),
+		slog.String("deployment.environment.name", cfg.Environment),
 	)
 	return logger, func() error { return closeAll(closers) }, nil
 }
