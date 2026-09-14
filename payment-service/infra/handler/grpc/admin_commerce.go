@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"common/fault"
 	"common/identity"
 	"common/request"
 	payment "payment/internal/domain/payment"
@@ -170,10 +171,14 @@ func (h *AdminCommerceHandler) authorize(ctx context.Context, permission string)
 }
 
 func adminPaymentError(err error) error {
-	switch {
-	case err == nil:
+	if err == nil {
 		return nil
-	case errors.Is(err, payment.ErrInvalidCommand), strings.Contains(err.Error(), "page size"):
+	}
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
+	}
+	switch {
+	case errors.Is(err, payment.ErrInvalidCommand):
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, payment.ErrOrderNotFound), errors.Is(err, payment.ErrFulfillmentNotFound):
 		return status.Error(codes.NotFound, err.Error())
