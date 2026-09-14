@@ -54,7 +54,7 @@ jobs:
           GOWORK: 'off'
         run: go test ./fault ./logging ./request ./requestlog
 
-  gateway-contracts:
+  boundary-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,9 +62,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ripgrep
-      - name: Materialize canonical toolchain and generated contracts
+      - name: Materialize canonical toolchain and generated contracts once
         run: make setup
-      - name: Test gateway response and observability boundaries
+      - name: Test Gateway response and observability boundaries
         working-directory: gateway-service
         env:
           GOWORK: 'off'
@@ -75,18 +75,7 @@ jobs:
             ./internal/httpmiddleware \
             ./internal/observability \
             ./cmd/http
-
-  user-plan-contracts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install repository setup prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ripgrep
-      - name: Materialize canonical toolchain and generated contracts
-        run: make setup
-      - name: Test typed PlanVersion faults through gRPC boundary
+      - name: Test User typed PlanVersion faults through gRPC boundary
         working-directory: user-service
         env:
           GOWORK: 'off'
@@ -94,18 +83,7 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/plan/admin \
             ./infra/handler/grpc
-
-  payment-contracts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install repository setup prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ripgrep
-      - name: Materialize canonical toolchain and generated contracts
-        run: make setup
-      - name: Test typed Payment admin faults through gRPC boundary
+      - name: Test Payment typed admin faults through gRPC boundary
         working-directory: payment-service
         env:
           GOWORK: 'off'
@@ -113,18 +91,7 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/admin \
             ./infra/handler/grpc
-
-  tqd-contracts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install repository setup prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ripgrep
-      - name: Materialize canonical toolchain and generated contracts
-        run: make setup
-      - name: Test typed TQD authority faults through gRPC boundary
+      - name: Test TQD typed authority faults through gRPC boundary
         working-directory: tqd-service
         env:
           GOWORK: 'off'
