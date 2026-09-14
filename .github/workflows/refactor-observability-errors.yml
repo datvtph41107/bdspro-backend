@@ -41,7 +41,13 @@ jobs:
         working-directory: gateway-service
         env:
           GOWORK: 'off'
-        run: "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/httperror ./internal/httpresponse ./internal/httpmiddleware ./internal/observability ./cmd/http
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
+            ./internal/httperror \
+            ./internal/httpresponse \
+            ./internal/httpmiddleware \
+            ./internal/observability \
+            ./cmd/http
 
   user-plan-contracts:
     runs-on: ubuntu-latest
@@ -53,4 +59,7 @@ jobs:
         working-directory: user-service
         env:
           GOWORK: 'off'
-        run: "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase/plan/admin ./infra/handler/grpc
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
+            ./internal/usecase/plan/admin \
+            ./infra/handler/grpc
