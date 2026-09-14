@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"log"
-	"strings"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/fault"
 	_utils "common/utils"
 
 	tqdpb "pb/types/tqd"
@@ -62,22 +62,25 @@ func workspaceStatusError(err error) error {
 		return nil
 	}
 
-	msg := err.Error()
-
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return status.Error(codes.NotFound, "record not found")
-	case strings.Contains(msg, "not found"):
-		return status.Error(codes.NotFound, msg)
-	case strings.Contains(msg, "is required"), strings.Contains(msg, "invalid"):
-		return status.Error(codes.InvalidArgument, msg)
-	case strings.Contains(msg, "cannot regenerate"),
-		strings.Contains(msg, "not ready to share"),
-		strings.Contains(msg, "does not support"):
-		return status.Error(codes.FailedPrecondition, msg)
-	default:
-		return status.Error(codes.Internal, msg)
+	if _, ok := fault.As(err); ok {
+		return fault.ToGRPC(err)
 	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return fault.ToGRPC(fault.Wrap(
+			err,
+			fault.KindNotFound,
+			"tqd.workspace.record_not_found",
+			"record not found",
+		))
+	}
+
+	return fault.ToGRPC(fault.Wrap(
+		err,
+		fault.KindInternal,
+		"tqd.workspace.internal",
+		"workspace operation failed",
+	))
 }
 
 func protoPoint(v dto.SpatialPointDTO) *tqdpb.SpatialPoint {

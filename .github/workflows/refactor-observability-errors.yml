@@ -99,8 +99,8 @@ jobs:
         env:
           GOWORK: 'off'
         run: |
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestQHLayerLegend|TestQHLandUse|TestRegion|TestImportRegion)'
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestQHLayerLegend|TestQHLandUse|TestRegion|TestImportRegion)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestQHLayerLegend|TestQHLandUse|TestRegion|TestWorkspaceMap|TestImportRegion)'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/grpc -run '^(TestQHAuthorityIssuring|TestQHLayerFamily|TestQHLabel|TestQHLayerLegend|TestQHLandUse|TestRegion|TestWorkspaceMap|TestImportRegion)'
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/http -run '^TestImportRegion'
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase/discovery/application -run '^TestDiscovery'
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler/http/discovery -run '^TestDiscovery'
