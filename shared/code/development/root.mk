@@ -45,7 +45,7 @@ export COMPOSE_PARALLEL_LIMIT := $(QHPRO_COMPOSE_PARALLEL_LIMIT)
 CORE_SERVICES := auth user organization payment tqd notification file gateway hub
 DOCKER_SERVICES := $(CORE_SERVICES) assistant
 NATIVE_SERVICES := assistant notification organization payment file user auth hub tqd gateway
-WIRE_SERVICES := user organization tqd notification
+WIRE_SERVICES := user organization tqd notification assistant hub
 TRACKED_WIRE_OUTPUTS := $(foreach service,$(WIRE_SERVICES),$(service)-service/wire/wire_gen.go)
 CONFIG_SERVICES := $(CORE_SERVICES) assistant bdspro chat chat-v1 crm map relay search social
 REPOSITORY_MODULES := assistant-service bdspro-service chat-service chat-v1-service \
@@ -95,6 +95,7 @@ help:
 # Public developer interface. The longer targets below remain implementation
 # details and compatibility aliases; developers do not need to memorize them.
 setup: bootstrap
+	@$(MAKE) generate-backend
 
 # This is an explicit operator action, not setup/seed behavior. The command is
 # transactionally refused after the first active root operator exists.
@@ -483,6 +484,7 @@ generate-backend:
 	@$(MAKE) -C shared/code buf-payment
 	@$(MAKE) -C shared/code buf-tqd
 	@$(MAKE) -C shared/code buf-notification
+	@$(MAKE) -C shared/code buf-transaction
 	@$(MAKE) -C shared/code buf-file
 	@for service in $(WIRE_SERVICES); do $(MAKE) -C shared/code wire $$service || exit; done
 

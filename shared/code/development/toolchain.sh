@@ -34,6 +34,7 @@ require_bootstrap_host() {
   command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required" >&2; return 1; }
   command -v tar >/dev/null 2>&1 || { echo "tar is required" >&2; return 1; }
   command -v unzip >/dev/null 2>&1 || { echo "unzip is required" >&2; return 1; }
+  command -v rg >/dev/null 2>&1 || { echo "ripgrep (rg) is required" >&2; return 1; }
   command -v python3 >/dev/null 2>&1 || { echo "python3 is required" >&2; return 1; }
   python3 -m venv --help >/dev/null 2>&1 || { echo "python3 venv support is required" >&2; return 1; }
   command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || {

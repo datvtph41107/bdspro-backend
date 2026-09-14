@@ -30,7 +30,7 @@ case "$COMMAND" in
       echo "${SERVICE}-service uses explicit process composition; Wire authority is retired."
       exit 0
     fi
-    if [[ "$SERVICE" == "notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub" ]]; then
+    if [[ "$SERVICE" == "notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub" || "$SERVICE" == "assistant" ]]; then
       echo "Generating Wire graph from ${SERVICE}'s process-input authority"
       (cd wire && wire gen)
       exit $?
