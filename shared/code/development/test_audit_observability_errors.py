@@ -4,6 +4,7 @@ import importlib.util
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPT = Path(__file__).with_name("audit-observability-errors.py")
 
@@ -100,6 +101,72 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
         )
 
         self.assertEqual(self.classify(source), {5})
+
+
+    def test_tqd_text_classifier_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.text_error_classification",
+                "tqd-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_tqd_text_classifier_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.text_error_classification",
+            "severity": "debt",
+            "owner": "tqd-service",
+            "path": "tqd-service/fixture.go",
+            "line": 1,
+            "excerpt": (
+                'strings.Contains(err.Error(), "not found")'
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "ratchet-regression.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "ratchet-regression.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

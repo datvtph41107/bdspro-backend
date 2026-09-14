@@ -61,6 +61,7 @@ ZERO_RATCHETS = (
     ("go.direct_http_error_writer", "gateway-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
+    ("go.text_error_classification", "tqd-service"),
 )
 
 
