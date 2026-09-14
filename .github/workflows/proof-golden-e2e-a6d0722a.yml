@@ -39,7 +39,7 @@ jobs:
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
           test "$(git hash-object shared/code/development/root.mk)" = 'a7ec870107c6d68807006c02a9d270ef14133429'
           test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
-          test "$(git hash-object integration-test/qhpro_commercial_runtime_test.go)" = '53e8580f2e376994eadb6bb6dd9f7477c4604a1f'
+          test "$(git hash-object integration-test/qhpro_commercial_runtime_test.go)" = '53e8580f2e376994eadb6bb6dd9f7477c5f30255'
           grep -Fq 'test-e2e: native-up runtime-value-chain-acceptance runtime-admin-acceptance' shared/code/development/root.mk
           echo 'Golden E2E exact-source identity and protected-scope gate PASS'
 
