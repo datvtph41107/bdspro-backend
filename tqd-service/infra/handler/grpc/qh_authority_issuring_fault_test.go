@@ -66,6 +66,9 @@ func TestQHAuthorityIssuringErrorDoesNotLeakDependencyFailure(t *testing.T) {
 	if st.Message() != "authority issuring operation failed" {
 		t.Fatalf("message = %q", st.Message())
 	}
+	if errorCodeFromQHAuthorityStatus(st) != "tqd.qh_authority_issuring.internal" {
+		t.Fatalf("error_code = %q", errorCodeFromQHAuthorityStatus(st))
+	}
 }
 
 func errorCodeFromQHAuthorityStatus(st *status.Status) string {
