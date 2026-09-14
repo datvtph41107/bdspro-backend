@@ -72,18 +72,50 @@ func (h filterHandler) WithGroup(name string) slog.Handler {
 	return filterHandler{handler: h.handler.WithGroup(name), accept: h.accept}
 }
 
-func channelFilter(channel string) func(slog.Record) bool {
-	return func(record slog.Record) bool {
-		matched := false
-		record.Attrs(func(attr slog.Attr) bool {
-			if attr.Key == "channel" && attr.Value.Kind() == slog.KindString && attr.Value.String() == channel {
-				matched = true
-				return false
-			}
-			return true
-		})
-		return matched
+type channelProjectionHandler struct {
+	handler      slog.Handler
+	target       string
+	boundChannel string
+}
+
+func (h channelProjectionHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.handler.Enabled(ctx, level)
+}
+
+func (h channelProjectionHandler) Handle(ctx context.Context, record slog.Record) error {
+	if h.boundChannel == h.target || recordChannel(record) == h.target {
+		return h.handler.Handle(ctx, record)
 	}
+	return nil
+}
+
+func (h channelProjectionHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	next := h
+	for _, attr := range attrs {
+		if attr.Key == "channel" && attr.Value.Kind() == slog.KindString {
+			next.boundChannel = attr.Value.String()
+		}
+	}
+	next.handler = h.handler.WithAttrs(attrs)
+	return next
+}
+
+func (h channelProjectionHandler) WithGroup(name string) slog.Handler {
+	next := h
+	next.handler = h.handler.WithGroup(name)
+	return next
+}
+
+func recordChannel(record slog.Record) string {
+	var channel string
+	record.Attrs(func(attr slog.Attr) bool {
+		if attr.Key == "channel" && attr.Value.Kind() == slog.KindString {
+			channel = attr.Value.String()
+			return false
+		}
+		return true
+	})
+	return channel
 }
 
 func errorFilter(record slog.Record) bool {
