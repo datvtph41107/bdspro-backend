@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"gateway/config"
+	_httpresponse "gateway/internal/httpresponse"
 
 	"github.com/gin-gonic/gin"
 )
@@ -55,7 +56,16 @@ func (p *Proxy) Handler(fallback http.Handler) gin.HandlerFunc {
 		service := strings.TrimSpace(c.Param("service"))
 		if _, ok := supported[service]; !ok {
 			if fallback == nil {
-				c.JSON(http.StatusNotFound, gin.H{"error": "service not found"})
+				_httpresponse.WriteProblem(
+					c.Request.Context(),
+					c.Writer,
+					_httpresponse.NewProblem(
+						http.StatusNotFound,
+						"gateway.v1.service_not_found",
+						"service not found",
+					),
+				)
+				c.Abort()
 				return
 			}
 			fallback.ServeHTTP(c.Writer, c.Request)
@@ -64,7 +74,16 @@ func (p *Proxy) Handler(fallback http.Handler) gin.HandlerFunc {
 
 		target, err := p.cfg.HTTPEndpoint(service)
 		if err != nil {
-			c.JSON(http.StatusBadGateway, gin.H{"error": "upstream unavailable"})
+			_httpresponse.WriteProblem(
+				c.Request.Context(),
+				c.Writer,
+				_httpresponse.NewProblem(
+					http.StatusBadGateway,
+					"gateway.v1.upstream_unavailable",
+					"upstream unavailable",
+				),
+			)
+			c.Abort()
 			return
 		}
 
@@ -78,12 +97,20 @@ func (p *Proxy) Handler(fallback http.Handler) gin.HandlerFunc {
 			},
 			ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 				statusCode := http.StatusBadGateway
+				code := "gateway.v1.upstream_failure"
+				detail := "upstream request failed"
 
 				if errors.Is(err, context.DeadlineExceeded) || errors.Is(r.Context().Err(), context.DeadlineExceeded) {
 					statusCode = http.StatusGatewayTimeout
+					code = "gateway.v1.upstream_timeout"
+					detail = "upstream request timed out"
 				}
 
-				http.Error(w, http.StatusText(statusCode), statusCode)
+				_httpresponse.WriteProblem(
+					r.Context(),
+					w,
+					_httpresponse.NewProblem(statusCode, code, detail),
+				)
 			},
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), p.timeout)
