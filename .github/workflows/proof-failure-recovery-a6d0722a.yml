@@ -25,25 +25,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify canonical ancestry and harness-only scope
+      - name: Verify canonical ancestry and bounded correction scope
         shell: bash
         run: |
           set -euo pipefail
           canonical=a6d0722a36090148829ca5ff02f03f409d753bad
           workflow=.github/workflows/proof-failure-recovery-a6d0722a.yml
+          recovery=shared/code/development/recovery-notification-broker.sh
 
           test "$(git merge-base "$canonical" HEAD)" = "$canonical"
-          test "$(git diff --name-only "$canonical" HEAD)" = "$workflow"
+          test "$(git diff --name-only "$canonical" HEAD | sort)" = "$(printf '%s\n' "$workflow" "$recovery" | sort)"
           git diff --check "$canonical" HEAD
           test "$(git diff --name-only "$canonical" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
           test "$(git hash-object shared/code/development/root.mk)" = 'a7ec870107c6d68807006c02a9d270ef14133429'
-          test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'e813de03361c8570620cc2f4f922351964bd8fb9'
+          test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'eca73df300fd2abe56f1b34fcc5fce40430dd541'
           test "$(git hash-object shared/code/development/native-stack.sh)" = 'b1d2444dba9e1902052764e1d6429ea745f2210b'
           test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
           grep -Fq 'runtime-notification-broker-recovery: env-check' shared/code/development/root.mk
           grep -Fq 'accept-backend: accept-code-backend verify-runtime-backend runtime-notification-broker-recovery runtime-value-chain-acceptance runtime-admin-acceptance' shared/code/development/root.mk
-          echo 'Failure/recovery exact-source identity and protected-scope gate PASS'
+          echo 'Failure/recovery exact-source identity, bounded-correction, and protected-scope gate PASS'
 
       - name: Install host runtime prerequisites
         shell: bash
@@ -102,7 +103,7 @@ jobs:
           if test -f .env; then
             docker compose --env-file .env -f compose.yaml ps -a > /tmp/recovery-compose-ps.txt 2>&1 || true
             docker compose --env-file .env -f compose.yaml logs --no-color rabbitmq postgres redis > /tmp/recovery-dependency-logs.txt 2>&1 || true
-            docker compose --env-file .env -f compose.yaml exec -T rabbitmq rabbitmqctl list_connections name > /tmp/recovery-rabbit-connections.txt 2>&1 || true
+            docker compose --env-file .env -f compose.yaml exec -T rabbitmq rabbitmqctl list_connections name client_properties > /tmp/recovery-rabbit-connections.txt 2>&1 || true
           fi
           find .tmp/development -maxdepth 2 -type f -print -exec tail -n 260 {} \; > /tmp/recovery-native-logs.txt 2>&1 || true
 
