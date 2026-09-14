@@ -9,6 +9,7 @@ on:
       - 'shared/common/fault/**'
       - 'shared/common/logging/**'
       - 'shared/code/development/audit-observability-errors.py'
+      - 'shared/code/development/test_audit_observability_errors.py'
       - 'gateway-service/**'
       - 'user-service/**'
       - 'payment-service/**'
@@ -27,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test observability/error inventory detector
+        run: python3 shared/code/development/test_audit_observability_errors.py
       - name: Build full-repository migration inventory and enforce ratchets
         run: python3 shared/code/development/audit-observability-errors.py --enforce-ratchets
       - name: Upload migration inventory
