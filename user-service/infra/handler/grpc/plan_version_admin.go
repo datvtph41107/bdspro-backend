@@ -1,9 +1,9 @@
 package grpc
 
 import (
+	_fault "common/fault"
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	userpb "pb/types/user"
@@ -293,12 +293,11 @@ func planServiceError(err error) error {
 	case errors.Is(err, publish.ErrConcurrentPublish):
 		return status.Error(codes.Aborted, "plan version changed; refresh and try again")
 	}
+	if _, ok := _fault.As(err); ok {
+		return _fault.ToGRPC(err)
+	}
 	if statusError, ok := status.FromError(err); ok {
 		return statusError.Err()
-	}
-	if strings.Contains(err.Error(), "required") || strings.Contains(err.Error(), "invalid") ||
-		strings.Contains(err.Error(), "page size") {
-		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	return status.Error(codes.Internal, "plan version administration failed")
 }
