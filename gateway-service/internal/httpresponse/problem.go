@@ -25,6 +25,8 @@ type Problem struct {
 	Detail      string            `json:"detail,omitempty"`
 	Instance    string            `json:"instance,omitempty"`
 	Code        string            `json:"code,omitempty"`
+	Reason      string            `json:"reason,omitempty"`
+	Domain      string            `json:"domain,omitempty"`
 	RequestID   string            `json:"request_id,omitempty"`
 	OperationID string            `json:"operation_id,omitempty"`
 	Errors      []FieldProblem    `json:"errors,omitempty"`
