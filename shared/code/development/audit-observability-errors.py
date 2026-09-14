@@ -43,6 +43,8 @@ SKIP_SUFFIXES = (
 # add a scope only after its canonical migration has reached zero.
 ZERO_RATCHETS = (
     ("go.direct_http_error_writer", "gateway-service"),
+    ("go.text_error_classification", "user-service"),
+    ("go.text_error_classification", "payment-service"),
 )
 
 
