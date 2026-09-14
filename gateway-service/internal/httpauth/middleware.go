@@ -40,13 +40,13 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 		if rawToken != "" && !providerCredential {
 			rawToken = strings.TrimSpace(strings.TrimPrefix(rawToken, "Bearer "))
 			if cfg.tokenVerifier == nil {
-				c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"code": http.StatusServiceUnavailable, "message": "token verifier unavailable"})
+				abortProblem(c, http.StatusServiceUnavailable, "auth.token_verifier_unavailable", "token verifier unavailable")
 				return
 			}
 			var err error
 			principal, err = cfg.tokenVerifier.Parse(rawToken)
 			if err != nil || principal == nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "message": "Invalid or expired token"})
+				abortProblem(c, http.StatusUnauthorized, "auth.invalid_token", "invalid or expired token")
 				return
 			}
 			switch jwtverify.TokenType(principal.Type) {
@@ -60,17 +60,17 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 					}
 				}
 				if !allowed {
-					c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": http.StatusForbidden, "message": "Token không đúng"})
+					abortProblem(c, http.StatusForbidden, "auth.temporary_token_forbidden", "temporary token is not allowed for this route")
 					return
 				}
 			default:
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": http.StatusUnauthorized, "message": "Token type is not allowed"})
+				abortProblem(c, http.StatusUnauthorized, "auth.token_type_not_allowed", "token type is not allowed")
 				return
 			}
 			requestCtx := WithPrincipal(c.Request.Context(), principal)
 			bound, err := identity.BindActor(requestCtx, ActorFromPrincipal(principal))
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "actor context conflict"})
+				abortInternalProblem(c, "auth.actor_context_conflict")
 				return
 			}
 			c.Request = c.Request.WithContext(bound)
@@ -81,28 +81,30 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 		}
 		resolution, err := ResolveHTTPCaller(c.Request.Context(), c.Request, principal, ignoreToken, cfg.apiKeyVerifier)
 		if err != nil {
-			statusCode, message := http.StatusUnauthorized, "Invalid caller classification"
+			statusCode := http.StatusUnauthorized
+			code := "auth.caller_invalid"
+			message := "invalid caller classification"
 			switch {
 			case errors.Is(err, ErrAPIKeyHeaderInvalid):
-				statusCode, message = http.StatusBadRequest, "Invalid API key header"
+				statusCode, code, message = http.StatusBadRequest, "auth.api_key_header_invalid", "invalid API key header"
 			case errors.Is(err, ErrAPIKeyInvalid):
-				message = "API key verification failed"
+				code, message = "auth.api_key_invalid", "API key verification failed"
 			case errors.Is(err, ErrAPIKeyUnavailable), errors.Is(err, context.DeadlineExceeded):
-				statusCode, message = http.StatusServiceUnavailable, "API key verification unavailable"
+				statusCode, code, message = http.StatusServiceUnavailable, "auth.api_key_unavailable", "API key verification unavailable"
 			case errors.Is(err, context.Canceled):
 				c.Abort()
 				return
 			case errors.Is(err, ErrAuthenticationRequired):
-				message = "Authorization header missing"
+				code, message = "auth.authentication_required", "authorization header missing"
 			case errors.Is(err, ErrTokenTypeNotAllowed):
-				message = "Token type is not allowed"
+				code, message = "auth.token_type_not_allowed", "token type is not allowed"
 			}
-			c.AbortWithStatusJSON(statusCode, gin.H{"code": statusCode, "message": message})
+			abortProblem(c, statusCode, code, message)
 			return
 		}
 		bound, err := identity.BindCaller(c.Request.Context(), resolution.Caller)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "caller context conflict"})
+			abortInternalProblem(c, "auth.caller_context_conflict")
 			return
 		}
 		c.Request = c.Request.WithContext(bound)
