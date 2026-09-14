@@ -21,7 +21,7 @@ jobs:
     env:
       QHPRO_BOOTSTRAP_CONFIRM: CREATE_ROOT_OPERATOR
       QHPRO_BOOTSTRAP_ADMIN_USERNAME: qhpro.root.acceptance
-      QHPRO_BOOTSTRAP_ADMIN_PASSWORD: Fresh-Root-Operator-2026!
+      QHPRO_BOOTSTRAP_ADMIN_PASSWORD: Fresh-Root-${{ github.run_id }}-Aa1!
       QHPRO_BOOTSTRAP_ADMIN_FULL_NAME: QHPro Fresh Root Acceptance
       QHPRO_BOOTSTRAP_ADMIN_EMAIL: fresh-root@acceptance.invalid
       QHPRO_BOOTSTRAP_ADMIN_PHONE: "0391111111"
@@ -42,6 +42,7 @@ jobs:
           expected="$(printf '%s\n' \
             '.github/workflows/proof-fresh-infrastructure-r4.yml' \
             'README.md' \
+            'bdspro-service/database/migrations/000001_create_property_table.up.sql' \
             'shared/code/development/toolchain.sh' | sort)"
           test "$actual" = "$expected"
           git diff --check "$base" HEAD
