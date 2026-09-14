@@ -8,6 +8,16 @@ import (
 	"testing"
 )
 
+func TestFromEnvUsesCanonicalRuntimeEnvironment(t *testing.T) {
+	t.Setenv("QHPRO_ENVIRONMENT", "staging")
+	t.Setenv("ENVIRONMENT", "production")
+
+	cfg := FromEnv("gateway-service")
+	if cfg.Environment != "staging" {
+		t.Fatalf("environment = %q, want canonical QHPRO_ENVIRONMENT value", cfg.Environment)
+	}
+}
+
 func TestFileRoutingUsesOneRecordSchemaWithChannelProjections(t *testing.T) {
 	root := t.TempDir()
 	logger, closeLogger, err := New(Config{
