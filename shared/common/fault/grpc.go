@@ -96,6 +96,8 @@ func grpcCode(kind Kind) codes.Code {
 		return codes.AlreadyExists
 	case KindPrecondition:
 		return codes.FailedPrecondition
+	case KindAborted:
+		return codes.Aborted
 	case KindResourceExhausted:
 		return codes.ResourceExhausted
 	case KindUnavailable:
@@ -119,6 +121,8 @@ func reasonForKind(kind Kind) string {
 		return "CONFLICT"
 	case KindPrecondition:
 		return "FAILED_PRECONDITION"
+	case KindAborted:
+		return "ABORTED"
 	case KindResourceExhausted:
 		return "RESOURCE_EXHAUSTED"
 	case KindUnavailable:
@@ -142,6 +146,8 @@ func defaultMessage(kind Kind) string {
 		return "resource conflict"
 	case KindPrecondition:
 		return "precondition failed"
+	case KindAborted:
+		return "operation aborted"
 	case KindResourceExhausted:
 		return "resource exhausted"
 	case KindUnavailable:
