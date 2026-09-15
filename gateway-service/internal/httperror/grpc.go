@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	_logging "common/logging"
@@ -54,9 +55,13 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 	// reach zero.
 	for _, detail := range grpcErr.Details() {
 		if info, ok := detail.(*sharepb.ErrorResponse); ok {
-			writeLegacyBusinessError(ctx, w, grpcErr, info)
+			writeBusinessCompatibilityError(ctx, w, grpcErr, info.Code, info.Message, info.Second)
 			return
 		}
+	}
+
+	if writeCanonicalOTPCompatibilityError(ctx, w, grpcErr) {
+		return
 	}
 
 	problem := problemFromGRPC(grpcErr)
@@ -64,22 +69,93 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 	_httpresponse.WriteProblem(ctx, w, problem)
 }
 
-func writeLegacyBusinessError(ctx context.Context, w http.ResponseWriter, grpcErr *status.Status, info *sharepb.ErrorResponse) {
+func writeCanonicalOTPCompatibilityError(
+	ctx context.Context,
+	w http.ResponseWriter,
+	grpcErr *status.Status,
+) bool {
+	if grpcErr.Code() != codes.ResourceExhausted {
+		return false
+	}
+
+	for _, detail := range grpcErr.Details() {
+		info, ok := detail.(*errdetails.ErrorInfo)
+		if !ok {
+			continue
+		}
+
+		if info.Domain != "qhpro.backend" ||
+			info.Reason != "RESOURCE_EXHAUSTED" {
+			continue
+		}
+
+		errorCode := strings.TrimSpace(info.Metadata["error_code"])
+		var expectedLegacyCode int32
+
+		switch errorCode {
+		case "user.otp.next_send_limited":
+			expectedLegacyCode = 1006
+		case "user.otp.request_limited":
+			expectedLegacyCode = 1017
+		default:
+			continue
+		}
+
+		legacyCodeRaw := strings.TrimSpace(info.Metadata["legacy_code"])
+		legacyCode, err := strconv.ParseInt(legacyCodeRaw, 10, 32)
+		if err != nil || int32(legacyCode) != expectedLegacyCode {
+			continue
+		}
+
+		secondRaw := strings.TrimSpace(info.Metadata["second"])
+		second, err := strconv.ParseInt(secondRaw, 10, 32)
+		if err != nil || second < 0 {
+			continue
+		}
+
+		second32 := int32(second)
+
+		writeBusinessCompatibilityError(
+			ctx,
+			w,
+			grpcErr,
+			expectedLegacyCode,
+			grpcErr.Message(),
+			&second32,
+		)
+
+		return true
+	}
+
+	return false
+}
+
+func writeBusinessCompatibilityError(
+	ctx context.Context,
+	w http.ResponseWriter,
+	grpcErr *status.Status,
+	code int32,
+	message string,
+	second *int32,
+) {
 	_logging.WithChannel(ctx, "http").With(
 		slog.String("component", "gateway.httperror"),
 	).WarnContext(ctx, "legacy downstream business error",
-		slog.String("event_name", "gateway.downstream.legacy_business_error"),
+		slog.String(
+			"event_name",
+			"gateway.downstream.legacy_business_error",
+		),
 		slog.String("grpc_code", grpcErr.Code().String()),
-		slog.Int64("legacy_error_code", int64(info.Code)),
+		slog.Int64("legacy_error_code", int64(code)),
 		slog.Bool("legacy_http_200_contract", true),
 	)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"code":    info.Code,
-		"message": info.Message,
-		"second":  info.Second,
+		"code":    code,
+		"message": message,
+		"second":  second,
 	})
 }
 

@@ -41,17 +41,3 @@ func ReturnError(code int32, message string) error {
 	stWithDetails, _ := st.WithDetails(detail)
 	return stWithDetails.Err()
 }
-
-// ReturnErrorWithSecond trả về error kèm theo số giây đếm ngược
-func ReturnErrorWithSecond(code int32, message string, second int32) error {
-	st := status.New(codes.Internal, message)
-
-	detail := &sharepb.ErrorResponse{
-		Code:    int32(code),
-		Message: message,
-		Second:  &second,
-	}
-
-	stWithDetails, _ := st.WithDetails(detail)
-	return stWithDetails.Err()
-}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	_errors "common/errors"
+	_fault "common/fault"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -103,11 +104,14 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockSendAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				seconds := int32(time.Until(nextTime).Seconds())
-				return _errors.ReturnErrorWithSecond(
-					int32(code),
+				return _fault.New(
+					_fault.KindResourceExhausted,
+					"user.otp.next_send_limited",
 					"Hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
-					seconds,
-				)
+				).WithMetadata(map[string]string{
+					"legacy_code": fmt.Sprintf("%d", code),
+					"second":      fmt.Sprintf("%d", seconds),
+				})
 			}
 		}
 	case enums.LIMIT_REQUEST_TIME:
@@ -115,11 +119,14 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockRequestAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				seconds := int32(time.Until(nextTime).Seconds())
-				return _errors.ReturnErrorWithSecond(
-					int32(code),
+				return _fault.New(
+					_fault.KindResourceExhausted,
+					"user.otp.request_limited",
 					"Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
-					seconds,
-				)
+				).WithMetadata(map[string]string{
+					"legacy_code": fmt.Sprintf("%d", code),
+					"second":      fmt.Sprintf("%d", seconds),
+				})
 			}
 		}
 	case enums.ACTIVATED:

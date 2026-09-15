@@ -3,6 +3,7 @@ package handler
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	_fault "common/fault"
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
@@ -18,6 +19,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+func authTransportError(err error) error {
+	if _, ok := _fault.As(err); ok {
+		return _fault.ToGRPC(err)
+	}
+	return err
+}
 
 type AuthHandler struct {
 	authpb.UnimplementedAuthServiceServer
@@ -82,7 +90,7 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 
 	result, err := h.AuthUsecase.RequestOtp(ctx, *dto)
 	if err != nil {
-		return nil, err
+		return nil, authTransportError(err)
 	}
 
 	// Convert DTO response to proto response
@@ -411,7 +419,7 @@ func (h *AuthHandler) ResendOTP(ctx context.Context, req *authpb.ResendOTPReques
 
 	result, err := h.AuthUsecase.ResendOTP(ctx, *dto)
 	if err != nil {
-		return nil, err
+		return nil, authTransportError(err)
 	}
 
 	// Convert DTO response to proto response
