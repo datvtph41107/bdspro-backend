@@ -105,7 +105,7 @@ func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *
 		return nil, err
 	}
 	if exists {
-		return nil, domain.ErrDealInvitationAlreadyExists
+		return nil, dealInvitationAlreadyExistsFault()
 		// return nil, custom_error.InvalidRequest(&errdetails.BadRequest{
 		// 	FieldViolations: []*errdetails.BadRequest_FieldViolation{
 		// 		{

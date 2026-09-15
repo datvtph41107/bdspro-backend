@@ -2,17 +2,13 @@ package handler
 
 import (
 	"context"
-	"errors"
 	bdspropb "pb/types/bdspro"
-	sharepb "pb/types/shared"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"common/fault"
 
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
-	"bdspro/internal/domain"
 	"bdspro/internal/usecases"
 )
 
@@ -69,20 +65,10 @@ func mapDealInvitationSendError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if !errors.Is(err, domain.ErrDealInvitationAlreadyExists) {
+	if _, ok := fault.As(err); !ok {
 		return err
 	}
-
-	const message = "invitation already exists for this user"
-	st := status.New(codes.Internal, message)
-	stWithDetails, detailErr := st.WithDetails(&sharepb.ErrorResponse{
-		Code:    400,
-		Message: message,
-	})
-	if detailErr != nil {
-		return st.Err()
-	}
-	return stWithDetails.Err()
+	return fault.ToGRPC(err)
 }
 
 // @Summary Xác nhận lời mời

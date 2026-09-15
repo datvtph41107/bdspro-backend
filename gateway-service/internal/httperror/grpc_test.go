@@ -121,3 +121,104 @@ func TestWriteGRPCMapsCanonicalNotFoundToHTTPProblem(t *testing.T) {
 		t.Fatalf("domain = %q", response.Domain)
 	}
 }
+
+func TestWriteGRPCMapsCanonicalConflictToHTTPProblem(t *testing.T) {
+	const (
+		wantMessage = "invitation already exists for this user"
+		wantCode    = "bdspro.deal_invitation.already_exists"
+	)
+
+	grpcStatus, detailsErr := status.New(
+		codes.AlreadyExists,
+		wantMessage,
+	).WithDetails(
+		&errdetails.ErrorInfo{
+			Reason: "CONFLICT",
+			Domain: "qhpro.backend",
+			Metadata: map[string]string{
+				"error_code": wantCode,
+			},
+		},
+	)
+	if detailsErr != nil {
+		t.Fatal(detailsErr)
+	}
+
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, grpcStatus.Err())
+
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf(
+			"HTTP status = %d, want %d",
+			recorder.Code,
+			http.StatusConflict,
+		)
+	}
+
+	var response struct {
+		Type     string            `json:"type"`
+		Status   int               `json:"status"`
+		Detail   string            `json:"detail"`
+		Code     string            `json:"code"`
+		Reason   string            `json:"reason"`
+		Domain   string            `json:"domain"`
+		Metadata map[string]string `json:"metadata"`
+	}
+
+	if err := json.Unmarshal(
+		recorder.Body.Bytes(),
+		&response,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if response.Type !=
+		"urn:qhpro:error:bdspro.deal_invitation.already_exists" {
+		t.Fatalf(
+			"type = %q",
+			response.Type,
+		)
+	}
+
+	if response.Status != http.StatusConflict {
+		t.Fatalf(
+			"body status = %d",
+			response.Status,
+		)
+	}
+
+	if response.Detail != wantMessage {
+		t.Fatalf(
+			"detail = %q",
+			response.Detail,
+		)
+	}
+
+	if response.Code != wantCode {
+		t.Fatalf(
+			"code = %q",
+			response.Code,
+		)
+	}
+
+	if response.Reason != "CONFLICT" {
+		t.Fatalf(
+			"reason = %q",
+			response.Reason,
+		)
+	}
+
+	if response.Domain != "qhpro.backend" {
+		t.Fatalf(
+			"domain = %q",
+			response.Domain,
+		)
+	}
+
+	if response.Metadata["error_code"] != wantCode {
+		t.Fatalf(
+			"metadata error_code = %q",
+			response.Metadata["error_code"],
+		)
+	}
+}
