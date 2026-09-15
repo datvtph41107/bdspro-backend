@@ -402,6 +402,128 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 )
 
 
+
+    def assert_legacy_shared_error_response_ratchet_enforces(
+        self,
+        owner: str,
+    ):
+        finding = {
+            "category": "go.legacy_shared_error_response",
+            "severity": "debt",
+            "owner": owner,
+            "path": f"{owner}/fixture.go",
+            "line": 1,
+            "excerpt": "&sharepb.ErrorResponse{Code: 401}",
+        }
+
+        slug = owner.replace("/", "-")
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / f"{slug}-legacy-error-response-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / f"{slug}-legacy-error-response-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+    def test_chat_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "chat-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "chat-service",
+        )
+
+    def test_chat_v1_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "chat-v1-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_v1_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "chat-v1-service",
+        )
+
+    def test_relay_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "relay-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_relay_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "relay-service",
+        )
+
+
     def test_canonical_http_error_serializer_owner_is_shared(self):
         summary = audit.build_summary([])
 
