@@ -169,6 +169,87 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_shared_common_direct_http_writer_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.direct_http_error_writer",
+                "shared/common",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_shared_common_direct_http_writer_ratchet_enforces_regression(
+        self,
+    ):
+        finding = {
+            "category": "go.direct_http_error_writer",
+            "severity": "debt",
+            "owner": "shared/common",
+            "path": (
+                "shared/common/jwt/"
+                "regression_fixture.go"
+            ),
+            "line": 1,
+            "excerpt": (
+                "c.AbortWithStatusJSON("
+                "http.StatusUnauthorized, payload)"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-common-ratchet-regression.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-common-ratchet-regression.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
     def test_canonical_http_error_serializer_owner_is_shared(self):
         summary = audit.build_summary([])
 

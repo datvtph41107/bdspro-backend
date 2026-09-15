@@ -59,6 +59,7 @@ TEXT_ERROR_ALIAS_CLASSIFIER_PATTERN = re.compile(
 # add a scope only after its canonical migration has reached zero.
 ZERO_RATCHETS = (
     ("go.direct_http_error_writer", "gateway-service"),
+    ("go.direct_http_error_writer", "shared/common"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
