@@ -60,6 +60,7 @@ TEXT_ERROR_ALIAS_CLASSIFIER_PATTERN = re.compile(
 ZERO_RATCHETS = (
     ("go.direct_http_error_writer", "gateway-service"),
     ("go.direct_http_error_writer", "shared/common"),
+    ("go.legacy_shared_error_response", "bdspro-service"),
     ("go.legacy_shared_error_response", "user-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
