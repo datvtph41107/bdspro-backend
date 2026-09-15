@@ -121,6 +121,7 @@ RULES = (
         (".go",),
         re.compile(r"(?:AbortWithStatusJSON\s*\(|\bhttp\.Error\s*\()"),
         excluded_prefixes=(
+            "shared/common/httpresponse/",
             "gateway-service/internal/httperror/",
             "gateway-service/internal/httpresponse/",
         ),
@@ -131,6 +132,7 @@ RULES = (
         (".go",),
         re.compile(r"(?:json\.NewEncoder\s*\([^\n]*\)\.Encode\s*\(|\.JSON\s*\()"),
         excluded_prefixes=(
+            "shared/common/httpresponse/",
             "gateway-service/internal/httperror/",
             "gateway-service/internal/httpresponse/",
         ),
@@ -437,7 +439,8 @@ def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
             "canonical_go_logging_api": "log/slog",
             "canonical_go_logging_owner": "shared/common/logging",
             "canonical_error_identity_owner": "shared/common/fault",
-            "canonical_gateway_error_serializer": "gateway-service/internal/httpresponse.WriteProblem",
+            "canonical_http_error_serializer": "shared/common/httpresponse.WriteProblem",
+            "gateway_http_error_facade": "gateway-service/internal/httpresponse.WriteProblem",
             "legacy_findings_fail_ci": False,
             "ratchets_fail_ci": True,
         },

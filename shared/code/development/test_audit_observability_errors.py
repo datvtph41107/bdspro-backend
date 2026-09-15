@@ -169,5 +169,19 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_canonical_http_error_serializer_owner_is_shared(self):
+        summary = audit.build_summary([])
+
+        self.assertEqual(
+            summary["policy"]["canonical_http_error_serializer"],
+            "shared/common/httpresponse.WriteProblem",
+        )
+
+        self.assertEqual(
+            summary["policy"]["gateway_http_error_facade"],
+            "gateway-service/internal/httpresponse.WriteProblem",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

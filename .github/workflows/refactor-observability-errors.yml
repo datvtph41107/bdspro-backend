@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - 'shared/common/fault/**'
+      - 'shared/common/httpresponse/**'
+      - 'shared/common/jwt/**'
       - 'shared/common/logging/**'
       - 'shared/code/development/audit-observability-errors.py'
       - 'shared/code/development/test_audit_observability_errors.py'
@@ -51,11 +53,11 @@ jobs:
           go-version: '1.25.10'
           cache: true
           cache-dependency-path: shared/common/go.sum
-      - name: Test shared fault and logging contracts
+      - name: Test shared fault, HTTP response, JWT, and logging contracts
         working-directory: shared/common
         env:
           GOWORK: 'off'
-        run: go test ./fault ./logging ./request ./requestlog
+        run: go test ./fault ./httpresponse ./jwt ./logging ./request ./requestlog
 
   boundary-contracts:
     runs-on: ubuntu-latest
