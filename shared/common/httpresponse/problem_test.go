@@ -308,3 +308,82 @@ func TestWriteProblemLegacyEnvelopePreservesNumericCodeAndAddsIdentity(
 		)
 	}
 }
+
+func TestWriteProblemLegacyDataEnvelopePreservesExactHistoricalShape(
+	t *testing.T,
+) {
+	ctx := _request.WithRequestID(
+		context.Background(),
+		"req-historical",
+	)
+
+	ctx, err := _request.BindOperationID(
+		ctx,
+		"op-historical",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recorder := httptest.NewRecorder()
+
+	WriteProblem(
+		ctx,
+		recorder,
+		NewProblem(
+			http.StatusUnauthorized,
+			"auth.token_invalid_or_expired",
+			"Invalid or expired token",
+		),
+		WithLegacyDataJSONEnvelope(),
+	)
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf(
+			"status = %d, want %d",
+			recorder.Code,
+			http.StatusUnauthorized,
+		)
+	}
+
+	if got := recorder.Header().Get(
+		"Content-Type",
+	); got != LegacyJSONMediaType {
+		t.Fatalf(
+			"content type = %q, want %q",
+			got,
+			LegacyJSONMediaType,
+		)
+	}
+
+	want :=
+		"{\"code\":401," +
+			"\"message\":\"Invalid or expired token\"," +
+			"\"data\":{}}\n"
+
+	if got := recorder.Body.String(); got != want {
+		t.Fatalf(
+			"body = %q, want %q",
+			got,
+			want,
+		)
+	}
+
+	for _, forbidden := range []string{
+		"error_code",
+		"status",
+		"request_id",
+		"operation_id",
+	} {
+		if strings.Contains(
+			recorder.Body.String(),
+			forbidden,
+		) {
+			t.Fatalf(
+				"historical body leaked %q: %q",
+				forbidden,
+				recorder.Body.String(),
+			)
+		}
+	}
+}

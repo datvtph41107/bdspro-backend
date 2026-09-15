@@ -326,3 +326,118 @@ func TestTempTokenRouteFaultMapsToForbidden(
 		)
 	}
 }
+
+func TestPublicJWTCompatibilityFaultsOwnStableIdentity(
+	t *testing.T,
+) {
+	cause := errors.New(
+		"jwt parser technical failure",
+	)
+
+	tests := []struct {
+		name    string
+		err     error
+		code    string
+		message string
+		cause   error
+	}{
+		{
+			name:    "authorization header missing",
+			err:     AuthorizationHeaderMissingFault(),
+			code:    "auth.authorization_header_missing",
+			message: "Authorization header is missing",
+		},
+		{
+			name:    "token missing",
+			err:     TokenMissingFault(),
+			code:    "auth.token_missing",
+			message: "Missing token",
+		},
+		{
+			name: "invalid or expired token",
+			err: InvalidOrExpiredTokenFault(
+				cause,
+			),
+			code:    "auth.token_invalid_or_expired",
+			message: "Invalid or expired token",
+			cause:   cause,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(
+			test.name,
+			func(t *testing.T) {
+				failure, ok := fault.As(
+					test.err,
+				)
+
+				if !ok {
+					t.Fatalf(
+						"error type = %T",
+						test.err,
+					)
+				}
+
+				if failure.Kind() !=
+					fault.KindUnauthenticated {
+					t.Fatalf(
+						"kind = %q",
+						failure.Kind(),
+					)
+				}
+
+				if failure.Code() !=
+					test.code {
+					t.Fatalf(
+						"code = %q, want %q",
+						failure.Code(),
+						test.code,
+					)
+				}
+
+				if failure.PublicMessage() !=
+					test.message {
+					t.Fatalf(
+						"message = %q, want %q",
+						failure.PublicMessage(),
+						test.message,
+					)
+				}
+
+				problem :=
+					commonhttp.ProblemFromError(
+						test.err,
+					)
+
+				if problem.Status !=
+					http.StatusUnauthorized {
+					t.Fatalf(
+						"status = %d, want %d",
+						problem.Status,
+						http.StatusUnauthorized,
+					)
+				}
+
+				if problem.Detail !=
+					test.message {
+					t.Fatalf(
+						"detail = %q, want %q",
+						problem.Detail,
+						test.message,
+					)
+				}
+
+				if test.cause != nil &&
+					!errors.Is(
+						test.err,
+						test.cause,
+					) {
+					t.Fatal(
+						"technical cause was not preserved",
+					)
+				}
+			},
+		)
+	}
+}

@@ -39,7 +39,8 @@ type Problem struct {
 }
 
 type writeConfig struct {
-	legacyJSONEnvelope bool
+	legacyJSONEnvelope     bool
+	legacyDataJSONEnvelope bool
 }
 
 // WriteOption configures representation at the HTTP boundary without
@@ -52,6 +53,21 @@ func WithLegacyJSONEnvelope() WriteOption {
 	return func(cfg *writeConfig) {
 		cfg.legacyJSONEnvelope = true
 	}
+}
+
+// WithLegacyDataJSONEnvelope preserves the historical direct-service
+// {code,message,data:{}} JSON contract while semantic identity remains
+// canonical. It exists only for bounded compatibility migrations.
+func WithLegacyDataJSONEnvelope() WriteOption {
+	return func(cfg *writeConfig) {
+		cfg.legacyDataJSONEnvelope = true
+	}
+}
+
+type legacyDataJSONEnvelope struct {
+	Code    int      `json:"code"`
+	Message string   `json:"message"`
+	Data    struct{} `json:"data"`
 }
 
 type legacyJSONEnvelope struct {
@@ -222,6 +238,24 @@ func WriteProblem(
 	if operationID, ok :=
 		_request.OperationIDFromContext(ctx); ok {
 		problem.OperationID = operationID
+	}
+
+	if cfg.legacyDataJSONEnvelope {
+		w.Header().Set(
+			"Content-Type",
+			LegacyJSONMediaType,
+		)
+
+		w.WriteHeader(problem.Status)
+
+		_ = json.NewEncoder(w).Encode(
+			legacyDataJSONEnvelope{
+				Code:    problem.Status,
+				Message: problem.Detail,
+			},
+		)
+
+		return
 	}
 
 	if cfg.legacyJSONEnvelope {

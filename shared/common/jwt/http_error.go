@@ -10,6 +10,43 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	authorizationHeaderMissingCode = "auth.authorization_header_missing"
+	tokenMissingCode               = "auth.token_missing"
+	invalidOrExpiredTokenCode      = "auth.token_invalid_or_expired"
+)
+
+// AuthorizationHeaderMissingFault owns the canonical identity for the
+// historical missing Authorization header response.
+func AuthorizationHeaderMissingFault() error {
+	return fault.New(
+		fault.KindUnauthenticated,
+		authorizationHeaderMissingCode,
+		"Authorization header is missing",
+	)
+}
+
+// TokenMissingFault owns the canonical identity for the historical missing
+// token response.
+func TokenMissingFault() error {
+	return fault.New(
+		fault.KindUnauthenticated,
+		tokenMissingCode,
+		"Missing token",
+	)
+}
+
+// InvalidOrExpiredTokenFault owns the canonical identity for the historical
+// invalid-or-expired token response while preserving the technical cause.
+func InvalidOrExpiredTokenFault(cause error) error {
+	return fault.Wrap(
+		cause,
+		fault.KindUnauthenticated,
+		invalidOrExpiredTokenCode,
+		"Invalid or expired token",
+	)
+}
+
 func abortWithFault(
 	c *gin.Context,
 	err error,
@@ -27,12 +64,7 @@ func abortWithFault(
 }
 
 func invalidTokenFault(cause error) error {
-	return fault.Wrap(
-		cause,
-		fault.KindUnauthenticated,
-		"auth.token_invalid_or_expired",
-		"Invalid or expired token",
-	)
+	return InvalidOrExpiredTokenFault(cause)
 }
 
 func actorContextConflictFault(

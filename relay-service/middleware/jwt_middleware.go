@@ -8,10 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	sharepb "pb/types/shared"
+	commonhttp "common/httpresponse"
+	commonjwt "common/jwt"
 	"relay/constants"
-
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func JWTMiddleware(next http.Handler) http.Handler {
@@ -31,7 +30,7 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		} else {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				writeErrorResponse(w, http.StatusUnauthorized, "Authorization header is missing")
+				writeErrorResponse(r.Context(), w, commonjwt.AuthorizationHeaderMissingFault())
 				return
 			}
 
@@ -46,13 +45,13 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		}
 
 		if tokenString == "" {
-			writeErrorResponse(w, http.StatusUnauthorized, "Missing token")
+			writeErrorResponse(r.Context(), w, commonjwt.TokenMissingFault())
 			return
 		}
 
 		claims, err := ExtractPayload(tokenString)
 		if err != nil {
-			writeErrorResponse(w, http.StatusUnauthorized, "Invalid or expired token")
+			writeErrorResponse(r.Context(), w, commonjwt.InvalidOrExpiredTokenFault(err))
 			return
 		}
 
@@ -80,13 +79,15 @@ func ExtractPayload(tokenString string) (map[string]any, error) {
 	return payload, nil
 }
 
-func writeErrorResponse(w http.ResponseWriter, code int, message string) {
-	response := &sharepb.ErrorResponse{
-		Code:    int32(code),
-		Message: message,
-		Data:    &anypb.Any{},
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(response)
+func writeErrorResponse(
+	ctx context.Context,
+	w http.ResponseWriter,
+	err error,
+) {
+	commonhttp.WriteProblem(
+		ctx,
+		w,
+		commonhttp.ProblemFromError(err),
+		commonhttp.WithLegacyDataJSONEnvelope(),
+	)
 }
