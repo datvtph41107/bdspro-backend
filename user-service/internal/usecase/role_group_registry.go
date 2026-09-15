@@ -47,7 +47,7 @@ func (s *RoleGroupRegistry) Load(ctx context.Context) error {
 func (s *RoleGroupRegistry) GetByCode(code string) (*access.RoleGroup, error) {
 	module, ok := s.moduleMap[code]
 	if !ok {
-		return nil, access.ErrRoleGroupNotFound
+		return nil, roleGroupNotFoundFault()
 	}
 	return module, nil
 }

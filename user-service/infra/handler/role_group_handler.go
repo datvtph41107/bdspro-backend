@@ -2,18 +2,14 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	"common/fault"
 	"context"
-	"errors"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	"user/infra/mapper"
-	"user/internal/domain/access"
 	"user/internal/enums"
 	"user/internal/usecase"
 	"user/validator"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type RoleGroupHandler struct {
@@ -170,20 +166,10 @@ func (h *RoleGroupHandler) GetRoleGroupById(ctx context.Context, req *sharepb.Id
 }
 
 func mapUpdateGroupPermissionsError(err error) error {
-	if !errors.Is(err, access.ErrRoleGroupNotFound) {
+	if _, ok := fault.As(err); !ok {
 		return err
 	}
-
-	const message = "Group không tồn tại"
-	st := status.New(codes.Internal, message)
-	withDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
-		Code:    404,
-		Message: message,
-	})
-	if detailsErr != nil {
-		return st.Err()
-	}
-	return withDetails.Err()
+	return fault.ToGRPC(err)
 }
 
 // @Summary Cập nhật permission cho group

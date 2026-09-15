@@ -2,8 +2,8 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	"common/fault"
 	"context"
-	"errors"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 
@@ -283,20 +283,10 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 }
 
 func mapGetRolesByModuleCodeError(err error) error {
-	if !errors.Is(err, access.ErrRoleGroupNotFound) {
+	if _, ok := fault.As(err); !ok {
 		return err
 	}
-
-	const message = "Role group not found"
-	st := status.New(codes.Internal, message)
-	withDetails, detailsErr := st.WithDetails(&sharepb.ErrorResponse{
-		Code:    404,
-		Message: message,
-	})
-	if detailsErr != nil {
-		return st.Err()
-	}
-	return withDetails.Err()
+	return fault.ToGRPC(err)
 }
 
 // @Summary Lấy danh sách role theo module code

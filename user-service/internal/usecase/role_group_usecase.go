@@ -33,7 +33,7 @@ func (uc *RoleGroupUsecase) UpdateGroupPermissions(ctx context.Context, groupID 
 		return err
 	}
 	if group == nil {
-		return access.ErrRoleGroupNotFound
+		return roleGroupNotFoundFault()
 	}
 
 	// Cập nhật permission cho group
