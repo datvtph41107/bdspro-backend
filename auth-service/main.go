@@ -5,13 +5,14 @@ import (
 	"auth/infra/handler"
 	authrpc "auth/infra/rpc"
 	"auth/infra/services"
+	"common/logging"
 	_middleware "common/middleware"
 	_ "common/models"
 	process "common/process"
 	qhprorpc "common/rpc"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -37,10 +38,23 @@ import (
 // nếu public -> đi luôn vào service con
 // nếu private -> đi vào auth -> auth điều hướng tới service con
 func main() {
-	if err := run(); err != nil {
-		log.Printf("auth service failed: %v", err)
-		os.Exit(1)
+	os.Exit(runProcess(run))
+}
+
+func runProcess(runFn func() error) int {
+	closeLogger, err := logging.Configure("auth-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure auth logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := runFn(); err != nil {
+		slog.Error("auth service failed", slog.Any("error", err))
+		return 1
+	}
+
+	return 0
 }
 
 func run() error {
@@ -97,7 +111,7 @@ func run() error {
 	)
 	authpb.RegisterAuthInternalServiceServer(s, authInternalHandler)
 
-	log.Printf("Listen: %v", port)
+	slog.Info("auth gRPC listening", slog.String("address", port))
 	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stopSignals()
 	processCtx, processCancel := context.WithCancel(signalCtx)

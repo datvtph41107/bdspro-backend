@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
@@ -107,7 +107,11 @@ func (s *PermissionService) Run(ctx context.Context) {
 			break
 		}
 		s.setLastError(err)
-		log.Printf("[PermissionService] initial refresh failed: %v", err)
+		slog.Warn(
+			"auth permission initial refresh failed",
+			slog.Any("error", err),
+			slog.Duration("retry_delay", retryDelay),
+		)
 
 		timer := time.NewTimer(retryDelay)
 		select {
@@ -136,7 +140,10 @@ func (s *PermissionService) Run(ctx context.Context) {
 			cancel()
 			if err != nil {
 				s.setLastError(err)
-				log.Printf("[PermissionService] refresh failed: %v", err)
+				slog.Warn(
+					"auth permission refresh failed",
+					slog.Any("error", err),
+				)
 			}
 		case <-ctx.Done():
 			return
@@ -167,11 +174,11 @@ func (s *PermissionService) refresh(ctx context.Context) error {
 	s.snapshot = next
 	s.lastErr = nil
 	s.mu.Unlock()
-	log.Printf(
-		"[PermissionService] snapshot=%s roles=%d codes=%d",
-		next.catalog.Version(),
-		next.catalog.RoleCount(),
-		next.catalog.CodeCount(),
+	slog.Info(
+		"auth permission snapshot refreshed",
+		slog.String("version", next.catalog.Version()),
+		slog.Int("roles", next.catalog.RoleCount()),
+		slog.Int("codes", next.catalog.CodeCount()),
 	)
 	return nil
 }

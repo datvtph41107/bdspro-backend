@@ -5,7 +5,7 @@ import (
 	qhprorpc "common/rpc"
 	"common/rpcenv"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -98,7 +98,12 @@ func parseRuntimeDuration(
 ) time.Duration {
 	parsed, err := time.ParseDuration(value)
 	if err != nil || parsed <= 0 {
-		log.Printf("[AuthRuntime] invalid %s=%q, using %s", key, value, fallback)
+		slog.Warn(
+			"auth runtime duration invalid; using fallback",
+			slog.String("key", key),
+			slog.String("value", value),
+			slog.Duration("fallback", fallback),
+		)
 		return fallback
 	}
 	return parsed
