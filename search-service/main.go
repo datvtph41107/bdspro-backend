@@ -1,8 +1,9 @@
 package main
 
 import (
+	"common/logging"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"search/config"
 	"search/handlers"
@@ -12,10 +13,23 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Printf("search service failed: %v", err)
-		os.Exit(1)
+	os.Exit(runProcess(run))
+}
+
+func runProcess(runFn func() error) int {
+	closeLogger, err := logging.Configure("search-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure search logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := runFn(); err != nil {
+		slog.Error("search service failed", slog.Any("error", err))
+		return 1
+	}
+
+	return 0
 }
 
 func run() error {
