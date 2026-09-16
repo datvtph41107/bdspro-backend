@@ -2,6 +2,7 @@ package main
 
 import (
 	_db "common/db"
+	"common/logging"
 	qhprorpc "common/rpc"
 	"common/rpcenv"
 	"context"
@@ -21,7 +22,7 @@ import (
 	"file/services"
 	"fmt"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -39,10 +40,23 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	if err := run(); err != nil {
-		log.Printf("File-service stopped with error: %v", err)
-		os.Exit(1)
+	os.Exit(runProcess(run))
+}
+
+func runProcess(runFn func() error) int {
+	closeLogger, err := logging.Configure("file-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure file logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := runFn(); err != nil {
+		slog.Error("file service stopped", slog.Any("error", err))
+		return 1
+	}
+
+	return 0
 }
 
 func run() error {
@@ -107,7 +121,11 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("load File schema policy: %w", err)
 	}
-	log.Printf("File database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	slog.Info(
+		"file database schema policy",
+		slog.String("mode", string(schemaPolicy.Mode)),
+		slog.String("source", schemaPolicy.Source),
+	)
 	if err := _db.ApplySchemaPolicy(db, schemaPolicy, models.AutoMigrate); err != nil {
 		return fmt.Errorf("apply File schema policy: %w", err)
 	}
