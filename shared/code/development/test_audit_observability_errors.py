@@ -588,6 +588,70 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_file_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "file-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_file_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "file-service",
+            "path": "file-service/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("File-service stopped with error: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "file-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "file-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
     def test_canonical_http_error_serializer_owner_is_shared(self):
         summary = audit.build_summary([])
 
