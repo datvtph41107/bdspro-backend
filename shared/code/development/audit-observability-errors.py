@@ -65,6 +65,7 @@ ZERO_RATCHETS = (
     ("go.legacy_shared_error_response", "chat-service"),
     ("go.legacy_shared_error_response", "chat-v1-service"),
     ("go.legacy_shared_error_response", "relay-service"),
+    ("go.legacy_std_log", "search-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
