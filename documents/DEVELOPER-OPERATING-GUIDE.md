@@ -44,7 +44,9 @@ make deps service=payment-service
 make dev service=payment-service
 ```
 
-`make dev` chạy native Air. Logs nằm ngay terminal. Save source → Go build → process restart. Đây là loop mặc định vì tối ưu feedback/debug.
+`make dev` chạy native Air. Logs stdout/stderr nằm ngay terminal. Save source → Go build → process restart. Đây là loop mặc định vì tối ưu feedback/debug.
+
+Structured application logs của cả `make up` và `make dev` dùng cùng một root tuyệt đối do repository sở hữu: `<repo>/.tmp/development/logs`. Logger tiếp tục tự tách theo service/run bên dưới root này; vị trí evidence không phụ thuộc service CWD. `make logs` vẫn là raw process-stream view, không phải structured-query command.
 
 VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → `BDSPro · Dev · <Service>`.
 

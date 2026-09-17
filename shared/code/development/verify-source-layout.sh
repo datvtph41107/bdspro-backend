@@ -49,4 +49,18 @@ done < <(find . -mindepth 2 -maxdepth 2 -name go.mod -print0 | sort -z)
 
 [[ -f ai-service/README.md ]] || { echo 'ai-service: missing README.md' >&2; exit 1; }
 
+# Development launchers must agree on one repository-owned structured-log root.
+# This keeps `make up` and service-local/root-routed `make dev` independent of CWD.
+expected_log_root="$repo_root/.tmp/development/logs"
+dev_recipe="$(make --no-print-directory -C auth-service -n dev)"
+grep -Fq "QHPRO_LOG_ROOT=\"$expected_log_root\"" <<<"$dev_recipe" || {
+  echo "service dev does not inject repository-owned QHPRO_LOG_ROOT=$expected_log_root" >&2
+  exit 1
+}
+grep -Fq 'export QHPRO_LOG_ROOT="$log_dir"' shared/code/development/native-stack.sh || {
+  echo 'native supervisor does not export the repository-owned structured log root' >&2
+  exit 1
+}
+bash -n shared/code/development/native-stack.sh
+
 echo 'source layout verification PASS'

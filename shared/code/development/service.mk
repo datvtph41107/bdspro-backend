@@ -8,6 +8,8 @@ include ../shared/code/development/go.mk
 
 ENV_FILE ?= .env
 ROOT_ENV_FILE ?= ../.env
+REPOSITORY_ROOT ?= ..
+QHPRO_LOG_ROOT := $(abspath $(REPOSITORY_ROOT)/.tmp/development/logs)
 BINARY_NAME ?= service
 BIN ?= bin/$(BINARY_NAME)
 BUILD_PACKAGE ?= .
@@ -19,7 +21,7 @@ GO_TEST_FLAGS ?=
 # service-owned environment. Docker Compose injects its own container wiring
 # and does not use this helper.
 define with_env
-set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host $(1)
+set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host QHPRO_LOG_ROOT="$(QHPRO_LOG_ROOT)" $(1)
 endef
 
 fmt:

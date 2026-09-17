@@ -154,6 +154,8 @@ start_one() {
     source "$repository_root/$directory/.env"
     set +a
     export QHPRO_EXECUTION_MODE=host
+    # Local structured evidence belongs to the repository, never to the service CWD.
+    export QHPRO_LOG_ROOT="$log_dir"
     if [[ -n "$args" ]]; then
       exec "./bin/$binary" $args
     else
