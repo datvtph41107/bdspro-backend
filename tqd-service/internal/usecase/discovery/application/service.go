@@ -1,10 +1,11 @@
 package application
 
 import (
+	"common/validation"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"math"
 	"regexp"
 	"sort"
@@ -25,13 +26,16 @@ func newRequestID() string {
 	return hex.EncodeToString(raw[:])
 }
 
+// ErrProvidersUnavailable cho biết tất cả nguồn truy vấn đều thất bại.
+var ErrProvidersUnavailable = errors.New("discovery providers unavailable")
+
 type Service struct{ repo ports.Repository }
 
 func NewService(repo ports.Repository) *Service { return &Service{repo: repo} }
 
 func validatePoint(p domain.Point) error {
 	if p.Latitude < -90 || p.Latitude > 90 || p.Longitude < -180 || p.Longitude > 180 {
-		return fmt.Errorf("invalid latitude/longitude")
+		return validation.New("coordinates", "DISCOVERY_COORDINATES_INVALID", "invalid latitude/longitude")
 	}
 	return nil
 }
@@ -88,7 +92,7 @@ func (s *Service) Identify(ctx context.Context, req domain.IdentifyRequest) (*do
 	response := &domain.IdentifyResponse{RequestID: newRequestID(), Candidates: candidates, Partial: partial, Warnings: warnings}
 	if len(candidates) == 0 {
 		if partial && len(warnings) == len(providers) {
-			return nil, fmt.Errorf("all discovery providers failed")
+			return nil, ErrProvidersUnavailable
 		}
 		response.Resolution = domain.Resolution{Status: "empty", Confidence: 0, Strategy: "spatial_candidates"}
 		return response, nil
@@ -195,7 +199,7 @@ func (s *Service) Search(ctx context.Context, req domain.SearchRequest) (*domain
 		candidates = append(candidates, r.items...)
 	}
 	if len(candidates) == 0 && len(warnings) == len(providers) {
-		return nil, fmt.Errorf("all search providers failed")
+		return nil, ErrProvidersUnavailable
 	}
 	candidates = filterKinds(dedupe(candidates), req.EntityKinds)
 	rankSearch(candidates, req, interpretation)

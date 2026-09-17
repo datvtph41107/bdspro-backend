@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -117,7 +118,11 @@ func (h *SubscriptionCheckoutHandler) Checkout(ctx context.Context, req *userpb.
 	}
 	result, err := h.service.Checkout(ctx, subject, req.GetPlanCode(), key)
 	if err != nil {
-		return nil, checkoutError(err)
+		mapped := checkoutError(err)
+		if status.Code(mapped) == codes.Internal || status.Code(mapped) == codes.Unavailable {
+			slog.ErrorContext(ctx, "subscription checkout failed", "plan_code", req.GetPlanCode(), "error", err)
+		}
+		return nil, mapped
 	}
 	return &userpb.CheckoutResponse{OrderId: result.Order.ID, Reference: result.Order.Reference, Status: result.Order.Status, Created: result.Created}, nil
 }
@@ -155,6 +160,8 @@ func checkoutError(err error) error {
 		return status.Error(codes.FailedPrecondition, err.Error())
 	case errors.Is(err, checkout.ErrPlanTermsUnavailable), errors.Is(err, checkout.ErrAmbiguousPlanVersion), errors.Is(err, checkout.ErrAmbiguousRecurringPrice):
 		return status.Error(codes.Unavailable, "checkout plan terms unavailable")
+	case status.Code(err) == codes.Unavailable, status.Code(err) == codes.DeadlineExceeded:
+		return status.Error(codes.Unavailable, "checkout payment dependency unavailable; retry the same command")
 	default:
 		return status.Error(codes.Internal, "checkout failed")
 	}

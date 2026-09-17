@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -93,7 +94,7 @@ func (h *QHLabelGrpcHandler) CreateLabel(ctx context.Context, req *tqdpb.CreateL
 
 	result, err := h.labelUsecase.Create(ctx, label)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -149,7 +150,7 @@ func (h *QHLabelGrpcHandler) BatchCreateLabels(ctx context.Context, req *tqdpb.B
 
 	created, skipped, err := h.labelUsecase.BatchCreate(ctx, req.LayerId, items)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -180,7 +181,7 @@ func (h *QHLabelGrpcHandler) GetLabel(ctx context.Context, req *tqdpb.GetLabelRe
 
 	result, err := h.labelUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if result == nil {
 		return nil, status.Error(codes.NotFound, "label not found")
@@ -251,12 +252,12 @@ func (h *QHLabelGrpcHandler) UpdateLabel(ctx context.Context, req *tqdpb.UpdateL
 
 	result, err := h.labelUsecase.Update(ctx, req.Id, label)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	if req.LayerId != nil && *req.LayerId > 0 {
 		if err := h.labelUsecase.UpdateLayerLinkMetadata(ctx, req.Id, *req.LayerId, req.LandUseId, req.LegendId); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, errorresponse.GRPC(ctx, err)
 		}
 	}
 
@@ -280,7 +281,7 @@ func (h *QHLabelGrpcHandler) DeleteLabel(ctx context.Context, req *tqdpb.DeleteL
 	}
 
 	if err := h.labelUsecase.Delete(ctx, req.Id); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -307,7 +308,7 @@ func (h *QHLabelGrpcHandler) BatchDeleteLabels(ctx context.Context, req *tqdpb.B
 	}
 
 	if err := h.labelUsecase.BatchDelete(ctx, req.Ids); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -362,16 +363,7 @@ func (h *QHLabelGrpcHandler) MergeLabels(ctx context.Context, req *tqdpb.MergeLa
 
 	result, err := h.labelUsecase.Merge(ctx, req.LayerId, req.SourceLabelIds, label)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "another layer") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -405,7 +397,7 @@ func (h *QHLabelGrpcHandler) ListAdminLabels(ctx context.Context, req *tqdpb.Lis
 
 	labels, total, err := h.labelUsecase.ListAdmin(ctx, layerID, pagable, req.GetIncludeInactive())
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	data := make([]*tqdpb.QHLabelResponse, len(labels))
@@ -438,7 +430,7 @@ func (h *QHLabelGrpcHandler) ListLabelsByLayer(ctx context.Context, req *tqdpb.L
 
 	labels, total, err := h.labelUsecase.ListByLayerID(ctx, req.LayerId, pagable, req.IncludeInactive)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	data := make([]*tqdpb.QHLabelResponse, len(labels))
@@ -488,7 +480,7 @@ func (h *QHLabelGrpcHandler) ListClientLabelsByLayer(ctx context.Context, req *t
 
 	labels, total, err := h.labelUsecase.ListClientByLayerID(ctx, req.LayerId, pagable)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	data := make([]*tqdpb.QHLabelResponse, len(labels))
@@ -519,7 +511,7 @@ func (h *QHLabelGrpcHandler) GetClientLabel(ctx context.Context, req *tqdpb.GetL
 
 	label, err := h.labelUsecase.GetClientByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if label == nil {
 		return nil, status.Error(codes.NotFound, "label not found")

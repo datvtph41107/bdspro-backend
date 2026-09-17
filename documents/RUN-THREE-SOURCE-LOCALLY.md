@@ -228,6 +228,18 @@ hai và không sửa bảng database.
 Tài khoản Test mode và tunnel phải được cấu hình trên SePay; task local không
 tự tạo chúng. Xem [hướng dẫn Payment](../payment-service/README.md#inline-qr-with-bank-webhooks-test-mode).
 
+Nếu chưa có URL công khai, chạy task **BDSPro · Payment · Webhook Test Tunnel**.
+Task dùng `cloudflared` tại `.tmp/development/tools/cloudflared` và mở proxy
+local ở `127.0.0.1:18080`. Chỉ `POST /v2/payment/sepay/webhook` được chuyển
+đến Gateway `127.0.0.1:8000`. Lấy URL `https://….trycloudflare.com` trong
+terminal rồi thêm `/v2/payment/sepay/webhook` để cấu hình trên SePay.
+Giữ task chạy trong lúc thử; mỗi lần tạo tunnel mới có thể nhận URL khác.
+Không chạy task thứ hai nếu tunnel nền đang giữ cổng `18080`.
+
+Cloudflared được tải từ [bản phát hành chính thức](https://github.com/cloudflare/cloudflared/releases)
+và kiểm tra SHA-256 trước khi chạy. [Quick Tunnel](https://developers.cloudflare.com/tunnel/setup/)
+dành cho development; khi Gateway có HTTPS công khai thì dùng trực tiếp URL đó.
+
 ### Kiểm tra cổng thanh toán SePay sandbox (luồng mở trang ngoài)
 
 Khi cần chứng minh provider integration, giữ

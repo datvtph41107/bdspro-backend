@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +21,8 @@ import (
 const requiredConfirmation = "CREATE_ROOT_OPERATOR"
 
 func main() {
+	defer logging.MustStart("user-bootstrap-admin")()
+	logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"bytes"
+	"common/validation"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,8 +16,9 @@ import (
 	"tqd/internal/interface/repo"
 )
 
-// ErrLayerNotFound khi admin list region theo layer nhưng layer không tồn tại
-var ErrLayerNotFound = errors.New("layer not found")
+// ErrRegionNotFound và ErrRegionSyncReferenceNotFound do usecase region sở hữu.
+var ErrRegionNotFound = errors.New("region not found")
+var ErrRegionSyncReferenceNotFound = errors.New("legend with landUse not found")
 
 // RegionUpdatePatch — các field có thể sửa qua UpdateRegion (không gồm geometry).
 // Chỉ gán pointer cho field thực sự muốn đổi; LabelID = pointer tới 0 nghĩa là gỡ label.
@@ -83,11 +85,11 @@ func NewRegionUsecase(
 func extractGeometryObjectFromBytes(raw []byte) (map[string]interface{}, error) {
 	trim := bytes.TrimSpace(raw)
 	if len(trim) == 0 {
-		return nil, errors.New("geometry is empty")
+		return nil, validation.New("geometry", "REGION_GEOMETRY_INVALID", "geometry is empty")
 	}
 	var root map[string]interface{}
 	if err := json.Unmarshal(trim, &root); err != nil {
-		return nil, fmt.Errorf("geometry is not valid JSON: %w", err)
+		return nil, validation.New("geometry", "REGION_GEOMETRY_INVALID", "geometry is not valid JSON")
 	}
 	t, _ := root["type"].(string)
 	t = strings.TrimSpace(t)
@@ -95,23 +97,23 @@ func extractGeometryObjectFromBytes(raw []byte) (map[string]interface{}, error) 
 	case "Feature":
 		g, ok := root["geometry"].(map[string]interface{})
 		if !ok || g == nil {
-			return nil, errors.New("GeoJSON Feature missing geometry object")
+			return nil, validation.New("geometry", "REGION_GEOMETRY_INVALID", "GeoJSON Feature missing geometry object")
 		}
 		return g, nil
 	case "Polygon", "MultiPolygon":
 		return root, nil
 	default:
-		return nil, fmt.Errorf("unsupported GeoJSON type %q (expected Feature, Polygon, or MultiPolygon)", t)
+		return nil, validation.New("geometry", "REGION_GEOMETRY_INVALID", fmt.Sprintf("unsupported GeoJSON type %q (expected Feature, Polygon, or MultiPolygon)", t))
 	}
 }
 
 func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name string, geometryBytes []byte, labelID uint64) (*qh_domain.QHRegion, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, validation.New("layer_id", "REGION_LAYER_ID_INVALID", "layerId is required")
 	}
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return nil, errors.New("name is required")
+		return nil, validation.New("name", "REGION_NAME_INVALID", "name is required")
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
@@ -131,7 +133,7 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 	}
 	geoInfo, err := geometry.ParseGeometry(string(geomBytes))
 	if err != nil {
-		return nil, fmt.Errorf("invalid geometry: %w", err)
+		return nil, validation.New("geometry", "REGION_GEOMETRY_INVALID", "invalid geometry")
 	}
 
 	areaSqm := 0.0
@@ -169,12 +171,12 @@ func (u *regionUsecaseImpl) Create(ctx context.Context, layerID uint64, name str
 
 func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch) (*qh_domain.QHRegion, error) {
 	if patch.RegionID == 0 {
-		return nil, errors.New("id is required")
+		return nil, validation.New("id", "REGION_ID_INVALID", "id is required")
 	}
 	has := patch.Name != nil || patch.DisplayName != nil || patch.Description != nil ||
 		patch.Status != nil || patch.LabelID != nil
 	if !has {
-		return nil, errors.New("at least one field to update is required")
+		return nil, validation.New("fields", "REGION_FIELDS_INVALID", "at least one field to update is required")
 	}
 
 	region, err := u.regionRepo.GetByID(ctx, patch.RegionID)
@@ -182,13 +184,13 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch)
 		return nil, fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return nil, fmt.Errorf("region %d not found", patch.RegionID)
+		return nil, fmt.Errorf("%w: id=%d", ErrRegionNotFound, patch.RegionID)
 	}
 
 	if patch.Name != nil {
 		v := strings.TrimSpace(*patch.Name)
 		if v == "" {
-			return nil, errors.New("name cannot be empty")
+			return nil, validation.New("name", "REGION_NAME_INVALID", "name cannot be empty")
 		}
 		region.Name = v
 	}
@@ -200,7 +202,7 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch)
 	}
 	if patch.Status != nil {
 		if !patch.Status.IsValid() {
-			return nil, fmt.Errorf("invalid status: %d", *patch.Status)
+			return nil, validation.New("status", "REGION_STATUS_INVALID", fmt.Sprintf("invalid status: %d", *patch.Status))
 		}
 		region.Status = *patch.Status
 	}
@@ -214,7 +216,7 @@ func (u *regionUsecaseImpl) Update(ctx context.Context, patch RegionUpdatePatch)
 				return nil, fmt.Errorf("get label failed: %w", lerr)
 			}
 			if label == nil {
-				return nil, fmt.Errorf("label %d not found", lid)
+				return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, lid)
 			}
 			// if label.LayerID != region.LayerID {
 			// 	return nil, errors.New("label does not belong to region layer")
@@ -238,7 +240,7 @@ func (u *regionUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.
 		return nil, fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return nil, fmt.Errorf("region %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrRegionNotFound, id)
 	}
 	return region, nil
 }
@@ -249,7 +251,7 @@ func (u *regionUsecaseImpl) List(ctx context.Context, filter *repo.RegionFilter)
 
 func (u *regionUsecaseImpl) ListForAdminByLayer(ctx context.Context, layerID uint64, filter *repo.RegionFilter) ([]qh_domain.QHRegion, int64, error) {
 	if layerID == 0 {
-		return nil, 0, errors.New("layerId is required")
+		return nil, 0, validation.New("layer_id", "REGION_LAYER_ID_INVALID", "layerId is required")
 	}
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
 	if err != nil {
@@ -269,14 +271,14 @@ func (u *regionUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 		return fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return fmt.Errorf("region %d not found", id)
+		return fmt.Errorf("%w: id=%d", ErrRegionNotFound, id)
 	}
 	return u.regionRepo.Delete(ctx, id)
 }
 
 func (u *regionUsecaseImpl) SyncRegion(ctx context.Context, layerID, labelID uint64) (*RegionSyncResult, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, validation.New("layer_id", "REGION_LAYER_ID_INVALID", "layerId is required")
 	}
 	if labelID == 0 {
 		return nil, errors.New("labelId is required")
@@ -295,7 +297,7 @@ func (u *regionUsecaseImpl) SyncRegion(ctx context.Context, layerID, labelID uin
 		return nil, fmt.Errorf("get label failed: %w", err)
 	}
 	if label == nil {
-		return nil, fmt.Errorf("label %d not found", labelID)
+		return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, labelID)
 	}
 
 	ref, err := u.regionRepo.GetSyncReferenceByLayerLabel(ctx, layerID, labelID)
@@ -303,7 +305,7 @@ func (u *regionUsecaseImpl) SyncRegion(ctx context.Context, layerID, labelID uin
 		return nil, fmt.Errorf("get region sync reference failed: %w", err)
 	}
 	if ref == nil {
-		return nil, fmt.Errorf("legend with landUse not found for layerId=%d labelId=%d", layerID, labelID)
+		return nil, fmt.Errorf("%w: layer_id=%d label_id=%d", ErrRegionSyncReferenceNotFound, layerID, labelID)
 	}
 
 	total, err := u.regionRepo.SyncLandUseAndLegendByLayerLabel(ctx, layerID, labelID, ref.LandUseID, ref.LegendID)
@@ -326,7 +328,7 @@ func (u *regionUsecaseImpl) UpdateProcessingStatus(ctx context.Context, regionID
 		return fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return fmt.Errorf("region %d not found", regionID)
+		return fmt.Errorf("%w: id=%d", ErrRegionNotFound, regionID)
 	}
 	region.ProcessingStatus = status
 	return u.regionRepo.Update(ctx, region)
@@ -339,7 +341,7 @@ func (u *regionUsecaseImpl) AssignLabel(ctx context.Context, regionID uint64, la
 		return fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return fmt.Errorf("region %d not found", regionID)
+		return fmt.Errorf("%w: id=%d", ErrRegionNotFound, regionID)
 	}
 
 	// Kiểm tra label tồn tại
@@ -348,7 +350,7 @@ func (u *regionUsecaseImpl) AssignLabel(ctx context.Context, regionID uint64, la
 		return fmt.Errorf("get label failed: %w", err)
 	}
 	if label == nil {
-		return fmt.Errorf("label %d not found", labelID)
+		return fmt.Errorf("%w: id=%d", ErrLabelNotFound, labelID)
 	}
 
 	// Gán label trực tiếp vào region
@@ -362,7 +364,7 @@ func (u *regionUsecaseImpl) GetLabelByRegion(ctx context.Context, regionID uint6
 		return nil, fmt.Errorf("get region failed: %w", err)
 	}
 	if region == nil {
-		return nil, fmt.Errorf("region %d not found", regionID)
+		return nil, fmt.Errorf("%w: id=%d", ErrRegionNotFound, regionID)
 	}
 	if region.LabelID == nil {
 		return nil, nil // Chưa có label
@@ -388,10 +390,10 @@ func (u *regionUsecaseImpl) ListClient(ctx context.Context, layerID uint64, bBox
 
 func (u *regionUsecaseImpl) FindByPoint(ctx context.Context, lat, lng float64, layerID *uint64) (*qh_domain.QHRegion, error) {
 	if lat < -90 || lat > 90 {
-		return nil, errors.New("invalid latitude")
+		return nil, validation.New("latitude", "REGION_LATITUDE_INVALID", "invalid latitude")
 	}
 	if lng < -180 || lng > 180 {
-		return nil, errors.New("invalid longitude")
+		return nil, validation.New("longitude", "REGION_LONGITUDE_INVALID", "invalid longitude")
 	}
 	region, err := u.regionRepo.FindByPoint(ctx, lat, lng, layerID)
 	if err != nil {

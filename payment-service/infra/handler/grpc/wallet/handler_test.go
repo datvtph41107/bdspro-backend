@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"math"
 	"testing"
 	"time"
 
@@ -12,17 +13,10 @@ import (
 	paymentpb "pb/types/payment"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
-
-func TestExtractCommercialOrderReferenceCanonicalizesCase(t *testing.T) {
-	got, ok := ExtractCommercialOrderReference(
-		"bank transfer qhp-d9ee180c81828aa0",
-	)
-	if !ok || got != "QHP-D9EE180C81828AA0" {
-		t.Fatalf("reference = %q, found = %v", got, ok)
-	}
-}
 
 func TestParseVNDMinor(t *testing.T) {
 	t.Parallel()
@@ -151,7 +145,7 @@ func TestBankWebhookSettlesMatchingFundsOnce(t *testing.T) {
 			digest := sha256.Sum256([]byte(tc.credential))
 			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-qhpro-provider-credential-sha256", hex.EncodeToString(digest[:])))
 			request := &paymentpb.SepayWebhookRequest{
-				Id: 123, Content: "Thanh toan QHP-0123456789ABCDEF", TransferAmount: tc.amount,
+				Id: 123, Content: "BankAPINotify QHP0123456789ABCDEF", TransferAmount: tc.amount,
 				TransferType: tc.direction, TransactionDate: "2026-09-08 15:00:00",
 			}
 			_, err := handler.SepayWebhook(ctx, request)
@@ -171,4 +165,25 @@ func TestBankWebhookSettlesMatchingFundsOnce(t *testing.T) {
 
 func (s *gatewaySettlementStore) MarkSettlementRequiresReview(context.Context, uint64, string) error {
 	return nil
+}
+
+func TestBankWebhookValidatesBeforeLegacyWalletRouting(t *testing.T) {
+	digest := sha256.Sum256([]byte("Apikey webhook-key"))
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-qhpro-provider-credential-sha256", hex.EncodeToString(digest[:])))
+	// Dependency nil bảo đảm request sai bị chặn trước khi gọi nhánh ví.
+	handler := NewPaymentHandler(nil, nil, nil, "webhook-key", "")
+	for _, req := range []*paymentpb.SepayWebhookRequest{
+		nil,
+		{Content: "DEP123", TransferType: "out", TransferAmount: 5000},
+		{Content: "DEP123", TransferType: "in", TransferAmount: math.Inf(1)},
+		{Content: "DEP123", TransferType: "in", TransferAmount: math.NaN()},
+		{Content: "DEP123", TransferType: "in", TransferAmount: float64(math.MaxInt64)},
+		{Content: "DEP123", TransferType: "in", TransferAmount: 1.5},
+		{Content: "unmatched", TransferType: "in", TransferAmount: 5000},
+	} {
+		require.NotPanics(t, func() {
+			_, err := handler.SepayWebhook(ctx, req)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
 }

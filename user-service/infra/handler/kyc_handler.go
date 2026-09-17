@@ -2,6 +2,7 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	"context"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -9,7 +10,6 @@ import (
 	"user/internal/dto"
 	"user/internal/usecases"
 
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -68,7 +68,7 @@ func (h *KYCHandler) SubmitKYC(ctx context.Context, req *userpb.SubmitKYCRequest
 
 	kyc, err := h.kycUsecase.SubmitKYC(ctx, submitDTO)
 	if err != nil {
-		return nil, status.Error(codes.Code(err.Code), err.Message)
+		return nil, status.Error(_errors.RPCCodeForHTTP(int32(err.Code)), err.Message)
 	}
 
 	// SubmitKYC luôn trả về cho owner (chính user submit)
@@ -105,7 +105,7 @@ func (h *KYCHandler) ListKYCs(ctx context.Context, req *userpb.ListKYCsRequest) 
 
 	entities, total, err := h.adminKYCUsecase.ListKYCs(ctx, listDTO)
 	if err != nil {
-		return nil, status.Error(codes.Code(err.Code), err.Message)
+		return nil, status.Error(_errors.RPCCodeForHTTP(int32(err.Code)), err.Message)
 	}
 
 	return &userpb.ListKYCsResponse{
@@ -130,7 +130,7 @@ func (h *KYCHandler) ListKYCs(ctx context.Context, req *userpb.ListKYCsRequest) 
 func (h *KYCHandler) ApproveKYC(ctx context.Context, req *userpb.ApproveKYCRequest) (*sharepb.Empty, error) {
 	err := h.adminKYCUsecase.ApproveKYC(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.Code(err.Code), err.Message)
+		return nil, status.Error(_errors.RPCCodeForHTTP(int32(err.Code)), err.Message)
 	}
 
 	return &sharepb.Empty{}, nil
@@ -153,7 +153,7 @@ func (h *KYCHandler) ApproveKYC(ctx context.Context, req *userpb.ApproveKYCReque
 func (h *KYCHandler) RejectKYC(ctx context.Context, req *userpb.RejectKYCRequest) (*sharepb.Empty, error) {
 	err := h.adminKYCUsecase.RejectKYC(ctx, req.Id, req.Reason)
 	if err != nil {
-		return nil, status.Error(codes.Code(err.Code), err.Message)
+		return nil, status.Error(_errors.RPCCodeForHTTP(int32(err.Code)), err.Message)
 	}
 
 	return &sharepb.Empty{}, nil

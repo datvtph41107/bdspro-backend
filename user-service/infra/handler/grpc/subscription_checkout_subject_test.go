@@ -4,6 +4,7 @@ import (
 	"common/identity"
 	"context"
 	"errors"
+	"fmt"
 	organizationpb "pb/types/organization"
 	"testing"
 
@@ -12,6 +13,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+func TestCheckoutErrorPreservesWrappedPaymentDependencyUnavailable(t *testing.T) {
+	for _, code := range []codes.Code{codes.Unavailable, codes.DeadlineExceeded} {
+		err := fmt.Errorf("create payment order: %w", status.Error(code, "temporary connection failure"))
+		if got := status.Code(checkoutError(err)); got != codes.Unavailable {
+			t.Fatalf("checkout dependency status=%v", got)
+		}
+	}
+}
 
 type organizationCheckoutAuthorizerStub struct {
 	allowed        bool

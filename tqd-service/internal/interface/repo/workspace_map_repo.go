@@ -27,6 +27,6 @@ type IMapWorkspaceRepo interface {
 	ListGeneratedReports(ctx context.Context, userID uint64, limit, offset int) ([]qh_domain.QHUserReported, int64, error)
 	GetGeneratedReport(ctx context.Context, userID, reportID uint64) (*qh_domain.QHUserReported, error)
 	RemoveGeneratedReport(ctx context.Context, userID, reportID uint64) error
-	UpdateGeneratedReportStatus(ctx context.Context, userID, reportID uint64, status uint32) error
+	RegenerateGeneratedReport(ctx context.Context, userID, reportID uint64) error
 	UpdateGeneratedReportShareURL(ctx context.Context, userID, reportID uint64, shareURL string) error
 }

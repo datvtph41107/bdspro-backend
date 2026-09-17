@@ -1,6 +1,7 @@
 package grpcserver
 
 import (
+	"common/logging"
 	"context"
 	"errors"
 	"fmt"
@@ -243,7 +244,7 @@ func buildServer(
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
-			interceptors.UnaryLoggerInterceptor(logger),
+			logging.UnaryServer(),
 			interceptors.UnaryRecoveryInterceptor(logger),
 		),
 		grpc.ChainStreamInterceptor(

@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+// Service điều phối checkout nhưng không tự quyết định số tiền hay quyền
+// sử dụng. Giá và điều kiện gói lấy từ PlanVersion của User Service; Payment
+// Service chỉ nhận order đã đóng băng thông tin này để tạo và đối soát thanh
+// toán. Nhờ vậy retry không bị đổi giá khi catalog được publish phiên bản mới.
 type Service struct {
 	plans          PlanResolver
 	subscriptions  SubscriptionReader
@@ -72,10 +76,10 @@ func (s *Service) Checkout(ctx context.Context, subject Subject, planCode, comma
 	}
 	requestHash := RequestHashFor(subject, planCode)
 
-	// Durable replay is checked before reading current Plan/Subscription state.
-	// A successful first Checkout freezes the server-owned plan snapshot;
-	// network retry must not become a different command because a successor plan
-	// became effective or the first payment already changed the Subscription.
+	// Kiểm tra replay bền vững trước khi đọc trạng thái hiện tại. Một retry
+	// mạng phải trả lại command cũ, không được tạo order thứ hai.
+	// Terms đã đóng băng vẫn được giữ khi catalog publish version mới hoặc
+	// thanh toán đầu tiên đã thay đổi subscription.
 	existing, found, err := s.commands.FindByCommand(ctx, subject, commandKey)
 	if err != nil {
 		return Result{}, err
@@ -96,7 +100,7 @@ func (s *Service) Checkout(ctx context.Context, subject Subject, planCode, comma
 		return Result{}, ErrSubjectScope
 	}
 
-	current, found, err := s.subscriptions.CurrentForProduct(ctx, subject, terms.ProductID)
+	current, found, err := s.subscriptions.CurrentForProduct(ctx, subject, terms.ProductID, at)
 	if err != nil {
 		return Result{}, err
 	}
@@ -135,9 +139,9 @@ func (s *Service) Checkout(ctx context.Context, subject Subject, planCode, comma
 		return Result{}, ErrPlanTermsUnavailable
 	}
 
-	// CreateCommand is an idempotent arbitration point. On a concurrent retry,
-	// the winner's frozen terms become authoritative for every caller sharing
-	// the same Subject + CommandKey.
+	// CreateCommand là điểm phân xử idempotency. Trong hai request đồng thời,
+	// command thắng cùng bộ terms đã đóng băng là sự thật cho mọi caller có
+	// cùng Subject và CommandKey.
 	saved, _, err := s.commands.CreateCommand(ctx, command)
 	if err != nil {
 		return Result{}, err

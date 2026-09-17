@@ -1,6 +1,7 @@
 package commercegrpc
 
 import (
+	_errors "common/errors"
 	"context"
 	"errors"
 	"strconv"
@@ -170,10 +171,13 @@ func (h *AdminCommerceHandler) authorize(ctx context.Context, permission string)
 }
 
 func adminPaymentError(err error) error {
+	if mapped, ok := _errors.ValidationStatus(err, "payment.admin"); ok {
+		return mapped
+	}
 	switch {
 	case err == nil:
 		return nil
-	case errors.Is(err, payment.ErrInvalidCommand), strings.Contains(err.Error(), "page size"):
+	case errors.Is(err, payment.ErrInvalidCommand):
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, payment.ErrOrderNotFound), errors.Is(err, payment.ErrFulfillmentNotFound):
 		return status.Error(codes.NotFound, err.Error())

@@ -84,6 +84,30 @@ func loadCurrent(db *gorm.DB, effect settlement.Effect, productID uint64) (settl
 		HasPendingChange: r.PendingPlanVersionID != nil || r.PendingEffectiveAt != nil}, nil
 }
 
+// expireElapsedSubscriptions materializes the time boundary immediately before
+// settlement creates a new subscription. Entitlement and profile reads already
+// use access_until; this transition keeps persisted lifecycle state and audit
+// history consistent without introducing a second subscription authority.
+func expireElapsedSubscriptions(db *gorm.DB, effect settlement.Effect, productID uint64, now time.Time) error {
+	return db.Exec(`WITH expired AS (
+		UPDATE catalog_subscriptions
+		SET status = 'expired', auto_renew = FALSE,
+			ended_at = COALESCE(ended_at, COALESCE(access_until, current_period_end)),
+			updated_at = ?
+		WHERE subject_kind = ? AND subject_id = ? AND product_id = ?
+		  AND status IN ('active', 'past_due')
+		  AND COALESCE(access_until, current_period_end) <= ?
+		RETURNING id, plan_version_id, COALESCE(access_until, current_period_end) AS expired_at
+	)
+	INSERT INTO catalog_subscription_events
+		(subscription_id, event_type, from_plan_version_id, to_plan_version_id,
+		 effective_at, reason, actor_kind, actor_id, request_id, operation_id, metadata, created_at)
+	SELECT id, 'subscription.expired', plan_version_id, plan_version_id,
+		expired_at, 'subscription access window elapsed', 'internal_service',
+		'user-service', '', ?, '{}'::jsonb, ?
+	FROM expired`, now, string(effect.SubjectKind), effect.SubjectID, productID, now, effect.EffectKey, now).Error
+}
+
 func insertSubscription(db *gorm.DB, a subscriptiondomain.Aggregate) (uint64, error) {
 	var rows []struct{ ID uint64 }
 	err := db.Raw(`INSERT INTO catalog_subscriptions

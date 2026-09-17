@@ -1,6 +1,7 @@
 package common
 
 import (
+	"common/logging"
 	_middleware "common/middleware"
 
 	"bytes"
@@ -99,6 +100,7 @@ func SetupGRPCServer(parameters SetupParameters, setup func(*grpc.Server)) {
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			logging.UnaryServer(),
 			ProfileIDInterceptor,
 		),
 		grpc.ChainStreamInterceptor(

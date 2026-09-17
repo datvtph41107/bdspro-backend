@@ -2,6 +2,7 @@ package redisquota
 
 import (
 	commonmetering "common/metering"
+	"common/operation"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -30,7 +31,14 @@ func usageKey(
 	)
 }
 
-func commandKey(usageKey, command string) string {
+// commandKey tách identity operation nhưng vẫn dùng chung pool meter.
+func commandKey(usageKey string, op operation.Code, command string) string {
+	sum := sha256.Sum256([]byte(usageKey + "\n" + string(op) + "\n" + command))
+	return "quota:command:v2:" + hex.EncodeToString(sum[:])
+}
+
+// legacyCommandKey chỉ dùng đọc chuyển tiếp reservation còn sống khi rollout.
+func legacyCommandKey(usageKey, command string) string {
 	sum := sha256.Sum256([]byte(usageKey + "\n" + command))
 	return "quota:command:" + hex.EncodeToString(sum[:])
 }

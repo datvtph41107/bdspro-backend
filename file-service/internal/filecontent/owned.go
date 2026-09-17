@@ -83,24 +83,8 @@ func (s *Service) PutOwnedFile(
 		)
 	}
 
-	if len(input.OwnerNamespace) > 64 ||
-		!ownerNamespacePattern.MatchString(
-			input.OwnerNamespace,
-		) {
-		return SavedFile{}, fmt.Errorf(
-			"%w: owner namespace is invalid",
-			ErrInvalidOwnedFile,
-		)
-	}
-
-	if len(input.OwnerKey) > 128 ||
-		!ownerKeyPattern.MatchString(
-			input.OwnerKey,
-		) {
-		return SavedFile{}, fmt.Errorf(
-			"%w: owner key is invalid",
-			ErrInvalidOwnedFile,
-		)
+	if err := validateOwnedIdentity(input.OwnerNamespace, input.OwnerKey); err != nil {
+		return SavedFile{}, err
 	}
 
 	requestHash :=
@@ -207,6 +191,36 @@ func (s *Service) PutOwnedFile(
 	}
 
 	return savedOwnedFile(fileEntity), nil
+}
+
+func validateOwnedIdentity(namespace, key string) error {
+	if len(namespace) > 64 || !ownerNamespacePattern.MatchString(namespace) {
+		return fmt.Errorf("%w: owner namespace is invalid", ErrInvalidOwnedFile)
+	}
+	if len(key) > 128 || !ownerKeyPattern.MatchString(key) {
+		return fmt.Errorf("%w: owner key is invalid", ErrInvalidOwnedFile)
+	}
+	return nil
+}
+
+// FindOwnedFile exposes only a completed File-owned effect. Report retries
+// observe this authority instead of uploading newly rendered, different bytes.
+func (s *Service) FindOwnedFile(ctx context.Context, namespace, key string) (SavedFile, bool, error) {
+	namespace, key = strings.TrimSpace(namespace), strings.TrimSpace(key)
+	if err := validateOwnedIdentity(namespace, key); err != nil {
+		return SavedFile{}, false, err
+	}
+	if s == nil || s.files == nil {
+		return SavedFile{}, false, errors.New("owned file service is unavailable")
+	}
+	file, found, err := s.files.FindByOwner(ctx, namespace, key)
+	if err != nil || !found {
+		return SavedFile{}, false, err
+	}
+	if file.Path == "" || file.Hash == "" {
+		return SavedFile{}, false, nil
+	}
+	return savedOwnedFile(file), true, nil
 }
 
 func savedOwnedFile(

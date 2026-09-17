@@ -231,3 +231,19 @@ func TestPublishRejectsMissingSubscriptionTerm(t *testing.T) {
 		t.Fatal("missing commercial terms reached persistence")
 	}
 }
+
+func TestPublishRejectsElapsedWindowBeforeOpeningTransaction(t *testing.T) {
+	tx := &fakeTransaction{}
+	service := NewService(tx, &fakeRepository{aggregate: validAggregate()})
+	now := time.Now().UTC()
+	_, err := service.Publish(context.Background(), Command{
+		PlanVersionID: 9, ActorID: 42, PublishedAt: now,
+		EffectiveFrom: now.Add(-time.Second),
+	})
+	if !errors.Is(err, ErrPublicationWindowElapsed) {
+		t.Fatalf("error = %v, want elapsed publication window", err)
+	}
+	if tx.calls != 0 {
+		t.Fatalf("opened %d transactions for an elapsed schedule", tx.calls)
+	}
+}

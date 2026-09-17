@@ -3,6 +3,7 @@ package grpc
 import (
 	"assistant/wire"
 	"common/configloader"
+	"common/logging"
 	_middleware "common/middleware"
 	"fmt"
 	"log"
@@ -45,7 +46,7 @@ func RunGRPCServer() {
 	grpcServer := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
-		grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware, logging.UnaryServer()),
 		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 

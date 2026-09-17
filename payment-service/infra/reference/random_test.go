@@ -1,8 +1,9 @@
 package reference
 
 import (
-	"regexp"
 	"testing"
+
+	domain "payment/internal/domain/payment"
 )
 
 func TestNewOrderReferenceUsesCanonicalUppercase(t *testing.T) {
@@ -10,7 +11,7 @@ func TestNewOrderReferenceUsesCanonicalUppercase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewOrderReference() error = %v", err)
 	}
-	if !regexp.MustCompile(`^QHP-[0-9A-F]{16}$`).MatchString(reference) {
+	if !domain.IsCanonicalOrderReference(reference) {
 		t.Fatalf("reference = %q", reference)
 	}
 }

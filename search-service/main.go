@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +14,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("search")()
+	logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("search service failed: %v", err)
 		os.Exit(1)

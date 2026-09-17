@@ -1,6 +1,7 @@
 package cmd_grpc
 
 import (
+	"common/logging"
 	_middleware "common/middleware"
 	process "common/process"
 	"context"
@@ -64,6 +65,7 @@ func runGRPC() error {
 	interceptors := grpc.ChainUnaryInterceptor(
 		// common.ProfileIDInterceptor,
 		_middleware.ParseGrpcMetadataContextMiddleware,
+		logging.UnaryServer(),
 		_middleware.UnaryRecoveryInterceptor(app.Logger),
 	)
 	s := grpc.NewServer(

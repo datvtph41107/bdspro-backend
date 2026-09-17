@@ -3,6 +3,7 @@ package wallet
 import (
 	"context"
 	"fmt"
+	"math"
 	paymentpb "pb/types/payment"
 	"time"
 
@@ -788,7 +789,7 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 	txCtx := tx.Context(ctx)
 
 	// Get transaction by code within transaction context
-	transaction, err := p.walletTransactionRepository.GetTransactionByCode(txCtx, transactionCode)
+	transaction, err := p.walletTransactionRepository.GetTransactionByCodeForUpdate(txCtx, transactionCode)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to get transaction by code: %w", err)
@@ -800,10 +801,25 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 		return nil, fmt.Errorf("transaction amount mismatch: expected %d minor units, got %d", transaction.Amount, amountMinor)
 	}
 
+	// Chỉ pending deposit được chuyển thành completed. Replay đã hoàn tất
+	// trả lại kết quả cũ sau khi kiểm tra số tiền, không cộng số dư lần nữa.
+	if transaction.Type != walletdomain.TransactionTypeDeposit {
+		tx.Rollback()
+		return nil, fmt.Errorf("transaction is not a deposit")
+	}
 	// Check if transaction is already completed
 	if transaction.Status == walletdomain.TransactionStatusCompleted {
 		tx.Rollback()
-		return nil, fmt.Errorf("transaction already completed")
+		return &paymentpb.WalletTransaction{
+			Id: transaction.Id, WalletId: transaction.WalletId,
+			Type: string(transaction.Type), Amount: walletdomain.MinorToWire(transaction.Amount),
+			Status: string(transaction.Status),
+		}, nil
+	}
+
+	if transaction.Status != walletdomain.TransactionStatusPending {
+		tx.Rollback()
+		return nil, fmt.Errorf("deposit is not pending")
 	}
 
 	// Get wallet with proper locking within transaction context
@@ -811,6 +827,12 @@ func (p *paymentUsecase) HandleDepositWebhook(ctx context.Context, transactionCo
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to get wallet: %w", err)
+	}
+
+	// Không để tổng số dư tràn int64 rồi trở thành số âm.
+	if wallet.Balance > math.MaxInt64-transaction.Amount {
+		tx.Rollback()
+		return nil, fmt.Errorf("wallet balance would overflow")
 	}
 
 	// Update wallet balance within transaction context

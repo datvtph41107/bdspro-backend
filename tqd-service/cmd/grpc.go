@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"common/logging"
 	"context"
 	"errors"
 	"fmt"
@@ -147,7 +148,7 @@ func runGRPCServer() error {
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
-		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), reportTargetOperationInterceptor, commercialActionInterceptor),
+		grpc.ChainUnaryInterceptor(grpcContextInterceptor(transportConfig), logging.UnaryServer(), reportTargetOperationInterceptor, commercialActionInterceptor),
 		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 	registerTQDServices(s, app)

@@ -52,7 +52,7 @@ func (s *Store) ReserveQuota(ctx context.Context, input quota.StoreReserveInput)
 	defer s.mu.Unlock()
 
 	usageKey := buildUsageKey(input.Subject, input.MeterCode, input.PeriodStart, input.PeriodEnd)
-	commandKey := buildCommandKey(usageKey, input.CommandKey)
+	commandKey := buildCommandKey(usageKey, string(input.Operation), input.CommandKey)
 
 	if reservationID, ok := s.commands[commandKey]; ok {
 		saved, exists := s.reservations[reservationID]
@@ -312,8 +312,8 @@ func buildUsageKey(
 	)
 }
 
-func buildCommandKey(usageKey, commandKey string) string {
-	return usageKey + ":" + commandKey
+func buildCommandKey(usageKey, operation, commandKey string) string {
+	return usageKey + "\n" + operation + "\n" + commandKey
 }
 
 func max64(left, right int64) int64 {

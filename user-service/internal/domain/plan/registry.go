@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"common/validation"
 	"fmt"
 	"regexp"
 	"sort"
@@ -23,7 +24,7 @@ type Registry struct {
 /** NewRegistry validates and freezes a catalog snapshot. */
 func NewRegistry(catalog Snapshot) (*Registry, error) {
 	if !versionPattern.MatchString(catalog.Version) {
-		return nil, fmt.Errorf("invalid catalog version %q", catalog.Version)
+		return nil, validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid catalog version %q", catalog.Version))
 	}
 
 	registry := &Registry{
@@ -38,19 +39,19 @@ func NewRegistry(catalog Snapshot) (*Registry, error) {
 			return nil, err
 		}
 		if _, exists := productCodes[product.Code]; exists {
-			return nil, fmt.Errorf("duplicate product code %q", product.Code)
+			return nil, validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("duplicate product code %q", product.Code))
 		}
 		productCodes[product.Code] = struct{}{}
 		registry.products[product.Code] = product.DisplayName
 
 		for _, plan := range product.Plans {
 			if plan.ProductCode != product.Code {
-				return nil, fmt.Errorf(
+				return nil, validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf(
 					"plan %q product %q does not match %q",
 					plan.PlanCode,
 					plan.ProductCode,
 					product.Code,
-				)
+				))
 			}
 
 			versions := registry.plans[plan.PlanCode]
@@ -59,11 +60,11 @@ func NewRegistry(catalog Snapshot) (*Registry, error) {
 				registry.plans[plan.PlanCode] = versions
 			}
 			if _, exists := versions[plan.Version]; exists {
-				return nil, fmt.Errorf(
+				return nil, validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf(
 					"duplicate plan version %s@%s",
 					plan.PlanCode,
 					plan.Version,
-				)
+				))
 			}
 			versions[plan.Version] = copyPlan(plan)
 		}
@@ -164,13 +165,13 @@ func (r *Registry) Snapshot() Snapshot {
 
 func validateProduct(product Product) error {
 	if !isStableCode(product.Code) {
-		return fmt.Errorf("invalid product code %q", product.Code)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid product code %q", product.Code))
 	}
 	if strings.TrimSpace(product.DisplayName) == "" {
-		return fmt.Errorf("product %q display name is required", product.Code)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("product %q display name is required", product.Code))
 	}
 	if len(product.Plans) == 0 {
-		return fmt.Errorf("product %q requires at least one plan", product.Code)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("product %q requires at least one plan", product.Code))
 	}
 	for _, plan := range product.Plans {
 		if err := validatePlan(plan); err != nil {
@@ -185,35 +186,35 @@ func validateProduct(product Product) error {
 
 func validatePlan(plan PlanVersion) error {
 	if !isStableCode(plan.ProductCode) {
-		return fmt.Errorf("invalid product code %q", plan.ProductCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid product code %q", plan.ProductCode))
 	}
 	if !isStableCode(plan.PlanCode) {
-		return fmt.Errorf("invalid plan code %q", plan.PlanCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid plan code %q", plan.PlanCode))
 	}
 	if !versionPattern.MatchString(plan.Version) {
-		return fmt.Errorf("invalid plan version %q", plan.Version)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid plan version %q", plan.Version))
 	}
 	if strings.TrimSpace(plan.DisplayName) == "" {
-		return fmt.Errorf("plan %q display name is required", plan.PlanCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q display name is required", plan.PlanCode))
 	}
 	if !validStatus(plan.Status) {
-		return fmt.Errorf("plan %q has invalid status %q", plan.PlanCode, plan.Status)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q has invalid status %q", plan.PlanCode, plan.Status))
 	}
 	if !validSubjectScope(plan.SubjectScope) {
-		return fmt.Errorf(
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf(
 			"plan %q has invalid subject scope %q",
 			plan.PlanCode,
 			plan.SubjectScope,
-		)
+		))
 	}
 	if plan.SubscriptionTermDays < 0 {
-		return fmt.Errorf("plan %q subscription term must not be negative", plan.PlanCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q subscription term must not be negative", plan.PlanCode))
 	}
 	if plan.Status != StatusDraft && plan.EffectiveFrom.IsZero() {
-		return fmt.Errorf("plan %q requires effective_from", plan.PlanCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q requires effective_from", plan.PlanCode))
 	}
 	if plan.EffectiveUntil != nil && !plan.EffectiveUntil.After(plan.EffectiveFrom) {
-		return fmt.Errorf("plan %q effective window is invalid", plan.PlanCode)
+		return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q effective window is invalid", plan.PlanCode))
 	}
 	if err := validateEntitlements(plan); err != nil {
 		return err
@@ -232,7 +233,7 @@ func validatePlan(plan PlanVersion) error {
 // while every newly active contract must carry explicit commercial terms.
 func validateCommercialCompleteness(plan PlanVersion) error {
 	if plan.Status != StatusDraft && plan.SubscriptionTermDays <= 0 {
-		return fmt.Errorf("plan %q requires subscription_term_days", plan.PlanCode)
+		return validation.New("draft.subscription_term_days", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q requires subscription_term_days", plan.PlanCode))
 	}
 	return nil
 }
@@ -252,43 +253,43 @@ func validateOperationBindings(plan PlanVersion) error {
 	codes := make(map[string]struct{}, len(plan.Operations))
 	for _, policy := range plan.Operations {
 		if !isStableCode(policy.Code) {
-			return fmt.Errorf("invalid operation code %q", policy.Code)
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid operation code %q", policy.Code))
 		}
 		if _, exists := codes[policy.Code]; exists {
-			return fmt.Errorf("duplicate operation policy %q", policy.Code)
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf("duplicate operation policy %q", policy.Code))
 		}
 		codes[policy.Code] = struct{}{}
 		if !isStableCode(policy.FeatureCode) {
-			return fmt.Errorf("operation %q requires feature_code", policy.Code)
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf("operation %q requires feature_code", policy.Code))
 		}
 		if _, exists := features[policy.FeatureCode]; !exists {
-			return fmt.Errorf(
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"operation %q feature %q is not granted by this plan",
 				policy.Code,
 				policy.FeatureCode,
-			)
+			))
 		}
 		if policy.MeterCode == "" {
 			if policy.UnitsPerAction != 0 {
-				return fmt.Errorf(
+				return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf(
 					"unmetered operation %q must have zero units_per_action",
 					policy.Code,
-				)
+				))
 			}
 			continue
 		}
 		if !isStableCode(policy.MeterCode) {
-			return fmt.Errorf("operation %q has invalid meter_code", policy.Code)
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf("operation %q has invalid meter_code", policy.Code))
 		}
 		if policy.UnitsPerAction <= 0 {
-			return fmt.Errorf("operation %q units_per_action must be positive", policy.Code)
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf("operation %q units_per_action must be positive", policy.Code))
 		}
 		if _, exists := usageMeters[policy.MeterCode]; !exists {
-			return fmt.Errorf(
+			return validation.New("draft.operations", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"operation %q meter %q has no usage allowance",
 				policy.Code,
 				policy.MeterCode,
-			)
+			))
 		}
 	}
 	return nil
@@ -299,10 +300,10 @@ func validateEntitlements(plan PlanVersion) error {
 	targets := make(map[string]struct{}, len(plan.Entitlements))
 	for _, entitlement := range plan.Entitlements {
 		if !isStableCode(entitlement.Code) {
-			return fmt.Errorf("invalid entitlement code %q", entitlement.Code)
+			return validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid entitlement code %q", entitlement.Code))
 		}
 		if _, exists := codes[entitlement.Code]; exists {
-			return fmt.Errorf("duplicate entitlement code %q", entitlement.Code)
+			return validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf("duplicate entitlement code %q", entitlement.Code))
 		}
 		codes[entitlement.Code] = struct{}{}
 
@@ -311,7 +312,7 @@ func validateEntitlements(plan PlanVersion) error {
 			return err
 		}
 		if _, exists := targets[target]; exists {
-			return fmt.Errorf("duplicate entitlement target %q", target)
+			return validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf("duplicate entitlement target %q", target))
 		}
 		targets[target] = struct{}{}
 	}
@@ -322,32 +323,32 @@ func validateEntitlement(entitlement Entitlement) (string, error) {
 	switch entitlement.Kind {
 	case EntitlementFeatureAccess:
 		if !isStableCode(entitlement.FeatureCode) {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"feature entitlement %q requires feature_code",
 				entitlement.Code,
-			)
+			))
 		}
 		if entitlement.MeterCode != "" || entitlement.Amount != 0 ||
 			entitlement.Unlimited || entitlement.Period != PeriodNone {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"feature entitlement %q contains quota fields",
 				entitlement.Code,
-			)
+			))
 		}
 		return "feature:" + entitlement.FeatureCode, nil
 
 	case EntitlementUsageAllowance:
 		if !isStableCode(entitlement.MeterCode) {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"usage entitlement %q requires meter_code",
 				entitlement.Code,
-			)
+			))
 		}
 		if entitlement.FeatureCode != "" {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"usage entitlement %q contains feature_code",
 				entitlement.Code,
-			)
+			))
 		}
 		if err := validateAmount(entitlement); err != nil {
 			return "", err
@@ -356,62 +357,62 @@ func validateEntitlement(entitlement Entitlement) (string, error) {
 			entitlement.Period != PeriodCalendarMonth &&
 			entitlement.Period != PeriodSubscriptionCycle &&
 			entitlement.Period != PeriodLifetime {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"usage entitlement %q has invalid period %q",
 				entitlement.Code,
 				entitlement.Period,
-			)
+			))
 		}
 		return "usage:" + entitlement.MeterCode + ":" + string(entitlement.Period), nil
 
 	case EntitlementCapacityLimit:
 		if !isStableCode(entitlement.MeterCode) {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"capacity entitlement %q requires meter_code",
 				entitlement.Code,
-			)
+			))
 		}
 		if entitlement.FeatureCode != "" {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"capacity entitlement %q contains feature_code",
 				entitlement.Code,
-			)
+			))
 		}
 		if err := validateAmount(entitlement); err != nil {
 			return "", err
 		}
 		if entitlement.Period != PeriodNone {
-			return "", fmt.Errorf(
+			return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"capacity entitlement %q must use period none",
 				entitlement.Code,
-			)
+			))
 		}
 		return "capacity:" + entitlement.MeterCode, nil
 
 	default:
-		return "", fmt.Errorf(
+		return "", validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 			"entitlement %q has invalid kind %q",
 			entitlement.Code,
 			entitlement.Kind,
-		)
+		))
 	}
 }
 
 func validateAmount(entitlement Entitlement) error {
 	if entitlement.Unlimited {
 		if entitlement.Amount != 0 {
-			return fmt.Errorf(
+			return validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 				"entitlement %q unlimited amount must be zero",
 				entitlement.Code,
-			)
+			))
 		}
 		return nil
 	}
 	if entitlement.Amount <= 0 {
-		return fmt.Errorf(
+		return validation.New("draft.entitlements", "PLAN_TERMS_INVALID", fmt.Sprintf(
 			"entitlement %q amount must be positive",
 			entitlement.Code,
-		)
+		))
 	}
 	return nil
 }
@@ -420,36 +421,36 @@ func validatePrices(plan PlanVersion) error {
 	codes := make(map[string]struct{}, len(plan.Prices))
 	for _, price := range plan.Prices {
 		if !isStableCode(price.Code) {
-			return fmt.Errorf("invalid price item code %q", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("invalid price item code %q", price.Code))
 		}
 		if _, exists := codes[price.Code]; exists {
-			return fmt.Errorf("duplicate price item code %q", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("duplicate price item code %q", price.Code))
 		}
 		codes[price.Code] = struct{}{}
 		if !currencyPattern.MatchString(price.Currency) {
-			return fmt.Errorf("price %q has invalid currency", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q has invalid currency", price.Code))
 		}
 		if price.AmountMinor < 0 {
-			return fmt.Errorf("price %q amount cannot be negative", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q amount cannot be negative", price.Code))
 		}
 		if !isStableCode(price.BillingUnit) {
-			return fmt.Errorf("price %q requires billing_unit", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q requires billing_unit", price.Code))
 		}
 		if price.Quantity <= 0 {
-			return fmt.Errorf("price %q quantity must be positive", price.Code)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q quantity must be positive", price.Code))
 		}
 
 		switch price.Kind {
 		case PriceRecurring:
 			if price.MeterCode != "" {
-				return fmt.Errorf("recurring price %q cannot target a meter", price.Code)
+				return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("recurring price %q cannot target a meter", price.Code))
 			}
 		case PriceAddOn, PriceOverage:
 			if !isStableCode(price.MeterCode) {
-				return fmt.Errorf("price %q requires meter_code", price.Code)
+				return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q requires meter_code", price.Code))
 			}
 		default:
-			return fmt.Errorf("price %q has invalid kind %q", price.Code, price.Kind)
+			return validation.New("draft.prices", "PLAN_TERMS_INVALID", fmt.Sprintf("price %q has invalid kind %q", price.Code, price.Kind))
 		}
 	}
 	return nil
@@ -470,7 +471,7 @@ func validateEffectiveWindows(planCode string, versions map[string]PlanVersion) 
 		previous := active[i-1]
 		current := active[i]
 		if previous.EffectiveUntil == nil || current.EffectiveFrom.Before(*previous.EffectiveUntil) {
-			return fmt.Errorf("plan %q has overlapping active versions", planCode)
+			return validation.New("draft", "PLAN_TERMS_INVALID", fmt.Sprintf("plan %q has overlapping active versions", planCode))
 		}
 	}
 	return nil

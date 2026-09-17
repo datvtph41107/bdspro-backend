@@ -8,6 +8,7 @@ import (
 	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
+	"common/logging"
 	_middleware "common/middleware"
 	_redis "common/redis"
 	_utils "common/utils"
@@ -119,7 +120,7 @@ func NewGRPCServer(port string) (*GRPCServer, error) {
 
 	// Initialize gRPC server
 	server := grpc.NewServer(
-		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware, logging.UnaryServer()),
 		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 

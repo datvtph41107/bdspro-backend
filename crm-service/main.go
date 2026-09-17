@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"fmt"
 	"os"
 
@@ -24,6 +26,8 @@ func init() {
 }
 
 func main() {
+	defer logging.MustStart("crm")()
+	logfabric.Bridge()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

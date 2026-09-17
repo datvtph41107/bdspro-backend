@@ -3,10 +3,10 @@ package handler_grpc
 import (
 	"bytes"
 	"context"
-	"errors"
 	"log"
 	"strings"
 	"time"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -128,14 +128,7 @@ func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateR
 
 	region, err := h.regionUsecase.Create(ctx, req.LayerId, req.Name, req.Geometry, req.LabelId)
 	if err != nil {
-		if errors.Is(err, usecase.ErrLayerNotFound) {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		msg := err.Error()
-		if strings.Contains(msg, "create region failed") || strings.Contains(msg, "reload region failed") {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.Internal, "create region returned nil")
@@ -181,14 +174,7 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 
 	region, err := h.regionUsecase.Update(ctx, patch)
 	if err != nil {
-		msg := err.Error()
-		if strings.Contains(msg, "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(msg, "update region failed") {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.Internal, "update region returned nil")
@@ -221,7 +207,7 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 
 	region, err := h.regionUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.NotFound, "region not found")
@@ -254,7 +240,7 @@ func (h *RegionGrpcHandler) ListRegions(ctx context.Context, req *tqdpb.ListRegi
 
 	regions, total, err := h.regionUsecase.List(ctx, filter)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return h.buildListRegionsAdminResponse(ctx, regions, total, pagable), nil
@@ -289,10 +275,7 @@ func (h *RegionGrpcHandler) ListAdminRegionsByLayer(ctx context.Context, req *tq
 
 	regions, total, err := h.regionUsecase.ListForAdminByLayer(ctx, req.LayerId, filter)
 	if err != nil {
-		if errors.Is(err, usecase.ErrLayerNotFound) {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return h.buildListRegionsAdminResponse(ctx, regions, total, pagable), nil
@@ -306,7 +289,7 @@ func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteR
 	log.Printf("[DeleteRegion] RegionID: %d", req.Id)
 
 	if err := h.regionUsecase.Delete(ctx, req.Id); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -329,10 +312,7 @@ func (h *RegionGrpcHandler) SyncRegion(ctx context.Context, req *tqdpb.SyncRegio
 
 	result, err := h.regionUsecase.SyncRegion(ctx, req.LayerId, req.LabelId)
 	if err != nil {
-		if errors.Is(err, usecase.ErrLayerNotFound) || strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -362,7 +342,7 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 
 	err := h.regionUsecase.UpdateProcessingStatus(ctx, req.RegionId, enums.ProcessingStatus(req.ProcessingStatus), userID, notes)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -371,7 +351,7 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 
 	region, err := h.regionUsecase.GetByID(ctx, req.RegionId)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	label, _ := h.regionUsecase.GetLabelByRegion(ctx, req.RegionId)
@@ -410,7 +390,7 @@ func (h *RegionGrpcHandler) ListClientRegions(ctx context.Context, req *tqdpb.Li
 
 	regions, total, err := h.regionUsecase.ListClient(ctx, layerID, bBox, pagable.GetPage(), pagable.GetSize())
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	protoRegions := make([]*tqdpb.RegionResponse, 0, len(regions))
@@ -446,7 +426,7 @@ func (h *RegionGrpcHandler) FindRegionByPoint(ctx context.Context, req *tqdpb.Fi
 
 	region, err := h.regionUsecase.FindByPoint(ctx, req.Lat, req.Lng, layerID)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	if region == nil {
 		return nil, status.Error(codes.NotFound, "no region found")
@@ -487,7 +467,7 @@ func (h *RegionGrpcHandler) FindRegionsByBBox(ctx context.Context, req *tqdpb.Fi
 		int(pagable.GetPage()), int(pagable.GetSize()),
 	)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	protoRegions := make([]*tqdpb.RegionResponse, 0, len(regions))

@@ -3,6 +3,7 @@ package handler_grpc
 import (
 	"context"
 	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -38,13 +39,7 @@ func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Con
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -56,13 +51,7 @@ func (h *QHAuthorityIssuringGrpcHandler) GetAuthorityIssuring(ctx context.Contex
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -87,16 +76,7 @@ func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Con
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		if strings.Contains(err.Error(), "empty") || strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHAuthorityIssuringPB(out), nil
 }
@@ -107,10 +87,7 @@ func (h *QHAuthorityIssuringGrpcHandler) DeleteAuthorityIssuring(ctx context.Con
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -126,7 +103,7 @@ func (h *QHAuthorityIssuringGrpcHandler) ListAuthorityIssuring(ctx context.Conte
 	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
 	rows, total, err := h.uc.List(ctx, pagable)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	data := make([]*tqdpb.QHAuthorityIssuringResponse, len(rows))
 	for i := range rows {

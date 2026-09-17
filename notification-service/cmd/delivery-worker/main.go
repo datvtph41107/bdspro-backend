@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"context"
 	"fmt"
 	"log"
@@ -19,6 +21,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("notification-delivery-worker")()
+ logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("delivery worker stopped: %v", err)
 		os.Exit(1)

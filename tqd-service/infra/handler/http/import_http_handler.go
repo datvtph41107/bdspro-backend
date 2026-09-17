@@ -1,10 +1,13 @@
 package handler_http
 
 import (
+	commonerrors "common/errors"
 	"encoding/json"
+	"google.golang.org/grpc/status"
 	"net/http"
 	"strconv"
 	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_utils "common/utils"
 	"tqd/internal/dto"
@@ -106,13 +109,8 @@ func (h *ImportHTTPHandler) PostImportGeoJSONMultipart(c *gin.Context) {
 
 	result, err := h.importUsecase.EnqueueImportFromReader(c.Request.Context(), src, fh.Filename, fileFormat, job)
 	if err != nil {
-		status := http.StatusBadRequest
-		if strings.Contains(err.Error(), "already has an import") {
-			status = http.StatusConflict
-		} else if strings.Contains(err.Error(), "not found") {
-			status = http.StatusNotFound
-		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		mapped := status.Convert(errorresponse.GRPC(c.Request.Context(), err))
+		c.JSON(commonerrors.HTTPStatusForRPC(mapped.Code()), gin.H{"error": mapped.Message(), "message": mapped.Message(), "code": int(mapped.Code()), "status": commonerrors.HTTPStatusForRPC(mapped.Code())})
 		return
 	}
 

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"context"
 	"errors"
 	"log"
@@ -16,6 +18,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("notification-payment-event-worker")()
+ logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("payment completed consumer stopped: %v", err)
 		os.Exit(1)

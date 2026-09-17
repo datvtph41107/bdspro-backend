@@ -122,6 +122,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(tqd_internal_usecase_quota.ProfileAccessReader), new(*tqd_infra_client_user_generatedreport.Client)),
 	wire.Bind(new(tqd_internal_usecase_quota.DurableUsageReader), new(*tqd_infra_postgres_usage.Store)),
 	wire.Bind(new(tqd_internal_usecase_usage.Store), new(*tqd_infra_postgres_usage.Store)),
+	wire.Bind(new(tqd_internal_usecase_quota.ReadActionUsageStore), new(*tqd_infra_postgres_usage.Store)),
 	wire.Bind(new(tqd_internal_usecase_generatedreport_admin.Repository), new(*tqd_infra_postgres_generatedreport_report.ReportStore)),
 	wire.Bind(new(tqd_internal_usecase_quota_reconciliation_usageprojection.QuotaStore), new(*tqd_infra_redis_quota.Store)),
 	common_injection.NewHttpClient,

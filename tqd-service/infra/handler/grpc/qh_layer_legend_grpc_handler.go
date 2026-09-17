@@ -2,7 +2,7 @@ package handler_grpc
 
 import (
 	"context"
-	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -48,7 +48,7 @@ func (h *QHLayerLegendGrpcHandler) CreateLayerLegend(ctx context.Context, req *t
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
@@ -78,7 +78,7 @@ func (h *QHLayerLegendGrpcHandler) BatchCreateLayerLegends(ctx context.Context, 
 	}
 	created, skipped, err := h.uc.BatchCreate(ctx, req.LayerId, items)
 	if err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	data := make([]*tqdpb.QHLayerLegendResponse, len(created))
 	for i := range created {
@@ -96,7 +96,7 @@ func (h *QHLayerLegendGrpcHandler) GetLayerLegend(ctx context.Context, req *tqdp
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
@@ -165,7 +165,7 @@ func (h *QHLayerLegendGrpcHandler) UpdateLayerLegend(ctx context.Context, req *t
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLayerLegendPB(out), nil
 }
@@ -175,7 +175,7 @@ func (h *QHLayerLegendGrpcHandler) DeleteLayerLegend(ctx context.Context, req *t
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -228,7 +228,7 @@ func (h *QHLayerLegendGrpcHandler) ListClientLayerLegends(ctx context.Context, r
 	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
 	rows, total, err := h.uc.ListClientByLayer(ctx, req.LayerId, pagable)
 	if err != nil {
-		return nil, mapLegendError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	data := make([]*tqdpb.QHLayerLegendResponse, len(rows))
 	for i := range rows {
@@ -257,20 +257,6 @@ func (h *QHLayerLegendGrpcHandler) GetAllLayerLegends(ctx context.Context, req *
 		Page:     1,
 		PageSize: 200,
 	}, nil
-}
-
-func mapLegendError(err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "already has legend") {
-		return status.Error(codes.AlreadyExists, msg)
-	}
-	if strings.Contains(msg, "not found") {
-		return status.Error(codes.NotFound, msg)
-	}
-	if strings.Contains(msg, "required") || strings.Contains(msg, "invalid") {
-		return status.Error(codes.InvalidArgument, msg)
-	}
-	return status.Error(codes.Internal, msg)
 }
 
 func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse {

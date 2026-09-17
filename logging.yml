@@ -1,0 +1,37 @@
+# Owner duy nhất cho logging native development. Đường dẫn root tính từ file này.
+# Container không truyền QHPRO_LOG_CONFIG: dùng stdout JSON, platform quản lý retention.
+version: 1
+defaults:
+    level: info
+    console: true
+    format: text
+    add_source: true
+    files: true
+    root: .tmp/development/logs
+    mode: session # session | append | truncate; chỉ tác động file do logger sở hữu
+    max_size_mb: 20
+    max_backups: 3
+    max_age_days: 7
+    keep_runs: 10 # Giữ tối đa các phiên đã kết thúc; không xóa phiên còn chạy
+    categories:
+        application: info
+        lifecycle: info
+        http: info
+        grpc: info # RPC thành công ở DEBUG; bật debug khi cần xem polling
+        dependency: info
+        database: info
+        worker: info
+    sql:
+        enabled: false
+        slow_threshold: 1s
+services:
+    tqd:
+        categories:
+            database: debug
+        sql:
+            enabled: true
+    user:
+        categories:
+            database: debug
+        sql:
+            enabled: true

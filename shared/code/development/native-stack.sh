@@ -154,6 +154,7 @@ start_one() {
     source "$repository_root/$directory/.env"
     set +a
     export QHPRO_EXECUTION_MODE=host
+    export QHPRO_LOG_CONFIG="${QHPRO_LOG_CONFIG:-$repository_root/logging.yml}"
     if [[ -n "$args" ]]; then
       exec "./bin/$binary" $args
     else

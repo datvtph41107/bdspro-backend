@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"fmt"
 	_ "net/http/pprof"
 	"os"
@@ -34,6 +36,8 @@ func init() {
 }
 
 func main() {
+	defer logging.MustStart("bdspro")()
+	logfabric.Bridge()
 	// go func() {
 	// 	log.Println("run go-routine")
 	// 	log.Println(http.ListenAndServe("localhost:6060", nil))

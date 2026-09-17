@@ -29,6 +29,7 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 	var result settlement.Result
 	err := s.db.WithTransaction(ctx, func(txCtx context.Context) error {
 		db := s.db.GetDB(txCtx)
+		now := s.now().UTC()
 		if err := advisoryLock(db, "subscription-effect:"+input.Effect.EffectKey); err != nil {
 			return err
 		}
@@ -55,12 +56,15 @@ func (s *SettlementStore) ApplySettlement(ctx context.Context, input settlement.
 		if err := advisoryLock(db, lockKey); err != nil {
 			return err
 		}
+		if err := expireElapsedSubscriptions(db, input.Effect, target.ProductID, now); err != nil {
+			return err
+		}
 
 		current, err := loadCurrent(db, input.Effect, target.ProductID)
 		if err != nil {
 			return err
 		}
-		decision, err := settlement.Decide(input.Effect, target, current, s.now())
+		decision, err := settlement.Decide(input.Effect, target, current, now)
 		if err != nil {
 			return err
 		}

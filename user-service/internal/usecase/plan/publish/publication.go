@@ -1,6 +1,7 @@
 package publish
 
 import (
+	"common/validation"
 	"context"
 	"errors"
 	"fmt"
@@ -11,10 +12,11 @@ import (
 )
 
 var (
-	ErrPlanVersionNotFound = errors.New("catalog plan version not found")
-	ErrPlanVersionNotDraft = errors.New("catalog plan version is not draft")
-	ErrConcurrentPublish   = errors.New("catalog plan version changed during publication")
-	ErrParentRetired       = errors.New("catalog product or plan is retired")
+	ErrPlanVersionNotFound      = errors.New("catalog plan version not found")
+	ErrPlanVersionNotDraft      = errors.New("catalog plan version is not draft")
+	ErrConcurrentPublish        = errors.New("catalog plan version changed during publication")
+	ErrParentRetired            = errors.New("catalog product or plan is retired")
+	ErrPublicationWindowElapsed = errors.New("publication cannot occur after effective_from")
 )
 
 /** Transaction executes one publication atomically. */
@@ -87,17 +89,17 @@ func (s *Service) Publish(ctx context.Context, command Command) (Result, error) 
 		return Result{}, fmt.Errorf("catalog publication service is not configured")
 	}
 	if command.PlanVersionID == 0 {
-		return Result{}, fmt.Errorf("plan version id is required")
+		return Result{}, validation.New("plan_version_id", "PLAN_PUBLICATION_INVALID", "plan version id is required")
 	}
 	if command.ActorID == 0 {
-		return Result{}, fmt.Errorf("publisher actor id is required")
+		return Result{}, validation.New("actor_id", "PLAN_PUBLICATION_INVALID", "publisher actor id is required")
 	}
 	if command.EffectiveFrom.IsZero() {
-		return Result{}, fmt.Errorf("effective_from is required")
+		return Result{}, validation.New("effective_from", "PLAN_PUBLICATION_INVALID", "effective_from is required")
 	}
 	if command.EffectiveUntil != nil &&
 		!command.EffectiveUntil.After(command.EffectiveFrom) {
-		return Result{}, fmt.Errorf("effective window is invalid")
+		return Result{}, validation.New("effective_until", "PLAN_PUBLICATION_INVALID", "effective window is invalid")
 	}
 
 	publishedAt := command.PublishedAt
@@ -105,7 +107,7 @@ func (s *Service) Publish(ctx context.Context, command Command) (Result, error) 
 		publishedAt = s.now().UTC()
 	}
 	if publishedAt.After(command.EffectiveFrom) {
-		return Result{}, fmt.Errorf("publication cannot occur after effective_from")
+		return Result{}, ErrPublicationWindowElapsed
 	}
 
 	var result Result
@@ -133,7 +135,7 @@ func (s *Service) Publish(ctx context.Context, command Command) (Result, error) 
 			return fmt.Errorf("invalid plan status %q", aggregate.PlanStatus)
 		}
 		if strings.TrimSpace(aggregate.ProductDisplayName) == "" {
-			return fmt.Errorf("product display name is required")
+			return validation.New("draft.product_display_name", "PLAN_PUBLICATION_INVALID", "product display name is required")
 		}
 
 		contract := aggregate.Contract(

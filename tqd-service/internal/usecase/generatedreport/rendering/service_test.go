@@ -35,6 +35,9 @@ func (e *fakeEngine) RenderPDF(ctx context.Context, html []byte) ([]byte, error)
 }
 
 type fakeUploader struct {
+	existingPath   string
+	existingSize   int64
+	lookupErr      error
 	path           string
 	err            error
 	ownerNamespace string
@@ -42,6 +45,33 @@ type fakeUploader struct {
 	filename       string
 	contentType    string
 	content        []byte
+}
+
+func (u *fakeUploader) FindOwnedFile(context.Context, string, string) (string, int64, bool, error) {
+	return u.existingPath, u.existingSize, u.existingPath != "", u.lookupErr
+}
+
+func TestServiceReusesCommittedFileWithoutRenderingOrUploadingAgain(t *testing.T) {
+	engine := &fakeEngine{err: errors.New("must not render again")}
+	uploader := &fakeUploader{existingPath: "committed.pdf", existingSize: 1234}
+	service, err := NewService(fakeSource{document: renderDocument()}, engine, uploader, fixedDelivery{url: "https://files.example/report.pdf"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := service.GenerateReport(context.Background(), processing.Job{ID: "report_job_12", ReportID: 12, UserID: 42})
+	if err != nil || output.FileSize != 1234 || output.PDFURL != "https://files.example/report.pdf" || len(uploader.content) != 0 || len(engine.html) != 0 {
+		t.Fatalf("committed File replay: output=%+v err=%v", output, err)
+	}
+}
+
+func TestServiceDoesNotRenderWhenFileAuthorityCannotBeRead(t *testing.T) {
+	engine := &fakeEngine{}
+	uploader := &fakeUploader{lookupErr: errors.New("File unavailable")}
+	service, _ := NewService(fakeSource{document: renderDocument()}, engine, uploader, fixedDelivery{})
+	_, err := service.GenerateReport(context.Background(), processing.Job{ID: "report_job_12", ReportID: 12, UserID: 42})
+	if err == nil || len(engine.html) != 0 {
+		t.Fatalf("unavailable File authority: err=%v", err)
+	}
 }
 
 func (u *fakeUploader) PutOwnedFile(

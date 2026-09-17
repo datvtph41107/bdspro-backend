@@ -55,11 +55,6 @@ gemini:
   timeout_seconds: 60  # Optional, default
   max_tokens: 4000
 
-logging:
-  level: "info"
-  format: "json"
-  output: "stdout"
-
 monitoring:
   enabled: true
   prometheus_port: "9091"

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"common/logging"
 	"context"
 	"errors"
 	"fmt"
@@ -115,7 +116,7 @@ func startGRPCServer() error {
 		return fmt.Errorf("listen notification gRPC on %s: %w", port, err)
 	}
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+		grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware, logging.UnaryServer()),
 		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 	)
 	notificationpb.RegisterGatewayNotificationServiceServer(s, app.NotificationHandler)

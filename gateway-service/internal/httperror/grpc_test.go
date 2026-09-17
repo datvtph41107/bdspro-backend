@@ -1,9 +1,14 @@
 package httperror
 
 import (
+	commonerrors "common/errors"
+	"common/request"
+	"common/validation"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -85,5 +90,38 @@ func TestWriteGRPCDoesNotExposeUnavailableTransportDetails(t *testing.T) {
 	}
 	if response.Message != "service temporarily unavailable" {
 		t.Fatalf("response message = %q", response.Message)
+	}
+}
+
+func TestValidationResponseHasHTTP400AndCorrelation(t *testing.T) {
+	ctx := request.WithRequestID(context.Background(), "req_9770ca1e2a97738baee1447ecd49df9f")
+	err, _ := commonerrors.ValidationStatus(validation.New("draft.tier_rank", "PLAN_TIER_RANK_INVALID", "tier rank must be positive"), "user.catalog")
+	recorder := httptest.NewRecorder()
+	WriteGRPCContext(ctx, recorder, err)
+	var result map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if recorder.Code != 400 || result["code"] != float64(3) || result["reason"] != "PLAN_TIER_RANK_INVALID" || result["request_id"] == nil || result["errors"] == nil {
+		t.Fatalf("response=%s", recorder.Body.String())
+	}
+}
+
+func TestLegacyErrorNeverReturnsHTTP200(t *testing.T) {
+	for _, code := range []int32{400, 401, 403, 404, 409, 429, 500, 501, 503, 0} {
+		recorder := httptest.NewRecorder()
+		WriteGRPC(recorder, commonerrors.ReturnError(code, "diagnostic"))
+		if recorder.Code < 400 {
+			t.Fatalf("legacy %d returned %d", code, recorder.Code)
+		}
+	}
+}
+
+func TestInternalErrorDetailsAreNotPublic(t *testing.T) {
+	st, _ := status.New(codes.Internal, "sql secret").WithDetails(&errdetails.ErrorInfo{Reason: "DATABASE_FAILURE", Metadata: map[string]string{"dsn": "private"}})
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, st.Err())
+	if strings.Contains(recorder.Body.String(), "private") || strings.Contains(recorder.Body.String(), "sql secret") {
+		t.Fatal(recorder.Body.String())
 	}
 }

@@ -17,7 +17,11 @@ func InvalidRequest(details ...protoadapt.MessageV1) error {
 }
 
 func ThrowError(code int32, err error, details ...protoadapt.MessageV1) error {
-	st := status.New(codes.Code(code), err.Error())
+	rpcCode := codes.Code(code)
+	if code < 1 || code > 16 {
+		rpcCode = RPCCodeForHTTP(code)
+	}
+	st := status.New(rpcCode, err.Error())
 
 	if len(details) > 0 {
 		stWithDetails, errDetails := st.WithDetails(details...)
@@ -31,7 +35,7 @@ func ThrowError(code int32, err error, details ...protoadapt.MessageV1) error {
 }
 
 func ReturnError(code int32, message string) error {
-	st := status.New(codes.Internal, message)
+	st := status.New(RPCCodeForHTTP(code), message)
 
 	detail := &sharepb.ErrorResponse{
 		Code:    int32(code),
@@ -44,7 +48,7 @@ func ReturnError(code int32, message string) error {
 
 // ReturnErrorWithSecond trả về error kèm theo số giây đếm ngược
 func ReturnErrorWithSecond(code int32, message string, second int32) error {
-	st := status.New(codes.Internal, message)
+	st := status.New(RPCCodeForHTTP(code), message)
 
 	detail := &sharepb.ErrorResponse{
 		Code:    int32(code),

@@ -2,6 +2,9 @@ package grpc
 
 import (
 	"context"
+	"fmt"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"strings"
 	"testing"
 	"time"
 
@@ -234,5 +237,42 @@ func handlerAggregateFromDraft(id uint64, record admin.DraftRecord) catalogdomai
 		SubscriptionTermDays: record.Terms.SubscriptionTermDays, TierRank: record.TierRank,
 		TermsChecksum: record.TermsChecksum, Entitlements: record.Terms.Entitlements,
 		Operations: record.Terms.Operations, Prices: record.Terms.Prices,
+	}
+}
+
+func TestPlanServiceErrorMapsElapsedPublicationWindowToInvalidArgument(t *testing.T) {
+	err := planServiceError(context.Background(), publish.ErrPublicationWindowElapsed)
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("error = %v, want InvalidArgument", err)
+	}
+}
+
+// Bảo vệ lỗi thực tế trên browser: rank=0 phải trả lỗi trường, không phải service bị hỏng.
+func TestCreateDraftRejectsZeroTierWithFieldDetails(t *testing.T) {
+	handler := NewPlanVersionAdminHandler(planVersionService(), allowPermissions(admin.PermissionPlanManage))
+	_, err := handler.CreatePlanVersionDraft(trustedAdminContext(t), &userpb.CreateCatalogPlanVersionDraftRequest{
+		Draft: &userpb.CatalogPlanVersionDraft{ProductDisplayName: "QHPro", TierRank: 0},
+	})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("error = %v", err)
+	}
+	var field, reason string
+	for _, detail := range status.Convert(err).Details() {
+		switch d := detail.(type) {
+		case *errdetails.BadRequest:
+			field = d.FieldViolations[0].Field
+		case *errdetails.ErrorInfo:
+			reason = d.Reason
+		}
+	}
+	if field != "draft.tier_rank" || reason != "PLAN_TIER_RANK_INVALID" {
+		t.Fatalf("field=%s reason=%s", field, reason)
+	}
+}
+
+func TestPlanDatabaseFailureDoesNotBecomeValidationByMessage(t *testing.T) {
+	err := planServiceError(context.Background(), fmt.Errorf("database: invalid connection, password required"))
+	if status.Code(err) != codes.Internal || strings.Contains(status.Convert(err).Message(), "password") {
+		t.Fatalf("error=%v", err)
 	}
 }

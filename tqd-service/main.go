@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"flag"
 	"fmt"
 	"log"
@@ -12,6 +14,8 @@ import (
 // TQD is an internal gRPC service. gateway-service is the only application
 // HTTP boundary and translates public/client HTTP routes into TQD gRPC calls.
 func main() {
+	defer logging.MustStart("tqd")()
+ logfabric.Bridge()
 	var (
 		serverType = flag.String("server", "grpc", "Server type: grpc or pmtiles")
 		port       = flag.Int("port", 0, "Server port (overrides config)")

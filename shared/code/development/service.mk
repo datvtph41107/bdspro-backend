@@ -19,7 +19,7 @@ GO_TEST_FLAGS ?=
 # service-owned environment. Docker Compose injects its own container wiring
 # and does not use this helper.
 define with_env
-set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host $(1)
+set -a; if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; set +a; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG="$${QHPRO_LOG_CONFIG:-$(abspath ../logging.yml)}" $(1)
 endef
 
 fmt:

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"common/validation"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +10,12 @@ import (
 	_dto "common/domain/dto"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
+)
+
+// Lỗi nghiệp vụ thuộc owner label; transport dùng errors.Is, không phụ thuộc câu chữ.
+var (
+	ErrLabelNotFound     = errors.New("label not found")
+	ErrLabelNameConflict = errors.New("label name already exists in layer")
 )
 
 type QHLabelUsecase interface {
@@ -56,10 +63,10 @@ func NewQHLabelUsecase(
 
 func (u *qhLabelUsecaseImpl) Create(ctx context.Context, label *qh_domain.QHLabel) (*qh_domain.QHLabel, error) {
 	if strings.TrimSpace(label.Name) == "" {
-		return nil, errors.New("label name is required")
+		return nil, validation.New("name", "LABEL_NAME_INVALID", "label name is required")
 	}
 	if label.LayerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, validation.New("layer_id", "LABEL_LAYER_ID_INVALID", "layerId is required")
 	}
 	applyLabelDefaults(label)
 	if err := u.labelRepo.Create(ctx, label); err != nil {
@@ -74,7 +81,7 @@ func (u *qhLabelUsecaseImpl) Update(ctx context.Context, id uint64, label *qh_do
 		return nil, fmt.Errorf("get label failed: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("label %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, id)
 	}
 
 	if strings.TrimSpace(label.Name) != "" {
@@ -125,17 +132,17 @@ func (u *qhLabelUsecaseImpl) Update(ctx context.Context, id uint64, label *qh_do
 
 func (u *qhLabelUsecaseImpl) UpdateLayerLinkMetadata(ctx context.Context, labelID, layerID uint64, landUseID, legendID *uint64) error {
 	if labelID == 0 {
-		return errors.New("labelId is required")
+		return validation.New("label_id", "LABEL_LABEL_ID_INVALID", "labelId is required")
 	}
 	if layerID == 0 {
-		return errors.New("layerId is required")
+		return validation.New("layer_id", "LABEL_LAYER_ID_INVALID", "layerId is required")
 	}
 	existing, err := u.labelRepo.GetByID(ctx, labelID)
 	if err != nil {
 		return fmt.Errorf("get label failed: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("label %d not found", labelID)
+		return fmt.Errorf("%w: id=%d", ErrLabelNotFound, labelID)
 	}
 	if err := u.labelRepo.UpdateLayerLinkMetadata(ctx, labelID, layerID, landUseID, legendID); err != nil {
 		return fmt.Errorf("update label layer metadata failed: %w", err)
@@ -149,7 +156,7 @@ func (u *qhLabelUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 		return fmt.Errorf("get label failed: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("label %d not found", id)
+		return fmt.Errorf("%w: id=%d", ErrLabelNotFound, id)
 	}
 
 	// Cập nhật tất cả regions có label_id = id thành 0 (không có label)
@@ -168,7 +175,7 @@ func (u *qhLabelUsecaseImpl) Delete(ctx context.Context, id uint64) error {
 
 func (u *qhLabelUsecaseImpl) BatchDelete(ctx context.Context, ids []uint64) error {
 	if len(ids) == 0 {
-		return errors.New("ids is required")
+		return validation.New("ids", "LABEL_IDS_INVALID", "ids is required")
 	}
 	unique := make([]uint64, 0, len(ids))
 	seen := make(map[uint64]struct{})
@@ -183,7 +190,7 @@ func (u *qhLabelUsecaseImpl) BatchDelete(ctx context.Context, ids []uint64) erro
 		unique = append(unique, id)
 	}
 	if len(unique) == 0 {
-		return errors.New("no valid ids")
+		return validation.New("ids", "LABEL_IDS_INVALID", "no valid ids")
 	}
 
 	n, err := u.labelRepo.CountActiveByIDs(ctx, unique)
@@ -191,7 +198,7 @@ func (u *qhLabelUsecaseImpl) BatchDelete(ctx context.Context, ids []uint64) erro
 		return fmt.Errorf("count labels failed: %w", err)
 	}
 	if n != int64(len(unique)) {
-		return errors.New("one or more labels not found")
+		return ErrLabelNotFound
 	}
 
 	if err := u.regionRepo.UpdateLabelForRegionsWhereLabelIn(ctx, unique, 0); err != nil {
@@ -214,7 +221,7 @@ func (u *qhLabelUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain
 		return nil, fmt.Errorf("get label failed: %w", err)
 	}
 	if label == nil {
-		return nil, fmt.Errorf("label %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, id)
 	}
 	return label, nil
 }
@@ -302,17 +309,17 @@ func (u *qhLabelUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_
 		return nil, fmt.Errorf("get label failed: %w", err)
 	}
 	if label == nil {
-		return nil, fmt.Errorf("label %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, id)
 	}
 	if label.Status != 10 || !label.IsVisible {
-		return nil, errors.New("label not available")
+		return nil, ErrLabelNotFound
 	}
 	return label, nil
 }
 
 func (u *qhLabelUsecaseImpl) BatchCreate(ctx context.Context, layerID uint64, labels []*qh_domain.QHLabel) ([]*qh_domain.QHLabel, []string, error) {
 	if layerID == 0 {
-		return nil, nil, errors.New("layerId is required")
+		return nil, nil, validation.New("layer_id", "LABEL_LAYER_ID_INVALID", "layerId is required")
 	}
 	if len(labels) == 0 {
 		return []*qh_domain.QHLabel{}, nil, nil
@@ -388,14 +395,14 @@ func (u *qhLabelUsecaseImpl) ensureBatchLayerLabelLinks(ctx context.Context, lay
 // Merge — tạo nhãn mới, chuyển mọi region đang dùng các nhãn nguồn sang nhãn mới, rồi xóa mềm các nhãn nguồn (DeleteBatch không gỡ region).
 func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLabelIDs []uint64, newLabel *qh_domain.QHLabel) (*qh_domain.QHLabel, error) {
 	if layerID == 0 {
-		return nil, errors.New("layerId is required")
+		return nil, validation.New("layer_id", "LABEL_LAYER_ID_INVALID", "layerId is required")
 	}
 	if newLabel == nil {
-		return nil, errors.New("new label is required")
+		return nil, validation.New("label", "LABEL_LABEL_INVALID", "new label is required")
 	}
 	name := strings.TrimSpace(newLabel.Name)
 	if name == "" {
-		return nil, errors.New("label name is required")
+		return nil, validation.New("name", "LABEL_NAME_INVALID", "label name is required")
 	}
 
 	unique := make([]uint64, 0, len(sourceLabelIDs))
@@ -411,7 +418,7 @@ func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLa
 		unique = append(unique, id)
 	}
 	if len(unique) < 1 {
-		return nil, errors.New("at least one source label id is required")
+		return nil, validation.New("source_label_ids", "LABEL_SOURCE_LABEL_IDS_INVALID", "at least one source label id is required")
 	}
 
 	for _, id := range unique {
@@ -420,10 +427,10 @@ func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLa
 			return nil, fmt.Errorf("get source label %d: %w", id, err)
 		}
 		if lbl == nil {
-			return nil, fmt.Errorf("source label %d not found", id)
+			return nil, fmt.Errorf("%w: id=%d", ErrLabelNotFound, id)
 		}
 		if lbl.LayerID != layerID {
-			return nil, fmt.Errorf("source label %d belongs to another layer", id)
+			return nil, validation.New("source_label_ids", "LABEL_LAYER_MISMATCH", fmt.Sprintf("source label %d belongs to another layer", id))
 		}
 	}
 
@@ -433,7 +440,7 @@ func (u *qhLabelUsecaseImpl) Merge(ctx context.Context, layerID uint64, sourceLa
 	}
 	if byName != nil {
 		if _, inSources := seen[byName.ID]; !inSources {
-			return nil, fmt.Errorf("label name %q already exists in layer", name)
+			return nil, fmt.Errorf("%w: name=%q", ErrLabelNameConflict, name)
 		}
 	}
 

@@ -5,6 +5,8 @@ import (
 	"auth/infra/handler"
 	authrpc "auth/infra/rpc"
 	"auth/infra/services"
+	"common/logging"
+ logfabric "common/logging/fabric"
 	_middleware "common/middleware"
 	_ "common/models"
 	process "common/process"
@@ -39,6 +41,8 @@ import (
 // nếu public -> đi luôn vào service con
 // nếu private -> đi vào auth -> auth điều hướng tới service con
 func main() {
+	defer logging.MustStart("auth")()
+ logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("auth service failed: %v", err)
 		os.Exit(1)
@@ -77,6 +81,7 @@ func run() error {
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			logging.UnaryServer(),
 		),
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"context"
 	"fmt"
 	"log"
@@ -24,6 +26,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("user")()
+ logfabric.Bridge()
 	if err := runGRPC(); err != nil {
 		log.Fatal(err)
 	}
@@ -95,6 +99,7 @@ func runGRPC() error {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			accessIngress(transportConfig),
+			logging.UnaryServer(),
 		),
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,

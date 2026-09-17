@@ -1,9 +1,9 @@
 package admin
 
 import (
+	"common/validation"
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -101,7 +101,7 @@ func (s *Service) GetPlanVersion(
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, validation.New("plan_version_id", "PLAN_VERSION_REQUIRED", "plan version id is required")
 	}
 	aggregate, err := s.repository.GetPlanVersion(ctx, planVersionID)
 	if errors.Is(err, publish.ErrPlanVersionNotFound) {
@@ -135,7 +135,7 @@ func (s *Service) UpdateDraft(ctx context.Context, planVersionID uint64, command
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, validation.New("plan_version_id", "PLAN_VERSION_REQUIRED", "plan version id is required")
 	}
 	record, err := validateDraftCommand(command)
 	if err != nil {
@@ -158,7 +158,7 @@ func (s *Service) ValidateDraft(ctx context.Context, planVersionID uint64) (stri
 		return "", ErrPlanVersionNotDraft
 	}
 	if aggregate.SubscriptionTermDays <= 0 {
-		return "", fmt.Errorf("plan %q requires subscription_term_days", aggregate.PlanCode)
+		return "", validation.New("draft.subscription_term_days", "PLAN_TERM_INVALID", "subscription_term_days must be positive")
 	}
 	return catalogdomain.TermsChecksum(aggregate.CurrentContract())
 }
@@ -170,10 +170,10 @@ func (s *Service) DeleteDraft(ctx context.Context, planVersionID, actorID uint64
 		return errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return errors.New("plan version id is required")
+		return validation.New("plan_version_id", "PLAN_VERSION_REQUIRED", "plan version id is required")
 	}
 	if actorID == 0 {
-		return errors.New("actor id is required")
+		return validation.New("actor_id", "ACTOR_REQUIRED", "actor id is required")
 	}
 	return s.repository.DeletePlanVersionDraft(ctx, planVersionID)
 }
@@ -185,10 +185,10 @@ func (s *Service) Retire(ctx context.Context, planVersionID, actorID uint64) (ca
 		return catalogdomain.PlanVersionAggregate{}, errors.New("plan admin service is not configured")
 	}
 	if planVersionID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("plan version id is required")
+		return catalogdomain.PlanVersionAggregate{}, validation.New("plan_version_id", "PLAN_VERSION_REQUIRED", "plan version id is required")
 	}
 	if actorID == 0 {
-		return catalogdomain.PlanVersionAggregate{}, errors.New("actor id is required")
+		return catalogdomain.PlanVersionAggregate{}, validation.New("actor_id", "ACTOR_REQUIRED", "actor id is required")
 	}
 	if err := s.repository.RetirePlanVersion(ctx, planVersionID, actorID, time.Now().UTC()); err != nil {
 		return catalogdomain.PlanVersionAggregate{}, err
@@ -215,13 +215,13 @@ func normalizeQuery(query Query) (Query, error) {
 		query.PageSize = 20
 	}
 	if query.PageSize > 100 {
-		return Query{}, fmt.Errorf("page size must be between 1 and 100")
+		return Query{}, validation.New("page_size", "PAGE_SIZE_INVALID", "page size must be between 1 and 100")
 	}
 	query.ProductCode = strings.TrimSpace(query.ProductCode)
 	query.PlanCode = strings.TrimSpace(query.PlanCode)
 	query.Status = strings.TrimSpace(query.Status)
 	if query.Status != "" && !validStatus(catalogdomain.Status(query.Status)) {
-		return Query{}, fmt.Errorf("invalid plan status %q", query.Status)
+		return Query{}, validation.New("status", "PLAN_STATUS_INVALID", "invalid plan status")
 	}
 	return query, nil
 }
@@ -234,14 +234,14 @@ func validStatus(status catalogdomain.Status) bool {
 
 func validateDraftCommand(command DraftCommand) (DraftRecord, error) {
 	if command.ActorID == 0 {
-		return DraftRecord{}, errors.New("actor id is required")
+		return DraftRecord{}, validation.New("actor_id", "ACTOR_REQUIRED", "actor id is required")
 	}
 	command.ProductDisplayName = strings.TrimSpace(command.ProductDisplayName)
 	if command.ProductDisplayName == "" {
-		return DraftRecord{}, errors.New("product display name is required")
+		return DraftRecord{}, validation.New("draft.product_display_name", "PRODUCT_DISPLAY_NAME_REQUIRED", "product display name is required")
 	}
 	if command.TierRank <= 0 {
-		return DraftRecord{}, errors.New("tier rank must be positive")
+		return DraftRecord{}, validation.New("draft.tier_rank", "PLAN_TIER_RANK_INVALID", "tier rank must be positive")
 	}
 	command.Terms.ProductCode = strings.TrimSpace(command.Terms.ProductCode)
 	command.Terms.PlanCode = strings.TrimSpace(command.Terms.PlanCode)
