@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: WRITER PRECHECK PASS / BOUNDED NOTIFICATION MUTATION AUTHORIZED
+Status: NOTIFICATION MUTATION PARTIAL / FIREBASE DUPLICATE-MATCH SCRIPT BUG / CONTINUATION REPAIR NEXT
 
 ## Authority
 
@@ -183,3 +183,36 @@ Next authorized action:
 - preserve all Notification business, delivery, retry, Firebase, Redis, RPC and process-lifecycle semantics;
 - then gofmt, canonical protobuf/Wire materialization, Notification test/build and canonical audit;
 - no ratchet, commit or push until Notification legacy std-log is proved zero and reviewed.
+
+
+## First Notification mutation attempt — duplicate-match script bug
+
+Report:
+`notification-logging-mutation-zero-proof-20260918-213924.txt`
+
+Observed:
+- pre-mutation authority gate PASS at exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2` on `local/r5-notification-canonical-logging`;
+- deterministic mutation stopped in `notification-service/infra/firebase/provider.go`;
+- stop message: `firebase topic send error: expected exactly 1 match, found 2`;
+- the source contains two identical active `log.Println("Error sending message:", err)` sites (topic and token paths), while the script incorrectly required a unique match for the first replacement;
+- this is a mutation-script cardinality bug, not a source/architecture failure.
+
+Partial local-state interpretation:
+- files written before the Firebase step may already contain the intended migration:
+  - `notification-service/main.go`
+  - `notification-service/cmd/grpc_server.go`
+  - `notification-service/cmd/delivery-worker/main.go`
+  - `notification-service/cmd/payment-event-worker/main.go`
+  - `notification-service/infra/broker/rabbitmq/payment_completed_supervisor.go`
+- `notification-service/infra/firebase/provider.go` is written only after all of its replacements complete, so the failed duplicate check should have left that file at authority state;
+- files after Firebase in the mutation sequence should also remain at authority state;
+- do not reset/clean/restart the whole mutation blindly.
+
+Next authorized action:
+- verify the exact five-file partial scope;
+- verify Firebase and the four later files are still authority-clean;
+- continue only the missing Firebase/handler/delivery-loop/usecase mutation with corrected cardinality handling;
+- then gofmt all nine files and run protobuf/Wire/test/build/audit/zero-debt/protected proofs;
+- no ratchet, commit or push.
+
+Live GitHub was reconciled after the failed attempt and remains identical to exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
