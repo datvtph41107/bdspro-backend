@@ -7,6 +7,15 @@ Every task delegated from ChatGPT to the user's WSL machine must use this contra
 
 ## Task block
 
+IMPORTANT USER INTERFACE RULE:
+
+The metadata block below is descriptive control-plane text. It is NOT shell code and must never be pasted into Bash. Only content explicitly placed under a `COMMAND` heading inside a ```bash` fenced block is executable.
+
+Coordinator responses must visually separate:
+
+1. **DO NOT COPY — task metadata**
+2. **COPY/RUN — shell command**
+
 ```text
 [USER-LANE]
 ID: <stable short id>
@@ -54,6 +63,12 @@ RUNTIME:
 - may start local dependencies/services;
 - must record exact SHA/config and preserve logs;
 - runtime observations are evidence, not source authority.
+
+## Copy/paste safety rule
+
+Never present `[USER-LANE]`, `ID:`, `MODE:`, `PURPOSE:`, `EXPECTED:`, `STOP IF:` or `RETURN:` inside a shell-executable block.
+
+If the user accidentally pastes metadata into Bash and receives `command not found`, classify that as a presentation/execution-interface error, not a source failure. Verify that no source mutation occurred, then continue with the actual command block.
 
 ## Failure rule
 
