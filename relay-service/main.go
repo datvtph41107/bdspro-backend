@@ -1,8 +1,9 @@
 package main
 
 import (
+	"common/logging"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"relay/config"
@@ -10,8 +11,18 @@ import (
 )
 
 func main() {
+	closeLogger, err := logging.Configure("relay-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Relay logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = closeLogger() }()
+
 	if err := run(); err != nil {
-		log.Printf("relay startup failed: %v", err)
+		slog.Error(
+			"relay startup failed",
+			slog.Any("error", err),
+		)
 		os.Exit(1)
 	}
 }

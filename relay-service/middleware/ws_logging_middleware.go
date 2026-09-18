@@ -2,17 +2,16 @@ package middlewares
 
 import (
 	"bytes"
+	"common/logging"
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var wsLogger = flogging.MustGetLogger("ws_middleware")
 
 func WSLoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
+		logger := logging.WithComponent(r.Context(), "websocket.middleware")
 
 		// Lấy địa chỉ IP thật sự từ header (nếu có)
 		clientIP := r.RemoteAddr
@@ -25,19 +24,26 @@ func WSLoggingMiddleware(next http.Handler) http.Handler {
 
 		duration := time.Since(startTime)
 
-
-		wsLogger.Infof("WS Request | Method: %s | URI: %s | ClientIP: %s | Origin: %s | Status: %d | Duration: %v | Headers: %v",
-			r.Method, r.RequestURI, clientIP, r.Header.Get("Origin"), lrw.statusCode, duration, r.Header,
+		logger.Info(
+			"relay WebSocket request",
+			slog.String("http.request.method", r.Method),
+			slog.String("http.request.uri", r.RequestURI),
+			slog.String("client.address", clientIP),
+			slog.String("http.request.origin", r.Header.Get("Origin")),
+			slog.Int("http.response.status_code", lrw.statusCode),
+			slog.Duration("duration", duration),
+			slog.Any("http.request.headers", r.Header),
 		)
 
-		if lrw.statusCode != 200 {
-			wsLogger.Errorf("WebSocket request failed | Method: %s | URI: %s | ClientIP: %s | Status: %d | Duration: %v | Body: %s",
-				r.Method,
-				r.RequestURI,
-				clientIP,
-				lrw.statusCode,
-				duration,
-				lrw.body.String(),
+		if lrw.statusCode != http.StatusOK {
+			logger.Error(
+				"relay WebSocket request failed",
+				slog.String("http.request.method", r.Method),
+				slog.String("http.request.uri", r.RequestURI),
+				slog.String("client.address", clientIP),
+				slog.Int("http.response.status_code", lrw.statusCode),
+				slog.Duration("duration", duration),
+				slog.String("http.response.body", lrw.body.String()),
 			)
 		}
 	})
@@ -57,6 +63,6 @@ func (lrw *wsLoggingResponseWriter) WriteHeader(code int) {
 func (lrw *wsLoggingResponseWriter) Write(p []byte) (int, error) {
 	if lrw.body == nil {
 		lrw.body = &bytes.Buffer{}
-	}	
+	}
 	return lrw.ResponseWriter.Write(p)
 }

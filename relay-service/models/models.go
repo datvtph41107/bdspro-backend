@@ -2,7 +2,7 @@ package models
 
 import (
 	_db "common/db"
-	"log"
+	"log/slog"
 	"relay/data"
 )
 
@@ -18,9 +18,16 @@ func SaveMessagesToDB(messages []*data.ChatMessage) error {
 	}
 	err := _db.DB.CreateInBatches(list, 100).Error
 	if err != nil {
-		log.Println("Error saving messages:", err)
+		slog.Error(
+			"save Relay messages",
+			slog.Int("message.count", len(list)),
+			slog.Any("error", err),
+		)
 	} else {
-		log.Println("Messages saved successfully! ", "?", len(list))
+		slog.Info(
+			"Relay messages saved",
+			slog.Int("message.count", len(list)),
+		)
 	}
 	return err
 }

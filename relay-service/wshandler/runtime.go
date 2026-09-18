@@ -1,9 +1,11 @@
 package wshandler
 
 import (
+	"common/logging"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,10 +16,7 @@ import (
 	"relay/utils"
 
 	"github.com/gorilla/websocket"
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var wsLogger = flogging.MustGetLogger("ws_handler")
 
 type WebSocketHandler struct {
 	upgrader    websocket.Upgrader
@@ -132,16 +131,20 @@ func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificat
 func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request) {
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to upgrade to WebSocket: %v", err))
 		return
 	}
 
 	userId := utils.GetCurrentUserID(r.Context())
-	print("userId: %d request: %s", userId, r.RequestURI)
+	logging.WithComponent(r.Context(), "websocket.handler").Info(
+		"Relay WebSocket connect request",
+		slog.Uint64("user.id", userId),
+		slog.String("http.request.uri", r.RequestURI),
+	)
 
 	if userId == 0 {
 		conn.Close()
-		wsLogger.Error("Missing user_id")
+		logging.WithComponent(context.Background(), "websocket.handler").Error("Missing user_id")
 		return
 	}
 
@@ -179,7 +182,7 @@ func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request)
 	// Lưu trạng thái online vào Redis
 	h.saveUserOnlineStatus(context.Background(), userId, true)
 
-	wsLogger.Infof("User %s connected", userId)
+	logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("User %d connected", userId))
 
 	connectionCtx, cancelConnection := context.WithCancel(context.Background())
 	// Subscribe to notification channel for this user.
@@ -220,10 +223,10 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(ctx context.Context, channel 
 			}
 			return fmt.Errorf("receive Relay channel %s: %w", channel, err)
 		}
-		wsLogger.Infof("Received message from channel %s: %s", channel, msg.Payload)
+		logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Received message from channel %s: %s", channel, msg.Payload))
 		var redisMsg RedisMessage
 		if err := json.Unmarshal([]byte(msg.Payload), &redisMsg); err != nil {
-			wsLogger.Errorf("Invalid JSON format: %v", err)
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Invalid JSON format: %v", err))
 			continue
 		}
 		h.broadcastMessage(redisMsg)
@@ -280,13 +283,13 @@ func (h *WebSocketHandler) handleDisconnect(userID uint64) {
 	if h.userClient != nil {
 		ctx := context.Background()
 		if err := h.userClient.UpdateLastSeen(ctx, userID); err != nil {
-			wsLogger.Errorf("Failed to update last seen for user %d: %v", userID, err)
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to update last seen for user %d: %v", userID, err))
 		} else {
-			wsLogger.Infof("Updated last seen for user %d", userID)
+			logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Updated last seen for user %d", userID))
 		}
 	}
 
-	wsLogger.Infof("User %d disconnected", userID)
+	logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("User %d disconnected", userID))
 }
 
 func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
@@ -295,13 +298,13 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		wsLogger.Errorf("Failed to marshal message: %v", err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to marshal message: %v", err))
 		return
 	}
 
 	m, ok := msg.Data.(map[string]any)
 	if !ok {
-		wsLogger.Errorf("Invalid message format: %+v", msg.Data)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Invalid message format: %+v", msg.Data))
 		return
 	}
 
@@ -311,7 +314,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		if rawMembers, ok := m["members"].([]any); ok {
 			members, err := utils.ParseUint64Slice(rawMembers)
 			if err != nil {
-				wsLogger.Errorf("Failed to parse members: %v", err)
+				logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse members: %v", err))
 				return
 			}
 			h.sendToUser(members, data)
@@ -324,7 +327,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			h.addUserToRoom(roomID, userID)
 			h.sendToRoom(roomID, data)
 		} else {
-			wsLogger.Errorf("Failed to parse roomId or userId in JOIN_ROOM_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse roomId or userId in JOIN_ROOM_TYPE"))
 		}
 
 	case constants.LEAVE_ROOM_TYPE:
@@ -334,7 +337,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			h.sendToRoom(roomID, data)
 			h.removeUserFromRoom(roomID, userID)
 		} else {
-			wsLogger.Errorf("Failed to parse roomId or userId in LEAVE_ROOM_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse roomId or userId in LEAVE_ROOM_TYPE"))
 		}
 
 	case constants.DELETE_ROOM_TYPE:
@@ -342,7 +345,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			h.sendToRoom(roomID, data)
 			delete(h.rooms, roomID)
 		} else {
-			wsLogger.Errorf("Failed to parse roomId in DELETE_ROOM_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse roomId in DELETE_ROOM_TYPE"))
 		}
 
 	case constants.REMOVE_MEMBER_TYPE:
@@ -352,14 +355,17 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 			h.sendToRoom(roomID, data)
 			h.removeUserFromRoom(roomID, userID)
 		} else {
-			wsLogger.Errorf("Failed to parse roomId or userId in REMOVE_MEMBER_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse roomId or userId in REMOVE_MEMBER_TYPE"))
 		}
 	case constants.UPDATE_ROOM_TYPE:
-		fmt.Printf("UPDDATEETETETE ROROOOMMMMMM TPPYPYPYP")
+		logging.WithComponent(
+			context.Background(),
+			"websocket.handler",
+		).Info("Relay update-room event")
 		if rawMembers, ok := m["members"].([]any); ok {
 			members, err := utils.ParseUint64Slice(rawMembers)
 			if err != nil {
-				wsLogger.Errorf("Failed to parse members in UPDATE_ROOM_TYPE: %v", err)
+				logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse members in UPDATE_ROOM_TYPE: %v", err))
 				return
 			}
 			for _, userID := range members {
@@ -372,7 +378,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		if conversationID, ok := utils.ParseUint64(m["conversationId"]); ok {
 			h.sendToRoom(conversationID, data)
 		} else {
-			wsLogger.Errorf("Failed to parse conversationId in UPDATE_SETTINGS_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse conversationId in UPDATE_SETTINGS_TYPE"))
 		}
 
 	case constants.RECALL_MESSAGE_TYPE,
@@ -389,7 +395,7 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		if roomID, ok := utils.ParseUint64(m["roomId"]); ok {
 			h.sendToRoom(roomID, data)
 		} else {
-			wsLogger.Errorf("Failed to parse roomId in message type: %s", msg.Type)
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse roomId in message type: %s", msg.Type))
 		}
 
 	case constants.NOTIFICATION_TYPE:
@@ -397,11 +403,11 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		if ownerID, ok := utils.ParseUint64(m["ownerId"]); ok {
 			h.sendToUser([]uint64{ownerID}, data)
 		} else {
-			wsLogger.Errorf("Failed to parse ownerId in NOTIFICATION_TYPE")
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to parse ownerId in NOTIFICATION_TYPE"))
 		}
 
 	default:
-		wsLogger.Warnf("Unhandled message type: %s", msg.Type)
+		logging.WithComponent(context.Background(), "websocket.handler").Warn(fmt.Sprintf("Unhandled message type: %s", msg.Type))
 	}
 }
 
@@ -496,7 +502,7 @@ func (h *WebSocketHandler) sendToUser(members []uint64, data []byte) {
 			conn := h.clients[userId]
 			err := conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				wsLogger.Errorf("Failed to send message to user %s: %v", userId, err)
+				logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to send message to user %d: %v", userId, err))
 			}
 		} else {
 			// User không có connection, kiểm tra nếu ở background thì gửi notification
@@ -515,7 +521,7 @@ func (h *WebSocketHandler) loadMemberOfRoom(roomID uint64) {
 	// }
 	members, err := h.chatClient.GetMembersOfRoom(context.Background(), roomID)
 	if err != nil {
-		wsLogger.Errorf("Failed to get room members: %v", err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to get room members: %v", err))
 		return
 	}
 	h.rooms[roomID] = members
@@ -524,7 +530,7 @@ func (h *WebSocketHandler) loadMemberOfRoom(roomID uint64) {
 func (h *WebSocketHandler) loadRoomsOfMember(userId uint64) {
 	roomIDs, err := h.chatClient.GetRoomsOfMember(context.Background(), userId)
 	if err != nil {
-		wsLogger.Errorf("Failed to get rooms of member: %v", err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to get rooms of member: %v", err))
 		return
 	}
 
@@ -539,13 +545,13 @@ func (h *WebSocketHandler) loadRoomsOfMember(userId uint64) {
 
 func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
 	_, ok := h.rooms[roomID]
-	wsLogger.Infof("Room %s: %v, %v", roomID, ok, string(data))
+	logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Room %d: %v, %v", roomID, ok, string(data)))
 	if !ok {
 		h.loadMemberOfRoom(roomID)
 	}
 	members, ok := h.rooms[roomID]
 	if !ok {
-		wsLogger.Warnf("Room %s not found, message not delivered2", roomID)
+		logging.WithComponent(context.Background(), "websocket.handler").Warn(fmt.Sprintf("Room %d not found, message not delivered2", roomID))
 		return
 	}
 
@@ -564,7 +570,7 @@ func (h *WebSocketHandler) sendToRoom(roomID uint64, data []byte) {
 		} else {
 			err := conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				wsLogger.Errorf("Failed to send message to all users: %v", err)
+				logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to send message to all users: %v", err))
 			}
 		}
 	}
@@ -576,20 +582,20 @@ func (h *WebSocketHandler) subscribeToNotificationChannel(ctx context.Context, c
 	pubsub := h.redisClient.Subscribe(ctx, channel)
 	defer pubsub.Close()
 
-	wsLogger.Infof("Subscribed to notification channel: %s for user: %d", channel, userID)
+	logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Subscribed to notification channel: %s for user: %d", channel, userID))
 
 	for {
 		msg, err := pubsub.ReceiveMessage(ctx)
 		if err != nil {
 			if ctx.Err() == nil {
-				wsLogger.Errorf("Notification subscription failed for user %d: %v", userID, err)
+				logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Notification subscription failed for user %d: %v", userID, err))
 			}
 			return
 		}
-		wsLogger.Infof("Received notification from channel %s: %s", channel, msg.Payload)
+		logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Received notification from channel %s: %s", channel, msg.Payload))
 		// Send notification directly to the WebSocket connection
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
-			wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
+			logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to send notification to user %d: %v", userID, err))
 			return
 		}
 	}
@@ -629,9 +635,9 @@ func (h *WebSocketHandler) saveUserOnlineStatus(ctx context.Context, userID uint
 	}
 
 	if err := h.redisClient.Set(ctx, key, status); err != nil {
-		wsLogger.Errorf("Failed to save user online status for user %d: %v", userID, err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to save user online status for user %d: %v", userID, err))
 	} else {
-		wsLogger.Infof("Saved user online status for user %d: %s", userID, status)
+		logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Saved user online status for user %d: %s", userID, status))
 	}
 }
 
@@ -642,9 +648,9 @@ func (h *WebSocketHandler) saveUserAppState(ctx context.Context, userID uint64, 
 	status := state + "|" + timestamp
 
 	if err := h.redisClient.Set(ctx, key, status); err != nil {
-		wsLogger.Errorf("Failed to save user app state for user %d: %v", userID, err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to save user app state for user %d: %v", userID, err))
 	} else {
-		wsLogger.Infof("Saved user app state for user %d: %s", userID, status)
+		logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Saved user app state for user %d: %s", userID, status))
 	}
 }
 
@@ -653,7 +659,7 @@ func (h *WebSocketHandler) isUserInBackground(ctx context.Context, userID uint64
 	key := constants.USER_APP_STATE_KEY_PREFIX + strconv.FormatUint(userID, 10)
 	status, err := h.redisClient.Get(ctx, key)
 	if err != nil {
-		wsLogger.Errorf("Failed to get user app state for user %d: %v", userID, err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to get user app state for user %d: %v", userID, err))
 		return false
 	}
 
@@ -681,7 +687,7 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 	// Parse message để lấy thông tin
 	var msg RedisMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
-		wsLogger.Errorf("Failed to unmarshal message for notification: %v", err)
+		logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed to unmarshal message for notification: %v", err))
 		return
 	}
 
@@ -696,7 +702,7 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 	}
 
 	// Chỉ gửi notification cho message type
-	wsLogger.Errorf("Failed : %v", msg.Type)
+	logging.WithComponent(context.Background(), "websocket.handler").Error(fmt.Sprintf("Failed : %v", msg.Type))
 	if msg.Type != constants.MESSAGE_TYPE {
 		return
 	}
@@ -733,6 +739,6 @@ func (h *WebSocketHandler) sendNotificationForMessage(ctx context.Context, userI
 	if err != nil {
 		// wsLogger.Errorf("Failed to send notification to user %d: %v", userID, err)
 	} else {
-		wsLogger.Infof("Sent notification to user %d for message in room %d", userID, roomID)
+		logging.WithComponent(context.Background(), "websocket.handler").Info(fmt.Sprintf("Sent notification to user %d for message in room %d", userID, roomID))
 	}
 }

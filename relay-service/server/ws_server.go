@@ -1,8 +1,10 @@
 package server
 
 import (
+	"common/logging"
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,8 +18,6 @@ import (
 	middlewares "relay/middleware"
 	relayredis "relay/redis"
 	"relay/wshandler"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 // parseTimeout chuyển đổi string timeout thành time.Duration
@@ -29,8 +29,6 @@ func parseTimeout(timeoutStr string) time.Duration {
 	return duration
 }
 
-var wsLogger = flogging.MustGetLogger("ws_server")
-
 type WSServer struct {
 	server     *http.Server
 	handler    *wshandler.WebSocketHandler
@@ -39,7 +37,10 @@ type WSServer struct {
 }
 
 func NewWSServer(port string) (*WSServer, error) {
-	wsLogger.Info("Initializing WebSocket server...")
+	slog.Info(
+		"Relay WebSocket server initializing",
+		slog.String("component", "websocket.server"),
+	)
 
 	userRPC, userCleanup, err := relayrpc.NewUserRPCClient()
 	if err != nil {
@@ -116,10 +117,14 @@ func (s *WSServer) Start() error {
 	defer stopSignals()
 	ctx, cancel := context.WithCancel(signalCtx)
 	defer cancel()
+	logger := logging.WithComponent(ctx, "websocket.server")
 	errCh := make(chan error, 2)
 
 	go func() {
-		wsLogger.Infof("WebSocket server is running on %s", s.server.Addr)
+		logger.Info(
+			"Relay WebSocket server running",
+			slog.String("server.address", s.server.Addr),
+		)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errCh <- fmt.Errorf("serve Relay WebSocket: %w", err)
 		}
@@ -140,7 +145,7 @@ func (s *WSServer) Start() error {
 	case runtimeErr = <-errCh:
 		cancel()
 	}
-	wsLogger.Info("Shutting down WebSocket server...")
+	logger.Info("Relay WebSocket server shutting down")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()

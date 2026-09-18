@@ -2,18 +2,17 @@ package middlewares
 
 import (
 	"bytes"
+	"common/logging"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var logger = flogging.MustGetLogger("logging.middleware")
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		logger := logging.WithComponent(r.Context(), "http.middleware")
 
 		queryParams := r.URL.RawQuery
 
@@ -25,7 +24,10 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 				bodyCopy = bodyBytes
 				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body for next handler
 			} else {
-				logger.Warnf("Failed to read request body: %v", err)
+				logger.Warn(
+					"read Relay request body",
+					slog.Any("error", err),
+				)
 			}
 		}
 
@@ -38,20 +40,26 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(lrw, r)
 
-		// Log request and response details
-		logger.Infof("[%s] Request URI: %s, Remote address: %s, Status code: %d, RequestTime: %s, Query Params: %s, Request Body: %s",
-			r.Method,
-			r.RequestURI,
-			r.RemoteAddr,
-			lrw.statusCode,
-			time.Since(start),
-			queryParams,
-			string(bodyCopy),
+		// Preserve the existing request/response evidence while projecting it
+		// through the canonical structured logger.
+		logger.Info(
+			"relay HTTP request",
+			slog.String("http.request.method", r.Method),
+			slog.String("http.request.uri", r.RequestURI),
+			slog.String("client.address", r.RemoteAddr),
+			slog.Int("http.response.status_code", lrw.statusCode),
+			slog.Duration("duration", time.Since(start)),
+			slog.String("http.request.query", queryParams),
+			slog.String("http.request.body", string(bodyCopy)),
 		)
 
-		if lrw.statusCode != 200 {
-			logger.Errorf("Error Response [%d] for %s %s | Response Body: %s",
-				lrw.statusCode, r.Method, r.RequestURI, lrw.body.String(),
+		if lrw.statusCode != http.StatusOK {
+			logger.Error(
+				"relay HTTP error response",
+				slog.Int("http.response.status_code", lrw.statusCode),
+				slog.String("http.request.method", r.Method),
+				slog.String("http.request.uri", r.RequestURI),
+				slog.String("http.response.body", lrw.body.String()),
 			)
 		}
 	})

@@ -1,22 +1,21 @@
 package redis
 
 import (
+	"common/logging"
 	"context"
 	"fmt"
+	"log/slog"
 
 	"relay/config"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type RedisClient struct {
 	client *redis.Client
-	logger *flogging.FabricLogger
 }
 
 func NewRedisClient() (*RedisClient, error) {
-	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.AppProperties.Redis.Host,
 		Password: config.AppProperties.Redis.Password,
@@ -29,8 +28,11 @@ func NewRedisClient() (*RedisClient, error) {
 		return nil, fmt.Errorf("connect Relay Redis: %w", err)
 	}
 
-	logger.Info("Connected to Redis")
-	return &RedisClient{client: client, logger: logger}, nil
+	slog.Info(
+		"Relay Redis connected",
+		slog.String("component", "redis"),
+	)
+	return &RedisClient{client: client}, nil
 }
 
 func (r *RedisClient) Close() error {
@@ -44,7 +46,11 @@ func (r *RedisClient) Close() error {
 func (r *RedisClient) PushMessage(ctx context.Context, key string, value []byte) error {
 	err := r.client.LPush(ctx, key, value).Err()
 	if err != nil {
-		r.logger.Errorf("Failed to push message to Redis: %v", err)
+		logging.WithComponent(ctx, "redis").Error(
+			"push Relay message to Redis",
+			slog.String("redis.key", key),
+			slog.Any("error", err),
+		)
 	}
 	return err
 }
@@ -119,7 +125,11 @@ func (r *RedisClient) ReadStream(ctx context.Context, stream, consumerGroup, con
 func (r *RedisClient) Set(ctx context.Context, key string, value string) error {
 	err := r.client.Set(ctx, key, value, 0).Err()
 	if err != nil {
-		r.logger.Errorf("Failed to set key %s in Redis: %v", key, err)
+		logging.WithComponent(ctx, "redis").Error(
+			"set Relay Redis key",
+			slog.String("redis.key", key),
+			slog.Any("error", err),
+		)
 	}
 	return err
 }
@@ -131,7 +141,11 @@ func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
 		return "", nil
 	}
 	if err != nil {
-		r.logger.Errorf("Failed to get key %s from Redis: %v", key, err)
+		logging.WithComponent(ctx, "redis").Error(
+			"get Relay Redis key",
+			slog.String("redis.key", key),
+			slog.Any("error", err),
+		)
 		return "", err
 	}
 	return val, nil

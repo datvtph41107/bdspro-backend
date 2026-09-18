@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	chatpb "relay/proto"
 
 	"github.com/golang/protobuf/ptypes"
@@ -18,7 +19,12 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to marshal ChatMessage: %v", err)
+		slog.Error(
+			"marshal Relay ChatMessage",
+			slog.String("component", "message.utility"),
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 
 	msg := &chatpb.ChatAction{
@@ -29,14 +35,19 @@ func main() {
 	// Chuyển đổi tin nhắn thành byte array
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		log.Fatal("Error marshaling message:", err)
+		slog.Error(
+			"marshal Relay message",
+			slog.String("component", "message.utility"),
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 	base64Data := base64.StdEncoding.EncodeToString(data)
 
 	// Lưu ra file để gửi qua Postman
 	// err = os.WriteFile("message.bin", data, 0644)
 	// if err != nil {
-	// 	log.Fatal("Error saving file:", err)
+	// 	slog.Error("save Relay message file", slog.Any("error", err))
 	// }
 
 	fmt.Println("Message plain is: " + msg.String())
