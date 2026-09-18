@@ -335,7 +335,7 @@ At this checkpoint:
 - Runtime R1-R4 are closed.
 - R5 canonical logger adoption is active service-by-service.
 - R5 Payment slice is closed at `fca4682587d93cbc436f2466244ee8bd03b8b1b9`.
-- Error/Response FINAL design is closed but implementation remains pending.
+- Error/Response FINAL design is refined with the proven `reason` requirement; implementation remains pending until R5 is deliberately stable.
 - R5 must not be bypassed merely because Error/Response design already exists.
 
 ## 17. Working philosophy
