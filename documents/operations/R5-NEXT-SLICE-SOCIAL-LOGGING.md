@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: BOUNDED MUTATION APPLIED / PROOF ENVIRONMENT MATERIALIZATION NEXT
+Status: SOCIAL ZERO PROOF PASS / LEGACY-STD-LOG RATCHET AUTHORIZED
 
 ## Authority
 
@@ -175,3 +175,39 @@ Still forbidden:
 - tracked mutation under `shared/protobuf/**`;
 - ratchet before zero proof;
 - commit or push before proof review.
+
+
+## Social zero proof — PASS
+
+Primary proof report:
+`social-proof-after-buf-20260918-135244.txt`
+
+Duplicate uploaded report:
+`social-proof-after-buf-20260918-135353.txt`
+
+The two uploaded reports are byte-identical:
+SHA256 `d6a4bf82c73c0dea4188ff63563d171a263e459a515a90461bc0a83cbd381847`.
+
+Verified result:
+- canonical protobuf materialization PASS;
+- required generated contracts exist;
+- generated protobuf produced no tracked source mutation;
+- Social test PASS;
+- Social build PASS;
+- canonical observability audit PASS;
+- total repository debt moved 721 -> 715;
+- Social total debt = 0;
+- Social legacy std-log debt = 0;
+- Social third-party logger debt = 0;
+- protected tracked diff empty;
+- deploy.sh SHA unchanged;
+- final tracked source scope remains exactly four Social source files;
+- FINAL_FAIL_COUNT=0.
+
+Ratchet decision:
+- authorize only `("go.legacy_std_log", "social-service")` in this slice;
+- do not add a Social third-party-logger ratchet because that category was already zero before this migration and was not retired debt in this slice;
+- add registration + regression-enforcement test;
+- rerun audit with `--enforce-ratchets`;
+- rerun Social test/build and protected/deploy invariants;
+- no commit or push until ratchet proof is reviewed.
