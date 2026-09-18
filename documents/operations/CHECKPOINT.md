@@ -41,11 +41,11 @@ Protected invariants: `shared/protobuf/**`, `organization-service/**`, `map-serv
 
 ## Error / Response FINAL
 
-DESIGN CLOSED / IMPLEMENTATION PENDING. Canonical caller-facing form remains `return _errors.ReturnError(codes.SomeCode, "Safe message")`. One core Error owns standard gRPC code + safe message; one gRPC normalizer; one Gateway projection. Technical failures remain wrapped Go errors.
+DESIGN REFINED / IMPLEMENTATION PENDING. The consumer-proven target now carries protocol `code` + stable low-cardinality application `reason` + public-safe `message`. Preferred one-way caller-facing vocabulary for implementation review is conceptually `failure.New(code, reason, safeMessage)`; exact package/signature migration still requires live compatibility proof. One gRPC normalizer and one Gateway projection remain the boundary owners. Technical failures remain wrapped Go errors and are sanitized only after internal evidence is preserved.
 
 ## Recovery order
 
-Read `CHECKPOINT.md`, then `BDSPro-OPERATING-SYSTEM.md`, `LOCAL-EXECUTION-RUNBOOK.md`, `USER-LANE-TASK-PROTOCOL.md`, handoff/roadmap, R1-R4 runtime inventories, `SOURCE-INVENTORY-RUNTIME-LOGGER-R5.md`, Error/Response FINAL authority, next-actions, ledger, operating-mode and live reconciliation; then reconcile live Git/GitHub before mutation.
+Read `CHECKPOINT.md`, then `BDSPro-OPERATING-SYSTEM.md`, `ARCHITECTURE-NAMING-OWNERSHIP-MINDSET.md`, `LOCAL-EXECUTION-RUNBOOK.md`, `USER-LANE-TASK-PROTOCOL.md`, handoff/roadmap, R1-R4 runtime inventories, `SOURCE-INVENTORY-RUNTIME-LOGGER-R5.md`, Error/Response FINAL authority, next-actions, ledger, operating-mode and live reconciliation; then reconcile live Git/GitHub before mutation.
 
 Historical/superseded error design remains historical only. Memory is orientation only.
 
