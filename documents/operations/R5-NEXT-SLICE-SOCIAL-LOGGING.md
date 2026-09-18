@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: CANDIDATE COMMIT CREATED / DETACHED EXACT-SHA PROOF NEXT
+Status: DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
 
 ## Authority
 
@@ -281,3 +281,68 @@ create a fresh detached proof worktree at candidate SHA and run exact-SHA canoni
 9. leave proof HEAD detached and tracked-clean.
 
 Publication remains forbidden until detached exact-SHA proof is reviewed.
+
+
+## Detached proof partial upload
+
+Uploaded report:
+`social-detached-exact-sha-proof-20260918-141507.txt`
+
+Verified before truncation:
+- candidate SHA and tree identity PASS;
+- candidate parent and six-file set PASS;
+- fresh proof worktree created detached at candidate SHA;
+- canonical protobuf generation PASS;
+- tracked state after generation CLEAN;
+- audit-tool unit tests PASS;
+- audit with zero-ratchet enforcement PASS;
+- Social legacy std-log ratchet count = 0;
+- total debt = 715.
+
+The uploaded report ends while canonical Social test is starting and contains no test exit, build result, protected/deploy proof, final detached-state proof, or FINAL_FAIL_COUNT.
+
+Do not rerun the mutation or detached-proof setup. Determine whether the original proof process is still running; if it completes, re-upload the same report file after completion. If the process has stopped, diagnose from the existing worktree/report without resetting or deleting proof state.
+
+
+## Detached exact-SHA proof — PASS
+
+Completed proof report:
+`social-detached-exact-sha-proof-20260918-141507(1).txt`
+
+Immutable candidate:
+- SHA: `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- tree: `91ccd0d547227191bc20df4498bdbb4ff723c0a2`;
+- parent: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`.
+
+Verified in fresh detached proof worktree:
+- candidate identity and six-file set PASS;
+- detached HEAD exactly at candidate PASS;
+- canonical protobuf materialization PASS;
+- generation left tracked state clean;
+- audit-tool unit tests: 30 PASS;
+- audit with `--enforce-ratchets`: PASS;
+- `go.legacy_std_log@social-service = 0`;
+- total repository debt = 715;
+- canonical Social test PASS;
+- canonical Social build PASS;
+- protected candidate diff empty;
+- deploy.sh byte identity PASS;
+- final proof worktree remained detached and tracked-clean at exact candidate SHA;
+- PUSHED=NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub immediately after proof review:
+- active refactor branch remains identical to authority SHA;
+- candidate is still unpublished.
+
+Safe publication is now authorized:
+- target branch: `refactor/canonical-observability-errors-a6d0722a`;
+- publication must be a non-force fast-forward from authority SHA to candidate SHA;
+- before push, re-read remote target with `git ls-remote` and require exact authority SHA;
+- push exact candidate SHA directly to target branch;
+- after push, require remote target equals exact candidate SHA;
+- do not force, rebase, amend, merge, or mutate candidate.
+
+Hosted proof after publication:
+- workflow `.github/workflows/refactor-observability-errors.yml` is configured to run on pushes to the active refactor branch;
+- only completed exact-SHA hosted evidence may close this Social slice.
