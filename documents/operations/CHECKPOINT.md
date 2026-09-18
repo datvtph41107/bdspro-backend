@@ -82,8 +82,8 @@ Local Notification candidate:
 - exact twelve-file candidate;
 - not pushed.
 
-First detached exact-SHA proof substantively passed every source/test/build/audit/ratchet/protected gate, but reported `FINAL_FAIL_COUNT=1` because of a shell-condition defect around the already-successful empty `go mod tidy -diff` hash check.
+The corrected detached exact-SHA proof at the same immutable candidate is now fully green with `FINAL_FAIL_COUNT=0`. Protobuf/Wire, empty post-generation tidy, baseline parity, all non-baseline tests, build, audit-tool tests, enforce-ratchets, Notification zero debt, repository debt 661, logger/process shape, protected paths, deploy hash and detached immutability all PASS.
 
-Do not amend/reset/recreate the candidate. Corrected detached proof at the same SHA is the next gate. Publication remains forbidden until corrected proof is green.
+Do not amend/reset/recreate the candidate. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is the next gate. Hosted exact-SHA proof remains mandatory before Notification can be called CLOSED.
 
 FINAL ACCEPTED = NO.
