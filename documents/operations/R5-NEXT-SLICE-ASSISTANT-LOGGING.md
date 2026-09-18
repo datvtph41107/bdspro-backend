@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
+Status: PROVED / CLOSED — HOSTED EXACT-SHA #85 SUCCESS
 
 ## Authority
 
@@ -397,5 +397,52 @@ Safe publication is now authorized:
 After publication:
 - wait for hosted workflow on exact candidate SHA;
 - only completed exact-SHA hosted evidence may close the Assistant slice.
+
+FINAL ACCEPTED = NO.
+
+
+## Safe publication + hosted exact-SHA proof — PASS
+
+Publication report:
+`assistant-safe-publication-20260918-152737.txt`
+
+Publication:
+- remote before push = exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- non-force fast-forward push PASS;
+- remote after push = exact candidate `492b94a102e26b8d86575d72cca05b57911c745b`;
+- force push = NO;
+- local writer/proof immutable identities preserved;
+- publication FINAL_FAIL_COUNT=0.
+
+Live GitHub:
+- active branch now exactly `492b94a102e26b8d86575d72cca05b57911c745b`;
+- branch vs candidate = identical, ahead 0 / behind 0.
+
+Hosted exact-SHA proof:
+- workflow: `Refactor Observability and Error Contracts`;
+- run #85 / ID `35324490969`;
+- exact head SHA `492b94a102e26b8d86575d72cca05b57911c745b`;
+- workflow status: completed;
+- workflow conclusion: success;
+- inventory: completed/success;
+- common-contracts: completed/success;
+- boundary-contracts: completed/success.
+- hosted inventory artifact: `observability-error-inventory-492b94a102e26b8d86575d72cca05b57911c745b`;
+- hosted total debt = 707;
+- `go.legacy_std_log@assistant-service = 0`.
+
+Acceptance decision:
+Assistant R5 canonical logging slice is PROVED/CLOSED.
+
+Result:
+- Assistant direct legacy std-log debt `8→0`;
+- repository debt `715→707`;
+- Assistant legacy std-log zero-ratchet active;
+- fatal startup lifecycle semantics preserved;
+- protected invariants preserved;
+- Error/Response scope not touched.
+
+R5 remains ACTIVE service-by-service.
+Next authorized action: read-only exact-SHA inventory for one next bounded non-protected service.
 
 FINAL ACCEPTED = NO.
