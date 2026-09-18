@@ -84,6 +84,6 @@ Local Notification candidate:
 
 The corrected detached exact-SHA proof at the same immutable candidate is now fully green with `FINAL_FAIL_COUNT=0`. Protobuf/Wire, empty post-generation tidy, baseline parity, all non-baseline tests, build, audit-tool tests, enforce-ratchets, Notification zero debt, repository debt 661, logger/process shape, protected paths, deploy hash and detached immutability all PASS.
 
-Do not amend/reset/recreate the candidate. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is the next gate. Hosted exact-SHA proof remains mandatory before Notification can be called CLOSED.
+Do not amend/reset/recreate the candidate. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is PASS. Remote active refactor now points at that exact candidate. Hosted exact-SHA proof for workflow `Refactor Observability and Error Contracts` is the next gate; Notification is not CLOSED until inventory/common-contracts/boundary-contracts and exact-SHA inventory artifact are verified.
 
 FINAL ACCEPTED = NO.
