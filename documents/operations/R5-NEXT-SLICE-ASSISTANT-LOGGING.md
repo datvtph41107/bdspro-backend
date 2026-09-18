@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: WRITER PRECHECK PASS / BOUNDED ASSISTANT MUTATION AUTHORIZED
+Status: ASSISTANT ZERO LOGGING DEBT PROVED / WIRE PROOF ENVIRONMENT REPAIR NEXT
 
 ## Authority
 
@@ -197,3 +197,41 @@ Next authorized action:
 - configure `shared/common/logging` once at process root;
 - then gofmt, targeted Assistant test/build, canonical audit and zero-debt proof;
 - no ratchet, commit or push until zero proof is reviewed.
+
+
+## Assistant bounded mutation + first proof attempt
+
+Report:
+`assistant-logging-mutation-zero-proof-20260918-150122.txt`
+
+Source result:
+- pre-mutation gate PASS at exact authority;
+- mutation applied only to `assistant-service/main.go` and `assistant-service/cmd/grpc/main.go`;
+- gofmt PASS;
+- exact tracked source scope PASS;
+- former legacy fatal logger count = 0;
+- four immediate `os.Exit(1)` sites present in Assistant gRPC composition;
+- protected tracked diff empty;
+- deploy SHA unchanged.
+
+Logging result:
+- canonical audit PASS;
+- repository findings = 2767;
+- repository debt = 707;
+- Assistant total debt = 0;
+- Assistant `go.legacy_std_log = 0`;
+- Assistant `go.third_party_logger = 0`;
+- direct legacy-log search PASS.
+
+Proof-environment blocker:
+- Assistant test/build failed because `assistant-service/wire/wire_gen.go` was absent;
+- `assistant-service/wire/wire.go` is `wireinject`-only;
+- repository `generate-backend` / `make setup` contract generates Wire for Assistant before repository tests/builds;
+- Assistant `.gitignore` ignores `wire_gen.go`, so this generated file is proof-environment material, not source authority for this slice.
+
+Interpretation:
+- do not reset the two-file source patch;
+- do not add ratchet yet because targeted test/build has not passed in a canonical generated environment;
+- materialize Assistant Wire with repository-owned generator, prove no tracked scope expansion, rerun Assistant test/build, rerun audit/zero proof, then review ratchet gate.
+
+Live GitHub was reconciled after this report and remains identical to exact authority `b55ce3c6...`.
