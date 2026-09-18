@@ -7,9 +7,9 @@ Durable prose is recovery guidance. Immutable live Git/source and completed exac
 ## Authority
 
 - canonical acceptance: `final-acceptance/source-canonicalization` @ `a6d0722a36090148829ca5ff02f03f409d753bad`
-- active refactor: `refactor/canonical-observability-errors-a6d0722a` @ `c6a9b121946a360d22759bde6a708bc6a35223c2`
-- active commit: `feat(relay): adopt canonical logging`
-- active tree: `01d08e582fb55759132cc199215303dd65f6d255`
+- active refactor: `refactor/canonical-observability-errors-a6d0722a` @ `381c29365a00f35737bb0b6078cf0973198dc7c2`
+- active commit: `feat(notification): adopt canonical logging`
+- active tree: `fe7c5153c65074bf406134e4e966c9d097a2d706`
 - production lineage remains separate
 - FINAL ACCEPTED = NO
 
@@ -37,6 +37,8 @@ Protected invariants: `shared/protobuf/**`, `organization-service/**`, `map-serv
 - R5 Social slice — PROVED/CLOSED @ `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`; tree `91ccd0d547227191bc20df4498bdbb4ff723c0a2`; hosted #84 / `35319045710` SUCCESS.
 - Social logging debt: `go.legacy_std_log 6→0`; repository debt `721→715`; Social legacy-std-log zero-ratchet active.
 - R5 Assistant slice — PROVED/CLOSED @ `492b94a102e26b8d86575d72cca05b57911c745b`; hosted #85 / `35324490969` SUCCESS.
+- R5 Relay slice — PROVED/CLOSED @ `c6a9b121946a360d22759bde6a708bc6a35223c2`; hosted #86 / `35333855680` SUCCESS.
+- R5 Notification slice — PROVED/CLOSED @ `381c29365a00f35737bb0b6078cf0973198dc7c2`; hosted run `35405779633` SUCCESS; artifact `10572063928`; repository debt `691→661`; Notification debt `30→0`; legacy std-log zero-ratchet active.
 - Assistant logging debt: `go.legacy_std_log 8→0`; repository debt `715→707`; Assistant legacy-std-log zero-ratchet active.
 
 ## Error / Response FINAL
@@ -71,19 +73,18 @@ Examples:
 - preferred one-way caller-facing naming is conceptually `failure.New(code, reason, safeMessage)`, subject to live compatibility/source migration proof;
 - do not revive Kind/Definition/catalog/i18n or a parallel numeric business-code truth.
 
-## Current Notification interrupted-state checkpoint
+## Current R5 checkpoint
 
-Remote active refactor remains `c6a9b121946a360d22759bde6a708bc6a35223c2` unless live Git proves otherwise.
+Remote active refactor is `381c29365a00f35737bb0b6078cf0973198dc7c2`.
 
-Local Notification candidate:
-- SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`;
-- tree `fe7c5153c65074bf406134e4e966c9d097a2d706`;
-- parent `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+Notification is PROVED/CLOSED:
 - exact twelve-file candidate;
-- not pushed.
+- corrected detached exact-SHA proof PASS;
+- non-force fast-forward publication PASS;
+- hosted run `35405779633`: inventory/common-contracts/boundary-contracts all SUCCESS;
+- hosted artifact `10572063928` confirms Notification debt=0 and repository debt=661;
+- protected/deploy invariants preserved.
 
-The corrected detached exact-SHA proof at the same immutable candidate is now fully green with `FINAL_FAIL_COUNT=0`. Protobuf/Wire, empty post-generation tidy, baseline parity, all non-baseline tests, build, audit-tool tests, enforce-ratchets, Notification zero debt, repository debt 661, logger/process shape, protected paths, deploy hash and detached immutability all PASS.
-
-Do not amend/reset/recreate the candidate. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is PASS. Remote active refactor now points at that exact candidate. Hosted exact-SHA proof for workflow `Refactor Observability and Error Contracts` is the next gate; Notification is not CLOSED until inventory/common-contracts/boundary-contracts and exact-SHA inventory artifact are verified.
+R5 remains ACTIVE. Next gate is fresh exact-SHA read-only inventory/source trace for the next non-protected logging owner. Error/Response implementation remains pending until R5 is deliberately stable.
 
 FINAL ACCEPTED = NO.
