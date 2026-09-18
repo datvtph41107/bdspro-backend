@@ -1,6 +1,7 @@
 package cmd_grpc
 
 import (
+	"common/logging"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
@@ -46,7 +47,7 @@ var GrpcCmd = &cobra.Command{
 		defer func() { _ = lis.Close() }()
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
-			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+			grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware, logging.UnaryServer()),
 			grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 		)
 		pb_social.RegisterNewsFeedServiceServer(s, app.NewsFeedService)

@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 const (
@@ -40,15 +38,7 @@ func Open(config DatabaseConfig) (*gorm.DB, error) {
 		return nil, errors.New("database DSN is required")
 	}
 
-	gormLogger := logger.New(
-		log.New(log.Writer(), "", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:        time.Second,
-			LogLevel:             logger.Info,
-			Colorful:             false,
-			ParameterizedQueries: true,
-		},
-	)
+	gormLogger := NewSQLLogger()
 
 	database, err := gorm.Open(
 		postgres.Open(dsn),

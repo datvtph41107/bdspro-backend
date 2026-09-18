@@ -16,7 +16,9 @@ func MinorFromWire(value float64) (int64, error) {
 	if value != math.Trunc(value) {
 		return 0, fmt.Errorf("amount must be expressed in whole minor units")
 	}
-	if value > float64(math.MaxInt64) || value < float64(math.MinInt64) {
+	// float64(MaxInt64) được làm tròn lên 2^63; phải loại cả giá trị bằng
+	// ngưỡng này trước khi cast để tránh biến số tiền dương thành MinInt64.
+	if value >= float64(math.MaxInt64) || value < float64(math.MinInt64) {
 		return 0, fmt.Errorf("amount is outside int64 range")
 	}
 	return int64(value), nil

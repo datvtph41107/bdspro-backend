@@ -106,12 +106,10 @@ func (r Result) IsValid() bool {
 		return r.Limit == 0
 	}
 
-	if r.Limit < 0 {
+	// Có meter hữu hạn thì allowance phải dương. Limit=0 không được biến
+	// thành quyền không tính quota; quyền không giới hạn phải khai báo Unlimited.
+	if r.Limit <= 0 {
 		return false
-	}
-
-	if r.Limit == 0 {
-		return r.Period == PeriodNone
 	}
 
 	if r.Period == PeriodNone {

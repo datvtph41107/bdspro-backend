@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"common/validation"
 	"fmt"
 	"strings"
 )
@@ -52,11 +53,11 @@ func NewEntityRef(kind EntityKind, id string) EntityRef {
 func ParseEntityKey(key string) (EntityRef, error) {
 	kind, id, ok := strings.Cut(strings.TrimSpace(key), ":")
 	if !ok || kind == "" || id == "" {
-		return EntityRef{}, fmt.Errorf("invalid canonical entity key")
+		return EntityRef{}, validation.New("entity_key", "DISCOVERY_ENTITY_KEY_INVALID", "invalid canonical entity key")
 	}
 	entityKind := EntityKind(kind)
 	if !entityKind.IsValid() {
-		return EntityRef{}, fmt.Errorf("unsupported entity kind %q", kind)
+		return EntityRef{}, validation.New("entity_key", "DISCOVERY_ENTITY_KIND_INVALID", fmt.Sprintf("unsupported entity kind %q", kind))
 	}
 	return NewEntityRef(entityKind, id), nil
 }

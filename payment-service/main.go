@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"fmt"
 	"os"
 
@@ -17,6 +19,8 @@ import (
 // @name Authorization
 
 func main() {
+	defer logging.MustStart("payment")()
+ logfabric.Bridge()
 	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
 	if err := cmd.RootCmd.Execute(); err != nil {
 		fmt.Println(err)

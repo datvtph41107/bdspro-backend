@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"tqd/internal/usecase"
 
+	postgresjob "tqd/infra/postgres/generatedreport/job"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -523,7 +525,7 @@ func (p *MapWorkspacePostgres) RemoveFollowedParcel(ctx context.Context, userID,
 		return fmt.Errorf("remove followed parcel failed: %w", tx.Error)
 	}
 	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return usecase.ErrWorkspaceItemNotFound
 	}
 
 	return nil
@@ -715,7 +717,7 @@ func (p *MapWorkspacePostgres) RemoveViewHistory(ctx context.Context, userID, hi
 		return fmt.Errorf("remove view history failed: %w", tx.Error)
 	}
 	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return usecase.ErrWorkspaceItemNotFound
 	}
 
 	return nil
@@ -826,29 +828,14 @@ func (p *MapWorkspacePostgres) RemoveGeneratedReport(ctx context.Context, userID
 		return fmt.Errorf("remove generated report failed: %w", tx.Error)
 	}
 	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return usecase.ErrWorkspaceItemNotFound
 	}
 
 	return nil
 }
 
-func (p *MapWorkspacePostgres) UpdateGeneratedReportStatus(ctx context.Context, userID, reportID uint64, status uint32) error {
-	tx := p.DB.WithContext(ctx).
-		Model(&qh_domain.QHUserReported{}).
-		Where("user_id = ? AND id = ? AND deleted_at IS NULL", userID, reportID).
-		Updates(map[string]any{
-			"status":     status,
-			"updated_at": time.Now(),
-		})
-
-	if tx.Error != nil {
-		return fmt.Errorf("update generated report status failed: %w", tx.Error)
-	}
-	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
-	return nil
+func (p *MapWorkspacePostgres) RegenerateGeneratedReport(ctx context.Context, userID, reportID uint64) error {
+	return postgresjob.NewStore(p.DB).RegenerateReport(ctx, userID, reportID, time.Now().UTC())
 }
 
 func (p *MapWorkspacePostgres) UpdateGeneratedReportShareURL(ctx context.Context, userID, reportID uint64, shareURL string) error {
@@ -864,7 +851,7 @@ func (p *MapWorkspacePostgres) UpdateGeneratedReportShareURL(ctx context.Context
 		return fmt.Errorf("update generated report share url failed: %w", tx.Error)
 	}
 	if tx.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return usecase.ErrWorkspaceItemNotFound
 	}
 
 	return nil

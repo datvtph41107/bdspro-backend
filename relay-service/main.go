@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +12,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("relay")()
+	logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("relay startup failed: %v", err)
 		os.Exit(1)

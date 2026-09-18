@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"common/validation"
 	"context"
 	"fmt"
 	"sort"
@@ -913,7 +914,7 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 	if ref.Kind == domain.EntityKindAdministrativeUnit {
 		unitType, unitID, ok := strings.Cut(ref.ID, ":")
 		if !ok || unitID == "" {
-			return nil, fmt.Errorf("administrative entity id must be ward:<id> or province:<id>")
+			return nil, validation.New("entity_key", "DISCOVERY_ENTITY_ID_INVALID", "administrative entity id must be ward:<id> or province:<id>")
 		}
 		switch unitType {
 		case "ward":
@@ -964,7 +965,7 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 				return nil, err
 			}
 		default:
-			return nil, fmt.Errorf("unsupported administrative unit type %q", unitType)
+			return nil, validation.New("entity_key", "DISCOVERY_ENTITY_KIND_INVALID", fmt.Sprintf("unsupported administrative unit type %q", unitType))
 		}
 		if row.ID == "" {
 			return nil, nil
@@ -975,7 +976,7 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 
 	numericID, err := strconv.ParseUint(ref.ID, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("entity id must be numeric: %w", err)
+		return nil, validation.New("entity_key", "DISCOVERY_ENTITY_ID_INVALID", "entity id must be numeric")
 	}
 	switch ref.Kind {
 	case domain.EntityKindParcel:
@@ -1086,7 +1087,7 @@ func (r *Repository) GetEntity(ctx context.Context, ref domain.EntityRef) (*doma
 			WHERE p.id = ? AND p.deleted_at IS NULL
 			LIMIT 1`, numericID).Scan(&row).Error
 	default:
-		return nil, fmt.Errorf("unsupported entity kind %q", ref.Kind)
+		return nil, validation.New("entity_key", "DISCOVERY_ENTITY_KIND_INVALID", fmt.Sprintf("unsupported entity kind %q", ref.Kind))
 	}
 	if err != nil {
 		return nil, err

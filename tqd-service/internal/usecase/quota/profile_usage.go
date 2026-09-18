@@ -55,6 +55,9 @@ func (s *ProfileUsageService) GetUsage(ctx context.Context, operationCode common
 	if err != nil {
 		return ProfileUsageProjection{}, err
 	}
+	if decision.Operation != operationCode || !decision.IsValid() {
+		return ProfileUsageProjection{}, errors.New("profile usage access evidence is invalid")
+	}
 	projection := ProfileUsageProjection{Access: decision, Reconciliation: "not_required"}
 	if !decision.Allowed || !decision.UsesQuota() {
 		return projection, nil
@@ -93,8 +96,9 @@ func (s *ProfileUsageService) GetUsage(ctx context.Context, operationCode common
 // ListUsage returns every customer-visible TQD quota independently. A denied
 // operation is still returned so the Client can explain which plan unlocks it.
 func (s *ProfileUsageService) ListUsage(ctx context.Context) ([]ProfileUsageProjection, error) {
-	result := make([]ProfileUsageProjection, 0, len(ProfileOperations))
-	for _, operationCode := range ProfileOperations {
+	operations := ProfileOperations()
+	result := make([]ProfileUsageProjection, 0, len(operations))
+	for _, operationCode := range operations {
 		projection, err := s.GetUsage(ctx, operationCode)
 		if err != nil {
 			return nil, err

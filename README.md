@@ -175,8 +175,14 @@ Các `*-migrate` container trong Compose là **one-shot jobs**: chờ database, 
 - [`documents/DEVELOPER-OPERATING-GUIDE.md`](documents/DEVELOPER-OPERATING-GUIDE.md) — clone → first change → integration.
 - [`documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md`](documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md) — quy chuẩn dài hạn.
 - [`documents/SERVICE-MAP.md`](documents/SERVICE-MAP.md) — service owners/entrypoints.
+- [`documents/COMMERCIAL-CATALOG-RUNBOOK.md`](documents/COMMERCIAL-CATALOG-RUNBOOK.md) — khai báo gói, chức năng, quota và lifecycle.
+- [`documents/QUOTA-DATABASE-AND-OPERATING-AUDIT.md`](documents/QUOTA-DATABASE-AND-OPERATING-AUDIT.md) — audit database, owner và quy trình mở rộng quota.
+- [`documents/QUOTA-DEVELOPMENT-STANDARD.md`](documents/QUOTA-DEVELOPMENT-STANDARD.md) — chuẩn comment, idempotency và review khi thêm chức năng có quota.
+- [`documents/QUOTA-CODE-REVIEW.md`](documents/QUOTA-CODE-REVIEW.md) — lỗi code đã sửa, bằng chứng kiểm thử và rủi ro còn mở.
 - [`documents/MIGRATIONS.md`](documents/MIGRATIONS.md) — migration authorities.
 - [`documents/THREE-SOURCE-ONBOARDING.md`](documents/THREE-SOURCE-ONBOARDING.md) — fresh clone → config → ba runtime → quota proof.
 - [`documents/QHPRO-COMMERCIAL-OPERATIONS.md`](documents/QHPRO-COMMERCIAL-OPERATIONS.md) — vận hành Admin/Client từ gói đến quota và report.
 - [`documents/RUN-THREE-SOURCE-LOCALLY.md`](documents/RUN-THREE-SOURCE-LOCALLY.md) — hướng dẫn terminal và browser đầy đủ cho Backend, Admin và React Native Web.
 - [`documents/FINAL-ACCEPTANCE-20260904.md`](documents/FINAL-ACCEPTANCE-20260904.md) — trạng thái proof của artifact này.
+
+Quy chuẩn debug liên service và response: [LOGGING-AND-ERROR-CONTRACT.md](documents/LOGGING-AND-ERROR-CONTRACT.md). Config native tại [`logging.yml`](logging.yml); tra log bằng `make log-view SERVICE=user`.

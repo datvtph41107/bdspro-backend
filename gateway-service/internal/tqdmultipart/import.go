@@ -106,7 +106,7 @@ func (h *Handler) importGeoJSON(c *gin.Context) {
 				return
 			}
 		}
-		httperror.WriteGRPC(c.Writer, err)
+		httperror.WriteGRPCContext(c.Request.Context(), c.Writer, err)
 		return
 	}
 	out, err := protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: false}.Marshal(resp)

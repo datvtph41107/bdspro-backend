@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -41,10 +42,7 @@ func (h *QHLayerFamilyGrpcHandler) CreateLayerFamily(ctx context.Context, req *t
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return mapper.ToProtoQHLayerFamilyClient(out, 6, 16), nil
 }
@@ -56,13 +54,7 @@ func (h *QHLayerFamilyGrpcHandler) GetLayerFamily(ctx context.Context, req *tqdp
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, out.ID)
 	if err != nil {
@@ -88,13 +80,7 @@ func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *t
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "empty") || strings.Contains(err.Error(), "required") {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	minZoom, maxZoom, err := h.uc.GetZoomRangeByFamilyID(ctx, out.ID)
 	if err != nil {
@@ -109,10 +95,7 @@ func (h *QHLayerFamilyGrpcHandler) DeleteLayerFamily(ctx context.Context, req *t
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -136,7 +119,7 @@ func (h *QHLayerFamilyGrpcHandler) ListLayerFamilies(ctx context.Context, req *t
 	pagable := _dto.NewPagableFromGrpc(&page, &size, sort)
 	rows, total, err := h.uc.List(ctx, pagable, search)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	data := make([]*tqdpb.QHLayerFamilyResponse, len(rows))
 	for i := range rows {
@@ -179,7 +162,7 @@ func (h *QHLayerFamilyGrpcHandler) ListClientFamilies(ctx context.Context, req *
 
 	rows, total, err := h.uc.ListClient(ctx, pagable, search)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	data := make([]*tqdpb.QHLayerFamilyResponse, 0, len(rows))
@@ -250,9 +233,10 @@ func (h *QHLayerFamilyGrpcHandler) BuildFamilyPMTiles(req *tqdpb.BuildFamilyPMTi
 		return status.Error(codes.ResourceExhausted, err.Error())
 	}
 
+	mapped := errorresponse.GRPC(ctx, err)
 	_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
 		Status:  "error",
-		Message: err.Error(),
+		Message: status.Convert(mapped).Message(),
 	})
-	return status.Error(codes.Internal, err.Error())
+	return mapped
 }

@@ -30,6 +30,34 @@ type fileOperations interface {
 		context.Context,
 		filecontent.PutOwnedInput,
 	) (filecontent.SavedFile, error)
+	FindOwnedFile(context.Context, string, string) (filecontent.SavedFile, bool, error)
+}
+
+// FindOwnedFile shares the internal effect's existing HMAC verifier. It does
+// not expose owner lookup to user JWTs or ordinary public file routes.
+func (h *Handler) FindOwnedFile(c *gin.Context) {
+	if h == nil || h.files == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "owned file service is unavailable"})
+		return
+	}
+	if !h.auth.Verify(c.GetHeader("X-Service-Auth"), c.GetHeader("X-Service-Name"), time.Now()) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "internal service authentication failed"})
+		return
+	}
+	file, found, err := h.files.FindOwnedFile(c.Request.Context(), c.Query("owner_namespace"), c.Query("owner_key"))
+	if err != nil {
+		if errors.Is(err, filecontent.ErrInvalidOwnedFile) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "owned file lookup failed"})
+		}
+		return
+	}
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "owned file not found"})
+		return
+	}
+	c.JSON(http.StatusOK, ownedFileResponse{FileID: file.ID, Path: file.Path, Filename: file.Filename, ContentType: file.ContentType, Size: file.Size})
 }
 
 type Handler struct {

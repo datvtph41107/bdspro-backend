@@ -64,3 +64,5 @@ PostgreSQL `user_service`, Redis DB 0, RPC clients. Canonical migration: `migrat
 - Worker/actor là component của owner trước khi là process/container riêng.
 
 Xem [`../documents/SERVICE-MAP.md`](../documents/SERVICE-MAP.md) và [`../documents/DEVELOPER-OPERATING-GUIDE.md`](../documents/DEVELOPER-OPERATING-GUIDE.md).
+
+Quy trình Admin khai báo version gói, chức năng và quota: [`../documents/COMMERCIAL-CATALOG-RUNBOOK.md`](../documents/COMMERCIAL-CATALOG-RUNBOOK.md).

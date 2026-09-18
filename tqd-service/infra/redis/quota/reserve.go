@@ -12,6 +12,15 @@ import (
 
 var reserveScript = redis.NewScript(`
 local existing_key = redis.call('GET', KEYS[2])
+-- Chỉ nhận reservation cũ của đúng operation. Không đổi pool usage hay làm
+-- mất lease đã có khi rollout; writer mới luôn ghi key v2.
+if not existing_key then
+    local legacy = redis.call('GET', KEYS[5])
+    if legacy and redis.call('HGET', legacy, 'operation') == ARGV[4] then
+        existing_key = legacy
+        redis.call('SET', KEYS[2], legacy, 'PX', ARGV[11])
+    end
+end
 if existing_key then
     local state = redis.call('HGET', existing_key, 'state')
     if not state or state == 'canceled' then
@@ -89,13 +98,13 @@ func (s *Store) ReserveQuota(ctx context.Context, input quota.StoreReserveInput)
 	usageTTL := keep
 
 	uKey := usageKey(input.Subject, input.MeterCode, input.PeriodStart, input.PeriodEnd)
-	cKey := commandKey(uKey, input.CommandKey)
+	cKey := commandKey(uKey, input.Operation, input.CommandKey)
 	rKey := reservationKey(input.ReservationID)
 
 	result, err := reserveScript.Run(
 		ctx,
 		s.client,
-		[]string{uKey, cKey, rKey, expiredSetKey},
+		[]string{uKey, cKey, rKey, expiredSetKey, legacyCommandKey(uKey, input.CommandKey)},
 		input.ReservationID,
 		string(input.Subject.Type),
 		input.Subject.ID,

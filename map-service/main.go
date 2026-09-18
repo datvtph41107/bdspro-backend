@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"log"
 	_ "map/docs"
 	"map/wire"
@@ -14,6 +16,8 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	defer logging.MustStart("map")()
+	logfabric.Bridge()
 	// Initialize runtime
 	if err := wire.InitializeRuntime(); err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)

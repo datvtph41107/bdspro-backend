@@ -1,7 +1,8 @@
 package handler_grpc
 
 import (
-	"errors"
+	"common/validation"
+	"context"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -21,7 +22,7 @@ func TestDiscoveryErrorMapsMalformedEntityIDsToInvalidArgument(t *testing.T) {
 		message := message
 		t.Run(message, func(t *testing.T) {
 			t.Parallel()
-			err := discoveryError(errors.New(message), "get entity")
+			err := discoveryError(context.Background(), validation.New("entity_key", "DISCOVERY_ENTITY_ID_INVALID", message), "get entity")
 			if got := status.Code(err); got != codes.InvalidArgument {
 				t.Fatalf("status code = %v, want %v; err=%v", got, codes.InvalidArgument, err)
 			}

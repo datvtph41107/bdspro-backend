@@ -1470,31 +1470,7 @@ func (p *ParcelPostgres) ResolveParcelOverviewByLocation(
 ) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
-	query := `
-		SELECT
-			p.id AS parcel_id,
-			COALESCE(NULLIF(p.lat, 0), ST_Y(ST_PointOnSurface(p.geometry)), 0) AS lat,
-			COALESCE(NULLIF(p.lon, 0), ST_X(ST_PointOnSurface(p.geometry)), 0) AS lon,
-			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
-			COALESCE(pi.address_text, '') AS address_text,
-			COALESCE(pi.map_number, '') AS map_number,
-			COALESCE(pi.land_number, '') AS land_number,
-			COALESCE(pi.property_code, '') AS property_code,
-			COALESCE(pi.property_uuid::text, '') AS property_uuid,
-			'' AS shape_type,
-			'' AS direction,
-			'' AS land_use_code,
-			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
-			'#CCCCCC' AS land_use_color,
-			COALESCE(prov.full_name, '') AS province,
-			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code,
-			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(pi.is_seo, false) AS is_seo
-		FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
-		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+	query := parcelInfoSelect(false) + `
 		WHERE p.deleted_at IS NULL
 		  AND p.geometry && ST_SetSRID(ST_Point(?, ?), 4326)
 		  AND ST_Covers(p.geometry, ST_SetSRID(ST_Point(?, ?), 4326))
@@ -1516,31 +1492,7 @@ func (p *ParcelPostgres) ResolveParcelOverviewByLocation(
 func (p *ParcelPostgres) GetParcelOverview(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
-	query := `
-		SELECT
-			p.id AS parcel_id,
-			COALESCE(p.lat, 0) AS lat,
-			COALESCE(p.lon, 0) AS lon,
-			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
-			COALESCE(pi.address_text, '') AS address_text,
-			COALESCE(pi.map_number, '') AS map_number,
-			COALESCE(pi.land_number, '') AS land_number,
-			COALESCE(pi.property_code, '') AS property_code,
-			COALESCE(pi.property_uuid::text, '') AS property_uuid,
-			'' AS shape_type,
-			'' AS direction,
-			'' AS land_use_code,
-			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
-			'#CCCCCC' AS land_use_color,
-			COALESCE(prov.full_name, '') AS province,
-			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code,
-			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(pi.is_seo, false) AS is_seo
-		FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
-		LEFT JOIN qh_planning_land_use pu ON pi.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+	query := parcelInfoSelect(false) + `
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1
@@ -1558,36 +1510,7 @@ func (p *ParcelPostgres) GetParcelOverview(ctx context.Context, parcelID uint64)
 func (p *ParcelPostgres) GetParcelInfo(ctx context.Context, parcelID uint64) (*dto.ParcelInfoResponse, error) {
 	var result dto.ParcelInfoResponse
 
-	query := `
-		SELECT
-			p.id AS parcel_id,
-			COALESCE(p.lat, 0) AS lat,
-			COALESCE(p.lon, 0) AS lon,
-			COALESCE(NULLIF(pi.total_area_sqm, 0), ST_Area(p.geometry::geography), 0) AS area_sqm,
-			COALESCE(pi.address_text, '') AS address_text,
-			ST_AsGeoJSON(p.geometry) AS geometry,
-
-			COALESCE(pi.map_number, '') AS map_number,
-			COALESCE(pi.land_number, '') AS land_number,
-			COALESCE(pi.property_code, '') AS property_code,
-			COALESCE(pi.property_uuid::text, '') AS property_uuid,
-			'' AS shape_type,
-			'' AS direction,
-
-			'' AS land_use_code,
-			COALESCE(pu.name, 'Chưa phân loại') AS land_use_name,
-			'#CCCCCC' AS land_use_color,
-
-			COALESCE(prov.full_name, '') AS province,
-			COALESCE(pi.province_code, '') AS province_code,
-			COALESCE(pi.ward_code, '') AS ward_code,
-			COALESCE(p.seo_id, 0) AS seo_id,
-			COALESCE(pi.is_seo, false) AS is_seo
-		FROM parcels p
-		LEFT JOIN qh_parcel_info pi ON pi.parcel_id = p.id
-		LEFT JOIN qh_planning_land_use pu
-			ON pi.land_type_id = pu.id
-		LEFT JOIN province_v2 prov ON pi.province_code = prov.code
+	query := parcelInfoSelect(true) + `
 		WHERE p.id = $1
 		  AND p.deleted_at IS NULL
 		LIMIT 1

@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"common/logging"
 	_middleware "common/middleware"
 	"fmt"
 	"net"
@@ -164,10 +165,10 @@ func buildGRPCServer(logger *flogging.FabricLogger,
 	internalNoteHandler *handler.InternalNoteHandler,
 ) (func() error, func(error)) {
 	unaryInts := []grpc.UnaryServerInterceptor{
-		interceptors.UnaryLoggerInterceptor(logger),
 		// interceptors.UnaryAuthInterceptor(logger),
 		interceptors.UnaryRecoveryInterceptor(logger),
 		_middleware.ParseGrpcMetadataContextMiddleware,
+		logging.UnaryServer(),
 	}
 	streamInts := []grpc.StreamServerInterceptor{
 		_middleware.ParseGrpcMetadataContextStreamMiddleware,

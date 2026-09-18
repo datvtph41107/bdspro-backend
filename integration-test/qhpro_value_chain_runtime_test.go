@@ -94,7 +94,7 @@ func TestQHPROValueChainRuntime(t *testing.T) {
 		"accountNumber": "ACCEPTANCE", "content": reference, "transferType": "in",
 		"description": "QHPRO canonical value-chain acceptance", "transferAmount": amountMinor,
 		"referenceCode": reference, "id": transactionID,
-	}, map[string]string{"Authorization": providerKey})
+	}, map[string]string{"Authorization": "Apikey " + providerKey})
 	if settlementStatus != http.StatusOK || jsonNumber(settlement, "code") != 0 {
 		t.Fatalf("provider settlement: status=%d body=%v", settlementStatus, settlement)
 	}
@@ -200,6 +200,10 @@ func TestQHPROValueChainRuntime(t *testing.T) {
 // therefore remain commercially empty until an operator publishes a plan;
 // acceptance owns and retires only the uniquely named plan it creates.
 func publishValueChainPlan(t *testing.T, client *http.Client, gatewayURL string) (string, int64, func()) {
+	return publishRuntimePlan(t, client, gatewayURL, 100, 3, false)
+}
+
+func publishRuntimePlan(t *testing.T, client *http.Client, gatewayURL string, tierRank, reportLimit int64, allFeatures bool) (string, int64, func()) {
 	t.Helper()
 	adminPassword := strings.TrimSpace(os.Getenv("QHPRO_ACCEPTANCE_ADMIN_PASSWORD"))
 	if adminPassword == "" {
@@ -221,13 +225,27 @@ func publishValueChainPlan(t *testing.T, client *http.Client, gatewayURL string)
 	draft := map[string]any{
 		"productCode": "qhpro", "productDisplayName": "QHPro",
 		"planCode": planCode, "version": "1.0.0", "displayName": "Gói chuỗi giá trị " + suffix,
-		"subjectScope": "profile", "tierRank": 100, "subscriptionTermDays": 30,
+		"subjectScope": "profile", "tierRank": tierRank, "subscriptionTermDays": 30,
 		"entitlements": []map[string]any{
 			{"code": "workspace.report.feature", "kind": "feature_access", "featureCode": "workspace.report.generate", "amount": 0, "unlimited": false, "period": "none"},
-			{"code": "workspace.report.allowance", "kind": "usage_allowance", "meterCode": "workspace.report_generation.accepted", "amount": 3, "unlimited": false, "period": "subscription_cycle"},
+			{"code": "workspace.report.allowance", "kind": "usage_allowance", "meterCode": "workspace.report_generation.accepted", "amount": reportLimit, "unlimited": false, "period": "subscription_cycle"},
 		},
 		"operations": []map[string]any{{"code": "workspace.report.generate", "featureCode": "workspace.report.generate", "meterCode": "workspace.report_generation.accepted", "unitsPerAction": 1}},
 		"prices":     []map[string]any{{"code": planCode + ".monthly", "kind": "recurring", "currency": "VND", "amountMinor": amountMinor, "billingUnit": "subscription_cycle", "quantity": 1}},
+	}
+	if allFeatures {
+		entitlements := draft["entitlements"].([]map[string]any)
+		operations := draft["operations"].([]map[string]any)
+		for _, pair := range [][2]string{
+			{"workspace.area.analyze", "workspace.area_analysis.accepted"},
+			{"workspace.parcel.detail.view", "workspace.parcel_detail.viewed"},
+		} {
+			entitlements = append(entitlements,
+				map[string]any{"code": pair[0] + ".feature", "kind": "feature_access", "featureCode": pair[0], "period": "none"},
+				map[string]any{"code": pair[0] + ".allowance", "kind": "usage_allowance", "meterCode": pair[1], "amount": 2, "period": "subscription_cycle"})
+			operations = append(operations, map[string]any{"code": pair[0], "featureCode": pair[0], "meterCode": pair[1], "unitsPerAction": 1})
+		}
+		draft["entitlements"], draft["operations"] = entitlements, operations
 	}
 	createStatus, created := runtimeJSONMethodAny(t, client, http.MethodPost, gatewayURL+"/v2/user/admin/catalog/plan-versions", map[string]any{"draft": draft}, adminToken)
 	planVersionID := jsonNumber(created, "id")
@@ -242,6 +260,14 @@ func publishValueChainPlan(t *testing.T, client *http.Client, gatewayURL string)
 	if validateStatus != http.StatusOK || !jsonBool(validation, "valid") {
 		retire()
 		t.Fatalf("validate value-chain plan: status=%d body=%v", validateStatus, validation)
+	}
+	// A schedule already elapsed is a caller error. The publication owner
+	// must leave the draft intact so an immediate, server-clock publish works.
+	elapsedStatus, elapsed := runtimeJSONMethodAny(t, client, http.MethodPost,
+		fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:publish", gatewayURL, planVersionID),
+		map[string]any{"planVersionId": planVersionID, "effectiveFrom": time.Now().UTC().Add(-time.Minute).Format(time.RFC3339Nano)}, adminToken)
+	if elapsedStatus != http.StatusBadRequest || jsonNumber(elapsed, "code") != 3 {
+		t.Fatalf("elapsed publication schedule: status=%d body=%v", elapsedStatus, elapsed)
 	}
 	publishStatus, publication := runtimeJSONMethodAny(t, client, http.MethodPost, fmt.Sprintf("%s/v2/user/admin/catalog/plan-versions/%d:publish", gatewayURL, planVersionID), map[string]any{
 		"planVersionId": planVersionID,

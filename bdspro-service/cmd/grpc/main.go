@@ -5,6 +5,7 @@ import (
 	"bdspro/infra/db"
 	"bdspro/initial"
 	"bdspro/wire"
+	"common/logging"
 	_middleware "common/middleware"
 	"context"
 	"fmt"
@@ -58,7 +59,7 @@ var GrpcCmd = &cobra.Command{
 		}
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
-			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
+			grpc.ChainUnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware, logging.UnaryServer()),
 			grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
 		)
 		bdspropb.RegisterPostServiceServer(s, app.PostService)

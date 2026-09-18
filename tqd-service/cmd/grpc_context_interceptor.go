@@ -8,11 +8,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-// targetIngress keeps legacy parsing on RPCs that have not migrated yet and
+// grpcContextInterceptor normalizes request context on RPCs that have not migrated yet and
 // uses the canonical Foundation RPC transport on migrated RPCs. The selector
 // decides migration scope; transport semantics themselves are owned by
 // common/rpc.
-func targetIngress(transportConfig rpc.TransportConfig) grpc.UnaryServerInterceptor {
+func grpcContextInterceptor(transportConfig rpc.TransportConfig) grpc.UnaryServerInterceptor {
 	canonical := rpc.UnaryServerInterceptor(transportConfig)
 
 	return func(

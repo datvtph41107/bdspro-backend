@@ -8,38 +8,28 @@ import (
 	"google.golang.org/protobuf/protoadapt"
 )
 
-var (
-	InvalidRequestCode            codes.Code = 3001
-	ExistingOrganizationNameCode  codes.Code = 3002
-	InvalidTaxCodeCode            codes.Code = 3003
-	UserAlreadyInOrganizationCode codes.Code = 3004
-	InternalServerErrorCode       codes.Code = 3005
-	InvalidOrganizationIDCode     codes.Code = 3006
-	UserOnlyOneOrganizationCode   codes.Code = 3007
-)
-
 func InvalidRequest(details ...protoadapt.MessageV1) error {
-	return _errors.ThrowError(int32(InvalidRequestCode), errors.New("invalid request"), details...)
+	return organizationError(codes.InvalidArgument, "ORGANIZATION_REQUEST_INVALID", errors.New("invalid request"), details...)
 }
 
 func ExistingOrganizationName() error {
-	return _errors.ThrowError(int32(ExistingOrganizationNameCode), errors.New("existing organization name"))
+	return organizationError(codes.AlreadyExists, "ORGANIZATION_NAME_EXISTS", errors.New("existing organization name"))
 }
 
 func InvalidTaxCode() error {
-	return _errors.ThrowError(int32(InvalidTaxCodeCode), errors.New("invalid tax code"))
+	return organizationError(codes.InvalidArgument, "ORGANIZATION_TAX_CODE_INVALID", errors.New("invalid tax code"))
 }
 
 func UserAlreadyInOrganization() error {
-	return _errors.ThrowError(int32(UserAlreadyInOrganizationCode), errors.New("user already in organization"))
+	return organizationError(codes.AlreadyExists, "ORGANIZATION_MEMBER_EXISTS", errors.New("user already in organization"))
 }
 
 func InternalServerError() error {
-	return _errors.ThrowError(int32(InternalServerErrorCode), errors.New("internal server error"))
+	return organizationError(codes.Internal, "ORGANIZATION_INTERNAL_ERROR", errors.New("internal server error"))
 }
 
 func InvalidOrganizationID() error {
-	return _errors.ThrowError(int32(InvalidOrganizationIDCode), errors.New("invalid organization id"))
+	return organizationError(codes.InvalidArgument, "ORGANIZATION_ID_INVALID", errors.New("invalid organization id"))
 }
 
 func Forbidden(message string) error {
@@ -51,5 +41,5 @@ func RecordNotFound(message string) error {
 }
 
 func UserOnlyOneOrganization() error {
-	return _errors.ThrowError(int32(UserOnlyOneOrganizationCode), errors.New("user only one organization"))
+	return organizationError(codes.FailedPrecondition, "ORGANIZATION_MEMBERSHIP_LIMIT", errors.New("user only one organization"))
 }

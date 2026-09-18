@@ -52,10 +52,12 @@ type fakeSubscriptions struct {
 	found   bool
 	err     error
 	calls   int
+	lastAt  time.Time
 }
 
-func (f *fakeSubscriptions) CurrentForProduct(context.Context, Subject, uint64) (CurrentSubscription, bool, error) {
+func (f *fakeSubscriptions) CurrentForProduct(_ context.Context, _ Subject, _ uint64, at time.Time) (CurrentSubscription, bool, error) {
 	f.calls++
+	f.lastAt = at
 	return f.current, f.found, f.err
 }
 
@@ -159,7 +161,7 @@ func TestListPaymentMethodsDelegatesToPaymentOwner(t *testing.T) {
 }
 
 func TestCheckoutInitialPurchaseFreezesServerTermsBeforePayment(t *testing.T) {
-	service, _, _, commands, payment := newCheckoutFixture()
+	service, _, subscriptions, commands, payment := newCheckoutFixture()
 	subject := Subject{Kind: SubjectProfile, ID: "42"}
 
 	result, err := service.Checkout(context.Background(), subject, "qhpro.pro", "checkout-1")
@@ -178,6 +180,10 @@ func TestCheckoutInitialPurchaseFreezesServerTermsBeforePayment(t *testing.T) {
 	}
 	if payment.last.CommandKey != "checkout-1" || payment.last.Subject != subject || payment.last.Terms != stored.Terms {
 		t.Fatalf("payment command did not use frozen server terms: %+v", payment.last)
+	}
+	wantAt := time.Date(2026, 8, 19, 10, 30, 0, 0, time.UTC)
+	if !subscriptions.lastAt.Equal(wantAt) {
+		t.Fatalf("current subscription evaluated at %v, want %v", subscriptions.lastAt, wantAt)
 	}
 }
 

@@ -3,8 +3,10 @@ package usecase
 import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
+	"common/validation"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -17,6 +19,10 @@ import (
 
 	"gorm.io/datatypes"
 )
+
+// Lỗi nghiệp vụ ổn định để adapter phân loại bằng errors.Is.
+var ErrWorkspaceItemNotFound = errors.New("workspace item not found")
+var ErrReportNotReadyToShare = errors.New("report is not ready to share")
 
 type MapWorkspaceUsecase interface {
 	ListFollowedParcels(ctx context.Context, userID uint64, pagable _dto.IPagable) (*dto.WorkspaceListResponse[dto.FollowedParcelPreviewDTO], error)
@@ -504,7 +510,7 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 	pagable _dto.IPagable,
 ) (*dto.WorkspaceListResponse[dto.FollowedParcelPreviewDTO], error) {
 	if userID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 
 	log.Printf(
@@ -601,10 +607,10 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 
 func (u *mapWorkspaceUsecase) FollowParcel(ctx context.Context, req dto.FollowParcelRequestDTO) (uint64, error) {
 	if req.UserID == 0 {
-		return 0, fmt.Errorf("user_id is required")
+		return 0, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if req.ParcelID == 0 {
-		return 0, fmt.Errorf("parcel_id is required")
+		return 0, validation.New("parcel_id", "WORKSPACE_INPUT_REQUIRED", "parcel_id is required")
 	}
 
 	parcelPreview, err := u.repo.GetParcelWorkspacePreview(ctx, req.ParcelID)
@@ -612,7 +618,7 @@ func (u *mapWorkspaceUsecase) FollowParcel(ctx context.Context, req dto.FollowPa
 		return 0, err
 	}
 	if parcelPreview == nil || parcelPreview.ParcelID == 0 {
-		return 0, fmt.Errorf("parcel not found")
+		return 0, ErrWorkspaceItemNotFound
 	}
 
 	row, err := u.repo.UpsertFollowedParcel(ctx, req.UserID, req.ParcelID, req.Note)
@@ -625,10 +631,10 @@ func (u *mapWorkspaceUsecase) FollowParcel(ctx context.Context, req dto.FollowPa
 
 func (u *mapWorkspaceUsecase) RemoveFollowedParcel(ctx context.Context, req dto.RemoveFollowedParcelRequestDTO) error {
 	if req.UserID == 0 {
-		return fmt.Errorf("user_id is required")
+		return validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if req.FollowID == 0 && req.ParcelID == 0 {
-		return fmt.Errorf("follow_id or parcel_id is required")
+		return validation.New("follow_id", "WORKSPACE_INPUT_REQUIRED", "follow_id or parcel_id is required")
 	}
 
 	return u.repo.RemoveFollowedParcel(ctx, req.UserID, req.FollowID, req.ParcelID)
@@ -640,7 +646,7 @@ func (u *mapWorkspaceUsecase) ListViewHistory(
 	pagable _dto.IPagable,
 ) (*dto.WorkspaceListResponse[dto.ViewHistoryPreviewDTO], error) {
 	if userID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 
 	histories, total, err := u.repo.ListViewHistory(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
@@ -741,10 +747,10 @@ func (u *mapWorkspaceUsecase) AddViewHistory(ctx context.Context, req dto.AddVie
 
 func (u *mapWorkspaceUsecase) TrackViewHistory(ctx context.Context, req dto.TrackViewHistoryRequestDTO) (*dto.TrackViewHistoryResultDTO, error) {
 	if req.UserID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if req.EntityID == 0 {
-		return nil, fmt.Errorf("entity_id is required")
+		return nil, validation.New("entity_id", "WORKSPACE_INPUT_REQUIRED", "entity_id is required")
 	}
 
 	entityType := enums.WorkspaceEntityTypeFromUint32(req.EntityType)
@@ -777,7 +783,7 @@ func (u *mapWorkspaceUsecase) TrackViewHistory(ctx context.Context, req dto.Trac
 			return nil, err
 		}
 		if parcel == nil || parcel.ParcelID == 0 {
-			return nil, fmt.Errorf("parcel not found")
+			return nil, ErrWorkspaceItemNotFound
 		}
 
 		parcelID = &id
@@ -794,7 +800,7 @@ func (u *mapWorkspaceUsecase) TrackViewHistory(ctx context.Context, req dto.Trac
 			return nil, err
 		}
 		if region == nil || region.RegionID == 0 {
-			return nil, fmt.Errorf("region not found")
+			return nil, ErrWorkspaceItemNotFound
 		}
 
 		regionID = &id
@@ -842,10 +848,10 @@ func (u *mapWorkspaceUsecase) TrackViewHistory(ctx context.Context, req dto.Trac
 
 func (u *mapWorkspaceUsecase) RemoveViewHistory(ctx context.Context, req dto.RemoveViewHistoryRequestDTO) error {
 	if req.UserID == 0 {
-		return fmt.Errorf("user_id is required")
+		return validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if req.HistoryID == 0 {
-		return fmt.Errorf("history_id is required")
+		return validation.New("history_id", "WORKSPACE_INPUT_REQUIRED", "history_id is required")
 	}
 
 	return u.repo.RemoveViewHistory(ctx, req.UserID, req.HistoryID)
@@ -853,7 +859,7 @@ func (u *mapWorkspaceUsecase) RemoveViewHistory(ctx context.Context, req dto.Rem
 
 func (u *mapWorkspaceUsecase) ClearViewHistory(ctx context.Context, userID uint64) error {
 	if userID == 0 {
-		return fmt.Errorf("user_id is required")
+		return validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 
 	return u.repo.ClearViewHistory(ctx, userID)
@@ -865,7 +871,7 @@ func (u *mapWorkspaceUsecase) ListGeneratedReports(
 	pagable _dto.IPagable,
 ) (*dto.WorkspaceListResponse[dto.GeneratedReportPreviewDTO], error) {
 	if userID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 
 	reports, total, err := u.repo.ListGeneratedReports(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
@@ -886,10 +892,10 @@ func (u *mapWorkspaceUsecase) ListGeneratedReports(
 
 func (u *mapWorkspaceUsecase) GetGeneratedReport(ctx context.Context, userID, reportID uint64) (*dto.GeneratedReportPreviewDTO, error) {
 	if userID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if reportID == 0 {
-		return nil, fmt.Errorf("report_id is required")
+		return nil, validation.New("report_id", "WORKSPACE_INPUT_REQUIRED", "report_id is required")
 	}
 
 	report, err := u.repo.GetGeneratedReport(ctx, userID, reportID)
@@ -897,7 +903,7 @@ func (u *mapWorkspaceUsecase) GetGeneratedReport(ctx context.Context, userID, re
 		return nil, err
 	}
 	if report == nil || report.ID == 0 {
-		return nil, fmt.Errorf("report not found")
+		return nil, ErrWorkspaceItemNotFound
 	}
 
 	item := buildGeneratedReportPreview(*report)
@@ -906,10 +912,10 @@ func (u *mapWorkspaceUsecase) GetGeneratedReport(ctx context.Context, userID, re
 
 func (u *mapWorkspaceUsecase) RemoveGeneratedReport(ctx context.Context, req dto.RemoveGeneratedReportRequestDTO) error {
 	if req.UserID == 0 {
-		return fmt.Errorf("user_id is required")
+		return validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if req.ReportID == 0 {
-		return fmt.Errorf("report_id is required")
+		return validation.New("report_id", "WORKSPACE_INPUT_REQUIRED", "report_id is required")
 	}
 
 	return u.repo.RemoveGeneratedReport(ctx, req.UserID, req.ReportID)
@@ -917,34 +923,23 @@ func (u *mapWorkspaceUsecase) RemoveGeneratedReport(ctx context.Context, req dto
 
 func (u *mapWorkspaceUsecase) RegenerateReport(ctx context.Context, userID, reportID uint64) error {
 	if userID == 0 {
-		return fmt.Errorf("user_id is required")
+		return validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if reportID == 0 {
-		return fmt.Errorf("report_id is required")
+		return validation.New("report_id", "WORKSPACE_INPUT_REQUIRED", "report_id is required")
 	}
 
-	report, err := u.repo.GetGeneratedReport(ctx, userID, reportID)
-	if err != nil {
-		return err
-	}
-	if report == nil || report.ID == 0 {
-		return fmt.Errorf("report not found")
-	}
-
-	status := enums.GeneratedReportStatus(report.Status)
-	if !status.CanRegenerate() {
-		return fmt.Errorf("report cannot regenerate in current status")
-	}
-
-	return u.repo.UpdateGeneratedReportStatus(ctx, userID, reportID, enums.GeneratedReportStatusProcessing.Uint32())
+	// The accepted report's job owner atomically schedules recovery. Changing
+	// the display status alone cannot produce an artifact and strands the report.
+	return u.repo.RegenerateGeneratedReport(ctx, userID, reportID)
 }
 
 func (u *mapWorkspaceUsecase) ShareReport(ctx context.Context, userID, reportID uint64) (*dto.ShareReportResultDTO, error) {
 	if userID == 0 {
-		return nil, fmt.Errorf("user_id is required")
+		return nil, validation.New("user_id", "WORKSPACE_INPUT_REQUIRED", "user_id is required")
 	}
 	if reportID == 0 {
-		return nil, fmt.Errorf("report_id is required")
+		return nil, validation.New("report_id", "WORKSPACE_INPUT_REQUIRED", "report_id is required")
 	}
 
 	report, err := u.repo.GetGeneratedReport(ctx, userID, reportID)
@@ -952,17 +947,24 @@ func (u *mapWorkspaceUsecase) ShareReport(ctx context.Context, userID, reportID 
 		return nil, err
 	}
 	if report == nil || report.ID == 0 {
-		return nil, fmt.Errorf("report not found")
+		return nil, ErrWorkspaceItemNotFound
 	}
 
 	status := enums.GeneratedReportStatus(report.Status)
 	if !status.CanShare() {
-		return nil, fmt.Errorf("report is not ready to share")
+		return nil, ErrReportNotReadyToShare
 	}
 
-	shareURL := report.ShareURL
+	// Share the actual File-owned output. There is no public report-page route
+	// backing the old /share/reports/{id} placeholder.
+	shareURL := report.PDFURL
 	if shareURL == "" {
-		shareURL = fmt.Sprintf("/share/reports/%d", report.ID)
+		shareURL = report.ImageURL
+	}
+	if shareURL == "" {
+		return nil, ErrReportNotReadyToShare
+	}
+	if report.ShareURL != shareURL {
 		if err := u.repo.UpdateGeneratedReportShareURL(ctx, userID, reportID, shareURL); err != nil {
 			return nil, err
 		}

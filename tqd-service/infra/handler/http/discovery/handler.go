@@ -1,6 +1,8 @@
 package discovery
 
 import (
+	"common/requestlog"
+	"common/validation"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,11 +26,12 @@ func (h *Handler) Identify(c *gin.Context) {
 	}
 	response, err := h.service.Identify(c.Request.Context(), req)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if strings.Contains(err.Error(), "invalid latitude") {
-			status = http.StatusBadRequest
+		if v, ok := validation.As(err); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"code": v.Reason, "message": v.Message, "field": v.Field})
+		} else {
+			requestlog.FromContext(c.Request.Context(), nil).ErrorContext(c.Request.Context(), "Discovery identify failed", "category", "application", "event_name", "discovery.identify.failed", "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "DISCOVERY_IDENTIFY_FAILED", "message": "internal server error"})
 		}
-		c.JSON(status, gin.H{"code": "DISCOVERY_IDENTIFY_FAILED", "message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, response)

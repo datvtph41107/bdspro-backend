@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	_db "common/db"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -247,7 +247,8 @@ func catalogMutationError(err error) error {
 	if errors.As(err, &pqError) && pqError.Code == "23505" {
 		return admin.ErrPlanVersionConflict
 	}
-	if strings.Contains(strings.ToLower(err.Error()), "duplicate key") {
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) && pgError.Code == "23505" {
 		return admin.ErrPlanVersionConflict
 	}
 	return err

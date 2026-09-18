@@ -1,7 +1,9 @@
 package main
 
 import (
+	_db "common/db"
 	_models "common/domain/entity"
+	"common/logging"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +14,6 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type WardJSON struct {
@@ -33,6 +34,7 @@ type ProvinceV2JSON struct {
 }
 
 func main() {
+	defer logging.MustStart("bdspro-import-location")()
 	// Lấy connection string từ environment hoặc dùng default
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -42,7 +44,7 @@ func main() {
 
 	// Kết nối database
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: _db.NewSQLLogger(),
 	})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)

@@ -121,6 +121,41 @@ type ownedFileResponse struct {
 	Size        int64  `json:"size"`
 }
 
+func (c *Client) FindOwnedFile(ctx context.Context, namespace, key string) (string, int64, bool, error) {
+	if c == nil || c.http == nil || ctx == nil {
+		return "", 0, false, errors.New("File lookup client/context is not configured")
+	}
+	query := url.Values{"owner_namespace": {namespace}, "owner_key": {key}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/internal/v1/file/owned?"+query.Encode(), nil)
+	if err != nil {
+		return "", 0, false, err
+	}
+	req.Header.Set("X-Service-Name", c.serviceName)
+	req.Header.Set("X-Service-Auth", signServiceRequest(time.Now(), c.serviceName, c.serviceAuthKey))
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", 0, false, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return "", 0, false, nil
+	}
+	if resp.StatusCode == http.StatusUnauthorized {
+		return "", 0, false, ErrUnauthorized
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", 0, false, fmt.Errorf("File owned lookup failed: status=%d", resp.StatusCode)
+	}
+	var file ownedFileResponse
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&file); err != nil {
+		return "", 0, false, err
+	}
+	if file.Path == "" || file.Size <= 0 || file.ContentType != "application/pdf" {
+		return "", 0, false, errors.New("owned report file metadata is invalid")
+	}
+	return file.Path, file.Size, true, nil
+}
+
 func (c *Client) PutOwnedFile(
 	ctx context.Context,
 	ownerNamespace string,

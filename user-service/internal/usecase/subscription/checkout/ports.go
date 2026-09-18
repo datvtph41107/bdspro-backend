@@ -16,7 +16,7 @@ type PlanResolver interface {
 }
 
 type SubscriptionReader interface {
-	CurrentForProduct(ctx context.Context, subject Subject, productID uint64) (CurrentSubscription, bool, error)
+	CurrentForProduct(ctx context.Context, subject Subject, productID uint64, at time.Time) (CurrentSubscription, bool, error)
 }
 
 // CommandStore owns the durable User-side resolution of a Checkout command.

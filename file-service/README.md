@@ -38,6 +38,12 @@ Root có thể gọi `make migrate service=file-service`.
 
 PostgreSQL `file_service`, Auth/Hub RPC và local file volume. Canonical migration: `migrate/`.
 
+Report sử dụng `POST /internal/v1/file/owned` để lưu effect theo namespace/key
+và `GET /internal/v1/file/owned?owner_namespace=...&owner_key=...` để đọc kết quả
+đã hoàn tất khi retry. Cả hai dùng verifier HMAC nội bộ của File; JWT người dùng
+hoặc raw secret không thay thế credential này. Lookup trả 404 khi chưa có file
+hoàn tất. Upload vẫn từ chối byte/nội dung khác cho cùng effect.
+
 ## Read source from here
 
 `main.go`, `internal/file*`, `infra/handler/filehttp/`, `repositories/`, `migrate/`.

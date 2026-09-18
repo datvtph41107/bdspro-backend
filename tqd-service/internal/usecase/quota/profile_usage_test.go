@@ -53,7 +53,7 @@ func meteredProfileAccess() access.Result {
 		Subject: access.Subject{Type: access.SubjectProfile, ID: "42"}, Operation: GeneratedReportOperation,
 		Allowed: true, Limit: 100, Period: access.PeriodSubscriptionCycle,
 		PeriodStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC), PeriodEnd: time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
-		Metering: access.Metering{FeatureCode: "generated_report", MeterCode: "workspace.report_generation.accepted", UnitsPerAction: 1, PolicyVersion: "1"},
+		Metering: access.Metering{FeatureCode: "workspace.report.generate", MeterCode: "workspace.report_generation.accepted", UnitsPerAction: 1, PolicyVersion: "1"},
 	}
 }
 
@@ -159,7 +159,7 @@ func TestProfileUsageListKeepsEveryOperationIndependent(t *testing.T) {
 	durable.Test(t)
 	runtime.Test(t)
 
-	for _, operationCode := range ProfileOperations {
+	for _, operationCode := range ProfileOperations() {
 		decision := access.Result{
 			Subject:   access.Subject{Type: access.SubjectProfile, ID: "42"},
 			Operation: operationCode,
@@ -171,8 +171,8 @@ func TestProfileUsageListKeepsEveryOperationIndependent(t *testing.T) {
 	projections, err := NewProfileUsageService(accessReader, durable, runtime).
 		ListUsage(context.Background())
 	require.NoError(t, err)
-	require.Len(t, projections, len(ProfileOperations))
-	for index, operationCode := range ProfileOperations {
+	require.Len(t, projections, len(ProfileOperations()))
+	for index, operationCode := range ProfileOperations() {
 		require.Equal(t, operationCode, projections[index].Access.Operation)
 		require.Equal(t, "not_required", projections[index].Reconciliation)
 	}

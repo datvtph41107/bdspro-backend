@@ -1,6 +1,8 @@
 package main
 
 import (
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"fmt"
 	"os"
 	cmd_grpc "social/cmd/grpc"
@@ -32,6 +34,8 @@ func init() {
 }
 
 func main() {
+	defer logging.MustStart("social")()
+	logfabric.Bridge()
 	// go func() {
 	// 	log.Println("run go-routine")
 	// 	log.Println(http.ListenAndServe("localhost:6060", nil))

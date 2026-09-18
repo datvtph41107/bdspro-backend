@@ -16,12 +16,10 @@ var (
 	ErrUsagePeriod           = errors.New("usage period boundary is not defined")
 )
 
-/**
- * Service lấy access hiện tại từ subscription và plan.
- *
- * Service chỉ trả lời "được dùng hay không" và "giới hạn bao nhiêu".
- * Nó không đọc used/reserved và không giữ quota.
- */
+// Service giải quyết quyền sử dụng tại một thời điểm cụ thể từ subscription
+// và PlanVersion. Đây là owner của entitlement: service chỉ trả lời được dùng
+// hay không, meter nào và giới hạn bao nhiêu; nó không đọc số đã dùng, không
+// giữ quota và không thực hiện thanh toán.
 type Service struct {
 	subscriptions SubscriptionStore
 	plans         PlanAccessStore
@@ -34,9 +32,9 @@ func NewService(subscriptions SubscriptionStore, plans PlanAccessStore) *Service
 	}
 }
 
-/**
- * GetAccess trả về quyền sử dụng của operation tại thời điểm now.
- */
+// GetAccess trả về bằng chứng quyền của operation tại thời điểm now. Kết quả
+// được TQD lưu kèm usage event để sau này vẫn truy được người dùng đã được
+// cấp quyền theo gói và phiên bản nào, kể cả khi catalog đã thay đổi.
 func (s *Service) GetAccess(
 	ctx context.Context,
 	subject access.Subject,
@@ -109,12 +107,10 @@ func (s *Service) GetAccess(
 	return result, nil
 }
 
-/**
- * usagePeriod chọn đúng khoảng quota mà source hiện tại đã có đủ dữ liệu.
- *
- * Report target đang dùng subscription_cycle.
- * Day/calendar_month cần chốt timezone, lifetime cần chốt mốc bắt đầu/kết thúc trước migration; hiện tại fail thay vì tự đoán.
- */
+// usagePeriod chọn khoảng thời gian mà quota áp dụng. Hiện source chỉ đủ dữ
+// liệu chắc chắn cho subscription_cycle. Day/calendar_month cần quy ước
+// timezone, còn lifetime cần mốc bắt đầu/kết thúc; khi chưa có quy ước, hàm
+// fail-closed thay vì tự đoán và tính sai quyền khách hàng.
 func usagePeriod(period access.Period, subscription Subscription) (time.Time, time.Time, error) {
 	switch period {
 	case access.PeriodNone:

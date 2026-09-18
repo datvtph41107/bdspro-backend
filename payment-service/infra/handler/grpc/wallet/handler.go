@@ -6,8 +6,8 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
-	"math"
 	commercedomain "payment/internal/domain/payment"
+	walletdomain "payment/internal/domain/wallet"
 	settlementuc "payment/internal/usecase/settlement"
 	paymentpb "pb/types/payment"
 	sharepb "pb/types/shared"
@@ -302,28 +302,37 @@ func (h *PaymentHandler) SepayWebhook(ctx context.Context, req *paymentpb.SepayW
 	if !validSepayAPIKeyCredential(ctx, h.sepayAPIKey) {
 		return nil, status.Error(codes.Unauthenticated, "invalid provider credential")
 	}
-	if h.commerceSettlement != nil {
-		if ref, ok := ExtractCommercialOrderReference(req.GetContent(), req.GetReferenceCode()); ok {
-			if strings.ToLower(strings.TrimSpace(req.GetTransferType())) != "in" {
-				return nil, status.Error(codes.InvalidArgument, "commercial webhook must be incoming transfer")
-			}
-			amount := req.GetTransferAmount()
-			if math.IsNaN(amount) || math.IsInf(amount, 0) || amount <= 0 || amount != math.Trunc(amount) {
-				return nil, status.Error(codes.InvalidArgument, "invalid VND amount")
-			}
-			occurred, err := time.ParseInLocation("2006-01-02 15:04:05", req.GetTransactionDate(), time.FixedZone("Asia/Ho_Chi_Minh", 7*3600))
-			if err != nil {
-				return nil, status.Error(codes.InvalidArgument, "invalid transaction date")
-			}
-			_, err = h.commerceSettlement.RecordProviderEvent(ctx, commercedomain.ProviderEvent{Provider: "sepay", TransactionID: strconv.FormatUint(uint64(req.GetId()), 10), Reference: ref, Amount: commercedomain.Money{Currency: commercedomain.CurrencyVND, AmountMinor: int64(amount)}, OccurredAt: occurred, Type: commercedomain.ProviderFundsConfirmed, EvidenceHash: fmt.Sprintf("sepay:%d", req.GetId())})
-			if err != nil {
-				return nil, status.Error(codes.FailedPrecondition, err.Error())
-			}
-			return &paymentpb.Empty{}, nil
-		}
+	// Cùng cổng webhook phục vụ order và ví: chiều tiền và số tiền phải được
+	// kiểm tra trước khi chọn nhánh, nếu không tiền ra có thể bị ghi thành nạp ví.
+	if req == nil || strings.ToLower(strings.TrimSpace(req.GetTransferType())) != "in" {
+		return nil, status.Error(codes.InvalidArgument, "bank webhook must be incoming transfer")
 	}
-	depositCode := ExtractDepositCode(req.Content)
-	_, err := h.paymentUsecase.HandleDepositWebhook(ctx, depositCode, req.TransferAmount)
+	amount, err := walletdomain.MinorFromWire(req.GetTransferAmount())
+	if err != nil || amount <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid VND amount")
+	}
+	if ref, ok := commercedomain.ExtractOrderReference(req.GetContent(), req.GetReferenceCode()); ok {
+		if h.commerceSettlement == nil {
+			return nil, status.Error(codes.Unavailable, "commercial settlement is unavailable")
+		}
+		occurred, err := time.ParseInLocation("2006-01-02 15:04:05", req.GetTransactionDate(), time.FixedZone("Asia/Ho_Chi_Minh", 7*3600))
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid transaction date")
+		}
+		_, err = h.commerceSettlement.RecordProviderEvent(ctx, commercedomain.ProviderEvent{Provider: "sepay", TransactionID: strconv.FormatUint(uint64(req.GetId()), 10), Reference: ref, Amount: commercedomain.Money{Currency: commercedomain.CurrencyVND, AmountMinor: amount}, OccurredAt: occurred, Type: commercedomain.ProviderFundsConfirmed, EvidenceHash: fmt.Sprintf("sepay:%d", req.GetId())})
+		if err != nil {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		return &paymentpb.Empty{}, nil
+	}
+	depositCode := ExtractDepositCode(req.GetContent())
+	if depositCode == "" {
+		return nil, status.Error(codes.InvalidArgument, "bank webhook reference is not recognized")
+	}
+	if h.paymentUsecase == nil {
+		return nil, status.Error(codes.Unavailable, "wallet settlement is unavailable")
+	}
+	_, err = h.paymentUsecase.HandleDepositWebhook(ctx, depositCode, req.GetTransferAmount())
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +368,7 @@ func (h *PaymentHandler) SepayGatewayIPN(ctx context.Context, req *paymentpb.Sep
 		!strings.EqualFold(strings.TrimSpace(req.GetTransaction().GetTransactionType()), "PAYMENT") {
 		return nil, status.Error(codes.InvalidArgument, "unsupported SePay gateway event")
 	}
-	reference, ok := ExtractCommercialOrderReference(req.GetOrder().GetOrderInvoiceNumber())
+	reference, ok := commercedomain.ExtractOrderReference(req.GetOrder().GetOrderInvoiceNumber())
 	if !ok {
 		return nil, status.Error(codes.InvalidArgument, "invalid commercial order reference")
 	}
@@ -481,14 +490,4 @@ func (h *PaymentHandler) GetDashboardMetrics(ctx context.Context, req *paymentpb
 	return &paymentpb.GetDashboardMetricsResponse{
 		Data: metrics,
 	}, nil
-}
-
-func ExtractCommercialOrderReference(values ...string) (string, bool) {
-	re := regexp.MustCompile(`(?i)QHP-[0-9A-F]{16}`)
-	for _, v := range values {
-		if x := re.FindString(v); x != "" {
-			return strings.ToUpper(x), true
-		}
-	}
-	return "", false
 }

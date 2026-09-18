@@ -13,6 +13,9 @@ import (
 	"tqd/internal/interface/repo"
 )
 
+// ErrLayerNotFound thuộc owner layer, dùng cho mọi usecase truy cập layer.
+var ErrLayerNotFound = errors.New("layer not found")
+
 type LayerUsecase interface {
 	// Admin
 	Create(ctx context.Context, layer *qh_domain.QHLayer, userID uint64, replaceLayerIDs []uint64) (*qh_domain.QHLayer, error)
@@ -124,7 +127,7 @@ func (u *layerUsecaseImpl) Update(ctx context.Context, id uint64, layer *qh_doma
 		return nil, fmt.Errorf("get layer failed: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("layer with id %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 
 	if layer.Name != "" && layer.Name != existing.Name {
@@ -210,7 +213,7 @@ func (u *layerUsecaseImpl) Delete(ctx context.Context, id uint64, userID uint64)
 		return fmt.Errorf("get layer failed: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("layer with id %d not found", id)
+		return fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 	if err := u.regionRepo.SoftDeleteAllByLayerID(ctx, id); err != nil {
 		return fmt.Errorf("soft delete regions by layer: %w", err)
@@ -236,7 +239,7 @@ func (u *layerUsecaseImpl) HardDelete(ctx context.Context, id uint64, userID uin
 		return fmt.Errorf("get layer failed: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("layer with id %d not found", id)
+		return fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 
 	// Xóa thật regions
@@ -293,7 +296,7 @@ func (u *layerUsecaseImpl) GetByID(ctx context.Context, id uint64) (*qh_domain.Q
 		return nil, fmt.Errorf("get layer failed: %w", err)
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("layer with id %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 	return layer, nil
 }
@@ -311,7 +314,7 @@ func (u *layerUsecaseImpl) UpdateStatus(ctx context.Context, id uint64, status e
 		return fmt.Errorf("get layer failed: %w", err)
 	}
 	if existing == nil {
-		return fmt.Errorf("layer with id %d not found", id)
+		return fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 	return u.layerRepo.UpdateStatus(ctx, id, status)
 }
@@ -322,7 +325,7 @@ func (u *layerUsecaseImpl) ToggleLayerBasicVisibility(ctx context.Context, id ui
 		return nil, fmt.Errorf("get layer failed: %w", err)
 	}
 	if existing == nil {
-		return nil, fmt.Errorf("layer with id %d not found", id)
+		return nil, fmt.Errorf("%w: id=%d", ErrLayerNotFound, id)
 	}
 	existing.DisplayOrder = -existing.DisplayOrder
 	existing.UpdatedBy = userID
@@ -343,7 +346,7 @@ func (u *layerUsecaseImpl) GetClientByID(ctx context.Context, id uint64) (*qh_do
 		return nil, fmt.Errorf("get layer failed: %w", err)
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("layer not found")
+		return nil, ErrLayerNotFound
 	}
 	// if !layer.IsClientVisible() {
 	// 	return nil, fmt.Errorf("layer not available")
@@ -359,8 +362,11 @@ func (u *layerUsecaseImpl) BuildPMTiles(ctx context.Context, layerID uint64, min
 	defer u.buildTracker.finish(layerID, gen)
 
 	layer, err := u.layerRepo.GetByID(ctx, layerID)
-	if err != nil || layer == nil {
-		return fmt.Errorf("layer %d not found", layerID)
+	if err != nil {
+		return fmt.Errorf("get layer for build: %w", err)
+	}
+	if layer == nil {
+		return fmt.Errorf("%w: id=%d", ErrLayerNotFound, layerID)
 	}
 
 	if outputDir == "" {

@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
+	"tqd/internal/usecase"
 
 	"gorm.io/gorm"
 )
@@ -23,14 +25,24 @@ func NewQHAuthorityIssuringRepository(db *gorm.DB) repo.QHAuthorityIssuringRepos
 }
 
 func (r *qhAuthorityIssuringRepo) Create(ctx context.Context, row *qh_domain.QHAuthorityIssuring) error {
-	return r.db.WithContext(ctx).Create(row).Error
+	return authorityWriteError(r.db.WithContext(ctx).Create(row).Error)
 }
 
 func (r *qhAuthorityIssuringRepo) Update(ctx context.Context, row *qh_domain.QHAuthorityIssuring) error {
-	return r.db.WithContext(ctx).Model(row).
+	return authorityWriteError(r.db.WithContext(ctx).Model(row).
 		Omit("created_at", "created_by", "id").
 		Select("Name", "Code", "Description").
-		Updates(row).Error
+		Updates(row).Error)
+}
+
+// Precheck không loại trừ hai request cùng tạo code. Unique index là chốt cuối;
+// chỉ constraint code đã biết mới thành conflict, lỗi SQL khác giữ nguyên cause.
+func authorityWriteError(err error) error {
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code == "23505" && pg.ConstraintName == "idx_qh_authority_issuring_code_active" {
+		return usecase.ErrAuthorityCodeConflict
+	}
+	return err
 }
 
 func (r *qhAuthorityIssuringRepo) Delete(ctx context.Context, id uint64) error {

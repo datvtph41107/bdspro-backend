@@ -2,9 +2,9 @@ package reference
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"strings"
+
+	domain "payment/internal/domain/payment"
 )
 
 type Generator struct{}
@@ -15,5 +15,5 @@ func (*Generator) NewOrderReference() (string, error) {
 	if _, e := rand.Read(b[:]); e != nil {
 		return "", fmt.Errorf("generate order reference: %w", e)
 	}
-	return "QHP-" + strings.ToUpper(hex.EncodeToString(b[:])), nil
+	return domain.FormatOrderReference(b), nil
 }

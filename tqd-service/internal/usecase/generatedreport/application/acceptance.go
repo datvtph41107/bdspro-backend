@@ -5,22 +5,23 @@ import (
 	"tqd/internal/usecase/usage"
 )
 
-// Acceptance mô tả đầy đủ durable facts mà create-report
-// yêu cầu PostgreSQL commit như một business acceptance.
-//
-// Report application tạo intent này.
-// Persistence chỉ arbitrate command và lưu các facts trong một transaction.
+// Acceptance là yêu cầu ghi Report + Job và Usage (khi có quota) trong cùng
+// transaction PostgreSQL. Commit xác nhận hệ thống đã nhận trách nhiệm tạo
+// báo cáo; chưa có nghĩa PDF đã sẵn sàng hoặc client đã tải được file.
+// Application quyết định nghiệp vụ; persistence phân xử command trùng và ghi
+// dữ liệu nguyên tử. Worker retry/regenerate dùng lại job đã được chấp nhận.
 type Acceptance struct {
 	Report Report
 	Usage  *usage.Event
 	Job    processing.Job
 }
 
-// AcceptanceResult trả durable facts sau transaction arbitration.
+// AcceptanceResult là kết quả sau khi database phân xử command idempotency.
+// Created=false nghĩa là retry đã gặp report cũ và phải dùng lại kết quả đó.
 //
 // DurableUsage không phải cờ điều khiển Redis. Nó là usage event
-// thực sự thuộc command đã thắng. Current Redis-D bridge dùng evidence
-// này để quyết reservation của request hiện tại cần Commit hay Cancel.
+// thực sự thuộc command đã thắng. Application dùng bằng chứng này để quyết
+// định reservation của request hiện tại cần Commit hay Cancel.
 type AcceptanceResult struct {
 	Report       Report
 	Created      bool

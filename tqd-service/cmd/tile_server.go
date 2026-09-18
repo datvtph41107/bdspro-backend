@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
-	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
@@ -33,7 +33,8 @@ func RunTileServer(port int) error {
 	if _, err := config.LoadConfig(); err != nil {
 		return fmt.Errorf("load TQD tile config: %w", err)
 	}
-	logger := log.New(os.Stdout, "[pmtiles] ", log.LstdFlags)
+	// PMTiles yêu cầu *log.Logger; adapter giữ category/level theo logging.yml.
+	logger := slog.NewLogLogger(slog.Default().With("category", "dependency", "component", "pmtiles").Handler(), slog.LevelInfo)
 	redisSvc := _redis.NewRedisService()
 	defer func() {
 		if redisSvc != nil && redisSvc.Client != nil {

@@ -18,6 +18,7 @@ import (
  */
 // @bind: tqd/internal/usecase/usage.Store
 // @bind: tqd/internal/usecase/quota.DurableUsageReader
+// @bind: tqd/internal/usecase/quota.ReadActionUsageStore
 type Store struct {
 	db *gorm.DB
 }

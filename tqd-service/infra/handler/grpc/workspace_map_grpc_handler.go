@@ -2,9 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"errors"
 	"log"
-	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
@@ -18,7 +17,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 )
 
 type MapWorkspaceGrpcHandler struct {
@@ -55,29 +53,6 @@ func (h *MapWorkspaceGrpcHandler) currentUserID(ctx context.Context) (uint64, er
 	}
 
 	return userID, nil
-}
-
-func workspaceStatusError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	msg := err.Error()
-
-	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return status.Error(codes.NotFound, "record not found")
-	case strings.Contains(msg, "not found"):
-		return status.Error(codes.NotFound, msg)
-	case strings.Contains(msg, "is required"), strings.Contains(msg, "invalid"):
-		return status.Error(codes.InvalidArgument, msg)
-	case strings.Contains(msg, "cannot regenerate"),
-		strings.Contains(msg, "not ready to share"),
-		strings.Contains(msg, "does not support"):
-		return status.Error(codes.FailedPrecondition, msg)
-	default:
-		return status.Error(codes.Internal, msg)
-	}
 }
 
 func protoPoint(v dto.SpatialPointDTO) *tqdpb.SpatialPoint {
@@ -314,7 +289,7 @@ func (h *MapWorkspaceGrpcHandler) ListFollowedParcels(
 	result, err := h.usecase.ListFollowedParcels(ctx, userID, pagable)
 	if err != nil {
 		log.Printf("[DEBUG][Handler][ListFollowedParcels][ERROR] userID=%d err=%v", userID, err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	items := make([]*tqdpb.FollowedParcelPreview, 0)
@@ -367,7 +342,7 @@ func (h *MapWorkspaceGrpcHandler) FollowParcel(
 	})
 	if err != nil {
 		log.Printf("[FollowParcel] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -404,7 +379,7 @@ func (h *MapWorkspaceGrpcHandler) RemoveFollowedParcel(
 	})
 	if err != nil {
 		log.Printf("[RemoveFollowedParcel] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -437,7 +412,7 @@ func (h *MapWorkspaceGrpcHandler) ListViewHistory(
 	result, err := h.usecase.ListViewHistory(ctx, userID, pagable)
 	if err != nil {
 		log.Printf("[ListViewHistory] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	items := make([]*tqdpb.ViewHistoryPreview, 0)
@@ -503,7 +478,7 @@ func (h *MapWorkspaceGrpcHandler) AddViewHistory(
 	})
 	if err != nil {
 		log.Printf("[AddViewHistory] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -566,7 +541,7 @@ func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
 	})
 	if err != nil {
 		log.Printf("[TrackViewHistory] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.TrackViewHistoryResponse{
@@ -600,7 +575,7 @@ func (h *MapWorkspaceGrpcHandler) RemoveViewHistory(
 	})
 	if err != nil {
 		log.Printf("[RemoveViewHistory] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -623,7 +598,7 @@ func (h *MapWorkspaceGrpcHandler) ClearViewHistory(
 
 	if err := h.usecase.ClearViewHistory(ctx, userID); err != nil {
 		log.Printf("[ClearViewHistory] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -655,7 +630,7 @@ func (h *MapWorkspaceGrpcHandler) ListGeneratedReports(
 	result, err := h.usecase.ListGeneratedReports(ctx, userID, pagable)
 	if err != nil {
 		log.Printf("[ListGeneratedReports] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	items := make([]*tqdpb.GeneratedReportPreview, 0)
@@ -719,7 +694,7 @@ func (h *MapWorkspaceGrpcHandler) GetGeneratedReport(
 	item, err := h.usecase.GetGeneratedReport(ctx, userID, req.GetReportId())
 	if err != nil {
 		log.Printf("[GetGeneratedReport] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	if item == nil {
@@ -750,7 +725,7 @@ func (h *MapWorkspaceGrpcHandler) RemoveGeneratedReport(
 	})
 	if err != nil {
 		log.Printf("[RemoveGeneratedReport] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -778,7 +753,7 @@ func (h *MapWorkspaceGrpcHandler) RegenerateReport(
 	err = h.usecase.RegenerateReport(ctx, userID, req.GetReportId())
 	if err != nil {
 		log.Printf("[RegenerateReport] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.WorkspaceMutationResponse{
@@ -806,7 +781,7 @@ func (h *MapWorkspaceGrpcHandler) ShareReport(
 	result, err := h.usecase.ShareReport(ctx, userID, req.GetReportId())
 	if err != nil {
 		log.Printf("[ShareReport] Error: %v", err)
-		return nil, workspaceStatusError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.ShareReportResponse{

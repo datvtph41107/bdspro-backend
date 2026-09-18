@@ -16,8 +16,6 @@ import (
 	"tqd/internal/usecase/usage"
 )
 
-const acceptanceLeaseSafetyGap = 5 * time.Second
-
 // Service sở hữu create-report flow.
 //
 // Service điều phối business capability, nhưng không sở hữu:
@@ -324,14 +322,14 @@ func (s *Service) CreateGeneratedReport(
 	// PostgreSQL adapter arbitrate command và persist các facts này.
 	// Nó không quyết Redis reservation lifecycle.
 	acceptanceCtx, cancelAcceptance, err :=
-		acceptanceLeaseContext(ctx, reservation, s.now())
+		quota.AcceptanceContext(ctx, reservation, s.now())
 	if err != nil {
 		logger.Warn(
 			"report acceptance lease unavailable",
 			"reservation_id", reservation.ID,
 			"reservation_expires_at", reservation.ExpiresAt,
 		)
-		return Result{}, err
+		return Result{}, errors.Join(ErrAcceptanceUnavailable, err)
 	}
 
 	accepted, err :=
@@ -540,26 +538,4 @@ func usageKey(
 	}
 
 	return event.UsageKey
-}
-
-// acceptanceLeaseContext fences durable acceptance before quota lease expiry.
-func acceptanceLeaseContext(
-	ctx context.Context,
-	reservation quota.Reservation,
-	now time.Time,
-) (context.Context, context.CancelFunc, error) {
-	if !reservation.Required {
-		return ctx, func() {}, nil
-	}
-	if reservation.ExpiresAt.IsZero() {
-		return nil, nil, ErrAcceptanceUnavailable
-	}
-
-	deadline := reservation.ExpiresAt.Add(-acceptanceLeaseSafetyGap)
-	if !now.Before(deadline) {
-		return nil, nil, ErrAcceptanceUnavailable
-	}
-
-	bounded, cancel := context.WithDeadline(ctx, deadline)
-	return bounded, cancel, nil
 }

@@ -34,12 +34,6 @@ database:
   max_idle_conns: 10
   conn_max_lifetime: 5m
 
-logging:
-  level:
-    root: INFO
-    org.springframework.web: DEBUG
-    org.hibernate: ERROR
-
 service:
   name: "user service"
   feature: "Enabled only for Service User"

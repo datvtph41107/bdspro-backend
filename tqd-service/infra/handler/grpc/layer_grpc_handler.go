@@ -8,8 +8,8 @@ import (
 	"context"
 	"errors"
 	"log"
-	"strings"
 	"time"
+	"tqd/infra/handler/errorresponse"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -126,7 +126,7 @@ func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLay
 
 	created, err := h.layerUsecase.Create(ctx, layer, userID, req.ReplaceLayerIds)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -142,7 +142,7 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 	// Lấy layer hiện tại để merge
 	existing, err := h.layerUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	// Chỉ update các field được phép (KHÔNG update layerUrl, styleConfig)
@@ -226,7 +226,7 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 
 	updated, err := h.layerUsecase.Update(ctx, req.Id, existing, userID)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -248,10 +248,7 @@ func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *
 	}
 	layer, err := h.layerUsecase.ToggleLayerBasicVisibility(ctx, req.Id, userID)
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -268,7 +265,7 @@ func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLay
 	}
 
 	if err := h.layerUsecase.Delete(ctx, req.Id, userID); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -285,7 +282,7 @@ func (h *LayerGrpcHandler) HardDeleteLayer(ctx context.Context, req *tqdpb.Delet
 	}
 
 	if err := h.layerUsecase.HardDelete(ctx, req.Id, userID); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	t := time.Now()
@@ -305,7 +302,7 @@ func (h *LayerGrpcHandler) GetLayer(ctx context.Context, req *tqdpb.GetLayerRequ
 
 	layer, err := h.layerUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return h.toProtoLayer(layer, true)
@@ -353,7 +350,7 @@ func (h *LayerGrpcHandler) ListLayers(ctx context.Context, req *tqdpb.ListLayers
 
 	layers, total, err := h.layerUsecase.List(ctx, filter)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	layerIDs := make([]uint64, 0, len(layers))
@@ -419,7 +416,7 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 
 	layers, total, err := h.layerUsecase.ListClient(ctx, &layerFilter)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	protoLayers := make([]*tqdpb.LayerResponse, 0, len(layers))
@@ -450,7 +447,7 @@ func (h *LayerGrpcHandler) GetClientLayer(ctx context.Context, req *tqdpb.GetCli
 
 	layer, err := h.layerUsecase.GetClientByID(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return mapper.ToProtoLayer(layer)

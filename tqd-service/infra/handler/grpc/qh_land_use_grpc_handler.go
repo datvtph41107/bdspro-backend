@@ -2,7 +2,7 @@ package handler_grpc
 
 import (
 	"context"
-	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
@@ -45,7 +45,7 @@ func (h *QHLandUseGrpcHandler) CreateLandUse(ctx context.Context, req *tqdpb.Cre
 	}
 	out, err := h.uc.Create(ctx, row)
 	if err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLandUsePB(out), nil
 }
@@ -56,7 +56,7 @@ func (h *QHLandUseGrpcHandler) CreateClientLandUse(ctx context.Context, req *tqd
 	}
 	out, err := h.uc.CreateLayerLandUse(ctx, req.LayerId, req.LandUseId)
 	if err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLandUsePB(out), nil
 }
@@ -78,7 +78,7 @@ func (h *QHLandUseGrpcHandler) CreateClientLandUse(ctx context.Context, req *tqd
 // 	}
 // 	created, skipped, err := h.uc.BatchCreate(ctx, req.LayerId, items)
 // 	if err != nil {
-// 		return nil, mapLandUseGroupError(err)
+// 		return nil, errorresponse.GRPC(ctx, err)
 // 	}
 // 	data := make([]*tqdpb.QHLandUseResponse, len(created))
 // 	for i := range created {
@@ -96,7 +96,7 @@ func (h *QHLandUseGrpcHandler) GetLandUse(ctx context.Context, req *tqdpb.GetLan
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
 	if err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLandUsePB(out), nil
 }
@@ -115,7 +115,7 @@ func (h *QHLandUseGrpcHandler) UpdateLandUse(ctx context.Context, req *tqdpb.Upd
 
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return toQHLandUsePB(out), nil
 }
@@ -125,7 +125,7 @@ func (h *QHLandUseGrpcHandler) DeleteLandUse(ctx context.Context, req *tqdpb.Del
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -161,7 +161,7 @@ func (h *QHLandUseGrpcHandler) ListClientLandUse(ctx context.Context, req *tqdpb
 	pagable := _dto.NewPagableFromGrpc(&page, &size, nil)
 	rows, total, err := h.uc.ListClientByLayer(ctx, req.LayerId, pagable)
 	if err != nil {
-		return nil, mapLandUseGroupError(err)
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	data := make([]*tqdpb.QHLandUseResponse, len(rows))
 	for i := range rows {
@@ -173,23 +173,6 @@ func (h *QHLandUseGrpcHandler) ListClientLandUse(ctx context.Context, req *tqdpb
 		Page:     int32(pagable.GetPage()),
 		PageSize: int32(pagable.GetSize()),
 	}, nil
-}
-
-func mapLandUseGroupError(err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "already has land use group") {
-		return status.Error(codes.AlreadyExists, msg)
-	}
-	if strings.Contains(msg, "already has land use") {
-		return status.Error(codes.AlreadyExists, msg)
-	}
-	if strings.Contains(msg, "not found") {
-		return status.Error(codes.NotFound, msg)
-	}
-	if strings.Contains(msg, "required") {
-		return status.Error(codes.InvalidArgument, msg)
-	}
-	return status.Error(codes.Internal, msg)
 }
 
 func toQHLandUsePB(e *qh_domain.QHLandUse) *tqdpb.QHLandUseResponse {

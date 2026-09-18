@@ -4,8 +4,12 @@ import (
 	"common/operation"
 	operationgrpc "common/operation/grpc"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"google.golang.org/protobuf/proto"
 	quotausecase "tqd/internal/usecase/quota"
+	"tqd/internal/usecase/usage"
 
 	tqdpb "pb/types/tqd"
 
@@ -58,8 +62,17 @@ func buildCommercialActionInterceptor(service *quotausecase.ActionService) grpc.
 			return nil, status.Error(codes.Internal, "commercial operation is missing")
 		}
 
+		message, ok := req.(proto.Message)
+		if !ok || message == nil {
+			return nil, status.Error(codes.InvalidArgument, "protobuf request is required")
+		}
+		payload, err := proto.MarshalOptions{Deterministic: true}.Marshal(message)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid read payload")
+		}
+		digest := sha256.Sum256(payload)
 		var response interface{}
-		err := service.Run(ctx, operationCode, func(actionCtx context.Context) error {
+		err = service.Run(ctx, operationCode, hex.EncodeToString(digest[:]), func(actionCtx context.Context) error {
 			var actionErr error
 			response, actionErr = handler(actionCtx, req)
 			return actionErr
@@ -75,6 +88,10 @@ func commercialActionStatus(err error) error {
 	var denied *quotausecase.AccessDeniedError
 	var exhausted *quotausecase.ExhaustedError
 	switch {
+	case errors.Is(err, usage.ErrReadCommandConflict):
+		return status.Error(codes.AlreadyExists, "Idempotency-Key đã dùng với dữ liệu khác")
+	case errors.Is(err, usage.ErrLegacyReadCommand):
+		return status.Error(codes.FailedPrecondition, "Thao tác cũ thiếu dấu vân tay dữ liệu; hãy bắt đầu thao tác mới")
 	case errors.As(err, &denied), errors.Is(err, quotausecase.ErrAccessDenied):
 		return status.Error(codes.PermissionDenied, "gói hiện tại không bao gồm tính năng này")
 	case errors.As(err, &exhausted), errors.Is(err, quotausecase.ErrQuotaExceeded):

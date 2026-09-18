@@ -10,6 +10,7 @@ import (
 	walletuc "payment/internal/usecase/wallet"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type WalletTransactionModel struct {
@@ -376,9 +377,12 @@ func (r *walletTransactionRepository) DeleteTransactionType(ctx context.Context,
 		}).Error
 }
 
-func (r *walletTransactionRepository) GetTransactionByCode(ctx context.Context, code string) (*wallet.WalletTransaction, error) {
+// GetTransactionByCodeForUpdate khóa giao dịch trước khi kiểm tra trạng thái.
+// Caller phải truyền transaction context và giữ khóa đến commit/rollback;
+// chỉ khóa wallet sau khi đọc trạng thái sẽ không chặn được webhook cộng trùng.
+func (r *walletTransactionRepository) GetTransactionByCodeForUpdate(ctx context.Context, code string) (*wallet.WalletTransaction, error) {
 	var model WalletTransactionModel
-	if err := dbFromContext(ctx, r.db).Where("transaction_code = ? AND is_deleted = ?", code, false).First(&model).Error; err != nil {
+	if err := dbFromContext(ctx, r.db).Clauses(clause.Locking{Strength: "UPDATE"}).Where("transaction_code = ? AND is_deleted = ?", code, false).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return WalletTransactionModelToEntity(&model), nil

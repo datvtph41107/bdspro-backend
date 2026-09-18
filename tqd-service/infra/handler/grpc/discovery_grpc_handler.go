@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"tqd/infra/handler/errorresponse"
 
 	"pb/clients"
 	tqdpb "pb/types/tqd"
@@ -69,7 +70,7 @@ func (h *DiscoveryGrpcHandler) IdentifyAtPoint(
 
 	response, err := h.service.Identify(ctx, request)
 	if err != nil {
-		return nil, discoveryError(err, "identify")
+		return nil, discoveryError(ctx, err, "identify")
 	}
 
 	result, err := h.mapper.ToProtoIdentifyResponse(response)
@@ -109,7 +110,7 @@ func (h *DiscoveryGrpcHandler) SearchDiscovery(
 	}
 
 	if err != nil {
-		return nil, discoveryError(err, "search")
+		return nil, discoveryError(ctx, err, "search")
 	}
 
 	result, err := h.mapper.ToProtoSearchResponse(response)
@@ -147,7 +148,7 @@ func (h *DiscoveryGrpcHandler) GetDiscoveryEntity(
 
 	entity, err := h.service.GetEntity(ctx, key)
 	if err != nil {
-		return nil, discoveryError(err, "get entity")
+		return nil, discoveryError(ctx, err, "get entity")
 	}
 
 	if entity == nil {
@@ -169,56 +170,7 @@ func (h *DiscoveryGrpcHandler) GetDiscoveryEntity(
 	return result, nil
 }
 
-// discoveryError chuyển application/domain error thành gRPC status error.
-//
-// Đây mới chỉ là error mapping theo thông điệp hiện có.
-// Về lâu dài nên thay bằng các typed domain error, chẳng hạn:
-//
-//   - domain.ErrInvalidPoint
-//   - domain.ErrEntityNotFound
-//   - domain.ErrAllProvidersFailed
-//
-// Khi đó không cần kiểm tra chuỗi error.
-func discoveryError(err error, operation string) error {
-	if err == nil {
-		return nil
-	}
-
-	message := strings.ToLower(err.Error())
-
-	switch {
-	case strings.Contains(message, "invalid latitude"),
-		strings.Contains(message, "invalid longitude"),
-		strings.Contains(message, "invalid canonical"),
-		strings.Contains(message, "entity id must be numeric"),
-		strings.Contains(message, "administrative entity id must be"),
-		strings.Contains(message, "unsupported administrative unit type"),
-		strings.Contains(message, "unsupported entity kind"),
-		strings.Contains(message, "query is required"):
-		return status.Error(
-			codes.InvalidArgument,
-			err.Error(),
-		)
-
-	case strings.Contains(message, "not found"):
-		return status.Error(
-			codes.NotFound,
-			err.Error(),
-		)
-
-	case strings.Contains(message, "all discovery providers failed"),
-		strings.Contains(message, "all search providers failed"):
-		return status.Error(
-			codes.Unavailable,
-			err.Error(),
-		)
-
-	default:
-		return status.Errorf(
-			codes.Internal,
-			"%s failed: %v",
-			operation,
-			err,
-		)
-	}
+// discoveryError giữ operation trong log; phân loại do adapter TQD sở hữu.
+func discoveryError(ctx context.Context, err error, operation string) error {
+	return errorresponse.GRPC(ctx, err)
 }

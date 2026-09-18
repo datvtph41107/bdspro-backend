@@ -2,6 +2,8 @@ package main
 
 import (
 	_db "common/db"
+	"common/logging"
+ logfabric "common/logging/fabric"
 	qhprorpc "common/rpc"
 	"common/rpcenv"
 	"context"
@@ -39,6 +41,8 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	defer logging.MustStart("file")()
+ logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("File-service stopped with error: %v", err)
 		os.Exit(1)

@@ -69,6 +69,7 @@ func NewRouter(deps RouterDependencies, cfg RouterConfig) *gin.Engine {
 	// Internal owned effects have their own HMAC authority and never pass
 	// through user JWT/API-key classification.
 	r.POST("/internal/v1/file/owned", deps.Files.PutOwnedFile)
+	r.GET("/internal/v1/file/owned", deps.Files.FindOwnedFile)
 
 	// Version publication is authenticated by the File-owned Hub API-key
 	// adapter inside VersionUploadHandler. Running it through JWT middleware

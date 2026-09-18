@@ -105,7 +105,7 @@ func (h *Handler) createPlanningProjectFromFolder(c *gin.Context) {
 	}
 	resp, err := tqdpb.NewQHPlanningServiceClient(h.conn).CreatePlanningProjectFromFolder(c.Request.Context(), req)
 	if err != nil {
-		httperror.WriteGRPC(c.Writer, err)
+		httperror.WriteGRPCContext(c.Request.Context(), c.Writer, err)
 		return
 	}
 	out, err := protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: false}.Marshal(resp)

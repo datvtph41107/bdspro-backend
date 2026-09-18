@@ -66,6 +66,15 @@ func (s *Service) GenerateReport(ctx context.Context, job processing.Job) (proce
 	if document.ReportID != job.ReportID || document.UserID != job.UserID || document.JobID != job.ID {
 		return processing.Output{}, errors.New("accepted report snapshot does not match claimed job")
 	}
+	// File owns the committed external effect. A retry/recovery keeps the
+	// immutable job identity and must not replace its PDF with a second render.
+	path, size, found, err := s.uploader.FindOwnedFile(ctx, processing.FileOwnerNamespace, job.ID)
+	if err != nil {
+		return processing.Output{}, fmt.Errorf("lookup generated report PDF: %w", err)
+	}
+	if found {
+		return s.output(path, uint64(size))
+	}
 
 	html, err := RenderHTML(document)
 	if err != nil {
@@ -80,7 +89,7 @@ func (s *Service) GenerateReport(ctx context.Context, job processing.Job) (proce
 	}
 
 	filename := fmt.Sprintf("qhpro-report-%d.pdf", job.ReportID)
-	path, err := s.uploader.PutOwnedFile(
+	path, err = s.uploader.PutOwnedFile(
 		ctx,
 		processing.FileOwnerNamespace,
 		job.ID,
@@ -89,8 +98,17 @@ func (s *Service) GenerateReport(ctx context.Context, job processing.Job) (proce
 		"application/pdf",
 	)
 	if err != nil {
+		// Resolve a response-loss or concurrent renderer winner through File's
+		// committed authority, while preserving conflict checks on every upload.
+		if existing, existingSize, exists, lookupErr := s.uploader.FindOwnedFile(ctx, processing.FileOwnerNamespace, job.ID); lookupErr == nil && exists {
+			return s.output(existing, uint64(existingSize))
+		}
 		return processing.Output{}, fmt.Errorf("upload generated report PDF: %w", err)
 	}
+	return s.output(path, uint64(len(pdf)))
+}
+
+func (s *Service) output(path string, size uint64) (processing.Output, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return processing.Output{}, errors.New("upload generated report PDF returned an empty path")
@@ -112,7 +130,7 @@ func (s *Service) GenerateReport(ctx context.Context, job processing.Job) (proce
 
 	return processing.Output{
 		PDFURL:   pdfURL,
-		FileSize: uint64(len(pdf)),
+		FileSize: size,
 		Format:   "pdf",
 	}, nil
 }

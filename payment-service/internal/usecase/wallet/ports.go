@@ -42,7 +42,7 @@ type WalletTransactionRepository interface {
 	CreateTransaction(ctx context.Context, transaction *walletdomain.WalletTransaction) error
 	UpdateTransaction(ctx context.Context, transaction *walletdomain.WalletTransaction) error
 	GetTransactionByDealId(ctx context.Context, dealID uint32) (*walletdomain.WalletTransaction, error)
-	GetTransactionByCode(ctx context.Context, code string) (*walletdomain.WalletTransaction, error)
+	GetTransactionByCodeForUpdate(ctx context.Context, code string) (*walletdomain.WalletTransaction, error)
 	GetTransactionsReport(ctx context.Context, req *paymentpb.ReportRequest) ([]*paymentpb.WalletTransaction, int64, int64, error)
 	ExportTransactions(ctx context.Context, req *paymentpb.ReportRequest) ([]byte, error)
 	GetDealTransactions(ctx context.Context, req *paymentpb.GetDealTransactionsRequest) ([]*paymentpb.DealTransaction, int64, error)

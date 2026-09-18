@@ -5,18 +5,25 @@
       "label": "BDSPro · Payment · Webhook Test Tunnel",
       "type": "process",
       "command": "python3",
-      "args": ["${workspaceFolder}/gateway-service/scripts/sepay-webhook-tunnel.py"],
+      "args": [
+        "${workspaceFolder}/gateway-service/ops/sepay-webhook-tunnel.py"
+      ],
       "problemMatcher": [],
-      "presentation": {"panel": "dedicated", "reveal": "always"}
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
     },
     {
       "label": "BDSPro · Payment · Configure Webhook Test",
       "type": "process",
       "command": "python3",
       "args": [
-        "${workspaceFolder}/payment-service/scripts/configure-webhook-test.py",
-        "--bank-bin", "${input:sepayTestBankBin}",
-        "--account-number", "${input:sepayTestAccountNumber}"
+        "${workspaceFolder}/payment-service/ops/configure-webhook-test.py",
+        "--bank-bin",
+        "${input:sepayTestBankBin}",
+        "--account-number",
+        "${input:sepayTestAccountNumber}"
       ],
       "problemMatcher": []
     },

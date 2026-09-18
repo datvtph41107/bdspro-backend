@@ -631,14 +631,9 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
 
-	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0)
-	updated := h.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	h.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-
-	if !updated {
-		return &tqdpb.FindParcelsByPolygonResponse{}, nil
-	}
-
+	// Metered analysis is arbitrated by the canonical idempotency/quota owner.
+	// Timestamp-based sync must not skip validation or return a charged empty
+	// response for an unrelated analysis command.
 	points, err := validatePolygonCoordinates(req)
 	if err != nil {
 		return nil, err

@@ -1912,7 +1912,7 @@ func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*
 		return nil, fmt.Errorf("get parcel info failed: %w", err)
 	}
 	if parcelInfo == nil || parcelInfo.ParcelID == 0 {
-		return nil, fmt.Errorf("parcel %d not found", parcelID)
+		return nil, nil
 	}
 
 	rows, err := u.parcelRepo.GetParcelLayerRowsV2(ctx, parcelID)

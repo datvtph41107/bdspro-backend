@@ -6,12 +6,11 @@ package wire
 import (
 	assistant_infra_client "assistant/infra/client"
 	assistant_infra_handler "assistant/infra/handler"
-	assistant_infra_rpc "assistant/infra/rpc"
 	assistant_initial "assistant/initial"
 	assistant_internal_interface_provider "assistant/internal/interface/provider"
 	assistant_internal_usecases "assistant/internal/usecases"
 	_db "common/db"
-	common_injection "common/injection"
+	injection "common/injection"
 	_provider "common/provider"
 	common_utils "common/utils"
 	"github.com/google/wire"
@@ -27,16 +26,15 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(assistant_internal_interface_provider.GeminiProvider), new(*assistant_infra_client.GeminiClient)),
 	wire.Bind(new(assistant_internal_interface_provider.HubProvider), new(*assistant_infra_client.HubClient)),
 	wire.Bind(new(assistant_internal_interface_provider.OpenAIProvider), new(*assistant_infra_client.OpenAIClient)),
-	common_injection.NewHttpClient,
+	injection.RPCClientSet,
+	injection.NewHttpClient,
 	common_utils.NewSyncUtil,
 	assistant_infra_handler.NewAssistantHandler,
 	assistant_internal_usecases.NewAssistantUsecase,
 	assistant_infra_client.NewBdsproInternalClient,
-	assistant_infra_rpc.NewBdsproRPCClient,
 	assistant_infra_client.NewDeepseekClient,
 	assistant_infra_client.NewGeminiClient,
 	assistant_infra_client.NewHubClient,
-	assistant_infra_rpc.NewHubRPCClient,
 	assistant_initial.NewInitialApp,
 	assistant_infra_client.NewOpenAIClient,
 )

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"common/logging"
 	"context"
 	"fmt"
 	"strings"
@@ -60,7 +61,7 @@ func newClient(cfg ClientConfig, interceptors ClientInterceptors) (*grpc.ClientC
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(cfg.Credentials),
 		grpc.WithConnectParams(grpc.ConnectParams{Backoff: backoffConfig}),
-		grpc.WithUnaryInterceptor(interceptors.Unary),
+		grpc.WithChainUnaryInterceptor(interceptors.Unary, logging.UnaryClient()),
 		grpc.WithStreamInterceptor(interceptors.Stream),
 	}
 	if len(cfg.DefaultCallOptions) > 0 {

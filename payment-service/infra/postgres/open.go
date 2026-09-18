@@ -1,28 +1,17 @@
 package postgres
 
 import (
+	_db "common/db"
 	"fmt"
-	"log"
-	"os"
-	"time"
 
 	paymentconfig "payment/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func Open(cfg paymentconfig.DatabaseConfig) (*gorm.DB, func(), error) {
-	gormConfig := &gorm.Config{Logger: logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             200 * time.Millisecond,
-			LogLevel:                  logger.Warn,
-			IgnoreRecordNotFoundError: true,
-			Colorful:                  false,
-		},
-	)}
+	gormConfig := &gorm.Config{Logger: _db.NewSQLLogger()}
 	db, err := gorm.Open(postgres.New(postgres.Config{DSN: cfg.DSN, PreferSimpleProtocol: true}), gormConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("open Payment PostgreSQL: %w", err)

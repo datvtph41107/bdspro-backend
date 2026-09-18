@@ -3,6 +3,9 @@
 package main
 
 import (
+	_db "common/db"
+	"common/logging"
+	logfabric "common/logging/fabric"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +22,8 @@ import (
 )
 
 func main() {
+	defer logging.MustStart("crm-payment-completed-consumer")()
+	logfabric.Bridge()
 	if err := run(); err != nil {
 		log.Printf("payment completed consumer stopped: %v", err)
 		os.Exit(1)
@@ -36,7 +41,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: _db.NewSQLLogger()})
 	if err != nil {
 		return fmt.Errorf("open crm database: %w", err)
 	}

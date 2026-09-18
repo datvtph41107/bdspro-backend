@@ -95,6 +95,7 @@ func (recorder *HTTPRecorder) RecordHTTPRequest(
 
 	attrs = append(
 		attrs,
+		slog.Bool("request_failed", result.StatusCode >= 400),
 		slog.String(
 			"http_method",
 			result.Method,

@@ -33,6 +33,12 @@ func TestResultUsesQuota(t *testing.T) {
 		t.Fatal("expected quota to be required")
 	}
 
+	result.Limit = 0
+	result.Period = PeriodNone
+	if result.IsValid() {
+		t.Fatal("finite metered access with zero allowance must not bypass accounting")
+	}
+
 	result.Unlimited = true
 	result.Limit = 0
 	if result.UsesQuota() {

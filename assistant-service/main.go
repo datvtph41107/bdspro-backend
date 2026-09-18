@@ -2,6 +2,8 @@ package main
 
 import (
 	"assistant/cmd/grpc"
+	"common/logging"
+ logfabric "common/logging/fabric"
 	"fmt"
 	"log"
 	"time"
@@ -14,6 +16,8 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	defer logging.MustStart("assistant")()
+ logfabric.Bridge()
 	// Set timezone về UTC (múi 0)
 	time.Local = time.UTC
 	fmt.Printf("\n🚀 Timezone: %s", time.Now())

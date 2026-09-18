@@ -18,6 +18,7 @@ type PDFEngine interface {
 
 // Uploader is the narrow File-service capability required after rendering.
 type Uploader interface {
+	FindOwnedFile(ctx context.Context, ownerNamespace, ownerKey string) (path string, size int64, found bool, err error)
 	PutOwnedFile(
 		ctx context.Context,
 		ownerNamespace string,

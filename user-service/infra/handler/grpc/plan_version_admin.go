@@ -1,9 +1,14 @@
 package grpc
 
 import (
+	_errors "common/errors"
+	"common/requestlog"
+	"common/validation"
 	"context"
 	"errors"
-	"strings"
+	"fmt"
+	"log/slog"
+	"runtime"
 	"time"
 
 	userpb "pb/types/user"
@@ -43,7 +48,7 @@ func (h *PlanVersionAdminHandler) CreatePlanVersionDraft(ctx context.Context, re
 	}
 	aggregate, err := h.service.CreateDraft(ctx, command)
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return planVersionToProto(aggregate), nil
 }
@@ -70,7 +75,7 @@ func (h *PlanVersionAdminHandler) ListPlanVersions(
 		Status:      req.GetStatus(),
 	})
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	response := &userpb.ListCatalogPlanVersionsResponse{
 		PlanVersions: make([]*userpb.CatalogPlanVersion, 0, len(page.PlanVersions)),
@@ -98,7 +103,7 @@ func (h *PlanVersionAdminHandler) GetPlanVersion(
 	}
 	aggregate, err := h.service.GetPlanVersion(ctx, req.GetPlanVersionId())
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return planVersionToProto(aggregate), nil
 }
@@ -120,7 +125,7 @@ func (h *PlanVersionAdminHandler) UpdatePlanVersionDraft(ctx context.Context, re
 	}
 	aggregate, err := h.service.UpdateDraft(ctx, req.GetPlanVersionId(), command)
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return planVersionToProto(aggregate), nil
 }
@@ -137,7 +142,7 @@ func (h *PlanVersionAdminHandler) ValidatePlanVersionDraft(ctx context.Context, 
 	}
 	checksum, err := h.service.ValidateDraft(ctx, req.GetPlanVersionId())
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return &userpb.ValidateCatalogPlanVersionDraftResponse{Valid: true, TermsChecksum: checksum}, nil
 }
@@ -154,7 +159,7 @@ func (h *PlanVersionAdminHandler) DeletePlanVersionDraft(ctx context.Context, re
 		return nil, status.Error(codes.InvalidArgument, "plan version id is required")
 	}
 	if err := h.service.DeleteDraft(ctx, req.GetPlanVersionId(), actorID); err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -197,11 +202,11 @@ func (h *PlanVersionAdminHandler) PublishPlanVersion(
 		PublishedAt:    publishedAt,
 	})
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	aggregate, err := h.service.GetPlanVersion(ctx, result.PlanVersionID)
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return &userpb.PublishCatalogPlanVersionResponse{
 		PlanVersion:   planVersionToProto(aggregate),
@@ -224,7 +229,7 @@ func (h *PlanVersionAdminHandler) RetirePlanVersion(ctx context.Context, req *us
 	}
 	aggregate, err := h.service.Retire(ctx, req.GetPlanVersionId(), actorID)
 	if err != nil {
-		return nil, planServiceError(err)
+		return nil, planServiceError(ctx, err)
 	}
 	return planVersionToProto(aggregate), nil
 }
@@ -275,7 +280,12 @@ func planAuthorizationError(err error) error {
 	return status.Error(codes.Internal, "plan authorization failed")
 }
 
-func planServiceError(err error) error {
+func planServiceError(ctx context.Context, err error) error {
+	pc, file, line, _ := runtime.Caller(1)
+	handlerName := ""
+	if f := runtime.FuncForPC(pc); f != nil {
+		handlerName = f.Name()
+	}
 	switch {
 	case errors.Is(err, admin.ErrPlanVersionNotFound),
 		errors.Is(err, publish.ErrPlanVersionNotFound):
@@ -290,16 +300,24 @@ func planServiceError(err error) error {
 	case errors.Is(err, publish.ErrPlanVersionNotDraft),
 		errors.Is(err, publish.ErrParentRetired):
 		return status.Error(codes.FailedPrecondition, err.Error())
+	// The publication owner rejects elapsed schedules; transport must expose
+	// this as an actionable request error rather than a generic service failure.
+	case errors.Is(err, publish.ErrPublicationWindowElapsed):
+		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Is(err, publish.ErrConcurrentPublish):
 		return status.Error(codes.Aborted, "plan version changed; refresh and try again")
 	}
 	if statusError, ok := status.FromError(err); ok {
 		return statusError.Err()
 	}
-	if strings.Contains(err.Error(), "required") || strings.Contains(err.Error(), "invalid") ||
-		strings.Contains(err.Error(), "page size") {
-		return status.Error(codes.InvalidArgument, err.Error())
+	if mapped, ok := _errors.ValidationStatus(err, "user.catalog"); ok {
+		v, _ := validation.As(err)
+		requestlog.FromContext(ctx, nil).WarnContext(ctx, "Dữ liệu gói không hợp lệ", "category", "application", "event_name", "catalog.validation.failed", "handler", handlerName, "error_reason", v.Reason, "field", v.Field, "error_source", v.Source)
+		return mapped
 	}
+	// Ghi nguyên nhân tại boundary có context; không trả SQL/địa chỉ nội bộ cho client.
+	requestlog.FromContext(ctx, nil).Log(ctx, slog.LevelError, "Không thể quản trị phiên bản gói", "category", "application", "event_name", "catalog.operation.failed", "handler", handlerName, "error_source", fmt.Sprintf("%s:%d", file, line), "error", err.Error())
+
 	return status.Error(codes.Internal, "plan version administration failed")
 }
 

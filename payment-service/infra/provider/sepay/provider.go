@@ -13,8 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/subiz/vietqr"
 	domain "payment/internal/domain/payment"
+
+	"github.com/subiz/vietqr"
 )
 
 const (
@@ -80,7 +81,7 @@ func (p *Provider) CreateAttempt(ctx context.Context, order domain.Order, method
 	}
 	expires := order.ExpiresAt.UTC()
 	if method != domain.PaymentMethodCard && p.checkout.BankTransferFlow == BankTransferFlowVietQR {
-		payload, err := p.checkout.vietQRDataURI(order)
+		payload, err := p.checkout.vietQRPayload(order)
 		if err != nil {
 			return domain.ProviderAttempt{}, domain.ErrProviderUnavailable
 		}
@@ -150,11 +151,10 @@ func (c CheckoutConfig) bankTransferEnabled() bool {
 	return true
 }
 
-// vietQRDataURI renders the payment instruction inside Payment Service. Bank
-// identity, account number, amount and order reference never leave the process
-// to reach a public QR-image API. Provider webhook evidence remains the only
-// authority that can settle the order.
-func (c CheckoutConfig) vietQRDataURI(order domain.Order) (string, error) {
+// vietQRPayload creates the canonical EMV payload. The client renders this
+// string as a QR code; provider webhook evidence remains the only authority
+// that can settle the order.
+func (c CheckoutConfig) vietQRPayload(order domain.Order) (string, error) {
 	if order.Terms.Price.Currency != domain.CurrencyVND || order.Terms.Price.AmountMinor <= 0 ||
 		order.Terms.Price.AmountMinor > 9_999_999_999_999 {
 		return "", fmt.Errorf("unsupported VietQR amount")
@@ -163,17 +163,14 @@ func (c CheckoutConfig) vietQRDataURI(order domain.Order) (string, error) {
 		return "", fmt.Errorf("invalid VietQR beneficiary")
 	}
 	note := strings.TrimSpace(order.Reference)
-	if len(note) == 0 || len(note) > 25 || vietqr.Ascii(note) != note {
+	if !domain.IsCanonicalOrderReference(note) {
 		return "", fmt.Errorf("invalid VietQR payment reference")
 	}
-	png, err := vietqr.GeneratePNG(float64(order.Terms.Price.AmountMinor), c.BankBIN, c.BankAccountNumber, note)
-	if err != nil {
-		return "", fmt.Errorf("render VietQR: %w", err)
+	payload := vietqr.Generate(float64(order.Terms.Price.AmountMinor), c.BankBIN, c.BankAccountNumber, note)
+	if strings.TrimSpace(payload) == "" {
+		return "", fmt.Errorf("generate VietQR: empty payload")
 	}
-	if len(png) == 0 {
-		return "", fmt.Errorf("render VietQR: empty PNG")
-	}
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(png), nil
+	return payload, nil
 }
 
 func validDigits(value string, minimum, maximum int) bool {

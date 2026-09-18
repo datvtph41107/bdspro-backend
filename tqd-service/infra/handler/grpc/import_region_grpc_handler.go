@@ -6,7 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"log"
-	"strings"
+	"tqd/infra/handler/errorresponse"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status" // Đây là package status của gRPC
@@ -45,7 +45,7 @@ func (h *ImportGrpcHandler) PreviewImport(ctx context.Context, req *tqdpb.Previe
 	result, err := h.importUsecase.Preview(ctx, req.GeoJson, req.LayerId)
 	if err != nil {
 		log.Printf("[PreviewImport] Error: %v", err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return h.importMapper.ToProtoPreviewResponse(result), nil
@@ -53,7 +53,7 @@ func (h *ImportGrpcHandler) PreviewImport(ctx context.Context, req *tqdpb.Previe
 
 // ImportGeoJson - Upload file JSON/GeoJSON/NDJSON; trả processing, xử lý nền theo chunk
 func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.ImportGeoJsonRequest) (*tqdpb.ImportGeoJsonResponse, error) {
-	log.Println("ImportGeoJson", req)
+	// Không ghi payload/file lên log; interceptor ghi method và thời gian xử lý.
 	if len(req.GetFileContent()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "file_content is required")
 	}
@@ -84,13 +84,7 @@ func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.Import
 	result, err := h.importUsecase.EnqueueImportFromFile(ctx, importReq)
 	if err != nil {
 		log.Printf("[ImportGeoJson] Error: %v", err)
-		if strings.Contains(err.Error(), "already has an import") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	log.Printf("[ImportGeoJson] Enqueued batchId=%s status=%s", result.BatchID, result.Status)
@@ -108,7 +102,7 @@ func (h *ImportGrpcHandler) GetImportBatchStatus(ctx context.Context, req *tqdpb
 
 	batchStatus, err := h.importUsecase.GetBatchStatus(ctx, req.BatchId) // ĐỔI TÊN BIẾN từ status -> batchStatus
 	if err != nil {
-		return nil, status.Error(codes.NotFound, err.Error()) // DÙNG status.Error của gRPC
+		return nil, errorresponse.GRPC(ctx, err) // DÙNG status.Error của gRPC
 	}
 
 	return h.importMapper.ToProtoBatchStatusResponse(batchStatus), nil
@@ -124,7 +118,7 @@ func (h *ImportGrpcHandler) RollbackImport(ctx context.Context, req *tqdpb.Rollb
 
 	deletedCount, err := h.importUsecase.Rollback(ctx, req.BatchId)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return &tqdpb.RollbackImportResponse{
@@ -144,10 +138,7 @@ func (h *ImportGrpcHandler) ListImportRegionErrors(ctx context.Context, req *tqd
 
 	rows, total, err := h.importUsecase.ListImportRegionErrors(ctx, req.LayerId, pagable)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 
 	return h.importMapper.ToProtoImportErrors(rows, total, int32(pagable.GetPage()), int32(pagable.GetSize())), nil
@@ -164,19 +155,7 @@ func (h *ImportGrpcHandler) RetryImportError(ctx context.Context, req *tqdpb.Ret
 	}
 	res, err := h.importUsecase.RetryImportError(ctx, req.ErrorId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-		if strings.Contains(err.Error(), "already in progress") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "cannot be retried") {
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		}
-		if strings.Contains(err.Error(), "could not be locked") {
-			return nil, status.Error(codes.Aborted, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, errorresponse.GRPC(ctx, err)
 	}
 	return h.importMapper.ToProtoRetryImportErrorResponse(res), nil
 }

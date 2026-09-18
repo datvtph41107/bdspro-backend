@@ -4,6 +4,7 @@
 package admin
 
 import (
+	"common/validation"
 	"context"
 	"errors"
 	"fmt"
@@ -164,6 +165,7 @@ func (s *Service) ConfirmFunds(ctx context.Context, command ConfirmFundsCommand)
 	command.CommandKey = strings.TrimSpace(command.CommandKey)
 	command.ActorID = strings.TrimSpace(command.ActorID)
 	command.Reason = strings.TrimSpace(command.Reason)
+
 	if s == nil || s.repository == nil || s.settlement == nil || s.now == nil ||
 		command.OrderID == 0 || command.CommandKey == "" || command.ActorID == "" || command.Reason == "" {
 		return ConfirmFundsResult{}, payment.ErrInvalidCommand
@@ -185,26 +187,48 @@ func (s *Service) ConfirmFunds(ctx context.Context, command ConfirmFundsCommand)
 	}
 
 	evidence := strings.Join([]string{
-		payment.CommandEffectManualFundsConfirmation, fmt.Sprintf("%d", command.OrderID),
-		command.CommandKey, command.ActorID, command.Reason, order.Order.Reference,
+		payment.CommandEffectManualFundsConfirmation,
+		fmt.Sprintf("%d", command.OrderID),
+		command.CommandKey,
+		command.ActorID,
+		command.Reason,
+		order.Order.Reference,
 	}, "\x00")
+
 	result, err := s.settlement.RecordOperatorFundsConfirmation(ctx, payment.ProviderEvent{
-		Provider: "manual_admin", TransactionID: fmt.Sprintf("order.%d.%s", command.OrderID, command.CommandKey),
-		Reference: order.Order.Reference, Amount: order.Order.Terms.Price, OccurredAt: now,
-		Type: payment.ProviderFundsConfirmed, EvidenceHash: evidence,
+		Provider: "manual_admin",
+		TransactionID: fmt.Sprintf(
+			"order.%d.%s",
+			command.OrderID,
+			command.CommandKey,
+		),
+		Reference:    order.Order.Reference,
+		Amount:       order.Order.Terms.Price,
+		OccurredAt:   now,
+		Type:         payment.ProviderFundsConfirmed,
+		EvidenceHash: evidence,
 	}, payment.CommandEffect{
-		EffectType: payment.CommandEffectManualFundsConfirmation, ScopeID: command.OrderID,
-		CommandKey: command.CommandKey, ActorID: command.ActorID, Reason: command.Reason,
-		Outcome: "submitted", CreatedAt: now,
+		EffectType: payment.CommandEffectManualFundsConfirmation,
+		ScopeID:    command.OrderID,
+		CommandKey: command.CommandKey,
+		ActorID:    command.ActorID,
+		Reason:     command.Reason,
+		Outcome:    "submitted", CreatedAt: now,
 	})
 	if err != nil {
 		return ConfirmFundsResult{}, err
 	}
+
 	updated, err := s.repository.GetAdminOrder(ctx, command.OrderID)
 	if err != nil {
 		return ConfirmFundsResult{}, err
 	}
-	return ConfirmFundsResult{Order: updated, Changed: !result.Replay, Replay: result.Replay}, nil
+
+	return ConfirmFundsResult{
+		Order:   updated,
+		Changed: !result.Replay,
+		Replay:  result.Replay,
+	}, nil
 }
 
 func normalizePage(page, pageSize uint32) (uint32, uint32, error) {
@@ -215,7 +239,7 @@ func normalizePage(page, pageSize uint32) (uint32, uint32, error) {
 		pageSize = 20
 	}
 	if pageSize > 100 {
-		return 0, 0, fmt.Errorf("page size must be between 1 and 100")
+		return 0, 0, validation.New("page_size", "PAGE_SIZE_INVALID", "page size must be between 1 and 100")
 	}
 	return page, pageSize, nil
 }

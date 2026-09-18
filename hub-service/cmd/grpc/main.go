@@ -2,6 +2,7 @@ package cmd_grpc
 
 import (
 	common_db "common/db"
+	"common/logging"
 	_middleware "common/middleware"
 	process "common/process"
 	"context"
@@ -63,6 +64,7 @@ var GrpcCmd = &cobra.Command{
 
 		interceptors := grpc.ChainUnaryInterceptor(
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			logging.UnaryServer(),
 			app.ApiKeyInterceptor,
 			_middleware.UnaryRecoveryInterceptor(app.Logger),
 		)

@@ -3,6 +3,7 @@ package memoryusage
 import (
 	commonmetering "common/metering"
 	"context"
+	"errors"
 	"sync"
 	"time"
 	"tqd/internal/access"
@@ -13,20 +14,26 @@ import (
  * Store là in-memory usage store dùng cho test và đọc flow.
  */
 type Store struct {
-	mu     sync.Mutex
-	events map[string]usage.Event
+	mu       sync.Mutex
+	events   map[string]usage.Event
+	commands map[readCommandKey]readCommandState
 }
 
 func NewStore() *Store {
-	return &Store{events: make(map[string]usage.Event)}
+	return &Store{events: make(map[string]usage.Event), commands: make(map[readCommandKey]readCommandState)}
 }
 
 func (s *Store) SaveUsageEvent(
 	ctx context.Context,
 	event usage.Event,
 ) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
 	if !event.IsValid() {
-		return false, nil
+		// Giữ cùng ngữ nghĩa với PostgreSQL: dữ liệu sai là lỗi, không phải
+		// replay thành công. Test double không được che lỗi production.
+		return false, errors.New("usage event is invalid")
 	}
 
 	s.mu.Lock()
@@ -42,6 +49,12 @@ func (s *Store) HasUsageForReservation(
 	ctx context.Context,
 	reservationID string,
 ) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	if reservationID == "" {
+		return false, nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, event := range s.events {

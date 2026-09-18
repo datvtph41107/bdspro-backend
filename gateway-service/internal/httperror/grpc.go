@@ -3,10 +3,13 @@
 package httperror
 
 import (
+	_errors "common/errors"
+	"common/request"
+	"common/requestlog"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -26,58 +29,71 @@ var (
 
 // WriteGRPC translates one downstream gRPC error into the Gateway HTTP contract.
 func WriteGRPC(w http.ResponseWriter, err error) {
+	WriteGRPCContext(context.Background(), w, err)
+}
+
+// WriteGRPCContext chỉ đổi giao thức; không đoán nghiệp vụ từ message.
+// code giữ namespace gRPC 1..16; legacy_code được giữ riêng để không trộn hai bộ mã.
+func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	log.Println("Gateway downstream gRPC error", err)
-
 	grpcErr, ok := status.FromError(err)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error": "Internal Server Error",
-		})
-		return
+	if !ok || grpcErr.Code() == codes.OK {
+		grpcErr = status.New(codes.Internal, "internal server error")
 	}
-
+	code := grpcErr.Code()
+	response := map[string]interface{}{}
 	for _, detail := range grpcErr.Details() {
 		if info, ok := detail.(*sharepb.ErrorResponse); ok {
-			fmt.Printf("Custom code = %d, message = %s\n", info.Code, info.Message)
-			// Existing client contract: business errors are returned with HTTP 200
-			// and clients inspect the response body code.
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
-				"code":    info.Code,
-				"message": info.Message,
-				"second":  info.Second,
-			})
-			return
+			// Lỗi HTTP cũ được nâng đúng transport status; không còn trả 200 khi lỗi.
+			code = _errors.RPCCodeForHTTP(info.Code)
+			response["legacy_code"] = info.Code
+			response["second"] = info.Second
 		}
 	}
-
-	w.WriteHeader(statusFromCode(grpcErr.Code()))
-	response := map[string]interface{}{
-		"code":    grpcErr.Code(),
-		"message": publicMessage(grpcErr.Code(), grpcErr.Message()),
+	httpStatus := statusFromCode(code)
+	response["code"] = code
+	response["message"] = publicMessage(code, grpcErr.Message())
+	response["status"] = httpStatus
+	response["reason"] = code.String()
+	requestID, _ := request.RequestIDFromContext(ctx)
+	operationID, _ := request.OperationIDFromContext(ctx)
+	if requestID == "" {
+		requestID = w.Header().Get("X-Request-Id")
 	}
-	for _, detail := range grpcErr.Details() {
-		switch value := detail.(type) {
-		case *errdetails.BadRequest:
-			violations := make([]map[string]string, 0, len(value.FieldViolations))
-			for _, violation := range value.FieldViolations {
-				violations = append(violations, map[string]string{
-					"field": violation.Field,
-					"error": violation.Description,
-				})
+	if operationID == "" {
+		operationID = w.Header().Get("X-Operation-Id")
+	}
+	if requestID != "" {
+		response["request_id"] = requestID
+	}
+	if operationID != "" {
+		response["operation_id"] = operationID
+	}
+	// Chỉ business 4xx được mang detail công khai; không lộ metadata hạ tầng ở 5xx.
+	if httpStatus < 500 {
+		for _, detail := range grpcErr.Details() {
+			switch value := detail.(type) {
+			case *errdetails.BadRequest:
+				violations := make([]map[string]string, 0, len(value.FieldViolations))
+				for _, violation := range value.FieldViolations {
+					violations = append(violations, map[string]string{"field": violation.Field, "error": violation.Description})
+				}
+				response["errors"] = violations
+			case *errdetails.ErrorInfo:
+				response["reason"] = value.Reason
+				response["domain"] = value.Domain
+				response["metadata"] = value.Metadata
 			}
-			response["errors"] = violations
-		case *errdetails.ErrorInfo:
-			// Preserve owner-provided semantic error data so HTTP clients can
-			// present business states without parsing a human message. Gateway
-			// translates transport only and does not interpret the metadata.
-			response["reason"] = value.Reason
-			response["domain"] = value.Domain
-			response["metadata"] = value.Metadata
 		}
 	}
+	level := slog.LevelWarn
+	if httpStatus >= 500 {
+		level = slog.LevelError
+	}
+	route, _ := runtime.HTTPPathPattern(ctx)
+	method, _ := runtime.RPCMethod(ctx)
+	requestlog.FromContext(ctx, nil).Log(ctx, level, "Downstream request rejected", "http_route", route, "grpc_method", method, "category", "dependency", "event_name", "gateway.downstream.failed", "grpc_code", code.String(), "http_status_code", httpStatus, "error_reason", response["reason"], "error_domain", response["domain"])
+	w.WriteHeader(httpStatus)
 	_ = json.NewEncoder(w).Encode(response)
 }
 
@@ -132,38 +148,9 @@ func friendlyUpstreamBusyMessage(msg string) (string, bool) {
 	return "máy chủ đang bận vui lòng thử lại sau", true
 }
 
-func statusFromCode(code codes.Code) int {
-	switch code {
-	case codes.InvalidArgument:
-		return http.StatusBadRequest
-	case codes.Unauthenticated:
-		return http.StatusUnauthorized
-	case codes.PermissionDenied:
-		return http.StatusForbidden
-	case codes.NotFound:
-		return http.StatusNotFound
-	case codes.AlreadyExists:
-		return http.StatusConflict
-	case codes.Aborted:
-		return http.StatusConflict
-	case codes.FailedPrecondition:
-		return http.StatusPreconditionFailed
-	case codes.ResourceExhausted:
-		return http.StatusTooManyRequests
-	case codes.Canceled:
-		return http.StatusRequestTimeout
-	case codes.DeadlineExceeded:
-		return http.StatusGatewayTimeout
-	case codes.Unimplemented:
-		return http.StatusNotImplemented
-	case codes.Unavailable:
-		return http.StatusServiceUnavailable
-	default:
-		return http.StatusInternalServerError
-	}
-}
+func statusFromCode(code codes.Code) int { return _errors.HTTPStatusForRPC(code) }
 
-// HandleGRPC adapts WriteGRPC to grpc-gateway's error-handler contract.
-func HandleGRPC(_ context.Context, _ *runtime.ServeMux, _ runtime.Marshaler, w http.ResponseWriter, _ *http.Request, err error) {
-	WriteGRPC(w, err)
+// HandleGRPC giữ context đã bind từ HTTP để truy vết request xuyên service.
+func HandleGRPC(ctx context.Context, _ *runtime.ServeMux, _ runtime.Marshaler, w http.ResponseWriter, _ *http.Request, err error) {
+	WriteGRPCContext(ctx, w, err)
 }

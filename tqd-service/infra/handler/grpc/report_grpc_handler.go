@@ -166,14 +166,10 @@ func (h *ReportGrpcHandler) DownloadReport(
 		return nil, _errors.ReturnError(404, "report not found")
 	}
 
-	// TODO: Implement actual file download
-	// Currently returns placeholder
-
-	return &tqdpb.DownloadReportResponse{
-		FileContent: []byte{},
-		ContentType: "application/pdf",
-		FileName:    "report.pdf",
-	}, nil
+	// Không trả về PDF rỗng giả. Việc tải file phải đi qua file-service
+	// canonical; nếu adapter chưa được nối thì báo lỗi rõ ràng để client
+	// không ghi nhận một lần tải thành công nhưng không có dữ liệu.
+	return nil, _errors.ReturnError(501, "report download is not available")
 }
 
 // =====================================================

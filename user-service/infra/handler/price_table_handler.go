@@ -3,12 +3,12 @@ package handler
 import (
 	_dto "common/domain/dto"
 	_err "common/domain/err"
+	_errors "common/errors"
 	"context"
 	pb "pb/types/user"
 	"user/infra/mapper"
 	"user/internal/usecases"
 
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -47,7 +47,7 @@ func (h *PriceTableHandler) CreatePriceTable(ctx context.Context, req *pb.Create
 	result, err := h.priceTableUsecase.Create(ctx, entity)
 	if err != nil {
 		if errDTO, ok := err.(*_err.ErrorDTO); ok {
-			return nil, status.Error(codes.Code(errDTO.Code), errDTO.Message)
+			return nil, status.Error(_errors.RPCCodeForHTTP(int32(errDTO.Code)), errDTO.Message)
 		}
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (h *PriceTableHandler) UpdatePriceTable(ctx context.Context, req *pb.Update
 	result, err := h.priceTableUsecase.Update(ctx, req.Id, entity)
 	if err != nil {
 		if errDTO, ok := err.(*_err.ErrorDTO); ok {
-			return nil, status.Error(codes.Code(errDTO.Code), errDTO.Message)
+			return nil, status.Error(_errors.RPCCodeForHTTP(int32(errDTO.Code)), errDTO.Message)
 		}
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (h *PriceTableHandler) DeletePriceTable(ctx context.Context, req *pb.Delete
 	_, err := h.priceTableUsecase.Delete(ctx, req.Id)
 	if err != nil {
 		if errDTO, ok := err.(*_err.ErrorDTO); ok {
-			return nil, status.Error(codes.Code(errDTO.Code), errDTO.Message)
+			return nil, status.Error(_errors.RPCCodeForHTTP(int32(errDTO.Code)), errDTO.Message)
 		}
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (h *PriceTableHandler) GetPriceTableById(ctx context.Context, req *pb.GetPr
 	result, err := h.priceTableUsecase.GetByID(ctx, req.Id)
 	if err != nil {
 		if errDTO, ok := err.(*_err.ErrorDTO); ok {
-			return nil, status.Error(codes.Code(errDTO.Code), errDTO.Message)
+			return nil, status.Error(_errors.RPCCodeForHTTP(int32(errDTO.Code)), errDTO.Message)
 		}
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (h *PriceTableHandler) GetPriceTableList(ctx context.Context, req *pb.GetPr
 	entities, total, err := h.priceTableUsecase.GetList(ctx, pagable)
 	if err != nil {
 		if errDTO, ok := err.(*_err.ErrorDTO); ok {
-			return nil, status.Error(codes.Code(errDTO.Code), errDTO.Message)
+			return nil, status.Error(_errors.RPCCodeForHTTP(int32(errDTO.Code)), errDTO.Message)
 		}
 		return nil, err
 	}

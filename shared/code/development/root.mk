@@ -333,7 +333,7 @@ verify-backend: env-check verify-config-isolation verify-migrations
 	if rg -n 'docker compose.*(up|restart).*\b(auth|user|organization|payment|tqd|notification|file|gateway|hub|assistant)\b' shared/code/development/native-stack.sh >/dev/null; then \
 	  echo 'Native supervisor không được khởi chạy application container' >&2; status=1; \
 	fi; \
-	rg -q '^      RPC_USER_ADDRESS: user:8201$$' "$(COMPOSE_FILE)" || \
+	rg -q '^[[:space:]]*RPC_USER_ADDRESS:[[:space:]]*user:8201$$' "$(COMPOSE_FILE)" || \
 	  { echo 'Compose Auth phải gọi User qua service DNS user:8201' >&2; status=1; }; \
 	for service in $(CORE_SERVICES); do \
 	  for retired in scripts experiments; do \
@@ -701,8 +701,9 @@ runtime-value-chain-acceptance: provision-acceptance-admin
 	  export QHPRO_ACCEPTANCE_PHONE="039$${phone_suffix}"; \
 	  export QHPRO_ACCEPTANCE_EMAIL="qhpro-$${run_id}@e.invalid"; \
 	  docker compose --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" --profile acceptance run --rm user-client-test-data; \
+	  export QHPRO_ACCEPTANCE_OUTPUT_DIR="$(CURDIR)/.tmp/development/acceptance-current"; \
 	  cd integration-test; \
-	  QHPRO_RUNTIME_SMOKE=1 "$(QHPRO_GO)" test -run '^TestQHPROValueChainRuntime$$' -count=1 -v
+	  QHPRO_RUNTIME_SMOKE=1 "$(QHPRO_GO)" test -run '^TestQHPRO(ValueChain|SubscriptionLifecycle)Runtime$$' -count=1 -v
 
 # Không gắn acceptance này vào verify-runtime-backend: fresh migrations chỉ seed catalog và
 # permission, không được giả lập giao dịch/subscription/usage của profile 1.
@@ -729,3 +730,13 @@ clean-backend:
 # CLOSED chỉ có nghĩa khi code gate, runtime topology, customer value chain và
 # operator IAM/projection cùng PASS trong một lần chạy.
 accept-backend: accept-code-backend verify-runtime-backend runtime-notification-broker-recovery runtime-value-chain-acceptance runtime-admin-acceptance
+
+# Một viewer đọc config chung; không grep/đoán level từ text log.
+LOG_CONFIG ?= $(CURDIR)/logging.yml
+REQUEST_ID ?=
+LOG_LEVEL ?=
+LOG_CATEGORY ?=
+log-view:
+	@GOWORK="$(CURDIR)/go.work" go run ./shared/common/cmd/logs -config "$(LOG_CONFIG)" -service "$(SERVICE)" -request-id "$(REQUEST_ID)" -level "$(LOG_LEVEL)" -category "$(LOG_CATEGORY)"
+
+.PHONY: log-view

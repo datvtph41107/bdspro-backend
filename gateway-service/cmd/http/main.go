@@ -46,10 +46,8 @@ var HttpCmd = &cobra.Command{
 			return fmt.Errorf("load gateway runtime config: %w", err)
 		}
 		port := strconv.Itoa(runtimeConfig.Server.Port)
-		env := runtimeConfig.Environment
-		// Containers and native processes share one logging contract: stdout
-		// and stderr. Retention/rotation belongs to the runtime platform, never
-		// to a hidden file under the application working directory.
+		// Gin diagnostics đi ra stdout; structured request logs dùng logger process
+		// đã cấu hình tại main theo logging.yml (native) hoặc stdout (container).
 		logOutput := os.Stdout
 
 		gin.DefaultWriter = logOutput
@@ -60,20 +58,7 @@ var HttpCmd = &cobra.Command{
 			),
 		)
 
-		logger :=
-			slog.New(
-				slog.NewJSONHandler(
-					logOutput,
-					&slog.HandlerOptions{
-						Level: slog.LevelInfo,
-					},
-				),
-			).With(
-				"service_name",
-				"gateway-service",
-				"environment",
-				env,
-			)
+		logger := slog.Default().With("category", "http")
 
 		httpRecorder :=
 			_observability.

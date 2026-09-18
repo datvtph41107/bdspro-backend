@@ -49,6 +49,10 @@ func (f *fakeFileOperations) PutOwnedFile(
 	return filecontent.SavedFile{}, nil
 }
 
+func (f *fakeFileOperations) FindOwnedFile(context.Context, string, string) (filecontent.SavedFile, bool, error) {
+	return f.saved, f.saved.Path != "", f.err
+}
+
 func TestUploadFilePreservesPublicHTTPContract(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

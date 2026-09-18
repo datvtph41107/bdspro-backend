@@ -6,13 +6,6 @@ server:
   name: auth-service
   tcp_port: 8216
 
-logging:
-  level:
-    root: INFO
-    org.springframework.web: DEBUG
-    org.hibernate: ERROR
-
-
 service:
   name: "auth service"
   feature: "Enabled only for Service Auth"

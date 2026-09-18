@@ -2,13 +2,13 @@ package sepay
 
 import (
 	"context"
-	"encoding/base64"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/subiz/vietqr"
 	domain "payment/internal/domain/payment"
 )
 
@@ -43,7 +43,7 @@ func TestUnconfiguredGatewayKeepsLegacyBankWebhookFlow(t *testing.T) {
 	require.False(t, New("sepay").Supports(domain.PaymentMethodCard))
 }
 
-func TestVietQRAttemptRendersPaymentInstructionInsidePaymentService(t *testing.T) {
+func TestVietQRAttemptReturnsCanonicalPayloadForClientRendering(t *testing.T) {
 	t.Parallel()
 	p := New("sepay", CheckoutConfig{
 		// Existing hosted credentials must not override the selected QR flow.
@@ -59,13 +59,8 @@ func TestVietQRAttemptRendersPaymentInstructionInsidePaymentService(t *testing.T
 	require.NoError(t, err)
 	require.Equal(t, domain.NextActionDisplayQR, attempt.NextAction.Kind)
 	require.Empty(t, attempt.NextAction.RedirectURL)
-	require.True(t, strings.HasPrefix(attempt.NextAction.QRPayload, "data:image/png;base64,"))
-
-	png, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(attempt.NextAction.QRPayload, "data:image/png;base64,"))
-	require.NoError(t, err)
-	require.Greater(t, len(png), 8)
-	require.Equal(t, []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}, png[:8])
-	require.Less(t, len(png), 4*1024*1024)
+	require.False(t, strings.HasPrefix(attempt.NextAction.QRPayload, "data:image/"))
+	require.Equal(t, vietqr.Generate(99000, "970422", "0123456789", validOrder().Reference), attempt.NextAction.QRPayload)
 }
 
 func TestVietQRRejectsInvalidBeneficiaryBeforeAttemptCreation(t *testing.T) {
