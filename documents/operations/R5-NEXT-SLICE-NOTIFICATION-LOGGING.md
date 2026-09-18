@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION SAFE PUBLICATION PASS / HOSTED EXACT-SHA PROOF PENDING
+Status: NOTIFICATION PROVED/CLOSED / HOSTED EXACT-SHA SUCCESS
 
 ## Authority
 
@@ -567,5 +567,46 @@ Hosted proof:
 - hosted exact-SHA proof is still pending verification.
 
 Notification is NOT CLOSED until hosted run is completed SUCCESS at the exact candidate SHA and the inventory artifact confirms Notification debt=0 and repository debt=661.
+
+FINAL ACCEPTED = NO.
+
+
+## Notification hosted exact-SHA proof — SUCCESS / CLOSED
+
+Exact hosted authority:
+- branch: `refactor/canonical-observability-errors-a6d0722a`;
+- SHA: `381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- tree: `fe7c5153c65074bf406134e4e966c9d097a2d706`;
+- parent: `c6a9b121946a360d22759bde6a708bc6a35223c2`.
+
+Hosted workflow:
+- run id: `35405779633`;
+- exact SHA/branch identity: PASS;
+- `inventory`: completed/success;
+- `common-contracts`: completed/success;
+- `boundary-contracts`: completed/success.
+
+Hosted artifact:
+- id: `10572063928`;
+- name: `observability-error-inventory-381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- digest: `sha256:8c8b98a33e56dda9aea3db532b4770437f729aa8d8e8a95988da8e453529c61d`;
+- expired: false;
+- hosted inventory total debt: `661`;
+- hosted Notification debt: `0`;
+- hosted Notification legacy std-log debt: `0`;
+- hosted Notification third-party logger debt: `0`;
+- zero ratchet `go.legacy_std_log@notification-service=0`: active.
+
+Closure:
+- Notification logging debt `30 -> 0`;
+- repository debt `691 -> 661`;
+- local exact-SHA proof PASS;
+- corrected detached proof PASS;
+- safe non-force publication PASS;
+- hosted exact-SHA proof PASS;
+- protected/deploy invariants preserved;
+- R5 Notification slice = PROVED/CLOSED.
+
+R5 remains ACTIVE service-by-service. Error/Response implementation remains blocked until R5 is deliberately stable.
 
 FINAL ACCEPTED = NO.
