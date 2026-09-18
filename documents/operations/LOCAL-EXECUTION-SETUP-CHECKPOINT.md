@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 3B COMPLETE / PHASE 3C END-TO-END USER-LANE NEXT
+Status: PHASE 3B COMPLETE / PHASE 3C FIRST ATTEMPT RECORDED / RETRY NEXT
 
 ## Authority
 
@@ -93,3 +93,58 @@ Prove the full user-lane operating loop without source mutation:
 7. coordinator uses that evidence to choose the next bounded R5 service.
 
 No source mutation, writer use, publication, or ratchet creation is authorized in Phase 3C.
+
+
+## Phase 3C first attempt — RECORDED, NOT CLOSED
+
+Two interface/tooling failures occurred without source mutation.
+
+### Metadata pasted as shell
+
+The user pasted the descriptive `[USER-LANE]` metadata block into Bash and received `command not found` for labels such as `ID:`, `MODE:`, and Vietnamese purpose text.
+
+Classification:
+- presentation/protocol usability defect;
+- not a Git/source failure;
+- USER-LANE protocol updated so metadata is explicitly DO NOT COPY and only fenced Bash is executable.
+
+### Audit external-output path failure
+
+The real R5 inventory ran on exact reader SHA and measured:
+- findings 2783;
+- debt 721;
+- `go.legacy_std_log` debt 617;
+- `go.third_party_logger` debt 99.
+
+It then exited 1 at the script's final reporting step:
+
+`args.output.relative_to(ROOT)`
+
+because Phase 3C passed an output path under `~/bdspro-ops/proofs`, which lies outside repository ROOT.
+
+The runner correctly recorded:
+- exit=1;
+- head_before=head_after=`fca4682587d93cbc436f2466244ee8bd03b8b1b9`;
+- log path `/home/bop/bdspro-ops/logs/20260918-115445-r5-next-service-inventory.log`.
+
+Classification:
+- audit CLI output-path UX limitation;
+- inventory scan itself completed and printed counts;
+- Phase 3C is NOT closed because artifact/evidence verification did not finish;
+- do not patch source merely to finish local setup.
+
+Retry strategy:
+- run audit using its canonical repository-local ignored default output paths;
+- copy completed TSV/JSON artifacts to `~/bdspro-ops/proofs` only after command exit 0;
+- build the human report from the copied evidence;
+- verify reader remains clean/exact SHA.
+
+## OpenCodeReview evaluation state
+
+Alibaba OpenCodeReview is approved for evaluation only, not installation/source integration yet.
+
+Decision:
+- potentially strong fit as a parallel review/proof lane;
+- not source authority and not a replacement for exact-SHA deterministic proof;
+- local pinned-version pilot comes after Phase 3C retry closes;
+- no GitHub Action/write-token integration during the first pilot.
