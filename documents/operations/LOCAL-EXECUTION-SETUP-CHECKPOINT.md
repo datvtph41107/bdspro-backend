@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 2B COMPLETE / PHASE 3 OPERATIONS WRAPPER + TMUX STANDARDIZATION NEXT
+Status: PHASE 3A COMPLETE / PHASE 3B TMUX STANDARDIZATION NEXT
 
 ## Authority
 
@@ -11,87 +11,91 @@ Live GitHub active refactor remains:
 - SHA: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
 - GitHub comparison: identical, ahead 0 / behind 0.
 
-## Phase 2A archive — VERIFIED
-
-Parked unpublished Auth zero-ratchet work is preserved outside the repository at:
-
-`/home/bop/bdspro-ops/state/anchor-auth-ratchet-20260918-112954`
-
-Archive includes exact patch, authority comparison patch, both modified files, metadata, status, pycache inventory and SHA256 checksums.
-
-The parked Auth ratchet remains PARKED and is not active source.
-
-## Phase 2B local cleanup / synchronization — COMPLETE
+## Local Git layout
 
 Anchor:
-
-`/home/bop/projects/bdspro-canonical-bootstrap-20260908`
-
-Final state:
-
-- branch: `refactor/canonical-observability-errors-a6d0722a`
-- HEAD: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
-- working tree clean
-- tracking remote active branch without ahead/behind divergence.
-
-Cleanup performed safely:
-
-- restored ONLY the two archived tracked audit files to the old local HEAD before fast-forward;
-- removed ONLY generated `shared/code/development/__pycache__`;
-- verified clean anchor;
-- fetched and verified exact remote authority;
-- fast-forwarded with `git merge --ff-only`;
-- did not use reset-hard, clean -fd, force-push or plain pull.
+- `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
+- branch `refactor/canonical-observability-errors-a6d0722a`
+- exact authority SHA
+- clean
 
 Reader:
-
-`/home/bop/bdspro-worktrees/reader`
-
-- detached at exact authority SHA;
-- clean;
-- canonical READ_ONLY / inventory worktree.
+- `/home/bop/bdspro-worktrees/reader`
+- detached exact authority SHA
+- clean
+- canonical READ_ONLY/inventory worktree
 
 Writer:
+- `/home/bop/bdspro-worktrees/writer`
+- branch `local/r5-next-candidate`
+- exact authority SHA
+- clean
+- PARKED until next bounded source slice is authorized
 
-`/home/bop/bdspro-worktrees/writer`
+Parked Auth zero-ratchet archive remains preserved under:
+`/home/bop/bdspro-ops/state/anchor-auth-ratchet-20260918-112954`
 
-- branch `local/r5-next-candidate`;
-- exact authority SHA;
-- clean;
-- no commits/diff;
-- remains PARKED until a bounded R5 slice is authorized.
+## Phase 3A operations wrapper — COMPLETE
 
-Stale temporary worktree registry metadata was pruned successfully. Only anchor, reader and writer remain registered.
+Operations directories exist:
 
-## Benign post-block command error
+- `/home/bop/bdspro-ops/logs`
+- `/home/bop/bdspro-ops/proofs`
+- `/home/bop/bdspro-ops/state`
 
-After the successful Phase 2B subshell finished, the user manually ran:
+Previous runner was preserved at:
 
-`git merge --ff-only "origin/$BRANCH"`
+`/home/bop/bdspro-ops/state/run.sh.before-v2-20260918-113731`
 
-outside the subshell.
+with SHA256:
 
-Because `BRANCH` was defined only inside `( ... )`, it no longer existed in the parent shell. The command therefore became effectively:
+`3b2ecb0c98fe2db7ec13ca207d9e89a7c2c30fa7efac1e8b7e2f563408b24063`
 
-`git merge --ff-only origin/`
+Canonical runner installed:
 
-and failed with:
+`/home/bop/bdspro-ops/run.sh`
 
-`merge: origin/ - not something we can merge`
+Proof:
 
-This did NOT change Git/source state and does NOT invalidate Phase 2B. Do not rerun the merge; the anchor is already at the exact authority SHA.
+- `bash -n` PASS;
+- reader authority check PASS;
+- first wrapped task `phase3-reader-smoke` exit 0;
+- evidence log:
+  `/home/bop/bdspro-ops/logs/20260918-113731-phase3-reader-smoke.log`;
+- log contains task/start/repo/branch/head_before/exit/head_after;
+- head_before/head_after both exact authority SHA;
+- reader remained clean.
 
-## Phase 3 — next authorized local action
+## tmux reality
 
-Standardize the user's execution control plane:
+The shell used for Phase 3A was outside tmux.
 
-1. create/verify `~/bdspro-ops/logs`, `proofs`, `state`;
-2. replace `~/bdspro-ops/run.sh` with the canonical evidence wrapper;
-3. syntax-test the wrapper;
-4. execute one harmless READ_ONLY command through the wrapper;
-5. verify the log records repo, branch, head_before, head_after and exit code;
-6. inspect/reuse the existing `tmux` session rather than killing it;
-7. create/rename stable tmux windows for control, inventory, proof, runtime and git;
-8. do not start the next R5 service source mutation yet.
+Existing tmux state:
+
+- session: `bdspro`
+- one window only
+- window 0 name: `bash`
+- one pane
+- session remains reusable; do not kill/recreate it.
+
+## Phase 3B — next authorized local action
+
+Standardize the existing `bdspro` tmux session into durable role windows without starting source work:
+
+- `0-control` — coordination/status; anchor/control-plane only
+- `1-inventory` — read-only work in reader
+- `2-proof` — proof/evidence shell; no candidate source until an exact candidate SHA exists
+- `3-runtime` — runtime/integration shell; no service start yet
+- `4-git` — Git/worktree/checkpoint inspection from anchor
+
+Requirements:
+
+1. reuse existing session;
+2. rename existing window rather than killing it;
+3. create only missing windows;
+4. establish deterministic working directories;
+5. verify windows/panes;
+6. do not mutate active source;
+7. do not use writer yet.
 
 No active source mutation is authorized by this checkpoint.
