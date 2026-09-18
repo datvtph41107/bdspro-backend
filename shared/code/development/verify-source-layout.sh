@@ -12,6 +12,7 @@ required=(
   shared/code/development/service.mk shared/code/development/migration.mk
   shared/code/development/native-stack.sh shared/code/development/dev-service.sh
   shared/code/development/test-native-stack-ownership.sh
+  shared/code/development/test-dev-stream-mirror.sh
   .cursor/rules/bdspro-development.mdc
 )
 for path in "${required[@]}"; do
@@ -66,5 +67,6 @@ grep -Fq 'export QHPRO_LOG_ROOT="$log_dir"' shared/code/development/native-stack
 bash -n shared/code/development/native-stack.sh
 bash -n shared/code/development/dev-service.sh
 bash -n shared/code/development/test-native-stack-ownership.sh
+bash -n shared/code/development/test-dev-stream-mirror.sh
 
 echo 'source layout verification PASS'

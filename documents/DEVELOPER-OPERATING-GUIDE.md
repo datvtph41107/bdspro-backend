@@ -48,7 +48,7 @@ make dev service=payment-service
 
 Runtime ownership có bốn trạng thái: `SUPERVISED`, `DEV`, `FOREIGN`, `DOWN`. `make status` hiển thị ownership và `ready=yes/no` riêng; port chỉ là readiness signal, không phải ownership truth. Root-routed và service-local `make dev` cùng dùng một DEV lifecycle owner, nên second DEV fail fast và SUPERVISED → DEV transfer không bị định nghĩa hai lần.
 
-Structured application logs của cả `make up` và `make dev` dùng cùng một root tuyệt đối do repository sở hữu: `<repo>/.tmp/development/logs`. Logger tiếp tục tự tách theo service/run bên dưới root này; vị trí evidence không phụ thuộc service CWD. `make logs` vẫn là raw process-stream view, không phải structured-query command.
+Structured application logs của cả `make up` và `make dev` dùng cùng một root tuyệt đối do repository sở hữu: `<repo>/.tmp/development/logs`. Logger tiếp tục tự tách theo service/run bên dưới root này; vị trí evidence không phụ thuộc service CWD. `make logs` vẫn là raw process-stream view, không phải structured-query command. Khi service ở DEV, Air/child stdout và stderr vẫn hiện trực tiếp trong terminal đồng thời được mirror vào cùng raw process-log view mà `make logs` đọc.
 
 VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → `BDSPro · Dev · <Service>`.
 
@@ -89,8 +89,8 @@ make native-restart service=payment-service
 ```
 
 Hoặc dùng `make dev service=payment-service` để xem log và hot reload ngay trong
-terminal. `make logs service=payment-service` đọc stdout/stderr của process do
-root supervisor quản lý.
+terminal. `make logs service=payment-service` đọc cùng raw stdout/stderr stream
+dù service đang ở SUPERVISED hay DEV.
 
 Full Compose chỉ còn là proof riêng cho image/package:
 

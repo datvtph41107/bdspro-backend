@@ -34,6 +34,8 @@ jobs:
         run: python3 shared/code/development/test_audit_observability_errors.py
       - name: Test native runtime ownership contract
         run: bash shared/code/development/test-native-stack-ownership.sh
+      - name: Test DEV raw process-stream mirror contract
+        run: bash shared/code/development/test-dev-stream-mirror.sh
       - name: Build full-repository migration inventory and enforce ratchets
         run: python3 shared/code/development/audit-observability-errors.py --enforce-ratchets
       - name: Upload migration inventory

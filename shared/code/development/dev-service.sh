@@ -11,8 +11,10 @@ shift
 "$native_stack" prepare-dev "$service"
 
 dev_pid_dir="$repository_root/.tmp/development/dev-pids"
+log_dir="$repository_root/.tmp/development/logs"
 pid_file="$dev_pid_dir/${service%-service}.pid"
-mkdir -p "$dev_pid_dir"
+log_file="$log_dir/${service%-service}.log"
+mkdir -p "$dev_pid_dir" "$log_dir"
 
 if [[ -e "$pid_file" ]] && ! "$native_stack" dev-pid "$service" >/dev/null 2>&1; then
   rm -f "$pid_file"
@@ -41,7 +43,7 @@ trap 'forward_and_exit HUP 129' HUP
 trap 'forward_and_exit INT 130' INT
 trap 'forward_and_exit TERM 143' TERM
 
-"$@" &
+"$@" > >(tee -a "$log_file") 2> >(tee -a "$log_file" >&2) &
 child_pid=$!
 
 set +e
