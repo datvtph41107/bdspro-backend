@@ -1,9 +1,9 @@
 # BDSPro Final Acceptance — Next Actions
 
 Updated: 2026-09-19 Asia/Bangkok
-Status: R1-R4 CLOSED / R5 PAYMENT+SOCIAL+ASSISTANT+RELAY CLOSED / R5 NEXT-SERVICE INVENTORY
+Status: R1-R4 CLOSED / R5 PAYMENT+SOCIAL+ASSISTANT+RELAY+NOTIFICATION CLOSED / R5 NEXT-SERVICE INVENTORY
 
-Active refactor HEAD: `c6a9b121946a360d22759bde6a708bc6a35223c2` unless live Git proves otherwise. FINAL ACCEPTED = NO.
+Active refactor HEAD: `381c29365a00f35737bb0b6078cf0973198dc7c2` unless live Git proves otherwise. FINAL ACCEPTED = NO.
 
 ## Immediate authorized sequence
 
@@ -108,20 +108,14 @@ Next gate: writer precheck / branch preparation only.
 ## 2026-09-19 interruption-safe next gate
 
 1. Read `CONTINUATION-PROMPT.md` and `ARCHITECTURE-NAMING-OWNERSHIP-MINDSET.md`.
-2. Reconcile remote active SHA, writer SHA/tree/status and existing detached Notification proof worktree.
-3. Preserve Notification candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`; no amend/reset/rebase/recreation.
-4. Corrected detached exact-SHA proof is PASS with `FINAL_FAIL_COUNT=0`.
-5. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is PASS; remote active branch now points at the candidate.
-6. Verify hosted exact-SHA workflow `Refactor Observability and Error Contracts`: inventory/common-contracts/boundary-contracts must all complete SUCCESS, then inspect exact-SHA inventory artifact before calling Notification CLOSED.
-7. Continue R5 service-by-service until deliberately stable.
-8. Only then implement refined Error/Response:
-   - one caller-facing application failure owner;
-   - one constructor conceptually `failure.New(code, reason, safeMessage)`;
-   - one gRPC normalization path;
-   - one Gateway projection;
-   - response/logging/metrics/tracing share canonical code/reason;
-   - technical errors remain wrapped/internal and are sanitized after evidence;
-   - no competing Kind/Definition/catalog/i18n/numeric-code framework.
-9. Naming/ownership changes follow the doctrine: split different invariants; converge duplicate public names; do not refactor for cosmetics alone.
+2. Reconcile remote active SHA against `381c29365a00f35737bb0b6078cf0973198dc7c2`.
+3. Keep Payment, Social, Assistant, Relay and Notification R5 slices CLOSED unless new exact source/proof proves a regression.
+4. Notification hosted closure: run `35405779633`; all three jobs SUCCESS; artifact `10572063928`; Notification debt=0; repository debt=661.
+5. Perform fresh read-only exact-SHA inventory and source/coupling trace for the next small non-protected logging owner.
+6. Select exactly one bounded next slice from ownership/coupling evidence, not occurrence count alone.
+7. Then: writer precheck -> bounded migration -> zero proof -> retirement -> ratchet -> immutable candidate -> detached exact-SHA proof -> safe publication -> hosted proof -> durable sync.
+8. Continue R5 until deliberately stable.
+9. Only then implement refined Error/Response: one application-failure owner/constructor, one gRPC normalization path, one Gateway projection, shared canonical code/reason semantics across response/observability, service-by-service retirement/ratchets.
+10. Preserve protected paths and production-lineage separation.
 
 FINAL ACCEPTED = NO.
