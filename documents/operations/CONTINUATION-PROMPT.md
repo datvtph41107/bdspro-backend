@@ -122,9 +122,9 @@ R5 remains ACTIVE. Error/Response implementation has not started. FINAL ACCEPTED
 
 1. Reconcile live remote active branch against exact SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`.
 2. Keep Payment, Social, Assistant, Relay and Notification R5 slices CLOSED unless exact source/proof proves regression.
-3. Perform fresh exact-SHA read-only logging inventory/source/coupling trace for the next non-protected owner.
-4. Select exactly one bounded R5 slice from ownership/coupling evidence, not raw count alone.
-5. Execute the full proof lifecycle and hosted closure before advancing.
+3. Fresh exact-SHA inventory/source trace has selected Chat as the next bounded R5 slice: hosted debt 27 = std-log 4 + third-party logger 23; durable authority is `R5-NEXT-SLICE-CHAT-LOGGING.md`.
+4. Next gate is Chat writer precheck/branch preparation only at exact authority `381c29365a00f35737bb0b6078cf0973198dc7c2`; no source mutation before precheck PASS.
+5. After precheck, execute the full bounded Chat proof lifecycle and hosted closure before advancing.
 6. Stay in R5 until canonical logger adoption is deliberately declared stable.
 7. Only after R5 stability begin Error/Response refined FINAL implementation.
 8. For Error/Response: establish one application-failure core/constructor, one gRPC normalization path, one Gateway projection, common reason semantics across response/observability, vertical proof, service-by-service migration, retirement, ratchets and protected compatibility resolution.
