@@ -68,6 +68,7 @@ ZERO_RATCHETS = (
     ("go.legacy_std_log", "search-service"),
     ("go.legacy_std_log", "file-service"),
     ("go.legacy_std_log", "payment-service"),
+    ("go.legacy_std_log", "social-service"),
     ("go.third_party_logger", "payment-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),

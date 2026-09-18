@@ -6,7 +6,7 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	socialpb "pb/types/social"
 	"social/internal/domain"
@@ -341,12 +341,20 @@ func (u *NewsFeedUsecase) UpdateVisibility(ctx context.Context, newsFeedID uint6
 }
 
 func (u *NewsFeedUsecase) SyncNewsFeed(ctx context.Context) {
-	log.Printf("SyncNewsFeed start")
+	slog.Info("social news feed sync started")
+
 	err := u.newsFeedRepo.SyncData(ctx)
 	if err != nil {
-		log.Printf("SyncNewsFeed error: %v", err)
+		slog.Error(
+			"social news feed sync failed",
+			slog.Any("error", err),
+		)
 	}
-	log.Printf("SyncNewsFeed success")
+
+	slog.Info(
+		"social news feed sync finished",
+		slog.Bool("success", err == nil),
+	)
 }
 
 func (u *NewsFeedUsecase) GetReelNewsFeed(ctx context.Context, req _dto.Pagable) ([]*domain.ReelEntity, int64, error) {

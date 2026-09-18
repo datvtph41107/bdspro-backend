@@ -4,7 +4,7 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	pb_social "pb/types/social"
@@ -54,7 +54,10 @@ var GrpcCmd = &cobra.Command{
 		pb_social.RegisterCommentServiceServer(s, app.CommentService)
 		pb_social.RegisterLikeServiceServer(s, app.LikeService)
 
-		log.Printf("GRPC Listen: %v", port)
+		slog.Info(
+			"social gRPC listening",
+			slog.String("address", port),
+		)
 
 		startScheduler(app)
 

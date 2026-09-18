@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	socialpb "pb/types/social"
 	"time"
 
@@ -558,12 +558,18 @@ func (r *PostgreNewsFeed) buildNewsFeedResults(newsFeeds []*NewsFeedRawQuery) ([
 		var friendIDs []uint64
 
 		if err := json.Unmarshal(newsFeed.NewsFeedMediaRaws, &medias); err != nil {
-			log.Printf("failed to unmarshal NewsFeedMedias: %v", err)
+			slog.Error(
+				"decode social news feed medias",
+				slog.Any("error", err),
+			)
 			medias = []*dto.NewsFeedMediaDTO{} // fallback
 		}
 
 		if err := json.Unmarshal(newsFeed.FriendTagRaws, &friendIDs); err != nil {
-			log.Printf("failed to unmarshal FriendTagIds: %v", err)
+			slog.Error(
+				"decode social friend tag IDs",
+				slog.Any("error", err),
+			)
 			friendIDs = []uint64{}
 		}
 

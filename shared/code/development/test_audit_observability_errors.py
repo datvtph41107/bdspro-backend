@@ -652,6 +652,67 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_social_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "social-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_social_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "social-service",
+            "path": "social-service/cmd/grpc/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("GRPC Listen: %v", port)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "social-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "social-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
     def test_payment_logging_zero_ratchets_are_registered(self):
         self.assertIn(
             ("go.legacy_std_log", "payment-service"),

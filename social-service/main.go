@@ -1,7 +1,9 @@
 package main
 
 import (
+	"common/logging"
 	"fmt"
+	"log/slog"
 	"os"
 	cmd_grpc "social/cmd/grpc"
 	cmd_http "social/cmd/http"
@@ -32,12 +34,21 @@ func init() {
 }
 
 func main() {
-	// go func() {
-	// 	log.Println("run go-routine")
-	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
-	// }()
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	os.Exit(runProcess(rootCmd.Execute))
+}
+
+func runProcess(execute func() error) int {
+	closeLogger, err := logging.Configure("social-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Social logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := execute(); err != nil {
+		slog.Error("social service failed", slog.Any("error", err))
+		return 1
+	}
+
+	return 0
 }
