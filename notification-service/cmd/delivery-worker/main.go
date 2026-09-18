@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	common_db "common/db"
+	"common/logging"
 	"notification/config"
 	"notification/infra/client"
 	"notification/infra/firebase"
@@ -19,8 +20,19 @@ import (
 )
 
 func main() {
+	closeLogger, err := logging.Configure("notification-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Notification delivery-worker logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = closeLogger() }()
+
 	if err := run(); err != nil {
-		log.Printf("delivery worker stopped: %v", err)
+		slog.Error(
+			"notification delivery worker stopped",
+			slog.String("component", "delivery-worker"),
+			slog.Any("error", err),
+		)
 		os.Exit(1)
 	}
 }

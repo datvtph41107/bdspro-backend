@@ -3,17 +3,18 @@ package usecase
 import (
 	_enum "common/domain/enum"
 	_jwt "common/jwt"
+	"common/logging"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"notification/infra/cache"
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
-			notificationpb "pb/types/notification"
+	notificationpb "pb/types/notification"
 	"strconv"
 	"strings"
 )
@@ -173,7 +174,10 @@ func (s *NotificationUsecase) Create(c context.Context, dto *dto.NotiNewRequest)
 	// 	return nil, err
 	// }
 
-	log.Println("ismerge=", dto.IsMerge)
+	logging.WithComponent(c, "notification.usecase").Debug(
+		"notification merge decision",
+		slog.Bool("notification.is_merge", dto.IsMerge),
+	)
 	// if dto.IsMerge {
 	// 	// s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
 	// }
@@ -236,7 +240,10 @@ func (s *NotificationUsecase) CreateToOwner(c context.Context, dto *dto.NotiNewR
 		return nil, err
 	}
 
-	log.Println("ismerge=", dto.IsMerge)
+	logging.WithComponent(c, "notification.usecase").Debug(
+		"notification merge decision",
+		slog.Bool("notification.is_merge", dto.IsMerge),
+	)
 	// if dto.IsMerge {
 	// 	s.Repo.RemoveUnique(c, dto.OwnerID, dto.TargetID, dto.NotificationType, dto.OwnerOf)
 	// }
@@ -384,7 +391,10 @@ func (s *NotificationUsecase) _removeNotification(c context.Context, dto *dto.No
 // publishNotificationEvent publishes notification event to Redis for relay service
 func (s *NotificationUsecase) publishNotificationEvent(ctx context.Context, notification *domain.NotificationEntity) {
 	if s.RedisClient == nil {
-		log.Println("RedisClient is nil, skipping publish notification event")
+		logging.WithComponent(ctx, "notification.usecase").Warn(
+			"notification event publish skipped",
+			slog.String("reason", "redis-client-unavailable"),
+		)
 		return
 	}
 
@@ -410,26 +420,40 @@ func (s *NotificationUsecase) publishNotificationEvent(ctx context.Context, noti
 
 	messageBytes, err := json.Marshal(eventMessage)
 	if err != nil {
-		log.Printf("Failed to marshal notification event: %v", err)
+		logging.WithComponent(ctx, "notification.usecase").Error(
+			"marshal notification event",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+			slog.Any("error", err),
+		)
 		return
 	}
 
 	// Publish to Redis channel: notification:{ownerId}
 	channel := "notification:" + strconv.FormatUint(notification.OwnerID, 10)
 	if err := s.RedisClient.Publish(ctx, channel, string(messageBytes)); err != nil {
-		log.Printf("Failed to publish notification event to Redis: %v", err)
+		logging.WithComponent(ctx, "notification.usecase").Error(
+			"publish notification event to Redis",
+			slog.String("redis.channel", channel),
+			slog.Any("error", err),
+		)
 	}
 }
 
 // checkAndSendPushNotification kiểm tra trạng thái online của user và gửi push notification nếu offline
 func (s *NotificationUsecase) checkAndSendPushNotification(ctx context.Context, notification *domain.NotificationEntity) {
 	if s.RedisClient == nil {
-		log.Println("RedisClient is nil, skipping check online status")
+		logging.WithComponent(ctx, "notification.usecase").Warn(
+			"notification online-status check skipped",
+			slog.String("reason", "redis-client-unavailable"),
+		)
 		return
 	}
 
 	if s.AuthClient == nil {
-		log.Println("AuthClient is nil, skipping push notification")
+		logging.WithComponent(ctx, "notification.usecase").Warn(
+			"notification push skipped",
+			slog.String("reason", "auth-client-unavailable"),
+		)
 		return
 	}
 
@@ -438,7 +462,11 @@ func (s *NotificationUsecase) checkAndSendPushNotification(ctx context.Context, 
 	onlineKey := USER_ONLINE_STATUS_KEY_PREFIX + strconv.FormatUint(notification.OwnerID, 10)
 	statusStr, err := s.RedisClient.Get(ctx, onlineKey)
 	if err != nil {
-		log.Printf("Failed to get online status for user %d: %v", notification.OwnerID, err)
+		logging.WithComponent(ctx, "notification.usecase").Error(
+			"get notification owner online status",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+			slog.Any("error", err),
+		)
 		return
 	}
 
@@ -453,26 +481,43 @@ func (s *NotificationUsecase) checkAndSendPushNotification(ctx context.Context, 
 
 	// Nếu user online, không cần gửi push notification (đã nhận qua WebSocket)
 	if isOnline {
-		log.Printf("User %d is online, skipping push notification", notification.OwnerID)
+		logging.WithComponent(ctx, "notification.usecase").Info(
+			"notification push skipped for online owner",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+		)
 		return
 	}
 
 	// User offline, lấy push token và gửi push notification
-	log.Printf("User %d is offline, getting push tokens and sending push notification", notification.OwnerID)
+	logging.WithComponent(ctx, "notification.usecase").Info(
+		"notification owner offline; resolving push tokens",
+		slog.Uint64("notification.owner_id", notification.OwnerID),
+	)
 	pushTokens, err := s.AuthClient.GetPushTokensByProfileId(ctx, notification.OwnerID)
 	if err != nil {
-		log.Printf("Failed to get push tokens for user %d: %v", notification.OwnerID, err)
+		logging.WithComponent(ctx, "notification.usecase").Error(
+			"get notification owner push tokens",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+			slog.Any("error", err),
+		)
 		return
 	}
 
 	if len(pushTokens) == 0 {
-		log.Printf("No push tokens found for user %d", notification.OwnerID)
+		logging.WithComponent(ctx, "notification.usecase").Info(
+			"notification push skipped; no push tokens",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+		)
 		return
 	}
 
 	// Gửi push notification qua Firebase
 	if s.FirebaseProvider == nil {
-		log.Printf("FirebaseProvider is nil, skipping push notification for user %d", notification.OwnerID)
+		logging.WithComponent(ctx, "notification.usecase").Warn(
+			"notification push skipped",
+			slog.String("reason", "firebase-provider-unavailable"),
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+		)
 		return
 	}
 
@@ -518,8 +563,16 @@ func (s *NotificationUsecase) checkAndSendPushNotification(ctx context.Context, 
 
 	// Gửi push notification
 	if err := s.FirebaseProvider.SendPushNotification(ctx, pushTokens, title, message, data); err != nil {
-		log.Printf("Failed to send push notification to user %d: %v", notification.OwnerID, err)
+		logging.WithComponent(ctx, "notification.usecase").Error(
+			"send notification push",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+			slog.Any("error", err),
+		)
 	} else {
-		log.Printf("Successfully sent push notification to user %d with %d tokens", notification.OwnerID, len(pushTokens))
+		logging.WithComponent(ctx, "notification.usecase").Info(
+			"notification push sent",
+			slog.Uint64("notification.owner_id", notification.OwnerID),
+			slog.Int("push.token_count", len(pushTokens)),
+		)
 	}
 }

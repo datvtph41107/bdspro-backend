@@ -2,8 +2,9 @@ package handler
 
 import (
 	_enum "common/domain/enum"
+	"common/logging"
 	"context"
-	"log"
+	"log/slog"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -67,7 +68,10 @@ func (s *InternalHandler) Create(ctx context.Context, req *sharepb.NotificationR
 		SendToDevice: req.SendToDevice,
 		IsMerge:      req.IsMerge,
 	}
-	log.Println("dto", dto)
+	logging.WithComponent(ctx, "internal-handler").Debug(
+		"notification request mapped",
+		slog.Bool("notification.is_merge", dto.IsMerge),
+	)
 	notification, err := s.Usecase.Create(ctx, dto)
 	if err != nil {
 		return nil, err
@@ -288,7 +292,10 @@ func (s *InternalHandler) CreateToOwner(ctx context.Context, req *sharepb.Notifi
 		SendToDevice:     req.SendToDevice,
 		IsMerge:          req.IsMerge,
 	}
-	log.Println("dto", dto)
+	logging.WithComponent(ctx, "internal-handler").Debug(
+		"notification request mapped",
+		slog.Bool("notification.is_merge", dto.IsMerge),
+	)
 	notification, err := s.Usecase.CreateToOwner(ctx, dto)
 	if err != nil {
 		return nil, err

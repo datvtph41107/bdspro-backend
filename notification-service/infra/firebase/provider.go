@@ -1,9 +1,10 @@
 package firebase
 
 import (
+	"common/logging"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"notification/config"
 	"notification/internal/domain"
@@ -57,7 +58,10 @@ func (s *FirebaseProvider) SendToTopic(c *gin.Context, request *dto.SendNotiRequ
 	}
 	result, err := client.Send(ctx, messageBody)
 	if err != nil {
-		log.Println("Error sending message:", err)
+		logging.WithComponent(ctx, "firebase").Error(
+			"Firebase message send failed",
+			slog.Any("error", err),
+		)
 		entity.Error = err.Error()
 	} else {
 		entity.Response = result
@@ -93,7 +97,10 @@ func (s *FirebaseProvider) SendToToken(c *gin.Context, request *dto.SendNotiRequ
 	}
 	result, err := client.Send(ctx, message)
 	if err != nil {
-		log.Println("Error sending message:", err)
+		logging.WithComponent(ctx, "firebase").Error(
+			"Firebase message send failed",
+			slog.Any("error", err),
+		)
 		entity.Error = err.Error()
 	} else {
 		entity.Response = result
@@ -164,11 +171,19 @@ func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []st
 		}
 
 		// Log kết quả
-		log.Printf("Firebase multicast sent: success=%d, failure=%d", br.SuccessCount, br.FailureCount)
+		logging.WithComponent(ctx, "firebase").Info(
+			"Firebase multicast sent",
+			slog.Int("firebase.success_count", br.SuccessCount),
+			slog.Int("firebase.failure_count", br.FailureCount),
+		)
 		if br.FailureCount > 0 {
 			for i, resp := range br.Responses {
 				if !resp.Success {
-					log.Printf("Firebase multicast token delivery failed at index=%d: %v", i, resp.Error)
+					logging.WithComponent(ctx, "firebase").Warn(
+						"Firebase multicast token delivery failed",
+						slog.Int("firebase.token_index", i),
+						slog.Any("error", resp.Error),
+					)
 				}
 			}
 		}
@@ -182,6 +197,8 @@ func (s *FirebaseProvider) SendPushNotification(ctx context.Context, tokens []st
 		return &deliverydomain.EffectError{Kind: deliverydomain.EffectFailureUnknown, Err: fmt.Errorf("Firebase send outcome unknown: %w", err)}
 	}
 
-	log.Printf("Firebase push notification sent successfully")
+	logging.WithComponent(ctx, "firebase").Info(
+		"Firebase push notification sent",
+	)
 	return nil
 }

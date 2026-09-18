@@ -1,9 +1,10 @@
 package rabbitmq
 
 import (
+	"common/logging"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -70,7 +71,11 @@ func (s *PaymentCompletedSupervisor) Run(ctx context.Context) error {
 			return nil
 		}
 
-		log.Printf("service=notification-service component=payment-consumer status=reconnecting retry_in=%s error=%v", retryDelay, err)
+		logging.WithComponent(ctx, "payment-consumer").Warn(
+			"notification payment consumer reconnecting",
+			slog.Duration("retry_in", retryDelay),
+			slog.Any("error", err),
+		)
 		timer := time.NewTimer(retryDelay)
 		select {
 		case <-ctx.Done():

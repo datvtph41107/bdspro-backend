@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os/signal"
 	"syscall"
@@ -53,7 +53,11 @@ func startGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("load Notification schema policy: %w", err)
 	}
-	log.Printf("Notification database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	slog.Info(
+		"notification database schema policy loaded",
+		slog.Any("database.schema.mode", schemaPolicy.Mode),
+		slog.Any("database.schema.source", schemaPolicy.Source),
+	)
 	if err := common_db.ApplySchemaPolicy(database, schemaPolicy, notificationdb.AutoMigrate); err != nil {
 		return fmt.Errorf("apply Notification schema policy: %w", err)
 	}
@@ -91,7 +95,11 @@ func startGRPCServer() error {
 			return fmt.Errorf("create payment completed supervisor: %w", err)
 		}
 	} else {
-		log.Printf("service=notification-service component=payment-consumer status=disabled reason=rabbitmq-not-configured")
+		slog.Info(
+			"notification payment consumer disabled",
+			slog.String("component", "payment-consumer"),
+			slog.String("reason", "rabbitmq-not-configured"),
+		)
 	}
 
 	var pushDeliveryWorker *deliveryworker.Worker
@@ -106,7 +114,11 @@ func startGRPCServer() error {
 		)
 		pushDeliveryWorker = deliveryworker.New(cfg.DeliveryWorkerID, deliveryService, cfg.DeliveryPollInterval)
 	} else {
-		log.Printf("service=notification-service component=delivery-worker status=disabled reason=firebase-not-configured")
+		slog.Info(
+			"notification delivery worker disabled",
+			slog.String("component", "delivery-worker"),
+			slog.String("reason", "firebase-not-configured"),
+		)
 	}
 
 	port := fmt.Sprintf(":%d", cfg.ServerPort)
@@ -152,7 +164,10 @@ func startGRPCServer() error {
 			}
 		}))
 	}
-	log.Printf("notification gRPC listening on %s", port)
+	slog.Info(
+		"notification gRPC listening",
+		slog.String("server.address", port),
+	)
 	if err := process.Run(ctx, cancel, s, lis, actors, process.Config{GracefulStopTimeout: cfg.ShutdownTimeout}); err != nil {
 		return fmt.Errorf("notification gRPC lifecycle: %w", err)
 	}

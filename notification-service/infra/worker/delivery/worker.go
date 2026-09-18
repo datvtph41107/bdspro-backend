@@ -1,9 +1,10 @@
 package delivery
 
 import (
+	"common/logging"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"time"
 
 	usecase "notification/internal/usecase/delivery"
@@ -35,7 +36,11 @@ func (w *Worker) Run(ctx context.Context) error {
 			}
 			// Durable intent state owns business retry. Infrastructure failures
 			// remain visible instead of being silently swallowed.
-			log.Printf("notification delivery worker %s: %v", w.id, err)
+			logging.WithComponent(ctx, "delivery-worker").Warn(
+				"notification delivery worker processing failed",
+				slog.String("worker.id", w.id),
+				slog.Any("error", err),
+			)
 		}
 		if processed {
 			continue

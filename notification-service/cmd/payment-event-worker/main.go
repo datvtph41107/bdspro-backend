@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	common_db "common/db"
+	"common/logging"
 	"notification/config"
 	brokerrabbit "notification/infra/broker/rabbitmq"
 	postgres_eventing "notification/infra/postgres/eventing"
@@ -16,8 +18,19 @@ import (
 )
 
 func main() {
+	closeLogger, err := logging.Configure("notification-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Notification payment-worker logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = closeLogger() }()
+
 	if err := run(); err != nil {
-		log.Printf("payment completed consumer stopped: %v", err)
+		slog.Error(
+			"notification payment completed consumer stopped",
+			slog.String("component", "payment-consumer"),
+			slog.Any("error", err),
+		)
 		os.Exit(1)
 	}
 }
