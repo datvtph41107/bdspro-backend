@@ -37,26 +37,28 @@ Operating Model V2 is mandatory:
 - use exactly one source writer;
 - aggregate proof only when all proof lanes read the same immutable candidate SHA;
 - every local user execution task must use `USER-LANE-TASK-PROTOCOL.md`;
-- the user's local setup currently restarts from Phase 1 verification in `LOCAL-EXECUTION-RUNBOOK.md`;
-- do not assume existing local repo/worktrees/scripts are correct until Phase 1 is reconciled;
+- the user's local execution infrastructure is established through Phase 3C in `LOCAL-EXECUTION-RUNBOOK.md`;
+- preserve the established anchor/reader/writer/proof separation and report-file handoff;
 - do not destroy existing local files/worktrees merely to restart setup.
 
 ## Current checkpoint
 
 - canonical `a6d0722a...`
-- active `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+- active `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`
 - R1-R4 CLOSED
 - R5 Payment slice CLOSED / hosted #83 SUCCESS
-- Payment logging debt 13→0; repository debt 734→721; Payment logging ratchets active
-- R5 phase ACTIVE; next-service inventory authorized after local setup verification
+- R5 Social slice CLOSED / hosted #84 `35319045710` SUCCESS
+- Payment logging debt 13→0; Social legacy std-log 6→0; repository debt 734→721→715
+- Payment logging ratchets and Social legacy-std-log ratchet active
+- R5 phase ACTIVE; next-service read-only inventory authorized
 - Error/Response FINAL DESIGN CLOSED / IMPLEMENTATION PENDING
 - Auth zero-ratchet PARKED
 - FINAL ACCEPTED = NO
 
 ## Next authorized sequence
 
-1. complete/reconcile the user's local Phase 1 repository verification;
-2. reconcile active exact SHA and clean source;
+1. reconcile active exact SHA `b55ce3c6...` and current worktree roles;
+2. preserve Social CLOSED status unless live source proves a regression;
 3. perform read-only next-service R5 logger inventory;
 4. choose one bounded non-protected service from owner/consumer/value, not counts alone;
 5. bounded migration -> zero proof -> retirement -> ratchet -> local exact-SHA proof -> safe publication -> hosted proof;
