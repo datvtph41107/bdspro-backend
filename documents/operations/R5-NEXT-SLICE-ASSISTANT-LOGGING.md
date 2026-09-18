@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: ASSISTANT CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
+Status: DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
 
 ## Authority
 
@@ -347,3 +347,55 @@ fresh detached exact-SHA proof at candidate SHA:
 10. leave proof worktree detached and tracked-clean at exact candidate SHA.
 
 Publication remains forbidden until detached exact-SHA proof is reviewed.
+
+
+## Assistant detached exact-SHA proof — PASS
+
+Report:
+`assistant-detached-exact-sha-proof-20260918-152404.txt`
+
+Immutable candidate:
+- SHA: `492b94a102e26b8d86575d72cca05b57911c745b`;
+- tree: `ce8ea2254b8715c8467535173f8c5f7182e7b4f2`;
+- parent: `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- exact four-file commit set PASS;
+- fresh proof worktree created detached at exact candidate SHA/tree.
+
+Fresh detached proof verified:
+- canonical protobuf materialization PASS;
+- repository-owned Assistant Wire generation PASS;
+- generated contracts/Wire created no tracked delta;
+- audit-tool unit tests: 32 PASS;
+- audit with `--enforce-ratchets`: PASS;
+- repository debt = 707;
+- Assistant total debt = 0;
+- Assistant `go.legacy_std_log = 0`;
+- Assistant `go.third_party_logger = 0`;
+- Assistant zero-ratchet registration count = 1;
+- canonical Assistant test PASS;
+- canonical Assistant build PASS;
+- legacy fatal count = 0;
+- exactly four immediate `os.Exit(1)` replacements remain;
+- protected candidate diff empty;
+- deploy SHA unchanged;
+- final proof worktree remains detached, tracked-clean, exact candidate SHA/tree;
+- PUSHED=NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation immediately after proof review:
+- active refactor branch remains identical to exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- candidate remains unpublished.
+
+Safe publication is now authorized:
+- target branch: `refactor/canonical-observability-errors-a6d0722a`;
+- remote target must still equal exact authority immediately before push;
+- publication must be non-force fast-forward only;
+- push exact candidate SHA directly to target branch;
+- after push require remote target equals exact candidate SHA;
+- do not amend, rebase, merge, or force-push.
+
+After publication:
+- wait for hosted workflow on exact candidate SHA;
+- only completed exact-SHA hosted evidence may close the Assistant slice.
+
+FINAL ACCEPTED = NO.
