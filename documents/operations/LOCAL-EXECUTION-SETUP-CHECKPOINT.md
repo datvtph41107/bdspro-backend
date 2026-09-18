@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 1B RECONCILED / PHASE 2A ARCHIVE PARKED LOCAL WORK NEXT
+Status: PHASE 2A ARCHIVE VERIFIED / PHASE 2B CLEAN + FAST-FORWARD NEXT
 
 ## Authority
 
@@ -11,100 +11,99 @@ Live GitHub active refactor remains:
 - SHA: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
 - GitHub comparison: identical, ahead 0 / behind 0.
 
-## Anchor clone classification
+## Anchor clone
 
 Path:
 
 `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
 
-Local HEAD:
+Local HEAD before cleanup:
 
 `e857fd4d0e34d0f61e5beb33b1e849590e78849b`
 
-Remote relationship:
+Local branch:
 
-- local anchor is behind active source by 5 commits;
-- anchor is not yet safe to fast-forward until local parked work is archived.
+`refactor/canonical-observability-errors-a6d0722a`
 
-Dirty tracked files:
+Relationship to authority:
 
-- `shared/code/development/audit-observability-errors.py`
-- `shared/code/development/test_audit_observability_errors.py`
+- behind by 5 commits;
+- two modified tracked audit files;
+- one generated Python bytecode artifact.
 
-The local diff adds an Auth-service `go.legacy_std_log` zero-ratchet and regression tests.
+## Parked Auth ratchet archive — VERIFIED
 
-Current source authority instead contains the later Payment zero-ratchets. Durable BDSPro state explicitly keeps the Auth zero-ratchet PARKED.
+Archive directory:
 
-Decision:
+`/home/bop/bdspro-ops/state/anchor-auth-ratchet-20260918-112954`
 
-- classify anchor dirty tracked changes as PARKED / UNPUBLISHED AUTH RATCHET CANDIDATE;
-- preserve exact local patch before cleaning;
-- do not merge/publish it during local setup;
-- after archive verification, clean the anchor and fast-forward it to active authority.
+The repository remained unchanged after archive creation.
 
-Untracked:
+Archived evidence:
 
-- `shared/code/development/__pycache__/audit-observability-errors.cpython-312.pyc`
+- `local-working-tree.patch` — 88 lines, exact local working diff vs local HEAD;
+- `vs-authority.patch` — 133 lines, local working state vs current authority;
+- exact copies of both modified audit files;
+- `git-status.txt`;
+- `metadata.txt`;
+- `pycache-list.txt`;
+- `SHA256SUMS`.
+
+Recorded archive checksums:
+
+- audit file: `4cc4b368f17dec31f1a9ed12a30aa41e54c49387948cd43e96377a1fe98c4ed6`
+- audit test file: `1889050770094eb00c5f917a72b3636ae07cb9f890a3f9163e7c95b58ffd51dc`
+- git-status: `3191540ad924e503e38f410a90690221083b7cdd47345ecce1e604cafb8254f3`
+- local patch: `a7a0dfa47c13f70c6f2543663961f9b75a437c44913d664d39afd0756f15af58`
+- metadata: `a2ad1b1912fd6d905ed5c6816b1e7e324b53f6cb4f44e1581b8cce9baf0137d7`
+- pycache list: `b084430c24fbe9ba673c2e674c38f08e4ceb200c39bc0bfca0237603dc526f4d`
+- authority comparison patch: `ab2afc1e43dbc2192f3e5e8ecf6718a0fdd5c03480088b977e2860f680d5b773`
 
 Classification:
 
-- generated Python bytecode;
-- not source authority;
-- may be removed after local parked work archive is verified.
+- tracked local diff = PARKED / UNPUBLISHED AUTH ZERO-RATCHET CANDIDATE;
+- do not publish during local setup;
+- generated `__pycache__` is not source authority.
 
-## Reader worktree
+## Existing worktrees
 
-`/home/bop/bdspro-worktrees/reader`
+Reader:
 
-- HEAD = `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
-- detached HEAD
+- `/home/bop/bdspro-worktrees/reader`
+- detached at `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
 - clean
-- `git diff --check` clean
+- REUSE.
 
-Decision: REUSE as canonical read-only/inventory worktree.
+Writer:
 
-## Writer worktree
+- `/home/bop/bdspro-worktrees/writer`
+- branch `local/r5-next-candidate`
+- HEAD `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+- no commits/diff
+- keep PARKED until next bounded slice is selected.
 
-`/home/bop/bdspro-worktrees/writer`
+Stale temp worktree metadata:
 
-- branch = `local/r5-next-candidate`
-- HEAD = `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
-- no commits relative to authority
-- no changed files relative to authority
-- no uncommitted diff
+- four `/tmp/bdspro-chat-*` entries are prunable;
+- no worktree source directories remain.
 
-Decision:
-- no local work needs rescue;
-- keep parked for now;
-- do not mutate/push until the coordinator selects the next bounded R5 slice;
-- may later be recreated/renamed for the selected slice.
+## Phase 2B — authorized local action
 
-## Stale temporary worktree registry
+Now that parked local work is archived and checksummed, it is authorized to:
 
-Four `/tmp/bdspro-chat-*` worktree entries are marked prunable because their gitdir paths no longer exist.
+1. restore ONLY the two tracked audit files to the local anchor HEAD;
+2. remove ONLY the generated audit `__pycache__` directory;
+3. verify anchor becomes clean but remains behind 5;
+4. fetch and verify remote authority still equals `fca46825...`;
+5. fast-forward anchor using `git merge --ff-only origin/refactor/canonical-observability-errors-a6d0722a`;
+6. verify exact authority SHA and clean working tree;
+7. prune stale worktree registry metadata with `git worktree prune --verbose`;
+8. verify reader/writer registrations remain intact.
 
-Decision:
-
-- safe to prune registry metadata after the anchor archive step;
-- no source content exists at those paths to preserve.
-
-## Recovery Sprite execution note
-
-The recovery Sprite's convenience working checkout currently has unrelated local `social-service` modifications. It is NOT source authority and must not be treated as a clean exact-SHA proof checkout until separately reconciled. Live Git/GitHub remains authoritative.
-
-## Phase 2A — next authorized local action
-
-Archive the anchor's parked Auth ratchet outside the repository, without modifying the repository.
-
-Required evidence:
-
-- patch file;
-- copies of both modified tracked files;
-- anchor status snapshot;
-- authority/local SHA metadata;
-- pycache listing;
-- SHA256 checksums for archive artifacts.
-
-Only after archive verification may Phase 2B clean/fast-forward the anchor and remove generated bytecode.
+Do NOT use:
+- `git reset --hard`;
+- `git clean -fd`;
+- force push;
+- plain `git pull`.
 
 No active source mutation is authorized by this checkpoint.
