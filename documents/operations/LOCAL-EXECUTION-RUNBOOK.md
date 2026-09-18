@@ -287,3 +287,46 @@ When terminal/browser/chat is interrupted:
 Only Phase 1 is authorized for the user's machine right now.
 
 Run Phase 1 exactly and return the output.
+
+
+## Phase 12 — tmux option scope correction
+
+Operating Model V2 requires stable tmux role names.
+
+Use option scopes correctly:
+
+- `automatic-rename` is a window option.
+- `allow-rename` is a pane option.
+
+Canonical pattern:
+
+```bash
+tmux set-window-option -t "$SESSION:$name" automatic-rename off
+
+PANE_ID="$(
+  tmux display-message     -p     -t "$SESSION:$name"     '#{pane_id}'
+)"
+
+tmux set-option   -p   -t "$PANE_ID"   allow-rename off
+```
+
+Verification:
+
+```bash
+AUTO="$(
+  tmux show-window-options     -v     -t "$SESSION:$name"     automatic-rename
+)"
+
+PANE_ID="$(
+  tmux display-message     -p     -t "$SESSION:$name"     '#{pane_id}'
+)"
+
+ALLOW="$(
+  tmux show-options     -p     -v     -t "$PANE_ID"     allow-rename
+)"
+
+test "$AUTO" = "off"
+test "$ALLOW" = "off"
+```
+
+Do not treat an empty `show-window-options ... allow-rename` result as a source/tmux failure; it means the verification used the wrong option scope.
