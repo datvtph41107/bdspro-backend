@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: SELECTED / WRITER PRECHECK NEXT
+Status: WRITER PRECHECK PASS / BOUNDED NOTIFICATION MUTATION AUTHORIZED
 
 ## Authority
 
@@ -155,3 +155,31 @@ No third-party logger ratchet is needed because hosted Notification third-party 
 Writer remains the only source writer.
 
 FINAL ACCEPTED = NO.
+
+
+## Notification writer precheck — PASS
+
+Report:
+`notification-writer-precheck-20260918-212335.txt`
+
+Verified:
+- remote active branch = exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- writer HEAD = exact authority;
+- writer branch = `local/r5-notification-canonical-logging`;
+- final writer HEAD = exact authority;
+- final writer branch = expected Notification branch;
+- source mutation = NONE;
+- commit = NONE;
+- push = NONE;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub was reconciled immediately after the precheck and the active refactor branch remains identical to the exact authority.
+
+Next authorized action:
+- bounded Notification logging mutation only;
+- configure canonical logging at the primary process root and both compatibility/recovery worker process roots;
+- migrate the 30 hosted legacy std-log findings to canonical slog projections;
+- migrate the primary-root diagnostic `fmt.Println(err)` into canonical logging while preserving immediate exit behavior;
+- preserve all Notification business, delivery, retry, Firebase, Redis, RPC and process-lifecycle semantics;
+- then gofmt, canonical protobuf/Wire materialization, Notification test/build and canonical audit;
+- no ratchet, commit or push until Notification legacy std-log is proved zero and reviewed.
