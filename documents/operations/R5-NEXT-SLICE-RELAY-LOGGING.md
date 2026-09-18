@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY ZERO PROOF PASS / DEPENDENCY RETIREMENT PROBE NEXT
+Status: RELAY ZERO PROOF PASS / MODULE RETIREMENT AUTHORIZED
 
 ## Authority
 
@@ -269,3 +269,34 @@ Retirement decision before ratchet:
 - no source mutation, ratchet, commit or push during this probe.
 
 Live GitHub was reconciled after zero-proof review and remains identical to exact authority.
+
+## Relay dependency-retirement probe — PASS
+
+Reports:
+- `relay-dependency-retirement-probe-20260918-163541.txt`
+- `relay-tidy-diff-20260918-163541.txt`
+
+Verified:
+- proven eight-file Relay patch remained unchanged;
+- direct Relay Fabric Go imports = 0;
+- current `relay-service/go.mod` still declares `github.com/hyperledger/fabric` direct;
+- `go mod tidy -diff` returned DIFF_PRESENT and mutated no files;
+- exact tidy delta moves:
+  - `github.com/hyperledger/fabric v2.1.1+incompatible` from direct -> indirect;
+  - `github.com/redis/go-redis/v9 v9.21.0` from direct -> indirect;
+- no version changes;
+- no go.sum delta was requested by the tidy diff;
+- `go mod why -m github.com/hyperledger/fabric` still resolves an indirect need through shared/common (`bdspro/infra/redis -> github.com/hyperledger/fabric/common/flogging`);
+- module-file hashes were unchanged after the read-only probe;
+- tracked source scope remained unchanged;
+- probe FINAL_FAIL_COUNT=0.
+
+Decision:
+- authorize exactly the tidy-proposed `relay-service/go.mod` retirement delta;
+- do not remove either dependency from the module graph entirely;
+- after mutation require `go mod tidy -diff` to be empty/exit 0;
+- rerun Relay test/build, canonical audit, zero-debt proof, protected/deploy invariants;
+- only after this retirement proof passes may Relay zero-ratchets be added;
+- no commit/push yet.
+
+Live GitHub after probe review remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
