@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: ASSISTANT RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
+Status: ASSISTANT CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
 
 ## Authority
 
@@ -310,3 +310,40 @@ Candidate commit constraints:
 - do not amend/rebase/merge;
 - do not push;
 - after commit record candidate SHA/tree and prove exact committed file set before detached exact-SHA proof.
+
+
+## Assistant candidate commit — CREATED
+
+Report:
+`assistant-candidate-commit-20260918-151700.txt`
+
+Immutable candidate:
+- SHA: `492b94a102e26b8d86575d72cca05b57911c745b`;
+- tree: `ce8ea2254b8715c8467535173f8c5f7182e7b4f2`;
+- parent: `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- single parent: PASS;
+- commit message: `feat(assistant): adopt canonical logging`;
+- committed file set: exactly four reviewed tracked files;
+- writer tracked state clean after commit;
+- candidate is exactly one commit ahead of authority and zero behind;
+- pushed: NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation after candidate creation:
+- active refactor branch remains identical to authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- candidate remains local-only.
+
+Next authorized gate:
+fresh detached exact-SHA proof at candidate SHA:
+1. verify exact candidate SHA/tree/parent and four-file commit set;
+2. materialize canonical protobuf contracts;
+3. materialize Assistant Wire via repository-owned generator;
+4. verify generation creates no tracked delta;
+5. run audit-tool unit tests;
+6. run audit with `--enforce-ratchets` and prove Assistant zero ratchet;
+7. run canonical Assistant test/build;
+8. prove fatal-lifecycle shape;
+9. prove protected paths + deploy checksum;
+10. leave proof worktree detached and tracked-clean at exact candidate SHA.
+
+Publication remains forbidden until detached exact-SHA proof is reviewed.
