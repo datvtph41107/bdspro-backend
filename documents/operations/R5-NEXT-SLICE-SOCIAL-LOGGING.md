@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: SOCIAL ZERO PROOF PASS / LEGACY-STD-LOG RATCHET AUTHORIZED
+Status: RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
 
 ## Authority
 
@@ -211,3 +211,37 @@ Ratchet decision:
 - rerun audit with `--enforce-ratchets`;
 - rerun Social test/build and protected/deploy invariants;
 - no commit or push until ratchet proof is reviewed.
+
+
+## Social ratchet proof — PASS
+
+Proof report:
+`social-ratchet-proof-20260918-135813.txt`
+
+Verified:
+- Social legacy std-log zero ratchet registered;
+- registration + regression-enforcement tests added;
+- audit-tool unit tests: 30 PASS;
+- `audit-observability-errors.py --enforce-ratchets`: PASS;
+- `go.legacy_std_log@social-service = 0`;
+- Social canonical test PASS;
+- Social canonical build PASS;
+- protected tracked diff empty;
+- `shared/code/deploy.sh` SHA unchanged;
+- exact tracked scope is six files: four Social source files plus audit script and audit test;
+- FINAL_FAIL_COUNT=0.
+
+Ratchet proof closes the pre-commit implementation gate.
+
+Candidate commit is now authorized with exact expected parent:
+`fca4682587d93cbc436f2466244ee8bd03b8b1b9`.
+
+Commit must:
+- stage only the six reviewed files;
+- have the authority SHA as its single parent;
+- not include ignored generated protobuf/build artifacts;
+- not push;
+- record candidate SHA and tree for detached exact-SHA proof.
+
+Next gate after commit:
+detached proof worktree at the immutable candidate SHA, canonical generation/test/build/audit/ratchet/protected proof, then publication only if that exact-SHA proof passes.
