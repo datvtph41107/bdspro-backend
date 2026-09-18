@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: SELECTED / WRITER PRECHECK NEXT
+Status: WRITER PRECHECK BLOCKED BY LOCAL PYTHON CACHE / CLEANUP NEXT
 
 ## Authority
 
@@ -128,3 +128,24 @@ Do NOT:
 Writer must remain the only source writer.
 
 FINAL ACCEPTED = NO.
+
+
+## Writer precheck attempt — blocked by untracked cache
+
+Report:
+`assistant-writer-precheck-20260918-144455.txt`
+
+Verified:
+- remote active branch = exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- writer HEAD = exact authority;
+- current writer branch = `local/r5-social-canonical-logging`;
+- no source mutation occurred.
+
+Blocker:
+- writer is not clean because `shared/code/development/__pycache__/` is untracked;
+- this is execution artifact from Python audit tooling, not source authority;
+- do not commit it;
+- archive metadata/listing, remove only this exact cache directory, then rerun writer clean/branch-preparation gate;
+- no Assistant source mutation until that gate passes.
+
+Live GitHub was reconciled after this report and the active refactor branch remains identical to exact authority.
