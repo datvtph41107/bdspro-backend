@@ -2,8 +2,10 @@ package main
 
 import (
 	"assistant/cmd/grpc"
+	"common/logging"
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"time"
 )
 
@@ -14,10 +16,21 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	closeLogger, err := logging.Configure("assistant-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Assistant logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = closeLogger() }()
+
 	// Set timezone về UTC (múi 0)
 	time.Local = time.UTC
-	fmt.Printf("\n🚀 Timezone: %s", time.Now())
 
-	log.Println("🚀 Starting Assistant Service...3")
+	slog.Info(
+		"assistant timezone configured",
+		slog.String("timezone", time.Local.String()),
+	)
+	slog.Info("assistant service starting")
+
 	grpc.RunGRPCServer()
 }

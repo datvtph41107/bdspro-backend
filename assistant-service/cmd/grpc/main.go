@@ -5,8 +5,9 @@ import (
 	"common/configloader"
 	_middleware "common/middleware"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
+	"os"
 
 	assistantpb "pb/types/assistant"
 
@@ -19,19 +20,32 @@ func RunGRPCServer() {
 	// The Wire graph then materializes typed Assistant config from that loaded state.
 	selection, err := configloader.LoadRuntimeYML()
 	if err != nil {
-		log.Fatalf("load assistant runtime config: %v", err)
+		slog.Error(
+			"load assistant runtime config",
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 
 	assistantHandler, cleanup, err := wire.InitializeApp()
 	if err != nil {
-		log.Fatalf("Failed to initialize dependencies: %v", err)
+		slog.Error(
+			"initialize assistant dependencies",
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 	defer cleanup()
 
 	grpcPort := assistantHandler.Runtime.GRPCPort
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
 	if err != nil {
-		log.Fatalf("Failed to listen on port %s: %v", grpcPort, err)
+		slog.Error(
+			"listen for assistant gRPC",
+			slog.String("port", grpcPort),
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 
 	// Create gRPC server — max msg đủ cho ClassifyDocumentWithGemini (file inline ~15MB).
@@ -49,11 +63,22 @@ func RunGRPCServer() {
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
-	log.Printf("✓ Runtime config loaded from config/runtime.yml (environment=%s)", selection.Environment)
-	log.Printf("✓ gRPC Server listening on port %s", grpcPort)
-	log.Printf("✓ Assistant Service is ready to serve requests")
+	slog.Info(
+		"assistant runtime config loaded",
+		slog.String("config.path", "config/runtime.yml"),
+		slog.String("runtime.environment", selection.Environment),
+	)
+	slog.Info(
+		"assistant gRPC listening",
+		slog.String("port", grpcPort),
+	)
+	slog.Info("assistant service ready")
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve gRPC server: %v", err)
+		slog.Error(
+			"serve assistant gRPC",
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 }
