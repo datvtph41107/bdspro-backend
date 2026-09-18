@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
+Status: DETACHED PROOF SCRIPT ORDER DEFECT / POST-GENERATION TIDY REPROOF NEXT
 
 ## Authority
 
@@ -421,3 +421,45 @@ fresh detached exact-SHA proof at candidate SHA:
 Publication remains forbidden until detached exact-SHA proof is reviewed.
 
 FINAL ACCEPTED = NO.
+
+## First Relay detached exact-SHA proof — proof-order defect
+
+Report:
+`relay-detached-exact-sha-proof-20260918-170550.txt`
+
+Verified candidate/proof results:
+- remote remained at exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- candidate identity/tree/parent PASS;
+- exact eleven-file candidate scope PASS;
+- fresh detached worktree created at exact candidate `c6a9b121946a360d22759bde6a708bc6a35223c2` / tree `01d08e582fb55759132cc199215303dd65f6d255`;
+- canonical protobuf materialization PASS;
+- generated protobuf caused no tracked delta;
+- audit-tool tests 35 PASS;
+- audit with `--enforce-ratchets` PASS;
+- Relay total debt = 0;
+- both Relay ratchets remain zero;
+- repository debt = 691;
+- canonical Relay test/build PASS;
+- module retirement classification PASS;
+- old direct logging mechanisms = 0;
+- utility/runtime behavior shape PASS;
+- protected diff empty;
+- deploy SHA unchanged;
+- final proof worktree remains detached, tracked-clean, exact candidate SHA/tree.
+
+Single blocker:
+- the proof script executed `go mod tidy -diff` BEFORE canonical protobuf materialization;
+- in a fresh proof worktree generated protobuf sources are not present yet;
+- that pre-generation tidy probe proposed removing grpc-gateway/googleapis-api module edges and produced `FINAL_FAIL_COUNT=1`;
+- after that failed probe, canonical protobuf materialization completed and every subsequent gate passed.
+
+Interpretation:
+- candidate source is not rejected by this report;
+- the failure is in proof ordering relative to the generated-source contract;
+- durable candidate gate already specified protobuf materialization before the module-tidy assertion;
+- do not amend/reset/rebase/recreate candidate;
+- keep the existing detached proof worktree and rerun the exact-SHA proof with canonical protobuf materialized before `go mod tidy -diff`.
+
+No publication is authorized until the corrected post-generation tidy reproof passes.
+
+Live GitHub after review remains identical to exact authority.
