@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: ASSISTANT ZERO PROOF PASS / LEGACY-STD-LOG RATCHET AUTHORIZED
+Status: ASSISTANT RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
 
 ## Authority
 
@@ -270,3 +270,43 @@ Ratchet decision:
 - no commit/push until ratchet proof is reviewed.
 
 Live GitHub was reconciled immediately after this proof and remains identical to exact authority.
+
+
+## Assistant ratchet proof — PASS
+
+Report:
+`assistant-ratchet-proof-20260918-151400.txt`
+
+Verified:
+- pre-ratchet source scope = exactly two Assistant source files;
+- Assistant legacy std-log ratchet added exactly once;
+- registration + regression-enforcement tests added;
+- audit-tool unit tests: 32 PASS;
+- audit with `--enforce-ratchets`: PASS;
+- repository debt remains 707;
+- `go.legacy_std_log@assistant-service = 0`;
+- Assistant total debt = 0;
+- repository-owned Assistant Wire generation PASS;
+- canonical Assistant test PASS;
+- canonical Assistant build PASS;
+- former legacy fatal count = 0;
+- exactly four immediate `os.Exit(1)` fatal-site replacements remain;
+- final tracked scope = exactly four reviewed files;
+- protected tracked diff empty;
+- deploy SHA unchanged;
+- commit = NO;
+- push = NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub immediately after proof review:
+- active refactor branch remains identical to authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`.
+
+Candidate commit is now authorized.
+
+Candidate commit constraints:
+- parent must be exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- stage only the four reviewed tracked files;
+- generated `assistant-service/wire/wire_gen.go`, protobuf outputs, Python cache and build artifacts must not enter the commit;
+- do not amend/rebase/merge;
+- do not push;
+- after commit record candidate SHA/tree and prove exact committed file set before detached exact-SHA proof.
