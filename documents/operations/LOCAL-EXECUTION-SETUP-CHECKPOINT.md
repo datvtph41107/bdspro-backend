@@ -1,88 +1,110 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 1 RECONCILED / PHASE 1B INSPECTION NEXT
+Status: PHASE 1B RECONCILED / PHASE 2A ARCHIVE PARKED LOCAL WORK NEXT
 
-This checkpoint records the user's WSL/local execution reality discovered while adopting Operating Model V2.
-
-## Authority reconciliation
+## Authority
 
 Live GitHub active refactor remains:
 
 - branch: `refactor/canonical-observability-errors-a6d0722a`
 - SHA: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+- GitHub comparison: identical, ahead 0 / behind 0.
 
-GitHub compare against that SHA is identical: ahead 0 / behind 0.
-
-## User anchor clone
+## Anchor clone classification
 
 Path:
 
 `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
 
-Repository root resolves to the same path.
-
-Remote:
-
-`git@github.com:datvtph41107/bdspro-backend.git`
-
-Local branch:
-
-`refactor/canonical-observability-errors-a6d0722a`
-
 Local HEAD:
 
 `e857fd4d0e34d0f61e5beb33b1e849590e78849b`
 
-Relationship to remote active branch:
+Remote relationship:
 
-- local anchor is behind by 5 commits;
-- do NOT pull/reset/clean yet.
+- local anchor is behind active source by 5 commits;
+- anchor is not yet safe to fast-forward until local parked work is archived.
 
-Local dirty state:
+Dirty tracked files:
 
-- modified: `shared/code/development/audit-observability-errors.py`
-- modified: `shared/code/development/test_audit_observability_errors.py`
-- untracked: `shared/code/development/__pycache__/`
+- `shared/code/development/audit-observability-errors.py`
+- `shared/code/development/test_audit_observability_errors.py`
 
-These local changes are not yet classified as valuable/stale/generated. Preserve them until inspected.
+The local diff adds an Auth-service `go.legacy_std_log` zero-ratchet and regression tests.
 
-## Existing worktrees discovered
+Current source authority instead contains the later Payment zero-ratchets. Durable BDSPro state explicitly keeps the Auth zero-ratchet PARKED.
 
-- anchor: `/home/bop/projects/bdspro-canonical-bootstrap-20260908` @ `e857fd4`
-- reader: `/home/bop/bdspro-worktrees/reader` @ `fca4682` detached
-- writer: `/home/bop/bdspro-worktrees/writer` @ `fca4682` branch `local/r5-next-candidate`
-- several `/tmp/bdspro-chat-*` worktrees @ `9d3d3ce`, marked prunable
+Decision:
 
-The reader/writer worktrees appear to be based on the correct authority SHA, but their cleanliness and exact role state have not yet been verified.
+- classify anchor dirty tracked changes as PARKED / UNPUBLISHED AUTH RATCHET CANDIDATE;
+- preserve exact local patch before cleaning;
+- do not merge/publish it during local setup;
+- after archive verification, clean the anchor and fast-forward it to active authority.
 
-## Safety decision
+Untracked:
 
-Until Phase 1B inspection completes:
+- `shared/code/development/__pycache__/audit-observability-errors.cpython-312.pyc`
 
-- do not run `git pull` in the anchor;
-- do not run `git reset --hard`;
-- do not run `git clean -fd`;
-- do not delete the two modified audit files;
-- do not delete the untracked `__pycache__` yet;
-- do not reuse/push the writer branch;
-- do not prune worktrees yet.
+Classification:
 
-## Next authorized local step — Phase 1B
+- generated Python bytecode;
+- not source authority;
+- may be removed after local parked work archive is verified.
 
-Read-only inspection only:
+## Reader worktree
 
-1. inspect anchor diff for the two modified audit files;
-2. inspect anchor untracked `__pycache__` contents;
-3. inspect reader HEAD/status/branch;
-4. inspect writer HEAD/status/branch and diff from authority;
-5. inspect worktree lock/prunable metadata.
+`/home/bop/bdspro-worktrees/reader`
 
-After this evidence is returned, the coordinator will decide:
-- whether anchor changes should be preserved, archived or discarded;
-- whether reader can be reused as-is;
-- whether writer can be reused or should be recreated;
-- when it is safe to prune stale `/tmp` worktrees;
-- when to install the canonical `run.sh` wrapper.
+- HEAD = `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+- detached HEAD
+- clean
+- `git diff --check` clean
 
-No source mutation is authorized by this checkpoint.
+Decision: REUSE as canonical read-only/inventory worktree.
+
+## Writer worktree
+
+`/home/bop/bdspro-worktrees/writer`
+
+- branch = `local/r5-next-candidate`
+- HEAD = `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+- no commits relative to authority
+- no changed files relative to authority
+- no uncommitted diff
+
+Decision:
+- no local work needs rescue;
+- keep parked for now;
+- do not mutate/push until the coordinator selects the next bounded R5 slice;
+- may later be recreated/renamed for the selected slice.
+
+## Stale temporary worktree registry
+
+Four `/tmp/bdspro-chat-*` worktree entries are marked prunable because their gitdir paths no longer exist.
+
+Decision:
+
+- safe to prune registry metadata after the anchor archive step;
+- no source content exists at those paths to preserve.
+
+## Recovery Sprite execution note
+
+The recovery Sprite's convenience working checkout currently has unrelated local `social-service` modifications. It is NOT source authority and must not be treated as a clean exact-SHA proof checkout until separately reconciled. Live Git/GitHub remains authoritative.
+
+## Phase 2A — next authorized local action
+
+Archive the anchor's parked Auth ratchet outside the repository, without modifying the repository.
+
+Required evidence:
+
+- patch file;
+- copies of both modified tracked files;
+- anchor status snapshot;
+- authority/local SHA metadata;
+- pycache listing;
+- SHA256 checksums for archive artifacts.
+
+Only after archive verification may Phase 2B clean/fast-forward the anchor and remove generated bytecode.
+
+No active source mutation is authorized by this checkpoint.
