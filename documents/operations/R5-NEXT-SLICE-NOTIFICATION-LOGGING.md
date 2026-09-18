@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION CORRECTED DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
+Status: NOTIFICATION SAFE PUBLICATION PASS / HOSTED EXACT-SHA PROOF PENDING
 
 ## Authority
 
@@ -532,5 +532,40 @@ Decision:
 - no force push;
 - after publication, hosted exact-SHA proof is mandatory before Notification can be called CLOSED;
 - Error/Response implementation remains blocked until R5 is deliberately stable.
+
+FINAL ACCEPTED = NO.
+
+
+## Notification safe publication — PASS
+
+Report:
+`notification-safe-publication-20260919-062733.txt`
+
+Verified:
+- remote-before = exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- writer candidate exact SHA/tree/parent/branch PASS;
+- detached proof exact SHA/tree and detached PASS;
+- merge-base = authority;
+- ahead = 1;
+- behind = 0;
+- single parent = PASS;
+- exact twelve-file candidate = PASS;
+- normal non-force push succeeded;
+- remote-after = exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- local writer/proof immutability preserved;
+- FAST_FORWARD=YES;
+- PUSHED=YES;
+- FORCE_PUSH=NO;
+- FINAL_FAIL_COUNT=0.
+
+Hosted proof:
+- exact workflow authority: `.github/workflows/refactor-observability-errors.yml`;
+- workflow name: `Refactor Observability and Error Contracts`;
+- active-branch push trigger is configured;
+- required jobs: `inventory`, `common-contracts`, `boundary-contracts`;
+- required inventory artifact name: `observability-error-inventory-381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- hosted exact-SHA proof is still pending verification.
+
+Notification is NOT CLOSED until hosted run is completed SUCCESS at the exact candidate SHA and the inventory artifact confirms Notification debt=0 and repository debt=661.
 
 FINAL ACCEPTED = NO.
