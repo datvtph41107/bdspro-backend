@@ -347,3 +347,39 @@ At this checkpoint:
 `READ -> UNDERSTAND -> SEARCH -> TRACE -> FIX -> TEST`
 
 The goal is not maximum activity. The goal is maximum trustworthy progress per unit of execution.
+
+
+## 18. External AI code-review lane
+
+OpenCodeReview (Alibaba) is approved for a bounded pilot as an OPTIONAL REVIEW/PROOF LANE.
+
+It is not:
+- source authority;
+- a replacement for deterministic tests/audit/ratchets;
+- permission to auto-fix source;
+- a reason to broaden a bounded slice;
+- a final acceptance gate by itself.
+
+Intended placement:
+
+```text
+ONE WRITER
+  -> candidate commit SHA
+  -> deterministic local proof
+  -> OCR review on exact base SHA -> candidate SHA
+  -> coordinator triage of OCR findings
+  -> publication only after required deterministic gates
+```
+
+Pilot rules:
+- install a pinned OCR version, never floating latest in CI;
+- start local-only/read-only;
+- use exact validated 40-hex Git SHAs for `--from`/`--to`/`--commit`;
+- output review artifacts under `~/bdspro-ops/proofs/ocr`;
+- do not enable automatic fix;
+- do not post PR comments or provide write GitHub tokens during the pilot;
+- do not copy a `pull_request_target` workflow blindly;
+- keep credentials outside chat and repository;
+- review findings are advisory evidence requiring coordinator/source verification.
+
+Only after the local pilot proves useful, reproducible and acceptably low-noise may OCR become a hosted CI review lane.
