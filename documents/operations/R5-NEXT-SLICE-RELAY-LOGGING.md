@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: WRITER PRECHECK PASS / BOUNDED RELAY MUTATION AUTHORIZED
+Status: RELAY MUTATION PARTIAL / SCRIPT REGEX BUG / CONTINUATION REPAIR NEXT
 
 ## Authority
 
@@ -163,3 +163,26 @@ Next authorized action:
 - preserve WebSocket/Redis/DB/RPC behavior;
 - then gofmt, canonical protobuf materialization, Relay test/build and canonical audit;
 - no ratchet, commit or push until Relay zero logging debt is proved and reviewed.
+
+
+## First Relay mutation attempt — script bug, partial local patch preserved
+
+Report:
+`relay-logging-mutation-zero-proof-20260918-161203.txt`
+
+Observed:
+- pre-mutation gate PASS at exact authority on `local/r5-relay-canonical-logging`;
+- deterministic mutation stopped while processing `relay-service/wshandler/runtime.go`;
+- stop message: `unsupported active wsLogger line: wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)`;
+- this is a mutation-script regex escaping bug, not a source/architecture failure.
+
+Important local-state interpretation:
+- the mutation script writes each earlier Relay file immediately;
+- therefore files processed before `wshandler/runtime.go` may already contain the intended logging migration;
+- `wshandler/runtime.go` write happens only after its conversion loop, so the failed loop should have left that file at authority state;
+- do not reset, clean, delete, or rerun the whole mutation blindly;
+- first verify the exact partial tracked scope, then apply only the missing wshandler continuation with corrected matching and continue zero proof.
+
+No ratchet, commit, or push is authorized.
+
+Live GitHub was reconciled after the failed attempt and remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
