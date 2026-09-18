@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION DETACHED PROOF SCRIPT CONDITION DEFECT / CORRECTED REPROOF NEXT
+Status: NOTIFICATION CORRECTED DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
 
 ## Authority
 
@@ -478,5 +478,59 @@ Decision:
 - preserve writer and detached proof worktree;
 - rerun only corrected detached exact-SHA proof logic at the same candidate, with proper grouped hash comparisons;
 - publication remains forbidden until corrected reproof ends `FINAL_FAIL_COUNT=0`.
+
+FINAL ACCEPTED = NO.
+
+
+## Notification corrected detached exact-SHA proof — PASS
+
+Report:
+`notification-corrected-detached-proof-20260919-062045.txt`
+
+Exact immutable candidate:
+- SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- tree `fe7c5153c65074bf406134e4e966c9d097a2d706`;
+- parent `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- exact twelve-file commit set;
+- writer candidate immutable PASS;
+- existing detached proof worktree exact SHA/tree and detached PASS.
+
+Corrected proof results:
+- remote active branch still exact authority before proof;
+- canonical protobuf + Notification Wire materialization PASS;
+- generated tracked source clean;
+- `go mod tidy -diff` exit 0;
+- tidy output EMPTY;
+- go.mod/go.sum hashes unchanged;
+- Postgres direct module classification PASS;
+- known config/db baseline failure parity PASS;
+- all 25 non-baseline Notification packages PASS;
+- baseline packages compile PASS;
+- Notification build PASS;
+- audit-tool unit tests = 37 PASS;
+- audit with `--enforce-ratchets` PASS;
+- Notification total debt = 0;
+- Notification legacy std-log = 0;
+- Notification third-party logger = 0;
+- repository debt = 661;
+- Notification legacy-std-log ratchet exactly once;
+- logger/process behavior shape PASS;
+- protected candidate diff empty;
+- deploy SHA unchanged;
+- detached proof ends tracked-clean at exact candidate SHA/tree;
+- PUSHED=NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation immediately after corrected proof:
+- active refactor remains identical to authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- ahead 0 / behind 0.
+
+Decision:
+- corrected detached exact-SHA proof gate is CLOSED/PASS;
+- exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is authorized for safe non-force fast-forward publication to `refactor/canonical-observability-errors-a6d0722a`;
+- publication must recheck remote-before, parent/merge-base topology, exact candidate identity and local immutability;
+- no force push;
+- after publication, hosted exact-SHA proof is mandatory before Notification can be called CLOSED;
+- Error/Response implementation remains blocked until R5 is deliberately stable.
 
 FINAL ACCEPTED = NO.
