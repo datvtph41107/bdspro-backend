@@ -4,6 +4,7 @@ set -euo pipefail
 repository_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
 state_dir="$repository_root/.tmp/development"
 pid_dir="$state_dir/pids"
+dev_pid_dir="$state_dir/dev-pids"
 log_dir="$state_dir/logs"
 
 # This is process topology, not business ownership. Each entry points to the
@@ -72,6 +73,10 @@ pid_file() {
   printf '%s/%s.pid' "$pid_dir" "$1"
 }
 
+dev_pid_file() {
+  printf '%s/%s.pid' "$dev_pid_dir" "$1"
+}
+
 log_file() {
   printf '%s/%s.log' "$log_dir" "$1"
 }
@@ -96,8 +101,108 @@ owned_pid() {
   printf '%s' "$pid"
 }
 
+dev_pid() {
+  local service file pid cwd expected_cwd cmdline
+  service=$(normalize_service "$1")
+  file=$(dev_pid_file "$service")
+  [[ -s "$file" ]] || return 1
+  pid=$(<"$file")
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+
+  cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)
+  expected_cwd="$repository_root/$(service_dir "$service")"
+  [[ "$cwd" == "$expected_cwd" ]] || return 1
+
+  cmdline=$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)
+  [[ "$cmdline" == *"shared/code/development/dev-service.sh $service "* ]] || return 1
+  printf '%s' "$pid"
+}
+
 port_open() {
   (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1
+}
+
+ownership_state() {
+  local service pid port
+  service=$(normalize_service "$1")
+  port=$(service_port "$service")
+
+  if pid=$(owned_pid "$service"); then
+    printf 'SUPERVISED\t%s\n' "$pid"
+    return 0
+  fi
+  if pid=$(dev_pid "$service"); then
+    printf 'DEV\t%s\n' "$pid"
+    return 0
+  fi
+  if port_open "$port"; then
+    printf 'FOREIGN\t-\n'
+    return 0
+  fi
+  printf 'DOWN\t-\n'
+}
+
+status_one() {
+  local service state pid port ready
+  service=$(normalize_service "$1")
+  port=$(service_port "$service")
+  read -r state pid < <(ownership_state "$service")
+  if port_open "$port"; then
+    ready=yes
+  else
+    ready=no
+  fi
+
+  printf '[%-10s] %-14s pid=%-7s port=%s ready=%s\n' "$state" "$service" "$pid" "$port" "$ready"
+
+  [[ "$state" != "FOREIGN" && "$state" != "DOWN" && "$ready" == "yes" ]]
+}
+
+preflight_up() {
+  local status=0 service state pid
+  for service in "${services[@]}"; do
+    read -r state pid < <(ownership_state "$service")
+    case "$state" in
+      DEV)
+        echo "$service cannot enter SUPERVISED runtime: foreground DEV owner pid=$pid is active" >&2
+        status=1
+        ;;
+      FOREIGN)
+        echo "$service cannot enter SUPERVISED runtime: port $(service_port "$service") has a FOREIGN owner" >&2
+        status=1
+        ;;
+    esac
+  done
+  return "$status"
+}
+
+prepare_dev() {
+  local service state pid port
+  service=$(normalize_service "$1")
+  port=$(service_port "$service")
+  read -r state pid < <(ownership_state "$service")
+
+  case "$state" in
+    DEV)
+      echo "$service already has a foreground DEV owner pid=$pid" >&2
+      return 2
+      ;;
+    FOREIGN)
+      echo "$service cannot enter DEV: port $port has a FOREIGN owner" >&2
+      return 2
+      ;;
+    SUPERVISED)
+      stop_one "$service"
+      ;;
+    DOWN)
+      ;;
+  esac
+
+  if port_open "$port"; then
+    echo "$service cannot enter DEV: port $port is still open after ownership transfer" >&2
+    return 2
+  fi
 }
 
 wait_for_port() {
@@ -121,18 +226,22 @@ wait_for_port() {
 start_one() {
   local service
   service=$(normalize_service "$1")
-  mkdir -p "$pid_dir" "$log_dir"
+  mkdir -p "$pid_dir" "$dev_pid_dir" "$log_dir"
   local existing
   if existing=$(owned_pid "$service"); then
-    printf '[READY] %-14s pid=%s port=%s\n' "$service" "$existing" "$(service_port "$service")"
+    printf '[SUPERVISED] %-14s pid=%s port=%s\n' "$service" "$existing" "$(service_port "$service")"
     return 0
+  fi
+  if existing=$(dev_pid "$service"); then
+    echo "$service cannot start SUPERVISED: foreground DEV owner pid=$existing is active" >&2
+    return 1
   fi
 
   rm -f "$(pid_file "$service")"
   local port
   port=$(service_port "$service")
   if port_open "$port"; then
-    echo "$service cannot start: port $port is owned by another process/container" >&2
+    echo "$service cannot start SUPERVISED: port $port has a FOREIGN owner" >&2
     echo "Run 'make integration-down' if an old Compose application stack is still active." >&2
     return 1
   fi
@@ -175,10 +284,19 @@ start_one() {
 stop_one() {
   local service
   service=$(normalize_service "$1")
-  local pid
+  local pid port
+  port=$(service_port "$service")
   if ! pid=$(owned_pid "$service"); then
     rm -f "$(pid_file "$service")"
-    printf '[DOWN]  %-14s\n' "$service"
+    if pid=$(dev_pid "$service"); then
+      printf '[DEV]        %-14s pid=%s port=%s left-running\n' "$service" "$pid" "$port"
+      return 0
+    fi
+    if port_open "$port"; then
+      printf '[FOREIGN]    %-14s port=%s not-stopped\n' "$service" "$port"
+      return 0
+    fi
+    printf '[DOWN]       %-14s port=%s\n' "$service" "$port"
     return 0
   fi
 
@@ -220,12 +338,7 @@ stop_all() {
 status_all() {
   local status=0
   for service in "${services[@]}"; do
-    local pid port
-    port=$(service_port "$service")
-    if pid=$(owned_pid "$service") && port_open "$port"; then
-      printf '[READY] %-14s pid=%s port=%s\n' "$service" "$pid" "$port"
-    else
-      printf '[DOWN]  %-14s port=%s\n' "$service" "$port"
+    if ! status_one "$service"; then
       status=1
     fi
   done
@@ -254,22 +367,33 @@ show_logs() {
   fi
 }
 
-command=${1:-}
-case "$command" in
-  start) start_all ;;
-  stop) stop_all ;;
-  restart)
-    service=$(normalize_service "${2:?service is required}")
-    stop_one "$service"
-    start_one "$service"
-    ;;
-  start-one) start_one "${2:?service is required}" ;;
-  stop-one) stop_one "${2:?service is required}" ;;
-  status) status_all ;;
-  pid) owned_pid "$(normalize_service "${2:?service is required}")" ;;
-  logs) show_logs "${2:-}" ;;
-  *)
-    echo "usage: $0 {start|stop|restart|start-one|stop-one|status|pid|logs} [service]" >&2
-    exit 2
-    ;;
-esac
+main() {
+  local command=${1:-}
+  case "$command" in
+    start) start_all ;;
+    stop) stop_all ;;
+    restart)
+      local service
+      service=$(normalize_service "${2:?service is required}")
+      stop_one "$service"
+      start_one "$service"
+      ;;
+    start-one) start_one "${2:?service is required}" ;;
+    stop-one) stop_one "${2:?service is required}" ;;
+    status) status_all ;;
+    status-one) status_one "${2:?service is required}" ;;
+    preflight-up) preflight_up ;;
+    prepare-dev) prepare_dev "${2:?service is required}" ;;
+    pid) owned_pid "$(normalize_service "${2:?service is required}")" ;;
+    dev-pid) dev_pid "$(normalize_service "${2:?service is required}")" ;;
+    logs) show_logs "${2:-}" ;;
+    *)
+      echo "usage: $0 {start|stop|restart|start-one|stop-one|status|status-one|preflight-up|prepare-dev|pid|dev-pid|logs} [service]" >&2
+      return 2
+      ;;
+  esac
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

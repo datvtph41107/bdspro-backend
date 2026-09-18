@@ -61,10 +61,12 @@ hub
 assistant
 ```
 
-Các application trên là process host được build từ working tree. PID và log có
-owner tại `.tmp/development/{pids,logs}`. Compose application services chỉ được
-gọi bằng `make integration-up` để kiểm tra image/package, không thuộc default
-development runtime.
+Các application trên là process host được build từ working tree. Runtime state
+và log có owner tại `.tmp/development/{pids,dev-pids,logs}`. `pids` nhận diện
+SUPERVISED, `dev-pids` nhận diện foreground DEV; port/readiness được kiểm tra riêng
+và port mở không có owner hợp lệ được báo FOREIGN. Compose application services
+chỉ được gọi bằng `make integration-up` để kiểm tra image/package, không thuộc
+default development runtime.
 
 `*-migrate` và acceptance fixtures là one-shot operations, không phải business
 services.

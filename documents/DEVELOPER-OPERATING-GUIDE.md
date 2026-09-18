@@ -46,6 +46,8 @@ make dev service=payment-service
 
 `make dev` chạy native Air. Logs stdout/stderr nằm ngay terminal. Save source → Go build → process restart. Đây là loop mặc định vì tối ưu feedback/debug.
 
+Runtime ownership có bốn trạng thái: `SUPERVISED`, `DEV`, `FOREIGN`, `DOWN`. `make status` hiển thị ownership và `ready=yes/no` riêng; port chỉ là readiness signal, không phải ownership truth. Root-routed và service-local `make dev` cùng dùng một DEV lifecycle owner, nên second DEV fail fast và SUPERVISED → DEV transfer không bị định nghĩa hai lần.
+
 Structured application logs của cả `make up` và `make dev` dùng cùng một root tuyệt đối do repository sở hữu: `<repo>/.tmp/development/logs`. Logger tiếp tục tự tách theo service/run bên dưới root này; vị trí evidence không phụ thuộc service CWD. `make logs` vẫn là raw process-stream view, không phải structured-query command.
 
 VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → `BDSPro · Dev · <Service>`.

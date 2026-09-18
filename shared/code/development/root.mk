@@ -78,7 +78,7 @@ help:
 	  'make doctor                        Chẩn đoán toolchain + Docker environment' \
 	  'make deps                          Khởi động Postgres, Redis và RabbitMQ local' \
 	  'make up                            Build và chạy toàn bộ Go service trực tiếp trên host' \
-	  'make status                        Xem hạ tầng Docker + process native' \
+	  'make status                        Xem owner SUPERVISED/DEV/FOREIGN/DOWN + readiness' \
 	  'make logs [service=payment-service] Theo dõi log process native' \
 	  'make smoke                         Kiểm tra public boundary cơ bản' \
 	  'make bootstrap-admin               Tạo root operator một lần trên database mới' \
@@ -169,7 +169,6 @@ test-e2e: native-up runtime-value-chain-acceptance runtime-admin-acceptance
 dev:
 	@test -n "$(SERVICE)" || { echo 'usage: make dev service=payment-service' >&2; exit 2; }
 	@case " $(CORE_SERVICES) " in *" $(SERVICE) "*) ;; *) echo 'native dev supports core service: $(SERVICE)-service' >&2; exit 2 ;; esac
-	@bash shared/code/development/native-stack.sh stop-one "$(SERVICE)"
 	@$(MAKE) -C "$(SERVICE)-service" dev
 
 configure:
@@ -592,6 +591,7 @@ native-build:
 	@for service in $(NATIVE_SERVICES); do $(MAKE) -C "$$service-service" build || exit; done
 
 native-up: doctor env-check
+	@bash shared/code/development/native-stack.sh preflight-up
 	@$(MAKE) deps
 	@docker compose --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" stop $(DOCKER_SERVICES) >/dev/null
 	@bash shared/code/development/native-stack.sh stop

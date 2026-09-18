@@ -40,9 +40,11 @@ make test service=payment-service
 ```
 
 `make up` build rồi chạy toàn bộ application binary trực tiếp trên WSL/Linux;
-PID và log nằm trong ignored `.tmp/development/`. `make dev` dừng binary native
-của service đang sửa và chạy service đó bằng Air trong terminal hiện tại. Docker
-chỉ chạy PostgreSQL/PostGIS, Redis và RabbitMQ trong golden path này.
+PID và log nằm trong ignored `.tmp/development/`. `make dev` chuyển đúng service
+đang sửa từ SUPERVISED sang DEV/Air trong terminal hiện tại. `make status` hiển
+thị owner `SUPERVISED / DEV / FOREIGN / DOWN` và readiness riêng, nên port mở
+không còn bị coi là bằng chứng ownership. Docker chỉ chạy PostgreSQL/PostGIS,
+Redis và RabbitMQ trong golden path này.
 
 Proof toàn hệ thống dùng chính các process native mà developer đang debug:
 
@@ -112,7 +114,7 @@ make generate                      protobuf/Wire generation
 make up                            infra Docker + toàn bộ application native
 make rebuild service=...          rebuild một integration image
 make rebuild                       rebuild toàn integration stack
-make status                        infra health + native process/port
+make status                        infra health + runtime owner/readiness
 make logs service=...              native stdout/stderr trong .tmp/development
 make smoke                         public boundary smoke
 make test-e2e                      cross-service business proof

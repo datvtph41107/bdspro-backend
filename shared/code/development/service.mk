@@ -10,6 +10,8 @@ ENV_FILE ?= .env
 ROOT_ENV_FILE ?= ../.env
 REPOSITORY_ROOT ?= ..
 QHPRO_LOG_ROOT := $(abspath $(REPOSITORY_ROOT)/.tmp/development/logs)
+SERVICE_NAME ?= $(patsubst %-service,%,$(notdir $(CURDIR)))
+DEV_RUNNER := $(abspath $(REPOSITORY_ROOT)/shared/code/development/dev-service.sh)
 BINARY_NAME ?= service
 BIN ?= bin/$(BINARY_NAME)
 BUILD_PACKAGE ?= .
@@ -46,7 +48,7 @@ server run:
 dev:
 	@test -f .air.toml || { echo 'This service has no .air.toml; use make server or add an owner-specific dev target.' >&2; exit 2; }
 	@mkdir -p .tmp/air
-	@$(call with_env,air -c .air.toml)
+	@$(call with_env,bash "$(DEV_RUNNER)" "$(SERVICE_NAME)" air -c .air.toml)
 
 clean:
 	rm -rf bin .tmp
