@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 3B COMPLETE / PHASE 3C FIRST ATTEMPT RECORDED / RETRY NEXT
+Status: PHASE 3C COMPLETE / LOCAL EXECUTION INFRASTRUCTURE CLOSED / R5 PARALLEL INVENTORY + OCR PILOT NEXT
 
 ## Authority
 
@@ -148,3 +148,58 @@ Decision:
 - not source authority and not a replacement for exact-SHA deterministic proof;
 - local pinned-version pilot comes after Phase 3C retry closes;
 - no GitHub Action/write-token integration during the first pilot.
+
+## Phase 3C retry — COMPLETE
+
+The retry ran the audit with its repository-local canonical `.tmp/observability-errors` outputs and copied completed evidence to `~/bdspro-ops/proofs` only after exit 0.
+
+Exact authority:
+`fca4682587d93cbc436f2466244ee8bd03b8b1b9`
+
+Result:
+- task exit: 0;
+- findings: 2783;
+- debt: 721;
+- total logging debt: 716;
+- reader HEAD before/after remained exact authority;
+- reader tracked state remained clean.
+
+Evidence:
+- inventory: `/home/bop/bdspro-ops/proofs/r5-next-service-inventory-20260918-120356.tsv`;
+- summary: `/home/bop/bdspro-ops/proofs/r5-next-service-summary-20260918-120356.json`;
+- human report: `/home/bop/bdspro-ops/proofs/r5-next-service-report-20260918-120356.txt`;
+- run log: `/home/bop/bdspro-ops/logs/20260918-120356-r5-next-service-inventory.log`.
+
+Artifact SHA256:
+- inventory: `80d0b03e0abdf5cc32d7409b7befe138f7da34427cf76641a1b639651d012d5e`;
+- summary: `ede6cb00e0d400194b4fbf77c5918eb79551865b15f158f70d46699e9cde85d6`;
+- report: `156298f33d7d4cb8e44d0c14d845c3e28a68b3bdf21ea7f6184617893fbb855f`.
+
+Logging debt by notable eligible non-protected owners:
+- tqd-service 228;
+- user-service 123;
+- bdspro-service 114;
+- crm-service 47;
+- chat-v1-service 30;
+- notification-service 30;
+- chat-service 27;
+- shared/common 25;
+- hub-service 19;
+- relay-service 16;
+- shared/code 15;
+- assistant-service 8;
+- social-service 6;
+- shared 3.
+
+Protected logging owners remain no-touch:
+- map-service 8;
+- organization-service 17.
+
+Local execution infrastructure is now CLOSED / OPERATIONAL.
+
+## Next authorized work
+
+1. Coordinator performs parallel read-only source inventory on a bounded set of small/non-protected R5 candidates at the exact authority SHA.
+2. Do not select by count alone; inspect composition root, worker/runtime ownership, third-party adapters, test coverage, removal shape and protected boundaries.
+3. OpenCodeReview Phase A pilot may begin in parallel as an independent local read-only tooling lane; it must not alter candidate selection or source.
+4. Writer remains parked until the coordinator explicitly authorizes one bounded source slice.
