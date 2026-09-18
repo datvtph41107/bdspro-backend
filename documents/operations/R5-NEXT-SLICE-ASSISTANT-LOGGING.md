@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: ASSISTANT WRITER BRANCH PRESENT / CLEAN VERIFICATION NEXT
+Status: WRITER PRECHECK PASS / BOUNDED ASSISTANT MUTATION AUTHORIZED
 
 ## Authority
 
@@ -170,3 +170,30 @@ Next gate:
 - no source mutation until that clean verification passes.
 
 Live GitHub remains identical to exact authority after this report.
+
+
+## Final writer precheck — PASS
+
+Report:
+`assistant-writer-final-precheck-20260918-145549.txt`
+
+Verified:
+- writer HEAD = exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- writer branch = `local/r5-assistant-canonical-logging`;
+- worktree clean;
+- ahead = 0;
+- behind = 0;
+- source mutation = none;
+- commit = none;
+- push = none;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub was reconciled again immediately after this proof and the active refactor branch remains identical to exact authority.
+
+Next authorized action:
+- bounded Assistant source mutation only in `assistant-service/main.go` and `assistant-service/cmd/grpc/main.go`;
+- preserve all four former `log.Fatalf` sites as structured error log + immediate `os.Exit(1)`;
+- replace non-fatal startup/readiness stdlib logs and the process timezone print with canonical `slog`;
+- configure `shared/common/logging` once at process root;
+- then gofmt, targeted Assistant test/build, canonical audit and zero-debt proof;
+- no ratchet, commit or push until zero proof is reviewed.
