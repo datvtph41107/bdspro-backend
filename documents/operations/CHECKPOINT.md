@@ -39,6 +39,7 @@ Protected invariants: `shared/protobuf/**`, `organization-service/**`, `map-serv
 - R5 Assistant slice — PROVED/CLOSED @ `492b94a102e26b8d86575d72cca05b57911c745b`; hosted #85 / `35324490969` SUCCESS.
 - R5 Relay slice — PROVED/CLOSED @ `c6a9b121946a360d22759bde6a708bc6a35223c2`; hosted #86 / `35333855680` SUCCESS.
 - R5 Notification slice — PROVED/CLOSED @ `381c29365a00f35737bb0b6078cf0973198dc7c2`; hosted run `35405779633` SUCCESS; artifact `10572063928`; repository debt `691→661`; Notification debt `30→0`; legacy std-log zero-ratchet active.
+- R5 Chat slice — SELECTED at authority `381c29365a00f35737bb0b6078cf0973198dc7c2`; hosted debt 27 = std-log 4 + third-party logger 23; writer precheck next; no source mutation authorized yet.
 - Assistant logging debt: `go.legacy_std_log 8→0`; repository debt `715→707`; Assistant legacy-std-log zero-ratchet active.
 
 ## Error / Response FINAL
@@ -85,6 +86,6 @@ Notification is PROVED/CLOSED:
 - hosted artifact `10572063928` confirms Notification debt=0 and repository debt=661;
 - protected/deploy invariants preserved.
 
-R5 remains ACTIVE. Next gate is fresh exact-SHA read-only inventory/source trace for the next non-protected logging owner. Error/Response implementation remains pending until R5 is deliberately stable.
+R5 remains ACTIVE. Fresh exact-SHA inventory/source trace selected Chat as the next bounded non-protected logging owner. Next gate is Chat writer precheck/branch preparation only. Error/Response implementation remains pending until R5 is deliberately stable.
 
 FINAL ACCEPTED = NO.
