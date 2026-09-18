@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION FINAL PRE-COMMIT PROOF PASS / CANDIDATE COMMIT AUTHORIZED
+Status: NOTIFICATION CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
 
 ## Authority
 
@@ -380,5 +380,51 @@ Live GitHub reconciliation immediately after proof:
 
 Next authorized gate:
 immutable Notification candidate commit, then fresh detached exact-SHA proof.
+
+FINAL ACCEPTED = NO.
+
+
+## Notification candidate commit — CREATED
+
+Report:
+`notification-candidate-commit-20260919-052421.txt`
+
+Immutable candidate:
+- SHA: `381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- tree: `fe7c5153c65074bf406134e4e966c9d097a2d706`;
+- parent: `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- single parent: PASS;
+- commit message: `feat(notification): adopt canonical logging`;
+- committed file set: exactly twelve reviewed tracked files;
+- candidate is exactly one commit ahead of authority and zero behind;
+- writer tracked state clean after commit;
+- pushed: NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation after candidate creation:
+- active refactor branch remains identical to exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- Notification candidate remains local-only.
+
+Next authorized gate:
+fresh detached exact-SHA proof at candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`.
+
+Detached proof requirements:
+1. verify exact candidate SHA/tree/parent and exact twelve-file commit set;
+2. create a fresh detached proof worktree; do not reuse writer state as proof;
+3. materialize canonical protobuf + Notification Wire before module assertions;
+4. require generated tracked state unchanged;
+5. require post-generation `go mod tidy -diff` empty and `go.sum` unchanged;
+6. prove the two known config/db baseline failures reproduce with the same signatures;
+7. run all non-baseline Notification packages and require PASS;
+8. compile config/db packages with the two baseline contracts excluded;
+9. run Notification build;
+10. run audit-tool unit tests and `--enforce-ratchets`;
+11. prove Notification total/logging debt zero, repository debt 661 and ratchet exactly once;
+12. prove logger/process behavior shape;
+13. prove protected paths + deploy checksum;
+14. leave proof worktree detached, tracked-clean at exact candidate SHA/tree;
+15. no push.
+
+Publication remains forbidden until detached exact-SHA proof is reviewed.
 
 FINAL ACCEPTED = NO.
