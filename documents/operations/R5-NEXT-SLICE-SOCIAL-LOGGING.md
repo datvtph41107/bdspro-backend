@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: DETACHED EXACT-SHA PROOF PASS / SAFE PUBLICATION AUTHORIZED
+Status: PROVED / CLOSED — HOSTED EXACT-SHA #84 SUCCESS
 
 ## Authority
 
@@ -346,3 +346,46 @@ Safe publication is now authorized:
 Hosted proof after publication:
 - workflow `.github/workflows/refactor-observability-errors.yml` is configured to run on pushes to the active refactor branch;
 - only completed exact-SHA hosted evidence may close this Social slice.
+
+
+## Safe publication + hosted proof — PASS
+
+Publication report:
+`social-safe-publication-20260918-142130.txt`
+
+Publication:
+- remote before push = exact authority `fca4682587d93cbc436f2466244ee8bd03b8b1b9`;
+- non-force fast-forward push PASS;
+- remote after push = exact candidate `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- force push = NO;
+- local writer/proof immutable identities preserved;
+- publication FINAL_FAIL_COUNT=0.
+
+Live GitHub:
+- active branch now exactly `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- branch vs candidate = identical, ahead 0 / behind 0.
+
+Hosted exact-SHA proof:
+- workflow: `Refactor Observability and Error Contracts`;
+- run #84 / ID `35319045710`;
+- exact head SHA `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- workflow status: completed;
+- workflow conclusion: success;
+- inventory: completed/success;
+- common-contracts: completed/success;
+- boundary-contracts: completed/success.
+
+Acceptance decision:
+Social R5 canonical logging slice is PROVED/CLOSED.
+
+Result:
+- Social direct legacy std-log debt `6→0`;
+- repository debt `721→715`;
+- Social legacy std-log zero-ratchet active;
+- protected invariants preserved;
+- Error/Response scope not touched.
+
+R5 phase remains ACTIVE service-by-service.
+Next authorized action: read-only exact-SHA inventory for one next bounded non-protected service.
+
+FINAL ACCEPTED = NO.
