@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY ZERO LOGGING DEBT PROVED / GO VET FORMAT REPAIR NEXT
+Status: RELAY ZERO PROOF PASS / DEPENDENCY RETIREMENT PROBE NEXT
 
 ## Authority
 
@@ -231,3 +231,41 @@ Decision:
 - no commit/push.
 
 Live GitHub after proof review remains identical to exact authority.
+
+
+## Relay complete zero proof — PASS
+
+Report:
+`relay-format-repair-zero-proof-20260918-162803.txt`
+
+Verified:
+- remote and writer remain at exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- tracked mutation scope remains exactly eight Relay source files;
+- the four uint64 logging format defects were repaired exactly once each;
+- direct Fabric logger imports = 0;
+- direct stdlib log imports = 0;
+- standalone message utility keeps exactly two functional stdout records and two immediate exits;
+- runtime debug-print count = 0;
+- canonical protobuf materialization PASS with no tracked scope expansion;
+- canonical Relay test PASS;
+- canonical Relay build PASS;
+- canonical audit PASS;
+- Relay total debt = 0;
+- Relay `go.legacy_std_log = 0`;
+- Relay `go.third_party_logger = 0`;
+- repository debt `707→691`;
+- protected tracked diff empty;
+- deploy SHA unchanged;
+- RATCHET_ADDED=NO;
+- COMMIT=NO;
+- PUSH=NO;
+- FINAL_FAIL_COUNT=0.
+
+Retirement decision before ratchet:
+- Relay source no longer imports Fabric logging, but authority `relay-service/go.mod` still declares `github.com/hyperledger/fabric` as a direct requirement;
+- Payment R5 precedent moved Fabric from direct to indirect when only shared/common still required it;
+- do not guess the Relay module mutation;
+- first run read-only `go mod tidy -diff` on the proven local Relay patch and capture the exact module retirement delta;
+- no source mutation, ratchet, commit or push during this probe.
+
+Live GitHub was reconciled after zero-proof review and remains identical to exact authority.
