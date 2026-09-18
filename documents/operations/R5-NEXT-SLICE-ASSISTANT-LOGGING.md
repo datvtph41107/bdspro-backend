@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Assistant Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: WRITER PRECHECK BLOCKED BY LOCAL PYTHON CACHE / CLEANUP NEXT
+Status: ASSISTANT WRITER BRANCH PRESENT / CLEAN VERIFICATION NEXT
 
 ## Authority
 
@@ -149,3 +149,24 @@ Blocker:
 - no Assistant source mutation until that gate passes.
 
 Live GitHub was reconciled after this report and the active refactor branch remains identical to exact authority.
+
+
+## Cleanup/precheck follow-up — branch already prepared
+
+Report:
+`assistant-writer-cleanup-precheck-20260918-145100.txt`
+
+Observed:
+- HEAD = exact authority `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- current branch = `local/r5-assistant-canonical-logging`.
+
+The short report stopped before clean-state proof because the follow-up script expected the prior Social branch. This is not a source failure. The Assistant branch already exists/current, so do not recreate or delete it.
+
+Next gate:
+- verify only allowed Python cache may remain;
+- archive/remove that cache if still present;
+- prove writer tracked/untracked state clean;
+- prove ahead=0 / behind=0 versus authority;
+- no source mutation until that clean verification passes.
+
+Live GitHub remains identical to exact authority after this report.
