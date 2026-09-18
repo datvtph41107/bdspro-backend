@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION ZERO LOGGING DEBT PROVED / TWO PRE-EXISTING BASELINE TEST FAILURES CLASSIFIED / LEGACY-STD-LOG RATCHET AUTHORIZED
+Status: NOTIFICATION RATCHET PROOF PASS EXCEPT BASELINE MODULE CLASSIFICATION / EXACT GO.MOD REPAIR AUTHORIZED
 
 ## Authority
 
@@ -270,3 +270,51 @@ Acceptance decision for this bounded slice:
 - no commit/push until ratchet proof is reviewed.
 
 Live GitHub after review remains identical to exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
+
+
+## Notification ratchet proof — one baseline module-classification blocker
+
+Report:
+`notification-ratchet-proof-20260918-220405.txt`
+
+Verified:
+- exact nine-file zero-proof source state PASS;
+- canonical protobuf + Wire materialization PASS;
+- the two known unrelated Notification test failures reproduce with expected baseline signatures;
+- all 25 non-baseline Notification packages PASS;
+- config/db baseline packages compile when the two bad contracts are not executed;
+- Notification build PASS;
+- pre-ratchet Notification debt = 0;
+- repository debt = 661;
+- Notification legacy-std-log ratchet added exactly once;
+- audit-tool tests = 37 PASS;
+- audit with `--enforce-ratchets` PASS;
+- Notification total debt = 0;
+- Notification legacy std-log = 0;
+- Notification third-party logger = 0;
+- protected diff empty;
+- deploy SHA unchanged;
+- COMMIT=NO;
+- PUSH=NO.
+
+Single blocker:
+- post-generation `go mod tidy -diff` proposes moving `gorm.io/driver/postgres v1.6.0` from the indirect block to the direct require block;
+- no version change is proposed;
+- no go.sum diff is proposed.
+
+Baseline classification proof:
+- a fresh detached exact-authority worktree at `c6a9b121946a360d22759bde6a708bc6a35223c2` reproduces the exact same post-generation tidy diff;
+- therefore the module-classification issue predates the Notification logging mutation;
+- exact authority source directly imports `gorm.io/driver/postgres` in `notification-service/infra/postgres/eventing/delivery_store_test.go`;
+- exact authority `notification-service/go.mod` incorrectly lists the same dependency as indirect.
+
+Acceptance decision:
+- unlike the two unrelated failing contract tests, this module classification is in-scope for canonical module hygiene because the durable slice explicitly permits go.mod changes proven by post-generation `go mod tidy -diff`;
+- authorize exactly one go.mod classification repair: move `gorm.io/driver/postgres v1.6.0` from indirect to direct, same version;
+- do not change go.sum unless a subsequent canonical tidy proof requires it;
+- after repair, require post-generation `go mod tidy -diff` to be empty;
+- final tracked scope becomes exactly twelve files: nine Notification source files + `notification-service/go.mod` + the two audit ratchet files;
+- rerun ratchet/audit/build/baseline-parity/protected proofs before candidate;
+- no commit/push yet.
+
+Live GitHub remains at exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
