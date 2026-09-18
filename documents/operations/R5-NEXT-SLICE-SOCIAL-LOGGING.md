@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
+Status: CANDIDATE COMMIT CREATED / DETACHED EXACT-SHA PROOF NEXT
 
 ## Authority
 
@@ -245,3 +245,39 @@ Commit must:
 
 Next gate after commit:
 detached proof worktree at the immutable candidate SHA, canonical generation/test/build/audit/ratchet/protected proof, then publication only if that exact-SHA proof passes.
+
+
+## Candidate commit — CREATED
+
+Commit report:
+`social-candidate-commit-20260918-140314.txt`
+
+Immutable candidate:
+- SHA: `b55ce3c6d8005e5d7375228196a7cafb10f8ddce`;
+- tree: `91ccd0d547227191bc20df4498bdbb4ff723c0a2`;
+- parent: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`;
+- single parent: PASS;
+- commit message: `feat(social): adopt canonical logging`;
+- committed file set: exactly the six reviewed files;
+- writer tracked state clean after commit;
+- candidate is exactly one commit ahead of authority;
+- pushed: NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation after candidate creation:
+- active refactor branch remains identical to authority SHA;
+- candidate is still local-only and therefore must be proven detached before publication.
+
+Next authorized gate:
+create a fresh detached proof worktree at candidate SHA and run exact-SHA canonical proof:
+1. verify detached HEAD = candidate;
+2. materialize canonical protobuf with `make -C shared/code buf-all`;
+3. verify generation creates no tracked source delta;
+4. run audit-tool unit tests;
+5. run audit with `--enforce-ratchets`;
+6. prove `go.legacy_std_log@social-service = 0`;
+7. run canonical Social test/build;
+8. prove protected paths and deploy checksum;
+9. leave proof HEAD detached and tracked-clean.
+
+Publication remains forbidden until detached exact-SHA proof is reviewed.
