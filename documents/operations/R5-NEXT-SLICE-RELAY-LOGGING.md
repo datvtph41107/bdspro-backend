@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY MUTATION PARTIAL / SCRIPT REGEX BUG / CONTINUATION REPAIR NEXT
+Status: RELAY ZERO LOGGING DEBT PROVED / GO VET FORMAT REPAIR NEXT
 
 ## Authority
 
@@ -186,3 +186,48 @@ Important local-state interpretation:
 No ratchet, commit, or push is authorized.
 
 Live GitHub was reconciled after the failed attempt and remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
+
+
+## Relay continuation zero-proof — logging zero, test blocked by format vet
+
+Report:
+`relay-mutation-continuation-zero-proof-20260918-162216.txt`
+
+Verified source/proof results:
+- remote/writer remain at exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- expected seven-file partial patch verified;
+- `wshandler/runtime.go` was authority-clean before continuation;
+- corrected continuation converted 38 active Fabric logger calls;
+- gofmt PASS;
+- final tracked scope exactly eight Relay source files;
+- direct Relay Fabric logger imports = 0;
+- direct Relay stdlib log imports = 0;
+- standalone utility functional stdout count = 2;
+- standalone utility immediate-exit count = 2;
+- runtime debug-print count = 0;
+- canonical protobuf materialization PASS with no tracked scope expansion;
+- Relay build PASS;
+- canonical audit PASS;
+- Relay total debt = 0;
+- Relay `go.legacy_std_log = 0`;
+- Relay `go.third_party_logger = 0`;
+- repository debt `707→691`;
+- protected diff empty;
+- deploy SHA unchanged.
+
+Proof blocker:
+- canonical Relay test failed because Go test/vet now sees four `fmt.Sprintf` format/type mismatches introduced while mechanically preserving old Fabric format strings:
+  - connected user: `%s` with `uint64 userId`;
+  - send-to-user failure: `%s` with `uint64 userId`;
+  - room evidence: `%s` with `uint64 roomID`;
+  - room-not-found evidence: `%s` with `uint64 roomID`.
+- Relay build still passed; this is a logging-format proof defect, not a runtime ownership or architecture change.
+
+Decision:
+- preserve the eight-file patch;
+- repair only those four format verbs from `%s` to `%d`;
+- rerun Relay test/build, canonical audit and all zero/protected invariants;
+- do not add ratchets until canonical Relay test also passes;
+- no commit/push.
+
+Live GitHub after proof review remains identical to exact authority.
