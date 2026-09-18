@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: DETACHED PROOF SCRIPT ORDER DEFECT / POST-GENERATION TIDY REPROOF NEXT
+Status: DETACHED EXACT-SHA REPROOF PASS / SAFE PUBLICATION AUTHORIZED
 
 ## Authority
 
@@ -463,3 +463,46 @@ Interpretation:
 No publication is authorized until the corrected post-generation tidy reproof passes.
 
 Live GitHub after review remains identical to exact authority.
+
+## Relay corrected detached exact-SHA reproof — PASS
+
+Report:
+`relay-detached-post-generation-reproof-20260918-171305.txt`
+
+Verified:
+- remote remains at exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- writer remains exact candidate `c6a9b121946a360d22759bde6a708bc6a35223c2` / tree `01d08e582fb55759132cc199215303dd65f6d255`;
+- proof worktree remains detached at the same exact candidate/tree;
+- canonical protobuf materialization runs before module-tidy assertion and leaves tracked state clean;
+- post-generation `go mod tidy -diff` exits 0 with empty output and does not mutate go.mod/go.sum;
+- audit-tool unit tests: 35 PASS;
+- audit with `--enforce-ratchets`: PASS;
+- Relay total debt = 0;
+- Relay legacy std-log = 0;
+- Relay third-party logger = 0;
+- repository debt = 691;
+- both Relay zero-ratchets registered exactly once;
+- canonical Relay test PASS;
+- canonical Relay build PASS;
+- Fabric and redis/v9 module retirement classifications remain correct;
+- functional utility stdout count = 2;
+- utility immediate-exit count = 2;
+- runtime debug-print count = 0;
+- protected candidate diff empty;
+- deploy SHA unchanged;
+- final proof remains detached at exact candidate SHA/tree;
+- PUSHED=NO;
+- FINAL_FAIL_COUNT=0.
+
+Safe publication is now authorized:
+- target branch: `refactor/canonical-observability-errors-a6d0722a`;
+- remote target must still equal exact authority immediately before push;
+- publication must be non-force fast-forward only;
+- push exact candidate SHA directly to the target branch;
+- after push require remote target = exact candidate;
+- preserve writer/proof identities;
+- no amend/rebase/merge/force-push.
+
+After safe publication, require hosted exact-SHA workflow success before closing the Relay R5 slice.
+
+FINAL ACCEPTED = NO.
