@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION MUTATION PARTIAL / FIREBASE DUPLICATE-MATCH SCRIPT BUG / CONTINUATION REPAIR NEXT
+Status: NOTIFICATION ZERO LOGGING DEBT PROVED / TWO PRE-EXISTING BASELINE TEST FAILURES CLASSIFIED / LEGACY-STD-LOG RATCHET AUTHORIZED
 
 ## Authority
 
@@ -216,3 +216,57 @@ Next authorized action:
 - no ratchet, commit or push.
 
 Live GitHub was reconciled after the failed attempt and remains identical to exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
+
+
+## Notification continuation zero proof — logging zero; canonical test has two proven baseline failures
+
+Report:
+`notification-continuation-zero-proof-20260918-215414.txt`
+
+Mutation/proof results:
+- exact five-file partial state verified;
+- remaining four files verified authority-clean before continuation;
+- continuation mutation PASS;
+- gofmt PASS;
+- final tracked source scope exactly nine Notification files;
+- three process roots configure the canonical logger;
+- canonical protobuf materialization PASS;
+- canonical Wire materialization PASS;
+- generated authority left tracked scope unchanged;
+- Notification build PASS;
+- canonical audit PASS;
+- Notification total debt = 0;
+- Notification `go.legacy_std_log = 0`;
+- Notification `go.third_party_logger = 0`;
+- repository debt `691→661`;
+- direct stdlib log imports = 0;
+- direct Fabric logger imports = 0;
+- process-root/diagnostic immediate-exit shape PASS;
+- protected diff empty;
+- deploy SHA unchanged;
+- RATCHET_ADDED=NO;
+- COMMIT=NO;
+- PUSH=NO.
+
+Canonical `make -C notification-service test` result:
+- overall test command FAILS due exactly two contract tests:
+  1. `notification/config: TestPaymentEventExchangeMatchesPublishedContract` because `../.env` does not exist;
+  2. `notification/db: TestCanonicalSQLCoversNotificationAutoMigrateRegistry` because the test globs `../migrate/*.up.sql` and receives an empty file set.
+- all other packages in the `go test ./...` run are passing/no-test-files.
+
+Baseline classification:
+- exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2` was reproduced independently in a fresh detached Sprite worktree;
+- the exact config contract test fails on authority with the same `open ../.env: no such file or directory`;
+- the exact DB migration contract test fails on authority with the same empty migration file set;
+- source at authority confirms `config_test.go` reads `../.env`;
+- source at authority confirms `migrate_contract_test.go` globs `../migrate/*.up.sql`, while the service Makefile's canonical migration directory is `database/migrations`;
+- therefore these two failures are pre-existing repository/test-layout debt and were not introduced by the Notification logging mutation.
+
+Acceptance decision for this bounded slice:
+- do not modify those unrelated tests, env layout, or migration layout inside R5 logging scope;
+- treat canonical full-service test failure as an unchanged baseline blocker with differential proof;
+- zero logging debt is proved and the Notification legacy-std-log ratchet is authorized;
+- ratchet proof must retain the same nine source files, add only the audit ratchet + ratchet test, rerun audit-tool tests/enforce-ratchets, post-generation tidy, build, and a bounded Notification test matrix that demonstrates all non-baseline packages remain passing;
+- no commit/push until ratchet proof is reviewed.
+
+Live GitHub after review remains identical to exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
