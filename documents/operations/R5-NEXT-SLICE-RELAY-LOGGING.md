@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY MODULE RETIREMENT PROOF PASS / BOTH ZERO-RATCHETS AUTHORIZED
+Status: RELAY RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
 
 ## Authority
 
@@ -338,3 +338,48 @@ Ratchet decision:
 - no commit/push until ratchet proof is reviewed.
 
 Live GitHub after proof review remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
+
+## Relay dual-ratchet proof — PASS
+
+Report:
+`relay-ratchet-proof-20260918-165324.txt`
+
+Verified:
+- writer remains at exact authority `492b94a102e26b8d86575d72cca05b57911c745b` on `local/r5-relay-canonical-logging`;
+- pre-ratchet tracked scope exactly nine proven Relay source/module files;
+- `go.legacy_std_log@relay-service` added exactly once;
+- `go.third_party_logger@relay-service` added exactly once;
+- registration + regression-enforcement tests added for both;
+- final tracked scope exactly eleven reviewed files;
+- audit-tool unit tests: 35 PASS;
+- audit with `--enforce-ratchets`: PASS;
+- Relay total debt = 0;
+- Relay legacy std-log = 0;
+- Relay third-party logger = 0;
+- repository debt remains 691;
+- module graph tidy (`go mod tidy -diff` empty);
+- canonical protobuf materialization PASS with no tracked expansion;
+- canonical Relay test PASS;
+- canonical Relay build PASS;
+- direct Fabric logger imports = 0;
+- direct stdlib log imports = 0;
+- functional utility stdout count = 2;
+- utility immediate-exit count = 2;
+- runtime debug-print count = 0;
+- protected tracked diff empty;
+- deploy SHA unchanged;
+- COMMIT=NO;
+- PUSH=NO;
+- FINAL_FAIL_COUNT=0.
+
+Candidate commit is now authorized.
+
+Candidate constraints:
+- parent must be exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- stage exactly the eleven reviewed files;
+- no generated protobuf/build artifacts or Python cache may enter the commit;
+- no amend/rebase/merge;
+- no push;
+- after commit record candidate SHA/tree and prove exact committed file set before detached exact-SHA proof.
+
+Live GitHub after ratchet-proof review remains identical to exact authority.
