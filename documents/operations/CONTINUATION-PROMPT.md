@@ -50,7 +50,7 @@ Operating Model V2 is mandatory:
 - R5 Social slice CLOSED / hosted #84 `35319045710` SUCCESS
 - Payment logging debt 13→0; Social legacy std-log 6→0; repository debt 734→721→715
 - Payment logging ratchets and Social legacy-std-log ratchet active
-- R5 phase ACTIVE; next-service read-only inventory authorized
+- R5 phase ACTIVE; Assistant canonical-logging slice SELECTED; writer precheck NEXT
 - Error/Response FINAL DESIGN CLOSED / IMPLEMENTATION PENDING
 - Auth zero-ratchet PARKED
 - FINAL ACCEPTED = NO
@@ -59,9 +59,9 @@ Operating Model V2 is mandatory:
 
 1. reconcile active exact SHA `b55ce3c6...` and current worktree roles;
 2. preserve Social CLOSED status unless live source proves a regression;
-3. perform read-only next-service R5 logger inventory;
-4. choose one bounded non-protected service from owner/consumer/value, not counts alone;
-5. bounded migration -> zero proof -> retirement -> ratchet -> local exact-SHA proof -> safe publication -> hosted proof;
+3. read `R5-NEXT-SLICE-ASSISTANT-LOGGING.md` and preserve its fatal-exit/lifecycle constraint;
+4. precheck/prepare the one writer at exact `b55ce3c6...`;
+5. bounded Assistant mutation -> zero proof -> ratchet -> local exact-SHA proof -> safe publication -> hosted proof;
 6. synchronize durable authority;
 7. only after R5 adoption gate is intentionally stable, start Error/Response FINAL implementation.
 
