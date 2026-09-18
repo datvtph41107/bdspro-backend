@@ -87,7 +87,7 @@ Do not reopen superseded Error V1, Kind/Definition/catalog/i18n, message-only Er
 ## Current source/proof checkpoint
 
 Remote active refactor authority remains:
-`c6a9b121946a360d22759bde6a708bc6a35223c2`
+`381c29365a00f35737bb0b6078cf0973198dc7c2`
 unless live Git proves otherwise.
 
 Closed:
@@ -98,42 +98,35 @@ Closed:
 - R5 Payment #83;
 - R5 Social #84;
 - R5 Assistant #85;
-- R5 Relay #86.
+- R5 Relay #86;
+- R5 Notification hosted run `35405779633`.
 
-Remote repository debt at the last hosted authority: 691.
+Remote repository debt at the last hosted authority: 661.
 
-Notification R5 candidate exists locally:
+Notification R5 is PROVED/CLOSED:
 - SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`;
 - tree `fe7c5153c65074bf406134e4e966c9d097a2d706`;
 - parent `c6a9b121946a360d22759bde6a708bc6a35223c2`;
-- exact twelve-file candidate;
-- writer tracked-clean;
-- not pushed.
-
-Notification corrected detached exact-SHA proof is fully green:
-- exact candidate/tree/parent preserved;
-- protobuf + Wire PASS;
-- post-generation `go mod tidy -diff` exit 0 with empty output and unchanged go.mod/go.sum hashes;
-- known baseline parity PASS;
-- all non-baseline tests/build PASS;
-- audit tests + enforce-ratchets PASS;
-- Notification debt 0, repository debt 661, ratchet exactly once;
-- protected/deploy and detached immutability PASS;
-- `FINAL_FAIL_COUNT=0`.
-
-Do not amend/recreate the candidate. Safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` is PASS; remote active branch now points at that SHA. The next Notification gate is hosted exact-SHA proof and inventory artifact verification before closure.
+- exact twelve-file slice;
+- corrected detached exact-SHA proof PASS;
+- safe non-force publication PASS;
+- hosted run `35405779633`: inventory/common-contracts/boundary-contracts SUCCESS;
+- hosted artifact `10572063928`, digest `sha256:8c8b98a33e56dda9aea3db532b4770437f729aa8d8e8a95988da8e453529c61d`;
+- Notification debt 30 -> 0;
+- repository debt 691 -> 661;
+- Notification legacy std-log zero-ratchet active.
 
 R5 remains ACTIVE. Error/Response implementation has not started. FINAL ACCEPTED = NO.
 
 ## Next authorized sequence
 
-1. Reconcile live remote active branch, local writer candidate and detached proof worktree.
-2. Preserve candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`; do not amend/reset/rebase it.
-3. Corrected detached exact-SHA Notification proof is already PASS; preserve that exact candidate/proof evidence.
-4. Safe non-force fast-forward publication is already PASS; preserve the exact candidate and publication evidence.
-5. Run/inspect hosted exact-SHA workflow and inventory artifact; only then close Notification and synchronize durable state.
-6. Stay in R5 and select the next bounded non-protected logging owner from fresh live inventory/ownership/coupling evidence.
-7. Only after R5 is deliberately declared stable begin Error/Response refined FINAL implementation.
+1. Reconcile live remote active branch against exact SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`.
+2. Keep Payment, Social, Assistant, Relay and Notification R5 slices CLOSED unless exact source/proof proves regression.
+3. Perform fresh exact-SHA read-only logging inventory/source/coupling trace for the next non-protected owner.
+4. Select exactly one bounded R5 slice from ownership/coupling evidence, not raw count alone.
+5. Execute the full proof lifecycle and hosted closure before advancing.
+6. Stay in R5 until canonical logger adoption is deliberately declared stable.
+7. Only after R5 stability begin Error/Response refined FINAL implementation.
 8. For Error/Response: establish one application-failure core/constructor, one gRPC normalization path, one Gateway projection, common reason semantics across response/observability, vertical proof, service-by-service migration, retirement, ratchets and protected compatibility resolution.
 
 FINAL ACCEPTED remains NO.
