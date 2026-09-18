@@ -110,13 +110,18 @@ Notification R5 candidate exists locally:
 - writer tracked-clean;
 - not pushed.
 
-Notification substantive detached proof is green, but the first detached proof report produced `FINAL_FAIL_COUNT=1` due a shell-condition defect in the proof harness despite:
-- `go mod tidy -diff` exit 0;
-- empty tidy output;
-- unchanged go.mod/go.sum hashes;
-- all remaining proof gates PASS.
+Notification corrected detached exact-SHA proof is fully green:
+- exact candidate/tree/parent preserved;
+- protobuf + Wire PASS;
+- post-generation `go mod tidy -diff` exit 0 with empty output and unchanged go.mod/go.sum hashes;
+- known baseline parity PASS;
+- all non-baseline tests/build PASS;
+- audit tests + enforce-ratchets PASS;
+- Notification debt 0, repository debt 661, ratchet exactly once;
+- protected/deploy and detached immutability PASS;
+- `FINAL_FAIL_COUNT=0`.
 
-Do not amend/recreate the candidate. The next Notification gate is a corrected detached exact-SHA reproof at the same candidate. Publication remains forbidden until corrected proof ends `FINAL_FAIL_COUNT=0`.
+Do not amend/recreate the candidate. The next Notification gate is safe non-force fast-forward publication of exact candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`, followed by hosted exact-SHA proof before closure.
 
 R5 remains ACTIVE. Error/Response implementation has not started. FINAL ACCEPTED = NO.
 
@@ -124,8 +129,8 @@ R5 remains ACTIVE. Error/Response implementation has not started. FINAL ACCEPTED
 
 1. Reconcile live remote active branch, local writer candidate and detached proof worktree.
 2. Preserve candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`; do not amend/reset/rebase it.
-3. Run corrected detached exact-SHA Notification proof only.
-4. If and only if corrected proof is fully green: safe non-force fast-forward publication.
+3. Corrected detached exact-SHA Notification proof is already PASS; preserve that exact candidate/proof evidence.
+4. Recheck remote-before/topology/local immutability and perform safe non-force fast-forward publication only.
 5. Run/inspect hosted exact-SHA proof and inventory; only then close Notification and synchronize durable state.
 6. Stay in R5 and select the next bounded non-protected logging owner from fresh live inventory/ownership/coupling evidence.
 7. Only after R5 is deliberately declared stable begin Error/Response refined FINAL implementation.
