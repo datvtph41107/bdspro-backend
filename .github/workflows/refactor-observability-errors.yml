@@ -101,14 +101,14 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/plan/admin \
             ./infra/handler/grpc
-      - name: Test Payment typed admin faults through gRPC boundary
+      - name: Test Payment typed admin faults and canonical logging boundary
         working-directory: payment-service
         env:
           GOWORK: 'off'
         run: |
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
-            ./internal/usecase/admin \
-            ./infra/handler/grpc
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase/admin ./infra/handler/grpc
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/server/grpc/interceptors ./infra/postgres -run '^(TestUnaryLoggerInterceptorProjectsCorrelation|TestUnaryRecoveryInterceptorProjectsCanonicalError|TestSlogGormLoggerProjectsSlowQuery)$'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test . ./cmd/grpc ./infra/worker/fulfillment ./worker -run '^$'
       - name: Test TQD typed faults through gRPC boundary
         working-directory: tqd-service
         env:

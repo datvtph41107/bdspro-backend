@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -45,7 +46,6 @@ import (
 	paymentworker "payment/worker"
 	paymentpb "pb/types/payment"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -79,8 +79,11 @@ func run(parent context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load Payment schema policy: %w", err)
 	}
-	logger := flogging.MustGetLogger("payment-service")
-	logger.Infof("Payment database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	slog.Info(
+		"payment database schema",
+		slog.Any("schema_mode", schemaPolicy.Mode),
+		slog.String("schema_source", schemaPolicy.Source),
+	)
 	if err := common_db.ApplySchemaPolicy(db, schemaPolicy, paymentinfra.AutoMigrate); err != nil {
 		return fmt.Errorf("apply Payment schema policy: %w", err)
 	}
@@ -173,7 +176,6 @@ func run(parent context.Context) error {
 
 	grpcServer, listener, err := buildServer(
 		cfg.Server.Address,
-		logger,
 		paymentHandler,
 		bankHandler,
 		internalHandler,
@@ -212,7 +214,6 @@ func run(parent context.Context) error {
 
 func buildServer(
 	address string,
-	logger *flogging.FabricLogger,
 	paymentHandler paymentpb.PaymentServiceServer,
 	bankHandler paymentpb.BankServiceServer,
 	internalHandler paymentpb.InternalServiceServer,
@@ -225,8 +226,8 @@ func buildServer(
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
-			interceptors.UnaryLoggerInterceptor(logger),
-			interceptors.UnaryRecoveryInterceptor(logger),
+			interceptors.UnaryLoggerInterceptor(),
+			interceptors.UnaryRecoveryInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			transport.Stream,

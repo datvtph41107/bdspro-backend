@@ -9,13 +9,13 @@ replace base => ../shared/base
 require (
 	base v0.0.0-00010101000000-000000000000
 	common v0.0.0-00010101000000-000000000000
-	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/rabbitmq/amqp091-go v1.13.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.20.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260727163830-6c54dddc4772
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/postgres v1.6.0
@@ -44,6 +44,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
+	github.com/hyperledger/fabric v2.1.1+incompatible // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -82,6 +83,5 @@ require (
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260729162451-8efbd57d26e0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260727163830-6c54dddc4772 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

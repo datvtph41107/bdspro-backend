@@ -1,19 +1,20 @@
 package interceptors
 
 import (
+	"common/logging"
 	"context"
+	"log/slog"
 	"payment/internal/requestactor"
 	"payment/pkg/utils"
 	"slices"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
-func UnaryAuthInterceptor(logger *flogging.FabricLogger, whitelist []string) grpc.UnaryServerInterceptor {
+func UnaryAuthInterceptor(whitelist []string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -36,7 +37,11 @@ func UnaryAuthInterceptor(logger *flogging.FabricLogger, whitelist []string) grp
 		tokenString := authHeader[0]
 		claims, err := utils.DecodeJWTPayload(tokenString)
 		if err != nil {
-			logger.Error("Invalid token", err)
+			logging.WithComponent(ctx, "grpc.auth").Error(
+				"invalid authentication token",
+				slog.String("method", info.FullMethod),
+				slog.Any("error", err),
+			)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
 		newCtx := context.WithValue(ctx, requestactor.UserContextKey, claims)

@@ -1,14 +1,15 @@
 package interceptors
 
 import (
+	"common/logging"
 	"context"
+	"log/slog"
 	"time"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"google.golang.org/grpc"
 )
 
-func UnaryLoggerInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInterceptor {
+func UnaryLoggerInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -19,7 +20,17 @@ func UnaryLoggerInterceptor(logger *flogging.FabricLogger) grpc.UnaryServerInter
 
 		resp, err = handler(ctx, req)
 
-		logger.Infof("Unary gRPC method: %s, request: %v, duration: %v, error: %v", info.FullMethod, req, time.Since(start), err)
+		logger := logging.WithComponent(ctx, "grpc")
+		attrs := []any{
+			slog.String("method", info.FullMethod),
+			slog.Duration("duration", time.Since(start)),
+		}
+		if err != nil {
+			attrs = append(attrs, slog.Any("error", err))
+			logger.Error("unary gRPC completed", attrs...)
+		} else {
+			logger.Info("unary gRPC completed", attrs...)
+		}
 
 		return resp, err
 	}

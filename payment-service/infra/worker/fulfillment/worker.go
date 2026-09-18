@@ -1,8 +1,9 @@
 package fulfillmentworker
 
 import (
+	"common/logging"
 	"context"
-	"log"
+	"log/slog"
 	"payment/internal/usecase/fulfillment"
 	"time"
 )
@@ -25,12 +26,12 @@ func (w *Worker) Run(ctx context.Context) {
 		processed := false
 		claim, ok, err := w.store.ClaimFulfillment(ctx, w.workerID, w.now().UTC(), w.lease)
 		if err != nil && ctx.Err() == nil {
-			log.Printf("commerce fulfillment claim: %v", err)
+			logging.WithComponent(ctx, "fulfillment").Error("claim fulfillment failed", slog.Any("error", err))
 		}
 		if ok {
 			processed = true
 			if err := w.service.ProcessClaim(ctx, claim, w.workerID); err != nil && ctx.Err() == nil {
-				log.Printf("commerce fulfillment process: %v", err)
+				logging.WithComponent(ctx, "fulfillment").Error("process fulfillment claim failed", slog.Any("error", err))
 			}
 		}
 		if processed {

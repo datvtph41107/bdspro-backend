@@ -652,6 +652,77 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_payment_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "payment-service/worker/outbox.go",
+            "line": 1,
+            "excerpt": 'log.Printf("payment failed: %v", err)',
+        }
+        output = audit.ROOT / ".tmp" / "observability-errors" / "payment-std-log-ratchet.tsv"
+        summary = audit.ROOT / ".tmp" / "observability-errors" / "payment-std-log-ratchet.json"
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+        with (
+            mock.patch.object(audit, "scan", return_value=[finding]),
+            mock.patch.object(sys, "argv", argv),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(audit.main(), 1)
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+    def test_payment_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "payment-service/cmd/grpc/runtime.go",
+            "line": 1,
+            "excerpt": 'github.com/hyperledger/fabric/common/flogging',
+        }
+        output = audit.ROOT / ".tmp" / "observability-errors" / "payment-third-party-ratchet.tsv"
+        summary = audit.ROOT / ".tmp" / "observability-errors" / "payment-third-party-ratchet.json"
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+        with (
+            mock.patch.object(audit, "scan", return_value=[finding]),
+            mock.patch.object(sys, "argv", argv),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(audit.main(), 1)
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
     def test_canonical_http_error_serializer_owner_is_shared(self):
         summary = audit.build_summary([])
 

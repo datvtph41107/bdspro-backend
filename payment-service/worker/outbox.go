@@ -1,9 +1,10 @@
 package worker
 
 import (
+	"common/logging"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -42,7 +43,7 @@ func (w *OutboxPublisher) Run(ctx context.Context) error {
 			if errors.Is(err, rabbit.ErrPublisherUnavailable) {
 				return err
 			}
-			log.Printf("service=payment-service component=outbox status=retry error=%q", err)
+			logging.WithComponent(ctx, "outbox").Warn("outbox publish retry", slog.Any("error", err))
 		}
 		if ctx.Err() != nil {
 			return nil
