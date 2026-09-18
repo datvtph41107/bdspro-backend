@@ -1,6 +1,6 @@
 # BDSPro Operating System — One Durable Way of Working
 
-Updated: 2026-09-18 Asia/Ho_Chi_Minh
+Updated: 2026-09-19 Asia/Bangkok
 Status: OPERATING MODEL V2 — ACTIVE
 
 This document defines the single long-lived operating model for BDSPro work between the user, ChatGPT coordinator, recovery Sprite, local WSL execution, GitHub, CI, and the ChatGPT Library.
@@ -42,7 +42,7 @@ Memory is orientation only. Never rely on Memory as the only place that stores a
 Source authority:
 - canonical acceptance branch: `final-acceptance/source-canonicalization`;
 - active refactor branch: `refactor/canonical-observability-errors-a6d0722a`;
-- current active source SHA at this operating-model checkpoint: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`;
+- current remote active source SHA at this operating-model checkpoint: `c6a9b121946a360d22759bde6a708bc6a35223c2`; Notification candidate `381c29365a00f35737bb0b6078cf0973198dc7c2` remains local-only pending corrected detached proof;
 - production lineage remains separate.
 
 Control-plane documentation:
@@ -383,3 +383,53 @@ Pilot rules:
 - review findings are advisory evidence requiring coordinator/source verification.
 
 Only after the local pilot proves useful, reproducible and acceptably low-noise may OCR become a hosted CI review lane.
+
+
+## 19. Naming, ownership and public-surface doctrine
+
+Durable doctrine:
+`ARCHITECTURE-NAMING-OWNERSHIP-MINDSET.md`.
+
+Extend the working philosophy to:
+
+`ONE TRUTH PER CONCERN -> ONE OWNER -> ONE PUBLIC NAME -> ONE OBVIOUS ENTRY POINT -> MULTIPLE PROJECTIONS THAT NEVER REDEFINE TRUTH`
+
+Rules:
+- do not use one catch-all owner such as `QuotaManager` for pricing, reservation and durable usage when they preserve different invariants;
+- split by invariant/reason-to-change, not mechanically by method count;
+- prefer role/capability names such as `QuotaPricer`, `QuotaReserver`, `QuotaLedger`;
+- scrutinize generic `Manager`, `Helper`, `Util`, `Common`, `Service` names when they obscure ownership;
+- consumer-facing interfaces should contain only the behavior that consumer actually needs;
+- do not expose two long-lived public commands/APIs for the same caller intent merely because internal implementations differ;
+- preserve separate internal mechanics where the underlying truths differ.
+
+Runtime/logging implication:
+- raw process output and structured evidence remain different internal sources/projections;
+- target daily public vocabulary converges on one `make logs` entry point with filters/options;
+- R4 `make log-query` is still closed/proved implementation history and must not be destructively removed or renamed without a bounded compatibility/docs/tests/proof slice.
+
+Error/Response implication:
+- one application failure fact is represented by protocol code + stable machine reason + public-safe message;
+- response, logging, metrics and traces project the same code/reason;
+- no second mandatory numeric business code;
+- no generic ErrorManager/failure logging framework;
+- ordinary technical Go errors remain ordinary wrapped Go errors;
+- target implementation naming should make the semantic distinction obvious, conceptually `failure.New(code, reason, safeMessage)`, subject to live compatibility/source proof before mutation.
+
+## 20. Continuation prompt contract
+
+The short cross-chat bootstrap may remain intentionally small. A new chat does not need the entire project history pasted into the prompt if it is instructed to:
+1. read `CONTINUATION-PROMPT.md` from the recovery Sprite;
+2. fall back to the mirrored Library file when Sprite is unavailable;
+3. follow that document exactly;
+4. reconcile live Git/source, local worktree/candidate state and completed exact-SHA proof before mutation.
+
+The durable continuation file, not the short pasted bootstrap text, owns the evolving recovery order and current checkpoint.
+
+A chat interruption must not cause:
+- source reset/clean/rebase;
+- candidate recreation;
+- reopening closed architecture merely because conversational context is missing;
+- reliance on Memory as source authority.
+
+A chat is disposable; exact Git state + proof + durable checkpoint are the continuity mechanism.
