@@ -50,13 +50,8 @@ func startGRPCServer() error {
 		return err
 	}
 	defer sqlDB.Close()
-	schemaPolicy, err := common_db.LoadSchemaPolicy("notification")
-	if err != nil {
-		return fmt.Errorf("load Notification schema policy: %w", err)
-	}
-	log.Printf("Notification database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := common_db.ApplySchemaPolicy(database, schemaPolicy, notificationdb.AutoMigrate); err != nil {
-		return fmt.Errorf("apply Notification schema policy: %w", err)
+	if err := common_db.EnsureSchema(database, "notification", notificationdb.AutoMigrate); err != nil {
+		return err
 	}
 	redisService, err := sharedredis.Open(sharedredis.Config{Address: cfg.RedisAddress, Password: cfg.RedisPassword, DB: cfg.RedisDB})
 	if err != nil {

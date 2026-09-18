@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"user/internal/models"
+	"user/internal/domain/user"
 
 	"gorm.io/gorm"
 )
@@ -19,13 +19,13 @@ func NewProfileDeletedPostgres(db *gorm.DB) *ProfileDeletedPostgres {
 }
 
 // Create lưu thông tin profile đã xóa vào bảng profile_deleted
-func (r *ProfileDeletedPostgres) Create(ctx context.Context, profileDeleted *models.ProfileDeleted) error {
+func (r *ProfileDeletedPostgres) Create(ctx context.Context, profileDeleted *user.ProfileDeleted) error {
 	return r.DB.WithContext(ctx).Create(profileDeleted).Error
 }
 
 // GetByProfileID lấy thông tin profile đã xóa theo profileID
-func (r *ProfileDeletedPostgres) GetByProfileID(ctx context.Context, profileID uint64) (*models.ProfileDeleted, error) {
-	var profileDeleted models.ProfileDeleted
+func (r *ProfileDeletedPostgres) GetByProfileID(ctx context.Context, profileID uint64) (*user.ProfileDeleted, error) {
+	var profileDeleted user.ProfileDeleted
 	err := r.DB.WithContext(ctx).
 		Where("profile_id = ?", profileID).
 		First(&profileDeleted).Error
@@ -36,13 +36,13 @@ func (r *ProfileDeletedPostgres) GetByProfileID(ctx context.Context, profileID u
 }
 
 // GetList lấy danh sách profile đã xóa với phân trang
-func (r *ProfileDeletedPostgres) GetList(ctx context.Context, offset, limit int) ([]*models.ProfileDeleted, int64, error) {
-	var profiles []*models.ProfileDeleted
+func (r *ProfileDeletedPostgres) GetList(ctx context.Context, offset, limit int) ([]*user.ProfileDeleted, int64, error) {
+	var profiles []*user.ProfileDeleted
 	var total int64
 
 	// Get total count
 	err := r.DB.WithContext(ctx).
-		Model(&models.ProfileDeleted{}).
+		Model(&user.ProfileDeleted{}).
 		Count(&total).Error
 	if err != nil {
 		return nil, 0, err

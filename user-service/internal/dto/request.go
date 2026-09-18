@@ -5,7 +5,7 @@ import (
 
 	_dto "common/domain/dto"
 	"user/enums"
-	"user/internal/models"
+	"user/internal/domain/user"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -52,7 +52,7 @@ type UserInfoRequest struct {
 	ProfessionRemoveIds    []uint64                 `json:"professionRemoveIds,omitempty"`
 	PurposeUseIDs          []uint64                 `json:"purposeUseIds,omitempty"`
 	MainAreaIds            []uint64                 `json:"mainAreaIds,omitempty"`
-	Tags                   []models.TagEntity       `json:"tags,omitempty"`
+	Tags                   []user.TagEntity         `json:"tags,omitempty"`
 	UpdateTags             bool                     `json:"updateTags,omitempty"`
 }
 

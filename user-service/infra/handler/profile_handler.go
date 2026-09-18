@@ -19,7 +19,7 @@ import (
 	"user/internal/interface/repo"
 	"user/internal/job"
 	organizationusecase "user/internal/usecase/organization"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/grpc/codes"

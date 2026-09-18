@@ -6,12 +6,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	"user/internal/models"
 )
 
 type KYCRepo struct {
-	_provider.CrudRepo[models.KYCEntity]
+	_provider.CrudRepo[user.KYCEntity]
 }
 
 // @bind: internal/interface/repo.IKYCRepo
@@ -21,8 +21,8 @@ func NewKYCRepo(db *_db.TransactionRepo) repo.IKYCRepo {
 	return repo
 }
 
-func (r *KYCRepo) GetByProfileID(ctx context.Context, profileID uint64) (*models.KYCEntity, error) {
-	var entity models.KYCEntity
+func (r *KYCRepo) GetByProfileID(ctx context.Context, profileID uint64) (*user.KYCEntity, error) {
+	var entity user.KYCEntity
 	err := r.TransactionRepo.GetDB(ctx).Where("profile_id = ? AND deleted_at IS NULL", profileID).First(&entity).Error
 	if err != nil {
 		return nil, err
@@ -30,13 +30,13 @@ func (r *KYCRepo) GetByProfileID(ctx context.Context, profileID uint64) (*models
 	return &entity, nil
 }
 
-func (r *KYCRepo) GetMapByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*models.KYCEntity, error) {
-	result := make(map[uint64]*models.KYCEntity)
+func (r *KYCRepo) GetMapByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*user.KYCEntity, error) {
+	result := make(map[uint64]*user.KYCEntity)
 	if len(profileIDs) == 0 {
 		return result, nil
 	}
 
-	var entities []models.KYCEntity
+	var entities []user.KYCEntity
 	err := r.TransactionRepo.GetDB(ctx).
 		Where("profile_id IN ? AND deleted_at IS NULL", profileIDs).
 		Find(&entities).Error
@@ -51,8 +51,8 @@ func (r *KYCRepo) GetMapByProfileIDs(ctx context.Context, profileIDs []uint64) (
 	return result, nil
 }
 
-func (r *KYCRepo) GetListWithFilter(ctx context.Context, search string, status uint32, page, size int, sortBy, sortOrder string) ([]models.KYCEntity, int64, error) {
-	var entities []models.KYCEntity
+func (r *KYCRepo) GetListWithFilter(ctx context.Context, search string, status uint32, page, size int, sortBy, sortOrder string) ([]user.KYCEntity, int64, error) {
+	var entities []user.KYCEntity
 	var total int64
 
 	// Select fields với join user_profile

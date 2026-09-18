@@ -13,7 +13,7 @@ import (
 
 // AuthSecurityUsecase gom nhóm dữ liệu status, pin và thiết bị cho 1 authId
 type AuthSecurityUsecase struct {
-	statusRepo           repo.StatusRepository
+	statusRepo           repo.AuthStatusRepository
 	pinRepo              repo.PINRepository
 	deviceRepo           repo.DeviceRepository
 	authMethodRepo       repo.AuthMethodRepository
@@ -23,7 +23,7 @@ type AuthSecurityUsecase struct {
 
 // NewAuthSecurityUsecase khởi tạo usecase
 func NewAuthSecurityUsecase(
-	statusRepo repo.StatusRepository,
+	statusRepo repo.AuthStatusRepository,
 	pinRepo repo.PINRepository,
 	deviceRepo repo.DeviceRepository,
 	authMethodRepo repo.AuthMethodRepository,

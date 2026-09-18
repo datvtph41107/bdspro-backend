@@ -1,6 +1,9 @@
 package dto
 
-import "user/internal/domain/auth"
+import (
+	_enum "common/domain/enum"
+	"user/internal/domain/auth"
+)
 
 // Hàm khởi tạo AuthLoginResponse từ UserAuthEntity
 func MakeAuthLoginResponse(accessToken string, authEntity *auth.AuthMethod, role string) *AuthLoginResponse {
@@ -282,7 +285,7 @@ type LoginWithKeyRequest struct {
 // LockAccountRequest đại diện cho yêu cầu khóa tài khoản
 type LockAccountRequest struct {
 	ProfileID uint64             `json:"profileId" binding:"required" validate:"required"`
-	LockType  auth.AccountStatus `json:"lockType" binding:"required" validate:"required"` // temporary hoặc permanent, 10: active, 40: inactive, 20: temporarily_locked, 30: permanently_locked
+	LockType  _enum.EUserStatus `json:"lockType" binding:"required" validate:"required"` // temporary hoặc permanent, 10: active, 40: inactive, 20: temporarily_locked, 30: permanently_locked
 	Duration  int                `json:"duration,omitempty"`                              // Số giờ khóa (chỉ dùng cho temporary)
 	Reason    string             `json:"reason" binding:"required" validate:"required,min=10,max=500"`
 	LockedBy  uint64             `json:"lockedBy" binding:"required" validate:"required"` // ID admin thực hiện khóa
@@ -300,7 +303,7 @@ type LockAccountResponse struct {
 	Success     bool               `json:"success"`
 	Message     string             `json:"message"`
 	ProfileID   uint64             `json:"profileId"`
-	LockType    auth.AccountStatus `json:"lockType"`
+	LockType    _enum.EUserStatus `json:"lockType"`
 	LockedAt    string             `json:"lockedAt,omitempty"`
 	LockedUntil string             `json:"lockedUntil,omitempty"` // Chỉ có khi lockType = temporary
 }
@@ -324,7 +327,7 @@ type GetAccountStatusResponse struct {
 	Status      uint32             `json:"status"`
 	StatusText  string             `json:"statusText"`
 	IsLocked    bool               `json:"isLocked"`
-	LockType    auth.AccountStatus `json:"lockType,omitempty"`
+	LockType    _enum.EUserStatus `json:"lockType,omitempty"`
 	LockedAt    string             `json:"lockedAt,omitempty"`
 	LockedUntil string             `json:"lockedUntil,omitempty"`
 	LockReason  string             `json:"lockReason,omitempty"`
@@ -337,7 +340,7 @@ type GetAccountStatusResponse struct {
 // LockMultipleUsersRequest đại diện cho yêu cầu khóa nhiều user
 type LockMultipleUsersRequest struct {
 	ProfileIDs []uint64           `json:"profileIds" binding:"required" validate:"required,min=1"`
-	LockType   auth.AccountStatus `json:"lockType" binding:"required" validate:"required"`
+	LockType   _enum.EUserStatus `json:"lockType" binding:"required" validate:"required"`
 	Duration   int                `json:"duration,omitempty"` // Số giờ khóa (chỉ dùng cho temporary)
 	Reason     string             `json:"reason" binding:"required" validate:"required,min=10,max=500"`
 	LockedBy   uint64             `json:"lockedBy" binding:"required" validate:"required"`
@@ -355,7 +358,7 @@ type LockMultipleUsersResponse struct {
 	Success     bool               `json:"success"`
 	Message     string             `json:"message"`
 	ProfileIDs  []uint64           `json:"profileIds"`
-	LockType    auth.AccountStatus `json:"lockType"`
+	LockType    _enum.EUserStatus `json:"lockType"`
 	LockedAt    string             `json:"lockedAt,omitempty"`
 	LockedUntil string             `json:"lockedUntil,omitempty"`
 }
@@ -383,10 +386,10 @@ type GetAuthUsersByProfileIDsResponse struct {
 // AuthUserStatusInfo thông tin status của AuthUser
 type AuthUserStatusInfo struct {
 	ProfileID   uint64             `json:"profileId"`
-	Status      auth.AccountStatus `json:"status"`
+	Status      _enum.EUserStatus `json:"status"`
 	StatusText  string             `json:"statusText"`
 	IsLocked    bool               `json:"isLocked"`
-	LockType    auth.AccountStatus `json:"lockType,omitempty"`
+	LockType    _enum.EUserStatus `json:"lockType,omitempty"`
 	LockedAt    string             `json:"lockedAt,omitempty"`
 	LockedUntil string             `json:"lockedUntil,omitempty"`
 	LockReason  string             `json:"lockReason,omitempty"`
@@ -537,7 +540,7 @@ type CheckPINExistsResponse struct {
 
 // AuthParam dùng để validate PIN
 type PINAuthParam struct {
-	Status  *auth.UserStatusEntity
+	Status  *auth.AuthStatus
 	PIN     *auth.UserPINEntity
 	PINCode string
 }

@@ -9,7 +9,7 @@ import (
 // AuthSecurityDataDTO gom nhóm dữ liệu status, pin và thiết bị cho 1 authId
 type AuthSecurityDataDTO struct {
 	AuthID        uint64
-	Status        *auth.UserStatusEntity
+	Status        *auth.AuthStatus
 	PIN           *auth.UserPINEntity
 	Devices       []*auth.DeviceEntity
 	User          *_dto.UserV3DTO

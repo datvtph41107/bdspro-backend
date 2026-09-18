@@ -7,12 +7,12 @@ import (
 	"context"
 	"strings"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 )
 
 type TagPostgres struct {
-	_provider.CrudRepo[models.TagEntity]
+	_provider.CrudRepo[user.TagEntity]
 }
 
 func NewTagPostgres(db *_db.TransactionRepo) repo.ITagRepo {
@@ -21,11 +21,11 @@ func NewTagPostgres(db *_db.TransactionRepo) repo.ITagRepo {
 	return repo
 }
 
-func (r *TagPostgres) ListByProfileID(ctx context.Context, profileID uint64) ([]models.TagEntity, error) {
-	var tags []models.TagEntity
+func (r *TagPostgres) ListByProfileID(ctx context.Context, profileID uint64) ([]user.TagEntity, error) {
+	var tags []user.TagEntity
 
 	err := r.TransactionRepo.GetDB(ctx).
-		Model(&models.TagEntity{}).
+		Model(&user.TagEntity{}).
 		Joins("JOIN tag_user tu ON tu.tag_id = tags.id AND tu.profile_id = ?", profileID).
 		Where("tags.deleted_at IS NULL").
 		Order("tags.created_at ASC").
@@ -34,7 +34,7 @@ func (r *TagPostgres) ListByProfileID(ctx context.Context, profileID uint64) ([]
 	return tags, err
 }
 
-func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64, tags []models.TagEntity) error {
+func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64, tags []user.TagEntity) error {
 	return r.TransactionRepo.WithTransaction(ctx, func(txCtx context.Context) error {
 		db := r.TransactionRepo.GetDB(txCtx)
 
@@ -42,7 +42,7 @@ func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64,
 			// Nếu không có tags, xóa hết records cũ
 			if err := db.
 				Where("profile_id = ?", profileID).
-				Delete(&models.TagUserEntity{}).
+				Delete(&user.TagUserEntity{}).
 				Error; err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64,
 			} else {
 				// Cập nhật tag nếu là user tag (không phải default tag)
 				// Chỉ cập nhật nếu tag này thuộc về user (không phải default tag)
-				if err := db.Model(&models.TagEntity{}).
+				if err := db.Model(&user.TagEntity{}).
 					Where("id = ? AND is_default = FALSE AND deleted_at IS NULL", tags[i].ID).
 					Updates(map[string]interface{}{
 						"name":     tags[i].Name,
@@ -79,15 +79,15 @@ func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64,
 		// Xóa hết records cũ trong tag_user của profile này trước khi tạo mới
 		if err := db.
 			Where("profile_id = ?", profileID).
-			Delete(&models.TagUserEntity{}).
+			Delete(&user.TagUserEntity{}).
 			Error; err != nil {
 			return err
 		}
 
 		// Tạo records mới trong tag_user
-		tagUserEntries := make([]models.TagUserEntity, 0, len(tagIDs))
+		tagUserEntries := make([]user.TagUserEntity, 0, len(tagIDs))
 		for _, tagID := range tagIDs {
-			tagUserEntries = append(tagUserEntries, models.TagUserEntity{
+			tagUserEntries = append(tagUserEntries, user.TagUserEntity{
 				ProfileID: *profileID,
 				TagID:     tagID,
 			})
@@ -101,14 +101,14 @@ func (r *TagPostgres) ReplaceProfileTags(ctx context.Context, profileID *uint64,
 	})
 }
 
-func (r *TagPostgres) ListForUser(ctx context.Context, profileID uint64, tagType enums.TagType, pagable _dto.IPagable, searchText string) ([]models.TagEntity, uint32, error) {
+func (r *TagPostgres) ListForUser(ctx context.Context, profileID uint64, tagType enums.TagType, pagable _dto.IPagable, searchText string) ([]user.TagEntity, uint32, error) {
 	var (
-		tags  []models.TagEntity
+		tags  []user.TagEntity
 		total int64
 	)
 
 	db := r.TransactionRepo.GetDB(ctx).
-		Model(&models.TagEntity{}).
+		Model(&user.TagEntity{}).
 		Where("tags.tag_type = ? AND tags.deleted_at IS NULL", tagType).
 		Where("(tags.is_default = TRUE AND tags.is_active = TRUE) OR EXISTS (SELECT 1 FROM tag_user tu WHERE tu.tag_id = tags.id AND tu.profile_id = ?)", profileID)
 
@@ -132,14 +132,14 @@ func (r *TagPostgres) ListForUser(ctx context.Context, profileID uint64, tagType
 	return tags, uint32(total), nil
 }
 
-func (r *TagPostgres) ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string, isDefault *bool) ([]models.TagEntity, uint32, error) {
+func (r *TagPostgres) ListAdmin(ctx context.Context, tagTypes []enums.TagType, pagable _dto.IPagable, searchText string, isDefault *bool) ([]user.TagEntity, uint32, error) {
 	var (
-		tags  []models.TagEntity
+		tags  []user.TagEntity
 		total int64
 	)
 
 	db := r.TransactionRepo.GetDB(ctx).
-		Model(&models.TagEntity{}).
+		Model(&user.TagEntity{}).
 		Where("deleted_at IS NULL")
 
 	if len(tagTypes) > 0 {
@@ -212,10 +212,10 @@ func (r *TagPostgres) parseSort(pagable _dto.IPagable) string {
 	return dbField + " " + order
 }
 
-func (r *TagPostgres) Update(ctx context.Context, id uint64, tag *models.TagEntity) error {
+func (r *TagPostgres) Update(ctx context.Context, id uint64, tag *user.TagEntity) error {
 	db := r.TransactionRepo.GetDB(ctx)
 
-	if err := db.Model(&models.TagEntity{}).
+	if err := db.Model(&user.TagEntity{}).
 		Where("id = ? AND deleted_at IS NULL", id).
 		Updates(map[string]interface{}{
 			"name":       tag.Name,

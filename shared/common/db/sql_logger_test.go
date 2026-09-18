@@ -5,12 +5,15 @@ import (
 	"common/logging"
 	"common/request"
 	"context"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"errors"
 	"log/slog"
 	"strings"
 	"testing"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func TestSQLParameterizedAndCorrelated(t *testing.T) {
@@ -35,4 +38,30 @@ func TestSQLParameterizedAndCorrelated(t *testing.T) {
 func TestDisabledSQLDoesNotEvaluateNormalQuery(t *testing.T) {
 	log := &sqlLogger{level: 4, config: logging.SQLConfig{SlowThreshold: time.Second}}
 	log.Trace(context.Background(), time.Now(), func() (string, int64) { t.Fatal("normal disabled query evaluated"); return "", 0 }, nil)
+}
+
+func TestSQLLoggerHonorsLogMode(t *testing.T) {
+	var output bytes.Buffer
+	old := slog.Default()
+	defer slog.SetDefault(old)
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&output, &slog.HandlerOptions{Level: slog.LevelDebug})))
+
+	base := &sqlLogger{level: logger.Info, config: logging.SQLConfig{Enabled: true, SlowThreshold: time.Second}}
+	silent := base.LogMode(logger.Silent)
+	silent.Trace(context.Background(), time.Now(), func() (string, int64) {
+		t.Fatal("silent mode must not evaluate SQL")
+		return "SELECT 1", 0
+	}, nil)
+
+	errorOnly := base.LogMode(logger.Error)
+	errorOnly.Trace(context.Background(), time.Now(), func() (string, int64) {
+		t.Fatal("error mode must not evaluate successful SQL")
+		return "SELECT 1", 0
+	}, nil)
+	errorOnly.Trace(context.Background(), time.Now(), func() (string, int64) {
+		return "SELECT boom", 0
+	}, errors.New("ddl failed"))
+	if !strings.Contains(output.String(), "ddl failed") {
+		t.Fatalf("error mode should log failures: %s", output.String())
+	}
 }

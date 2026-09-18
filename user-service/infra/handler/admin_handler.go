@@ -11,8 +11,8 @@ import (
 	"time"
 	"user/infra/mapper"
 	"user/internal/interface/providers"
+	usecase "user/internal/usecase/user"
 	"user/internal/usecase/useradmin"
-	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,14 +20,14 @@ import (
 
 type AdminHandler struct {
 	userpb.UnimplementedAdminProfileServiceServer
-	AdminUsecase       *usecases.AdminUsecase
+	AdminUsecase       *usecase.AdminUsecase
 	AdminMapper        *mapper.AdminMapper
 	NotificationClient providers.NotificationProvider
 	Authorizer         useradmin.PermissionAuthorizer
 }
 
 func NewAdminHandler(
-	adminUsecase *usecases.AdminUsecase,
+	adminUsecase *usecase.AdminUsecase,
 	adminMapper *mapper.AdminMapper,
 	notificationClient providers.NotificationProvider,
 	authorizer useradmin.PermissionAuthorizer,

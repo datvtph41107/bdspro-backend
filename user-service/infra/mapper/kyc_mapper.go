@@ -3,8 +3,8 @@ package mapper
 import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
+	"user/internal/domain/user"
 	"user/internal/dto"
-	"user/internal/models"
 )
 
 type KYCMapper struct{}
@@ -13,12 +13,12 @@ func NewKYCMapper() *KYCMapper {
 	return &KYCMapper{}
 }
 
-func (m *KYCMapper) ToProto(entity *models.KYCEntity) *sharepb.KYCV3Proto {
+func (m *KYCMapper) ToProto(entity *user.KYCEntity) *sharepb.KYCV3Proto {
 	return m.ToProtoWithOwnerCheck(entity, false)
 }
 
 // ToProtoWithOwnerCheck trả về KYC proto, chỉ trả về 4 trường nhạy cảm nếu isOwner = true
-func (m *KYCMapper) ToProtoWithOwnerCheck(entity *models.KYCEntity, isOwner bool) *sharepb.KYCV3Proto {
+func (m *KYCMapper) ToProtoWithOwnerCheck(entity *user.KYCEntity, isOwner bool) *sharepb.KYCV3Proto {
 	if entity == nil {
 		return nil
 	}
@@ -65,12 +65,12 @@ func (m *KYCMapper) ToProtoWithOwnerCheck(entity *models.KYCEntity, isOwner bool
 	return resp
 }
 
-func (m *KYCMapper) FromSubmitRequest(req *dto.SubmitKYCRequest, profileID uint64) *models.KYCEntity {
+func (m *KYCMapper) FromSubmitRequest(req *dto.SubmitKYCRequest, profileID uint64) *user.KYCEntity {
 	if req == nil {
 		return nil
 	}
 
-	return &models.KYCEntity{
+	return &user.KYCEntity{
 		ProfileID:    profileID,
 		FullName:     req.FullName,
 		IdentityCard: req.IdentityCard,
@@ -84,7 +84,7 @@ func (m *KYCMapper) FromSubmitRequest(req *dto.SubmitKYCRequest, profileID uint6
 	}
 }
 
-func (m *KYCMapper) ToProtoList(entities []models.KYCEntity) []*sharepb.KYCV3Proto {
+func (m *KYCMapper) ToProtoList(entities []user.KYCEntity) []*sharepb.KYCV3Proto {
 	if entities == nil {
 		return []*sharepb.KYCV3Proto{}
 	}

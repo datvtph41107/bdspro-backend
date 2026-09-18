@@ -15,8 +15,8 @@ import (
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/job"
+	usecase "user/internal/usecase/user"
 	"user/internal/usecase/useradmin"
-	"user/internal/usecases"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,16 +24,16 @@ import (
 
 type AdminUserProfileHandler struct {
 	userpb.UnimplementedAdminUserProfileServiceServer
-	AdminUsecase          *usecases.AdminUsecase
-	ProfileUsecase        *usecases.ProfileUsecase
+	AdminUsecase          *usecase.AdminUsecase
+	ProfileUsecase        *usecase.ProfileUsecase
 	NotificationClient    providers.NotificationProvider
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	Authorizer            useradmin.PermissionAuthorizer
 }
 
 func NewAdminUserProfileHandler(
-	adminUsecase *usecases.AdminUsecase,
-	profileUsecase *usecases.ProfileUsecase,
+	adminUsecase *usecase.AdminUsecase,
+	profileUsecase *usecase.ProfileUsecase,
 	notificationClient providers.NotificationProvider,
 	UserDashboardStatsJob *job.UserDashboardStatsJob,
 	authorizer useradmin.PermissionAuthorizer,

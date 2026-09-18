@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -75,7 +76,7 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 	}
 }
 
-func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity, error) {
+func (s *ProfileUsecase) GetInfoMe(c context.Context) (*user.UserProfileEntity, error) {
 	id := _utils.GetProfileIdWithContext(c)
 	userInfo, _ := s.ProfileRepo.GetByProfileID(id)
 	if userInfo == nil {
@@ -92,7 +93,7 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 	}
 	// areas, _ := s.MainAreaRepo.ListByProfileID(c, id)
 	// for _, area := range areas {
-	// 	userInfo.MainAreas = append(userInfo.MainAreas, models.TagEntity{
+	// 	userInfo.MainAreas = append(userInfo.MainAreas, user.TagEntity{
 	// 		BaseEntity: _models.BaseEntity{
 	// 			ID: area.ID,
 	// 		},
@@ -140,13 +141,13 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 	return userInfo, nil
 }
 
-func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoRequest) (*models.UserProfileEntity, error) {
+func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoRequest) (*user.UserProfileEntity, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	// Lấy thông tin user từ DB
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		infoEntity = &models.UserProfileEntity{
+		infoEntity = &user.UserProfileEntity{
 			ProfileID: profileId,
 		}
 	}
@@ -156,9 +157,9 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 	}
 
 	// cập nhật chuyên môn
-	professions := []models.ProfessionEntity{}
+	professions := []user.ProfessionEntity{}
 	for i := range info.Professions {
-		professions = append(professions, models.ProfessionEntity{
+		professions = append(professions, user.ProfessionEntity{
 			Name:           info.Professions[i].Name,
 			Issuer:         info.Professions[i].Issuer,
 			IssueDate:      info.Professions[i].IssueDate,
@@ -175,9 +176,9 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 	}
 
 	// Cập nhật chứng chỉ
-	certificates := []models.CertificationEntity{}
+	certificates := []user.CertificationEntity{}
 	for i := range info.Certifications {
-		certificates = append(certificates, models.CertificationEntity{
+		certificates = append(certificates, user.CertificationEntity{
 			// Type:           info.Certifications[i].Type,
 			// Title:          info.Certifications[i].Title,
 			Name:           info.Certifications[i].Name,
@@ -218,12 +219,12 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 
 	if s.TagRepo != nil && info.UpdateTags {
 		if info.Tags != nil {
-			tagEntities := make([]models.TagEntity, 0, len(info.Tags))
+			tagEntities := make([]user.TagEntity, 0, len(info.Tags))
 			for _, tag := range info.Tags {
 				if tag.Name == "" || !tag.TagType.IsValid() {
 					continue
 				}
-				tagEntities = append(tagEntities, models.TagEntity{
+				tagEntities = append(tagEntities, user.TagEntity{
 					BaseEntity: _models.BaseEntity{
 						ID: tag.ID,
 					},
@@ -258,8 +259,8 @@ func (s *ProfileUsecase) UpdateUserInfo(c context.Context, info *dto.UserInfoReq
 	return infoEntity, nil
 }
 
-func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isMe bool) (*models.UserProfileEntity, error) {
-	// var infoEntity models.UserProfileEntity
+func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isMe bool) (*user.UserProfileEntity, error) {
+	// var infoEntity user.UserProfileEntity
 	currentUserId := _utils.GetProfileIdWithContext(c)
 	if currentUserId == profileId {
 		isMe = true
@@ -269,7 +270,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		infoEntity = &models.UserProfileEntity{
+		infoEntity = &user.UserProfileEntity{
 			ProfileID: profileId,
 		}
 	}
@@ -277,7 +278,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 	// var result dto.PublicUserInfo
 	if infoEntity.Visibility != 10 && !isMe {
 		// copier.Copy(&result, &infoEntity)
-		infoEntity = &models.UserProfileEntity{}
+		infoEntity = &user.UserProfileEntity{}
 	}
 	if infoEntity.ProfileVisibility == 10 || isMe {
 		professions, _ := s.ProfessionRepo.ListItemByProfileID(c, profileId)
@@ -341,7 +342,7 @@ func (s *ProfileUsecase) PublicUserInfo(c context.Context, profileId uint64, isM
 }
 
 func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access string) (*_dto.TotalResponseDTO, error) {
-	// var infoEntity models.UserProfileEntity
+	// var infoEntity user.UserProfileEntity
 	currentUserId := _utils.GetProfileIdWithContext(c)
 	isMe := false
 	profileId := _profileId
@@ -354,7 +355,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access
 	infoEntity, err := s.ProfileRepo.GetByProfileID(profileId)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		infoEntity = &models.UserProfileEntity{
+		infoEntity = &user.UserProfileEntity{
 			ProfileID: profileId,
 		}
 	}
@@ -366,7 +367,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access
 	// var result dto.PublicUserInfo
 	if infoEntity.Visibility != 10 && !isMe {
 		// copier.Copy(&result, &infoEntity)
-		infoEntity = &models.UserProfileEntity{}
+		infoEntity = &user.UserProfileEntity{}
 	}
 	var user *_dto.UserV3DTO
 	var kyc *_dto.KYCV3DTO
@@ -562,7 +563,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access
 }
 
 func (s *ProfileUsecase) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo, error) {
-	// var infoEntity models.UserProfileEntity
+	// var infoEntity user.UserProfileEntity
 	phone := c.DefaultQuery("phone", "")
 
 	// Lấy thông tin user từ DB
@@ -579,7 +580,7 @@ func (s *ProfileUsecase) ProfileGetByPhone(c *gin.Context) (*dto.PublicUserInfo,
 }
 
 // FindByPhone tìm user theo số điện thoại (v2)
-func (s *ProfileUsecase) FindByPhone(ctx context.Context, phone string) (*models.UserProfileEntity, error) {
+func (s *ProfileUsecase) FindByPhone(ctx context.Context, phone string) (*user.UserProfileEntity, error) {
 	if phone == "" {
 		return nil, nil
 	}
@@ -598,7 +599,7 @@ func (s *ProfileUsecase) FindByPhone(ctx context.Context, phone string) (*models
 	return infoEntity, nil
 }
 
-func (s *ProfileUsecase) SearchUserByFriend(c *gin.Context, dto dto.ProfileSearch) (*[]models.UserProfileSearch, int64, error) {
+func (s *ProfileUsecase) SearchUserByFriend(c *gin.Context, dto dto.ProfileSearch) (*[]user.UserProfileSearch, int64, error) {
 	profileId := _jwt.GetProfileId(c)
 	// Lấy thông tin user từ DB
 	results, total, _ := s.ProfileRepo.FriendSearchProfile(c, profileId, dto)
@@ -614,7 +615,7 @@ func (s *ProfileUsecase) SearchUserByFriend(c *gin.Context, dto dto.ProfileSearc
 }
 
 func (s *ProfileUsecase) ProfileChatFind(c *gin.Context) (*[]dto.PublicUserInfo, error) {
-	// var infoEntity models.UserProfileEntity
+	// var infoEntity user.UserProfileEntity
 	phone := c.DefaultQuery("text", "")
 
 	// Lấy thông tin user từ DB
@@ -632,7 +633,7 @@ func (s *ProfileUsecase) ProfileChatFind(c *gin.Context) (*[]dto.PublicUserInfo,
 }
 
 func (s *ProfileUsecase) ProfileFindByIds(c *gin.Context) (*[]dto.PublicUserInfo, error) {
-	// var infoEntity models.UserProfileEntity
+	// var infoEntity user.UserProfileEntity
 	query, _ := _utils.ParseQueryToStruct[dto.ProfileIDsRequest](c.Request.URL.Query())
 	ids := query.IDs
 	// Lấy thông tin user từ DB
@@ -649,14 +650,14 @@ func (s *ProfileUsecase) ProfileFindByIds(c *gin.Context) (*[]dto.PublicUserInfo
 	return &info, nil
 }
 
-func (s *ProfileUsecase) SearchProfilePublic(c context.Context, req *userpb.SearchProfilePublicRequest, pageable _dto.Pagable) (*[]models.UserProfileSearch, int64, error) {
+func (s *ProfileUsecase) SearchProfilePublic(c context.Context, req *userpb.SearchProfilePublicRequest, pageable _dto.Pagable) (*[]user.UserProfileSearch, int64, error) {
 	results, total, _ := s.ProfileRepo.GlobalSearchProfile(c, req.Text, pageable)
 
 	return results, total, nil
 }
 
 // ListAllUsers lấy danh sách tất cả user với phân trang và tìm kiếm
-func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error) {
+func (uc *ProfileUsecase) ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]user.UserProfileEntity, uint32, error) {
 	// Kiểm tra quyền admin (sẽ được implement sau)
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if !uc.isAdmin(profileID) {
@@ -737,8 +738,8 @@ func (uc *ProfileUsecase) CheckAccountStatus(ctx context.Context, profileID uint
 		ProfileId:  profileID,
 		Status:     uint32(profile.Status),
 		StatusText: statusText,
-		IsLocked:   profile.Status.IsLocked(),
-		CanLogin:   profile.Status.CanLogin(),
+		IsLocked:   profile.IsLocked() && !profile.IsLockExpired(),
+		CanLogin:   profile.CanLogin(),
 	}, nil
 }
 
@@ -763,9 +764,9 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 	}
 
 	if s.TagRepo != nil && req.UpdateTags {
-		tags := make([]models.TagEntity, len(req.Tags))
+		tags := make([]user.TagEntity, len(req.Tags))
 		for i, tag := range req.Tags {
-			tags[i] = models.TagEntity{
+			tags[i] = user.TagEntity{
 				BaseEntity: _models.BaseEntity{
 					ID: tag.ID,
 				},
@@ -780,9 +781,9 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 
 	// Cập nhật certifications nếu có
 	if s.CertificationRepo != nil {
-		certificates := []models.CertificationEntity{}
+		certificates := []user.CertificationEntity{}
 		for _, cert := range req.Certifications {
-			certEntity := models.CertificationEntity{
+			certEntity := user.CertificationEntity{
 				Name:           cert.Name,
 				VerifiedStatus: enums.VerifyPending, // Cập nhật trạng thái mặc định
 				BaseEntity: _models.BaseEntity{
@@ -836,9 +837,9 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 		}
 
 		// Tạo danh sách medias mới (không có ID để tạo mới)
-		medias := []models.ProfileMediaEntity{}
+		medias := []user.ProfileMediaEntity{}
 		for _, media := range req.Medias {
-			mediaEntity := models.ProfileMediaEntity{
+			mediaEntity := user.ProfileMediaEntity{
 				Name: media.Name,
 				BaseEntity: _models.BaseEntity{
 					ID: 0, // ID = 0 để tạo mới

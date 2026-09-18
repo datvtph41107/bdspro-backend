@@ -63,3 +63,33 @@ func TestApplySchemaPolicy(t *testing.T) {
 	})
 	require.ErrorIs(t, err, want)
 }
+
+func TestEnsureSchema(t *testing.T) {
+	t.Setenv(SchemaModeEnv, "")
+	t.Setenv("QHPRO_USER_DB_SCHEMA_MODE", "automigrate")
+
+	called := false
+	err := EnsureSchema(&gorm.DB{}, "user", func(*gorm.DB) error {
+		called = true
+		return nil
+	})
+	require.NoError(t, err)
+	require.True(t, called)
+
+	t.Setenv("QHPRO_USER_DB_SCHEMA_MODE", "sql")
+	called = false
+	err = EnsureSchema(nil, "user", func(*gorm.DB) error {
+		called = true
+		return nil
+	})
+	require.NoError(t, err)
+	require.False(t, called)
+
+	t.Setenv("QHPRO_USER_DB_SCHEMA_MODE", "automigrate")
+	want := errors.New("registry failed")
+	err = EnsureSchema(&gorm.DB{}, "user", func(*gorm.DB) error {
+		return want
+	})
+	require.ErrorIs(t, err, want)
+	require.Contains(t, err.Error(), "apply user schema policy")
+}

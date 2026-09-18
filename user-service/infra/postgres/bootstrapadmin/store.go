@@ -117,8 +117,8 @@ RETURNING profile_id
 		if err := tx.Raw(`
 INSERT INTO auth_method (
     provider, auth_name, password, full_name, email, phone,
-    role_key, status, user_id, created_at, updated_at
-) VALUES ('ADMIN', ?, ?, ?, ?, ?, ?, 1, ?, NOW(), NOW())
+    role_key, user_id, created_at, updated_at
+) VALUES ('ADMIN', ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
 RETURNING id
 `, input.Username, passwordHash, input.FullName, input.Email, input.Phone, rootRoleCode, created.ProfileID).
 			Scan(&created.AuthID).Error; err != nil {
@@ -126,10 +126,10 @@ RETURNING id
 		}
 
 		if err := tx.Exec(`
-INSERT INTO user_info(profile_id, status, role_id, created_at, updated_at)
-VALUES (?, 10, ?, NOW(), NOW())
-`, created.ProfileID, created.RoleID).Error; err != nil {
-			return fmt.Errorf("create root user state: %w", err)
+INSERT INTO auth_status(auth_id, active, verified, updated_at)
+VALUES (?, true, true, NOW())
+`, created.AuthID).Error; err != nil {
+			return fmt.Errorf("create root auth status: %w", err)
 		}
 
 		if err := tx.Exec(`

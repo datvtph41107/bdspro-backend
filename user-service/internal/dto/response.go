@@ -7,7 +7,8 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"user/enums"
-	models "user/internal/models"
+	"user/internal/domain/user"
+	"user/internal/models"
 )
 
 type FollowInfoRes struct {
@@ -126,14 +127,14 @@ type PublicUserInfo struct {
 	RoleBgColor       string                `json:"roleBgColor,omitempty"`
 
 	// transient
-	Certifications []models.CertificationEntity `json:"certifications,omitempty"`
-	Professions    []models.ProfessionEntity    `json:"professions,omitempty"`
-	PurposeUses    []models.PurposeUseEntity    `json:"purposeUses,omitempty"`
-	MainAreas      []models.MainAreaEntity      `json:"mainAreas,omitempty"`
-	FriendStatus   *_dto.FriendItemDTO          `json:"relationShip,omitempty"`
-	Following      bool                         `json:"following,omitempty"`
-	Bookmark       bool                         `json:"bookmark,omitempty"`
-	RateStats      *_dto.RateStats              `json:"rateStats,omitempty"`
+	Certifications []user.CertificationEntity `json:"certifications,omitempty"`
+	Professions    []user.ProfessionEntity    `json:"professions,omitempty"`
+	PurposeUses    []user.PurposeUseEntity    `json:"purposeUses,omitempty"`
+	MainAreas      []models.MainAreaEntity    `json:"mainAreas,omitempty"`
+	FriendStatus   *_dto.FriendItemDTO        `json:"relationShip,omitempty"`
+	Following      bool                       `json:"following,omitempty"`
+	Bookmark       bool                       `json:"bookmark,omitempty"`
+	RateStats      *_dto.RateStats            `json:"rateStats,omitempty"`
 }
 
 type RelationShip struct {

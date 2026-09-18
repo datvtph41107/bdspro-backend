@@ -5,12 +5,12 @@ import (
 	_provider "common/provider"
 	"context"
 	"fmt"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 )
 
 type PurposeUseRepo struct {
-	_provider.CrudRepo[models.PurposeUseEntity]
+	_provider.CrudRepo[user.PurposeUseEntity]
 }
 
 func NewPurposeUseRepo(db *_db.TransactionRepo) repo.IPurposeUseRepo {
@@ -19,15 +19,15 @@ func NewPurposeUseRepo(db *_db.TransactionRepo) repo.IPurposeUseRepo {
 	return repo
 }
 
-func (r *PurposeUseRepo) ListByProfileID(ctx context.Context, profileID uint64) ([]models.PurposeUseEntity, error) {
-	tablePurpose := models.PurposeUseEntity{}.TableName()
-	tablePivot := models.PurposeUseProfileEntity{}.TableName()
+func (r *PurposeUseRepo) ListByProfileID(ctx context.Context, profileID uint64) ([]user.PurposeUseEntity, error) {
+	tablePurpose := user.PurposeUseEntity{}.TableName()
+	tablePivot := user.PurposeUseProfileEntity{}.TableName()
 
-	var purposeUses []models.PurposeUseEntity
+	var purposeUses []user.PurposeUseEntity
 
 	err := r.TransactionRepo.
 		GetDB(ctx).
-		Model(&models.PurposeUseEntity{}).
+		Model(&user.PurposeUseEntity{}).
 		Joins(fmt.Sprintf("JOIN %s pup ON pup.purpose_use_id = %s.id AND pup.deleted_at IS NULL", tablePivot, tablePurpose)).
 		Where("pup.profile_id = ? AND "+tablePurpose+".deleted_at IS NULL AND "+tablePurpose+".is_active = TRUE", profileID).
 		Order(tablePurpose + ".name ASC").
@@ -44,7 +44,7 @@ func (r *PurposeUseRepo) AssignToProfile(ctx context.Context, profileID uint64, 
 
 		if err := db.
 			Where("profile_id = ?", profileID).
-			Delete(&models.PurposeUseProfileEntity{}).
+			Delete(&user.PurposeUseProfileEntity{}).
 			Error; err != nil {
 			return err
 		}
@@ -53,9 +53,9 @@ func (r *PurposeUseRepo) AssignToProfile(ctx context.Context, profileID uint64, 
 			return nil
 		}
 
-		entries := make([]models.PurposeUseProfileEntity, 0, len(ids))
+		entries := make([]user.PurposeUseProfileEntity, 0, len(ids))
 		for _, id := range ids {
-			entries = append(entries, models.PurposeUseProfileEntity{
+			entries = append(entries, user.PurposeUseProfileEntity{
 				ProfileID:    profileID,
 				PurposeUseID: id,
 			})
@@ -69,7 +69,7 @@ func (r *PurposeUseRepo) AssignToProfile(ctx context.Context, profileID uint64, 
 	})
 }
 
-func (r *PurposeUseRepo) BeforeSave(ctx context.Context, id *uint64, entity *models.PurposeUseEntity) error {
+func (r *PurposeUseRepo) BeforeSave(ctx context.Context, id *uint64, entity *user.PurposeUseEntity) error {
 	return nil
 }
 

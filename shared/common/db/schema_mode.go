@@ -2,10 +2,12 @@ package _db
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // SchemaMode selects the only schema mutation mechanism a process may use.
@@ -70,10 +72,47 @@ func ParseSchemaMode(raw string) (SchemaMode, error) {
 	}
 }
 
+// EnsureSchema is the process-root entry point for schema ownership: load
+// policy, emit one lifecycle line, then apply. AutoMigrate runs with a Silent
+// SQL logger so hundreds of information_schema probes do not flood the console;
+// DDL failures still return to the process root.
+//
+// Prefer schema mode "sql" for day-to-day starts (zero DDL introspection). Use
+// "automigrate" only for bootstrap of empty/local databases.
+func EnsureSchema(
+	database *gorm.DB,
+	service string,
+	autoMigrate func(*gorm.DB) error,
+) error {
+	policy, err := LoadSchemaPolicy(service)
+	if err != nil {
+		return fmt.Errorf("load %s schema policy: %w", service, err)
+	}
+	slog.Info(
+		"Database schema policy",
+		"category", "lifecycle",
+		"event_name", "database.schema.policy",
+		"schema_service", service,
+		"mode", string(policy.Mode),
+		"source", policy.Source,
+	)
+	migrateDB := database
+	if policy.Mode == SchemaModeAutoMigrate && database != nil && database.Config != nil && database.Logger != nil {
+		migrateDB = database.Session(&gorm.Session{
+			Logger: database.Logger.LogMode(logger.Silent),
+		})
+	}
+	if err := ApplySchemaPolicy(migrateDB, policy, autoMigrate); err != nil {
+		return fmt.Errorf("apply %s schema policy: %w", service, err)
+	}
+	return nil
+}
+
 // ApplySchemaPolicy applies at most one schema mechanism. SQL is deliberately
 // a no-op here: golang-migrate runs as the single deployment/init owner and
 // serving binaries never attempt to replay its files. AutoMigrate invokes the
 // service-owned model registry and propagates every error to the process root.
+// Prefer EnsureSchema at process roots; keep this for tests and advanced callers.
 func ApplySchemaPolicy(
 	database *gorm.DB,
 	policy SchemaPolicy,

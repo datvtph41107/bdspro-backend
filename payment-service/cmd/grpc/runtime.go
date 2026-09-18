@@ -75,15 +75,10 @@ func run(parent context.Context) error {
 		return err
 	}
 	defer closeDB()
-	schemaPolicy, err := common_db.LoadSchemaPolicy("payment")
-	if err != nil {
-		return fmt.Errorf("load Payment schema policy: %w", err)
+	if err := common_db.EnsureSchema(db, "payment", paymentinfra.AutoMigrate); err != nil {
+		return err
 	}
 	logger := flogging.MustGetLogger("payment-service")
-	logger.Infof("Payment database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := common_db.ApplySchemaPolicy(db, schemaPolicy, paymentinfra.AutoMigrate); err != nil {
-		return fmt.Errorf("apply Payment schema policy: %w", err)
-	}
 
 	// Legacy Wallet/Bank remains a live public capability during the commercial
 	// cutover, but it shares the exact same process-owned DB lifecycle.

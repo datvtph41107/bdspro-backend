@@ -11,7 +11,7 @@ func TestHTTPErrorUsesActualRPCStatus(t *testing.T) {
 	for _, tc := range []struct {
 		http int32
 		rpc  codes.Code
-	}{{400, codes.InvalidArgument}, {401, codes.Unauthenticated}, {403, codes.PermissionDenied}, {404, codes.NotFound}, {409, codes.AlreadyExists}, {429, codes.ResourceExhausted}, {500, codes.Internal}, {501, codes.Unimplemented}, {503, codes.Unavailable}, {0, codes.Internal}} {
+	}{{400, codes.InvalidArgument}, {401, codes.Unauthenticated}, {403, codes.PermissionDenied}, {404, codes.NotFound}, {409, codes.AlreadyExists}, {429, codes.ResourceExhausted}, {500, codes.Internal}, {501, codes.Unimplemented}, {503, codes.Unavailable}, {0, codes.Internal}, {1004, codes.InvalidArgument}, {1016, codes.InvalidArgument}} {
 		if got := status.Code(ReturnError(tc.http, "message")); got != tc.rpc {
 			t.Errorf("HTTP %d => %v want %v", tc.http, got, tc.rpc)
 		}

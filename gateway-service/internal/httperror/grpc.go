@@ -41,6 +41,7 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 		grpcErr = status.New(codes.Internal, "internal server error")
 	}
 	code := grpcErr.Code()
+	message := grpcErr.Message()
 	response := map[string]interface{}{}
 	for _, detail := range grpcErr.Details() {
 		if info, ok := detail.(*sharepb.ErrorResponse); ok {
@@ -48,11 +49,14 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 			code = _errors.RPCCodeForHTTP(info.Code)
 			response["legacy_code"] = info.Code
 			response["second"] = info.Second
+			if info.Message != "" {
+				message = info.Message
+			}
 		}
 	}
 	httpStatus := statusFromCode(code)
 	response["code"] = code
-	response["message"] = publicMessage(code, grpcErr.Message())
+	response["message"] = publicMessage(code, message)
 	response["status"] = httpStatus
 	response["reason"] = code.String()
 	requestID, _ := request.RequestIDFromContext(ctx)
@@ -113,10 +117,30 @@ func publicMessage(code codes.Code, message string) string {
 	case codes.DeadlineExceeded:
 		return "upstream request timed out"
 	case codes.Internal, codes.Unknown, codes.DataLoss:
-		return "internal server error"
+		if isInfrastructureError(message) || strings.TrimSpace(message) == "" {
+			return "internal server error"
+		}
+		// Owner-provided business/diagnostic messages (via ReturnError) stay visible.
+		return message
 	default:
 		return message
 	}
+}
+
+func isInfrastructureError(msg string) bool {
+	lower := strings.ToLower(msg)
+	return strings.Contains(lower, "sqlstate") ||
+		strings.Contains(lower, "sql:") ||
+		strings.Contains(lower, "sql ") ||
+		strings.Contains(lower, "pq:") ||
+		strings.Contains(lower, "dial tcp") ||
+		strings.Contains(lower, "connection refused") ||
+		strings.Contains(lower, "runtime error") ||
+		strings.Contains(lower, "column \"") ||
+		strings.Contains(lower, "relation \"") ||
+		strings.Contains(lower, "dsn") ||
+		strings.Contains(lower, "password=") ||
+		strings.Contains(lower, "stack")
 }
 
 func isUpstreamConnectionError(msg string) bool {
@@ -154,3 +178,4 @@ func statusFromCode(code codes.Code) int { return _errors.HTTPStatusForRPC(code)
 func HandleGRPC(ctx context.Context, _ *runtime.ServeMux, _ runtime.Marshaler, w http.ResponseWriter, _ *http.Request, err error) {
 	WriteGRPCContext(ctx, w, err)
 }
+

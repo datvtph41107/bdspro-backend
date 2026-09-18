@@ -5,6 +5,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"log"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	"strings"
@@ -144,6 +145,7 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 
 	result, err := h.AuthUsecase.VerifyOtp(ctx, *otpDto)
 	if err != nil {
+		log.Printf("[VerifyOTP] phone=%s authId=%d failed: %v", req.Phone, req.AuthId, err)
 		return nil, err
 	}
 
@@ -171,23 +173,26 @@ func (h *AuthHandler) VerifyOTP(ctx context.Context, req *authpb.VerifyOTPReques
 }
 
 // @Summary Check phone
-// @Description Check phone đã tồn tại hay chưa
+// @Description Check phone đã tồn tại hay chưa. Path param là phone đã encode (substitution 0-9), không phải SĐT thô.
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param body body authpb.PhoneCheckRequest true "Thông tin phone"
+// @Param phone path string true "Phone đã encode (10 ký tự map 0-9)"
 // @Success 200 {object} authpb.PhoneCheckResponse
 // @Failure 400 {object} authpb.PhoneCheckResponse
 // @Failure 500 {object} authpb.PhoneCheckResponse
-// @Router /phone/check [get]
+// @Router /phone/check/{phone} [get]
 func (h *AuthHandler) PhoneCheck(ctx context.Context, req *authpb.PhoneCheckRequest) (*authpb.PhoneCheckResponse, error) {
-	// Convert proto request to DTO
-	existed, userId, err := h.AuthUsecase.PhoneCheck(ctx, req.Phone)
+	phone, err := _utils.DecodePhone(req.Phone)
+	if err != nil {
+		return nil, _errors.ReturnError(400, "Mã số điện thoại không hợp lệ")
+	}
+
+	existed, userId, err := h.AuthUsecase.PhoneCheck(ctx, phone)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert DTO response to proto response
 	return &authpb.PhoneCheckResponse{
 		Existed: existed,
 		UserId:  userId,

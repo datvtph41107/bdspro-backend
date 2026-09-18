@@ -5,7 +5,7 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"user/infra/mapper"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 )
 
 type TagHandler struct {

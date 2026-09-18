@@ -9,8 +9,8 @@ import (
 	accessgrpc "user/infra/handler/grpc/entitlement"
 	"user/infra/scheduler"
 	"user/internal/job"
-	"user/internal/usecase"
-	"user/internal/usecases"
+	usecase "user/internal/usecase"
+	usecases "user/internal/usecase/user"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
@@ -38,8 +38,8 @@ type InitialApp struct {
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	OrganizationClient    *clients.OrganizationClient
 
-	AuthHandler     *handler.AuthHandler
-	UserInfoHandler *handler.AuthUserProfileHandler
+	AuthHandler       *handler.AuthHandler
+	UserInfoHandler   *handler.AuthUserProfileHandler
 	OAuthHandler      *handler.OAuthHandler
 	PermissionHandler *handler.PermissionHandler
 	RoleGroupHandler  *handler.RoleGroupHandler

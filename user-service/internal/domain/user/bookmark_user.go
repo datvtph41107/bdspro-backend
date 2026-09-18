@@ -1,4 +1,4 @@
-package models
+package user
 
 // BookmarkUserEntity đại diện cho bookmark user của admin
 type BookmarkUserEntity struct {

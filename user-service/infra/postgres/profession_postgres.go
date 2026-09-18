@@ -6,12 +6,12 @@ import (
 	_provider "common/provider"
 	"context"
 	"time"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 )
 
 type ProfessionPostgres struct {
-	_provider.CrudRepo[models.ProfessionEntity]
+	_provider.CrudRepo[user.ProfessionEntity]
 }
 
 func NewProfessionPostgres(db *_db.TransactionRepo) repo.IProfessionRepo {
@@ -20,12 +20,12 @@ func NewProfessionPostgres(db *_db.TransactionRepo) repo.IProfessionRepo {
 	return repo
 }
 
-func (r *ProfessionPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]models.ProfessionEntity, error) {
-	var professions []models.ProfessionEntity
+func (r *ProfessionPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]user.ProfessionEntity, error) {
+	var professions []user.ProfessionEntity
 
 	err := r.TransactionRepo.
 		GetDB(c).
-		Model(&models.ProfessionEntity{}).
+		Model(&user.ProfessionEntity{}).
 		Where("created_by = ? AND deleted_at IS NULL", profileID).
 		Order("created_at DESC").
 		Find(&professions).Error
@@ -35,7 +35,7 @@ func (r *ProfessionPostgres) ListItemByProfileID(c context.Context, profileID ui
 
 func (r *ProfessionPostgres) BatchSave(
 	c context.Context,
-	professions *[]models.ProfessionEntity,
+	professions *[]user.ProfessionEntity,
 	deletedIds []uint64,
 ) error {
 	if len(deletedIds) == 0 && len(*professions) == 0 {
@@ -47,7 +47,7 @@ func (r *ProfessionPostgres) BatchSave(
 
 		if len(deletedIds) > 0 {
 			if err := db.
-				Model(&models.ProfessionEntity{}).
+				Model(&user.ProfessionEntity{}).
 				Where("id IN ? AND deleted_at IS NULL", deletedIds).
 				Update("deleted_at", time.Now()).
 				Error; err != nil {
@@ -69,7 +69,7 @@ func (r *ProfessionPostgres) BatchSave(
 			}
 
 			if err := db.
-				Model(&models.ProfessionEntity{}).
+				Model(&user.ProfessionEntity{}).
 				Where("id = ? AND deleted_at IS NULL", item.ID).
 				Updates(item).
 				Error; err != nil {
@@ -81,14 +81,14 @@ func (r *ProfessionPostgres) BatchSave(
 	})
 }
 
-func (r *ProfessionPostgres) ListVerified(ctx context.Context, pagable _dto.IPagable) ([]models.ProfessionEntity, uint32, error) {
+func (r *ProfessionPostgres) ListVerified(ctx context.Context, pagable _dto.IPagable) ([]user.ProfessionEntity, uint32, error) {
 	var (
-		data  []models.ProfessionEntity
+		data  []user.ProfessionEntity
 		total int64
 	)
 
 	db := r.TransactionRepo.GetDB(ctx).
-		Model(&models.ProfessionEntity{}).
+		Model(&user.ProfessionEntity{}).
 		Where("deleted_at IS NULL AND is_active = ?", true)
 
 	if err := db.

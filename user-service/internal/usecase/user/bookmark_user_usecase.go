@@ -5,9 +5,9 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/repo"
-	"user/internal/models"
 )
 
 // BookmarkUserUsecase usecase cho bookmark user
@@ -39,7 +39,7 @@ func (u *BookmarkUserUsecase) GetBookmarkUsers(ctx context.Context, req *dto.Boo
 
 		// Map user info if available
 		if bookmark.User != nil {
-			responses[i].User = &models.UserItem{
+			responses[i].User = &user.UserItem{
 				ProfileID:    bookmark.User.ProfileID,
 				FullName:     bookmark.User.FullName,
 				Avatar:       bookmark.User.Avatar,
@@ -71,7 +71,7 @@ func (u *BookmarkUserUsecase) UpdateBookmarkUsers(ctx context.Context, adminID u
 
 			// Nếu chưa bookmark thì tạo mới
 			if !exists {
-				bookmark := &models.BookmarkUserEntity{
+				bookmark := &user.BookmarkUserEntity{
 					AdminID: adminID,
 					UserID:  profileID,
 				}

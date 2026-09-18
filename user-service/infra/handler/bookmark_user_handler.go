@@ -6,7 +6,7 @@ import (
 	"context"
 	userpb "pb/types/user"
 	"user/internal/dto"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

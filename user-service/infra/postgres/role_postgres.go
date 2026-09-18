@@ -494,6 +494,31 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 		}
 	}
 
+	profileIDs := make([]uint64, 0, len(authMethods))
+	for _, am := range authMethods {
+		if am != nil && am.UserID > 0 {
+			profileIDs = append(profileIDs, am.UserID)
+		}
+	}
+	profileStatus := map[uint64]uint32{}
+	if len(profileIDs) > 0 {
+		type profileStatusRow struct {
+			ProfileID uint64 `gorm:"column:profile_id"`
+			Status    uint32 `gorm:"column:status"`
+		}
+		var rows []profileStatusRow
+		if err := r.GetDB(ctx).
+			Table("user_profile").
+			Select("profile_id, status").
+			Where("profile_id IN ? AND deleted_at IS NULL", profileIDs).
+			Find(&rows).Error; err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			profileStatus[row.ProfileID] = row.Status
+		}
+	}
+
 	admins := make([]*access.AuthAdminWithRole, 0, len(authMethods))
 	for _, am := range authMethods {
 		if am == nil {
@@ -508,7 +533,7 @@ func (r *RoleRepo) GetAuthAdminsWithRolesByIds(ctx context.Context, ids []uint64
 			Phone:     am.Phone,
 			Avatar:    am.Avatar,
 			RoleKey:   am.RoleKey,
-			Status:    uint32(am.Status),
+			Status:    profileStatus[am.UserID],
 			CreatedAt: am.CreatedAt,
 			UpdatedAt: am.UpdatedAt,
 		}

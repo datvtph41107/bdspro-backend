@@ -33,12 +33,6 @@ type AuthMethodRepository interface {
 	FindDeletedByEmail(c context.Context, email string) (*auth.AuthMethod, error)
 	FindDeletedByUsername(c context.Context, username string) (*auth.AuthMethod, error)
 
-	// Account lock management methods
-	LockAccount(c context.Context, authID uint64, lockType string, duration int, reason string, lockedBy uint64) error
-	UnlockAccount(c context.Context, authID uint64, reason string, unlockedBy uint64) error
-	GetAccountStatus(c context.Context, authID uint64) (*auth.AuthMethod, error)
-	CheckLockExpiration(c context.Context) error // Kiểm tra và tự động mở khóa các tài khoản hết hạn
-
 	// OAuth connected accounts
 	GetConnectedOAuthAccounts(c context.Context, userID uint64) ([]*auth.AuthMethod, error)
 	PhoneCheck(ctx context.Context, phone string) (*auth.AuthMethod, error)

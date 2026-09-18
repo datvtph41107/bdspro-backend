@@ -25,7 +25,7 @@ var _ AccessTokenIssuer = (*AuthUsecase)(nil)
 
 type PINUsecase struct {
 	pinRepo              repo.PINRepository
-	statusRepo           repo.StatusRepository
+	statusRepo           repo.AuthStatusRepository
 	authMethodRepo       repo.AuthMethodRepository
 	sessionRepo          repo.SessionRepository
 	otpRepo              repo.OTPRepository
@@ -41,7 +41,7 @@ type PINUsecase struct {
 
 func NewPINUsecase(
 	pinRepo repo.PINRepository,
-	statusRepo repo.StatusRepository,
+	statusRepo repo.AuthStatusRepository,
 	authMethodRepo repo.AuthMethodRepository,
 	sessionRepo repo.SessionRepository,
 	otpRepo repo.OTPRepository,

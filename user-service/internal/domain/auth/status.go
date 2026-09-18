@@ -2,18 +2,16 @@ package auth
 
 import "time"
 
-// UserStatusEntity đại diện cho trạng thái của người dùng
-type UserStatusEntity struct {
+// AuthStatus is registration/credential lifecycle state keyed by auth_id.
+// After a profile exists, account lock/status truth lives on user_profile.
+type AuthStatus struct {
 	IdDomain
-	// AuthID      uint64    `gorm:"primaryKey;column:auth_id"`
-	Active      bool      `gorm:"column:active"`
-	Verified    bool      `gorm:"column:verified"`
-	LockedUntil time.Time `gorm:"column:locked_until"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-	// DeletedAt   gorm.DeletedAt `gorm:"index"`
+	Active      bool      `gorm:"column:active" json:"active"`
+	Verified    bool      `gorm:"column:verified" json:"verified"`
+	LockedUntil time.Time `gorm:"column:locked_until" json:"lockedUntil"`
+	UpdatedAt   time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updatedAt"`
 }
 
-// TableName đặt tên bảng trong DB
-func (UserStatusEntity) TableName() string {
-	return "user_status"
+func (AuthStatus) TableName() string {
+	return "auth_status"
 }

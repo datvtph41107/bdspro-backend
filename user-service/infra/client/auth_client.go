@@ -83,7 +83,6 @@ func (c *AuthClient) Create(ctx context.Context, authMethod *providers.AuthMetho
 		Phone:    strings.TrimSpace(authMethod.Phone),
 		Avatar:   authMethod.Avatar,
 		RoleKey:  authMethod.RoleKey,
-		Status:   uint8(domainauth.StatusActive),
 		UserID:   authMethod.UserID,
 	})
 	if err != nil {

@@ -32,7 +32,9 @@ run-dev:
 	if [ -f "$(ROOT_DIR)/.env" ]; then . "$(ROOT_DIR)/.env"; fi; \
 	if [ -f "$(ROOT_DIR)/$(SERVICE)-service/.env" ]; then . "$(ROOT_DIR)/$(SERVICE)-service/.env"; fi; \
 	set +a; \
-	QHPRO_EXECUTION_MODE=host $(AIR_EXE) $(ARGS)
+	QHPRO_EXECUTION_MODE=host \
+	QHPRO_LOG_CONFIG="$${QHPRO_LOG_CONFIG:-$(ROOT_DIR)/logging.yml}" \
+	$(AIR_EXE) $(ARGS)
 
 %:
 	@:	

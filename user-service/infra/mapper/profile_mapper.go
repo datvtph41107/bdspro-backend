@@ -8,8 +8,8 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/dto"
-	models "user/internal/models"
 )
 
 type ProfileMapper struct {
@@ -104,11 +104,11 @@ func (m *ProfileMapper) ProfessionToDTO(profession *userpb.ProfessionItem) *dto.
 	}
 }
 
-func (m *ProfileMapper) TagToModel(tag *userpb.TagItem) *models.TagEntity {
+func (m *ProfileMapper) TagToModel(tag *userpb.TagItem) *user.TagEntity {
 	if tag == nil {
 		return nil
 	}
-	return &models.TagEntity{
+	return &user.TagEntity{
 		BaseEntity: _models.BaseEntity{
 			ID: tag.Id,
 		},
@@ -119,7 +119,7 @@ func (m *ProfileMapper) TagToModel(tag *userpb.TagItem) *models.TagEntity {
 	}
 }
 
-func (m *ProfileMapper) CertificationToPb(certification *models.CertificationEntity) *userpb.CertificationItem {
+func (m *ProfileMapper) CertificationToPb(certification *user.CertificationEntity) *userpb.CertificationItem {
 	return &userpb.CertificationItem{
 		Id:        certification.ID,
 		Name:      certification.Name,
@@ -131,7 +131,7 @@ func (m *ProfileMapper) CertificationToPb(certification *models.CertificationEnt
 	}
 }
 
-func (m *ProfileMapper) ProfessionToPb(profession *models.ProfessionEntity) *userpb.ProfessionItem {
+func (m *ProfileMapper) ProfessionToPb(profession *user.ProfessionEntity) *userpb.ProfessionItem {
 	result := &userpb.ProfessionItem{
 		Id:             profession.ID,
 		Name:           profession.Name,
@@ -146,7 +146,7 @@ func (m *ProfileMapper) ProfessionToPb(profession *models.ProfessionEntity) *use
 	return result
 }
 
-func (m *ProfileMapper) PurposeUseToPb(purpose *models.PurposeUseEntity) *userpb.PurposeUseItem {
+func (m *ProfileMapper) PurposeUseToPb(purpose *user.PurposeUseEntity) *userpb.PurposeUseItem {
 	result := &userpb.PurposeUseItem{
 		Id:   purpose.ID,
 		Name: purpose.Name,
@@ -157,7 +157,7 @@ func (m *ProfileMapper) PurposeUseToPb(purpose *models.PurposeUseEntity) *userpb
 	return result
 }
 
-func (m *ProfileMapper) TagToPb(tag *models.TagEntity) *userpb.TagItem {
+func (m *ProfileMapper) TagToPb(tag *user.TagEntity) *userpb.TagItem {
 	isActive := tag.IsActive
 	return &userpb.TagItem{
 		Id:        tag.ID,
@@ -168,7 +168,7 @@ func (m *ProfileMapper) TagToPb(tag *models.TagEntity) *userpb.TagItem {
 	}
 }
 
-func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *userpb.ProfilePublicInfo {
+func (m *ProfileMapper) PublicUserInfoToPb(profile *user.UserProfileEntity, kyc *sharepb.KYCV3Proto) *userpb.ProfilePublicInfo {
 	result := &userpb.ProfilePublicInfo{
 		ProfileId:         profile.ProfileID,
 		Phone:             profile.Phone,
@@ -253,7 +253,7 @@ func (m *ProfileMapper) PublicUserInfoToPb(profile *models.UserProfileEntity, ky
 	return result
 }
 
-func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]models.UserProfileSearch) []*userpb.UserSearchItem {
+func (m *ProfileMapper) UserSearchItemToPbs(profiles *[]user.UserProfileSearch) []*userpb.UserSearchItem {
 	infos := []*userpb.UserSearchItem{}
 	if profiles != nil {
 		for _, profile := range *profiles {
@@ -420,7 +420,7 @@ func (m *ProfileMapper) UserV3ToDTO(req *sharepb.UserV3Proto) *_dto.UserV3DTO {
 	return result
 }
 
-func (m *ProfileMapper) ModelToUserV3Proto(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
+func (m *ProfileMapper) ModelToUserV3Proto(profile *user.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
 	if profile == nil {
 		return nil
 	}
@@ -679,7 +679,7 @@ func (m *ProfileMapper) DTOToUserV3Proto(profile *_dto.UserV3DTO, kyc *sharepb.K
 	return result
 }
 
-func (m *ProfileMapper) ModelToUserV3ProtoWithMedias(profile *models.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
+func (m *ProfileMapper) ModelToUserV3ProtoWithMedias(profile *user.UserProfileEntity, kyc *sharepb.KYCV3Proto) *sharepb.UserV3Proto {
 	result := m.ModelToUserV3Proto(profile, kyc)
 	if result == nil {
 		return nil

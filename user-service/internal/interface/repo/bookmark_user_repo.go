@@ -2,17 +2,17 @@ package repo
 
 import (
 	"context"
+	"user/internal/domain/user"
 	"user/internal/dto"
-	models "user/internal/models"
 )
 
 // IBookmarkUserRepo interface cho bookmark user repository
 type IBookmarkUserRepo interface {
 	// GetBookmarkUsers lấy danh sách bookmark user với phân trang
-	GetBookmarkUsers(ctx context.Context, adminID uint64, page, size int) ([]models.BookmarkUserEntity, int64, error)
+	GetBookmarkUsers(ctx context.Context, adminID uint64, page, size int) ([]user.BookmarkUserEntity, int64, error)
 
 	// CreateBookmarkUser tạo bookmark user mới
-	CreateBookmarkUser(ctx context.Context, bookmark *models.BookmarkUserEntity) error
+	CreateBookmarkUser(ctx context.Context, bookmark *user.BookmarkUserEntity) error
 
 	// DeleteBookmarkUser xóa bookmark user
 	DeleteBookmarkUser(ctx context.Context, adminID, userID uint64) error

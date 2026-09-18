@@ -2,10 +2,10 @@ package repo
 
 import (
 	"context"
-	models "user/internal/models"
+	"user/internal/domain/user"
 )
 
 type IProfileMediaRepo interface {
-	ListItemByProfileID(c context.Context, profileID uint64) ([]models.ProfileMediaEntity, error)
-	BatchSave(c context.Context, medias *[]models.ProfileMediaEntity, deletedIds []uint64) error
+	ListItemByProfileID(c context.Context, profileID uint64) ([]user.ProfileMediaEntity, error)
+	BatchSave(c context.Context, medias *[]user.ProfileMediaEntity, deletedIds []uint64) error
 }

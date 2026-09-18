@@ -107,13 +107,8 @@ func run() error {
 	}
 	defer sqlDB.Close()
 
-	schemaPolicy, err := _db.LoadSchemaPolicy("file")
-	if err != nil {
-		return fmt.Errorf("load File schema policy: %w", err)
-	}
-	log.Printf("File database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := _db.ApplySchemaPolicy(db, schemaPolicy, models.AutoMigrate); err != nil {
-		return fmt.Errorf("apply File schema policy: %w", err)
+	if err := _db.EnsureSchema(db, "file", models.AutoMigrate); err != nil {
+		return err
 	}
 
 	fileRepository := repositories.NewFileRepository(db)

@@ -2,10 +2,11 @@ package postgres
 
 import (
 	"context"
-	"gorm.io/gorm"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/repo"
-	models "user/internal/models"
+
+	"gorm.io/gorm"
 )
 
 // BookmarkUserPostgres implement BookmarkUserRepository
@@ -19,14 +20,14 @@ func NewBookmarkUserPostgres(db *gorm.DB) repo.IBookmarkUserRepo {
 }
 
 // GetBookmarkUsers lấy danh sách bookmark user với phân trang
-func (r *BookmarkUserPostgres) GetBookmarkUsers(ctx context.Context, adminID uint64, page, size int) ([]models.BookmarkUserEntity, int64, error) {
-	var bookmarks []models.BookmarkUserEntity
+func (r *BookmarkUserPostgres) GetBookmarkUsers(ctx context.Context, adminID uint64, page, size int) ([]user.BookmarkUserEntity, int64, error) {
+	var bookmarks []user.BookmarkUserEntity
 	var total int64
 
 	offset := (page - 1) * size
 
 	// Đếm tổng số record
-	if err := r.db.Model(&models.BookmarkUserEntity{}).
+	if err := r.db.Model(&user.BookmarkUserEntity{}).
 		Where("admin_id = ?", adminID).
 		Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -46,29 +47,29 @@ func (r *BookmarkUserPostgres) GetBookmarkUsers(ctx context.Context, adminID uin
 }
 
 // CreateBookmarkUser tạo bookmark user mới
-func (r *BookmarkUserPostgres) CreateBookmarkUser(ctx context.Context, bookmark *models.BookmarkUserEntity) error {
+func (r *BookmarkUserPostgres) CreateBookmarkUser(ctx context.Context, bookmark *user.BookmarkUserEntity) error {
 	return r.db.Create(bookmark).Error
 }
 
 // DeleteBookmarkUser xóa bookmark user
 func (r *BookmarkUserPostgres) DeleteBookmarkUser(ctx context.Context, adminID, userID uint64) error {
 	return r.db.WithContext(ctx).
-		Model(&models.BookmarkUserEntity{}).
+		Model(&user.BookmarkUserEntity{}).
 		Where("admin_id = ? AND user_id = ?", adminID, userID).
-		Delete(&models.BookmarkUserEntity{}).
+		Delete(&user.BookmarkUserEntity{}).
 		Error
 }
 
 // DeleteAllBookmarkUsers xóa tất cả bookmark user của admin
 func (r *BookmarkUserPostgres) DeleteAllBookmarkUsers(ctx context.Context, adminID uint64) error {
 	return r.db.WithContext(ctx).Where("admin_id = ?", adminID).
-		Delete(&models.BookmarkUserEntity{}).Error
+		Delete(&user.BookmarkUserEntity{}).Error
 }
 
 // CheckBookmarkUserExists kiểm tra bookmark user đã tồn tại chưa
 func (r *BookmarkUserPostgres) CheckBookmarkUserExists(ctx context.Context, adminID, userID uint64) (bool, error) {
 	var count int64
-	err := r.db.Model(&models.BookmarkUserEntity{}).
+	err := r.db.Model(&user.BookmarkUserEntity{}).
 		Where("admin_id = ? AND user_id = ?", adminID, userID).
 		Count(&count).Error
 	return count > 0, err

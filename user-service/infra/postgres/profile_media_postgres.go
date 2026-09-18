@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 	"time"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 
 	"gorm.io/gorm"
 )
@@ -19,11 +19,11 @@ func NewProfileMediaPostgres(db *gorm.DB) repo.IProfileMediaRepo {
 	}
 }
 
-func (r *ProfileMediaPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]models.ProfileMediaEntity, error) {
-	var medias []models.ProfileMediaEntity
+func (r *ProfileMediaPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]user.ProfileMediaEntity, error) {
+	var medias []user.ProfileMediaEntity
 
 	err := r.DB.WithContext(c).
-		Model(&models.ProfileMediaEntity{}).
+		Model(&user.ProfileMediaEntity{}).
 		Where("created_by = ? and deleted_at is null", profileID).
 		Find(&medias).Error
 
@@ -32,14 +32,14 @@ func (r *ProfileMediaPostgres) ListItemByProfileID(c context.Context, profileID 
 
 func (r *ProfileMediaPostgres) BatchSave(
 	c context.Context,
-	medias *[]models.ProfileMediaEntity,
+	medias *[]user.ProfileMediaEntity,
 	deletedIds []uint64,
 ) error {
 	// Mở transaction
 	return r.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		// Nếu có danh sách cần xóa
 		if len(deletedIds) > 0 {
-			if err := tx.WithContext(c).Model(&models.ProfileMediaEntity{}).
+			if err := tx.WithContext(c).Model(&user.ProfileMediaEntity{}).
 				Where("id IN ?", deletedIds).
 				Update("deleted_at", time.Now()).Error; err != nil {
 				return err // rollback

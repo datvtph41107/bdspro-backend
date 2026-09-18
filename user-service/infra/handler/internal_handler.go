@@ -15,12 +15,12 @@ import (
 	"time"
 	"user/infra/mapper"
 	"user/internal/domain/access"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
-	"user/internal/models"
 	"user/internal/usecase"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -78,7 +78,7 @@ func NewInternalHandler(
 // CreateProfile tạo profile mới (dùng bởi auth-service)
 func (h *InternalHandler) CreateProfile(ctx context.Context, req *userpb.CreateProfileRequest) (*userpb.CreateProfileResponse, error) {
 	// Tạo UserProfileEntity từ request
-	profile := &models.UserProfileEntity{
+	profile := &user.UserProfileEntity{
 		// ProfileID:    req.ProfileId,
 		FullName:     req.FullName,
 		Email:        req.Email,
@@ -87,7 +87,7 @@ func (h *InternalHandler) CreateProfile(ctx context.Context, req *userpb.CreateP
 		ReferralCode: req.ReferralCode,
 	}
 	// Set tất cả visibility thành public mặc định
-	models.SetAllVisibilityPublic(profile)
+	user.SetAllVisibilityPublic(profile)
 
 	// Gọi repo để tạo profile
 	createdProfile, err := h.profileUsecase.ProfileRepo.CreateUserProfile(ctx, profile)

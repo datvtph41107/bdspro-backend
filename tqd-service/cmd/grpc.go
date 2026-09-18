@@ -74,13 +74,8 @@ func runGRPCServer() error {
 		return errors.New("TQD app is nil after InitializeApp")
 	}
 
-	schemaPolicy, err := _db.LoadSchemaPolicy("tqd")
-	if err != nil {
-		return fmt.Errorf("load TQD schema policy: %w", err)
-	}
-	log.Printf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := _db.ApplySchemaPolicy(app.DB, schemaPolicy, tqddb.AutoMigrate); err != nil {
-		return fmt.Errorf("apply TQD schema policy: %w", err)
+	if err := _db.EnsureSchema(app.DB, "tqd", tqddb.AutoMigrate); err != nil {
+		return err
 	}
 
 	addr := fmt.Sprintf("%s:%d", GrpcHost, cfg.Properties.Server.GrpcPort)

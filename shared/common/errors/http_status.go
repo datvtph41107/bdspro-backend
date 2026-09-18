@@ -8,6 +8,10 @@ import (
 // RPCCodeForHTTP là bảng chuyển status tường minh cho API lỗi cũ dùng số HTTP.
 // Mã nghiệp vụ riêng không được cast thành gRPC code vì gRPC chỉ có 0..16.
 func RPCCodeForHTTP(code int32) codes.Code {
+	// Auth/OTP business codes (1000-1999) are client-facing validation failures.
+	if code >= 1000 && code < 2000 {
+		return codes.InvalidArgument
+	}
 	switch code {
 	case 400, 422:
 		return codes.InvalidArgument

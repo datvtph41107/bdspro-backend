@@ -6,9 +6,9 @@ import (
 	_utils "common/utils"
 	"context"
 	"time"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/repo"
-	"user/internal/models"
 )
 
 type KYCUsecase struct {
@@ -16,13 +16,13 @@ type KYCUsecase struct {
 }
 
 type IKYCUsecase interface {
-	SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*models.KYCEntity, *_err.ErrorDTO)
-	GetMyKYC(ctx context.Context) (*models.KYCEntity, *_err.ErrorDTO)
-	GetKYCByProfileID(ctx context.Context, profileID uint64) (*models.KYCEntity, *_err.ErrorDTO)
+	SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*user.KYCEntity, *_err.ErrorDTO)
+	GetMyKYC(ctx context.Context) (*user.KYCEntity, *_err.ErrorDTO)
+	GetKYCByProfileID(ctx context.Context, profileID uint64) (*user.KYCEntity, *_err.ErrorDTO)
 }
 
 type IAdminKYCUsecase interface {
-	ListKYCs(ctx context.Context, req dto.ListKYCsRequest) ([]models.KYCEntity, int64, *_err.ErrorDTO)
+	ListKYCs(ctx context.Context, req dto.ListKYCsRequest) ([]user.KYCEntity, int64, *_err.ErrorDTO)
 	ApproveKYC(ctx context.Context, id uint64) *_err.ErrorDTO
 	RejectKYC(ctx context.Context, id uint64, reason string) *_err.ErrorDTO
 }
@@ -40,7 +40,7 @@ func NewAdminKYCUsecase(kycRepo repo.IKYCRepo) IAdminKYCUsecase {
 }
 
 // SubmitKYC tạo hoặc cập nhật KYC request
-func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*models.KYCEntity, *_err.ErrorDTO) {
+func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*user.KYCEntity, *_err.ErrorDTO) {
 	profileID := _utils.GetProfileIdWithContext(ctx)
 
 	// Kiểm tra xem user đã có KYC request chưa
@@ -73,7 +73,7 @@ func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*
 	}
 
 	// Tạo KYC entity mới nếu chưa có
-	kyc := &models.KYCEntity{
+	kyc := &user.KYCEntity{
 		ProfileID:    profileID,
 		FullName:     req.FullName,
 		IdentityCard: req.IdentityCard,
@@ -98,13 +98,13 @@ func (u *KYCUsecase) SubmitKYC(ctx context.Context, req dto.SubmitKYCRequest) (*
 }
 
 // GetMyKYC lấy KYC của user hiện tại
-func (u *KYCUsecase) GetMyKYC(ctx context.Context) (*models.KYCEntity, *_err.ErrorDTO) {
+func (u *KYCUsecase) GetMyKYC(ctx context.Context) (*user.KYCEntity, *_err.ErrorDTO) {
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	return u.GetKYCByProfileID(ctx, profileID)
 }
 
 // GetKYCByProfileID lấy KYC theo profileID
-func (u *KYCUsecase) GetKYCByProfileID(ctx context.Context, profileID uint64) (*models.KYCEntity, *_err.ErrorDTO) {
+func (u *KYCUsecase) GetKYCByProfileID(ctx context.Context, profileID uint64) (*user.KYCEntity, *_err.ErrorDTO) {
 	kyc, err := u.kycRepo.GetByProfileID(ctx, profileID)
 	if err != nil {
 		return nil, &_err.ErrorDTO{
@@ -117,7 +117,7 @@ func (u *KYCUsecase) GetKYCByProfileID(ctx context.Context, profileID uint64) (*
 }
 
 // ListKYCs lấy danh sách KYC (Admin)
-func (u *KYCUsecase) ListKYCs(ctx context.Context, req dto.ListKYCsRequest) ([]models.KYCEntity, int64, *_err.ErrorDTO) {
+func (u *KYCUsecase) ListKYCs(ctx context.Context, req dto.ListKYCsRequest) ([]user.KYCEntity, int64, *_err.ErrorDTO) {
 	page := int(req.GetPage())
 	size := int(req.GetSize())
 

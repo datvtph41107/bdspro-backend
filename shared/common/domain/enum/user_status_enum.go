@@ -38,6 +38,13 @@ func (e EUserStatus) IsLocked() bool {
 	return e == EUserStatusTemporaryLocked || e == EUserStatusPermanentlyLocked
 }
 
+// CanLogin mirrors user_profile account gate without lock expiry.
+// Expiry-aware checks belong on UserProfileEntity.CanLogin (uses locked_until).
 func (e EUserStatus) CanLogin() bool {
-	return e != EUserStatusSuspended
+	switch e {
+	case EUserStatusActive:
+		return true
+	default:
+		return false
+	}
 }

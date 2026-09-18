@@ -3,7 +3,6 @@ package grpcserver
 import (
 	common_db "common/db"
 	"fmt"
-	"log"
 
 	config "organization/config"
 	"organization/infrastructure/repository"
@@ -25,13 +24,8 @@ var GrpcServerCmd = &cobra.Command{
 		}
 		defer cleanup()
 
-		schemaPolicy, err := common_db.LoadSchemaPolicy("organization")
-		if err != nil {
-			return fmt.Errorf("load Organization schema policy: %w", err)
-		}
-		log.Printf("Organization database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-		if err := common_db.ApplySchemaPolicy(common_db.DB, schemaPolicy, repository.AutoMigrate); err != nil {
-			return fmt.Errorf("apply Organization schema policy: %w", err)
+		if err := common_db.EnsureSchema(common_db.DB, "organization", repository.AutoMigrate); err != nil {
+			return err
 		}
 		app.GRPCServer.Start()
 		return nil

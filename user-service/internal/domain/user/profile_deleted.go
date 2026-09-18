@@ -1,4 +1,4 @@
-package models
+package user
 
 import (
 	_enum "common/domain/enum"

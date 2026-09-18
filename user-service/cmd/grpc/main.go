@@ -62,13 +62,8 @@ func runGRPC() error {
 		return fmt.Errorf("initialize User app: app or database is nil")
 	}
 
-	schemaPolicy, err := _db.LoadSchemaPolicy("user")
-	if err != nil {
-		return fmt.Errorf("load User schema policy: %w", err)
-	}
-	log.Printf("User database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-	if err := _db.ApplySchemaPolicy(app.DB, schemaPolicy, userdb.AutoMigrate); err != nil {
-		return fmt.Errorf("apply User schema policy: %w", err)
+	if err := _db.EnsureSchema(app.DB, "user", userdb.AutoMigrate); err != nil {
+		return err
 	}
 
 	lis, err := net.Listen("tcp", runtimeConfig.GRPCAddress)

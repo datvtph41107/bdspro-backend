@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"user/internal/domain/auth"
+	"user/internal/domain/user"
 )
 
 type UserInfoMapper struct {
@@ -14,37 +14,31 @@ func NewUserInfoMapper() *UserInfoMapper {
 	return &UserInfoMapper{}
 }
 
-func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(user *auth.AuthUser) *userpb.AuthUserStatusInfo {
+func (m *UserInfoMapper) MapAuthUserStatusInfoToPb(profile *user.UserProfileEntity) *userpb.AuthUserStatusInfo {
 	result := &userpb.AuthUserStatusInfo{
-		ProfileId:   user.ProfileID,
-		Status:      uint32(user.Status),
-		StatusText:  user.Status.Str(),
-		IsLocked:    user.IsLocked(),
-		LockType:    uint32(user.Status),
-		LockedAt:    _utils.FormatTimeToString(user.LockedAt),
-		LockedUntil: _utils.FormatTimeToString(user.LockedUntil),
-		LockReason:  user.LockReason,
-		LockedBy:    user.LockedBy,
-		CanLogin:    user.CanLogin(),
-		IsExpired:   user.IsLockExpired(),
+		ProfileId:   profile.ProfileID,
+		Status:      uint32(profile.Status),
+		StatusText:  profile.Status.String(),
+		IsLocked:    profile.IsLocked(),
+		LockType:    uint32(profile.Status),
+		LockedAt:    _utils.FormatTimeToString(profile.LockedAt),
+		LockedUntil: _utils.FormatTimeToString(profile.LockedUntil),
+		LockReason:  profile.LockReason,
+		LockedBy:    profile.LockedBy,
+		CanLogin:    profile.CanLogin(),
+		IsExpired:   profile.IsLockExpired(),
 	}
 
-	if user.Role != nil {
+	if profile.RoleID != nil && *profile.RoleID > 0 {
 		result.Role = &sharepb.Role{
-			Id:       user.Role.ID,
-			RoleName: user.Role.RoleName,
-			RoleKey:  user.Role.RoleKey,
+			Id:       *profile.RoleID,
+			RoleName: profile.RoleName,
+			RoleKey:  profile.RoleKeyData,
 		}
-		if user.Role.Color != nil {
+		if profile.RoleColor != "" || profile.RoleBgColor != "" {
 			result.Role.Color = &sharepb.Color{
-				Id:              user.Role.Color.ID,
-				Name:            user.Role.Color.Name,
-				ContentColor:    user.Role.Color.ContentColor,
-				BackgroundColor: user.Role.Color.BackgroundColor,
-				ColorKey:        user.Role.Color.ColorKey,
-				HexCode:         user.Role.Color.HexCode,
-				Description:     &user.Role.Color.Description,
-				IsActive:        user.Role.Color.IsActive,
+				ContentColor:    profile.RoleColor,
+				BackgroundColor: profile.RoleBgColor,
 			}
 		}
 	}

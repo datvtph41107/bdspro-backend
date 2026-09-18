@@ -45,7 +45,7 @@ func (m *AuthSecurityMapper) MapToProto(data *dto.AuthSecurityDataDTO) *sharepb.
 	return result
 }
 
-func (m *AuthSecurityMapper) mapStatus(status *auth.UserStatusEntity) *sharepb.UserStatusV3Proto {
+func (m *AuthSecurityMapper) mapStatus(status *auth.AuthStatus) *sharepb.UserStatusV3Proto {
 	var lockedUntil string
 	if !status.LockedUntil.IsZero() {
 		lock := status.LockedUntil

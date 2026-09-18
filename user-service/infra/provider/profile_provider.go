@@ -9,17 +9,24 @@ import (
 	"user/internal/dto"
 	internalenums "user/internal/enums"
 	"user/internal/interface/repo"
-	"user/internal/models"
+	"user/internal/domain/user"
 	"user/internal/utils"
 )
 
 // @bind: user/internal/interface/providers.ProfileProvider
 type ProfileProvider struct {
-	profileRepo repo.IProfileRepo
+	profileRepo        repo.IProfileRepo
+	profileAccountRepo repo.ProfileAccountRepository
 }
 
-func NewProfileProvider(profileRepo repo.IProfileRepo) *ProfileProvider {
-	return &ProfileProvider{profileRepo: profileRepo}
+func NewProfileProvider(
+	profileRepo repo.IProfileRepo,
+	profileAccountRepo repo.ProfileAccountRepository,
+) *ProfileProvider {
+	return &ProfileProvider{
+		profileRepo:        profileRepo,
+		profileAccountRepo: profileAccountRepo,
+	}
 }
 
 func (p *ProfileProvider) GetByProfileID(ctx context.Context, profileID uint64) (*dto.ProfileDTO, error) {
@@ -48,13 +55,13 @@ func (p *ProfileProvider) GetByProfileIDV3(ctx context.Context, profileID uint64
 
 func (p *ProfileProvider) SaveProfile(ctx context.Context, profile *dto.ProfileDTO) error {
 	entity := profileDTOToEntity(profile)
-	models.SetAllVisibilityPublic(entity)
+	user.SetAllVisibilityPublic(entity)
 	_, err := p.profileRepo.CreateUserProfile(ctx, entity)
 	return err
 }
 
 func (p *ProfileProvider) CreateProfile(ctx context.Context, authID uint64, planID *uint64, name, email, phone, avatar string) (*dto.ProfileDTO, error) {
-	entity := models.MakeUserProfileEntity(authID, planID, name, email, phone, avatar)
+	entity := user.MakeUserProfileEntity(authID, planID, name, email, phone, avatar)
 	if authID > 0 {
 		entity.ProfileID = authID
 	}
@@ -107,11 +114,21 @@ func (p *ProfileProvider) CheckAccountStatus(ctx context.Context, profileID uint
 	if err != nil {
 		return false, true, err
 	}
-	return profile.Status.IsLocked(), profile.Status.CanLogin(), nil
+	return profile.IsLocked() && !profile.IsLockExpired(), profile.CanLogin(), nil
 }
 
 func (p *ProfileProvider) LockAccount(ctx context.Context, profileID uint64) error {
-	return p.profileRepo.UpdateUserProfileStatus(ctx, profileID, _enum.EUserStatusTemporaryLocked)
+	if profileID == 0 {
+		return nil
+	}
+	return p.profileAccountRepo.LockUser(
+		ctx,
+		profileID,
+		_enum.EUserStatusTemporaryLocked,
+		24,
+		"Khóa tài khoản",
+		0,
+	)
 }
 
 func (p *ProfileProvider) MakeUserProfileEntity(authID uint64, planID *uint64, name, email, phone, avatar string) *dto.ProfileDTO {
@@ -150,7 +167,7 @@ func (p *ProfileProvider) GetMapProfileByIds(ctx context.Context, ids []uint64) 
 	return result, nil
 }
 
-func entityToProfileDTO(profile *models.UserProfileEntity) *dto.ProfileDTO {
+func entityToProfileDTO(profile *user.UserProfileEntity) *dto.ProfileDTO {
 	if profile == nil {
 		return nil
 	}
@@ -166,11 +183,11 @@ func entityToProfileDTO(profile *models.UserProfileEntity) *dto.ProfileDTO {
 	}
 }
 
-func profileDTOToEntity(profile *dto.ProfileDTO) *models.UserProfileEntity {
+func profileDTOToEntity(profile *dto.ProfileDTO) *user.UserProfileEntity {
 	if profile == nil {
 		return nil
 	}
-	entity := &models.UserProfileEntity{
+	entity := &user.UserProfileEntity{
 		ProfileID:    profile.ProfileID,
 		FullName:     profile.FullName,
 		Email:        profile.Email,

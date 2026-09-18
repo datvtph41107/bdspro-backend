@@ -148,3 +148,41 @@ func TestInternalErrorDetailsAreNotPublic(t *testing.T) {
 		t.Fatal(recorder.Body.String())
 	}
 }
+
+func TestAuthBusinessErrorMessageIsPublic(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, commonerrors.ReturnError(1004, "Mã không chính xác. Bạn còn 2 lần."))
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusBadRequest)
+	}
+	var response struct {
+		Message    string `json:"message"`
+		LegacyCode int32  `json:"legacy_code"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.LegacyCode != 1004 {
+		t.Fatalf("legacy_code = %d", response.LegacyCode)
+	}
+	if response.Message != "Mã không chính xác. Bạn còn 2 lần." {
+		t.Fatalf("message = %q", response.Message)
+	}
+}
+
+func TestOwnerInternalBusinessMessageIsPublic(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, commonerrors.ReturnError(500, "Không tạo được hồ sơ người dùng. Vui lòng thử lại"))
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("HTTP status = %d", recorder.Code)
+	}
+	var response struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Message != "Không tạo được hồ sơ người dùng. Vui lòng thử lại" {
+		t.Fatalf("message = %q", response.Message)
+	}
+}

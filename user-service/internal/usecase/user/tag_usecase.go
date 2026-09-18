@@ -7,9 +7,9 @@ import (
 	"context"
 	"strings"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 
 	"gorm.io/gorm"
 )
@@ -24,12 +24,12 @@ func NewTagUsecase(tagRepo repo.ITagRepo) *TagUsecase {
 	}
 }
 
-func (u *TagUsecase) AdminCreateTag(ctx context.Context, req *dto.AdminTagRequest) (*models.TagEntity, error) {
+func (u *TagUsecase) AdminCreateTag(ctx context.Context, req *dto.AdminTagRequest) (*user.TagEntity, error) {
 	if err := validateAdminTagRequest(req); err != nil {
 		return nil, err
 	}
 
-	tag := &models.TagEntity{
+	tag := &user.TagEntity{
 		Name:      strings.TrimSpace(req.Name),
 		TagType:   req.TagType,
 		IsDefault: true,
@@ -43,7 +43,7 @@ func (u *TagUsecase) AdminCreateTag(ctx context.Context, req *dto.AdminTagReques
 	return tag, nil
 }
 
-func (u *TagUsecase) AdminUpdateTag(ctx context.Context, req *dto.AdminTagRequest) (*models.TagEntity, error) {
+func (u *TagUsecase) AdminUpdateTag(ctx context.Context, req *dto.AdminTagRequest) (*user.TagEntity, error) {
 	if req == nil || req.ID == 0 {
 		return nil, _errors.ReturnError(400, "Thiếu thông tin tag")
 	}
@@ -78,7 +78,7 @@ func (u *TagUsecase) AdminDeleteTag(ctx context.Context, id uint64) error {
 	return u.TagRepo.Delete(ctx, id)
 }
 
-func (u *TagUsecase) ListTagsByType(ctx context.Context, req *dto.TagListRequest) ([]models.TagEntity, uint32, error) {
+func (u *TagUsecase) ListTagsByType(ctx context.Context, req *dto.TagListRequest) ([]user.TagEntity, uint32, error) {
 	if req == nil || !req.TagType.IsValid() {
 		return nil, 0, _errors.ReturnError(400, "Tag type không hợp lệ")
 	}
@@ -92,7 +92,7 @@ func (u *TagUsecase) ListTagsByType(ctx context.Context, req *dto.TagListRequest
 	return u.TagRepo.ListForUser(ctx, profileID, req.TagType, pagable, strings.TrimSpace(req.Text))
 }
 
-func (u *TagUsecase) AdminListTags(ctx context.Context, req *dto.AdminTagListRequest) ([]models.TagEntity, uint32, error) {
+func (u *TagUsecase) AdminListTags(ctx context.Context, req *dto.AdminTagListRequest) ([]user.TagEntity, uint32, error) {
 	var tagTypes []enums.TagType
 	if req != nil && len(req.TagTypes) > 0 {
 		tagTypes = req.TagTypes
@@ -106,7 +106,7 @@ func (u *TagUsecase) AdminListTags(ctx context.Context, req *dto.AdminTagListReq
 }
 
 // GetProfileTagsByType lấy tags của profile cụ thể theo type (public API, không cần authentication)
-func (u *TagUsecase) GetProfileTagsByType(ctx context.Context, profileID uint64, tagType enums.TagType) ([]models.TagEntity, uint32, error) {
+func (u *TagUsecase) GetProfileTagsByType(ctx context.Context, profileID uint64, tagType enums.TagType) ([]user.TagEntity, uint32, error) {
 	// if profileID == 0 {
 	// 	return nil, 0, _errors.ReturnError(400, "Profile ID không hợp lệ")
 	// }

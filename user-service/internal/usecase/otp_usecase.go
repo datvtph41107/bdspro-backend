@@ -16,14 +16,14 @@ import (
 
 type OtpUsecase struct {
 	otpRepo              repo.OTPRepository
-	statusRepo           repo.StatusRepository
+	statusRepo           repo.AuthStatusRepository
 	properties           dto.PropertiesDTO
 	notificationProvider providers.NotificationProvider
 }
 
 func NewOtpUsecase(
 	otpRepo repo.OTPRepository,
-	statusRepo repo.StatusRepository,
+	statusRepo repo.AuthStatusRepository,
 	properties factory.IFactory,
 	notificationProvider providers.NotificationProvider,
 ) *OtpUsecase {
@@ -92,7 +92,8 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			)
 		}
 	case enums.EXPIRED:
-		if otpEntity.ExpiredTime.IsZero() && otpEntity.ExpiredTime.Before(time.Now()) {
+		if otpEntity.ExpiredTime != nil && !otpEntity.ExpiredTime.IsZero() &&
+			otpEntity.ExpiredTime.Before(time.Now()) {
 			return _errors.ReturnError(
 				int32(code),
 				"Mã OTP đã hết hạn. Nhấn Gửi lại mã.",

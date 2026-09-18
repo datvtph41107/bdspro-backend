@@ -1,4 +1,4 @@
-package models
+package user
 
 import (
 	_dto "common/domain/dto"
@@ -91,6 +91,11 @@ type UserProfileEntity struct {
 	Following    bool                `gorm:"-" json:"following"`
 	Status       _enum.EUserStatus   `gorm:"column:status;default:10" json:"status"`
 
+	LockedAt    *time.Time `gorm:"column:locked_at" json:"lockedAt"`
+	LockedUntil *time.Time `gorm:"column:locked_until" json:"lockedUntil"`
+	LockReason  string     `gorm:"column:lock_reason;size:500" json:"lockReason"`
+	LockedBy    *uint64    `gorm:"column:locked_by" json:"lockedBy"`
+
 	Bookmark bool `gorm:"-" json:"bookmark"`
 
 	LastLoginAt *time.Time `gorm:"column:last_login_at" json:"lastLoginAt"`
@@ -109,6 +114,38 @@ type UserProfileEntity struct {
 	RoleBgColor string `gorm:"-" json:"roleBgColor"`
 
 	KYC *KYCEntity `gorm:"-" json:"kyc"`
+}
+
+func (p *UserProfileEntity) IsLocked() bool {
+	return p.Status.IsLocked()
+}
+
+func (p *UserProfileEntity) IsTemporarilyLocked() bool {
+	return p.Status == _enum.EUserStatusTemporaryLocked
+}
+
+func (p *UserProfileEntity) IsPermanentlyLocked() bool {
+	return p.Status == _enum.EUserStatusPermanentlyLocked
+}
+
+func (p *UserProfileEntity) IsLockExpired() bool {
+	if !p.IsTemporarilyLocked() || p.LockedUntil == nil {
+		return false
+	}
+	return time.Now().After(*p.LockedUntil)
+}
+
+func (p *UserProfileEntity) CanLogin() bool {
+	if p.Status == _enum.EUserStatusSuspended || p.Status == _enum.EUserStatusInactive {
+		return false
+	}
+	if p.IsPermanentlyLocked() {
+		return false
+	}
+	if p.IsTemporarilyLocked() && !p.IsLockExpired() {
+		return false
+	}
+	return true
 }
 
 // TableName đặt tên bảng trong DB

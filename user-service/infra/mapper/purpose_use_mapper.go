@@ -5,7 +5,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"user/internal/models"
+	"user/internal/domain/user"
 )
 
 type PurposeUseMapper struct{}
@@ -14,8 +14,8 @@ func NewPurposeUseMapper() *PurposeUseMapper {
 	return &PurposeUseMapper{}
 }
 
-func (m *PurposeUseMapper) ProtoToEntity(req *userpb.PurposeUse) *models.PurposeUseEntity {
-	return &models.PurposeUseEntity{
+func (m *PurposeUseMapper) ProtoToEntity(req *userpb.PurposeUse) *user.PurposeUseEntity {
+	return &user.PurposeUseEntity{
 		BaseEntity: _models.BaseEntity{
 			ID: req.GetId(),
 		},
@@ -25,7 +25,7 @@ func (m *PurposeUseMapper) ProtoToEntity(req *userpb.PurposeUse) *models.Purpose
 	}
 }
 
-func (m *PurposeUseMapper) EntityToProto(entity *models.PurposeUseEntity) *userpb.PurposeUse {
+func (m *PurposeUseMapper) EntityToProto(entity *user.PurposeUseEntity) *userpb.PurposeUse {
 	if entity == nil {
 		return nil
 	}
@@ -42,7 +42,7 @@ func (m *PurposeUseMapper) EntityToProto(entity *models.PurposeUseEntity) *userp
 	return result
 }
 
-func (m *PurposeUseMapper) EntitiesToProtos(entities []models.PurposeUseEntity) []*userpb.PurposeUse {
+func (m *PurposeUseMapper) EntitiesToProtos(entities []user.PurposeUseEntity) []*userpb.PurposeUse {
 	result := make([]*userpb.PurposeUse, 0, len(entities))
 	for _, entity := range entities {
 		result = append(result, m.EntityToProto(&entity))
@@ -50,7 +50,7 @@ func (m *PurposeUseMapper) EntitiesToProtos(entities []models.PurposeUseEntity) 
 	return result
 }
 
-func (m *PurposeUseMapper) EntitiesToItemProtos(entities []models.PurposeUseEntity) []*sharepb.ItemV3Proto {
+func (m *PurposeUseMapper) EntitiesToItemProtos(entities []user.PurposeUseEntity) []*sharepb.ItemV3Proto {
 	result := make([]*sharepb.ItemV3Proto, 0, len(entities))
 	for _, entity := range entities {
 		result = append(result, &sharepb.ItemV3Proto{

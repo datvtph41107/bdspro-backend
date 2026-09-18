@@ -6,123 +6,66 @@ import (
 	"time"
 
 	_db "common/db"
-	"user/internal/domain/auth"
+	_enum "common/domain/enum"
+	"user/internal/domain/access"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
 
 	"gorm.io/gorm"
 )
 
-type UserInfoPostgres struct {
+// ProfileAccountPostgres persists post-profile account lock/status on user_profile.
+type ProfileAccountPostgres struct {
 	*_db.TransactionRepo
 }
 
-// NewUserInfoRepository tạo mới UserInfoRepository
-func NewUserInfoRepository(db *_db.TransactionRepo) repo.UserInfoRepository {
-	return &UserInfoPostgres{TransactionRepo: db}
+func NewUserInfoRepository(db *_db.TransactionRepo) repo.ProfileAccountRepository {
+	return &ProfileAccountPostgres{TransactionRepo: db}
 }
 
-// Create tạo mới UserInfo
-func (r *UserInfoPostgres) Create(ctx context.Context, userInfo *auth.AuthUser) (*auth.AuthUser, error) {
-	err := r.GetDB(ctx).WithContext(ctx).Create(userInfo).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user info: %w", err)
-	}
-	return userInfo, nil
-}
-
-// Update cập nhật UserInfo
-func (r *UserInfoPostgres) Update(ctx context.Context, userInfo *auth.AuthUser) (*auth.AuthUser, error) {
-	err := r.GetDB(ctx).WithContext(ctx).Save(userInfo).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to update user info: %w", err)
-	}
-	return userInfo, nil
-}
-
-// GetByProfileID lấy UserInfo theo profileID
-func (r *UserInfoPostgres) GetByProfileID(ctx context.Context, profileID uint64) (*auth.AuthUser, error) {
-	var userInfo auth.AuthUser
-	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ?", profileID).First(&userInfo).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user info: %w", err)
-	}
-	return &userInfo, nil
-}
-
-// Delete xóa UserInfo
-func (r *UserInfoPostgres) Delete(ctx context.Context, profileID uint64) error {
-	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ?", profileID).Delete(&auth.AuthUser{}).Error
-	if err != nil {
-		return fmt.Errorf("failed to delete user info: %w", err)
-	}
-	return nil
-}
-
-// LockUser khóa user (tạm thời hoặc vĩnh viễn)
-func (r *UserInfoPostgres) LockUser(ctx context.Context, profileID uint64, lockType auth.AccountStatus, duration int, reason string, lockedBy uint64) error {
+func (r *ProfileAccountPostgres) LockUser(ctx context.Context, profileID uint64, lockType _enum.EUserStatus, duration int, reason string, lockedBy uint64) error {
 	now := time.Now()
 	var lockedUntil *time.Time
 
-	// Xác định trạng thái và thời gian khóa
-	var status auth.AccountStatus
-	if lockType == auth.StatusPermanentlyLocked {
-		status = auth.StatusPermanentlyLocked
-	} else if lockType == auth.StatusTemporarilyLocked {
-		status = auth.StatusTemporarilyLocked
-		// Tính thời gian khóa đến
-		expiryTime := now.Add(time.Duration(duration) * time.Hour)
-		lockedUntil = &expiryTime
-	} else {
+	switch lockType {
+	case _enum.EUserStatusPermanentlyLocked:
+	case _enum.EUserStatusTemporaryLocked:
+		if duration > 0 {
+			expiryTime := now.Add(time.Duration(duration) * time.Hour)
+			lockedUntil = &expiryTime
+		}
+	default:
 		return fmt.Errorf("invalid lock type: %d", lockType)
 	}
 
-	// Kiểm tra user info có tồn tại không
-	var userInfo auth.AuthUser
-	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
-	if err != nil {
-		// Nếu không tồn tại, tạo mới
-		userInfo = auth.AuthUser{
-			ProfileID:   profileID,
-			Status:      status,
-			LockedAt:    &now,
-			LockedUntil: lockedUntil,
-			LockReason:  reason,
-			LockedBy:    &lockedBy,
-		}
-		err = r.GetDB(ctx).WithContext(ctx).Create(&userInfo).Error
-	} else {
-		// Nếu đã tồn tại, cập nhật
-		updates := map[string]interface{}{
-			"status":      status,
-			"locked_at":   now,
-			"lock_reason": reason,
-			"locked_by":   lockedBy,
-			"updated_at":  now,
-		}
-
-		if lockedUntil != nil {
-			updates["locked_until"] = lockedUntil
-		}
-
-		err = r.GetDB(ctx).Model(&auth.AuthUser{}).
-			Where("profile_id = ? and deleted_at is null", profileID).
-			Updates(updates).Error
+	updates := map[string]interface{}{
+		"status":       lockType,
+		"locked_at":    now,
+		"lock_reason":  reason,
+		"locked_by":    lockedBy,
+		"locked_until": lockedUntil,
+		"updated_at":   now,
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to lock user: %w", err)
+	res := r.GetDB(ctx).WithContext(ctx).Model(&user.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Updates(updates)
+	if res.Error != nil {
+		return fmt.Errorf("failed to lock user: %w", res.Error)
 	}
-
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("failed to lock user: profile %d not found", profileID)
+	}
 	return nil
 }
 
-// UnlockUser mở khóa user
-func (r *UserInfoPostgres) UnlockUser(ctx context.Context, profileID uint64, reason string, unlockedBy uint64) error {
+func (r *ProfileAccountPostgres) UnlockUser(ctx context.Context, profileID uint64, reason string, unlockedBy uint64) error {
 	now := time.Now()
+	_ = reason
+	_ = unlockedBy
 
-	// Cập nhật user về trạng thái active
 	updates := map[string]interface{}{
-		"status":       uint32(auth.StatusActive),
+		"status":       _enum.EUserStatusActive,
 		"locked_at":    nil,
 		"locked_until": nil,
 		"lock_reason":  "",
@@ -130,110 +73,108 @@ func (r *UserInfoPostgres) UnlockUser(ctx context.Context, profileID uint64, rea
 		"updated_at":   now,
 	}
 
-	err := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
-		Where("profile_id = ? and deleted_at is null", profileID).
-		Updates(updates).Error
-
-	if err != nil {
-		return fmt.Errorf("failed to unlock user: %w", err)
+	res := r.GetDB(ctx).WithContext(ctx).Model(&user.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Updates(updates)
+	if res.Error != nil {
+		return fmt.Errorf("failed to unlock user: %w", res.Error)
 	}
-
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("failed to unlock user: profile %d not found", profileID)
+	}
 	return nil
 }
 
-// GetUserStatus lấy trạng thái user
-func (r *UserInfoPostgres) GetUserStatus(ctx context.Context, profileID uint64) (*auth.AuthUser, error) {
-	var userInfo auth.AuthUser
-	err := r.GetDB(ctx).WithContext(ctx).Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
+func (r *ProfileAccountPostgres) GetUserStatus(ctx context.Context, profileID uint64) (*user.UserProfileEntity, error) {
+	var profile user.UserProfileEntity
+	err := r.GetDB(ctx).WithContext(ctx).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		First(&profile).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			newUser := auth.AuthUser{
-				ProfileID: profileID,
-				Status:    auth.StatusActive,
-			}
-			err = r.
-				GetDB(ctx).
-				WithContext(ctx).
-				Create(&newUser).Error
-			if err != nil {
-				return nil, fmt.Errorf("failed to create user info: %w", err)
-			}
-			return &newUser, nil
-		}
-		// Nếu không tìm thấy, trả về user với trạng thái active mặc định
-		return nil, err
+		return nil, fmt.Errorf("failed to get user status: %w", err)
 	}
-	return &userInfo, nil
+	return &profile, nil
 }
 
-// CheckLockExpiration kiểm tra và tự động mở khóa các user hết hạn
-func (r *UserInfoPostgres) CheckLockExpiration(ctx context.Context) error {
+func (r *ProfileAccountPostgres) CheckLockExpiration(ctx context.Context) error {
 	now := time.Now()
 
-	// Tìm các user khóa tạm thời đã hết hạn
-	var expiredUsers []auth.AuthUser
-	err := r.GetDB(ctx).WithContext(ctx).Where("status = ? AND locked_until IS NOT NULL AND locked_until < ?",
-		uint32(auth.StatusTemporarilyLocked), now).Find(&expiredUsers).Error
-
-	if err != nil {
-		return fmt.Errorf("failed to find expired users: %w", err)
+	res := r.GetDB(ctx).WithContext(ctx).Model(&user.UserProfileEntity{}).
+		Where("status = ? AND locked_until IS NOT NULL AND locked_until < ? AND deleted_at IS NULL",
+			_enum.EUserStatusTemporaryLocked, now).
+		Updates(map[string]interface{}{
+			"status":       _enum.EUserStatusActive,
+			"locked_at":    nil,
+			"locked_until": nil,
+			"lock_reason":  "",
+			"locked_by":    nil,
+			"updated_at":   now,
+		})
+	if res.Error != nil {
+		return fmt.Errorf("failed to unlock expired users: %w", res.Error)
 	}
-
-	// Mở khóa các user hết hạn
-	if len(expiredUsers) > 0 {
-		var profileIDs []uint64
-		for _, user := range expiredUsers {
-			profileIDs = append(profileIDs, user.ProfileID)
-		}
-
-		err = r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
-			Where("profile_id IN ? and deleted_at is null", profileIDs).
-			Updates(map[string]interface{}{
-				"status":       auth.StatusActive,
-				"locked_at":    nil,
-				"locked_until": nil,
-				"lock_reason":  "",
-				"locked_by":    nil,
-				"updated_at":   now,
-			}).Error
-
-		if err != nil {
-			return fmt.Errorf("failed to unlock expired users: %w", err)
-		}
-	}
-
 	return nil
 }
 
-// GetUsersStatus lấy trạng thái nhiều user
-func (r *UserInfoPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs []uint64) ([]auth.AuthUser, error) {
-	var users []auth.AuthUser
-	err := r.GetDB(ctx).
-		// Model().
-		Preload("Role").
-		Preload("Role.Color").
-		Where("profile_id IN ? and deleted_at is null", profileIDs).
-		Find(&users).Error
+func (r *ProfileAccountPostgres) GetUsersByProfileIDs(ctx context.Context, profileIDs []uint64) ([]user.UserProfileEntity, error) {
+	if len(profileIDs) == 0 {
+		return nil, nil
+	}
+
+	var profiles []user.UserProfileEntity
+	err := r.GetDB(ctx).WithContext(ctx).
+		Where("profile_id IN ? AND deleted_at IS NULL", profileIDs).
+		Find(&profiles).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return users, nil
-}
-
-func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID uint64) ([]uint64, error) {
+	roleIDs := make([]uint64, 0)
 	roleIDSet := make(map[uint64]struct{})
-
-	var userInfo auth.AuthUser
-	err := r.GetDB(ctx).
-		Where("profile_id = ? AND deleted_at IS NULL", profileID).
-		First(&userInfo).Error
-	if err == nil && userInfo.RoleID != nil && *userInfo.RoleID > 0 {
-		roleIDSet[*userInfo.RoleID] = struct{}{}
+	for _, p := range profiles {
+		if p.RoleID != nil && *p.RoleID > 0 {
+			if _, ok := roleIDSet[*p.RoleID]; !ok {
+				roleIDSet[*p.RoleID] = struct{}{}
+				roleIDs = append(roleIDs, *p.RoleID)
+			}
+		}
 	}
 
+	rolesByID := map[uint64]*access.Role{}
+	if len(roleIDs) > 0 {
+		var roles []access.Role
+		if err := r.GetDB(ctx).WithContext(ctx).
+			Preload("Color").
+			Where("id IN ? AND deleted_at IS NULL", roleIDs).
+			Find(&roles).Error; err != nil {
+			return nil, err
+		}
+		for i := range roles {
+			rolesByID[roles[i].ID] = &roles[i]
+		}
+	}
+
+	for i := range profiles {
+		if profiles[i].RoleID == nil {
+			continue
+		}
+		role := rolesByID[*profiles[i].RoleID]
+		if role == nil {
+			continue
+		}
+		profiles[i].RoleName = role.RoleName
+		profiles[i].RoleKeyData = role.RoleKey
+		if role.Color != nil {
+			profiles[i].RoleColor = role.Color.ContentColor
+			profiles[i].RoleBgColor = role.Color.BackgroundColor
+		}
+	}
+	return profiles, nil
+}
+
+func (r *ProfileAccountPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID uint64) ([]uint64, error) {
 	var profileRoleIDs []uint64
-	err = r.GetDB(ctx).
+	err := r.GetDB(ctx).WithContext(ctx).
 		Table("role_profiles").
 		Select("role_id").
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
@@ -241,6 +182,8 @@ func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID 
 	if err != nil {
 		return nil, err
 	}
+
+	roleIDSet := make(map[uint64]struct{})
 	for _, roleID := range profileRoleIDs {
 		if roleID > 0 {
 			roleIDSet[roleID] = struct{}{}
@@ -254,73 +197,53 @@ func (r *UserInfoPostgres) GetRoleIdsByProfileId(ctx context.Context, profileID 
 	return roleIDs, nil
 }
 
-// LockMultipleUsers khóa nhiều user cùng lúc
-func (r *UserInfoPostgres) LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType auth.AccountStatus, duration int, reason string, lockedBy uint64) error {
+func (r *ProfileAccountPostgres) LockMultipleUsers(ctx context.Context, profileIDs []uint64, lockType _enum.EUserStatus, duration int, reason string, lockedBy uint64) error {
 	now := time.Now()
 	var lockedUntil *time.Time
 
-	// Xác định trạng thái và thời gian khóa
-	var status auth.AccountStatus
-	if lockType == auth.StatusPermanentlyLocked {
-		status = auth.StatusPermanentlyLocked
-	} else if lockType == auth.StatusTemporarilyLocked {
-		status = auth.StatusTemporarilyLocked
-		expiryTime := now.Add(time.Duration(duration) * time.Hour)
-		lockedUntil = &expiryTime
-	} else {
+	switch lockType {
+	case _enum.EUserStatusPermanentlyLocked:
+	case _enum.EUserStatusTemporaryLocked:
+		if duration > 0 {
+			expiryTime := now.Add(time.Duration(duration) * time.Hour)
+			lockedUntil = &expiryTime
+		}
+	default:
 		return fmt.Errorf("invalid lock type: %d", lockType)
 	}
 
-	// Sử dụng transaction để đảm bảo tính nhất quán
+	updates := map[string]interface{}{
+		"status":       lockType,
+		"locked_at":    now,
+		"lock_reason":  reason,
+		"locked_by":    lockedBy,
+		"locked_until": lockedUntil,
+		"updated_at":   now,
+	}
+
 	return r.GetDB(ctx).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, profileID := range profileIDs {
-			var userInfo auth.AuthUser
-			err := tx.Where("profile_id = ? and deleted_at is null", profileID).First(&userInfo).Error
-
-			if err != nil {
-				// Tạo mới nếu không tồn tại
-				userInfo = auth.AuthUser{
-					ProfileID:   profileID,
-					Status:      status,
-					LockedAt:    &now,
-					LockedUntil: lockedUntil,
-					LockReason:  reason,
-					LockedBy:    &lockedBy,
-				}
-				err = tx.Create(&userInfo).Error
-			} else {
-				// Cập nhật nếu đã tồn tại
-				updates := map[string]interface{}{
-					"status":      status,
-					"locked_at":   now,
-					"lock_reason": reason,
-					"locked_by":   lockedBy,
-					"updated_at":  now,
-				}
-
-				if lockedUntil != nil {
-					updates["locked_until"] = lockedUntil
-				}
-
-				err = tx.Model(&auth.AuthUser{}).
-					Where("profile_id = ? and deleted_at is null", profileID).
-					Updates(updates).Error
+			res := tx.Model(&user.UserProfileEntity{}).
+				Where("profile_id = ? AND deleted_at IS NULL", profileID).
+				Updates(updates)
+			if res.Error != nil {
+				return fmt.Errorf("failed to lock user %d: %w", profileID, res.Error)
 			}
-
-			if err != nil {
-				return fmt.Errorf("failed to lock user %d: %w", profileID, err)
+			if res.RowsAffected == 0 {
+				return fmt.Errorf("failed to lock user %d: profile not found", profileID)
 			}
 		}
 		return nil
 	})
 }
 
-// UnlockMultipleUsers mở khóa nhiều user cùng lúc
-func (r *UserInfoPostgres) UnlockMultipleUsers(ctx context.Context, profileIDs []uint64, reason string, unlockedBy uint64) error {
+func (r *ProfileAccountPostgres) UnlockMultipleUsers(ctx context.Context, profileIDs []uint64, reason string, unlockedBy uint64) error {
 	now := time.Now()
+	_ = reason
+	_ = unlockedBy
 
 	updates := map[string]interface{}{
-		"status":       uint32(auth.StatusActive),
+		"status":       _enum.EUserStatusActive,
 		"locked_at":    nil,
 		"locked_until": nil,
 		"lock_reason":  "",
@@ -328,13 +251,11 @@ func (r *UserInfoPostgres) UnlockMultipleUsers(ctx context.Context, profileIDs [
 		"updated_at":   now,
 	}
 
-	err := r.GetDB(ctx).WithContext(ctx).Model(&auth.AuthUser{}).
-		Where("profile_id IN ? and deleted_at is null", profileIDs).
+	err := r.GetDB(ctx).WithContext(ctx).Model(&user.UserProfileEntity{}).
+		Where("profile_id IN ? AND deleted_at IS NULL", profileIDs).
 		Updates(updates).Error
-
 	if err != nil {
 		return fmt.Errorf("failed to unlock users: %w", err)
 	}
-
 	return nil
 }

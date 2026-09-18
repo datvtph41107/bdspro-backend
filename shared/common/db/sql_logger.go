@@ -58,17 +58,29 @@ func (l *sqlLogger) ParamsFilter(_ context.Context, sql string, _ ...any) (strin
 	return sql, nil
 }
 func (l *sqlLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
-	if l.level == logger.Silent {
+	// GORM LogMode: Silent < Error < Warn < Info. Higher = more verbose.
+	if l.level <= logger.Silent {
 		return
 	}
 	elapsed := time.Since(begin)
-	level := slog.LevelDebug
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	isError := err != nil && !errors.Is(err, gorm.ErrRecordNotFound)
+	isSlow := elapsed > l.config.SlowThreshold
+
+	var level slog.Level
+	switch {
+	case isError:
 		level = slog.LevelError
-	} else if elapsed > l.config.SlowThreshold {
+	case isSlow:
+		if l.level < logger.Warn {
+			return
+		}
 		level = slog.LevelWarn
-	} else if !l.config.Enabled {
-		return
+	default:
+		// Successful non-slow queries only when Info mode and sql.enabled.
+		if l.level < logger.Info || !l.config.Enabled {
+			return
+		}
+		level = slog.LevelDebug
 	}
 	sql, rows := fc()
 	operation := "unknown"

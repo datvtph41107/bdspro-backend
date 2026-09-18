@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -14,9 +15,10 @@ import (
 )
 
 type AdminUsecase struct {
-	adminRepo    repo.IAdminRepo
-	profileRepo  repo.IProfileRepo
-	authProvider providers.AuthProvider
+	adminRepo          repo.IAdminRepo
+	profileRepo        repo.IProfileRepo
+	profileAccountRepo repo.ProfileAccountRepository
+	authProvider       providers.AuthProvider
 }
 
 func adminActorID(ctx context.Context) (uint64, error) {
@@ -30,12 +32,14 @@ func adminActorID(ctx context.Context) (uint64, error) {
 func NewAdminUsecase(
 	adminRepo repo.IAdminRepo,
 	profileRepo repo.IProfileRepo,
+	profileAccountRepo repo.ProfileAccountRepository,
 	authProvider providers.AuthProvider,
 ) *AdminUsecase {
 	return &AdminUsecase{
-		adminRepo:    adminRepo,
-		profileRepo:  profileRepo,
-		authProvider: authProvider,
+		adminRepo:          adminRepo,
+		profileRepo:        profileRepo,
+		profileAccountRepo: profileAccountRepo,
+		authProvider:       authProvider,
 	}
 }
 
@@ -45,24 +49,25 @@ func (uc *AdminUsecase) LockUser(ctx context.Context, req *dto.LockUserRequest) 
 		return err
 	}
 
-	// Kiểm tra user có tồn tại không
 	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user_profile thành khóa tạm thời
-	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, req.LockType)
+	actorID, err := adminActorID(ctx)
 	if err != nil {
-		fmt.Printf("Failed to block user in user_profile: %v\n", err)
-		return fmt.Errorf("failed to update user profile status: %v", err)
+		actorID = 0
 	}
 
-	fmt.Printf("User blocked successfully (Temporary Locked)\n")
+	// Temporary lock without explicit duration stays locked until unlock.
+	durationHours := 0
+	if req.LockType == _enum.EUserStatusTemporaryLocked {
+		durationHours = 24
+	}
 
-	// TODO: Log action và gửi notification
-	// TODO: Lưu lý do khóa vào bảng audit log
-
+	if err := uc.profileAccountRepo.LockUser(ctx, req.ProfileID, req.LockType, durationHours, req.Reason, actorID); err != nil {
+		return fmt.Errorf("failed to update user profile status: %v", err)
+	}
 	return nil
 }
 
@@ -71,23 +76,19 @@ func (uc *AdminUsecase) UnLockUser(ctx context.Context, req *dto.UnLockUserReque
 	if err := uc.rejectSystemRootMutation(ctx, req.ProfileID); err != nil {
 		return err
 	}
-	// Kiểm tra user có tồn tại không
 	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user_profile thành active
-	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, _enum.EUserStatusActive)
+	actorID, err := adminActorID(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to update user profile status: %v", err)
+		actorID = 0
 	}
 
-	fmt.Printf("User unblocked successfully (Active)\n")
-
-	// TODO: Log action và gửi notification
-	// TODO: Lưu lý do mở khóa vào bảng audit log
-
+	if err := uc.profileAccountRepo.UnlockUser(ctx, req.ProfileID, req.Reason, actorID); err != nil {
+		return fmt.Errorf("failed to update user profile status: %v", err)
+	}
 	return nil
 }
 
@@ -96,23 +97,14 @@ func (uc *AdminUsecase) ApproveUser(ctx context.Context, req *dto.ApproveUserReq
 	if err := uc.rejectSystemRootMutation(ctx, req.ProfileID); err != nil {
 		return err
 	}
-	// Kiểm tra user có tồn tại không
 	_, err := uc.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
 
-	// Cập nhật trạng thái user_profile thành active
-	err = uc.profileRepo.UpdateUserProfileStatus(ctx, req.ProfileID, _enum.EUserStatusActive)
-	if err != nil {
+	if err := uc.profileAccountRepo.UnlockUser(ctx, req.ProfileID, req.Note, 0); err != nil {
 		return fmt.Errorf("failed to update user profile status: %v", err)
 	}
-
-	fmt.Printf("User approved successfully (Active)\n")
-
-	// TODO: Log action và gửi notification
-	// TODO: Lưu ghi chú duyệt vào bảng audit log
-
 	return nil
 }
 
@@ -411,7 +403,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 	}
 
 	// Tạo user profile trong user service (dùng UserProfileEntity)
-	userProfile := &models.UserProfileEntity{
+	userProfile := &user.UserProfileEntity{
 		// PostgreSQL owns profile identity generation. Reusing the operator's
 		// identity here would overwrite or alias the admin account.
 		ProfileID: 0,
@@ -432,7 +424,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 	}
 
 	// Set tất cả visibility thành public mặc định
-	models.SetAllVisibilityPublic(userProfile)
+	user.SetAllVisibilityPublic(userProfile)
 
 	createdProfile, err := u.profileRepo.CreateUserProfile(ctx, userProfile)
 	if err != nil {
@@ -484,7 +476,7 @@ func (u *AdminUsecase) UpdateUser(ctx context.Context, req *dto.UpdateUserReques
 	}
 
 	// Cập nhật thông tin trong user profile
-	updatedProfile := &models.UserProfileEntity{
+	updatedProfile := &user.UserProfileEntity{
 		ProfileID: req.ProfileID,
 		RoleID:    req.RoleID,
 		Address:   req.Address,

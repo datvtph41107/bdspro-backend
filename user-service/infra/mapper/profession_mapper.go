@@ -5,7 +5,7 @@ import (
 	_utils "common/utils"
 	userpb "pb/types/user"
 	"user/enums"
-	"user/internal/models"
+	"user/internal/domain/user"
 )
 
 type ProfessionMapper struct{}
@@ -14,8 +14,8 @@ func NewProfessionMapper() *ProfessionMapper {
 	return &ProfessionMapper{}
 }
 
-func (m *ProfessionMapper) ProtoToEntity(req *userpb.Profession) *models.ProfessionEntity {
-	entity := &models.ProfessionEntity{
+func (m *ProfessionMapper) ProtoToEntity(req *userpb.Profession) *user.ProfessionEntity {
+	entity := &user.ProfessionEntity{
 		BaseEntity: _models.BaseEntity{
 			ID: req.GetId(),
 		},
@@ -43,7 +43,7 @@ func (m *ProfessionMapper) ProtoToEntity(req *userpb.Profession) *models.Profess
 	return entity
 }
 
-func (m *ProfessionMapper) EntityToProto(entity *models.ProfessionEntity) *userpb.Profession {
+func (m *ProfessionMapper) EntityToProto(entity *user.ProfessionEntity) *userpb.Profession {
 	proto := &userpb.Profession{
 		Id:             entity.ID,
 		Name:           entity.Name,
@@ -65,7 +65,7 @@ func (m *ProfessionMapper) EntityToProto(entity *models.ProfessionEntity) *userp
 	return proto
 }
 
-func (m *ProfessionMapper) EntitiesToProtos(entities []models.ProfessionEntity) []*userpb.Profession {
+func (m *ProfessionMapper) EntitiesToProtos(entities []user.ProfessionEntity) []*userpb.Profession {
 	result := make([]*userpb.Profession, 0, len(entities))
 	for idx := range entities {
 		entity := entities[idx]

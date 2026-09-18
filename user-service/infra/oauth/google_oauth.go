@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"user/config"
 	"user/internal/domain/auth"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/repo"
-	"user/internal/models"
 	"user/internal/usecase"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -192,7 +192,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 
 	// Nếu chưa có UserID, tạo profile mới (không bắt buộc số điện thoại)
 	if existingUser.UserID == 0 {
-		profile, err := g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &models.UserProfileEntity{
+		profile, err := g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &user.UserProfileEntity{
 			FullName: fullName,
 			Email:    email,
 			Avatar:   avatar,
@@ -222,7 +222,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	profile, err := g.ProfileUsecase.ProfileRepo.GetByProfileID(existingUser.UserID)
 	if err != nil || profile == nil {
 		// Nếu không tìm thấy profile, thử tạo lại (trường hợp user_id đã có nhưng profile bị xóa)
-		profile, err = g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &models.UserProfileEntity{
+		profile, err = g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &user.UserProfileEntity{
 			ProfileID:    existingUser.UserID,
 			FullName:     fullName,
 			Email:        email,

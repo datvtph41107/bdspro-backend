@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
-	models "user/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -21,18 +21,18 @@ func NewCertificationPostgres(db *gorm.DB) repo.ICertificationRepo {
 	}
 }
 
-func (r *CertificationPostgres) CreateBatchCertification(c *gin.Context, certifications *[]models.CertificationEntity) error {
+func (r *CertificationPostgres) CreateBatchCertification(c *gin.Context, certifications *[]user.CertificationEntity) error {
 	for _, certification := range *certifications {
 		certification.VerifiedStatus = enums.VerifyPending
 	}
 	return r.DB.WithContext(c).Create(&certifications).Error
 }
 
-func (r *CertificationPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]models.CertificationEntity, error) {
-	var certifications []models.CertificationEntity
+func (r *CertificationPostgres) ListItemByProfileID(c context.Context, profileID uint64) ([]user.CertificationEntity, error) {
+	var certifications []user.CertificationEntity
 
 	err := r.DB.WithContext(c).
-		Model(&models.CertificationEntity{}).
+		Model(&user.CertificationEntity{}).
 		Where("created_by = ? and deleted_at is null", profileID).
 		// Select("id, name, file_name, file_type, file_url, verified_status, issue_date").
 		Find(&certifications).Error
@@ -40,9 +40,9 @@ func (r *CertificationPostgres) ListItemByProfileID(c context.Context, profileID
 	return certifications, err
 }
 
-func (r *CertificationPostgres) UpdateCertification(c *gin.Context, certification *models.CertificationEntity) error {
+func (r *CertificationPostgres) UpdateCertification(c *gin.Context, certification *user.CertificationEntity) error {
 	return r.DB.WithContext(c).
-		Model(&models.CertificationEntity{}).
+		Model(&user.CertificationEntity{}).
 		Where("id = ?", certification.ID).
 		Updates(map[string]interface{}{
 			// "title":      certification.Title,
@@ -58,21 +58,21 @@ func (r *CertificationPostgres) UpdateCertification(c *gin.Context, certificatio
 }
 
 func (r *CertificationPostgres) DeleteCertification(c *gin.Context, id uint64) error {
-	return r.DB.WithContext(c).Model(&models.CertificationEntity{}).
+	return r.DB.WithContext(c).Model(&user.CertificationEntity{}).
 		Where("id = ?", id).
 		Update("deleted_at", time.Now()).Error
 }
 
 func (r *CertificationPostgres) BatchSave(
 	c context.Context,
-	certifications *[]models.CertificationEntity,
+	certifications *[]user.CertificationEntity,
 	deletedIds []uint64,
 ) error {
 	// Mở transaction
 	return r.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		// Nếu có danh sách cần xóa
 		if len(deletedIds) > 0 {
-			if err := tx.WithContext(c).Model(&models.CertificationEntity{}).
+			if err := tx.WithContext(c).Model(&user.CertificationEntity{}).
 				Where("id IN ?", deletedIds).
 				Update("deleted_at", time.Now()).Error; err != nil {
 				return err // rollback

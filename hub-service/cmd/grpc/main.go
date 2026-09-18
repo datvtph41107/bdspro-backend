@@ -41,13 +41,8 @@ var GrpcCmd = &cobra.Command{
 		}
 		defer cleanup()
 
-		schemaPolicy, err := common_db.LoadSchemaPolicy("hub")
-		if err != nil {
-			return fmt.Errorf("load Hub schema policy: %w", err)
-		}
-		log.Printf("Hub database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
-		if err := common_db.ApplySchemaPolicy(app.DB, schemaPolicy, db.AutoMigrate); err != nil {
-			return fmt.Errorf("apply Hub schema policy: %w", err)
+		if err := common_db.EnsureSchema(app.DB, "hub", db.AutoMigrate); err != nil {
+			return err
 		}
 
 		signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

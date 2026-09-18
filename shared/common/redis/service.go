@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,11 +13,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+func init() {
+	// Mute go-redis pool dial spam; RedisService prints one plain warning instead.
+	redis.SetLogger(quietRedisLogger{})
+}
+
+type quietRedisLogger struct{}
+
+func (quietRedisLogger) Printf(context.Context, string, ...interface{}) {}
+
 // RedisService định nghĩa cấu trúc và phương thức thao tác với Redis
 type RedisService struct {
 	Client    *redis.Client
 	Ctx       context.Context
-	logger    *log.Logger
 	connected bool
 	mu        sync.RWMutex
 }
@@ -73,25 +79,25 @@ func Open(config Config) (*RedisService, error) {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         address,
-		Password:     config.Password,
-		DB:           config.DB,
-		DialTimeout:  dialTimeout,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		PoolTimeout:  poolTimeout,
-		MaxRetries:   maxRetries,
+		Addr:           address,
+		Password:       config.Password,
+		DB:             config.DB,
+		DialTimeout:    dialTimeout,
+		ReadTimeout:    readTimeout,
+		WriteTimeout:   writeTimeout,
+		PoolTimeout:    poolTimeout,
+		MaxRetries:     maxRetries,
+		DialerRetries:  1,
 	})
 	svc := &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),
-		logger: log.New(os.Stdout, "redis: ", log.LstdFlags),
 	}
 
 	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
 	defer cancel()
 	if _, err := rdb.Ping(pingCtx).Result(); err != nil {
-		svc.logger.Printf("Redis unavailable at startup: %v", err)
+		fmt.Printf("Redis unavailable at startup (%s): %v\n", address, err)
 		return svc, nil
 	}
 	svc.connected = true
@@ -113,11 +119,10 @@ func NewRedisService() *RedisService {
 	// Keep the old no-error constructor contract. The returned disconnected
 	// client makes failures explicit at operation time without hiding a second
 	// configuration source.
-	log.Printf("Redis configuration invalid: %v", err)
+	fmt.Printf("Redis configuration invalid: %v\n", err)
 	return &RedisService{
 		Client: redis.NewClient(&redis.Options{}),
 		Ctx:    context.Background(),
-		logger: log.New(os.Stdout, "redis: ", log.LstdFlags),
 	}
 }
 
@@ -156,7 +161,7 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 			return r.Client, nil
 		}
 		r.markDisconnected()
-		r.logger.Printf("WARN: Redis connection lost: %v", err)
+		fmt.Printf("Redis connection lost: %v\n", err)
 	}
 
 	// Thử kết nối lại (timeout ngắn — tránh treo API ~25s khi Redis down)
@@ -171,12 +176,12 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 	_, err := r.Client.Ping(pingCtx).Result()
 	cancel()
 	if err != nil {
-		r.logger.Printf("WARN: Failed to reconnect to Redis: %v", err)
+		fmt.Printf("Redis reconnect failed: %v\n", err)
 		return nil, err
 	}
 
 	r.connected = true
-	r.logger.Printf("Reconnected to Redis successfully")
+	fmt.Println("Redis reconnected")
 	return r.Client, nil
 }
 
@@ -240,7 +245,7 @@ func (r *RedisService) Get(key string) (string, error) {
 	}
 	val, err := r.Client.Get(r.Ctx, key).Result()
 	if err != nil && err != redis.Nil {
-		log.Printf("[RedisService.Get] Error getting key %s: %v", key, err)
+		fmt.Printf("Redis get failed (%s): %v\n", key, err)
 		r.markDisconnected()
 	}
 	return val, err

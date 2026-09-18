@@ -8,7 +8,7 @@ import (
 	userpb "pb/types/user"
 	"user/infra/mapper"
 	"user/internal/dto"
-	"user/internal/usecases"
+	usecases "user/internal/usecase/user"
 
 	"google.golang.org/grpc/status"
 )

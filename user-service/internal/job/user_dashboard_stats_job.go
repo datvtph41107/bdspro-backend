@@ -6,18 +6,18 @@ import (
 
 	dashboard "base/dashboard"
 
-	"user/internal/usecases"
+	userusecase "user/internal/usecase/user"
 
 	"gorm.io/gorm"
 )
 
 type UserDashboardStatsJob struct {
-	userUsecase usecases.UserUsecase
+	userUsecase userusecase.UserUsecase
 	job         dashboard.DashboardStatsJob
 }
 
 func NewUserDashboardStatsJob(
-	userUsecase usecases.UserUsecase,
+	userUsecase userusecase.UserUsecase,
 	db *gorm.DB,
 ) *UserDashboardStatsJob {
 

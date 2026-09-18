@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -23,6 +24,8 @@ import (
 	"user/internal/interface/factory"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
+
+	"gorm.io/gorm"
 )
 
 // AuthUsecase is User Service's access-token authority.
@@ -33,10 +36,10 @@ type AuthUsecase struct {
 	PreePlanID         *uint64
 	ProfileProvider    providers.ProfileProvider
 	AuthMethodRepo     repo.AuthMethodRepository
-	UserInfoRepo       repo.UserInfoRepository
+	UserInfoRepo       repo.ProfileAccountRepository
 	SessionRepo        repo.SessionRepository
 	OTPRepo            repo.OTPRepository
-	StatusRepo         repo.StatusRepository
+	StatusRepo         repo.AuthStatusRepository
 	DeviceRepo         repo.DeviceRepository
 	DeviceUsecase      *DeviceUsecase
 	OtpUsecase         *OtpUsecase
@@ -71,10 +74,10 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 	cacheProvider providers.CacheProvider,
 	profileProvider providers.ProfileProvider,
 	authMethodRepo repo.AuthMethodRepository,
-	userInfoRepo repo.UserInfoRepository,
+	userInfoRepo repo.ProfileAccountRepository,
 	sessionRepo repo.SessionRepository,
 	otpRepo repo.OTPRepository,
-	statusRepo repo.StatusRepository,
+	statusRepo repo.AuthStatusRepository,
 	deviceRepo repo.DeviceRepository,
 	deviceUsecase *DeviceUsecase,
 	otpUsecase *OtpUsecase,
@@ -141,13 +144,24 @@ func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.
 			"Số điện thoại không đúng",
 		)
 	}
+
 	existed := false
 	var smsChannel string
 	oauth, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
-	if err == nil && oauth != nil {
-		// User đã tồn tại - gửi OTP
-
-		param, _ := s.GetParamValidate(c, oauth, "")
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		// Chưa có credential → tạo mới theo luồng đăng ký
+		oauth, smsChannel, err = s.RequestIsRegister(c, otp)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		param, err := s.GetParamValidate(c, oauth, "")
+		if err != nil {
+			return nil, err
+		}
 		err = s.OtpUsecase.ValidateAuth(c,
 			[]enums.AuthCodeEnum{
 				enums.LOCKED,
@@ -158,15 +172,6 @@ func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.
 		}
 		existed = oauth.UserID != 0
 		_, smsChannel = s.SendNewOTP(c, param.OTP, otp.Phone)
-	} else {
-		// Bắt buộc phải có họ tên khi đăng ký
-		// if otp.Fullname == "" {
-		// 	return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
-		// }
-		oauth, smsChannel, err = s.RequestIsRegister(c, otp)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return &dto.RequestLoginResponse{
@@ -262,9 +267,15 @@ func (s *AuthUsecase) ResendOTP(c context.Context, otp dto.OtpRequest) (*dto.Res
 func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	e, err := s.AuthMethodRepo.FindByPhone(c, otp.Phone)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, _errors.ReturnError(400, "Số điện thoại chưa đăng ký OTP")
+		}
 		return nil, err
 	}
-	param, _ := s.GetParamValidate(c, e, otp.Otp)
+	param, err := s.GetParamValidate(c, e, otp.Otp)
+	if err != nil {
+		return nil, err
+	}
 	err = s.OtpUsecase.ValidateAuth(c, []enums.AuthCodeEnum{
 		enums.ACTIVATED,
 		enums.EXPIRED,
@@ -302,7 +313,8 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		// infoEntity = s.ProfileProvider.MakeUserProfileEntity(e.ID, s.PreePlanID, e.FullName, e.Email, e.Phone, e.Avatar)
 		infoEntity, err = s.ProfileProvider.CreateProfile(c, e.ID, s.PreePlanID, fullname, e.Email, e.AuthName, e.Avatar)
 		if err != nil {
-			return nil, err
+			log.Printf("[VerifyOTP] CreateProfile failed authId=%d phone=%s: %v", e.ID, otp.Phone, err)
+			return nil, _errors.ReturnError(500, "Không tạo được hồ sơ người dùng. Vui lòng thử lại")
 		}
 
 		e.UserID = infoEntity.ProfileID
@@ -382,7 +394,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		var oauthAcc *auth.AuthMethod
 		if oauthAcc, err = s.AuthMethodRepo.FindByID(c, otp.AuthID); err == nil {
 			if oauthAcc != nil && oauthAcc.UserID == 0 {
-				// var statusOauth *auth.UserStatusEntity
+				// var statusOauth *auth.AuthStatus
 				if statusOauth, err := s.StatusRepo.GetByID(c, oauthAcc.ID); err == nil {
 					statusOauth.Verified = true
 					s.StatusRepo.UpdateStatus(c, statusOauth)
@@ -1367,11 +1379,6 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 		return nil, err
 	}
 
-	err = s.AuthMethodRepo.LockAccount(c, authId, "temporary", 1, "Khóa tài khoản", 0)
-	if err != nil {
-		return nil, err
-	}
-
 	err = s.ProfileProvider.LockAccount(c, e.UserID)
 	if err != nil {
 		return nil, err
@@ -1397,7 +1404,7 @@ func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccou
 		Success:     true,
 		Message:     "Khóa tài khoản thành công",
 		ProfileID:   e.UserID,
-		LockType:    auth.AccountStatus(_enum.EUserStatusPermanentlyLocked),
+		LockType:    _enum.EUserStatusPermanentlyLocked,
 		LockedAt:    _utils.FormatTimeToString(&lockedAt),
 		LockedUntil: _utils.FormatTimeToString(&lockedUntil),
 	}, nil
@@ -1456,8 +1463,8 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest
 }
 
 func (s *AuthUsecase) NewUser(c context.Context, oauthId uint64) (*dto.AuthParam, error) {
-	// Tạo UserStatusEntity mới
-	statusEntity := &auth.UserStatusEntity{
+	// Tạo auth_status cho vòng đời đăng ký credential
+	statusEntity := &auth.AuthStatus{
 		Active:   true,
 		Verified: false,
 		IdDomain: auth.IdDomain{
@@ -2440,55 +2447,37 @@ func (s *AuthUsecase) UnlockAccount(ctx context.Context, req *dto.UnlockAccountR
 
 // GetAccountStatus lấy trạng thái tài khoản
 func (s *AuthUsecase) GetAccountStatus(ctx context.Context, req *dto.GetAccountStatusRequest) (*dto.GetAccountStatusResponse, error) {
-	// Lấy thông tin user
 	userInfo, err := s.UserInfoRepo.GetUserStatus(ctx, req.ProfileID)
 	if err != nil {
 		return &dto.GetAccountStatusResponse{}, err
 	}
 
-	// Xác định trạng thái text
-	var statusText string
-	switch userInfo.Status {
-	case auth.StatusActive:
-		statusText = "Hoạt động"
-	case (auth.StatusInactive):
-		statusText = "Vô hiệu hóa"
-	case auth.StatusTemporarilyLocked:
-		statusText = "Khóa tạm thời"
-	case auth.StatusPermanentlyLocked:
-		statusText = "Khóa vĩnh viễn"
-	default:
-		statusText = "Không xác định"
-	}
-
-	// Xác định loại khóa
-	var lockType auth.AccountStatus
+	var lockType _enum.EUserStatus
 	if userInfo.IsTemporarilyLocked() {
-		lockType = auth.StatusTemporarilyLocked
+		lockType = _enum.EUserStatusTemporaryLocked
 	} else if userInfo.IsPermanentlyLocked() {
-		lockType = auth.StatusPermanentlyLocked
+		lockType = _enum.EUserStatusPermanentlyLocked
 	}
 
-	// Kiểm tra khóa có hết hạn không
 	var isExpired bool
 	if userInfo.IsTemporarilyLocked() {
 		isExpired = userInfo.IsLockExpired()
 	}
 
-	// Tạo response
 	response := &dto.GetAccountStatusResponse{
 		ProfileID:  userInfo.ProfileID,
 		Status:     uint32(userInfo.Status),
-		StatusText: statusText,
+		StatusText: userInfo.Status.String(),
 		IsLocked:   userInfo.IsLocked(),
 		LockType:   lockType,
 		CanLogin:   userInfo.CanLogin(),
 		IsExpired:  isExpired,
 	}
 
-	// Thêm thông tin khóa nếu có
 	if userInfo.IsLocked() {
-		response.LockedAt = userInfo.LockedAt.Format("2006-01-02T15:04:05Z07:00")
+		if userInfo.LockedAt != nil {
+			response.LockedAt = userInfo.LockedAt.Format("2006-01-02T15:04:05Z07:00")
+		}
 		response.LockReason = userInfo.LockReason
 		response.LockedBy = userInfo.LockedBy
 
@@ -2507,15 +2496,13 @@ func (s *AuthUsecase) CheckAndUnlockExpiredAccounts(ctx context.Context) error {
 
 // LockMultipleUsers khóa nhiều user cùng lúc
 func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultipleUsersRequest) (*dto.LockMultipleUsersResponse, error) {
-	// Validate duration cho khóa tạm thời
-	if req.LockType == auth.StatusTemporarilyLocked && req.Duration <= 0 {
+	if req.LockType == _enum.EUserStatusTemporaryLocked && req.Duration <= 0 {
 		return &dto.LockMultipleUsersResponse{
 			Success: false,
 			Message: "Thời gian khóa tạm thời phải lớn hơn 0",
 		}, fmt.Errorf("invalid duration for temporary lock")
 	}
 
-	// Thực hiện khóa nhiều user
 	err := s.UserInfoRepo.LockMultipleUsers(ctx, req.ProfileIDs, req.LockType, req.Duration, req.Reason, req.LockedBy)
 	if err != nil {
 		return &dto.LockMultipleUsersResponse{
@@ -2524,7 +2511,6 @@ func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultip
 		}, err
 	}
 
-	// Tạo response
 	response := &dto.LockMultipleUsersResponse{
 		Success:    true,
 		Message:    "Khóa nhiều user thành công",
@@ -2533,8 +2519,7 @@ func (s *AuthUsecase) LockMultipleUsers(ctx context.Context, req *dto.LockMultip
 		LockedAt:   time.Now().Format("2006-01-02T15:04:05Z07:00"),
 	}
 
-	// Thêm thông tin thời gian khóa đến cho khóa tạm thời
-	if req.LockType == auth.StatusTemporarilyLocked {
+	if req.LockType == _enum.EUserStatusTemporaryLocked {
 		lockedUntil := time.Now().Add(time.Duration(req.Duration) * time.Hour)
 		response.LockedUntil = lockedUntil.Format("2006-01-02T15:04:05Z07:00")
 	}
@@ -2639,8 +2624,8 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 		)
 	}
 
-	// Tạo status và OTP cho auth_method mới (nếu cần)
-	statusEntity := &auth.UserStatusEntity{
+	// Tạo auth_status cho auth_method mới
+	statusEntity := &auth.AuthStatus{
 		Active:   true,
 		Verified: true, // Đã verified vì user đã đăng nhập
 		IdDomain: auth.IdDomain{

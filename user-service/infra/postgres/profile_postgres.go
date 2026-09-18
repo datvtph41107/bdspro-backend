@@ -12,6 +12,7 @@ import (
 	"time"
 	"user/enums"
 	"user/infra/client"
+	"user/internal/domain/user"
 	"user/internal/dto"
 	models "user/internal/models"
 
@@ -35,13 +36,13 @@ func NewProfilePostgres(
 	}
 }
 
-func (r *ProfilePostgres) GlobalSearchProfile(c context.Context, text string, pageable _dto.Pagable) (*[]models.UserProfileSearch, int64, error) {
-	var profiles []models.UserProfileSearch
+func (r *ProfilePostgres) GlobalSearchProfile(c context.Context, text string, pageable _dto.Pagable) (*[]user.UserProfileSearch, int64, error) {
+	var profiles []user.UserProfileSearch
 	var total int64
 	currentUserId := _utils.GetProfileIdWithContext(c)
 
 	query := r.DB.WithContext(c).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Select("profile_id, full_name, avatar, email").
 		Where("deleted_at is null AND profile_id != ?", currentUserId)
 
@@ -69,8 +70,8 @@ func (r *ProfilePostgres) GlobalSearchProfile(c context.Context, text string, pa
 	return &profiles, total, nil
 }
 
-func (r *ProfilePostgres) FriendSearchProfile(c context.Context, profileId uint64, dto dto.ProfileSearch) (*[]models.UserProfileSearch, int64, error) {
-	var friends []models.UserProfileSearch
+func (r *ProfilePostgres) FriendSearchProfile(c context.Context, profileId uint64, dto dto.ProfileSearch) (*[]user.UserProfileSearch, int64, error) {
+	var friends []user.UserProfileSearch
 	var total int64
 
 	query := r.DB.
@@ -104,7 +105,7 @@ func (r *ProfilePostgres) FriendSearchProfile(c context.Context, profileId uint6
 func (r *ProfilePostgres) UpdateProfile(c context.Context, profileId uint64, dto *dto.UserInfoRequest) error {
 	// Chỉ cập nhật các trường cụ thể
 	return r.DB.WithContext(c).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ?", profileId).
 		Updates(map[string]interface{}{
 			"full_name":        dto.FullName,
@@ -142,7 +143,7 @@ func (r *ProfilePostgres) UpdateProfile(c context.Context, profileId uint64, dto
 
 func (r *ProfilePostgres) UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error {
 	return r.DB.WithContext(ctx).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
 		Updates(map[string]interface{}{
 			"visibility":         visibility,
@@ -152,24 +153,24 @@ func (r *ProfilePostgres) UpdatePrivacySetting(ctx context.Context, profileID ui
 }
 
 // GetByProfileId truy vấn UserProfileEntity theo profileId
-func (r *ProfilePostgres) GetByProfileID(profileId uint64) (*models.UserProfileEntity, error) {
-	var userProfile models.UserProfileEntity
+func (r *ProfilePostgres) GetByProfileID(profileId uint64) (*user.UserProfileEntity, error) {
+	var userProfile user.UserProfileEntity
 	if err := r.DB.Where("profile_id = ? and deleted_at is null", profileId).First(&userProfile).Error; err != nil {
 		return nil, err
 	}
 	return &userProfile, nil
 }
 
-func (r *ProfilePostgres) GetProfileByIds(ids []uint64) ([]*models.UserProfileEntity, error) {
-	var userProfiles []*models.UserProfileEntity
+func (r *ProfilePostgres) GetProfileByIds(ids []uint64) ([]*user.UserProfileEntity, error) {
+	var userProfiles []*user.UserProfileEntity
 	if err := r.DB.Where("profile_id IN (?) and deleted_at is null", ids).Find(&userProfiles).Error; err != nil {
 		return nil, err
 	}
 	return userProfiles, nil
 }
 
-func (r *ProfilePostgres) SearchByPhoneOrName(ctx context.Context, text string) ([]models.UserProfileEntity, error) {
-	var profiles []models.UserProfileEntity
+func (r *ProfilePostgres) SearchByPhoneOrName(ctx context.Context, text string) ([]user.UserProfileEntity, error) {
+	var profiles []user.UserProfileEntity
 	query := "%" + text + "%"
 	if err := r.DB.WithContext(ctx).
 		Where("(phone ILIKE ? OR full_name ILIKE ?) AND deleted_at IS NULL", query, query).
@@ -179,16 +180,16 @@ func (r *ProfilePostgres) SearchByPhoneOrName(ctx context.Context, text string) 
 	return profiles, nil
 }
 
-func (r *ProfilePostgres) GetProfileByPhones(phones []string) ([]*models.UserProfileEntity, error) {
-	var userProfiles []*models.UserProfileEntity
+func (r *ProfilePostgres) GetProfileByPhones(phones []string) ([]*user.UserProfileEntity, error) {
+	var userProfiles []*user.UserProfileEntity
 	if err := r.DB.Where("phone IN (?) and deleted_at is null", phones).Find(&userProfiles).Error; err != nil {
 		return nil, err
 	}
 	return userProfiles, nil
 }
 
-func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]models.UserProfileEntity, uint32, error) {
-	var users []models.UserProfileEntity
+func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRequest) ([]user.UserProfileEntity, uint32, error) {
+	var users []user.UserProfileEntity
 	var total int64
 
 	// Admin routes use only the canonical actor promoted by strict ingress.
@@ -360,8 +361,8 @@ func (r *ProfilePostgres) ListAllUsers(ctx context.Context, req *dto.ListUsersRe
 }
 
 // GetUserDetailByID lấy chi tiết user theo profile ID
-func (r *ProfilePostgres) GetUserDetailByID(ctx context.Context, profileID uint64) (*models.UserProfileEntity, error) {
-	var user models.UserProfileEntity
+func (r *ProfilePostgres) GetUserDetailByID(ctx context.Context, profileID uint64) (*user.UserProfileEntity, error) {
+	var user user.UserProfileEntity
 	err := r.DB.WithContext(ctx).
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
 		First(&user).Error
@@ -372,7 +373,7 @@ func (r *ProfilePostgres) GetUserDetailByID(ctx context.Context, profileID uint6
 }
 
 // CreateUserProfile tạo user profile mới
-func (r *ProfilePostgres) CreateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error) {
+func (r *ProfilePostgres) CreateUserProfile(ctx context.Context, profile *user.UserProfileEntity) (*user.UserProfileEntity, error) {
 	// Set tất cả visibility thành public mặc định nếu chưa được set
 	if profile.Visibility == 0 {
 		profile.Visibility = _enum.EVisibilityDTOPublic
@@ -404,7 +405,7 @@ func (r *ProfilePostgres) CreateUserProfile(ctx context.Context, profile *models
 }
 
 // UpdateUserProfile cập nhật thông tin user profile
-func (r *ProfilePostgres) UpdateUserProfile(ctx context.Context, profile *models.UserProfileEntity) (*models.UserProfileEntity, error) {
+func (r *ProfilePostgres) UpdateUserProfile(ctx context.Context, profile *user.UserProfileEntity) (*user.UserProfileEntity, error) {
 	err := r.DB.WithContext(ctx).
 		Where("profile_id = ? AND deleted_at IS NULL", profile.ProfileID).
 		Updates(profile).Error
@@ -439,14 +440,14 @@ func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint6
 	// Bắt đầu transaction
 	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Lấy thông tin profile trước khi xóa
-		var profile models.UserProfileEntity
+		var profile user.UserProfileEntity
 		err := tx.Where("profile_id = ?", profileID).First(&profile).Error
 		if err != nil {
 			return err
 		}
 
 		// 2. Tạo bản sao vào profile_deleted
-		profileDeleted := models.NewProfileDeleted(&profile, deletedBy, reason)
+		profileDeleted := user.NewProfileDeleted(&profile, deletedBy, reason)
 		err = tx.Create(profileDeleted).Error
 		if err != nil {
 			return err
@@ -455,7 +456,7 @@ func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint6
 		// 3. Xóa profile (hard delete)
 		err = tx.Unscoped().
 			Where("profile_id = ?", profileID).
-			Delete(&models.UserProfileEntity{}).Error
+			Delete(&user.UserProfileEntity{}).Error
 		if err != nil {
 			return err
 		}
@@ -464,19 +465,32 @@ func (r *ProfilePostgres) DeleteUserProfile(ctx context.Context, profileID uint6
 	})
 }
 
-// UpdateUserProfileStatus cập nhật trạng thái user profile
+// UpdateUserProfileStatus cập nhật trạng thái user profile và đồng bộ lock audit.
 func (r *ProfilePostgres) UpdateUserProfileStatus(ctx context.Context, profileID uint64, status _enum.EUserStatus) error {
-	err := r.DB.WithContext(ctx).
-		Model(&models.UserProfileEntity{}).
+	now := time.Now()
+	updates := map[string]interface{}{
+		"status":     status,
+		"updated_at": now,
+	}
+	switch status {
+	case _enum.EUserStatusActive, _enum.EUserStatusInactive, _enum.EUserStatusSuspended:
+		updates["locked_at"] = nil
+		updates["locked_until"] = nil
+		updates["lock_reason"] = ""
+		updates["locked_by"] = nil
+	case _enum.EUserStatusTemporaryLocked, _enum.EUserStatusPermanentlyLocked:
+		updates["locked_at"] = now
+	}
+	return r.DB.WithContext(ctx).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
-		Update("status", status).Error
-	return err
+		Updates(updates).Error
 }
 
 // GetByPhone lấy profile theo số điện thoại
-func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, error) {
-	var profile models.UserProfileEntity
-	err := r.DB.Model(&models.UserProfileEntity{}).
+func (r *ProfilePostgres) GetByPhone(phone string) (*user.UserProfileEntity, error) {
+	var profile user.UserProfileEntity
+	err := r.DB.Model(&user.UserProfileEntity{}).
 		Where("phone = ? AND deleted_at IS NULL", phone).
 		First(&profile).Error
 	if err != nil {
@@ -489,7 +503,7 @@ func (r *ProfilePostgres) GetByPhone(phone string) (*models.UserProfileEntity, e
 func (r *ProfilePostgres) UpdateLastSeen(ctx context.Context, profileID uint64) error {
 	now := time.Now()
 	err := r.DB.WithContext(ctx).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileID).
 		Update("last_seen_at", now).Error
 	return err
@@ -630,7 +644,7 @@ func (r *ProfilePostgres) UpdatePerson(c context.Context, profileId uint64, req 
 	}
 
 	err := r.DB.WithContext(c).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileId).
 		Updates(updates).Error
 
@@ -645,7 +659,7 @@ func (r *ProfilePostgres) PatchProfileV3(c context.Context, profileId uint64, re
 	}
 
 	return r.DB.WithContext(c).
-		Model(&models.UserProfileEntity{}).
+		Model(&user.UserProfileEntity{}).
 		Where("profile_id = ? AND deleted_at IS NULL", profileId).
 		Updates(updates).Error
 }

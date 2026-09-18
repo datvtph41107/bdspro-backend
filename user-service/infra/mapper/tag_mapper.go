@@ -4,8 +4,8 @@ import (
 	_utils "common/utils"
 	"strings"
 	"user/enums"
+	"user/internal/domain/user"
 	"user/internal/dto"
-	models "user/internal/models"
 
 	userpb "pb/types/user"
 )
@@ -80,7 +80,7 @@ func (m *TagMapper) GetProfileTagsByTypeRequestToDTO(req *userpb.GetProfileTagsB
 	return req.ProfileId, tagType
 }
 
-func (m *TagMapper) TagEntityToPb(tag *models.TagEntity) *userpb.TagItem {
+func (m *TagMapper) TagEntityToPb(tag *user.TagEntity) *userpb.TagItem {
 	if tag == nil {
 		return nil
 	}
@@ -96,7 +96,7 @@ func (m *TagMapper) TagEntityToPb(tag *models.TagEntity) *userpb.TagItem {
 	}
 }
 
-func (m *TagMapper) TagsToPb(tags []models.TagEntity) []*userpb.TagItem {
+func (m *TagMapper) TagsToPb(tags []user.TagEntity) []*userpb.TagItem {
 	if len(tags) == 0 {
 		return []*userpb.TagItem{}
 	}
