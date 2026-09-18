@@ -33,7 +33,7 @@ Example:
 
 ```go
 if order == nil {
-    return _errors.ReturnError(
+    return failure.New(
         codes.NotFound,
         "ORDER_NOT_FOUND",
         "Không tìm thấy đơn hàng",
@@ -218,7 +218,7 @@ HTTP status is transport truth and is not duplicated in the body without a consu
 Representation is one even when ownership differs.
 
 Examples:
-- request/input validation -> `ReturnError(codes.InvalidArgument, safe message)`;
+- request/input validation -> `failure.New(codes.InvalidArgument, stableReason, safeMessage)`;
 - authentication -> `codes.Unauthenticated`;
 - authorization -> `codes.PermissionDenied`;
 - business state rejection -> appropriate standard RPC code such as `FailedPrecondition`;
