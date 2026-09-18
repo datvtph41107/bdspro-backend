@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY ZERO PROOF PASS / MODULE RETIREMENT AUTHORIZED
+Status: RELAY MODULE RETIREMENT PROOF PASS / BOTH ZERO-RATCHETS AUTHORIZED
 
 ## Authority
 
@@ -300,3 +300,41 @@ Decision:
 - no commit/push yet.
 
 Live GitHub after probe review remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
+
+## Relay module-retirement proof — PASS
+
+Report:
+`relay-module-retirement-proof-20260918-164741.txt`
+
+Verified:
+- writer remains at exact authority `492b94a102e26b8d86575d72cca05b57911c745b` on `local/r5-relay-canonical-logging`;
+- exact tidy-proposed module retirement applied;
+- `github.com/hyperledger/fabric` direct -> indirect, exactly once;
+- `github.com/redis/go-redis/v9` direct -> indirect, exactly once;
+- no version changes;
+- `go mod tidy -diff` exit 0 with empty output;
+- `go.sum` unchanged;
+- final tracked source/module scope exactly nine Relay files;
+- canonical protobuf materialization PASS with no tracked expansion;
+- canonical Relay test PASS;
+- canonical Relay build PASS;
+- canonical audit PASS;
+- Relay total debt = 0;
+- Relay `go.legacy_std_log = 0`;
+- Relay `go.third_party_logger = 0`;
+- repository debt remains 691;
+- Fabric and redis/v9 remain justified transitively via shared/common;
+- protected tracked diff empty;
+- deploy SHA unchanged;
+- RATCHET_ADDED=NO;
+- COMMIT=NO;
+- PUSH=NO;
+- FINAL_FAIL_COUNT=0.
+
+Ratchet decision:
+- authorize exactly `go.legacy_std_log@relay-service` and `go.third_party_logger@relay-service`;
+- add registration plus regression-enforcement tests for both;
+- rerun audit-tool tests, `--enforce-ratchets`, tidy-diff, Relay test/build, zero-debt proof and protected/deploy invariants;
+- no commit/push until ratchet proof is reviewed.
+
+Live GitHub after proof review remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`.
