@@ -7,9 +7,9 @@ Durable prose is recovery guidance. Immutable live Git/source and completed exac
 ## Authority
 
 - canonical acceptance: `final-acceptance/source-canonicalization` @ `a6d0722a36090148829ca5ff02f03f409d753bad`
-- active refactor: `refactor/canonical-observability-errors-a6d0722a` @ `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
-- active commit: `feat(payment): adopt canonical logging`
-- active tree: `ac2ff2a1a98aec5afa647edb1584683aeb5d545f`
+- active refactor: `refactor/canonical-observability-errors-a6d0722a` @ `c6a9b121946a360d22759bde6a708bc6a35223c2`
+- active commit: `feat(relay): adopt canonical logging`
+- active tree: `01d08e582fb55759132cc199215303dd65f6d255`
 - production lineage remains separate
 - FINAL ACCEPTED = NO
 
@@ -34,7 +34,9 @@ Protected invariants: `shared/protobuf/**`, `organization-service/**`, `map-serv
 - R5 canonical logger adoption — ACTIVE service-by-service.
 - R5 Payment slice — PROVED/CLOSED @ `fca4682587d93cbc436f2466244ee8bd03b8b1b9`; hosted #83 / `35303545759` SUCCESS.
 - Payment logging debt: `go.legacy_std_log 4→0`, `go.third_party_logger 9→0`; repository debt `734→721`; both Payment zero-ratchets active.
-- R5 next gate: read-only exact-SHA inventory for the next bounded non-protected service; no bulk migration.
+- R5 Relay slice — PROVED/CLOSED @ `c6a9b121946a360d22759bde6a708bc6a35223c2`; hosted #86 / `35333855680` SUCCESS.
+- Relay logging debt: `16→0`; repository debt `707→691`; both Relay logging zero-ratchets active.
+- R5 next gate: read-only exact-SHA inventory/trace for the next bounded non-protected logging owner; no bulk migration.
 
 ## Error / Response FINAL
 
