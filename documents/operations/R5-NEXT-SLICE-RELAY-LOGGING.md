@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: SELECTED / WRITER PRECHECK NEXT
+Status: WRITER PRECHECK PASS / BOUNDED RELAY MUTATION AUTHORIZED
 
 ## Authority
 
@@ -131,3 +131,35 @@ Both categories are migration-owned Relay debt and therefore both must reach zer
 Writer remains the only source writer.
 
 FINAL ACCEPTED = NO.
+
+
+## Relay writer precheck — PASS
+
+Report:
+`relay-writer-precheck-20260918-155824.txt`
+
+Verified:
+- remote active branch = exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- writer began at exact authority on prior Assistant branch;
+- tracked writer state clean;
+- Python execution cache gate clean;
+- new writer branch `local/r5-relay-canonical-logging` created successfully;
+- final writer HEAD = exact authority;
+- ahead = 0;
+- behind = 0;
+- final worktree clean;
+- source mutation = NONE;
+- commit = NONE;
+- push = NONE;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub was reconciled immediately after this proof and active refactor remains identical to exact authority.
+
+Next authorized action:
+- bounded Relay logging mutation only;
+- migrate the 5 legacy std-log and 11 direct Fabric logger debt findings;
+- preserve functional stdout in the standalone message utility;
+- convert the two runtime debug process prints in `wshandler/runtime.go` into canonical logging projections;
+- preserve WebSocket/Redis/DB/RPC behavior;
+- then gofmt, canonical protobuf materialization, Relay test/build and canonical audit;
+- no ratchet, commit or push until Relay zero logging debt is proved and reviewed.
