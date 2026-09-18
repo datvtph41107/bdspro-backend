@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Social Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: WRITER PRECHECK PASS / BOUNDED MUTATION AUTHORIZED
+Status: BOUNDED MUTATION APPLIED / PROOF ENVIRONMENT MATERIALIZATION NEXT
 
 ## Authority
 
@@ -127,3 +127,51 @@ Next authorized transition:
 bounded Social source mutation + gofmt + targeted local proof + canonical audit zero-proof.
 
 No commit, ratchet, or push is authorized until that proof is reviewed.
+
+
+## Mutation attempt and proof-environment finding
+
+Primary report:
+`social-logging-mutation-zero-proof-20260918-134454.txt`
+
+Second accidental rerun:
+`social-logging-mutation-zero-proof-20260918-134542.txt`
+
+The second report correctly stopped at the pre-mutation dirty-tree guard because the first run had already applied the intended four-file mutation. Do not reset or replay the mutation.
+
+First-run source result:
+- exact pre-mutation writer gate PASS;
+- mutation applied only to the four authorized Social files;
+- gofmt PASS;
+- exact changed-file scope PASS;
+- 4 files changed, 44 insertions, 16 deletions;
+- no ratchet, commit, or push occurred.
+
+Proof failure classification:
+- `go test ./...` failed because ignored generated protobuf packages under `shared/protobuf/types/**` were absent in the fresh writer worktree;
+- `go build ./...` failed for the same generated-contract absence;
+- canonical audit was interrupted by `KeyboardInterrupt` before completion;
+- this is NOT evidence that the logging patch failed compilation after canonical protobuf materialization.
+
+Repository contract reconciliation:
+- root `.gitignore` intentionally ignores `/shared/protobuf/types/`;
+- tracked authority SHA does not contain generated `shared/protobuf/types/**`;
+- canonical CI/acceptance workflows materialize protobuf before Go tests;
+- repository-owned generator is `make -C shared/code buf-all`;
+- `shared/code/Makefile` generates shared, crm, bdspro, hub, chat, organization, social, assistant, user/auth, payment, tqd/operation, notification and transaction contracts;
+- generated protobuf output is proof-environment material, not tracked source authority.
+
+Next authorized action:
+1. preserve the current four-file Social patch;
+2. materialize canonical ignored protobuf contracts with `make -C shared/code buf-all`;
+3. verify no tracked path outside the four authorized Social files changed;
+4. rerun canonical Social test/build;
+5. rerun canonical audit to completion;
+6. prove Social legacy std-log and third-party logger debt are both zero;
+7. only after successful zero proof may the Social ratchet be added.
+
+Still forbidden:
+- reset/clean of the writer;
+- tracked mutation under `shared/protobuf/**`;
+- ratchet before zero proof;
+- commit or push before proof review.
