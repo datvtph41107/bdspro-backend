@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION RATCHET PROOF PASS EXCEPT BASELINE MODULE CLASSIFICATION / EXACT GO.MOD REPAIR AUTHORIZED
+Status: NOTIFICATION FINAL PRE-COMMIT PROOF PASS / CANDIDATE COMMIT AUTHORIZED
 
 ## Authority
 
@@ -318,3 +318,67 @@ Acceptance decision:
 - no commit/push yet.
 
 Live GitHub remains at exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`.
+
+
+## Notification module-classification repair + final pre-commit reproof — PASS
+
+Report:
+`notification-module-classification-reproof-20260918-221447(1).txt`
+
+Verified:
+- remote active branch remained exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- writer HEAD remained exact authority on `local/r5-notification-canonical-logging`;
+- exact pre-repair eleven-file ratchet state PASS;
+- `gorm.io/driver/postgres v1.6.0` moved from indirect to direct, same version;
+- exact final tracked scope = twelve files;
+- protobuf + Wire materialization PASS and did not expand tracked scope;
+- post-generation `go mod tidy -diff` exits 0 with empty output;
+- `go.sum` SHA unchanged;
+- known config/db baseline failure parity PASS;
+- all non-baseline Notification tests PASS;
+- config/db packages compile with the two unrelated contracts excluded;
+- Notification build PASS;
+- audit-tool unit tests = 37 PASS;
+- audit with `--enforce-ratchets` PASS;
+- Notification total debt = 0;
+- Notification legacy std-log = 0;
+- Notification third-party logger = 0;
+- repository debt = 661;
+- Notification legacy-std-log ratchet registered exactly once;
+- logger ownership/retirement shape PASS;
+- protected tracked diff empty;
+- deploy SHA unchanged;
+- COMMIT=NO;
+- PUSH=NO;
+- FINAL_FAIL_COUNT=0.
+
+Candidate commit is authorized with these exact twelve tracked files only:
+- `notification-service/cmd/delivery-worker/main.go`
+- `notification-service/cmd/grpc_server.go`
+- `notification-service/cmd/payment-event-worker/main.go`
+- `notification-service/go.mod`
+- `notification-service/infra/broker/rabbitmq/payment_completed_supervisor.go`
+- `notification-service/infra/firebase/provider.go`
+- `notification-service/infra/handler/internal_handler.go`
+- `notification-service/infra/worker/delivery/worker.go`
+- `notification-service/internal/usecase/notification_usecase.go`
+- `notification-service/main.go`
+- `shared/code/development/audit-observability-errors.py`
+- `shared/code/development/test_audit_observability_errors.py`
+
+Candidate constraints:
+- parent must remain exact authority `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- stage exactly the twelve reviewed files;
+- no generated protobuf/Wire output beyond the reviewed tracked set;
+- no amend/rebase/merge;
+- no push;
+- record candidate SHA/tree/parent/exact file set before detached proof.
+
+Live GitHub reconciliation immediately after proof:
+- active refactor branch remains identical to exact authority;
+- ahead 0 / behind 0.
+
+Next authorized gate:
+immutable Notification candidate commit, then fresh detached exact-SHA proof.
+
+FINAL ACCEPTED = NO.
