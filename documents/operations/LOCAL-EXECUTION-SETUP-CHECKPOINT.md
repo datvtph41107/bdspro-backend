@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 3B PARTIAL PASS / TMUX OPTION-SCOPE FIX NEXT
+Status: PHASE 3B COMPLETE / PHASE 3C END-TO-END USER-LANE NEXT
 
 ## Authority
 
@@ -11,64 +11,85 @@ Live GitHub active refactor remains:
 - SHA: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
 - GitHub comparison: identical, ahead 0 / behind 0.
 
-## Phase 3A
+## Local Git layout
 
-Operations wrapper remains PROVED locally:
+Anchor:
+- `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
+- active refactor branch
+- exact authority SHA
+- clean
 
-- canonical `~/bdspro-ops/run.sh` installed;
-- syntax PASS;
-- first wrapped reader smoke task exit 0;
-- evidence fields and exact SHA preservation PASS.
+Reader:
+- `/home/bop/bdspro-worktrees/reader`
+- detached exact authority SHA
+- clean
+- canonical READ_ONLY/inventory worktree
 
-## Phase 3B current tmux reality
+Writer:
+- `/home/bop/bdspro-worktrees/writer`
+- branch `local/r5-next-candidate`
+- exact authority SHA
+- clean
+- PARKED until a bounded R5 source slice is authorized
 
-The existing `bdspro` session was reused successfully.
+Parked unpublished Auth ratchet remains archived at:
+`/home/bop/bdspro-ops/state/anchor-auth-ratchet-20260918-112954`
 
-Window structure created successfully:
+## Operations control plane
 
-- `0 control`
-- `1 inventory`
-- `2 proof`
-- `3 runtime`
-- `4 git`
+Canonical runner:
+`/home/bop/bdspro-ops/run.sh`
 
-All five windows have one pane.
+Runner proof:
+- syntax PASS
+- wrapped reader smoke exit 0
+- evidence log persisted
+- exact head_before/head_after preserved
+- reader remained clean
 
-Working-directory verification PASS:
+Current runner SHA256:
+`cb5218995c8e5595286d70300411e234f3f563e41fab4d377c6b24440665ce16`
 
-- control -> `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
-- inventory -> `/home/bop/bdspro-worktrees/reader`
-- proof -> `/home/bop/bdspro-ops/proofs`
-- runtime -> `/home/bop/bdspro-ops`
-- git -> `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
+Canonical tmux layout:
+`/home/bop/bdspro-ops/tmux-layout.sh`
 
-## Verification defect discovered
+Current layout SHA256:
+`aceb22ffb70b07699c28863a9d501ec7cc9785203ce162b23389bbe099b97eb0`
 
-Phase 3B stopped at the stable-window-name verification:
+Pre-fix layout backup:
+`/home/bop/bdspro-ops/state/tmux-layout.sh.before-pane-fix-20260918-115031`
 
-`control automatic-rename=off allow-rename=`
+## Phase 3B tmux standardization — COMPLETE
 
-This is a control-plane script verification defect, not a source or tmux-layout failure.
+Reusable session:
+`bdspro`
 
-Reason:
+Stable role windows:
+- `0 control` -> anchor
+- `1 inventory` -> reader
+- `2 proof` -> operations proofs directory
+- `3 runtime` -> operations directory
+- `4 git` -> anchor
 
-- `automatic-rename` is a window option and was correctly set/read as `off`;
-- `allow-rename` is pane-scoped behavior and should be set/read through pane options;
-- the canonical layout script incorrectly used window-option commands for `allow-rename`;
-- with `set -e`, the empty value caused the equality test to stop the block.
+All windows:
+- one pane each;
+- deterministic working directory PASS;
+- `automatic-rename=off` at window scope PASS;
+- `allow-rename=off` at pane scope PASS;
+- source remained clean/exact authority after layout application.
 
-No source mutation occurred. The active Git authority remains unchanged.
+The previous option-scope defect is CLOSED.
 
-## Next authorized action
+## Phase 3C — next authorized local action
 
-Repair only the local control-plane script:
+Prove the full user-lane operating loop without source mutation:
 
-1. preserve the current `~/bdspro-ops/tmux-layout.sh` as a pre-fix backup;
-2. change `allow-rename` handling to pane scope;
-3. syntax-check;
-4. reapply the existing idempotent layout;
-5. verify automatic-rename at window scope;
-6. verify allow-rename at pane scope;
-7. verify all paths and Git worktrees remain clean/exact authority.
+1. attach to existing `bdspro` session;
+2. practice role navigation;
+3. run one real R5 READ_ONLY inventory task from the `inventory` window through `~/bdspro-ops/run.sh`;
+4. persist the inventory report under `~/bdspro-ops/proofs`;
+5. verify reader SHA/cleanliness before and after;
+6. return task output, exit code, log path and proof artifact path to the coordinator;
+7. coordinator uses that evidence to choose the next bounded R5 service.
 
-Do not recreate the session and do not start source work yet.
+No source mutation, writer use, publication, or ratchet creation is authorized in Phase 3C.
