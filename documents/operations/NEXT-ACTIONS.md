@@ -1,7 +1,7 @@
 # BDSPro Final Acceptance — Next Actions
 
 Updated: 2026-09-19 Asia/Bangkok
-Status: R1-R4 CLOSED / R5 PAYMENT+SOCIAL+ASSISTANT+RELAY+NOTIFICATION CLOSED / R5 NEXT-SERVICE INVENTORY
+Status: R1-R4 CLOSED / R5 PAYMENT+SOCIAL+ASSISTANT+RELAY+NOTIFICATION CLOSED / CHAT SELECTED
 
 Active refactor HEAD: `381c29365a00f35737bb0b6078cf0973198dc7c2` unless live Git proves otherwise. FINAL ACCEPTED = NO.
 
@@ -111,9 +111,9 @@ Next gate: writer precheck / branch preparation only.
 2. Reconcile remote active SHA against `381c29365a00f35737bb0b6078cf0973198dc7c2`.
 3. Keep Payment, Social, Assistant, Relay and Notification R5 slices CLOSED unless new exact source/proof proves a regression.
 4. Notification hosted closure: run `35405779633`; all three jobs SUCCESS; artifact `10572063928`; Notification debt=0; repository debt=661.
-5. Perform fresh read-only exact-SHA inventory and source/coupling trace for the next small non-protected logging owner.
-6. Select exactly one bounded next slice from ownership/coupling evidence, not occurrence count alone.
-7. Then: writer precheck -> bounded migration -> zero proof -> retirement -> ratchet -> immutable candidate -> detached exact-SHA proof -> safe publication -> hosted proof -> durable sync.
+5. Fresh exact-SHA inventory/source trace selected Chat: debt 27 = std-log 4 + third-party logger 23; Hub remains deferred because its Fabric logger is coupled to the shared recovery-interceptor contract also consumed by CRM.
+6. Chat next gate: writer precheck/branch preparation at exact authority only; no source mutation yet.
+7. After precheck PASS: bounded Chat migration -> zero proof -> retirement -> ratchet -> immutable candidate -> detached exact-SHA proof -> safe publication -> hosted proof -> durable sync.
 8. Continue R5 until deliberately stable.
 9. Only then implement refined Error/Response: one application-failure owner/constructor, one gRPC normalization path, one Gateway projection, shared canonical code/reason semantics across response/observability, service-by-service retirement/ratchets.
 10. Preserve protected paths and production-lineage separation.
