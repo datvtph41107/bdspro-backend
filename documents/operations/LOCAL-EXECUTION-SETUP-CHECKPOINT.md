@@ -1,7 +1,7 @@
 # BDSPro Local Execution Setup Checkpoint
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: PHASE 3A COMPLETE / PHASE 3B TMUX STANDARDIZATION NEXT
+Status: PHASE 3B PARTIAL PASS / TMUX OPTION-SCOPE FIX NEXT
 
 ## Authority
 
@@ -11,91 +11,64 @@ Live GitHub active refactor remains:
 - SHA: `fca4682587d93cbc436f2466244ee8bd03b8b1b9`
 - GitHub comparison: identical, ahead 0 / behind 0.
 
-## Local Git layout
+## Phase 3A
 
-Anchor:
-- `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
-- branch `refactor/canonical-observability-errors-a6d0722a`
-- exact authority SHA
-- clean
+Operations wrapper remains PROVED locally:
 
-Reader:
-- `/home/bop/bdspro-worktrees/reader`
-- detached exact authority SHA
-- clean
-- canonical READ_ONLY/inventory worktree
+- canonical `~/bdspro-ops/run.sh` installed;
+- syntax PASS;
+- first wrapped reader smoke task exit 0;
+- evidence fields and exact SHA preservation PASS.
 
-Writer:
-- `/home/bop/bdspro-worktrees/writer`
-- branch `local/r5-next-candidate`
-- exact authority SHA
-- clean
-- PARKED until next bounded source slice is authorized
+## Phase 3B current tmux reality
 
-Parked Auth zero-ratchet archive remains preserved under:
-`/home/bop/bdspro-ops/state/anchor-auth-ratchet-20260918-112954`
+The existing `bdspro` session was reused successfully.
 
-## Phase 3A operations wrapper — COMPLETE
+Window structure created successfully:
 
-Operations directories exist:
+- `0 control`
+- `1 inventory`
+- `2 proof`
+- `3 runtime`
+- `4 git`
 
-- `/home/bop/bdspro-ops/logs`
-- `/home/bop/bdspro-ops/proofs`
-- `/home/bop/bdspro-ops/state`
+All five windows have one pane.
 
-Previous runner was preserved at:
+Working-directory verification PASS:
 
-`/home/bop/bdspro-ops/state/run.sh.before-v2-20260918-113731`
+- control -> `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
+- inventory -> `/home/bop/bdspro-worktrees/reader`
+- proof -> `/home/bop/bdspro-ops/proofs`
+- runtime -> `/home/bop/bdspro-ops`
+- git -> `/home/bop/projects/bdspro-canonical-bootstrap-20260908`
 
-with SHA256:
+## Verification defect discovered
 
-`3b2ecb0c98fe2db7ec13ca207d9e89a7c2c30fa7efac1e8b7e2f563408b24063`
+Phase 3B stopped at the stable-window-name verification:
 
-Canonical runner installed:
+`control automatic-rename=off allow-rename=`
 
-`/home/bop/bdspro-ops/run.sh`
+This is a control-plane script verification defect, not a source or tmux-layout failure.
 
-Proof:
+Reason:
 
-- `bash -n` PASS;
-- reader authority check PASS;
-- first wrapped task `phase3-reader-smoke` exit 0;
-- evidence log:
-  `/home/bop/bdspro-ops/logs/20260918-113731-phase3-reader-smoke.log`;
-- log contains task/start/repo/branch/head_before/exit/head_after;
-- head_before/head_after both exact authority SHA;
-- reader remained clean.
+- `automatic-rename` is a window option and was correctly set/read as `off`;
+- `allow-rename` is pane-scoped behavior and should be set/read through pane options;
+- the canonical layout script incorrectly used window-option commands for `allow-rename`;
+- with `set -e`, the empty value caused the equality test to stop the block.
 
-## tmux reality
+No source mutation occurred. The active Git authority remains unchanged.
 
-The shell used for Phase 3A was outside tmux.
+## Next authorized action
 
-Existing tmux state:
+Repair only the local control-plane script:
 
-- session: `bdspro`
-- one window only
-- window 0 name: `bash`
-- one pane
-- session remains reusable; do not kill/recreate it.
+1. preserve the current `~/bdspro-ops/tmux-layout.sh` as a pre-fix backup;
+2. change `allow-rename` handling to pane scope;
+3. syntax-check;
+4. reapply the existing idempotent layout;
+5. verify automatic-rename at window scope;
+6. verify allow-rename at pane scope;
+7. verify all paths and Git worktrees remain clean/exact authority.
 
-## Phase 3B — next authorized local action
-
-Standardize the existing `bdspro` tmux session into durable role windows without starting source work:
-
-- `0-control` — coordination/status; anchor/control-plane only
-- `1-inventory` — read-only work in reader
-- `2-proof` — proof/evidence shell; no candidate source until an exact candidate SHA exists
-- `3-runtime` — runtime/integration shell; no service start yet
-- `4-git` — Git/worktree/checkpoint inspection from anchor
-
-Requirements:
-
-1. reuse existing session;
-2. rename existing window rather than killing it;
-3. create only missing windows;
-4. establish deterministic working directories;
-5. verify windows/panes;
-6. do not mutate active source;
-7. do not use writer yet.
-
-No active source mutation is authorized by this checkpoint.
+Do not recreate the session and do not start source work yet.
