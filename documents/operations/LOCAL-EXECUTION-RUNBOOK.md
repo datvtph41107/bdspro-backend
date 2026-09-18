@@ -282,11 +282,13 @@ When terminal/browser/chat is interrupted:
 - start/continue ChatGPT from durable continuation prompt;
 - let coordinator reconcile exact Git SHA/CI before new mutation.
 
-## Current first action
+## Current action authority
 
-Only Phase 1 is authorized for the user's machine right now.
+This runbook is procedural guidance, not the live phase pointer.
 
-Run Phase 1 exactly and return the output.
+Always read `LOCAL-EXECUTION-SETUP-CHECKPOINT.md` for the current authorized local phase before running the next setup or execution task.
+
+At the 2026-09-18 checkpoint, Phase 3B is complete and Phase 3C end-to-end USER-LANE proof is next.
 
 
 ## Phase 12 — tmux option scope correction
