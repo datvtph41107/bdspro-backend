@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Notification Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: NOTIFICATION CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
+Status: NOTIFICATION DETACHED PROOF SCRIPT CONDITION DEFECT / CORRECTED REPROOF NEXT
 
 ## Authority
 
@@ -426,5 +426,57 @@ Detached proof requirements:
 15. no push.
 
 Publication remains forbidden until detached exact-SHA proof is reviewed.
+
+FINAL ACCEPTED = NO.
+
+
+## First Notification detached exact-SHA proof — proof-script condition defect
+
+Report:
+`notification-detached-exact-sha-proof-20260919-052712.txt`
+
+Candidate identity:
+- SHA `381c29365a00f35737bb0b6078cf0973198dc7c2`;
+- tree `fe7c5153c65074bf406134e4e966c9d097a2d706`;
+- parent `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- exact twelve-file commit set PASS;
+- fresh detached proof worktree created and exact SHA/tree identity PASS.
+
+Substantive proof results:
+- canonical protobuf + Notification Wire materialization PASS;
+- generated tracked state clean;
+- `go mod tidy -diff` exit = 0;
+- tidy output = EMPTY;
+- go.mod hash unchanged;
+- go.sum hash unchanged;
+- Postgres module classification PASS;
+- known config/db baseline failure parity PASS;
+- all 25 non-baseline Notification packages PASS;
+- baseline packages compile PASS;
+- Notification build PASS;
+- audit-tool unit tests = 37 PASS;
+- audit with `--enforce-ratchets` PASS;
+- Notification total debt = 0;
+- Notification legacy std-log = 0;
+- Notification third-party logger = 0;
+- repository debt = 661;
+- Notification ratchet count = 1;
+- logger/process behavior shape PASS;
+- protected candidate diff empty;
+- deploy SHA unchanged;
+- final proof remains detached, tracked-clean at exact candidate SHA/tree;
+- PUSHED=NO.
+
+Single reported failure:
+- final summary marks `Post-generation module tidy: FAIL` and therefore `FINAL_FAIL_COUNT=1`;
+- this contradicts the same report's `TIDY_DIFF_EXIT=0`, empty tidy output, and byte-identical go.mod/go.sum hashes;
+- the cause is a proof-script shell condition defect: the hash-equality comparisons were emitted outside their own `[[ ... ]]` tests, so Bash attempted to execute the hash strings as commands after the successful grep check;
+- this is proof harness logic failure, not candidate/source failure.
+
+Decision:
+- do NOT amend/reset/rebase/recreate the candidate;
+- preserve writer and detached proof worktree;
+- rerun only corrected detached exact-SHA proof logic at the same candidate, with proper grouped hash comparisons;
+- publication remains forbidden until corrected reproof ends `FINAL_FAIL_COUNT=0`.
 
 FINAL ACCEPTED = NO.
