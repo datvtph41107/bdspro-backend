@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: RELAY RATCHET PROOF PASS / CANDIDATE COMMIT AUTHORIZED
+Status: RELAY CANDIDATE CREATED / DETACHED EXACT-SHA PROOF NEXT
 
 ## Authority
 
@@ -383,3 +383,41 @@ Candidate constraints:
 - after commit record candidate SHA/tree and prove exact committed file set before detached exact-SHA proof.
 
 Live GitHub after ratchet-proof review remains identical to exact authority.
+
+## Relay candidate commit — CREATED
+
+Report:
+`relay-candidate-commit-20260918-170313.txt`
+
+Immutable candidate:
+- SHA: `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- tree: `01d08e582fb55759132cc199215303dd65f6d255`;
+- parent: `492b94a102e26b8d86575d72cca05b57911c745b`;
+- single parent: PASS;
+- commit message: `feat(relay): adopt canonical logging`;
+- committed file set: exactly eleven reviewed tracked files;
+- writer tracked state clean after commit;
+- candidate is exactly one commit ahead of authority and zero behind;
+- pushed: NO;
+- FINAL_FAIL_COUNT=0.
+
+Live GitHub reconciliation after candidate creation:
+- active refactor branch remains identical to exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- Relay candidate remains local-only.
+
+Next authorized gate:
+fresh detached exact-SHA proof at candidate SHA:
+1. verify exact candidate SHA/tree/parent and eleven-file commit set;
+2. materialize canonical protobuf contracts;
+3. require generation creates no tracked delta;
+4. run audit-tool unit tests;
+5. run audit with `--enforce-ratchets` and prove both Relay ratchets remain zero;
+6. require Relay module graph tidy;
+7. run canonical Relay test/build;
+8. prove utility/runtime behavior shape;
+9. prove protected paths + deploy checksum;
+10. leave proof worktree detached and tracked-clean at exact candidate SHA.
+
+Publication remains forbidden until detached exact-SHA proof is reviewed.
+
+FINAL ACCEPTED = NO.
