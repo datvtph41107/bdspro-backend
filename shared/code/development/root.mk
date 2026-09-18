@@ -64,7 +64,7 @@ OWNED_ENV_FILES := $(ENV_FILES) ./$(ACCEPTANCE_ENV_FILE)
 ROOT_REQUIRED_ENV_KEYS := QHPRO_ENVIRONMENT QHPRO_EXECUTION_MODE JWT_KEY_GENERATE \
 	QHPRO_INTERNAL_METADATA_SECRET QHPRO_TRUSTED_METADATA_MODE SERVICE_AUTH_KEY
 
-.PHONY: help setup deps deps-down up down status logs smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation generate-backend build-backend test-backend \
+.PHONY: help setup deps deps-down up down status logs log-query smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation generate-backend build-backend test-backend \
 	vet-backend race-backend diff-check-backend accept-code-backend migrate-backend verify-runtime-backend docker-backend compose-up compose-up-build compose-down \
 	compose-config compose-ps compose-logs integration-up integration-down integration-status integration-logs native-build native-up native-down native-status native-logs native-restart dev-up dev-status dev-logs dev-smoke dev-down dev-reset \
 	dev-dependencies dev-dependencies-down \
@@ -79,7 +79,8 @@ help:
 	  'make deps                          Khởi động Postgres, Redis và RabbitMQ local' \
 	  'make up                            Build và chạy toàn bộ Go service trực tiếp trên host' \
 	  'make status                        Xem owner SUPERVISED/DEV/FOREIGN/DOWN + readiness' \
-	  'make logs [service=payment-service] Theo dõi log process native' \
+	  'make logs [service=payment-service] Theo dõi raw process output' \
+	  'make log-query request_id=<id>      Truy vấn structured runtime evidence' \
 	  'make smoke                         Kiểm tra public boundary cơ bản' \
 	  'make bootstrap-admin               Tạo root operator một lần trên database mới' \
 	  'Development accounts: admin/admin123 và 0900000000/client123' \
@@ -141,6 +142,8 @@ status: native-status
 
 logs: native-logs
 
+log-query:
+	@python3 shared/code/development/query-structured-logs.py --root "$(CURDIR)/.tmp/development/logs" $(if $(strip $(request_id)),--request-id "$(request_id)") $(if $(strip $(operation_id)),--operation-id "$(operation_id)") $(if $(strip $(service)),--service "$(service)") $(if $(strip $(event_name)),--event-name "$(event_name)") $(if $(strip $(level)),--level "$(level)") $(if $(strip $(component)),--component "$(component)") $(if $(strip $(LIMIT)),--limit "$(LIMIT)") $(if $(strip $(FORMAT)),--format "$(FORMAT)")
 smoke: dev-smoke
 
 reset: dev-reset

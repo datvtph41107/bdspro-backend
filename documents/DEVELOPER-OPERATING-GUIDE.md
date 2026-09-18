@@ -50,6 +50,17 @@ Runtime ownership có bốn trạng thái: `SUPERVISED`, `DEV`, `FOREIGN`, `DOWN
 
 Structured application logs của cả `make up` và `make dev` dùng cùng một root tuyệt đối do repository sở hữu: `<repo>/.tmp/development/logs`. Logger tiếp tục tự tách theo service/run bên dưới root này; vị trí evidence không phụ thuộc service CWD. `make logs` vẫn là raw process-stream view, không phải structured-query command. Khi service ở DEV, Air/child stdout và stderr vẫn hiện trực tiếp trong terminal đồng thời được mirror vào cùng raw process-log view mà `make logs` đọc.
 
+Khi cần truy vết structured evidence, dùng `make log-query`. Command này chỉ đọc canonical `runtime.jsonl`, không đọc channel projections nên không nhân đôi cùng một event:
+
+```bash
+make log-query request_id=req_123
+make log-query operation_id=op_123 service=payment-service
+make log-query level=ERROR component=fulfillment LIMIT=100
+make log-query request_id=req_123 FORMAT=json
+```
+
+Các filter hiện tại là exact-field: `request_id`, `operation_id`, `service`, `event_name`, `level`, `component`. Output mặc định là timeline cho người đọc; tool chỉ trả evidence và không suy diễn root cause.
+
 VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → `BDSPro · Dev · <Service>`.
 
 ## 4. Proof

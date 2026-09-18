@@ -11,6 +11,9 @@ required=(
   documents/SERVICE-MAP.md documents/MIGRATIONS.md
   shared/code/development/service.mk shared/code/development/migration.mk
   shared/code/development/native-stack.sh shared/code/development/dev-service.sh
+  shared/code/development/query-structured-logs.py
+  shared/code/development/test_query_structured_logs.py
+  shared/code/development/test-structured-log-query.sh
   shared/code/development/test-native-stack-ownership.sh
   shared/code/development/test-dev-stream-mirror.sh
   .cursor/rules/bdspro-development.mdc
@@ -68,5 +71,6 @@ bash -n shared/code/development/native-stack.sh
 bash -n shared/code/development/dev-service.sh
 bash -n shared/code/development/test-native-stack-ownership.sh
 bash -n shared/code/development/test-dev-stream-mirror.sh
+bash -n shared/code/development/test-structured-log-query.sh
 
 echo 'source layout verification PASS'
