@@ -110,9 +110,9 @@ Next gate: writer precheck / branch preparation only.
 1. Read `CONTINUATION-PROMPT.md` and `ARCHITECTURE-NAMING-OWNERSHIP-MINDSET.md`.
 2. Reconcile remote active SHA, writer SHA/tree/status and existing detached Notification proof worktree.
 3. Preserve Notification candidate `381c29365a00f35737bb0b6078cf0973198dc7c2`; no amend/reset/rebase/recreation.
-4. Correct only the detached proof-harness condition and reprove the same immutable candidate.
-5. Publish only after corrected detached proof is fully green.
-6. Require hosted exact-SHA proof before calling Notification CLOSED.
+4. Corrected detached exact-SHA proof is PASS with `FINAL_FAIL_COUNT=0`.
+5. Recheck remote-before/topology/local immutability, then perform safe non-force fast-forward publication of the exact candidate only.
+6. Require hosted exact-SHA proof + inventory before calling Notification CLOSED.
 7. Continue R5 service-by-service until deliberately stable.
 8. Only then implement refined Error/Response:
    - one caller-facing application failure owner;
