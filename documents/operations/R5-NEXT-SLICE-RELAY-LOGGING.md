@@ -1,7 +1,7 @@
 # BDSPro R5 Next Slice Selection — Relay Service Canonical Logging
 
 Updated: 2026-09-18 Asia/Ho_Chi_Minh
-Status: DETACHED EXACT-SHA REPROOF PASS / SAFE PUBLICATION AUTHORIZED
+Status: PROVED / CLOSED — HOSTED EXACT-SHA #86 SUCCESS
 
 ## Authority
 
@@ -504,5 +504,59 @@ Safe publication is now authorized:
 - no amend/rebase/merge/force-push.
 
 After safe publication, require hosted exact-SHA workflow success before closing the Relay R5 slice.
+
+FINAL ACCEPTED = NO.
+
+
+## Relay safe publication + hosted exact-SHA proof — PASS
+
+Publication report:
+`relay-safe-publication-20260918-171620.txt`
+
+Publication:
+- remote before push = exact authority `492b94a102e26b8d86575d72cca05b57911c745b`;
+- candidate = `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- tree = `01d08e582fb55759132cc199215303dd65f6d255`;
+- non-force exact-SHA fast-forward push PASS;
+- remote after push = exact candidate;
+- force push = NO;
+- writer/proof immutable identities preserved;
+- publication FINAL_FAIL_COUNT=0.
+
+Live GitHub:
+- active refactor branch now exactly `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- branch vs candidate = identical, ahead 0 / behind 0.
+
+Hosted exact-SHA proof:
+- workflow: `Refactor Observability and Error Contracts`;
+- run #86 / ID `35333855680`;
+- exact head SHA `c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- workflow status: completed;
+- workflow conclusion: success;
+- inventory: completed/success;
+- common-contracts: completed/success;
+- boundary-contracts: completed/success.
+- hosted inventory artifact: `observability-error-inventory-c6a9b121946a360d22759bde6a708bc6a35223c2`;
+- artifact digest: `sha256:464b2003d943b22a22b0bec6d9db29be61e3c0657d27d5857d5cce421eeacaf8`;
+- hosted repository debt = 691;
+- hosted Relay debt_by_owner = 0;
+- `go.legacy_std_log@relay-service = 0`;
+- `go.third_party_logger@relay-service = 0`.
+
+Acceptance decision:
+Relay R5 canonical logging slice is PROVED/CLOSED.
+
+Result:
+- Relay logging debt `16→0`;
+- repository debt `707→691`;
+- Relay legacy std-log + third-party logger zero-ratchets active;
+- Fabric/redis-v9 direct module ownership retired to indirect-only as justified by shared/common;
+- functional utility stdout and immediate-exit semantics preserved;
+- runtime debug process prints retired into canonical logging;
+- protected invariants preserved;
+- Error/Response scope not touched.
+
+R5 remains ACTIVE service-by-service.
+Next authorized action: read-only exact-SHA inventory/trace for one next bounded non-protected logging owner.
 
 FINAL ACCEPTED = NO.
