@@ -2,7 +2,7 @@ package dashboard
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -67,8 +67,13 @@ func (j *dashboardStatsJob) Run(ctx context.Context) error {
 		return err
 	}
 
-	log.Printf("Dashboard stats updated for table %s: count=%d, date=%s",
-		j.TableName, count, calculateTime.Format("2006-01-02"))
+	slog.InfoContext(
+		ctx,
+		"dashboard stats updated",
+		slog.String("table", j.TableName),
+		slog.Int64("count", count),
+		slog.String("date", calculateTime.Format(time.DateOnly)),
+	)
 	return nil
 }
 
@@ -87,11 +92,20 @@ func (j *dashboardStatsJob) RunDailyAtMidnight(ctx context.Context) {
 				default:
 				}
 			}
-			log.Printf("Dashboard stats job stopped for table %s", j.TableName)
+			slog.InfoContext(
+				ctx,
+				"dashboard stats job stopped",
+				slog.String("table", j.TableName),
+			)
 			return
 		case <-timer.C:
 			if err := j.Run(ctx); err != nil {
-				log.Printf("Error running dashboard stats job for table %s: %v", j.TableName, err)
+				slog.ErrorContext(
+					ctx,
+					"dashboard stats job run failed",
+					slog.String("table", j.TableName),
+					slog.Any("error", err),
+				)
 			}
 		}
 	}

@@ -1387,5 +1387,83 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
 
 
 
+
+    def test_shared_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "shared",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_shared_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "shared",
+            "path": (
+                "shared/base/dashboard/"
+                "dashboard_stats_job.go"
+            ),
+            "line": 1,
+            "excerpt": (
+                'log.Printf("dashboard stats job failed")'
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-legacy-std-log-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
 if __name__ == "__main__":
     unittest.main()

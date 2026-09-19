@@ -74,6 +74,7 @@ ZERO_RATCHETS = (
     ("go.legacy_std_log", "notification-service"),
     ("go.legacy_std_log", "chat-service"),
     ("go.legacy_std_log", "chat-v1-service"),
+    ("go.legacy_std_log", "shared"),
     ("go.third_party_logger", "payment-service"),
     ("go.third_party_logger", "relay-service"),
     ("go.third_party_logger", "chat-service"),
