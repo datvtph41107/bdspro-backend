@@ -7,10 +7,11 @@ import (
 	"bdspro/internal/repo"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/logging"
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/url"
 	"path"
 	"sort"
@@ -126,6 +127,8 @@ func (u *ProductNoteUsecase) CreateNote(
 			subjectID = req.ProductID
 		}
 
+		logger := logging.FromContext(ctx)
+
 		go func() {
 			contextTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -140,7 +143,10 @@ func (u *ProductNoteUsecase) CreateNote(
 				},
 			)
 			if err != nil {
-				log.Printf("Failed to register property event: %v", err)
+				logger.Warn(
+					"register property event failed",
+					slog.Any("error", err),
+				)
 			}
 		}()
 		// go func() {

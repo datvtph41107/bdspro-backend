@@ -7,10 +7,11 @@ import (
 	property_usecases "bdspro/internal/usecases/property"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/logging"
 	_utils "common/utils"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -454,7 +455,10 @@ func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.Upda
 		return nil, _errors.UnauthorizedException()
 	}
 	if err := property_validator.ValidateUpdateRequest(req); err != nil {
-		log.Printf("validation error: %v", err)
+		logging.FromContext(ctx).Warn(
+			"property update validation rejected",
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 	cmd := MapUpdateRequestToCmd(req)

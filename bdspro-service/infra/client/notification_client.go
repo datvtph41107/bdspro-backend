@@ -6,8 +6,9 @@ import (
 	"bdspro/internal/provider"
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/logging"
 	"context"
-	"log"
+	"log/slog"
 	"pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
@@ -36,7 +37,10 @@ func (s *NotificationClient) RegistedEventProperty(ctx context.Context, req *dto
 		req.Description,
 		req.ActorID,
 	); err != nil {
-		log.Printf("create PropertyHistory failed: %v", err)
+		logging.FromContext(ctx).Error(
+			"create property history failed",
+			slog.Any("error", err),
+		)
 		return _errors.InternalServerException("create PropertyHistory failed")
 	}
 

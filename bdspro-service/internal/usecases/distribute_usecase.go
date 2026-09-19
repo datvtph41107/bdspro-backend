@@ -3,7 +3,7 @@ package usecases
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"bdspro/internal/domain"
@@ -14,6 +14,7 @@ import (
 	_enum "common/domain/enum"
 	_util "common/domain/util"
 	_errors "common/errors"
+	"common/logging"
 	_utils "common/utils"
 )
 
@@ -56,6 +57,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 
 	var resp *dto.DistributeResultDTO
 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		logger := logging.FromContext(txCtx)
 		now := time.Now()
 
 		dist := &domain.DistributionEntity{
@@ -68,7 +70,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 		}
 
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
-			log.Printf("create distribution failed: %v", err)
+			logger.Error("create distribution failed", slog.Any("error", err))
 			return _errors.InternalServerException("create distribution failed")
 		}
 
@@ -83,14 +85,14 @@ func (uc *DistributionUsecase) CreateDistribute(
 			_utils.GetProfileIdWithContext(ctx),
 		)
 		if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
-			log.Printf("create product price failed: %v", err)
+			logger.Error("create product price failed", slog.Any("error", err))
 			return _errors.InternalServerException("create product price failed")
 		}
 
 		// Cập nhật PriceID vào distribution
 		dist.PriceID = &productPrice.ID
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
-			log.Printf("update distribution priceId failed: %v", err)
+			logger.Error("update distribution priceId failed", slog.Any("error", err))
 			return _errors.InternalServerException("update distribution priceId failed")
 		}
 
@@ -109,7 +111,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 		var propertyID uint64
 		product, err := uc.productRepo.GetProductByID(txCtx, &dist.ProductID)
 		if err != nil || product == nil {
-			log.Printf("get product failed: %v", err)
+			logger.Warn("get product failed", slog.Any("error", err))
 		} else if product.PropertyID != nil {
 			propertyID = *product.PropertyID
 		}
@@ -158,6 +160,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 
 	var resp *dto.DistributeResultDTO
 	err := uc.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		logger := logging.FromContext(txCtx)
 		dist, err := uc.distributionRepo.FindByID(txCtx, distID)
 		if err != nil {
 			return _errors.InternalServerException("load distribution failed")
@@ -176,7 +179,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		if dist.PriceID != nil {
 			oldPrice, err = uc.productPriceRepo.GetByID(txCtx, *dist.PriceID)
 			if err != nil {
-				log.Printf("get old product price failed: %v", err)
+				logger.Warn("get old product price failed", slog.Any("error", err))
 			}
 		}
 
@@ -233,7 +236,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 				_utils.GetProfileIdWithContext(ctx),
 			)
 			if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
-				log.Printf("create product price failed: %v", err)
+				logger.Error("create product price failed", slog.Any("error", err))
 				return _errors.InternalServerException("create product price failed")
 			}
 
@@ -244,12 +247,12 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			if dist.PriceID != nil {
 				productPrice, err = uc.productPriceRepo.GetByID(txCtx, *dist.PriceID)
 				if err != nil {
-					log.Printf("get product price failed: %v", err)
+					logger.Warn("get product price failed", slog.Any("error", err))
 				} else if productPrice != nil {
 					// Cập nhật ChannelPrice vào ProductPrice hiện tại
 					productPrice.ChannelPrice = req.ChannelPrice
 					if err := uc.productPriceRepo.UpdatePrice(txCtx, dist.PriceID, productPrice); err != nil {
-						log.Printf("update product price channel price failed: %v", err)
+						logger.Warn("update product price channel price failed", slog.Any("error", err))
 					}
 				}
 			}
@@ -274,7 +277,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		var propertyID uint64
 		product, err := uc.productRepo.GetProductByID(txCtx, &dist.ProductID)
 		if err != nil || product == nil {
-			log.Printf("get product failed: %v", err)
+			logger.Warn("get product failed", slog.Any("error", err))
 		} else if product.PropertyID != nil {
 			propertyID = *product.PropertyID
 		}

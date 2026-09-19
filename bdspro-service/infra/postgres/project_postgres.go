@@ -3,12 +3,9 @@ package postgres
 import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
-	_db "common/db"
 	_enum "common/domain/enum"
 	"context"
-	"log"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -22,20 +19,6 @@ func NewPostgreProject(db *gorm.DB) *PostgreProject {
 	return &PostgreProject{
 		DB: db,
 	}
-}
-
-// Lấy bản ghi theo ID (bỏ qua những bản ghi đã bị xóa mềm)
-func (r *PostgreProject) GetByID(c *gin.Context, id uint64) (*domain.Project, error) {
-	log.Printf("LOAD_DETAIL id=%d", id)
-	var entity *domain.Project
-	err := _db.DB.
-		Preload("Builds").
-		Where("id = ? AND deleted_at IS NULL", id).
-		First(&entity).Error
-	if err != nil {
-		return nil, err
-	}
-	return entity, nil
 }
 
 func (r *PostgreProject) GetAll() ([]domain.Project, error) {

@@ -15,7 +15,7 @@ require (
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/wire v0.7.0
-	github.com/hyperledger/fabric v2.1.1+incompatible
+	github.com/hyperledger/fabric v2.1.1+incompatible // indirect
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9

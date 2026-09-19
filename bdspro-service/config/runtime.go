@@ -2,7 +2,8 @@ package config
 
 import (
 	"common/configloader"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -31,10 +32,18 @@ var AppProperties UserProperties
 // LoadConfig đọc cấu hình từ file config.yml
 func LoadConfig() {
 	if _, err := configloader.LoadRuntimeYML(); err != nil {
-		log.Fatalf("load BDSPro runtime config: %v", err)
+		slog.Error(
+			"load BDSPro runtime config failed",
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
-		log.Fatalf("Lỗi parse config: %v", err)
+		slog.Error(
+			"parse BDSPro runtime config failed",
+			slog.Any("error", err),
+		)
+		os.Exit(1)
 	}
 }

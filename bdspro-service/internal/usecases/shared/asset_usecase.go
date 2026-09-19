@@ -9,11 +9,12 @@ import (
 	"bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	"common/logging"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/jinzhu/copier"
@@ -85,7 +86,10 @@ func (s *AssetUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Asse
 	// 		Message: "Bạn không có quyền truy cập",
 	// 	}
 	// }
-	log.Print("*asset.OwnerID != profileId", *asset.OwnerID != profileId)
+	logging.FromContext(c).Debug(
+		"asset owner mismatch check",
+		slog.Bool("owner_mismatch", *asset.OwnerID != profileId),
+	)
 	if asset.OwnerID == nil || *asset.OwnerID != profileId {
 		return nil, &_routes.Except{
 			Code:    401,

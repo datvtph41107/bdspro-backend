@@ -18,12 +18,13 @@ import (
 	_provider "common/domain/provider"
 	_usecase "common/domain/usecase"
 	_errors "common/errors"
+	"common/logging"
 	_models "common/models"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	sharepb "pb/types/shared"
 	"sort"
 	"strconv"
@@ -277,7 +278,11 @@ func (uc *ProductUsecase) FlushSyncIds(ctx context.Context, limit int64) error {
 		return _errors.ReturnError(400, "owner_id is required")
 	}
 	key := fmt.Sprintf(keyUserProducts, ownerId)
-	log.Println("key_trimmed", key, limit)
+	logging.FromContext(ctx).Debug(
+		"trim sync ids",
+		slog.String("redis_key", key),
+		slog.Int64("limit", limit),
+	)
 	client, err := uc.redisClient.Client(context.Background())
 	if err != nil {
 		return _errors.InternalServerException("get user products error: %w", err.Error())
@@ -827,7 +832,11 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 					ctxClone := _utils.CloneContext(c)
 					err := s.PropertyUsecase.LinkAssetToProperty(ctxClone, assetEntity.ID, entity.ID)
 					if err != nil {
-						log.Printf("Failed to link asset %d to property: %v", assetEntity.ID, err)
+						logging.FromContext(c).Warn(
+							"link asset to property failed",
+							slog.Uint64("asset_id", assetEntity.ID),
+							slog.Any("error", err),
+						)
 					}
 				}()
 			}
@@ -863,7 +872,11 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 			_, err := s.PropertyUsecase.CreateWithProduct(cloneCtx, entity)
 			// Log error nhưng không fail transaction nếu tạo Property thất bại
 			if err != nil {
-				log.Printf("Failed to create Property for product %d: %v", entity.ID, err)
+				logging.FromContext(c).Warn(
+					"create property for product failed",
+					slog.Uint64("product_id", entity.ID),
+					slog.Any("error", err),
+				)
 			}
 		}()
 	}
@@ -1906,7 +1919,11 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 			ctxClone := _utils.CloneContext(c)
 			err := s.PropertyUsecase.LinkProductToProperty(ctxClone, result.Product.ID, parent.ID)
 			if err != nil {
-				log.Printf("Failed to link child product %d to property: %v", result.Product.ID, err)
+				logging.FromContext(c).Warn(
+					"link child product to property failed",
+					slog.Uint64("product_id", result.Product.ID),
+					slog.Any("error", err),
+				)
 			}
 		}()
 	}
@@ -2160,12 +2177,13 @@ func (s *ProductUsecase) SearchProductMarket(c context.Context, dto *dto.Product
 }
 
 func (s *ProductUsecase) SyncProduct(c context.Context) error {
+	logger := logging.FromContext(c)
 	err := s.ProductRepo.SyncData(c)
 	if err != nil {
-		log.Printf("SyncNewsFeed error: %v", err)
+		logger.Error("sync product failed", slog.Any("error", err))
 		return err
 	}
-	log.Printf("SyncProduct success")
+	logger.Info("sync product succeeded")
 	return nil
 }
 

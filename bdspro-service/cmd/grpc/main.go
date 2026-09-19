@@ -8,7 +8,7 @@ import (
 	_middleware "common/middleware"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	bdspropb "pb/types/bdspro"
@@ -32,29 +32,58 @@ var GrpcCmd = &cobra.Command{
 
 		app, cleanup, err := wire.InitializeApp()
 		if err != nil {
-			log.Fatalf("failed to initialize app: %v", err)
+			slog.ErrorContext(
+				cmd.Context(),
+				"initialize BDSPro app failed",
+				slog.Any("error", err),
+			)
+			os.Exit(1)
 		}
 		defer cleanup()
 
 		if app == nil {
-			log.Fatal("app is nil after InitializeApp")
+			slog.ErrorContext(
+				cmd.Context(),
+				"initialize BDSPro app returned nil",
+			)
+			os.Exit(1)
 		}
 		db.MigrateDomain()
 
 		// Chạy IdentifierProperty với lineageID=23 lúc start (tạo property_identify và đính vào lineage + các bảng thuộc tính)
 		ids := []uint64{26, 27, 28}
-		for _, id := range ids {
-			if id, err := app.PropertyHandler.PropertyUsecase.IdentifierProperty(context.Background(), id); err != nil {
-				log.Printf("IdentifierProperty(lineageID=%d) failed: %v", id, err)
+		for _, lineageID := range ids {
+			identifyID, err := app.PropertyHandler.PropertyUsecase.IdentifierProperty(
+				context.Background(),
+				lineageID,
+			)
+			if err != nil {
+				slog.ErrorContext(
+					cmd.Context(),
+					"identifier property startup failed",
+					slog.Uint64("lineage_id", lineageID),
+					slog.Any("error", err),
+				)
 			} else {
-				log.Printf("IdentifierProperty(lineageID=%d) ok, identifyID=%d", id, id)
+				slog.InfoContext(
+					cmd.Context(),
+					"identifier property startup completed",
+					slog.Uint64("lineage_id", lineageID),
+					slog.Uint64("identify_id", identifyID),
+				)
 			}
 		}
 
 		port := fmt.Sprintf(":%s", viper.GetString("server.tcp_port"))
 		lis, err := net.Listen("tcp", port)
 		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
+			slog.ErrorContext(
+				cmd.Context(),
+				"listen BDSPro gRPC failed",
+				slog.String("address", port),
+				slog.Any("error", err),
+			)
+			os.Exit(1)
 		}
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
@@ -114,16 +143,25 @@ var GrpcCmd = &cobra.Command{
 		// bdspropb.RegisterAssetLegalServiceServer(s, app.AssetLegalServer)
 		// bdspropb.RegisterAssetSplitHistoryServiceServer(s, app.AssetSplitHistoryServer)
 
-		log.Printf("Listen: %v", port)
+		slog.InfoContext(
+			cmd.Context(),
+			"BDSPro gRPC listening",
+			slog.String("address", port),
+		)
 
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			slog.ErrorContext(
+				cmd.Context(),
+				"serve BDSPro gRPC failed",
+				slog.Any("error", err),
+			)
+			os.Exit(1)
 		}
 	},
 }
 
 func startScheduler(app *initial.InitialApp) {
-	log.Printf("startScheduler")
+	slog.Info("BDSPro scheduler starting")
 	now := time.Now()
 	nextHour := now.Truncate(time.Minute).Add(30 * time.Minute) // 30p
 	wait := time.Until(nextHour)

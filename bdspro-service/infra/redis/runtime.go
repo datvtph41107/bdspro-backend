@@ -3,11 +3,12 @@ package redis_cli
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	configs "bdspro/config"
+	"common/logging"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -16,28 +17,38 @@ import (
 // primitive access, and deterministic process shutdown.
 type RedisClient struct {
 	client *redis.Client
-	logger *flogging.FabricLogger
 }
 
 func NewClient() (*RedisClient, func(), error) {
-	logger := flogging.MustGetLogger("redis")
+	ctx := context.Background()
+	logger := logging.WithComponent(ctx, "redis")
+
 	client := redis.NewClient(&redis.Options{
 		Addr:     configs.AppProperties.Redis.Host,
 		Password: configs.AppProperties.Redis.Password,
 		DB:       0,
 	})
 
-	rc := &RedisClient{client: client, logger: logger}
-	if err := client.Ping(context.Background()).Err(); err != nil {
-		logger.Warnf("Failed to connect to Redis on startup: %v. App will continue and commands may retry through go-redis.", err)
+	rc := &RedisClient{client: client}
+	if err := client.Ping(ctx).Err(); err != nil {
+		logger.Warn(
+			"BDSPro Redis unavailable on startup",
+			slog.Any("error", err),
+			slog.String("behavior", "continue"),
+		)
 	} else {
-		logger.Info("Connected to Redis")
+		logger.Info("BDSPro Redis connected")
 	}
+
 	cleanup := func() {
 		if err := rc.Close(); err != nil {
-			logger.Warnf("Failed to close Redis client: %v", err)
+			logger.Warn(
+				"close BDSPro Redis client failed",
+				slog.Any("error", err),
+			)
 		}
 	}
+
 	return rc, cleanup, nil
 }
 

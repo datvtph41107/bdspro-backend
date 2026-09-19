@@ -3,9 +3,10 @@ package postgres
 import (
 	"bdspro/internal/domain"
 	property_repo "bdspro/internal/repo/property"
+	"common/logging"
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -43,7 +44,10 @@ func (r *WardV2Repo) FirstOrCreate(ctx context.Context, ward *domain.WardV2) err
 		FirstOrCreate(ward).Error
 }
 func (r *WardV2Repo) GetByID(ctx context.Context, id uint64) (*domain.WardV2, error) {
-	log.Printf("Getting WardV2 by ID: %d", id)
+	logging.FromContext(ctx).Debug(
+		"get ward by id",
+		slog.Uint64("ward_id", id),
+	)
 	var entity domain.WardV2
 	err := GetDB(ctx, r.DB).
 		First(&entity, "id = ?", id).Error

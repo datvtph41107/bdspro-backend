@@ -2,10 +2,11 @@ package main
 
 import (
 	_models "common/domain/entity"
+	"common/logging"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
+	"log/slog"
 	"os"
 
 	"bdspro/internal/domain"
@@ -33,11 +34,25 @@ type ProvinceV2JSON struct {
 }
 
 func main() {
+	os.Exit(runImportLocationV2())
+}
+
+func runImportLocationV2() int {
+	closeLogger, err := logging.Configure("bdspro-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure BDSPro location import logging: %v\n", err)
+		return 1
+	}
+	defer func() { _ = closeLogger() }()
+
 	// Lấy connection string từ environment hoặc dùng default
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		dsn = "host=localhost user=postgres password=postgres dbname=bdspro_service port=5432 sslmode=disable"
-		log.Println("Using default database connection. Set DATABASE_URL environment variable to override.")
+		slog.Warn(
+			"using default database connection",
+			slog.String("environment_variable", "DATABASE_URL"),
+		)
 	}
 
 	// Kết nối database
@@ -45,25 +60,38 @@ func main() {
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error(
+			"connect to database failed",
+			slog.Any("error", err),
+		)
+		return 1
 	}
 
 	// Auto migrate tables
-	log.Println("Running auto migration...")
+	slog.Info("running location v2 auto migration")
 	if err := db.AutoMigrate(&domain.ProvinceV2{}, &domain.WardV2{}); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		slog.Error(
+			"migrate location v2 tables failed",
+			slog.Any("error", err),
+		)
+		return 1
 	}
 
 	// Import provinces and wards
 	if err := importLocationV2Data(db); err != nil {
-		log.Fatalf("Failed to import location v2 data: %v", err)
+		slog.Error(
+			"import location v2 data failed",
+			slog.Any("error", err),
+		)
+		return 1
 	}
 
-	log.Println("✅ Import completed successfully!")
+	slog.Info("location v2 import completed successfully")
+	return 0
 }
 
 func importLocationV2Data(db *gorm.DB) error {
-	log.Println("Importing location v2 data...")
+	slog.Info("importing location v2 data")
 
 	// Đọc file JSON
 	data, err := ioutil.ReadFile("../../shared/code/locationv2.json")
@@ -77,12 +105,20 @@ func importLocationV2Data(db *gorm.DB) error {
 	}
 
 	// Xóa dữ liệu cũ (nếu muốn)
-	log.Println("Truncating old data...")
+	slog.Info("truncating old location v2 data")
 	if err := db.Exec("TRUNCATE TABLE ward_v2 RESTART IDENTITY CASCADE").Error; err != nil {
-		log.Printf("Warning: Failed to truncate ward_v2 table: %v", err)
+		slog.Warn(
+			"truncate location v2 table failed",
+			slog.String("table", "ward_v2"),
+			slog.Any("error", err),
+		)
 	}
 	if err := db.Exec("TRUNCATE TABLE province_v2 RESTART IDENTITY CASCADE").Error; err != nil {
-		log.Printf("Warning: Failed to truncate province_v2 table: %v", err)
+		slog.Warn(
+			"truncate location v2 table failed",
+			slog.String("table", "province_v2"),
+			slog.Any("error", err),
+		)
 	}
 
 	// Chuyển đổi và insert provinces
@@ -119,20 +155,32 @@ func importLocationV2Data(db *gorm.DB) error {
 
 	// Batch insert provinces
 	if len(provinces) > 0 {
-		log.Printf("Inserting %d provinces...", len(provinces))
+		slog.Info(
+			"inserting location v2 provinces",
+			slog.Int("count", len(provinces)),
+		)
 		if err := db.CreateInBatches(provinces, 100).Error; err != nil {
 			return fmt.Errorf("failed to insert provinces: %w", err)
 		}
-		log.Printf("✅ Imported %d provinces", len(provinces))
+		slog.Info(
+			"imported location v2 provinces",
+			slog.Int("count", len(provinces)),
+		)
 	}
 
 	// Batch insert wards
 	if len(allWards) > 0 {
-		log.Printf("Inserting %d wards...", len(allWards))
+		slog.Info(
+			"inserting location v2 wards",
+			slog.Int("count", len(allWards)),
+		)
 		if err := db.CreateInBatches(allWards, 500).Error; err != nil {
 			return fmt.Errorf("failed to insert wards: %w", err)
 		}
-		log.Printf("✅ Imported %d wards", len(allWards))
+		slog.Info(
+			"imported location v2 wards",
+			slog.Int("count", len(allWards)),
+		)
 	}
 
 	return nil

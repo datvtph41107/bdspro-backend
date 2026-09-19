@@ -7,6 +7,7 @@ import (
 
 	cmd_grpc "bdspro/cmd/grpc"
 	cmd_http "bdspro/cmd/http"
+	"common/logging"
 	_ "common/models"
 
 	"github.com/spf13/cobra"
@@ -38,10 +39,24 @@ func main() {
 	// 	log.Println("run go-routine")
 	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
 	// }()
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	os.Exit(runProcess(rootCmd.Execute))
+}
+
+func runProcess(execute func() error) int {
+	closeLogger, err := logging.Configure("bdspro-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure BDSPro logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := execute(); err != nil {
+		// Preserve the existing Cobra functional output contract.
+		fmt.Println(err)
+		return 1
+	}
+
+	return 0
 }
 
 // userProductService.UserAssetService = userAssetService

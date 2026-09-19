@@ -11,13 +11,14 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
+	"common/logging"
 	"common/pkg/fieldmask"
 	"common/pkg/patch"
 	_utils "common/utils"
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
 	"strings"
@@ -1653,7 +1654,7 @@ func (u *PropertyUsecase) applyActionPolicy(
 		if !actorRole.HasFullAccess() {
 			return fmt.Errorf("Thay đổi này cần được admin xem xét trước khi áp dụng")
 		}
-		log.Printf("INFO: Admin override for critical change")
+		slog.Info("admin override for critical property change")
 	}
 
 	return nil
@@ -1664,6 +1665,8 @@ func (u *PropertyUsecase) validateLocationUpdate(
 	lineage *domain.PropertyLineage,
 	cmd *dto.UpdatePropertyDTO,
 ) error {
+	logger := logging.FromContext(ctx)
+
 	if cmd.Location == nil {
 		return nil
 	}
@@ -1686,7 +1689,9 @@ func (u *PropertyUsecase) validateLocationUpdate(
 
 	// Warning if province_id provided but not in mask
 	if cmd.Location.ProvinceID != nil && !cmd.Mask.Allows("location.province_id") {
-		log.Printf("WARNING: ProvinceID provided but not in mask - will be ignored")
+		logger.Warn(
+			"province ID ignored because field mask excludes it",
+		)
 	}
 
 	return nil
@@ -1702,6 +1707,8 @@ func (u *PropertyUsecase) executeUpdate(
 	cmd *dto.UpdatePropertyDTO,
 	userID uint64,
 ) (*dto.UpdatePropertyResult, error) {
+	logger := logging.FromContext(ctx)
+
 	fkPatch := make(FKPatch)
 
 	// Handle side blocks (media, amenities, etc.)
@@ -1711,7 +1718,10 @@ func (u *PropertyUsecase) executeUpdate(
 
 	// Auto-set avatar from media if not provided
 	if err := u.setAvatarFromMedia(ctx, lineage.ID, cmd); err != nil {
-		log.Printf("WARN: set avatar failed: %v", err)
+		logger.Warn(
+			"set property avatar from media failed",
+			slog.Any("error", err),
+		)
 	}
 
 	// Handle location resolution from TQD (async with timeout)
@@ -1774,6 +1784,8 @@ func (u *PropertyUsecase) handleLocationResolution(
 	cmd *dto.UpdatePropertyDTO,
 	userID uint64,
 ) {
+	logger := logging.FromContext(ctx)
+
 	if !u.needResolveLocation(cmd) {
 		return
 	}
@@ -1800,7 +1812,9 @@ func (u *PropertyUsecase) handleLocationResolution(
 			u.applyResolveResult(cmd, result, currentLocation)
 		}
 	case <-time.After(3 * time.Second):
-		log.Printf("⚠ Resolve location timeout")
+		logger.Warn(
+			"property location resolution timed out",
+		)
 	}
 }
 
@@ -1824,6 +1838,8 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 	ctx context.Context,
 	resolve *ResolveLocationFromTQD,
 ) {
+	logger := logging.FromContext(ctx)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -1831,13 +1847,18 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("CRITICAL: Panic in resolve goroutine: %v", r)
+			logger.Error(
+				"panic while resolving property location",
+				slog.Any("panic", r),
+			)
 			result.Error = fmt.Errorf("internal panic: %v", r)
 		}
 		select {
 		case resolve.Result <- result:
 		default:
-			log.Printf("WARN: Result channel full or closed")
+			logger.Warn(
+				"property location result channel full or closed",
+			)
 		}
 		close(resolve.Result)
 	}()
@@ -1849,7 +1870,11 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 	}
 
 	if resp == nil || resp.Province == nil {
-		log.Printf("TQD returned no province for (%f, %f)", resolve.Latitude, resolve.Longitude)
+		logger.Warn(
+			"TQD returned no province for property location",
+			slog.Float64("latitude", resolve.Latitude),
+			slog.Float64("longitude", resolve.Longitude),
+		)
 		return
 	}
 
@@ -1868,7 +1893,10 @@ func (u *PropertyUsecase) resolveLocationFromTQD(
 		if err == nil && ward != nil {
 			result.WardID = &ward.ID
 		} else if err != nil {
-			log.Printf("Ward error: %v", err)
+			logger.Warn(
+				"resolve property ward failed",
+				slog.Any("error", err),
+			)
 		}
 	}
 }
@@ -1884,7 +1912,10 @@ func (u *PropertyUsecase) applyResolveResult(
 			*result.ProvinceID != *currentLocation.ProvinceID {
 			cmd.Location.ProvinceID = result.ProvinceID
 			cmd.Location.ResolvedFromTQD = true
-			log.Printf("Province resolved to ID=%d", *result.ProvinceID)
+			slog.Info(
+				"property province resolved",
+				slog.Uint64("province_id", *result.ProvinceID),
+			)
 		}
 	}
 
@@ -1893,14 +1924,32 @@ func (u *PropertyUsecase) applyResolveResult(
 			currentLocation.WardID == nil ||
 			*result.WardID != *currentLocation.WardID {
 			cmd.Location.WardID = result.WardID
-			log.Printf("Ward resolved to ID=%d", *result.WardID)
+			slog.Info(
+				"property ward resolved",
+				slog.Uint64("ward_id", *result.WardID),
+			)
 		}
 	}
 }
 
 func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Province, userID uint64) (*domain.ProvinceV2, error) {
-	log.Println("Creating new province for TQD ID= ", p)
-	log.Println("User ID= ", userID)
+	logger := logging.FromContext(ctx)
+
+	logger.Info(
+		"creating province from TQD location",
+		slog.String("tqd_id", p.Id),
+		slog.String("code", p.Code),
+		slog.String("full_name", p.FullName),
+		slog.String("short_name", p.ShortName),
+		slog.String("division_type", p.DivisionType),
+		slog.String("phone_code", p.PhoneCode),
+		slog.Float64("latitude", p.Latitude),
+		slog.Float64("longitude", p.Longitude),
+	)
+	logger.Info(
+		"province creation requested by user",
+		slog.Uint64("user_id", userID),
+	)
 	province, err := u.ProvinceRepo.GetByTQDID(ctx, p.Id)
 	if err == nil && province != nil {
 		return province, nil
@@ -1923,15 +1972,30 @@ func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Pro
 		Lng:          p.Longitude,
 	}
 
-	log.Printf("Attempting to create province: %+v", newProvince)
+	logger.Info(
+		"attempting to create province",
+		slog.Any("tqd_id", newProvince.TQDID),
+		slog.Any("code", newProvince.Code),
+		slog.Any("name", newProvince.Name),
+		slog.Any("codename", newProvince.Codename),
+		slog.Any("division_type", newProvince.DivisionType),
+		slog.Any("phone_code", newProvince.PhoneCode),
+		slog.Any("lat", newProvince.Lat),
+		slog.Any("lng", newProvince.Lng),
+	)
 	err = u.ProvinceRepo.Create(ctx, newProvince)
 	if err == nil {
-		log.Printf("Created province ID=%d", newProvince.ID)
+		logger.Info(
+			"created province",
+			slog.Any("province_id", newProvince.ID),
+		)
 		return newProvince, nil
 	}
 
 	if isDuplicateKeyError(err) {
-		log.Printf("⚠ Duplicate province, retry find...")
+		logger.Warn(
+			"duplicate province detected; retrying lookup",
+		)
 		province, findErr := u.ProvinceRepo.GetByTQDID(ctx, p.Id)
 		if findErr == nil && province != nil {
 			return province, nil
@@ -1942,6 +2006,8 @@ func (u *PropertyUsecase) findOrCreateProvince(ctx context.Context, p *tqdpb.Pro
 }
 
 func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, provinceID uint64, userID uint64) (*domain.WardV2, error) {
+	logger := logging.FromContext(ctx)
+
 	ward, err := u.WardRepo.GetByTQDID(ctx, w.Id)
 	if err == nil && ward != nil {
 		if ward.ProvinceID == provinceID {
@@ -1970,7 +2036,10 @@ func (u *PropertyUsecase) findOrCreateWard(ctx context.Context, w *tqdpb.Ward, p
 
 	err = u.WardRepo.Create(ctx, newWard)
 	if err == nil {
-		log.Printf("Created ward ID=%d", newWard.ID)
+		logger.Info(
+			"created ward",
+			slog.Any("ward_id", newWard.ID),
+		)
 		return newWard, nil
 	}
 
@@ -2174,23 +2243,36 @@ func (u *PropertyUsecase) postUpdateTasks(
 	evaluation *modules.ImpactEvaluation,
 	assessment *dto.ImpactAssessmentDTO,
 ) {
+	logger := logging.FromContext(ctx)
+
 	// Update entity states based on projected states
 	if err := u.updateEntityStates(ctx, evaluation); err != nil {
-		log.Printf("WARN: Failed to update entity states: %v", err)
+		logger.Warn(
+			"update property entity states failed",
+			slog.Any("error", err),
+		)
 	}
 
 	// Create new snapshots for affected entities
 	if err := u.createAffectedSnapshots(ctx, propertyID, evaluation); err != nil {
-		log.Printf("WARN: Failed to create snapshots: %v", err)
+		logger.Warn(
+			"create property impact snapshots failed",
+			slog.Any("error", err),
+		)
 	}
 
 	// Create audit log
 	if err := u.createAuditLog(ctx, propertyID, userID, evaluation, assessment); err != nil {
-		log.Printf("WARN: Failed to create audit log: %v", err)
+		logger.Warn(
+			"create property audit log failed",
+			slog.Any("error", err),
+		)
 	}
 }
 
 func (u *PropertyUsecase) updateEntityStates(ctx context.Context, evaluation *modules.ImpactEvaluation) error {
+	logger := logging.FromContext(ctx)
+
 	if evaluation == nil || len(evaluation.SnapshotComparisons) == 0 {
 		return nil
 	}
@@ -2199,11 +2281,19 @@ func (u *PropertyUsecase) updateEntityStates(ctx context.Context, evaluation *mo
 		switch comp.EntityType {
 		case "product":
 			if err := u.updateProductState(ctx, comp.EntityID, comp.ProjectedState); err != nil {
-				log.Printf("Failed to update product %d state: %v", comp.EntityID, err)
+				logger.Warn(
+					"update product state failed",
+					slog.Any("product_id", comp.EntityID),
+					slog.Any("error", err),
+				)
 			}
 		case "listing":
 			if err := u.updateListingState(ctx, comp.EntityID, comp.ProjectedState); err != nil {
-				log.Printf("Failed to update listing %d state: %v", comp.EntityID, err)
+				logger.Warn(
+					"update listing state failed",
+					slog.Any("listing_id", comp.EntityID),
+					slog.Any("error", err),
+				)
 			}
 		}
 	}
@@ -2211,18 +2301,32 @@ func (u *PropertyUsecase) updateEntityStates(ctx context.Context, evaluation *mo
 }
 
 func (u *PropertyUsecase) updateProductState(ctx context.Context, productID uint64, state enums.EffectiveState) error {
+	logger := logging.FromContext(ctx)
+
 	// TODO: Call product service to update state
-	log.Printf("Updating product %d to state %s", productID, state.String())
+	logger.Info(
+		"updating product state",
+		slog.Uint64("product_id", productID),
+		slog.String("state", state.String()),
+	)
 	return nil
 }
 
 func (u *PropertyUsecase) updateListingState(ctx context.Context, listingID uint64, state enums.EffectiveState) error {
+	logger := logging.FromContext(ctx)
+
 	// TODO: Call listing service to update state
-	log.Printf("Updating listing %d to state %s", listingID, state.String())
+	logger.Info(
+		"updating listing state",
+		slog.Uint64("listing_id", listingID),
+		slog.String("state", state.String()),
+	)
 	return nil
 }
 
 func (u *PropertyUsecase) createAffectedSnapshots(ctx context.Context, propertyID uint64, evaluation *modules.ImpactEvaluation) error {
+	logger := logging.FromContext(ctx)
+
 	if evaluation == nil || len(evaluation.SnapshotComparisons) == 0 {
 		return nil
 	}
@@ -2235,7 +2339,12 @@ func (u *PropertyUsecase) createAffectedSnapshots(ctx context.Context, propertyI
 	for _, comp := range evaluation.SnapshotComparisons {
 		snapshotData, err := u.buildSnapshotData(lineage, comp.EntityType)
 		if err != nil {
-			log.Printf("Failed to build snapshot data for %s %d: %v", comp.EntityType, comp.EntityID, err)
+			logger.Warn(
+				"build property impact snapshot data failed",
+				slog.String("entity_type", comp.EntityType),
+				slog.Any("entity_id", comp.EntityID),
+				slog.Any("error", err),
+			)
 			continue
 		}
 
@@ -2250,7 +2359,12 @@ func (u *PropertyUsecase) createAffectedSnapshots(ctx context.Context, propertyI
 		}
 
 		if err := u.PropertyImpactRepo.Create(ctx, snapshot); err != nil {
-			log.Printf("Failed to create snapshot for %s %d: %v", comp.EntityType, comp.EntityID, err)
+			logger.Warn(
+				"create property impact snapshot failed",
+				slog.String("entity_type", comp.EntityType),
+				slog.Any("entity_id", comp.EntityID),
+				slog.Any("error", err),
+			)
 		}
 	}
 

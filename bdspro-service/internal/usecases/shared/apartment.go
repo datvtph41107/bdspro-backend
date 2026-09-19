@@ -6,7 +6,7 @@ import (
 	"bdspro/internal/repo"
 	_routes "common/routes"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -156,7 +156,12 @@ func (s *ApartmentUsecase) ImportApartments(c *gin.Context) (*[]domain.Apartment
 			if column < len(row) {
 				_, err = fmt.Sscanf(row[column], "%d", &apt.Status)
 			}
-			log.Println("Row= ", column, len(row), apt.Status)
+			slog.Default().Debug(
+				"apartment import row parsed",
+				slog.Int("column", column),
+				slog.Int("row_length", len(row)),
+				slog.Uint64("status", uint64(apt.Status)),
+			)
 
 			// _, err = fmt.Sscanf(row[3], "%d", &apt.Status)
 			// _, err = fmt.Sscanf(row[4], "%d", &apt.Archived)
@@ -166,7 +171,11 @@ func (s *ApartmentUsecase) ImportApartments(c *gin.Context) (*[]domain.Apartment
 			apt.Ordinal = idxOrdinal + 1
 
 			if err != nil {
-				log.Printf("Lỗi đọc dòng %d: %v\n", i+2, err)
+				slog.Default().Warn(
+					"apartment import row parse failed",
+					slog.Int("row", i+2),
+					slog.Any("error", err),
+				)
 				// continue
 			}
 

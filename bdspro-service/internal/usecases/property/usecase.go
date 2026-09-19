@@ -1,11 +1,12 @@
 package property_usecases
 
 import (
+	"common/logging"
 	"common/pkg/fieldmask"
 	"common/pkg/patch"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -334,8 +335,12 @@ func (h *LocationHandler) Insert(ctx context.Context) (uint64, error) {
 		return 0, fmt.Errorf("create location: %w", err)
 	}
 
-	log.Printf("✓ Created location ID=%d with province_id=%v, ward_id=%v",
-		location.ID, safeStr(location.ProvinceID), safeStr(location.WardID))
+	logging.FromContext(ctx).Info(
+		"location created",
+		slog.Uint64("location_id", location.ID),
+		slog.String("province_id", safeStr(location.ProvinceID)),
+		slog.String("ward_id", safeStr(location.WardID)),
+	)
 
 	return location.ID, nil
 }
@@ -374,8 +379,11 @@ func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
 	if h.Mask.Allows("location.province_id") && h.Patch.ProvinceID != nil {
 		if existing.ProvinceID == nil || *h.Patch.ProvinceID != *existing.ProvinceID {
 			fields["province_id"] = *h.Patch.ProvinceID
-			log.Printf("  - province_id: %v -> %d",
-				safeStr(existing.ProvinceID), *h.Patch.ProvinceID)
+			logging.FromContext(ctx).Debug(
+				"location province update selected",
+				slog.String("province_id_before", safeStr(existing.ProvinceID)),
+				slog.Uint64("province_id_after", *h.Patch.ProvinceID),
+			)
 		}
 	}
 
@@ -383,8 +391,11 @@ func (h *LocationHandler) Update(ctx context.Context, id uint64) error {
 	if h.Mask.Allows("location.ward_id") && h.Patch.WardID != nil {
 		if existing.WardID == nil || *h.Patch.WardID != *existing.WardID {
 			fields["ward_id"] = *h.Patch.WardID
-			log.Printf("  - ward_id: %v -> %d",
-				safeStr(existing.WardID), *h.Patch.WardID)
+			logging.FromContext(ctx).Debug(
+				"location ward update selected",
+				slog.String("ward_id_before", safeStr(existing.WardID)),
+				slog.Uint64("ward_id_after", *h.Patch.WardID),
+			)
 		}
 	}
 
