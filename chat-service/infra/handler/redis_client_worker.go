@@ -12,7 +12,7 @@ import (
 	"chat/infra/redis"
 	"chat/internal/constants"
 
-	"github.com/hyperledger/fabric/common/flogging"
+	"common/logging"
 )
 
 type redisClientWorker struct {
@@ -22,7 +22,7 @@ type redisClientWorker struct {
 	ctx                 context.Context
 }
 
-func NewRedisClientWorker(ctx context.Context, parent *chatHandler, redisClient *redis.RedisClient, logger *flogging.FabricLogger) *redisClientWorker {
+func NewRedisClientWorker(ctx context.Context, parent *chatHandler, redisClient *redis.RedisClient) *redisClientWorker {
 	return &redisClientWorker{
 		parent:              parent,
 		redisClient:         redisClient,
@@ -38,7 +38,7 @@ func (r *redisClientWorker) serve() {
 			r.handleEvent(event)
 
 		case <-r.ctx.Done():
-			r.parent.logger.Info("Redis worker stopped")
+			logging.WithComponent(r.ctx, "redis_client_worker").Info("Redis worker stopped")
 			return
 		}
 	}
@@ -50,7 +50,9 @@ func (r *redisClientWorker) handleEvent(event any) {
 	case *chatpb.UpdateRoomMessage:
 		members, err := r.parent.participantUsecases.InternalGetListParticipant(r.ctx, v.Data.RoomId)
 		if err != nil {
-			r.parent.logger.Errorf("Get participants error: %v", err)
+			logging.WithComponent(r.ctx, "redis_client_worker").Error(
+				fmt.Sprintf("Get participants error: %v", err),
+			)
 			return
 		}
 
@@ -70,7 +72,9 @@ func (r *redisClientWorker) handleEvent(event any) {
 func (r *redisClientWorker) publish(event any) {
 	data, err := json.Marshal(event)
 	if err != nil {
-		r.parent.logger.Errorf("Marshal error: %v", err)
+		logging.WithComponent(r.ctx, "redis_client_worker").Error(
+			fmt.Sprintf("Marshal error: %v", err),
+		)
 		return
 	}
 
@@ -78,6 +82,8 @@ func (r *redisClientWorker) publish(event any) {
 	defer cancel()
 
 	if err := r.redisClient.Publish(ctx, constants.API_WS_CHANNEL, string(data)); err != nil {
-		r.parent.logger.Errorf("Redis publish error: %v", err)
+		logging.WithComponent(r.ctx, "redis_client_worker").Error(
+			fmt.Sprintf("Redis publish error: %v", err),
+		)
 	}
 }

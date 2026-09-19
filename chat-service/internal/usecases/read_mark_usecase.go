@@ -7,8 +7,6 @@ import (
 	"chat/internal/domain"
 	repo "chat/internal/repo"
 	"chat/utils"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type ReadMarkUsecases struct {
@@ -16,7 +14,6 @@ type ReadMarkUsecases struct {
 	participantRepo  repo.ParticipantRepo
 	readMarkRepo     repo.ReadMarkRepo
 	messageRepo      repo.MessageRepo
-	logger           *flogging.FabricLogger
 }
 
 func NewReadMarkUsecases(
@@ -30,7 +27,6 @@ func NewReadMarkUsecases(
 		participantRepo:  participantRepo,
 		readMarkRepo:     readMarkRepoRepo,
 		messageRepo:      messageRepo,
-		logger:           flogging.MustGetLogger("read_mark_usecases"),
 	}
 }
 

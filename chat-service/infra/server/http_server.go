@@ -8,6 +8,7 @@ import (
 	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
+	"common/logging"
 	_redis "common/redis"
 	_utils "common/utils"
 	"context"
@@ -21,7 +22,6 @@ import (
 	middlewares "chat/infra/middleware"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 func parseTimeout(timeoutStr string) time.Duration {
@@ -32,23 +32,23 @@ func parseTimeout(timeoutStr string) time.Duration {
 	return duration
 }
 
-var logger = flogging.MustGetLogger("http_server")
-
 type HTTPServer struct {
 	server  *http.Server
 	cleanup func()
 }
 
 func NewHTTPServer(port string) (*HTTPServer, error) {
-	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
+	logger := logging.WithComponent(ctx, "http_server")
+	logger.Info("Initializing HTTP server...")
 
 	config.LoadConfig()
 
 	// Initialize database using shared/common/db
 	dbInstance, err := _db.NewDB()
 	if err != nil {
-		logger.Fatalf("Failed to connect to database: %v", err)
+		logger.Error(fmt.Sprintf("Failed to connect to database: %v", err))
+		os.Exit(1)
 	}
 
 	// Migrate domain
@@ -153,6 +153,7 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 }
 
 func (s *HTTPServer) Start() error {
+	logger := logging.WithComponent(context.Background(), "http_server")
 	if s.cleanup != nil {
 		defer s.cleanup()
 	}
@@ -162,7 +163,7 @@ func (s *HTTPServer) Start() error {
 	errCh := make(chan error, 1)
 
 	go func() {
-		logger.Infof("HTTP server is running on %s", s.server.Addr)
+		logger.Info(fmt.Sprintf("HTTP server is running on %s", s.server.Addr))
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errCh <- err
 		}

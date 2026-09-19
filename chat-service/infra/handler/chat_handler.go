@@ -22,13 +22,10 @@ import (
 	"chat/internal/usecases"
 
 	"chat/utils"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type chatHandler struct {
 	chatpb.UnimplementedChatServiceServer
-	logger                  *flogging.FabricLogger
 	conversationUsecases    *usecases.ConversationUsecases
 	messageUsecases         *usecases.MessageUsecases
 	readMarkUsecases        *usecases.ReadMarkUsecases
@@ -69,7 +66,6 @@ func NewChatHandler(
 		readMarkUsecases:        readMarkUsecases,
 		participantUsecases:     participantUsecases,
 		messageReactionUsecases: messageReactionUsecases,
-		logger:                  flogging.MustGetLogger("chat_handler"),
 		numberOfWorker:          config.AppProperties.Worker.Number,
 		maxParticipant:          config.AppProperties.MaxParticipant,
 		redisClient:             redis.NewRedisClient(),
@@ -1358,7 +1354,7 @@ func (s *chatHandler) UnreadCount(ctx context.Context, _ *chatpb.UnreadCountRequ
 func (s *chatHandler) Start() {
 	s.startOnce.Do(func() {
 		for i := 0; i < s.numberOfWorker; i++ {
-			redisClientWorker := NewRedisClientWorker(s.workerCtx, s, s.redisClient, s.logger)
+			redisClientWorker := NewRedisClientWorker(s.workerCtx, s, s.redisClient)
 			s.workerWG.Add(1)
 			go func() {
 				defer s.workerWG.Done()

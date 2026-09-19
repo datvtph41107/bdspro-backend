@@ -1,14 +1,18 @@
 package server
 
 import (
-	"log"
+	"common/logging"
+	"context"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func NewSwaggerServe() {
+	logger := logging.WithComponent(context.Background(), "swagger")
 	r := mux.NewRouter()
 
 	// Route để phục vụ file swagger.json
@@ -26,6 +30,8 @@ func NewSwaggerServe() {
 	}).Methods("GET")
 
 	// Khởi chạy server
-	log.Println("Server is running at :3001")
-	log.Fatal(http.ListenAndServe(":3001", r))
+	logger.Info("Server is running at :3001")
+	err := http.ListenAndServe(":3001", r)
+	logger.Error(fmt.Sprintf("Swagger server stopped: %v", err))
+	os.Exit(1)
 }

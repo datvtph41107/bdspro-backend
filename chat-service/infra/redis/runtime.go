@@ -3,11 +3,12 @@ package redis
 import (
 	"context"
 	"fmt"
+	"os"
 
 	configs "chat/config"
+	"common/logging"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 var updateTypingScript = redis.NewScript(`
@@ -28,31 +29,33 @@ return current
 
 type RedisClient struct {
 	client *redis.Client
-	logger *flogging.FabricLogger
 }
 
 func NewRedisClient() *RedisClient {
-	logger := flogging.MustGetLogger("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     configs.AppProperties.Redis.Host,
 		Password: configs.AppProperties.Redis.Password,
 		DB:       0,
 	})
+	logger := logging.WithComponent(client.Context(), "redis")
 
 	_, err := client.Ping(client.Context()).Result()
 	if err != nil {
-		logger.Fatalf("Failed to connect to Redis: %v", err)
+		logger.Error(fmt.Sprintf("Failed to connect to Redis: %v", err))
+		os.Exit(1)
 	}
 
 	logger.Info("Connected to Redis")
-	return &RedisClient{client: client, logger: logger}
+	return &RedisClient{client: client}
 }
 
 // Push message to list
 func (r *RedisClient) PushMessage(ctx context.Context, key string, value []byte) error {
 	err := r.client.LPush(ctx, key, value).Err()
 	if err != nil {
-		r.logger.Errorf("Failed to push message to Redis: %v", err)
+		logging.WithComponent(ctx, "redis").Error(
+			fmt.Sprintf("Failed to push message to Redis: %v", err),
+		)
 	}
 	return err
 }

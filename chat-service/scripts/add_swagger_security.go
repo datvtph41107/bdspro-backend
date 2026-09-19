@@ -1,28 +1,28 @@
 package scripts
 
 import (
+	"common/logging"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"chat/config"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
-var logger = flogging.MustGetLogger("scripts")
-
 func AddSwaggerSecurity() {
+	logger := logging.WithComponent(context.Background(), "scripts")
 	config.LoadConfig()
-	logger.Infof("Swagger path: %s", config.AppProperties.Swagger.Path)
+	logger.Info(fmt.Sprintf("Swagger path: %s", config.AppProperties.Swagger.Path))
 	data, err := ioutil.ReadFile(config.AppProperties.Swagger.Path)
 	if err != nil {
-		logger.Errorf("Error reading file: %v", err)
+		logger.Error(fmt.Sprintf("Error reading file: %v", err))
 		return
 	}
 
 	var swagger map[string]interface{}
 	if err := json.Unmarshal(data, &swagger); err != nil {
-		logger.Errorf("Error parsing JSON: %v", err)
+		logger.Error(fmt.Sprintf("Error parsing JSON: %v", err))
 		return
 	}
 
@@ -42,12 +42,12 @@ func AddSwaggerSecurity() {
 
 	updatedData, err := json.MarshalIndent(swagger, "", "  ")
 	if err != nil {
-		logger.Errorf("Error encoding JSON: %v", err)
+		logger.Error(fmt.Sprintf("Error encoding JSON: %v", err))
 		return
 	}
 
 	if err := ioutil.WriteFile(config.AppProperties.Swagger.Path, updatedData, 0644); err != nil {
-		logger.Errorf("Error writing file: %v", err)
+		logger.Error(fmt.Sprintf("Error writing file: %v", err))
 		return
 	}
 

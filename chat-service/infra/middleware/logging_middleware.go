@@ -2,18 +2,17 @@ package middlewares
 
 import (
 	"bytes"
+	"common/logging"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var logger = flogging.MustGetLogger("logging.middleware")
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		logger := logging.WithComponent(r.Context(), "logging.middleware")
 
 		queryParams := r.URL.RawQuery
 
@@ -25,7 +24,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 				bodyCopy = bodyBytes
 				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body for next handler
 			} else {
-				logger.Warnf("Failed to read request body: %v", err)
+				logger.Warn(fmt.Sprintf("Failed to read request body: %v", err))
 			}
 		}
 
@@ -39,7 +38,8 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		// Log request and response details
-		logger.Infof("[%s] Request URI: %s, Remote address: %s, Status code: %d, RequestTime: %s, Query Params: %s, Request Body: %s",
+		logger.Info(fmt.Sprintf(
+			"[%s] Request URI: %s, Remote address: %s, Status code: %d, RequestTime: %s, Query Params: %s, Request Body: %s",
 			r.Method,
 			r.RequestURI,
 			r.RemoteAddr,
@@ -47,12 +47,16 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			time.Since(start),
 			queryParams,
 			string(bodyCopy),
-		)
+		))
 
 		if lrw.statusCode != 200 {
-			logger.Errorf("Error Response [%d] for %s %s | Response Body: %s",
-				lrw.statusCode, r.Method, r.RequestURI, lrw.body.String(),
-			)
+			logger.Error(fmt.Sprintf(
+				"Error Response [%d] for %s %s | Response Body: %s",
+				lrw.statusCode,
+				r.Method,
+				r.RequestURI,
+				lrw.body.String(),
+			))
 		}
 	})
 }

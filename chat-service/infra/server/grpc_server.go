@@ -8,6 +8,7 @@ import (
 	chatrpc "chat/infra/rpc"
 	"chat/internal/usecases"
 	_db "common/db"
+	"common/logging"
 	_middleware "common/middleware"
 	_redis "common/redis"
 	_utils "common/utils"
@@ -19,12 +20,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
-
-var grpcLogger = flogging.MustGetLogger("grpc_server")
 
 type GRPCServer struct {
 	server  *grpc.Server
@@ -34,7 +32,8 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(port string) (*GRPCServer, error) {
-	grpcLogger.Info("Initializing gRPC server...")
+	logger := logging.WithComponent(context.Background(), "grpc_server")
+	logger.Info("Initializing gRPC server...")
 
 	config.LoadConfig()
 	viper.Set("redis.pass", config.AppProperties.Redis.Password)
@@ -42,7 +41,8 @@ func NewGRPCServer(port string) (*GRPCServer, error) {
 	// Initialize database using shared/common/db
 	dbInstance, err := _db.NewDB()
 	if err != nil {
-		grpcLogger.Fatalf("Failed to connect to database: %v", err)
+		logger.Error(fmt.Sprintf("Failed to connect to database: %v", err))
+		os.Exit(1)
 	}
 
 	// Migrate domain
@@ -134,6 +134,7 @@ func NewGRPCServer(port string) (*GRPCServer, error) {
 }
 
 func (s *GRPCServer) Start() error {
+	logger := logging.WithComponent(context.Background(), "grpc_server")
 	if s.cleanup != nil {
 		defer s.cleanup()
 	}
@@ -144,19 +145,21 @@ func (s *GRPCServer) Start() error {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", s.port))
 	if err != nil {
-		grpcLogger.Fatalf("Failed to listen: %v", err)
+		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
+		os.Exit(1)
 	}
 
 	go func() {
-		grpcLogger.Infof("gRPC server is running on port %s", s.port)
+		logger.Info(fmt.Sprintf("gRPC server is running on port %s", s.port))
 		if err := s.server.Serve(lis); err != nil {
-			grpcLogger.Fatalf("Failed to serve: %v", err)
+			logger.Error(fmt.Sprintf("Failed to serve: %v", err))
+			os.Exit(1)
 		}
 	}()
 
 	select {
 	case <-stop:
-		grpcLogger.Info("Shutting down servers...")
+		logger.Info("Shutting down servers...")
 	case err := <-errCh:
 		return err
 	}
@@ -172,10 +175,10 @@ func (s *GRPCServer) Start() error {
 
 	select {
 	case <-ctx.Done():
-		grpcLogger.Warning("Shutdown timed out, forcing stop")
+		logger.Warn("Shutdown timed out, forcing stop")
 		s.server.Stop()
 	case <-done:
-		grpcLogger.Info("Servers stopped gracefully")
+		logger.Info("Servers stopped gracefully")
 	}
 
 	return nil
