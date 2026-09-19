@@ -3,6 +3,7 @@ package wshandler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -10,12 +11,10 @@ import (
 	"chat/infrastructure/redis"
 	"chat/internal/constants"
 	"chat/utils"
+	"common/logging"
 
 	"github.com/gorilla/websocket"
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var wsLogger = flogging.MustGetLogger("ws_handler")
 
 type WebSocketHandler struct {
 	upgrader             websocket.Upgrader
@@ -48,15 +47,16 @@ func NewWebSocketHandler(conversationUsercase conversationUsercase) *WebSocketHa
 }
 
 func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	logger := logging.WithComponent(r.Context(), "ws_handler")
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+		logger.Error(fmt.Sprintf("Failed to upgrade to WebSocket: %v", err))
 		return
 	}
 	userId := utils.GetCurrentUserID(r.Context())
 	if userId == 0 {
 		conn.Close()
-		wsLogger.Error("Missing user_id")
+		logger.Error("Missing user_id")
 		return
 	}
 	userIdStr := strconv.FormatUint(userId, 10)
@@ -64,15 +64,16 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	h.clients[userIdStr] = conn
 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s connected", userId)
+	logger.Info(fmt.Sprintf("User %d connected", userId))
 
 	go h.handleDisconnect(conn, userIdStr)
 }
 
 func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Request) {
+	logger := logging.WithComponent(r.Context(), "ws_handler")
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
+		logger.Error(fmt.Sprintf("Failed to upgrade to WebSocket: %v", err))
 		return
 	}
 
@@ -80,7 +81,7 @@ func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Re
 
 	if userId == 0 {
 		conn.Close()
-		wsLogger.Error("Missing user_id")
+		logger.Error("Missing user_id")
 		return
 	}
 	userIdStr := strconv.FormatUint(userId, 10)
@@ -89,19 +90,19 @@ func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Re
 
 	if roomID == "" {
 		conn.Close()
-		wsLogger.Error("Missing  room_id")
+		logger.Error("Missing  room_id")
 		return
 	}
 	roomIDUint, err := strconv.ParseUint(roomID, 10, 64)
 	if err != nil {
 		conn.Close()
-		wsLogger.Error("Invalid room_id format")
+		logger.Error("Invalid room_id format")
 		return
 	}
 	err = h.conversationUsercase.ValidateConversationAndCurrentUser(r.Context(), roomIDUint)
 	if err != nil {
 		conn.Close()
-		wsLogger.Error("Invalid room_id")
+		logger.Error("Invalid room_id")
 		return
 	}
 	h.mu.Lock()
@@ -113,21 +114,22 @@ func (h *WebSocketHandler) HandleRoomWebSocket(w http.ResponseWriter, r *http.Re
 
 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s joined room %s", userIdStr, roomID)
+	logger.Info(fmt.Sprintf("User %s joined room %s", userIdStr, roomID))
 
 	go h.handleDisconnect(conn, userIdStr)
 }
 
 func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
+	logger := logging.WithComponent(context.Background(), "ws_handler")
 	pubsub := h.redisClient.Subscribe(context.Background(), channel)
 	messages := pubsub.Channel()
 
 	go func() {
 		for msg := range messages {
-			wsLogger.Infof("Received message from channel %s: %s", channel, msg.Payload)
+			logger.Info(fmt.Sprintf("Received message from channel %s: %s", channel, msg.Payload))
 			var redisMsg RedisMessage
 			if err := json.Unmarshal([]byte(msg.Payload), &redisMsg); err != nil {
-				wsLogger.Errorf("Invalid JSON format: %v", err)
+				logger.Error(fmt.Sprintf("Invalid JSON format: %v", err))
 				continue
 			}
 
@@ -137,6 +139,7 @@ func (h *WebSocketHandler) SubscribeToRedisChannel(channel string) {
 }
 
 func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID string) {
+	logger := logging.WithComponent(context.Background(), "ws_handler")
 	defer conn.Close()
 	<-context.Background().Done()
 
@@ -152,22 +155,23 @@ func (h *WebSocketHandler) handleDisconnect(conn *websocket.Conn, userID string)
 	}
 	h.mu.Unlock()
 
-	wsLogger.Infof("User %s disconnected", userID)
+	logger.Info(fmt.Sprintf("User %s disconnected", userID))
 }
 
 func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
+	logger := logging.WithComponent(context.Background(), "ws_handler")
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		wsLogger.Errorf("Failed to marshal message: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal message: %v", err))
 		return
 	}
 
 	m, ok := msg.Data.(map[string]any)
 	if !ok {
-		wsLogger.Errorf("Invalid message format: %+v", msg.Data)
+		logger.Error(fmt.Sprintf("Invalid message format: %+v", msg.Data))
 		return
 	}
 
@@ -254,21 +258,22 @@ func (h *WebSocketHandler) broadcastMessage(msg RedisMessage) {
 		}
 
 	default:
-		wsLogger.Warnf("Unhandled message type: %s", msg.Type)
+		logger.Warn(fmt.Sprintf("Unhandled message type: %s", msg.Type))
 	}
 }
 
 func (h *WebSocketHandler) sendToRoom(roomID string, data []byte) {
+	logger := logging.WithComponent(context.Background(), "ws_handler")
 	if roomClients, exists := h.rooms[roomID]; exists {
 		for conn := range roomClients {
 			err := conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				wsLogger.Errorf("Failed to send message to room %s: %v", roomID, err)
+				logger.Error(fmt.Sprintf("Failed to send message to room %s: %v", roomID, err))
 			}
 
 		}
 	} else {
-		wsLogger.Warnf("Room %s not found, message not delivered", roomID)
+		logger.Warn(fmt.Sprintf("Room %s not found, message not delivered", roomID))
 	}
 }
 
@@ -292,12 +297,13 @@ func (h *WebSocketHandler) removeUserFromRoom(roomID, userID string) {
 }
 
 func (h *WebSocketHandler) sendToUser(members []string, data []byte) {
+	logger := logging.WithComponent(context.Background(), "ws_handler")
 	for _, userId := range members {
 		if h.clients[userId] != nil {
 			conn := h.clients[userId]
 			err := conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				wsLogger.Errorf("Failed to send message to user %s: %v", userId, err)
+				logger.Error(fmt.Sprintf("Failed to send message to user %s: %v", userId, err))
 			}
 		}
 	}

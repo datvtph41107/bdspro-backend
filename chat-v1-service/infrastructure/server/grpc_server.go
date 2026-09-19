@@ -2,6 +2,7 @@ package server
 
 import (
 	chatrpc "chat/infrastructure/rpc"
+	"common/logging"
 	_middleware "common/middleware"
 	_redis "common/redis"
 	_utils "common/utils"
@@ -21,11 +22,8 @@ import (
 	"chat/internal/repository"
 	"chat/internal/usecases"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"google.golang.org/grpc"
 )
-
-var grpcLogger = flogging.MustGetLogger("grpc_server")
 
 type GRPCServer struct {
 	server  *grpc.Server
@@ -34,13 +32,15 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(port string) (*GRPCServer, error) {
-	grpcLogger.Info("Initializing gRPC server...")
+	logger := logging.WithComponent(context.Background(), "grpc_server")
+	logger.Info("Initializing gRPC server...")
 
 	config.LoadConfig()
 
 	db, err := postgres.NewPostgresDB(config.AppProperties.Database.DSN)
 	if err != nil {
-		grpcLogger.Fatalf("Failed to connect to database: %v", err)
+		logger.Error(fmt.Sprintf("Failed to connect to database: %v", err))
+		os.Exit(1)
 	}
 	pRepository := repository.NewRepository(db)
 	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
@@ -104,6 +104,7 @@ func NewGRPCServer(port string) (*GRPCServer, error) {
 }
 
 func (s *GRPCServer) Start() error {
+	logger := logging.WithComponent(context.Background(), "grpc_server")
 	if s.cleanup != nil {
 		defer s.cleanup()
 	}
@@ -112,18 +113,20 @@ func (s *GRPCServer) Start() error {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", s.port))
 	if err != nil {
-		grpcLogger.Fatalf("Failed to listen: %v", err)
+		logger.Error(fmt.Sprintf("Failed to listen: %v", err))
+		os.Exit(1)
 	}
 
 	go func() {
-		grpcLogger.Infof("gRPC server is running on port %s", s.port)
+		logger.Info(fmt.Sprintf("gRPC server is running on port %s", s.port))
 		if err := s.server.Serve(lis); err != nil {
-			grpcLogger.Fatalf("Failed to serve: %v", err)
+			logger.Error(fmt.Sprintf("Failed to serve: %v", err))
+			os.Exit(1)
 		}
 	}()
 
 	<-stop
-	grpcLogger.Info("Shutting down gRPC server...")
+	logger.Info("Shutting down gRPC server...")
 
 	// Create a deadline for server shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -138,10 +141,10 @@ func (s *GRPCServer) Start() error {
 
 	select {
 	case <-ctx.Done():
-		grpcLogger.Warning("Shutdown timed out, forcing stop")
+		logger.Warn("Shutdown timed out, forcing stop")
 		s.server.Stop()
 	case <-done:
-		grpcLogger.Info("Server stopped gracefully")
+		logger.Info("Server stopped gracefully")
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/logging"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -22,13 +23,10 @@ import (
 	"chat/internal/usecases"
 	"chat/models"
 	"chat/utils"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type chatHandler struct {
 	chatpb.UnimplementedChatServiceServer
-	logger                  *flogging.FabricLogger
 	conversationUsecases    conversationUsecases
 	messageUsecases         messageUsecases
 	readReceptUsecases      readReceptUsecases
@@ -121,7 +119,6 @@ func NewChatHandler(
 		readReceptUsecases:      readReceptUsecases,
 		participantUsecases:     participantUsecases,
 		messageReactionUsecases: messageReactionUsecases,
-		logger:                  flogging.MustGetLogger("chat_handler"),
 		numberOfWorker:          config.AppProperties.Worker.Number,
 		maxParticipant:          config.AppProperties.MaxParticipant,
 		redisClient:             redisCli,
@@ -1150,7 +1147,9 @@ func (s *chatHandler) AddUsers(ctx context.Context, req *chatpb.AddUserRequest) 
 
 	if totalAdded > 0 {
 		if err := s.systemMessageUsecase.AddMemberSystemMessage(ctx, req.ConversationId, req.UserIds); err != nil {
-			s.logger.Errorf("Failed to create system message for add users: %v", err)
+			logging.WithComponent(ctx, "chat_handler").Error(
+				fmt.Sprintf("Failed to create system message for add users: %v", err),
+			)
 		}
 	}
 
@@ -1598,7 +1597,7 @@ func (s *chatHandler) UnreadCount(ctx context.Context, req *chatpb.UnreadCountRe
 
 func (s *chatHandler) Start() {
 	for i := 0; i < s.numberOfWorker; i++ {
-		redisClientWorker := NewRedisClientWorker(s, s.redisClient, s.logger)
+		redisClientWorker := NewRedisClientWorker(s, s.redisClient)
 		go redisClientWorker.serve()
 	}
 }

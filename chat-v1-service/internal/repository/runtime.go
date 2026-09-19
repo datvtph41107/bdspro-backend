@@ -1,18 +1,19 @@
 package repository
 
 import (
+	"context"
+
 	configs "chat/config"
 	"chat/internal/repository/orm"
 	"chat/internal/usecases"
 	"chat/models"
+	"common/logging"
 
-	"github.com/hyperledger/fabric/common/flogging"
 	"gorm.io/gorm"
 )
 
-var repoLogger = flogging.MustGetLogger("repository")
-
 func NewRepository(db *gorm.DB) usecases.Repository {
+	logger := logging.WithComponent(context.Background(), "repository")
 	switch configs.AppProperties.Database.Type {
 	case "POSTGRES":
 		err := db.AutoMigrate(&models.ConversationModel{},
@@ -23,7 +24,7 @@ func NewRepository(db *gorm.DB) usecases.Repository {
 			&models.BackgroundImageModel{},
 		)
 		if err != nil {
-			repoLogger.Error("Failed to migrate user model")
+			logger.Error("Failed to migrate user model")
 		}
 		return orm.NewGormRepository(db)
 	default:
@@ -35,7 +36,7 @@ func NewRepository(db *gorm.DB) usecases.Repository {
 			&models.BackgroundImageModel{},
 		)
 		if err != nil {
-			repoLogger.Error("Failed to migrate user model")
+			logger.Error("Failed to migrate user model")
 		}
 		return orm.NewGormRepository(db)
 	}

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"common/logging"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"chat/cmd"
@@ -19,8 +21,18 @@ import (
 func main() {
 	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
 
+	closeLogger, err := logging.Configure("chat-v1-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Chat V1 logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() { _ = closeLogger() }()
+
 	if err := cmd.RootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		slog.Error(
+			"chat-v1 command failed",
+			slog.Any("error", err),
+		)
 		os.Exit(-1)
 	}
 }

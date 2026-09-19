@@ -959,6 +959,142 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(missing_ok=True)
 
 
+    def test_chat_v1_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "chat-v1-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "chat-v1-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_v1_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "chat-v1-service",
+            "path": "chat-v1-service/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("chat-v1 startup failed: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-legacy-std-log-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+    def test_chat_v1_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "chat-v1-service",
+            "path": "chat-v1-service/infrastructure/server/http_server.go",
+            "line": 1,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-third-party-logger-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-third-party-logger-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
     def test_relay_logging_zero_ratchets_are_registered(self):
         self.assertIn(
             ("go.legacy_std_log", "relay-service"),

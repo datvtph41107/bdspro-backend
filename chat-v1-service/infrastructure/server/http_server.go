@@ -2,6 +2,7 @@ package server
 
 import (
 	chatrpc "chat/infrastructure/rpc"
+	"common/logging"
 	_redis "common/redis"
 	_utils "common/utils"
 	"context"
@@ -22,7 +23,6 @@ import (
 	"chat/internal/usecases"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 func parseTimeout(timeoutStr string) time.Duration {
@@ -33,22 +33,22 @@ func parseTimeout(timeoutStr string) time.Duration {
 	return duration
 }
 
-var logger = flogging.MustGetLogger("http_server")
-
 type HTTPServer struct {
 	server  *http.Server
 	cleanup func()
 }
 
 func NewHTTPServer(port string) (*HTTPServer, error) {
-	logger.Info("Initializing HTTP server...")
 	ctx := context.Background()
+	logger := logging.WithComponent(ctx, "http_server")
+	logger.Info("Initializing HTTP server...")
 
 	config.LoadConfig()
 
 	db, err := postgres.NewPostgresDB(config.AppProperties.Database.DSN)
 	if err != nil {
-		logger.Fatalf("Failed to connect to database: %v", err)
+		logger.Error(fmt.Sprintf("Failed to connect to database: %v", err))
+		os.Exit(1)
 	}
 	pRepository := repository.NewRepository(db)
 	userRPC, userCleanup, err := chatrpc.NewUserRPCClient()
@@ -121,6 +121,7 @@ func NewHTTPServer(port string) (*HTTPServer, error) {
 }
 
 func (s *HTTPServer) Start() error {
+	logger := logging.WithComponent(context.Background(), "http_server")
 	if s.cleanup != nil {
 		defer s.cleanup()
 	}
@@ -128,9 +129,10 @@ func (s *HTTPServer) Start() error {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		logger.Infof("HTTP server is running on %s", s.server.Addr)
+		logger.Info(fmt.Sprintf("HTTP server is running on %s", s.server.Addr))
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("HTTP server error: %v", err)
+			logger.Error(fmt.Sprintf("HTTP server error: %v", err))
+			os.Exit(1)
 		}
 	}()
 
@@ -141,7 +143,7 @@ func (s *HTTPServer) Start() error {
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		logger.Errorf("HTTP server shutdown error: %v", err)
+		logger.Error(fmt.Sprintf("HTTP server shutdown error: %v", err))
 	}
 	return nil
 }

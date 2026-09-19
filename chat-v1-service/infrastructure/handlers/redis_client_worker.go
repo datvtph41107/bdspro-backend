@@ -3,14 +3,14 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
 	chatpb "pb/types/chat"
 
 	"chat/internal/constants"
-
-	"github.com/hyperledger/fabric/common/flogging"
+	"common/logging"
 )
 
 type redisClientWorker struct {
@@ -20,7 +20,7 @@ type redisClientWorker struct {
 	ctx                 context.Context
 }
 
-func NewRedisClientWorker(parent *chatHandler, redisClient redisClient, logger *flogging.FabricLogger) *redisClientWorker {
+func NewRedisClientWorker(parent *chatHandler, redisClient redisClient) *redisClientWorker {
 	return &redisClientWorker{
 		parent:              parent,
 		redisClient:         redisClient,
@@ -31,14 +31,18 @@ func NewRedisClientWorker(parent *chatHandler, redisClient redisClient, logger *
 
 func (r *redisClientWorker) serve() {
 	for event := range r.parent.eventChannel {
-		r.parent.logger.Infof("Received event: %v", event)
+		logging.WithComponent(r.ctx, "redis_client_worker").Info(
+			fmt.Sprintf("Received event: %v", event),
+		)
 
 		switch v := event.(type) {
 
 		case *chatpb.UpdateRoomMessage:
 			members, err := r.parent.participantUsecases.InternalGetListParticipant(r.ctx, v.Data.RoomId)
 			if err != nil {
-				r.parent.logger.Errorf("Failed to get list participant: %v", err)
+				logging.WithComponent(r.ctx, "redis_client_worker").Error(
+					fmt.Sprintf("Failed to get list participant: %v", err),
+				)
 				continue
 			}
 
@@ -62,7 +66,9 @@ func (r *redisClientWorker) serve() {
 func (s *redisClientWorker) publishToRedis(event any) {
 	data, err := json.Marshal(event)
 	if err != nil {
-		s.parent.logger.Errorf("Failed to marshal message: %v", err)
+		logging.WithComponent(s.ctx, "redis_client_worker").Error(
+			fmt.Sprintf("Failed to marshal message: %v", err),
+		)
 	}
 
 	redisCtx, cancel := context.WithTimeout(context.Background(), s.requestRedisTimeout)
@@ -70,6 +76,8 @@ func (s *redisClientWorker) publishToRedis(event any) {
 
 	err = s.redisClient.Publish(redisCtx, constants.API_WS_CHANNEL, string(data))
 	if err != nil {
-		s.parent.logger.Errorf("Failed to publish message to Redis: %v", err)
+		logging.WithComponent(s.ctx, "redis_client_worker").Error(
+			fmt.Sprintf("Failed to publish message to Redis: %v", err),
+		)
 	}
 }

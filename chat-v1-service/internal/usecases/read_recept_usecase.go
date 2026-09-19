@@ -2,24 +2,22 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"chat/infrastructure/delivery/errors"
 	"chat/models"
 	"chat/utils"
-
-	"github.com/hyperledger/fabric/common/flogging"
+	"common/logging"
 )
 
 type readReceptUsecases struct {
-	repo   Repository
-	logger *flogging.FabricLogger
+	repo Repository
 }
 
 func NewReadReceptUsecases(repository Repository) *readReceptUsecases {
 	return &readReceptUsecases{
-		repo:   repository,
-		logger: flogging.MustGetLogger("read_recept_usecases"),
+		repo: repository,
 	}
 }
 
@@ -49,7 +47,9 @@ func (r *readReceptUsecases) MarkAsRead(ctx context.Context, conversationId uint
 		}
 	}
 	if len(needSaveMessageIds) == 0 {
-		r.logger.Debugf("User %d already read message %v", userID, messageIds)
+		logging.WithComponent(ctx, "read_recept_usecases").Debug(
+			fmt.Sprintf("User %d already read message %v", userID, messageIds),
+		)
 		return nil
 	}
 
