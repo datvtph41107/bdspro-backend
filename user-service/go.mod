@@ -14,7 +14,7 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/wire v0.7.0
-	github.com/hyperledger/fabric v2.1.1+incompatible
+	github.com/hyperledger/fabric v2.1.1+incompatible // indirect
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible

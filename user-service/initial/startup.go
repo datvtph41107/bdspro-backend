@@ -3,15 +3,13 @@ package initial
 import (
 	_provider "common/domain/provider"
 	"context"
+	"log/slog"
 	"pb/clients"
 	"user/infra/handler"
 	"user/infra/scheduler"
 	"user/internal/job"
 	"user/internal/usecase"
 	"user/internal/usecases"
-
-	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/spf13/viper"
 )
 
 type InitialApp struct {
@@ -46,8 +44,6 @@ type InitialApp struct {
 
 	// Scheduler để chạy background jobs
 	ZnsScheduler *scheduler.ZnsScheduler
-
-	Logger *flogging.FabricLogger
 }
 
 func NewInitialApp(
@@ -102,12 +98,6 @@ func NewInitialApp(
 		ZnsScheduler:      znsScheduler,
 	}
 
-	loggerName := viper.GetString("server.name")
-	if loggerName == "" {
-		loggerName = "user-service"
-	}
-	app.Logger = flogging.MustGetLogger(loggerName)
-
 	return app
 }
 
@@ -121,6 +111,6 @@ func (app *InitialApp) LoadRoleGroupsOnStartup(ctx context.Context) error {
 	if err := app.RoleGroupRegistry.Load(ctx); err != nil {
 		return err
 	}
-	app.Logger.Infof("Successfully loaded role groups on startup")
+	slog.InfoContext(ctx, "role groups loaded on startup")
 	return nil
 }

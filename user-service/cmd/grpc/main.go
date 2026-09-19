@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	_db "common/db"
+	"common/logging"
 	_middleware "common/middleware"
 	"common/process"
 	_redis "common/redis"
@@ -24,9 +26,26 @@ import (
 )
 
 func main() {
-	if err := runGRPC(); err != nil {
-		log.Fatal(err)
+	os.Exit(runProcess())
+}
+
+func runProcess() int {
+	closeLogger, err := logging.Configure("user-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure User logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := runGRPC(); err != nil {
+		slog.Error(
+			"user service failed",
+			slog.Any("error", err),
+		)
+		return 1
+	}
+
+	return 0
 }
 
 func runGRPC() error {
@@ -39,11 +58,11 @@ func runGRPC() error {
 	if err != nil {
 		return fmt.Errorf("load User runtime policy: %w", err)
 	}
-	log.Printf(
-		"User runtime policy: module_warmup=%t dashboard_stats=%t zns_scheduler=%t",
-		runtimePolicy.ModuleWarmup,
-		runtimePolicy.DashboardStats,
-		runtimePolicy.ZNSScheduler,
+	slog.Info(
+		"user runtime policy",
+		slog.Bool("module_warmup", runtimePolicy.ModuleWarmup),
+		slog.Bool("dashboard_stats", runtimePolicy.DashboardStats),
+		slog.Bool("zns_scheduler", runtimePolicy.ZNSScheduler),
 	)
 
 	database, err := _db.Open(_db.DatabaseConfig{
@@ -65,7 +84,11 @@ func runGRPC() error {
 	if err != nil {
 		return fmt.Errorf("load User schema policy: %w", err)
 	}
-	log.Printf("User database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	slog.Info(
+		"user database schema policy",
+		slog.String("mode", string(schemaPolicy.Mode)),
+		slog.String("source", schemaPolicy.Source),
+	)
 	if err := _db.ApplySchemaPolicy(database, schemaPolicy, userdb.AutoMigrate); err != nil {
 		return fmt.Errorf("apply User schema policy: %w", err)
 	}
@@ -136,7 +159,11 @@ func runGRPC() error {
 
 	if runtimePolicy.ModuleWarmup {
 		if err := app.LoadRoleGroupsOnStartup(processCtx); err != nil {
-			log.Printf("User module cache warmup failed; starting degraded: %v", err)
+			slog.WarnContext(
+				processCtx,
+				"user module cache warmup failed",
+				slog.Any("error", err),
+			)
 		}
 	}
 
@@ -148,7 +175,11 @@ func runGRPC() error {
 		actors = append(actors, process.ActorFunc(app.ZnsScheduler.Run))
 	}
 
-	log.Printf("User gRPC listening on %s", runtimeConfig.GRPCAddress)
+	slog.InfoContext(
+		processCtx,
+		"user gRPC listening",
+		slog.String("grpc.address", runtimeConfig.GRPCAddress),
+	)
 	return process.Run(
 		processCtx,
 		processCancel,

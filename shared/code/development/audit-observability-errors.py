@@ -78,6 +78,7 @@ ZERO_RATCHETS = (
     ("go.third_party_logger", "relay-service"),
     ("go.third_party_logger", "chat-service"),
     ("go.third_party_logger", "chat-v1-service"),
+    ("go.third_party_logger", "user-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
