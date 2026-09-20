@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"time"
 
 	_dto "common/domain/dto"
@@ -68,12 +69,11 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
-
-	log.Printf("[ListParcelSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[ListParcelSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit))
 
 	subs, total, err := h.subUsecase.ListParcelSubscriptions(ctx, userID, req.Status, page, limit)
 	if err != nil {
-		log.Printf("[ListParcelSubscriptions] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListParcelSubscriptions] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -148,12 +148,11 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 	if req.ParcelId == 0 {
 		return nil, _errors.ReturnError(400, "parcel_id is required")
 	}
-
-	log.Printf("[GetParcelSubscriptionStatus] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetParcelSubscriptionStatus] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	isFollowing, sub, err := h.subUsecase.GetParcelStatus(ctx, userID, req.ParcelId)
 	if err != nil {
-		log.Printf("[GetParcelSubscriptionStatus] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelSubscriptionStatus] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -184,12 +183,11 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 	if req.ParcelId == 0 {
 		return nil, _errors.ReturnError(400, "parcel_id is required")
 	}
-
-	log.Printf("[CreateParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	sub, err := h.subUsecase.CreateParcelSubscription(ctx, userID, req.ParcelId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
-		log.Printf("[CreateParcelSubscription] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateParcelSubscription] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -220,11 +218,10 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 	if req.ParcelId == 0 {
 		return nil, _errors.ReturnError(400, "parcel_id is required")
 	}
-
-	log.Printf("[DeleteParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId)
+	slog.InfoContext(ctx, fmt.Sprintf("[DeleteParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	if err := h.subUsecase.DeleteParcelSubscription(ctx, userID, req.ParcelId); err != nil {
-		log.Printf("[DeleteParcelSubscription] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteParcelSubscription] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -253,12 +250,11 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
-
-	log.Printf("[ListRegionSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[ListRegionSubscriptions] UserID: %d, Page: %d, Limit: %d", userID, page, limit))
 
 	subs, regions, total, err := h.subUsecase.ListUserRegionSubscriptions(ctx, userID, page, limit)
 	if err != nil {
-		log.Printf("[ListRegionSubscriptions] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListRegionSubscriptions] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -303,8 +299,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 	if req.RegionId == 0 {
 		return nil, _errors.ReturnError(400, "region_id is required")
 	}
-
-	log.Printf("[CreateRegionSubscription] UserID: %d, RegionID: %d", userID, req.RegionId)
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateRegionSubscription] UserID: %d, RegionID: %d", userID, req.RegionId))
 
 	_, err := h.regionUsecase.GetByID(ctx, req.RegionId)
 	if err != nil {
@@ -313,7 +308,7 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 
 	sub, err := h.subUsecase.CreateRegionSubscription(ctx, userID, req.RegionId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
-		log.Printf("[CreateRegionSubscription] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateRegionSubscription] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -344,11 +339,10 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 	if req.SubscriptionId == 0 {
 		return nil, _errors.ReturnError(400, "subscription_id is required")
 	}
-
-	log.Printf("[DeleteRegionSubscription] UserID: %d, SubscriptionID: %d", userID, req.SubscriptionId)
+	slog.InfoContext(ctx, fmt.Sprintf("[DeleteRegionSubscription] UserID: %d, SubscriptionID: %d", userID, req.SubscriptionId))
 
 	if err := h.subUsecase.DeleteRegionSubscription(ctx, userID, req.SubscriptionId); err != nil {
-		log.Printf("[DeleteRegionSubscription] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteRegionSubscription] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -382,12 +376,11 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
-
-	log.Printf("[ListNotifications] UserID: %d, Page: %d, Limit: %d", userID, page, limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[ListNotifications] UserID: %d, Page: %d, Limit: %d", userID, page, limit))
 
 	notifs, total, unread, err := h.notifUsecase.List(ctx, userID, req.Type, req.Read, page, limit)
 	if err != nil {
-		log.Printf("[ListNotifications] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListNotifications] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -431,11 +424,10 @@ func (h *SubscriptionGrpcHandler) MarkNotificationRead(
 	if req.NotificationId == 0 {
 		return nil, _errors.ReturnError(400, "notification_id is required")
 	}
-
-	log.Printf("[MarkNotificationRead] UserID: %d, NotificationID: %d", userID, req.NotificationId)
+	slog.InfoContext(ctx, fmt.Sprintf("[MarkNotificationRead] UserID: %d, NotificationID: %d", userID, req.NotificationId))
 
 	if err := h.notifUsecase.MarkRead(ctx, userID, req.NotificationId); err != nil {
-		log.Printf("[MarkNotificationRead] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[MarkNotificationRead] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &emptypb.Empty{}, nil
@@ -450,11 +442,10 @@ func (h *SubscriptionGrpcHandler) MarkAllNotificationsRead(
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
-
-	log.Printf("[MarkAllNotificationsRead] UserID: %d", userID)
+	slog.InfoContext(ctx, fmt.Sprintf("[MarkAllNotificationsRead] UserID: %d", userID))
 
 	if err := h.notifUsecase.MarkAllRead(ctx, userID); err != nil {
-		log.Printf("[MarkAllNotificationsRead] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[MarkAllNotificationsRead] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 	return &emptypb.Empty{}, nil
@@ -470,18 +461,17 @@ func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	req *tqdpb.AdminListSubscriptionsRequest,
 ) (*tqdpb.ListSubscriptionsAdminResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
-	log.Printf("[AdminListSubscriptions] AdminUserID: %d", userID)
+	slog.InfoContext(ctx, fmt.Sprintf("[AdminListSubscriptions] AdminUserID: %d", userID))
 
 	// Sử dụng Pagable
 	pagable := _dto.NewPagableFromGrpc(req.Page, req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
-
-	log.Printf("[AdminListSubscriptions] Page: %d, Limit: %d", page, limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[AdminListSubscriptions] Page: %d, Limit: %d", page, limit))
 
 	subs, total, err := h.subUsecase.AdminList(ctx, req.UserId, req.TargetType, (*uint32)(req.Status), page, limit)
 	if err != nil {
-		log.Printf("[AdminListSubscriptions] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[AdminListSubscriptions] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -514,14 +504,14 @@ func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 	req *tqdpb.AdminDeleteSubscriptionRequest,
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
-	log.Printf("[AdminDeleteSubscription] AdminUserID: %d, SubscriptionID: %d", userID, req.SubscriptionId)
+	slog.InfoContext(ctx, fmt.Sprintf("[AdminDeleteSubscription] AdminUserID: %d, SubscriptionID: %d", userID, req.SubscriptionId))
 
 	if req.SubscriptionId == 0 {
 		return nil, _errors.ReturnError(400, "subscription_id is required")
 	}
 
 	if err := h.subUsecase.AdminDelete(ctx, req.SubscriptionId); err != nil {
-		log.Printf("[AdminDeleteSubscription] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[AdminDeleteSubscription] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 

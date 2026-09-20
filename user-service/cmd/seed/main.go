@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -14,7 +14,8 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
 
@@ -46,6 +47,6 @@ func run() error {
 		return fmt.Errorf("run User DatabaseSeeder: %w", err)
 	}
 
-	log.Printf("User DatabaseSeeder complete: seeders=%d", result.SeederCount)
+	fmt.Printf("User DatabaseSeeder complete: seeders=%d\n", result.SeederCount)
 	return nil
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -46,7 +46,7 @@ func (r *layerRepoImpl) Create(ctx context.Context, layer *qh_domain.QHLayer, re
 	layer.UpdatedAt = now
 
 	if len(replaceLayerIDs) == 0 {
-		log.Println("Creating layer:", layer.ID)
+		slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("Creating layer:", layer.ID), "\n"))
 		return r.db.WithContext(ctx).Create(layer).Error
 	}
 
@@ -198,8 +198,7 @@ func (r *layerRepoImpl) List(ctx context.Context, filter *repo.LayerFilter) ([]q
 	if strings.ToUpper(filter.OrderDir) == "ASC" {
 		orderDir = "ASC"
 	}
-
-	log.Println("Creating layer:", filter.Size)
+	slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("Creating layer:", filter.Size), "\n"))
 
 	err := query.
 		Order(fmt.Sprintf("%s %s, id ASC", orderBy, orderDir)).

@@ -76,6 +76,15 @@ ZERO_RATCHETS = (
     ("go.legacy_std_log", "chat-v1-service"),
     ("go.legacy_std_log", "shared"),
     ("go.legacy_std_log", "bdspro-service"),
+    ("go.legacy_std_log", "hub-service"),
+    ("go.legacy_std_log", "crm-service"),
+    ("go.legacy_std_log", "shared/common"),
+    ("go.legacy_std_log", "shared/code"),
+    ("go.legacy_std_log", "tqd-service"),
+    ("go.legacy_std_log", "user-service"),
+    ("go.third_party_logger", "hub-service"),
+    ("go.third_party_logger", "crm-service"),
+    ("go.third_party_logger", "shared/common"),
     ("go.third_party_logger", "payment-service"),
     ("go.third_party_logger", "relay-service"),
     ("go.third_party_logger", "chat-service"),
@@ -95,6 +104,7 @@ class Rule:
     suffixes: tuple[str, ...]
     pattern: re.Pattern[str]
     excluded_prefixes: tuple[str, ...] = ()
+    excluded_paths: tuple[str, ...] = ()
     required_path_fragments: tuple[str, ...] = ()
 
 
@@ -104,6 +114,7 @@ RULES = (
         "debt",
         (".go",),
         re.compile(r"\blog\.(?:Print|Printf|Println|Fatal|Fatalf|Fatalln|Panic|Panicf|Panicln|New)\s*\("),
+        excluded_paths=("shared/common/logging/stdlog_bridge.go",),
     ),
     Rule(
         "go.direct_slog_construction",
@@ -214,6 +225,8 @@ def rule_applies(rule: Rule, rel: str, path: Path) -> bool:
     if not any(path.name.endswith(suffix) for suffix in rule.suffixes):
         return False
     if rel.startswith(rule.excluded_prefixes):
+        return False
+    if rel in rule.excluded_paths:
         return False
     if rule.required_path_fragments and not any(fragment in f"/{rel}" for fragment in rule.required_path_fragments):
         return False

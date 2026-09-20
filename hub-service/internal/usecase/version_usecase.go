@@ -2,7 +2,8 @@ package usecase
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -192,7 +193,7 @@ func (u *VersionUsecase) CreateBundleVersion(ctx context.Context, bundleVersion 
 // sendNotificationToAllUsers gửi thông báo cho tất cả user về version mới
 func (u *VersionUsecase) sendNotificationToAllUsers(ctx context.Context, version *domain.VersionEntity) {
 	if u.NotificationClient == nil || u.UserClient == nil {
-		log.Println("NotificationClient or UserClient is nil, skipping notification")
+		slog.WarnContext(ctx, strings.TrimSuffix(fmt.Sprintln("NotificationClient or UserClient is nil, skipping notification"), "\n"))
 		return
 	}
 
@@ -203,7 +204,7 @@ func (u *VersionUsecase) sendNotificationToAllUsers(ctx context.Context, version
 	for {
 		usersResp, err := u.UserClient.ListAllUsers(ctx, page, size)
 		if err != nil {
-			log.Printf("Failed to get users list: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to get users list: %v", err))
 			break
 		}
 
@@ -241,9 +242,9 @@ func (u *VersionUsecase) sendNotificationToAllUsers(ctx context.Context, version
 		// Gửi batch notification
 		if len(notificationRequests) > 0 {
 			if err := u.NotificationClient.SendBatch(ctx, notificationRequests); err != nil {
-				log.Printf("Failed to send batch notification: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("Failed to send batch notification: %v", err))
 			} else {
-				log.Printf("Sent notification to %d users for version %s", len(notificationRequests), version.VersionName)
+				slog.InfoContext(ctx, fmt.Sprintf("Sent notification to %d users for version %s", len(notificationRequests), version.VersionName))
 			}
 		}
 

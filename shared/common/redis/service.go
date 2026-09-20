@@ -3,23 +3,21 @@ package _redis
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/hyperledger/fabric/common/flogging"
+	"common/logging"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"log/slog"
 )
 
 // RedisService định nghĩa cấu trúc và phương thức thao tác với Redis
 type RedisService struct {
 	Client    *redis.Client
 	Ctx       context.Context
-	logger    *flogging.FabricLogger
 	connected bool
 	mu        sync.RWMutex
 }
@@ -85,13 +83,12 @@ func Open(config Config) (*RedisService, error) {
 	svc := &RedisService{
 		Client: rdb,
 		Ctx:    context.Background(),
-		logger: flogging.MustGetLogger("redis"),
 	}
 
 	pingCtx, cancel := context.WithTimeout(context.Background(), 800*time.Millisecond)
 	defer cancel()
 	if _, err := rdb.Ping(pingCtx).Result(); err != nil {
-		svc.logger.Warnf("Redis unavailable at startup: %v", err)
+		logging.WithComponent(context.Background(), "redis").Warn("redis unavailable at startup", slog.Any("error", err))
 		return svc, nil
 	}
 	svc.connected = true
@@ -113,11 +110,10 @@ func NewRedisService() *RedisService {
 	// Keep the old no-error constructor contract. The returned disconnected
 	// client makes failures explicit at operation time without hiding a second
 	// configuration source.
-	log.Printf("Redis configuration invalid: %v", err)
+	logging.WithComponent(context.Background(), "redis").Error("redis configuration invalid", slog.Any("error", err))
 	return &RedisService{
 		Client: redis.NewClient(&redis.Options{}),
 		Ctx:    context.Background(),
-		logger: flogging.MustGetLogger("redis"),
 	}
 }
 
@@ -156,7 +152,7 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 			return r.Client, nil
 		}
 		r.markDisconnected()
-		r.logger.Warnf("Redis connection lost: %v", err)
+		logging.WithComponent(r.Ctx, "redis").Warn("redis connection lost", slog.Any("error", err))
 	}
 
 	// Thử kết nối lại (timeout ngắn — tránh treo API ~25s khi Redis down)
@@ -171,12 +167,12 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 	_, err := r.Client.Ping(pingCtx).Result()
 	cancel()
 	if err != nil {
-		r.logger.Warnf("Failed to reconnect to Redis: %v", err)
+		logging.WithComponent(r.Ctx, "redis").Warn("redis reconnect failed", slog.Any("error", err))
 		return nil, err
 	}
 
 	r.connected = true
-	r.logger.Info("Reconnected to Redis successfully")
+	logging.WithComponent(r.Ctx, "redis").Info("redis reconnected")
 	return r.Client, nil
 }
 
@@ -240,7 +236,7 @@ func (r *RedisService) Get(key string) (string, error) {
 	}
 	val, err := r.Client.Get(r.Ctx, key).Result()
 	if err != nil && err != redis.Nil {
-		log.Printf("[RedisService.Get] Error getting key %s: %v", key, err)
+		logging.WithComponent(r.Ctx, "redis").Error("redis get failed", slog.String("key", key), slog.Any("error", err))
 		r.markDisconnected()
 	}
 	return val, err
@@ -267,12 +263,12 @@ func (r *RedisService) DeleteAllKeysWithPrefix(prefix string) error {
 	for iter.Next(r.Ctx) {
 		err := r.Client.Del(r.Ctx, iter.Val()).Err()
 		if err != nil {
-			fmt.Println("Xóa lỗi key:", iter.Val(), err)
+			logging.WithComponent(r.Ctx, "redis").Error("redis key delete failed", slog.String("key", iter.Val()), slog.Any("error", err))
 			r.markDisconnected()
 		}
 	}
 	if err := iter.Err(); err != nil {
-		fmt.Println("Scan lỗi:", err)
+		logging.WithComponent(r.Ctx, "redis").Error("redis scan failed", slog.Any("error", err))
 		r.markDisconnected()
 		return err
 	}

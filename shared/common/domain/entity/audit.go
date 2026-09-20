@@ -2,7 +2,9 @@ package _models
 
 import (
 	_enums "common/domain/enum"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -41,6 +43,6 @@ func GetCurrentUserID(tx *gorm.DB) uint64 {
 	if profileId == nil {
 		return 0
 	}
-	log.Println("CALLBACK", profileId, ginProfileId)
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("CALLBACK", profileId, ginProfileId), "\n"))
 	return profileId.(uint64) // Nếu không có user_id, trả về 0 (hoặc panic nếu cần)
 }

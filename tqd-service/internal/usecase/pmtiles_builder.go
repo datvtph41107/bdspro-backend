@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -125,7 +125,7 @@ func BuildPMTilesFile(
 	} else {
 		args = append(args, "--minimum-zoom", "6")
 	}
-	log.Printf("maxZoom=%d", maxZoom)
+	slog.InfoContext(ctx, fmt.Sprintf("maxZoom=%d", maxZoom))
 	if maxZoom > 0 {
 		args = append(args, "--maximum-zoom", fmt.Sprintf("%d", maxZoom))
 	} else {
@@ -280,7 +280,7 @@ func readOutput(prefix string, r io.Reader, progressFn func(BuildProgress)) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		log.Printf("[%s] %s", prefix, line)
+		slog.Info(fmt.Sprintf("[%s] %s", prefix, line))
 
 		// Optional: parse progress nếu tippecanoe in ra % hoặc zoom
 		// Ví dụ: nếu thấy "Zoom level" thì update CurrentZoom
@@ -294,6 +294,6 @@ func readOutput(prefix string, r io.Reader, progressFn func(BuildProgress)) {
 	}
 
 	if err := scanner.Err(); err != nil && err != io.EOF {
-		log.Printf("[%s] scanner error: %v", prefix, err)
+		slog.Error(fmt.Sprintf("[%s] scanner error: %v", prefix, err))
 	}
 }

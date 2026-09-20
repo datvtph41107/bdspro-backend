@@ -14,7 +14,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"log"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
@@ -140,14 +140,13 @@ func (u *SeoDomainUsecase) GenerateSeoFromParcels(ctx context.Context, req *dto.
 	if req != nil {
 		limit = req.Limit
 	}
-
-	log.Printf("[SEO_GENERATE] start generate seo from parcels limit=%d", limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] start generate seo from parcels limit=%d", limit))
 	sources, err := u.tqdProvider.GetParcelSeoSourcesForGenerate(ctx, limit)
 	if err != nil {
-		log.Printf("[SEO_GENERATE] get parcel seo sources failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] get parcel seo sources failed: %v", err))
 		return nil, nil, err
 	}
-	log.Printf("[SEO_GENERATE] received parcel seo sources total=%d", len(sources))
+	slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] received parcel seo sources total=%d", len(sources)))
 
 	result := &dto.GenerateSeoFromParcelsResult{
 		Total: int64(len(sources)),
@@ -155,31 +154,30 @@ func (u *SeoDomainUsecase) GenerateSeoFromParcels(ctx context.Context, req *dto.
 	createdItems := make([]seo_domain.SeoDomain, 0, len(sources))
 
 	for i := range sources {
-		log.Printf("[SEO_GENERATE] processing parcelId=%d adrSearch=%q seoId=%v", sources[i].ParcelID, sources[i].AdrSearch, sources[i].SeoID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] processing parcelId=%d adrSearch=%q seoId=%v", sources[i].ParcelID, sources[i].AdrSearch, sources[i].SeoID))
 
 		seoDomain, created, err := u.createSeoFromParcelSource(ctx, sources[i])
 		if err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("parcelId=%d: %v", sources[i].ParcelID, err))
-			log.Printf("[SEO_GENERATE] failed parcelId=%d error=%v", sources[i].ParcelID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] failed parcelId=%d error=%v", sources[i].ParcelID, err))
 			continue
 		}
 		if seoDomain == nil || !created {
 			result.Skipped++
 			if seoDomain == nil {
-				log.Printf("[SEO_GENERATE] skipped parcelId=%d reason=seoDomain_nil", sources[i].ParcelID)
+				slog.WarnContext(ctx, fmt.Sprintf("[SEO_GENERATE] skipped parcelId=%d reason=seoDomain_nil", sources[i].ParcelID))
 			} else {
-				log.Printf("[SEO_GENERATE] skipped parcelId=%d reason=already_exists seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL)
+				slog.WarnContext(ctx, fmt.Sprintf("[SEO_GENERATE] skipped parcelId=%d reason=already_exists seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL))
 			}
 			continue
 		}
 
 		result.Created++
 		createdItems = append(createdItems, *seoDomain)
-		log.Printf("[SEO_GENERATE] created parcelId=%d seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] created parcelId=%d seoId=%d canonicalUrl=%s", sources[i].ParcelID, seoDomain.ID, seoDomain.CanonicalURL))
 	}
-
-	log.Printf("[SEO_GENERATE] done total=%d created=%d skipped=%d failed=%d", result.Total, result.Created, result.Skipped, result.Failed)
+	slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] done total=%d created=%d skipped=%d failed=%d", result.Total, result.Created, result.Skipped, result.Failed))
 	return createdItems, result, nil
 }
 
@@ -189,39 +187,39 @@ func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source
 	}
 
 	if source.SeoID != nil && *source.SeoID > 0 {
-		log.Printf("[SEO_GENERATE] parcelId=%d has seoId=%d, checking existing seo_domain", source.ParcelID, *source.SeoID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] parcelId=%d has seoId=%d, checking existing seo_domain", source.ParcelID, *source.SeoID))
 
 		existing, err := u.seoDomainRepo.GetByID(ctx, *source.SeoID)
 		if err != nil {
-			log.Printf("[SEO_GENERATE] get existing by seoId failed parcelId=%d seoId=%d error=%v", source.ParcelID, *source.SeoID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] get existing by seoId failed parcelId=%d seoId=%d error=%v", source.ParcelID, *source.SeoID, err))
 			return nil, false, err
 		}
 		if existing != nil {
-			log.Printf("[SEO_GENERATE] found existing by seoId parcelId=%d seoId=%d canonicalUrl=%s", source.ParcelID, existing.ID, existing.CanonicalURL)
+			slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] found existing by seoId parcelId=%d seoId=%d canonicalUrl=%s", source.ParcelID, existing.ID, existing.CanonicalURL))
 			return existing, false, nil
 		}
-		log.Printf("[SEO_GENERATE] parcelId=%d seoId=%d not found in crm, will recreate", source.ParcelID, *source.SeoID)
+		slog.WarnContext(ctx, fmt.Sprintf("[SEO_GENERATE] parcelId=%d seoId=%d not found in crm, will recreate", source.ParcelID, *source.SeoID))
 	}
 
 	parcelURL, err := buildParcelSeoURL(source.ParcelID, source.AdrSearch)
 	if err != nil {
-		log.Printf("[SEO_GENERATE] build parcel seo url failed parcelId=%d adrSearch=%q error=%v", source.ParcelID, source.AdrSearch, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] build parcel seo url failed parcelId=%d adrSearch=%q error=%v", source.ParcelID, source.AdrSearch, err))
 		return nil, false, err
 	}
-	log.Printf("[SEO_GENERATE] built parcel url parcelId=%d url=%s", source.ParcelID, parcelURL)
+	slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] built parcel url parcelId=%d url=%s", source.ParcelID, parcelURL))
 
 	existingByURL, err := u.seoDomainRepo.GetByCanonicalURL(ctx, parcelURL)
 	if err != nil {
-		log.Printf("[SEO_GENERATE] get existing by canonical failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, parcelURL, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] get existing by canonical failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, parcelURL, err))
 		return nil, false, err
 	}
 	if existingByURL != nil {
-		log.Printf("[SEO_GENERATE] existing canonical found parcelId=%d seoId=%d, updating tqd seo_id", source.ParcelID, existingByURL.ID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] existing canonical found parcelId=%d seoId=%d, updating tqd seo_id", source.ParcelID, existingByURL.ID))
 		if err := u.tqdProvider.UpdateParcelSeoID(ctx, source.ParcelID, existingByURL.ID); err != nil {
-			log.Printf("[SEO_GENERATE] update tqd seo_id failed parcelId=%d seoId=%d error=%v", source.ParcelID, existingByURL.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] update tqd seo_id failed parcelId=%d seoId=%d error=%v", source.ParcelID, existingByURL.ID, err))
 			return nil, false, err
 		}
-		log.Printf("[SEO_GENERATE] updated tqd seo_id from existing canonical parcelId=%d seoId=%d", source.ParcelID, existingByURL.ID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] updated tqd seo_id from existing canonical parcelId=%d seoId=%d", source.ParcelID, existingByURL.ID))
 		return existingByURL, false, nil
 	}
 
@@ -268,30 +266,29 @@ func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source
 
 	var created *seo_domain.SeoDomain
 	err = u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		log.Printf("[SEO_GENERATE] creating seo_domain parcelId=%d slug=%q canonicalUrl=%s", source.ParcelID, seoDomain.Slug, seoDomain.CanonicalURL)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] creating seo_domain parcelId=%d slug=%q canonicalUrl=%s", source.ParcelID, seoDomain.Slug, seoDomain.CanonicalURL))
 
 		createdSeo, err := u.seoDomainRepo.Create(txCtx, seoDomain)
 		if err != nil {
-			log.Printf("[SEO_GENERATE] create seo_domain failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, seoDomain.CanonicalURL, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] create seo_domain failed parcelId=%d canonicalUrl=%s error=%v", source.ParcelID, seoDomain.CanonicalURL, err))
 			return err
 		}
 		if createdSeo == nil || createdSeo.ID == 0 {
-			log.Printf("[SEO_GENERATE] create seo_domain returned empty parcelId=%d canonicalUrl=%s", source.ParcelID, seoDomain.CanonicalURL)
+			slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] create seo_domain returned empty parcelId=%d canonicalUrl=%s", source.ParcelID, seoDomain.CanonicalURL))
 			return _errors.ReturnError(500, "tạo seo domain thất bại")
 		}
-
-		log.Printf("[SEO_GENERATE] create seo_domain success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] create seo_domain success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID))
 		if err := u.tqdProvider.UpdateParcelSeoID(txCtx, source.ParcelID, createdSeo.ID); err != nil {
-			log.Printf("[SEO_GENERATE] update tqd seo_id after create failed parcelId=%d seoId=%d error=%v", source.ParcelID, createdSeo.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] update tqd seo_id after create failed parcelId=%d seoId=%d error=%v", source.ParcelID, createdSeo.ID, err))
 			return err
 		}
-		log.Printf("[SEO_GENERATE] update tqd seo_id after create success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID)
+		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] update tqd seo_id after create success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID))
 
 		created = createdSeo
 		return nil
 	})
 	if err != nil {
-		log.Printf("[SEO_GENERATE] transaction failed parcelId=%d error=%v", source.ParcelID, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SEO_GENERATE] transaction failed parcelId=%d error=%v", source.ParcelID, err))
 		return nil, false, err
 	}
 

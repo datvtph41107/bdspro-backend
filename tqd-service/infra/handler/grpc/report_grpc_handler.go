@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"time"
 
 	_dto "common/domain/dto"
@@ -45,9 +46,8 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 	if userID == 0 {
 		return nil, _errors.ReturnError(401, "unauthorized")
 	}
-
-	log.Printf("[CreateReportAsync] UserID: %d, ReportType: %d, Profile: %d, Format: %d",
-		userID, req.ReportType, req.Profile, req.Format)
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateReportAsync] UserID: %d, ReportType: %d, Profile: %d, Format: %d",
+		userID, req.ReportType, req.Profile, req.Format))
 
 	// Parse targetData if exists
 	// if req.TargetData != nil && *req.TargetData != "" {
@@ -72,11 +72,10 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 		report,
 	)
 	if err != nil {
-		log.Printf("[CreateReportAsync] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateReportAsync] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
-
-	log.Printf("[CreateReportAsync] Report created: %d", reportID)
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateReportAsync] Report created: %d", reportID))
 
 	t := time.Now()
 	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDReportList, userID), t.UnixMilli())
@@ -101,12 +100,11 @@ func (h *ReportGrpcHandler) GetReportStatus(
 	if req.ReportId == 0 {
 		return nil, _errors.ReturnError(400, "report_id is required")
 	}
-
-	log.Printf("[GetReportStatus] UserID: %d, ReportID: %d", userID, req.ReportId)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetReportStatus] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	report, err := h.reportUsecase.GetStatus(ctx, userID, req.ReportId)
 	if err != nil {
-		log.Printf("[GetReportStatus] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetReportStatus] Error: %v", err))
 		return nil, _errors.ReturnError(404, err.Error())
 	}
 
@@ -153,12 +151,11 @@ func (h *ReportGrpcHandler) DownloadReport(
 	if req.ReportId == 0 {
 		return nil, _errors.ReturnError(400, "report_id is required")
 	}
-
-	log.Printf("[DownloadReport] UserID: %d, ReportID: %d", userID, req.ReportId)
+	slog.InfoContext(ctx, fmt.Sprintf("[DownloadReport] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	report, err := h.reportUsecase.Download(ctx, userID, req.ReportId)
 	if err != nil {
-		log.Printf("[DownloadReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[DownloadReport] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 
@@ -197,13 +194,12 @@ func (h *ReportGrpcHandler) ListReports(ctx context.Context, req *tqdpb.ListRepo
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
 	page := int(pagable.GetPage())
 	limit := pagable.GetLimit()
-
-	log.Printf("[ListReports] UserID: %d, Page: %d, Limit: %d, ReportType: %v, Status: %v",
-		userID, page, limit, req.ReportType, req.Status)
+	slog.InfoContext(ctx, fmt.Sprintf("[ListReports] UserID: %d, Page: %d, Limit: %d, ReportType: %v, Status: %v",
+		userID, page, limit, req.ReportType, req.Status))
 
 	reports, total, err := h.reportUsecase.ListUser(ctx, userID, req.ReportType, req.Status, page, limit)
 	if err != nil {
-		log.Printf("[ListReports] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListReports] Error: %v", err))
 		return nil, _errors.ReturnError(500, err.Error())
 	}
 
@@ -251,11 +247,10 @@ func (h *ReportGrpcHandler) DeleteReport(
 	if req.ReportId == 0 {
 		return nil, _errors.ReturnError(400, "report_id is required")
 	}
-
-	log.Printf("[DeleteReport] UserID: %d, ReportID: %d", userID, req.ReportId)
+	slog.InfoContext(ctx, fmt.Sprintf("[DeleteReport] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	if err := h.reportUsecase.Delete(ctx, userID, req.ReportId); err != nil {
-		log.Printf("[DeleteReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteReport] Error: %v", err))
 		return nil, _errors.ReturnError(400, err.Error())
 	}
 

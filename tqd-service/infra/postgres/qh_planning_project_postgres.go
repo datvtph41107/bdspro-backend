@@ -3,7 +3,8 @@ package postgres
 import (
 	_db "common/db"
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"strings"
 	qh_domain "tqd/internal/domain/qh"
 	qh_dto "tqd/internal/dto/qh"
@@ -100,8 +101,7 @@ func (r *QHPlanningProjectRepo) GetList(ctx context.Context, req *qh_dto.ListPla
 		Limit(req.GetLimit()).
 		Order("created_at DESC").
 		Find(&projects).Error
-
-	log.Printf("projects: %+v", len(projects))
+	slog.InfoContext(ctx, fmt.Sprintf("projects: %+v", len(projects)))
 	return projects, total, err
 }
 

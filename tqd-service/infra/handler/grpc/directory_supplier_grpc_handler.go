@@ -3,7 +3,8 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -73,7 +74,7 @@ func (h *DirectorySupplierGrpcHandler) CreateDirectorySupplier(ctx context.Conte
 	// Call usecase
 	result, err := h.directorySupplierUsecase.Create(ctx, createReq)
 	if err != nil {
-		log.Printf("error creating directory supplier: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating directory supplier: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create directory supplier: %v", err)
 	}
 
@@ -88,7 +89,7 @@ func (h *DirectorySupplierGrpcHandler) GetDirectorySupplier(ctx context.Context,
 
 	result, err := h.directorySupplierUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting directory supplier: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting directory supplier: %v", err))
 		return nil, status.Errorf(codes.NotFound, "directory supplier not found: %v", err)
 	}
 
@@ -139,7 +140,7 @@ func (h *DirectorySupplierGrpcHandler) UpdateDirectorySupplier(ctx context.Conte
 	// Call usecase
 	result, err := h.directorySupplierUsecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
-		log.Printf("error updating directory supplier: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating directory supplier: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update directory supplier: %v", err)
 	}
 
@@ -154,7 +155,7 @@ func (h *DirectorySupplierGrpcHandler) DeleteDirectorySupplier(ctx context.Conte
 
 	err := h.directorySupplierUsecase.Delete(ctx, req.Id)
 	if err != nil {
-		log.Printf("error deleting directory supplier: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting directory supplier: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to delete directory supplier: %v", err)
 	}
 
@@ -208,7 +209,7 @@ func (h *DirectorySupplierGrpcHandler) ListDirectorySuppliers(ctx context.Contex
 	// Call usecase
 	result, err := h.directorySupplierUsecase.List(ctx, filters)
 	if err != nil {
-		log.Printf("error listing directory suppliers: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing directory suppliers: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to list directory suppliers: %v", err)
 	}
 

@@ -7,11 +7,11 @@ import (
 	_request "common/request"
 	_rpc "common/rpc"
 	_rpcenv "common/rpcenv"
+	"log/slog"
 
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -161,10 +161,9 @@ func parseGrpcMetadataContextMiddlewareWithTrust(
 	case !transportConfig.RequireServiceAssertion &&
 		(hasPrivilegedMetadata || hasServiceAssertion):
 		ctx = markInboundMetadataUnverified(ctx)
-		log.Printf(
-			"[gRPC Server] Unverified transport metadata on %s: %v",
+		slog.InfoContext(ctx, fmt.Sprintf("[gRPC Server] Unverified transport metadata on %s: %v",
 			fullMethod,
-			verifyErr,
+			verifyErr),
 		)
 	}
 

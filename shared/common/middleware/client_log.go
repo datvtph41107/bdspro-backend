@@ -3,10 +3,12 @@ package _middleware
 import (
 	_rpc "common/rpc"
 	_rpcenv "common/rpcenv"
+	"fmt"
+	"log/slog"
+	"strings"
 
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -46,7 +48,7 @@ func unaryClientInterceptorWithTrust(
 	}
 
 	err = invoker(outgoingCtx, method, req, reply, cc, opts...)
-	log.Printf("[gRPC Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err)
+	slog.ErrorContext(ctx, fmt.Sprintf("[gRPC Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err))
 	return err
 }
 
@@ -84,7 +86,7 @@ func streamClientInterceptorWithTrust(
 	}
 
 	stream, err := streamer(outgoingCtx, desc, cc, method, opts...)
-	log.Printf("[gRPC Stream Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err)
+	slog.ErrorContext(ctx, fmt.Sprintf("[gRPC Stream Client] Method: %s, Duration: %s, Error: %v", method, time.Since(start), err))
 	return stream, err
 }
 
@@ -111,7 +113,7 @@ func outgoingContextWithTrust(
 			return nil, status.Error(codes.FailedPrecondition, "internal metadata signing is unavailable")
 		}
 		if !errors.Is(err, _rpc.ErrServiceAssertionNotConfigured) {
-			log.Printf("[gRPC Client] Trusted metadata signing skipped: %v", err)
+			slog.WarnContext(ctx, fmt.Sprintf("[gRPC Client] Trusted metadata signing skipped: %v", err))
 		}
 	}
 
@@ -121,11 +123,11 @@ func outgoingContextWithTrust(
 func MonitorConnection(ctx context.Context, name string, conn *grpc.ClientConn) {
 	for {
 		state := conn.GetState()
-		log.Printf("[gRPC] Connection state of %s: %v", name, state)
+		slog.InfoContext(ctx, fmt.Sprintf("[gRPC] Connection state of %s: %v", name, state))
 
 		// Wait until the state changes before continuing the loop
 		if !conn.WaitForStateChange(ctx, state) {
-			log.Println("[gRPC] Context canceled or connection closed")
+			slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("[gRPC] Context canceled or connection closed"), "\n"))
 			return
 		}
 	}

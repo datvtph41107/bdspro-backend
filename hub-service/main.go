@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"common/logging"
 	_ "common/models"
 	cmd_grpc "hub/cmd/grpc"
 
@@ -22,8 +23,21 @@ func init() {
 }
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	os.Exit(runProcess(rootCmd.Execute))
+}
+
+func runProcess(execute func() error) int {
+	closeLogger, err := logging.Configure("hub-service")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure Hub logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := execute(); err != nil {
+		// Preserve Cobra's existing functional command-error output.
+		fmt.Println(err)
+		return 1
+	}
+	return 0
 }

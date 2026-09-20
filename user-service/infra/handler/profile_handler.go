@@ -8,7 +8,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strconv"
@@ -192,7 +192,7 @@ func (s *GrpcProfileService) GetProfileInfo(ctx context.Context, req *userpb.IdR
 // @Success 200 {object} sharepb.TotalResponseProto "Thông tin công khai của người dùng"
 // @Router /v3/user/profile/{access}/{id} [get]
 func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.SyncRequest) (*sharepb.TotalResponseProto, error) {
-	log.Printf("OKOK1")
+	slog.InfoContext(ctx, fmt.Sprintf("OKOK1"))
 	updated := s.SyncProvider.HasUpdated(ctx, fmt.Sprintf("time:profile:%d", req.Id), req.Timestamp)
 	if !updated {
 		return &sharepb.TotalResponseProto{}, nil
@@ -201,7 +201,7 @@ func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
-	log.Printf("OKOK")
+	slog.InfoContext(ctx, fmt.Sprintf("OKOK"))
 	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:profile:%d", req.Id), result.User.UpdatedAt.UnixMilli())
 
 	// Lấy tên province và ward từ hub service
@@ -312,7 +312,7 @@ func (s *GrpcProfileService) GenTileSessionToken(ctx context.Context, _ *sharepb
 		return nil, status.Errorf(codes.Internal, "gen tile session: %v", err)
 	}
 	sessionKStr := strconv.FormatUint(sessionK, 10)
-	log.Printf("gen tile session: %s, %s, %v", sessionKStr, sessionEncryptKey, expiresIn)
+	slog.InfoContext(ctx, fmt.Sprintf("gen tile session: %s, %s, %v", sessionKStr, sessionEncryptKey, expiresIn))
 	return &userpb.GenTileSessionTokenResponse{
 		SessionK:          sessionKStr,
 		SessionEncryptKey: sessionEncryptKey,

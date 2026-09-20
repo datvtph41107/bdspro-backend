@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"path/filepath"
 	"strings"
 	qh_domain "tqd/internal/domain/qh"
@@ -153,7 +153,7 @@ func (u *qhPlanningClassifyUsecase) RunOnce(ctx context.Context, batchSize int) 
 		u.classifyOne(ctx, &doc)
 
 		if err := u.documentRepo.Update(ctx, doc.ID, &doc); err != nil {
-			log.Printf("[QHPlanningClassify] update document %d lỗi: %v", doc.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] update document %d lỗi: %v", doc.ID, err))
 			continue
 		}
 		processed++
@@ -205,15 +205,15 @@ func (u *qhPlanningClassifyUsecase) classifyOne(ctx context.Context, doc *qh_dom
 		fileBytes, err = u.fileProvider.GetFile(ctx, doc.Filepath)
 		maxInline := u.policy.MaxInlineBytes
 		if err != nil {
-			log.Printf("[QHPlanningClassify] GetFile document %d lỗi, fallback filename: %v", doc.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] GetFile document %d lỗi, fallback filename: %v", doc.ID, err))
 		} else if len(fileBytes) > maxInline {
-			log.Printf("[QHPlanningClassify] document %d vượt max_inline_bytes (%d > %d), fallback filename", doc.ID, len(fileBytes), maxInline)
+			slog.WarnContext(ctx, fmt.Sprintf("[QHPlanningClassify] document %d vượt max_inline_bytes (%d > %d), fallback filename", doc.ID, len(fileBytes), maxInline))
 			fileBytes = nil
 		} else if len(fileBytes) > 0 {
 			prompt := fmt.Sprintf(classifyPromptContentTemplate, baseName, doc.RelativePath, ext)
 			content, model, err = u.assistant.ClassifyDocument(ctx, prompt, fileBytes, mimeType)
 			if err != nil {
-				log.Printf("[QHPlanningClassify] ClassifyDocument lỗi document %d, fallback filename: %v", doc.ID, err)
+				slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] ClassifyDocument lỗi document %d, fallback filename: %v", doc.ID, err))
 				fileBytes = nil
 			} else {
 				usedContentAI = true
@@ -226,7 +226,7 @@ func (u *qhPlanningClassifyUsecase) classifyOne(ctx context.Context, doc *qh_dom
 		prompt := fmt.Sprintf(classifyPromptFilenameTemplate, baseName, doc.RelativePath, ext)
 		content, model, err = u.assistant.GenerateContent(ctx, prompt, 512, 0.2)
 		if err != nil {
-			log.Printf("[QHPlanningClassify] gọi Gemini lỗi cho document %d: %v", doc.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] gọi Gemini lỗi cho document %d: %v", doc.ID, err))
 			doc.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusFailed)
 			doc.ClassifyError = "gemini: " + err.Error()
 			return
@@ -236,7 +236,7 @@ func (u *qhPlanningClassifyUsecase) classifyOne(ctx context.Context, doc *qh_dom
 
 	result, err := parseClassifyResult(content)
 	if err != nil {
-		log.Printf("[QHPlanningClassify] parse JSON Gemini lỗi cho document %d: %v (raw=%s)", doc.ID, err, content)
+		slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] parse JSON Gemini lỗi cho document %d: %v (raw=%s)", doc.ID, err, content))
 		doc.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusFailed)
 		doc.ClassifyError = "parse kết quả gemini: " + err.Error()
 		return
@@ -323,11 +323,11 @@ func (u *qhPlanningClassifyUsecase) refreshProjectStatus(ctx context.Context, pr
 		newStatus = enums.PlanningProcessStatusClassified
 	}
 	if err := u.projectRepo.UpdateProcessStatus(ctx, projectID, newStatus); err != nil {
-		log.Printf("[QHPlanningClassify] cập nhật trạng thái đồ án %d lỗi: %v", projectID, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] cập nhật trạng thái đồ án %d lỗi: %v", projectID, err))
 		return
 	}
 	if err := u.aiJobRepo.UpdateProcessStatusByProjectID(ctx, projectID, newStatus); err != nil {
-		log.Printf("[QHPlanningClassify] sync job AI đồ án %d lỗi: %v", projectID, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassify] sync job AI đồ án %d lỗi: %v", projectID, err))
 	}
 }
 

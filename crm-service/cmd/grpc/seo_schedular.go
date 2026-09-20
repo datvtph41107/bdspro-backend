@@ -5,18 +5,20 @@ import (
 	"crm/config"
 	"crm/initial"
 	"crm/internal/dto"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 )
 
 func runSeoScheduler(ctx context.Context, app *initial.InitialApp) {
 	if !config.AppProperties.Seo.GenerationJob.Enabled {
-		log.Println("SEO generation job disabled")
+		slog.WarnContext(ctx, strings.TrimSuffix(fmt.Sprintln("SEO generation job disabled"), "\n"))
 		<-ctx.Done()
 		return
 	}
 	if app == nil || app.SeoWorkerUsecase == nil {
-		log.Println("SEO generation job disabled: SeoWorkerUsecase is nil")
+		slog.WarnContext(ctx, strings.TrimSuffix(fmt.Sprintln("SEO generation job disabled: SeoWorkerUsecase is nil"), "\n"))
 		<-ctx.Done()
 		return
 	}
@@ -43,11 +45,11 @@ func runSeoScheduler(ctx context.Context, app *initial.InitialApp) {
 				Limit: batchSize, TriggerType: "scheduler", Reason: "daily seo generation job",
 			})
 			if err != nil {
-				log.Printf("seo generation job error: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("seo generation job error: %v", err))
 				continue
 			}
 			if result != nil {
-				log.Printf("seo generation job done scanned=%d success=%d failed=%d skipped=%d", result.Scanned, result.Success, result.Failed, result.Skipped)
+				slog.ErrorContext(ctx, fmt.Sprintf("seo generation job done scanned=%d success=%d failed=%d skipped=%d", result.Scanned, result.Success, result.Failed, result.Skipped))
 			}
 		}
 	}

@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -141,8 +142,7 @@ func (h *RegionGrpcHandler) CreateRegion(ctx context.Context, req *tqdpb.CreateR
 	if len(bytes.TrimSpace(req.Geometry)) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "geometry is required")
 	}
-
-	log.Printf("[CreateRegion] LayerID: %d, Name: %s", req.LayerId, req.Name)
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateRegion] LayerID: %d, Name: %s", req.LayerId, req.Name))
 
 	region, err := h.regionUsecase.Create(
 		ctx,
@@ -193,8 +193,7 @@ func (h *RegionGrpcHandler) UpdateRegion(ctx context.Context, req *tqdpb.UpdateR
 		lid := *req.LabelId
 		patch.LabelID = &lid
 	}
-
-	log.Printf("[UpdateRegion] RegionID: %d", req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[UpdateRegion] RegionID: %d", req.Id))
 
 	region, err := h.regionUsecase.Update(ctx, patch)
 	if err != nil {
@@ -226,8 +225,7 @@ func (h *RegionGrpcHandler) GetRegion(ctx context.Context, req *tqdpb.GetRegionR
 	if !updated {
 		return &tqdpb.RegionResponse{}, nil
 	}
-
-	log.Printf("[GetRegion] RegionID: %d", req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetRegion] RegionID: %d", req.Id))
 
 	region, err := h.regionUsecase.GetByID(ctx, req.Id)
 	if err != nil {
@@ -312,8 +310,7 @@ func (h *RegionGrpcHandler) DeleteRegion(ctx context.Context, req *tqdpb.DeleteR
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
-
-	log.Printf("[DeleteRegion] RegionID: %d", req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[DeleteRegion] RegionID: %d", req.Id))
 
 	if err := h.regionUsecase.Delete(ctx, req.Id); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -334,8 +331,7 @@ func (h *RegionGrpcHandler) SyncRegion(ctx context.Context, req *tqdpb.SyncRegio
 	if req.LabelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "labelId is required")
 	}
-
-	log.Printf("[SyncRegion] LayerID: %d, LabelID: %d", req.LayerId, req.LabelId)
+	slog.InfoContext(ctx, fmt.Sprintf("[SyncRegion] LayerID: %d, LabelID: %d", req.LayerId, req.LabelId))
 
 	result, err := h.regionUsecase.SyncRegion(
 		ctx,
@@ -362,8 +358,7 @@ func (h *RegionGrpcHandler) UpdateRegionProcessingStatus(ctx context.Context, re
 	if req.RegionId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "regionId is required")
 	}
-
-	log.Printf("[UpdateRegionProcessingStatus] RegionID: %d, Status: %d", req.RegionId, req.ProcessingStatus)
+	slog.InfoContext(ctx, fmt.Sprintf("[UpdateRegionProcessingStatus] RegionID: %d, Status: %d", req.RegionId, req.ProcessingStatus))
 
 	userID := _utils.GetOriginIdFromContext(ctx)
 	notes := ""

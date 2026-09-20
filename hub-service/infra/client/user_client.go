@@ -2,16 +2,18 @@ package client
 
 import (
 	"context"
+
+	hubrpc "hub/infra/rpc"
 	userpb "pb/types/user"
 )
 
 // @bind: hub/internal/interface.IUserClient
 type UserClient struct {
-	AdminClient userpb.AdminUserProfileServiceClient
+	AdminClient *hubrpc.AdminUserProfileClient
 }
 
 func NewUserClient(
-	adminClient userpb.AdminUserProfileServiceClient,
+	adminClient *hubrpc.AdminUserProfileClient,
 ) *UserClient {
 	return &UserClient{
 		AdminClient: adminClient,

@@ -2,33 +2,34 @@ package appointmentreminder
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
+	"common/logging"
 	emailsender "crm/infra/email_sender"
 	"crm/internal/usecase"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type AppointmentReminderJob struct {
 	appointmentReminderUsecase usecase.AppointmentReminderUsecase
 	emailSender                *emailsender.EmailSender
-	logger                     *flogging.FabricLogger
 }
 
 func NewAppointmentReminderJob(appointmentReminderUsecase usecase.AppointmentReminderUsecase, emailSender *emailsender.EmailSender) *AppointmentReminderJob {
 	return &AppointmentReminderJob{
 		appointmentReminderUsecase: appointmentReminderUsecase,
 		emailSender:                emailSender,
-		logger:                     flogging.MustGetLogger("appointment-reminder-job"),
 	}
 }
 
 func (j *AppointmentReminderJob) Run() {
-	reminders, err := j.appointmentReminderUsecase.GetReminders(context.Background(), 10)
+	ctx := context.Background()
+	reminders, err := j.appointmentReminderUsecase.GetReminders(ctx, 10)
 	if err != nil {
-		log.Println("Error getting reminders:", err)
+		logging.WithComponent(ctx, "appointment-reminder-job").Error(
+			"get appointment reminders failed",
+			slog.Any("error", err),
+		)
 		return
 	}
 	for _, reminder := range reminders {

@@ -4,7 +4,7 @@ import (
 	_redis "common/redis"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 	"user/internal/interface/providers"
 
@@ -27,7 +27,7 @@ func (r *RedisProvider) MGet(c context.Context, keys ...string) ([]interface{}, 
 
 	val, err := r.RedisService.Client.MGet(c, keys...).Result()
 	if err != nil {
-		log.Printf("Lỗi khi MGet từ Redis: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Lỗi khi MGet từ Redis: %v", err))
 		return nil, fmt.Errorf("lỗi khi MGet từ Redis: %w", err)
 	}
 

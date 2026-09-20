@@ -1,25 +1,26 @@
 package _db
 
 import (
-	"log"
+	"log/slog"
+	"os"
 	"reflect"
 )
 
-// // AutoMigrate tạo bảng nếu chưa có
-// Hàm AutoMigrate với Reflection
+// AutoMigrate creates the table when it does not exist.
+// This compatibility helper preserves its historical immediate-exit behavior.
 func AutoMigrate(e interface{}) {
-	// Kiểm tra kiểu của e và truyền vào cho AutoMigrate
 	val := reflect.ValueOf(e)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 	if val.Kind() != reflect.Struct {
-		log.Fatal("❌ Đối tượng truyền vào phải là một struct")
+		slog.Error("database migration requires a struct value")
+		os.Exit(1)
 	}
 
-	err := DB.AutoMigrate(e)
-	if err != nil {
-		log.Fatal("❌ Lỗi khi migrate database:", err)
+	if err := DB.AutoMigrate(e); err != nil {
+		slog.Error("database migration failed", slog.Any("error", err))
+		os.Exit(1)
 	}
-	log.Println("✅ Đã migrate database thành công!")
+	slog.Info("database migration completed")
 }

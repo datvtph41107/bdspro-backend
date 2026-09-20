@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -324,9 +324,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 					s.properties.CSKH.TeamIDs,
 				)
 				if err != nil {
-					log.Printf("Failed to create default support chat group for user %d: %v", infoEntity.ProfileID, err)
+					slog.ErrorContext(c, fmt.Sprintf("Failed to create default support chat group for user %d: %v", infoEntity.ProfileID, err))
 				} else {
-					log.Printf("Created default support chat group (ID: %d) for new user %d", conversationID, infoEntity.ProfileID)
+					slog.InfoContext(c, fmt.Sprintf("Created default support chat group (ID: %d) for new user %d", conversationID, infoEntity.ProfileID))
 				}
 			}()
 		}
@@ -342,7 +342,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 	if e.UserID != 0 {
 		_, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
 		if err != nil {
-			log.Printf("Failed to check account status: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to check account status: %v", err))
 		}
 		if !canLogin {
 			// Logout tài khoản nếu bị khóa
@@ -420,9 +420,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 				[]string{},
 			)
 			if err != nil {
-				log.Printf("Failed to send welcome notification: %v", err)
+				slog.ErrorContext(c, fmt.Sprintf("Failed to send welcome notification: %v", err))
 			} else {
-				log.Printf("Successfully sent welcome notification to user %d", infoEntity.ProfileID)
+				slog.InfoContext(c, fmt.Sprintf("Successfully sent welcome notification to user %d", infoEntity.ProfileID))
 			}
 		}()
 	}
@@ -439,41 +439,41 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 		// Lưu app state = "active" khi login thành công
 		if err := s.CacheProvider.SaveAppState(c, infoEntity.ProfileID, "active"); err != nil {
-			log.Printf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err))
 		}
 	}
 
 	// Diffie-Hellman key exchange: Mã hóa auth_key nếu client gửi public key
 	if otp.ClientPublicKey != "" {
-		log.Printf("[VerifyOTP] Starting DH key exchange...")
+		slog.InfoContext(c, fmt.Sprintf("[VerifyOTP] Starting DH key exchange..."))
 
 		// Decode client public key
 		clientPublicKey, err := _utils.DecodePublicKey(otp.ClientPublicKey)
 		if err != nil {
-			log.Printf("Failed to decode client public key: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to decode client public key: %v", err))
 		} else {
 
 			// Decode server private key
 			serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
 			if err != nil {
-				log.Printf("Failed to decode server private key: %v", err)
+				slog.ErrorContext(c, fmt.Sprintf("Failed to decode server private key: %v", err))
 			} else {
 
 				// Compute shared secret
 				sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
 				if err != nil {
-					log.Printf("Failed to compute shared secret: %v", err)
+					slog.ErrorContext(c, fmt.Sprintf("Failed to compute shared secret: %v", err))
 				} else {
 					sharedSecretHex := sharedSecret.Text(16)
 
 					// Encrypt auth_key with shared secret
 					encryptedAuthKey, err := _utils.EncryptAuthKeyXOR(e.AuthKey, sharedSecretHex)
 					if err != nil {
-						log.Printf("Failed to encrypt auth key: %v", err)
+						slog.ErrorContext(c, fmt.Sprintf("Failed to encrypt auth key: %v", err))
 					} else {
 						response.EncryptedAuthKey = encryptedAuthKey
 						response.ServerPublicKey = e.PublicKey
-						log.Printf("[VerifyOTP] DH key exchange completed successfully")
+						slog.InfoContext(c, fmt.Sprintf("[VerifyOTP] DH key exchange completed successfully"))
 					}
 				}
 			}
@@ -497,9 +497,8 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		if userAgent == "" {
 			userAgent = "Mobile-Client"
 		}
-
-		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
-			e.UserID, ipAddress, userAgent)
+		slog.InfoContext(c, fmt.Sprintf("Creating login history for user %d, IP: %s, UserAgent: %s",
+			e.UserID, ipAddress, userAgent))
 
 		success := true
 		historyDeviceID := otp.DeviceID
@@ -535,7 +534,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log auth history (OTP): %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log auth history (OTP): %v", err))
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -554,9 +553,9 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 			userAgent,                           // userAgent
 		)
 		if err != nil {
-			log.Printf("Failed to log login history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log login history: %v", err))
 		} else {
-			log.Printf("Successfully logged login history for user %d", e.UserID)
+			slog.InfoContext(c, fmt.Sprintf("Successfully logged login history for user %d", e.UserID))
 		}
 	}()
 
@@ -575,7 +574,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 
 				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
 				if err != nil {
-					log.Printf("Failed to update device with auth info after verify OTP: %v", err)
+					slog.ErrorContext(c, fmt.Sprintf("Failed to update device with auth info after verify OTP: %v", err))
 				}
 			}()
 		}
@@ -655,7 +654,7 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 			ipAddress,
 			userAgent,
 		); err != nil {
-			log.Printf("failed to log phone recovery audit: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("failed to log phone recovery audit: %v", err))
 		}
 	}
 
@@ -677,27 +676,26 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	if e.AuthKey == "" || e.PrivateKey == "" || e.PublicKey == "" {
 		return nil, _errors.ReturnError(400, "Tài khoản chưa được khởi tạo auth key. Vui lòng đăng ký lại")
 	}
-
-	log.Printf("[LoginWithKey] Starting DH key exchange for phone: %s", req.Phone)
+	slog.InfoContext(c, fmt.Sprintf("[LoginWithKey] Starting DH key exchange for phone: %s", req.Phone))
 
 	// 2. Decode server private key
 	serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
 	if err != nil {
-		log.Printf("Failed to decode server private key: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to decode server private key: %v", err))
 		return nil, _errors.ReturnError(500, "Lỗi xác thực")
 	}
 
 	// 3. Decode client public key
 	clientPublicKey, err := _utils.DecodePublicKey(req.ClientPublicKey)
 	if err != nil {
-		log.Printf("Failed to decode client public key: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to decode client public key: %v", err))
 		return nil, _errors.ReturnError(400, "Client public key không hợp lệ")
 	}
 
 	// 4. Compute shared secret
 	sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
 	if err != nil {
-		log.Printf("Failed to compute shared secret: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to compute shared secret: %v", err))
 		return nil, _errors.ReturnError(500, "Lỗi xác thực")
 	}
 
@@ -706,7 +704,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	// 5. Decrypt auth key từ client gửi lên
 	decryptedAuthKey, err := _utils.DecryptAuthKeyXOR(req.EncryptedAuthKey, sharedSecretHex)
 	if err != nil {
-		log.Printf("Failed to decrypt auth key: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to decrypt auth key: %v", err))
 		return nil, _errors.ReturnError(400, "Auth key không hợp lệ")
 	}
 
@@ -714,14 +712,13 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	if decryptedAuthKey != e.AuthKey {
 		return nil, _errors.ReturnError(401, "Auth key không đúng")
 	}
-
-	log.Printf("[LoginWithKey] Auth key validation successful!")
+	slog.InfoContext(c, fmt.Sprintf("[LoginWithKey] Auth key validation successful!"))
 
 	// 7. Kiểm tra account status
 	if e.UserID != 0 {
 		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, e.UserID)
 		if err != nil {
-			log.Printf("Failed to check account status: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to check account status: %v", err))
 		}
 		if isLocked || !canLogin {
 			return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên")
@@ -770,7 +767,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 
 		// Lưu app state = "active" khi login thành công
 		if err := s.CacheProvider.SaveAppState(c, infoEntity.ProfileID, "active"); err != nil {
-			log.Printf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to save app state for user %d: %v", infoEntity.ProfileID, err))
 		}
 	}
 
@@ -798,9 +795,8 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		if userAgent == "" {
 			userAgent = "Mobile-Client"
 		}
-
-		log.Printf("Creating login history for user %d (LoginWithKey), IP: %s, UserAgent: %s",
-			e.UserID, ipAddress, userAgent)
+		slog.InfoContext(c, fmt.Sprintf("Creating login history for user %d (LoginWithKey), IP: %s, UserAgent: %s",
+			e.UserID, ipAddress, userAgent))
 
 		success := true
 		historyPayload := dto.HistoryAuthCreateDTO{
@@ -821,7 +817,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log auth key history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log auth key history: %v", err))
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -840,9 +836,9 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 			userAgent,
 		)
 		if err != nil {
-			log.Printf("Failed to log login history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log login history: %v", err))
 		} else {
-			log.Printf("Successfully logged login history for user %d", e.UserID)
+			slog.InfoContext(c, fmt.Sprintf("Successfully logged login history for user %d", e.UserID))
 		}
 	}()
 
@@ -863,7 +859,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 
 				err := s.DeviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, e.ID, infoEntity.ProfileID)
 				if err != nil {
-					log.Printf("Failed to update device with auth info after login with key: %v", err)
+					slog.ErrorContext(c, fmt.Sprintf("Failed to update device with auth info after login with key: %v", err))
 				}
 			}()
 		}
@@ -979,15 +975,15 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 			PlanAt:         profile.PlanAt,
 			Type:           "REFRESH",
 		})
+		slog.
 
-		// Lưu timestamp mới vào cache để invalidate refresh token cũ
-		// currentTime := time.Now().Format(time.RFC3339)
-		// err = s.CacheProvider.SaveToken(c, props.ProfileID, currentTime, uint64(config.Properties.JWT.RefreshExpMinutes*60))
-		// if err != nil {
-		// 	log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
-		// }
-
-		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID)
+			// Lưu timestamp mới vào cache để invalidate refresh token cũ
+			// currentTime := time.Now().Format(time.RFC3339)
+			// err = s.CacheProvider.SaveToken(c, props.ProfileID, currentTime, uint64(config.Properties.JWT.RefreshExpMinutes*60))
+			// if err != nil {
+			// 	log.Printf("⚠️ [RefreshToken] Không thể lưu timestamp vào cache cho authID %d: %v", props.AuthID, err)
+			// }
+			InfoContext(c, fmt.Sprintf("✅ [RefreshToken] Refresh token thành công cho authID %d", props.AuthID))
 		response := &dto.RefreshResponse{
 			AccessToken:  newAccessToken,
 			RefreshToken: newRefreshToken,
@@ -1114,7 +1110,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 
 		// Lưu app state = "inactive" khi logout
 		if err := s.CacheProvider.SaveAppState(c, profileID, "inactive"); err != nil {
-			log.Printf("Failed to save app state for user %d: %v", profileID, err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to save app state for user %d: %v", profileID, err))
 		}
 	}
 
@@ -1317,13 +1313,13 @@ func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountR
 
 	// Xóa vĩnh viễn profile trong user-service
 	if err := s.ProfileProvider.HardDeleteProfile(c, profileId); err != nil {
-		log.Printf("Failed to hard delete profile: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to hard delete profile: %v", err))
 		return nil, _errors.ReturnError(500, "Lỗi khi xóa thông tin tài khoản")
 	}
 
 	// Xóa vĩnh viễn auth method trong auth-service
 	if err := s.AuthMethodRepo.Delete(c, authId); err != nil {
-		log.Printf("Failed to hard delete auth method: %v", err)
+		slog.ErrorContext(c, fmt.Sprintf("Failed to hard delete auth method: %v", err))
 		return nil, _errors.ReturnError(500, "Lỗi khi xóa phương thức xác thực")
 	}
 
@@ -1516,22 +1512,22 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *auth.UserOTPEntit
 	if s.ZnsProvider != nil {
 		result, err := s.ZnsProvider.SendOTPZNS(c, phone, otp)
 		if err != nil {
-			log.Printf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err)
+			slog.ErrorContext(c, fmt.Sprintf("⚠️ [ZNS] Lỗi khi gửi OTP qua ZNS cho phone %s: %v", phone, err))
 			// ZNS lỗi → smsChannel = "sms"
 			smsChannel = "sms"
 		} else {
 			if success, ok := result["success"].(bool); ok && success {
-				log.Printf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone)
+				slog.InfoContext(c, fmt.Sprintf("✅ [ZNS] Đã gửi OTP thành công cho phone %s", phone))
 				// ZNS thành công → smsChannel = "zalo"
 				smsChannel = "zalo"
 			} else {
-				log.Printf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"])
+				slog.InfoContext(c, fmt.Sprintf("⚠️ [ZNS] Gửi OTP thất bại cho phone %s: %v", phone, result["message"]))
 				// ZNS thất bại → smsChannel = "sms"
 				smsChannel = "sms"
 			}
 		}
 	} else {
-		log.Printf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS")
+		slog.InfoContext(c, fmt.Sprintf("⚠️ [ZNS] ZnsProvider chưa được khởi tạo, không gửi OTP qua ZNS"))
 		// Không có ZNS provider → smsChannel = "sms"
 		smsChannel = "sms"
 	}
@@ -1544,9 +1540,9 @@ func (s *AuthUsecase) SendNewOTP(c context.Context, otpEntity *auth.UserOTPEntit
 		message := strings.ReplaceAll(template, "{OTP}", otp)
 		_, err := s.SMSProvider.SendSMS(c, phone, "BDS Pro", message)
 		if err != nil {
-			log.Printf("⚠️ [SMS] Lỗi khi gửi OTP qua SMS cho phone %s: %v", phone, err)
+			slog.ErrorContext(c, fmt.Sprintf("⚠️ [SMS] Lỗi khi gửi OTP qua SMS cho phone %s: %v", phone, err))
 		} else {
-			log.Printf("✅ [SMS] Đã gửi OTP thành công cho phone %s", phone)
+			slog.InfoContext(c, fmt.Sprintf("✅ [SMS] Đã gửi OTP thành công cho phone %s", phone))
 			smsChannel = "sms"
 		}
 	}
@@ -1853,9 +1849,8 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 		if userAgent == "" {
 			userAgent = "QR-Client"
 		}
-
-		log.Printf("Creating login history for user %d (QR), IP: %s, UserAgent: %s",
-			authEntity.UserID, ipAddress, userAgent)
+		slog.InfoContext(c, fmt.Sprintf("Creating login history for user %d (QR), IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent))
 
 		success := true
 		historyPayload := dto.HistoryAuthCreateDTO{
@@ -1876,7 +1871,7 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log QR auth history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log QR auth history: %v", err))
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -1895,9 +1890,9 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 			userAgent,                                     // userAgent
 		)
 		if err != nil {
-			log.Printf("Failed to log QR login history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log QR login history: %v", err))
 		} else {
-			log.Printf("Successfully logged QR login history for user %d", authEntity.UserID)
+			slog.InfoContext(c, fmt.Sprintf("Successfully logged QR login history for user %d", authEntity.UserID))
 		}
 	}()
 
@@ -1916,9 +1911,10 @@ func (s *AuthUsecase) GenRefreshToken(c context.Context, authEntity *auth.AuthMe
 	s.CacheProvider.SaveToken(c, authEntity.UserID, fmt.Sprintf("%d", validFromTimestamp), s.properties.JwtRefreshExpMinutes*60)
 
 	refreshToken := s.GetRefreshToken(c, authEntity, sessionId)
-	// Không set cookie nữa, trả refreshToken trong response body
-	// s.CookieProvider.SetRefreshToken(c, refreshToken)
-	log.Printf("[GenRefreshToken] authID=%d validFrom=%d", authEntity.ID, validFromTimestamp)
+	slog.
+		// Không set cookie nữa, trả refreshToken trong response body
+		// s.CookieProvider.SetRefreshToken(c, refreshToken)
+		InfoContext(c, fmt.Sprintf("[GenRefreshToken] authID=%d validFrom=%d", authEntity.ID, validFromTimestamp))
 	return refreshToken
 }
 
@@ -1943,12 +1939,11 @@ func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *auth.AuthMe
 
 		// Kiểm tra profile có tồn tại không
 		if profile == nil {
-			log.Printf("Cannot log login history: profile is nil for user %d", authEntity.UserID)
+			slog.ErrorContext(c, fmt.Sprintf("Cannot log login history: profile is nil for user %d", authEntity.UserID))
 			return
 		}
-
-		log.Printf("Creating login history for user %d, IP: %s, UserAgent: %s",
-			authEntity.UserID, ipAddress, userAgent)
+		slog.InfoContext(c, fmt.Sprintf("Creating login history for user %d, IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent))
 
 		success := true
 		historyPayload := dto.HistoryAuthCreateDTO{
@@ -1966,7 +1961,7 @@ func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *auth.AuthMe
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log auth history (generic): %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log auth history (generic): %v", err))
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -1985,9 +1980,9 @@ func (s *AuthUsecase) LogLoginHistory(c context.Context, authEntity *auth.AuthMe
 			userAgent,                           // userAgent
 		)
 		if err != nil {
-			log.Printf("Failed to log login history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log login history: %v", err))
 		} else {
-			log.Printf("Successfully logged login history for user %d", authEntity.UserID)
+			slog.InfoContext(c, fmt.Sprintf("Successfully logged login history for user %d", authEntity.UserID))
 		}
 	}()
 }
@@ -2056,7 +2051,7 @@ func (s *AuthUsecase) logHistoryAuth(ctx context.Context, payload *dto.HistoryAu
 		defer cancel()
 
 		if err := s.NotificationClient.CreateHistoryAuth(timeoutCtx, &p); err != nil {
-			log.Printf("failed to create auth history: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("failed to create auth history: %v", err))
 		}
 	}(prepared)
 }
@@ -2204,7 +2199,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 	if adminAuthEntity.UserID != 0 {
 		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(c, adminAuthEntity.UserID)
 		if err != nil {
-			log.Printf("Failed to check account status: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to check account status: %v", err))
 		}
 		if isLocked || !canLogin {
 			// Logout tài khoản nếu bị khóa
@@ -2271,9 +2266,8 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		if userAgent == "" {
 			userAgent = "Admin-Client"
 		}
-
-		log.Printf("Creating admin history for user %d, IP: %s, UserAgent: %s",
-			adminAuthEntity.UserID, ipAddress, userAgent)
+		slog.InfoContext(c, fmt.Sprintf("Creating admin history for user %d, IP: %s, UserAgent: %s",
+			adminAuthEntity.UserID, ipAddress, userAgent))
 
 		success := true
 		historyDeviceID := adminDeviceID
@@ -2298,7 +2292,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(c, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log admin auth history: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log admin auth history: %v", err))
 		}
 
 		err := s.NotificationClient.CreateAdminHistory(contextTimeout,
@@ -2317,9 +2311,9 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 			userAgent,                                     // userAgent
 		)
 		if err != nil {
-			log.Printf("Failed to log admin login: %v", err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to log admin login: %v", err))
 		} else {
-			log.Printf("Successfully logged admin login for user %d", adminAuthEntity.UserID)
+			slog.InfoContext(c, fmt.Sprintf("Successfully logged admin login for user %d", adminAuthEntity.UserID))
 		}
 	}()
 
@@ -2726,7 +2720,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	if authEntity.UserID != 0 {
 		isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(ctx, authEntity.UserID)
 		if err != nil {
-			log.Printf("Failed to check account status: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to check account status: %v", err))
 		}
 		if isLocked || !canLogin {
 			// Logout tài khoản nếu bị khóa
@@ -2777,7 +2771,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 	// Lưu app state = "active" khi login thành công
 	if profile.ProfileID != 0 {
 		if err := s.CacheProvider.SaveAppState(ctx, profile.ProfileID, "active"); err != nil {
-			log.Printf("Failed to save app state for user %d: %v", profile.ProfileID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to save app state for user %d: %v", profile.ProfileID, err))
 		}
 	}
 
@@ -2798,9 +2792,8 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		if userAgent == "" {
 			userAgent = "Password-Client"
 		}
-
-		log.Printf("Creating password login history for user %d, IP: %s, UserAgent: %s",
-			authEntity.UserID, ipAddress, userAgent)
+		slog.InfoContext(ctx, fmt.Sprintf("Creating password login history for user %d, IP: %s, UserAgent: %s",
+			authEntity.UserID, ipAddress, userAgent))
 
 		success := true
 		historyDeviceID := deviceID
@@ -2825,7 +2818,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		historyPayload.UserAgent = userAgent
 		preparedHistory := s.prepareHistoryAuthPayload(ctx, &historyPayload)
 		if err := s.NotificationClient.CreateHistoryAuth(contextTimeout, &preparedHistory); err != nil {
-			log.Printf("Failed to log password auth history: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to log password auth history: %v", err))
 		}
 		if authEntity.Provider != "ADMIN" {
 			return
@@ -2847,9 +2840,9 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 			userAgent,                                     // userAgent
 		)
 		if err != nil {
-			log.Printf("Failed to log admin login: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to log admin login: %v", err))
 		} else {
-			log.Printf("Successfully logged admin login for user %d", authEntity.UserID)
+			slog.InfoContext(ctx, fmt.Sprintf("Successfully logged admin login for user %d", authEntity.UserID))
 		}
 	}()
 
@@ -2964,7 +2957,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	// Kiểm tra token có trong cache không (validate bằng issuedAt)
 	cachedTimestamp, err := s.CacheProvider.GetToken(ctx, props.ProfileID)
 	if err != nil {
-		log.Printf("⚠️ [LoginWithToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err)
+		slog.InfoContext(ctx, fmt.Sprintf("⚠️ [LoginWithToken] Không tìm thấy token trong cache cho authID %d: %v", props.AuthID, err))
 		// Không tìm thấy thì vẫn cho login tiếp
 	} else {
 		invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
@@ -2988,7 +2981,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	// Check account status
 	isLocked, canLogin, err := s.ProfileProvider.CheckAccountStatus(ctx, props.ProfileID)
 	if err != nil {
-		log.Printf("Failed to check account status: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to check account status: %v", err))
 	}
 	if isLocked || !canLogin {
 		return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ")
@@ -3224,14 +3217,14 @@ func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pa
 // removeProfileIdFromDevices xóa profileId khỏi tất cả devices của user
 func (s *AuthUsecase) removeProfileIdFromDevices(ctx context.Context, profileID uint64) {
 	if s.DeviceRepo == nil {
-		log.Printf("DeviceRepo is nil, skipping remove profileId from devices")
+		slog.WarnContext(ctx, fmt.Sprintf("DeviceRepo is nil, skipping remove profileId from devices"))
 		return
 	}
 
 	// Lấy tất cả devices của profileId
 	devices, err := s.DeviceRepo.ListByProfileID(ctx, profileID)
 	if err != nil {
-		log.Printf("Failed to list devices for profileId %d: %v", profileID, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to list devices for profileId %d: %v", profileID, err))
 		return
 	}
 
@@ -3239,12 +3232,12 @@ func (s *AuthUsecase) removeProfileIdFromDevices(ctx context.Context, profileID 
 	for _, device := range devices {
 		device.ProfileID = nil
 		if _, err := s.DeviceRepo.Update(ctx, device); err != nil {
-			log.Printf("Failed to remove profileId from device %s: %v", device.DeviceID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to remove profileId from device %s: %v", device.DeviceID, err))
 		}
 	}
 
 	if len(devices) > 0 {
-		log.Printf("Removed profileId from %d device(s) for profileId %d", len(devices), profileID)
+		slog.InfoContext(ctx, fmt.Sprintf("Removed profileId from %d device(s) for profileId %d", len(devices), profileID))
 	}
 }
 
@@ -3264,7 +3257,7 @@ func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint
 func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, sessionId uint64, organizationId *uint64) (string, error) {
 	authMethod, err := s.AuthMethodRepo.FindByID(ctx, authId)
 	if err != nil {
-		log.Printf("GenerateAccessToken error - FindByID failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("GenerateAccessToken error - FindByID failed: %v", err))
 		return "", err
 	}
 
@@ -3273,13 +3266,13 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 	originID, err = s.CrmProvider.GetOriginID(originCtx, authMethod.UserID)
 	cancelOriginLookup()
 	if err != nil {
-		log.Printf("Warning: Cannot get origin ID from CRM (service may be down), using 0: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Warning: Cannot get origin ID from CRM (service may be down), using 0: %v", err))
 		originID = 0
 	}
 
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
 	if err != nil {
-		log.Printf("GenerateAccessToken error - GetByProfileID failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("GenerateAccessToken error - GetByProfileID failed: %v", err))
 		return "", err
 	}
 
@@ -3298,10 +3291,9 @@ func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, se
 		Type:           _jwt.AccessToken,
 	})
 	if err != nil {
-		log.Printf("GenerateAccessToken error - GenerateToken failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("GenerateAccessToken error - GenerateToken failed: %v", err))
 		return "", err
 	}
-
-	log.Printf("GenerateAccessToken success: authId=%d, originID=%d", authId, originID)
+	slog.InfoContext(ctx, fmt.Sprintf("GenerateAccessToken success: authId=%d, originID=%d", authId, originID))
 	return accessToken, nil
 }

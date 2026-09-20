@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"strconv"
 	"sync"
@@ -431,7 +431,7 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 					u.polygonFilterWithZoom(filter, regionZoom),
 				)
 				if err != nil {
-					log.Printf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err)
+					slog.ErrorContext(ctx, fmt.Sprintf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err))
 					return
 				}
 				parcelCount = count
@@ -525,7 +525,7 @@ func (u *parcelUsecase) FindMapTargetsByPolygon(
 				u.polygonFilterWithZoom(filter, effectiveZoom),
 			)
 			if err != nil {
-				log.Printf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("[FindMapTargetsByPolygon] CountParcelsByPolygon error: %v", err))
 				return
 			}
 			parcelCount = count
@@ -613,7 +613,7 @@ func (u *parcelUsecase) CheckingPolygon(
 		r, _, err := u.parcelRepo.FindRegionsByPolygon(ctx, points, intersect, effectiveZoom, limit, offset, filter, true)
 		recordDuration(&findRegionsMs, start)
 		if err != nil {
-			log.Printf("[CheckingPolygon] FindRegions error: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[CheckingPolygon] FindRegions error: %v", err))
 			return
 		}
 		regions = r
@@ -629,7 +629,7 @@ func (u *parcelUsecase) CheckingPolygon(
 		)
 		recordDuration(&countParcelsMs, start)
 		if err != nil {
-			log.Printf("[CheckingPolygon] CountParcelsByPolygon error: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[CheckingPolygon] CountParcelsByPolygon error: %v", err))
 			return
 		}
 		parcelCount = count
@@ -643,7 +643,7 @@ func (u *parcelUsecase) CheckingPolygon(
 			a, rows, err := u.parcelRepo.SummarizePolygonAnalysis(ctx, points, intersect, effectiveZoom, filter, true)
 			recordDuration(&analysisMs, start)
 			if err != nil {
-				log.Printf("[CheckingPolygon] Analysis error: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("[CheckingPolygon] Analysis error: %v", err))
 				return
 			}
 			analysis = a
@@ -661,7 +661,7 @@ func (u *parcelUsecase) CheckingPolygon(
 			rows, err := u.parcelRepo.GetPolygonQuickInfo(ctx, points, intersect, effectiveZoom, filter)
 			recordDuration(&quickInfoMs, start)
 			if err != nil {
-				log.Printf("[CheckingPolygon] GetPolygonQuickInfo error: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("[CheckingPolygon] GetPolygonQuickInfo error: %v", err))
 				return
 			}
 			if rows == nil {
@@ -700,9 +700,7 @@ func (u *parcelUsecase) CheckingPolygon(
 	if area > 1.0 {
 		resp.Warning = fmt.Sprintf("Diện tích vùng chọn lớn (%.2f ha). Kết quả thửa đất có thể không đầy đủ.", area*100)
 	}
-
-	log.Printf(
-		"[CheckingPolygon] timing findRegions=%v quickInfo=%v countParcels=%v analysis=%v total=%v | regions=%d parcelCount=%d quickLayers=%v includeAnalysis=%v",
+	slog.InfoContext(ctx, fmt.Sprintf("[CheckingPolygon] timing findRegions=%v quickInfo=%v countParcels=%v analysis=%v total=%v | regions=%d parcelCount=%d quickLayers=%v includeAnalysis=%v",
 		findRegionsMs,
 		quickInfoMs,
 		countParcelsMs,
@@ -711,7 +709,7 @@ func (u *parcelUsecase) CheckingPolygon(
 		len(regions),
 		parcelCount,
 		hasQuickLayers,
-		includeAnalysis,
+		includeAnalysis),
 	)
 
 	return resp, nil
@@ -743,7 +741,7 @@ func (u *parcelUsecase) attachPolygonParcelCount(
 
 	count, err := u.parcelRepo.CountParcelsByPolygon(ctx, points, intersect, u.polygonFilterWithZoom(filter, zoom))
 	if err != nil {
-		log.Printf("[attachPolygonParcelCount] error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[attachPolygonParcelCount] error: %v", err))
 		return
 	}
 	analysis.ParcelCount = count
@@ -905,15 +903,15 @@ func (u *parcelUsecase) resolveParcelPlanning(ctx context.Context, opts parcelPl
 
 	parcelInfo, infoErr := u.parcelRepo.GetParcelInfo(ctx, opts.ParcelID)
 	if infoErr != nil {
-		log.Printf("[%s] Failed to fetch parcel info for parcel %d: %v",
-			opts.LogPrefix, opts.ParcelID, infoErr)
+		slog.ErrorContext(ctx, fmt.Sprintf("[%s] Failed to fetch parcel info for parcel %d: %v",
+			opts.LogPrefix, opts.ParcelID, infoErr))
 	}
 
 	layerIDs := extractLayerIDsV2(rows)
 	legalDocsMap, legalErr := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if legalErr != nil {
-		log.Printf("[%s] Failed to fetch legal docs for parcel %d: %v",
-			opts.LogPrefix, opts.ParcelID, legalErr)
+		slog.ErrorContext(ctx, fmt.Sprintf("[%s] Failed to fetch legal docs for parcel %d: %v",
+			opts.LogPrefix, opts.ParcelID, legalErr))
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 
@@ -1727,7 +1725,7 @@ func (u *parcelUsecase) GetParcelDetail(ctx context.Context, parcelID uint64) (*
 	layerIDs := extractLayerIDsV2(rows)
 	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if err != nil {
-		log.Printf("[GetParcelDetail] Failed to fetch legal docs: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelDetail] Failed to fetch legal docs: %v", err))
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 
@@ -1804,7 +1802,7 @@ func (u *parcelUsecase) GetParcelLayers(ctx context.Context, parcelID uint64, pa
 	layerIDs := extractLayerIDsV2(rows)
 	legalDocsMap, err := u.layerLegalRepo.GetByLayerIDs(ctx, layerIDs)
 	if err != nil {
-		log.Printf("[GetParcelLayers] Failed to fetch legal docs: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelLayers] Failed to fetch legal docs: %v", err))
 		legalDocsMap = make(map[uint64][]*qh_domain.QHLayerLegal)
 	}
 

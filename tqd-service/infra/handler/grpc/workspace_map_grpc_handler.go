@@ -3,7 +3,8 @@ package handler_grpc
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
@@ -316,7 +317,7 @@ func (h *MapWorkspaceGrpcHandler) ListFollowedParcels(
 
 	result, err := h.usecase.ListFollowedParcels(ctx, userID, pagable)
 	if err != nil {
-		log.Printf("[DEBUG][Handler][ListFollowedParcels][ERROR] userID=%d err=%v", userID, err)
+		slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Handler][ListFollowedParcels][ERROR] userID=%d err=%v", userID, err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -333,9 +334,8 @@ func (h *MapWorkspaceGrpcHandler) ListFollowedParcels(
 			items = append(items, followedDTOToProto(item))
 		}
 	} else {
-		log.Printf(
-			"[DEBUG][Handler][ListFollowedParcels][USECASE_RESULT] userID=%d resultNil=true",
-			userID,
+		slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Handler][ListFollowedParcels][USECASE_RESULT] userID=%d resultNil=true",
+			userID),
 		)
 	}
 
@@ -360,8 +360,7 @@ func (h *MapWorkspaceGrpcHandler) FollowParcel(
 	if req.GetParcelId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcelId is required")
 	}
-
-	log.Printf("[FollowParcel] UserID: %d, ParcelID: %d", userID, req.GetParcelId())
+	slog.InfoContext(ctx, fmt.Sprintf("[FollowParcel] UserID: %d, ParcelID: %d", userID, req.GetParcelId()))
 
 	id, err := h.usecase.FollowParcel(ctx, dto.FollowParcelRequestDTO{
 		UserID:   userID,
@@ -369,7 +368,7 @@ func (h *MapWorkspaceGrpcHandler) FollowParcel(
 		Note:     req.GetNote(),
 	})
 	if err != nil {
-		log.Printf("[FollowParcel] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[FollowParcel] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -392,12 +391,10 @@ func (h *MapWorkspaceGrpcHandler) RemoveFollowedParcel(
 	if req.GetFollowId() == 0 && req.GetParcelId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "followId or parcelId is required")
 	}
-
-	log.Printf(
-		"[RemoveFollowedParcel] UserID: %d, FollowID: %d, ParcelID: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[RemoveFollowedParcel] UserID: %d, FollowID: %d, ParcelID: %d",
 		userID,
 		req.GetFollowId(),
-		req.GetParcelId(),
+		req.GetParcelId()),
 	)
 
 	err = h.usecase.RemoveFollowedParcel(ctx, dto.RemoveFollowedParcelRequestDTO{
@@ -406,7 +403,7 @@ func (h *MapWorkspaceGrpcHandler) RemoveFollowedParcel(
 		ParcelID: req.GetParcelId(),
 	})
 	if err != nil {
-		log.Printf("[RemoveFollowedParcel] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[RemoveFollowedParcel] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -427,19 +424,17 @@ func (h *MapWorkspaceGrpcHandler) ListViewHistory(
 	}
 
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
-
-	log.Printf(
-		"[ListViewHistory] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[ListViewHistory] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
 		userID,
 		pagable.GetPage(),
 		pagable.GetSize(),
 		pagable.GetLimit(),
-		pagable.GetOffset(),
+		pagable.GetOffset()),
 	)
 
 	result, err := h.usecase.ListViewHistory(ctx, userID, pagable)
 	if err != nil {
-		log.Printf("[ListViewHistory] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListViewHistory] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -456,12 +451,10 @@ func (h *MapWorkspaceGrpcHandler) ListViewHistory(
 			items = append(items, historyDTOToProto(item))
 		}
 	}
-
-	log.Printf(
-		"[ListViewHistory] UserID: %d, Total: %d, Items: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[ListViewHistory] UserID: %d, Total: %d, Items: %d",
 		userID,
 		total,
-		len(items),
+		len(items)),
 	)
 
 	return &tqdpb.ListViewHistoryResponse{
@@ -485,14 +478,12 @@ func (h *MapWorkspaceGrpcHandler) AddViewHistory(
 	if req.GetEntityId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "entityId is required")
 	}
-
-	log.Printf(
-		"[AddViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[AddViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d",
 		userID,
 		req.GetEntityType(),
 		req.GetEntityId(),
 		req.GetParcelId(),
-		req.GetRegionId(),
+		req.GetRegionId()),
 	)
 
 	id, err := h.usecase.AddViewHistory(ctx, dto.AddViewHistoryRequestDTO{
@@ -505,7 +496,7 @@ func (h *MapWorkspaceGrpcHandler) AddViewHistory(
 		Zoom:       req.GetZoom(),
 	})
 	if err != nil {
-		log.Printf("[AddViewHistory] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[AddViewHistory] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -528,16 +519,14 @@ func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
 	if req.GetEntityId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "entityId is required")
 	}
-
-	log.Printf(
-		"[TrackViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d, CountIntent: %v, VisibleMs: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[TrackViewHistory] UserID: %d, EntityType: %d, EntityID: %d, ParcelID: %d, RegionID: %d, CountIntent: %v, VisibleMs: %d",
 		userID,
 		req.GetEntityType(),
 		req.GetEntityId(),
 		req.GetParcelId(),
 		req.GetRegionId(),
 		req.GetCountIntent(),
-		req.GetVisibleMs(),
+		req.GetVisibleMs()),
 	)
 
 	result, err := h.usecase.TrackViewHistory(ctx, dto.TrackViewHistoryRequestDTO{
@@ -568,7 +557,7 @@ func (h *MapWorkspaceGrpcHandler) TrackViewHistory(
 		MetadataJSON: req.GetMetadataJson(),
 	})
 	if err != nil {
-		log.Printf("[TrackViewHistory] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[TrackViewHistory] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -594,15 +583,14 @@ func (h *MapWorkspaceGrpcHandler) RemoveViewHistory(
 	if req.GetHistoryId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "historyId is required")
 	}
-
-	log.Printf("[RemoveViewHistory] UserID: %d, HistoryID: %d", userID, req.GetHistoryId())
+	slog.InfoContext(ctx, fmt.Sprintf("[RemoveViewHistory] UserID: %d, HistoryID: %d", userID, req.GetHistoryId()))
 
 	err = h.usecase.RemoveViewHistory(ctx, dto.RemoveViewHistoryRequestDTO{
 		UserID:    userID,
 		HistoryID: req.GetHistoryId(),
 	})
 	if err != nil {
-		log.Printf("[RemoveViewHistory] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[RemoveViewHistory] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -621,11 +609,10 @@ func (h *MapWorkspaceGrpcHandler) ClearViewHistory(
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("[ClearViewHistory] UserID: %d", userID)
+	slog.InfoContext(ctx, fmt.Sprintf("[ClearViewHistory] UserID: %d", userID))
 
 	if err := h.usecase.ClearViewHistory(ctx, userID); err != nil {
-		log.Printf("[ClearViewHistory] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ClearViewHistory] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -645,19 +632,17 @@ func (h *MapWorkspaceGrpcHandler) ListGeneratedReports(
 	}
 
 	pagable := _dto.NewPagableFromGrpc(&req.Page, &req.Size, nil)
-
-	log.Printf(
-		"[ListGeneratedReports] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[ListGeneratedReports] UserID: %d, Page: %d, Size: %d, Limit: %d, Offset: %d",
 		userID,
 		pagable.GetPage(),
 		pagable.GetSize(),
 		pagable.GetLimit(),
-		pagable.GetOffset(),
+		pagable.GetOffset()),
 	)
 
 	result, err := h.usecase.ListGeneratedReports(ctx, userID, pagable)
 	if err != nil {
-		log.Printf("[ListGeneratedReports] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ListGeneratedReports] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -674,12 +659,10 @@ func (h *MapWorkspaceGrpcHandler) ListGeneratedReports(
 			items = append(items, reportDTOToProto(item))
 		}
 	}
-
-	log.Printf(
-		"[ListGeneratedReports] UserID: %d, Total: %d, Items: %d",
+	slog.InfoContext(ctx, fmt.Sprintf("[ListGeneratedReports] UserID: %d, Total: %d, Items: %d",
 		userID,
 		total,
-		len(items),
+		len(items)),
 	)
 
 	return &tqdpb.ListGeneratedReportsResponse{
@@ -716,12 +699,11 @@ func (h *MapWorkspaceGrpcHandler) GetGeneratedReport(
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
-
-	log.Printf("[GetGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+	slog.InfoContext(ctx, fmt.Sprintf("[GetGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId()))
 
 	item, err := h.usecase.GetGeneratedReport(ctx, userID, req.GetReportId())
 	if err != nil {
-		log.Printf("[GetGeneratedReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetGeneratedReport] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -744,15 +726,14 @@ func (h *MapWorkspaceGrpcHandler) RemoveGeneratedReport(
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
-
-	log.Printf("[RemoveGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+	slog.InfoContext(ctx, fmt.Sprintf("[RemoveGeneratedReport] UserID: %d, ReportID: %d", userID, req.GetReportId()))
 
 	err = h.usecase.RemoveGeneratedReport(ctx, dto.RemoveGeneratedReportRequestDTO{
 		UserID:   userID,
 		ReportID: req.GetReportId(),
 	})
 	if err != nil {
-		log.Printf("[RemoveGeneratedReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[RemoveGeneratedReport] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -775,12 +756,11 @@ func (h *MapWorkspaceGrpcHandler) RegenerateReport(
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
-
-	log.Printf("[RegenerateReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+	slog.InfoContext(ctx, fmt.Sprintf("[RegenerateReport] UserID: %d, ReportID: %d", userID, req.GetReportId()))
 
 	err = h.usecase.RegenerateReport(ctx, userID, req.GetReportId())
 	if err != nil {
-		log.Printf("[RegenerateReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[RegenerateReport] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 
@@ -803,12 +783,11 @@ func (h *MapWorkspaceGrpcHandler) ShareReport(
 	if req.GetReportId() == 0 {
 		return nil, status.Error(codes.InvalidArgument, "reportId is required")
 	}
-
-	log.Printf("[ShareReport] UserID: %d, ReportID: %d", userID, req.GetReportId())
+	slog.InfoContext(ctx, fmt.Sprintf("[ShareReport] UserID: %d, ReportID: %d", userID, req.GetReportId()))
 
 	result, err := h.usecase.ShareReport(ctx, userID, req.GetReportId())
 	if err != nil {
-		log.Printf("[ShareReport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ShareReport] Error: %v", err))
 		return nil, workspaceStatusError(err)
 	}
 

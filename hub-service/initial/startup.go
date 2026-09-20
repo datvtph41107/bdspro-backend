@@ -1,11 +1,8 @@
 package initial
 
 import (
-	"hub/config"
 	"hub/infra/handler"
 	"hub/internal/usecase"
-
-	"github.com/hyperledger/fabric/common/flogging"
 )
 
 type InitialApp struct {
@@ -21,7 +18,6 @@ type InitialApp struct {
 	ApiKeyHandler           *handler.ApiKeyHandler
 	SystemConfigUsecase     *usecase.SystemConfigUsecase
 	ApiKeyUsecase           usecase.IApiKeyUsecase
-	Logger                  *flogging.FabricLogger
 	InteractiveEventHandler *handler.InteractiveEventHandler
 	ErrorLogHandler         *handler.ErrorLogHandler
 	ApplinkHandler          *handler.ApplinkHandler
@@ -43,7 +39,6 @@ func NewInitialApp(
 	interactiveEventHandler *handler.InteractiveEventHandler,
 	errorLogHandler *handler.ErrorLogHandler,
 	appLinkHandler *handler.ApplinkHandler,
-	runtime config.Runtime,
 ) *InitialApp {
 	return &InitialApp{
 		EventQueueService:       eventQueueService,
@@ -58,7 +53,6 @@ func NewInitialApp(
 		ApiKeyHandler:           apiKeyHandler,
 		SystemConfigUsecase:     systemConfigUsecase,
 		ApiKeyUsecase:           apiKeyUsecase,
-		Logger:                  flogging.MustGetLogger(runtime.ServerName),
 		InteractiveEventHandler: interactiveEventHandler,
 		ErrorLogHandler:         errorLogHandler,
 		ApplinkHandler:          appLinkHandler,

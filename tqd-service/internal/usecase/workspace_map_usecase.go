@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -506,32 +506,27 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 	if userID == 0 {
 		return nil, workspaceUserIDRequired()
 	}
-
-	log.Printf(
-		"[DEBUG][Usecase][ListFollowedParcels][START] userID=%d limit=%d offset=%d page=%d size=%d",
+	slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][START] userID=%d limit=%d offset=%d page=%d size=%d",
 		userID,
 		pagable.GetLimit(),
 		pagable.GetOffset(),
 		pagable.GetPage(),
-		pagable.GetSize(),
+		pagable.GetSize()),
 	)
 
 	follows, total, err := u.repo.ListFollowedParcels(ctx, userID, pagable.GetLimit(), pagable.GetOffset())
 	if err != nil {
-		log.Printf(
-			"[DEBUG][Usecase][ListFollowedParcels][REPO_FOLLOWS_ERROR] userID=%d err=%v",
+		slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][REPO_FOLLOWS_ERROR] userID=%d err=%v",
 			userID,
-			err,
+			err),
 		)
 		return nil, err
 	}
-
-	log.Printf(
-		"[DEBUG][Usecase][ListFollowedParcels][FOLLOWS] userID=%d followsNil=%v followsLen=%d total=%d",
+	slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][FOLLOWS] userID=%d followsNil=%v followsLen=%d total=%d",
 		userID,
 		follows == nil,
 		len(follows),
-		total,
+		total),
 	)
 
 	parcelIDs := make([]uint64, 0, len(follows))
@@ -540,30 +535,25 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 	}
 
 	uniqueIDs := uniqueUint64(parcelIDs)
-
-	log.Printf(
-		"[DEBUG][Usecase][ListFollowedParcels][PARCEL_IDS] userID=%d parcelIDsLen=%d uniqueIDsLen=%d uniqueIDs=%v",
+	slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][PARCEL_IDS] userID=%d parcelIDsLen=%d uniqueIDsLen=%d uniqueIDs=%v",
 		userID,
 		len(parcelIDs),
 		len(uniqueIDs),
-		uniqueIDs,
+		uniqueIDs),
 	)
 
 	parcelRows, err := u.repo.GetParcelWorkspacePreviewsByIDs(ctx, uniqueIDs)
 	if err != nil {
-		log.Printf(
-			"[DEBUG][Usecase][ListFollowedParcels][REPO_PREVIEWS_ERROR] userID=%d err=%v",
+		slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][REPO_PREVIEWS_ERROR] userID=%d err=%v",
 			userID,
-			err,
+			err),
 		)
 		return nil, err
 	}
-
-	log.Printf(
-		"[DEBUG][Usecase][ListFollowedParcels][PREVIEWS] userID=%d parcelRowsNil=%v parcelRowsLen=%d",
+	slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][PREVIEWS] userID=%d parcelRowsNil=%v parcelRowsLen=%d",
 		userID,
 		parcelRows == nil,
-		len(parcelRows),
+		len(parcelRows)),
 	)
 
 	parcelMap := buildParcelPreviewMap(parcelRows)
@@ -580,9 +570,7 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 
 		items = append(items, buildFollowedParcelPreview(follow, row))
 	}
-
-	log.Printf(
-		"[DEBUG][Usecase][ListFollowedParcels][RETURN] userID=%d followsLen=%d parcelRowsLen=%d itemsNil=%v itemsLen=%d total=%d missingPreviewLen=%d missingPreviewIDs=%v",
+	slog.DebugContext(ctx, fmt.Sprintf("[DEBUG][Usecase][ListFollowedParcels][RETURN] userID=%d followsLen=%d parcelRowsLen=%d itemsNil=%v itemsLen=%d total=%d missingPreviewLen=%d missingPreviewIDs=%v",
 		userID,
 		len(follows),
 		len(parcelRows),
@@ -590,7 +578,7 @@ func (u *mapWorkspaceUsecase) ListFollowedParcels(
 		len(items),
 		total,
 		len(missingParcelIDs),
-		missingParcelIDs,
+		missingParcelIDs),
 	)
 
 	return &dto.WorkspaceListResponse[dto.FollowedParcelPreviewDTO]{

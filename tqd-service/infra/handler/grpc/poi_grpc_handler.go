@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"time"
 
 	_dto "common/domain/dto"
@@ -72,7 +73,7 @@ func (h *PoiGrpcHandler) CreatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	// Call usecase
 	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
-		log.Printf("error creating poi: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating poi: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create poi: %v", err)
 	}
 
@@ -97,7 +98,7 @@ func (h *PoiGrpcHandler) GetPoi(ctx context.Context, req *sharepb.IdRequest) (*t
 
 	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting poi: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting poi: %v", err))
 		return nil, status.Errorf(codes.NotFound, "poi not found: %v", err)
 	}
 
@@ -112,7 +113,7 @@ func (h *PoiGrpcHandler) GetPoiByCode(ctx context.Context, req *tqdpb.GetPoiByCo
 
 	result, err := h.usecase.GetByCode(ctx, req.Code)
 	if err != nil {
-		log.Printf("error getting poi by code: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting poi by code: %v", err))
 		return nil, status.Errorf(codes.NotFound, "poi not found: %v", err)
 	}
 
@@ -147,7 +148,7 @@ func (h *PoiGrpcHandler) GetNearbyPois(ctx context.Context, req *tqdpb.GetNearby
 	// Call usecase
 	result, err := h.usecase.ListNearby(ctx, nearbyReq)
 	if err != nil {
-		log.Printf("error getting nearby pois: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting nearby pois: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to get nearby pois: %v", err)
 	}
 
@@ -183,7 +184,7 @@ func (h *PoiGrpcHandler) GetPoisByCategory(ctx context.Context, req *tqdpb.GetPo
 
 	results, err := h.usecase.ListByCategory(ctx, req.CategoryId, limit)
 	if err != nil {
-		log.Printf("error getting pois by category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting pois by category: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to get pois by category: %v", err)
 	}
 
@@ -250,7 +251,7 @@ func (h *PoiGrpcHandler) UpdatePoi(ctx context.Context, req *tqdpb.Poi) (*tqdpb.
 	// Call usecase
 	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
-		log.Printf("error updating poi: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating poi: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update poi: %v", err)
 	}
 
@@ -269,7 +270,7 @@ func (h *PoiGrpcHandler) UpdatePoiRating(ctx context.Context, req *tqdpb.UpdateP
 
 	result, err := h.usecase.UpdateRating(ctx, req.Id, req.Rating, req.ReviewCount)
 	if err != nil {
-		log.Printf("error updating poi rating: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating poi rating: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update poi rating: %v", err)
 	}
 
@@ -283,7 +284,7 @@ func (h *PoiGrpcHandler) DeletePoi(ctx context.Context, req *sharepb.IdRequest) 
 	}
 
 	if err := h.usecase.Delete(ctx, req.Id); err != nil {
-		log.Printf("error deleting poi: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting poi: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to delete poi: %v", err)
 	}
 
@@ -332,7 +333,7 @@ func (h *PoiGrpcHandler) ListPois(ctx context.Context, req *tqdpb.ListPoisReques
 	// Call usecase
 	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
-		log.Printf("error listing pois: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing pois: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to list pois: %v", err)
 	}
 

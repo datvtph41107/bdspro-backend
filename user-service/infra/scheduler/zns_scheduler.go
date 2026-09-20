@@ -2,7 +2,9 @@ package scheduler
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 	"user/internal/interface/providers"
 )
@@ -22,7 +24,7 @@ func NewZnsScheduler(znsProvider providers.IZnsProvider) *ZnsScheduler {
 }
 
 func (s *ZnsScheduler) Run(ctx context.Context) {
-	log.Println("[ZNS Scheduler] started")
+	slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("[ZNS Scheduler] started"), "\n"))
 	for {
 		next := s.getNextMidnightTime()
 		timer := time.NewTimer(time.Until(next))
@@ -34,7 +36,7 @@ func (s *ZnsScheduler) Run(ctx context.Context) {
 				default:
 				}
 			}
-			log.Println("[ZNS Scheduler] stopped")
+			slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("[ZNS Scheduler] stopped"), "\n"))
 			return
 		case <-timer.C:
 			s.refreshTokenJob(ctx)
@@ -51,9 +53,10 @@ func (s *ZnsScheduler) refreshTokenJob(ctx context.Context) {
 	jobCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if _, _, err := s.znsProvider.RefreshAccessToken(jobCtx); err != nil {
-		log.Printf("[ZNS Scheduler] refresh failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ZNS Scheduler] refresh failed: %v", err))
 		return
 	}
-	// Tokens are credentials. Never log token values or prefixes.
-	log.Printf("[ZNS Scheduler] refresh succeeded at %s", time.Now().Format(timeLayout))
+	slog.
+		// Tokens are credentials. Never log token values or prefixes.
+		InfoContext(ctx, fmt.Sprintf("[ZNS Scheduler] refresh succeeded at %s", time.Now().Format(timeLayout)))
 }

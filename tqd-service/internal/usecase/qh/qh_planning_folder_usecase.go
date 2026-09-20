@@ -6,7 +6,7 @@ import (
 	_err "common/domain/err"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"path/filepath"
 	"time"
 	qh_domain "tqd/internal/domain/qh"
@@ -109,7 +109,7 @@ func (u *qhPlanningFolderUsecase) CreateFromFolder(
 		}
 		path, err := u.fileProvider.UploadFile(ctx, bytes.NewReader(f.Content), f.RelativePath, contentType)
 		if err != nil {
-			log.Printf("[QHPlanningFolder] upload lỗi file %s: %v", f.RelativePath, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningFolder] upload lỗi file %s: %v", f.RelativePath, err))
 			doc.ProcessStatus = enums.PlanningProcessStatus(enums.PlanningProcessStatusFailed)
 			doc.ClassifyError = "upload lỗi: " + err.Error()
 		} else {

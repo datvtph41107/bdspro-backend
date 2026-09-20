@@ -6,7 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -92,7 +92,7 @@ func (h *InternalHandler) CreateProfile(ctx context.Context, req *userpb.CreateP
 	// Gọi repo để tạo profile
 	createdProfile, err := h.profileUsecase.ProfileRepo.CreateUserProfile(ctx, profile)
 	if err != nil {
-		log.Printf("Failed to create profile: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to create profile: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to create profile: %v", err)
 	}
 
@@ -113,7 +113,7 @@ func (h *InternalHandler) UpdateProfile(ctx context.Context, req *userpb.UpdateP
 	// Lấy profile hiện tại
 	existingProfile, err := h.profileUsecase.ProfileRepo.GetUserDetailByID(ctx, req.ProfileId)
 	if err != nil {
-		log.Printf("Failed to get profile: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to get profile: %v", err))
 		return nil, status.Errorf(codes.NotFound, "Profile not found")
 	}
 
@@ -134,7 +134,7 @@ func (h *InternalHandler) UpdateProfile(ctx context.Context, req *userpb.UpdateP
 	// Gọi repo để cập nhật
 	_, err = h.profileUsecase.ProfileRepo.UpdateUserProfile(ctx, existingProfile)
 	if err != nil {
-		log.Printf("Failed to update profile: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to update profile: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to update profile: %v", err)
 	}
 
@@ -154,14 +154,14 @@ func (h *InternalHandler) SoftDeleteProfile(ctx context.Context, req *userpb.Sof
 	// Xóa profile
 	err := h.profileUsecase.ProfileRepo.DeleteUserProfile(ctx, req.ProfileId, deletedBy, reason)
 	if err != nil {
-		log.Printf("Failed to soft delete profile: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to soft delete profile: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to soft delete profile: %v", err)
 	}
 
 	// Xóa TẤT CẢ auth method của user
 	err = h.profileUsecase.AuthProvider.DeleteAllAuthMethodsByUserId(ctx, req.ProfileId)
 	if err != nil {
-		log.Printf("Warning: Failed to delete all auth methods for user %d: %v", req.ProfileId, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Warning: Failed to delete all auth methods for user %d: %v", req.ProfileId, err))
 		// Không return error vì profile đã được xóa
 	}
 
@@ -181,14 +181,14 @@ func (h *InternalHandler) HardDeleteProfile(ctx context.Context, req *sharepb.Id
 	// Xóa profile
 	err := h.profileUsecase.ProfileRepo.DeleteUserProfile(ctx, req.Id, deletedBy, reason)
 	if err != nil {
-		log.Printf("Failed to hard delete profile: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to hard delete profile: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to hard delete profile: %v", err)
 	}
 
 	// Xóa TẤT CẢ auth method của user
 	err = h.profileUsecase.AuthProvider.DeleteAllAuthMethodsByUserId(ctx, req.Id)
 	if err != nil {
-		log.Printf("Warning: Failed to delete all auth methods for user %d: %v", req.Id, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Warning: Failed to delete all auth methods for user %d: %v", req.Id, err))
 		// Không return error vì profile đã được xóa
 	}
 
@@ -199,7 +199,7 @@ func (h *InternalHandler) HardDeleteProfile(ctx context.Context, req *sharepb.Id
 func (h *InternalHandler) GetProfileByID(ctx context.Context, req *userpb.GetProfileByIDRequest) (*userpb.ProfileResponse, error) {
 	profile, err := h.profileUsecase.ProfileRepo.GetUserDetailByID(ctx, req.ProfileId)
 	if err != nil {
-		log.Printf("Failed to get profile by ID: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to get profile by ID: %v", err))
 		return nil, status.Errorf(codes.NotFound, "Profile not found")
 	}
 
@@ -249,7 +249,7 @@ func (h *InternalHandler) LockUser(ctx context.Context, req *sharepb.RequestV3Pr
 func (h *InternalHandler) UpdateLastSeen(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Empty, error) {
 	err := h.profileUsecase.ProfileRepo.UpdateLastSeen(ctx, req.Id)
 	if err != nil {
-		log.Printf("Failed to update last seen for profile %d: %v", req.Id, err)
+		slog.ErrorContext(ctx, fmt.Sprintf("Failed to update last seen for profile %d: %v", req.Id, err))
 		return nil, status.Errorf(codes.Internal, "Failed to update last seen: %v", err)
 	}
 
@@ -267,8 +267,9 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	roleIdsStr, err := h.redisService.Get(ctx, roleKey)
 	var roleIds []string
 	if err != nil || roleIdsStr == "" {
-		// fallback: lấy từ DB
-		log.Printf("[HasPermissions] Cache miss for roleIds for profileId %d, fetching from DB", profileId)
+		slog.
+			// fallback: lấy từ DB
+			InfoContext(ctx, fmt.Sprintf("[HasPermissions] Cache miss for roleIds for profileId %d, fetching from DB", profileId))
 		roleIdsUint, err := h.roleRepo.GetRoleIdsByProfileId(ctx, profileId)
 		if err != nil {
 			return err
@@ -279,10 +280,10 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 		// lưu lại Redis
 		h.redisService.Set(ctx, roleKey, strings.Join(roleIds, ","), time.Duration(0))
 	} else {
-		log.Printf("[HasPermissions] Cache hit for roleIds for profileId %d", profileId)
+		slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Cache hit for roleIds for profileId %d", profileId))
 		roleIds = strings.Split(roleIdsStr, ",")
 	}
-	log.Printf("[HasPermissions] Stage 1 (Get roleIds) took %s", time.Since(stage1Start))
+	slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Stage 1 (Get roleIds) took %s", time.Since(stage1Start)))
 
 	// -------------------
 	// 2. Lấy permission_ids từ Redis (sử dụng MGet nếu có thể)
@@ -303,7 +304,7 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	if len(rolePermKeys) > 0 {
 		permIdsVals, err := h.redisService.MGet(ctx, rolePermKeys...)
 		if err != nil {
-			log.Printf("[HasPermissions] Error MGet role perm keys from Redis: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[HasPermissions] Error MGet role perm keys from Redis: %v", err))
 			// Xử lý lỗi MGet, có thể fallback về Get từng cái hoặc bỏ qua cache
 		} else {
 			for i, val := range permIdsVals {
@@ -326,11 +327,11 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 			}
 		}
 	}
-	log.Printf("[HasPermissions] Initial permIds lookup from Redis (MGet) took %s", time.Since(stage2Start))
+	slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Initial permIds lookup from Redis (MGet) took %s", time.Since(stage2Start)))
 
 	// fallback DB cho role chưa có trong Redis
 	if len(missingRoleIds) > 0 {
-		log.Printf("[HasPermissions] Cache miss for permIds for roles %v, fetching from DB", missingRoleIds)
+		slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Cache miss for permIds for roles %v, fetching from DB", missingRoleIds))
 		dbPermIds, err := h.roleRepo.GetPermissionIdsByRoleIds(ctx, missingRoleIds)
 		if err != nil {
 			return err
@@ -346,7 +347,7 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 			// lưu Redis
 			h.redisService.Set(ctx, rolePermKey, strings.Join(strIds, ","), time.Duration(0))
 		}
-		log.Printf("[HasPermissions] Fallback DB for permIds took %s", time.Since(stage2Start))
+		slog.WarnContext(ctx, fmt.Sprintf("[HasPermissions] Fallback DB for permIds took %s", time.Since(stage2Start)))
 	}
 
 	// -------------------
@@ -367,7 +368,7 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	if len(permKeysToFetch) > 0 {
 		keysVals, err := h.redisService.MGet(ctx, permKeysToFetch...)
 		if err != nil {
-			log.Printf("[HasPermissions] Error MGet perm keys from Redis: %v", err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[HasPermissions] Error MGet perm keys from Redis: %v", err))
 			// Xử lý lỗi MGet, có thể fallback về Get từng cái hoặc bỏ qua cache
 		} else {
 			for i, val := range keysVals {
@@ -388,11 +389,11 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 			}
 		}
 	}
-	log.Printf("[HasPermissions] Initial permKeys lookup from Redis (MGet) took %s", time.Since(stage3Start))
+	slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Initial permKeys lookup from Redis (MGet) took %s", time.Since(stage3Start)))
 
 	// fallback DB cho permission chưa có Redis
 	if len(missingPermIds) > 0 {
-		log.Printf("[HasPermissions] Cache miss for permKeys for permIds %v, fetching from DB", missingPermIds)
+		slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Cache miss for permKeys for permIds %v, fetching from DB", missingPermIds))
 		keys, err := h.roleRepo.GetPermissionKeysByIds(ctx, missingPermIds)
 		if err != nil {
 			return err
@@ -403,18 +404,18 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 			rk := "PERM_KEY_" + strconv.FormatUint(missingPermIds[i], 10)
 			h.redisService.Set(ctx, rk, key, time.Duration(0))
 		}
-		log.Printf("[HasPermissions] Fallback DB for permKeys took %s", time.Since(stage3Start))
+		slog.WarnContext(ctx, fmt.Sprintf("[HasPermissions] Fallback DB for permKeys took %s", time.Since(stage3Start)))
 	}
 
 	// -------------------
 	// 4. Kiểm tra các permission cần thiết
 	for _, required := range keys {
 		if _, ok := userPerms[required]; ok {
-			log.Printf("[HasPermissions] Permission check succeeded for profileId %d, took %s total", profileId, time.Since(funcStart))
+			slog.InfoContext(ctx, fmt.Sprintf("[HasPermissions] Permission check succeeded for profileId %d, took %s total", profileId, time.Since(funcStart)))
 			return nil
 		}
 	}
-	log.Printf("[HasPermissions] Permission check failed for profileId %d, took %s total", profileId, time.Since(funcStart))
+	slog.ErrorContext(ctx, fmt.Sprintf("[HasPermissions] Permission check failed for profileId %d, took %s total", profileId, time.Since(funcStart)))
 
 	return _errors.ReturnError(403, "Bạn không có quyền truy cập")
 }

@@ -6,7 +6,9 @@ import (
 	"common/fault"
 	_utils "common/utils"
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status" // Đây là package status của gRPC
@@ -39,12 +41,11 @@ func (h *ImportGrpcHandler) PreviewImport(ctx context.Context, req *tqdpb.Previe
 	if req.LayerId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "layerId is required")
 	}
-
-	log.Printf("[PreviewImport] LayerID: %d, GeoJSON length: %d", req.LayerId, len(req.GeoJson))
+	slog.InfoContext(ctx, fmt.Sprintf("[PreviewImport] LayerID: %d, GeoJSON length: %d", req.LayerId, len(req.GeoJson)))
 
 	result, err := h.importUsecase.Preview(ctx, req.GeoJson, req.LayerId)
 	if err != nil {
-		log.Printf("[PreviewImport] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[PreviewImport] Error: %v", err))
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -53,7 +54,7 @@ func (h *ImportGrpcHandler) PreviewImport(ctx context.Context, req *tqdpb.Previe
 
 // ImportGeoJson - Upload file JSON/GeoJSON/NDJSON; trả processing, xử lý nền theo chunk
 func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.ImportGeoJsonRequest) (*tqdpb.ImportGeoJsonResponse, error) {
-	log.Println("ImportGeoJson", req)
+	slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("ImportGeoJson", req), "\n"))
 	if len(req.GetFileContent()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "file_content is required")
 	}
@@ -83,11 +84,10 @@ func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.Import
 
 	result, err := h.importUsecase.EnqueueImportFromFile(ctx, importReq)
 	if err != nil {
-		log.Printf("[ImportGeoJson] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[ImportGeoJson] Error: %v", err))
 		return nil, importGRPCError(err)
 	}
-
-	log.Printf("[ImportGeoJson] Enqueued batchId=%s status=%s", result.BatchID, result.Status)
+	slog.InfoContext(ctx, fmt.Sprintf("[ImportGeoJson] Enqueued batchId=%s status=%s", result.BatchID, result.Status))
 
 	return h.importMapper.ToProtoImportEnqueueResponse(result), nil
 }
@@ -97,8 +97,7 @@ func (h *ImportGrpcHandler) GetImportBatchStatus(ctx context.Context, req *tqdpb
 	if req.BatchId == "" {
 		return nil, status.Error(codes.InvalidArgument, "batchId is required")
 	}
-
-	log.Printf("[GetImportBatchStatus] BatchID: %s", req.BatchId)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetImportBatchStatus] BatchID: %s", req.BatchId))
 
 	batchStatus, err := h.importUsecase.GetBatchStatus(ctx, req.BatchId) // ĐỔI TÊN BIẾN từ status -> batchStatus
 	if err != nil {
@@ -113,8 +112,7 @@ func (h *ImportGrpcHandler) RollbackImport(ctx context.Context, req *tqdpb.Rollb
 	if req.BatchId == "" {
 		return nil, status.Error(codes.InvalidArgument, "batchId is required")
 	}
-
-	log.Printf("[RollbackImport] BatchID: %s", req.BatchId)
+	slog.InfoContext(ctx, fmt.Sprintf("[RollbackImport] BatchID: %s", req.BatchId))
 
 	deletedCount, err := h.importUsecase.Rollback(ctx, req.BatchId)
 	if err != nil {

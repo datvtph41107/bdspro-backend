@@ -3,7 +3,8 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -58,7 +59,7 @@ func (h *DirectoryCategoryGrpcHandler) CreateDirectoryCategory(ctx context.Conte
 	}
 
 	if err := h.directoryCategoryUsecase.CreateDirectoryCategory(ctx, category); err != nil {
-		log.Printf("error creating directory category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating directory category: %v", err))
 		return nil, status.Error(codes.Internal, "failed to create directory category")
 	}
 
@@ -73,7 +74,7 @@ func (h *DirectoryCategoryGrpcHandler) GetDirectoryCategory(ctx context.Context,
 
 	result, err := h.directoryCategoryUsecase.GetDirectoryCategoryByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting directory category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting directory category: %v", err))
 		return nil, status.Error(codes.NotFound, "directory category not found")
 	}
 
@@ -104,7 +105,7 @@ func (h *DirectoryCategoryGrpcHandler) UpdateDirectoryCategory(ctx context.Conte
 
 	result, err := h.directoryCategoryUsecase.UpdateDirectoryCategory(ctx, req.Id, category)
 	if err != nil {
-		log.Printf("error updating directory category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating directory category: %v", err))
 		return nil, status.Error(codes.Internal, "failed to update directory category")
 	}
 
@@ -119,7 +120,7 @@ func (h *DirectoryCategoryGrpcHandler) DeleteDirectoryCategory(ctx context.Conte
 
 	err := h.directoryCategoryUsecase.DeleteDirectoryCategory(ctx, req.Id)
 	if err != nil {
-		log.Printf("error deleting directory category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting directory category: %v", err))
 		return nil, status.Error(codes.Internal, "failed to delete directory category")
 	}
 
@@ -148,7 +149,7 @@ func (h *DirectoryCategoryGrpcHandler) ListServiceCategories(ctx context.Context
 
 	results, total, err := h.directoryCategoryUsecase.ListDirectoryCategories(ctx, listReq)
 	if err != nil {
-		log.Printf("error listing directory categories: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing directory categories: %v", err))
 		return nil, status.Error(codes.Internal, "failed to list directory categories")
 	}
 
@@ -170,7 +171,7 @@ func (h *DirectoryCategoryGrpcHandler) GetActiveServiceCategories(ctx context.Co
 		IsActive: func(b bool) *bool { return &b }(true),
 	})
 	if err != nil {
-		log.Printf("error listing active directory categories: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing active directory categories: %v", err))
 		return nil, status.Error(codes.Internal, "failed to list active directory categories")
 	}
 
@@ -195,7 +196,7 @@ func (h *DirectoryCategoryGrpcHandler) GetServiceCategoriesByLevel(ctx context.C
 		Pagable: _dto.Pagable{Page: 1, Size: 1000},
 	})
 	if err != nil {
-		log.Printf("error listing directory categories by level: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing directory categories by level: %v", err))
 		return nil, status.Error(codes.Internal, "failed to list directory categories by level")
 	}
 

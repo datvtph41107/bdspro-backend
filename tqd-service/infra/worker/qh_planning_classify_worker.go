@@ -2,7 +2,9 @@ package worker
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 
 	qh_usecase "tqd/internal/usecase/qh"
@@ -46,18 +48,17 @@ func (w *QHPlanningClassifyWorker) Close() error {
 
 func (w *QHPlanningClassifyWorker) Run(ctx context.Context) {
 	if w == nil || w.usecase == nil {
-		log.Println("[QHPlanningClassifyWorker] skip: usecase nil")
+		slog.WarnContext(ctx, strings.TrimSuffix(fmt.Sprintln("[QHPlanningClassifyWorker] skip: usecase nil"), "\n"))
 		return
 	}
 
 	interval := w.config.Interval
 	batchSize := w.config.BatchSize
 	if !w.config.Enabled {
-		log.Println("[QHPlanningClassifyWorker] disabled by config")
+		slog.WarnContext(ctx, strings.TrimSuffix(fmt.Sprintln("[QHPlanningClassifyWorker] disabled by config"), "\n"))
 		return
 	}
-
-	log.Printf("[QHPlanningClassifyWorker] started interval=%s batch=%d", interval, batchSize)
+	slog.InfoContext(ctx, fmt.Sprintf("[QHPlanningClassifyWorker] started interval=%s batch=%d", interval, batchSize))
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -67,7 +68,7 @@ func (w *QHPlanningClassifyWorker) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("[QHPlanningClassifyWorker] stopped")
+			slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("[QHPlanningClassifyWorker] stopped"), "\n"))
 			return
 		case <-ticker.C:
 			w.runOnce(ctx, batchSize)
@@ -78,10 +79,10 @@ func (w *QHPlanningClassifyWorker) Run(ctx context.Context) {
 func (w *QHPlanningClassifyWorker) runOnce(ctx context.Context, batchSize int) {
 	n, err := w.usecase.RunOnce(ctx, batchSize)
 	if err != nil {
-		log.Printf("[QHPlanningClassifyWorker] RunOnce lỗi: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[QHPlanningClassifyWorker] RunOnce lỗi: %v", err))
 		return
 	}
 	if n > 0 {
-		log.Printf("[QHPlanningClassifyWorker] đã xử lý %d tài liệu", n)
+		slog.InfoContext(ctx, fmt.Sprintf("[QHPlanningClassifyWorker] đã xử lý %d tài liệu", n))
 	}
 }

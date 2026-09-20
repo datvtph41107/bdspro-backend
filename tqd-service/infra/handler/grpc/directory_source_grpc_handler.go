@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
@@ -68,7 +69,7 @@ func (h *DirectorySourceGrpcHandler) CreateDirectorySource(ctx context.Context, 
 
 	result, err := h.directorySourceUsecase.Create(ctx, source)
 	if err != nil {
-		log.Printf("error creating directory source: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating directory source: %v", err))
 		return nil, status.Error(codes.Internal, "failed to create directory source")
 	}
 
@@ -83,7 +84,7 @@ func (h *DirectorySourceGrpcHandler) GetDirectorySource(ctx context.Context, req
 
 	result, err := h.directorySourceUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting directory source: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting directory source: %v", err))
 		return nil, status.Error(codes.NotFound, "directory source not found")
 	}
 
@@ -120,7 +121,7 @@ func (h *DirectorySourceGrpcHandler) UpdateDirectorySource(ctx context.Context, 
 
 	result, err := h.directorySourceUsecase.Update(ctx, source)
 	if err != nil {
-		log.Printf("error updating directory source: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating directory source: %v", err))
 		return nil, status.Error(codes.Internal, "failed to update directory source")
 	}
 
@@ -135,7 +136,7 @@ func (h *DirectorySourceGrpcHandler) DeleteDirectorySource(ctx context.Context, 
 
 	err := h.directorySourceUsecase.Delete(ctx, req.Id)
 	if err != nil {
-		log.Printf("error deleting directory source: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting directory source: %v", err))
 		return nil, status.Error(codes.Internal, "failed to delete directory source")
 	}
 
@@ -167,7 +168,7 @@ func (h *DirectorySourceGrpcHandler) ListDirectorySources(ctx context.Context, r
 
 	results, total, err := h.directorySourceUsecase.List(ctx, filter)
 	if err != nil {
-		log.Printf("error listing directory sources: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing directory sources: %v", err))
 		return nil, status.Error(codes.Internal, "failed to list directory sources")
 	}
 

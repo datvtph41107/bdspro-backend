@@ -11,7 +11,7 @@ import (
 	"hub/infra/db"
 	hubMiddleware "hub/infra/middleware"
 	"hub/wire"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -48,7 +48,7 @@ var GrpcCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("load Hub schema policy: %w", err)
 		}
-		log.Printf("Hub database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+		slog.Info(fmt.Sprintf("Hub database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source))
 		if err := common_db.ApplySchemaPolicy(common_db.DB, schemaPolicy, db.AutoMigrate); err != nil {
 			return fmt.Errorf("apply Hub schema policy: %w", err)
 		}
@@ -73,13 +73,13 @@ var GrpcCmd = &cobra.Command{
 				app.ApiKeyUsecase,
 				runtime.Security.ProtectedMethods,
 			),
-			_middleware.UnaryRecoveryInterceptor(app.Logger),
+			_middleware.UnaryRecoveryInterceptor(),
 		)
 
 		// Load system config vào memory khi startup
 		if app.SystemConfigUsecase != nil {
 			if err := app.SystemConfigUsecase.InitializeSystemConfig(processCtx); err != nil {
-				log.Printf("Warning: Failed to initialize system config: %v", err)
+				slog.Error(fmt.Sprintf("Warning: Failed to initialize system config: %v", err))
 			}
 		}
 
@@ -103,8 +103,7 @@ var GrpcCmd = &cobra.Command{
 		hubpb.RegisterErrorLogServiceServer(s, app.ErrorLogHandler)
 		hubpb.RegisterUpdateDataServiceServer(s, app.UpdateDataHandler)
 		hubpb.RegisterApplinkServiceServer(s, app.ApplinkHandler)
-
-		log.Printf("Listen: %v", port)
+		slog.Info(fmt.Sprintf("Listen: %v", port))
 
 		return process.Run(
 			processCtx, processCancel, s, lis, nil,

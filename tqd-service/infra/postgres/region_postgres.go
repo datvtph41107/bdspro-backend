@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -88,7 +88,7 @@ func (r *regionRepoImpl) logImportError(ctx context.Context, regions []*qh_domai
 
 	payload, marshalErr := json.Marshal(snapshots)
 	if marshalErr != nil {
-		log.Printf("[CreateBatch] failed to marshal error payload: %v (original error: %v)", marshalErr, insertErr)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateBatch] failed to marshal error payload: %v (original error: %v)", marshalErr, insertErr))
 		return
 	}
 
@@ -104,7 +104,7 @@ func (r *regionRepoImpl) logImportError(ctx context.Context, regions []*qh_domai
 
 	// Dùng background context để tránh bị cancel khi ctx đã hết hạn
 	if saveErr := r.db.WithContext(context.Background()).Create(errLog).Error; saveErr != nil {
-		log.Printf("[CreateBatch] failed to save import error log: %v (original error: %v)", saveErr, insertErr)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateBatch] failed to save import error log: %v (original error: %v)", saveErr, insertErr))
 	}
 }
 
@@ -825,13 +825,11 @@ func (r *regionRepoImpl) BuildPMTiles(layerID int64, outputPath string) error {
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	log.Println("Running tippecanoe...")
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("Running tippecanoe..."), "\n"))
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-
-	log.Println("PMTiles created at:", outputPath)
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("PMTiles created at:", outputPath), "\n"))
 	return nil
 }
 

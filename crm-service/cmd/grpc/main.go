@@ -8,7 +8,7 @@ import (
 	"crm/initial"
 	"crm/wire"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -64,7 +64,7 @@ func runGRPC() error {
 	interceptors := grpc.ChainUnaryInterceptor(
 		// common.ProfileIDInterceptor,
 		_middleware.ParseGrpcMetadataContextMiddleware,
-		_middleware.UnaryRecoveryInterceptor(app.Logger),
+		_middleware.UnaryRecoveryInterceptor(),
 	)
 	s := grpc.NewServer(
 		interceptors,
@@ -96,9 +96,9 @@ func runGRPC() error {
 	crmpb.RegisterAppointmentServiceServer(s, app.AppointmentService)
 	crmpb.RegisterSeoDomainServiceServer(s, app.SeoDomainHandler)
 	crmpb.RegisterCRMPublicContentServiceServer(s, app.PublicContentHandler)
-	// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
-
-	log.Printf("Listen: %v", port)
+	slog.
+		// crmpb.RegisterRegistryServiceServer(s, app.RegistryHandler)
+		Info(fmt.Sprintf("Listen: %v", port))
 
 	signalCtx, stopSignals := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stopSignals()
@@ -118,7 +118,7 @@ func runRuleEventScheduler(ctx context.Context, app *initial.InitialApp) {
 		return
 	}
 	if err := app.RuleEventUsecase.TriggerJobAutoEvent(ctx); err != nil {
-		log.Printf("CRM rule event scheduler initial run failed: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("CRM rule event scheduler initial run failed: %v", err))
 	}
 	for {
 		now := time.Now()
@@ -135,7 +135,7 @@ func runRuleEventScheduler(ctx context.Context, app *initial.InitialApp) {
 			return
 		case <-timer.C:
 			if err := app.RuleEventUsecase.TriggerJobAutoEvent(ctx); err != nil {
-				log.Printf("CRM rule event scheduler run failed: %v", err)
+				slog.ErrorContext(ctx, fmt.Sprintf("CRM rule event scheduler run failed: %v", err))
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,7 +19,8 @@ const requiredConfirmation = "CREATE_ROOT_OPERATOR"
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
 
@@ -70,8 +70,8 @@ func run() error {
 		}
 	}
 
-	log.Printf(
-		"root operator created: profile_id=%d auth_id=%d role_id=%d permissions_granted=%d",
+	fmt.Printf(
+		"root operator created: profile_id=%d auth_id=%d role_id=%d permissions_granted=%d\n",
 		result.ProfileID, result.AuthID, result.RoleID, result.PermissionCount,
 	)
 	return nil

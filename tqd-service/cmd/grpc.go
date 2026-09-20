@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	_db "common/db"
@@ -52,7 +53,7 @@ func init() {
 func RunGRPCServer() error { return runGRPCServer() }
 
 func runGRPCServer() error {
-	log.Println("Starting TQD gRPC Server...")
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("Starting TQD gRPC Server..."), "\n"))
 
 	cfg, err := config.LoadRuntimeConfig()
 	if err != nil {
@@ -81,7 +82,7 @@ func runGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("load TQD schema policy: %w", err)
 	}
-	log.Printf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source)
+	slog.Info(fmt.Sprintf("TQD database schema mode=%s source=%s", schemaPolicy.Mode, schemaPolicy.Source))
 	if err := _db.ApplySchemaPolicy(database, schemaPolicy, tqddb.AutoMigrate); err != nil {
 		return fmt.Errorf("apply TQD schema policy: %w", err)
 	}
@@ -168,9 +169,10 @@ func runGRPCServer() error {
 			cfg.Report,
 			nil,
 		); targetErr != nil {
-			// Generated Report is capability-local. Planning/GIS/discovery remain
-			// available while report creation fails closed.
-			log.Printf("[REPORT-TARGET] capability unavailable: %v", targetErr)
+			slog.
+				// Generated Report is capability-local. Planning/GIS/discovery remain
+				// available while report creation fails closed.
+				Warn(fmt.Sprintf("[REPORT-TARGET] capability unavailable: %v", targetErr))
 		} else {
 			closeReportTarget = closeTarget
 		}
@@ -180,8 +182,7 @@ func runGRPCServer() error {
 	if app.QHPlanningClassifyWorker != nil {
 		actors = append(actors, process.ActorFunc(app.QHPlanningClassifyWorker.Run))
 	}
-
-	log.Printf("TQD gRPC listening on %s", addr)
+	slog.Info(fmt.Sprintf("TQD gRPC listening on %s", addr))
 	lifecycleErr := process.Run(
 		processCtx,
 		processCancel,
@@ -194,7 +195,7 @@ func runGRPCServer() error {
 	// process.Run cancels and joins registered actors. Report owns additional
 	// runners and exposes its own join barrier before process resources close.
 	closeReportTarget()
-	log.Println("TQD gRPC server exited")
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("TQD gRPC server exited"), "\n"))
 	if lifecycleErr != nil {
 		return fmt.Errorf("TQD gRPC lifecycle: %w", lifecycleErr)
 	}

@@ -1313,7 +1313,7 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
             audit.ZERO_RATCHETS,
         )
 
-        self.assertNotIn(
+        self.assertIn(
             (
                 "go.legacy_std_log",
                 "user-service",
@@ -1613,6 +1613,71 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
                 summary.unlink(
                     missing_ok=True,
                 )
+
+
+
+class R5LoggingConvergencePolicyTest(unittest.TestCase):
+    def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.legacy_std_log"
+        )
+        self.assertEqual(
+            rule.excluded_paths,
+            ("shared/common/logging/stdlog_bridge.go",),
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "shared/common/logging/stdlog_bridge.go",
+                Path("stdlog_bridge.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "shared/common/logging/regression.go",
+                Path("regression.go"),
+            )
+        )
+
+    def test_r5_logging_zero_ratchets_are_registered(self):
+        expected = {
+            ("go.legacy_std_log", "hub-service"),
+            ("go.legacy_std_log", "crm-service"),
+            ("go.legacy_std_log", "shared/common"),
+            ("go.legacy_std_log", "shared/code"),
+            ("go.legacy_std_log", "tqd-service"),
+            ("go.legacy_std_log", "user-service"),
+            ("go.third_party_logger", "hub-service"),
+            ("go.third_party_logger", "crm-service"),
+            ("go.third_party_logger", "shared/common"),
+        }
+        self.assertTrue(expected.issubset(set(audit.ZERO_RATCHETS)))
+
+    def test_r5_logging_ratchets_count_regressions(self):
+        findings = [
+            {
+                "category": "go.legacy_std_log",
+                "severity": "debt",
+                "owner": "tqd-service",
+                "path": "tqd-service/fixture.go",
+                "line": 1,
+                "excerpt": 'log.Printf("regression")',
+            },
+            {
+                "category": "go.third_party_logger",
+                "severity": "debt",
+                "owner": "crm-service",
+                "path": "crm-service/fixture.go",
+                "line": 1,
+                "excerpt": "github.com/hyperledger/fabric/common/flogging",
+            },
+        ]
+        counts = audit.ratchet_counts(findings)
+        self.assertEqual(counts["go.legacy_std_log@tqd-service"], 1)
+        self.assertEqual(counts["go.third_party_logger@crm-service"], 1)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -119,7 +119,7 @@ func (s *TqdPublicService) ensureQhConfigProcessed(configName string) (string, e
 	templatePath := fmt.Sprintf("template/%s.json", configName)
 	templateData, err := os.ReadFile(templatePath)
 	if err != nil {
-		log.Printf("failed to read template file: %v", err)
+		slog.Error(fmt.Sprintf("failed to read template file: %v", err))
 		return "", status.Errorf(codes.NotFound, "template file not found: %v", err)
 	}
 
@@ -132,13 +132,13 @@ func (s *TqdPublicService) ensureQhConfigProcessed(configName string) (string, e
 
 	if configName == atlasflowcatalog.TemplateName {
 		if err := atlasflowcatalog.ValidateJSON([]byte(content)); err != nil {
-			log.Printf("invalid AtlasFlow map catalog: %v", err)
+			slog.Error(fmt.Sprintf("invalid AtlasFlow map catalog: %v", err))
 			return "", status.Errorf(codes.Internal, "invalid AtlasFlow map catalog: %v", err)
 		}
 	}
 
 	if err := os.MkdirAll("files/json", 0755); err != nil {
-		log.Printf("failed to create json directory: %v", err)
+		slog.Error(fmt.Sprintf("failed to create json directory: %v", err))
 		return "", status.Errorf(codes.Internal, "failed to create json directory: %v", err)
 	}
 

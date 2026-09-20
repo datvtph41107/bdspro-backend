@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -47,46 +47,46 @@ func (r *regionExtendRepoImpl) CreateMergedReplaceSources(ctx context.Context, r
 		if found != int64(len(sourceIDs)) {
 			return fmt.Errorf("some merge source ids not found or not in layer %d", record.LayerID)
 		}
+		slog.
 
-		// var mergedJSON []byte
-		// query := `
-		// 	WITH src AS (
-		// 		SELECT geometry
-		// 		FROM qh_region_extends
-		// 		WHERE id IN (?) AND deleted_at IS NULL AND layer_id = ?
-		// 	)`
-		// args := []interface{}{sourceIDs, record.LayerID}
+			// var mergedJSON []byte
+			// query := `
+			// 	WITH src AS (
+			// 		SELECT geometry
+			// 		FROM qh_region_extends
+			// 		WHERE id IN (?) AND deleted_at IS NULL AND layer_id = ?
+			// 	)`
+			// args := []interface{}{sourceIDs, record.LayerID}
+			InfoContext( // if len(extraGeometry) > 0 {
+				// 	query += `,
+				// 	extra AS (
+				// 		SELECT ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)::geometry AS geometry
+				// 	)`
+				// 	args = append(args, string(extraGeometry))
+				// }
 
-		// if len(extraGeometry) > 0 {
-		// 	query += `,
-		// 	extra AS (
-		// 		SELECT ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)::geometry AS geometry
-		// 	)`
-		// 	args = append(args, string(extraGeometry))
-		// }
+				// query += `,
+				// 	parts AS (
+				// 		SELECT geometry FROM src`
+				// if len(extraGeometry) > 0 {
+				// 	query += `
+				// 		UNION ALL
+				// 		SELECT geometry FROM extra`
+				// }
+				// query += `
+				// 	),
+				// 	merged AS (
+				// 		SELECT ST_Multi(ST_LineMerge(ST_Collect(geometry))) AS geom
+				// 		FROM parts
+				// 		WHERE geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
+				// 	)
+				// 	SELECT ST_AsGeoJSON(geom) FROM merged
+				// `
 
-		// query += `,
-		// 	parts AS (
-		// 		SELECT geometry FROM src`
-		// if len(extraGeometry) > 0 {
-		// 	query += `
-		// 		UNION ALL
-		// 		SELECT geometry FROM extra`
-		// }
-		// query += `
-		// 	),
-		// 	merged AS (
-		// 		SELECT ST_Multi(ST_LineMerge(ST_Collect(geometry))) AS geom
-		// 		FROM parts
-		// 		WHERE geometry IS NOT NULL AND NOT ST_IsEmpty(geometry)
-		// 	)
-		// 	SELECT ST_AsGeoJSON(geom) FROM merged
-		// `
-
-		// if err := tx.Raw(query, args...).Scan(&mergedJSON).Error; err != nil {
-		// 	return fmt.Errorf("merge geometries failed: %w", err)
-		// }
-		log.Printf("[CreateMergedReplaceSources] extraGeometry: %v", extraGeometry)
+				// if err := tx.Raw(query, args...).Scan(&mergedJSON).Error; err != nil {
+				// 	return fmt.Errorf("merge geometries failed: %w", err)
+				// }
+				ctx, fmt.Sprintf("[CreateMergedReplaceSources] extraGeometry: %v", extraGeometry))
 		if len(extraGeometry) == 0 {
 			return errors.New("merged geometry is empty")
 		}

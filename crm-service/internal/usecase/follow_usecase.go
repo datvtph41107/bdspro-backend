@@ -11,7 +11,8 @@ import (
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
 	"database/sql"
-	"log"
+	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -208,7 +209,7 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 
 		currentUser, err := s.userClient.GetProfileById(asyncCtx, profileId)
 		if err != nil || currentUser == nil {
-			log.Printf("follow notification: get current user failed profile_id=%d: %v", profileId, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("follow notification: get current user failed profile_id=%d: %v", profileId, err))
 			return
 		}
 
@@ -224,7 +225,7 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 			[]string{strconv.FormatUint(followId, 10)},
 		)
 		if err != nil {
-			log.Printf("follow notification: create failed profile_id=%d follow_id=%d: %v", profileId, followId, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("follow notification: create failed profile_id=%d follow_id=%d: %v", profileId, followId, err))
 		}
 	}()
 }

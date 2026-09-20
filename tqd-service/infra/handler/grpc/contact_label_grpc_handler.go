@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
@@ -55,7 +56,7 @@ func (h *ContactLabelGrpcHandler) CreateContactLabel(ctx context.Context, req *t
 	// Call usecase
 	result, err := h.contactLabelUsecase.Create(ctx, createReq)
 	if err != nil {
-		log.Printf("error creating contact label: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating contact label: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create contact label: %v", err)
 	}
 
@@ -70,7 +71,7 @@ func (h *ContactLabelGrpcHandler) GetContactLabel(ctx context.Context, req *tqdp
 
 	result, err := h.contactLabelUsecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting contact label: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting contact label: %v", err))
 		return nil, status.Errorf(codes.NotFound, "contact label not found: %v", err)
 	}
 
@@ -98,7 +99,7 @@ func (h *ContactLabelGrpcHandler) UpdateContactLabel(ctx context.Context, req *t
 
 	result, err := h.contactLabelUsecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
-		log.Printf("error updating contact label: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating contact label: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update contact label: %v", err)
 	}
 
@@ -113,7 +114,7 @@ func (h *ContactLabelGrpcHandler) DeleteContactLabel(ctx context.Context, req *t
 
 	err := h.contactLabelUsecase.Delete(ctx, req.Id)
 	if err != nil {
-		log.Printf("error deleting contact label: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting contact label: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to delete contact label: %v", err)
 	}
 
@@ -154,7 +155,7 @@ func (h *ContactLabelGrpcHandler) ListContactLabels(ctx context.Context, req *tq
 
 	result, err := h.contactLabelUsecase.List(ctx, listReq)
 	if err != nil {
-		log.Printf("error listing contact labels: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing contact labels: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to list contact labels: %v", err)
 	}
 

@@ -7,7 +7,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -381,7 +382,7 @@ func (h *LayerGrpcHandler) ListClientLayers(ctx context.Context, req *tqdpb.List
 	for _, layer := range layers {
 		protoLayer, err := mapper.ToProtoLayer(&layer)
 		if err != nil {
-			log.Printf("Failed to convert layer %d: %v", layer.ID, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("Failed to convert layer %d: %v", layer.ID, err))
 			continue
 		}
 		protoLayers = append(protoLayers, protoLayer)

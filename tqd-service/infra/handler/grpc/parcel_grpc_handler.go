@@ -6,7 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -219,8 +219,7 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 	if req == nil || len(req.Data) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "request data is required")
 	}
-
-	log.Printf("[CreateBatchParcels] UserID: %d, Batch size: %d", userID, len(req.Data))
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateBatchParcels] UserID: %d, Batch size: %d", userID, len(req.Data)))
 
 	// Convert proto to request DTO
 	createReq := h.mapper.ProtoToDomains(req)
@@ -230,11 +229,10 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 		Data: createReq,
 	})
 	if err != nil {
-		log.Printf("[CreateBatchParcels] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CreateBatchParcels] Error: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create parcel: %v", err)
 	}
-
-	log.Printf("[CreateBatchParcels] Successfully created %d parcels", len(result.Data))
+	slog.InfoContext(ctx, fmt.Sprintf("[CreateBatchParcels] Successfully created %d parcels", len(result.Data)))
 
 	t := time.Now()
 	h.SyncProvider.PutTimeRequest(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDParcelDetail, 0), t.UnixMilli())
@@ -269,13 +267,12 @@ func (h *ParcelGrpcHandler) FindParcelByLocation(ctx context.Context, req *tqdpb
 	if req.Longitude < -180 || req.Longitude > 180 {
 		return nil, status.Error(codes.InvalidArgument, "longitude must be between -180 and 180")
 	}
-
-	log.Printf("[FindParcelByLocation] Lat: %f, Lng: %f", req.Latitude, req.Longitude)
+	slog.InfoContext(ctx, fmt.Sprintf("[FindParcelByLocation] Lat: %f, Lng: %f", req.Latitude, req.Longitude))
 
 	// Call usecase
 	result, err := h.usecase.FindByLocation(ctx, req.Latitude, req.Longitude)
 	if err != nil {
-		log.Printf("[FindParcelByLocation] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[FindParcelByLocation] Error: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to find parcel by location: %v", err)
 	}
 
@@ -512,19 +509,17 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 	includeAnalysis := req.GetIncludeAnalysis()
 
 	if z == nil {
-		log.Printf(
-			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel, HasFilter=%v, IncludeAnalysis=%v",
+		slog.InfoContext(ctx, fmt.Sprintf("[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=<nil>, Mode=legacy-parcel, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
 			req.MaxAreaHa,
 			page,
 			pageSize,
 			filter != nil,
-			includeAnalysis,
+			includeAnalysis),
 		)
 	} else {
-		log.Printf(
-			"[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d, HasFilter=%v, IncludeAnalysis=%v",
+		slog.InfoContext(ctx, fmt.Sprintf("[FindParcelsByPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%d, HasFilter=%v, IncludeAnalysis=%v",
 			len(points),
 			req.Intersect,
 			req.MaxAreaHa,
@@ -532,7 +527,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 			pageSize,
 			*z,
 			filter != nil,
-			includeAnalysis,
+			includeAnalysis),
 		)
 	}
 
@@ -548,7 +543,7 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 		includeAnalysis,
 	)
 	if err != nil {
-		log.Printf("[FindParcelsByPolygon] Usecase error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[FindParcelsByPolygon] Usecase error: %v", err))
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -562,14 +557,12 @@ func (h *ParcelGrpcHandler) FindParcelsByPolygon(
 			ResultType: mapper.WorkspaceEntityTypeParcel,
 		}, nil
 	}
-
-	log.Printf(
-		"[FindParcelsByPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d",
+	slog.InfoContext(ctx, fmt.Sprintf("[FindParcelsByPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d",
 		result.ResultType,
 		result.Z,
 		len(result.Parcels),
 		len(result.Regions),
-		result.Total,
+		result.Total),
 	)
 
 	return h.mapper.PolygonMapTargetsToProto(result), nil
@@ -607,9 +600,7 @@ func (h *ParcelGrpcHandler) CheckingPolygon(
 	z := getOptionalPolygonZoom(req)
 	filter := getPolygonTargetFilter(req)
 	includeAnalysis := req.GetIncludeAnalysis()
-
-	log.Printf(
-		"[CheckingPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%v, HasFilter=%v, IncludeAnalysis=%v",
+	slog.InfoContext(ctx, fmt.Sprintf("[CheckingPolygon] Points=%d, Intersect=%v, MaxAreaKm2=%f, Page=%d, Size=%d, Z=%v, HasFilter=%v, IncludeAnalysis=%v",
 		len(points),
 		req.Intersect,
 		req.MaxAreaHa,
@@ -617,7 +608,7 @@ func (h *ParcelGrpcHandler) CheckingPolygon(
 		pageSize,
 		z,
 		filter != nil,
-		includeAnalysis,
+		includeAnalysis),
 	)
 
 	handlerStart := time.Now()
@@ -633,7 +624,7 @@ func (h *ParcelGrpcHandler) CheckingPolygon(
 		includeAnalysis,
 	)
 	if err != nil {
-		log.Printf("[CheckingPolygon] Usecase error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[CheckingPolygon] Usecase error: %v", err))
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -647,15 +638,13 @@ func (h *ParcelGrpcHandler) CheckingPolygon(
 			ResultType: mapper.WorkspaceEntityTypeParcel,
 		}, nil
 	}
-
-	log.Printf(
-		"[CheckingPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d, handlerTotal=%v",
+	slog.InfoContext(ctx, fmt.Sprintf("[CheckingPolygon] ResultType=%d, Z=%d, Parcels=%d, Regions=%d, Total=%d, handlerTotal=%v",
 		result.ResultType,
 		result.Z,
 		len(result.Parcels),
 		len(result.Regions),
 		result.Total,
-		time.Since(handlerStart),
+		time.Since(handlerStart)),
 	)
 
 	return h.mapper.PolygonMapTargetsToProto(result), nil
@@ -672,8 +661,8 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(
 	}
 
 	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[SearchTxtClientParcels] UserID: %d, OriginalText: %s, CleanedText: %s, Map: %s, Land: %s, Page: %d, Size: %d",
-		userID, req.Text, searchInfo.CleanedText, searchInfo.MapNumber, searchInfo.LandNumber, req.Page, req.Size)
+	slog.InfoContext(ctx, fmt.Sprintf("[SearchTxtClientParcels] UserID: %d, OriginalText: %s, CleanedText: %s, Map: %s, Land: %s, Page: %d, Size: %d",
+		userID, req.Text, searchInfo.CleanedText, searchInfo.MapNumber, searchInfo.LandNumber, req.Page, req.Size))
 
 	pagable := _dto.Pagable{
 		Page: req.Page,
@@ -684,7 +673,7 @@ func (h *ParcelGrpcHandler) SearchTxtClientParcels(
 	// Gọi SearchParcelsByText với các thông tin đã bóc tách
 	parcels, total, err := h.usecase.SearchParcelsByText(ctx, searchInfo.CleanedText, searchInfo.MapNumber, searchInfo.LandNumber, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
-		log.Printf("[SearchTxtClientParcels] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SearchTxtClientParcels] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -704,7 +693,7 @@ func (h *ParcelGrpcHandler) SearchPublicParcels(
 	ctx context.Context,
 	req *sharepb.RequestV3Proto,
 ) (*tqdpb.ListParcelResponse, error) {
-	log.Printf("[SearchPublicParcels] Page: %d, Size: %d", req.Page, req.Size)
+	slog.InfoContext(ctx, fmt.Sprintf("[SearchPublicParcels] Page: %d, Size: %d", req.Page, req.Size))
 
 	pagable := _dto.Pagable{
 		Page: req.Page,
@@ -714,7 +703,7 @@ func (h *ParcelGrpcHandler) SearchPublicParcels(
 
 	parcels, total, err := h.usecase.SearchPublicParcels(ctx, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
-		log.Printf("[SearchPublicParcels] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[SearchPublicParcels] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -739,12 +728,12 @@ func (h *ParcelGrpcHandler) PreviewParcelsById(
 	}
 
 	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id))
 
 	// Gọi đúng method GetParcelInfoByID (không phải GetParcelDetail)
 	info, err := h.usecase.GetParcelInfoByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("[PreviewParcelsById] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[PreviewParcelsById] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -765,12 +754,12 @@ func (h *ParcelGrpcHandler) PublicParcelsById(
 	}
 
 	userID := _utils.GetOriginIdFromContext(ctx)
-	log.Printf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[PreviewParcelsById] UserID: %d, ParcelID: %d", userID, req.Id))
 
 	// Gọi đúng method GetParcelInfoByID (không phải GetParcelDetail)
 	info, err := h.usecase.GetParcelInfoByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("[PreviewParcelsById] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[PreviewParcelsById] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -858,7 +847,7 @@ func (h *ParcelGrpcHandler) GetParcelQuickLayers(
 }
 
 func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetParcelDetailRequest) (*tqdpb.ParcelDetailResponse, error) {
-	log.Printf("[GetParcelDetail] ParcelID: %d", req.ParcelId)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetParcelDetail] ParcelID: %d", req.ParcelId))
 
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
@@ -866,7 +855,7 @@ func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetP
 
 	data, err := h.usecase.GetParcelDetail(ctx, req.ParcelId)
 	if err != nil {
-		log.Printf("[GetParcelDetail] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelDetail] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if data == nil {
@@ -877,7 +866,7 @@ func (h *ParcelGrpcHandler) GetParcelDetail(ctx context.Context, req *tqdpb.GetP
 }
 
 func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetParcelLayersRequest) (*tqdpb.ParcelLayersResponse, error) {
-	log.Printf("[GetParcelLayers] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetParcelLayers] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit))
 
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
@@ -891,7 +880,7 @@ func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetP
 
 	data, total, err := h.usecase.GetParcelLayers(ctx, req.ParcelId, pagable)
 	if err != nil {
-		log.Printf("[GetParcelLayers] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelLayers] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -916,7 +905,7 @@ func (h *ParcelGrpcHandler) GetParcelLayers(ctx context.Context, req *tqdpb.GetP
 }
 
 func (h *ParcelGrpcHandler) GetZoneGeometry(ctx context.Context, req *tqdpb.GetZoneGeometryRequest) (*tqdpb.ZoneGeometryResponse, error) {
-	log.Printf("[GetZoneGeometry] ParcelID: %d, LayerID: %d, ZoneID: %d", req.ParcelId, req.LayerId, req.ZoneId)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetZoneGeometry] ParcelID: %d, LayerID: %d, ZoneID: %d", req.ParcelId, req.LayerId, req.ZoneId))
 
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
@@ -930,7 +919,7 @@ func (h *ParcelGrpcHandler) GetZoneGeometry(ctx context.Context, req *tqdpb.GetZ
 
 	geoJSON, props, err := h.usecase.GetZoneGeometry(ctx, req.ParcelId, req.LayerId, req.ZoneId)
 	if err != nil {
-		log.Printf("[GetZoneGeometry] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetZoneGeometry] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if geoJSON == "" {
@@ -954,7 +943,7 @@ func (h *ParcelGrpcHandler) GetZoneGeometry(ctx context.Context, req *tqdpb.GetZ
 }
 
 func (h *ParcelGrpcHandler) GetParcelLegalDocuments(ctx context.Context, req *tqdpb.GetParcelLegalDocumentsRequest) (*tqdpb.ParcelLegalDocumentsResponse, error) {
-	log.Printf("[GetParcelLegalDocuments] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetParcelLegalDocuments] ParcelID: %d, Page: %d, Limit: %d", req.ParcelId, req.Page, req.Limit))
 
 	if req == nil || req.ParcelId == 0 {
 		return nil, status.Error(codes.InvalidArgument, "parcel_id is required")
@@ -968,7 +957,7 @@ func (h *ParcelGrpcHandler) GetParcelLegalDocuments(ctx context.Context, req *tq
 
 	docs, total, err := h.usecase.GetParcelLegalDocuments(ctx, req.ParcelId, req.Type, req.Status, pagable)
 	if err != nil {
-		log.Printf("[GetParcelLegalDocuments] Error: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelLegalDocuments] Error: %v", err))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

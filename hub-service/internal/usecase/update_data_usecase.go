@@ -5,8 +5,9 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	providers "hub/internal/provider"
@@ -110,7 +111,7 @@ func (uc *UpdateDataUsecase) FlushSyncIds(ctx context.Context, ownerID uint64, r
 		return _errors.ReturnError(400, "owner_id is required")
 	}
 	key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
-	log.Println("key_trimmed", key, limit)
+	slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("key_trimmed", key, limit), "\n"))
 	err := uc.cacheProvider.LTrim(ctx, key, limit, -1)
 	// if err != nil {
 	// 	return _errors.InternalServerException("get user products error: %w", err.Error())

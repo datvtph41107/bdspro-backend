@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -103,7 +104,7 @@ func (h *GisReportAdminGrpcHandler) Queue(ctx context.Context, req *tqdpb.AdminG
 	if err := h.requirePerm(ctx, permReportView); err != nil {
 		return nil, err
 	}
-	log.Printf("[GisReportAdminGrpcHandler.Queue] Permission check took %s", time.Since(start))
+	slog.InfoContext(ctx, fmt.Sprintf("[GisReportAdminGrpcHandler.Queue] Permission check took %s", time.Since(start)))
 
 	bucket := strings.TrimSpace(req.GetBucket())
 	if bucket == "" {
@@ -115,19 +116,19 @@ func (h *GisReportAdminGrpcHandler) Queue(ctx context.Context, req *tqdpb.AdminG
 		severity = req.Severity
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
-	log.Printf("[GisReportAdminGrpcHandler.Queue] ActorID: %d", actorID)
+	slog.InfoContext(ctx, fmt.Sprintf("[GisReportAdminGrpcHandler.Queue] ActorID: %d", actorID))
 
 	queryStart := time.Now()
 	reports, total, err := h.usecase.AdminQueue(ctx, bucket, severity, int(pagable.GetPage()), pagable.GetLimit(), actorID)
 	if err != nil {
 		return nil, _errors.ReturnError(500, err.Error())
 	}
-	log.Printf("[GisReportAdminGrpcHandler.Queue] AdminQueue query took %s, found %d reports", time.Since(queryStart), len(reports))
+	slog.InfoContext(ctx, fmt.Sprintf("[GisReportAdminGrpcHandler.Queue] AdminQueue query took %s, found %d reports", time.Since(queryStart), len(reports)))
 
 	resolveStart := time.Now()
 	displays := h.usecase.ResolveLinkageDisplays(ctx, reports)
 	users := h.usecase.ResolveUserDisplays(ctx, reports)
-	log.Printf("[GisReportAdminGrpcHandler.Queue] ResolveLinkageDisplays and ResolveUserDisplays took %s", time.Since(resolveStart))
+	slog.InfoContext(ctx, fmt.Sprintf("[GisReportAdminGrpcHandler.Queue] ResolveLinkageDisplays and ResolveUserDisplays took %s", time.Since(resolveStart)))
 
 	return adminGisReportListResponse(reports, total, int32(pagable.GetPage()), int32(pagable.GetSize()), bucket, displays, users), nil
 }

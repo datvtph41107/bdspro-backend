@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
+
+	"common/logging"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -41,7 +42,7 @@ func Open(config DatabaseConfig) (*gorm.DB, error) {
 	}
 
 	gormLogger := logger.New(
-		log.New(log.Writer(), "", log.LstdFlags),
+		logging.StdLogger("postgres"),
 		logger.Config{
 			SlowThreshold:        time.Second,
 			LogLevel:             logger.Info,

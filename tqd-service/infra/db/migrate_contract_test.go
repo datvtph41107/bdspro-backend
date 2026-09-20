@@ -21,7 +21,7 @@ func TestCanonicalMigrationSequence(t *testing.T) {
 	t.Parallel()
 	const latestMigration = 44
 
-	entries, err := os.ReadDir(filepath.Join("..", "..", "migrate"))
+	entries, err := os.ReadDir(filepath.Join("..", "..", "database", "migrations"))
 	require.NoError(t, err)
 
 	pairs := make(map[string]map[string]string)
@@ -51,7 +51,7 @@ func TestCanonicalMigrationSequence(t *testing.T) {
 func TestCanonicalSQLCoversRuntimeSchemaRegistry(t *testing.T) {
 	t.Parallel()
 
-	migrationDir := filepath.Join("..", "..", "migrate")
+	migrationDir := filepath.Join("..", "..", "database", "migrations")
 	entries, err := os.ReadDir(migrationDir)
 	require.NoError(t, err)
 
@@ -136,7 +136,7 @@ func TestCanonicalSQLCoversRuntimeSchemaRegistry(t *testing.T) {
 func TestEveryForeignKeyTargetExistsBeforeFirstUse(t *testing.T) {
 	t.Parallel()
 
-	migrationDir := filepath.Join("..", "..", "migrate")
+	migrationDir := filepath.Join("..", "..", "database", "migrations")
 	entries, err := os.ReadDir(migrationDir)
 	require.NoError(t, err)
 	files := make([]string, 0, len(entries))
@@ -182,7 +182,7 @@ func TestEveryForeignKeyTargetExistsBeforeFirstUse(t *testing.T) {
 func TestSchemaCompletionRollbackIsNonDestructive(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "..", "migrate", "000041_complete_gorm_owned_schema.down.sql"))
+	contents, err := os.ReadFile(filepath.Join("..", "..", "database", "migrations", "000041_complete_gorm_owned_schema.down.sql"))
 	require.NoError(t, err)
 	sql := strings.ToLower(string(contents))
 	require.NotContains(t, sql, "drop table")
@@ -192,7 +192,7 @@ func TestSchemaCompletionRollbackIsNonDestructive(t *testing.T) {
 func TestLayerFamilySortOrderIsVersioned(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "..", "migrate", "000043_add_qh_layer_family_sort_number.up.sql"))
+	contents, err := os.ReadFile(filepath.Join("..", "..", "database", "migrations", "000043_add_qh_layer_family_sort_number.up.sql"))
 	require.NoError(t, err)
 	sql := strings.ToLower(string(contents))
 	require.Contains(t, sql, "add column if not exists sort_number integer not null default 0")
@@ -202,7 +202,7 @@ func TestLayerFamilySortOrderIsVersioned(t *testing.T) {
 func TestAdministrativeCatalogCutoverIsVersioned(t *testing.T) {
 	t.Parallel()
 
-	contents, err := os.ReadFile(filepath.Join("..", "..", "migrate", "000044_canonicalize_vn_administrative_catalog.up.sql"))
+	contents, err := os.ReadFile(filepath.Join("..", "..", "database", "migrations", "000044_canonicalize_vn_administrative_catalog.up.sql"))
 	if err != nil {
 		t.Fatalf("read administrative catalog migration: %v", err)
 	}

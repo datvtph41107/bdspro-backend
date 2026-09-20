@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
@@ -46,7 +47,7 @@ func (h *OpenHourGrpcHandler) CreateOpenHour(ctx context.Context, req *tqdpb.Ope
 	// Call usecase
 	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
-		log.Printf("error creating open hour: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating open hour: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create open hour: %v", err)
 	}
 
@@ -60,7 +61,7 @@ func (h *OpenHourGrpcHandler) GetOpenHour(ctx context.Context, req *sharepb.IdRe
 
 	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting open hour: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting open hour: %v", err))
 		return nil, status.Errorf(codes.NotFound, "open hour not found: %v", err)
 	}
 
@@ -110,7 +111,7 @@ func (h *OpenHourGrpcHandler) UpdateOpenHour(ctx context.Context, req *tqdpb.Ope
 
 	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
-		log.Printf("error updating open hour: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating open hour: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update open hour: %v", err)
 	}
 
@@ -123,7 +124,7 @@ func (h *OpenHourGrpcHandler) DeleteOpenHour(ctx context.Context, req *sharepb.I
 	}
 
 	if err := h.usecase.Delete(ctx, req.Id); err != nil {
-		log.Printf("error deleting open hour: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting open hour: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to delete open hour: %v", err)
 	}
 
@@ -154,7 +155,7 @@ func (h *OpenHourGrpcHandler) ListOpenHours(ctx context.Context, req *tqdpb.List
 
 	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
-		log.Printf("error listing open hours: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing open hours: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to list open hours: %v", err)
 	}
 
@@ -177,7 +178,7 @@ func (h *OpenHourGrpcHandler) GetOpenHourTimesByDay(ctx context.Context, req *tq
 
 	results, err := h.usecase.GetTimesByDay(ctx, getReq)
 	if err != nil {
-		log.Printf("error getting open hour times: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting open hour times: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to get open hour times: %v", err)
 	}
 

@@ -12,12 +12,18 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// AdminUserProfileClient gives Wire a concrete, nameable owner for the
+// generated gRPC client interface while preserving the same RPC contract.
+type AdminUserProfileClient struct {
+	userpb.AdminUserProfileServiceClient
+}
+
 // NewAdminUserProfileClient constructs the Hub process-owned User RPC
 // capability. Wire propagates cleanup to the process composition root.
 func NewAdminUserProfileClient(
 	runtime config.Runtime,
 ) (
-	userpb.AdminUserProfileServiceClient,
+	*AdminUserProfileClient,
 	func(),
 	error,
 ) {
@@ -40,5 +46,7 @@ func NewAdminUserProfileClient(
 		_ = conn.Close()
 	}
 
-	return userpb.NewAdminUserProfileServiceClient(conn), cleanup, nil
+	return &AdminUserProfileClient{
+		AdminUserProfileServiceClient: userpb.NewAdminUserProfileServiceClient(conn),
+	}, cleanup, nil
 }

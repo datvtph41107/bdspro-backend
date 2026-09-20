@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -269,7 +269,7 @@ type pendingExtend struct {
 func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, fileFormat string, req *dto.ImportRequest) {
 	defer func() {
 		if err := os.Remove(tmpPath); err != nil && !os.IsNotExist(err) {
-			log.Printf("[import] remove temp %s: %v", tmpPath, err)
+			slog.WarnContext(ctx, fmt.Sprintf("[import] remove temp %s: %v", tmpPath, err))
 		}
 	}()
 
@@ -441,18 +441,18 @@ func (u *importUsecaseImpl) runImportJob(ctx context.Context, tmpPath, batchID, 
 
 	// ── Finalise ────────────────────────────────────────────────────────
 	if readErr != nil {
-		log.Printf("[import] batch=%s read error: %v", batchID, readErr)
+		slog.ErrorContext(ctx, fmt.Sprintf("[import] batch=%s read error: %v", batchID, readErr))
 		_ = u.layerRepo.UpdateImportStatus(ctx, req.LayerID, enums.LayerImportStatusFailed, &batchID)
 		return
 	}
 	if err := u.labelRepo.SyncRegionCountByLayerID(ctx, req.LayerID); err != nil {
-		log.Printf("[import] batch=%s sync label region_count layer=%d: %v", batchID, req.LayerID, err)
+		slog.InfoContext(ctx, fmt.Sprintf("[import] batch=%s sync label region_count layer=%d: %v", batchID, req.LayerID, err))
 	}
 	if err := u.layerRepo.UpdateImportStatus(ctx, req.LayerID, enums.LayerImportStatusDone, &batchID); err != nil {
-		log.Printf("[import] batch=%s update done: %v", batchID, err)
+		slog.InfoContext(ctx, fmt.Sprintf("[import] batch=%s update done: %v", batchID, err))
 	}
-	log.Printf("[import] batch=%s layer=%d total=%d success=%d failed=%d",
-		batchID, req.LayerID, result.TotalFeatures, result.SuccessCount, result.FailedCount)
+	slog.ErrorContext(ctx, fmt.Sprintf("[import] batch=%s layer=%d total=%d success=%d failed=%d",
+		batchID, req.LayerID, result.TotalFeatures, result.SuccessCount, result.FailedCount))
 }
 
 // indexedFeature pairs a parsed GeoJSON feature with its position in the file.
@@ -834,7 +834,7 @@ func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64
 	defer func() {
 		if !retryCommitted {
 			if rerr := u.regionRepo.ResetImportErrorRetryIfProcessing(ctx, errorID); rerr != nil {
-				log.Printf("[retry-import] reset processing→pending errorLog=%d: %v", errorID, rerr)
+				slog.ErrorContext(ctx, fmt.Sprintf("[retry-import] reset processing→pending errorLog=%d: %v", errorID, rerr))
 			}
 		}
 	}()
@@ -873,13 +873,13 @@ func (u *importUsecaseImpl) RetryImportError(ctx context.Context, errorID uint64
 		if rerr != nil {
 			failCount++
 			remaining = append(remaining, snap)
-			log.Printf("[retry-import] errorLog=%d item=%d build: %v", errorID, i, rerr)
+			slog.ErrorContext(ctx, fmt.Sprintf("[retry-import] errorLog=%d item=%d build: %v", errorID, i, rerr))
 			continue
 		}
 		if err := u.regionRepo.Create(ctx, reg); err != nil {
 			failCount++
 			remaining = append(remaining, snap)
-			log.Printf("[retry-import] errorLog=%d item=%d insert: %v", errorID, i, err)
+			slog.ErrorContext(ctx, fmt.Sprintf("[retry-import] errorLog=%d item=%d insert: %v", errorID, i, err))
 			continue
 		}
 		okCount++

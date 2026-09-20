@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -67,7 +66,7 @@ func camelToSnake(s string) string {
 
 func main() {
 	// domainName :=
-	log.Printf("GEN: %s", path)
+	fmt.Printf("GEN: %s", path)
 	for i := 0; i < len(domains); i++ {
 		GenerateDomain(domains[i])
 	}
@@ -116,13 +115,13 @@ func AddServer(domainName string) {
 	} else {
 		input, err := os.ReadFile(filename)
 		if err != nil {
-			log.Printf("S:=%s", err)
+			fmt.Printf("S:=%s", err)
 			return
 		}
 
 		var output []string
 		scanner := bufio.NewScanner(strings.NewReader(string(input)))
-		log.Printf("S:=%s", output)
+		fmt.Printf("S:=%s", output)
 
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -133,7 +132,7 @@ func AddServer(domainName string) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Printf("S:=%s", err)
+			fmt.Printf("S:=%s", err)
 			return
 		}
 
@@ -174,13 +173,13 @@ func AddConfig(domainName string) {
 	} else {
 		input, err := os.ReadFile(filename)
 		if err != nil {
-			log.Printf("S:=%s", err)
+			fmt.Printf("S:=%s", err)
 			return
 		}
 
 		var output []string
 		scanner := bufio.NewScanner(strings.NewReader(string(input)))
-		log.Printf("S:=%s", output)
+		fmt.Printf("S:=%s", output)
 
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -191,7 +190,7 @@ func AddConfig(domainName string) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Printf("S_1:=%s", err)
+			fmt.Printf("S_1:=%s", err)
 			return
 		}
 
@@ -218,13 +217,13 @@ func AddConfig(domainName string) {
 	} else {
 		input, err := os.ReadFile(filename)
 		if err != nil {
-			log.Printf("S1:=%s", err)
+			fmt.Printf("S1:=%s", err)
 			return
 		}
 
 		var output []string
 		scanner := bufio.NewScanner(strings.NewReader(string(input)))
-		log.Printf("S2:=%s", content2)
+		fmt.Printf("S2:=%s", content2)
 
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -236,10 +235,10 @@ func AddConfig(domainName string) {
 				output = append(output, content3) // Chèn sau dòng chứa bindTag
 			}
 		}
-		// log.Printf("S3:=%s", output)
+		// fmt.Printf("S3:=%s", output)
 
 		if err := scanner.Err(); err != nil {
-			log.Printf("S4:=%s", err)
+			fmt.Printf("S4:=%s", err)
 			return
 		}
 
@@ -406,7 +405,7 @@ func MakeGormRepo(domainName string) {
 	fileName := fmt.Sprintf("%s.go", pkgName)
 
 	structName := domainName // fmt.Sprintf("%s", pkgName)
-	log.Print("packageName: ", structName)
+	fmt.Print("packageName: ", structName)
 
 	content := `package postgre
 
@@ -490,7 +489,7 @@ func MakeProtobuf(domainName string) {
 	fileName := fmt.Sprintf("%s.proto", pkgName)
 
 	structName := domainName // fmt.Sprintf("%s", pkgName)
-	log.Print("packageName: ", structName)
+	fmt.Print("packageName: ", structName)
 
 	content := `syntax = "proto3";
 
@@ -543,7 +542,7 @@ func MakeService(domainName string) {
 	fileName := fmt.Sprintf("%s.go", pkgName)
 
 	structName := domainName // fmt.Sprintf("%s", pkgName)
-	log.Print("packageName: ", structName)
+	fmt.Print("packageName: ", structName)
 
 	content := `package service
 
@@ -641,7 +640,7 @@ func AppendYarmService(domainName string) {
 	api := ToKebabCase(domainName)
 
 	structName := domainName // fmt.Sprintf("%s", pkgName)
-	log.Print("packageName: ", structName)
+	fmt.Print("packageName: ", structName)
 
 	content := `
     - selector: pb_$1$.$2$Service.Get
@@ -704,7 +703,7 @@ func Swagger(domainName string) {
 	api := ToKebabCase(domainName)
 
 	structName := domainName // fmt.Sprintf("%s", pkgName)
-	log.Print("packageName: ", structName)
+	fmt.Print("packageName: ", structName)
 
 	content := `
 package swagger_gen

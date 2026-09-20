@@ -4,9 +4,6 @@ import (
 	"crm/infra/handler"
 	handlergrpc "crm/infra/handler/grpc"
 	"crm/internal/usecase"
-
-	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/spf13/viper"
 )
 
 type InitialApp struct {
@@ -38,7 +35,6 @@ type InitialApp struct {
 	SupportTicketHandler *handler.SupportTicketHandler
 	AdminSalesHandler    *handler.AdminSalesHandler
 
-	Logger           *flogging.FabricLogger
 	SeoDomainHandler *handler.SeoDomainHandler
 	// PublicContentHandler is part of the same CRM dependency graph and shares
 	// the process-owned database and client lifecycle created by Wire.
@@ -107,6 +103,5 @@ func NewInitialApp(
 
 		SeoDomainHandler:     seoDomainHandler,
 		PublicContentHandler: publicContentHandler,
-		Logger:               flogging.MustGetLogger(viper.GetString("server.name")),
 	}
 }

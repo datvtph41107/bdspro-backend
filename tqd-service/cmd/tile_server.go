@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
 
+	"common/logging"
 	_redis "common/redis"
 	"tqd/config"
 
@@ -33,7 +33,7 @@ func RunTileServer(port int) error {
 	if _, err := config.LoadConfig(); err != nil {
 		return fmt.Errorf("load TQD tile config: %w", err)
 	}
-	logger := log.New(os.Stdout, "[pmtiles] ", log.LstdFlags)
+	logger := logging.StdLogger("pmtiles")
 	redisSvc := _redis.NewRedisService()
 	defer func() {
 		if redisSvc != nil && redisSvc.Client != nil {

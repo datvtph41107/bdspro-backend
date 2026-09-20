@@ -2,7 +2,9 @@ package db
 
 import (
 	_db "common/db"
-	"log"
+	"fmt"
+	"log/slog"
+	"strings"
 )
 
 func AutoMigrate() {
@@ -13,6 +15,5 @@ func AutoMigrate() {
 	// &domain.AdminOpportunityEvent{},
 	// &seo_domain.SeoRef{},
 	)
-
-	log.Println("Migrate success")
+	slog.Info(strings.TrimSuffix(fmt.Sprintln("Migrate success"), "\n"))
 }

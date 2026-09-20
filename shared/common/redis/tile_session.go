@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -45,7 +45,7 @@ func (r *RedisService) SaveTileSession(sessionK uint64, sessionEncryptKey string
 		ttl = TileSessionTTL
 	}
 	kRedis := tileSessionAESKey(sessionK)
-	log.Printf("save tile session: %s, %s, %v", kRedis, sessionEncryptKey, sessionK)
+	slog.Info(fmt.Sprintf("save tile session: %s, %s, %v", kRedis, sessionEncryptKey, sessionK))
 	if err = client.Set(r.Ctx, kRedis, sessionEncryptKey, ttl).Err(); err != nil {
 		return fmt.Errorf("save tile session: %w", err)
 	}

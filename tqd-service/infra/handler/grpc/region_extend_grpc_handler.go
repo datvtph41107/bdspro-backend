@@ -3,7 +3,8 @@ package handler_grpc
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 
@@ -115,8 +116,7 @@ func (h *RegionExtendGrpcHandler) ListRegionExtends(ctx context.Context, req *tq
 		Page: req.Page,
 		Size: req.Size,
 	}
-
-	log.Printf("[ListRegionExtends] LayerID: %d geomType: %v", req.LayerId, req.Size)
+	slog.InfoContext(ctx, fmt.Sprintf("[ListRegionExtends] LayerID: %d geomType: %v", req.LayerId, req.Size))
 
 	records, total, err := h.extendUsecase.List(ctx, req.LayerId, req.GeomType, pagable)
 	if err != nil {
@@ -140,8 +140,7 @@ func (h *RegionExtendGrpcHandler) GetRegionExtend(ctx context.Context, req *tqdp
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
-
-	log.Printf("[GetRegionExtend] ID: %d", req.Id)
+	slog.InfoContext(ctx, fmt.Sprintf("[GetRegionExtend] ID: %d", req.Id))
 
 	rec, err := h.extendUsecase.GetByID(ctx, req.Id)
 	if err != nil {

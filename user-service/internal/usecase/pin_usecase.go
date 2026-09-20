@@ -6,7 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 	"user/internal/domain/auth"
 	"user/internal/dto"
@@ -207,7 +207,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 			defer cancel()
 
 			if err := s.deviceUsecase.UpdateDeviceWithAuthInfo(deviceCtx, deviceID, authEntity.ID, profile.ProfileID); err != nil {
-				log.Printf("Failed to update device with auth info after verify PIN: %v", err)
+				slog.ErrorContext(c, fmt.Sprintf("Failed to update device with auth info after verify PIN: %v", err))
 			}
 		}
 	}
@@ -215,7 +215,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 	// Lưu app state = "active" khi login thành công
 	if profile.ProfileID != 0 && s.cacheProvider != nil {
 		if err := s.cacheProvider.SaveAppState(c, profile.ProfileID, "active"); err != nil {
-			log.Printf("Failed to save app state for user %d: %v", profile.ProfileID, err)
+			slog.ErrorContext(c, fmt.Sprintf("Failed to save app state for user %d: %v", profile.ProfileID, err))
 		}
 	}
 
@@ -512,7 +512,7 @@ func (s *PINUsecase) dispatchHistoryAuth(ctx context.Context, payload dto.Histor
 	defer cancel()
 
 	if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &payload); err != nil {
-		log.Printf("%s: %v", logPrefix, err)
+		slog.InfoContext(ctx, fmt.Sprintf("%s: %v", logPrefix, err))
 	}
 }
 

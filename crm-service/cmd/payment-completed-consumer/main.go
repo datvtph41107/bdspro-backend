@@ -6,11 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"common/logging"
 	paymentconsumer "crm/internal/integrations/paymentcompleted"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"gorm.io/driver/postgres"
@@ -18,10 +19,22 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Printf("payment completed consumer stopped: %v", err)
-		os.Exit(1)
+	os.Exit(runProcess())
+}
+
+func runProcess() int {
+	closeLogger, err := logging.Configure("crm-payment-completed-consumer")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure CRM payment consumer logging: %v\n", err)
+		return 1
 	}
+	defer func() { _ = closeLogger() }()
+
+	if err := run(); err != nil {
+		slog.Error("payment completed consumer stopped", slog.Any("error", err))
+		return 1
+	}
+	return 0
 }
 
 func run() error {

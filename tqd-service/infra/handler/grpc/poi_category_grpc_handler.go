@@ -2,7 +2,8 @@ package handler_grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
@@ -53,7 +54,7 @@ func (h *PoiCategoryGrpcHandler) CreatePoiCategory(ctx context.Context, req *tqd
 	// Call usecase
 	result, err := h.usecase.Create(ctx, createReq)
 	if err != nil {
-		log.Printf("error creating poi category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error creating poi category: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to create poi category: %v", err)
 	}
 
@@ -68,7 +69,7 @@ func (h *PoiCategoryGrpcHandler) GetPoiCategory(ctx context.Context, req *sharep
 
 	result, err := h.usecase.GetByID(ctx, req.Id)
 	if err != nil {
-		log.Printf("error getting poi category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting poi category: %v", err))
 		return nil, status.Errorf(codes.NotFound, "poi category not found: %v", err)
 	}
 
@@ -111,7 +112,7 @@ func (h *PoiCategoryGrpcHandler) UpdatePoiCategory(ctx context.Context, req *tqd
 	// Call usecase
 	result, err := h.usecase.Update(ctx, req.Id, updateReq)
 	if err != nil {
-		log.Printf("error updating poi category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error updating poi category: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to update poi category: %v", err)
 	}
 
@@ -125,7 +126,7 @@ func (h *PoiCategoryGrpcHandler) DeletePoiCategory(ctx context.Context, req *sha
 	}
 
 	if err := h.usecase.Delete(ctx, req.Id); err != nil {
-		log.Printf("error deleting poi category: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error deleting poi category: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to delete poi category: %v", err)
 	}
 
@@ -158,7 +159,7 @@ func (h *PoiCategoryGrpcHandler) ListPoiCategories(ctx context.Context, req *tqd
 	// Call usecase
 	result, err := h.usecase.List(ctx, filter)
 	if err != nil {
-		log.Printf("error listing poi categories: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error listing poi categories: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to list poi categories: %v", err)
 	}
 
@@ -175,7 +176,7 @@ func (h *PoiCategoryGrpcHandler) ListPoiCategories(ctx context.Context, req *tqd
 func (h *PoiCategoryGrpcHandler) GetPoiCategoryTree(ctx context.Context, req *emptypb.Empty) (*tqdpb.GetPoiCategoryTreeResponse, error) {
 	results, err := h.usecase.GetTree(ctx)
 	if err != nil {
-		log.Printf("error getting poi category tree: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("error getting poi category tree: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to get poi category tree: %v", err)
 	}
 

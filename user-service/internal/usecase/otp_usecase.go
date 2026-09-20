@@ -6,7 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -244,6 +244,6 @@ func (s *OtpUsecase) logOtpLockHistory(ctx context.Context, param *dto.AuthParam
 	defer cancel()
 
 	if err := s.notificationProvider.CreateHistoryAuth(timeoutCtx, &payload); err != nil {
-		log.Printf("failed to log OTP lock history: %v", err)
+		slog.ErrorContext(ctx, fmt.Sprintf("failed to log OTP lock history: %v", err))
 	}
 }
