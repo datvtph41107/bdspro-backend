@@ -30,8 +30,6 @@ services:
             addresses: ["localhost:8211"]
         appointment:
             addresses: ["localhost:8213"]
-        marketing:
-            addresses: ["localhost:8214"]
         transaction:
             addresses: ["localhost:8215"]
         feedback:

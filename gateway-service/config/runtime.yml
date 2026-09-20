@@ -21,7 +21,6 @@ service:
         map: 8210
         search: 8211
         appointment: 8213
-        marketing: 8214
         transaction: 8215
         # Auth public protobuf hiện do User Service phục vụ; AuthInternal dùng 8216 riêng.
         auth: 8201

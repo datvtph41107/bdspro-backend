@@ -53,7 +53,6 @@ ALL_SVCS=(
   "payment|payment-grpc|8205"
   "membership|membership-grpc|8212"
   "file|file-http|8002"
-  "marketing|marketing-grpc|8214"
   "transaction|transaction-grpc|8215"
   "assistant|assistant-grpc|8218"
   "tqd-grpc|tqd-grpc|8219"
@@ -73,14 +72,14 @@ SUPPORT_SVCS=(
 ALL_PORTS=(
   8000 8001 8002 8081 5173 8308 8800
   8201 8202 8203 8204 8205 8206 8207 8208 8209
-  8210 8211 8212 8213 8214 8215 8216 8217 8218 8219 8280
+  8210 8211 8212 8213 8215 8216 8217 8218 8219 8280
 )
 
 ALL_MOD_SVCS=(
   auth-service user-service gateway-service crm-service tqd-service
   bdspro-service organization-service notification-service social-service
   appointment-service chat-service relay-service payment-service
-  membership-service file-service marketing-service transaction-service
+  membership-service file-service transaction-service
   assistant-service
 )
 

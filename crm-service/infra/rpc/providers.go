@@ -47,13 +47,6 @@ func NewAuthRPCClient() (*clients.AuthGrpcClient, func(), error) {
 	)
 }
 
-func NewPaymentRPCClient() (*clients.PaymentClient, func(), error) {
-	return bindDependency(
-		"rpc.payment.address",
-		clients.BindPaymentClient,
-	)
-}
-
 func NewTQDRPCClient() (*clients.TQDGrpcClient, func(), error) {
 	return bindDependency(
 		"rpc.tqd.address",

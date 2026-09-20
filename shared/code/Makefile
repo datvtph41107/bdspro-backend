@@ -91,8 +91,6 @@ buf-chat-v1:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path chat_v1
 buf-task:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path task
-buf-marketing:
-	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path marketing	
 buf-transaction:
 	$(SCHEMA) && buf generate --template ./buf.gen.yaml --path transaction
 buf-auth:
@@ -156,7 +154,6 @@ init:
 	$(CD_ROOT) && cd relay-service && go mod tidy
 	$(CD_ROOT) && cd bdspro-service && go mod tidy
 	$(CD_ROOT) && cd crm-service && go mod tidy
-	$(CD_ROOT) && cd marketing-service && go mod tidy
 	$(CD_ROOT) && cd auth-service && go mod tidy
 	$(CD_ROOT) && cd transaction-service && go mod tidy
 	
@@ -206,9 +203,6 @@ membership-grpc:
 file-http:
 	$(MAKE) -C ../../file-service dev
 
-marketing-grpc:
-	$(CD_ROOT) && cd marketing-service && air grpc
-
 transaction-grpc:
 	$(CD_ROOT) && cd transaction-service && air grpc
 
@@ -244,7 +238,6 @@ start-all:
 	$(MAKE) payment-grpc &
 	$(MAKE) membership-grpc &
 	$(MAKE) file-http &
-	$(MAKE) marketing-grpc &
 	$(MAKE) transaction-grpc &
 	$(MAKE) auth-grpc &
 	$(MAKE) tqd-grpc &

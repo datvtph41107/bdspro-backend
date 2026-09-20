@@ -51,7 +51,6 @@ ALL_MODULES=(
   "crm"
   "feedback"
   "generic"
-  "marketing"
   "notification"
   "operation"
   "organization"

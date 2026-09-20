@@ -23,7 +23,6 @@ crm-service/crm-service
 file-service/file-service
 gateway-service/gateway-service
 map-service/map-service
-marketing-service/marketing-service
 membership-service/membership-service
 notification-service/notification-service
 organization-service/organization-service

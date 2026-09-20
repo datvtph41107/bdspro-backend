@@ -269,13 +269,6 @@ services:
     networks:
       - internal
 
-  marketing:
-    build: ./marketing-service
-    container_name: marketing
-    command: ["./main", "grpc"]
-    networks:
-      - internal
-  
   assistant:
     build: ./assistant-service
     container_name: assistant

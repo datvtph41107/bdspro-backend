@@ -234,11 +234,6 @@ case "$1" in
     path_jar=main
     payload_build=feedback
     ;;
-  "marketing")
-    service_path=marketing-service
-    path_jar=main
-    payload_build=marketing
-    ;;
   "transaction")
     service_path=transaction-service
     path_jar=main
