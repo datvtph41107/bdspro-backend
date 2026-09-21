@@ -390,11 +390,17 @@ func validateCallerActor(caller _identity.Caller, hasCaller bool, hasActor bool)
 
 /**
  * PrincipalFromContext projects the canonical actor for legacy callers.
+ * When transport assertion is not verified, the server interceptor still fills
+ * legacy enum keys via withLegacyActorContext; fall back to those so handlers
+ * keep working in non-enforce trusted-metadata mode.
  */
 func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	actor, ok := _identity.ActorFromContext(ctx)
 	if !ok {
-		return nil, errors.New("actor identity not found in context")
+		actor = actorFromLegacyContext(ctx)
+		if !actor.IsValid() {
+			return nil, errors.New("actor identity not found in context")
+		}
 	}
 
 	principal := &_jwt.Principal{
@@ -415,6 +421,36 @@ func PrincipalFromContext(ctx context.Context) (*_jwt.Principal, error) {
 	}
 
 	return principal, nil
+}
+
+func actorFromLegacyContext(ctx context.Context) _identity.Actor {
+	if ctx == nil {
+		return _identity.Actor{}
+	}
+	actor := _identity.Actor{}
+	if value, ok := ctx.Value(_enums.ProfileIDKey).(uint64); ok {
+		actor.ProfileID = value
+	}
+	if value, ok := ctx.Value(_enums.OriginIDKey).(uint64); ok {
+		actor.OriginID = value
+	}
+	if value, ok := ctx.Value(_enums.AuthIDKey).(uint64); ok {
+		actor.AuthID = value
+	}
+	if value, ok := ctx.Value(_enums.SessionKey).(uint64); ok {
+		actor.SessionID = value
+	}
+	if value, ok := ctx.Value(_enums.OrganizationIDKey).(uint64); ok && value > 0 {
+		organizationID := value
+		actor.OrganizationID = &organizationID
+	}
+	if value, ok := ctx.Value(_enums.RoleKey).(string); ok {
+		actor.Role = value
+	}
+	if value, ok := ctx.Value(_enums.TypeKey).(string); ok {
+		actor.TokenType = value
+	}
+	return actor
 }
 
 /**

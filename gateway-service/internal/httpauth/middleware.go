@@ -70,7 +70,11 @@ func Middleware(publicRoutes, tempRoutes []Route, options ...Option) gin.Handler
 			requestCtx := WithPrincipal(c.Request.Context(), principal)
 			bound, err := identity.BindActor(requestCtx, ActorFromPrincipal(principal))
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "actor context conflict"})
+				message := "actor context conflict"
+				if errors.Is(err, identity.ErrInvalidActor) {
+					message = "actor identity is invalid"
+				}
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"code": 500, "message": message})
 				return
 			}
 			c.Request = c.Request.WithContext(bound)

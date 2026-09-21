@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"tqd/internal/enums"
+	_utils "common/utils"
 	planningdomain "tqd/internal/domain/planningclient/model"
+	"tqd/internal/enums"
 	tqdutils "tqd/internal/utils"
 
 	"github.com/lib/pq"
@@ -66,6 +67,38 @@ func parseUintCSV(value string) []uint64 {
 		if err == nil {
 			result = append(result, parsed)
 		}
+	}
+	return result
+}
+
+// provinceIDFilterValues maps client province CSV to text IDs for
+// qh_planning_project_provinces.province_id (VARCHAR). Encoded location IDs
+// (…1) are decoded to the source province id stored on the join table.
+func provinceIDFilterValues(value string) []string {
+	parts := parseCSV(value)
+	result := make([]string, 0, len(parts))
+	seen := make(map[string]struct{}, len(parts))
+	add := func(id string) {
+		if id == "" {
+			return
+		}
+		if _, ok := seen[id]; ok {
+			return
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	for _, part := range parts {
+		parsed, err := strconv.ParseUint(part, 10, 64)
+		if err != nil {
+			add(part)
+			continue
+		}
+		if sourceID, kind, err := _utils.DecodeLocationID(parsed); err == nil && kind == _utils.LocationIDKindProvince {
+			add(strconv.FormatUint(sourceID, 10))
+			continue
+		}
+		add(strconv.FormatUint(parsed, 10))
 	}
 	return result
 }
@@ -173,12 +206,12 @@ func applyProjectFilters(db *gorm.DB, filter planningdomain.ProjectListFilter) *
 			  AND ppt.tag_id IN ?
 		)`, values)
 	}
-	if values := parseUintCSV(filter.ProvinceIDs); len(values) > 0 {
+	if values := provinceIDFilterValues(filter.ProvinceIDs); len(values) > 0 {
 		db = db.Where(`EXISTS (
 			SELECT 1 FROM qh_planning_project_provinces ppp
 			WHERE ppp.planning_project_id = p.id
 			  AND ppp.deleted_at IS NULL
-			  AND ppp.province_id IN ?
+			  AND CAST(ppp.province_id AS text) IN ?
 		)`, values)
 	}
 	if clause, arg, ok := tqdutils.PlanningProjectAdmJoinClause(filter.AdmID, "p.id"); ok {

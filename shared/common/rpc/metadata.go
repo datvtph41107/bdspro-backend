@@ -253,7 +253,8 @@ func actorFromMetadata(md metadata.MD) (identity.Actor, bool, error) {
 	if err != nil {
 		return identity.Actor{}, false, err
 	}
-	if found {
+	// Organization 0 is absent (personal token). Pointer-to-zero fails Actor.IsValid.
+	if found && organizationID > 0 {
 		hasValue = true
 		actor.OrganizationID = &organizationID
 	}

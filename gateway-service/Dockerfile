@@ -17,7 +17,6 @@ RUN apk add --no-cache ca-certificates tzdata wget && \
 WORKDIR /app
 COPY --from=build /out/gateway /app/gateway
 COPY gateway-service/config /app/config
-COPY gateway-service/docs /app/docs
 # Gateway hiện ghi một bản log compatibility cạnh stdout. Runtime user cần
 # quyền trên đúng thư mục này, không cần quyền root cho toàn container.
 RUN chown -R app:app /app

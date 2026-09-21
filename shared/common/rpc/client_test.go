@@ -45,8 +45,26 @@ func TestNewClientBuildsCallerOwnedChannel(t *testing.T) {
 	if conn == nil {
 		t.Fatal("nil connection")
 	}
+	if got := conn.Target(); got != "passthrough:///user:8201" {
+		t.Fatalf("Target() = %q, want passthrough:///user:8201", got)
+	}
 	if err := conn.Close(); err != nil {
 		t.Fatalf("Close() error = %v", err)
+	}
+}
+
+func TestNormalizeClientTarget(t *testing.T) {
+	t.Parallel()
+	cases := map[string]string{
+		"":                         "",
+		"user:8201":                "passthrough:///user:8201",
+		"passthrough:///user:8201": "passthrough:///user:8201",
+		"dns:///user:8201":         "dns:///user:8201",
+	}
+	for input, want := range cases {
+		if got := normalizeClientTarget(input); got != want {
+			t.Fatalf("normalizeClientTarget(%q) = %q, want %q", input, got, want)
+		}
 	}
 }
 

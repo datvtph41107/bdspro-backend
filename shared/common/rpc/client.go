@@ -41,7 +41,7 @@ func NewClientWithInterceptors(
 }
 
 func newClient(cfg ClientConfig, interceptors ClientInterceptors) (*grpc.ClientConn, error) {
-	target := strings.TrimSpace(cfg.Target)
+	target := normalizeClientTarget(cfg.Target)
 	if target == "" {
 		return nil, fmt.Errorf("gRPC target is required")
 	}
@@ -73,6 +73,17 @@ func newClient(cfg ClientConfig, interceptors ClientInterceptors) (*grpc.ClientC
 		return nil, fmt.Errorf("create gRPC client channel %q: %w", target, err)
 	}
 	return conn, nil
+}
+
+// normalizeClientTarget keeps scheme-aware targets and maps bare host:port to
+// passthrough so Docker Compose service names are not resolved through gRPC's
+// dns resolver (which often returns "produced zero addresses" for short names).
+func normalizeClientTarget(target string) string {
+	target = strings.TrimSpace(target)
+	if target == "" || strings.Contains(target, "://") {
+		return target
+	}
+	return "passthrough:///" + target
 }
 
 // Unavailable returns a connection interface that fails every RPC with
