@@ -26,19 +26,7 @@ Local immutable evidence:
 Safe publication mapping:
 - local source tree `750855edc...` -> remote source commit `58a527cafcd5c87256e43ef41dfe1512338280cb` -> same tree;
 - local harness tree `d21e700f...` -> remote branch head `373663d955d2fcffac1cfc96736ce694e8ce5b73` -> same tree;
-- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
-- branch was absent before publication; publication was create-only/non-force.
-
-Proof:
-- focused common middleware/errors tests PASS;
-- focused Payment interceptor/handler tests PASS;
-- Payment compile gate PASS;
-- detector tests: 57 PASS;
-- all ratchets PASS, including `go.direct_grpc_error_projection@payment-service=0`;
-- Payment direct `ToGRPC(` = 0;
-- Payment-local recovery retired;
-- detached exact-SHA reconstruction/proof PASS;
-- protected paths unchanged and `shared/code/deploy.sh` hash preserved.
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`.
 
 Hosted exact-SHA:
 - workflow: `Refactor Observability and Error Contracts`
