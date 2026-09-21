@@ -340,15 +340,95 @@ This slice addresses the earlier open question: deleting one old violation and a
 `SLICE_D_READ_ONLY_CLASSIFICATION=PASS/CLOSED`
 `SLICE_D_SOURCE_MUTATION=AUTHORIZED`
 
+
+
+## Slice D — Debt fingerprint enforcement — PROVED/CLOSED
+
+Local immutable evidence:
+- source candidate: `0f25ad6df6a74320647b5dd56ad5c4033880c620`
+- source tree: `bc8a19aed01760ff065996d90ee1ab75cf0f2925`
+- harness-only child: `318473dba3b8aa4518f1e3b1b06fe53c90f054b9`
+- harness tree: `478604fd04b0901f7e569ac8064c545679150cd4`
+- harness delta from source candidate: exactly `.github/workflows/refactor-observability-errors.yml`.
+
+Implemented bounded outcomes:
+- existing zero-debt ratchets remain authoritative;
+- committed accepted nonzero debt baseline added at `shared/code/development/observability-error-debt-baseline.tsv`;
+- fingerprint identity is `category + owner + path + normalized excerpt`; line number is excluded;
+- accepted debt is enforced as an exact multiset/count, not only a total;
+- same-count replacement, moved/unknown debt identity, duplicate reintroduction, and retirement without synchronized baseline change all fail enforcement;
+- synchronized debt retirement remains possible by changing source and shrinking the reviewed baseline together;
+- CI does not auto-update the accepted-debt baseline;
+- caller-facing `ReturnError` API and protected Organization legacy consumers remain untouched.
+
+Focused/local proof:
+- detector test suite: 71 PASS;
+- current inventory: 2069 findings / 44 debt;
+- committed baseline: 44 debt occurrences / 43 unique fingerprints;
+- `--enforce-ratchets`: PASS with all zero-ratchets at zero and exact fingerprint multiset match;
+- tests explicitly prove exact match, line/whitespace stability, stale-baseline failure, synchronized retirement, same-count replacement failure, duplicate occurrence failure and unknown-owner failure;
+- protected paths unchanged: `shared/protobuf`, `organization-service`, `map-service`, `shared/code/deploy.sh`;
+- deploy hash preserved: `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Detached exact-SHA proof:
+- worktree: `/home/sprite/work/proof-pre-final-d-318473d`;
+- exact local harness SHA/tree: `318473dba3b8aa4518f1e3b1b06fe53c90f054b9` / `478604fd04b0901f7e569ac8064c545679150cd4`;
+- canonical `make setup`: PASS;
+- detector tests: 71 PASS;
+- exact debt baseline enforcement: PASS;
+- baseline cardinality proof: 44 occurrences / 43 fingerprints;
+- harness-only delta: PASS;
+- protected invariants + final cleanliness: PASS;
+- `SLICE_D_DETACHED_EXACT_SHA_PROOF=PASS`.
+
+Safe publication mapping:
+- previous remote head: `4c4db1c60f044dea57df61b423c9c5b7b9620341`;
+- remote source commit: `57683ffdeda9af47f7af8e3728f3a7981f127b17`;
+- remote source tree: `bc8a19aed01760ff065996d90ee1ab75cf0f2925` (identical to local source tree);
+- remote harness/head: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- remote harness tree: `478604fd04b0901f7e569ac8064c545679150cd4` (identical to local harness tree);
+- parent chain: `4c4db1c... -> 57683ffd... -> 3c8e3412...`;
+- branch update was fast-forward only with `force=false`.
+
+Hosted exact-SHA:
+- workflow: `Refactor Observability and Error Contracts`;
+- run number: `106`;
+- run ID: `35625590718`;
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- exact head SHA: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- status/conclusion: `completed/success`;
+- `inventory`: SUCCESS, including `Build migration inventory and enforce ratchets plus accepted-debt fingerprints`;
+- `common-contracts`: SUCCESS;
+- `boundary-contracts`: SUCCESS;
+- exact-SHA artifact: `observability-error-inventory-3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- artifact ID: `10652805270`;
+- expired: false;
+- digest: `sha256:52182b11e72bedd04bbce905c4d110660559b948f73b432375d282ae41671941`.
+
+Writer preservation note:
+- local writer `/home/sprite/work/arch-hardening-ca98ece` remains at immutable harness commit `318473d...`;
+- a later staged workflow-only rename/revert exists in that writer and is not part of the immutable Slice D harness authority;
+- preserve it; do not reset/clean it and do not use its staged index as aggregate proof authority.
+
+`SLICE_D_SOURCE_MUTATION=CLOSED`
+`SLICE_D_FOCUSED_PROOF=PASS`
+`SLICE_D_DEBT_FINGERPRINT_PROOF=PASS`
+`SLICE_D_DETACHED_EXACT_SHA_PROOF=PASS`
+`SLICE_D_PUBLICATION=PASS`
+`SLICE_D_HOSTED_PROOF=PASS/CLOSED`
+`SLICE_D=PROVED/CLOSED`
+
 ## Remaining hardening order
 
-1. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
-2. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
-3. Re-open Production Promotion only after hardening is PROVED/CLOSED.
+1. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
+2. Re-open Production Promotion only after hardening is PROVED/CLOSED.
 
 `SLICE_D_READ_ONLY_CLASSIFICATION=PASS/CLOSED`
 `SLICE_D_SOURCE_MUTATION=AUTHORIZED`
 
-`NEXT_GATE=SLICE_D_BOUNDED_SOURCE_MUTATION`
+`AGGREGATE_HARDENING_PROOF=AUTHORIZED`
+`PRODUCTION_PROMOTION=PAUSED`
+
+`NEXT_GATE=AGGREGATE_EXACT_SHA_AND_RELEASE_PROOF`
 
 `FINAL ACCEPTED=NO`
