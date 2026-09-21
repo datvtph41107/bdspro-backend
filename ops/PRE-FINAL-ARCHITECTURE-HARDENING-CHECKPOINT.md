@@ -6,14 +6,13 @@ Updated: 2026-09-21 Asia/Bangkok
 
 `PRE_FINAL_ARCHITECTURE_HARDENING=AUTHORIZED/ACTIVE`
 
-The user explicitly paused Production Promotion before final completion in order to implement and re-prove the architecture/ownership hardening discussed after canonical acceptance.
+Production Promotion remains paused. The official production-lineage repository has not been mutated.
 
-Baseline canonical authority:
+Baseline canonical authority before hardening:
 - branch: `final-acceptance/source-canonicalization`
 - SHA: `ca98eceb276dca8249b2f1d4d73cdce6248ec7dd`
 - tree: `76b77be3745d004a7c59cbfcd32cf544568b5000`
 - Fresh-clone Reconstruction: PROVED/CLOSED at run `35588223133`
-- production lineage remains untouched
 - FINAL ACCEPTED = NO
 
 ## Operating constraints
@@ -21,41 +20,86 @@ Baseline canonical authority:
 Operating Model V2 remains mandatory:
 - many read-only discovery/proof lanes;
 - exactly one source writer;
-- bounded concerns are serialized;
-- each candidate receives zero/removal proof where applicable, local exact-SHA proof, safe publication, hosted proof and durable checkpoint sync;
+- architecture/gate decisions and source mutation are serialized;
+- classify failed proof before mutation;
 - protected/no-touch invariants remain in force;
-- do not mutate the official production-lineage repository during this hardening phase.
+- preserve all interrupted worktrees/evidence;
+- do not mutate official production lineage during hardening.
 
-## Hardening objective
+Doctrine:
+`ONE TRUTH PER CONCERN -> ONE OWNER -> ONE PUBLIC NAME -> ONE OBVIOUS ENTRY POINT -> MULTIPLE PROJECTIONS THAT NEVER REDEFINE TRUTH`
 
-Strengthen source architecture before final promotion using the doctrine:
+`REALITY -> PROBLEM -> OWNER -> CONSUMER -> VALUE -> COST -> PROOF -> REMOVAL TEST`
 
-`REAL INCIDENT/CONSUMER -> PROBLEM -> INVARIANT -> OWNER -> CANONICAL TRUTH -> PROJECTION -> VALUE -> COST -> PROOF -> REMOVAL TEST`
+## Slice A — Error boundary ownership convergence
 
-and
+Classification from exact `ca98ece...` source:
+- common `UnaryErrorInterceptor` was already the canonical application-error normalization boundary;
+- Payment had no common error interceptor in its unary chain;
+- Payment handler manually called `_errors.ToGRPC` for canonical errors;
+- Payment had a private recovery interceptor duplicating common recovery;
+- Payment completion logger also owned ERROR severity and technical error payloads, creating a second operational-error policy.
 
-`ONE TRUTH PER CONCERN -> ONE OWNER -> ONE PUBLIC NAME -> ONE OBVIOUS ENTRY POINT -> MULTIPLE PROJECTIONS THAT NEVER REDEFINE TRUTH`.
+Bounded mutation:
+- install common `UnaryErrorInterceptor` in Payment unary chain;
+- retire Payment-local recovery and use common recovery;
+- canonical application errors now return unchanged from Payment handler so the common boundary owns gRPC projection;
+- Payment completion logger is INFO-only outcome projection and emits canonical code/reason/grpc_code without owning cause/severity;
+- common error boundary logs canonical operational failures for Internal/Unknown/Unavailable/DataLoss/DeadlineExceeded and includes wrapped technical cause only in internal logs;
+- expected canonical business errors remain unpromoted;
+- add detector + zero ratchet `go.direct_grpc_error_projection@payment-service=0`.
 
-Primary concerns recovered from exact `ca98ece...` source:
-1. infrastructure ownership: DB/Redis/RabbitMQ/config/lifecycle/health separation;
-2. Redis currently mixes transport lifecycle with business key/TTL/token semantics and requires bounded ownership separation based on real consumers;
-3. error evidence/severity: canonical application errors can carry causes, while common normalization and Payment-local logging currently implement different severity/evidence policies;
-4. compatibility API: `ReturnError(interface{}, ...interface{})` remains migration-only and must not become permanent architecture;
-5. Payment reliability/health: durable outbox + publisher confirms + supervisor are present, but operational degradation/backoff/lag/idempotency boundaries require source proof and bounded hardening where justified;
-6. static enforcement and package/release reconstruction must be re-proved after all source changes.
+Evidence already PASS:
+- focused common middleware/errors tests;
+- focused Payment interceptor/handler tests;
+- Payment compile gate;
+- detector unit tests (57 tests);
+- observability/error ratchets, including new Payment direct-projection ratchet = 0;
+- zero/removal proof: no direct `ToGRPC(` remains in Payment; Payment-local recovery file retired;
+- protected paths unchanged: `shared/protobuf`, `organization-service`, `map-service`, `shared/code/deploy.sh`;
+- deploy script hash remains `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
 
-## Execution order
+Immutable commits:
+- source candidate: `f7f4c981da29a48a63d430ba7e8afc3312961ce2`
+- source candidate tree: `750855edc374d9fc556d9b089a29dd9cef0b9a05`
+- harness-only child: `bec7db04aa2502269eed7018d6c4e3898125c979`
+- harness-only child tree: `d21e700f2fd09282f3d75727cafcfbc9853ba471`
+- harness delta is exactly one file: `.github/workflows/refactor-observability-errors.yml`
+- harness change only enables branch `refactor/pre-final-architecture-hardening-ca98ece` and aligns Payment hosted test names.
 
-1. READ-ONLY whole-source ownership inventory from exact baseline.
-2. Slice A — Error evidence/severity ownership convergence.
-3. Slice B — Redis transport/key-policy ownership separation for proven consumers only.
-4. Slice C — Payment outbox degradation/backoff/health/idempotency proof and bounded fixes.
-5. Slice D — compile-time/static enforcement for permanent canonical APIs where compatibility state permits.
-6. Aggregate exact-SHA proof, full canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
-7. Re-open Production Promotion only after the new canonical hardening authority is PROVED/CLOSED.
+Environment classification:
+- recovery Sprite originally lacked Pango/FFmpeg prerequisites; host prerequisite installation reached `HOST_PREREQS=PASS`;
+- `make doctor` reports Docker daemon unavailable on recovery Sprite. This is an environment capability gap, not a source regression. Hosted/fresh-clone proof must cover Docker-dependent gates.
 
-No big-bang rewrite is authorized. Each slice must be classified from source reality before mutation.
+Current writer:
+- `/home/sprite/work/arch-hardening-ca98ece`
+- branch `work/pre-final-hardening`
+- HEAD `bec7db04aa2502269eed7018d6c4e3898125c979`
+- clean
 
-`NEXT_GATE=PRE_FINAL_HARDENING_READ_ONLY_INVENTORY`
+Preserved proof worktrees:
+- `/home/sprite/work/proof-pre-final-a-f7f4c98`
+- `/home/sprite/work/proof-pre-final-a-bec7db0`
+- do not delete/reset/recreate them.
+
+## Remaining hardening order
+
+1. Complete Slice A detached exact-SHA proof on `bec7db0...`.
+2. Safe non-force publication to `refactor/pre-final-architecture-hardening-ca98ece`.
+3. Hosted exact-SHA proof for Slice A.
+4. Slice B — Redis transport/key-policy/secret ownership separation for proven consumers only.
+5. Slice C — Payment outbox degradation/backoff/health/idempotency proof and bounded fixes.
+6. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
+7. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
+8. Re-open Production Promotion only after hardening is PROVED/CLOSED.
+
+`SLICE_A_SOURCE_MUTATION=CLOSED`
+`SLICE_A_FOCUSED_PROOF=PASS`
+`SLICE_A_ZERO_RATCHET=PASS`
+`SLICE_A_DETACHED_EXACT_SHA_PROOF=PENDING`
+`SLICE_A_PUBLICATION=PENDING`
+`SLICE_A_HOSTED_PROOF=PENDING`
+
+`NEXT_GATE=SLICE_A_DETACHED_EXACT_SHA_PROOF`
 
 `FINAL ACCEPTED=NO`
