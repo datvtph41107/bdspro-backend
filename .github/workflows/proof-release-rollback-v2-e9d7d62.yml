@@ -108,6 +108,7 @@ jobs:
           bash shared/code/development/verify-source-layout.sh
           (cd shared/common && GOWORK=off go test ./logging ./requestlog)
           python3 shared/code/development/test_audit_observability_errors.py
+          rm -rf shared/code/development/__pycache__
           grep -Fq 'QHPRO_LOG_OUTPUT: stdout' compose.yaml
           make help | grep -E 'release-(build|verify|up|rollback)'
           test -z "$(git status --porcelain)"
