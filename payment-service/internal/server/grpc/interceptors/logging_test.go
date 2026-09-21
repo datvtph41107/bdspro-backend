@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"testing"
 
+	_errors "common/errors"
 	"common/request"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func captureDefaultLogger(t *testing.T) (*bytes.Buffer, func()) {
@@ -35,7 +36,7 @@ func decodeSingleLogRecord(t *testing.T, buffer *bytes.Buffer) map[string]any {
 	return record
 }
 
-func TestUnaryLoggerInterceptorProjectsCorrelation(t *testing.T) {
+func TestUnaryLoggerInterceptorProjectsSuccessfulCompletion(t *testing.T) {
 	buffer, restore := captureDefaultLogger(t)
 	defer restore()
 
@@ -60,32 +61,40 @@ func TestUnaryLoggerInterceptorProjectsCorrelation(t *testing.T) {
 	require.Equal(t, requestID, record["request_id"])
 	require.Equal(t, "grpc", record["component"])
 	require.Equal(t, "/payment.PaymentService/Get", record["method"])
+	require.Equal(t, "success", record["outcome"])
 	require.Equal(t, "INFO", record["level"])
 }
 
-func TestUnaryRecoveryInterceptorProjectsCanonicalError(t *testing.T) {
+func TestUnaryLoggerInterceptorProjectsCanonicalFailureWithoutOwningSeverity(t *testing.T) {
 	buffer, restore := captureDefaultLogger(t)
 	defer restore()
 
-	requestID := request.NewRequestID()
-	ctx := request.WithRequestID(context.Background(), requestID)
+	spec := _errors.MustSpec(
+		599991,
+		"PAYMENT_TEST_UNAVAILABLE",
+		"payment temporarily unavailable",
+		codes.Unavailable,
+	)
+	want := _errors.ReturnError(spec, _errors.WithCause(errors.New("database unavailable")))
 
-	interceptor := UnaryRecoveryInterceptor()
+	interceptor := UnaryLoggerInterceptor()
 	_, err := interceptor(
-		ctx,
+		context.Background(),
 		nil,
-		&grpc.UnaryServerInfo{FullMethod: "/payment.PaymentService/Panic"},
+		&grpc.UnaryServerInfo{FullMethod: "/payment.PaymentService/Get"},
 		func(context.Context, interface{}) (interface{}, error) {
-			panic("boom")
+			return nil, want
 		},
 	)
 
-	require.Equal(t, codes.Internal, status.Code(err))
+	require.ErrorIs(t, err, want)
 
 	record := decodeSingleLogRecord(t, buffer)
-	require.Equal(t, "panic recovered in unary interceptor", record["msg"])
-	require.Equal(t, requestID, record["request_id"])
-	require.Equal(t, "grpc", record["component"])
-	require.Equal(t, "/payment.PaymentService/Panic", record["method"])
-	require.Equal(t, "ERROR", record["level"])
+	require.Equal(t, "unary gRPC completed", record["msg"])
+	require.Equal(t, "error", record["outcome"])
+	require.Equal(t, "INFO", record["level"])
+	require.Equal(t, float64(599991), record["error_code"])
+	require.Equal(t, "PAYMENT_TEST_UNAVAILABLE", record["error_reason"])
+	require.Equal(t, codes.Unavailable.String(), record["grpc_code"])
+	require.NotContains(t, buffer.String(), "database unavailable")
 }

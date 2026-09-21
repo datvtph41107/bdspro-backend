@@ -232,8 +232,9 @@ func buildServer(
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			_middleware.UnaryErrorInterceptor(),
 			interceptors.UnaryLoggerInterceptor(),
-			interceptors.UnaryRecoveryInterceptor(),
+			_middleware.UnaryRecoveryInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			transport.Stream,

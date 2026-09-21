@@ -93,6 +93,7 @@ ZERO_RATCHETS = (
     ("go.third_party_logger", "bdspro-service"),
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
+    ("go.direct_grpc_error_projection", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
 ) + tuple(
     (category, owner)
@@ -157,6 +158,16 @@ RULES = (
         "debt",
         (".go",),
         re.compile(r"strings\.(?:Contains|HasPrefix|HasSuffix)\s*\(\s*[A-Za-z0-9_\.]+\.Error\(\)"),
+    ),
+    Rule(
+        "go.direct_grpc_error_projection",
+        "debt",
+        (".go",),
+        re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\.ToGRPC\s*\("),
+        excluded_prefixes=(
+            "shared/common/errors/",
+            "shared/common/middleware/",
+        ),
     ),
     Rule(
         "go.grpc_status_emitter",

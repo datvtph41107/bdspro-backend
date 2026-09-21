@@ -1616,6 +1616,58 @@ class TextErrorClassifierDetectorTest(unittest.TestCase):
 
 
 
+
+class ErrorBoundaryPolicyTest(unittest.TestCase):
+    def test_direct_grpc_projection_rule_excludes_canonical_owners(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.direct_grpc_error_projection"
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "shared/common/errors/grpc.go",
+                Path("grpc.go"),
+            )
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "shared/common/middleware/error_interceptor.go",
+                Path("error_interceptor.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "payment-service/infra/handler/grpc/fixture.go",
+                Path("fixture.go"),
+            )
+        )
+
+    def test_payment_direct_grpc_projection_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.direct_grpc_error_projection", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_direct_grpc_projection_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.direct_grpc_error_projection",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "payment-service/infra/handler/grpc/fixture.go",
+            "line": 1,
+            "excerpt": "_errors.ToGRPC(err)",
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.direct_grpc_error_projection@payment-service"],
+            1,
+        )
+
+
 class R5LoggingConvergencePolicyTest(unittest.TestCase):
     def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
         rule = next(

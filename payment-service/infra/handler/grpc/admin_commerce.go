@@ -175,7 +175,9 @@ func adminPaymentError(err error) error {
 		return nil
 	}
 	if _, ok := _errors.As(err); ok {
-		return _errors.ToGRPC(err)
+		// Canonical application failures cross the process through the shared
+		// UnaryErrorInterceptor. Handlers must not own a second gRPC projection.
+		return err
 	}
 	switch {
 	case errors.Is(err, payment.ErrInvalidCommand):
