@@ -1,0 +1,196 @@
+name: Proof Release Rollback 8BC26F4
+
+on:
+  push:
+    branches:
+      - proof/release-rollback-8bc26f4
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-release-rollback-8bc26f4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-rollback:
+    name: Immutable release and rollback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+
+    env:
+      SOURCE_SHA: 8bc26f496b6badeb491dd96ee3a5267449230415
+      PREVIOUS_SHA: 5c8a0ad2bf73ab08e95a6eaa9b9d148bcaade859
+      RELEASE_NAMESPACE: bdspro-release-proof
+
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source ancestry and harness-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow=.github/workflows/proof-release-rollback-8bc26f4.yml
+
+          test "$(git rev-parse "$SOURCE_SHA^{tree}")" = 49cf65baa79556d6cf64504d3ae6feb366c10a9f
+          test "$(git rev-parse "$SOURCE_SHA^")" = "$PREVIOUS_SHA"
+          test "$(git merge-base "$SOURCE_SHA" HEAD)" = "$SOURCE_SHA"
+          test "$(git diff --name-only "$SOURCE_SHA" HEAD)" = "$workflow"
+          git diff --check "$SOURCE_SHA" HEAD
+
+          test -z "$(git diff --name-only "$PREVIOUS_SHA" "$SOURCE_SHA" -- shared/protobuf organization-service map-service shared/code/deploy.sh)"
+          test "$(git show "$SOURCE_SHA:shared/code/deploy.sh" | sha256sum | awk '{print $1}')" = 80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e
+
+          test "$(git rev-parse "$SOURCE_SHA:BACKEND-ACCEPTANCE.md")" = a25421178998352c2759888c3a75f4030fcc1909
+          test "$(git rev-parse "$SOURCE_SHA:shared/code/development/release-candidate.sh")" = 9750bb78a82758395eae10468f4a8b17fc574602
+          test "$(git rev-parse "$SOURCE_SHA:shared/code/development/root.mk")" = 7c76b8e0b728fb4c04361df2a57f206bd5bf762f
+          test "$(git rev-parse "$SOURCE_SHA:shared/code/development/test-release-candidate.sh")" = 3011fae0fc6e3c242033a144f6473fbe2a5a03ea
+
+          echo "Release source identity and protected scope PASS"
+
+      - name: Install host prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends             python3-venv ffmpeg curl ripgrep             libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize source and previous worktrees
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach /tmp/bdspro-release-source "$SOURCE_SHA"
+          git worktree add --detach /tmp/bdspro-release-previous "$PREVIOUS_SHA"
+          test "$(git -C /tmp/bdspro-release-source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C /tmp/bdspro-release-previous rev-parse HEAD)" = "$PREVIOUS_SHA"
+
+      - name: Materialize canonical source setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-source
+          make setup
+          make doctor
+
+      - name: Prove repository release contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-source
+          make verify-release-contract
+          make help | grep -E 'release-(build|verify|up|rollback)'
+          grep -Fq 'outboxSupervisor\.Run\(actorCtx\)' shared/code/development/root.mk
+          ! grep -Fq 'outboxPublisher\.Run\(actorCtx\)' shared/code/development/root.mk
+          bash -n shared/code/development/release-candidate.sh
+          bash -n shared/code/development/test-release-candidate.sh
+
+      - name: Prepare previous immutable release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root=/tmp/bdspro-release-source
+          previous_dir=/tmp/bdspro-releases/$PREVIOUS_SHA
+          services='auth user organization payment tqd notification file gateway hub assistant'
+          cd "$source_root"
+          QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_RELEASE_SERVICES="$services"             bash shared/code/development/release-candidate.sh prepare-commit "$PREVIOUS_SHA" "$previous_dir"
+          bash shared/code/development/release-candidate.sh verify "$previous_dir"
+          grep -Fxq "commit=$PREVIOUS_SHA" "$previous_dir/release.meta"
+          grep -Fxq "tag=$PREVIOUS_SHA" "$previous_dir/release.meta"
+
+      - name: Build previous exact-SHA images
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-previous
+          QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$PREVIOUS_SHA" make docker-backend
+          cd /tmp/bdspro-release-source
+          bash shared/code/development/release-candidate.sh capture-images "/tmp/bdspro-releases/$PREVIOUS_SHA"
+          bash shared/code/development/release-candidate.sh verify-images "/tmp/bdspro-releases/$PREVIOUS_SHA"
+
+      - name: Build current exact-SHA release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-source
+          QHPRO_RELEASE_NAMESPACE="$RELEASE_NAMESPACE"             make release-build release_dir="/tmp/bdspro-releases/$SOURCE_SHA"
+          make release-verify release_dir="/tmp/bdspro-releases/$SOURCE_SHA"
+          grep -Fxq "commit=$SOURCE_SHA" "/tmp/bdspro-releases/$SOURCE_SHA/release.meta"
+          grep -Fxq "tag=$SOURCE_SHA" "/tmp/bdspro-releases/$SOURCE_SHA/release.meta"
+          cmp -s             "/tmp/bdspro-releases/$SOURCE_SHA/migration-trees.tsv"             "/tmp/bdspro-releases/$PREVIOUS_SHA/migration-trees.tsv"
+
+      - name: Activate exact current release without rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-source
+          make reset CONFIRM=reset-development-data || true
+          make release-up release_dir="/tmp/bdspro-releases/$SOURCE_SHA"
+
+          QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$SOURCE_SHA"             docker compose --env-file .env -f compose.yaml config > /tmp/current-compose.yaml
+
+          while IFS=$'\t' read -r service image expected_id; do
+            cid="$(QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$SOURCE_SHA"               docker compose --env-file .env -f compose.yaml ps -q "$service")"
+            test -n "$cid"
+            actual_id="$(docker inspect --format '{{.Image}}' "$cid")"
+            test "$actual_id" = "$expected_id"
+          done < "/tmp/bdspro-releases/$SOURCE_SHA/image-manifest.tsv"
+
+          make smoke 2>&1 | tee /tmp/current-release-smoke.log
+          echo "Current immutable release readiness/business smoke PASS"
+
+      - name: Roll back to previous immutable release without rebuild
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/bdspro-release-source
+          make release-rollback             current_release="/tmp/bdspro-releases/$SOURCE_SHA"             previous_release="/tmp/bdspro-releases/$PREVIOUS_SHA"
+
+          QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$PREVIOUS_SHA"             docker compose --env-file .env -f compose.yaml config > /tmp/previous-compose.yaml
+
+          while IFS=$'\t' read -r service image expected_id; do
+            cid="$(QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$PREVIOUS_SHA"               docker compose --env-file .env -f compose.yaml ps -q "$service")"
+            test -n "$cid"
+            actual_id="$(docker inspect --format '{{.Image}}' "$cid")"
+            test "$actual_id" = "$expected_id"
+          done < "/tmp/bdspro-releases/$PREVIOUS_SHA/image-manifest.tsv"
+
+          make smoke 2>&1 | tee /tmp/previous-release-smoke.log
+          echo "Previous immutable release rollback readiness/business smoke PASS"
+
+      - name: Build release proof summary
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/release-proof-evidence/current /tmp/release-proof-evidence/previous
+          for f in release.meta source-artifact.sha256 SOURCE-MANIFEST.sha256 migration-trees.tsv release-evidence.sha256 image-manifest.tsv image-manifest.tsv.sha256; do
+            test -f "/tmp/bdspro-releases/$SOURCE_SHA/$f" && cp "/tmp/bdspro-releases/$SOURCE_SHA/$f" "/tmp/release-proof-evidence/current/$f"
+            test -f "/tmp/bdspro-releases/$PREVIOUS_SHA/$f" && cp "/tmp/bdspro-releases/$PREVIOUS_SHA/$f" "/tmp/release-proof-evidence/previous/$f"
+          done
+          cp /tmp/current-compose.yaml /tmp/release-proof-evidence/current-compose.yaml 2>/dev/null || true
+          cp /tmp/previous-compose.yaml /tmp/release-proof-evidence/previous-compose.yaml 2>/dev/null || true
+          cp /tmp/current-release-smoke.log /tmp/release-proof-evidence/current-release-smoke.log 2>/dev/null || true
+          cp /tmp/previous-release-smoke.log /tmp/release-proof-evidence/previous-release-smoke.log 2>/dev/null || true
+          git -C /tmp/bdspro-release-source show -s --format='%H %T %P %s' > /tmp/release-proof-evidence/source-identity.txt 2>/dev/null || true
+
+      - name: Upload release proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-rollback-8bc26f4-${{ github.sha }}
+          path: /tmp/release-proof-evidence
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f /tmp/bdspro-release-source/.env; then
+            cd /tmp/bdspro-release-source
+            QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$PREVIOUS_SHA"               docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
