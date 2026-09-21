@@ -141,14 +141,25 @@ func run(parent context.Context) error {
 			_ = rabbitPublisher.Close()
 			_ = rabbitConnection.Close()
 		}
-		return outbox.NewService(store, rabbitPublisher, time.Now, cfg.Rabbit.PublisherRetry), closeResources, nil
+		return outbox.NewService(
+			store,
+			rabbitPublisher,
+			time.Now,
+			outbox.RetryPolicy{
+				Base: cfg.Rabbit.OutboxRetryBase,
+				Max:  cfg.Rabbit.OutboxRetryMax,
+			},
+		), closeResources, nil
 	}
 	outboxSupervisor := paymentworker.NewOutboxSupervisor(
 		outboxFactory,
 		paymentworker.ProcessID("payment-outbox"),
 		cfg.Rabbit.PublisherLease,
 		cfg.Rabbit.PublisherPoll,
-		cfg.Rabbit.PublisherRetry,
+		paymentworker.ReconnectPolicy{
+			Base: cfg.Rabbit.ReconnectBase,
+			Max:  cfg.Rabbit.ReconnectMax,
+		},
 	)
 	now := time.Now
 	orderService := order.NewService(store, reference.New(), now, cfg.Commerce.OrderTTL)

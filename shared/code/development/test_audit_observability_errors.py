@@ -1705,6 +1705,56 @@ class TileSessionSecretLoggingPolicyTest(unittest.TestCase):
         )
 
 
+
+class PaymentPublisherUnavailableOwnershipPolicyTest(unittest.TestCase):
+    def test_parallel_publisher_unavailable_definition_excludes_canonical_owner(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.payment_parallel_publisher_unavailable"
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "payment-service/internal/usecase/outbox/service.go",
+                Path("service.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "payment-service/infra/broker/rabbitmq/fixture.go",
+                Path("fixture.go"),
+            )
+        )
+        self.assertIsNotNone(
+            rule.pattern.search(
+                'var ErrPublisherUnavailable = errors.New("parallel owner")'
+            )
+        )
+
+    def test_payment_parallel_publisher_unavailable_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.payment_parallel_publisher_unavailable", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_parallel_publisher_unavailable_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.payment_parallel_publisher_unavailable",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "payment-service/infra/broker/rabbitmq/fixture.go",
+            "line": 1,
+            "excerpt": 'var ErrPublisherUnavailable = errors.New("parallel owner")',
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.payment_parallel_publisher_unavailable@payment-service"],
+            1,
+        )
+
+
 class R5LoggingConvergencePolicyTest(unittest.TestCase):
     def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
         rule = next(

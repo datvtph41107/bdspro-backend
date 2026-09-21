@@ -17,8 +17,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var ErrPublisherUnavailable = errors.New("rabbitmq publisher unavailable")
-
 type Publisher struct {
 	mu       sync.Mutex
 	channel  *amqp.Channel
@@ -54,7 +52,7 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 		return errors.New("invalid payment outbox message")
 	}
 	if p.channel.IsClosed() {
-		return ErrPublisherUnavailable
+		return outbox.ErrPublisherUnavailable
 	}
 	if err := ctx.Err(); err != nil {
 		return err
@@ -98,7 +96,7 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 	)
 	if err != nil {
 		if errors.Is(err, amqp.ErrClosed) {
-			return fmt.Errorf("%w: publish channel closed: %v", ErrPublisherUnavailable, err)
+			return fmt.Errorf("%w: publish channel closed: %v", outbox.ErrPublisherUnavailable, err)
 		}
 		return fmt.Errorf("publish payment event: %w", err)
 	}
@@ -130,14 +128,14 @@ func (p *Publisher) Publish(ctx context.Context, message outbox.Message) error {
 
 func (p *Publisher) unavailable() error {
 	if p == nil || p.channel == nil {
-		return ErrPublisherUnavailable
+		return outbox.ErrPublisherUnavailable
 	}
 	select {
 	case closeErr, ok := <-p.closed:
 		if !ok || closeErr == nil {
-			return ErrPublisherUnavailable
+			return outbox.ErrPublisherUnavailable
 		}
-		return fmt.Errorf("%w: %v", ErrPublisherUnavailable, closeErr)
+		return fmt.Errorf("%w: %v", outbox.ErrPublisherUnavailable, closeErr)
 	default:
 		return nil
 	}

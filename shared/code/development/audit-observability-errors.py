@@ -97,6 +97,7 @@ ZERO_RATCHETS = (
     ("go.tile_session_secret_logging", "shared/common"),
     ("go.tile_session_secret_logging", "user-service"),
     ("go.tile_session_secret_logging", "tqd-service"),
+    ("go.payment_parallel_publisher_unavailable", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
 ) + tuple(
     (category, owner)
@@ -180,6 +181,16 @@ RULES = (
             r"\b(?:slog|log|logger)\.[A-Za-z_][A-Za-z0-9_]*"
             r"[^\n]*\bsessionEncryptKey\b"
         ),
+    ),
+    Rule(
+        "go.payment_parallel_publisher_unavailable",
+        "debt",
+        (".go",),
+        re.compile(r"\bvar\s+ErrPublisherUnavailable\s*="),
+        excluded_paths=(
+            "payment-service/internal/usecase/outbox/service.go",
+        ),
+        required_path_fragments=("/payment-service/",),
     ),
     Rule(
         "go.grpc_status_emitter",

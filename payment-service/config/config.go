@@ -37,11 +37,14 @@ type CommerceConfig struct {
 }
 
 type RabbitConfig struct {
-	URL            string
-	Exchange       string
-	PublisherLease time.Duration
-	PublisherPoll  time.Duration
-	PublisherRetry time.Duration
+	URL             string
+	Exchange        string
+	PublisherLease  time.Duration
+	PublisherPoll   time.Duration
+	OutboxRetryBase time.Duration
+	OutboxRetryMax  time.Duration
+	ReconnectBase   time.Duration
+	ReconnectMax    time.Duration
 }
 
 type ProviderConfig struct {
@@ -83,6 +86,8 @@ func Load() (Config, error) {
 		return Config{}, errors.New("PAYMENT_DATABASE_URL is required")
 	}
 
+	outboxRetryBase, outboxRetryMax, reconnectBase, reconnectMax := rabbitTimingConfig()
+
 	cfg := Config{
 		Environment: selection.Environment,
 		Server: ServerConfig{
@@ -114,16 +119,22 @@ func Load() (Config, error) {
 			FulfillmentPoll:  durationEnv("PAYMENT_FULFILLMENT_POLL_INTERVAL", time.Second),
 		},
 		Rabbit: RabbitConfig{
-			URL:            strings.TrimSpace(os.Getenv("PAYMENT_RABBIT_URL")),
-			Exchange:       envOr("PAYMENT_EVENT_EXCHANGE", "", "qhpro.payment.events"),
-			PublisherLease: durationEnv("PAYMENT_OUTBOX_CLAIM_LEASE", 30*time.Second),
-			PublisherPoll:  durationEnv("PAYMENT_OUTBOX_POLL_INTERVAL", time.Second),
-			PublisherRetry: durationEnv("PAYMENT_OUTBOX_RETRY_DELAY", 5*time.Second),
+			URL:             strings.TrimSpace(os.Getenv("PAYMENT_RABBIT_URL")),
+			Exchange:        envOr("PAYMENT_EVENT_EXCHANGE", "", "qhpro.payment.events"),
+			PublisherLease:  durationEnv("PAYMENT_OUTBOX_CLAIM_LEASE", 30*time.Second),
+			PublisherPoll:   durationEnv("PAYMENT_OUTBOX_POLL_INTERVAL", time.Second),
+			OutboxRetryBase: outboxRetryBase,
+			OutboxRetryMax:  outboxRetryMax,
+			ReconnectBase:   reconnectBase,
+			ReconnectMax:    reconnectMax,
 		},
 		Provider: ProviderConfig{SepayAPIKey: strings.TrimSpace(os.Getenv("SEPAY_API_KEY"))},
 	}
 	if cfg.Server.Address == "" || cfg.Database.MaxOpenConns <= 0 || cfg.Database.MaxIdleConns < 0 ||
-		cfg.Commerce.OrderTTL <= 0 || cfg.Commerce.FulfillmentLease <= 0 || cfg.Commerce.FulfillmentPoll <= 0 {
+		cfg.Commerce.OrderTTL <= 0 || cfg.Commerce.FulfillmentLease <= 0 || cfg.Commerce.FulfillmentPoll <= 0 ||
+		cfg.Rabbit.PublisherLease <= 0 || cfg.Rabbit.PublisherPoll <= 0 ||
+		cfg.Rabbit.OutboxRetryBase <= 0 || cfg.Rabbit.OutboxRetryMax < cfg.Rabbit.OutboxRetryBase ||
+		cfg.Rabbit.ReconnectBase <= 0 || cfg.Rabbit.ReconnectMax < cfg.Rabbit.ReconnectBase {
 		return Config{}, fmt.Errorf("invalid Payment runtime configuration")
 	}
 	return cfg, nil
@@ -131,6 +142,15 @@ func Load() (Config, error) {
 
 // resolveConfigFile uses one committed runtime default. CONFIG_FILE is the
 // explicit operator escape hatch for an externally mounted configuration.
+func rabbitTimingConfig() (outboxRetryBase, outboxRetryMax, reconnectBase, reconnectMax time.Duration) {
+	legacyRetry := durationEnv("PAYMENT_OUTBOX_RETRY_DELAY", 5*time.Second)
+	outboxRetryBase = durationEnv("PAYMENT_OUTBOX_RETRY_BASE", legacyRetry)
+	outboxRetryMax = durationEnv("PAYMENT_OUTBOX_RETRY_MAX", time.Minute)
+	reconnectBase = durationEnv("PAYMENT_RABBIT_RECONNECT_BASE", legacyRetry)
+	reconnectMax = durationEnv("PAYMENT_RABBIT_RECONNECT_MAX", 30*time.Second)
+	return outboxRetryBase, outboxRetryMax, reconnectBase, reconnectMax
+}
+
 func resolveConfigFile(override string) string {
 	if file := strings.TrimSpace(override); file != "" {
 		return file
