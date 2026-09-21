@@ -13,7 +13,7 @@ import (
 func TestCanonicalSQLCoversNotificationAutoMigrateRegistry(t *testing.T) {
 	t.Parallel()
 
-	files, err := filepath.Glob(filepath.Join("..", "migrate", "*.up.sql"))
+	files, err := filepath.Glob(filepath.Join("..", "database", "migrations", "*.up.sql"))
 	require.NoError(t, err)
 	require.NotEmpty(t, files)
 	created := map[string]struct{}{}
