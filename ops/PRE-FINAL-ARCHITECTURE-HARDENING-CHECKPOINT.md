@@ -305,15 +305,50 @@ Hosted exact-SHA:
 `SLICE_C_HOSTED_PROOF=PASS/CLOSED`
 `SLICE_C=PROVED/CLOSED`
 
+
+## Slice D — Debt fingerprint enforcement — SOURCE MUTATION AUTHORIZED
+
+Read-only classification from immutable Slice C authority `0f40c937798f10f6e9c88f2f2f673ee84d26cce7` / tree `c6885fc2df1f7ac80f7e414c32832efc38d10bbf`:
+
+- current observability/error inventory remains `44` debt findings;
+- current enforcement has narrow zero-count ratchets only; it does not fingerprint accepted nonzero debt;
+- therefore a same-count substitution (remove one accepted violation and add one new violation) can escape count-based reasoning;
+- `ReturnError(value interface{}, arguments ...interface{})` is deliberately dual-shape during migration;
+- there are hundreds of canonical `ReturnError(Spec, Option...)` callers, so a new parallel typed constructor or bulk signature rewrite would add churn/public API without current consumer value;
+- exactly two `go.legacy_numeric_return_error` findings remain and both are in protected `organization-service/internal/usecase/deal_invitation_usecase.go`;
+- Organization is no-touch, so those two compatibility callers cannot be migrated in this hardening slice.
+
+Architecture decision:
+- do NOT change the caller-facing `ReturnError` API in Slice D;
+- do NOT add `NewError`, `NewFailure`, or another parallel caller-facing constructor;
+- keep the migration bridge only because protected legacy consumers still exist;
+- strengthen the existing audit owner instead.
+
+Authorized bounded mutation:
+- add a committed accepted-debt fingerprint baseline owned by `shared/code/development`;
+- fingerprint identity = `category + owner + path + normalized excerpt`; line number is excluded so harmless line movement does not redefine debt identity;
+- represent fingerprints as a multiset/count so duplicate reintroduction is detected;
+- `--enforce-ratchets` must require exact multiset equality between current nonzero debt and the committed baseline, while existing zero-ratchets remain enforced;
+- debt retirement therefore requires deleting the finding and shrinking the baseline in the same reviewed slice, preventing retired debt from silently reappearing later;
+- any unknown fingerprint, moved debt, replacement debt, or duplicate count increase fails CI even when total debt count is unchanged;
+- baseline updates are explicit source review surfaces; CI must never auto-update the baseline;
+- add detector tests proving: exact baseline PASS, removal without baseline sync FAIL, synchronized retirement PASS, same-count replacement FAIL, duplicate occurrence FAIL, unknown/new owner FAIL;
+- preserve all protected/no-touch paths and existing error wire/runtime semantics.
+
+This slice addresses the earlier open question: deleting one old violation and adding one new violation with the same total count must fail.
+
+`SLICE_D_READ_ONLY_CLASSIFICATION=PASS/CLOSED`
+`SLICE_D_SOURCE_MUTATION=AUTHORIZED`
+
 ## Remaining hardening order
 
 1. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
 2. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
 3. Re-open Production Promotion only after hardening is PROVED/CLOSED.
 
-`SLICE_D_READ_ONLY_CLASSIFICATION=AUTHORIZED`
-`SLICE_D_SOURCE_MUTATION=NOT_AUTHORIZED`
+`SLICE_D_READ_ONLY_CLASSIFICATION=PASS/CLOSED`
+`SLICE_D_SOURCE_MUTATION=AUTHORIZED`
 
-`NEXT_GATE=SLICE_D_STATIC_ENFORCEMENT_READ_ONLY_CLASSIFICATION`
+`NEXT_GATE=SLICE_D_BOUNDED_SOURCE_MUTATION`
 
 `FINAL ACCEPTED=NO`
