@@ -55,8 +55,11 @@ NATIVE_SERVICES := assistant notification organization payment file user auth hu
 WIRE_SERVICES := user organization tqd notification assistant hub
 TRACKED_WIRE_OUTPUTS := $(foreach service,$(WIRE_SERVICES),$(service)-service/wire/wire_gen.go)
 CONFIG_SERVICES := $(CORE_SERVICES) assistant bdspro chat chat-v1 crm map relay search social
+# Protected Map remains source-preserved but is intentionally excluded from the
+# mutable repository-module gate. Its legacy module metadata may not be tidied
+# under the established map-service/** NO-TOUCH invariant.
 REPOSITORY_MODULES := assistant-service bdspro-service chat-service chat-v1-service \
-	crm-service map-service relay-service search-service social-service \
+	crm-service relay-service search-service social-service \
 	shared/base shared/code shared/common shared/protobuf
 MODULES ?= $(REPOSITORY_MODULES)
 DB_SERVICES := user organization payment tqd notification file hub
@@ -471,8 +474,8 @@ verify-backend: env-check verify-config-isolation verify-migrations verify-relea
 	  { echo 'Relay Redis phải được process root inject vào WebSocket handler' >&2; status=1; }; \
 	rg -q 'tx\.Table\("notification"\)' notification-service/infra/postgres/eventing/payment_completed_store.go || \
 	  { echo 'PaymentCompleted phải tạo customer-visible Notification projection trong Inbox transaction' >&2; status=1; }; \
-	rg -q 'outboxPublisher\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
-	  { echo 'Payment process phải sở hữu durable outbox publisher' >&2; status=1; }; \
+	rg -q 'outboxSupervisor\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
+	  { echo 'Payment process phải sở hữu durable outbox supervisor' >&2; status=1; }; \
 	if rg -n '^  payment-publisher:' "$(COMPOSE_FILE)" >/dev/null; then \
 	  echo 'Payment outbox là component, không phải standing container riêng' >&2; status=1; \
 	fi; \
