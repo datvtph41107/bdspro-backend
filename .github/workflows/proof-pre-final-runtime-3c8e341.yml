@@ -1,0 +1,212 @@
+name: Proof Pre Final Runtime 3C8E341
+
+on:
+  push:
+    branches:
+      - proof/pre-final-runtime-3c8e341
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-pre-final-runtime-3c8e341-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fresh-clone:
+    name: Exact-SHA runtime acceptance and final source artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    env:
+      SOURCE_SHA: 3c8e341211dccff653b040466fec3480c5f7c8d5
+      SOURCE_TREE: 478604fd04b0901f7e569ac8064c545679150cd4
+
+    steps:
+      - name: Checkout proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify harness-only proof scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow=.github/workflows/proof-pre-final-runtime-3c8e341.yml
+          test "$(git merge-base "$SOURCE_SHA" HEAD)" = "$SOURCE_SHA"
+          test "$(git diff --name-only "$SOURCE_SHA" HEAD)" = "$workflow"
+          test "$(git rev-parse "$SOURCE_SHA^{tree}")" = "$SOURCE_TREE"
+          git diff --check "$SOURCE_SHA" HEAD
+          test -z "$(git diff --name-only "$SOURCE_SHA" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)"
+          test "$(git show "$SOURCE_SHA:shared/code/deploy.sh" | sha256sum | awk '{print $1}')" = 80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e
+          echo "Fresh-clone proof scope PASS"
+
+      - name: Install host prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Checkout exact canonical source as a fresh clone
+        uses: actions/checkout@v4
+        with:
+          ref: 3c8e341211dccff653b040466fec3480c5f7c8d5
+          fetch-depth: 0
+          clean: true
+          path: fresh
+
+      - name: Prove initial clone has no hidden local state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fresh
+
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD^{tree})" = "$SOURCE_TREE"
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+          test ! -e .env
+          test ! -e integration-test/.env
+          test ! -d .tmp
+          test ! -e SOURCE-MANIFEST.sha256
+          test ! -d shared/protobuf/types
+
+          if find . -type f -name '.env' ! -path './.git/*' -print | grep -q .; then
+            echo "fresh clone unexpectedly contains local .env files" >&2
+            exit 1
+          fi
+
+          echo "Initial fresh-clone state PASS"
+
+      - name: Reconstruct repository-owned setup and generated state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fresh
+
+          make setup
+          make doctor
+
+          test -f .env
+          test -f integration-test/.env
+          test -f auth-service/.env
+          test -f user-service/.env
+          test -f payment-service/.env
+          test -f assistant-service/.env
+
+          test -d shared/protobuf/types
+          test -n "$(find shared/protobuf/types -type f -print -quit)"
+
+          git diff --exit-code
+          git diff --cached --exit-code
+
+          echo "Fresh setup/generated reconstruction PASS"
+
+      - name: Run final repository acceptance from fresh clone
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fresh
+          make accept 2>&1 | tee /tmp/fresh-clone-accept.log
+
+      - name: Enforce post-acceptance clean source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fresh
+
+          git diff --exit-code
+          git diff --cached --exit-code
+          git status --porcelain --untracked-files=all | tee /tmp/fresh-clone-status.txt
+          test ! -s /tmp/fresh-clone-status.txt
+
+          echo "Post-acceptance source cleanliness PASS"
+
+      - name: Build final clean source artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd fresh
+          out=/tmp/final-source-artifact
+          rm -rf "$out"
+          mkdir -p "$out"
+
+          QHPRO_IMAGE_NAMESPACE=fresh-clone-final             bash shared/code/development/release-artifact.sh prepare "$out"
+
+          grep -Fxq "commit=$SOURCE_SHA" "$out/release.meta"
+          grep -Fxq "tree=$SOURCE_TREE" "$out/release.meta"
+
+          (
+            cd "$out"
+            sha256sum -c source-artifact.sha256
+            sha256sum -c source-evidence.sha256
+          )
+
+          zip="$out/bdspro-backend-$SOURCE_SHA.zip"
+          test -s "$zip"
+
+          extracted=/tmp/final-source-extracted
+          rm -rf "$extracted"
+          mkdir -p "$extracted"
+          python3 - "$zip" "$extracted" <<'PY'
+          import sys
+          import zipfile
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              z.extractall(sys.argv[2])
+          PY
+
+          (
+            cd "$extracted"
+            sha256sum -c "$out/SOURCE-MANIFEST.sha256"
+          )
+
+          ! grep -E '(^|/)(\.tmp|\.env|shared/protobuf/types)(/|$)' "$out/SOURCE-MANIFEST.sha256"
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+          echo "Final clean source artifact PASS"
+
+      - name: Collect proof evidence
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/fresh-clone-proof
+          cp /tmp/fresh-clone-accept.log /tmp/fresh-clone-proof/accept.log 2>/dev/null || true
+          cp /tmp/fresh-clone-status.txt /tmp/fresh-clone-proof/post-accept-status.txt 2>/dev/null || true
+
+          if test -d fresh/.git || test -f fresh/.git; then
+            git -C fresh show -s --format='%H %T %P %s' > /tmp/fresh-clone-proof/source-identity.txt 2>/dev/null || true
+            git -C fresh status --porcelain --untracked-files=all > /tmp/fresh-clone-proof/final-git-status.txt 2>/dev/null || true
+          fi
+
+          if test -d /tmp/final-source-artifact; then
+            cp /tmp/final-source-artifact/release.meta /tmp/fresh-clone-proof/ 2>/dev/null || true
+            cp /tmp/final-source-artifact/SOURCE-MANIFEST.sha256 /tmp/fresh-clone-proof/ 2>/dev/null || true
+            cp /tmp/final-source-artifact/source-artifact.sha256 /tmp/fresh-clone-proof/ 2>/dev/null || true
+            cp /tmp/final-source-artifact/source-evidence.sha256 /tmp/fresh-clone-proof/ 2>/dev/null || true
+            cp /tmp/final-source-artifact/bdspro-backend-$SOURCE_SHA.zip /tmp/fresh-clone-proof/ 2>/dev/null || true
+          fi
+
+      - name: Upload fresh-clone evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-final-runtime-3c8e341-${{ github.sha }}
+          path: /tmp/fresh-clone-proof
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if test -f fresh/.env; then
+            cd fresh
+            make down
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans
+          fi
