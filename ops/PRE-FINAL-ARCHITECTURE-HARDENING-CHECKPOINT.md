@@ -467,8 +467,51 @@ Runtime/release environment classification:
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=HOSTED_CANONICAL_RUNTIME_RELEASE_EXACT_SHA_PROOF`
+`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
 
+`FINAL ACCEPTED=NO`
+
+
+## Hosted aggregate proof harness — AUTHORIZED
+
+Read-only hosted classification at immutable source authority `3c8e341211dccff653b040466fec3480c5f7c8d5` / tree `478604fd04b0901f7e569ac8064c545679150cd4`:
+- the repository contains eight canonical workflows:
+  - `acceptance-assistant-runtime.yml`
+  - `acceptance-auth-runtime.yml`
+  - `acceptance-bdspro-redis.yml`
+  - `acceptance-hub-runtime.yml`
+  - `acceptance-make-vocabulary.yml`
+  - `acceptance-shared-runtime.yml`
+  - `acceptance-source-integrity.yml`
+  - `refactor-observability-errors.yml`;
+- exact source head `3c8e3412...` already has Refactor workflow run `35625590718` / #106 SUCCESS;
+- the other seven canonical workflows do not push-trigger on the hardening branch; they expose `workflow_dispatch`, but the connected GitHub action surface does not provide workflow-dispatch;
+- recovery Sprite has no Docker daemon, so repository runtime/E2E and immutable release activation/rollback require a hosted runner;
+- previously accepted proof branches contain repository-owned fresh-clone and release/rollback workflow patterns that exercise `make accept`, final source artifact creation, exact-SHA release build/verify/up, image-ID verification and immutable rollback.
+
+Authorized harness-only mutation:
+1. Freeze all application/source architecture. No application source, migration, protobuf, Organization, Map or deploy-script mutation is authorized.
+2. Create one new clean aggregate harness writer from source authority `3c8e3412...`; preserve the existing hardening writer and all proof worktrees unchanged.
+3. In one proof-only child commit:
+   - add the current hardening branch to push triggers of the seven canonical acceptance workflows that do not currently trigger there;
+   - preserve existing workflow behavior/jobs;
+   - add one fresh-clone/runtime proof workflow adapted from the accepted V4 pattern, with `SOURCE_SHA=3c8e3412...` and `SOURCE_TREE=478604fd...`;
+   - add one immutable release/rollback proof workflow adapted from the accepted V2 pattern, with current `SOURCE_SHA=3c8e3412...`;
+   - use baseline canonical `ca98eceb276dca8249b2f1d4d73cdce6248ec7dd` as rollback predecessor because it is an ancestor of the hardening branch; the hosted workflow itself must prove migration-manifest equality before rollback is permitted.
+4. Both new proof workflows must verify the child is harness-only by exact expected workflow-path diff from `SOURCE_SHA`, preserve protected paths/deploy hash, and fail on any unexpected delta.
+5. Before publication, detached local proof must verify parent/source identity, exact harness-only path set, YAML parse, protected invariants and clean reconstruction.
+6. Publication is fast-forward/non-force only.
+7. Hosted closure requires:
+   - all 8 canonical workflows SUCCESS on one immutable harness SHA;
+   - fresh-clone `make setup` + `make accept` + post-acceptance cleanliness + source artifact SUCCESS;
+   - release build + release verify + exact image archive activation/readiness/smoke + immutable rollback SUCCESS;
+   - exact-SHA artifacts/evidence retained and durable checkpoint synchronized.
+
+`HOSTED_AGGREGATE_HARNESS_CLASSIFICATION=PASS/CLOSED`
+`HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
+`APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
+`SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
+`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -482,6 +525,6 @@ Runtime/release environment classification:
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=HOSTED_CANONICAL_RUNTIME_RELEASE_EXACT_SHA_PROOF`
+`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
 
 `FINAL ACCEPTED=NO`
