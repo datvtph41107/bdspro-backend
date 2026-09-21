@@ -467,7 +467,7 @@ Runtime/release environment classification:
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,7 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
 `FINAL ACCEPTED=NO`
 
 
@@ -577,7 +577,7 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `HOSTED_AGGREGATE_RUNTIME_RELEASE=PENDING`
 
-`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
 `FINAL ACCEPTED=NO`
 
 
@@ -602,7 +602,36 @@ Publication reconstruction note:
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `REMOTE_AGGREGATE_HARNESS_SHA=44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
 `REMOTE_AGGREGATE_HARNESS_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
-`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`FINAL ACCEPTED=NO`
+
+
+## Aggregate hosted canonical workflow closure — 8/8 SUCCESS
+
+Exact hosted harness authority:
+- remote harness SHA: `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
+- remote harness tree: `79c9d6505519ea551d99d8284626b555439d35c4`
+- immutable application source parent: `3c8e341211dccff653b040466fec3480c5f7c8d5`.
+
+All eight canonical workflows completed SUCCESS on the same exact harness SHA:
+- Acceptance Make Vocabulary — run `35637680501` / #47;
+- Acceptance BDSPro Redis Ownership — run `35637680481` / #41;
+- Acceptance Auth Runtime Ownership — run `35637680557` / #39;
+- Acceptance Assistant Runtime Ownership — run `35637680511` / #41;
+- Acceptance Hub Runtime Ownership — run `35637680475` / #56;
+- Acceptance Source Integrity — run `35637680492` / #63;
+- Acceptance Shared Runtime Ownership — run `35637680515` / #46;
+- Refactor Observability and Error Contracts — run `35637680466` / #107.
+
+Exact-SHA retained artifacts:
+- source manifest artifact id `10656692607`, name `source-manifest-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`, expired=false, digest `sha256:575bd002e49bf58b1a253f7a13a9367941c5783326d008822602d7d1630868df`;
+- observability/error inventory artifact id `10655959940`, name `observability-error-inventory-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`, expired=false, digest `sha256:ce14f5ba44648a0e2e0dbbca1a889927ce63f653d1655712ae669c79890912ab`.
+
+`AGGREGATE_CANONICAL_WORKFLOWS=8/8_SUCCESS`
+`AGGREGATE_CANONICAL_WORKFLOW_CLOSURE=PASS/CLOSED`
+`FRESH_CLONE_RUNTIME_PROOF=PENDING`
+`IMMUTABLE_RELEASE_ROLLBACK_PROOF=PENDING`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -616,6 +645,6 @@ Publication reconstruction note:
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
 
 `FINAL ACCEPTED=NO`
