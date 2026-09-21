@@ -5,6 +5,7 @@ on:
     branches:
       - refactor/canonical-observability-errors-a6d0722a
       - final-acceptance/source-canonicalization
+      - refactor/pre-final-architecture-hardening-ca98ece
   pull_request:
     paths:
       - 'shared/common/errors/**'
@@ -116,7 +117,7 @@ jobs:
           GOWORK: 'off'
         run: |
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/usecase/admin ./infra/handler/grpc
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/server/grpc/interceptors ./infra/postgres -run '^(TestUnaryLoggerInterceptorProjectsCorrelation|TestUnaryRecoveryInterceptorProjectsCanonicalError|TestSlogGormLoggerProjectsSlowQuery)$'
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/server/grpc/interceptors ./infra/postgres -run '^(TestUnaryLoggerInterceptorProjectsSuccessfulCompletion|TestUnaryLoggerInterceptorProjectsCanonicalFailureWithoutOwningSeverity|TestSlogGormLoggerProjectsSlowQuery)$'
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test . ./cmd/grpc ./infra/worker/fulfillment ./worker -run '^$'
       - name: Test TQD typed faults through gRPC boundary
         working-directory: tqd-service
