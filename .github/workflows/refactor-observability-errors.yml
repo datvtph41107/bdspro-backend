@@ -19,6 +19,7 @@ on:
       - 'shared/code/script/**'
       - 'shared/code/development/audit-observability-errors.py'
       - 'shared/code/development/test_audit_observability_errors.py'
+      - 'shared/code/development/observability-error-debt-baseline.tsv'
       - 'shared/code/development/root.mk'
       - 'shared/code/development/query-structured-logs.py'
       - 'shared/code/development/test_query_structured_logs.py'
@@ -52,7 +53,7 @@ jobs:
         run: |
           python3 shared/code/development/test_query_structured_logs.py
           bash shared/code/development/test-structured-log-query.sh
-      - name: Build full-repository migration inventory and enforce ratchets
+      - name: Build migration inventory and enforce ratchets plus accepted-debt fingerprints
         run: python3 shared/code/development/audit-observability-errors.py --enforce-ratchets
       - name: Upload migration inventory
         uses: actions/upload-artifact@v4
