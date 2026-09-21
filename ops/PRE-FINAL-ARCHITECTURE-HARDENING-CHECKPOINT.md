@@ -41,6 +41,49 @@ Hosted exact-SHA:
 
 `SLICE_A=PROVED/CLOSED`
 
+
+## Slice B — Redis/tile-session ownership — PROVED/CLOSED
+
+Local immutable evidence:
+- source candidate: `cf5e62e5ece1add747c7be77cbd468128bf4ba27`
+- source tree: `804cff3330a568346f2d6824dce755e6623f3f03`
+- harness-only child: `7a229202f8a0b31c8470cb14faf3ce2bf8dcfb1e`
+- harness tree: `cb357507b528beef25a799aa346278c1d0ed7798`
+- detached exact-SHA proof: PASS.
+
+Source outcomes:
+- technical Redis lifecycle remains in `common/redis`;
+- tile-session keyspace/TTL/persistence moved to narrow `common/tilesession.Store`;
+- production key literal `ss:k:` has one owner;
+- plaintext `sessionEncryptKey` logging retired and zero-ratcheted;
+- User no longer keeps process-global `sessionKey`; each generated tile session is independent;
+- TQD tile server now loads typed Redis config and owns exactly one explicit Redis open/close lifecycle;
+- dead common Redis token helpers retired;
+- Wire provider authority lives in `shared/code/script/injection_clients.yml` and is service-scoped;
+- User Wire regeneration is hash-stable;
+- protected paths and deploy hash unchanged.
+
+Safe publication mapping:
+- remote source commit: `eb745852c7cd888d7298e3e6500d862be780db81`
+- remote source tree: `804cff3330a568346f2d6824dce755e6623f3f03` (identical to local source tree)
+- remote harness/head: `b7317728721821225c2596a8b0b5597adb08a6fc`
+- remote harness tree: `cb357507b528beef25a799aa346278c1d0ed7798` (identical to local harness tree)
+- parent remains Slice A remote head `373663d955d2fcffac1cfc96736ce694e8ce5b73`.
+
+Hosted exact-SHA:
+- workflow run: `35619824787` / run number `104`
+- head SHA: `b7317728721821225c2596a8b0b5597adb08a6fc`
+- conclusion: `success`
+- `inventory`: SUCCESS
+- `common-contracts`: SUCCESS
+- `boundary-contracts`: SUCCESS
+- exact-SHA artifact: `observability-error-inventory-b7317728721821225c2596a8b0b5597adb08a6fc`
+- artifact id: `10646784034`
+- expired: false
+- digest: `sha256:c8ab6d279734bbcb7f5fe8dba63910dc35c461b316592ec6821b22844d225753`.
+
+`SLICE_B=PROVED/CLOSED`
+
 ## Slice B — Redis transport/key-policy/secret ownership
 
 ### Classification
