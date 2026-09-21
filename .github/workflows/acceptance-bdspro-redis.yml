@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - final-acceptance/source-canonicalization
+      - refactor/pre-final-architecture-hardening-ca98ece
       - 'final-acceptance/proof-s4-bdspro-redis-*'
   workflow_dispatch:
 
