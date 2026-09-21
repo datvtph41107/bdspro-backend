@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"crm/internal"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -34,10 +35,10 @@ type seoDocumentTemplateView struct {
 
 func renderSeoPublicDocumentHTML(document *dto.SeoPublicDocument, options seoDocumentRenderOptions) (string, error) {
 	if document == nil {
-		return "", _errors.ReturnError(422, "public SEO document là bắt buộc")
+		return "", _errors.ReturnError(service.SEOPublicDocumentRequired)
 	}
 	if strings.TrimSpace(document.Heading.Title) == "" {
-		return "", _errors.ReturnError(422, "title là bắt buộc để render")
+		return "", _errors.ReturnError(service.SEOTitleRequiredForRender)
 	}
 
 	canonicalURL := firstNonEmptyRender(options.CanonicalURL, document.SEO.CanonicalPath)
@@ -48,7 +49,7 @@ func renderSeoPublicDocumentHTML(document *dto.SeoPublicDocument, options seoDoc
 
 	structuredData, err := buildSeoStructuredDataJSON(document, canonicalURL)
 	if err != nil {
-		return "", _errors.ReturnError(500, "không tạo được JSON-LD: "+err.Error())
+		return "", fmt.Errorf("create SEO JSON-LD: %w", err)
 	}
 
 	var primaryMedia *dto.SeoMedia
@@ -71,12 +72,12 @@ func renderSeoPublicDocumentHTML(document *dto.SeoPublicDocument, options seoDoc
 
 	tpl, err := template.New("seo_public_document").Parse(seoPublicDocumentHTMLTemplate)
 	if err != nil {
-		return "", _errors.ReturnError(500, "không parse được public SEO template: "+err.Error())
+		return "", fmt.Errorf("parse public SEO template: %w", err)
 	}
 
 	var output strings.Builder
 	if err := tpl.Execute(&output, view); err != nil {
-		return "", _errors.ReturnError(500, "render public SEO document thất bại: "+err.Error())
+		return "", fmt.Errorf("render public SEO document: %w", err)
 	}
 	return output.String(), nil
 }

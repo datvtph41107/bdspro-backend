@@ -104,9 +104,11 @@ func run() error {
 		grpc.ChainUnaryInterceptor(
 			transport.Unary,
 			_middleware.ParseGrpcMetadataContextMiddleware,
+			_middleware.UnaryErrorInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			_middleware.StreamErrorInterceptor(),
 		),
 	)
 	authpb.RegisterAuthInternalServiceServer(s, authInternalHandler)

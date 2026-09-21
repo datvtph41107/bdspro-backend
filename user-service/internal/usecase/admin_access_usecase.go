@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"user/internal"
 	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/interface/providers"
@@ -34,23 +35,23 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 	// Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
-	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// 	return nil, _errors.ReturnError(service.AccessDenied)
 	// }
 
 	// Kiểm tra user tồn tại
 	// user, err := u.AuthMethodRepo.FindByID(ctx, req.UserID)
 	// if err != nil || user == nil {
-	// 	return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+	// 	return nil, _errors.ReturnError(service.UserNotFound)
 	// }
 
 	// Kiểm tra giới hạn thiết bị
 	if req.DeviceID != "" {
 		count, err := u.AdminAccessRepo.CountByUserID(ctx, req.UserID)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi kiểm tra giới hạn thiết bị")
+			return nil, fmt.Errorf("check device limit: %w", err)
 		}
 		if count >= int64(req.MaxDevices) {
-			return nil, _errors.ReturnError(int32(400), fmt.Sprintf("Tài khoản đã gắn với số thiết bị tối đa (%d)", req.MaxDevices))
+			return nil, _errors.ReturnError(service.DeviceLimitReached, _errors.WithPublicMessage(fmt.Sprintf("Tài khoản đã gắn với số thiết bị tối đa (%d)", req.MaxDevices)))
 		}
 	}
 
@@ -58,10 +59,10 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 	if req.IPAddress != "" {
 		count, err := u.AdminAccessRepo.CountByIPAddress(ctx, req.IPAddress)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi kiểm tra giới hạn IP")
+			return nil, fmt.Errorf("check IP limit: %w", err)
 		}
 		if count >= 3 {
-			return nil, _errors.ReturnError(int32(400), "IP này đã được gắn với tối đa 3 tài khoản")
+			return nil, _errors.ReturnError(service.IPAddressAccountLimitReached)
 		}
 	}
 
@@ -92,7 +93,7 @@ func (u *AdminAccessUsecase) CreateAdminAccess(ctx context.Context, req dto.Admi
 
 	createdAccess, err := u.AdminAccessRepo.Create(ctx, access)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo quyền truy cập")
+		return nil, fmt.Errorf("create access grant: %w", err)
 	}
 
 	return u.convertToResponse(createdAccess), nil
@@ -103,13 +104,13 @@ func (u *AdminAccessUsecase) UpdateAdminAccess(ctx context.Context, id uint64, r
 	// Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
-	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// 	return nil, _errors.ReturnError(service.AccessDenied)
 	// }
 
 	// Tìm quyền truy cập hiện tại
 	existingAccess, err := u.AdminAccessRepo.FindByID(ctx, id)
 	if err != nil || existingAccess == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy quyền truy cập")
+		return nil, _errors.ReturnError(service.AccessGrantNotFound)
 	}
 
 	// Cập nhật thông tin
@@ -128,7 +129,7 @@ func (u *AdminAccessUsecase) UpdateAdminAccess(ctx context.Context, id uint64, r
 
 	updatedAccess, err := u.AdminAccessRepo.Update(ctx, existingAccess)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật quyền truy cập")
+		return nil, fmt.Errorf("update access grant: %w", err)
 	}
 
 	return u.convertToResponse(updatedAccess), nil
@@ -139,19 +140,19 @@ func (u *AdminAccessUsecase) DeleteAdminAccess(ctx context.Context, id uint64) e
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return _errors.ReturnError(service.AccessDenied)
 	}
 
 	// Tìm quyền truy cập
 	access, err := u.AdminAccessRepo.FindByID(ctx, id)
 	if err != nil || access == nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy quyền truy cập")
+		return _errors.ReturnError(service.AccessGrantNotFound)
 	}
 
 	// Soft delete
 	err = u.AdminAccessRepo.SoftDelete(ctx, id)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi xóa quyền truy cập")
+		return fmt.Errorf("delete access grant: %w", err)
 	}
 
 	return nil
@@ -162,7 +163,7 @@ func (u *AdminAccessUsecase) GetAdminAccessList(ctx context.Context, req dto.Adm
 	// Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
-	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// 	return nil, _errors.ReturnError(service.AccessDenied)
 	// }
 
 	// Set default pagination
@@ -191,7 +192,7 @@ func (u *AdminAccessUsecase) GetAdminAccessList(ctx context.Context, req dto.Adm
 	// Lấy danh sách
 	accesses, total, err := u.AdminAccessRepo.FindAll(ctx, req.Page, req.Size, filters)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách quyền truy cập")
+		return nil, fmt.Errorf("list access grants: %w", err)
 	}
 
 	// Lấy danh sách userID từ accesses
@@ -231,7 +232,7 @@ func (u *AdminAccessUsecase) ValidateAdminAccess(ctx context.Context, req dto.Ad
 	// Kiểm tra quyền truy cập
 	result, err := u.AdminAccessRepo.ValidateAccess(ctx, req.UserID, req.IPAddress, req.DeviceID)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi kiểm tra quyền truy cập")
+		return nil, fmt.Errorf("validate admin access: %w", err)
 	}
 
 	// Tạo log truy cập
@@ -282,7 +283,7 @@ func (u *AdminAccessUsecase) GetAdminAccessLogList(ctx context.Context, req dto.
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AccessDenied)
 	}
 
 	// Set default pagination
@@ -303,11 +304,11 @@ func (u *AdminAccessUsecase) GetAdminAccessLogList(ctx context.Context, req dto.
 	} else if req.IPAddress != "" {
 		logs, total, err = u.AdminAccessRepo.FindLogsByIPAddress(ctx, req.IPAddress, req.Page, req.Size)
 	} else {
-		return nil, _errors.ReturnError(int32(400), "Cần cung cấp UserID hoặc IPAddress")
+		return nil, _errors.ReturnError(service.UserIDOrIPAddressRequired)
 	}
 
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách log")
+		return nil, fmt.Errorf("list access logs: %w", err)
 	}
 
 	// Convert to response

@@ -12,6 +12,7 @@ import (
 	userpb "pb/types/user"
 	"time"
 	"user/infra/mapper"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/job"
@@ -258,7 +259,7 @@ func (s *AdminUserProfileHandler) LockUser(ctx context.Context, req *userpb.Lock
 
 	lockType := _enum.EUserStatus(req.LockType)
 	if lockType != _enum.EUserStatusPermanentlyLocked && lockType != _enum.EUserStatusTemporaryLocked {
-		return nil, _errors.ReturnError(int32(400), "Loại khóa tài khoản không hợp lệ: 20(tạm thời) hoặc 30 (vĩnh viễn)")
+		return nil, _errors.ReturnError(service.AccountLockTypeInvalid)
 	}
 	// Convert proto request to DTO
 	dtoReq := &dto.LockUserRequest{

@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -34,13 +35,13 @@ func (s *qhLayerFamilyFaultRepoStub) ListClient(context.Context, int, int, strin
 func TestQHLayerFamilyCreateReturnsCanonicalValidationFault(t *testing.T) {
 	service := NewQHLayerFamilyUsecase(&qhLayerFamilyFaultRepoStub{}, nil, nil)
 	_, err := service.Create(context.Background(), &qh_domain.QHLayerFamily{Name: "   "})
-	assertQHLayerFamilyFault(t, err, fault.KindValidation, "tqd.qh_layer_family.name_required")
+	assertQHLayerFamilyFault(t, err, codes.InvalidArgument, "tqd.qh_layer_family.name_required")
 }
 
 func TestQHLayerFamilyGetReturnsCanonicalNotFoundFault(t *testing.T) {
 	service := NewQHLayerFamilyUsecase(&qhLayerFamilyFaultRepoStub{}, nil, nil)
 	_, err := service.GetByID(context.Background(), 42)
-	assertQHLayerFamilyFault(t, err, fault.KindNotFound, "tqd.qh_layer_family.not_found")
+	assertQHLayerFamilyFault(t, err, codes.NotFound, "tqd.qh_layer_family.not_found")
 }
 
 func TestQHLayerFamilyBuildPreservesRepositoryFailureAsInternalCause(t *testing.T) {
@@ -53,21 +54,21 @@ func TestQHLayerFamilyBuildPreservesRepositoryFailureAsInternalCause(t *testing.
 	if !errors.Is(err, dependencyErr) {
 		t.Fatalf("error = %v, want wrapped repository failure", err)
 	}
-	if failure, ok := fault.As(err); ok && failure.Kind() == fault.KindNotFound {
-		t.Fatalf("repository failure was incorrectly classified as not found: %+v", failure)
+	if application, ok := _errors.As(err); ok && application.RPCCode() == codes.NotFound {
+		t.Fatalf("repository failure was incorrectly classified as not found: %+v", application)
 	}
 }
 
-func assertQHLayerFamilyFault(t *testing.T, err error, kind fault.Kind, code string) {
+func assertQHLayerFamilyFault(t *testing.T, err error, rpcCode codes.Code, code string) {
 	t.Helper()
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault", err)
+		t.Fatalf("error type = %T, want canonical application error", err)
 	}
-	if failure.Kind() != kind {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), kind)
+	if application.RPCCode() != rpcCode {
+		t.Fatalf("kind = %q, want %q", application.RPCCode(), rpcCode)
 	}
-	if failure.Code() != code {
-		t.Fatalf("code = %q, want %q", failure.Code(), code)
+	if application.Spec().LegacyProblemCode() != code {
+		t.Fatalf("code = %q, want %q", application.Spec().LegacyProblemCode(), code)
 	}
 }

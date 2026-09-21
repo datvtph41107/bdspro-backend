@@ -1,11 +1,14 @@
 package handler_grpc
 
 import (
-	_errors "common/errors"
 	"context"
+	"fmt"
+
+	_errors "common/errors"
 
 	pb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/internal"
 	"tqd/internal/usecase"
 )
 
@@ -22,21 +25,21 @@ func NewOneHouseGrpcHandler(oneHouseUsecase usecase.OneHouseUsecase) *OneHouseGr
 
 func (h *OneHouseGrpcHandler) GetOneHouseDetail(ctx context.Context, req *pb.GetOneHouseDetailRequest) (*pb.OneHouse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "id is required")
+		return nil, _errors.ReturnError(service.OneHouseIDRequired)
 	}
 
 	ohDomain, err := h.oneHouseUsecase.GetDetail(ctx, req.Id)
 	if err != nil {
-		return nil, _errors.ReturnError(404, err.Error())
+		return nil, err
 	}
 
 	if ohDomain == nil {
-		return nil, _errors.ReturnError(404, "one_house not found")
+		return nil, _errors.ReturnError(service.OneHouseNotFound)
 	}
 
 	protoOneHouse, err := mapper.ToProtoOneHouse(ohDomain)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "internal error: "+err.Error())
+		return nil, fmt.Errorf("map one house response: %w", err)
 	}
 
 	return protoOneHouse, nil

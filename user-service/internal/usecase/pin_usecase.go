@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+	"user/internal"
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -73,17 +74,17 @@ func NewPINUsecase(
 func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) (*dto.CreatePINResponse, error) {
 	// Validate PIN (phải là 6 số)
 	if len(request.PIN) != 6 {
-		return nil, _errors.ReturnError(400, "Mã PIN phải có đúng 6 số")
+		return nil, _errors.ReturnError(service.PINLengthInvalid)
 	}
 	if len(request.OTP) != 6 {
-		return nil, _errors.ReturnError(400, "OTP không hợp lệ")
+		return nil, _errors.ReturnError(service.OTPInvalid)
 	}
 
 	authID := _utils.GetAuthIdFromContext(c)
 	// Tìm auth method theo phone
 	authEntity, err := s.authMethodRepo.FindByID(c, authID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+		return nil, _errors.ReturnError(service.AccountNotFoundGeneric)
 	}
 
 	// Validate OTP trước khi tạo PIN
@@ -106,13 +107,13 @@ func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) 
 	// Kiểm tra xem đã có PIN chưa
 	exists, err := s.pinRepo.CheckPINExists(c, authEntity.ID)
 	if err == nil && exists {
-		return nil, _errors.ReturnError(400, "Mã PIN đã tồn tại. Vui lòng sử dụng chức năng cập nhật PIN")
+		return nil, _errors.ReturnError(service.PINAlreadyExists)
 	}
 
 	// Hash PIN
 	hashedPIN, err := bcrypt.GenerateFromPassword([]byte(request.PIN), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể tạo mã PIN")
+		return nil, fmt.Errorf("hash PIN: %w", err)
 	}
 
 	// Tạo PIN entity
@@ -130,7 +131,7 @@ func (s *PINUsecase) CreatePIN(c context.Context, request dto.CreatePINRequest) 
 	// Lưu vào database
 	err = s.pinRepo.Create(c, pinEntity)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể lưu mã PIN")
+		return nil, fmt.Errorf("create PIN: %w", err)
 	}
 
 	s.logPINActionHistory(c, authEntity, "pin", "PIN_CREATED",
@@ -149,7 +150,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 	// Tìm auth method theo phone
 	authEntity, err := s.authMethodRepo.FindByPhone(c, request.Phone)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+		return nil, _errors.ReturnError(service.AccountNotFoundGeneric)
 	}
 
 	_, err = s.verifyPINCode(c, authEntity, request.PIN, &dto.PinVerifyMeta{
@@ -166,22 +167,22 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 	// Tạo session trước khi phát access token; token luôn bind tới durable session ID.
 	newSession := s.createSession(c, authEntity, request)
 	if err := s.sessionRepo.CreateSession(c, newSession); err != nil {
-		return nil, _errors.ReturnError(500, "Không thể tạo phiên đăng nhập")
+		return nil, fmt.Errorf("create login session: %w", err)
 	}
 
 	// Lấy thông tin profile
 	profile, err := s.profileProvider.GetByProfileID(c, authEntity.UserID)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	if s.tokenIssuer == nil {
-		return nil, _errors.ReturnError(500, "Token issuer chưa được cấu hình")
+		return nil, fmt.Errorf("token issuer is not configured")
 	}
 
 	accessToken, err := s.tokenIssuer.GenerateAccessToken(c, authEntity.ID, newSession.SessionID, nil)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể tạo access token")
+		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
 	response := &dto.AuthLoginResponse{
@@ -226,30 +227,30 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 func (s *PINUsecase) UpdatePIN(c context.Context, authID uint64, request dto.UpdatePINRequest) (*dto.UpdatePINResponse, error) {
 	// Validate PIN mới
 	if len(request.NewPIN) != 6 {
-		return nil, _errors.ReturnError(400, "Mã PIN mới phải có đúng 6 số")
+		return nil, _errors.ReturnError(service.NewPINLengthInvalid)
 	}
 
 	authEntity, err := s.authMethodRepo.FindByID(c, authID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+		return nil, _errors.ReturnError(service.AccountNotFoundGeneric)
 	}
 
 	// Lấy PIN hiện tại
 	pinEntity, err := s.pinRepo.GetByAuthID(c, authID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Chưa thiết lập mã PIN")
+		return nil, _errors.ReturnError(service.PINNotSet)
 	}
 
 	// Verify PIN cũ
 	err = bcrypt.CompareHashAndPassword([]byte(pinEntity.PIN), []byte(request.OldPIN))
 	if err != nil {
-		return nil, _errors.ReturnError(401, "Mã PIN cũ không đúng")
+		return nil, _errors.ReturnError(service.OldPINInvalid)
 	}
 
 	// Hash PIN mới
 	hashedPIN, err := bcrypt.GenerateFromPassword([]byte(request.NewPIN), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể cập nhật mã PIN")
+		return nil, fmt.Errorf("hash new PIN: %w", err)
 	}
 
 	// Update PIN
@@ -261,7 +262,7 @@ func (s *PINUsecase) UpdatePIN(c context.Context, authID uint64, request dto.Upd
 
 	err = s.pinRepo.Update(c, pinEntity)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể lưu mã PIN mới")
+		return nil, fmt.Errorf("save new PIN: %w", err)
 	}
 
 	s.logPINActionHistory(c, authEntity, "pin", "PIN_UPDATED",
@@ -277,12 +278,12 @@ func (s *PINUsecase) UpdatePIN(c context.Context, authID uint64, request dto.Upd
 // ActivePIN bật/tắt PIN của người dùng hiện tại
 func (s *PINUsecase) ActivePIN(c context.Context, authID uint64, request dto.ActivePINRequest) (*dto.UpdatePINResponse, error) {
 	if len(request.PIN) != 6 {
-		return nil, _errors.ReturnError(400, "Mã PIN phải có đúng 6 số")
+		return nil, _errors.ReturnError(service.PINLengthInvalid)
 	}
 
 	authEntity, err := s.authMethodRepo.FindByID(c, authID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản")
+		return nil, _errors.ReturnError(service.AccountNotFoundGeneric)
 	}
 
 	pinEntity, err := s.verifyPINCode(c, authEntity, request.PIN, &dto.PinVerifyMeta{
@@ -297,7 +298,7 @@ func (s *PINUsecase) ActivePIN(c context.Context, authID uint64, request dto.Act
 	pinEntity.LockedUntil = nil
 
 	if err := s.pinRepo.Update(c, pinEntity); err != nil {
-		return nil, _errors.ReturnError(500, "Không thể cập nhật trạng thái PIN")
+		return nil, fmt.Errorf("update PIN status: %w", err)
 	}
 
 	status := "vô hiệu hóa"
@@ -338,19 +339,19 @@ func (s *PINUsecase) CheckPINExists(c context.Context, authID uint64) (*dto.Chec
 func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *auth.AuthMethod, inputPIN string, meta *dto.PinVerifyMeta, requireActive bool) (*auth.UserPINEntity, error) {
 	pinEntity, err := s.pinRepo.GetByAuthID(ctx, authEntity.ID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Chưa thiết lập mã PIN")
+		return nil, _errors.ReturnError(service.PINNotSet)
 	}
 
 	if pinEntity.LockedUntil != nil && pinEntity.LockedUntil.After(time.Now()) {
 		minutes := time.Until(*pinEntity.LockedUntil).Minutes()
 		return nil, _errors.ReturnError(
-			423,
-			fmt.Sprintf("Mã PIN đã bị khóa. Vui lòng thử lại sau %.0f phút", minutes),
+			service.PINLocked,
+			_errors.WithPublicMessage(fmt.Sprintf("Mã PIN đã bị khóa. Vui lòng thử lại sau %.0f phút", minutes)),
 		)
 	}
 
 	if requireActive && !pinEntity.IsActive {
-		return nil, _errors.ReturnError(403, "Mã PIN đã bị vô hiệu hóa")
+		return nil, _errors.ReturnError(service.PINDisabled)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(pinEntity.PIN), []byte(inputPIN)); err != nil {
@@ -362,20 +363,20 @@ func (s *PINUsecase) verifyPINCode(ctx context.Context, authEntity *auth.AuthMet
 			_ = s.pinRepo.LockPIN(ctx, authEntity.ID, lockedUntil)
 			s.logPINLockHistory(ctx, authEntity, meta, lockedUntil)
 			return nil, _errors.ReturnError(
-				423,
-				fmt.Sprintf("Đã nhập sai %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes())),
+				service.PINAttemptsExceeded,
+				_errors.WithPublicMessage(fmt.Sprintf("Đã nhập sai %d lần. Mã PIN đã bị khóa trong %d phút", s.maxPINAttempts, int(s.pinLockDuration.Minutes()))),
 			)
 		}
 
 		remaining := s.maxPINAttempts - pinEntity.PINCheckTime
 		return nil, _errors.ReturnError(
-			401,
-			fmt.Sprintf("Mã PIN không đúng. Bạn còn %d lần thử", remaining),
+			service.PINIncorrect,
+			_errors.WithPublicMessage(fmt.Sprintf("Mã PIN không đúng. Bạn còn %d lần thử", remaining)),
 		)
 	}
 
 	if err := s.pinRepo.ResetCheckCounter(ctx, authEntity.ID); err != nil {
-		return nil, _errors.ReturnError(500, "Không thể cập nhật trạng thái PIN")
+		return nil, fmt.Errorf("update PIN status: %w", err)
 	}
 
 	pinEntity.PINCheckTime = 0
@@ -547,17 +548,17 @@ func (s *PINUsecase) createSession(c context.Context, authEntity *auth.AuthMetho
 
 func (s *PINUsecase) buildAuthParam(c context.Context, authEntity *auth.AuthMethod, otp string) (*dto.AuthParam, error) {
 	if s.otpRepo == nil || s.otpUsecase == nil {
-		return nil, _errors.ReturnError(500, "OTP service chưa được cấu hình")
+		return nil, fmt.Errorf("OTP service is not configured")
 	}
 
 	statusEntity, err := s.statusRepo.GetByID(c, authEntity.ID)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "Không tìm thấy trạng thái người dùng")
+		return nil, _errors.ReturnError(service.UserStatusNotFound)
 	}
 
 	otpEntity, err := s.otpRepo.GetByID(c, authEntity.ID)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "Không tìm thấy OTP hợp lệ")
+		return nil, _errors.ReturnError(service.ValidOTPNotFound)
 	}
 
 	return &dto.AuthParam{

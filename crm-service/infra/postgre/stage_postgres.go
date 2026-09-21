@@ -1,9 +1,10 @@
 package postgre
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
 	"crm/infra/impl"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"time"
@@ -120,10 +121,7 @@ func (r *PostgreStage) BulkUpdate(ctx context.Context, removeIds []uint64, stage
 		Count(&count)
 
 	if count > 20 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Số lượng stage vượt quá 20",
-		}
+		return _errors.ReturnError(service.StageLimitExceeded)
 	}
 
 	return nil

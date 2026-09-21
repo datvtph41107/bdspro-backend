@@ -3,12 +3,12 @@ package handler_grpc
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"common/fault"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"log/slog"
 	"strings"
+	"tqd/internal"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status" // Đây là package status của gRPC
@@ -64,7 +64,7 @@ func (h *ImportGrpcHandler) ImportGeoJson(ctx context.Context, req *tqdpb.Import
 
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 	sourceFileName := req.GetSourceFileName()
 
@@ -149,7 +149,7 @@ func (h *ImportGrpcHandler) RetryImportError(ctx context.Context, req *tqdpb.Ret
 	}
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 	res, err := h.importUsecase.RetryImportError(ctx, req.ErrorId)
 	if err != nil {
@@ -159,16 +159,5 @@ func (h *ImportGrpcHandler) RetryImportError(ctx context.Context, req *tqdpb.Ret
 }
 
 func importGRPCError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.import.internal",
-		"import operation failed",
-	))
+	return _errors.ToGRPC(err)
 }

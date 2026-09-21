@@ -1,11 +1,11 @@
 package seopublic
 
 import (
+	_errors "common/errors"
 	"net/http"
 	"strings"
 
 	"crm/internal/usecase"
-	sharedpb "pb/types/shared"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/status"
@@ -154,21 +154,13 @@ func writeError(c *gin.Context, err error) {
 			message = grpcStatus.Message()
 		}
 
-		for _, detail := range grpcStatus.Details() {
-			errorResponse, ok := detail.(*sharedpb.ErrorResponse)
-			if !ok {
-				continue
+		if legacyCode, legacyMessage, matched := _errors.LegacyGRPCDetail(err); matched {
+			if legacyCode >= 400 && legacyCode <= 599 {
+				statusCode = int(legacyCode)
 			}
-
-			if errorResponse.Code >= 400 && errorResponse.Code <= 599 {
-				statusCode = int(errorResponse.Code)
+			if strings.TrimSpace(legacyMessage) != "" {
+				message = legacyMessage
 			}
-
-			if strings.TrimSpace(errorResponse.Message) != "" {
-				message = errorResponse.Message
-			}
-
-			break
 		}
 	}
 

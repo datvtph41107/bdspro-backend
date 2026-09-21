@@ -2,6 +2,7 @@ package admin_handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
 	_dto "common/domain/dto"
@@ -50,10 +51,10 @@ func (h *AdminProjectHandler) GetList(ctx context.Context, req *bdspropb.SearchQ
 func (h *AdminProjectHandler) Create(ctx context.Context, req *bdspropb.Project) (*bdspropb.Project, error) {
 	project := h.ProjectMapper.ProjectPbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên dự án không được để trống")
+		return nil, _errors.ReturnError(service.ProjectNameRequired)
 	}
 	if req.DeveloperId == 0 {
-		return nil, _errors.ReturnError(400, "Developer ID không được để trống")
+		return nil, _errors.ReturnError(service.DeveloperIDRequired)
 	}
 
 	project, err := h.AdminProjectUsecase.Create(ctx, project)
@@ -66,10 +67,10 @@ func (h *AdminProjectHandler) Create(ctx context.Context, req *bdspropb.Project)
 func (h *AdminProjectHandler) Update(ctx context.Context, req *bdspropb.Project) (*bdspropb.Project, error) {
 	project := h.ProjectMapper.ProjectPbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên dự án không được để trống")
+		return nil, _errors.ReturnError(service.ProjectNameRequired)
 	}
 	if req.DeveloperId == 0 {
-		return nil, _errors.ReturnError(400, "Developer ID không được để trống")
+		return nil, _errors.ReturnError(service.DeveloperIDRequired)
 	}
 
 	project, err := h.AdminProjectUsecase.Update(ctx, req.Id, project)

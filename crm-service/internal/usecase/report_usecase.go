@@ -4,6 +4,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/interface/provider"
@@ -35,13 +36,13 @@ func (u *ReportUsecase) CreateReport(ctx context.Context, req *dto.ReportCreateR
 		return nil, err
 	}
 	if existReason == nil {
-		return nil, _errors.ReturnError(404, "lý do báo cáo không tồn tại")
+		return nil, _errors.ReturnError(service.ReportReasonNotFound)
 	}
 
 	// Nếu có registryName, lấy ownerOf từ registry
 	registryKey := u.registryUsecase.GetOwnerOfByRegistry(req.RegistryName)
 	if registryKey == 0 {
-		return nil, _errors.ReturnError(404, "registry name không tồn tại")
+		return nil, _errors.ReturnError(service.RegistryNameNotFound)
 	}
 	ownerOf := registryKey
 
@@ -51,7 +52,7 @@ func (u *ReportUsecase) CreateReport(ctx context.Context, req *dto.ReportCreateR
 		return nil, err
 	}
 	if exist {
-		return nil, _errors.ReturnError(400, "bạn đã gửi báo cáo cho đối tượng này")
+		return nil, _errors.ReturnError(service.ReportAlreadySubmitted)
 	}
 
 	report := &domain.Report{
@@ -97,7 +98,7 @@ func (u *ReportUsecase) GetReportList(ctx context.Context, req *dto.ReportListRe
 	if req.Registry != "" {
 		ownerOf = u.registryUsecase.GetOwnerOfByRegistry(req.Registry)
 		if ownerOf == 0 {
-			return nil, 0, _errors.ReturnError(404, "registry không tồn tại")
+			return nil, 0, _errors.ReturnError(service.RegistryNotFound)
 		}
 		req.OwnerOf = ownerOf
 	}
@@ -124,7 +125,7 @@ func (u *ReportUsecase) UpdateReport(ctx context.Context, id uint64, req *dto.Re
 	}
 
 	if existingReport.CreatedBy == nil || *existingReport.CreatedBy != profileId {
-		return nil, _errors.ReturnError(403, "Bạn không có quyền cập nhật báo cáo này")
+		return nil, _errors.ReturnError(service.ReportUpdateDenied)
 	}
 
 	updates := make(map[string]interface{})
@@ -153,7 +154,7 @@ func (u *ReportUsecase) DeleteReport(ctx context.Context, id uint64) error {
 	}
 
 	if existingReport.CreatedBy == nil || *existingReport.CreatedBy != profileId {
-		return _errors.ReturnError(403, "Bạn không có quyền xóa báo cáo này")
+		return _errors.ReturnError(service.ReportDeleteDenied)
 	}
 
 	return u.reportRepo.Delete(ctx, id)
@@ -167,7 +168,7 @@ func (u *ReportUsecase) GetAdminReportList(ctx context.Context, req *dto.ReportL
 	if req.Registry != "" {
 		ownerOf = u.registryUsecase.GetOwnerOfByRegistry(req.Registry)
 		if ownerOf == 0 {
-			return nil, 0, _errors.ReturnError(404, "registry không tồn tại")
+			return nil, 0, _errors.ReturnError(service.RegistryNotFound)
 		}
 		req.OwnerOf = ownerOf
 	}
@@ -185,12 +186,12 @@ func (u *ReportUsecase) ApproveReport(ctx context.Context, id uint64, req *dto.A
 		return err
 	}
 	if existingReport == nil {
-		return _errors.ReturnError(404, "Báo cáo không tồn tại")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 
 	// Kiểm tra trạng thái hiện tại
 	if existingReport.ReportStatus == 20 {
-		return _errors.ReturnError(400, "Báo cáo đã được duyệt trước đó")
+		return _errors.ReturnError(service.ReportAlreadyApproved)
 	}
 
 	// Update report status to approved (20)
@@ -219,12 +220,12 @@ func (u *ReportUsecase) RejectReport(ctx context.Context, id uint64, req *dto.Ad
 		return err
 	}
 	if existingReport == nil {
-		return _errors.ReturnError(404, "Báo cáo không tồn tại")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 
 	// Kiểm tra trạng thái hiện tại
 	if existingReport.ReportStatus == 30 {
-		return _errors.ReturnError(400, "Báo cáo đã bị từ chối trước đó")
+		return _errors.ReturnError(service.ReportAlreadyRejected)
 	}
 
 	// Update report status to rejected (30)
@@ -251,7 +252,7 @@ func (u *ReportUsecase) RemoveReport(ctx context.Context, id uint64) error {
 		return err
 	}
 	if existingReport == nil {
-		return _errors.ReturnError(404, "Báo cáo không tồn tại")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 
 	// Admin có thể xóa mọi báo cáo

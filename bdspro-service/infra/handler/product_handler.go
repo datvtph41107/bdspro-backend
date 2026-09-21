@@ -11,10 +11,10 @@ import (
 	"bdspro/internal/usecases"
 	shared_usecase "bdspro/internal/usecases/shared"
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"strconv"
@@ -766,7 +766,7 @@ func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.
 
 	vals, err := s.SyncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.InternalServerException("error: %v", err.Error())
+		return nil, fmt.Errorf("get product timestamps: %w", err)
 	}
 
 	names := []string{

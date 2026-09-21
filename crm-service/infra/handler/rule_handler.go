@@ -3,8 +3,9 @@ package handler
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -92,10 +93,7 @@ func (s *RuleService) Create(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 		entity.Trigger == 0 ||
 		entity.ConditionValue == "" ||
 		entity.TriggerValue == "" {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "ownerId, ownerType, ruleName, condition, trigger, conditionValue and triggerValue are required",
-		}
+		return nil, _errors.ReturnError(service.RuleFieldsRequired)
 	}
 	result, err := s.UC.Create(ctx, entity)
 	return mapper.RuleDomainToPb(result), err
@@ -113,10 +111,7 @@ func (s *RuleService) Create(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 func (s *RuleService) Update(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.RuleDTO, error) {
 	entity := mapper.RulePbToDomain(req)
 	if entity.ID == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "id is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 	result, err := s.UC.Update(ctx, entity.ID, entity)
 	return mapper.RuleDomainToPb(result), err
@@ -132,10 +127,7 @@ func (s *RuleService) Update(ctx context.Context, req *crmpb.RuleDTO) (*crmpb.Ru
 // @Router /rule/{id} [delete]
 func (s *RuleService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "id is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 	err := s.UC.Delete(ctx, req.Id)
 	if err != nil {
@@ -158,10 +150,7 @@ func (s *RuleService) Delete(ctx context.Context, req *sharepb.IdRequest) (*shar
 // @Router /rule/{id}/active [put]
 func (s *RuleService) Active(ctx context.Context, req *crmpb.ActiveRuleRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "id is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 	err := s.UC.Active(ctx, req.Id, req.Active)
 	if err != nil {

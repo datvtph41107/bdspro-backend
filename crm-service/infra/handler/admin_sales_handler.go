@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"crm/infra/client"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -195,7 +196,7 @@ func (h *AdminSalesHandler) UpdateOpportunity(ctx context.Context, req *crmpb.Up
 		return nil, err
 	}
 	if req.Id == 0 {
-		return nil, _errors.ReturnError(400, "ID không hợp lệ")
+		return nil, _errors.ReturnError(service.AdminIDInvalid)
 	}
 	lead, err := h.usecase.Update(ctx, req.Id, mapAdminUpdateReq(req))
 	if err != nil {
@@ -268,7 +269,7 @@ func (h *AdminSalesHandler) CreateFollowUp(ctx context.Context, req *crmpb.Creat
 	}
 	t, err := parseTime(req.NextFollowUpAt)
 	if err != nil || t == nil {
-		return nil, _errors.ReturnError(400, "Thời điểm follow-up không hợp lệ")
+		return nil, _errors.ReturnError(service.FollowUpTimeInvalid)
 	}
 	if err := h.usecase.CreateFollowUp(ctx, req.Id, &dto.AdminOpportunityFollowUpDTO{
 		NextFollowUpAt: *t,

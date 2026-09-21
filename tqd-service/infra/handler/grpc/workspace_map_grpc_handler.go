@@ -8,12 +8,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"common/fault"
 	_utils "common/utils"
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/handler/grpc/generatedreport"
 	"tqd/infra/mapper"
+	"tqd/internal"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
 
@@ -52,7 +52,7 @@ func (h *MapWorkspaceGrpcHandler) UseCreateReportAdapter(adapter *grpcadapter.Ad
 func (h *MapWorkspaceGrpcHandler) currentUserID(ctx context.Context) (uint64, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return 0, _errors.UnauthorizedException()
+		return 0, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	return userID, nil
@@ -62,26 +62,13 @@ func workspaceStatusError(err error) error {
 	if err == nil {
 		return nil
 	}
-
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fault.ToGRPC(fault.Wrap(
-			err,
-			fault.KindNotFound,
-			"tqd.workspace.record_not_found",
-			"record not found",
+		return _errors.ToGRPC(_errors.ReturnError(
+			service.WorkspaceRecordNotFound,
+			_errors.WithCause(err),
 		))
 	}
-
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.workspace.internal",
-		"workspace operation failed",
-	))
+	return _errors.ToGRPC(err)
 }
 
 func protoPoint(v dto.SpatialPointDTO) *tqdpb.SpatialPoint {

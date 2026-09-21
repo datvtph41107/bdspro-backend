@@ -4,11 +4,10 @@ package crypto
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
-
-	_errors "common/errors"
 
 	"github.com/spf13/viper"
 )
@@ -40,29 +39,24 @@ func (m *DefaultKeyManager) InitializeFromConfig(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Lấy passphrase từ nhiều nguồn
 	passphrase := viper.GetString("encryption.aes_passphrase")
 	if passphrase == "" {
 		passphrase = os.Getenv("CONFIG_ENCRYPTION_PASSPHRASE")
 	}
-
 	if passphrase == "" {
-		return _errors.ReturnError(ErrCodeKeyManagerInitFailed,
-			"encryption passphrase is required (set in config or env)")
+		return errors.New("encryption passphrase is required (set in config or env)")
 	}
 
 	hash := sha256.Sum256([]byte(passphrase))
 	m.activeKey = hash[:]
 	m.activeKeyID = generateKeyID(m.activeKey)
-
 	return nil
 }
 
 // InitializeWithPassphrase khởi tạo với passphrase trực tiếp
 func (m *DefaultKeyManager) InitializeWithPassphrase(ctx context.Context, passphrase string) error {
 	if passphrase == "" {
-		return _errors.ReturnError(ErrCodeKeyManagerInitFailed,
-			"passphrase is required")
+		return errors.New("passphrase is required")
 	}
 
 	m.mu.Lock()
@@ -71,7 +65,6 @@ func (m *DefaultKeyManager) InitializeWithPassphrase(ctx context.Context, passph
 	hash := sha256.Sum256([]byte(passphrase))
 	m.activeKey = hash[:]
 	m.activeKeyID = generateKeyID(m.activeKey)
-
 	return nil
 }
 
@@ -81,7 +74,7 @@ func (m *DefaultKeyManager) GetActiveKey(ctx context.Context) ([]byte, error) {
 	defer m.mu.RUnlock()
 
 	if m.activeKey == nil {
-		return nil, _errors.ReturnError(ErrCodeKeyNotFound, "no active key")
+		return nil, errors.New("no active encryption key")
 	}
 	return m.activeKey, nil
 }
@@ -90,16 +83,19 @@ func (m *DefaultKeyManager) GetActiveKey(ctx context.Context) ([]byte, error) {
 func (m *DefaultKeyManager) GetActiveEncryptor(ctx context.Context) (*AESEncryptor, error) {
 	key, err := m.GetActiveKey(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get active encryption key: %w", err)
 	}
-	return NewAESEncryptorFromKey(key)
+	encryptor, err := NewAESEncryptorFromKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("create active encryptor: %w", err)
+	}
+	return encryptor, nil
 }
 
 // RotateKey implements KeyManager
 func (m *DefaultKeyManager) RotateKey(ctx context.Context, newKey []byte) error {
 	if len(newKey) != AESKeySize {
-		return _errors.ReturnError(ErrCodeInvalidKeySize,
-			fmt.Sprintf("new key must be %d bytes", AESKeySize))
+		return fmt.Errorf("new key must be %d bytes, got %d", AESKeySize, len(newKey))
 	}
 
 	m.mu.Lock()
@@ -108,7 +104,6 @@ func (m *DefaultKeyManager) RotateKey(ctx context.Context, newKey []byte) error 
 	// TODO: Lưu key cũ vào backup để decrypt data cũ nếu cần
 	m.activeKey = newKey
 	m.activeKeyID = generateKeyID(newKey)
-
 	return nil
 }
 

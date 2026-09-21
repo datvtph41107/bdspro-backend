@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"hub/internal"
 
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
@@ -82,7 +83,7 @@ func (u *UserGuideUsecase) GetByKey(ctx context.Context, key string) (*domain.Us
 		return nil, err
 	}
 	if data == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy user guide với key: "+key)
+		return nil, _errors.ReturnError(service.UserGuideNotFound, _errors.WithPublicMessage("Không tìm thấy user guide với key: "+key))
 	}
 	return data, nil
 }

@@ -5,6 +5,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/repo"
@@ -44,7 +45,7 @@ func (u *TagUsecase) AdminCreateTag(ctx context.Context, req *dto.AdminTagReques
 
 func (u *TagUsecase) AdminUpdateTag(ctx context.Context, req *dto.AdminTagRequest) (*domain.TagEntity, error) {
 	if req == nil || req.ID == 0 {
-		return nil, _errors.ReturnError(400, "Thiếu thông tin tag")
+		return nil, _errors.ReturnError(service.TagPayloadRequired)
 	}
 	if err := validateAdminTagRequest(req); err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (u *TagUsecase) AdminUpdateTag(ctx context.Context, req *dto.AdminTagReques
 	existed, err := u.tagRepo.GetByID(ctx, req.ID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, _errors.ReturnError(404, "Tag không tồn tại")
+			return nil, _errors.ReturnError(service.TagNotFound)
 		}
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (u *TagUsecase) AdminUpdateTag(ctx context.Context, req *dto.AdminTagReques
 
 func (u *TagUsecase) AdminDeleteTag(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return _errors.ReturnError(400, "Thiếu thông tin tag")
+		return _errors.ReturnError(service.TagPayloadRequired)
 	}
 	return u.tagRepo.Delete(ctx, id)
 }
@@ -135,10 +136,10 @@ func (u *TagUsecase) ReplaceContactTags(ctx context.Context, contactID uint64, t
 
 func validateAdminTagRequest(req *dto.AdminTagRequest) error {
 	if req == nil {
-		return _errors.ReturnError(400, "Thiếu thông tin tag")
+		return _errors.ReturnError(service.TagPayloadRequired)
 	}
 	if strings.TrimSpace(req.Name) == "" {
-		return _errors.ReturnError(400, "Tên tag không được để trống")
+		return _errors.ReturnError(service.TagNameRequired)
 	}
 	return nil
 }

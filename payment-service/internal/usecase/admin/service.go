@@ -4,12 +4,14 @@
 package admin
 
 import (
+	_errors "common/errors"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"payment/internal"
 	payment "payment/internal/domain/payment"
 	"payment/internal/usecase/settlement"
 )
@@ -209,7 +211,13 @@ func normalizePage(page, pageSize uint32) (uint32, uint32, error) {
 		pageSize = 20
 	}
 	if pageSize > 100 {
-		return 0, 0, ErrPageSizeOutOfRange
+		return 0, 0, _errors.ReturnError(
+			service.AdminPageSizeOutOfRange,
+			_errors.WithViolations(_errors.FieldViolation{
+				Field:       "page_size",
+				Description: "must be between 1 and 100",
+			}),
+		)
 	}
 	return page, pageSize, nil
 }

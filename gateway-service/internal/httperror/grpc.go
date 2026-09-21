@@ -50,7 +50,7 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 
 	// Migration-only compatibility adapter. Existing legacy protobuf business
 	// errors historically return HTTP 200 and a numeric body code. New service
-	// code must not create sharepb.ErrorResponse; typed common/fault errors use
+	// code must not create sharepb.ErrorResponse; typed common/errors application errors use
 	// the canonical RFC 9457 path below. Remove this adapter when legacy emitters
 	// reach zero.
 	for _, detail := range grpcErr.Details() {
@@ -60,6 +60,10 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 		}
 	}
 
+	if writeCanonicalLegacyCompatibilityError(ctx, w, grpcErr) {
+		return
+	}
+
 	if writeCanonicalOTPCompatibilityError(ctx, w, grpcErr) {
 		return
 	}
@@ -67,6 +71,45 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 	problem := problemFromGRPC(grpcErr)
 	logProblem(ctx, grpcErr, problem)
 	_httpresponse.WriteProblem(ctx, w, problem)
+}
+
+func writeCanonicalLegacyCompatibilityError(
+	ctx context.Context,
+	w http.ResponseWriter,
+	grpcErr *status.Status,
+) bool {
+	for _, detail := range grpcErr.Details() {
+		info, ok := detail.(*errdetails.ErrorInfo)
+		if !ok || info.Domain != "qhpro.backend" {
+			continue
+		}
+		if !strings.EqualFold(strings.TrimSpace(info.Metadata["legacy_http_200"]), "true") {
+			continue
+		}
+		codeRaw := strings.TrimSpace(info.Metadata["error_code"])
+		code, err := strconv.ParseInt(codeRaw, 10, 32)
+		if err != nil {
+			continue
+		}
+		var second *int32
+		if secondRaw := strings.TrimSpace(info.Metadata["second"]); secondRaw != "" {
+			parsed, parseErr := strconv.ParseInt(secondRaw, 10, 32)
+			if parseErr == nil && parsed >= 0 {
+				value := int32(parsed)
+				second = &value
+			}
+		}
+		writeBusinessCompatibilityError(
+			ctx,
+			w,
+			grpcErr,
+			int32(code),
+			grpcErr.Message(),
+			second,
+		)
+		return true
+	}
+	return false
 }
 
 func writeCanonicalOTPCompatibilityError(
@@ -186,7 +229,9 @@ func problemFromGRPC(grpcErr *status.Status) _httpresponse.Problem {
 				for key, metadataValue := range value.Metadata {
 					problem.Metadata[key] = metadataValue
 				}
-				if errorCode := strings.TrimSpace(value.Metadata["error_code"]); errorCode != "" {
+				if legacyCode := strings.TrimSpace(value.Metadata["legacy_code"]); legacyCode != "" {
+					problem.Code = legacyCode
+				} else if errorCode := strings.TrimSpace(value.Metadata["error_code"]); errorCode != "" {
 					problem.Code = errorCode
 				}
 			}

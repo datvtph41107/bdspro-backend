@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
@@ -79,7 +80,7 @@ func TestRegionCreateLayerNotFoundIsCanonical(t *testing.T) {
 	assertRegionFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.region.layer_not_found",
 	)
 
@@ -109,7 +110,7 @@ func TestRegionCreateInvalidGeometryIsCanonical(t *testing.T) {
 	assertRegionFault(
 		t,
 		err,
-		fault.KindValidation,
+		codes.InvalidArgument,
 		"tqd.region.geometry_invalid",
 	)
 }
@@ -132,7 +133,7 @@ func TestRegionUpdateNotFoundIsCanonical(t *testing.T) {
 	assertRegionFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.region.not_found",
 	)
 }
@@ -154,7 +155,7 @@ func TestRegionSyncLabelNotFoundIsCanonical(t *testing.T) {
 	assertRegionFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.region.label_not_found",
 	)
 }
@@ -179,7 +180,7 @@ func TestRegionSyncReferenceNotFoundIsCanonical(t *testing.T) {
 	assertRegionFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.region.sync_reference_not_found",
 	)
 }
@@ -203,12 +204,9 @@ func TestRegionDependencyFailurePreservesCause(t *testing.T) {
 		0,
 	)
 
-	assertRegionFault(
-		t,
-		err,
-		fault.KindInternal,
-		"tqd.region.layer_lookup_failed",
-	)
+	if _, ok := _errors.As(err); ok {
+		t.Fatalf("technical dependency error received application identity: %v", err)
+	}
 
 	if !errors.Is(err, dependencyErr) {
 		t.Fatalf(
@@ -221,32 +219,32 @@ func TestRegionDependencyFailurePreservesCause(t *testing.T) {
 func assertRegionFault(
 	t *testing.T,
 	err error,
-	kind fault.Kind,
+	rpcCode codes.Code,
 	code string,
 ) {
 	t.Helper()
 
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
 		t.Fatalf(
-			"error type = %T, want canonical fault: %v",
+			"error type = %T, want canonical application error: %v",
 			err,
 			err,
 		)
 	}
 
-	if failure.Kind() != kind {
+	if application.RPCCode() != rpcCode {
 		t.Fatalf(
 			"kind = %q, want %q",
-			failure.Kind(),
-			kind,
+			application.RPCCode(),
+			rpcCode,
 		)
 	}
 
-	if failure.Code() != code {
+	if application.Spec().LegacyProblemCode() != code {
 		t.Fatalf(
 			"code = %q, want %q",
-			failure.Code(),
+			application.Spec().LegacyProblemCode(),
 			code,
 		)
 	}

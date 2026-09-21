@@ -3,6 +3,7 @@ package user_router
 import (
 	"bdspro/internal/dto"
 	shared_usecase "bdspro/internal/usecases/shared"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -76,10 +77,7 @@ func (route *UserProductChildRouter) RegisterRoutes(r *gin.RouterGroup, path str
 func (route *UserProductChildRouter) InfoArea(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 

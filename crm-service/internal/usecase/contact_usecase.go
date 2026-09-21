@@ -5,9 +5,9 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -65,7 +65,7 @@ func NewContactUsecase(
 func (u *ContactUsecase) GetInterestedContactsByProduct(ctx context.Context, req *dto.ContactProductInterestedFilter) ([]*dto.ContactProductInterestedDTO, int64, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, 0, _errors.UnauthorizedException()
+		return nil, 0, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	items, total, err := u.repo.GetInterestedContactsByProduct(
@@ -136,10 +136,7 @@ func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*
 	if entity.OwnerOf == base_enum.EOwnerOfMember {
 		profileId := _utils.GetProfileIdWithContext(c)
 		if profileId != entity.OwnerID {
-			return nil, &_routes.Except{
-				Code:    403,
-				Message: "Bạn không có quyền truy cập",
-			}
+			return nil, _errors.ReturnError(service.ContactAccessDenied)
 		}
 	}
 	return entity, nil
@@ -161,10 +158,7 @@ func (s *ContactUsecase) GetListContactByProductId(c context.Context, productId 
 	// Lấy ownerId từ context (thường là organizationId)
 	ownerId := _utils.GetProfileIdWithContext(c)
 	if ownerId == 0 {
-		return nil, 0, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy thông tin liên hệ",
-		}
+		return nil, 0, _errors.ReturnError(service.ContactNotFound, _errors.WithPublicMessage("Không tìm thấy thông tin liên hệ"), _errors.WithLegacyCode(400))
 	}
 	ownerType := base_enum.EOwnerOfMember
 	contacts, total, err := s.repo.GetListContactByProductId(c, productId, ownerId, ownerType, dto)
@@ -201,7 +195,7 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 				return err
 			}
 			if existing != nil {
-				return _errors.ConflictException("Contact already exists for this profile")
+				return _errors.ReturnError(service.ContactAlreadyExists)
 			}
 		}
 
@@ -211,7 +205,7 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 			if err == nil && len(profiles) > 0 {
 				if profile, exists := profiles[entity.Phone]; exists {
 					if profile.ProfileId == ownerId {
-						return _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+						return _errors.ReturnError(service.SelfContactNotAllowed)
 					}
 					entity.ProfileID = &profile.ProfileId
 				}
@@ -513,7 +507,7 @@ func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.Conta
 		if err == nil && len(profiles) > 0 {
 			if profile, exists := profiles[entity.Phone]; exists {
 				if profile.ProfileId == ownerId {
-					return nil, _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+					return nil, _errors.ReturnError(service.SelfContactNotAllowed)
 				}
 				entity.ProfileID = &profile.ProfileId
 			}

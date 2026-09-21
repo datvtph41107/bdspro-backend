@@ -3,8 +3,8 @@ package postgre
 import (
 	_errors "common/errors"
 	_models "common/models"
-	_routes "common/routes"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"time"
 
@@ -35,7 +35,7 @@ func (r *FollowPostgre) GetFollow(ctx context.Context, followerID, followingID u
 
 func (r *FollowPostgre) CreateFollow(ctx context.Context, followerID, followingID uint64) (*domain.FollowEntity, error) {
 	if followerID == followingID {
-		return nil, _errors.BadRequestException("cannot follow yourself")
+		return nil, _errors.ReturnError(service.SelfFollowNotAllowed, _errors.WithPublicMessage("cannot follow yourself"))
 	}
 	follow := &domain.FollowEntity{
 		FollowingID: followingID,
@@ -106,10 +106,7 @@ func (repo *FollowPostgre) FollowingUser(c context.Context, currentId uint64, pa
 
 func (repo *FollowPostgre) FollowUser(c context.Context, profileId, followingID uint64) (*domain.FollowEntity, error) {
 	if profileId == followingID {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể tự follow chính mình",
-		}
+		return nil, _errors.ReturnError(service.SelfFollowNotAllowed)
 	}
 
 	follow := domain.FollowEntity{
@@ -124,10 +121,7 @@ func (repo *FollowPostgre) FollowUser(c context.Context, profileId, followingID 
 		profileId, followingID).Scan(&exists).Error
 
 	if err != nil || exists {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Đã follow người này rồi",
-		}
+		return nil, _errors.ReturnError(service.AlreadyFollowing)
 	}
 
 	err = repo.DB.WithContext(c).Create(&follow).Error
@@ -142,10 +136,7 @@ func (repo *FollowPostgre) UnfollowUser(c context.Context, profileId uint64, fol
 		Update("deleted_at", time.Now())
 
 	if result.RowsAffected == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Bạn chưa follow người này",
-		}
+		return _errors.ReturnError(service.NotFollowing)
 	}
 	return nil
 }

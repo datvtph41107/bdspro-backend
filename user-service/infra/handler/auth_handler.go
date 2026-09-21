@@ -3,13 +3,13 @@ package handler
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_fault "common/fault"
 	_utils "common/utils"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	"strings"
 	"time"
+	"user/internal"
 
 	"user/infra/mapper"
 	"user/internal/dto"
@@ -19,13 +19,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-func authTransportError(err error) error {
-	if _, ok := _fault.As(err); ok {
-		return _fault.ToGRPC(err)
-	}
-	return err
-}
 
 type AuthHandler struct {
 	authpb.UnimplementedAuthServiceServer
@@ -90,7 +83,7 @@ func (h *AuthHandler) RequestOTP(ctx context.Context, req *authpb.RequestOTPRequ
 
 	result, err := h.AuthUsecase.RequestOtp(ctx, *dto)
 	if err != nil {
-		return nil, authTransportError(err)
+		return nil, err
 	}
 
 	// Convert DTO response to proto response
@@ -419,7 +412,7 @@ func (h *AuthHandler) ResendOTP(ctx context.Context, req *authpb.ResendOTPReques
 
 	result, err := h.AuthUsecase.ResendOTP(ctx, *dto)
 	if err != nil {
-		return nil, authTransportError(err)
+		return nil, err
 	}
 
 	// Convert DTO response to proto response
@@ -1392,7 +1385,7 @@ func validateAppState(state string) error {
 func (h *AuthHandler) UpdateDeviceMode(ctx context.Context, req *authpb.AppStateRequest) (*authpb.AppStateResponse, error) {
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, _errors.ReturnError(400, "Không xác định được người dùng hiện tại")
+		return nil, _errors.ReturnError(service.CurrentUserUnknown)
 	}
 
 	// Validate app state
@@ -1404,7 +1397,7 @@ func (h *AuthHandler) UpdateDeviceMode(ctx context.Context, req *authpb.AppState
 	// Lưu app state vào Redis
 	err := h.AuthUsecase.CacheProvider.SaveAppState(ctx, profileID, state)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 
 	return &authpb.AppStateResponse{

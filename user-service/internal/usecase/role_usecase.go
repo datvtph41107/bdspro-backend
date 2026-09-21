@@ -6,6 +6,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"strings"
+	"user/internal"
 
 	"user/internal/domain/access"
 	"user/internal/dto"
@@ -38,13 +39,13 @@ func NewRoleUsecase(
 // Create tạo mới role
 func (uc *RoleUsecase) Create(ctx context.Context, role *access.Role) (*access.Role, error) {
 	if role.RoleName == "" {
-		return nil, _errors.ReturnError(400, "name không được để trống")
+		return nil, _errors.ReturnError(service.RoleNameRequired)
 	}
 	if role.PermissionIDs == nil {
-		return nil, _errors.ReturnError(400, "permissionIds không được để trống")
+		return nil, _errors.ReturnError(service.PermissionIDsRequired)
 	}
 	if isSystemRootRole(role) {
-		return nil, _errors.ReturnError(400, "Vai trò quản trị gốc chỉ được tạo bởi bootstrap operator")
+		return nil, _errors.ReturnError(service.RootAdminRoleBootstrapOnly)
 	}
 
 	err := uc.Repo.Create(ctx, role)
@@ -61,7 +62,7 @@ func (uc *RoleUsecase) Detail(ctx context.Context, id uint64) (*access.Role, err
 		return nil, err
 	}
 	if role == nil {
-		return nil, _errors.ReturnError(404, "Role không tồn tại")
+		return nil, _errors.ReturnError(service.RoleNotFound)
 	}
 	return role, nil
 }
@@ -69,10 +70,10 @@ func (uc *RoleUsecase) Detail(ctx context.Context, id uint64) (*access.Role, err
 // Update cập nhật role
 func (uc *RoleUsecase) Update(ctx context.Context, id uint64, role *access.Role) (*access.Role, error) {
 	if role.RoleName == "" {
-		return nil, _errors.ReturnError(400, "Tên role không được để trống")
+		return nil, _errors.ReturnError(service.RoleNameRequiredVI)
 	}
 	// if role.Key == "" {
-	// 	return nil, _errors.ReturnError(400, "Key role không được để trống")
+	// 	return nil, _errors.ReturnError(service.RoleKeyRequired)
 	// }
 
 	// Kiểm tra role có tồn tại không
@@ -81,10 +82,10 @@ func (uc *RoleUsecase) Update(ctx context.Context, id uint64, role *access.Role)
 		return nil, err
 	}
 	if existingRole == nil {
-		return nil, _errors.ReturnError(404, "Role không tồn tại")
+		return nil, _errors.ReturnError(service.RoleNotFound)
 	}
 	if isSystemRootRole(existingRole) || isSystemRootRole(role) {
-		return nil, _errors.ReturnError(403, "Không thể thay đổi vai trò quản trị gốc")
+		return nil, _errors.ReturnError(service.RootAdminRoleMutationDenied)
 	}
 
 	role.ID = id
@@ -103,10 +104,10 @@ func (uc *RoleUsecase) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 	if existingRole == nil {
-		return _errors.ReturnError(404, "Role không tồn tại")
+		return _errors.ReturnError(service.RoleNotFound)
 	}
 	if isSystemRootRole(existingRole) {
-		return _errors.ReturnError(403, "Không thể xóa vai trò quản trị gốc")
+		return _errors.ReturnError(service.RootAdminRoleDeleteDenied)
 	}
 
 	return uc.Repo.Delete(ctx, id)
@@ -147,10 +148,10 @@ func (uc *RoleUsecase) ReplacePermissions(ctx context.Context, roleID uint64, pe
 		return err
 	}
 	if existingRole == nil {
-		return _errors.ReturnError(404, "Role không tồn tại")
+		return _errors.ReturnError(service.RoleNotFound)
 	}
 	if isSystemRootRole(existingRole) {
-		return _errors.ReturnError(403, "Không thể thay đổi quyền của vai trò quản trị gốc")
+		return _errors.ReturnError(service.RootAdminRolePermissionMutationDenied)
 	}
 	existingRole.PermissionIDs = append([]uint64(nil), permissionIDs...)
 	return uc.Repo.Update(ctx, roleID, existingRole)
@@ -180,7 +181,7 @@ func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) 
 		return nil, err
 	}
 	if organizationMember == nil {
-		return nil, _errors.ReturnError(404, "Organization member not found")
+		return nil, _errors.ReturnError(service.OrganizationMemberNotFound)
 	}
 	keys, err := uc.Repo.GetPermissionKeysByRoleKey(ctx, organizationMember.RoleKey)
 	if err != nil {
@@ -193,7 +194,7 @@ func (uc *RoleUsecase) GetPermissionKeys(ctx context.Context) ([]string, error) 
 func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]access.Role, int64, error) {
 	entities, total, err := s.Repo.GetListByGroupKey(c, groupKey)
 	if err != nil {
-		return nil, 0, _errors.ReturnError(500, err.Error())
+		return nil, 0, err
 	}
 
 	return entities, total, nil
@@ -203,29 +204,29 @@ func (s *RoleUsecase) GetListByGroupKey(c context.Context, groupKey uint32) ([]a
 func (uc *RoleUsecase) AssignRoleToUser(ctx context.Context, req *dto.AssignRoleToUserRequest) (*dto.AssignRoleToUserResponse, error) {
 	// Validate input
 	if req.UserID == 0 {
-		return nil, _errors.ReturnError(400, "UserID không được để trống")
+		return nil, _errors.ReturnError(service.UserIDRequired)
 	}
 	if req.RoleID == 0 {
-		return nil, _errors.ReturnError(400, "RoleID không được để trống")
+		return nil, _errors.ReturnError(service.RoleIDRequired)
 	}
 
 	// Lấy role theo roleId
 	role, err := uc.Repo.GetByID(ctx, req.RoleID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi lấy role: "+err.Error())
+		return nil, err
 	}
 
 	if role == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy role với roleId đã cung cấp")
+		return nil, _errors.ReturnError(service.RoleByIDNotFound)
 	}
 	if isSystemRootRole(role) || !role.AllowAssign {
-		return nil, _errors.ReturnError(403, "Vai trò này không cho phép gán qua API")
+		return nil, _errors.ReturnError(service.RoleAPIAssignmentDenied)
 	}
 
 	// Gán role cho user
 	err = uc.Repo.AssignRoleToUser(ctx, req.UserID, role)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi gán role cho user: "+err.Error())
+		return nil, err
 	}
 
 	// Convert domain role to DTO
@@ -311,7 +312,7 @@ func (uc *RoleUsecase) GetListByModuleCode(ctx context.Context, code string) ([]
 		return nil, err
 	}
 	if roleGroup == nil {
-		return nil, _errors.ReturnError(404, "Module không đúng")
+		return nil, _errors.ReturnError(service.ModuleInvalid)
 	}
 
 	entities, err := uc.Repo.GetRoleByGroupId(ctx, roleGroup.ID)

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"auth/internal"
 	"auth/internal/permissioncatalog"
 
 	_errors "common/errors"
@@ -256,24 +257,24 @@ func (s *PermissionService) resolvePermissionIDs(
 	snapshot := s.snapshot
 	s.mu.RUnlock()
 	if snapshot.loadedAt.IsZero() || time.Since(snapshot.loadedAt) >= s.maxStaleness {
-		return nil, _errors.ReturnError(503, "permission snapshot chưa sẵn sàng hoặc đã quá hạn")
+		return nil, _errors.ReturnError(service.PermissionSnapshotUnavailable)
 	}
 
 	set := make(map[uint32]struct{}, len(permissionIDs)+len(permissionCodes))
 	for _, permissionID := range permissionIDs {
 		if permissionID == 0 || !snapshot.catalog.ContainsID(permissionID) {
-			return nil, _errors.ReturnError(400, "permissionId không tồn tại trong snapshot")
+			return nil, _errors.ReturnError(service.PermissionIDNotFound)
 		}
 		set[permissionID] = struct{}{}
 	}
 	for _, rawCode := range permissionCodes {
 		code := strings.TrimSpace(rawCode)
 		if code == "" {
-			return nil, _errors.ReturnError(400, "permission code không hợp lệ")
+			return nil, _errors.ReturnError(service.PermissionCodeInvalid)
 		}
 		permissionID, ok := snapshot.catalog.ResolveCode(code)
 		if !ok {
-			return nil, _errors.ReturnError(403, "permission code không tồn tại trong snapshot")
+			return nil, _errors.ReturnError(service.PermissionCodeDenied)
 		}
 		set[permissionID] = struct{}{}
 	}
@@ -308,7 +309,7 @@ func (s *PermissionService) resolveRoleIDs(ctx context.Context, profileID uint64
 	defer cancel()
 	roleIDs, err := s.userClient.GetRoleIdsByProfileId(callCtx, profileID)
 	if err != nil {
-		return nil, _errors.ReturnError(503, "không thể xác minh role assignment hiện tại")
+		return nil, _errors.ReturnError(service.RoleAssignmentUnavailable)
 	}
 	roleIDs = normalizeRoleIDs(roleIDs)
 	s.roleMu.Lock()
@@ -352,19 +353,19 @@ func (s *PermissionService) RequiredPermissions(
 		return nil
 	}
 	if mode != MatchAll && mode != MatchAny {
-		return _errors.ReturnError(400, "permission match mode không hợp lệ")
+		return _errors.ReturnError(service.PermissionMatchModeInvalid)
 	}
 
 	profileID := profileIDFromContext(ctx)
 	if profileID == 0 {
-		return _errors.ReturnError(401, "Unauthorized")
+		return _errors.ReturnError(service.Unauthenticated)
 	}
 	roleIDs, err := s.resolveRoleIDs(ctx, profileID)
 	if err != nil {
 		return err
 	}
 	if len(roleIDs) == 0 {
-		return _errors.ReturnError(403, "Bạn không có quyền truy cập")
+		return _errors.ReturnError(service.PermissionDenied)
 	}
 
 	allowed := false
@@ -374,7 +375,7 @@ func (s *PermissionService) RequiredPermissions(
 		allowed = s.hasAnyPermission(roleIDs, requested)
 	}
 	if !allowed {
-		return _errors.ReturnError(403, "Bạn không có quyền truy cập")
+		return _errors.ReturnError(service.PermissionDenied)
 	}
 	return nil
 }

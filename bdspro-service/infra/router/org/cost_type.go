@@ -5,6 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	shared_usecase "bdspro/internal/usecases/shared"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"strconv"
@@ -43,10 +44,7 @@ func (r *OrgCostTypeRouter) RegisterRoutes(router *gin.RouterGroup, path string)
 func (r *OrgCostTypeRouter) Search(c *gin.Context) {
 	var dto dto.AssetCostTypeSearchDTO
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 
 		return
 	}
@@ -68,10 +66,7 @@ func (r *OrgCostTypeRouter) Search(c *gin.Context) {
 func (r *OrgCostTypeRouter) GetByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 		return
 	}
 
@@ -88,10 +83,7 @@ func (r *OrgCostTypeRouter) GetByID(c *gin.Context) {
 func (r *OrgCostTypeRouter) Create(c *gin.Context) {
 	var dto domain.AssetCostType
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 		return
 	}
 
@@ -109,19 +101,13 @@ func (r *OrgCostTypeRouter) Create(c *gin.Context) {
 func (r *OrgCostTypeRouter) Update(c *gin.Context) {
 	var dto domain.AssetCostType
 	if err := _utils.ParseBodyWithValidator(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 		return
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 		return
 	}
 
@@ -138,10 +124,7 @@ func (r *OrgCostTypeRouter) Update(c *gin.Context) {
 func (r *OrgCostTypeRouter) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.RequestValidationFailed))
 		return
 	}
 

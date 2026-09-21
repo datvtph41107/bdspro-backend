@@ -3,6 +3,7 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"crm/internal"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -51,7 +52,7 @@ func newSeoRefResolver(cfg seo_domain.SeoRefTypeConfig, bdsproProvider provider.
 
 func (r *seoRefResolver) Search(ctx context.Context, req *dto.SearchSeoRefValuesRequest) ([]dto.SeoRefValueResponse, int64, error) {
 	if req == nil {
-		return nil, 0, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.RequestInvalid)
 	}
 
 	if !seo_domain.IsSeoRefTypeSearchable(r.cfg) {
@@ -136,10 +137,10 @@ func (r *seoRefResolver) Search(ctx context.Context, req *dto.SearchSeoRefValues
 
 func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValueRequest) (*dto.SeoRefSnapshotResponse, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	if req.RefID == 0 {
-		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	if !seo_domain.IsSeoRefTypeResolvable(r.cfg) {
@@ -168,7 +169,7 @@ func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValu
 			return nil, err
 		}
 		if region == nil || region.GetId() == 0 {
-			return nil, _errors.ReturnError(404, "source không tồn tại")
+			return nil, _errors.ReturnError(service.SEOSourceNotFound)
 		}
 		item = r.normalizeRegion(region)
 
@@ -181,7 +182,7 @@ func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValu
 			return nil, err
 		}
 		if region == nil || region.GetId() == 0 {
-			return nil, _errors.ReturnError(404, "source không tồn tại")
+			return nil, _errors.ReturnError(service.SEOSourceNotFound)
 		}
 		item = r.normalizeAreaRegion(region)
 
@@ -194,7 +195,7 @@ func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValu
 			return nil, err
 		}
 		if source == nil || source.ParcelID == 0 {
-			return nil, _errors.ReturnError(404, "source parcel không tồn tại")
+			return nil, _errors.ReturnError(service.SEOParcelSourceNotFound)
 		}
 		item = r.normalizeParcel(*source)
 
@@ -211,10 +212,7 @@ func (r *seoRefResolver) Resolve(ctx context.Context, req *dto.ResolveSeoRefValu
 			return nil, err
 		}
 		if source == nil || source.ID == 0 {
-			return nil, _errors.ReturnError(
-				404,
-				"source đồ án quy hoạch không tồn tại",
-			)
+			return nil, _errors.ReturnError(service.SEOPlanningSourceNotFound)
 		}
 
 		item = r.normalizePlanningProject(*source)
@@ -249,7 +247,7 @@ func (r *seoRefResolver) resolveProject(ctx context.Context, refID uint64) (*bds
 		return project, nil
 	}
 
-	return nil, _errors.ReturnError(404, "source project không tồn tại hoặc AdminProjectService chưa có API detail theo id")
+	return nil, _errors.ReturnError(service.SEOProjectSourceNotFound)
 }
 
 func (r *seoRefResolver) normalizeProject(project *bdspropb.Project) normalizedSeoRef {
@@ -616,11 +614,11 @@ func normalizeRefPaging(page uint32, size uint32) (uint32, uint32) {
 }
 
 func resolverUnavailable(resolverKey string) error {
-	return _errors.ReturnError(503, "resolver SEO chưa cấu hình client nguồn: "+resolverKey)
+	return _errors.ReturnError(service.SEOResolverUnavailable, _errors.WithPublicMessage("resolver SEO chưa cấu hình client nguồn: "+resolverKey))
 }
 
 func resolverNotImplemented(resolverKey string) error {
-	return _errors.ReturnError(501, "resolver SEO chưa có adapter production: "+resolverKey)
+	return _errors.ReturnError(service.SEOResolverNotImplemented, _errors.WithPublicMessage("resolver SEO chưa có adapter production: "+resolverKey))
 }
 
 func sourceServiceFromResolver(resolverKey string) string {

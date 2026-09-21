@@ -1,10 +1,11 @@
 package usecases
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -32,25 +33,16 @@ func NewProductAssetUsecase(
 func (uc *ProductAssetUsecase) LinkProductAsset(ctx context.Context, req *dto.LinkProductAssetRequest) error {
 	// Validate danh sách productIds không rỗng
 	if len(req.ProductIDs) == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Danh sách sản phẩm không được để trống",
-		}
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Danh sách sản phẩm không được để trống"))
 	}
 
 	// Validate asset tồn tại
 	asset, err := uc.AssetRepo.GetByID(req.AssetID)
 	if err != nil {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Tài sản không tồn tại",
-		}
+		return _errors.ReturnError(service.AssetNotFound)
 	}
 	if asset == nil {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Tài sản không tồn tại",
-		}
+		return _errors.ReturnError(service.AssetNotFound)
 	}
 
 	// Validate từng product và kiểm tra liên kết đã tồn tại
@@ -59,25 +51,24 @@ func (uc *ProductAssetUsecase) LinkProductAsset(ctx context.Context, req *dto.Li
 		// Validate product tồn tại
 		product, err := uc.ProductRepo.GetByIDContext(ctx, productID)
 		if err != nil {
-			return &_routes.Except{
-				Code:    404,
-				Message: fmt.Sprintf("Sản phẩm ID %d không tồn tại", productID),
-			}
+			return _errors.ReturnError(
+				service.ProductNotFound,
+				_errors.WithPublicMessage(fmt.Sprintf("Sản phẩm ID %d không tồn tại", productID)),
+				_errors.WithCause(err),
+			)
 		}
 		if product == nil {
-			return &_routes.Except{
-				Code:    404,
-				Message: fmt.Sprintf("Sản phẩm ID %d không tồn tại", productID),
-			}
+			return _errors.ReturnError(
+				service.ProductNotFound,
+				_errors.WithPublicMessage(fmt.Sprintf("Sản phẩm ID %d không tồn tại", productID)),
+				_errors.WithCause(err),
+			)
 		}
 
 		// Kiểm tra liên kết đã tồn tại chưa
 		exists, err := uc.ProductAssetRepo.CheckExists(ctx, productID, req.AssetID)
 		if err != nil {
-			return &_routes.Except{
-				Code:    500,
-				Message: fmt.Sprintf("Lỗi kiểm tra liên kết cho sản phẩm ID %d", productID),
-			}
+			return fmt.Errorf("check asset link for product %d: %w", productID, err)
 		}
 		if !exists {
 			// Chỉ thêm vào danh sách nếu chưa tồn tại
@@ -87,20 +78,14 @@ func (uc *ProductAssetUsecase) LinkProductAsset(ctx context.Context, req *dto.Li
 
 	// Tạo liên kết cho các product chưa được liên kết
 	if len(productsToLink) == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Tất cả các sản phẩm đã được liên kết với tài sản này",
-		}
+		return _errors.ReturnError(service.ProductsAlreadyLinkedToAsset)
 	}
 
 	// Tạo liên kết cho từng product
 	for _, productID := range productsToLink {
 		err = uc.ProductAssetRepo.Link(ctx, productID, req.AssetID)
 		if err != nil {
-			return &_routes.Except{
-				Code:    500,
-				Message: fmt.Sprintf("Lỗi tạo liên kết cho sản phẩm ID %d", productID),
-			}
+			return fmt.Errorf("link product %d to asset %d: %w", productID, req.AssetID, err)
 		}
 	}
 
@@ -137,10 +122,7 @@ func (uc *ProductAssetUsecase) UnlinkProductAsset(ctx context.Context, req *dto.
 func (uc *ProductAssetUsecase) GetAssetsByProductID(ctx context.Context, productID uint64) ([]uint64, error) {
 	assetIDs, err := uc.ProductAssetRepo.GetAssetIDsByProductID(ctx, productID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi lấy danh sách tài sản",
-		}
+		return nil, fmt.Errorf("list assets for product %d: %w", productID, err)
 	}
 	return assetIDs, nil
 }
@@ -149,10 +131,7 @@ func (uc *ProductAssetUsecase) GetAssetsByProductID(ctx context.Context, product
 func (uc *ProductAssetUsecase) GetProductsByAssetID(ctx context.Context, assetID uint64) ([]uint64, error) {
 	productIDs, err := uc.ProductAssetRepo.GetProductIDsByAssetID(ctx, assetID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi lấy danh sách sản phẩm",
-		}
+		return nil, fmt.Errorf("list products for asset %d: %w", assetID, err)
 	}
 	return productIDs, nil
 }

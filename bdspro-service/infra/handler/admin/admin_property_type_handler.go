@@ -2,6 +2,7 @@ package admin_handler
 
 import (
 	"bdspro/infra/mapper"
+	"bdspro/internal"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
 	_dto "common/domain/dto"
@@ -50,7 +51,7 @@ func (h *AdminPropertyTypeHandler) GetList(ctx context.Context, req *bdspropb.Se
 func (h *AdminPropertyTypeHandler) Create(ctx context.Context, req *bdspropb.PropertyType) (*bdspropb.PropertyType, error) {
 	propertyType := h.PropertyTypeMapper.PropertyTypePbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên tính chất không được để trống")
+		return nil, _errors.ReturnError(service.PropertyNameRequired)
 	}
 	propertyType, err := h.AdminPropertyTypeUsecase.Create(ctx, propertyType)
 	if err != nil {
@@ -62,7 +63,7 @@ func (h *AdminPropertyTypeHandler) Create(ctx context.Context, req *bdspropb.Pro
 func (h *AdminPropertyTypeHandler) Update(ctx context.Context, req *bdspropb.PropertyType) (*bdspropb.PropertyType, error) {
 	propertyType := h.PropertyTypeMapper.PropertyTypePbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên loại không được để trống")
+		return nil, _errors.ReturnError(service.PropertyTypeNameRequired)
 	}
 	propertyType, err := h.AdminPropertyTypeUsecase.Update(ctx, req.Id, propertyType)
 	if err != nil {

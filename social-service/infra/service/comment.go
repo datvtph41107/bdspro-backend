@@ -7,6 +7,7 @@ import (
 	_utils "common/utils"
 	"context"
 	stderrors "errors"
+	"social/internal"
 
 	"social/infra/client"
 	"social/internal/domain"
@@ -34,7 +35,7 @@ func NewCommentService(
 
 func mapCommentError(err error) error {
 	if stderrors.Is(err, domain.ErrCommentNewsFeedUnavailable) {
-		return _errors.ReturnError(400, "bài viết không tồn tại hoặc bị giới hạn bình luận")
+		return _errors.ReturnError(service.CommentUnavailable)
 	}
 	return err
 }
@@ -49,7 +50,7 @@ func mapCommentError(err error) error {
 func (s *CommentService) CreateComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.Content == "" || comment.NewsFeedID == 0 {
-		return nil, _errors.ReturnError(400, "content and news feed id are required")
+		return nil, _errors.ReturnError(service.CommentCreateFieldsRequired)
 	}
 	comment, err := s.commentUsecase.CreateComment(ctx, comment)
 	if err != nil {
@@ -69,7 +70,7 @@ func (s *CommentService) CreateComment(ctx context.Context, req *pb_social.Comme
 func (s *CommentService) UpdateComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.Content == "" || comment.ID == 0 {
-		return nil, _errors.ReturnError(400, "content, news feed id and id are required")
+		return nil, _errors.ReturnError(service.CommentUpdateFieldsRequired)
 	}
 	comment, err := s.commentUsecase.UpdateComment(ctx, comment)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *CommentService) UpdateComment(ctx context.Context, req *pb_social.Comme
 func (s *CommentService) DeleteComment(ctx context.Context, req *pb_social.CommentRequest) (*pb_social.CommentResponse, error) {
 	comment := s.PbCommentToDomain(req)
 	if comment.ID == 0 {
-		return nil, _errors.ReturnError(400, "id is required")
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 	err := s.commentUsecase.DeleteComment(ctx, comment)
 	if err != nil {

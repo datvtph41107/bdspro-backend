@@ -4,9 +4,9 @@ import (
 	base_enum "base/enum"
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
@@ -59,17 +59,11 @@ func (s *FollowUsecase) FollowingUser(c context.Context) ([]uint64, error) {
 func (s *FollowUsecase) Existed(c context.Context, followId uint64) error {
 	ok, err := s.contactRepo.ExistByProfile(c, followId)
 	if !ok {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFound, _errors.WithLegacyCode(400))
 	}
 
 	if err != nil {
-		return &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return fmt.Errorf("crm dependency operation: %w", err)
 	}
 	return nil
 }
@@ -82,11 +76,11 @@ func (s *FollowUsecase) ValidateFollowId(ctx context.Context, followId uint64) (
 
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return 0, 0, _errors.UnauthorizedException("User not authenticated")
+		return 0, 0, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("User not authenticated"), _errors.WithLegacyCode(401))
 	}
 
 	if followId == 0 {
-		return 0, 0, _errors.BadRequestException("Following ID is required")
+		return 0, 0, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Following ID is required"))
 	}
 
 	return profileId, followId, nil
@@ -100,7 +94,7 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 		// Lấy profileId của người follow từ context
 		profileId = _utils.GetProfileIdWithContext(txCtx)
 		if profileId == 0 {
-			return _errors.UnauthorizedException("missing profile id")
+			return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 		}
 
 		// Kiểm tra followId hợp lệ (người được follow tồn tại)
@@ -110,13 +104,13 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 
 		// Không tự follow chính mình
 		if profileId == followId {
-			return _errors.BadRequestException("cannot follow yourself")
+			return _errors.ReturnError(service.SelfFollowNotAllowed, _errors.WithPublicMessage("cannot follow yourself"))
 		}
 
 		// Kiểm tra follow đã tồn tại chưa
 		existingFollow, err := s.followRepo.GetFollow(txCtx, profileId, followId)
 		if err != nil && err != sql.ErrNoRows {
-			return _errors.InternalServerException("failed to check follow: " + err.Error())
+			return fmt.Errorf("failed to check follow: %w", err)
 		}
 
 		// Nếu đã follow active -> return luôn
@@ -129,7 +123,7 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 		if existingFollow != nil && existingFollow.Status == 2 {
 			existingFollow.Status = 1
 			if err := s.followRepo.Update(txCtx, existingFollow); err != nil {
-				return _errors.InternalServerException("failed to update follow: " + err.Error())
+				return fmt.Errorf("failed to update follow: %w", err)
 			}
 			result = existingFollow
 			return nil
@@ -138,7 +132,7 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 		// Tạo follow mới
 		newFollow, err := s.followRepo.CreateFollow(txCtx, profileId, followId)
 		if err != nil {
-			return _errors.InternalServerException("failed to create follow: " + err.Error())
+			return fmt.Errorf("failed to create follow: %w", err)
 		}
 		result = newFollow
 
@@ -162,15 +156,15 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 func (s *FollowUsecase) hasContact(ctx context.Context, ownerID, profileID uint64) error {
 	targetUser, err := s.userClient.GetProfileById(ctx, profileID)
 	if err != nil {
-		return _errors.InternalServerException("failed to get target user: " + err.Error())
+		return fmt.Errorf("failed to get target user: %w", err)
 	}
 	if targetUser == nil {
-		return _errors.NotFoundException("target user not found")
+		return _errors.ReturnError(service.UserNotFound, _errors.WithPublicMessage("target user not found"))
 	}
 
 	existingContact, err := s.contactRepo.GetByProfileID(ctx, profileID, ownerID, base_enum.EOwnerOfMember)
 	if err != nil && err != sql.ErrNoRows {
-		return _errors.InternalServerException("failed to check contact: " + err.Error())
+		return fmt.Errorf("failed to check contact: %w", err)
 	}
 
 	if existingContact != nil {
@@ -194,10 +188,10 @@ func (s *FollowUsecase) validateUserExists(ctx context.Context, userID uint64) e
 	// Gọi user service để kiểm tra user tồn tại
 	user, err := s.userClient.GetProfileById(ctx, userID)
 	if err != nil {
-		return _errors.InternalServerException("failed to validate user: " + err.Error())
+		return fmt.Errorf("failed to validate user: %w", err)
 	}
 	if user == nil {
-		return _errors.NotFoundException("user not found")
+		return _errors.ReturnError(service.UserNotFound, _errors.WithPublicMessage("user not found"))
 	}
 	return nil
 }
@@ -233,7 +227,7 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 func (s *FollowUsecase) UnfollowUser(ctx context.Context, followId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return _errors.UnauthorizedException("missing profile id")
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 	}
 
 	// Có thể dùng transaction nếu cần xóa contact hoặc các logic khác

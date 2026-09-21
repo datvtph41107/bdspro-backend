@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 	qh_domain "tqd/internal/domain/qh"
 )
 
@@ -33,7 +34,7 @@ func (s *qhAuthorityIssuringRepoStub) List(context.Context, int, int) ([]qh_doma
 func TestQHAuthorityIssuringCreateReturnsCanonicalValidationFault(t *testing.T) {
 	service := NewQHAuthorityIssuringUsecase(&qhAuthorityIssuringRepoStub{})
 	_, err := service.Create(context.Background(), &qh_domain.QHAuthorityIssuring{Name: "", Code: "code"})
-	assertQHAuthorityIssuringFault(t, err, fault.KindValidation, "tqd.qh_authority_issuring.name_required")
+	assertQHAuthorityIssuringFault(t, err, codes.InvalidArgument, "tqd.qh_authority_issuring.name_required")
 }
 
 func TestQHAuthorityIssuringCreateReturnsCanonicalConflictFault(t *testing.T) {
@@ -41,25 +42,25 @@ func TestQHAuthorityIssuringCreateReturnsCanonicalConflictFault(t *testing.T) {
 		byCode: &qh_domain.QHAuthorityIssuring{Code: "dup"},
 	})
 	_, err := service.Create(context.Background(), &qh_domain.QHAuthorityIssuring{Name: "Authority", Code: "dup"})
-	assertQHAuthorityIssuringFault(t, err, fault.KindConflict, "tqd.qh_authority_issuring.code_conflict")
+	assertQHAuthorityIssuringFault(t, err, codes.AlreadyExists, "tqd.qh_authority_issuring.code_conflict")
 }
 
 func TestQHAuthorityIssuringGetReturnsCanonicalNotFoundFault(t *testing.T) {
 	service := NewQHAuthorityIssuringUsecase(&qhAuthorityIssuringRepoStub{})
 	_, err := service.GetByID(context.Background(), 42)
-	assertQHAuthorityIssuringFault(t, err, fault.KindNotFound, "tqd.qh_authority_issuring.not_found")
+	assertQHAuthorityIssuringFault(t, err, codes.NotFound, "tqd.qh_authority_issuring.not_found")
 }
 
-func assertQHAuthorityIssuringFault(t *testing.T, err error, kind fault.Kind, code string) {
+func assertQHAuthorityIssuringFault(t *testing.T, err error, rpcCode codes.Code, code string) {
 	t.Helper()
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault", err)
+		t.Fatalf("error type = %T, want canonical application error", err)
 	}
-	if failure.Kind() != kind {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), kind)
+	if application.RPCCode() != rpcCode {
+		t.Fatalf("kind = %q, want %q", application.RPCCode(), rpcCode)
 	}
-	if failure.Code() != code {
-		t.Fatalf("code = %q, want %q", failure.Code(), code)
+	if application.Spec().LegacyProblemCode() != code {
+		t.Fatalf("code = %q, want %q", application.Spec().LegacyProblemCode(), code)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"user/internal"
 	"user/internal/domain/access"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -39,7 +40,7 @@ func (uc *PermissionUsecase) GetByID(ctx context.Context, id uint64) (*access.Pe
 		return nil, err
 	}
 	if permission == nil {
-		return nil, _errors.ReturnError(404, "Permission không tồn tại")
+		return nil, _errors.ReturnError(service.PermissionNotFound)
 	}
 	return permission, nil
 }
@@ -48,7 +49,7 @@ func (uc *PermissionUsecase) GetByID(ctx context.Context, id uint64) (*access.Pe
 // dùng repository/User IAM làm nguồn dữ liệu duy nhất.
 func (uc *PermissionUsecase) GetByModuleWithPagination(ctx context.Context, module uint64, page, size int) ([]*access.Permission, uint64, error) {
 	if module == 0 {
-		return nil, 0, _errors.ReturnError(400, "Module không được để trống")
+		return nil, 0, _errors.ReturnError(service.ModuleRequired)
 	}
 	return uc.permissionRepo.FindByModuleWithPagination(ctx, fmt.Sprintf("%d", module), page, size)
 }
@@ -57,7 +58,7 @@ func (uc *PermissionUsecase) GetByModuleWithPagination(ctx context.Context, modu
 // Đây là read-only compatibility logic; role/permission persistence vẫn do User sở hữu.
 func (uc *PermissionUsecase) GetPermissionKeysByOrganizationID(ctx context.Context, organizationID uint64) ([]string, error) {
 	if organizationID == 0 {
-		return nil, _errors.ReturnError(400, "organizationId là bắt buộc")
+		return nil, _errors.ReturnError(service.OrganizationIDRequired)
 	}
 	roles, err := uc.roleRepo.FindByOrganizationId(ctx, organizationID)
 	if err != nil {

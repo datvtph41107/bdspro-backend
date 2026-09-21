@@ -1,8 +1,9 @@
 package usecase
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/interface/provider"
@@ -39,10 +40,7 @@ func (u *StageUsecase) CheckPermission(c context.Context, pipelineId uint64, get
 		return nil, err
 	}
 	if !pipeline.IsCustom && !getRequest {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Giai đoạn của quy trình mặc định không thể thao tác",
-		}
+		return nil, _errors.ReturnError(service.DefaultStageMutationDenied)
 	}
 
 	if err := u.permissionUsecase.UserInOwner(c, pipeline.OwnerID, pipeline.OwnerType); err != nil {
@@ -135,10 +133,7 @@ func (u *StageUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 	if existed {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Giai đoạn này đang có khách hàng",
-		}
+		return _errors.ReturnError(service.StageHasCustomers)
 	}
 
 	err = u.stageRepo.Delete(c, id)

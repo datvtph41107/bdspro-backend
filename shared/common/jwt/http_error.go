@@ -3,63 +3,39 @@ package _jwt
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	"common/fault"
+	_errors "common/errors"
 	commonhttp "common/httpresponse"
 
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	authorizationHeaderMissingCode = "auth.authorization_header_missing"
-	tokenMissingCode               = "auth.token_missing"
-	invalidOrExpiredTokenCode      = "auth.token_invalid_or_expired"
-)
-
-// AuthorizationHeaderMissingFault owns the canonical identity for the
-// historical missing Authorization header response.
+// AuthorizationHeaderMissingFault preserves the historical direct-HTTP
+// representation while canonical identity lives in common/errors.
 func AuthorizationHeaderMissingFault() error {
-	return fault.New(
-		fault.KindUnauthenticated,
-		authorizationHeaderMissingCode,
-		"Authorization header is missing",
-	)
+	return _errors.ReturnError(_errors.AuthorizationHeaderMissing)
 }
 
-// TokenMissingFault owns the canonical identity for the historical missing
-// token response.
 func TokenMissingFault() error {
-	return fault.New(
-		fault.KindUnauthenticated,
-		tokenMissingCode,
-		"Missing token",
-	)
+	return _errors.ReturnError(_errors.TokenMissing)
 }
 
-// InvalidOrExpiredTokenFault owns the canonical identity for the historical
-// invalid-or-expired token response while preserving the technical cause.
 func InvalidOrExpiredTokenFault(cause error) error {
-	return fault.Wrap(
-		cause,
-		fault.KindUnauthenticated,
-		invalidOrExpiredTokenCode,
-		"Invalid or expired token",
+	return _errors.ReturnError(
+		_errors.TokenInvalidOrExpired,
+		_errors.WithCause(cause),
 	)
 }
 
-func abortWithFault(
-	c *gin.Context,
-	err error,
-) {
+func abortWithFault(c *gin.Context, err error) {
 	problem := commonhttp.ProblemFromError(err)
-
 	commonhttp.WriteProblem(
 		c.Request.Context(),
 		c.Writer,
 		problem,
 		commonhttp.WithLegacyJSONEnvelope(),
 	)
-
 	c.Abort()
 }
 
@@ -67,103 +43,52 @@ func invalidTokenFault(cause error) error {
 	return InvalidOrExpiredTokenFault(cause)
 }
 
-func actorContextConflictFault(
-	cause error,
-) error {
-	return fault.Wrap(
-		cause,
-		fault.KindInternal,
-		"auth.actor_context_conflict",
-		"actor context conflict",
-	)
+func actorContextConflictFault(cause error) error {
+	return fmt.Errorf("actor context conflict: %w", cause)
 }
 
 func tempTokenRouteForbiddenFault() error {
-	return fault.New(
-		fault.KindPermissionDenied,
-		"auth.temp_token_route_forbidden",
-		"Token không đúng",
-	)
+	return _errors.ReturnError(_errors.TempTokenRouteForbidden)
 }
 
-func callerContextConflictFault(
-	cause error,
-) error {
-	return fault.Wrap(
-		cause,
-		fault.KindInternal,
-		"auth.caller_context_conflict",
-		"caller context conflict",
-	)
+func callerContextConflictFault(cause error) error {
+	return fmt.Errorf("caller context conflict: %w", cause)
 }
 
 func callerResolutionFault(err error) error {
 	switch {
-	case errors.Is(
-		err,
-		ErrAPIKeyHeaderInvalid,
-	):
-		return fault.Wrap(
-			err,
-			fault.KindValidation,
-			"auth.api_key_header_invalid",
-			"Invalid API key header",
+	case errors.Is(err, ErrAPIKeyHeaderInvalid):
+		return _errors.ReturnError(
+			_errors.APIKeyHeaderInvalid,
+			_errors.WithCause(err),
 		)
 
-	case errors.Is(
-		err,
-		ErrAPIKeyInvalid,
-	):
-		return fault.Wrap(
-			err,
-			fault.KindUnauthenticated,
-			"auth.api_key_invalid",
-			"API key verification failed",
+	case errors.Is(err, ErrAPIKeyInvalid):
+		return _errors.ReturnError(
+			_errors.APIKeyInvalid,
+			_errors.WithCause(err),
 		)
 
-	case errors.Is(
-		err,
-		ErrAPIKeyUnavailable,
-	),
-		errors.Is(
-			err,
-			context.DeadlineExceeded,
-		):
-		return fault.Wrap(
-			err,
-			fault.KindUnavailable,
-			"auth.api_key_verification_unavailable",
-			"API key verification unavailable",
+	case errors.Is(err, ErrAPIKeyUnavailable),
+		errors.Is(err, context.DeadlineExceeded):
+		return _errors.ReturnError(
+			_errors.APIKeyVerificationUnavailable,
+			_errors.WithCause(err),
 		)
 
-	case errors.Is(
-		err,
-		ErrAuthenticationRequired,
-	):
-		return fault.Wrap(
-			err,
-			fault.KindUnauthenticated,
-			"auth.authentication_required",
-			"Authorization header missing",
+	case errors.Is(err, ErrAuthenticationRequired):
+		return _errors.ReturnError(
+			_errors.AuthenticationRequired,
+			_errors.WithCause(err),
 		)
 
-	case errors.Is(
-		err,
-		ErrCallerClassification,
-	):
-		return fault.Wrap(
-			err,
-			fault.KindUnauthenticated,
-			"auth.caller_classification_invalid",
-			"Invalid caller classification",
+	case errors.Is(err, ErrCallerClassification):
+		return _errors.ReturnError(
+			_errors.CallerClassificationInvalid,
+			_errors.WithCause(err),
 		)
 
 	default:
-		return fault.Wrap(
-			err,
-			fault.KindInternal,
-			"auth.caller_resolution_failed",
-			"authentication resolution failed",
-		)
+		return fmt.Errorf("resolve caller identity: %w", err)
 	}
 }

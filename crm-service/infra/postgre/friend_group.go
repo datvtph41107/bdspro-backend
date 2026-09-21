@@ -1,8 +1,9 @@
 package postgre
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"fmt"
 
@@ -100,10 +101,7 @@ func (repo *FriendGroupRepo) DeleteGroup(c context.Context, profileId *uint64, i
 
 	// Kiểm tra quyền xóa
 	if group.CreatedBy != profileId {
-		return &_routes.Except{
-			Code:    401,
-			Message: "bạn không có quyền xóa nhóm này",
-		}
+		return _errors.ReturnError(service.FriendGroupDeleteDenied)
 	}
 
 	return repo.DB.WithContext(c).Delete(&domain.GroupEntity{}, id).Error

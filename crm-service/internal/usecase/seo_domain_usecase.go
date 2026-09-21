@@ -4,6 +4,7 @@ import (
 	_errors "common/errors"
 	"context"
 	"crm/config"
+	"crm/internal"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -65,17 +66,17 @@ func (u *SeoDomainUsecase) GetSeoDomain(ctx context.Context, id uint64) (*seo_do
 		return nil, err
 	}
 	if seoDomain == nil {
-		return nil, _errors.ReturnError(404, "seo domain không tồn tại")
+		return nil, _errors.ReturnError(service.SEODomainNotFound)
 	}
 	return seoDomain, nil
 }
 
 func (u *SeoDomainUsecase) GetSeoDomainByRef(ctx context.Context, refType uint32, refID uint64) (*seo_domain.SeoDomain, error) {
 	if !enums.IsValidSEORefType(refType) {
-		return nil, _errors.ReturnError(400, "refType không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 	if refID == 0 {
-		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	seoDomain, err := u.seoDomainRepo.GetByRef(ctx, refType, refID)
@@ -83,7 +84,7 @@ func (u *SeoDomainUsecase) GetSeoDomainByRef(ctx context.Context, refType uint32
 		return nil, err
 	}
 	if seoDomain == nil {
-		return nil, _errors.ReturnError(404, "seo domain không tồn tại")
+		return nil, _errors.ReturnError(service.SEODomainNotFound)
 	}
 	return seoDomain, nil
 }
@@ -113,10 +114,10 @@ func (u *SeoDomainUsecase) GetSitemapXML(ctx context.Context, req *dto.SitemapRe
 
 func (u *SeoDomainUsecase) CreateSeoFromParcel(ctx context.Context, req *dto.CreateSeoFromParcelRequest) (*seo_domain.SeoDomain, error) {
 	if req == nil || req.ParcelID == 0 {
-		return nil, _errors.ReturnError(400, "parcelId không được để trống")
+		return nil, _errors.ReturnError(service.SEOParcelIDRequired)
 	}
 	if u.tqdProvider == nil {
-		return nil, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
+		return nil, _errors.ReturnError(service.TQDProviderNotConfigured)
 	}
 
 	source, err := u.tqdProvider.GetParcelSeoSource(ctx, req.ParcelID)
@@ -124,7 +125,7 @@ func (u *SeoDomainUsecase) CreateSeoFromParcel(ctx context.Context, req *dto.Cre
 		return nil, err
 	}
 	if source == nil {
-		return nil, _errors.ReturnError(404, "parcel không tồn tại")
+		return nil, _errors.ReturnError(service.SEOParcelNotFound)
 	}
 
 	seoDomain, _, err := u.createSeoFromParcelSource(ctx, *source)
@@ -133,7 +134,7 @@ func (u *SeoDomainUsecase) CreateSeoFromParcel(ctx context.Context, req *dto.Cre
 
 func (u *SeoDomainUsecase) GenerateSeoFromParcels(ctx context.Context, req *dto.GenerateSeoFromParcelsRequest) ([]seo_domain.SeoDomain, *dto.GenerateSeoFromParcelsResult, error) {
 	if u.tqdProvider == nil {
-		return nil, nil, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
+		return nil, nil, _errors.ReturnError(service.TQDProviderNotConfigured)
 	}
 
 	limit := uint32(0)
@@ -183,7 +184,7 @@ func (u *SeoDomainUsecase) GenerateSeoFromParcels(ctx context.Context, req *dto.
 
 func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source dto.ParcelSeoSource) (*seo_domain.SeoDomain, bool, error) {
 	if u.tqdProvider == nil {
-		return nil, false, _errors.ReturnError(503, "TQD provider chưa được cấu hình")
+		return nil, false, _errors.ReturnError(service.TQDProviderNotConfigured)
 	}
 
 	if source.SeoID != nil && *source.SeoID > 0 {
@@ -275,7 +276,7 @@ func (u *SeoDomainUsecase) createSeoFromParcelSource(ctx context.Context, source
 		}
 		if createdSeo == nil || createdSeo.ID == 0 {
 			slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] create seo_domain returned empty parcelId=%d canonicalUrl=%s", source.ParcelID, seoDomain.CanonicalURL))
-			return _errors.ReturnError(500, "tạo seo domain thất bại")
+			return fmt.Errorf("create SEO domain returned an empty result")
 		}
 		slog.InfoContext(ctx, fmt.Sprintf("[SEO_GENERATE] create seo_domain success parcelId=%d seoId=%d", source.ParcelID, createdSeo.ID))
 		if err := u.tqdProvider.UpdateParcelSeoID(txCtx, source.ParcelID, createdSeo.ID); err != nil {
@@ -432,13 +433,13 @@ func (u *SeoDomainUsecase) DeleteSeoDomain(ctx context.Context, id uint64) error
 
 func (u *SeoDomainUsecase) TouchByRef(ctx context.Context, req *dto.TouchSeoDomainByRefRequest) error {
 	if req == nil {
-		return _errors.ReturnError(400, "request không hợp lệ")
+		return _errors.ReturnError(service.RequestInvalid)
 	}
 	if !enums.IsValidSEORefType(req.RefType) || req.RefType == 0 {
-		return _errors.ReturnError(400, "refType không hợp lệ")
+		return _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 	if req.RefID == 0 {
-		return _errors.ReturnError(400, "refId không hợp lệ")
+		return _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	cfg, err := resolveSeoRefConfig(req.RefType, req.RefSource, "")
@@ -574,7 +575,7 @@ func (u *SeoDomainUsecase) CreateSeoInternalLink(ctx context.Context, req *dto.S
 		title = child.Title
 	}
 	if title == "" {
-		return nil, _errors.ReturnError(400, "title là bắt buộc")
+		return nil, _errors.ReturnError(service.SEOInternalLinkTitleRequired)
 	}
 
 	exist, err := u.seoInternalRepo.Exist(ctx, parent.ID, child.ID, linkType, nil)
@@ -582,7 +583,7 @@ func (u *SeoDomainUsecase) CreateSeoInternalLink(ctx context.Context, req *dto.S
 		return nil, err
 	}
 	if exist {
-		return nil, _errors.ReturnError(409, "internal link đã tồn tại")
+		return nil, _errors.ReturnError(service.SEOInternalLinkAlreadyExists)
 	}
 
 	link := &seo_domain.SeoInternalLink{
@@ -606,7 +607,7 @@ func (u *SeoDomainUsecase) UpdateSeoInternalLink(ctx context.Context, id uint64,
 		return nil, err
 	}
 	if existing == nil {
-		return nil, _errors.ReturnError(404, "seo internal link không tồn tại")
+		return nil, _errors.ReturnError(service.SEOInternalLinkNotFound)
 	}
 
 	parentID := existing.ParentSeoID
@@ -637,7 +638,7 @@ func (u *SeoDomainUsecase) UpdateSeoInternalLink(ctx context.Context, id uint64,
 		return nil, err
 	}
 	if exist {
-		return nil, _errors.ReturnError(409, "internal link đã tồn tại")
+		return nil, _errors.ReturnError(service.SEOInternalLinkAlreadyExists)
 	}
 
 	updates := map[string]interface{}{
@@ -657,7 +658,7 @@ func (u *SeoDomainUsecase) UpdateSeoInternalLink(ctx context.Context, id uint64,
 	if req.Title != nil {
 		title := strings.TrimSpace(*req.Title)
 		if title == "" {
-			return nil, _errors.ReturnError(400, "title không được để trống")
+			return nil, _errors.ReturnError(service.SEOTitleRequired)
 		}
 		updates["title"] = title
 	}
@@ -674,7 +675,7 @@ func (u *SeoDomainUsecase) DeleteSeoInternalLink(ctx context.Context, id uint64)
 		return err
 	}
 	if existing == nil {
-		return _errors.ReturnError(404, "seo internal link không tồn tại")
+		return _errors.ReturnError(service.SEOInternalLinkNotFound)
 	}
 	return u.seoInternalRepo.Delete(ctx, id)
 }
@@ -694,7 +695,7 @@ func (u *SeoDomainUsecase) CreateSeoRelative(ctx context.Context, req *dto.SeoRe
 		return nil, err
 	}
 	if exist {
-		return nil, _errors.ReturnError(409, "seo relative đã tồn tại")
+		return nil, _errors.ReturnError(service.SEORelativeAlreadyExists)
 	}
 
 	relative := &seo_domain.SeoRelative{
@@ -716,7 +717,7 @@ func (u *SeoDomainUsecase) DeleteSeoRelative(ctx context.Context, id uint64) err
 		return err
 	}
 	if existing == nil {
-		return _errors.ReturnError(404, "seo relative không tồn tại")
+		return _errors.ReturnError(service.SEORelativeNotFound)
 	}
 	return u.seoRelativeRepo.Delete(ctx, id)
 }
@@ -727,7 +728,7 @@ func (u *SeoDomainUsecase) DeleteSeoRelative(ctx context.Context, id uint64) err
 
 func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto.SeoDomainCreateRequest) (*seo_domain.SeoDomain, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	if err := validateRef(req.RefType, req.RefID); err != nil {
 		return nil, err
@@ -759,23 +760,23 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 	scope := normalizeScope(req.Scope)
 	publishedAt, err := parseSeoTime(req.PublishedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "publishedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		return nil, _errors.ReturnError(service.SEOPublishedAtInvalid)
 	}
 	sitemapLastedAt, err := parseSeoTime(req.SiteMapLastedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "siteMapLastedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		return nil, _errors.ReturnError(service.SEOSitemapLastedAtInvalid)
 	}
 	generatedAt, err := parseSeoTime(req.GeneratedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "generatedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		return nil, _errors.ReturnError(service.SEOGeneratedAtInvalid)
 	}
 	sourceUpdatedAt, err := parseSeoTime(req.SourceUpdatedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "sourceUpdatedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		return nil, _errors.ReturnError(service.SEOSourceUpdatedAtInvalid)
 	}
 	refLastSyncedAt, err := parseSeoTime(req.RefLastSyncedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "refLastSyncedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+		return nil, _errors.ReturnError(service.SEORefLastSyncedAtInvalid)
 	}
 
 	metadata, err := parseMetadata(req.Metadata)
@@ -826,7 +827,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		sitemapPriority = 0.5
 	}
 	if sitemapPriority < 0 || sitemapPriority > 1 {
-		return nil, _errors.ReturnError(400, "sitemapPriority phải nằm trong khoảng 0..1")
+		return nil, _errors.ReturnError(service.SEOSitemapPriorityInvalid)
 	}
 
 	changeFreq := normalizeChangeFreq(req.SitemapChangeFreq)
@@ -852,7 +853,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 		return nil, err
 	}
 	if exist {
-		return nil, _errors.ReturnError(409, "canonicalUrl đã tồn tại")
+		return nil, _errors.ReturnError(service.SEOCanonicalURLAlreadyExists)
 	}
 
 	if sourceBinding.RefSource != seo_domain.SeoRefSourceManual && req.RefID != nil {
@@ -861,7 +862,7 @@ func (u *SeoDomainUsecase) buildSeoDomainForCreate(ctx context.Context, req *dto
 			return nil, err
 		}
 		if existingByRef != nil {
-			return nil, _errors.ReturnError(409, "SEO page cho source này đã tồn tại")
+			return nil, _errors.ReturnError(service.SEOSourcePageAlreadyExists)
 		}
 	}
 
@@ -943,7 +944,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.Slug != nil {
 		slug := strings.TrimSpace(*req.Slug)
 		if slug == "" {
-			return nil, _errors.ReturnError(400, "slug không được để trống")
+			return nil, _errors.ReturnError(service.SEOSlugRequired)
 		}
 		state.Slug = slug
 		updates["slug"] = slug
@@ -952,7 +953,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.OriginURL != nil {
 		originURL := strings.TrimSpace(*req.OriginURL)
 		if originURL == "" {
-			return nil, _errors.ReturnError(400, "originUrl không được để trống")
+			return nil, _errors.ReturnError(service.SEOOriginURLRequired)
 		}
 		updates["origin_url"] = originURL
 	}
@@ -968,7 +969,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 			return nil, err
 		}
 		if exist {
-			return nil, _errors.ReturnError(409, "canonicalUrl đã tồn tại")
+			return nil, _errors.ReturnError(service.SEOCanonicalURLAlreadyExists)
 		}
 
 		state.Canonical = canonicalURL
@@ -1003,7 +1004,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 				return nil, err
 			}
 			if existingByRef != nil && existingByRef.ID != existing.ID {
-				return nil, _errors.ReturnError(409, "SEO page cho source này đã tồn tại")
+				return nil, _errors.ReturnError(service.SEOSourcePageAlreadyExists)
 			}
 		}
 
@@ -1055,7 +1056,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.PublishedAt != nil {
 		parsed, err := parseSeoTime(req.PublishedAt)
 		if err != nil {
-			return nil, _errors.ReturnError(400, "publishedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+			return nil, _errors.ReturnError(service.SEOPublishedAtInvalid)
 		}
 		updates["published_at"] = parsed
 	}
@@ -1075,14 +1076,14 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.SiteMapLastedAt != nil {
 		parsed, err := parseSeoTime(req.SiteMapLastedAt)
 		if err != nil {
-			return nil, _errors.ReturnError(400, "siteMapLastedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+			return nil, _errors.ReturnError(service.SEOSitemapLastedAtInvalid)
 		}
 		updates["site_map_lasted_at"] = parsed
 	}
 
 	if req.SitemapPriority != nil {
 		if *req.SitemapPriority < 0 || *req.SitemapPriority > 1 {
-			return nil, _errors.ReturnError(400, "sitemapPriority phải nằm trong khoảng 0..1")
+			return nil, _errors.ReturnError(service.SEOSitemapPriorityInvalid)
 		}
 		updates["sitemap_priority"] = *req.SitemapPriority
 	}
@@ -1099,14 +1100,14 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.GeneratedAt != nil {
 		parsed, err := parseSeoTime(req.GeneratedAt)
 		if err != nil {
-			return nil, _errors.ReturnError(400, "generatedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+			return nil, _errors.ReturnError(service.SEOGeneratedAtInvalid)
 		}
 		updates["generated_at"] = parsed
 	}
 	if req.SourceUpdatedAt != nil {
 		parsed, err := parseSeoTime(req.SourceUpdatedAt)
 		if err != nil {
-			return nil, _errors.ReturnError(400, "sourceUpdatedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+			return nil, _errors.ReturnError(service.SEOSourceUpdatedAtInvalid)
 		}
 		updates["source_updated_at"] = parsed
 	}
@@ -1137,7 +1138,7 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 	if req.RefLastSyncedAt != nil {
 		parsed, err := parseSeoTime(req.RefLastSyncedAt)
 		if err != nil {
-			return nil, _errors.ReturnError(400, "refLastSyncedAt phải theo RFC3339 hoặc YYYY-MM-DD")
+			return nil, _errors.ReturnError(service.SEORefLastSyncedAtInvalid)
 		}
 		updates["ref_last_synced_at"] = parsed
 	}
@@ -1221,10 +1222,10 @@ func (u *SeoDomainUsecase) buildSeoDomainUpdates(ctx context.Context, existing *
 
 func (u *SeoDomainUsecase) prepareInternalLink(ctx context.Context, parentID, childID uint64, linkType string, priority uint32) (*seo_domain.SeoDomain, *seo_domain.SeoDomain, string, uint32, error) {
 	if parentID == 0 || childID == 0 {
-		return nil, nil, "", 0, _errors.ReturnError(400, "parentSeoId và childSeoId là bắt buộc")
+		return nil, nil, "", 0, _errors.ReturnError(service.SEOParentChildRequired)
 	}
 	if parentID == childID {
-		return nil, nil, "", 0, _errors.ReturnError(400, "parentSeoId không được trùng childSeoId")
+		return nil, nil, "", 0, _errors.ReturnError(service.SEOParentChildSame)
 	}
 
 	parent, err := u.GetSeoDomain(ctx, parentID)
@@ -1249,10 +1250,10 @@ func (u *SeoDomainUsecase) prepareInternalLink(ctx context.Context, parentID, ch
 
 func (u *SeoDomainUsecase) prepareRelative(ctx context.Context, parentID, childID uint64, relationType string, priority uint32) (*seo_domain.SeoDomain, *seo_domain.SeoDomain, string, uint32, error) {
 	if parentID == 0 || childID == 0 {
-		return nil, nil, "", 0, _errors.ReturnError(400, "parentSeoId và childSeoId là bắt buộc")
+		return nil, nil, "", 0, _errors.ReturnError(service.SEOParentChildRequired)
 	}
 	if parentID == childID {
-		return nil, nil, "", 0, _errors.ReturnError(400, "parentSeoId không được trùng childSeoId")
+		return nil, nil, "", 0, _errors.ReturnError(service.SEOParentChildSame)
 	}
 
 	parent, err := u.GetSeoDomain(ctx, parentID)
@@ -1302,7 +1303,7 @@ func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uin
 	}
 
 	if refID == nil || *refID == 0 {
-		return seoSourceBinding{}, _errors.ReturnError(400, "refId là bắt buộc khi refType khác 0")
+		return seoSourceBinding{}, _errors.ReturnError(service.SEORefIDRequired)
 	}
 
 	cfg, err := resolveSeoRefConfig(refType, refSource, "")
@@ -1312,7 +1313,7 @@ func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uin
 	cfg = seo_domain.NormalizeSeoRefTypeConfig(cfg)
 
 	if !seo_domain.IsSeoRefTypeResolvable(cfg) {
-		return seoSourceBinding{}, _errors.ReturnError(501, "seo source chưa hỗ trợ resolve: "+cfg.Key)
+		return seoSourceBinding{}, _errors.ReturnError(service.SEOSourceUnsupported, _errors.WithPublicMessage("seo source chưa hỗ trợ resolve: "+cfg.Key))
 	}
 	if !seo_domain.IsSeoResolverReady(cfg.ResolverKey) {
 		return seoSourceBinding{}, resolverNotImplemented(cfg.ResolverKey)
@@ -1348,13 +1349,13 @@ func (u *SeoDomainUsecase) prepareSourceBinding(ctx context.Context, refType uin
 
 func validateRef(refType uint32, refID *uint64) error {
 	if !enums.IsValidSEORefType(refType) {
-		return _errors.ReturnError(400, "refType không hợp lệ")
+		return _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 	if refType == 0 {
 		return nil
 	}
 	if refID == nil || *refID == 0 {
-		return _errors.ReturnError(400, "refId là bắt buộc khi refType khác 0")
+		return _errors.ReturnError(service.SEORefIDRequired)
 	}
 	return nil
 }
@@ -1375,21 +1376,21 @@ func validateSeoState(state seoState) error {
 			return err
 		}
 		if state.PageStatus == seo_domain.SeoPageStatusPublished && !state.Published {
-			return _errors.ReturnError(400, "page_status=published yêu cầu published=true")
+			return _errors.ReturnError(service.SEOPublishedStatusFlagRequired)
 		}
 		if state.PageStatus == seo_domain.SeoPageStatusArchived && (state.Published || state.IsSiteMap || state.IsIndex) {
-			return _errors.ReturnError(400, "page_status=archived không được published/index/sitemap")
+			return _errors.ReturnError(service.SEOArchivedPageFlagsInvalid)
 		}
 	}
 
 	if state.Published {
 		if strings.TrimSpace(state.Slug) == "" || strings.TrimSpace(state.Canonical) == "" || strings.TrimSpace(state.Title) == "" {
-			return _errors.ReturnError(400, "published page cần slug, canonicalUrl và title")
+			return _errors.ReturnError(service.SEOPublishedPageFieldsRequired)
 		}
 	}
 
 	if state.IsSiteMap && (!state.Published || !state.IsIndex) {
-		return _errors.ReturnError(400, "page trong sitemap phải published=true và isIndex=true")
+		return _errors.ReturnError(service.SEOSitemapPageStateInvalid)
 	}
 
 	return nil
@@ -1402,12 +1403,12 @@ func parseMetadata(value *string) (datatypes.JSON, error) {
 
 	payload := strings.TrimSpace(*value)
 	if !json.Valid([]byte(payload)) {
-		return nil, _errors.ReturnError(400, "metadata phải là JSON hợp lệ")
+		return nil, _errors.ReturnError(service.SEOMetadataJSONInvalid)
 	}
 
 	var obj map[string]interface{}
 	if err := json.Unmarshal([]byte(payload), &obj); err != nil {
-		return nil, _errors.ReturnError(400, "metadata phải là JSON object")
+		return nil, _errors.ReturnError(service.SEOMetadataObjectRequired)
 	}
 
 	return datatypes.JSON([]byte(payload)), nil
@@ -1420,7 +1421,7 @@ func parseJSONPayload(value *string, fieldName string) (datatypes.JSON, error) {
 
 	payload := strings.TrimSpace(*value)
 	if !json.Valid([]byte(payload)) {
-		return nil, _errors.ReturnError(400, fieldName+" phải là JSON hợp lệ")
+		return nil, _errors.ReturnError(service.SEOMetadataFieldJSONInvalid, _errors.WithPublicMessage(fieldName+" phải là JSON hợp lệ"))
 	}
 
 	return datatypes.JSON([]byte(payload)), nil
@@ -1470,7 +1471,7 @@ func normalizePageStatusStrict(status string) (string, error) {
 	case seo_domain.SeoPageStatusArchived:
 		return seo_domain.SeoPageStatusArchived, nil
 	default:
-		return "", _errors.ReturnError(400, "pageStatus không hợp lệ")
+		return "", _errors.ReturnError(service.SEOPageStatusInvalid)
 	}
 }
 
@@ -1511,7 +1512,7 @@ func normalizeRenderStatusStrict(status string) (string, error) {
 	case seo_domain.SeoRenderStatusFailed:
 		return seo_domain.SeoRenderStatusFailed, nil
 	default:
-		return "", _errors.ReturnError(400, "renderStatus không hợp lệ")
+		return "", _errors.ReturnError(service.SEORenderStatusInvalid)
 	}
 }
 
@@ -1566,7 +1567,7 @@ func normalizeChangeFreq(freq string) string {
 
 func resolveSeoRefConfig(refType uint32, resolverKey string, sourceService string) (seo_domain.SeoRefTypeConfig, error) {
 	if !enums.IsValidSEORefType(refType) {
-		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(400, "refType không hợp lệ")
+		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 
 	resolverKey = strings.TrimSpace(resolverKey)
@@ -1574,7 +1575,7 @@ func resolveSeoRefConfig(refType uint32, resolverKey string, sourceService strin
 
 	cfg, ok := seo_domain.GetSeoRefTypeConfig(refType, resolverKey, sourceService)
 	if !ok {
-		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(400, "refType hoặc resolver không được hỗ trợ")
+		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(service.SEORefResolverUnsupported)
 	}
 
 	return seo_domain.NormalizeSeoRefTypeConfig(cfg), nil
@@ -1621,7 +1622,7 @@ func slugify(value string) string {
 func buildParcelSeoURL(parcelID uint64, adrSearch string) (string, error) {
 	template := strings.TrimSpace(viper.GetString("seo.parcelUrlTemplate"))
 	if template == "" {
-		return "", _errors.ReturnError(500, "seo.parcelUrlTemplate chưa được cấu hình")
+		return "", fmt.Errorf("seo parcel URL template is not configured")
 	}
 
 	slug := slugify(adrSearch)

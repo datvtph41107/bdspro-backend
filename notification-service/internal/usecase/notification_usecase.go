@@ -2,15 +2,16 @@ package usecase
 
 import (
 	_enum "common/domain/enum"
+	_errors "common/errors"
 	_jwt "common/jwt"
 	"common/logging"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"notification/infra/cache"
+	"notification/internal"
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
@@ -45,10 +46,7 @@ func NewNotificationService(
 func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto.NotiNewRequest) (*domain.NotificationEntity, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Không thể tạo thông báo",
-		}
+		return nil, _errors.ReturnError(service.NotificationOwnerIdentityRequired)
 	}
 
 	// var visibleAt *time.Time
@@ -75,10 +73,7 @@ func (s *NotificationUsecase) CreateNotification(c context.Context, request *dto
 func (s *NotificationUsecase) CreateBatch(c context.Context, dto *notificationpb.NotiBatchRequest) (*notificationpb.ListResponse, error) {
 	metadata := _jwt.MetadataFromContext(c)
 	if metadata == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Thông tin không chính xác",
-		}
+		return nil, _errors.ReturnError(service.NotificationMetadataRequired)
 	}
 
 	notifications := []domain.NotificationEntity{}

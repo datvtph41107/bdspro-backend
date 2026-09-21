@@ -5,6 +5,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 )
 
 type OwnerUsecase struct {
@@ -17,7 +18,7 @@ func NewOwnerUsecase() *OwnerUsecase {
 func (u *OwnerUsecase) GetOwnerInfo(ctx context.Context, ownerOf base_enum.EOwnerOf, ownerId uint64) (uint64, error) {
 	id := uint64(0)
 	if !ownerOf.IsValid() {
-		return 0, _errors.ReturnError(400, "OwnerOf is invalid")
+		return 0, _errors.ReturnError(service.OwnerTypeInvalid)
 	}
 
 	if ownerOf == base_enum.EOwnerOfOrgnization {
@@ -40,7 +41,7 @@ func (u *OwnerUsecase) GetOwnerInfo(ctx context.Context, ownerOf base_enum.EOwne
 	}
 
 	if id == 0 {
-		return 0, _errors.ReturnError(400, "Yêu cầu không thể thực hiện")
+		return 0, _errors.ReturnError(service.RequestCannotBePerformed)
 	}
 
 	return id, nil

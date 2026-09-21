@@ -9,331 +9,112 @@ import (
 	"strings"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 	commonhttp "common/httpresponse"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/codes"
 )
 
-func TestCallerResolutionFaultMapping(
-	t *testing.T,
-) {
+func TestCallerResolutionCanonicalMapping(t *testing.T) {
 	tests := []struct {
 		name   string
 		err    error
-		kind   fault.Kind
+		rpc    codes.Code
 		code   string
 		status int
 	}{
-		{
-			name:   "invalid header",
-			err:    ErrAPIKeyHeaderInvalid,
-			kind:   fault.KindValidation,
-			code:   "auth.api_key_header_invalid",
-			status: http.StatusBadRequest,
-		},
-		{
-			name:   "invalid api key",
-			err:    ErrAPIKeyInvalid,
-			kind:   fault.KindUnauthenticated,
-			code:   "auth.api_key_invalid",
-			status: http.StatusUnauthorized,
-		},
-		{
-			name:   "verifier unavailable",
-			err:    ErrAPIKeyUnavailable,
-			kind:   fault.KindUnavailable,
-			code:   "auth.api_key_verification_unavailable",
-			status: http.StatusServiceUnavailable,
-		},
-		{
-			name:   "deadline exceeded",
-			err:    context.DeadlineExceeded,
-			kind:   fault.KindUnavailable,
-			code:   "auth.api_key_verification_unavailable",
-			status: http.StatusServiceUnavailable,
-		},
-		{
-			name:   "authentication required",
-			err:    ErrAuthenticationRequired,
-			kind:   fault.KindUnauthenticated,
-			code:   "auth.authentication_required",
-			status: http.StatusUnauthorized,
-		},
-		{
-			name:   "invalid caller",
-			err:    ErrCallerClassification,
-			kind:   fault.KindUnauthenticated,
-			code:   "auth.caller_classification_invalid",
-			status: http.StatusUnauthorized,
-		},
+		{"invalid header", ErrAPIKeyHeaderInvalid, codes.InvalidArgument, "auth.api_key_header_invalid", http.StatusBadRequest},
+		{"invalid api key", ErrAPIKeyInvalid, codes.Unauthenticated, "auth.api_key_invalid", http.StatusUnauthorized},
+		{"verifier unavailable", ErrAPIKeyUnavailable, codes.Unavailable, "auth.api_key_verification_unavailable", http.StatusServiceUnavailable},
+		{"deadline exceeded", context.DeadlineExceeded, codes.Unavailable, "auth.api_key_verification_unavailable", http.StatusServiceUnavailable},
+		{"authentication required", ErrAuthenticationRequired, codes.Unauthenticated, "auth.authentication_required", http.StatusUnauthorized},
+		{"invalid caller", ErrCallerClassification, codes.Unauthenticated, "auth.caller_classification_invalid", http.StatusUnauthorized},
 	}
 
 	for _, test := range tests {
-		t.Run(
-			test.name,
-			func(t *testing.T) {
-				err :=
-					callerResolutionFault(
-						test.err,
-					)
-
-				failure, ok :=
-					fault.As(err)
-
-				if !ok {
-					t.Fatalf(
-						"error type = %T",
-						err,
-					)
-				}
-
-				if failure.Kind() !=
-					test.kind {
-					t.Fatalf(
-						"kind = %q, want %q",
-						failure.Kind(),
-						test.kind,
-					)
-				}
-
-				if failure.Code() !=
-					test.code {
-					t.Fatalf(
-						"code = %q, want %q",
-						failure.Code(),
-						test.code,
-					)
-				}
-
-				problem :=
-					commonhttp.ProblemFromError(
-						err,
-					)
-
-				if problem.Status !=
-					test.status {
-					t.Fatalf(
-						"status = %d, want %d",
-						problem.Status,
-						test.status,
-					)
-				}
-			},
-		)
+		t.Run(test.name, func(t *testing.T) {
+			err := callerResolutionFault(test.err)
+			application, ok := _errors.As(err)
+			if !ok {
+				t.Fatalf("error type = %T", err)
+			}
+			if application.RPCCode() != test.rpc {
+				t.Fatalf("rpc = %q, want %q", application.RPCCode(), test.rpc)
+			}
+			if application.Spec().LegacyProblemCode() != test.code {
+				t.Fatalf("legacy problem code = %q, want %q", application.Spec().LegacyProblemCode(), test.code)
+			}
+			problem := commonhttp.ProblemFromError(err)
+			if problem.Status != test.status || problem.Code != test.code {
+				t.Fatalf("problem = %+v", problem)
+			}
+		})
 	}
 }
 
-func TestCallerResolutionUnknownFailureFailsClosed(
-	t *testing.T,
-) {
-	dependencyErr := errors.New(
-		"postgres password=secret auth lookup failed",
-	)
+func TestCallerResolutionUnknownFailureFailsClosed(t *testing.T) {
+	dependencyErr := errors.New("postgres password=secret auth lookup failed")
+	err := callerResolutionFault(dependencyErr)
 
-	err := callerResolutionFault(
-		dependencyErr,
-	)
-
-	failure, ok := fault.As(err)
-
-	if !ok {
-		t.Fatalf(
-			"error type = %T",
-			err,
-		)
+	if _, ok := _errors.As(err); ok {
+		t.Fatalf("unknown technical failure became an application error: %v", err)
 	}
-
-	if failure.Kind() !=
-		fault.KindInternal {
-		t.Fatalf(
-			"kind = %q",
-			failure.Kind(),
-		)
-	}
-
-	if failure.Code() !=
-		"auth.caller_resolution_failed" {
-		t.Fatalf(
-			"code = %q",
-			failure.Code(),
-		)
-	}
-
 	if !errors.Is(err, dependencyErr) {
-		t.Fatal(
-			"dependency cause was not preserved",
-		)
+		t.Fatal("dependency cause was not preserved")
 	}
 
-	problem :=
-		commonhttp.ProblemFromError(
-			err,
-		)
-
-	if problem.Status !=
-		http.StatusInternalServerError {
-		t.Fatalf(
-			"status = %d",
-			problem.Status,
-		)
+	problem := commonhttp.ProblemFromError(err)
+	if problem.Status != http.StatusInternalServerError || problem.Code != "" {
+		t.Fatalf("problem = %+v", problem)
 	}
-
-	if strings.Contains(
-		problem.Detail,
-		"secret",
-	) ||
-		strings.Contains(
-			problem.Detail,
-			"postgres",
-		) {
-		t.Fatalf(
-			"dependency detail leaked: %q",
-			problem.Detail,
-		)
+	if strings.Contains(problem.Detail, "secret") || strings.Contains(problem.Detail, "postgres") {
+		t.Fatalf("dependency detail leaked: %q", problem.Detail)
 	}
 }
 
-func TestAbortWithFaultPreservesLegacyEnvelopeAndAddsCanonicalIdentity(
-	t *testing.T,
-) {
+func TestAbortWithFaultPreservesLegacyEnvelopeAndCanonicalIdentity(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-
 	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/private", nil)
 
-	ctx, _ :=
-		gin.CreateTestContext(
-			recorder,
-		)
-
-	ctx.Request =
-		httptest.NewRequest(
-			http.MethodGet,
-			"/private",
-			nil,
-		)
-
-	abortWithFault(
-		ctx,
-		invalidTokenFault(
-			errors.New(
-				"jwt signature key=secret",
-			),
-		),
-	)
+	abortWithFault(ctx, invalidTokenFault(errors.New("jwt signature key=secret")))
 
 	if !ctx.IsAborted() {
-		t.Fatal(
-			"gin context was not aborted",
-		)
+		t.Fatal("gin context was not aborted")
 	}
-
-	if recorder.Code !=
-		http.StatusUnauthorized {
-		t.Fatalf(
-			"status = %d",
-			recorder.Code,
-		)
-	}
-
-	if got := recorder.Header().Get(
-		"Content-Type",
-	); got != commonhttp.LegacyJSONMediaType {
-		t.Fatalf(
-			"content type = %q",
-			got,
-		)
-	}
-
 	var response struct {
 		Code      int    `json:"code"`
 		Message   string `json:"message"`
 		ErrorCode string `json:"error_code"`
 		Status    int    `json:"status"`
 	}
-
-	if err := json.Unmarshal(
-		recorder.Body.Bytes(),
-		&response,
-	); err != nil {
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
-
-	if response.Code !=
-		http.StatusUnauthorized {
-		t.Fatalf(
-			"legacy code = %d",
-			response.Code,
-		)
+	if recorder.Code != http.StatusUnauthorized ||
+		response.Code != http.StatusUnauthorized ||
+		response.ErrorCode != "auth.token_invalid_or_expired" ||
+		response.Status != http.StatusUnauthorized ||
+		response.Message != "Invalid or expired token" {
+		t.Fatalf("response = %+v status=%d", response, recorder.Code)
 	}
-
-	if response.Message !=
-		"Invalid or expired token" {
-		t.Fatalf(
-			"message = %q",
-			response.Message,
-		)
-	}
-
-	if response.ErrorCode !=
-		"auth.token_invalid_or_expired" {
-		t.Fatalf(
-			"error_code = %q",
-			response.ErrorCode,
-		)
-	}
-
-	if response.Status !=
-		http.StatusUnauthorized {
-		t.Fatalf(
-			"status field = %d",
-			response.Status,
-		)
-	}
-
-	if strings.Contains(
-		response.Message,
-		"secret",
-	) {
-		t.Fatalf(
-			"token cause leaked: %q",
-			response.Message,
-		)
+	if strings.Contains(response.Message, "secret") {
+		t.Fatalf("token cause leaked: %q", response.Message)
 	}
 }
 
-func TestTempTokenRouteFaultMapsToForbidden(
-	t *testing.T,
-) {
-	problem :=
-		commonhttp.ProblemFromError(
-			tempTokenRouteForbiddenFault(),
-		)
-
-	if problem.Status !=
-		http.StatusForbidden {
-		t.Fatalf(
-			"status = %d",
-			problem.Status,
-		)
-	}
-
-	if problem.Code !=
-		"auth.temp_token_route_forbidden" {
-		t.Fatalf(
-			"code = %q",
-			problem.Code,
-		)
+func TestTempTokenRouteFaultMapsToForbidden(t *testing.T) {
+	problem := commonhttp.ProblemFromError(tempTokenRouteForbiddenFault())
+	if problem.Status != http.StatusForbidden ||
+		problem.Code != "auth.temp_token_route_forbidden" {
+		t.Fatalf("problem = %+v", problem)
 	}
 }
 
-func TestPublicJWTCompatibilityFaultsOwnStableIdentity(
-	t *testing.T,
-) {
-	cause := errors.New(
-		"jwt parser technical failure",
-	)
-
+func TestPublicJWTCompatibilityFaultsOwnStableCanonicalIdentity(t *testing.T) {
+	cause := errors.New("jwt parser technical failure")
 	tests := []struct {
 		name    string
 		err     error
@@ -341,103 +122,32 @@ func TestPublicJWTCompatibilityFaultsOwnStableIdentity(
 		message string
 		cause   error
 	}{
-		{
-			name:    "authorization header missing",
-			err:     AuthorizationHeaderMissingFault(),
-			code:    "auth.authorization_header_missing",
-			message: "Authorization header is missing",
-		},
-		{
-			name:    "token missing",
-			err:     TokenMissingFault(),
-			code:    "auth.token_missing",
-			message: "Missing token",
-		},
-		{
-			name: "invalid or expired token",
-			err: InvalidOrExpiredTokenFault(
-				cause,
-			),
-			code:    "auth.token_invalid_or_expired",
-			message: "Invalid or expired token",
-			cause:   cause,
-		},
+		{"authorization header missing", AuthorizationHeaderMissingFault(), "auth.authorization_header_missing", "Authorization header is missing", nil},
+		{"token missing", TokenMissingFault(), "auth.token_missing", "Missing token", nil},
+		{"invalid or expired token", InvalidOrExpiredTokenFault(cause), "auth.token_invalid_or_expired", "Invalid or expired token", cause},
 	}
 
 	for _, test := range tests {
-		t.Run(
-			test.name,
-			func(t *testing.T) {
-				failure, ok := fault.As(
-					test.err,
-				)
-
-				if !ok {
-					t.Fatalf(
-						"error type = %T",
-						test.err,
-					)
-				}
-
-				if failure.Kind() !=
-					fault.KindUnauthenticated {
-					t.Fatalf(
-						"kind = %q",
-						failure.Kind(),
-					)
-				}
-
-				if failure.Code() !=
-					test.code {
-					t.Fatalf(
-						"code = %q, want %q",
-						failure.Code(),
-						test.code,
-					)
-				}
-
-				if failure.PublicMessage() !=
-					test.message {
-					t.Fatalf(
-						"message = %q, want %q",
-						failure.PublicMessage(),
-						test.message,
-					)
-				}
-
-				problem :=
-					commonhttp.ProblemFromError(
-						test.err,
-					)
-
-				if problem.Status !=
-					http.StatusUnauthorized {
-					t.Fatalf(
-						"status = %d, want %d",
-						problem.Status,
-						http.StatusUnauthorized,
-					)
-				}
-
-				if problem.Detail !=
-					test.message {
-					t.Fatalf(
-						"detail = %q, want %q",
-						problem.Detail,
-						test.message,
-					)
-				}
-
-				if test.cause != nil &&
-					!errors.Is(
-						test.err,
-						test.cause,
-					) {
-					t.Fatal(
-						"technical cause was not preserved",
-					)
-				}
-			},
-		)
+		t.Run(test.name, func(t *testing.T) {
+			application, ok := _errors.As(test.err)
+			if !ok {
+				t.Fatalf("error type = %T", test.err)
+			}
+			if application.RPCCode() != codes.Unauthenticated ||
+				application.Spec().LegacyProblemCode() != test.code ||
+				application.PublicMessage() != test.message {
+				t.Fatalf("application = key:%q rpc:%q code:%q message:%q",
+					application.Key(), application.RPCCode(), application.Spec().LegacyProblemCode(), application.PublicMessage())
+			}
+			problem := commonhttp.ProblemFromError(test.err)
+			if problem.Status != http.StatusUnauthorized ||
+				problem.Code != test.code ||
+				problem.Detail != test.message {
+				t.Fatalf("problem = %+v", problem)
+			}
+			if test.cause != nil && !errors.Is(test.err, test.cause) {
+				t.Fatal("technical cause was not preserved")
+			}
+		})
 	}
 }

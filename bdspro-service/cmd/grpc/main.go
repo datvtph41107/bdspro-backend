@@ -87,8 +87,14 @@ var GrpcCmd = &cobra.Command{
 		}
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
-			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
-			grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
+			grpc.ChainUnaryInterceptor(
+				_middleware.ParseGrpcMetadataContextMiddleware,
+				_middleware.UnaryErrorInterceptor(),
+			),
+			grpc.ChainStreamInterceptor(
+				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+				_middleware.StreamErrorInterceptor(),
+			),
 		)
 		bdspropb.RegisterPostServiceServer(s, app.PostService)
 		bdspropb.RegisterProductServiceServer(s, app.ProductService)

@@ -3,6 +3,7 @@ package usecase
 import (
 	_dto "common/domain/dto"
 	"context"
+	"crm/internal"
 	"strings"
 
 	_errors "common/errors"
@@ -28,7 +29,7 @@ func (u *SeoDomainUsecase) GetSeoSources(ctx context.Context) []seo_domain.SeoRe
 func (u *SeoDomainUsecase) GetSeoSource(ctx context.Context, sourceKey string) (seo_domain.SeoRefTypeConfig, error) {
 	cfg, ok := seo_domain.GetSeoRefTypeConfigByKey(sourceKey)
 	if !ok {
-		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(404, "seo source không tồn tại: "+strings.TrimSpace(sourceKey))
+		return seo_domain.SeoRefTypeConfig{}, _errors.ReturnError(service.SEOSourceNotFound, _errors.WithPublicMessage("seo source không tồn tại: "+strings.TrimSpace(sourceKey)))
 	}
 	return cfg, nil
 }
@@ -37,11 +38,11 @@ func (u *SeoDomainUsecase) GetSeoSource(ctx context.Context, sourceKey string) (
 // but now enforces registry readiness/capability before calling resolver.
 func (u *SeoDomainUsecase) SearchSeoRefValues(ctx context.Context, req *dto.SearchSeoRefValuesRequest) ([]dto.SeoRefValueResponse, int64, error) {
 	if req == nil {
-		return nil, 0, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.RequestInvalid)
 	}
 	req.Normalize()
 	if !enums.IsValidSEORefType(req.RefType) {
-		return nil, 0, _errors.ReturnError(400, "refType không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 
 	cfg, err := resolveSeoRefConfig(req.RefType, req.ResolverKey, req.SourceService)
@@ -76,7 +77,7 @@ func (u *SeoDomainUsecase) SearchSeoRefValues(ctx context.Context, req *dto.Sear
 // SearchSeoSourceValues is the V2 search behavior for /seo/sources/{sourceKey}/values.
 func (u *SeoDomainUsecase) SearchSeoSourceValues(ctx context.Context, req *dto.SearchSeoSourceValuesRequest) ([]dto.SeoRefValueResponse, int64, error) {
 	if req == nil {
-		return nil, 0, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.RequestInvalid)
 	}
 	req.Normalize()
 
@@ -124,13 +125,13 @@ func (u *SeoDomainUsecase) SearchSeoSourceValues(ctx context.Context, req *dto.S
 // but now enforces registry readiness/capability before calling resolver.
 func (u *SeoDomainUsecase) ResolveSeoRefValue(ctx context.Context, req *dto.ResolveSeoRefValueRequest) (*dto.SeoRefSnapshotResponse, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	if !enums.IsValidSEORefType(req.RefType) {
-		return nil, _errors.ReturnError(400, "refType không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 	if req.RefID == 0 {
-		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	cfg, err := resolveSeoRefConfig(req.RefType, req.ResolverKey, req.SourceService)
@@ -162,10 +163,10 @@ func (u *SeoDomainUsecase) ResolveSeoRefValue(ctx context.Context, req *dto.Reso
 // ResolveSeoSourceValue is the V2 resolve behavior for /seo/sources/{sourceKey}/values/{refId}.
 func (u *SeoDomainUsecase) ResolveSeoSourceValue(ctx context.Context, req *dto.ResolveSeoSourceValueRequest) (*dto.SeoRefSnapshotResponse, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	if req.RefID == 0 {
-		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+		return nil, _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	cfg, err := u.GetSeoSource(ctx, req.SourceKey)
@@ -239,10 +240,10 @@ func (u *SeoDomainUsecase) GetSeoRefs(ctx context.Context, req *dto.GetSeoRefsRe
 
 	refType := req.RefType.Validate()
 	if !refType {
-		return nil, 0, _errors.ReturnError(400, "refType không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.SEORefTypeInvalid)
 	}
 	if req.RefID == 0 {
-		return nil, 0, _errors.ReturnError(400, "refId không hợp lệ")
+		return nil, 0, _errors.ReturnError(service.SEORefIDInvalid)
 	}
 
 	req.Normalize()

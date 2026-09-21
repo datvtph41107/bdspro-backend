@@ -4,6 +4,7 @@ import (
 	_errors "common/errors"
 	"regexp"
 	"strings"
+	"tqd/internal"
 	"tqd/internal/domain"
 )
 
@@ -45,26 +46,26 @@ func (v *DirectoryCategoryValidator) ValidateUpdateRequest(req *domain.Directory
 func (v *DirectoryCategoryValidator) validateBasicFields(name, code string) error {
 	// Validate name
 	if strings.TrimSpace(name) == "" {
-		return _errors.ReturnError(400, "name is required")
+		return _errors.ReturnError(service.DirectoryCategoryNameRequired)
 	}
 
 	if len(name) > 255 {
-		return _errors.ReturnError(400, "Name must not exceed 255 characters")
+		return _errors.ReturnError(service.DirectoryCategoryNameTooLong)
 	}
 
 	// Validate code
 	if strings.TrimSpace(code) == "" {
-		return _errors.ReturnError(400, "code is required")
+		return _errors.ReturnError(service.DirectoryCategoryCodeRequired)
 	}
 
 	if len(code) > 50 {
-		return _errors.ReturnError(400, "Code must not exceed 50 characters")
+		return _errors.ReturnError(service.DirectoryCategoryCodeTooLong)
 	}
 
 	// Validate code format (alphanumeric and underscore only)
 	codeRegex := regexp.MustCompile(`^[A-Z0-9_]+$`)
 	if !codeRegex.MatchString(code) {
-		return _errors.ReturnError(400, "Code must contain only uppercase letters, numbers, and underscores")
+		return _errors.ReturnError(service.DirectoryCategoryCodeFormatInvalid)
 	}
 
 	return nil
@@ -74,7 +75,7 @@ func (v *DirectoryCategoryValidator) validateBasicFields(name, code string) erro
 func (v *DirectoryCategoryValidator) validateOptionalFields(description, icon, color string) error {
 	// Validate description
 	if len(description) > 500 {
-		return _errors.ReturnError(400, "Description must not exceed 500 characters")
+		return _errors.ReturnError(service.DirectoryCategoryDescriptionTooLong)
 	}
 
 	// Validate color (hex color code)

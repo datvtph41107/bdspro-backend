@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	_routes "common/routes"
+	_errors "common/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"user/internal"
 	"user/internal/dto"
 )
 
@@ -33,7 +34,7 @@ func TestValidateOrganizationMembership(t *testing.T) {
 		provider    organizationMembershipProvider
 		profileID   uint64
 		orgID       uint64
-		wantCode    int
+		wantSpec    _errors.Spec
 		wantErrIs   error
 		wantNoError bool
 	}{
@@ -53,7 +54,7 @@ func TestValidateOrganizationMembership(t *testing.T) {
 			provider:  organizationMembershipProviderStub{},
 			profileID: 42,
 			orgID:     7,
-			wantCode:  403,
+			wantSpec:  service.OrganizationMembershipInactive,
 		},
 		{
 			name: "inactive membership is forbidden",
@@ -64,7 +65,7 @@ func TestValidateOrganizationMembership(t *testing.T) {
 			}},
 			profileID: 42,
 			orgID:     7,
-			wantCode:  403,
+			wantSpec:  service.OrganizationMembershipInactive,
 		},
 		{
 			name: "mismatched member identity is forbidden",
@@ -75,7 +76,7 @@ func TestValidateOrganizationMembership(t *testing.T) {
 			}},
 			profileID: 42,
 			orgID:     7,
-			wantCode:  403,
+			wantSpec:  service.OrganizationMembershipInactive,
 		},
 		{
 			name:      "provider failure is preserved",
@@ -88,7 +89,7 @@ func TestValidateOrganizationMembership(t *testing.T) {
 			name:      "missing provider fails closed",
 			profileID: 42,
 			orgID:     7,
-			wantCode:  401,
+			wantSpec:  service.OrganizationMembershipAuthenticationFailed,
 		},
 	}
 
@@ -106,9 +107,11 @@ func TestValidateOrganizationMembership(t *testing.T) {
 				assert.ErrorIs(t, err, tt.wantErrIs)
 				return
 			}
-			var got *_routes.Except
-			require.ErrorAs(t, err, &got)
-			assert.Equal(t, tt.wantCode, got.Code)
+			application, ok := _errors.As(err)
+			require.True(t, ok)
+			assert.Equal(t, tt.wantSpec.Key(), application.Key())
+			assert.Equal(t, tt.wantSpec.RPCCode(), application.RPCCode())
+			assert.Equal(t, tt.wantSpec.LegacyCode(), application.Spec().LegacyCode())
 		})
 	}
 }

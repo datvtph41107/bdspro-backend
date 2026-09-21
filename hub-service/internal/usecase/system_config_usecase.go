@@ -4,6 +4,7 @@ import (
 	_errors "common/errors"
 	"context"
 	"fmt"
+	"hub/internal"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/enums"
@@ -29,12 +30,12 @@ func (uc *SystemConfigUsecase) GetSystemConfigsByGroup(ctx context.Context, grou
 	// Parse groupKey string to enum
 	configGroup, err := enums.GetSystemConfigGroup(groupKey)
 	if err != nil {
-		return nil, _errors.ReturnError(400, fmt.Sprintf("Group key không hợp lệ: %s", groupKey))
+		return nil, _errors.ReturnError(service.SystemConfigGroupInvalid, _errors.WithPublicMessage(fmt.Sprintf("Group key không hợp lệ: %s", groupKey)))
 	}
 
 	configs, err := uc.repo.GetByGroup(ctx, configGroup)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi lấy danh sách system config theo group")
+		return nil, fmt.Errorf("get system configs by group: %w", err)
 	}
 	return configs, nil
 }
@@ -47,7 +48,7 @@ func (uc *SystemConfigUsecase) BulkUpsertSystemConfig(ctx context.Context, req *
 		// Parse groupKey string to enum
 		configGroup, err := enums.GetSystemConfigGroup(item.GroupKey)
 		if err != nil {
-			return nil, 0, 0, _errors.ReturnError(400, fmt.Sprintf("Group key không hợp lệ cho config %s: %s", item.Key, item.GroupKey))
+			return nil, 0, 0, _errors.ReturnError(service.SystemConfigItemGroupInvalid, _errors.WithPublicMessage(fmt.Sprintf("Group key không hợp lệ cho config %s: %s", item.Key, item.GroupKey)))
 		}
 
 		configs[i] = &domain.SystemConfigEntity{
@@ -61,7 +62,7 @@ func (uc *SystemConfigUsecase) BulkUpsertSystemConfig(ctx context.Context, req *
 	// Execute bulk upsert
 	results, createdCount, updatedCount, err := uc.repo.BulkUpsert(ctx, configs)
 	if err != nil {
-		return nil, 0, 0, _errors.ReturnError(500, fmt.Sprintf("Lỗi khi bulk upsert system config: %v", err))
+		return nil, 0, 0, fmt.Errorf("bulk upsert system config: %w", err)
 	}
 
 	// Cập nhật lại persistData từ DB
@@ -75,7 +76,7 @@ func (uc *SystemConfigUsecase) LoadDataFromDB(ctx context.Context) error {
 	// Lấy tất cả config từ DB
 	configs, err := uc.repo.GetAll(ctx)
 	if err != nil {
-		return _errors.ReturnError(500, fmt.Sprintf("Lỗi khi lấy danh sách config từ DB: %v", err))
+		return fmt.Errorf("load system config from database: %w", err)
 	}
 
 	// Clear map hiện tại và cập nhật lại
@@ -105,7 +106,7 @@ func (uc *SystemConfigUsecase) ResetDefaultByGroup(ctx context.Context, groupKey
 	// Parse groupKey string to enum
 	configGroup, err := enums.GetSystemConfigGroup(groupKey)
 	if err != nil {
-		return nil, 0, _errors.ReturnError(400, fmt.Sprintf("Group key không hợp lệ: %s", groupKey))
+		return nil, 0, _errors.ReturnError(service.SystemConfigGroupInvalid, _errors.WithPublicMessage(fmt.Sprintf("Group key không hợp lệ: %s", groupKey)))
 	}
 
 	// Lấy tất cả config mặc định từ property.DefaultSystemConfig theo group
@@ -114,7 +115,7 @@ func (uc *SystemConfigUsecase) ResetDefaultByGroup(ctx context.Context, groupKey
 
 	// Nếu không có config mặc định nào cho group này
 	if len(defaultConfigs) == 0 {
-		return nil, 0, _errors.ReturnError(404, fmt.Sprintf("Không tìm thấy config mặc định cho group: %s", enums.GetSystemConfigGroupName(configGroup)))
+		return nil, 0, _errors.ReturnError(service.SystemConfigDefaultNotFound, _errors.WithPublicMessage(fmt.Sprintf("Không tìm thấy config mặc định cho group: %s", enums.GetSystemConfigGroupName(configGroup))))
 	}
 
 	// Thực hiện bulk upsert để reset về giá trị mặc định vào DB
@@ -124,7 +125,7 @@ func (uc *SystemConfigUsecase) ResetDefaultByGroup(ctx context.Context, groupKey
 
 	results, _, _, err := uc.BulkUpsertSystemConfig(ctx, req)
 	if err != nil {
-		return nil, 0, _errors.ReturnError(500, fmt.Sprintf("Lỗi khi reset config: %v", err))
+		return nil, 0, fmt.Errorf("reset system config: %w", err)
 	}
 
 	// persistData đã được update tự động trong BulkUpsertSystemConfig
@@ -135,7 +136,7 @@ func (uc *SystemConfigUsecase) ResetDefaultByGroup(ctx context.Context, groupKey
 func (uc *SystemConfigUsecase) GetSystemConfigByKey(ctx context.Context, key string) (*domain.SystemConfigEntity, error) {
 	// Validate key
 	if key == "" {
-		return nil, _errors.ReturnError(400, "Key không được để trống")
+		return nil, _errors.ReturnError(service.SystemConfigKeyRequired)
 	}
 
 	// Repository technical failures pass through. Only normalized absence owns
@@ -145,7 +146,7 @@ func (uc *SystemConfigUsecase) GetSystemConfigByKey(ctx context.Context, key str
 		return nil, err
 	}
 	if config == nil {
-		return nil, _errors.ReturnError(404, fmt.Sprintf("Không tìm thấy config với key: %s", key))
+		return nil, _errors.ReturnError(service.SystemConfigNotFound, _errors.WithPublicMessage(fmt.Sprintf("Không tìm thấy config với key: %s", key)))
 	}
 
 	return config, nil
@@ -156,13 +157,13 @@ func (uc *SystemConfigUsecase) GetUserSettingsByGroup(ctx context.Context, group
 	// Parse groupKey string to enum
 	configGroup, err := enums.GetSystemConfigGroup(groupKey)
 	if err != nil {
-		return nil, _errors.ReturnError(400, fmt.Sprintf("Group key không hợp lệ: %s", groupKey))
+		return nil, _errors.ReturnError(service.SystemConfigGroupInvalid, _errors.WithPublicMessage(fmt.Sprintf("Group key không hợp lệ: %s", groupKey)))
 	}
 
 	// Lấy configs từ DB
 	configs, err := uc.repo.GetByGroup(ctx, configGroup)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi lấy settings")
+		return nil, fmt.Errorf("get system settings: %w", err)
 	}
 
 	// Convert sang map key-value

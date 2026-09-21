@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_dto "common/domain/dto"
-	"common/fault"
+	_errors "common/errors"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -260,18 +260,7 @@ func (h *QHLayerLegendGrpcHandler) GetAllLayerLegends(ctx context.Context, req *
 }
 
 func mapLegendError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.legend.internal",
-		"legend operation failed",
-	))
+	return _errors.ToGRPC(err)
 }
 
 func toQHLayerLegendPB(e *qh_domain.QHLayerLegend) *tqdpb.QHLayerLegendResponse {

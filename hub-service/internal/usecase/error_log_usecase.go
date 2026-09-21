@@ -3,16 +3,18 @@ package usecase
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	_err "common/domain/err"
+	_errors "common/errors"
+	"gorm.io/datatypes"
+	"hub/internal"
 	"hub/internal/domain"
 	"hub/internal/dto"
 	"hub/internal/repo"
-	"gorm.io/datatypes"
 )
 
 type IErrorLogUsecase interface {
-	LogError(ctx context.Context, req *dto.LogErrorRequest) *_err.ErrorDTO
+	LogError(ctx context.Context, req *dto.LogErrorRequest) error
 }
 
 type ErrorLogUsecase struct {
@@ -25,12 +27,9 @@ func NewErrorLogUsecase(errorLogRepo repo.IErrorLogRepo) IErrorLogUsecase {
 	}
 }
 
-func (u *ErrorLogUsecase) LogError(ctx context.Context, req *dto.LogErrorRequest) *_err.ErrorDTO {
+func (u *ErrorLogUsecase) LogError(ctx context.Context, req *dto.LogErrorRequest) error {
 	if req == nil || req.Message == "" {
-		return &_err.ErrorDTO{
-			Code:    400,
-			Message: "message là bắt buộc",
-		}
+		return _errors.ReturnError(service.ErrorLogMessageRequired)
 	}
 
 	var deviceJSON datatypes.JSON
@@ -59,10 +58,7 @@ func (u *ErrorLogUsecase) LogError(ctx context.Context, req *dto.LogErrorRequest
 	}
 
 	if err := u.ErrorLogRepo.Insert(ctx, entity); err != nil {
-		return &_err.ErrorDTO{
-			Code:    500,
-			Message: "Lỗi khi lưu error log: " + err.Error(),
-		}
+		return fmt.Errorf("insert error log: %w", err)
 	}
 
 	return nil

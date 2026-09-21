@@ -1,6 +1,7 @@
 package shared_usecase
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -9,8 +10,8 @@ import (
 	"bdspro/internal/utils"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
+	_errors "common/errors"
 	"common/logging"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -91,10 +92,7 @@ func (s *AssetUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Asse
 		slog.Bool("owner_mismatch", *asset.OwnerID != profileId),
 	)
 	if asset.OwnerID == nil || *asset.OwnerID != profileId {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return nil, _errors.ReturnError(service.AssetOwnershipDenied)
 	}
 	return asset, nil
 }
@@ -188,10 +186,7 @@ func (uc *AssetUsecase) DeleteAsset(ctx context.Context, id uint64) error {
 // UC7: Tạo mới tài sản bằng nút truy cập nhanh
 func (uc *AssetUsecase) CreateAsset(ctx context.Context, asset *domain.Asset) (*domain.Asset, error) {
 	if asset.Name == "" || asset.Area <= 0 || asset.ProvinceID == nil || asset.OwnerOf == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "missing required fields: name, area, provinceId, ownerType",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("missing required fields: name, area, provinceId, ownerType"))
 	}
 
 	legalItems := []domain.AssetLegal{}
@@ -415,10 +410,7 @@ func (uc *AssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	entities, err := uc.AssetRepo.GetByIDsWithValidOwner(ctx, profileId, dto.IDs)
 	if len(entities) != len(dto.IDs) {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Bạn không sở hữu tài sản hoặc tài sản đang trong giao dịch chưa hoàn tất",
-		}
+		return nil, _errors.ReturnError(service.AssetOwnershipOrTradeDenied)
 	}
 
 	if err != nil {
@@ -436,10 +428,7 @@ func (uc *AssetUsecase) MergeAsset(ctx context.Context, dto dto.MergeAssetDTO) (
 			parentId = e.ParentAssetID
 		}
 		if e.ParentAssetID == nil {
-			return nil, &_routes.Except{
-				Code:    400,
-				Message: "Chỉ gộp tài sản con",
-			}
+			return nil, _errors.ReturnError(service.AssetChildMergeOnly)
 		}
 		// if e.WardID != currentAsset.WardID ||
 		// 	e.DistrictID != currentAsset.DistrictID ||
@@ -543,10 +532,7 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) (
 		return nil, err
 	}
 	if numProductLink > 1 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể tách do tài sản đang liên kết với nhiều sản phẩm",
-		}
+		return nil, _errors.ReturnError(service.AssetSplitBlockedByProductLinks)
 	}
 
 	// currentAsset := entities[0]
@@ -554,18 +540,12 @@ func (uc *AssetUsecase) SplitAsset(ctx context.Context, dto dto.SplitAssetDTO) (
 	for _, e := range dto.Datas {
 		sumArea += e.Area
 		if e.Area < 1 {
-			return nil, &_routes.Except{
-				Code:    400,
-				Message: "Diện tích không hợp lệ",
-			}
+			return nil, _errors.ReturnError(service.AreaInvalid)
 		}
 	}
 
 	if sumArea >= currentAsset.Area {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Diện tích không hợp lệ",
-		}
+		return nil, _errors.ReturnError(service.AreaInvalid)
 	}
 
 	for i := range dto.Datas {

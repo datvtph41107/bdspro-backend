@@ -3,11 +3,12 @@ package handler_grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
 	_dto "common/domain/dto"
-	"common/fault"
+	_errors "common/errors"
 	_utils "common/utils"
 
 	"google.golang.org/grpc"
@@ -15,6 +16,7 @@ import (
 
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/internal"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
 )
@@ -33,11 +35,7 @@ func NewQHLayerFamilyGrpcHandler(uc usecase.QHLayerFamilyUsecase, syncProvider *
 // CreateLayerFamily — POST /v2/tqd/qh/admin/layer-families
 func (h *QHLayerFamilyGrpcHandler) CreateLayerFamily(ctx context.Context, req *tqdpb.CreateLayerFamilyRequest) (*tqdpb.QHLayerFamilyResponse, error) {
 	if req == nil {
-		return nil, qhLayerFamilyValidation(
-			"tqd.qh_layer_family.request_required",
-			"request is required",
-			"",
-		)
+		return nil, _errors.ReturnError(service.LayerFamilyRequestRequired)
 	}
 	row := &qh_domain.QHLayerFamily{
 		Name:       strings.TrimSpace(req.Name),
@@ -53,10 +51,9 @@ func (h *QHLayerFamilyGrpcHandler) CreateLayerFamily(ctx context.Context, req *t
 // GetLayerFamily — GET /v2/tqd/qh/admin/layer-families/{id}
 func (h *QHLayerFamilyGrpcHandler) GetLayerFamily(ctx context.Context, req *tqdpb.GetLayerFamilyRequest) (*tqdpb.QHLayerFamilyResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhLayerFamilyValidation(
-			"tqd.qh_layer_family.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.LayerFamilyIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
@@ -73,10 +70,9 @@ func (h *QHLayerFamilyGrpcHandler) GetLayerFamily(ctx context.Context, req *tqdp
 // UpdateLayerFamily — PUT /v2/tqd/qh/admin/layer-families/{id}
 func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *tqdpb.UpdateLayerFamilyRequest) (*tqdpb.QHLayerFamilyResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhLayerFamilyValidation(
-			"tqd.qh_layer_family.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.LayerFamilyIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	in := &usecase.QHLayerFamilyUpdateInput{}
@@ -87,11 +83,7 @@ func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *t
 		in.SortNumber = req.SortNumber
 	}
 	if in.Name == nil && in.SortNumber == nil {
-		return nil, qhLayerFamilyValidation(
-			"tqd.qh_layer_family.update_fields_required",
-			"at least one field to update is required",
-			"",
-		)
+		return nil, _errors.ReturnError(service.LayerFamilyUpdateFieldsRequired)
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
@@ -107,10 +99,9 @@ func (h *QHLayerFamilyGrpcHandler) UpdateLayerFamily(ctx context.Context, req *t
 // DeleteLayerFamily — DELETE /v2/tqd/qh/admin/layer-families/{id}
 func (h *QHLayerFamilyGrpcHandler) DeleteLayerFamily(ctx context.Context, req *tqdpb.DeleteLayerFamilyRequest) (*emptypb.Empty, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhLayerFamilyValidation(
-			"tqd.qh_layer_family.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.LayerFamilyIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
@@ -206,10 +197,9 @@ func (h *QHLayerFamilyGrpcHandler) ListClientFamilies(ctx context.Context, req *
 func (h *QHLayerFamilyGrpcHandler) BuildFamilyPMTiles(req *tqdpb.BuildFamilyPMTilesRequest, stream grpc.ServerStreamingServer[tqdpb.BuildFamilyPMTilesProgress]) error {
 	ctx := stream.Context()
 	if req == nil || req.FamilyId == 0 {
-		return qhLayerFamilyValidation(
-			"tqd.qh_layer_family.family_id_required",
-			"family_id is required",
-			"family_id",
+		return _errors.ReturnError(
+			service.LayerFamilyFamilyIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "family_id", Description: "family_id is required"}),
 		)
 	}
 
@@ -253,54 +243,29 @@ func (h *QHLayerFamilyGrpcHandler) BuildFamilyPMTiles(req *tqdpb.BuildFamilyPMTi
 			TotalTiles:   buildErr.Progress.TotalTiles,
 			OutputPath:   buildErr.Progress.OutputPath,
 		})
-		return fault.ToGRPC(fault.New(
-			fault.KindResourceExhausted,
-			"tqd.qh_layer_family.build_in_progress",
-			"family tile build is already in progress",
-		).WithMetadata(map[string]string{
-			"family_id": strconv.FormatUint(req.FamilyId, 10),
-		}))
+		return _errors.ToGRPC(_errors.ReturnError(
+			service.LayerFamilyBuildInProgress,
+			_errors.WithMetadata(map[string]string{
+				"family_id": strconv.FormatUint(req.FamilyId, 10),
+			}),
+		))
 	}
 
-	if failure, ok := fault.As(err); ok {
+	if application, ok := _errors.As(err); ok {
 		_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
 			Status:  "error",
-			Message: failure.PublicMessage(),
+			Message: application.PublicMessage(),
 		})
-		return fault.ToGRPC(err)
+		return _errors.ToGRPC(err)
 	}
 
 	_ = stream.Send(&tqdpb.BuildFamilyPMTilesProgress{
 		Status:  "error",
 		Message: "family tile build failed",
 	})
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.qh_layer_family.build_failed",
-		"family tile build failed",
-	))
-}
-
-func qhLayerFamilyValidation(code, message, field string) error {
-	violations := make([]fault.FieldViolation, 0, 1)
-	if field != "" {
-		violations = append(violations, fault.FieldViolation{Field: field, Description: message})
-	}
-	return fault.ToGRPC(fault.Validation(code, message, violations...))
+	return _errors.ToGRPC(fmt.Errorf("build family PMTiles: %w", err))
 }
 
 func qhLayerFamilyError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.qh_layer_family.internal",
-		"layer family operation failed",
-	))
+	return _errors.ToGRPC(err)
 }

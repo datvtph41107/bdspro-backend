@@ -3,25 +3,25 @@ package admin
 import (
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 )
 
-func TestNormalizePageReturnsCanonicalPageSizeFault(t *testing.T) {
+func TestNormalizePageReturnsCanonicalPageSizeError(t *testing.T) {
 	_, _, err := normalizePage(1, 101)
 	if err == nil {
 		t.Fatal("normalizePage returned nil error")
 	}
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault", err)
+		t.Fatalf("error type = %T, want canonical application error", err)
 	}
-	if failure.Kind() != fault.KindValidation {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), fault.KindValidation)
+	if application.Key() != "PAYMENT_ADMIN_PAGE_SIZE_OUT_OF_RANGE" {
+		t.Fatalf("key = %q", application.Key())
 	}
-	if failure.Code() != "payment.admin.page_size_out_of_range" {
-		t.Fatalf("code = %q", failure.Code())
+	if application.Spec().LegacyProblemCode() != "payment.admin.page_size_out_of_range" {
+		t.Fatalf("legacy problem code = %q", application.Spec().LegacyProblemCode())
 	}
-	violations := failure.Violations()
+	violations := application.Violations()
 	if len(violations) != 1 || violations[0].Field != "page_size" {
 		t.Fatalf("violations = %+v", violations)
 	}

@@ -4,32 +4,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"common/fault"
+	_errors "common/errors"
+	"tqd/internal"
 )
 
 var (
-	ErrQHLayerFamilyPayloadRequired = fault.Validation(
-		"tqd.qh_layer_family.payload_required",
-		"payload is required",
-	)
-	ErrQHLayerFamilyNameRequired = fault.Validation(
-		"tqd.qh_layer_family.name_required",
-		"name is required",
-		fault.FieldViolation{Field: "name", Description: "is required"},
-	)
-	ErrQHLayerFamilyIDRequired = fault.Validation(
-		"tqd.qh_layer_family.id_required",
-		"id is required",
-		fault.FieldViolation{Field: "id", Description: "must be positive"},
-	)
+	ErrQHLayerFamilyPayloadRequired = _errors.ReturnError(service.LayerFamilyPayloadRequired)
+	ErrQHLayerFamilyNameRequired    = _errors.ReturnError(service.LayerFamilyNameRequired, _errors.WithViolations(_errors.FieldViolation{Field: "name", Description: "is required"}))
+	ErrQHLayerFamilyIDRequired      = _errors.ReturnError(service.LayerFamilyIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "must be positive"}))
 )
 
 func qhLayerFamilyNotFound(id uint64) error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.qh_layer_family.not_found",
-		fmt.Sprintf("layer family %d was not found", id),
-	).WithMetadata(map[string]string{
-		"id": strconv.FormatUint(id, 10),
-	})
+	return _errors.ReturnError(service.LayerFamilyNotFound, _errors.WithPublicMessage(fmt.Sprintf("layer family %d was not found", id)), _errors.WithMetadata(map[string]string{"id": strconv.FormatUint(id, 10)}))
 }

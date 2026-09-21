@@ -1,8 +1,9 @@
 package usecase
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -57,10 +58,7 @@ func (s *SharingAccessUsecase) BulkShare(c context.Context,
 		return err
 	}
 	if contact == nil || contact.ID == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Liên hệ không tồn tại",
-		}
+		return _errors.ReturnError(service.ContactNotFound, _errors.WithPublicMessage("Liên hệ không tồn tại"), _errors.WithLegacyCode(400))
 	}
 
 	profileIds := make([]uint64, len(receivers))
@@ -72,10 +70,7 @@ func (s *SharingAccessUsecase) BulkShare(c context.Context,
 		return err
 	}
 	if !validated {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại vui lòng kiểm tra lại",
-		}
+		return _errors.ReturnError(service.UserNotFound, _errors.WithPublicMessage("Người dùng không tồn tại vui lòng kiểm tra lại"), _errors.WithLegacyCode(400))
 	}
 
 	if err := s.CheckPermission(c, contactId); err != nil {

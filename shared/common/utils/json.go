@@ -1,7 +1,7 @@
 package _utils
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -13,9 +13,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -24,13 +21,24 @@ func ParseBody[T any](c *gin.Context) (*T, error) {
 
 	// Đọc toàn bộ body từ request
 	if err := c.ShouldBindJSON(&entity); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	return &entity, nil
+}
+
+func validationViolations(errorsMap map[string]string) []_errors.FieldViolation {
+	if len(errorsMap) == 0 {
+		return nil
+	}
+	violations := make([]_errors.FieldViolation, 0, len(errorsMap))
+	for field, description := range errorsMap {
+		violations = append(violations, _errors.FieldViolation{
+			Field:       field,
+			Description: description,
+		})
+	}
+	return violations
 }
 
 func ParseBodyWithValidator[T any](c *gin.Context, target *T) error {
@@ -89,18 +97,16 @@ func ParseBodyWithValidator[T any](c *gin.Context, target *T) error {
 				}
 			}
 
-			return &_routes.Except{
-				Code:    400,
-				Message: "Validation failed",
-				Errors:  errorsMap,
-			}
+			return _errors.ReturnError(
+				_errors.RequestValidationFailed,
+				_errors.WithPublicMessage("Validation failed"),
+				_errors.WithViolations(validationViolations(errorsMap)...),
+				_errors.WithCause(err),
+			)
 		}
 
 		// Nếu không phải lỗi validator (ví dụ: JSON không hợp lệ)
-		return &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	return nil
@@ -271,10 +277,7 @@ func ParseQuery[T any](c *gin.Context) (*T, error) {
 
 	// Đọc toàn bộ body từ request
 	if err := c.ShouldBindQuery(&entity); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	return &entity, nil
@@ -482,7 +485,7 @@ func isZeroValue(v reflect.Value) bool {
 	}
 }
 
-func MapWithValidation[S any, D any](src *S, dest *D) *_routes.Except {
+func MapWithValidation[S any, D any](src *S, dest *D) error {
 	srcVal := reflect.ValueOf(*src)
 	srcType := reflect.TypeOf(*src)
 
@@ -545,20 +548,14 @@ func MapWithValidation[S any, D any](src *S, dest *D) *_routes.Except {
 	}
 
 	if len(errorsMap) > 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Validation failed",
-			Errors:  errorsMap,
-		}
+		return _errors.ReturnError(
+			_errors.RequestValidationFailed,
+			_errors.WithPublicMessage("Validation failed"),
+			_errors.WithViolations(validationViolations(errorsMap)...),
+		)
 	}
 
 	return nil
-}
-
-func ErrorField(err *_routes.Except, detail protoadapt.MessageV1) error {
-	st := status.New(codes.Code(err.Code), err.Message)
-	stWithDetails, _ := st.WithDetails(detail)
-	return stWithDetails.Err()
 }
 
 func StructToJSONString(p interface{}) *string {

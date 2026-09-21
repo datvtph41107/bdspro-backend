@@ -1,6 +1,7 @@
 package shared_usecase
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -9,7 +10,6 @@ import (
 	"bdspro/internal/usecases"
 	_db "common/db"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"time"
@@ -76,11 +76,11 @@ func (s *PostUsecase) CreatePost(c context.Context, dto *dto.PostSaveRequest) (*
 	profileId := _utils.GetProfileIdWithContext(c)
 	// profileId := _jwt.GetProfileId(c)
 	if plan != nil && plan.LimitPost <= s.Repo.CountPostFromDate(c, time.Now().Add(-30)) {
-		return nil, _errors.ReturnError(400, "Số lượng tạo tin đã đạt giới hạn. Vui lòng nâng cấp gói")
+		return nil, _errors.ReturnError(service.PostQuotaExceeded)
 	}
 	// plan := s.planService.Plans
 	if existed := s.Repo.ExistedPostWorking(c, dto.ProductID, profileId, dto.TransactionType); existed {
-		return nil, _errors.ReturnError(400, "Tin đăng vẫn còn hạn")
+		return nil, _errors.ReturnError(service.PostStillActive)
 	}
 
 	numDate := dto.NumDate
@@ -223,10 +223,7 @@ func (s *PostUsecase) RequiredOwner(c context.Context, id uint64) (*domain.PostI
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	if *post.CreatedBy != profileId {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return nil, _errors.ReturnError(service.AccessDenied)
 	}
 	return post, nil
 }
@@ -383,10 +380,7 @@ func (s *PostUsecase) Delete(c context.Context, id uint64) error {
 	}
 
 	if requiredOwner.VisibleStatus == enums.EPostTransactionSelling || requiredOwner.VisibleStatus == enums.EPostTransactionRenting {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Tin đăng đã được đăng",
-		}
+		return _errors.ReturnError(service.PostAlreadyPublished)
 	}
 
 	profileId := _utils.GetProfileIdWithContext(c)

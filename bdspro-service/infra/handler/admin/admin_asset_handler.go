@@ -3,6 +3,7 @@ package admin_handler
 import (
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
@@ -115,7 +116,7 @@ func (h *AdminAssetHandler) CreateAsset(ctx context.Context, req *bdspropb.SaveA
 
 	asset := h.AssetMapper.AssetPbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên tài sản không được để trống")
+		return nil, _errors.ReturnError(service.AssetNameRequired)
 	}
 
 	createdAsset, err := h.AdminAssetService.Create(ctx, asset)
@@ -141,7 +142,7 @@ func (h *AdminAssetHandler) UpdateAsset(ctx context.Context, req *bdspropb.SaveA
 
 	asset := h.AssetMapper.AssetPbToDomain(req)
 	if req.Name == "" {
-		return nil, _errors.ReturnError(400, "Tên tài sản không được để trống")
+		return nil, _errors.ReturnError(service.AssetNameRequired)
 	}
 
 	updatedAsset, err := h.AdminAssetService.Update(ctx, req.Id, asset)

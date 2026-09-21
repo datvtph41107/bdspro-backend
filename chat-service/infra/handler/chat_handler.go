@@ -200,7 +200,7 @@ func (s *chatHandler) SendMessage(ctx context.Context, req *chatpb.SendMessageRe
 // @Router /messages/to-receiver [post]
 func (s *chatHandler) SendToReceiver(ctx context.Context, req *chatpb.SendMessageRequest) (*chatpb.SendMessageResponse, error) {
 	if req.ReceiverId == nil {
-		return nil, _errors.BadRequestException("receiverId is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("receiverId is required"))
 	}
 
 	message, err := s.messageUsecases.SendToReceiver(
@@ -304,7 +304,7 @@ func (s *chatHandler) GetMessagesByIndex(ctx context.Context, req *chatpb.GetMes
 func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypingRequest) (*chatpb.StateTypingResponse, error) {
 	userId := utils.GetCurrentUserID(ctx)
 	if userId == 0 {
-		return nil, _errors.UnauthorizedException("missing user_id")
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing user_id"), _errors.WithLegacyCode(401))
 	}
 
 	err := s.conversationUsecases.ValidateConversationAndCurrentUser(ctx, req.ConversationId)
@@ -314,7 +314,7 @@ func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypin
 
 	count, err := s.redisClient.UpdateTyping(ctx, req.ConversationId, userId, req.IsTyping)
 	if err != nil {
-		return nil, _errors.InternalServerException("update typing state failed")
+		return nil, fmt.Errorf("update typing state: %w", err)
 	}
 
 	event := &chatpb.TypingIndicator{
@@ -1249,7 +1249,7 @@ func (s *chatHandler) GetLinks(ctx context.Context, req *chatpb.GetLinksRequest)
 // @Router /conversation/{id}/timestamp [get]
 func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharepb.IdRequest) (*chatpb.ConversationTimestampsResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.BadRequestException("conversation id is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("conversation id is required"))
 	}
 
 	if s.syncProvider == nil {
@@ -1270,7 +1270,7 @@ func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharep
 
 	vals, err := s.syncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.InternalServerException("error: %v", err.Error())
+		return nil, fmt.Errorf("get conversation timestamps: %w", err)
 	}
 
 	names := []string{

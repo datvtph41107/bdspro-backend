@@ -4,8 +4,6 @@ import (
 	"context"
 	bdspropb "pb/types/bdspro"
 
-	"common/fault"
-
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
 	"bdspro/infra/validator"
@@ -55,20 +53,10 @@ func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *bds
 
 	createdInvitation, err := h.dealInvitationUsecase.SendInvitation(ctx, invitation)
 	if err != nil {
-		return nil, mapDealInvitationSendError(err)
+		return nil, err
 	}
 
 	return h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil
-}
-
-func mapDealInvitationSendError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); !ok {
-		return err
-	}
-	return fault.ToGRPC(err)
 }
 
 // @Summary Xác nhận lời mời

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -99,7 +100,7 @@ func (u *SupportTicketUsecase) GetByID(ctx context.Context, id uint64) (*dto.Sup
 		return nil, err
 	}
 	if ticket == nil {
-		return nil, _errors.ReturnError(404, "ticket not found")
+		return nil, _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	notes, _ := u.repo.ListNotes(ctx, id)
 	events, _ := u.repo.ListEvents(ctx, id, 50)
@@ -113,10 +114,10 @@ func (u *SupportTicketUsecase) Update(ctx context.Context, id uint64, req *dto.S
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	if req == nil || (req.Title == nil && req.Description == nil) {
-		return _errors.ReturnError(400, "Cần ít nhất tiêu đề hoặc mô tả để cập nhật")
+		return _errors.ReturnError(service.SupportTicketUpdateContentRequired)
 	}
 	before, _ := json.Marshal(map[string]string{
 		"title":       ticket.Title,
@@ -125,7 +126,7 @@ func (u *SupportTicketUsecase) Update(ctx context.Context, id uint64, req *dto.S
 	if req.Title != nil {
 		title := *req.Title
 		if title == "" {
-			return _errors.ReturnError(400, "Tiêu đề không được để trống")
+			return _errors.ReturnError(service.SupportTicketTitleRequired)
 		}
 		ticket.Title = title
 	}
@@ -156,10 +157,10 @@ func (u *SupportTicketUsecase) Assign(ctx context.Context, id uint64, req *dto.S
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	if ticket.Status == enums.SupportTicketStatusClosed {
-		return _errors.ReturnError(400, "cannot assign closed ticket")
+		return _errors.ReturnError(service.SupportTicketClosedAssignmentDenied)
 	}
 	before, _ := json.Marshal(map[string]interface{}{"assigneeId": ticket.AssigneeID, "status": ticket.Status})
 	ticket.AssigneeID = &req.AssigneeID
@@ -187,7 +188,7 @@ func (u *SupportTicketUsecase) UpdatePriority(ctx context.Context, id uint64, re
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	before := fmt.Sprintf("%d", ticket.Priority)
 	ticket.Priority = enums.SupportTicketPriority(req.Priority)
@@ -211,14 +212,14 @@ func (u *SupportTicketUsecase) UpdateStatus(ctx context.Context, id uint64, req 
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	to := enums.SupportTicketStatus(req.Status)
 	if !enums.CanTransitionSupportTicket(ticket.Status, to) {
-		return _errors.ReturnError(400, "STATUS_TRANSITION_INVALID")
+		return _errors.ReturnError(service.SupportTicketStatusTransitionInvalid)
 	}
 	if strings.TrimSpace(req.Note) == "" {
-		return _errors.ReturnError(400, "Vui lòng nhập ghi chú cập nhật trạng thái")
+		return _errors.ReturnError(service.SupportTicketStatusNoteRequired)
 	}
 	before := fmt.Sprintf("%d", ticket.Status)
 	ticket.Status = to
@@ -246,21 +247,21 @@ func (u *SupportTicketUsecase) Transfer(ctx context.Context, id uint64, req *dto
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	if ticket.Status == enums.SupportTicketStatusClosed {
-		return _errors.ReturnError(400, "không thể chuyển tuyến ticket đã đóng")
+		return _errors.ReturnError(service.SupportTicketClosedRoutingDenied)
 	}
 	reason := strings.TrimSpace(req.Reason)
 	if reason == "" {
-		return _errors.ReturnError(400, "Vui lòng nhập lý do chuyển tuyến")
+		return _errors.ReturnError(service.SupportTicketRoutingReasonRequired)
 	}
 	if !enums.IsValidSupportTicketHandlingTeam(req.HandlingTeam) {
-		return _errors.ReturnError(400, "bộ phận xử lý không hợp lệ")
+		return _errors.ReturnError(service.SupportDepartmentInvalid)
 	}
 	toStatus := enums.SupportTicketStatusTransferred
 	if !enums.CanTransitionSupportTicket(ticket.Status, toStatus) && ticket.Status != toStatus {
-		return _errors.ReturnError(400, "STATUS_TRANSITION_INVALID")
+		return _errors.ReturnError(service.SupportTicketStatusTransitionInvalid)
 	}
 	before, _ := json.Marshal(map[string]interface{}{
 		"status":       ticket.Status,
@@ -293,7 +294,7 @@ func (u *SupportTicketUsecase) AddNote(ctx context.Context, id uint64, req *dto.
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	_, err = u.repo.AddNote(ctx, &domain.SupportTicketNote{
 		TicketID: id,
@@ -329,7 +330,7 @@ func (u *SupportTicketUsecase) UpdateImages(ctx context.Context, id uint64, imag
 		return err
 	}
 	if ticket == nil {
-		return _errors.ReturnError(404, "ticket not found")
+		return _errors.ReturnError(service.SupportTicketNotFound)
 	}
 	existing := unmarshalImages(ticket.Images)
 	before, _ := json.Marshal(existing)

@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	_fault "common/fault"
+	_errors "common/errors"
 	"context"
 	"errors"
 	"time"
@@ -293,8 +293,8 @@ func planServiceError(err error) error {
 	case errors.Is(err, publish.ErrConcurrentPublish):
 		return status.Error(codes.Aborted, "plan version changed; refresh and try again")
 	}
-	if _, ok := _fault.As(err); ok {
-		return _fault.ToGRPC(err)
+	if _, ok := _errors.As(err); ok {
+		return _errors.ToGRPC(err)
 	}
 	if statusError, ok := status.FromError(err); ok {
 		return statusError.Err()

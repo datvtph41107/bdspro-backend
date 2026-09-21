@@ -492,3 +492,47 @@ func TestWriteGRPCRequiresCanonicalOTPErrorInfoProvenance(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteGRPCPreservesCanonicalLegacyHTTP200Envelope(t *testing.T) {
+	st, err := status.New(
+		codes.NotFound,
+		"Không tìm thấy người dùng",
+	).WithDetails(
+		&errdetails.ErrorInfo{
+			Reason: "USER_NOT_FOUND",
+			Domain: "qhpro.backend",
+			Metadata: map[string]string{
+				"error_code":      "404",
+				"legacy_http_200": "true",
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, st.Err())
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+
+	var response struct {
+		Code    int32  `json:"code"`
+		Message string `json:"message"`
+		Second  *int32 `json:"second"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != 404 {
+		t.Fatalf("code = %d, want 404", response.Code)
+	}
+	if response.Message != "Không tìm thấy người dùng" {
+		t.Fatalf("message = %q", response.Message)
+	}
+	if response.Second != nil {
+		t.Fatalf("second = %v, want nil", response.Second)
+	}
+}

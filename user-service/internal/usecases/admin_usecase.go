@@ -5,6 +5,7 @@ import (
 	_errors "common/errors"
 	"context"
 	"fmt"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -21,7 +22,7 @@ type AdminUsecase struct {
 func adminActorID(ctx context.Context) (uint64, error) {
 	actorID, err := useradmin.ActorIDFromContext(ctx)
 	if err != nil {
-		return 0, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return 0, _errors.ReturnError(service.AccessDenied)
 	}
 	return actorID, nil
 }
@@ -123,16 +124,16 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 	}
 
 	if req.Username == "" {
-		return nil, _errors.ReturnError(int32(400), "Username không được để trống")
+		return nil, _errors.ReturnError(service.UsernameRequired)
 	}
 	if req.Password == "" {
-		return nil, _errors.ReturnError(int32(400), "Password không được để trống")
+		return nil, _errors.ReturnError(service.PasswordRequired)
 	}
 
 	// Convert response từ auth service
 	createAdminResp, err := u.adminRepo.CreateAdmin(ctx, req)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo hồ sơ admin")
+		return nil, fmt.Errorf("create admin profile record: %w", err)
 	}
 
 	// Link auth.user_id ↔ admin_profiles.id (BaseEntity.ID). Fallback AuthID nếu ID chưa được GORM fill.
@@ -141,7 +142,7 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 		linkUserID = createAdminResp.AuthID
 	}
 	if linkUserID == 0 {
-		return nil, _errors.ReturnError(int32(500), "Không lấy được ID hồ sơ admin sau khi tạo")
+		return nil, fmt.Errorf("admin profile id missing after create")
 	}
 
 	// Gọi auth service để tạo/cập nhật credential đăng nhập (auth_name + password)
@@ -157,7 +158,7 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 	})
 	if err != nil {
 		fmt.Printf("Error updating admin via auth service: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo thông tin đăng nhập admin")
+		return nil, fmt.Errorf("create admin login info: %w", err)
 	}
 
 	createAdminResp.Username = req.Username
@@ -172,7 +173,7 @@ func (u *AdminUsecase) CreateAdmin(ctx context.Context, req *models.AdminProfile
 	if req.RoleID != nil && *req.RoleID > 0 {
 		if err := u.authProvider.AssignRoleToUser(ctx, linkUserID, *req.RoleID); err != nil {
 			fmt.Printf("Error assigning role via auth service: %v\n", err)
-			return nil, _errors.ReturnError(int32(500), "Tạo tài khoản thành công nhưng gán role thất bại: "+err.Error())
+			return nil, fmt.Errorf("assign role after admin creation: %w", err)
 		}
 	}
 
@@ -207,19 +208,19 @@ func (u *AdminUsecase) UpdateAdmin(ctx context.Context, req *models.AdminProfile
 	})
 	if err != nil {
 		fmt.Printf("Error updating admin via auth service: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
+		return nil, fmt.Errorf("update admin auth service: %w", err)
 	}
 
 	result, err := u.adminRepo.UpdateAdmin(ctx, req)
 	if err != nil {
 		fmt.Printf("Error updating admin profile in DB: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật hồ sơ admin: "+err.Error())
+		return nil, fmt.Errorf("update admin profile: %w", err)
 	}
 
 	if req.RoleID != nil && *req.RoleID > 0 && linkUserID > 0 {
 		if err := u.authProvider.AssignRoleToUser(ctx, linkUserID, *req.RoleID); err != nil {
 			fmt.Printf("Error assigning role via auth service: %v\n", err)
-			return nil, _errors.ReturnError(int32(500), "Cập nhật thành công nhưng gán role thất bại: "+err.Error())
+			return nil, fmt.Errorf("assign role after admin update: %w", err)
 		}
 	}
 
@@ -238,12 +239,12 @@ func (u *AdminUsecase) DeleteAdmin(ctx context.Context, req uint64) error {
 
 	err := u.authProvider.SoftDelete(ctx, req)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi xóa tài khoản admin")
+		return fmt.Errorf("delete admin account: %w", err)
 	}
 
 	err = u.adminRepo.DeleteAdmin(ctx, req)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi xóa tài khoản admin")
+		return fmt.Errorf("delete admin account: %w", err)
 	}
 
 	return nil
@@ -251,14 +252,14 @@ func (u *AdminUsecase) DeleteAdmin(ctx context.Context, req uint64) error {
 
 func (u *AdminUsecase) rejectSystemRootAdminMutation(ctx context.Context, id uint64) error {
 	if u == nil || u.adminRepo == nil {
-		return _errors.ReturnError(int32(503), "Kho dữ liệu quản trị chưa sẵn sàng")
+		return _errors.ReturnError(service.AdminDataStoreUnavailable)
 	}
 	isRoot, err := u.adminRepo.IsSystemRootAdmin(ctx, id)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Không thể xác minh tài khoản quản trị gốc")
+		return fmt.Errorf("verify system root admin: %w", err)
 	}
 	if isRoot {
-		return _errors.ReturnError(int32(403), "Không thể thay đổi tài khoản quản trị gốc qua API")
+		return _errors.ReturnError(service.RootAdminMutationDenied)
 	}
 	return nil
 }
@@ -274,7 +275,7 @@ func (u *AdminUsecase) ListAdmins(ctx context.Context, req *dto.AdminListRequest
 	authResp, total, err := u.adminRepo.ListAdmin(ctx, req)
 	if err != nil {
 		fmt.Printf("Error listing admins via auth service: %v\n", err)
-		return nil, 0, _errors.ReturnError(int32(500), "Lỗi lấy danh sách admin")
+		return nil, 0, fmt.Errorf("list admins: %w", err)
 	}
 
 	// Lấy danh sách roleIds từ admins (loại bỏ duplicate và nil)
@@ -322,7 +323,7 @@ func (u *AdminUsecase) GetDetail(ctx context.Context, req uint64) (*models.Admin
 
 	detail, err := u.adminRepo.GetDetail(ctx, req)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy thông tin admin")
+		return nil, fmt.Errorf("load admin information: %w", err)
 	}
 	if authResp != nil {
 		detail.Username = authResp.AuthName
@@ -356,7 +357,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 	// Kiểm tra email đã tồn tại chưa
 	existingAuth, _ := u.authProvider.FindByEmail(ctx, req.Email)
 	if existingAuth != nil {
-		return nil, _errors.ReturnError(int32(400), "Email đã tồn tại trong hệ thống")
+		return nil, _errors.ReturnError(service.EmailAlreadyExistsInSystem)
 	}
 	// Tự động generate username từ email nếu không có
 	username := req.Username
@@ -376,12 +377,12 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 		}
 	}
 	if existingAuth, _ := u.authProvider.FindByAuthNameAndProvider(ctx, username, "ADMIN"); existingAuth != nil {
-		return nil, _errors.ReturnError(int32(400), "Tên đăng nhập đã tồn tại trong hệ thống")
+		return nil, _errors.ReturnError(service.UsernameAlreadyExistsInSystem)
 	}
 
 	password := req.Password
 	if password == "" {
-		return nil, _errors.ReturnError(int32(400), "Mật khẩu là bắt buộc")
+		return nil, _errors.ReturnError(service.PasswordRequiredVI)
 	}
 
 	// Tạo auth method trong auth service
@@ -398,7 +399,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 	createdAuth, err := u.authProvider.Create(ctx, authMethod)
 	if err != nil {
 		fmt.Printf("Error creating auth method: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản xác thực")
+		return nil, fmt.Errorf("create auth account: %w", err)
 	}
 
 	// Tạo user profile trong user service (dùng UserProfileEntity)
@@ -430,7 +431,7 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 		fmt.Printf("Error creating user profile: %v\n", err)
 		// Rollback: xóa auth method đã tạo
 		_ = u.authProvider.SoftDelete(ctx, createdAuth.ID)
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo hồ sơ người dùng")
+		return nil, fmt.Errorf("create user profile: %w", err)
 	}
 
 	// Link the credential to the canonical profile generated by PostgreSQL.
@@ -438,11 +439,11 @@ func (u *AdminUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 	createdAuth, err = u.authProvider.Update(ctx, createdAuth)
 	if err != nil {
 		_ = u.authProvider.SoftDelete(ctx, createdAuth.ID)
-		return nil, _errors.ReturnError(int32(500), "Lỗi liên kết tài khoản xác thực với hồ sơ người dùng")
+		return nil, fmt.Errorf("link auth account to profile: %w", err)
 	}
 	if req.RoleID > 0 {
 		if err := u.authProvider.AssignRoleToUser(ctx, createdProfile.ProfileID, req.RoleID); err != nil {
-			return nil, _errors.ReturnError(int32(500), "Tạo người dùng thành công nhưng gán vai trò thất bại")
+			return nil, fmt.Errorf("assign role to created user: %w", err)
 		}
 	}
 
@@ -471,7 +472,7 @@ func (u *AdminUsecase) UpdateUser(ctx context.Context, req *dto.UpdateUserReques
 	// Kiểm tra user có tồn tại không
 	existingUser, err := u.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+		return nil, _errors.ReturnError(service.UserNotFound)
 	}
 
 	// Cập nhật thông tin trong user profile
@@ -523,7 +524,7 @@ func (u *AdminUsecase) UpdateUser(ctx context.Context, req *dto.UpdateUserReques
 
 	result, err := u.profileRepo.UpdateUserProfile(ctx, updatedProfile)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin người dùng")
+		return nil, fmt.Errorf("update user profile: %w", err)
 	}
 
 	// Cập nhật thông tin trong auth service
@@ -570,7 +571,7 @@ func (u *AdminUsecase) DeleteUser(ctx context.Context, req *dto.DeleteUserReques
 	// Kiểm tra user có tồn tại không
 	_, err = u.profileRepo.GetUserDetailByID(ctx, req.ProfileID)
 	if err != nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+		return _errors.ReturnError(service.UserNotFound)
 	}
 
 	// Xóa user profile (soft delete)
@@ -581,7 +582,7 @@ func (u *AdminUsecase) DeleteUser(ctx context.Context, req *dto.DeleteUserReques
 	}
 	err = u.profileRepo.DeleteUserProfile(ctx, req.ProfileID, &adminProfileID, reason)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi xóa hồ sơ người dùng")
+		return fmt.Errorf("delete user profile: %w", err)
 	}
 
 	// Xóa TẤT CẢ auth method của user trong auth service
@@ -596,14 +597,14 @@ func (u *AdminUsecase) DeleteUser(ctx context.Context, req *dto.DeleteUserReques
 
 func (u *AdminUsecase) rejectSystemRootMutation(ctx context.Context, profileID uint64) error {
 	if u == nil || u.profileRepo == nil {
-		return _errors.ReturnError(int32(503), "Kho dữ liệu người dùng chưa sẵn sàng")
+		return fmt.Errorf("user data store is unavailable")
 	}
 	isRoot, err := u.profileRepo.IsSystemRootProfile(ctx, profileID)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Không thể xác minh tài khoản quản trị gốc")
+		return fmt.Errorf("verify system root admin: %w", err)
 	}
 	if isRoot {
-		return _errors.ReturnError(int32(403), "Không thể thay đổi tài khoản quản trị gốc qua API")
+		return _errors.ReturnError(service.RootAdminMutationDenied)
 	}
 	return nil
 }
@@ -618,7 +619,7 @@ func (u *AdminUsecase) GetUserDetail(ctx context.Context, profileID uint64) (*dt
 	// Lấy thông tin user từ profile repo
 	user, err := u.profileRepo.GetUserDetailByID(ctx, profileID)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy người dùng")
+		return nil, _errors.ReturnError(service.UserNotFound)
 	}
 
 	// Lấy thông tin role nếu có

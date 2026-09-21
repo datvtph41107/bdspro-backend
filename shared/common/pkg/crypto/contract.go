@@ -38,21 +38,8 @@ type KeyManager interface {
 }
 
 const (
-	AESKeySize     = 32 // AES-256
-	NonceSize      = 12 // GCM recommended nonce size
-	CTRNonceSize   = 16 // AES block size — IV cho CTR (tile)
-	KeyVersion     = "v1"
-)
-
-// Custom error codes for encryption (HTTP-style codes)
-const (
-	ErrCodeInvalidKeySize       = 4001 // Bad Request - Invalid key size
-	ErrCodeEncryptionFailed     = 5001 // Internal - Encryption failed
-	ErrCodeDecryptionFailed     = 5002 // Internal - Decryption failed
-	ErrCodeDecodingFailed       = 4002 // Bad Request - Base64 decoding failed
-	ErrCodeInvalidCiphertext    = 4003 // Bad Request - Invalid ciphertext
-	ErrCodeUnsupportedVersion   = 4004 // Bad Request - Unsupported version
-	ErrCodeKeyNotFound          = 5003 // Internal - Encryption key not found
-	ErrCodeInvalidKey           = 4005 // Bad Request - Invalid encryption key
-	ErrCodeKeyManagerInitFailed = 5004
+	AESKeySize   = 32 // AES-256
+	NonceSize    = 12 // GCM recommended nonce size
+	CTRNonceSize = 16 // AES block size — IV cho CTR (tile)
+	KeyVersion   = "v1"
 )

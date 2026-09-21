@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"notification/internal/domain"
@@ -50,6 +51,9 @@ func (r *AccountWarningPostgresRepo) SoftDelete(c context.Context, id uint64) er
 func (r *AccountWarningPostgresRepo) FindByID(c context.Context, id uint64) (*domain.AccountWarningEntity, error) {
 	var warning domain.AccountWarningEntity
 	err := r.db.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&warning).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +219,9 @@ func (r *AccountWarningPostgresRepo) DeleteTemplate(c context.Context, id uint64
 func (r *AccountWarningPostgresRepo) FindTemplateByID(c context.Context, id uint64) (*domain.AccountWarningTemplateEntity, error) {
 	var template domain.AccountWarningTemplateEntity
 	err := r.db.WithContext(c).Where("id = ? AND deleted_at IS NULL", id).First(&template).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

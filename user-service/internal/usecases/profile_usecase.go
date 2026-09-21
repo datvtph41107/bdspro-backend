@@ -10,11 +10,13 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strconv"
 	"strings"
 	"user/enums"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -79,7 +81,7 @@ func (s *ProfileUsecase) GetInfoMe(c context.Context) (*models.UserProfileEntity
 	id := _utils.GetProfileIdWithContext(c)
 	userInfo, _ := s.ProfileRepo.GetByProfileID(id)
 	if userInfo == nil {
-		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+		return nil, _errors.ReturnError(service.UserNotFoundProfile)
 	}
 
 	professions, _ := s.ProfessionRepo.ListItemByProfileID(c, id)
@@ -360,7 +362,7 @@ func (s *ProfileUsecase) UserInfoV3(c context.Context, _profileId uint64, access
 	}
 
 	if infoEntity.Status != _enum.EUserStatusActive {
-		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+		return nil, _errors.ReturnError(service.UserNotFoundProfile)
 	}
 
 	// var result dto.PublicUserInfo
@@ -749,7 +751,7 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 	// Validate email nếu có
 	if req.Email != "" {
 		if !_utils.IsValidEmail(req.Email) {
-			return _errors.ReturnError(400, "email không hợp lệ")
+			return _errors.ReturnError(service.EmailInvalid)
 		}
 	}
 
@@ -758,7 +760,7 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 		// Check phone đã được dùng bởi user khác chưa
 		existedProfile, _ := s.ProfileRepo.GetByPhone(req.Phone)
 		if existedProfile != nil && existedProfile.ProfileID != profileId {
-			return _errors.ReturnError(400, "số điện thoại đã được sử dụng")
+			return _errors.ReturnError(service.PhoneAlreadyUsed)
 		}
 	}
 
@@ -879,12 +881,12 @@ func (s *ProfileUsecase) SetPerson(c context.Context, req *_dto.UserV3DTO) error
 
 func (s *ProfileUsecase) UpdatePrivacySetting(ctx context.Context, req *dto.ProfilePrivacyRequest) error {
 	if req == nil {
-		return _errors.ReturnError(400, "payload không hợp lệ")
+		return _errors.ReturnError(service.PayloadInvalid)
 	}
 
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return _errors.ReturnError(401, "profileId không hợp lệ")
+		return _errors.ReturnError(service.ProfileIDInvalid)
 	}
 
 	if err := s.ProfileRepo.UpdatePrivacySetting(ctx, profileID, req.Visibility, req.ProfileVisibility, req.StatusOnline); err != nil {
@@ -896,7 +898,7 @@ func (s *ProfileUsecase) UpdatePrivacySetting(ctx context.Context, req *dto.Prof
 	}
 
 	if s.NotificationClient == nil {
-		return _errors.ReturnError(500, "notification client chưa được cấu hình")
+		return fmt.Errorf("notification client is not configured")
 	}
 
 	configs := make([]*sharepb.PersonConfigV3Proto, len(req.PersonConfigs))
@@ -923,7 +925,7 @@ func (s *ProfileUsecase) QuickSetup(ctx context.Context, req *_dto.UserV3DTO) er
 	profileId := _utils.GetProfileIdWithContext(ctx)
 
 	if !enums.ERoleRealEstate(req.RoleRealEstate).IsValid() {
-		return _errors.ReturnError(400, "roleRealEstate không hợp lệ")
+		return _errors.ReturnError(service.RealEstateRoleInvalid)
 	}
 
 	if err := s.ProfileRepo.PatchProfileV3(ctx, profileId, req); err != nil {
@@ -1024,7 +1026,7 @@ func (s *ProfileUsecase) GetProfileCompletion(ctx context.Context) (*dto.Profile
 	// Lấy thông tin profile
 	profile, err := s.ProfileRepo.GetByProfileID(profileID)
 	if err != nil {
-		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+		return nil, _errors.ReturnError(service.UserNotFoundProfile)
 	}
 
 	// Định nghĩa các field cần kiểm tra và điểm số của chúng
@@ -1166,16 +1168,16 @@ func (s *ProfileUsecase) GetStatusOnline(ctx context.Context, profileID uint64) 
 	// Lấy thông tin profile từ DB (bao gồm visibilityStatusOnline)
 	profile, err := s.ProfileRepo.GetByProfileID(profileID)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Người dùng không tồn tại")
+		return nil, _errors.ReturnError(service.UserNotFoundProfile, _errors.WithLegacyCode(404))
 	}
 
 	if profile == nil {
-		return nil, _errors.ReturnError(404, "Người dùng không tồn tại")
+		return nil, _errors.ReturnError(service.UserNotFoundProfile, _errors.WithLegacyCode(404))
 	}
 
 	// Check visibilityStatusOnline - nếu là Private (20) thì không cho phép xem trạng thái online
 	if profile.StatusOnline == enums.HIDDEN {
-		return nil, _errors.ReturnError(400, "Người dùng đã ẩn trạng thái online")
+		return nil, _errors.ReturnError(service.OnlineStatusHidden)
 	}
 
 	// Ưu tiên lấy trạng thái từ Redis (relay service)

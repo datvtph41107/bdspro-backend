@@ -3,12 +3,12 @@ package usecase
 import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	"log/slog"
-	"net/http"
 	socialpb "pb/types/social"
+	"social/internal"
 	"social/internal/domain"
 	"social/internal/dto"
 	"social/internal/enums"
@@ -56,7 +56,7 @@ func NewNewsFeedUsecase(postRepo repo.NewsFeedRepo,
 
 func (u *NewsFeedUsecase) CreateGroupNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed, groupId *uint64) (*domain.NewsFeed, error) {
 	if groupId == nil {
-		return nil, _errors.ReturnError(http.StatusBadRequest, "groupId is required")
+		return nil, _errors.ReturnError(service.GroupIDRequired)
 	}
 	ownerType := enums.OwnerOfGroup
 	ownerID := groupId
@@ -75,10 +75,7 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 
 	if newsFeed.PostID != nil {
 		if err := u.bdsproClient.OwnerPost(ctx, *newsFeed.PostID, profileId); err != nil {
-			return nil, &_routes.Except{
-				Code:    http.StatusForbidden,
-				Message: "bạn không có quyền tạo/forward tin đăng này",
-			}
+			return nil, _errors.ReturnError(service.PostForwardDenied)
 		}
 	}
 
@@ -87,10 +84,7 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 		newsFeed.OwnerID = ownerID
 		createdFeed, err := u.newsFeedRepo.Create(ctx, newsFeed)
 		if err != nil {
-			return &_routes.Except{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			}
+			return fmt.Errorf("social news feed operation: %w", err)
 		}
 		newsFeed = createdFeed
 		if newsFeed.ParentID != nil {
@@ -107,10 +101,7 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 				UserID: *ownerID,
 			}
 			if err := u.newsFeedOfUserRepo.Create(ctx, newsFeedOfUser); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: "không thể track tin đăng cho user",
-				}
+				return fmt.Errorf("track news feed for user: %w", err)
 			}
 		} else if ownerType == enums.OwnerOfGroup {
 			newsFeedOfGroup := &domain.NewsFeedOfGroup{
@@ -118,32 +109,20 @@ func (u *NewsFeedUsecase) createNewsFeed(ctx context.Context, newsFeed *domain.N
 				GroupID: *ownerID,
 			}
 			if err := u.newsFeedOfGroupRepo.Create(ctx, newsFeedOfGroup); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: "không thể track tin đăng cho group",
-				}
+				return fmt.Errorf("track news feed for group: %w", err)
 			}
 		}
 
 		if len(newsFeed.FriendTagIds) > 0 {
 			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
 			if err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 			if !isFriends {
-				return &_routes.Except{
-					Code:    http.StatusForbidden,
-					Message: "not friends",
-				}
+				return _errors.ReturnError(service.FriendTagDenied)
 			}
 			if err := u.friendTagRepo.UpdateFriendTag(ctx, newsFeed.ID, newsFeed.FriendTagIds); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 		}
 
@@ -173,10 +152,7 @@ func (u *NewsFeedUsecase) CheckOwner(ctx context.Context, newsFeed *domain.NewsF
 		return err
 	}
 	if !exist {
-		return &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "bài viết không tồn tại hoặc bạn không có quyền cập nhật",
-		}
+		return _errors.ReturnError(service.NewsFeedUpdateDenied)
 	}
 	return nil
 }
@@ -197,39 +173,24 @@ func (u *NewsFeedUsecase) UpdatePost(ctx context.Context, newsFeed *domain.NewsF
 		if len(newsFeed.FriendTagIds) > 0 {
 			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
 			if err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 			if !isFriends {
-				return &_routes.Except{
-					Code:    http.StatusForbidden,
-					Message: "not friends",
-				}
+				return _errors.ReturnError(service.FriendTagDenied)
 			}
 			if err := u.friendTagRepo.UpdateFriendTag(ctx, newsFeed.ID, newsFeed.FriendTagIds); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 		}
 
 		if len(newsFeed.NewsFeedMedias) > 0 {
 			if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 		}
 		_, err := u.newsFeedRepo.Update(ctx, newsFeed)
 		if err != nil {
-			return &_routes.Except{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			}
+			return fmt.Errorf("social news feed operation: %w", err)
 		}
 		return nil
 	})
@@ -246,10 +207,7 @@ func (u *NewsFeedUsecase) DeletePost(ctx context.Context, newsFeedID uint64) err
 		return err
 	}
 	if newsfeed.CreatedBy != nil && *newsfeed.CreatedBy != profileId {
-		return &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "bạn không có quyền xóa bài viết này",
-		}
+		return _errors.ReturnError(service.NewsFeedDeleteDenied)
 	}
 	return u.newsFeedRepo.Delete(ctx, newsfeed)
 }
@@ -377,10 +335,7 @@ func (u *NewsFeedUsecase) CountByOwner(ctx context.Context, ownerOf socialpb.Own
 // AdminCreateNewsFeed - Admin tạo bài viết
 func (u *NewsFeedUsecase) AdminCreateNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Lưu createdBy từ request (nếu có) để admin có thể set user khác làm creator
@@ -412,10 +367,7 @@ func (u *NewsFeedUsecase) AdminCreateNewsFeed(ctx context.Context, newsFeed *dom
 // AdminUpdateNewsFeed - Admin sửa bài viết
 func (u *NewsFeedUsecase) AdminUpdateNewsFeed(ctx context.Context, newsFeed *domain.NewsFeed) (*domain.NewsFeed, error) {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Admin có thể sửa bất kỳ bài viết nào, không cần check owner
@@ -424,39 +376,24 @@ func (u *NewsFeedUsecase) AdminUpdateNewsFeed(ctx context.Context, newsFeed *dom
 			profileId := _utils.GetProfileIdWithContext(ctx)
 			isFriends, err := u.userClient.IsFriends(ctx, profileId, newsFeed.FriendTagIds)
 			if err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 			if !isFriends {
-				return &_routes.Except{
-					Code:    http.StatusForbidden,
-					Message: "not friends",
-				}
+				return _errors.ReturnError(service.FriendTagDenied)
 			}
 			if err := u.friendTagRepo.UpdateFriendTag(ctx, newsFeed.ID, newsFeed.FriendTagIds); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 		}
 
 		if len(newsFeed.NewsFeedMedias) > 0 {
 			if err := u.newsFeedMediaRepo.UpdateMedia(ctx, newsFeed.ID, newsFeed.NewsFeedMedias); err != nil {
-				return &_routes.Except{
-					Code:    http.StatusInternalServerError,
-					Message: err.Error(),
-				}
+				return fmt.Errorf("social news feed operation: %w", err)
 			}
 		}
 		_, err := u.newsFeedRepo.Update(ctx, newsFeed)
 		if err != nil {
-			return &_routes.Except{
-				Code:    http.StatusInternalServerError,
-				Message: err.Error(),
-			}
+			return fmt.Errorf("social news feed operation: %w", err)
 		}
 		return nil
 	})
@@ -469,10 +406,7 @@ func (u *NewsFeedUsecase) AdminUpdateNewsFeed(ctx context.Context, newsFeed *dom
 // AdminDeleteNewsFeed - Admin xóa bài viết
 func (u *NewsFeedUsecase) AdminDeleteNewsFeed(ctx context.Context, newsFeedID uint64) error {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	newsfeed, err := u.newsFeedRepo.GetByID(ctx, newsFeedID)
@@ -486,10 +420,7 @@ func (u *NewsFeedUsecase) AdminDeleteNewsFeed(ctx context.Context, newsFeedID ui
 // AdminHideNewsFeed - Admin ẩn/hiện bài viết
 func (u *NewsFeedUsecase) AdminHideNewsFeed(ctx context.Context, newsFeedID uint64, isHidden bool) (*domain.NewsFeed, error) {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	err := u.newsFeedRepo.HideNewsFeed(ctx, newsFeedID, isHidden)
@@ -507,10 +438,7 @@ func (u *NewsFeedUsecase) AdminHideNewsFeed(ctx context.Context, newsFeedID uint
 // AdminGetListNewsFeed - Admin lấy danh sách bài viết
 func (u *NewsFeedUsecase) AdminGetListNewsFeed(ctx context.Context, req *dto.AdminNewsFeedSearch) ([]*dto.NewsFeedPublic, int32, error) {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return nil, 0, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return nil, 0, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Validate pagination
@@ -531,10 +459,7 @@ func (u *NewsFeedUsecase) AdminGetListNewsFeed(ctx context.Context, req *dto.Adm
 // AdminGetNewsFeedByID - Admin lấy chi tiết bài viết
 func (u *NewsFeedUsecase) AdminGetNewsFeedByID(ctx context.Context, newsFeedID uint64) (*domain.NewsFeed, error) {
 	if !u.permissionUsecase.IsAdmin(ctx) {
-		return nil, &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "Bạn không có quyền admin",
-		}
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	profileId := _utils.GetProfileIdWithContext(ctx)

@@ -3,6 +3,7 @@ package user_router
 import (
 	"bdspro/internal/dto"
 	shared_usecase "bdspro/internal/usecases/shared"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"fmt"
@@ -91,10 +92,7 @@ func (route *UserProductRouter) CreateNewProduct(c *gin.Context) {
 func (route *UserProductRouter) Detail(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 
@@ -120,10 +118,7 @@ func (route *UserProductRouter) Posts(c *gin.Context) {
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 
@@ -149,10 +144,7 @@ func (route *UserProductRouter) Members(c *gin.Context) {
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 
@@ -172,19 +164,13 @@ func (route *UserProductRouter) Members(c *gin.Context) {
 func (route *UserProductRouter) History(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 
 	dto := dto.ProductHistorySearch{}
 	if err := _utils.ParseQuery2(c, &dto); err != nil {
-		_routes.RouteResult(c, nil, &_routes.Except{
-			Code:    400,
-			Message: "ID không hợp lệ",
-		})
+		_routes.RouteResult(c, nil, _errors.ReturnError(_errors.ResourceIDInvalid))
 		return
 	}
 

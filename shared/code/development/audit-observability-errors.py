@@ -94,6 +94,29 @@ ZERO_RATCHETS = (
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
     ("go.text_error_classification", "tqd-service"),
+) + tuple(
+    (category, owner)
+    for category in (
+        "go.legacy_exception_helper",
+        "go.legacy_routes_except",
+        "go.legacy_numeric_return_error",
+    )
+    for owner in (
+        "auth-service",
+        "bdspro-service",
+        "chat-service",
+        "chat-v1-service",
+        "crm-service",
+        "file-service",
+        "hub-service",
+        "notification-service",
+        "payment-service",
+        "relay-service",
+        "shared/common",
+        "social-service",
+        "tqd-service",
+        "user-service",
+    )
 )
 
 
@@ -140,7 +163,7 @@ RULES = (
         "review",
         (".go",),
         re.compile(r"\bstatus\.(?:Error|Errorf|New|Newf)\s*\("),
-        excluded_prefixes=("shared/common/fault/",),
+        excluded_prefixes=("shared/common/errors/",),
     ),
     Rule(
         "go.transport_error_in_domain_or_usecase",
@@ -177,6 +200,32 @@ RULES = (
         (".go",),
         re.compile(r"(?:sharepb|sharedpb|commonpb)\.ErrorResponse\b"),
         excluded_prefixes=("gateway-service/internal/httperror/",),
+    ),
+    Rule(
+        "go.legacy_exception_helper",
+        "debt",
+        (".go",),
+        re.compile(
+            r"\b[A-Za-z_][A-Za-z0-9_]*\."
+            r"(?:BadRequestException|UnauthorizedException|ForbiddenException|"
+            r"NotFoundException|ConflictException|TooManyRequestsException|"
+            r"InternalServerException)\s*\("
+        ),
+    ),
+    Rule(
+        "go.legacy_routes_except",
+        "debt",
+        (".go",),
+        re.compile(r"\b(?:_routes|routes)\.Except\b"),
+    ),
+    Rule(
+        "go.legacy_numeric_return_error",
+        "debt",
+        (".go",),
+        re.compile(
+            r"\b[A-Za-z_][A-Za-z0-9_]*\.ReturnError\s*\(\s*"
+            r"(?:[-+]?\d+|(?:int|int32|int64|uint|uint32|uint64)\s*\()"
+        ),
     ),
     Rule(
         "go.process_print_review",
@@ -474,7 +523,7 @@ def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
         "policy": {
             "canonical_go_logging_api": "log/slog",
             "canonical_go_logging_owner": "shared/common/logging",
-            "canonical_error_identity_owner": "shared/common/fault",
+            "canonical_error_identity_owner": "shared/common/errors",
             "canonical_http_error_serializer": "shared/common/httpresponse.WriteProblem",
             "gateway_http_error_facade": "gateway-service/internal/httpresponse.WriteProblem",
             "legacy_findings_fail_ci": False,

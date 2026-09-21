@@ -1,6 +1,7 @@
 package property_usecases
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -162,7 +163,7 @@ func (u *PropertyUsecase) GetPropertyAmenities(
 	sourceType uint32,
 ) ([]*dto.PropertyAmenityDTO, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	property, err := u.PropertyRepo.GetDetail(ctx, propertyID, sourceType)
@@ -170,7 +171,7 @@ func (u *PropertyUsecase) GetPropertyAmenities(
 		return nil, err
 	}
 	if property == nil {
-		return nil, _errors.NotFoundException("Property not found")
+		return nil, _errors.ReturnError(service.PropertyNotFound)
 	}
 
 	amenities, err := u.PropertyAmenityRepo.GetAll(ctx, nil)
@@ -239,7 +240,7 @@ func (u *PropertyUsecase) AddPropertyUser(
 		return nil, err
 	}
 	if lineage == nil {
-		return nil, _errors.NotFoundException("Không tìm thấy BĐS")
+		return nil, _errors.ReturnError(service.PropertyNotFound, _errors.WithPublicMessage("Không tìm thấy BĐS"))
 	}
 
 	existed, err := u.PropertyUserRepo.GetByLineageAndOwnerUnscoped(ctx, lineage.ID, userID)
@@ -253,7 +254,7 @@ func (u *PropertyUsecase) AddPropertyUser(
 			}
 			return lineage, nil
 		}
-		return nil, _errors.ConflictException("Đã thêm BĐS này")
+		return nil, _errors.ReturnError(service.PropertyAlreadyAdded)
 	}
 
 	if _, err := u.PropertyUserRepo.CreateOwner(ctx, lineage.ID, userID); err != nil {
@@ -289,7 +290,7 @@ func (u *PropertyUsecase) UpdatePropertyAmenities(
 	req *dto.UpdatePropertyAmenitiesRequest,
 ) error {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID, req.SourceType)
@@ -297,7 +298,7 @@ func (u *PropertyUsecase) UpdatePropertyAmenities(
 		return err
 	}
 	if property == nil {
-		return _errors.NotFoundException("Property not found")
+		return _errors.ReturnError(service.PropertyNotFound)
 	}
 
 	return u.PropertyAmenityRepo.UpdatePropertyAmenityIds(
@@ -313,7 +314,7 @@ func (u *PropertyUsecase) GetPropertyTags(
 	sourceType uint32,
 ) ([]*dto.PropertyTagDTO, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	property, err := u.PropertyRepo.GetDetail(ctx, propertyID, sourceType)
@@ -321,7 +322,7 @@ func (u *PropertyUsecase) GetPropertyTags(
 		return nil, err
 	}
 	if property == nil {
-		return nil, _errors.NotFoundException("Property not found")
+		return nil, _errors.ReturnError(service.PropertyNotFound)
 	}
 
 	tagIDs, err := u.PropertyAmenityRepo.GetTagIDsByProperty(ctx, propertyID)
@@ -356,7 +357,7 @@ func (u *PropertyUsecase) SearchTags(
 	search *dto.TagSearchDTO,
 ) ([]*dto.TagDTO, int64, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return nil, 0, _errors.UnauthorizedException()
+		return nil, 0, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	tags, total, err := u.PropertyAmenityRepo.Search(ctx, search)
@@ -383,7 +384,7 @@ func (u *PropertyUsecase) UpdatePropertyTags(
 	req *dto.UpdatePropertyTagsRequest,
 ) error {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	property, err := u.PropertyRepo.GetDetail(ctx, req.PropertyID, req.SourceType)
@@ -391,7 +392,7 @@ func (u *PropertyUsecase) UpdatePropertyTags(
 		return err
 	}
 	if property == nil {
-		return _errors.NotFoundException("Property not found")
+		return _errors.ReturnError(service.PropertyNotFound)
 	}
 
 	// validate tag ids (nếu có)
@@ -401,7 +402,7 @@ func (u *PropertyUsecase) UpdatePropertyTags(
 			return err
 		}
 		if len(tags) != len(req.TagIDs) {
-			return _errors.BadRequestException("Invalid tag ids")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Invalid tag ids"))
 		}
 	}
 
@@ -518,7 +519,7 @@ func (u *PropertyUsecase) GetList(ctx context.Context, searchDTO *dto.PropertySe
 func (u *PropertyUsecase) ListMe(ctx context.Context, page, size uint32) ([]*domain.PropertyLineage, int64, error) {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
-		return nil, 0, _errors.UnauthorizedException("origin_id required")
+		return nil, 0, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("origin_id required"), _errors.WithLegacyCode(401))
 	}
 	return u.PropertyRepo.ListMe(ctx, originId, _dto.Pagable{Page: page, Size: size})
 }
@@ -530,7 +531,7 @@ func (u *PropertyUsecase) Detail(
 	sourceType uint32,
 ) (*domain.PropertyLineage, error) {
 	if id == 0 {
-		return nil, _errors.BadRequestException("id is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("id is required"))
 	}
 
 	property, err := u.PropertyRepo.GetDetail2(ctx, id, sourceType)
@@ -624,7 +625,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			}
 		}
 		if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
-			return _errors.InternalServerException("Create PropertyInfo Error: ", err.Error())
+			return fmt.Errorf("create property info: %w", err)
 		}
 
 		// 2. Tạo Location
@@ -632,7 +633,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			loc := req.Location
 			loc.PropertyIdentifyID = identifyID
 			if err := u.PropertyLocationRepo.Create(txCtx, loc); err != nil {
-				return _errors.InternalServerException("Create PropertyLocation Error: ", err.Error())
+				return fmt.Errorf("create property location: %w", err)
 			}
 			locationID = &loc.ID
 			infoID = &info.ID
@@ -643,7 +644,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			landInfo := req.LandInfo
 			landInfo.PropertyIdentifyID = identifyID
 			if err := u.PropertyLandInfoRepo.Create(txCtx, landInfo); err != nil {
-				return _errors.InternalServerException("Create PropertyLandInfo Error: ", err.Error())
+				return fmt.Errorf("create property land info: %w", err)
 			}
 			landInfoID = &landInfo.ID
 		}
@@ -653,7 +654,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			buildingInfo := req.BuildingInfo
 			buildingInfo.PropertyIdentifyID = identifyID
 			if err := u.PropertyBuildingInfoRepo.Create(txCtx, buildingInfo); err != nil {
-				return _errors.InternalServerException("Create PropertyBuildingInfo Error: ", err.Error())
+				return fmt.Errorf("create property building info: %w", err)
 			}
 			buildingID = &buildingInfo.ID
 		}
@@ -663,7 +664,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			edv := req.Edvidence
 			edv.PropertyIdentifyID = identifyID
 			if err := u.PropertyEdvidenceRepo.Create(txCtx, edv); err != nil {
-				return _errors.InternalServerException("Create PropertyEdvidence Error: ", err.Error())
+				return fmt.Errorf("create property evidence: %w", err)
 			}
 			edvidenceID = &edv.ID
 		}
@@ -673,7 +674,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			extRef := req.ExternalRef
 			extRef.PropertyIdentifyID = identifyID
 			if err := u.PropertyExternalRefRepo.Create(txCtx, extRef); err != nil {
-				return _errors.InternalServerException("Create PropertyExternalRef Error: ", err.Error())
+				return fmt.Errorf("create property external ref: %w", err)
 			}
 			// externalRefID = &extRef.ID
 		}
@@ -697,7 +698,7 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			ListingCount: listCount,
 		}
 		if err := u.PropertyStatisticRepo.Save(txCtx, statistic); err != nil {
-			return _errors.InternalServerException("Create PropertyStatistic Error: ", err.Error())
+			return fmt.Errorf("create property statistic: %w", err)
 		}
 		statisticID := &statistic.ID
 
@@ -717,12 +718,12 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 		}
 
 		if err := u.PropertyRepo.Create(txCtx, property); err != nil {
-			return _errors.InternalServerException("Create PropertyLineage Error: ", err.Error())
+			return fmt.Errorf("create property lineage: %w", err)
 		}
 
 		// 9. Tạo PropertyUser
 		if _, err := u.PropertyUserRepo.CreateOwner(txCtx, property.ID, originId); err != nil {
-			return _errors.InternalServerException("Create PropertyUser Error: ", err.Error())
+			return fmt.Errorf("create property user: %w", err)
 		}
 
 		// 7. Tạo MediaList
@@ -731,13 +732,13 @@ func (u *PropertyUsecase) UserCreate(ctx context.Context, req *dto.CreatePropert
 			// 	req.MediaList[i].LineageID = &property.ID
 			// }
 			if err := u.PropertyMediaRepo.CreateBatch(txCtx, req.MediaList); err != nil {
-				return _errors.InternalServerException("Create PropertyMedia Error: ", err.Error())
+				return fmt.Errorf("create property media: %w", err)
 			}
 			avatarID := req.MediaList[0].ID
 
 			info.AvatarID = &avatarID
 			if err := u.PropertyInfoRepo.Save(txCtx, info); err != nil {
-				return _errors.InternalServerException("Create PropertyInfo Error: ", err.Error())
+				return fmt.Errorf("create property info: %w", err)
 			}
 		}
 
@@ -1397,20 +1398,20 @@ func (u *PropertyUsecase) DeleteProperties(ctx context.Context, ids []uint64) er
 func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.ArchivePropertiesDTO) error {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	if len(req.IDs) == 0 {
-		return _errors.BadRequestException("No property IDs provided")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("No property IDs provided"))
 	}
 
 	for _, id := range req.IDs {
 		property, err := u.PropertyRepo.GetOneByID(ctx, id)
 		if err != nil {
-			return _errors.InternalServerException("Failed to validate property ID: " + err.Error())
+			return fmt.Errorf("validate property id %d: %w", id, err)
 		}
 		if property == nil {
-			return _errors.NotFoundException(fmt.Sprintf("Property with ID %d not found", id))
+			return _errors.ReturnError(service.PropertyNotFound, _errors.WithPublicMessage(fmt.Sprintf("Property with ID %d not found", id)))
 		}
 	}
 
@@ -1420,20 +1421,20 @@ func (u *PropertyUsecase) ArchiveProperties(ctx context.Context, req *dto.Archiv
 func (u *PropertyUsecase) HideProperties(ctx context.Context, ids []uint64, hidden bool) error {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	if len(ids) == 0 {
-		return _errors.BadRequestException("No property IDs provided")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("No property IDs provided"))
 	}
 
 	for _, id := range ids {
 		property, err := u.PropertyRepo.GetOneByID(ctx, id)
 		if err != nil {
-			return _errors.InternalServerException("Failed to validate property ID: " + err.Error())
+			return fmt.Errorf("validate property id %d: %w", id, err)
 		}
 		if property == nil {
-			return _errors.NotFoundException(fmt.Sprintf("Property with ID %d not found", id))
+			return _errors.ReturnError(service.PropertyNotFound, _errors.WithPublicMessage(fmt.Sprintf("Property with ID %d not found", id)))
 		}
 	}
 
@@ -1596,7 +1597,7 @@ func (u *PropertyUsecase) checkPermission(ctx context.Context, lineage *domain.P
 		return enums.ActorRoleCollaborator, err
 	}
 	if propertyUser == nil {
-		return enums.ActorRoleCollaborator, _errors.ForbiddenException("You don't have permission to update this property")
+		return enums.ActorRoleCollaborator, _errors.ReturnError(service.PropertyUpdateDenied)
 	}
 	return u.determineActorRole(propertyUser, userID), nil
 }
@@ -2065,7 +2066,7 @@ func (u *PropertyUsecase) handleSideBlocks(
 ) error {
 	originID := _utils.GetOriginIdFromContext(ctx)
 	if originID == 0 {
-		return _errors.UnauthorizedException("origin_id required")
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("origin_id required"), _errors.WithLegacyCode(401))
 	}
 
 	if cmd.Media != nil {
@@ -2551,7 +2552,7 @@ func (u *PropertyUsecase) checkDuplicateReport(ctx context.Context, lineageID, r
 		return err
 	}
 	if existing != nil {
-		return _errors.ConflictException("you already have a pending report for this property")
+		return _errors.ReturnError(service.PropertyReportAlreadyPending)
 	}
 	return nil
 }

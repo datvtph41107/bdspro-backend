@@ -1,6 +1,7 @@
 package shared_usecase
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -10,7 +11,7 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"time"
@@ -104,10 +105,7 @@ func (s *SharingAccessUsecase) CanAccessAsset(c context.Context, assetId uint64)
 		return err
 	}
 	if asset.CreatedBy == nil || *asset.CreatedBy != profileId {
-		return &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return _errors.ReturnError(service.AccessDenied)
 	}
 
 	return nil
@@ -285,10 +283,7 @@ func (s *SharingAccessUsecase) RequiredOwner(c context.Context, id uint64) (*dom
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	if asset.CreatedBy == nil || *asset.CreatedBy != profileId {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return nil, _errors.ReturnError(service.AccessDenied)
 	}
 	return asset, nil
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"hub/internal"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -259,12 +260,12 @@ func (u *VersionUsecase) sendNotificationToAllUsers(ctx context.Context, version
 
 func (u *VersionUsecase) UpdateBundleVersion(ctx context.Context, bundleVersion *domain.VersionEntity) (*domain.VersionEntity, error) {
 	if bundleVersion.ID == 0 {
-		return nil, _errors.ReturnError(400, "Thiếu ID")
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 
 	oldBundleVersion, err := u.Repo.GetByID(ctx, bundleVersion.ID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể lấy thông tin phiên bản bundle: "+err.Error())
+		return nil, fmt.Errorf("get bundle version: %w", err)
 	}
 
 	oldBundleVersion.ForceUpdate = bundleVersion.ForceUpdate
@@ -273,7 +274,7 @@ func (u *VersionUsecase) UpdateBundleVersion(ctx context.Context, bundleVersion 
 	print("oldBundleVersion", oldBundleVersion.Active)
 
 	if err := u.Repo.Update(ctx, oldBundleVersion.ID, oldBundleVersion); err != nil {
-		return nil, _errors.ReturnError(500, "Không thể cập nhật phiên bản bundle: "+err.Error())
+		return nil, fmt.Errorf("update bundle version: %w", err)
 	}
 	return bundleVersion, nil
 }

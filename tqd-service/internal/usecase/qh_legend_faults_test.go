@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
@@ -56,7 +57,7 @@ func TestQHLayerLegendInvalidTypeIsCanonical(t *testing.T) {
 	assertQHLayerLegendFault(
 		t,
 		err,
-		fault.KindValidation,
+		codes.InvalidArgument,
 		"tqd.legend.legend_type_invalid",
 	)
 }
@@ -71,7 +72,7 @@ func TestQHLayerLegendRecordNotFoundIsCanonical(t *testing.T) {
 	assertQHLayerLegendFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.legend.record_not_found",
 	)
 }
@@ -90,7 +91,7 @@ func TestQHLayerLegendLayerNotFoundIsCanonical(t *testing.T) {
 	assertQHLayerLegendFault(
 		t,
 		err,
-		fault.KindNotFound,
+		codes.NotFound,
 		"tqd.legend.layer_not_found",
 	)
 }
@@ -115,7 +116,7 @@ func TestQHLayerLegendDuplicateIsCanonical(t *testing.T) {
 	assertQHLayerLegendFault(
 		t,
 		err,
-		fault.KindConflict,
+		codes.AlreadyExists,
 		"tqd.legend.duplicate",
 	)
 }
@@ -140,7 +141,7 @@ func TestQHLayerLegendPreservesDependencyCause(t *testing.T) {
 		)
 	}
 
-	if _, ok := fault.As(err); ok {
+	if _, ok := _errors.As(err); ok {
 		t.Fatalf(
 			"technical dependency error was incorrectly classified: %v",
 			err,
@@ -151,32 +152,32 @@ func TestQHLayerLegendPreservesDependencyCause(t *testing.T) {
 func assertQHLayerLegendFault(
 	t *testing.T,
 	err error,
-	kind fault.Kind,
+	rpcCode codes.Code,
 	code string,
 ) {
 	t.Helper()
 
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
 		t.Fatalf(
-			"error type = %T, want canonical fault: %v",
+			"error type = %T, want canonical application error: %v",
 			err,
 			err,
 		)
 	}
 
-	if failure.Kind() != kind {
+	if application.RPCCode() != rpcCode {
 		t.Fatalf(
 			"kind = %q, want %q",
-			failure.Kind(),
-			kind,
+			application.RPCCode(),
+			rpcCode,
 		)
 	}
 
-	if failure.Code() != code {
+	if application.Spec().LegacyProblemCode() != code {
 		t.Fatalf(
 			"code = %q, want %q",
-			failure.Code(),
+			application.Spec().LegacyProblemCode(),
 			code,
 		)
 	}

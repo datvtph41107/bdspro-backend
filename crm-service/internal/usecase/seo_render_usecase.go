@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"crm/internal"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -38,7 +39,7 @@ func NewSeoRenderUsecase(
 
 func (u *SeoRenderUsecase) PreviewSeoPage(ctx context.Context, req *dto.RenderSeoPreviewRequest) (*dto.RenderSeoPreviewResponse, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 
 	warnings := validatePreviewWarnings(req.Title, req.Description, req.CanonicalURL, req.Content)
@@ -75,7 +76,7 @@ func (u *SeoRenderUsecase) PreviewSeoPage(ctx context.Context, req *dto.RenderSe
 
 func (u *SeoRenderUsecase) PreviewExistingSeoPage(ctx context.Context, req *dto.RenderExistingSeoPreviewRequest) (*dto.RenderSeoPreviewResponse, error) {
 	if req == nil || req.ID == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	page, err := u.seoDomainRepo.GetByID(ctx, req.ID)
@@ -83,7 +84,7 @@ func (u *SeoRenderUsecase) PreviewExistingSeoPage(ctx context.Context, req *dto.
 		return nil, err
 	}
 	if page == nil {
-		return nil, _errors.ReturnError(404, "seo page không tồn tại")
+		return nil, _errors.ReturnError(service.SEOPageNotFound)
 	}
 
 	content := page.Content
@@ -118,7 +119,7 @@ func (u *SeoRenderUsecase) PreviewExistingSeoPage(ctx context.Context, req *dto.
 
 func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.GenerateSeoPageRequest) (*dto.GenerateSeoPageResponse, error) {
 	if req == nil || req.ID == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	page, err := u.seoDomainRepo.GetByID(ctx, req.ID)
@@ -126,7 +127,7 @@ func (u *SeoRenderUsecase) GenerateSeoPage(ctx context.Context, req *dto.Generat
 		return nil, err
 	}
 	if page == nil {
-		return nil, _errors.ReturnError(404, "seo page không tồn tại")
+		return nil, _errors.ReturnError(service.SEOPageNotFound)
 	}
 
 	if err := validatePageCanGenerate(page); err != nil {
@@ -330,19 +331,19 @@ func validatePreviewWarnings(title string, description string, canonicalURL stri
 
 func validatePageCanGenerate(page *seo_domain.SeoDomain) error {
 	if page == nil {
-		return _errors.ReturnError(404, "seo page không tồn tại")
+		return _errors.ReturnError(service.SEOPageNotFound)
 	}
 
 	page.NormalizeLifecycle()
 
 	if page.PageStatus != seo_domain.SeoPageStatusPublished || !page.Published {
-		return _errors.ReturnError(409, "chỉ generate SEO page đã published")
+		return _errors.ReturnError(service.SEOPublishedPageRequiredForGenerate)
 	}
 	if strings.TrimSpace(page.Title) == "" {
-		return _errors.ReturnError(422, "title là bắt buộc để generate")
+		return _errors.ReturnError(service.SEOTitleRequiredForGenerate)
 	}
 	if strings.TrimSpace(page.CanonicalURL) == "" {
-		return _errors.ReturnError(422, "canonicalUrl là bắt buộc để generate")
+		return _errors.ReturnError(service.SEOCanonicalURLRequiredForGenerate)
 	}
 	return nil
 }

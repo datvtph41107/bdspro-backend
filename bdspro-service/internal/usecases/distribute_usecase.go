@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bdspro/internal"
 	"context"
 	"fmt"
 	"log/slog"
@@ -52,7 +53,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 	req *dto.DistributeDTO,
 ) (*dto.DistributeResultDTO, error) {
 	if err := req.Validate(false); err != nil {
-		return nil, _errors.BadRequestException("Validate: ", err.Error())
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	var resp *dto.DistributeResultDTO
@@ -71,7 +72,7 @@ func (uc *DistributionUsecase) CreateDistribute(
 
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
 			logger.Error("create distribution failed", slog.Any("error", err))
-			return _errors.InternalServerException("create distribution failed")
+			return fmt.Errorf("create distribution: %w", err)
 		}
 
 		// Tạo ProductPrice mới
@@ -86,14 +87,14 @@ func (uc *DistributionUsecase) CreateDistribute(
 		)
 		if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
 			logger.Error("create product price failed", slog.Any("error", err))
-			return _errors.InternalServerException("create product price failed")
+			return fmt.Errorf("create product price: %w", err)
 		}
 
 		// Cập nhật PriceID vào distribution
 		dist.PriceID = &productPrice.ID
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
 			logger.Error("update distribution priceId failed", slog.Any("error", err))
-			return _errors.InternalServerException("update distribution priceId failed")
+			return fmt.Errorf("update distribution price id: %w", err)
 		}
 
 		if err := uc.distributionRepo.AssignPartner(
@@ -155,7 +156,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 	req *dto.DistributeDTO,
 ) (*dto.DistributeResultDTO, error) {
 	if err := req.Validate(true); err != nil {
-		return nil, _errors.BadRequestException(err.Error())
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	var resp *dto.DistributeResultDTO
@@ -163,14 +164,14 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		logger := logging.FromContext(txCtx)
 		dist, err := uc.distributionRepo.FindByID(txCtx, distID)
 		if err != nil {
-			return _errors.InternalServerException("load distribution failed")
+			return fmt.Errorf("load distribution: %w", err)
 		}
 		if dist == nil {
-			return _errors.NotFoundException("distribution not found")
+			return _errors.ReturnError(service.DistributionNotFound, _errors.WithPublicMessage("distribution not found"))
 		}
 
 		if dist.RevokedAt != nil || time.Now().After(*dist.ToDate) {
-			return _errors.BadRequestException("distribution has been revoked")
+			return _errors.ReturnError(service.DistributionRevoked)
 		}
 
 		// Kiểm tra xem Price hoặc CommissionValue có thay đổi không
@@ -237,7 +238,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 			)
 			if err := uc.productPriceRepo.Create(txCtx, productPrice); err != nil {
 				logger.Error("create product price failed", slog.Any("error", err))
-				return _errors.InternalServerException("create product price failed")
+				return fmt.Errorf("create product price: %w", err)
 			}
 
 			// Cập nhật PriceID vào distribution
@@ -259,7 +260,7 @@ func (uc *DistributionUsecase) UpdateDistribute(
 		}
 
 		if err := uc.distributionRepo.Save(txCtx, dist); err != nil {
-			return _errors.InternalServerException("update distribution failed")
+			return fmt.Errorf("update distribution: %w", err)
 		}
 
 		// if err := uc.distributionRepo.AssignPartner(
@@ -360,7 +361,7 @@ func (uc *DistributionUsecase) mapToResultDTO(
 func (uc *DistributionUsecase) RevokeDistribute(ctx context.Context, distributeID uint64, revoke dto.RevokeDTO) error {
 	now := time.Now()
 	if err := uc.distributionRepo.Revoke(ctx, distributeID, now, revoke); err != nil {
-		return _errors.InternalServerException("Failed to revoke distribution")
+		return fmt.Errorf("revoke distribution: %w", err)
 	}
 	return nil
 }
@@ -368,10 +369,10 @@ func (uc *DistributionUsecase) RevokeDistribute(ctx context.Context, distributeI
 func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, disID uint64) (*dto.DistributionWithPartners, error) {
 	dist, err := uc.distributionRepo.FindByIdWithPartner(ctx, disID)
 	if err != nil {
-		return nil, _errors.InternalServerException("Failed to fetch distribution")
+		return nil, fmt.Errorf("fetch distribution: %w", err)
 	}
 	if dist == nil {
-		return nil, _errors.NotFoundException("Distribution not found")
+		return nil, _errors.ReturnError(service.DistributionNotFound)
 	}
 	dist.Status = displayStatus(dist)
 
@@ -381,7 +382,7 @@ func (uc *DistributionUsecase) GetDistributeWithPartners(ctx context.Context, di
 func (uc *DistributionUsecase) GetListDistributesWithPartners(ctx context.Context, productID uint64, filter *dto.FilterDistributeDTO) ([]*dto.DistributionWithPartners, error) {
 	distributes, err := uc.distributionRepo.GetListDistrByProduct(ctx, productID, filter)
 	if err != nil {
-		return nil, _errors.InternalServerException("Failed to get distribution list")
+		return nil, fmt.Errorf("list distributions: %w", err)
 	}
 
 	for _, dist := range distributes {
@@ -416,7 +417,7 @@ func displayStatus(dist *dto.DistributionWithPartners) enums.DistributionStatus 
 func (uc *DistributionUsecase) GetListPartnersOfDistribute(ctx context.Context, disID uint64) ([]*domain.ProductUser, error) {
 	partners, err := uc.distributionRepo.GetListPartnersOfDistribute(ctx, disID)
 	if err != nil {
-		return nil, _errors.InternalServerException("Failed to get partners")
+		return nil, fmt.Errorf("list distribution partners: %w", err)
 	}
 	return partners, nil
 }
@@ -426,7 +427,7 @@ func (uc *DistributionUsecase) RevokeUserFromDistribute(ctx context.Context, dis
 		// Xóa user khỏi product_user và lấy số lượng còn lại
 		remainingCount, err := uc.distributionRepo.RevokeUser(txCtx, distributeID, originProfileID)
 		if err != nil {
-			return _errors.InternalServerException(err.Error())
+			return fmt.Errorf("revoke distribution user: %w", err)
 		}
 
 		// Nếu distribute chỉ còn 0 product_user, revoke distribute
@@ -437,7 +438,7 @@ func (uc *DistributionUsecase) RevokeUserFromDistribute(ctx context.Context, dis
 				ReasonOther: "Xóa đối tác",
 			}
 			if err := uc.distributionRepo.Revoke(txCtx, distributeID, now, revoke); err != nil {
-				return _errors.InternalServerException("Failed to revoke distribute")
+				return fmt.Errorf("revoke distribution: %w", err)
 			}
 		}
 

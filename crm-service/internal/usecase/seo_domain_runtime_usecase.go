@@ -3,6 +3,7 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"crm/internal"
 	seo_domain "crm/internal/domain/seo"
 	"crm/internal/dto"
 	"strings"
@@ -11,7 +12,7 @@ import (
 func (u *SeoDomainUsecase) GetInternalSeoRenderDataBySlug(ctx context.Context, slug string) (*dto.InternalSeoRenderDataResponse, error) {
 	slug = strings.Trim(strings.TrimSpace(slug), "/")
 	if slug == "" {
-		return nil, _errors.ReturnError(400, "slug không được để trống")
+		return nil, _errors.ReturnError(service.SEOSlugRequired)
 	}
 
 	seoDomain, err := u.seoDomainRepo.GetBySlug(ctx, slug)
@@ -19,13 +20,13 @@ func (u *SeoDomainUsecase) GetInternalSeoRenderDataBySlug(ctx context.Context, s
 		return nil, err
 	}
 	if seoDomain == nil {
-		return nil, _errors.ReturnError(404, "seo domain không tồn tại")
+		return nil, _errors.ReturnError(service.SEODomainNotFound)
 	}
 	if !seoDomain.Published {
-		return nil, _errors.ReturnError(404, "seo domain chưa publish")
+		return nil, _errors.ReturnError(service.SEODomainUnpublished)
 	}
 	if !seoDomain.IsIndex {
-		return nil, _errors.ReturnError(404, "seo domain không cho index")
+		return nil, _errors.ReturnError(service.SEODomainIndexDenied)
 	}
 
 	return &dto.InternalSeoRenderDataResponse{

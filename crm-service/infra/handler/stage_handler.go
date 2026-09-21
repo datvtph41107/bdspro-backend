@@ -2,8 +2,9 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -70,10 +71,7 @@ func (s *StageService) Create(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 	domain := mapper.StagePbToDomain(req)
 
 	if req.PipelineId == 0 || req.StageName == "" {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "pipelineId and stageName are required",
-		}
+		return nil, _errors.ReturnError(service.StageCreateFieldsRequired)
 	}
 
 	result, err := s.UC.Create(ctx, domain)
@@ -114,10 +112,7 @@ func (s *StageService) Update(ctx context.Context, req *crmpb.StageDTO) (*crmpb.
 // @Router /stage/{id} [delete]
 func (s *StageService) Delete(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req.Id == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "id is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired)
 	}
 
 	err := s.UC.Delete(ctx, req.Id)

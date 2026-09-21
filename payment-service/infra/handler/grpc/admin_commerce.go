@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"common/fault"
+	_errors "common/errors"
 	"common/identity"
 	"common/request"
 	payment "payment/internal/domain/payment"
@@ -174,8 +174,8 @@ func adminPaymentError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
+	if _, ok := _errors.As(err); ok {
+		return _errors.ToGRPC(err)
 	}
 	switch {
 	case errors.Is(err, payment.ErrInvalidCommand):

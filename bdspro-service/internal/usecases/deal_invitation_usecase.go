@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"bdspro/internal"
+	_errors "common/errors"
 	"context"
 	"errors"
 	"fmt"
@@ -105,7 +107,7 @@ func (u *dealInvitationUsecase) SendInvitation(ctx context.Context, invitation *
 		return nil, err
 	}
 	if exists {
-		return nil, dealInvitationAlreadyExistsFault()
+		return nil, _errors.ReturnError(service.DealInvitationAlreadyExists, _errors.WithCause(domain.ErrDealInvitationAlreadyExists))
 		// return nil, custom_error.InvalidRequest(&errdetails.BadRequest{
 		// 	FieldViolations: []*errdetails.BadRequest_FieldViolation{
 		// 		{

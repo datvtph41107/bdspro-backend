@@ -46,8 +46,14 @@ var GrpcCmd = &cobra.Command{
 		defer func() { _ = lis.Close() }()
 		s := grpc.NewServer(
 			// grpc.UnaryInterceptor(common.ProfileIDInterceptor),
-			grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
-			grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
+			grpc.ChainUnaryInterceptor(
+				_middleware.ParseGrpcMetadataContextMiddleware,
+				_middleware.UnaryErrorInterceptor(),
+			),
+			grpc.ChainStreamInterceptor(
+				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+				_middleware.StreamErrorInterceptor(),
+			),
 		)
 		pb_social.RegisterNewsFeedServiceServer(s, app.NewsFeedService)
 		pb_social.RegisterReportServiceServer(s, app.ReportService)

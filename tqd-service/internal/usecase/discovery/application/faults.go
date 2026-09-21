@@ -1,10 +1,10 @@
 package application
 
-import "common/fault"
+import (
+	_errors "common/errors"
+	"tqd/internal"
+)
 
 func invalidCoordinateFault() error {
-	return fault.Validation(
-		"tqd.discovery.coordinate_invalid",
-		"invalid latitude/longitude",
-	)
+	return _errors.ReturnError(service.DiscoveryCoordinateInvalid)
 }

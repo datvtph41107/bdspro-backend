@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"common/fault"
+	commonhttp "common/httpresponse"
 	_utils "common/utils"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
@@ -153,38 +153,14 @@ func parseLabelMappingsForm(c *gin.Context) (map[string]uint64, error) {
 }
 
 func importHTTPProblem(err error) (int, gin.H) {
-	failure, ok := fault.As(err)
-	if !ok {
-		failure = fault.Wrap(
-			err,
-			fault.KindInternal,
-			"tqd.import.internal",
-			"import operation failed",
-		)
+	problem := commonhttp.ProblemFromError(err)
+	statusCode := problem.Status
+	// Historical direct-import HTTP mapped FailedPrecondition to 409.
+	if statusCode == http.StatusPreconditionFailed {
+		statusCode = http.StatusConflict
 	}
-	return importHTTPStatus(failure.Kind()), gin.H{
-		"error":      failure.PublicMessage(),
-		"error_code": failure.Code(),
-	}
-}
-
-func importHTTPStatus(kind fault.Kind) int {
-	switch kind {
-	case fault.KindValidation:
-		return http.StatusBadRequest
-	case fault.KindUnauthenticated:
-		return http.StatusUnauthorized
-	case fault.KindPermissionDenied:
-		return http.StatusForbidden
-	case fault.KindNotFound:
-		return http.StatusNotFound
-	case fault.KindConflict, fault.KindPrecondition, fault.KindAborted:
-		return http.StatusConflict
-	case fault.KindResourceExhausted:
-		return http.StatusTooManyRequests
-	case fault.KindUnavailable:
-		return http.StatusServiceUnavailable
-	default:
-		return http.StatusInternalServerError
+	return statusCode, gin.H{
+		"error":      problem.Detail,
+		"error_code": problem.Code,
 	}
 }

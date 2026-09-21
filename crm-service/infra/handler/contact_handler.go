@@ -4,7 +4,6 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_provider "common/domain/provider"
-	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
@@ -71,7 +70,7 @@ func (s *ContactService) GetInterestedContactsByProduct(
 		},
 	)
 	if err != nil {
-		return nil, _errors.InternalServerException("GetInterestedContactsByProduct Error: ", err.Error())
+		return nil, fmt.Errorf("get interested contacts by product: %w", err)
 	}
 
 	return &crmpb.ContactProductInterestResponse{

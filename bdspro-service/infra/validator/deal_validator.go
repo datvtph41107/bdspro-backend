@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"bdspro/internal"
 	_errors "common/errors"
 	bdspropb "pb/types/bdspro"
 
@@ -35,7 +36,7 @@ func (v *groupDealValidator) ValidateCreateGroupDealRequest(request *bdspropb.Cr
 		// 		},
 		// 	},
 		// })
-		return _errors.ReturnError(400, "name is required")
+		return _errors.ReturnError(service.DealNameRequired)
 	}
 	// if request.TargetProfit <= 0 {
 	// 	details = append(details, &errdetails.BadRequest{

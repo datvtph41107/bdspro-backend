@@ -1,12 +1,13 @@
 package shared_usecase
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/common"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 )
@@ -35,10 +36,7 @@ func (uc *AssetCostTypeUsecase) CheckPermission(c context.Context, id uint64) er
 	}
 
 	if assetCostType.OwnerID != profileId || assetCostType.OwnerType != enums.EOwnerOfMember {
-		return &_routes.Except{
-			Code:    403,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return _errors.ReturnError(service.AccessDenied, _errors.WithLegacyCode(403))
 	}
 	return nil
 }

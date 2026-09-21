@@ -2,9 +2,10 @@ package usecase
 
 import (
 	base_enum "base/enum"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -42,10 +43,7 @@ func NewPipelineUsecase(
 func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO, withStages bool) ([]domain.PipelineEntity, int64, error) {
 	organizationId := _utils.GetOrganizationIdFromContext(ctx)
 	if organizationId == 0 {
-		return nil, 0, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình",
-		}
+		return nil, 0, _errors.ReturnError(service.PipelineAccessDenied)
 	}
 
 	// if err := u.permissionUsecase.UserInOwner(c, ownerId, ownerType); err != nil {
@@ -58,10 +56,7 @@ func (u *PipelineUsecase) Search(ctx context.Context, dto dto.PipelineSearchDTO,
 func (u *PipelineUsecase) Create(c context.Context, entity *domain.PipelineEntity) (*domain.PipelineEntity, error) {
 	organizationId := _utils.GetOrganizationIdFromContext(c)
 	if organizationId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình",
-		}
+		return nil, _errors.ReturnError(service.PipelineAccessDenied)
 	}
 	err := u.permissionUsecase.UserInOwner(c, organizationId, base_enum.EOwnerOfOrgnization)
 	if err != nil {
@@ -111,10 +106,7 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 		return nil, err
 	}
 	if !entity.IsCustom {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền cập nhật quy trình mặc định",
-		}
+		return nil, _errors.ReturnError(service.DefaultPipelineUpdateDenied)
 	}
 
 	if err := u.permissionUsecase.UserInOwner(c, entity.OwnerID, entity.OwnerType); err != nil {
@@ -123,10 +115,7 @@ func (u *PipelineUsecase) Update(c context.Context, id uint64, dto *dto.Pipeline
 
 	organizationId := _utils.GetOrganizationIdFromContext(c)
 	if organizationId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình",
-		}
+		return nil, _errors.ReturnError(service.PipelineAccessDenied)
 	}
 	var pipeline *domain.PipelineEntity
 	err = u.transaction.WithTransaction(c, func(c context.Context) error {
@@ -184,10 +173,7 @@ func (u *PipelineUsecase) Delete(c context.Context, id uint64) error {
 		return err
 	}
 	if existed {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Quy trình này đang có khách hàng",
-		}
+		return _errors.ReturnError(service.PipelineHasCustomers)
 	}
 
 	err = u.pipelineRepo.Delete(c, id)
@@ -220,18 +206,12 @@ func (u *PipelineUsecase) GetByID(c context.Context, id uint64) (*domain.Pipelin
 func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity, *domain.StageEntity, error) {
 	organizationId := _utils.GetOrganizationIdFromContext(c)
 	if organizationId == 0 {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình mặc định",
-		}
+		return nil, nil, _errors.ReturnError(service.DefaultPipelineAccessDenied)
 	}
 
 	profileId := _utils.GetProfileIdWithContext(c)
 	if profileId == 0 {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình mặc định",
-		}
+		return nil, nil, _errors.ReturnError(service.DefaultPipelineAccessDenied)
 	}
 
 	pipeline, err := u.pipelineRepo.GetDefault(c, organizationId)

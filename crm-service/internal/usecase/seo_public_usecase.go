@@ -3,6 +3,7 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"crm/internal"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -25,7 +26,7 @@ func NewSeoPublicUsecase(seoDomainRepo repo.SeoDomainRepo) *SeoPublicUsecase {
 func (u *SeoPublicUsecase) GetPublicSeoPageBySlug(ctx context.Context, slug string) (*dto.SeoPublicPageResponse, error) {
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
-		return nil, _errors.ReturnError(400, "slug không hợp lệ")
+		return nil, _errors.ReturnError(service.SEOSlugInvalid)
 	}
 
 	page, err := u.seoDomainRepo.GetBySlug(ctx, slug)
@@ -39,7 +40,7 @@ func (u *SeoPublicUsecase) GetPublicSeoPageBySlug(ctx context.Context, slug stri
 func (u *SeoPublicUsecase) GetPublicSeoPageByCanonicalURL(ctx context.Context, canonicalURL string) (*dto.SeoPublicPageResponse, error) {
 	canonicalURL = strings.TrimSpace(canonicalURL)
 	if canonicalURL == "" {
-		return nil, _errors.ReturnError(400, "canonical URL không hợp lệ")
+		return nil, _errors.ReturnError(service.SEOCanonicalURLInvalid)
 	}
 
 	page, err := u.seoDomainRepo.GetByCanonicalURL(ctx, canonicalURL)
@@ -91,7 +92,7 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 ) (*dto.SeoPublicDocumentResponse, error) {
 	moduleID = normalizeSeoModuleID(moduleID)
 	if moduleID == "" || moduleID == "default" {
-		return nil, _errors.ReturnError(400, "SEO module không được hỗ trợ")
+		return nil, _errors.ReturnError(service.SEOModuleUnsupported)
 	}
 	slug, err := normalizePublicSeoSlug(slug)
 	if err != nil {
@@ -116,13 +117,13 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 	}
 	document, warnings, err := composeSeoPublicDocument(page, generatedAt)
 	if err != nil {
-		return nil, _errors.ReturnError(503, err.Error())
+		return nil, fmt.Errorf("compose SEO public document: %w", err)
 	}
 	if document.ModuleID != moduleID {
-		return nil, _errors.ReturnError(503, fmt.Sprintf("SEO module contract mismatch: expected %s, got %s", moduleID, document.ModuleID))
+		return nil, _errors.ReturnError(service.SEOModuleContractMismatch, _errors.WithPublicMessage(fmt.Sprintf("SEO module contract mismatch: expected %s, got %s", moduleID, document.ModuleID)))
 	}
 	if document.Identity.CanonicalPath != canonicalPath || document.SEO.CanonicalPath != canonicalPath {
-		return nil, _errors.ReturnError(503, "SEO canonical contract mismatch")
+		return nil, _errors.ReturnError(service.SEOCanonicalContractMismatch)
 	}
 	payload, err := json.Marshal(document)
 	if err != nil {
@@ -140,17 +141,17 @@ func (u *SeoPublicUsecase) GetPublicSeoDocument(
 
 func validatePublicSeoPage(page *seo_domain.SeoDomain) error {
 	if page == nil {
-		return _errors.ReturnError(404, "seo page không tồn tại")
+		return _errors.ReturnError(service.SEOPageNotFound)
 	}
 	page.NormalizeLifecycle()
 	if page.PageStatus == seo_domain.SeoPageStatusArchived {
-		return _errors.ReturnError(410, "seo page đã archived")
+		return _errors.ReturnError(service.SEOPageArchived)
 	}
 	if page.PageStatus != seo_domain.SeoPageStatusPublished || !page.Published || page.Scope != seo_domain.SeoScopePublic {
-		return _errors.ReturnError(404, "seo page chưa được xuất bản công khai")
+		return _errors.ReturnError(service.SEOPageNotPublic)
 	}
 	if page.RenderStatus != seo_domain.SeoRenderStatusSuccess || strings.TrimSpace(page.RenderedHTML) == "" {
-		return _errors.ReturnError(503, "seo page chưa render thành công")
+		return _errors.ReturnError(service.SEOPageRenderIncomplete)
 	}
 	return nil
 }
@@ -178,7 +179,7 @@ func (u *SeoPublicUsecase) resolvePublicDocumentPage(
 		return nil, err
 	}
 	if page == nil {
-		return nil, _errors.ReturnError(404, "SEO page không tồn tại")
+		return nil, _errors.ReturnError(service.SEOPublicPageNotFound)
 	}
 	return page, nil
 }
@@ -193,7 +194,7 @@ func normalizePublicSeoSlug(value string) (string, error) {
 		lower == "undefined" ||
 		lower == "null" ||
 		strings.Contains(lower, "[object object]") {
-		return "", _errors.ReturnError(400, "slug không hợp lệ")
+		return "", _errors.ReturnError(service.SEOSlugInvalid)
 	}
 	return slug, nil
 }
@@ -209,7 +210,7 @@ func publicCanonicalPath(moduleID string, slug string) (string, error) {
 	}
 	prefix := prefixes[moduleID]
 	if prefix == "" {
-		return "", _errors.ReturnError(400, "SEO module chưa có public route contract")
+		return "", _errors.ReturnError(service.SEOPublicRouteContractMissing)
 	}
 	return prefix + "/" + strings.Trim(slug, "/"), nil
 }

@@ -3,75 +3,65 @@ package admin
 import (
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 )
 
-func TestValidateDraftCommandReturnsCanonicalTierRankFault(t *testing.T) {
+func TestValidateDraftCommandReturnsCanonicalTierRankError(t *testing.T) {
 	_, err := validateDraftCommand(DraftCommand{
 		ActorID:            1,
 		ProductDisplayName: "Professional",
 		TierRank:           0,
 	})
-	assertValidationFault(t, err, "catalog.plan_version.tier_rank_positive", "tier_rank")
+	assertValidationError(t, err, "USER_PLAN_TIER_RANK_MUST_BE_POSITIVE", "catalog.plan_version.tier_rank_positive", "tier_rank")
 }
 
-func TestNormalizeQueryReturnsCanonicalValidationFaults(t *testing.T) {
+func TestNormalizeQueryReturnsCanonicalValidationErrors(t *testing.T) {
 	testCases := []struct {
-		name      string
-		query     Query
-		code      string
-		fieldName string
+		name       string
+		query      Query
+		key        _errors.Key
+		legacyCode string
+		fieldName  string
 	}{
-		{
-			name:      "page size",
-			query:     Query{PageSize: 101},
-			code:      "catalog.plan_version.page_size_invalid",
-			fieldName: "page_size",
-		},
-		{
-			name:      "status",
-			query:     Query{Status: "unknown"},
-			code:      "catalog.plan_version.status_invalid",
-			fieldName: "status",
-		},
+		{"page size", Query{PageSize: 101}, "USER_PLAN_PAGE_SIZE_OUT_OF_RANGE", "catalog.plan_version.page_size_invalid", "page_size"},
+		{"status", Query{Status: "unknown"}, "USER_PLAN_STATUS_INVALID", "catalog.plan_version.status_invalid", "status"},
 	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			_, err := normalizeQuery(testCase.query)
-			assertValidationFault(t, err, testCase.code, testCase.fieldName)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := normalizeQuery(tc.query)
+			assertValidationError(t, err, tc.key, tc.legacyCode, tc.fieldName)
 		})
 	}
 }
 
-func TestValidateDraftCommandWrapsDomainValidationAsCanonicalFault(t *testing.T) {
+func TestValidateDraftCommandWrapsDomainValidationAsCanonicalError(t *testing.T) {
 	_, err := validateDraftCommand(DraftCommand{
 		ActorID:            1,
 		ProductDisplayName: "Professional",
 		TierRank:           1,
 	})
-	assertValidationFault(t, err, "catalog.plan_version.terms_invalid", "")
+	assertValidationError(t, err, "USER_PLAN_TERMS_INVALID", "catalog.plan_version.terms_invalid", "")
 }
 
-func assertValidationFault(t *testing.T, err error, code, fieldName string) {
+func assertValidationError(t *testing.T, err error, key _errors.Key, legacyCode, fieldName string) {
 	t.Helper()
 	if err == nil {
 		t.Fatal("expected validation error")
 	}
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault", err)
+		t.Fatalf("error type = %T, want canonical application error", err)
 	}
-	if failure.Kind() != fault.KindValidation {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), fault.KindValidation)
+	if application.Key() != key {
+		t.Fatalf("key = %q, want %q", application.Key(), key)
 	}
-	if failure.Code() != code {
-		t.Fatalf("code = %q, want %q", failure.Code(), code)
+	if application.Spec().LegacyProblemCode() != legacyCode {
+		t.Fatalf("legacy code = %q, want %q", application.Spec().LegacyProblemCode(), legacyCode)
 	}
 	if fieldName == "" {
 		return
 	}
-	violations := failure.Violations()
+	violations := application.Violations()
 	if len(violations) != 1 || violations[0].Field != fieldName {
 		t.Fatalf("violations = %+v, want field %q", violations, fieldName)
 	}

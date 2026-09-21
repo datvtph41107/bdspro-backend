@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -102,7 +103,7 @@ func (r *DealPostgresRepository) AddProductToDeal(
 	}
 
 	if result.RowsAffected == 0 {
-		return _errors.ConflictException("product already exists in deal")
+		return _errors.ReturnError(service.DealProductAlreadyExists)
 	}
 
 	return nil

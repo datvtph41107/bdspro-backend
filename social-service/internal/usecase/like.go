@@ -2,10 +2,10 @@ package usecase
 
 import (
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	"errors"
+	"social/internal"
 	"time"
 
 	"social/internal/domain"
@@ -43,10 +43,10 @@ func NewLikeUsecase(likeRepo repo.LikeRepo,
 func (u *LikeUsecase) LikeComment(ctx context.Context, targetId uint64, dislike bool) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "unauthorized",
-		}
+		return nil, _errors.ReturnError(
+			service.Unauthenticated,
+			_errors.WithPublicMessage("unauthorized"),
+		)
 	}
 	existComment, err := u.commentRepo.GetByID(ctx, targetId)
 	if err != nil {
@@ -70,10 +70,10 @@ func (u *LikeUsecase) LikeComment(ctx context.Context, targetId uint64, dislike 
 func (u *LikeUsecase) UnlikeComment(ctx context.Context, targetId uint64) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "unauthorized",
-		}
+		return nil, _errors.ReturnError(
+			service.Unauthenticated,
+			_errors.WithPublicMessage("unauthorized"),
+		)
 	}
 	result, err := u.Unlike(ctx, targetId, enums.TargetTypeComment)
 	if err != nil {
@@ -88,10 +88,10 @@ func (u *LikeUsecase) UnlikeComment(ctx context.Context, targetId uint64) (*doma
 func (u *LikeUsecase) LikeNewsFeed(ctx context.Context, targetId uint64) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "unauthorized",
-		}
+		return nil, _errors.ReturnError(
+			service.Unauthenticated,
+			_errors.WithPublicMessage("unauthorized"),
+		)
 	}
 	existNewsFeed, err := u.newsFeedRepo.GetByID(ctx, targetId)
 	if err != nil {
@@ -114,10 +114,10 @@ func (u *LikeUsecase) LikeNewsFeed(ctx context.Context, targetId uint64) (*domai
 func (u *LikeUsecase) UnlikeNewsFeed(ctx context.Context, targetId uint64) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "unauthorized",
-		}
+		return nil, _errors.ReturnError(
+			service.Unauthenticated,
+			_errors.WithPublicMessage("unauthorized"),
+		)
 	}
 	result, err := u.Unlike(ctx, targetId, enums.TargetTypeNewsFeed)
 	if err != nil {
@@ -129,7 +129,7 @@ func (u *LikeUsecase) UnlikeNewsFeed(ctx context.Context, targetId uint64) (*dom
 func (u *LikeUsecase) Like(ctx context.Context, targetId uint64, targetType enums.TargetType, dislike bool) (*domain.Like, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated, _errors.WithPublicMessage("unauthorized"))
 	}
 	liked, _ := u.likeRepo.GetByTargetIdAndTypeAndUserId(ctx,
 		targetId,

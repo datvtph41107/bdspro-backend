@@ -5,6 +5,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/interface/provider"
@@ -57,10 +58,10 @@ func (u *RateUsecase) CreateRate(ctx context.Context, registryName string, rate 
 	ownerOf := u.registryUsecase.GetOwnerOfByRegistry(registryName)
 
 	if rate.OwnerID <= 0 {
-		return nil, _errors.ReturnError(400, "ownerId là bắt buộc")
+		return nil, _errors.ReturnError(service.OwnerIDRequired)
 	}
 	if ownerOf == 0 {
-		return nil, _errors.ReturnError(400, "registry không đúng")
+		return nil, _errors.ReturnError(service.RegistryInvalid)
 	} else {
 		rate.OwnerOf = ownerOf
 	}

@@ -2,12 +2,14 @@ package usecase
 
 import (
 	"context"
+
+	_errors "common/errors"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+	"tqd/internal"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
@@ -97,10 +99,10 @@ func (u *reportUsecase) processReport(reportID, userID uint64, reportType uint32
 func (u *reportUsecase) GetStatus(ctx context.Context, userID uint64, reportID uint64) (*domain.Report, error) {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return nil, errors.New("report not found")
+		return nil, _errors.ReturnError(service.ReportNotFound)
 	}
 	if report.UserID != userID {
-		return nil, errors.New("permission denied")
+		return nil, _errors.ReturnError(service.ReportPermissionDenied)
 	}
 	return report, nil
 }
@@ -108,13 +110,13 @@ func (u *reportUsecase) GetStatus(ctx context.Context, userID uint64, reportID u
 func (u *reportUsecase) Download(ctx context.Context, userID uint64, reportID uint64) (*domain.Report, error) {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return nil, errors.New("report not found")
+		return nil, _errors.ReturnError(service.ReportNotFound)
 	}
 	if report.UserID != userID {
-		return nil, errors.New("permission denied")
+		return nil, _errors.ReturnError(service.ReportPermissionDenied)
 	}
 	if report.Status != 30 {
-		return nil, errors.New("report not ready")
+		return nil, _errors.ReturnError(service.ReportNotReady)
 	}
 	return report, nil
 }
@@ -126,10 +128,10 @@ func (u *reportUsecase) ListUser(ctx context.Context, userID uint64, reportType 
 func (u *reportUsecase) Delete(ctx context.Context, userID uint64, reportID uint64) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	if report.UserID != userID {
-		return errors.New("permission denied")
+		return _errors.ReturnError(service.ReportPermissionDenied)
 	}
 	return u.repo.Delete(ctx, reportID)
 }
@@ -173,7 +175,7 @@ func (u *reportUsecase) AdminQueueSummary(ctx context.Context, actorID uint64) (
 func (u *reportUsecase) AdminGet(ctx context.Context, reportID uint64) (*domain.Report, error) {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return nil, errors.New("report not found")
+		return nil, _errors.ReturnError(service.ReportNotFound)
 	}
 	return report, nil
 }
@@ -222,11 +224,11 @@ func (u *reportUsecase) AdminCreateInternal(ctx context.Context, actorID uint64,
 
 func (u *reportUsecase) AdminAssign(ctx context.Context, reportID, assigneeID uint64) error {
 	if assigneeID == 0 {
-		return errors.New("assigneeId is required")
+		return _errors.ReturnError(service.ReportAssigneeIDRequired)
 	}
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	before := compactJSON(map[string]interface{}{
 		"assigneeId": report.AssigneeID, "qaStatus": uint32(report.QaStatus),
@@ -248,7 +250,7 @@ func (u *reportUsecase) AdminAssign(ctx context.Context, reportID, assigneeID ui
 func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64, severity uint32, reason string) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	before := compactJSON(map[string]interface{}{"severity": uint32(report.Severity)})
 	report.Severity = enums.ReportSeverity(severity)
@@ -268,11 +270,11 @@ func (u *reportUsecase) AdminUpdateSeverity(ctx context.Context, reportID uint64
 func (u *reportUsecase) AdminUpdateQaStatus(ctx context.Context, reportID uint64, qaStatus uint32, note string) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	to := enums.ReportQaStatus(qaStatus)
 	if !enums.CanTransitionReportQa(report.QaStatus, to) {
-		return errors.New("STATUS_TRANSITION_INVALID")
+		return _errors.ReturnError(service.ReportStatusTransitionInvalid)
 	}
 	before := compactJSON(map[string]interface{}{"qaStatus": uint32(report.QaStatus)})
 	report.QaStatus = to
@@ -296,7 +298,7 @@ func (u *reportUsecase) AdminUpdateQaStatus(ctx context.Context, reportID uint64
 func (u *reportUsecase) AdminUpdateLinkage(ctx context.Context, reportID uint64, linkage map[string]interface{}) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	if linkage == nil {
 		linkage = map[string]interface{}{}
@@ -582,7 +584,7 @@ func (u *reportUsecase) ResolveUserDisplays(ctx context.Context, reports []domai
 func (u *reportUsecase) AdminUpdateImages(ctx context.Context, reportID uint64, images []string) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	before := compactJSON(map[string]interface{}{"count": len(unmarshalReportImages(report.Images))})
 	next := sanitizeImageList(images)
@@ -634,7 +636,7 @@ func mergeUniqueStrings(existing, incoming []string) []string {
 func (u *reportUsecase) AdminClose(ctx context.Context, reportID uint64, reject bool, note string) error {
 	report, err := u.repo.GetByID(ctx, reportID)
 	if err != nil || report == nil {
-		return errors.New("report not found")
+		return _errors.ReturnError(service.ReportNotFound)
 	}
 	to := enums.ReportQaStatusClosed
 	action := "close"
@@ -645,7 +647,7 @@ func (u *reportUsecase) AdminClose(ctx context.Context, reportID uint64, reject 
 		eventNote = "Từ chối phản ánh"
 	}
 	if !enums.CanTransitionReportQa(report.QaStatus, to) {
-		return errors.New("STATUS_TRANSITION_INVALID")
+		return _errors.ReturnError(service.ReportStatusTransitionInvalid)
 	}
 	before := compactJSON(map[string]interface{}{"qaStatus": uint32(report.QaStatus)})
 	report.QaStatus = to

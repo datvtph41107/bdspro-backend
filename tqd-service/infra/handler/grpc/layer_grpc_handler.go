@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+	"tqd/internal"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -42,7 +43,7 @@ func NewLayerGrpcHandler(layerUsecase usecase.LayerUsecase, syncProvider *_utils
 func (h *LayerGrpcHandler) CreateLayer(ctx context.Context, req *tqdpb.CreateLayerRequest) (*tqdpb.LayerResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	// Validate required fields
@@ -227,7 +228,7 @@ func (h *LayerGrpcHandler) UpdateLayer(ctx context.Context, req *tqdpb.UpdateLay
 func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *tqdpb.ToggleLayerBasicVisibilityRequest) (*tqdpb.LayerResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
@@ -250,7 +251,7 @@ func (h *LayerGrpcHandler) ToggleLayerBasicVisibility(ctx context.Context, req *
 func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLayerRequest) (*sharepb.Empty, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if err := h.layerUsecase.Delete(ctx, req.Id, userID); err != nil {
@@ -267,7 +268,7 @@ func (h *LayerGrpcHandler) DeleteLayer(ctx context.Context, req *tqdpb.DeleteLay
 func (h *LayerGrpcHandler) HardDeleteLayer(ctx context.Context, req *tqdpb.DeleteLayerRequest) (*sharepb.Empty, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if err := h.layerUsecase.HardDelete(ctx, req.Id, userID); err != nil {
@@ -417,7 +418,7 @@ func (h *LayerGrpcHandler) SearchTxtClientLayer(ctx context.Context, req *tqdpb.
 		Pagable: _dto.Pagable{Page: 0, Size: 100},
 	})
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("list layer permissions: %w", err)
 	}
 
 	protoLayers := make([]*tqdpb.LayerResponse, 0, len(layers))

@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
-	"common/fault"
+	_errors "common/errors"
 	_utils "common/utils"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	tqdpb "pb/types/tqd"
+	"tqd/internal"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
 )
@@ -28,11 +29,7 @@ func NewQHAuthorityIssuringGrpcHandler(uc usecase.QHAuthorityIssuringUsecase) *Q
 // CreateAuthorityIssuring — POST /v2/tqd/qh/admin/authority-issuring
 func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Context, req *tqdpb.CreateAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil {
-		return nil, qhAuthorityIssuringValidation(
-			"tqd.qh_authority_issuring.request_required",
-			"request is required",
-			"",
-		)
+		return nil, _errors.ReturnError(service.AuthorityRequestRequired)
 	}
 	row := &qh_domain.QHAuthorityIssuring{
 		Name:        strings.TrimSpace(req.Name),
@@ -49,10 +46,9 @@ func (h *QHAuthorityIssuringGrpcHandler) CreateAuthorityIssuring(ctx context.Con
 // GetAuthorityIssuring — GET /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) GetAuthorityIssuring(ctx context.Context, req *tqdpb.GetAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhAuthorityIssuringValidation(
-			"tqd.qh_authority_issuring.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.AuthorityIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	out, err := h.uc.GetByID(ctx, req.Id)
@@ -65,10 +61,9 @@ func (h *QHAuthorityIssuringGrpcHandler) GetAuthorityIssuring(ctx context.Contex
 // UpdateAuthorityIssuring — PUT /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Context, req *tqdpb.UpdateAuthorityIssuringRequest) (*tqdpb.QHAuthorityIssuringResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhAuthorityIssuringValidation(
-			"tqd.qh_authority_issuring.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.AuthorityIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	in := &usecase.QHAuthorityIssuringUpdateInput{}
@@ -82,11 +77,7 @@ func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Con
 		in.Description = req.Description
 	}
 	if in.Name == nil && in.Code == nil && in.Description == nil {
-		return nil, qhAuthorityIssuringValidation(
-			"tqd.qh_authority_issuring.update_fields_required",
-			"at least one field to update is required",
-			"",
-		)
+		return nil, _errors.ReturnError(service.AuthorityUpdateFieldsRequired)
 	}
 	out, err := h.uc.Update(ctx, req.Id, in)
 	if err != nil {
@@ -98,10 +89,9 @@ func (h *QHAuthorityIssuringGrpcHandler) UpdateAuthorityIssuring(ctx context.Con
 // DeleteAuthorityIssuring — DELETE /v2/tqd/qh/admin/authority-issuring/{id}
 func (h *QHAuthorityIssuringGrpcHandler) DeleteAuthorityIssuring(ctx context.Context, req *tqdpb.DeleteAuthorityIssuringRequest) (*emptypb.Empty, error) {
 	if req == nil || req.Id == 0 {
-		return nil, qhAuthorityIssuringValidation(
-			"tqd.qh_authority_issuring.id_required",
-			"id is required",
-			"id",
+		return nil, _errors.ReturnError(
+			service.AuthorityIDRequired,
+			_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
 		)
 	}
 	if err := h.uc.Delete(ctx, req.Id); err != nil {
@@ -135,29 +125,9 @@ func (h *QHAuthorityIssuringGrpcHandler) ListAuthorityIssuring(ctx context.Conte
 	}, nil
 }
 
-func qhAuthorityIssuringValidation(code, message, field string) error {
-	violations := make([]fault.FieldViolation, 0, 1)
-	if field != "" {
-		violations = append(violations, fault.FieldViolation{Field: field, Description: message})
-	}
-	return fault.ToGRPC(fault.Validation(code, message, violations...))
-}
-
 func qhAuthorityIssuringError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.qh_authority_issuring.internal",
-		"authority issuring operation failed",
-	))
+	return _errors.ToGRPC(err)
 }
-
 func toQHAuthorityIssuringPB(e *qh_domain.QHAuthorityIssuring) *tqdpb.QHAuthorityIssuringResponse {
 	if e == nil {
 		return nil

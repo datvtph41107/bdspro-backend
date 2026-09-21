@@ -3,9 +3,10 @@ package admin_handler
 import (
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
+	"bdspro/internal"
 	"bdspro/internal/dto"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
@@ -78,26 +79,17 @@ func (h *AdminProductHandler) CreateProduct(ctx context.Context, req *bdspropb.P
 
 	// Validate required fields
 	if req.Name == "" {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tên sản phẩm không được để trống",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Tên sản phẩm không được để trống"))
 	}
 
 	if req.OwnerId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "OwnerId không được để trống",
-		}
+		return nil, _errors.ReturnError(service.OwnerIDRequired, _errors.WithPublicMessage("OwnerId không được để trống"))
 	}
 
 	// Convert proto request to DTO
 	product := h.ProductMapper.ProductSavePbToDTO(req)
 	if product == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu sản phẩm không hợp lệ",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Dữ liệu sản phẩm không hợp lệ"))
 	}
 
 	// Create product using AdminProductService

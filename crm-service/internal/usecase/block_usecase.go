@@ -1,9 +1,10 @@
 package usecase
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
@@ -45,10 +46,7 @@ func (s *BlockUsecase) ValidateBlockId(c context.Context, blockId uint64) error 
 		return err
 	}
 	if profile == nil {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFound)
 	}
 	return nil
 }
@@ -61,10 +59,7 @@ func (s *BlockUsecase) BlockUser(c context.Context, blockId uint64) (*domain.Blo
 		return nil, err
 	}
 	if blockId == profileId {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể chặn chính mình",
-		}
+		return nil, _errors.ReturnError(service.SelfBlockNotAllowed)
 	}
 
 	s.friendRepo.BlockFriend(c, profileId, blockId)
@@ -81,10 +76,7 @@ func (s *BlockUsecase) UnblockUser(c context.Context, blockId uint64) (uint64, e
 		return 0, err
 	}
 	if blockId == profileId {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Không thể bỏ chặn chính mình",
-		}
+		return 0, _errors.ReturnError(service.SelfUnblockNotAllowed)
 	}
 
 	return s.blockRepo.UnblockUser(c, profileId, blockId)
@@ -94,26 +86,17 @@ func (s *BlockUsecase) UnblockUser(c context.Context, blockId uint64) (uint64, e
 func (s *BlockUsecase) BeforeRequest(c context.Context, targetId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(c)
 	if targetId == profileId {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Bạn không thể theo dõi/kết bạn với chính mình",
-		}
+		return _errors.ReturnError(service.SelfRelationshipNotAllowed)
 	}
 
 	blocked := s.blockRepo.IsBlocked(c, targetId, profileId)
 	if blocked {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFound)
 	}
 
 	blocking := s.blockRepo.IsBlocked(c, profileId, targetId)
 	if blocking {
-		return &_routes.Except{
-			Code:    505,
-			Message: "Vui lòng bỏ chặn",
-		}
+		return _errors.ReturnError(service.UnblockRequired)
 	}
 
 	profile, err := s.userClient.GetProfileById(c, targetId)
@@ -122,10 +105,7 @@ func (s *BlockUsecase) BeforeRequest(c context.Context, targetId uint64) error {
 	}
 
 	if profile == nil {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFound, _errors.WithLegacyCode(400))
 	}
 
 	return nil

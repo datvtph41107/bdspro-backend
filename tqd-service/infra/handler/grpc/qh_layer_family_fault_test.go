@@ -2,46 +2,29 @@ package handler_grpc
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
+	"tqd/internal"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func TestQHLayerFamilyErrorPreservesCanonicalFault(t *testing.T) {
-	st, ok := status.FromError(qhLayerFamilyError(fault.New(
-		fault.KindNotFound,
-		"tqd.qh_layer_family.not_found",
-		"layer family 42 was not found",
-	)))
-	if !ok {
-		t.Fatal("qhLayerFamilyError did not return a gRPC status")
-	}
-	if st.Code() != codes.NotFound {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.NotFound)
-	}
-	if errorCodeFromQHLayerFamilyStatus(st) != "tqd.qh_layer_family.not_found" {
-		t.Fatalf("error_code = %q", errorCodeFromQHLayerFamilyStatus(st))
-	}
+func TestQHLayerFamilyErrorPreservesCanonicalError(t *testing.T) {
+	err := _errors.ReturnError(
+		service.LayerFamilyNotFound,
+		_errors.WithPublicMessage("layer family 42 was not found"),
+	)
+	assertCanonicalStatus(t, qhLayerFamilyError(err), service.LayerFamilyNotFound)
 }
 
 func TestQHLayerFamilyValidationCarriesFieldViolation(t *testing.T) {
-	st, ok := status.FromError(qhLayerFamilyValidation(
-		"tqd.qh_layer_family.id_required",
-		"id is required",
-		"id",
-	))
-	if !ok {
-		t.Fatal("validation did not return a gRPC status")
-	}
-	if st.Code() != codes.InvalidArgument {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.InvalidArgument)
-	}
-	if errorCodeFromQHLayerFamilyStatus(st) != "tqd.qh_layer_family.id_required" {
-		t.Fatalf("error_code = %q", errorCodeFromQHLayerFamilyStatus(st))
-	}
+	err := _errors.ReturnError(
+		service.LayerFamilyIDRequired,
+		_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
+	)
+	st := assertCanonicalStatus(t, qhLayerFamilyError(err), service.LayerFamilyIDRequired)
 
 	var field string
 	for _, detail := range st.Details() {
@@ -55,26 +38,11 @@ func TestQHLayerFamilyValidationCarriesFieldViolation(t *testing.T) {
 }
 
 func TestQHLayerFamilyErrorDoesNotLeakDependencyFailure(t *testing.T) {
-	st, ok := status.FromError(qhLayerFamilyError(errors.New("postgres password=secret connection failed")))
-	if !ok {
-		t.Fatal("dependency failure did not return a gRPC status")
+	st := assertTechnicalStatus(
+		t,
+		qhLayerFamilyError(errors.New("postgres password=secret connection failed")),
+	)
+	if strings.Contains(st.Message(), "secret") || strings.Contains(st.Message(), "postgres") {
+		t.Fatalf("dependency detail leaked: %q", st.Message())
 	}
-	if st.Code() != codes.Internal {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.Internal)
-	}
-	if st.Message() != "layer family operation failed" {
-		t.Fatalf("message = %q", st.Message())
-	}
-	if errorCodeFromQHLayerFamilyStatus(st) != "tqd.qh_layer_family.internal" {
-		t.Fatalf("error_code = %q", errorCodeFromQHLayerFamilyStatus(st))
-	}
-}
-
-func errorCodeFromQHLayerFamilyStatus(st *status.Status) string {
-	for _, detail := range st.Details() {
-		if info, ok := detail.(*errdetails.ErrorInfo); ok {
-			return info.Metadata["error_code"]
-		}
-	}
-	return ""
 }

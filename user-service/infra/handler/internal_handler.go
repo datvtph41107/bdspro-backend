@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 	"user/infra/mapper"
+	"user/internal"
 	"user/internal/domain/access"
 	"user/internal/dto"
 	"user/internal/interface/providers"
@@ -417,7 +418,7 @@ func (h *InternalHandler) HasPermissions(ctx context.Context, keys []string) err
 	}
 	slog.ErrorContext(ctx, fmt.Sprintf("[HasPermissions] Permission check failed for profileId %d, took %s total", profileId, time.Since(funcStart)))
 
-	return _errors.ReturnError(403, "Bạn không có quyền truy cập")
+	return _errors.ReturnError(service.PermissionDenied)
 }
 
 func (h *InternalHandler) ResetPermission(ctx context.Context, roleId uint64) error {
@@ -453,7 +454,7 @@ func (h *InternalHandler) GetRoleById(ctx context.Context, req *sharepb.IdReques
 // Role vẫn được đọc từ repository User, không tạo thêm owner thứ hai.
 func (h *InternalHandler) GetAdminRoleIdByGroupKey(ctx context.Context, req *sharepb.IdRequest) (*sharepb.Role, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "groupKey là bắt buộc")
+		return nil, _errors.ReturnError(service.GroupKeyRequired)
 	}
 	role, err := h.roleRepo.GetAdminRoleIdByGroupKey(ctx, req.Id)
 	if err != nil {
@@ -495,7 +496,7 @@ func (h *InternalHandler) GetProfileByIds(ctx context.Context, req *sharepb.GetP
 // forward contract cũ; credential và profile đều được User usecase xử lý.
 func (h *InternalHandler) CreateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
 	result, err := h.authMethodUsecase.CreateAdmin(ctx, entity)
@@ -507,7 +508,7 @@ func (h *InternalHandler) CreateAdmin(ctx context.Context, req *authpb.AuthMetho
 
 func (h *InternalHandler) UpdateAdmin(ctx context.Context, req *authpb.AuthMethod) (*authpb.AuthMethod, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	entity := h.authMethodMapper.MapAuthMethodPbToDomain(req)
 	result, err := h.authMethodUsecase.UpdateAdmin(ctx, entity)
@@ -519,7 +520,7 @@ func (h *InternalHandler) UpdateAdmin(ctx context.Context, req *authpb.AuthMetho
 
 func (h *InternalHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdRequest) (*sharepb.SubmitResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "admin id là bắt buộc")
+		return nil, _errors.ReturnError(service.AdminIDRequired)
 	}
 	if err := h.authMethodUsecase.DeleteAdmin(ctx, req.Id); err != nil {
 		return nil, err
@@ -529,7 +530,7 @@ func (h *InternalHandler) DeleteAdmin(ctx context.Context, req *sharepb.IdReques
 
 func (h *InternalHandler) GetAdminById(ctx context.Context, req *sharepb.IdRequest) (*authpb.AuthMethod, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "admin id là bắt buộc")
+		return nil, _errors.ReturnError(service.AdminIDRequired)
 	}
 	result, err := h.authMethodUsecase.GetByID(ctx, req.Id)
 	if err != nil {
@@ -647,13 +648,13 @@ func (h *InternalHandler) DeleteAuthMethodsByUserId(ctx context.Context, req *sh
 // GetAuthAdminByIds lấy thông tin admin kèm với role theo danh sách IDs
 func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *userpb.GetAuthAdminByIdsRequest) (*userpb.GetAuthAdminByIdsResponse, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 	if h.roleRepo == nil {
-		return nil, _errors.ReturnError(500, "role repository chưa được cấu hình")
+		return nil, fmt.Errorf("role repository is not configured")
 	}
 	if h.roleMapper == nil {
-		return nil, _errors.ReturnError(500, "role mapper chưa được cấu hình")
+		return nil, fmt.Errorf("role mapper is not configured")
 	}
 
 	admins, err := h.roleRepo.GetAuthAdminsWithRolesByIds(ctx, req.Ids)
@@ -677,7 +678,7 @@ func (h *InternalHandler) GetAuthAdminByIds(ctx context.Context, req *userpb.Get
 // GetAuthDataByAuthId trả về thông tin status, pin và devices theo authId
 func (h *InternalHandler) GetAuthDataByAuthId(ctx context.Context, req *sharepb.RequestV3Proto) (*sharepb.AuthDataV3Proto, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "authId là bắt buộc")
+		return nil, _errors.ReturnError(service.AuthIDRequiredLower)
 	}
 
 	result, err := h.authSecurityUsecase.GetAuthSecurityData(ctx, req.Id)
@@ -691,7 +692,7 @@ func (h *InternalHandler) GetAuthDataByAuthId(ctx context.Context, req *sharepb.
 // GetPushTokensByProfileId lấy danh sách push token theo profile ID (Internal API cho notification service)
 func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetPushTokensResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
+		return nil, _errors.ReturnError(service.ProfileIDRequired)
 	}
 
 	devices, err := h.deviceRepo.ListByProfileID(ctx, req.Id)
@@ -713,7 +714,7 @@ func (h *InternalHandler) GetPushTokensByProfileId(ctx context.Context, req *sha
 
 func (h *InternalHandler) GetRoleIdsByProfileId(ctx context.Context, req *sharepb.IdRequest) (*userpb.GetRoleIdsByProfileIdResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
+		return nil, _errors.ReturnError(service.ProfileIDRequired)
 	}
 
 	roleIds, err := h.roleRepo.GetRoleIdsByProfileId(ctx, req.Id)

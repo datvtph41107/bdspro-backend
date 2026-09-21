@@ -4,8 +4,10 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
+	"user/internal"
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
@@ -26,18 +28,18 @@ func NewDeviceUsecase(deviceRepo repo.DeviceRepository) *DeviceUsecase {
 // RegisterDevice tạo mới hoặc cập nhật thông tin thiết bị
 func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDeviceRequest) (*auth.DeviceEntity, error) {
 	if req == nil {
-		return nil, _errors.ReturnError(400, "Yêu cầu không hợp lệ")
+		return nil, _errors.ReturnError(service.DeviceRequestInvalid)
 	}
 
 	if strings.TrimSpace(req.DeviceID) == "" {
-		return nil, _errors.ReturnError(400, "deviceId là bắt buộc")
+		return nil, _errors.ReturnError(service.DeviceIDRequired)
 	}
 
 	lastSeen := _utils.TimeNowPtr()
 	if req.LastSeenAt != nil && strings.TrimSpace(*req.LastSeenAt) != "" {
 		parsed := _utils.ParseStringToTime(strings.TrimSpace(*req.LastSeenAt))
 		if parsed == nil {
-			return nil, _errors.ReturnError(400, "lastSeenAt không hợp lệ, định dạng phải là RFC3339")
+			return nil, _errors.ReturnError(service.LastSeenAtInvalid)
 		}
 		lastSeen = parsed
 	}
@@ -48,7 +50,7 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 
 	existing, err := u.deviceRepo.FindByDeviceIDAndModelAndManufacturer(ctx, req.DeviceID, req.Model, req.Manufacturer)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể truy vấn thông tin thiết bị")
+		return nil, fmt.Errorf("query device: %w", err)
 	}
 
 	if existing == nil {
@@ -79,7 +81,7 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 
 		created, createErr := u.deviceRepo.Create(ctx, device)
 		if createErr != nil {
-			return nil, _errors.ReturnError(500, "Không thể lưu thông tin thiết bị")
+			return nil, fmt.Errorf("save device: %w", createErr)
 		}
 		return created, nil
 	}
@@ -118,7 +120,7 @@ func (u *DeviceUsecase) RegisterDevice(ctx context.Context, req *dto.CreateDevic
 
 	updated, updateErr := u.deviceRepo.Update(ctx, existing)
 	if updateErr != nil {
-		return nil, _errors.ReturnError(500, "Không thể cập nhật thông tin thiết bị")
+		return nil, fmt.Errorf("update device: %w", updateErr)
 	}
 
 	return updated, nil

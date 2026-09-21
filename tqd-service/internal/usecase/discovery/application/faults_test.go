@@ -2,9 +2,10 @@ package application
 
 import (
 	"context"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 
 	"tqd/internal/domain/discovery/model"
 )
@@ -22,34 +23,34 @@ func TestDiscoveryInvalidCoordinateIsCanonical(t *testing.T) {
 		},
 	)
 
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
 		t.Fatalf(
-			"error type = %T, want canonical fault: %v",
+			"error type = %T, want canonical application error: %v",
 			err,
 			err,
 		)
 	}
 
-	if failure.Kind() != fault.KindValidation {
+	if application.RPCCode() != codes.InvalidArgument {
 		t.Fatalf(
 			"kind = %q, want %q",
-			failure.Kind(),
-			fault.KindValidation,
+			application.RPCCode(),
+			codes.InvalidArgument,
 		)
 	}
 
-	if failure.Code() != "tqd.discovery.coordinate_invalid" {
+	if application.Spec().LegacyProblemCode() != "tqd.discovery.coordinate_invalid" {
 		t.Fatalf(
 			"code = %q",
-			failure.Code(),
+			application.Spec().LegacyProblemCode(),
 		)
 	}
 
-	if failure.PublicMessage() != "invalid latitude/longitude" {
+	if application.PublicMessage() != "invalid latitude/longitude" {
 		t.Fatalf(
 			"public message = %q",
-			failure.PublicMessage(),
+			application.PublicMessage(),
 		)
 	}
 }

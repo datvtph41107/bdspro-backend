@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"user/internal"
 
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_provider "common/domain/provider"
 	_errors "common/errors"
 	_jwt "common/jwt"
-	_routes "common/routes"
 	_utils "common/utils"
 	shared_enum "pb/enums"
 	"user/config"
@@ -112,10 +112,7 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 
 func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
 	if otp.Mode != "auth" && otp.Mode != "verify" {
-		return nil, _errors.ReturnError(
-			400,
-			"Mode phải là auth hoặc verify",
-		)
+		return nil, _errors.ReturnError(service.AuthModeInvalid)
 	}
 
 	var err error
@@ -136,10 +133,7 @@ func (s *AuthUsecase) RequestOtp(c context.Context, otp dto.OtpRequest) (*dto.Re
 func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
 	valid := _utils.ValidatePhoneNumber(otp.Phone)
 	if !valid {
-		return nil, _errors.ReturnError(
-			400,
-			"Số điện thoại không đúng",
-		)
+		return nil, _errors.ReturnError(service.PhoneInvalid)
 	}
 	existed := false
 	var smsChannel string
@@ -161,7 +155,7 @@ func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.
 	} else {
 		// Bắt buộc phải có họ tên khi đăng ký
 		// if otp.Fullname == "" {
-		// 	return nil, _errors.ReturnError(400, "Vui lòng nhập họ tên khi đăng ký")
+		// 	return nil, _errors.ReturnError(service.FullNameRequiredForRegistration)
 		// }
 		oauth, smsChannel, err = s.RequestIsRegister(c, otp)
 		if err != nil {
@@ -180,10 +174,7 @@ func (s *AuthUsecase) _requestAuth(c context.Context, otp dto.OtpRequest) (*dto.
 
 func (s *AuthUsecase) _requestVerify(c context.Context, otp dto.OtpRequest) (*dto.RequestLoginResponse, error) {
 	if otp.AuthId == 0 {
-		return nil, _errors.ReturnError(
-			400,
-			"AuthId không được để trống",
-		)
+		return nil, _errors.ReturnError(service.AuthIDRequired)
 	}
 	var smsChannel string
 	oauth, err := s.AuthMethodRepo.FindByID(c, otp.AuthId)
@@ -191,10 +182,7 @@ func (s *AuthUsecase) _requestVerify(c context.Context, otp dto.OtpRequest) (*dt
 		return nil, err
 	}
 	if oauth == nil {
-		return nil, _errors.ReturnError(
-			400,
-			"AuthId không đúng",
-		)
+		return nil, _errors.ReturnError(service.AuthIDInvalid)
 	}
 
 	// User đã tồn tại - gửi OTP
@@ -220,10 +208,7 @@ func (s *AuthUsecase) _requestVerify(c context.Context, otp dto.OtpRequest) (*dt
 
 func (s *AuthUsecase) ResendOTP(c context.Context, otp dto.OtpRequest) (*dto.ResendOTPResponse, error) {
 	if otp.AuthId == 0 && otp.Phone == "" {
-		return nil, _errors.ReturnError(
-			400,
-			"Phone/ID không được để trống",
-		)
+		return nil, _errors.ReturnError(service.PhoneOrIDRequired)
 	}
 	var oauth *auth.AuthMethod
 	var err error
@@ -347,10 +332,7 @@ func (s *AuthUsecase) VerifyOtp(c context.Context, otp dto.OtpVerifyRequest) (*d
 		if !canLogin {
 			// Logout tài khoản nếu bị khóa
 			s.CacheProvider.DeleteToken(c, e.ID)
-			return nil, _errors.ReturnError(
-				int32(403),
-				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
-			)
+			return nil, _errors.ReturnError(service.AccountLocked)
 		}
 	}
 
@@ -588,16 +570,16 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 	// 1. Lấy authID của user đang đăng nhập từ context
 	currentAuthID := _utils.GetAuthIdFromContext(c)
 	if currentAuthID == 0 {
-		return nil, _errors.ReturnError(401, "Vui lòng đăng nhập để thực hiện thao tác này")
+		return nil, _errors.ReturnError(service.LoginRequired)
 	}
 
 	// 2. Lấy thông tin auth_method của user hiện tại
 	currentAuthMethod, err := s.AuthMethodRepo.FindByID(c, currentAuthID)
 	if err != nil || currentAuthMethod == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin tài khoản")
+		return nil, _errors.ReturnError(service.AccountInfoNotFound)
 	}
 	if currentAuthMethod.UserID == 0 {
-		return nil, _errors.ReturnError(400, "Tài khoản hiện tại chưa có profile")
+		return nil, _errors.ReturnError(service.CurrentAccountProfileMissing)
 	}
 
 	// 3. Verify OTP cho số điện thoại mới
@@ -622,7 +604,7 @@ func (s *AuthUsecase) VerifyRecovery(c context.Context, otp dto.OtpVerifyRequest
 	e.UserID = currentAuthMethod.UserID
 	_, err = s.AuthMethodRepo.Update(c, e)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi cập nhật thông tin tài khoản")
+		return nil, fmt.Errorf("update account: %w", err)
 	}
 
 	// Audit is best-effort, but it remains request-owned and bounded.
@@ -669,12 +651,12 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	// 1. Tìm auth method bằng phone
 	e, err := s.AuthMethodRepo.FindByPhone(c, req.Phone)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Số điện thoại không tồn tại")
+		return nil, _errors.ReturnError(service.PhoneNotFound)
 	}
 
 	// Kiểm tra auth_key đã được khởi tạo chưa
 	if e.AuthKey == "" || e.PrivateKey == "" || e.PublicKey == "" {
-		return nil, _errors.ReturnError(400, "Tài khoản chưa được khởi tạo auth key. Vui lòng đăng ký lại")
+		return nil, _errors.ReturnError(service.AuthKeyNotInitialized)
 	}
 	slog.InfoContext(c, fmt.Sprintf("[LoginWithKey] Starting DH key exchange for phone: %s", req.Phone))
 
@@ -682,21 +664,21 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	serverPrivateKey, err := _utils.DecodePrivateKey(e.PrivateKey)
 	if err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to decode server private key: %v", err))
-		return nil, _errors.ReturnError(500, "Lỗi xác thực")
+		return nil, fmt.Errorf("authenticate request: %w", err)
 	}
 
 	// 3. Decode client public key
 	clientPublicKey, err := _utils.DecodePublicKey(req.ClientPublicKey)
 	if err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to decode client public key: %v", err))
-		return nil, _errors.ReturnError(400, "Client public key không hợp lệ")
+		return nil, _errors.ReturnError(service.ClientPublicKeyInvalid)
 	}
 
 	// 4. Compute shared secret
 	sharedSecret, err := _utils.ComputeSharedSecret(serverPrivateKey, clientPublicKey)
 	if err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to compute shared secret: %v", err))
-		return nil, _errors.ReturnError(500, "Lỗi xác thực")
+		return nil, fmt.Errorf("authenticate request: %w", err)
 	}
 
 	sharedSecretHex := sharedSecret.Text(16)
@@ -705,12 +687,12 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	decryptedAuthKey, err := _utils.DecryptAuthKeyXOR(req.EncryptedAuthKey, sharedSecretHex)
 	if err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to decrypt auth key: %v", err))
-		return nil, _errors.ReturnError(400, "Auth key không hợp lệ")
+		return nil, _errors.ReturnError(service.AuthKeyInvalid)
 	}
 
 	// 6. So sánh với auth_key trong database
 	if decryptedAuthKey != e.AuthKey {
-		return nil, _errors.ReturnError(401, "Auth key không đúng")
+		return nil, _errors.ReturnError(service.AuthKeyMismatch)
 	}
 	slog.InfoContext(c, fmt.Sprintf("[LoginWithKey] Auth key validation successful!"))
 
@@ -721,7 +703,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 			slog.ErrorContext(c, fmt.Sprintf("Failed to check account status: %v", err))
 		}
 		if isLocked || !canLogin {
-			return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên")
+			return nil, _errors.ReturnError(service.AccountLockedContactAdmin)
 		}
 	}
 
@@ -748,7 +730,7 @@ func (s *AuthUsecase) LoginWithKey(c context.Context, req dto.LoginWithKeyReques
 	// 9. Lấy profile
 	infoEntity, err := s.ProfileProvider.GetByProfileID(c, e.UserID)
 	if err != nil || infoEntity == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	// 10. Generate tokens
@@ -896,10 +878,7 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 	claims := _jwt.GetPrincipalContext(c)
 	props, err := _jwt.GetProperties(refreshToken)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(service.TokenInvalidOrExpired, _errors.WithCause(err))
 	}
 
 	if claims != nil && claims.OrganizationId != nil {
@@ -937,13 +916,13 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		// if props.SessionID != 0 {
 		// 	sessionEntity, err := s.SessionRepo.GetBySessionID(c, props.SessionID)
 		// 	if err != nil {
-		// 		return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+		// 		return nil, _errors.ReturnError(service.SessionInvalid)
 		// 	}
 		// 	if sessionEntity == nil || sessionEntity.LogoutAt != nil {
-		// 		return nil, _errors.ReturnError(401, "Phiên làm việc đã kết thúc. Vui lòng đăng nhập lại")
+		// 		return nil, _errors.ReturnError(service.SessionEnded)
 		// 	}
 		// } else {
-		// 	return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
+		// 	return nil, _errors.ReturnError(service.SessionInvalid)
 		// }
 
 		profile, err := s.ProfileProvider.GetByProfileID(c, props.ProfileID)
@@ -1006,16 +985,13 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		return response, nil
 	}
 
-	return nil, &_routes.Except{
-		Code:    401,
-		Message: "Token không đúng",
-	}
+	return nil, _errors.ReturnError(service.TokenInvalidOrExpired, _errors.WithPublicMessage("Token không đúng"))
 }
 
 func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDeviceId uint64) (*dto.LogoutResponse, error) {
 	authID := _utils.GetAuthIdFromContext(c)
 	if authID == 0 {
-		return nil, _errors.ReturnError(401, "Không thể xác thực phiên đăng nhập")
+		return nil, _errors.ReturnError(service.SessionAuthenticationFailed)
 	}
 
 	sessionID := _utils.GetSessionIdFromContext(c)
@@ -1041,7 +1017,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 		}
 	case "device":
 		if sessionDeviceId == 0 {
-			return nil, _errors.ReturnError(400, "sessionId là bắt buộc khi logout theo thiết bị")
+			return nil, _errors.ReturnError(service.SessionIDRequiredForDeviceLogout)
 		}
 		session, err := s.SessionRepo.GetBySessionIDAndAuthID(c, sessionDeviceId, authID)
 		if err != nil {
@@ -1053,7 +1029,7 @@ func (s *AuthUsecase) Logout(c context.Context, logoutType string, sessionDevice
 	default: // "session"
 		sessionID := _utils.GetSessionIdFromContext(c)
 		if sessionID == 0 {
-			return nil, _errors.ReturnError(401, "Không thể xác thực phiên đăng nhập")
+			return nil, _errors.ReturnError(service.SessionAuthenticationFailed)
 		}
 		session, err := s.SessionRepo.GetBySessionID(c, sessionID)
 		if err != nil {
@@ -1185,10 +1161,7 @@ func (s *AuthUsecase) Restore(c context.Context, query dto.RestorePhoneRequest) 
 		return nil, err
 	}
 	if ok {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Số điện thoại đã liên kết với tài khoản khác. Vui lòng nhập số điện thoại khác",
-		}
+		return nil, _errors.ReturnError(service.PhoneAlreadyUsed, _errors.WithPublicMessage("Số điện thoại đã liên kết với tài khoản khác. Vui lòng nhập số điện thoại khác"))
 	}
 
 	profileId := _utils.GetProfileIdWithContext(c)
@@ -1229,42 +1202,27 @@ func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDe
 	} else if req.Username != "" {
 		deletedAuth, err = s.AuthMethodRepo.FindDeletedByUsername(c, req.Username)
 	} else {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Vui lòng cung cấp phone, email hoặc username để khôi phục tài khoản",
-		}
+		return nil, _errors.ReturnError(service.RecoveryIdentifierRequired)
 	}
 
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy tài khoản đã bị xóa",
-		}
+		return nil, _errors.ReturnError(service.DeletedAccountNotFound, _errors.WithCause(err))
 	}
 
 	if deletedAuth == nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy tài khoản đã bị xóa",
-		}
+		return nil, _errors.ReturnError(service.DeletedAccountNotFound, _errors.WithCause(err))
 	}
 
 	// Kiểm tra xem tài khoản đã được khôi phục chưa
 	existingAuth, err := s.AuthMethodRepo.FindByID(c, deletedAuth.ID)
 	if err == nil && existingAuth != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tài khoản đã được khôi phục trước đó",
-		}
+		return nil, _errors.ReturnError(service.AccountAlreadyRestored)
 	}
 
 	// Khôi phục tài khoản bằng cách set deleted_at = null
 	err = s.AuthMethodRepo.RestoreAccount(c, deletedAuth.ID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi khôi phục tài khoản",
-		}
+		return nil, fmt.Errorf("restore deleted account: %w", err)
 	}
 
 	return &dto.RestoreDeletedAccountResponse{
@@ -1278,10 +1236,7 @@ func (s *AuthUsecase) RestoreDeletedAccount(c context.Context, req dto.RestoreDe
 // Xóa tài khoản
 func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountResponse, error) {
 	if len(otp) < 6 {
-		return nil, _errors.ReturnError(
-			400,
-			"OTP không đủ độ dài",
-		)
+		return nil, _errors.ReturnError(service.OTPLengthInvalid)
 	}
 	authId := _utils.GetAuthIdFromContext(c)
 	e, err := s.AuthMethodRepo.FindByID(c, authId)
@@ -1308,19 +1263,19 @@ func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountR
 		return nil, err
 	}
 	if profile == nil {
-		return nil, _errors.ReturnError(400, "Tài khoản không tồn tại")
+		return nil, _errors.ReturnError(service.AccountNotFound)
 	}
 
 	// Xóa vĩnh viễn profile trong user-service
 	if err := s.ProfileProvider.HardDeleteProfile(c, profileId); err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to hard delete profile: %v", err))
-		return nil, _errors.ReturnError(500, "Lỗi khi xóa thông tin tài khoản")
+		return nil, fmt.Errorf("hard delete user profile: %w", err)
 	}
 
 	// Xóa vĩnh viễn auth method trong auth-service
 	if err := s.AuthMethodRepo.Delete(c, authId); err != nil {
 		slog.ErrorContext(c, fmt.Sprintf("Failed to hard delete auth method: %v", err))
-		return nil, _errors.ReturnError(500, "Lỗi khi xóa phương thức xác thực")
+		return nil, fmt.Errorf("hard delete auth method: %w", err)
 	}
 
 	// Xóa session và cache
@@ -1339,10 +1294,7 @@ func (s *AuthUsecase) Delete(c context.Context, otp string) (*dto.DeleteAccountR
 
 func (s *AuthUsecase) LockAccount(c context.Context, otp string) (*dto.LockAccountResponse, error) {
 	if len(otp) < 6 {
-		return nil, _errors.ReturnError(
-			400,
-			"OTP không đủ độ dài",
-		)
+		return nil, _errors.ReturnError(service.OTPLengthInvalid)
 	}
 	authId := _utils.GetAuthIdFromContext(c)
 	e, err := s.AuthMethodRepo.FindByID(c, authId)
@@ -1402,13 +1354,13 @@ func (s *AuthUsecase) RequestIsRegister(c context.Context, otpReq dto.OtpRequest
 	// Generate Diffie-Hellman key pair
 	keyPair, err := _utils.GenerateDHKeyPair()
 	if err != nil {
-		return nil, "", _errors.ReturnError(500, "Lỗi sinh key pair")
+		return nil, "", fmt.Errorf("generate DH key pair: %w", err)
 	}
 
 	// Generate auth key
 	authKey, err := _utils.GenerateAuthKey()
 	if err != nil {
-		return nil, "", _errors.ReturnError(500, "Lỗi sinh auth key")
+		return nil, "", fmt.Errorf("generate auth key: %w", err)
 	}
 
 	// Tạo một UserAuthEntity mới với DH keys và auth_key
@@ -1561,10 +1513,7 @@ func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) er
 	}
 	countPhone, _ := strconv.ParseInt(requestCountPhone, 10, 32)
 	if countPhone >= s.properties.LimitOtpDevice {
-		return &_routes.Except{
-			Code:    401,
-			Message: "Bạn đã gửi quá nhiều OTP. Vui lòng thử lại sau.",
-		}
+		return _errors.ReturnError(service.OTPRequestLimited, _errors.WithPublicMessage("Bạn đã gửi quá nhiều OTP. Vui lòng thử lại sau."), _errors.WithLegacyCode(401))
 	}
 
 	// Kiểm tra giới hạn gửi OTP theo IP
@@ -1574,10 +1523,7 @@ func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) er
 		return err
 	}
 	if countIp >= s.properties.LimitOtpIP {
-		return &_routes.Except{
-			Code:    401,
-			Message: "IP của bạn đã bị chặn do gửi quá nhiều yêu cầu. Vui lòng thử lại sau.",
-		}
+		return _errors.ReturnError(service.OTPIPAddressRateLimited)
 	}
 
 	// Tăng số lần gửi OTP trong Redis
@@ -1601,26 +1547,17 @@ func (s *AuthUsecase) CheckOtpSpam(c context.Context, phoneNumber, ip string) er
 // GetParamValidate kiểm tra thông tin xác thực và trả về data.AuthParam
 func (s *AuthUsecase) GetParamValidate(c context.Context, oauth *auth.AuthMethod, otp string) (*dto.AuthParam, error) {
 	if oauth == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Thông tin không đúng, vui lòng kiểm tra lại",
-		}
+		return nil, _errors.ReturnError(service.RequestValidationFailed, _errors.WithPublicMessage("Thông tin không đúng, vui lòng kiểm tra lại"))
 	}
 
 	statusEntity, err := s.StatusRepo.GetByID(c, oauth.ID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy trạng thái người dùng",
-		}
+		return nil, _errors.ReturnError(service.UserStatusNotFound, _errors.WithCause(err))
 	}
 
 	otpEntity, err := s.OTPRepo.GetByID(c, oauth.ID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không tìm thấy OTP",
-		}
+		return nil, _errors.ReturnError(service.ValidOTPNotFound, _errors.WithPublicMessage("Không tìm thấy OTP"), _errors.WithCause(err))
 	}
 
 	return &dto.AuthParam{
@@ -1761,10 +1698,7 @@ func (s *AuthUsecase) CreateQRSession(c context.Context, e *dto.SessionQRRequest
 
 	err := s.SessionRepo.CreateSession(c, session)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return nil, fmt.Errorf("create login session: %w", err)
 	}
 
 	s.CookieProvider.Set(c, config.C_SESSION_ID, strconv.FormatUint(session.SessionID, 10))
@@ -1785,27 +1719,18 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 	case semaphore <- struct{}{}:
 		defer func() { <-semaphore }() // Giải phóng khi xử lý xong
 	default:
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Truy cập đạt giới hạn vui lòng thử lại sau",
-		}
+		return nil, _errors.ReturnError(service.QRSessionCapacityExceeded)
 	}
 
 	sessionEntity, err := s.SessionRepo.GetBySessionID(c, sessionId)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(service.LoginSessionNotFound, _errors.WithCause(err), _errors.WithLegacyCode(400))
 	}
 
 	if sessionEntity.FinishedDate != nil ||
 		sessionEntity.Activate ||
 		sessionEntity.SessionKey != e.SessionKey {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Phiên đăng nhập không chính xác",
-		}
+		return nil, _errors.ReturnError(service.LoginSessionIncorrect)
 	}
 
 	sessionEntity.Activate = true
@@ -1816,20 +1741,14 @@ func (s *AuthUsecase) VerifyQRSession(c context.Context, e *dto.SessionQRConfirm
 
 	authEntity, err := s.AuthMethodRepo.FindByID(c, sessionEntity.AuthID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(service.AuthenticationInfoNotFound, _errors.WithCause(err), _errors.WithLegacyCode(400))
 	}
 
 	// s.CookieService.SetRefreshToken(c.Writer, refreshToken)
 	refreshToken := s.GenRefreshToken(c, authEntity, sessionId)
 	profile, err := s.ProfileProvider.GetByProfileID(c, authEntity.UserID)
 	if err != nil || profile == nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy thông tin người dùng",
-		}
+		return nil, _errors.ReturnError(service.UserInfoNotFound, _errors.WithCause(err))
 	}
 
 	// Ghi log admin history
@@ -2061,16 +1980,10 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	sessionId := _utils.GetSessionIdFromContext(c)
 	profileId := _utils.GetProfileIdWithContext(c)
 	if profileId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể xác thực phiên đăng nhập",
-		}
+		return nil, _errors.ReturnError(service.SessionAuthenticationFailed, _errors.WithLegacyCode(400))
 	}
 	if organizationID == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể chuyển đổi tổ chức",
-		}
+		return nil, _errors.ReturnError(service.OrganizationIDRequired, _errors.WithPublicMessage("Không thể chuyển đổi tổ chức"))
 	}
 	if err := s.validateOrganizationMembership(c, profileId, organizationID); err != nil {
 		return nil, err
@@ -2078,10 +1991,7 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 
 	profile, err := s.ProfileProvider.GetByProfileID(c, profileId)
 	if err != nil || profile == nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy thông tin người dùng",
-		}
+		return nil, _errors.ReturnError(service.UserInfoNotFound, _errors.WithCause(err))
 	}
 
 	// payload := _jwt.JwtTokenProperties{
@@ -2127,7 +2037,7 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 // Organization Service quyết định; auth flow không tự sao chép catalog đó.
 func (s *AuthUsecase) validateOrganizationMembership(ctx context.Context, profileID, organizationID uint64) error {
 	if profileID == 0 || organizationID == 0 || s.OrganizationClient == nil {
-		return &_routes.Except{Code: 401, Message: "Không thể xác thực thành viên tổ chức"}
+		return _errors.ReturnError(service.OrganizationMembershipAuthenticationFailed)
 	}
 
 	member, err := s.OrganizationClient.GetOrganizationMember(ctx, organizationID, profileID)
@@ -2135,7 +2045,7 @@ func (s *AuthUsecase) validateOrganizationMembership(ctx context.Context, profil
 		return err
 	}
 	if member == nil || member.OrganizationId != organizationID || member.UserId != profileID || member.Status != organizationMemberStatusActive {
-		return &_routes.Except{Code: 403, Message: "Bạn không phải thành viên đang hoạt động của tổ chức"}
+		return _errors.ReturnError(service.OrganizationMembershipInactive)
 	}
 	return nil
 }
@@ -2144,10 +2054,7 @@ func (s *AuthUsecase) validateOrganizationMembership(ctx context.Context, profil
 func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginRequest) (*dto.AuthLoginResponse, error) {
 	// Validate input
 	if adminLogin.Username == "" || adminLogin.Password == "" {
-		return nil, _errors.ReturnError(
-			int32(400),
-			"Username và password không được để trống",
-		)
+		return nil, _errors.ReturnError(service.UsernamePasswordRequired)
 	}
 
 	// Tìm theo username (ADMIN); có thể có bản ghi legacy trùng auth_name → thử password từng candidate
@@ -2156,10 +2063,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		candidates, err = s.AuthMethodRepo.FindAllByEmailAndProvider(c, adminLogin.Username, "ADMIN")
 	}
 	if err != nil || len(candidates) == 0 {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Username hoặc password không đúng",
-		)
+		return nil, _errors.ReturnError(service.UsernamePasswordInvalid)
 	}
 
 	var adminAuthEntity *auth.AuthMethod
@@ -2170,10 +2074,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		}
 	}
 	if adminAuthEntity == nil {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Username hoặc password không đúng",
-		)
+		return nil, _errors.ReturnError(service.UsernamePasswordInvalid)
 	}
 
 	// Lấy profile của admin
@@ -2204,10 +2105,7 @@ func (s *AuthUsecase) AdminLogin(c context.Context, adminLogin dto.AdminLoginReq
 		if isLocked || !canLogin {
 			// Logout tài khoản nếu bị khóa
 			s.CacheProvider.DeleteToken(c, adminAuthEntity.ID)
-			return nil, _errors.ReturnError(
-				int32(403),
-				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
-			)
+			return nil, _errors.ReturnError(service.AccountLocked)
 		}
 	}
 
@@ -2542,53 +2440,35 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 	// Lấy profileId từ context
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Không thể xác thực phiên đăng nhập",
-		)
+		return nil, _errors.ReturnError(service.SessionAuthenticationFailed)
 	}
 
 	// Kiểm tra password và confirmPassword có khớp không
 	if req.Password != req.ConfirmPassword {
-		return nil, _errors.ReturnError(
-			int32(400),
-			"Mật khẩu xác nhận không khớp",
-		)
+		return nil, _errors.ReturnError(service.PasswordConfirmationMismatch)
 	}
 
 	// Kiểm tra độ dài password (tối thiểu 8 ký tự)
 	if len(req.Password) < 8 {
-		return nil, _errors.ReturnError(
-			int32(400),
-			"Mật khẩu phải có ít nhất 8 ký tự",
-		)
+		return nil, _errors.ReturnError(service.PasswordTooShort)
 	}
 
 	// Kiểm tra user đã có auth_method với provider ADMIN chưa
 	existingAuth, err := s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileId, "ADMIN")
 	if err == nil && existingAuth != nil {
-		return nil, _errors.ReturnError(
-			int32(400),
-			"Bạn đã có mật khẩu. Vui lòng sử dụng chức năng đổi mật khẩu nếu muốn thay đổi",
-		)
+		return nil, _errors.ReturnError(service.PasswordAlreadySet)
 	}
 
 	// Hash password
 	hashedPassword, err := _utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, _errors.ReturnError(
-			int32(500),
-			"Lỗi khi xử lý mật khẩu",
-		)
+		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
 	// Lấy thông tin profile để có username
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, profileId)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(
-			int32(404),
-			"Không tìm thấy thông tin người dùng",
-		)
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	// Tạo auth_method mới với provider ADMIN
@@ -2606,10 +2486,7 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 	// Lưu vào database
 	createdAuth, err := s.AuthMethodRepo.Create(ctx, newAuthMethod)
 	if err != nil {
-		return nil, _errors.ReturnError(
-			int32(500),
-			"Lỗi khi tạo mật khẩu",
-		)
+		return nil, fmt.Errorf("create password auth method: %w", err)
 	}
 
 	// Tạo status và OTP cho auth_method mới (nếu cần)
@@ -2634,10 +2511,7 @@ func (s *AuthUsecase) CreatePassword(ctx context.Context, req dto.CreatePassword
 func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPasswordRequest) (*dto.AuthLoginResponse, error) {
 	// Validate input
 	if req.Username == "" || req.Password == "" {
-		return nil, _errors.ReturnError(
-			int32(400),
-			"Username và password không được để trống",
-		)
+		return nil, _errors.ReturnError(service.UsernamePasswordRequired)
 	}
 
 	// Tìm auth_method theo username (có thể là phone)
@@ -2652,10 +2526,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		// password credential predates provider separation.
 		authEntity, err = s.AuthMethodRepo.FindByPhone(ctx, req.Username)
 		if err != nil || authEntity == nil {
-			return nil, _errors.ReturnError(
-				int32(401),
-				"Số điện thoại hoặc mật khẩu không đúng",
-			)
+			return nil, _errors.ReturnError(service.PhonePasswordInvalid)
 		}
 		if authEntity.Provider != "PASSWORD" && authEntity.Provider != "ADMIN" {
 			if authEntity.UserID != 0 {
@@ -2665,16 +2536,10 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 					authEntity, err = s.AuthMethodRepo.GetByUserIdAndProvider(ctx, profileID, "ADMIN")
 				}
 				if err != nil || authEntity == nil {
-					return nil, _errors.ReturnError(
-						int32(401),
-						"Bạn chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng OTP",
-					)
+					return nil, _errors.ReturnError(service.PasswordNotSetUseOTP)
 				}
 			} else {
-				return nil, _errors.ReturnError(
-					int32(401),
-					"Bạn chưa thiết lập mật khẩu. Vui lòng đăng nhập bằng OTP",
-				)
+				return nil, _errors.ReturnError(service.PasswordNotSetUseOTP)
 			}
 		}
 	} else {
@@ -2685,35 +2550,23 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 			authEntity, err = s.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.Username, "ADMIN")
 		}
 		if err != nil || authEntity == nil {
-			return nil, _errors.ReturnError(
-				int32(401),
-				"Username hoặc mật khẩu không đúng",
-			)
+			return nil, _errors.ReturnError(service.UsernameOrPasswordInvalid)
 		}
 	}
 
 	if authEntity.Provider != "PASSWORD" && authEntity.Provider != "ADMIN" {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Phương thức đăng nhập không đúng",
-		)
+		return nil, _errors.ReturnError(service.LoginMethodInvalid)
 	}
 
 	// Kiểm tra password
 	if !_utils.CheckPasswordHash(req.Password, authEntity.Password) {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Username hoặc mật khẩu không đúng",
-		)
+		return nil, _errors.ReturnError(service.UsernameOrPasswordInvalid)
 	}
 
 	// Lấy profile của user
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, authEntity.UserID)
 	if err != nil || profile == nil || profile.ProfileID == 0 {
-		return nil, _errors.ReturnError(
-			int32(404),
-			"Không tìm thấy thông tin người dùng",
-		)
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	// Check account status - nếu tài khoản bị khóa thì logout và báo lỗi
@@ -2725,10 +2578,7 @@ func (s *AuthUsecase) LoginWithPassword(ctx context.Context, req dto.LoginWithPa
 		if isLocked || !canLogin {
 			// Logout tài khoản nếu bị khóa
 			s.CacheProvider.DeleteToken(ctx, authEntity.ID)
-			return nil, _errors.ReturnError(
-				int32(403),
-				"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ",
-			)
+			return nil, _errors.ReturnError(service.AccountLocked)
 		}
 	}
 
@@ -2856,38 +2706,26 @@ func (s *AuthUsecase) SwitchAccount(c context.Context, req dto.SwitchAccountRequ
 	currentProfileId := _utils.GetProfileIdWithContext(c)
 	authId := _utils.GetAuthIdFromContext(c)
 	if currentProfileId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể xác thực phiên đăng nhập",
-		}
+		return nil, _errors.ReturnError(service.SessionAuthenticationFailed, _errors.WithLegacyCode(400))
 	}
 
 	// Kiểm tra quyền truy cập profile mới
 	if req.ProfileID != currentProfileId {
 		// TODO: Kiểm tra quyền truy cập profile khác (có thể là admin hoặc có quyền đặc biệt)
 		// Hiện tại chỉ cho phép chuyển đổi trong cùng profile
-		return nil, &_routes.Except{
-			Code:    403,
-			Message: "Không có quyền truy cập profile này",
-		}
+		return nil, _errors.ReturnError(service.ProfileAccessDenied)
 	}
 
 	// Lấy thông tin profile
 	profile, err := s.ProfileProvider.GetByProfileID(c, req.ProfileID)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy profile",
-		}
+		return nil, _errors.ReturnError(service.ProfileNotFound, _errors.WithCause(err))
 	}
 
 	// Lấy thông tin auth hiện tại (sử dụng provider OTP làm mặc định)
 	authEntity, err := s.AuthMethodRepo.GetByUserIdAndProvider(c, req.ProfileID, "PHONE")
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy thông tin xác thực",
-		}
+		return nil, _errors.ReturnError(service.AuthenticationInfoNotFound, _errors.WithCause(err))
 	}
 
 	// Tạo JWT token mới với thông tin chuyển đổi
@@ -2918,10 +2756,7 @@ func (s *AuthUsecase) SwitchAccount(c context.Context, req dto.SwitchAccountRequ
 	// Tạo access token mới
 	accessToken, err := _jwt.GenerateToken(payload)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi tạo token",
-		}
+		return nil, fmt.Errorf("generate switch-account access token: %w", err)
 	}
 
 	// Tạo response
@@ -2946,12 +2781,12 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	// Parse refreshToken để lấy thông tin
 	props, err := _jwt.GetProperties(refreshToken)
 	if err != nil {
-		return nil, _errors.ReturnError(401, "Token không hợp lệ hoặc đã hết hạn")
+		return nil, _errors.ReturnError(service.TokenInvalidOrExpired)
 	}
 
 	// Kiểm tra xem có phải là REFRESH token không
 	if props.Type != "REFRESH" {
-		return nil, _errors.ReturnError(401, "Token không phải là refresh token")
+		return nil, _errors.ReturnError(service.RefreshTokenRequired)
 	}
 
 	// Kiểm tra token có trong cache không (validate bằng issuedAt)
@@ -2962,20 +2797,20 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 	} else {
 		invalidToken := _utils.ValidTokenByIssueAt(props.IssuedAt, cachedTimestamp)
 		if invalidToken {
-			return nil, _errors.ReturnError(401, "Phiên làm việc đã hết hạn, vui lòng đăng nhập lại")
+			return nil, _errors.ReturnError(service.SessionExpired)
 		}
 	}
 
 	// Lấy auth entity
 	authEntity, err := s.AuthMethodRepo.FindByID(ctx, props.AuthID)
 	if err != nil || authEntity == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin đăng nhập")
+		return nil, _errors.ReturnError(service.LoginInfoNotFound)
 	}
 
 	// Lấy profile
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, props.ProfileID)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	// Check account status
@@ -2984,7 +2819,7 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 		slog.ErrorContext(ctx, fmt.Sprintf("Failed to check account status: %v", err))
 	}
 	if isLocked || !canLogin {
-		return nil, _errors.ReturnError(403, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ")
+		return nil, _errors.ReturnError(service.AccountLocked)
 	}
 
 	// Tạo access token mới
@@ -3056,18 +2891,12 @@ func (s *AuthUsecase) LoginWithToken(ctx context.Context, refreshToken string) (
 func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]*auth.UserSessionEntity, int64, error) {
 	authID := _utils.GetAuthIdFromContext(ctx)
 	if authID == 0 {
-		return nil, 0, _errors.ReturnError(
-			int32(401),
-			"Không tìm thấy thông tin đăng nhập",
-		)
+		return nil, 0, _errors.ReturnError(service.LoginInfoNotFound, _errors.WithLegacyCode(401))
 	}
 
 	sessions, total, err := s.SessionRepo.GetLoginHistoryByAuthID(ctx, authID, page, size)
 	if err != nil {
-		return nil, 0, _errors.ReturnError(
-			int32(500),
-			"Không thể lấy lịch sử đăng nhập: "+err.Error(),
-		)
+		return nil, 0, fmt.Errorf("get login history: %w", err)
 	}
 
 	return sessions, total, nil
@@ -3076,7 +2905,7 @@ func (s *AuthUsecase) GetLoginHistory(ctx context.Context, page, size int32) ([]
 // GetQRStatus kiểm tra trạng thái phiên QR
 func (s *AuthUsecase) GetQRStatus(ctx context.Context, req *dto.QRStatusRequest) (*dto.QRStatusResponse, error) {
 	if req == nil || req.SessionId == 0 || req.SessionKey == "" {
-		return nil, _errors.ReturnError(400, "Thông tin phiên QR không hợp lệ")
+		return nil, _errors.ReturnError(service.QRSessionInvalid)
 	}
 
 	session, err := s.SessionRepo.GetBySessionID(ctx, req.SessionId)
@@ -3088,7 +2917,7 @@ func (s *AuthUsecase) GetQRStatus(ctx context.Context, req *dto.QRStatusRequest)
 	}
 
 	if session.SessionKey != req.SessionKey {
-		return nil, _errors.ReturnError(400, "Phiên đăng nhập không chính xác")
+		return nil, _errors.ReturnError(service.LoginSessionIncorrect)
 	}
 
 	if session.FinishedDate != nil || session.LogoutAt != nil {
@@ -3115,44 +2944,44 @@ func (s *AuthUsecase) GetQRStatus(ctx context.Context, req *dto.QRStatusRequest)
 func (s *AuthUsecase) UpdateFullname(ctx context.Context, fullname string) (*dto.AuthLoginResponse, error) {
 	// Validate fullname
 	if fullname == "" {
-		return nil, _errors.ReturnError(400, "Họ tên không được để trống")
+		return nil, _errors.ReturnError(service.FullNameRequired)
 	}
 
 	// Lấy profileId từ context
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, _errors.ReturnError(401, "Không thể xác thực người dùng")
+		return nil, _errors.ReturnError(service.UserAuthenticationFailed)
 	}
 
 	// Lấy profile hiện tại
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, profileId)
 	if err != nil || profile == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng")
+		return nil, _errors.ReturnError(service.UserInfoNotFound)
 	}
 
 	// Update fullname
 	profile.FullName = fullname
 	err = s.ProfileProvider.UpdateProfile(ctx, profile)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Lỗi khi cập nhật họ tên")
+		return nil, fmt.Errorf("update profile full name: %w", err)
 	}
 
 	// Lấy authId từ context
 	authId := _utils.GetAuthIdFromContext(ctx)
 	if authId == 0 {
-		return nil, _errors.ReturnError(401, "Không thể xác thực người dùng")
+		return nil, _errors.ReturnError(service.UserAuthenticationFailed)
 	}
 
 	// Lấy sessionId từ context
 	sessionId := _utils.GetSessionIdFromContext(ctx)
 	if sessionId == 0 {
-		return nil, _errors.ReturnError(401, "Không tìm thấy thông tin phiên đăng nhập")
+		return nil, _errors.ReturnError(service.LoginSessionNotFound)
 	}
 
 	// Lấy auth entity
 	authEntity, err := s.AuthMethodRepo.FindByID(ctx, authId)
 	if err != nil || authEntity == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy thông tin đăng nhập")
+		return nil, _errors.ReturnError(service.LoginInfoNotFound)
 	}
 
 	// Tạo ACCESS token mới (không phải TEMP nữa vì đã có fullname)
@@ -3197,18 +3026,12 @@ func (s *AuthUsecase) GetSessionsByProfile(ctx context.Context, pagable *_dto.Pa
 
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, 0, _errors.ReturnError(
-			int32(401),
-			"Không tìm thấy thông tin người dùng",
-		)
+		return nil, 0, _errors.ReturnError(service.UserInfoNotFound, _errors.WithLegacyCode(401))
 	}
 
 	sessions, total, err := s.SessionRepo.GetSessionsByProfile(ctx, profileID, pagable)
 	if err != nil {
-		return nil, 0, _errors.ReturnError(
-			int32(500),
-			"Không thể lấy danh sách session: "+err.Error(),
-		)
+		return nil, 0, fmt.Errorf("get profile sessions: %w", err)
 	}
 
 	return sessions, total, nil
@@ -3245,7 +3068,7 @@ func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint
 	// Check if phone exists
 	auth, err := s.AuthMethodRepo.PhoneCheck(ctx, phone)
 	if err != nil {
-		return false, nil, _errors.ReturnError(500, "Lỗi khi kiểm tra sự tồn tại của số điện thoại")
+		return false, nil, fmt.Errorf("check phone existence: %w", err)
 	}
 	if auth == nil {
 		return false, nil, nil

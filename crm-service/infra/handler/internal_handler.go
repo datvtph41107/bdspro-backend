@@ -1,13 +1,13 @@
 package handler
 
 import (
-	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"crm/infra/mapper"
 	"crm/internal/dto"
 	"crm/internal/repo"
 	"crm/internal/usecase"
+	"fmt"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 	"strings"
@@ -176,10 +176,7 @@ func (h *CrmInternalService) HasContactRelation(ctx context.Context, req *crmpb.
 		req.ContactOriginProfileId,
 	)
 	if err != nil {
-		return nil, _errors.InternalServerException(
-			"HasContactRelation fail Error: ",
-			err.Error(),
-		)
+		return nil, fmt.Errorf("check contact relation: %w", err)
 	}
 
 	return &crmpb.HasContactRelationResponse{

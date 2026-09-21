@@ -4,7 +4,6 @@ import (
 	"common/case/crud"
 	_db "common/db"
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	"context"
 	"errors"
 	"time"
@@ -368,11 +367,11 @@ func (r *RoleRepo) GetListByGroupKey(ctx context.Context, groupKey uint32) ([]ac
 		Limit(100).
 		Find(&roles).Error
 	if err != nil {
-		return nil, 0, _errors.ReturnError(500, err.Error())
+		return nil, 0, err
 	}
 
 	// if len(roles) == 0 {
-	// 	return nil, 0, _errors.ReturnError(404, "no roles found")
+	// 	return nil, 0, _errors.ReturnError(service.RolesNotFound)
 	// }
 
 	// Trả về role đầu tiên (có allow_assign = true nếu có, hoặc role đầu tiên nếu không có)

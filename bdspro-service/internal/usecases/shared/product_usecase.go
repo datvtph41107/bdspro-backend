@@ -4,6 +4,7 @@ import (
 	"bdspro/infra/providers"
 	redis_cli "bdspro/infra/redis"
 	"bdspro/infra/redis/cache"
+	"bdspro/internal"
 	"bdspro/internal/common/token"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
@@ -20,9 +21,9 @@ import (
 	_errors "common/errors"
 	"common/logging"
 	_models "common/models"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	sharepb "pb/types/shared"
@@ -210,11 +211,11 @@ func (uc *ProductUsecase) CheckVersionSync(
 	key := fmt.Sprintf(keyUserProducts, ownerId)
 	client, err := uc.redisClient.Client(ctx)
 	if err != nil {
-		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+		return nil, fmt.Errorf("get user products: %w", err)
 	}
 	productIds, err := client.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
-		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+		return nil, fmt.Errorf("get user products: %w", err)
 	}
 	// if len(productIds) == 0 {
 	// 	return nil, _errors.NotFoundException("User products not found")
@@ -223,7 +224,7 @@ func (uc *ProductUsecase) CheckVersionSync(
 	for i, productId := range productIds {
 		productIdsUint64[i], err = strconv.ParseUint(productId, 10, 64)
 		if err != nil {
-			return nil, _errors.InternalServerException("parse product id error: %w", err.Error())
+			return nil, fmt.Errorf("parse product id %q: %w", productId, err)
 		}
 	}
 	return &dto.CheckVersionSyncResponse{
@@ -247,11 +248,11 @@ func (uc *ProductUsecase) CheckVersionSyncById(
 	key := fmt.Sprintf(keyUserProducts, id)
 	client, err := uc.redisClient.Client(ctx)
 	if err != nil {
-		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+		return nil, fmt.Errorf("get user products: %w", err)
 	}
 	productIds, err := client.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
-		return nil, _errors.InternalServerException("get user products error: %w", err.Error())
+		return nil, fmt.Errorf("get user products: %w", err)
 	}
 	// if len(productIds) == 0 {
 	// 	return nil, _errors.NotFoundException("User products not found")
@@ -260,7 +261,7 @@ func (uc *ProductUsecase) CheckVersionSyncById(
 	for i, productId := range productIds {
 		productIdsUint64[i], err = strconv.ParseUint(productId, 10, 64)
 		if err != nil {
-			return nil, _errors.InternalServerException("parse product id error: %w", err.Error())
+			return nil, fmt.Errorf("parse product id %q: %w", productId, err)
 		}
 	}
 	return &dto.CheckVersionSyncResponse{
@@ -275,7 +276,7 @@ func (uc *ProductUsecase) CheckVersionSyncById(
 func (uc *ProductUsecase) FlushSyncIds(ctx context.Context, limit int64) error {
 	ownerId := _utils.GetOriginIdFromContext(ctx)
 	if ownerId == 0 {
-		return _errors.ReturnError(400, "owner_id is required")
+		return _errors.ReturnError(service.OwnerIDRequired)
 	}
 	key := fmt.Sprintf(keyUserProducts, ownerId)
 	logging.FromContext(ctx).Debug(
@@ -285,7 +286,7 @@ func (uc *ProductUsecase) FlushSyncIds(ctx context.Context, limit int64) error {
 	)
 	client, err := uc.redisClient.Client(context.Background())
 	if err != nil {
-		return _errors.InternalServerException("get user products error: %w", err.Error())
+		return fmt.Errorf("get user products: %w", err)
 	}
 	return client.LTrim(ctx, key, limit, -1).Err()
 }
@@ -307,10 +308,10 @@ func (uc *ProductUsecase) GetVersionData(
 	// }
 	entity, err := uc.ProductRepo.GetByIDContext(ctx, idDetail)
 	if err != nil {
-		return nil, nil, _errors.InternalServerException("get product error: %w", err.Error())
+		return nil, nil, fmt.Errorf("get product %d: %w", idDetail, err)
 	}
 	if entity == nil {
-		return nil, nil, _errors.NotFoundException("Product not found")
+		return nil, nil, _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 	}
 
 	uc.MapProductStatus(ctx, entity)
@@ -1201,7 +1202,7 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 		return nil, err
 	}
 	if entity == nil {
-		return nil, _errors.NotFoundException("Product not found")
+		return nil, _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 	}
 
 	s.MapProductStatus(c, entity)
@@ -1363,10 +1364,7 @@ func (s *ProductUsecase) SuggestFieldsWithDeepseek(c context.Context, text strin
 	// Gọi DeepSeek client để phân tích
 	deepseekResult, err := s.DeepseekClient.SuggestProductInfo(c, text)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: fmt.Sprintf("Lỗi khi gọi DeepSeek AI: %v", err),
-		}
+		return nil, fmt.Errorf("suggest product fields with DeepSeek: %w", err)
 	}
 
 	// Khởi tạo result parser
@@ -1502,10 +1500,7 @@ func (s *ProductUsecase) RequiredOwner(c context.Context, id uint64) (*domain.Pr
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	if product.OwnerID != profileId {
-		return nil, &_routes.Except{
-			Code:    401,
-			Message: "Bạn không có quyền truy cập",
-		}
+		return nil, _errors.ReturnError(service.AccessDenied)
 	}
 	return product, nil
 }
@@ -1535,10 +1530,7 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 
 	// todo: thêm hoặc có tin active
 	if product.SaleTransactionID != nil || product.RentTransactionID != nil {
-		return &_routes.Except{
-			Code:    401,
-			Message: "Không thể xóa sản phẩm này",
-		}
+		return _errors.ReturnError(service.ProductDeleteDenied)
 	}
 	return s.ProductRepo.Delete(c, id)
 }
@@ -1811,10 +1803,7 @@ func (uc *ProductUsecase) Members(c context.Context, id uint64, dto dto.SharingA
 
 func (uc *ProductUsecase) GetDealsByProduct(c context.Context, productID uint64, pagable _dto.Pagable) ([]*domain.Deal, int64, *time.Time, error) {
 	if uc.DealRepo == nil {
-		return nil, 0, &time.Time{}, &_routes.Except{
-			Code:    500,
-			Message: "Deal repository not initialized",
-		}
+		return nil, 0, &time.Time{}, errors.New("deal repository not initialized")
 	}
 
 	deals, total, productUpdatedAt, err := uc.DealRepo.GetDealsByProductID(c, productID, pagable)
@@ -1829,10 +1818,7 @@ func (uc *ProductUsecase) History(c context.Context, productId uint64, dto dto.P
 	profileId := _utils.GetProfileIdWithContext(c)
 	entities, total, err := uc.ProductHistoryRepo.History(c, profileId, productId, dto)
 	if err != nil {
-		return nil, 0, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy dữ liệu",
-		}
+		return nil, 0, _errors.ReturnError(_errors.DataNotFound)
 	}
 
 	return entities, total, nil
@@ -1858,10 +1844,7 @@ func (s *ProductUsecase) RequiredBeforeSave(c context.Context, parentID uint64) 
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	if parent.OwnerID != profileId {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Sản phẩm không thuộc quyền sở hữu của bạn",
-		}
+		return nil, _errors.ReturnError(service.ProductOwnershipDenied)
 	}
 
 	return parent, nil
@@ -1885,10 +1868,7 @@ func (s *ProductUsecase) CreateChild(c context.Context, body *dto.ProductSaveReq
 	}
 	totalAreaDevide := s.ProductChildRepo.TotalAreaDevide(body.ParentID)
 	if totalAreaDevide+body.AreaLand > parent.Area {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Diện tích không hợp lệ",
-		}
+		return nil, _errors.ReturnError(service.AreaInvalid)
 	}
 
 	body.ParentID = &parent.ID
@@ -1962,10 +1942,7 @@ func (s *ProductUsecase) MergeProductChild(c context.Context, body *dto.MergePro
 
 	validate := s.ProductChildRepo.ValidatorMerge(*body.ParentID, *body.ChildIDs)
 	if !validate {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tồn tại sản phẩm con không đạt điều kiện để gộp",
-		}
+		return nil, _errors.ReturnError(service.ProductChildMergeIneligible)
 	}
 
 	go func() {
@@ -2002,10 +1979,7 @@ func (s *ProductUsecase) MergeAllProductChild(c context.Context, parentID *uint6
 
 	validate := s.ProductChildRepo.ValidListChild(*parentID)
 	if !validate {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Tồn tại sản phẩm con không đạt điều kiện để gộp",
-		}
+		return nil, _errors.ReturnError(service.ProductChildMergeIneligible)
 	}
 
 	ids := s.ProductChildRepo.AllChildId(*parentID)
@@ -2044,10 +2018,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 	}
 
 	if child.ParentId == nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Chia sản phẩm con chỉ áp dụng đối với sản phẩm con",
-		}
+		return nil, _errors.ReturnError(service.ProductChildSplitOnly)
 	}
 
 	totalDevide := 0.0
@@ -2059,17 +2030,11 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 	}
 
 	if child.Area <= totalDevide || totalDevide < 1 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Diện tích không hợp lệ",
-		}
+		return nil, _errors.ReturnError(service.AreaInvalid)
 	}
 	validate := s.ProductChildRepo.ValidListChild(*devideData.ParentID)
 	if !validate {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Sản phẩm con không đạt điều kiện để chia",
-		}
+		return nil, _errors.ReturnError(service.ProductChildSplitIneligible)
 	}
 
 	// Lấy sản phẩm cha để copy địa chỉ
@@ -2078,10 +2043,7 @@ func (s *ProductUsecase) DevideProductChild(c context.Context, devideData *dto.D
 		return nil, err
 	}
 	if parent == nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy sản phẩm cha",
-		}
+		return nil, _errors.ReturnError(service.ParentProductNotFound)
 	}
 
 	// devideu_product_dto.ProductSaveRequest.ParentID = child.ParentId
@@ -2225,7 +2187,7 @@ func (s *ProductUsecase) GetProductSummary(ctx context.Context, searchRequest dt
 	// Lấy profileID từ context
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, _errors.InternalServerException("profile ID not found in context")
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("profile ID not found in context"), _errors.WithLegacyCode(401))
 	}
 
 	// Gọi repo để lấy thống kê với filters
@@ -2244,7 +2206,7 @@ func (uc *ProductUsecase) GetProductPricedDetail(
 ) (*dto.ProductPriceDetailDTO, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	product, err := uc.ProductRepo.GetProductWithCurrentPrice(ctx, productID)
@@ -2252,7 +2214,7 @@ func (uc *ProductUsecase) GetProductPricedDetail(
 		return nil, err
 	}
 	if product == nil {
-		return nil, _errors.NotFoundException("Product not found")
+		return nil, _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 	}
 
 	// OWNER
@@ -2294,7 +2256,7 @@ func (uc *ProductUsecase) buildOwnerPrice(
 	private *domain.ProductPrivate,
 ) (*dto.ProductPriceDetailDTO, error) {
 	if product == nil || product.Price == nil {
-		return nil, _errors.NotFoundException("Price not found")
+		return nil, _errors.ReturnError(service.ProductPriceNotFound)
 	}
 	price := product.Price.SalePrice
 	area := product.Area
@@ -2328,7 +2290,7 @@ func (uc *ProductUsecase) buildProductUserPrice(
 	distribute *domain.DistributionEntity,
 ) (*dto.ProductPriceDetailDTO, error) {
 	if distribute == nil || distribute.ProductPrice == nil {
-		return nil, _errors.NotFoundException("Distribute price not found")
+		return nil, _errors.ReturnError(service.DistributionPriceNotFound)
 	}
 	price := distribute.ProductPrice.SalePrice
 	area := product.Area
@@ -2352,7 +2314,7 @@ func (uc *ProductUsecase) buildPublicPrice(
 ) (*dto.ProductPriceDetailDTO, error) {
 
 	if product == nil || product.Price == nil {
-		return nil, _errors.NotFoundException("Price not found")
+		return nil, _errors.ReturnError(service.ProductPriceNotFound)
 	}
 
 	price := product.Price.SalePrice
@@ -2377,7 +2339,7 @@ func calcPricePerM2(price float64, area float64) int64 {
 // GetPriceHistory HISTORY APPLY PRICE CHANGE ////////////////
 func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHistorySearch) ([]*dto.PriceHistoryItemDTO, int64, *time.Time, error) {
 	if _utils.GetProfileIdWithContext(ctx) == 0 {
-		return nil, 0, &time.Time{}, _errors.UnauthorizedException()
+		return nil, 0, &time.Time{}, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	product, err := u.ProductRepo.GetProductByID(ctx, &req.ProductID)
@@ -2385,7 +2347,7 @@ func (u *ProductUsecase) GetPriceHistory(ctx context.Context, req *dto.PriceHist
 		return nil, 0, &time.Time{}, err
 	}
 	if product == nil {
-		return nil, 0, &time.Time{}, _errors.NotFoundException("Product not found")
+		return nil, 0, &time.Time{}, _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 	}
 
 	prices, total, err := u.PriceRepo.GetHistoryProductPrice(ctx, req)
@@ -2483,10 +2445,10 @@ func (u *ProductUsecase) ApplyPriceUpdate(
 ) (*dto.ApplyPriceUpdateResponse, error) {
 	originProfileId := _utils.GetOriginIdFromContext(ctx)
 	if originProfileId == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	if req.Price <= 0 {
-		return nil, _errors.BadRequestException("Sale price must be greater than 0")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Sale price must be greater than 0"))
 	}
 
 	var resp *dto.ApplyPriceUpdateResponse
@@ -2572,7 +2534,7 @@ func (u *ProductUsecase) resolvePriceUpdateValid(
 		return nil, err
 	}
 	if rsl == nil {
-		return nil, _errors.NotFoundException("Product not found")
+		return nil, _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 	}
 
 	product := &domain.Product{
@@ -2599,15 +2561,15 @@ func (u *ProductUsecase) resolvePriceUpdateValid(
 	}
 
 	if rsl.ProductUserID == nil {
-		return nil, _errors.ForbiddenException("User has no access to product")
+		return nil, _errors.ReturnError(service.ProductAccessDenied)
 	}
 
 	if rsl.PriceID == nil {
-		return nil, _errors.ForbiddenException("Product price has not been set")
+		return nil, _errors.ReturnError(service.ProductPriceNotSet)
 	}
 
 	if rsl.ChannelPrice == nil || !*rsl.ChannelPrice {
-		return nil, _errors.ForbiddenException("Price is not channel price")
+		return nil, _errors.ReturnError(service.ProductPriceNotChannel)
 	}
 
 	productUser, _ := u.ProductUserRepo.GetByProductAndOriginProfile(ctx, rsl.ProductID, originProfileId)
@@ -2647,10 +2609,7 @@ func (u *ProductUsecase) createProductPrice(
 	}
 
 	if err := u.PriceRepo.Create(ctx, price); err != nil {
-		return nil, _errors.InternalServerException(
-			"Create product price failed",
-			err.Error(),
-		)
+		return nil, fmt.Errorf("create product price: %w", err)
 	}
 
 	return price, nil
@@ -2747,15 +2706,15 @@ func (u *ProductUsecase) UpdateProductSource(
 ) error {
 	ownerId := _utils.GetProfileIdWithContext(ctx)
 	if ownerId == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	hasRelation, err := u.CrmProvider.HasContactRelation(ctx, ownerId, req.SourceContactId)
 	if err != nil {
-		return _errors.InternalServerException("hasRelation productUsecase error: ", err.Error())
+		return fmt.Errorf("check contact relation for product source: %w", err)
 	}
 	if !hasRelation {
-		return _errors.ForbiddenException("You do not have permission to update this product source")
+		return _errors.ReturnError(service.ProductSourceUpdateDenied)
 	}
 
 	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -2764,7 +2723,7 @@ func (u *ProductUsecase) UpdateProductSource(
 			return err
 		}
 		if product == nil {
-			return _errors.NotFoundException("Product not found")
+			return _errors.ReturnError(service.ProductNotFound, _errors.WithPublicMessage("Product not found"))
 		}
 
 		update := map[string]interface{}{
@@ -2798,10 +2757,10 @@ func (u *ProductUsecase) UpdateProductSource(
 func (u *ProductUsecase) ArchiveProducts(ctx context.Context, req *dto.ArchiveProductsDTO) error {
 	originId := _utils.GetOriginIdFromContext(ctx)
 	if originId == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	if len(req.IDs) == 0 {
-		return _errors.BadRequestException("No product IDs provided")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("No product IDs provided"))
 	}
 
 	for _, productId := range req.IDs {
@@ -2816,10 +2775,10 @@ func (u *ProductUsecase) ArchiveProducts(ctx context.Context, req *dto.ArchivePr
 func (u *ProductUsecase) archiveProductForUser(ctx context.Context, productId, originId uint64, archived bool) error {
 	productUser, err := u.ProductUserRepo.GetByProductAndOriginProfile(ctx, productId, originId)
 	if err != nil {
-		return _errors.InternalServerException("Failed to get product user relation: " + err.Error())
+		return fmt.Errorf("get product user relation: %w", err)
 	}
 	if productUser == nil {
-		return _errors.NotFoundException("Product user relation not found")
+		return _errors.ReturnError(service.ProductUserRelationNotFound)
 	}
 
 	// if productUser.Archived == archived {

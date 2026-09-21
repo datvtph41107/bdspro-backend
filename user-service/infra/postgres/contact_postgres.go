@@ -1,7 +1,8 @@
 package postgres
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
+	"user/internal"
 	models "user/internal/models"
 
 	"gorm.io/gorm"
@@ -37,10 +38,7 @@ func (r *ContactPostgres) Existed(followId uint64) error {
 
 	// ok, err := r.contactRepo.ExistByProfile(followId)
 	if count == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFoundProfile)
 	}
 
 	// if err != nil {

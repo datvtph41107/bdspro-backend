@@ -2,8 +2,9 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -130,10 +131,7 @@ func (s *PipelineService) Update(ctx context.Context, req *crmpb.PipelineSaveReq
 // @Router /pipeline/{id} [delete]
 func (s *PipelineService) Delete(ctx context.Context, req *crmpb.PipelineDTO) (*crmpb.PipelineDTO, error) {
 	if req.Id == 0 {
-		return nil, &_routes.Except{
-			Code:    int(codes.InvalidArgument),
-			Message: "id is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired, _errors.WithLegacyCode(int32(codes.InvalidArgument)))
 	}
 
 	err := s.UC.Delete(ctx, req.Id)

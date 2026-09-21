@@ -4,7 +4,7 @@ import (
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
-	_routes "common/routes"
+	_errors "common/errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -26,10 +26,7 @@ func NewApartmentUsecase(apartmentRepo repo.ApartmentRepo) *ApartmentUsecase {
 func (s *ApartmentUsecase) UpdateApartments(c *gin.Context) (*[]domain.Apartment, error) {
 	var body dto.ApartmentRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed)
 	}
 
 	attribute := body.Attribute
@@ -43,10 +40,7 @@ func (s *ApartmentUsecase) UpdateApartments(c *gin.Context) (*[]domain.Apartment
 		apartments[idx].BuildID = body.BuildID
 	}
 	if err := s.Repo.UpdateApartments(c, apartments, attribute.ID); err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return nil, fmt.Errorf("persist apartment changes: %w", err)
 	}
 
 	return &apartments, nil
@@ -55,10 +49,7 @@ func (s *ApartmentUsecase) UpdateApartments(c *gin.Context) (*[]domain.Apartment
 func (s *ApartmentUsecase) UpdateStatusApartments(c *gin.Context) (*[]domain.Apartment, error) {
 	var body dto.ApartmentStatusRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Dữ liệu không hợp lệ",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed)
 	}
 
 	apartments := body.Apartments
@@ -66,10 +57,7 @@ func (s *ApartmentUsecase) UpdateStatusApartments(c *gin.Context) (*[]domain.Apa
 		apartments[idx].BuildID = body.BuildID
 	}
 	if err := s.Repo.UpdateStatusApartments(c, apartments, body.Data.Status, body.Data.Archived); err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return nil, fmt.Errorf("persist apartment changes: %w", err)
 	}
 
 	return &apartments, nil
@@ -79,28 +67,19 @@ func (s *ApartmentUsecase) UpdateStatusApartments(c *gin.Context) (*[]domain.Apa
 func (s *ApartmentUsecase) ImportApartments(c *gin.Context) (*[]domain.Apartment, error) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	buildIdStr := c.PostForm("buildId")
 	buildId, err := strconv.Atoi(buildIdStr)
 
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithCause(err))
 	}
 	defer file.Close()
 

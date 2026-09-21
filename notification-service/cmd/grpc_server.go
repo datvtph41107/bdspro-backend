@@ -127,8 +127,14 @@ func startGRPCServer() error {
 		return fmt.Errorf("listen notification gRPC on %s: %w", port, err)
 	}
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(_middleware.ParseGrpcMetadataContextMiddleware),
-		grpc.StreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
+		grpc.ChainUnaryInterceptor(
+			_middleware.ParseGrpcMetadataContextMiddleware,
+			_middleware.UnaryErrorInterceptor(),
+		),
+		grpc.ChainStreamInterceptor(
+			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			_middleware.StreamErrorInterceptor(),
+		),
 	)
 	notificationpb.RegisterGatewayNotificationServiceServer(s, app.NotificationHandler)
 	notificationpb.RegisterInternalNotificationServiceServer(s, app.InternalHandler)

@@ -4,9 +4,9 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
@@ -95,10 +95,10 @@ func (s *LeadService) GetByContact(ctx context.Context, req *sharepb.IdRequest) 
 func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
 	dto := s.LeadMapper.LeadSaveToDomain(req)
 	if dto.Phone == "" {
-		return nil, _errors.ReturnError(400, "phone is required")
+		return nil, _errors.ReturnError(service.PhoneRequired)
 	}
 	if dto.StageID == nil {
-		return nil, _errors.ReturnError(400, "stageId is required")
+		return nil, _errors.ReturnError(service.StageIDRequired)
 	}
 
 	result, err := s.UC.Create(ctx, dto)
@@ -120,10 +120,7 @@ func (s *LeadService) Create(ctx context.Context, req *crmpb.LeadSaveRequest) (*
 func (s *LeadService) Update(ctx context.Context, req *crmpb.LeadSaveRequest) (*crmpb.LeadDTO, error) {
 	dto := s.LeadMapper.LeadSaveToDomain(req)
 	if req.Id == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "ID is required",
-		}
+		return nil, _errors.ReturnError(service.IDRequired, _errors.WithPublicMessage("ID is required"))
 	}
 
 	result, err := s.UC.Update(ctx, req.Id, dto)
@@ -193,10 +190,7 @@ func (s *LeadService) Note(ctx context.Context, req *crmpb.LeadNoteRequest) (*cr
 // @Router /lead/stage [put]
 func (s *LeadService) Stage(ctx context.Context, req *crmpb.LeadStageRequest) (*crmpb.LeadDTO, error) {
 	if req.LeadId == 0 || req.StageId == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "leadId and stageID is required",
-		}
+		return nil, _errors.ReturnError(service.LeadStageFieldsRequired)
 	}
 
 	result, err := s.UC.SwitchStage(ctx, req.LeadId, &req.StageId, req.StageNote)

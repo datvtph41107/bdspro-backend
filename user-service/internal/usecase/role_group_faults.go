@@ -1,20 +1,14 @@
 package usecase
 
 import (
-	"common/fault"
+	_errors "common/errors"
+	"user/internal"
 	"user/internal/domain/access"
 )
 
-// RoleGroupNotFoundCode is the stable application identity for a missing IAM
-// role group. Protocol mappings consume this identity; messages do not define
-// semantics.
-const RoleGroupNotFoundCode = "iam.role_group.not_found"
-
 func roleGroupNotFoundFault() error {
-	return fault.Wrap(
-		access.ErrRoleGroupNotFound,
-		fault.KindNotFound,
-		RoleGroupNotFoundCode,
-		"role group not found",
+	return _errors.ReturnError(
+		service.RoleGroupNotFound,
+		_errors.WithCause(access.ErrRoleGroupNotFound),
 	)
 }

@@ -3,9 +3,11 @@ package admin_handler
 import (
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
+	"bdspro/internal"
 	admin_usecases "bdspro/internal/usecases/admin"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"fmt"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
@@ -60,10 +62,7 @@ func (h *AdminTransactionHandler) GetTransactions(ctx context.Context, req *bdsp
 	// Get list from usecase
 	transactions, total, err := h.AdminTransactionUsecase.GetList(ctx, filter)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi lấy danh sách thương vụ: " + err.Error(),
-		}
+		return nil, fmt.Errorf("list admin transactions: %w", err)
 	}
 
 	// Map to response
@@ -87,10 +86,7 @@ func (h *AdminTransactionHandler) GetTransactionDetail(ctx context.Context, req 
 	// Get detail from usecase
 	transaction, err := h.AdminTransactionUsecase.GetDetail(ctx, req.Id)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    404,
-			Message: "Không tìm thấy thương vụ",
-		}
+		return nil, _errors.ReturnError(service.DealNotFound)
 	}
 
 	// Map to response
@@ -114,10 +110,7 @@ func (h *AdminTransactionHandler) ApproveTransaction(ctx context.Context, req *s
 	// Approve transaction
 	err := h.AdminTransactionUsecase.ApproveTransaction(ctx, req.Id)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi phê duyệt thương vụ: " + err.Error(),
-		}
+		return nil, fmt.Errorf("approve transaction %d: %w", req.Id, err)
 	}
 
 	return &bdspropb.Response{
@@ -143,19 +136,13 @@ func (h *AdminTransactionHandler) RejectTransaction(ctx context.Context, req *bd
 
 	// Validate reason
 	if req.Reason == "" {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Vui lòng nhập lý do từ chối",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("Vui lòng nhập lý do từ chối"))
 	}
 
 	// Reject transaction
 	err := h.AdminTransactionUsecase.RejectTransaction(ctx, req.Id)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi từ chối thương vụ: " + err.Error(),
-		}
+		return nil, fmt.Errorf("reject transaction %d: %w", req.Id, err)
 	}
 
 	return &bdspropb.Response{
@@ -181,10 +168,7 @@ func (h *AdminTransactionHandler) DeleteTransaction(ctx context.Context, req *sh
 	// Delete transaction
 	err := h.AdminTransactionUsecase.DeleteTransaction(ctx, req.Id)
 	if err != nil {
-		return nil, &_routes.Except{
-			Code:    500,
-			Message: "Lỗi khi xóa thương vụ: " + err.Error(),
-		}
+		return nil, fmt.Errorf("delete transaction %d: %w", req.Id, err)
 	}
 
 	return &bdspropb.Response{

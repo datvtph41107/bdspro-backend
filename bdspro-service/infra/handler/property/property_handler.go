@@ -11,6 +11,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -336,7 +337,7 @@ func (h *PropertyHandler) GetPropertyTimestamps(ctx context.Context, req *sharep
 
 	vals, err := h.SyncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.InternalServerException("error: %v", err.Error())
+		return nil, fmt.Errorf("get property timestamps: %w", err)
 	}
 
 	names := []string{"property_detail", "property_histories"}
@@ -452,7 +453,7 @@ func (h *PropertyHandler) ImportProperty(ctx context.Context, req *bdspropb.Crea
 func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.UpdatePropertyRequest) (*bdspropb.UpdatePropertyResponse, error) {
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	if err := property_validator.ValidateUpdateRequest(req); err != nil {
 		logging.FromContext(ctx).Warn(
@@ -481,7 +482,7 @@ func (h *PropertyHandler) UpdateProperty(ctx context.Context, req *bdspropb.Upda
 func (h *PropertyHandler) PreviewPropertyUpdate(ctx context.Context, req *bdspropb.PreviewPropertyUpdateRequest) (*bdspropb.PreviewPropertyUpdateResponse, error) {
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	cmd := MapPreviewRequestToCmd(req)
 	cmd.ImpactAssessment = &dto.ImpactAssessmentDTO{PreviewOnly: true}
@@ -499,7 +500,7 @@ func (h *PropertyHandler) PreviewPropertyUpdate(ctx context.Context, req *bdspro
 func (h *PropertyHandler) ConfirmPropertyUpdate(ctx context.Context, req *bdspropb.ConfirmPropertyUpdateRequest) (*bdspropb.UpdatePropertyResponse, error) {
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	cmd := &dto.UpdatePropertyDTO{
 		LineageID: req.Id,
@@ -523,7 +524,7 @@ func (h *PropertyHandler) ConfirmPropertyUpdate(ctx context.Context, req *bdspro
 func (h *PropertyHandler) SendPropertyReport(ctx context.Context, req *bdspropb.SendReportPropertyRequest) (*bdspropb.ReportPropertyResponse, error) {
 	authenID := _utils.GetOriginIdFromContext(ctx)
 	if authenID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	cmd := MapReportRequestToCmd(req)
 	result, err := h.PropertyUsecase.SubmitReport(ctx, cmd, authenID)

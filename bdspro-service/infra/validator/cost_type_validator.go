@@ -1,7 +1,7 @@
 package validator
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	bdspropb "pb/types/bdspro"
 )
 
@@ -14,10 +14,7 @@ func NewCostTypeValidator() *CostTypeValidator {
 
 func (v *CostTypeValidator) ValidateSaveCostType(pbCostType *bdspropb.AssetCostTypeDTO) error {
 	if pbCostType.TypeName == "" || pbCostType.Type == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "name and type are required",
-		}
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("name and type are required"))
 	}
 	return nil
 }

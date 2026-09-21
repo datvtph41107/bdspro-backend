@@ -117,9 +117,11 @@ func runGRPC() error {
 	transportConfig := rpcenv.LoadTransportConfig()
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			_middleware.UnaryErrorInterceptor(),
 			accessIngress(transportConfig),
 		),
 		grpc.ChainStreamInterceptor(
+			_middleware.StreamErrorInterceptor(),
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,
 		),
 	)

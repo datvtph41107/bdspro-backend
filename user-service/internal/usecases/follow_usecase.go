@@ -1,9 +1,11 @@
 package usecases
 
 import (
+	_errors "common/errors"
 	_jwt "common/jwt"
-	_routes "common/routes"
+	"fmt"
 	"strconv"
+	"user/internal"
 	"user/internal/interface/repo"
 	"user/internal/models"
 
@@ -43,17 +45,11 @@ func (u *FollowUsecase) FollowingUser(c *gin.Context) ([]models.Profile, error) 
 func (u *FollowUsecase) Existed(followId uint64) error {
 	ok, err := u.contactRepo.ExistByProfile(followId)
 	if !ok {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFoundProfile)
 	}
 
 	if err != nil {
-		return &_routes.Except{
-			Code:    500,
-			Message: err.Error(),
-		}
+		return fmt.Errorf("validate follow target: %w", err)
 	}
 	return nil
 }

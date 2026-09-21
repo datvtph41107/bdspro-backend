@@ -5,9 +5,9 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/provider"
 	_dto "common/domain/dto"
-	_errors "common/errors"
 	"common/logging"
 	"context"
+	"fmt"
 	"log/slog"
 	"pb/clients"
 	notificationpb "pb/types/notification"
@@ -41,7 +41,7 @@ func (s *NotificationClient) RegistedEventProperty(ctx context.Context, req *dto
 			"create property history failed",
 			slog.Any("error", err),
 		)
-		return _errors.InternalServerException("create PropertyHistory failed")
+		return fmt.Errorf("create property history: %w", err)
 	}
 
 	return nil

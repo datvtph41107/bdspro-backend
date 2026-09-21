@@ -2,47 +2,29 @@ package handler_grpc
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
+	"tqd/internal"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func TestQHAuthorityIssuringErrorPreservesCanonicalFault(t *testing.T) {
-	err := qhAuthorityIssuringError(fault.New(
-		fault.KindNotFound,
-		"tqd.qh_authority_issuring.not_found",
-		"authority issuring 42 was not found",
-	))
-	st, ok := status.FromError(err)
-	if !ok {
-		t.Fatal("qhAuthorityIssuringError did not return a gRPC status")
-	}
-	if st.Code() != codes.NotFound {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.NotFound)
-	}
-	if errorCodeFromQHAuthorityStatus(st) != "tqd.qh_authority_issuring.not_found" {
-		t.Fatalf("error_code = %q", errorCodeFromQHAuthorityStatus(st))
-	}
+func TestQHAuthorityIssuringErrorPreservesCanonicalError(t *testing.T) {
+	err := _errors.ReturnError(
+		service.AuthorityNotFound,
+		_errors.WithPublicMessage("authority issuring 42 was not found"),
+	)
+	assertCanonicalStatus(t, qhAuthorityIssuringError(err), service.AuthorityNotFound)
 }
 
 func TestQHAuthorityIssuringValidationCarriesFieldViolation(t *testing.T) {
-	st, ok := status.FromError(qhAuthorityIssuringValidation(
-		"tqd.qh_authority_issuring.id_required",
-		"id is required",
-		"id",
-	))
-	if !ok {
-		t.Fatal("validation did not return a gRPC status")
-	}
-	if st.Code() != codes.InvalidArgument {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.InvalidArgument)
-	}
-	if errorCodeFromQHAuthorityStatus(st) != "tqd.qh_authority_issuring.id_required" {
-		t.Fatalf("error_code = %q", errorCodeFromQHAuthorityStatus(st))
-	}
+	err := _errors.ReturnError(
+		service.AuthorityIDRequired,
+		_errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "id is required"}),
+	)
+	st := assertCanonicalStatus(t, qhAuthorityIssuringError(err), service.AuthorityIDRequired)
 
 	var field string
 	for _, detail := range st.Details() {
@@ -56,26 +38,11 @@ func TestQHAuthorityIssuringValidationCarriesFieldViolation(t *testing.T) {
 }
 
 func TestQHAuthorityIssuringErrorDoesNotLeakDependencyFailure(t *testing.T) {
-	st, ok := status.FromError(qhAuthorityIssuringError(errors.New("postgres password=secret connection failed")))
-	if !ok {
-		t.Fatal("dependency failure did not return a gRPC status")
+	st := assertTechnicalStatus(
+		t,
+		qhAuthorityIssuringError(errors.New("postgres password=secret connection failed")),
+	)
+	if strings.Contains(st.Message(), "secret") || strings.Contains(st.Message(), "postgres") {
+		t.Fatalf("dependency detail leaked: %q", st.Message())
 	}
-	if st.Code() != codes.Internal {
-		t.Fatalf("gRPC code = %s, want %s", st.Code(), codes.Internal)
-	}
-	if st.Message() != "authority issuring operation failed" {
-		t.Fatalf("message = %q", st.Message())
-	}
-	if errorCodeFromQHAuthorityStatus(st) != "tqd.qh_authority_issuring.internal" {
-		t.Fatalf("error_code = %q", errorCodeFromQHAuthorityStatus(st))
-	}
-}
-
-func errorCodeFromQHAuthorityStatus(st *status.Status) string {
-	for _, detail := range st.Details() {
-		if info, ok := detail.(*errdetails.ErrorInfo); ok {
-			return info.Metadata["error_code"]
-		}
-	}
-	return ""
 }

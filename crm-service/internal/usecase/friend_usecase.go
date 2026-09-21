@@ -5,9 +5,10 @@ import (
 	_db "common/db"
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -73,7 +74,7 @@ func (s *FriendUsecase) FriendList(c context.Context, dto data.FriendRequest) ([
 func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain.FriendEntity, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return nil, _errors.UnauthorizedException("missing profile id")
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 	}
 
 	if err := s.blockService.BeforeRequest(ctx, receiverId); err != nil {
@@ -82,7 +83,7 @@ func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain
 
 	receiverUser, err := s.userClient.GetProfileById(ctx, receiverId)
 	if err != nil || receiverUser == nil {
-		return nil, _errors.NotFoundException("receiver not found")
+		return nil, _errors.ReturnError(service.UserNotFound, _errors.WithPublicMessage("receiver not found"))
 	}
 
 	currentUser, _ := s.userClient.GetProfileById(ctx, profileId)
@@ -92,23 +93,23 @@ func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain
 	err = s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		existing, err := s.friendRepo.GetFriendship(txCtx, profileId, receiverId)
 		if err != nil {
-			return _errors.InternalServerException("failed to check friendship: " + err.Error())
+			return fmt.Errorf("failed to check friendship: %w", err)
 		}
 
 		if existing != nil {
 			switch existing.Status {
 			case enums.FriendStatusAccepted:
-				return _errors.ConflictException("already friends")
+				return _errors.ReturnError(service.FriendshipAlreadyExists)
 			case enums.FriendStatusPending:
 				if existing.CreatedBy != nil && *existing.CreatedBy == profileId {
-					return _errors.ConflictException("friend request already sent")
+					return _errors.ReturnError(service.FriendRequestAlreadySent)
 				} else {
-					return _errors.ConflictException("you have a pending request from this user, please accept or reject it")
+					return _errors.ReturnError(service.FriendRequestPendingIncoming)
 				}
 			case enums.FriendStatusReject:
 				// Xóa mềm bản ghi cũ (hủy bỏ) để tạo mới
 				if err := s.friendRepo.CancelRequest(txCtx, existing.ID); err != nil {
-					return _errors.InternalServerException("failed to delete old rejected request: " + err.Error())
+					return fmt.Errorf("failed to delete old rejected request: %w", err)
 				}
 			}
 		}
@@ -119,7 +120,7 @@ func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain
 			ReceiverID: receiverId,
 		}
 		if err := _db.SaveWithContext(txCtx, friendEntity); err != nil {
-			return _errors.InternalServerException("failed to create friend request: " + err.Error())
+			return fmt.Errorf("failed to create friend request: %w", err)
 		}
 		result = friendEntity
 
@@ -127,7 +128,7 @@ func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain
 		if _, err := s.contact.GetOrCreateByProfileID(txCtx,
 			receiverId, profileId, base_enum.EOwnerOfMember,
 			receiverUser.FullName, receiverUser.Phone, receiverUser.Avatar); err != nil {
-			return _errors.InternalServerException("failed to create contact for sender: " + err.Error())
+			return fmt.Errorf("failed to create contact for sender: %w", err)
 		}
 
 		// Tạo contact cho người nhận (lưu thông tin người gửi)
@@ -135,7 +136,7 @@ func (s *FriendUsecase) Request(ctx context.Context, receiverId uint64) (*domain
 			if _, err := s.contact.GetOrCreateByProfileID(txCtx,
 				profileId, receiverId, base_enum.EOwnerOfMember,
 				currentUser.FullName, currentUser.Phone, currentUser.Avatar); err != nil {
-				return _errors.InternalServerException("failed to create contact for receiver: " + err.Error())
+				return fmt.Errorf("failed to create contact for receiver: %w", err)
 			}
 		}
 
@@ -198,7 +199,7 @@ func (s *FriendUsecase) RequestReceived(c context.Context, params data.FriendDTO
 func (s *FriendUsecase) ChangeStatus(ctx context.Context, requestId uint64, status enums.FriendStatus) (int, error) {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return 0, _errors.UnauthorizedException("missing profile id")
+		return 0, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 	}
 
 	// Validate block
@@ -214,13 +215,13 @@ func (s *FriendUsecase) ChangeStatus(ctx context.Context, requestId uint64, stat
 		var err error
 		requestEntity, err = s.friendRepo.FindByID(txCtx, requestId)
 		if err != nil {
-			return _errors.NotFoundException("friend request not found")
+			return _errors.ReturnError(service.FriendRequestNotFound)
 		}
 		if requestEntity.ReceiverID != profileId {
-			return _errors.ForbiddenException("you are not the receiver of this request")
+			return _errors.ReturnError(service.FriendRequestReceiverDenied)
 		}
 		if requestEntity.Status != enums.FriendStatusPending {
-			return _errors.ConflictException("request already processed")
+			return _errors.ReturnError(service.FriendRequestAlreadyProcessed)
 		}
 
 		// Kiểm tra block giữa profileId và người gửi (senderId)
@@ -229,7 +230,7 @@ func (s *FriendUsecase) ChangeStatus(ctx context.Context, requestId uint64, stat
 			senderId = *requestEntity.CreatedBy
 		}
 		if senderId == 0 {
-			return _errors.BadRequestException("invalid sender")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("invalid sender"))
 		}
 		if err := s.blockService.BeforeRequest(txCtx, senderId); err != nil {
 			return err
@@ -238,7 +239,7 @@ func (s *FriendUsecase) ChangeStatus(ctx context.Context, requestId uint64, stat
 		// Update status
 		respondedAt := time.Now()
 		if err := s.friendRepo.UpdateStatusById(txCtx, status, requestId, &respondedAt); err != nil {
-			return _errors.InternalServerException("failed to update status: " + err.Error())
+			return fmt.Errorf("failed to update status: %w", err)
 		}
 
 		// Nếu accept, có thể cập nhật thêm thông tin contact (ví dụ: đánh dấu là bạn bè) nhưng không cần tạo mới
@@ -305,19 +306,13 @@ func (s *FriendUsecase) ChangeGroup(c context.Context, requestId uint64, groupId
 	requestEntity, err := s.friendRepo.FindByID(c, requestId)
 	if err != nil {
 		// return 0, errors.New("Id không chính xác")
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Thông tin không đúng vui lòng kiểm tra lại",
-		}
+		return 0, _errors.ReturnError(service.FriendRequestInputInvalid)
 	}
 
 	profileId := _utils.GetProfileIdWithContext(c)
 
 	if (requestEntity.ReceiverID != profileId && requestEntity.CreatedBy != &profileId) || requestEntity.Status != enums.FriendStatusPending {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Không thể thực hiện yêu cầu",
-		}
+		return 0, _errors.ReturnError(service.RequestCannotBePerformed, _errors.WithPublicMessage("Không thể thực hiện yêu cầu"))
 	}
 
 	isGroup := true
@@ -505,29 +500,29 @@ func (s *FriendUsecase) GetCommonFriends(c context.Context, user1Id uint64, user
 func (s *FriendUsecase) CancelRequest(ctx context.Context, receiverId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return _errors.UnauthorizedException("missing profile id")
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 	}
 
 	return s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		// Tìm request pending từ profileId đến receiverId
 		request, err := s.friendRepo.FindBySenderIdAndReceiverId(txCtx, profileId, receiverId)
 		if err != nil || request == nil {
-			return _errors.NotFoundException("friend request not found")
+			return _errors.ReturnError(service.FriendRequestNotFound)
 		}
 		if request.Status != enums.FriendStatusPending {
-			return _errors.ConflictException("cannot cancel non-pending request")
+			return _errors.ReturnError(service.FriendRequestNotPending)
 		}
 
 		// Xóa request (soft delete)
 		if err := s.friendRepo.CancelRequest(txCtx, request.ID); err != nil {
-			return _errors.InternalServerException("failed to cancel request: " + err.Error())
+			return fmt.Errorf("failed to cancel request: %w", err)
 		}
 
 		// Xóa contact của current user về receiver
 		contact1, err := s.contact.GetByProfileID(txCtx, receiverId, profileId, base_enum.EOwnerOfMember)
 		if err == nil && contact1 != nil {
 			if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for sender: " + err.Error())
+				return fmt.Errorf("failed to delete contact for sender: %w", err)
 			}
 		}
 
@@ -535,7 +530,7 @@ func (s *FriendUsecase) CancelRequest(ctx context.Context, receiverId uint64) er
 		contact2, err := s.contact.GetByProfileID(txCtx, profileId, receiverId, base_enum.EOwnerOfMember)
 		if err == nil && contact2 != nil {
 			if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for receiver: " + err.Error())
+				return fmt.Errorf("failed to delete contact for receiver: %w", err)
 			}
 		}
 
@@ -546,29 +541,29 @@ func (s *FriendUsecase) CancelRequest(ctx context.Context, receiverId uint64) er
 func (s *FriendUsecase) Unfriend(ctx context.Context, friendId uint64) error {
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId == 0 {
-		return _errors.UnauthorizedException("missing profile id")
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("missing profile id"), _errors.WithLegacyCode(401))
 	}
 
 	return s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		// Tìm friendship giữa hai người (status = accepted)
 		friendship, err := s.friendRepo.GetFriendship(txCtx, profileId, friendId)
 		if err != nil {
-			return _errors.InternalServerException("failed to get friendship: " + err.Error())
+			return fmt.Errorf("failed to get friendship: %w", err)
 		}
 		if friendship == nil || friendship.Status != enums.FriendStatusAccepted {
-			return _errors.NotFoundException("friendship not found")
+			return _errors.ReturnError(service.FriendshipNotFound)
 		}
 
 		// Xóa friendship (soft delete)
 		if err := s.friendRepo.DeleteByID(txCtx, friendship.ID); err != nil {
-			return _errors.InternalServerException("failed to delete friendship: " + err.Error())
+			return fmt.Errorf("failed to delete friendship: %w", err)
 		}
 
 		// Xóa contact của profileId về friendId
 		contact1, err := s.contact.GetByProfileID(txCtx, friendId, profileId, base_enum.EOwnerOfMember)
 		if err == nil && contact1 != nil {
 			if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for profile: " + err.Error())
+				return fmt.Errorf("failed to delete contact for profile: %w", err)
 			}
 		}
 
@@ -576,7 +571,7 @@ func (s *FriendUsecase) Unfriend(ctx context.Context, friendId uint64) error {
 		contact2, err := s.contact.GetByProfileID(txCtx, profileId, friendId, base_enum.EOwnerOfMember)
 		if err == nil && contact2 != nil {
 			if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for friend: " + err.Error())
+				return fmt.Errorf("failed to delete contact for friend: %w", err)
 			}
 		}
 

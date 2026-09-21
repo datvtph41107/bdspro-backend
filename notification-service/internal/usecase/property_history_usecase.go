@@ -3,9 +3,11 @@ package usecase
 import (
 	_errors "common/errors"
 	"context"
+	"fmt"
+	"notification/internal"
 	"notification/internal/domain"
 	"notification/internal/dto"
-			sharepb "pb/types/shared"
+	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
 )
@@ -52,7 +54,7 @@ func (uc *PropertyHistoryUseCase) GetDetail(
 		return nil, nil, err
 	}
 	if history == nil {
-		return nil, nil, _errors.NotFoundException("History not found")
+		return nil, nil, _errors.ReturnError(service.PropertyHistoryNotFound)
 	}
 
 	actor, err := uc.UserProvider.GetProfileByID(
@@ -61,10 +63,7 @@ func (uc *PropertyHistoryUseCase) GetDetail(
 	)
 	if err != nil {
 		return nil, nil,
-			_errors.InternalServerException(
-				"Get UserProfile property history [DETAIL] fail error: ",
-				err.Error(),
-			)
+			fmt.Errorf("get property history actor profile: %w", err)
 	}
 
 	return history, actor, nil
@@ -81,7 +80,7 @@ func (uc *PropertyHistoryUseCase) SoftDelete(
 		return err
 	}
 	if history == nil {
-		return _errors.NotFoundException("History not found")
+		return _errors.ReturnError(service.PropertyHistoryNotFound)
 	}
 
 	return uc.PropertyHistoryRepo.Delete(ctx, id)
@@ -94,7 +93,7 @@ func (uc *PropertyHistoryUseCase) Search(
 	histories, total, err := uc.PropertyHistoryRepo.Search(ctx, q)
 	if err != nil {
 		return nil, nil, 0,
-			_errors.InternalServerException("GetList PropertyHistory err: ", err.Error())
+			fmt.Errorf("search property history: %w", err)
 	}
 
 	if len(histories) == 0 {
@@ -111,7 +110,7 @@ func (uc *PropertyHistoryUseCase) Search(
 		&sharepb.GetProfileByIdsRequest{Ids: userIDs},
 	)
 	if err != nil {
-		return nil, nil, 0, _errors.InternalServerException("Get UserProfile property history [LIST] fail error: ", err.Error())
+		return nil, nil, 0, fmt.Errorf("get property history profile map: %w", err)
 	}
 	if len(userMap) == 0 {
 		userMap = map[uint64]*sharepb.ProfileItem{}

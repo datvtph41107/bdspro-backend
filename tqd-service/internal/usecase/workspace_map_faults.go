@@ -1,105 +1,34 @@
 package usecase
 
-import "common/fault"
+import (
+	_errors "common/errors"
+	"tqd/internal"
+)
 
 func workspaceUserIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.user_id_required",
-		"user_id is required",
-		fault.FieldViolation{
-			Field:       "user_id",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.WorkspaceUserIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "user_id", Description: "is required"}))
 }
-
 func workspaceParcelIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.parcel_id_required",
-		"parcel_id is required",
-		fault.FieldViolation{
-			Field:       "parcel_id",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.WorkspaceParcelIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "parcel_id", Description: "is required"}))
 }
-
 func workspaceFollowOrParcelIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.follow_or_parcel_id_required",
-		"follow_id or parcel_id is required",
-	)
+	return _errors.ReturnError(service.WorkspaceFollowOrParcelIDRequired)
 }
-
 func workspaceEntityIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.entity_id_required",
-		"entity_id is required",
-		fault.FieldViolation{
-			Field:       "entity_id",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.WorkspaceEntityIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "entity_id", Description: "is required"}))
 }
-
 func workspaceHistoryIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.history_id_required",
-		"history_id is required",
-		fault.FieldViolation{
-			Field:       "history_id",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.WorkspaceHistoryIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "history_id", Description: "is required"}))
 }
-
 func workspaceReportIDRequired() error {
-	return fault.Validation(
-		"tqd.workspace.report_id_required",
-		"report_id is required",
-		fault.FieldViolation{
-			Field:       "report_id",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.WorkspaceReportIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "report_id", Description: "is required"}))
 }
-
-func workspaceParcelNotFound() error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.workspace.parcel_not_found",
-		"parcel not found",
-	)
-}
-
-func workspaceRegionNotFound() error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.workspace.region_not_found",
-		"region not found",
-	)
-}
-
-func workspaceReportNotFound() error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.workspace.report_not_found",
-		"report not found",
-	)
-}
-
+func workspaceParcelNotFound() error { return _errors.ReturnError(service.WorkspaceParcelNotFound) }
+func workspaceRegionNotFound() error { return _errors.ReturnError(service.WorkspaceRegionNotFound) }
+func workspaceReportNotFound() error { return _errors.ReturnError(service.WorkspaceReportNotFound) }
 func workspaceReportRegenerationNotAllowed() error {
-	return fault.New(
-		fault.KindPrecondition,
-		"tqd.workspace.report_regeneration_not_allowed",
-		"report cannot regenerate in current status",
-	)
+	return _errors.ReturnError(service.WorkspaceReportRegenerationNotAllowed)
 }
-
 func workspaceReportShareNotReady() error {
-	return fault.New(
-		fault.KindPrecondition,
-		"tqd.workspace.report_share_not_ready",
-		"report is not ready to share",
-	)
+	return _errors.ReturnError(service.WorkspaceReportShareNotReady)
 }

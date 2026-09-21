@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
+
+	_errors "common/errors"
 	"regexp"
 
+	"tqd/internal"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
 )
@@ -29,7 +31,7 @@ func isUUID(s string) bool {
 
 func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*qh_domain.OneHouse, error) {
 	if idOrUUID == 0 {
-		return nil, errors.New("id or uuid is required")
+		return nil, _errors.ReturnError(service.OneHouseIdentifierRequired)
 	}
 
 	// Ưu tiên tìm theo property_uuid nếu đầu vào có dạng UUID
@@ -49,7 +51,7 @@ func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*qh_d
 	// 	if oh != nil {
 	// 		return oh, nil
 	// 	}
-	// 	return nil, errors.New("one_house not found")
+	// 	return nil, _errors.ReturnError(service.OneHouseNotFound)
 	// }
 
 	// Nếu không phải UUID, chỉ tìm theo id (text)
@@ -58,7 +60,7 @@ func (u *oneHouseUsecase) GetDetail(ctx context.Context, idOrUUID uint64) (*qh_d
 		return nil, err
 	}
 	if oh == nil {
-		return nil, errors.New("one_house not found")
+		return nil, _errors.ReturnError(service.OneHouseNotFound)
 	}
 	return oh, nil
 }

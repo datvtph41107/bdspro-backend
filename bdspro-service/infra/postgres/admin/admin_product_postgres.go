@@ -1,6 +1,7 @@
 package admin_postgres
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/repo"
@@ -37,7 +38,7 @@ func NewAdminProductPostgres(db *_db.TransactionRepo, productRepo repo.ProductRe
 func (r *AdminProductPostgres) GetList(c context.Context, pagable _dto.IPagable) ([]domain.Product, int64, error) {
 	dto, ok := pagable.(*dto.ProductSearchRequest)
 	if !ok {
-		return nil, 0, _errors.ReturnError(400, "invalid pagable")
+		return nil, 0, _errors.ReturnError(service.InvalidPagable)
 	}
 	// r.WithTransaction(c, func(c context.Context) error {
 	// 	return nil

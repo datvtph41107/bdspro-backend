@@ -2,7 +2,6 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	"common/fault"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
@@ -282,13 +281,6 @@ func (h *RoleHandler) GetRolesByGroupKey(ctx context.Context, req *authpb.GetRol
 	}, nil
 }
 
-func mapGetRolesByModuleCodeError(err error) error {
-	if _, ok := fault.As(err); !ok {
-		return err
-	}
-	return fault.ToGRPC(err)
-}
-
 // @Summary Lấy danh sách role theo module code
 // @Description Lấy danh sách role theo module code
 // @Tags Role
@@ -304,7 +296,7 @@ func (h *RoleHandler) GetRolesByModuleCode(ctx context.Context, req *authpb.GetR
 	}
 	roles, err := h.roleUsecase.GetListByModuleCode(ctx, req.Code)
 	if err != nil {
-		return nil, mapGetRolesByModuleCodeError(err)
+		return nil, err
 	}
 
 	pbRoles := h.roleMapper.MapRoleListToItemPb(roles)

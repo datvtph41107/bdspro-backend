@@ -1,12 +1,12 @@
 package client
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
-	"net/http"
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	pb_social "pb/types/social"
+	"social/internal"
 	"social/internal/dto"
 )
 
@@ -28,10 +28,7 @@ func (c *BdsproClient) OwnerPost(ctx context.Context, postID uint64, profileID u
 		return err
 	}
 	if !resposne.Success {
-		return &_routes.Except{
-			Code:    http.StatusForbidden,
-			Message: "bạn không có quyền tạo/forward tin đăng này",
-		}
+		return _errors.ReturnError(service.PostForwardDenied)
 	}
 	return nil
 }

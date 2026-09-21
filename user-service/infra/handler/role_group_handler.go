@@ -2,7 +2,6 @@ package handler
 
 import (
 	_dto "common/domain/dto"
-	"common/fault"
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
@@ -165,13 +164,6 @@ func (h *RoleGroupHandler) GetRoleGroupById(ctx context.Context, req *sharepb.Id
 	return h.Mapper.MapToPb(result), nil
 }
 
-func mapUpdateGroupPermissionsError(err error) error {
-	if _, ok := fault.As(err); !ok {
-		return err
-	}
-	return fault.ToGRPC(err)
-}
-
 // @Summary Cập nhật permission cho group
 // @Description Cập nhật toàn bộ permission cho group
 // @Tags RoleGroup
@@ -187,7 +179,7 @@ func (h *RoleGroupHandler) UpdateGroupPermissions(ctx context.Context, req *auth
 	}
 	err := h.RoleGroupUsecase.UpdateGroupPermissions(ctx, req.GroupId, req.PermissionIds)
 	if err != nil {
-		return nil, mapUpdateGroupPermissionsError(err)
+		return nil, err
 	}
 
 	return &sharepb.SubmitResponse{

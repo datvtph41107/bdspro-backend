@@ -82,7 +82,7 @@ func (h *ProductNoteHandler) CreateProductNote(
 	req *bdspropb.CreateProductNoteRequest,
 ) (*bdspropb.Response, error) {
 	if req.ProductId == 0 {
-		return nil, _errors.BadRequestException("productId is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("productId is required"))
 	}
 
 	result, err := h.ProductNoteUsecase.CreateNote(ctx, &dto.CreateProductNoteRequest{
@@ -107,7 +107,7 @@ func (h *ProductNoteHandler) UpdateProductNote(
 	req *bdspropb.UpdateProductNoteReqClient,
 ) (*bdspropb.Response, error) {
 	if req.Id == 0 {
-		return nil, _errors.BadRequestException("noteId is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("noteId is required"))
 	}
 
 	err := h.ProductNoteUsecase.UpdateNote(ctx, &dto.UpdateProductNoteRequest{
@@ -131,7 +131,7 @@ func (h *ProductNoteHandler) DeleteProductNote(
 	req *bdspropb.DeleteProductNoteRequest,
 ) (*bdspropb.Response, error) {
 	if req.NoteId == 0 {
-		return nil, _errors.BadRequestException("noteId is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("noteId is required"))
 	}
 
 	if err := h.ProductNoteUsecase.DeleteNote(ctx, req.NoteId); err != nil {
@@ -149,7 +149,7 @@ func (h *ProductNoteHandler) TogglePinProductNote(
 	req *bdspropb.TogglePinProductNoteRequest,
 ) (*bdspropb.Response, error) {
 	if req.Id == 0 {
-		return nil, _errors.BadRequestException("noteId is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("noteId is required"))
 	}
 
 	if err := h.ProductNoteUsecase.TogglePin(ctx, req.Id, req.IsPinned); err != nil {

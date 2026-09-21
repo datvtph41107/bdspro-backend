@@ -1,7 +1,7 @@
 package validator
 
 import (
-	_routes "common/routes"
+	_errors "common/errors"
 	bdspropb "pb/types/bdspro"
 )
 
@@ -19,10 +19,7 @@ func (v *AssetCostValidator) ValidateSaveAssetCost(pbAssetCost *bdspropb.AssetCo
 		pbAssetCost.Type == 0 ||
 		pbAssetCost.AssetId == 0 ||
 		pbAssetCost.CostTypeId == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "amount, date, ownerType, type, assetId and costTypeId are required",
-		}
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("amount, date, ownerType, type, assetId and costTypeId are required"))
 	}
 	return nil
 }

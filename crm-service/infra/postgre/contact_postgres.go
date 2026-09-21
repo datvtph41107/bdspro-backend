@@ -4,9 +4,10 @@ import (
 	base_enum "base/enum"
 	base_util "base/utils"
 	_db "common/db"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -428,10 +429,7 @@ func (r *PostgreContact) Existed(c context.Context, followId uint64) error {
 
 	// ok, err := r.contactRepo.ExistByProfile(followId)
 	if count == 0 {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFound, _errors.WithLegacyCode(400))
 	}
 
 	// if err != nil {

@@ -1,8 +1,9 @@
 package usecases
 
 import (
+	_errors "common/errors"
 	_jwt "common/jwt"
-	_routes "common/routes"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/repo"
@@ -64,26 +65,17 @@ func (s *FriendUsecase) Request(c *gin.Context) (*models.FriendEntity, error) {
 	}
 
 	if receiverId == profileId {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn bè là chính mình",
-		}
+		return nil, _errors.ReturnError(service.SelfFriendNotAllowed)
 	}
 
 	existingRequest, _ := s.repo.ExistsByCreatedByAndReceiverId(profileId, receiverId)
 	if existingRequest {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Đã gửi yêu cầu",
-		}
+		return nil, _errors.ReturnError(service.FriendRequestAlreadySent)
 	}
 
 	ok, _ := s.contact.ExistByProfile(receiverId)
 	if !ok {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Người dùng không tồn tại hoặc chưa đăng ký",
-		}
+		return nil, _errors.ReturnError(service.FriendTargetUnavailable)
 	}
 
 	e := &models.FriendEntity{
@@ -101,10 +93,7 @@ func (s *FriendUsecase) RequestSent(c *gin.Context) ([]models.FriendEntity, erro
 	profileId := _jwt.GetProfileId(c)
 	var params dto.FriendDTO
 	if err := c.ShouldBindQuery(&params); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(service.RequestValidationFailed, _errors.WithCause(err))
 	}
 	params.Status = enums.EFriendStatusPending
 
@@ -115,10 +104,7 @@ func (s *FriendUsecase) RequestReceived(c *gin.Context) ([]models.FriendEntity, 
 	profileId := _jwt.GetProfileId(c)
 	var params dto.FriendDTO
 	if err := c.ShouldBindQuery(&params); err != nil {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: err.Error(),
-		}
+		return nil, _errors.ReturnError(service.RequestValidationFailed, _errors.WithCause(err))
 	}
 	params.ReceiverID = profileId
 	params.Status = enums.EFriendStatusPending
@@ -181,19 +167,13 @@ func (s *FriendUsecase) ChangeGroup(c *gin.Context) (int, error) {
 	requestEntity, err := s.repo.FindByID(id)
 	if err != nil {
 		// return 0, errors.New("Id không chính xác")
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Thông tin không đúng vui lòng kiểm tra lại",
-		}
+		return 0, _errors.ReturnError(service.RequestValidationFailed, _errors.WithPublicMessage("Thông tin không đúng vui lòng kiểm tra lại"))
 	}
 
 	profileId := _jwt.GetProfileId(c)
 
 	if (requestEntity.ReceiverID != profileId && requestEntity.CreatedBy != &profileId) || requestEntity.Status != enums.EFriendStatusPending {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Không thể thực hiện yêu cầu",
-		}
+		return 0, _errors.ReturnError(service.FriendRequestCannotBePerformed)
 	}
 
 	isGroup := true

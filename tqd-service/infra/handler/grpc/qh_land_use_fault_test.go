@@ -7,13 +7,10 @@ import (
 	"testing"
 
 	_dto "common/domain/dto"
-	"common/fault"
-
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	_errors "common/errors"
 
 	tqdpb "pb/types/tqd"
+	"tqd/internal"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/usecase"
 )
@@ -33,120 +30,35 @@ func (s *qhLandUseUsecaseFaultStub) List(
 }
 
 func TestQHLandUseConflictMapsToAlreadyExists(t *testing.T) {
-	st, ok := status.FromError(mapLandUseGroupError(fault.New(
-		fault.KindConflict,
-		"tqd.land_use.duplicate",
-		"layer 7 already has land use 11",
-	)))
-	if !ok {
-		t.Fatal("mapLandUseGroupError did not return gRPC status")
-	}
-
-	if st.Code() != codes.AlreadyExists {
-		t.Fatalf(
-			"code = %s, want %s",
-			st.Code(),
-			codes.AlreadyExists,
-		)
-	}
-
-	if qhLandUseErrorCode(st) != "tqd.land_use.duplicate" {
-		t.Fatalf(
-			"error_code = %q",
-			qhLandUseErrorCode(st),
-		)
-	}
+	err := _errors.ReturnError(
+		service.LandUseDuplicate,
+		_errors.WithPublicMessage("layer 7 already has land use 11"),
+	)
+	assertCanonicalStatus(t, mapLandUseGroupError(err), service.LandUseDuplicate)
 }
 
 func TestQHLandUseValidationMapsToInvalidArgument(t *testing.T) {
-	st, _ := status.FromError(mapLandUseGroupError(fault.Validation(
-		"tqd.land_use.name_required",
-		"name is required",
-	)))
-
-	if st.Code() != codes.InvalidArgument {
-		t.Fatalf(
-			"code = %s, want %s",
-			st.Code(),
-			codes.InvalidArgument,
-		)
-	}
+	err := _errors.ReturnError(service.LandUseNameRequired)
+	assertCanonicalStatus(t, mapLandUseGroupError(err), service.LandUseNameRequired)
 }
 
 func TestQHLandUseNotFoundMapsToNotFound(t *testing.T) {
-	st, _ := status.FromError(mapLandUseGroupError(fault.New(
-		fault.KindNotFound,
-		"tqd.land_use.not_found",
-		"land use 11 not found",
-	)))
-
-	if st.Code() != codes.NotFound {
-		t.Fatalf(
-			"code = %s, want %s",
-			st.Code(),
-			codes.NotFound,
-		)
-	}
+	err := _errors.ReturnError(
+		service.LandUseNotFound,
+		_errors.WithPublicMessage("land use 11 not found"),
+	)
+	assertCanonicalStatus(t, mapLandUseGroupError(err), service.LandUseNotFound)
 }
 
 func TestQHLandUseListDependencyFailureDoesNotLeak(t *testing.T) {
-	dependencyErr := errors.New(
-		"postgres password=secret land-use list failed",
-	)
-
+	dependencyErr := errors.New("postgres password=secret land-use list failed")
 	h := &QHLandUseGrpcHandler{
-		uc: &qhLandUseUsecaseFaultStub{
-			listErr: dependencyErr,
-		},
+		uc: &qhLandUseUsecaseFaultStub{listErr: dependencyErr},
 	}
 
-	_, err := h.ListLandUses(
-		context.Background(),
-		&tqdpb.ListLandUseRequest{},
-	)
-
-	st, ok := status.FromError(err)
-	if !ok {
-		t.Fatal("ListLandUses did not return gRPC status")
+	_, err := h.ListLandUses(context.Background(), &tqdpb.ListLandUseRequest{})
+	st := assertTechnicalStatus(t, err)
+	if strings.Contains(st.Message(), "secret") || strings.Contains(st.Message(), "postgres") {
+		t.Fatalf("dependency detail leaked: %q", st.Message())
 	}
-
-	if st.Code() != codes.Internal {
-		t.Fatalf(
-			"code = %s, want %s",
-			st.Code(),
-			codes.Internal,
-		)
-	}
-
-	if st.Message() != "land use operation failed" {
-		t.Fatalf(
-			"message = %q, want safe public message",
-			st.Message(),
-		)
-	}
-
-	if strings.Contains(st.Message(), "secret") ||
-		strings.Contains(st.Message(), "postgres") {
-		t.Fatalf(
-			"dependency detail leaked: %q",
-			st.Message(),
-		)
-	}
-
-	if qhLandUseErrorCode(st) != "tqd.land_use.internal" {
-		t.Fatalf(
-			"error_code = %q",
-			qhLandUseErrorCode(st),
-		)
-	}
-}
-
-func qhLandUseErrorCode(st *status.Status) string {
-	for _, detail := range st.Details() {
-		info, ok := detail.(*errdetails.ErrorInfo)
-		if ok {
-			return info.Metadata["error_code"]
-		}
-	}
-	return ""
 }

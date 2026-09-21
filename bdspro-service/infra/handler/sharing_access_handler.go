@@ -7,7 +7,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	shared_usecase "bdspro/internal/usecases/shared"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	bdspropb "pb/types/bdspro"
@@ -60,10 +60,7 @@ func (s *SharingAccessService) BulkSave(ctx context.Context, req *bdspropb.Shari
 func (s *SharingAccessService) SearchProduct(ctx context.Context, req *bdspropb.SharingAccessRequest) (*bdspropb.SharingAccessResponse, error) {
 	searchDTO := s.Mapper.SharingAccessToSearchDTO(req)
 	if searchDTO.DomainID == 0 || searchDTO.FromType == 0 {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "domainID and domain and fromType are required",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("domainID and domain and fromType are required"))
 	}
 	entities, err := s.Usecase.SearchForProduct(ctx, enums.EOwnerOf(req.FromType), searchDTO)
 	if err != nil {

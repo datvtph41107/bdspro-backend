@@ -2,9 +2,10 @@ package postgres
 
 import (
 	_db "common/db"
-	_routes "common/routes"
+	_errors "common/errors"
 	"errors"
 	"time"
+	"user/internal"
 	models "user/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -48,10 +49,7 @@ func (repo *FollowPostgres) FollowingUser(currentId uint64, page int, pageSize i
 
 func (repo *FollowPostgres) FollowUser(c *gin.Context, profileId, followingID uint64) (*models.FollowEntity, error) {
 	if profileId == followingID {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể tự follow chính mình",
-		}
+		return nil, _errors.ReturnError(service.SelfFollowNotAllowed)
 	}
 
 	follow := models.FollowEntity{
@@ -66,10 +64,7 @@ func (repo *FollowPostgres) FollowUser(c *gin.Context, profileId, followingID ui
 		profileId, followingID).Scan(&exists).Error
 
 	if err != nil || exists {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Đã follow người này rồi",
-		}
+		return nil, _errors.ReturnError(service.AlreadyFollowing)
 	}
 
 	err = _db.SaveWithAudit(c, &follow)

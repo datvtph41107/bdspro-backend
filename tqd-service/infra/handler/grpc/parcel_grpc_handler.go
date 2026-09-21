@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+	"tqd/internal"
 
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
@@ -212,7 +213,7 @@ func (h *ParcelGrpcHandler) CreateBatchParcels(ctx context.Context, req *tqdpb.P
 	// Get user ID from context
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	// Validate request

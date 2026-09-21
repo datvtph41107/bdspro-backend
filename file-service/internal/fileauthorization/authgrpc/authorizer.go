@@ -1,13 +1,13 @@
 package authgrpc
 
 import (
+	_errors "common/errors"
 	"context"
 	"errors"
 	"file/internal/fileauthorization"
 	"time"
 
 	authpb "pb/types/auth"
-	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -64,14 +64,12 @@ func mapAuthorityError(err error) error {
 	if st.Code() == codes.Unauthenticated || st.Code() == codes.PermissionDenied {
 		return fileauthorization.ErrDenied
 	}
-	for _, detail := range st.Details() {
-		if response, ok := detail.(*sharepb.ErrorResponse); ok {
-			switch response.GetCode() {
-			case 401, 403:
-				return fileauthorization.ErrDenied
-			case 503:
-				return fileauthorization.ErrUnavailable
-			}
+	if legacyCode, _, matched := _errors.LegacyGRPCDetail(err); matched {
+		switch legacyCode {
+		case 401, 403:
+			return fileauthorization.ErrDenied
+		case 503:
+			return fileauthorization.ErrUnavailable
 		}
 	}
 	return fileauthorization.ErrUnavailable

@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"context"
-	"errors"
+
+	_errors "common/errors"
 	tqdpb "pb/types/tqd"
+	"tqd/internal"
 	"tqd/internal/domain"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
@@ -68,17 +70,17 @@ func (u *subscriptionUsecase) CreateParcelSubscription(ctx context.Context, user
 	// check parcel exists
 	_, err := u.parcelRepo.GetByID(ctx, parcelID)
 	if err != nil {
-		return nil, errors.New("parcel not found")
+		return nil, _errors.ReturnError(service.ParcelNotFound)
 	}
 	// check existing subscription
 	existing, _ := u.subRepo.GetByUserAndTarget(ctx, userID, "parcel", parcelID)
 	if existing != nil {
-		return nil, errors.New("subscription already exists")
+		return nil, _errors.ReturnError(service.SubscriptionAlreadyExists)
 	}
 	// convert scope proto to datatypes.JSON
 	scopeJSON, err := dto.ProtoToSubscriptionScopeJSON(scope)
 	if err != nil {
-		return nil, errors.New("invalid subscription scope")
+		return nil, _errors.ReturnError(service.SubscriptionScopeInvalid)
 	}
 	// default scope if empty
 	if scope == nil || len(scopeJSON) == 0 {
@@ -119,7 +121,7 @@ func (u *subscriptionUsecase) CreateParcelSubscription(ctx context.Context, user
 func (u *subscriptionUsecase) DeleteParcelSubscription(ctx context.Context, userID uint64, parcelID uint64) error {
 	sub, err := u.subRepo.GetByUserAndTarget(ctx, userID, "parcel", parcelID)
 	if err != nil || sub == nil {
-		return errors.New("subscription not found")
+		return _errors.ReturnError(service.SubscriptionNotFound)
 	}
 	return u.subRepo.Delete(ctx, sub.ID)
 }
@@ -130,17 +132,17 @@ func (u *subscriptionUsecase) CreateRegionSubscription(ctx context.Context, user
 	// check region exists
 	_, err := u.regionRepo.GetByID(ctx, regionID)
 	if err != nil {
-		return nil, errors.New("region not found")
+		return nil, _errors.ReturnError(service.RegionNotFound)
 	}
 	// check existing subscription
 	existing, _ := u.subRepo.GetByUserAndTarget(ctx, userID, "region", regionID)
 	if existing != nil {
-		return nil, errors.New("subscription already exists")
+		return nil, _errors.ReturnError(service.SubscriptionAlreadyExists)
 	}
 	// convert scope proto to datatypes.JSON
 	scopeJSON, err := dto.ProtoToSubscriptionScopeJSON(scope)
 	if err != nil {
-		return nil, errors.New("invalid subscription scope")
+		return nil, _errors.ReturnError(service.SubscriptionScopeInvalid)
 	}
 	// default scope if empty
 	if scope == nil || len(scopeJSON) == 0 {
@@ -178,10 +180,10 @@ func (u *subscriptionUsecase) CreateRegionSubscription(ctx context.Context, user
 func (u *subscriptionUsecase) DeleteRegionSubscription(ctx context.Context, userID uint64, subscriptionID uint64) error {
 	sub, err := u.subRepo.GetByID(ctx, subscriptionID)
 	if err != nil || sub == nil {
-		return errors.New("subscription not found")
+		return _errors.ReturnError(service.SubscriptionNotFound)
 	}
 	if sub.UserID != userID {
-		return errors.New("permission denied")
+		return _errors.ReturnError(service.SubscriptionPermissionDenied)
 	}
 	return u.subRepo.Delete(ctx, subscriptionID)
 }

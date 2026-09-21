@@ -6,15 +6,16 @@ import (
 	"strings"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
+	"tqd/internal"
 )
 
 func TestImportRegionHTTPMapsNotFound(t *testing.T) {
-	statusCode, body := importHTTPProblem(fault.New(
-		fault.KindNotFound,
-		"tqd.import.layer_not_found",
-		"layer 7 not found",
-	))
+	err := _errors.ReturnError(
+		service.ImportLayerNotFound,
+		_errors.WithPublicMessage("layer 7 not found"),
+	)
+	statusCode, body := importHTTPProblem(err)
 
 	if statusCode != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", statusCode, http.StatusNotFound)
@@ -25,11 +26,11 @@ func TestImportRegionHTTPMapsNotFound(t *testing.T) {
 }
 
 func TestImportRegionHTTPMapsInProgressToConflict(t *testing.T) {
-	statusCode, body := importHTTPProblem(fault.New(
-		fault.KindPrecondition,
-		"tqd.import.in_progress",
-		"layer 7 already has an import in progress",
-	))
+	err := _errors.ReturnError(
+		service.ImportInProgress,
+		_errors.WithPublicMessage("layer 7 already has an import in progress"),
+	)
+	statusCode, body := importHTTPProblem(err)
 
 	if statusCode != http.StatusConflict {
 		t.Fatalf("status = %d, want %d", statusCode, http.StatusConflict)
@@ -47,11 +48,11 @@ func TestImportRegionHTTPDoesNotLeakDependencyFailure(t *testing.T) {
 	if statusCode != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want %d", statusCode, http.StatusInternalServerError)
 	}
-	if body["error_code"] != "tqd.import.internal" {
-		t.Fatalf("error_code = %v", body["error_code"])
+	if body["error_code"] != "" {
+		t.Fatalf("technical error received application identity: %v", body["error_code"])
 	}
 	message, _ := body["error"].(string)
-	if message != "import operation failed" {
+	if message != "internal server error" {
 		t.Fatalf("message = %q, want safe public message", message)
 	}
 	if strings.Contains(message, "secret") || strings.Contains(message, "postgres") {

@@ -12,6 +12,7 @@ import (
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
+	"tqd/internal"
 	"tqd/internal/domain"
 	"tqd/internal/dto"
 	"tqd/internal/interface/repo"
@@ -50,14 +51,14 @@ func NewGisReportAdminGrpcHandler(
 
 func (h *GisReportAdminGrpcHandler) HasPermissions(ctx context.Context, keys []string) error {
 	if h == nil || h.authClient == nil {
-		return _errors.ReturnError(503, "permission authority unavailable")
+		return _errors.ReturnError(service.PermissionAuthorityUnavailable)
 	}
 	return h.authClient.HasPermissions(ctx, keys)
 }
 
 func (h *GisReportAdminGrpcHandler) requirePerm(ctx context.Context, keys []string) error {
 	if err := h.authClient.HasPermissions(ctx, keys); err != nil {
-		return _errors.ReturnError(403, err.Error())
+		return err
 	}
 	return nil
 }
@@ -81,7 +82,7 @@ func (h *GisReportAdminGrpcHandler) List(ctx context.Context, req *tqdpb.AdminGi
 
 	reports, total, err := h.usecase.AdminList(ctx, filter)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	displays := h.usecase.ResolveLinkageDisplays(ctx, reports)
 	users := h.usecase.ResolveUserDisplays(ctx, reports)
@@ -94,7 +95,7 @@ func (h *GisReportAdminGrpcHandler) Summary(ctx context.Context, _ *emptypb.Empt
 	}
 	m, err := h.usecase.AdminSummary(ctx)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportSummaryResponse{ByQaStatus: m}, nil
 }
@@ -121,7 +122,7 @@ func (h *GisReportAdminGrpcHandler) Queue(ctx context.Context, req *tqdpb.AdminG
 	queryStart := time.Now()
 	reports, total, err := h.usecase.AdminQueue(ctx, bucket, severity, int(pagable.GetPage()), pagable.GetLimit(), actorID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[GisReportAdminGrpcHandler.Queue] AdminQueue query took %s, found %d reports", time.Since(queryStart), len(reports)))
 
@@ -140,7 +141,7 @@ func (h *GisReportAdminGrpcHandler) QueueSummary(ctx context.Context, _ *emptypb
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	sum, err := h.usecase.AdminQueueSummary(ctx, actorID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportQueueSummaryResponse{
 		Mine:       sum.Mine,
@@ -168,7 +169,7 @@ func (h *GisReportAdminGrpcHandler) ListEvents(ctx context.Context, req *tqdpb.A
 
 	events, total, err := h.usecase.AdminListEvents(ctx, filter)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	names := h.actorNames(ctx, events)
 	return toAdminGisReportEvents(events, total, names), nil
@@ -184,7 +185,7 @@ func (h *GisReportAdminGrpcHandler) ListReportEvents(ctx context.Context, req *t
 	}
 	events, err := h.usecase.AdminListReportEvents(ctx, req.GetId(), limit)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	names := h.actorNames(ctx, events)
 	return toAdminGisReportEvents(events, int64(len(events)), names), nil
@@ -195,11 +196,11 @@ func (h *GisReportAdminGrpcHandler) Get(ctx context.Context, req *tqdpb.AdminGis
 		return nil, err
 	}
 	if req.GetId() == 0 {
-		return nil, _errors.ReturnError(400, "invalid id")
+		return nil, _errors.ReturnError(service.AdminReportIDInvalid)
 	}
 	report, err := h.usecase.AdminGet(ctx, req.GetId())
 	if err != nil {
-		return nil, _errors.ReturnError(404, err.Error())
+		return nil, err
 	}
 	displays := h.usecase.ResolveLinkageDisplays(ctx, []domain.Report{*report})
 	users := h.usecase.ResolveUserDisplays(ctx, []domain.Report{*report})
@@ -223,7 +224,7 @@ func (h *GisReportAdminGrpcHandler) CreateInternal(ctx context.Context, req *tqd
 	}
 	report, err := h.usecase.AdminCreateInternal(ctx, actorID, createReq)
 	if err != nil {
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	users := h.usecase.ResolveUserDisplays(ctx, []domain.Report{*report})
 	return toAdminGisReportDetail(*report, usecase.LinkageDisplay{}, users[report.ID]), nil
@@ -234,7 +235,7 @@ func (h *GisReportAdminGrpcHandler) Assign(ctx context.Context, req *tqdpb.Admin
 		return nil, err
 	}
 	if err := h.usecase.AdminAssign(ctx, req.GetId(), req.GetAssigneeId()); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "assigned"}, nil
 }
@@ -244,7 +245,7 @@ func (h *GisReportAdminGrpcHandler) UpdateSeverity(ctx context.Context, req *tqd
 		return nil, err
 	}
 	if err := h.usecase.AdminUpdateSeverity(ctx, req.GetId(), req.GetSeverity(), req.GetReason()); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "severity updated"}, nil
 }
@@ -254,7 +255,7 @@ func (h *GisReportAdminGrpcHandler) UpdateQaStatus(ctx context.Context, req *tqd
 		return nil, err
 	}
 	if err := h.usecase.AdminUpdateQaStatus(ctx, req.GetId(), req.GetQaStatus(), req.GetNote()); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "qa status updated"}, nil
 }
@@ -265,7 +266,7 @@ func (h *GisReportAdminGrpcHandler) UpdateLinkage(ctx context.Context, req *tqdp
 	}
 	linkage := structToMap(req.GetLinkage())
 	if err := h.usecase.AdminUpdateLinkage(ctx, req.GetId(), linkage); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "linkage updated"}, nil
 }
@@ -275,7 +276,7 @@ func (h *GisReportAdminGrpcHandler) UpdateImages(ctx context.Context, req *tqdpb
 		return nil, err
 	}
 	if err := h.usecase.AdminUpdateImages(ctx, req.GetId(), req.GetImages()); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "images updated"}, nil
 }
@@ -285,7 +286,7 @@ func (h *GisReportAdminGrpcHandler) Close(ctx context.Context, req *tqdpb.AdminG
 		return nil, err
 	}
 	if err := h.usecase.AdminClose(ctx, req.GetId(), req.GetReject(), req.GetNote()); err != nil {
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 	return &tqdpb.AdminGisReportActionResponse{Id: req.GetId(), Message: "closed"}, nil
 }

@@ -1,9 +1,10 @@
 package usecases
 
 import (
+	_errors "common/errors"
 	_jwt "common/jwt"
-	_routes "common/routes"
 	"strconv"
+	"user/internal"
 	"user/internal/interface/repo"
 	models "user/internal/models"
 
@@ -58,10 +59,7 @@ func (u *BlockUsecase) BlockUser(c *gin.Context) (*models.BlockEntity, error) {
 		return nil, err
 	}
 	if blockId == profileId {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "Không thể chặn chính mình",
-		}
+		return nil, _errors.ReturnError(service.SelfBlockNotAllowed)
 	}
 
 	u.friendRepo.BlockFriend(profileId, blockId)
@@ -78,10 +76,7 @@ func (u *BlockUsecase) UnblockUser(c *gin.Context) (uint64, error) {
 		return 0, err
 	}
 	if blockId == profileId {
-		return 0, &_routes.Except{
-			Code:    400,
-			Message: "Không thể bỏ chặn chính mình",
-		}
+		return 0, _errors.ReturnError(service.SelfUnblockNotAllowed)
 	}
 
 	return u.blockRepo.UnblockUser(profileId, blockId)
@@ -93,19 +88,13 @@ func (u *BlockUsecase) BeforeRequest(c *gin.Context, targetId uint64) error {
 
 	blocked := u.blockRepo.IsBlocked(targetId, profileId)
 	if blocked {
-		return &_routes.Except{
-			Code:    404,
-			Message: "Người dùng không tồn tại",
-		}
+		return _errors.ReturnError(service.UserNotFoundProfile, _errors.WithLegacyCode(404))
 	}
 
 	blocking := u.blockRepo.IsBlocked(profileId, targetId)
 
 	if blocking {
-		return &_routes.Except{
-			Code:    505,
-			Message: "Vui lòng bỏ chặn",
-		}
+		return _errors.ReturnError(service.UnblockRequired)
 	}
 	return nil
 }

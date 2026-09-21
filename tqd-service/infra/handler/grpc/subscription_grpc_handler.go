@@ -11,6 +11,7 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
+	"tqd/internal"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/dto"
 	"tqd/internal/usecase"
@@ -56,7 +57,7 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 ) (*tqdpb.ListParcelSubscriptionsResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID)
@@ -74,7 +75,7 @@ func (h *SubscriptionGrpcHandler) ListParcelSubscriptions(
 	subs, total, err := h.subUsecase.ListParcelSubscriptions(ctx, userID, req.Status, page, limit)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[ListParcelSubscriptions] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("list parcel subscriptions: %w", err)
 	}
 
 	if len(subs) == 0 {
@@ -142,18 +143,18 @@ func (h *SubscriptionGrpcHandler) GetParcelSubscriptionStatus(
 ) (*tqdpb.ParcelSubscriptionStatusResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ParcelId == 0 {
-		return nil, _errors.ReturnError(400, "parcel_id is required")
+		return nil, _errors.ReturnError(service.ParcelIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[GetParcelSubscriptionStatus] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	isFollowing, sub, err := h.subUsecase.GetParcelStatus(ctx, userID, req.ParcelId)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[GetParcelSubscriptionStatus] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("get parcel subscription status: %w", err)
 	}
 
 	resp := &tqdpb.ParcelSubscriptionStatusResponse{IsFollowing: isFollowing}
@@ -177,18 +178,18 @@ func (h *SubscriptionGrpcHandler) CreateParcelSubscription(
 ) (*tqdpb.SubscriptionResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ParcelId == 0 {
-		return nil, _errors.ReturnError(400, "parcel_id is required")
+		return nil, _errors.ReturnError(service.ParcelIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[CreateParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	sub, err := h.subUsecase.CreateParcelSubscription(ctx, userID, req.ParcelId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[CreateParcelSubscription] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	t := time.Now()
@@ -212,17 +213,17 @@ func (h *SubscriptionGrpcHandler) DeleteParcelSubscription(
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ParcelId == 0 {
-		return nil, _errors.ReturnError(400, "parcel_id is required")
+		return nil, _errors.ReturnError(service.ParcelIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[DeleteParcelSubscription] UserID: %d, ParcelID: %d", userID, req.ParcelId))
 
 	if err := h.subUsecase.DeleteParcelSubscription(ctx, userID, req.ParcelId); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteParcelSubscription] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	t := time.Now()
@@ -237,7 +238,7 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 ) (*tqdpb.ListRegionSubscriptionsResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDSubscriptionList, userID)
@@ -255,7 +256,7 @@ func (h *SubscriptionGrpcHandler) ListRegionSubscriptions(
 	subs, regions, total, err := h.subUsecase.ListUserRegionSubscriptions(ctx, userID, page, limit)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[ListRegionSubscriptions] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("list region subscriptions: %w", err)
 	}
 
 	items := make([]*tqdpb.RegionSubscriptionItem, 0, len(subs))
@@ -293,23 +294,23 @@ func (h *SubscriptionGrpcHandler) CreateRegionSubscription(
 ) (*tqdpb.SubscriptionResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.RegionId == 0 {
-		return nil, _errors.ReturnError(400, "region_id is required")
+		return nil, _errors.ReturnError(service.RegionIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[CreateRegionSubscription] UserID: %d, RegionID: %d", userID, req.RegionId))
 
 	_, err := h.regionUsecase.GetByID(ctx, req.RegionId)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "region not found")
+		return nil, _errors.ReturnError(service.RegionNotFound)
 	}
 
 	sub, err := h.subUsecase.CreateRegionSubscription(ctx, userID, req.RegionId, req.SubscriptionScope, req.GetTriggerConfig())
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[CreateRegionSubscription] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	t := time.Now()
@@ -333,17 +334,17 @@ func (h *SubscriptionGrpcHandler) DeleteRegionSubscription(
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.SubscriptionId == 0 {
-		return nil, _errors.ReturnError(400, "subscription_id is required")
+		return nil, _errors.ReturnError(service.SubscriptionIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[DeleteRegionSubscription] UserID: %d, SubscriptionID: %d", userID, req.SubscriptionId))
 
 	if err := h.subUsecase.DeleteRegionSubscription(ctx, userID, req.SubscriptionId); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteRegionSubscription] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	t := time.Now()
@@ -363,7 +364,7 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 ) (*tqdpb.ListNotificationsResponse, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDNotificationList, userID)
@@ -381,7 +382,7 @@ func (h *SubscriptionGrpcHandler) ListNotifications(
 	notifs, total, unread, err := h.notifUsecase.List(ctx, userID, req.Type, req.Read, page, limit)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[ListNotifications] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("list notifications: %w", err)
 	}
 
 	items := make([]*tqdpb.NotificationItem, 0, len(notifs))
@@ -418,17 +419,17 @@ func (h *SubscriptionGrpcHandler) MarkNotificationRead(
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.NotificationId == 0 {
-		return nil, _errors.ReturnError(400, "notification_id is required")
+		return nil, _errors.ReturnError(service.NotificationIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[MarkNotificationRead] UserID: %d, NotificationID: %d", userID, req.NotificationId))
 
 	if err := h.notifUsecase.MarkRead(ctx, userID, req.NotificationId); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[MarkNotificationRead] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("mark notification read: %w", err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -440,13 +441,13 @@ func (h *SubscriptionGrpcHandler) MarkAllNotificationsRead(
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[MarkAllNotificationsRead] UserID: %d", userID))
 
 	if err := h.notifUsecase.MarkAllRead(ctx, userID); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[MarkAllNotificationsRead] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("mark all notifications read: %w", err)
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -472,7 +473,7 @@ func (h *SubscriptionGrpcHandler) AdminListSubscriptions(
 	subs, total, err := h.subUsecase.AdminList(ctx, req.UserId, req.TargetType, (*uint32)(req.Status), page, limit)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[AdminListSubscriptions] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("admin list subscriptions: %w", err)
 	}
 
 	items := make([]*tqdpb.SubscriptionAdminItem, 0, len(subs))
@@ -507,12 +508,12 @@ func (h *SubscriptionGrpcHandler) AdminDeleteSubscription(
 	slog.InfoContext(ctx, fmt.Sprintf("[AdminDeleteSubscription] AdminUserID: %d, SubscriptionID: %d", userID, req.SubscriptionId))
 
 	if req.SubscriptionId == 0 {
-		return nil, _errors.ReturnError(400, "subscription_id is required")
+		return nil, _errors.ReturnError(service.SubscriptionIDRequired)
 	}
 
 	if err := h.subUsecase.AdminDelete(ctx, req.SubscriptionId); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[AdminDeleteSubscription] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, fmt.Errorf("admin delete subscription: %w", err)
 	}
 
 	t := time.Now()

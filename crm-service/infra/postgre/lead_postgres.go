@@ -3,8 +3,9 @@ package postgre
 import (
 	base_enum "base/enum"
 	_db "common/db"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -351,7 +352,7 @@ func (r *LeadPostgre) Update(ctx context.Context, id uint64, entity *domain.Lead
 			"customer_type":       entity.CustomerType,
 			"need_summary":        entity.NeedSummary,
 			"interested_plan":     entity.InterestedPlan,
-			"opportunity_status":   entity.OpportunityStatus,
+			"opportunity_status":  entity.OpportunityStatus,
 			"admin_source":        entity.AdminSource,
 			"expected_value":      entity.ExpectedValue,
 			"probability":         entity.Probability,
@@ -516,10 +517,7 @@ func (r *LeadPostgre) GetByContactID(ctx context.Context, contactID uint64) (*do
 		First(&customer).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, &_routes.Except{
-				Code:    404,
-				Message: "Liên hệ không tồn tại",
-			}
+			return nil, _errors.ReturnError(service.ContactNotFound, _errors.WithPublicMessage("Liên hệ không tồn tại"))
 		}
 		return nil, err
 	}

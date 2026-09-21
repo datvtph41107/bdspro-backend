@@ -64,12 +64,14 @@ func runGRPC() error {
 	interceptors := grpc.ChainUnaryInterceptor(
 		// common.ProfileIDInterceptor,
 		_middleware.ParseGrpcMetadataContextMiddleware,
+		_middleware.UnaryErrorInterceptor(),
 		_middleware.UnaryRecoveryInterceptor(),
 	)
 	s := grpc.NewServer(
 		interceptors,
 		grpc.ChainStreamInterceptor(
 			_middleware.ParseGrpcMetadataContextStreamMiddleware,
+			_middleware.StreamErrorInterceptor(),
 		),
 	)
 	crmpb.RegisterPipelineServiceServer(s, app.PipelineService)

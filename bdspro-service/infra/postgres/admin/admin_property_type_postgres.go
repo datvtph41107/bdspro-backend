@@ -1,6 +1,7 @@
 package admin_postgres
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud"
@@ -36,7 +37,7 @@ func (r *AdminPropertyTypePostgres) QueryDomain(query *gorm.DB, dto *dto.TextSea
 func (r *AdminPropertyTypePostgres) GetList(c context.Context, pagable _dto.IPagable) ([]domain.PropertyType, int64, error) {
 	dto, ok := pagable.(*dto.TextSearchRequest)
 	if !ok {
-		return nil, 0, _errors.ReturnError(400, "invalid pagable")
+		return nil, 0, _errors.ReturnError(service.InvalidPagable)
 	}
 
 	var propertyTypes []domain.PropertyType

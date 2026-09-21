@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"user/internal"
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -45,25 +46,25 @@ func NewAdminUsecase(
 func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *auth.AuthMethod) (*auth.AuthMethod, error) {
 	// Validate request
 	if err := req.Validate(); err != nil {
-		return nil, _errors.ReturnError(int32(400), err.Error())
+		return nil, _errors.ReturnError(service.RequestValidationFailed, _errors.WithPublicMessage(err.Error()))
 	}
 
 	// Kiểm tra username đã tồn tại chưa
 	existingAuth, err := u.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.AuthName, "ADMIN")
 	if err == nil && existingAuth != nil {
-		return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
+		return nil, _errors.ReturnError(service.UsernameAlreadyExists)
 	}
 
 	// Kiểm tra email đã tồn tại chưa
 	existingEmail, err := u.AuthMethodRepo.FindByEmail(ctx, req.Email)
 	if err == nil && existingEmail != nil {
-		return nil, _errors.ReturnError(int32(400), "Email đã tồn tại")
+		return nil, _errors.ReturnError(service.EmailAlreadyExists)
 	}
 
 	// Mã hóa password
 	hashedPassword, err := _utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
+		return nil, fmt.Errorf("hash admin password: %w", err)
 	}
 
 	// Convert roleKey string to uint32 (có thể cần mapping logic)
@@ -86,7 +87,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *auth.AuthMethod
 	createdAuth, err := u.AuthMethodRepo.Create(ctx, authMethod)
 	if err != nil {
 		fmt.Printf("Error creating auth method: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản admin")
+		return nil, fmt.Errorf("create admin auth method: %w", err)
 	}
 	fmt.Printf("Created auth method with ID: %d\n", createdAuth.ID)
 
@@ -105,7 +106,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *auth.AuthMethod
 	// Lưu profile
 	err = u.ProfileProvider.SaveProfile(ctx, profile)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo profile admin")
+		return nil, fmt.Errorf("save admin profile: %w", err)
 	}
 
 	// Cập nhật UserID cho auth method
@@ -113,7 +114,7 @@ func (u *AuthAdminUsecase) CreateAdmin(ctx context.Context, req *auth.AuthMethod
 	_, err = u.AuthMethodRepo.Update(ctx, createdAuth)
 	if err != nil {
 		fmt.Printf("Error updating auth method: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
+		return nil, fmt.Errorf("update admin auth method: %w", err)
 	}
 
 	return &auth.AuthMethod{
@@ -133,7 +134,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AccessDenied)
 	}
 
 	// Tìm admin cần cập nhật
@@ -145,14 +146,14 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 		if req.AuthName != "" {
 			existingAuth, err := u.AuthMethodRepo.FindByAuthNameAndProvider(ctx, req.AuthName, "ADMIN")
 			if err == nil && existingAuth != nil {
-				return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
+				return nil, _errors.ReturnError(service.UsernameAlreadyExists)
 			}
 		}
 
 		// Tạo auth method mới
 		hashedPassword, err := _utils.HashPassword(req.Password)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
+			return nil, fmt.Errorf("hash admin password: %w", err)
 		}
 		newAuthMethod := &auth.AuthMethod{
 			// ID:       req.ID,
@@ -170,7 +171,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 		// Lưu auth method mới
 		createdAuth, err := u.AuthMethodRepo.Create(ctx, newAuthMethod)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi tạo tài khoản admin mới")
+			return nil, fmt.Errorf("create new admin auth method: %w", err)
 		}
 
 		return createdAuth, nil
@@ -178,14 +179,14 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 
 	// Kiểm tra provider phải là ADMIN
 	if authMethod.Provider != "ADMIN" {
-		return nil, _errors.ReturnError(int32(400), "Tài khoản không phải admin")
+		return nil, _errors.ReturnError(service.AccountNotAdmin)
 	}
 
 	// Kiểm tra email đã tồn tại chưa (nếu thay đổi)
 	if req.Email != authMethod.Email {
 		existingEmail, err := u.AuthMethodRepo.FindByEmail(ctx, req.Email)
 		if err == nil && existingEmail != nil && existingEmail.ID != req.ID {
-			return nil, _errors.ReturnError(int32(400), "Email đã tồn tại")
+			return nil, _errors.ReturnError(service.EmailAlreadyExists)
 		}
 	}
 
@@ -201,7 +202,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 		if err == nil {
 			for _, existingAuth := range existingAuths {
 				if existingAuth != nil && existingAuth.ID != authMethod.ID {
-					return nil, _errors.ReturnError(int32(400), "Username đã tồn tại")
+					return nil, _errors.ReturnError(service.UsernameAlreadyExists)
 				}
 			}
 		}
@@ -211,7 +212,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 	if req.Password != "" {
 		hashedPassword, err := _utils.HashPassword(req.Password)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi mã hóa password")
+			return nil, fmt.Errorf("hash admin password: %w", err)
 		}
 		authMethod.Password = hashedPassword
 	}
@@ -220,7 +221,7 @@ func (u *AuthAdminUsecase) UpdateAdmin(ctx context.Context, req *auth.AuthMethod
 	updatedAuth, err := u.AuthMethodRepo.Update(ctx, authMethod)
 	if err != nil {
 		fmt.Printf("Error updating auth method: %v\n", err)
-		return nil, _errors.ReturnError(int32(500), "Lỗi cập nhật thông tin admin")
+		return nil, fmt.Errorf("update admin auth method: %w", err)
 	}
 
 	return updatedAuth, nil
@@ -231,29 +232,29 @@ func (u *AuthAdminUsecase) DeleteAdmin(ctx context.Context, authID uint64) error
 	// // Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
-	// 	return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// 	return _errors.ReturnError(service.AccessDenied)
 	// }
 
 	// Tìm admin cần xóa
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, authID)
 	if err != nil || authMethod == nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
+		return _errors.ReturnError(service.AdminAccountNotFound)
 	}
 
 	// Kiểm tra provider phải là ADMIN
 	if authMethod.Provider != "ADMIN" {
-		return _errors.ReturnError(int32(400), "Tài khoản không phải admin")
+		return _errors.ReturnError(service.AccountNotAdmin)
 	}
 
 	// // Không cho phép xóa chính mình
 	// if authMethod.UserID == profileID {
-	// 	return _errors.ReturnError(int32(400), "Không thể xóa tài khoản của chính mình")
+	// 	return _errors.ReturnError(service.SelfAccountDeleteDenied)
 	// }
 
 	// Soft delete auth method
 	err = u.AuthMethodRepo.SoftDelete(ctx, authID)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi xóa tài khoản admin")
+		return fmt.Errorf("delete admin auth method: %w", err)
 	}
 
 	// Soft delete profile
@@ -269,7 +270,7 @@ func (u *AuthAdminUsecase) DeleteAllAuthMethodsByUserId(ctx context.Context, use
 	// Xóa tất cả auth_method của user
 	err := u.AuthMethodRepo.DeleteByUserId(ctx, userId)
 	if err != nil {
-		return _errors.ReturnError(int32(500), fmt.Sprintf("Lỗi xóa auth methods của user %d: %v", userId, err))
+		return fmt.Errorf("delete auth methods for user %d: %w", userId, err)
 	}
 
 	fmt.Printf("Deleted all auth methods for userId: %d\n", userId)
@@ -280,7 +281,7 @@ func (u *AuthAdminUsecase) DeleteAllAuthMethodsByUserId(ctx context.Context, use
 func (u *AuthAdminUsecase) ListAdmins(ctx context.Context, req dto.AdminListRequest) (*dto.AdminListResponse, error) {
 	admins, total, err := u.AuthMethodRepo.FindAdminsByProvider(ctx, "ADMIN", int(req.Page), int(req.Size), &req.RoleID, req.Name)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách admin")
+		return nil, fmt.Errorf("list admin auth methods: %w", err)
 	}
 
 	authIDs := make([]uint64, 0, len(admins))
@@ -364,12 +365,12 @@ func (u *AuthAdminUsecase) GetByID(ctx context.Context, authID uint64) (*auth.Au
 	// Tìm admin theo ID
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, authID)
 	if err != nil || authMethod == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
+		return nil, _errors.ReturnError(service.AdminAccountNotFound)
 	}
 
 	// Kiểm tra provider phải là ADMIN
 	if authMethod.Provider != "ADMIN" {
-		return nil, _errors.ReturnError(int32(400), "Tài khoản không phải admin")
+		return nil, _errors.ReturnError(service.AccountNotAdmin)
 	}
 
 	return authMethod, nil
@@ -380,36 +381,36 @@ func (u *AuthAdminUsecase) ChangePassword(ctx context.Context, req dto.ChangePas
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return _errors.ReturnError(service.AccessDenied)
 	}
 
 	// Tìm admin theo ID
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
 	if err != nil || authMethod == nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
+		return _errors.ReturnError(service.AdminAccountNotFound)
 	}
 
 	// Kiểm tra provider phải là ADMIN
 	if authMethod.Provider != "ADMIN" {
-		return _errors.ReturnError(int32(400), "Tài khoản không phải admin")
+		return _errors.ReturnError(service.AccountNotAdmin)
 	}
 
 	// Kiểm tra mật khẩu cũ
 	if !_utils.CheckPasswordHash(req.OldPassword, authMethod.Password) {
-		return _errors.ReturnError(int32(400), "Mật khẩu cũ không đúng")
+		return _errors.ReturnError(service.OldPasswordInvalid)
 	}
 
 	// Mã hóa mật khẩu mới
 	hashedPassword, err := _utils.HashPassword(req.NewPassword)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi mã hóa mật khẩu")
+		return fmt.Errorf("hash new admin password: %w", err)
 	}
 
 	// Cập nhật mật khẩu
 	authMethod.Password = hashedPassword
 	_, err = u.AuthMethodRepo.Update(ctx, authMethod)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi cập nhật mật khẩu")
+		return fmt.Errorf("update admin password: %w", err)
 	}
 
 	return nil
@@ -420,31 +421,31 @@ func (u *AuthAdminUsecase) ResetPassword(ctx context.Context, req dto.ResetPassw
 	// Kiểm tra quyền admin
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return _errors.ReturnError(service.AccessDenied)
 	}
 
 	// Tìm admin theo ID
 	authMethod, err := u.AuthMethodRepo.FindByID(ctx, req.AuthID)
 	if err != nil || authMethod == nil {
-		return _errors.ReturnError(int32(404), "Không tìm thấy tài khoản admin")
+		return _errors.ReturnError(service.AdminAccountNotFound)
 	}
 
 	// Kiểm tra provider phải là ADMIN
 	if authMethod.Provider != "ADMIN" {
-		return _errors.ReturnError(int32(400), "Tài khoản không phải admin")
+		return _errors.ReturnError(service.AccountNotAdmin)
 	}
 
 	// Mã hóa mật khẩu mới
 	hashedPassword, err := _utils.HashPassword(req.NewPassword)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi mã hóa mật khẩu")
+		return fmt.Errorf("hash new admin password: %w", err)
 	}
 
 	// Cập nhật mật khẩu
 	authMethod.Password = hashedPassword
 	_, err = u.AuthMethodRepo.Update(ctx, authMethod)
 	if err != nil {
-		return _errors.ReturnError(int32(500), "Lỗi reset mật khẩu")
+		return fmt.Errorf("reset admin password: %w", err)
 	}
 
 	return nil

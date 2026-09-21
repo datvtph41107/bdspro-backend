@@ -7,6 +7,7 @@ import (
 	"crm/config"
 	"crm/infra/mapper"
 	"crm/infra/utils"
+	"crm/internal"
 	"crm/internal/dto"
 	"crm/internal/enums"
 	"crm/internal/usecase"
@@ -339,12 +340,12 @@ func (h *SeoDomainHandler) DeleteSeoDomain(ctx context.Context, req *sharepb.IdR
 
 func (h *SeoDomainHandler) CreateSeoDraft(ctx context.Context, req *crmpb.CreateSeoDraftRequest) (*crmpb.SeoDomainResponse, error) {
 	if req == nil || req.Source == nil || req.Seo == nil {
-		return nil, _errors.ReturnError(400, "request không hợp lệ")
+		return nil, _errors.ReturnError(service.RequestInvalid)
 	}
 
 	sourceKey := strings.TrimSpace(req.Source.SourceKey)
 	if sourceKey == "" {
-		return nil, _errors.ReturnError(400, "sourceKey là bắt buộc")
+		return nil, _errors.ReturnError(service.SEOSourceKeyRequired)
 	}
 
 	cfg, err := h.seoDomainUsecase.GetSeoSource(ctx, sourceKey)
@@ -358,7 +359,7 @@ func (h *SeoDomainHandler) CreateSeoDraft(ctx context.Context, req *crmpb.Create
 
 	if sourceKey != "manual" {
 		if req.Source.RefId == 0 {
-			return nil, _errors.ReturnError(400, "refId là bắt buộc với source entity")
+			return nil, _errors.ReturnError(service.SEOSourceRefIDRequired)
 		}
 
 		snapshot, err := h.seoDomainUsecase.ResolveSeoSourceValue(ctx, &dto.ResolveSeoSourceValueRequest{
@@ -416,7 +417,7 @@ func (h *SeoDomainHandler) CreateSeoDraft(ctx context.Context, req *crmpb.Create
 
 func (h *SeoDomainHandler) PublishSeoPage(ctx context.Context, req *crmpb.SeoPageCommandRequest) (*crmpb.SeoDomainResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	updated, err := h.seoDomainUsecase.PublishSeoPage(ctx, req.Id)
@@ -428,7 +429,7 @@ func (h *SeoDomainHandler) PublishSeoPage(ctx context.Context, req *crmpb.SeoPag
 
 func (h *SeoDomainHandler) UnpublishSeoPage(ctx context.Context, req *crmpb.SeoPageCommandRequest) (*crmpb.SeoDomainResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	updated, err := h.seoDomainUsecase.UnpublishSeoPage(ctx, req.Id)
@@ -440,7 +441,7 @@ func (h *SeoDomainHandler) UnpublishSeoPage(ctx context.Context, req *crmpb.SeoP
 
 func (h *SeoDomainHandler) ArchiveSeoPage(ctx context.Context, req *crmpb.SeoPageCommandRequest) (*crmpb.SeoDomainResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	updated, err := h.seoDomainUsecase.ArchiveSeoPage(ctx, req.Id)
@@ -452,7 +453,7 @@ func (h *SeoDomainHandler) ArchiveSeoPage(ctx context.Context, req *crmpb.SeoPag
 
 func (h *SeoDomainHandler) RestoreSeoPage(ctx context.Context, req *crmpb.SeoPageCommandRequest) (*crmpb.SeoDomainResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.ReturnError(400, "id không hợp lệ")
+		return nil, _errors.ReturnError(service.IDInvalid)
 	}
 
 	updated, err := h.seoDomainUsecase.RestoreSeoPage(ctx, req.Id)
@@ -469,7 +470,7 @@ func (h *SeoDomainHandler) RestoreSeoPage(ctx context.Context, req *crmpb.SeoPag
 
 func (h *SeoDomainHandler) PreviewSeoPage(ctx context.Context, req *crmpb.RenderSeoPreviewRequest) (*crmpb.RenderSeoPreviewResponse, error) {
 	if h.seoRenderUsecase == nil {
-		return nil, _errors.ReturnError(503, "SeoRenderUsecase chưa được cấu hình")
+		return nil, _errors.ReturnError(service.SEORenderUsecaseNotConfigured)
 	}
 
 	var refID *uint64
@@ -504,7 +505,7 @@ func (h *SeoDomainHandler) PreviewSeoPage(ctx context.Context, req *crmpb.Render
 
 func (h *SeoDomainHandler) PreviewExistingSeoPage(ctx context.Context, req *crmpb.RenderExistingSeoPreviewRequest) (*crmpb.RenderSeoPreviewResponse, error) {
 	if h.seoRenderUsecase == nil {
-		return nil, _errors.ReturnError(503, "SeoRenderUsecase chưa được cấu hình")
+		return nil, _errors.ReturnError(service.SEORenderUsecaseNotConfigured)
 	}
 
 	resp, err := h.seoRenderUsecase.PreviewExistingSeoPage(ctx, &dto.RenderExistingSeoPreviewRequest{
@@ -526,7 +527,7 @@ func (h *SeoDomainHandler) PreviewExistingSeoPage(ctx context.Context, req *crmp
 
 func (h *SeoDomainHandler) GenerateSeoPage(ctx context.Context, req *crmpb.GenerateSeoPageRequest) (*crmpb.GenerateSeoPageResponse, error) {
 	if h.seoRenderUsecase == nil {
-		return nil, _errors.ReturnError(503, "SeoRenderUsecase chưa được cấu hình")
+		return nil, _errors.ReturnError(service.SEORenderUsecaseNotConfigured)
 	}
 
 	resp, err := h.seoRenderUsecase.GenerateSeoPage(ctx, &dto.GenerateSeoPageRequest{
@@ -550,7 +551,7 @@ func (h *SeoDomainHandler) GenerateSeoPage(ctx context.Context, req *crmpb.Gener
 
 func (h *SeoDomainHandler) GetSeoGenerationLogs(ctx context.Context, req *crmpb.GetSeoGenerationLogsRequest) (*crmpb.GetSeoGenerationLogsResponse, error) {
 	if h.seoRenderUsecase == nil {
-		return nil, _errors.ReturnError(503, "SeoRenderUsecase chưa được cấu hình")
+		return nil, _errors.ReturnError(service.SEORenderUsecaseNotConfigured)
 	}
 	if req == nil {
 		req = &crmpb.GetSeoGenerationLogsRequest{}
@@ -670,7 +671,7 @@ func (h *SeoDomainHandler) GetSeoSitemap(ctx context.Context, req *crmpb.GetSeoS
 
 func (h *SeoDomainHandler) GetInternalSeoRenderData(ctx context.Context, req *crmpb.GetInternalSeoRenderDataRequest) (*crmpb.InternalSeoRenderDataResponse, error) {
 	if !utils.ValidateSeoInternalSecret(ctx) {
-		return nil, _errors.ReturnError(401, "secretKey không hợp lệ")
+		return nil, _errors.ReturnError(service.SEOSecretKeyInvalid)
 	}
 
 	seoDomain, err := h.seoDomainUsecase.GetInternalRenderData(ctx, &dto.InternalSeoRenderDataRequest{RefType: req.RefType, RefID: req.RefId})

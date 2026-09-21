@@ -1,16 +1,18 @@
 package usecase
 
 import (
-	_errors "common/errors"
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	_errors "common/errors"
 	_middleware "common/middleware"
+	"notification/internal"
 	"notification/internal/domain"
 	"notification/internal/dto"
 	"notification/internal/enums"
-	)
+)
 
 type AccountWarningUsecase struct {
 	AccountWarningRepo AccountWarningStore
@@ -32,7 +34,7 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Kiểm tra không gửi cảnh báo cho chính mình
@@ -41,21 +43,21 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 		return nil, err
 	}
 	if profileID == req.TargetID {
-		return nil, _errors.ReturnError(int32(400), "Không thể gửi cảnh báo cho chính tài khoản của mình")
+		return nil, _errors.ReturnError(service.SelfWarningNotAllowed)
 	}
 
 	// Kiểm tra nội dung tối thiểu
 	if len(strings.TrimSpace(req.Content)) < 20 {
-		return nil, _errors.ReturnError(int32(400), "Nội dung cảnh báo phải có ít nhất 20 ký tự")
+		return nil, _errors.ReturnError(service.WarningContentTooShort)
 	}
 
 	// Kiểm tra cảnh báo trùng lặp trong 24h
 	isDuplicate, err := u.AccountWarningRepo.CheckDuplicateWarning(ctx, req.TargetID, req.Content, 24)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi kiểm tra cảnh báo trùng lặp")
+		return nil, fmt.Errorf("check duplicate warning: %w", err)
 	}
 	if isDuplicate {
-		return nil, _errors.ReturnError(int32(400), "Không được gửi 2 cảnh báo trùng nội dung trong vòng 24 giờ")
+		return nil, _errors.ReturnError(service.DuplicateWarningNotAllowed)
 	}
 
 	// Set default severity nếu không có
@@ -83,7 +85,7 @@ func (u *AccountWarningUsecase) SendAccountWarning(ctx context.Context, req dto.
 
 	createdWarning, err := u.AccountWarningRepo.Create(ctx, warning)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo cảnh báo")
+		return nil, fmt.Errorf("create account warning: %w", err)
 	}
 
 	// Tạo log
@@ -131,7 +133,7 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 	// Kiểm tra quyền admin
 	// profileID := _utils.GetProfileIdWithContext(ctx)
 	// if profileID == 0 {
-	// 	return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+	// 	return nil, _errors.ReturnError(service.AdminAccessRequired)
 	// }
 
 	// Set default pagination - page bắt đầu từ 0
@@ -169,7 +171,7 @@ func (u *AccountWarningUsecase) GetAccountWarningList(ctx context.Context, req d
 	// Lấy danh sách - giữ nguyên page = 0
 	warnings, total, err := u.AccountWarningRepo.FindAll(ctx, req.Page, req.Size, filters)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách cảnh báo")
+		return nil, fmt.Errorf("list account warnings: %w", err)
 	}
 
 	// Convert to response
@@ -214,7 +216,7 @@ func (u *AccountWarningUsecase) MarkWarningAsRead(ctx context.Context, req dto.M
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 	profileID, err := u.getProfileID(ctx)
 	if err != nil {
@@ -222,18 +224,21 @@ func (u *AccountWarningUsecase) MarkWarningAsRead(ctx context.Context, req dto.M
 	}
 	// Kiểm tra cảnh báo tồn tại
 	warning, err := u.AccountWarningRepo.FindByID(ctx, req.WarningID)
-	if err != nil || warning == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy cảnh báo")
+	if err != nil {
+		return nil, fmt.Errorf("find account warning: %w", err)
+	}
+	if warning == nil {
+		return nil, _errors.ReturnError(service.WarningNotFound)
 	}
 
 	// Kiểm tra quyền đọc (chỉ người nhận mới được đánh dấu đã đọc)
 	if warning.TargetID != req.TargetID {
-		return nil, _errors.ReturnError(int32(403), "Không có quyền đánh dấu đã đọc cảnh báo này")
+		return nil, _errors.ReturnError(service.WarningReadDenied)
 	}
 
 	err = u.AccountWarningRepo.MarkAsRead(ctx, req.WarningID, req.TargetID)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi đánh dấu đã đọc")
+		return nil, fmt.Errorf("mark account warning as read: %w", err)
 	}
 
 	// Tạo log
@@ -261,30 +266,30 @@ func (u *AccountWarningUsecase) MarkWarningAsAcknowledged(ctx context.Context, r
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 	profileID, err := u.getProfileID(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Kiểm tra cảnh báo tồn tại
 	warning, err := u.AccountWarningRepo.FindByID(ctx, req.WarningID)
 	if err != nil || warning == nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy cảnh báo")
+		return nil, _errors.ReturnError(service.WarningNotFound)
 	}
 
 	// Kiểm tra quyền xác nhận (chỉ người nhận mới được xác nhận)
 	if warning.TargetID != req.TargetID {
-		return nil, _errors.ReturnError(int32(403), "Không có quyền xác nhận cảnh báo này")
+		return nil, _errors.ReturnError(service.WarningAcknowledgeDenied)
 	}
 
 	err = u.AccountWarningRepo.MarkAsAcknowledged(ctx, req.WarningID, req.TargetID)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi đánh dấu đã xác nhận")
+		return nil, fmt.Errorf("acknowledge account warning: %w", err)
 	}
 
 	// Tạo log
@@ -312,7 +317,7 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Set default severity nếu không có
@@ -332,7 +337,7 @@ func (u *AccountWarningUsecase) CreateWarningTemplate(ctx context.Context, req d
 
 	createdTemplate, err := u.AccountWarningRepo.CreateTemplate(ctx, template)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi tạo mẫu cảnh báo")
+		return nil, fmt.Errorf("create warning template: %w", err)
 	}
 
 	return &dto.CreateWarningTemplateResponse{
@@ -357,7 +362,7 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Set default pagination - page bắt đầu từ 0
@@ -375,7 +380,7 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 	if req.WarningType != "" {
 		templates, err = u.AccountWarningRepo.FindTemplatesByType(ctx, req.WarningType)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách mẫu")
+			return nil, fmt.Errorf("list warning templates: %w", err)
 		}
 		total = int64(len(templates))
 
@@ -392,7 +397,7 @@ func (u *AccountWarningUsecase) GetWarningTemplateList(ctx context.Context, req 
 	} else {
 		templates, total, err = u.AccountWarningRepo.FindAllTemplates(ctx, req.Page, req.Size)
 		if err != nil {
-			return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách mẫu")
+			return nil, fmt.Errorf("list warning templates: %w", err)
 		}
 	}
 
@@ -430,13 +435,16 @@ func (u *AccountWarningUsecase) GetWarningTemplateDetail(ctx context.Context, id
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Lấy template theo ID
 	template, err := u.AccountWarningRepo.FindTemplateByID(ctx, id)
 	if err != nil {
-		return nil, _errors.ReturnError(int32(404), "Không tìm thấy mẫu cảnh báo")
+		return nil, fmt.Errorf("find warning template: %w", err)
+	}
+	if template == nil {
+		return nil, _errors.ReturnError(service.WarningTemplateNotFound)
 	}
 
 	return &dto.WarningTemplateItem{
@@ -462,14 +470,14 @@ func (u *AccountWarningUsecase) GetWarningLogList(ctx context.Context, req dto.G
 		return nil, err
 	}
 	if !hasAdminRole {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 	profileID, err := u.getProfileID(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if profileID == 0 {
-		return nil, _errors.ReturnError(int32(401), "Không có quyền truy cập")
+		return nil, _errors.ReturnError(service.AdminAccessRequired)
 	}
 
 	// Set default pagination - page bắt đầu từ 0
@@ -489,11 +497,11 @@ func (u *AccountWarningUsecase) GetWarningLogList(ctx context.Context, req dto.G
 	} else if req.TargetID != nil {
 		logs, total, err = u.AccountWarningRepo.FindLogsByTargetID(ctx, *req.TargetID, req.Page, req.Size)
 	} else {
-		return nil, _errors.ReturnError(int32(400), "Cần cung cấp WarningID hoặc TargetID")
+		return nil, _errors.ReturnError(service.WarningLogSelectorRequired)
 	}
 
 	if err != nil {
-		return nil, _errors.ReturnError(int32(500), "Lỗi lấy danh sách log")
+		return nil, fmt.Errorf("list warning logs: %w", err)
 	}
 
 	// Convert to response

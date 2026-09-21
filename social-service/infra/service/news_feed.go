@@ -4,13 +4,12 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	_models "common/models"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
 	stderrors "errors"
-	"net/http"
 	sharepb "pb/types/shared"
 	socialpb "pb/types/social"
+	"social/internal"
 
 	"social/infra/client"
 	"social/infra/mapper"
@@ -51,16 +50,16 @@ func NewNewsFeedService(
 
 func (s *NewsFeedService) RequiredOwner(ctx context.Context, ownerOf socialpb.OwnerOf, ownerId *uint64) error {
 	if ownerOf != socialpb.OwnerOf_group && ownerOf != socialpb.OwnerOf_user && ownerOf != socialpb.OwnerOf_organization {
-		return _errors.ReturnError(400, "ownerOf is user/group/organization")
+		return _errors.ReturnError(service.OwnerTypeInvalid)
 	}
 	if ownerOf == socialpb.OwnerOf_group && ownerId == nil {
-		return _errors.ReturnError(400, "groupId is required")
+		return _errors.ReturnError(service.GroupIDRequired)
 	}
 	if ownerOf == socialpb.OwnerOf_organization && ownerId == nil {
-		return _errors.ReturnError(400, "organizationId is required")
+		return _errors.ReturnError(service.OrganizationIDRequired)
 	}
 	// if ownerOf == socialpb.OwnerOf_user && ownerId == nil {
-	// 	return _errors.ReturnError(400, "userId is required")
+	// 	return _errors.ReturnError(service.UserIDRequired)
 	// }
 	return nil
 }
@@ -140,7 +139,7 @@ func (s *NewsFeedService) GetNewsFeedByOwner(ctx context.Context, req *socialpb.
 			return nil, err
 		}
 	} else {
-		return nil, _errors.ReturnError(400, "ownerOf is user/group/organization")
+		return nil, _errors.ReturnError(service.OwnerTypeInvalid)
 	}
 
 	return s.responseGlobalNewsFeed(ctx, posts, total)
@@ -247,10 +246,7 @@ func mapShareNewsFeedError(err error) error {
 // @Router /news-feed/{newsFeedId}/share [post]
 func (s *NewsFeedService) ShareNewsFeed(ctx context.Context, req *socialpb.ShareRequest) (*socialpb.ShareResponse, error) {
 	if req.NewsFeedId == 0 || req.ShareType == 0 {
-		return nil, &_routes.Except{
-			Code:    http.StatusBadRequest,
-			Message: "newsFeedId or shareType is required",
-		}
+		return nil, _errors.ReturnError(service.ShareFieldsRequired)
 	}
 	newsFeedShare, err := s.newsFeedShareUsecase.ShareNewsFeed(ctx,
 		req.NewsFeedId,
@@ -551,7 +547,7 @@ func (s *NewsFeedService) getNewsFeedByOwner(ctx context.Context, req *socialpb.
 			return nil, err
 		}
 	} else {
-		return nil, _errors.ReturnError(400, "ownerOf is user/group/organization")
+		return nil, _errors.ReturnError(service.OwnerTypeInvalid)
 	}
 
 	// data := s.newsFeedMapper.DomainToNewsFeedPbList(ctx, posts)
@@ -622,7 +618,7 @@ func (s *NewsFeedService) responseGlobalNewsFeed(ctx context.Context, newsFeeds 
 func (s *NewsFeedService) GetMyNewsFeed(ctx context.Context, req *socialpb.MyNewsFeedRequest) (*socialpb.ListNewsFeed, error) {
 	profileID := _utils.GetProfileIdWithContext(ctx)
 	if profileID == 0 {
-		return nil, _errors.ReturnError(http.StatusUnauthorized, "Unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	postSearch := &dto.NewsFeedGlobalSearch{

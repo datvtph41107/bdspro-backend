@@ -6,6 +6,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -59,7 +60,7 @@ func (u *AdminSalesUsecase) Funnel(ctx context.Context, search dto.LeadSearchDTO
 func (u *AdminSalesUsecase) Get(ctx context.Context, id uint64) (*domain.LeadEntity, error) {
 	lead, err := u.leadRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy cơ hội")
+		return nil, _errors.ReturnError(service.OpportunityNotFound)
 	}
 	if err := u.ensureAdminLead(lead); err != nil {
 		return nil, err
@@ -101,7 +102,7 @@ func (u *AdminSalesUsecase) ListContacts(ctx context.Context, page, size int32, 
 
 func (u *AdminSalesUsecase) CreateContact(ctx context.Context, in *dto.AdminContactSaveDTO) (*domain.ContactEntity, error) {
 	if strings.TrimSpace(in.FullName) == "" {
-		return nil, _errors.ReturnError(400, "Tên liên hệ là bắt buộc")
+		return nil, _errors.ReturnError(service.ContactNameRequired)
 	}
 	ownerID, err := u.ownerUsecase.GetOwnerInfo(ctx, base_enum.EOwnerOfAdmin, 0)
 	if err != nil {
@@ -129,7 +130,7 @@ func (u *AdminSalesUsecase) CreateContact(ctx context.Context, in *dto.AdminCont
 func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunitySaveDTO) (*domain.LeadEntity, error) {
 	if in.ContactID == nil || *in.ContactID == 0 {
 		if strings.TrimSpace(in.FullName) == "" {
-			return nil, _errors.ReturnError(400, "Vui lòng chọn liên hệ hoặc nhập tên khách hàng")
+			return nil, _errors.ReturnError(service.OpportunityContactOrCustomerRequired)
 		}
 	}
 
@@ -174,10 +175,10 @@ func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunity
 		if in.ContactID != nil && *in.ContactID > 0 {
 			existing, err := u.contactRepo.GetByID(txCtx, *in.ContactID)
 			if err != nil || existing == nil {
-				return _errors.ReturnError(404, "Không tìm thấy liên hệ")
+				return _errors.ReturnError(service.ContactNotFound)
 			}
 			if existing.OwnerOf != base_enum.EOwnerOfAdmin {
-				return _errors.ReturnError(403, "Liên hệ không thuộc phạm vi Admin")
+				return _errors.ReturnError(service.AdminContactScopeDenied)
 			}
 			contact = existing
 		} else {
@@ -200,34 +201,34 @@ func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunity
 		}
 
 		entity := &domain.LeadEntity{
-			ContactID:          contact.ID,
-			Source:             in.Source,
-			AssignNote:         in.AssignNote,
-			Priority:           priority,
-			ChargePersonID:     in.ChargePersonID,
-			ChargePersonType:   enums.EOwnerOfAdmin,
-			Note:               in.Note,
-			Title:              adminSalesFirstNonEmpty(in.Title, contact.FullName),
-			CustomerType:       customerType,
-			NeedSummary:        in.NeedSummary,
-			InterestedPlan:     in.InterestedPlan,
-			OpportunityStatus:  status,
-			AdminSource:        adminSource,
-			ExpectedValue:      in.ExpectedValue,
-			Probability:        in.Probability,
-			ExpectedCloseDate:  in.ExpectedCloseDate,
-			NextFollowUpAt:     in.NextFollowUpAt,
-			ChurnRisk:          in.ChurnRisk,
-			UpgradeSignal:      in.UpgradeSignal,
-			RenewalSignal:      in.RenewalSignal,
-			OwnerTeam:          in.OwnerTeam,
-			Segment:            in.Segment,
-			Region:             in.Region,
-			Tags:               in.Tags,
-			ProposalRef:        in.ProposalRef,
-			PaymentRequestRef:  in.PaymentRequestRef,
-			SubscriptionRef:    in.SubscriptionRef,
-			TicketRef:          in.TicketRef,
+			ContactID:         contact.ID,
+			Source:            in.Source,
+			AssignNote:        in.AssignNote,
+			Priority:          priority,
+			ChargePersonID:    in.ChargePersonID,
+			ChargePersonType:  enums.EOwnerOfAdmin,
+			Note:              in.Note,
+			Title:             adminSalesFirstNonEmpty(in.Title, contact.FullName),
+			CustomerType:      customerType,
+			NeedSummary:       in.NeedSummary,
+			InterestedPlan:    in.InterestedPlan,
+			OpportunityStatus: status,
+			AdminSource:       adminSource,
+			ExpectedValue:     in.ExpectedValue,
+			Probability:       in.Probability,
+			ExpectedCloseDate: in.ExpectedCloseDate,
+			NextFollowUpAt:    in.NextFollowUpAt,
+			ChurnRisk:         in.ChurnRisk,
+			UpgradeSignal:     in.UpgradeSignal,
+			RenewalSignal:     in.RenewalSignal,
+			OwnerTeam:         in.OwnerTeam,
+			Segment:           in.Segment,
+			Region:            in.Region,
+			Tags:              in.Tags,
+			ProposalRef:       in.ProposalRef,
+			PaymentRequestRef: in.PaymentRequestRef,
+			SubscriptionRef:   in.SubscriptionRef,
+			TicketRef:         in.TicketRef,
 		}
 		if stage != nil {
 			entity.StageID = &stage.ID
@@ -269,7 +270,7 @@ func (u *AdminSalesUsecase) Update(ctx context.Context, id uint64, in *dto.Admin
 		return nil, err
 	}
 	if lead.Contact == nil {
-		return nil, _errors.ReturnError(404, "Không tìm thấy liên hệ")
+		return nil, _errors.ReturnError(service.ContactNotFound)
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	before := adminSalesMustJSON(snapshotLead(lead))
@@ -395,7 +396,7 @@ func (u *AdminSalesUsecase) Assign(ctx context.Context, id uint64, in *dto.Admin
 		return err
 	}
 	if in.ChargePersonID == 0 {
-		return _errors.ReturnError(400, "Người phụ trách không hợp lệ")
+		return _errors.ReturnError(service.OpportunityAssigneeInvalid)
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	before := adminSalesMustJSON(map[string]any{
@@ -432,7 +433,7 @@ func (u *AdminSalesUsecase) SwitchStage(ctx context.Context, id uint64, stageID 
 		return err
 	}
 	if stageID == 0 {
-		return _errors.ReturnError(400, "Stage không hợp lệ")
+		return _errors.ReturnError(service.OpportunityStageInvalid)
 	}
 	stage, err := u.stageRepo.GetByID(ctx, stageID)
 	if err != nil {
@@ -474,10 +475,10 @@ func (u *AdminSalesUsecase) UpdateStatus(ctx context.Context, id uint64, in *dto
 		return err
 	}
 	if !in.OpportunityStatus.IsValid() {
-		return _errors.ReturnError(400, "Trạng thái cơ hội không hợp lệ")
+		return _errors.ReturnError(service.OpportunityStateInvalid)
 	}
 	if lead.OpportunityStatus.IsClosed() {
-		return _errors.ReturnError(400, "Trạng thái cơ hội không cho phép thao tác")
+		return _errors.ReturnError(service.OpportunityStateActionDenied)
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	before := adminSalesMustJSON(map[string]any{"opportunityStatus": lead.OpportunityStatus})
@@ -502,7 +503,7 @@ func (u *AdminSalesUsecase) CreateFollowUp(ctx context.Context, id uint64, in *d
 		return err
 	}
 	if in.NextFollowUpAt.IsZero() {
-		return _errors.ReturnError(400, "Thời điểm follow-up không hợp lệ")
+		return _errors.ReturnError(service.FollowUpTimeInvalid)
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	before := adminSalesMustJSON(map[string]any{"nextFollowUpAt": lead.NextFollowUpAt})
@@ -525,10 +526,10 @@ func (u *AdminSalesUsecase) Close(ctx context.Context, id uint64, in *dto.AdminO
 	if in.Result != enums.OpportunityStatusWon &&
 		in.Result != enums.OpportunityStatusLost &&
 		in.Result != enums.OpportunityStatusCancelled {
-		return _errors.ReturnError(400, "Kết quả đóng không hợp lệ")
+		return _errors.ReturnError(service.AdminOpportunityCloseResultInvalid)
 	}
 	if strings.TrimSpace(in.CloseReason) == "" {
-		return _errors.ReturnError(400, "Lý do đóng là bắt buộc")
+		return _errors.ReturnError(service.OpportunityCloseReasonRequired)
 	}
 	return u.UpdateStatus(ctx, id, &dto.AdminOpportunityStatusDTO{
 		OpportunityStatus: in.Result,
@@ -538,7 +539,7 @@ func (u *AdminSalesUsecase) Close(ctx context.Context, id uint64, in *dto.AdminO
 
 func (u *AdminSalesUsecase) Export(ctx context.Context, reason string) error {
 	if strings.TrimSpace(reason) == "" {
-		return _errors.ReturnError(400, "Vui lòng nhập lý do xuất dữ liệu vì có thể chứa thông tin nhạy cảm")
+		return _errors.ReturnError(service.ExportSensitiveDataReasonRequired)
 	}
 	actorID := _utils.GetProfileIdWithContext(ctx)
 	// Audit stub — file export wiring deferred; record intent
@@ -565,13 +566,13 @@ func (u *AdminSalesUsecase) addEvent(ctx context.Context, opportunityID, actorID
 
 func (u *AdminSalesUsecase) ensureAdminLead(lead *domain.LeadEntity) error {
 	if lead == nil || lead.ID == 0 {
-		return _errors.ReturnError(404, "Không tìm thấy cơ hội")
+		return _errors.ReturnError(service.OpportunityNotFound)
 	}
 	if lead.Contact == nil {
-		return _errors.ReturnError(404, "Không tìm thấy liên hệ")
+		return _errors.ReturnError(service.ContactNotFound)
 	}
 	if lead.Contact.OwnerOf != base_enum.EOwnerOfAdmin {
-		return _errors.ReturnError(403, "Cơ hội không thuộc phạm vi Admin")
+		return _errors.ReturnError(service.AdminOpportunityScopeDenied)
 	}
 	return nil
 }
@@ -645,20 +646,20 @@ func BuildAdminLeadSearch(
 			Page: uint32(page),
 			Size: uint32(size),
 		},
-		FullName:        strings.TrimSpace(q),
-		StageIDs:        stageIDs,
-		ChargePersonIds: chargeIDs,
-		PipelineID:      pipelineID,
-		UnassignedOnly:  unassignedOnly,
-		Queue:           queue,
-		FollowUpFrom:    followUpFrom,
-		FollowUpTo:      followUpTo,
+		FullName:         strings.TrimSpace(q),
+		StageIDs:         stageIDs,
+		ChargePersonIds:  chargeIDs,
+		PipelineID:       pipelineID,
+		UnassignedOnly:   unassignedOnly,
+		Queue:            queue,
+		FollowUpFrom:     followUpFrom,
+		FollowUpTo:       followUpTo,
 		MinExpectedValue: minEV,
 		MaxExpectedValue: maxEV,
-		UpgradeOnly:     upgradeOnly,
-		RenewalOnly:     renewalOnly,
-		InterestedPlan:  interestedPlan,
-		OwnerOf:         base_enum.EOwnerOfAdmin,
+		UpgradeOnly:      upgradeOnly,
+		RenewalOnly:      renewalOnly,
+		InterestedPlan:   interestedPlan,
+		OwnerOf:          base_enum.EOwnerOfAdmin,
 	}
 	for _, s := range sources {
 		search.Sources = append(search.Sources, enums.ESourceLead(s))

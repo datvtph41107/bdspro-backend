@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	"common/fault"
+	_errors "common/errors"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -525,18 +525,7 @@ func (h *QHLabelGrpcHandler) GetClientLabel(ctx context.Context, req *tqdpb.GetL
 // =====================================================
 
 func qhLabelError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.qh_label.internal",
-		"label operation failed",
-	))
+	return _errors.ToGRPC(err)
 }
 
 func toQHLabelResponse(l *qh_domain.QHLabel) *tqdpb.QHLabelResponse {

@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/enums"
@@ -43,7 +44,7 @@ func TestImportRegionLayerNotFoundIsCanonical(t *testing.T) {
 		layerRepo: &importLayerRepoStub{},
 	}
 	_, err := u.validateLayerForImport(context.Background(), 7)
-	assertImportRegionFault(t, err, fault.KindNotFound, "tqd.import.layer_not_found")
+	assertImportRegionFault(t, err, codes.NotFound, "tqd.import.layer_not_found")
 }
 
 func TestImportRegionAlreadyProcessingIsCanonical(t *testing.T) {
@@ -56,7 +57,7 @@ func TestImportRegionAlreadyProcessingIsCanonical(t *testing.T) {
 		},
 	}
 	_, err := u.validateLayerForImport(context.Background(), 7)
-	assertImportRegionFault(t, err, fault.KindPrecondition, "tqd.import.in_progress")
+	assertImportRegionFault(t, err, codes.FailedPrecondition, "tqd.import.in_progress")
 }
 
 func TestImportRegionPreservesLayerRepositoryFailure(t *testing.T) {
@@ -69,8 +70,8 @@ func TestImportRegionPreservesLayerRepositoryFailure(t *testing.T) {
 	if !errors.Is(err, dependencyErr) {
 		t.Fatalf("error = %v, want wrapped/original repository failure", err)
 	}
-	if _, ok := fault.As(err); ok {
-		t.Fatalf("repository failure was incorrectly classified as business fault: %v", err)
+	if _, ok := _errors.As(err); ok {
+		t.Fatalf("repository failure was incorrectly classified as application error: %v", err)
 	}
 }
 
@@ -79,7 +80,7 @@ func TestImportRegionRetryNotFoundIsCanonical(t *testing.T) {
 		regionRepo: &importRegionRepoStub{},
 	}
 	_, err := u.RetryImportError(context.Background(), 11)
-	assertImportRegionFault(t, err, fault.KindNotFound, "tqd.import.error_not_found")
+	assertImportRegionFault(t, err, codes.NotFound, "tqd.import.error_not_found")
 }
 
 func TestImportRegionRetryInProgressIsCanonical(t *testing.T) {
@@ -92,7 +93,7 @@ func TestImportRegionRetryInProgressIsCanonical(t *testing.T) {
 		},
 	}
 	_, err := u.RetryImportError(context.Background(), 11)
-	assertImportRegionFault(t, err, fault.KindPrecondition, "tqd.import.retry_in_progress")
+	assertImportRegionFault(t, err, codes.FailedPrecondition, "tqd.import.retry_in_progress")
 }
 
 func TestImportRegionRetryNotAllowedIsCanonical(t *testing.T) {
@@ -105,7 +106,7 @@ func TestImportRegionRetryNotAllowedIsCanonical(t *testing.T) {
 		},
 	}
 	_, err := u.RetryImportError(context.Background(), 11)
-	assertImportRegionFault(t, err, fault.KindPrecondition, "tqd.import.retry_not_allowed")
+	assertImportRegionFault(t, err, codes.FailedPrecondition, "tqd.import.retry_not_allowed")
 }
 
 func TestImportRegionRetryLockConflictIsCanonical(t *testing.T) {
@@ -119,19 +120,19 @@ func TestImportRegionRetryLockConflictIsCanonical(t *testing.T) {
 		},
 	}
 	_, err := u.RetryImportError(context.Background(), 11)
-	assertImportRegionFault(t, err, fault.KindAborted, "tqd.import.retry_lock_conflict")
+	assertImportRegionFault(t, err, codes.Aborted, "tqd.import.retry_lock_conflict")
 }
 
-func assertImportRegionFault(t *testing.T, err error, kind fault.Kind, code string) {
+func assertImportRegionFault(t *testing.T, err error, rpcCode codes.Code, code string) {
 	t.Helper()
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault: %v", err, err)
+		t.Fatalf("error type = %T, want canonical application error: %v", err, err)
 	}
-	if failure.Kind() != kind {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), kind)
+	if application.RPCCode() != rpcCode {
+		t.Fatalf("kind = %q, want %q", application.RPCCode(), rpcCode)
 	}
-	if failure.Code() != code {
-		t.Fatalf("code = %q, want %q", failure.Code(), code)
+	if application.Spec().LegacyProblemCode() != code {
+		t.Fatalf("code = %q, want %q", application.Spec().LegacyProblemCode(), code)
 	}
 }

@@ -2,12 +2,12 @@ package usecase
 
 import (
 	_errors "common/errors"
-	_fault "common/fault"
 	_utils "common/utils"
 	"context"
 	"fmt"
 	"log/slog"
 	"time"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/enums"
 	"user/internal/interface/factory"
@@ -47,10 +47,7 @@ func (s *OtpUsecase) ValidateAuth(c context.Context, authCodes []enums.AuthCodeE
 
 func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, param *dto.AuthParam) error {
 	if param == nil {
-		return _errors.ReturnError(
-			int32(400),
-			"Người dùng không tồn tại",
-		)
+		return _errors.ReturnError(service.UserNotFoundProfile)
 	}
 	statusEntity := param.Status
 	otpEntity := param.OTP
@@ -61,15 +58,16 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 	case enums.LOCKED:
 		if !statusEntity.LockedUntil.IsZero() && statusEntity.LockedUntil.After(time.Now()) {
 			minutes := time.Until(statusEntity.LockedUntil).Minutes()
-			return _errors.ReturnError(int32(code), "Tài khoản của bạn bị tạm khóa. Vui lòng thử lại sau "+fmt.Sprintf("%.0f phút", minutes))
+			return _errors.ReturnError(service.OTPLocked, _errors.WithLegacyCode(int32(code)), _errors.WithPublicMessage("Tài khoản của bạn bị tạm khóa. Vui lòng thử lại sau "+fmt.Sprintf("%.0f phút", minutes)))
 		}
 	case enums.LIMIT_OTP_SEND:
 		if otpEntity.OTPSendTime >= s.properties.MaxTimesResend {
 			s.LockAccount(c, param)
 			s.logOtpLockHistory(c, param, "limit_otp_send", otpEntity.OTPSendTime, s.properties.MaxTimesResend)
 			return _errors.ReturnError(
-				int32(code),
-				fmt.Sprintf("Đã quá %d lần gửi OTP. Vui lòng thử lại sau", s.properties.MaxTimesResend),
+				service.OTPSendLimitExceeded,
+				_errors.WithLegacyCode(int32(code)),
+				_errors.WithPublicMessage(fmt.Sprintf("Đã quá %d lần gửi OTP. Vui lòng thử lại sau", s.properties.MaxTimesResend)),
 			)
 		}
 	case enums.LIMIT_OTP_ENTER:
@@ -77,8 +75,9 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			s.LockAccount(c, param)
 			s.logOtpLockHistory(c, param, "limit_otp_enter", otpEntity.OTPCheckTime, s.properties.MaxTimesOtpEnter)
 			return _errors.ReturnError(
-				int32(code),
-				"Đã quá 3 lần nhập. Vui lòng thử lại sau "+fmt.Sprintf("%.0f phút", time.Until(statusEntity.LockedUntil).Minutes()),
+				service.OTPEnterLimitExceeded,
+				_errors.WithLegacyCode(int32(code)),
+				_errors.WithPublicMessage("Đã quá 3 lần nhập. Vui lòng thử lại sau "+fmt.Sprintf("%.0f phút", time.Until(statusEntity.LockedUntil).Minutes())),
 			)
 		}
 	case enums.CHECK_OTP:
@@ -86,32 +85,29 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			otpEntity.OTPCheckTime++
 			s.otpRepo.UpdateOTP(c, otpEntity)
 			return _errors.ReturnError(
-				int32(code),
-				"Mã không chính xác. Bạn còn "+fmt.Sprintf("%d",
-					s.properties.MaxTimesOtpEnter+1-otpEntity.OTPCheckTime)+
-					" lần.",
+				service.OTPIncorrect,
+				_errors.WithLegacyCode(int32(code)),
+				_errors.WithPublicMessage(
+					"Mã không chính xác. Bạn còn "+fmt.Sprintf("%d",
+						s.properties.MaxTimesOtpEnter+1-otpEntity.OTPCheckTime)+" lần.",
+				),
 			)
 		}
 	case enums.EXPIRED:
 		if otpEntity.ExpiredTime.IsZero() && otpEntity.ExpiredTime.Before(time.Now()) {
-			return _errors.ReturnError(
-				int32(code),
-				"Mã OTP đã hết hạn. Nhấn Gửi lại mã.",
-			)
+			return _errors.ReturnError(service.OTPExpired, _errors.WithLegacyCode(int32(code)))
 		}
 	case enums.LIMIT_NEXT_TIME:
 		if otpEntity.OTPDate != nil {
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockSendAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				seconds := int32(time.Until(nextTime).Seconds())
-				return _fault.New(
-					_fault.KindResourceExhausted,
-					"user.otp.next_send_limited",
-					"Hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
-				).WithMetadata(map[string]string{
-					"legacy_code": fmt.Sprintf("%d", code),
-					"second":      fmt.Sprintf("%d", seconds),
-				})
+				return _errors.ReturnError(
+					service.OTPNextSendLimited,
+					_errors.WithLegacyCode(int32(code)),
+					_errors.WithPublicMessage("Hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s"),
+					_errors.WithMetadata(map[string]string{"second": fmt.Sprintf("%d", seconds)}),
+				)
 			}
 		}
 	case enums.LIMIT_REQUEST_TIME:
@@ -119,29 +115,21 @@ func (s *OtpUsecase) Validate(c context.Context, validCode enums.AuthCodeEnum, p
 			nextTime := otpEntity.OTPDate.Add(time.Duration(s.properties.LockRequestAfter) * time.Second)
 			if time.Now().Before(nextTime) {
 				seconds := int32(time.Until(nextTime).Seconds())
-				return _fault.New(
-					_fault.KindResourceExhausted,
-					"user.otp.request_limited",
-					"Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s",
-				).WithMetadata(map[string]string{
-					"legacy_code": fmt.Sprintf("%d", code),
-					"second":      fmt.Sprintf("%d", seconds),
-				})
+				return _errors.ReturnError(
+					service.OTPRequestLimited,
+					_errors.WithLegacyCode(int32(code)),
+					_errors.WithPublicMessage("Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau "+fmt.Sprintf("%d", seconds)+"s"),
+					_errors.WithMetadata(map[string]string{"second": fmt.Sprintf("%d", seconds)}),
+				)
 			}
 		}
 	case enums.ACTIVATED:
 		if otpEntity.Activate {
-			return _errors.ReturnError(
-				int32(code),
-				"OTP đã kích hoạt",
-			)
+			return _errors.ReturnError(service.OTPActivated, _errors.WithLegacyCode(int32(code)))
 		}
 	case enums.INACTIVE_ACCOUNT:
 		if otpEntity.Activate {
-			return _errors.ReturnError(
-				int32(code),
-				"Tài khoản đang bị vô hiệu hóa",
-			)
+			return _errors.ReturnError(service.AccountInactive, _errors.WithLegacyCode(int32(code)))
 		}
 	}
 	return nil

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"user/config"
+	"user/internal"
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
@@ -230,7 +231,7 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 
 		// profile = profileResponse
 		if err != nil {
-			return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng và không thể tạo mới")
+			return nil, _errors.ReturnError(service.UserNotFoundAndCreateFailedLower, _errors.WithLegacyCode(int32(enums.NOT_FOUND_ACCOUNT)))
 		}
 	}
 

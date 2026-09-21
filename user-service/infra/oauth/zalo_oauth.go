@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"user/config"
+	"user/internal"
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/interface/repo"
@@ -181,10 +182,7 @@ func (s *ZaloAuthService) fetchUserInfo(accessToken string) (map[string]interfac
 func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string]interface{}, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
 	username, ok := userInfo["id"].(string)
 	if !ok {
-		return nil, _errors.ReturnError(
-			int32(401),
-			"Không lấy được id từ Zalo",
-		)
+		return nil, _errors.ReturnError(service.ZaloUserIDUnavailable)
 	}
 
 	fullName := ""
@@ -271,7 +269,7 @@ func (s *ZaloAuthService) RegisterOrLogin(c context.Context, userInfo map[string
 		// Nếu không tìm thấy profile, thử tạo lại
 		profile, err = s.AuthService.ProfileProvider.CreateProfile(c, existingUser.ID, nil, fullName, "", "", avatar)
 		if err != nil {
-			return nil, _errors.ReturnError(404, "Không tìm thấy thông tin người dùng và không thể tạo mới")
+			return nil, _errors.ReturnError(service.UserNotFoundAndCreateFailed)
 		}
 	}
 

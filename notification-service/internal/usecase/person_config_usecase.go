@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"context"
+	"notification/internal"
 
 	_errors "common/errors"
 
 	"notification/internal/domain"
 	"notification/internal/dto"
-	)
+)
 
 type PersonConfigUsecase struct {
 	repo PersonConfigStore
@@ -41,7 +42,7 @@ func (u *PersonConfigUsecase) BatchUpsert(ctx context.Context, configs []*dto.Pe
 
 func (u *PersonConfigUsecase) ListByUserID(ctx context.Context, userID uint64) ([]*domain.PersonConfigEntity, error) {
 	if userID == 0 {
-		return nil, _errors.ReturnError(400, "userId không hợp lệ")
+		return nil, _errors.ReturnError(service.UserIDInvalid)
 	}
 
 	return u.repo.ListByUserID(ctx, userID)

@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/provider"
@@ -52,11 +53,11 @@ func (u *ProductNoteUsecase) CreateNote(
 ) (*domain.ProductNote, error) {
 	authorID := _utils.GetProfileIdWithContext(ctx)
 	if authorID == 0 {
-		return nil, _errors.UnauthorizedException()
+		return nil, _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	if strings.TrimSpace(req.Content) == "" {
-		return nil, _errors.BadRequestException("note content is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("note content is required"))
 	}
 
 	if err := validateMentions(req.Content, req.Mentions); err != nil {
@@ -190,7 +191,7 @@ func (u *ProductNoteUsecase) TogglePin(ctx context.Context, noteID uint64, isPin
 		return err
 	}
 	if note == nil {
-		return _errors.NotFoundException("note not found")
+		return _errors.ReturnError(service.ProductNoteNotFound)
 	}
 
 	var pinnedAt *time.Time
@@ -250,7 +251,7 @@ func (u *ProductNoteUsecase) DeleteNote(
 ) error {
 	requestUserID := _utils.GetProfileIdWithContext(ctx)
 	if requestUserID == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	note, err := u.noteRepo.GetByID(ctx, noteID)
@@ -258,12 +259,12 @@ func (u *ProductNoteUsecase) DeleteNote(
 		return err
 	}
 	if note == nil {
-		return _errors.NotFoundException("note not found")
+		return _errors.ReturnError(service.ProductNoteNotFound)
 	}
 
 	profileId := _utils.GetProfileIdWithContext(ctx)
 	if profileId != note.AuthorID {
-		return _errors.ForbiddenException("permission denied")
+		return _errors.ReturnError(service.ProductNoteAccessDenied)
 	}
 
 	return u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -283,7 +284,7 @@ func (u *ProductNoteUsecase) UpdateNote(
 ) error {
 	authorID := _utils.GetProfileIdWithContext(ctx)
 	if authorID == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 
 	if err := validateMentions(req.Content, req.Mentions); err != nil {
@@ -295,10 +296,10 @@ func (u *ProductNoteUsecase) UpdateNote(
 		return err
 	}
 	if note == nil {
-		return _errors.NotFoundException("note not found")
+		return _errors.ReturnError(service.ProductNoteNotFound)
 	}
 	if note.AuthorID != authorID {
-		return _errors.ForbiddenException("permission denied")
+		return _errors.ReturnError(service.ProductNoteAccessDenied)
 	}
 
 	return u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -377,22 +378,23 @@ func validateMentions(content string, mentions []dto.MentionNoteDTO) error {
 	var prevEnd int32 = 0
 	for _, m := range mentions {
 		if m.StartPos < 0 || m.Length <= 0 {
-			return _errors.BadRequestException("invalid mention position")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("invalid mention position"))
 		}
 
 		end := m.StartPos + m.Length
 		if end > contentLen {
-			return _errors.BadRequestException("mention out of content range")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("mention out of content range"))
 		}
 
 		if m.StartPos < prevEnd {
-			return _errors.BadRequestException(
-				fmt.Sprintf(
+			return _errors.ReturnError(
+				_errors.RequestValidationFailed,
+				_errors.WithPublicMessage(fmt.Sprintf(
 					"mention overlap: userId=%d start=%d length=%d",
 					m.UserID,
 					m.StartPos,
 					m.Length,
-				),
+				)),
 			)
 		}
 

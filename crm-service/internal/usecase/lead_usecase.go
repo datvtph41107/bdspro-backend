@@ -3,9 +3,9 @@ package usecase
 import (
 	_enum "common/domain/enum"
 	_errors "common/errors"
-	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"crm/internal"
 	"crm/internal/domain"
 	"crm/internal/dto"
 	"crm/internal/enums"
@@ -290,7 +290,7 @@ func (u *LeadUsecase) Delete(ctx context.Context, id uint64) error {
 	}
 
 	if lead.Contact == nil {
-		return _errors.ReturnError(400, "Khách hàng không tồn tại")
+		return _errors.ReturnError(service.CustomerNotFound)
 	}
 
 	err = u.permissionUC.HasRoleWithOwner(ctx, lead.Contact.OwnerID, lead.Contact.OwnerOf, enums.AuthCustomerDelete)
@@ -327,7 +327,7 @@ func (u *LeadUsecase) UpdateNote(ctx context.Context, id uint64, dto *dto.LeadDT
 	}
 
 	if customer.Contact == nil {
-		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+		return nil, _errors.ReturnError(service.CustomerNotFound)
 	}
 
 	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerNote)
@@ -369,7 +369,7 @@ func (u *LeadUsecase) Assign(ctx context.Context, id uint64, dto *dto.LeadDTO) (
 	}
 
 	if customer.Contact == nil {
-		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+		return nil, _errors.ReturnError(service.CustomerNotFound)
 	}
 
 	_, err = u.leadRepo.Assign(ctx, id, dto)
@@ -407,7 +407,7 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 	}
 
 	if customer.Contact == nil {
-		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+		return nil, _errors.ReturnError(service.CustomerNotFound)
 	}
 
 	customer, err = u.leadRepo.SwitchStage(ctx, id, stageID, note)
@@ -439,7 +439,7 @@ func (u *LeadUsecase) GetByID(ctx context.Context, id uint64) (*domain.LeadEntit
 	}
 
 	if customer.Contact == nil {
-		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+		return nil, _errors.ReturnError(service.CustomerNotFound)
 	}
 
 	// todo: check xem có quyền xem chi tiết lead không
@@ -494,7 +494,7 @@ func (u *LeadUsecase) UpdateProductIds(ctx context.Context, leadId uint64, produ
 		return err
 	}
 	if lead == nil {
-		return _errors.ReturnError(404, "Lead không tồn tại")
+		return _errors.ReturnError(service.LeadNotFound)
 	}
 
 	// Update products using transaction
@@ -520,10 +520,7 @@ func (u *LeadUsecase) AssignCrm(ctx context.Context, contactId uint64, personCha
 		return nil, err
 	}
 	if lead != nil {
-		return nil, &_routes.Except{
-			Code:    409,
-			Message: "Khách hàng đã tồn tại",
-		}
+		return nil, _errors.ReturnError(service.CustomerAlreadyExists)
 	}
 	stage, err := u.stageRepo.GetByID(ctx, stageId)
 	if err != nil {

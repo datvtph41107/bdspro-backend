@@ -73,6 +73,7 @@ var GrpcCmd = &cobra.Command{
 				app.ApiKeyUsecase,
 				runtime.Security.ProtectedMethods,
 			),
+			_middleware.UnaryErrorInterceptor(),
 			_middleware.UnaryRecoveryInterceptor(),
 		)
 
@@ -88,6 +89,7 @@ var GrpcCmd = &cobra.Command{
 			grpc.ChainStreamInterceptor(
 				transport.Stream,
 				_middleware.ParseGrpcMetadataContextStreamMiddleware,
+				_middleware.StreamErrorInterceptor(),
 			),
 		)
 		hubpb.RegisterEventQueueServiceServer(s, app.EventQueueService)

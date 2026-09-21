@@ -7,28 +7,27 @@ import (
 	"testing"
 	"time"
 
-	_fault "common/fault"
+	_errors "common/errors"
+	"google.golang.org/grpc/codes"
 
 	"user/internal/domain/auth"
 	"user/internal/dto"
 	"user/internal/enums"
 )
 
-func TestOtpCooldownFaultsCarryCanonicalIdentityAndLegacyCompatibilityMetadata(
-	t *testing.T,
-) {
+func TestOtpCooldownErrorsCarryCanonicalIdentityAndLegacyCompatibilityMetadata(t *testing.T) {
 	tests := []struct {
 		name       string
 		code       enums.AuthCodeEnum
-		wantCode   string
-		legacyCode string
+		wantKey    _errors.Key
+		legacyCode int32
 		message    func(string) string
 	}{
 		{
 			name:       "next send limited",
 			code:       enums.LIMIT_NEXT_TIME,
-			wantCode:   "user.otp.next_send_limited",
-			legacyCode: "1006",
+			wantKey:    "USER_OTP_NEXT_SEND_LIMITED",
+			legacyCode: 1006,
 			message: func(second string) string {
 				return fmt.Sprintf("Hãy thử lại sau %ss", second)
 			},
@@ -36,13 +35,10 @@ func TestOtpCooldownFaultsCarryCanonicalIdentityAndLegacyCompatibilityMetadata(
 		{
 			name:       "request limited",
 			code:       enums.LIMIT_REQUEST_TIME,
-			wantCode:   "user.otp.request_limited",
-			legacyCode: "1017",
+			wantKey:    "USER_OTP_REQUEST_LIMITED",
+			legacyCode: 1017,
 			message: func(second string) string {
-				return fmt.Sprintf(
-					"Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau %ss",
-					second,
-				)
+				return fmt.Sprintf("Bạn đã yêu cầu OTP quá nhiều, hãy thử lại sau %ss", second)
 			},
 		},
 	}
@@ -50,87 +46,47 @@ func TestOtpCooldownFaultsCarryCanonicalIdentityAndLegacyCompatibilityMetadata(
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			now := time.Now()
-
 			service := &OtpUsecase{
 				properties: dto.PropertiesDTO{
 					LockSendAfter:    60,
 					LockRequestAfter: 60,
 				},
 			}
-
 			param := &dto.AuthParam{
 				OTP: &auth.UserOTPEntity{
 					OTPDate: &now,
 				},
 			}
 
-			err := service.Validate(
-				context.Background(),
-				tt.code,
-				param,
-			)
-
-			failure, ok := _fault.As(err)
+			err := service.Validate(context.Background(), tt.code, param)
+			application, ok := _errors.As(err)
 			if !ok {
-				t.Fatalf(
-					"error = %T %v, want typed fault",
-					err,
-					err,
-				)
+				t.Fatalf("error = %T %v, want canonical application error", err, err)
+			}
+			if application.Key() != tt.wantKey {
+				t.Fatalf("key = %q, want %q", application.Key(), tt.wantKey)
+			}
+			if application.RPCCode() != codes.ResourceExhausted {
+				t.Fatalf("rpc = %q, want %q", application.RPCCode(), codes.ResourceExhausted)
+			}
+			legacyCode, ok := application.LegacyCode()
+			if !ok || legacyCode != tt.legacyCode {
+				t.Fatalf("legacy code = %d, %v; want %d, true", legacyCode, ok, tt.legacyCode)
 			}
 
-			if failure.Kind() != _fault.KindResourceExhausted {
-				t.Fatalf(
-					"kind = %q, want %q",
-					failure.Kind(),
-					_fault.KindResourceExhausted,
-				)
-			}
-
-			if failure.Code() != tt.wantCode {
-				t.Fatalf(
-					"code = %q, want %q",
-					failure.Code(),
-					tt.wantCode,
-				)
-			}
-
-			metadata := failure.Metadata()
-
-			if metadata["legacy_code"] != tt.legacyCode {
-				t.Fatalf(
-					"legacy_code = %q, want %q",
-					metadata["legacy_code"],
-					tt.legacyCode,
-				)
-			}
-
+			metadata := application.Metadata()
 			secondRaw := metadata["second"]
-
-			second, err := strconv.Atoi(secondRaw)
-			if err != nil {
-				t.Fatalf(
-					"second = %q: %v",
-					secondRaw,
-					err,
-				)
+			second, parseErr := strconv.Atoi(secondRaw)
+			if parseErr != nil {
+				t.Fatalf("second = %q: %v", secondRaw, parseErr)
 			}
-
 			if second < 0 || second > 60 {
-				t.Fatalf(
-					"second = %d, want 0..60",
-					second,
-				)
+				t.Fatalf("second = %d, want 0..60", second)
 			}
 
 			wantMessage := tt.message(secondRaw)
-
-			if failure.PublicMessage() != wantMessage {
-				t.Fatalf(
-					"message = %q, want %q",
-					failure.PublicMessage(),
-					wantMessage,
-				)
+			if application.PublicMessage() != wantMessage {
+				t.Fatalf("message = %q, want %q", application.PublicMessage(), wantMessage)
 			}
 		})
 	}

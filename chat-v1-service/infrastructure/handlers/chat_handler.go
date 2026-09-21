@@ -843,7 +843,7 @@ func (s *chatHandler) MuteConversation(ctx context.Context, req *chatpb.MuteConv
 // @Router /conversation/{id}/timestamp [get]
 func (s *chatHandler) GetConversationTimestamps(ctx context.Context, req *sharepb.IdRequest) (*chatpb.ConversationTimestampsResponse, error) {
 	if req == nil || req.Id == 0 {
-		return nil, _errors.BadRequestException("conversation id is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("conversation id is required"))
 	}
 
 	if s.syncProvider == nil {
@@ -1544,7 +1544,7 @@ func (s *chatHandler) ReactionMessage(ctx context.Context, req *chatpb.ReactionM
 // @Router /typing [post]
 func (s *chatHandler) GetStateTyping(ctx context.Context, req *chatpb.StateTypingRequest) (*chatpb.StateTypingResponse, error) {
 	if req == nil {
-		return nil, _errors.BadRequestException("request is required")
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("request is required"))
 	}
 	counter, err := s.typingUsecases.ApplyTypingState(ctx, req.ConversationId, req.IsTyping)
 	if err != nil {

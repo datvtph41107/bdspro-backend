@@ -1,10 +1,11 @@
 package shared_usecase
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
-	_routes "common/routes"
+	_errors "common/errors"
 	"context"
 )
 
@@ -54,10 +55,7 @@ func (s *ProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpdat
 	newSaleStatus := dto.SaleStatus
 	productId := dto.ProductID
 	if newSaleStatus == enums.EProductSelling {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không thể cập nhật trạng thái sản phẩm thành cọc",
-		}
+		return _errors.ReturnError(service.ProductDepositTransitionDenied)
 	}
 	err := s.CheckPermission(c, productId, enums.PermissionProductUpdateStatus)
 	if err != nil {
@@ -74,10 +72,7 @@ func (s *ProductUsecase) SaleStatusUpdate(c context.Context, dto dto.StatusUpdat
 
 	s.MapProductStatus(c, product)
 	if product.SaleStatus == newSaleStatus {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Trạng thái trùng với trạng thái cũ",
-		}
+		return _errors.ReturnError(service.ProductStatusUnchanged)
 	}
 
 	contextTx := s.Transaction.StartTransaction(c)
@@ -196,10 +191,7 @@ func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdat
 	newRentStatus := dto.RentStatus
 	productId := dto.ProductID
 	if newRentStatus == enums.EProductRenting {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Không thể cập nhật trạng thái sản phẩm thành cọc",
-		}
+		return _errors.ReturnError(service.ProductDepositTransitionDenied)
 	}
 	err := s.CheckPermission(c, productId, enums.PermissionProductUpdateStatus)
 	if err != nil {
@@ -216,10 +208,7 @@ func (s *ProductUsecase) RentStatusUpdate(c context.Context, dto dto.StatusUpdat
 
 	s.MapProductStatus(c, product)
 	if product.RentStatus == newRentStatus {
-		return &_routes.Except{
-			Code:    400,
-			Message: "Trạng thái trùng với trạng thái cũ",
-		}
+		return _errors.ReturnError(service.ProductStatusUnchanged)
 	}
 
 	contextTx := s.Transaction.StartTransaction(c)

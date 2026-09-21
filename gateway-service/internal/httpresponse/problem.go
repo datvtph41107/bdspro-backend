@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"common/fault"
 	sharedhttp "common/httpresponse"
 )
 
@@ -27,10 +26,6 @@ func NewProblem(
 
 func TypeForCode(code string) string {
 	return sharedhttp.TypeForCode(code)
-}
-
-func StatusForKind(kind fault.Kind) int {
-	return sharedhttp.StatusForKind(kind)
 }
 
 func ProblemFromError(err error) Problem {

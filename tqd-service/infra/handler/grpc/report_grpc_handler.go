@@ -11,6 +11,7 @@ import (
 	_utils "common/utils"
 	"pb/clients"
 	tqdpb "pb/types/tqd"
+	"tqd/internal"
 	"tqd/internal/dto"
 	"tqd/internal/enums"
 	"tqd/internal/usecase"
@@ -44,7 +45,7 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 ) (*tqdpb.CreateReportAsyncResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[CreateReportAsync] UserID: %d, ReportType: %d, Profile: %d, Format: %d",
 		userID, req.ReportType, req.Profile, req.Format))
@@ -54,7 +55,7 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 	// 	var targetData interface{}
 	// 	if err := json.Unmarshal([]byte(*req.TargetData), &targetData); err != nil {
 	// 		log.Printf("[CreateReportAsync] Invalid targetData: %v", err)
-	// 		return nil, _errors.ReturnError(400, "invalid targetData json")
+	// 		return nil, _errors.ReturnError(service.ReportTargetDataInvalid)
 	// 	}
 	// }
 
@@ -73,7 +74,7 @@ func (h *ReportGrpcHandler) CreateReportAsync(
 	)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[CreateReportAsync] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[CreateReportAsync] Report created: %d", reportID))
 
@@ -94,18 +95,18 @@ func (h *ReportGrpcHandler) GetReportStatus(
 ) (*tqdpb.ReportStatusResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ReportId == 0 {
-		return nil, _errors.ReturnError(400, "report_id is required")
+		return nil, _errors.ReturnError(service.ReportIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[GetReportStatus] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	report, err := h.reportUsecase.GetStatus(ctx, userID, req.ReportId)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[GetReportStatus] Error: %v", err))
-		return nil, _errors.ReturnError(404, err.Error())
+		return nil, err
 	}
 
 	resp := &tqdpb.ReportStatusResponse{
@@ -145,22 +146,22 @@ func (h *ReportGrpcHandler) DownloadReport(
 ) (*tqdpb.DownloadReportResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ReportId == 0 {
-		return nil, _errors.ReturnError(400, "report_id is required")
+		return nil, _errors.ReturnError(service.ReportIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[DownloadReport] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	report, err := h.reportUsecase.Download(ctx, userID, req.ReportId)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[DownloadReport] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	if report == nil {
-		return nil, _errors.ReturnError(404, "report not found")
+		return nil, _errors.ReturnError(service.ReportNotFound)
 	}
 
 	// TODO: Implement actual file download
@@ -181,7 +182,7 @@ func (h *ReportGrpcHandler) DownloadReport(
 func (h *ReportGrpcHandler) ListReports(ctx context.Context, req *tqdpb.ListReportsRequest) (*tqdpb.ListReportsResponse, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDReportList, userID)
@@ -200,7 +201,7 @@ func (h *ReportGrpcHandler) ListReports(ctx context.Context, req *tqdpb.ListRepo
 	reports, total, err := h.reportUsecase.ListUser(ctx, userID, req.ReportType, req.Status, page, limit)
 	if err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[ListReports] Error: %v", err))
-		return nil, _errors.ReturnError(500, err.Error())
+		return nil, err
 	}
 
 	items := make([]*tqdpb.ReportSummary, 0, len(reports))
@@ -241,17 +242,17 @@ func (h *ReportGrpcHandler) DeleteReport(
 ) (*emptypb.Empty, error) {
 	userID := _utils.GetOriginIdFromContext(ctx)
 	if userID == 0 {
-		return nil, _errors.ReturnError(401, "unauthorized")
+		return nil, _errors.ReturnError(service.Unauthenticated)
 	}
 
 	if req.ReportId == 0 {
-		return nil, _errors.ReturnError(400, "report_id is required")
+		return nil, _errors.ReturnError(service.ReportIDRequired)
 	}
 	slog.InfoContext(ctx, fmt.Sprintf("[DeleteReport] UserID: %d, ReportID: %d", userID, req.ReportId))
 
 	if err := h.reportUsecase.Delete(ctx, userID, req.ReportId); err != nil {
 		slog.ErrorContext(ctx, fmt.Sprintf("[DeleteReport] Error: %v", err))
-		return nil, _errors.ReturnError(400, err.Error())
+		return nil, err
 	}
 
 	t := time.Now()

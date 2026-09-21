@@ -4,150 +4,80 @@ import (
 	"fmt"
 	"strconv"
 
-	"common/fault"
+	_errors "common/errors"
+	"tqd/internal"
 )
 
 func regionLayerIDRequired() error {
-	return fault.Validation(
-		"tqd.region.layer_id_required",
-		"layerId is required",
-		fault.FieldViolation{
-			Field:       "layer_id",
-			Description: "must be greater than zero",
-		},
-	)
+	return _errors.ReturnError(service.RegionLayerIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "layer_id", Description: "must be greater than zero"}))
 }
-
 func regionLabelIDRequired() error {
-	return fault.Validation(
-		"tqd.region.label_id_required",
-		"labelId is required",
-		fault.FieldViolation{
-			Field:       "label_id",
-			Description: "must be greater than zero",
-		},
-	)
+	return _errors.ReturnError(service.RegionLabelIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "label_id", Description: "must be greater than zero"}))
 }
-
 func regionIDRequired() error {
-	return fault.Validation(
-		"tqd.region.id_required",
-		"id is required",
-		fault.FieldViolation{
-			Field:       "id",
-			Description: "must be greater than zero",
-		},
-	)
+	return _errors.ReturnError(service.RegionRecordIDRequired, _errors.WithViolations(_errors.FieldViolation{Field: "id", Description: "must be greater than zero"}))
 }
-
 func regionNameRequired() error {
-	return fault.Validation(
-		"tqd.region.name_required",
-		"name is required",
-		fault.FieldViolation{
-			Field:       "name",
-			Description: "is required",
-		},
-	)
+	return _errors.ReturnError(service.RegionNameRequired, _errors.WithViolations(_errors.FieldViolation{Field: "name", Description: "is required"}))
 }
-
 func regionUpdateRequired() error {
-	return fault.Validation(
-		"tqd.region.update_required",
-		"at least one field to update is required",
-	)
+	return _errors.ReturnError(service.RegionUpdateRequired)
 }
-
 func regionNameEmpty() error {
-	return fault.Validation(
-		"tqd.region.name_empty",
-		"name cannot be empty",
-		fault.FieldViolation{
-			Field:       "name",
-			Description: "cannot be empty",
-		},
-	)
+	return _errors.ReturnError(service.RegionNameEmpty, _errors.WithViolations(_errors.FieldViolation{Field: "name", Description: "cannot be empty"}))
 }
-
 func regionStatusInvalid(value uint32) error {
-	return fault.Validation(
-		"tqd.region.status_invalid",
-		fmt.Sprintf("invalid status: %d", value),
-		fault.FieldViolation{
-			Field:       "status",
-			Description: "unsupported region status",
-		},
+	return _errors.ReturnError(
+		service.RegionStatusInvalid,
+		_errors.WithPublicMessage(fmt.Sprintf("invalid status: %d", value)),
+		_errors.WithViolations(_errors.FieldViolation{Field: "status", Description: "unsupported region status"}),
 	)
 }
-
 func regionGeometryInvalid(cause error) error {
-	message := "invalid geometry"
-	if cause != nil && cause.Error() != "" {
-		message = cause.Error()
+	if cause == nil {
+		return _errors.ReturnError(service.RegionGeometryInvalid)
 	}
-
-	return fault.Wrap(
-		cause,
-		fault.KindValidation,
-		"tqd.region.geometry_invalid",
-		message,
+	return _errors.ReturnError(
+		service.RegionGeometryInvalid,
+		_errors.WithCause(cause),
+		_errors.WithPublicMessage(cause.Error()),
 	)
 }
-
 func regionLayerNotFound(layerID uint64) error {
-	return fault.Wrap(
-		ErrLayerNotFound,
-		fault.KindNotFound,
-		"tqd.region.layer_not_found",
-		fmt.Sprintf("layer %d not found", layerID),
-	).WithMetadata(map[string]string{
-		"layer_id": strconv.FormatUint(layerID, 10),
-	})
-}
-
-func regionNotFound(regionID uint64) error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.region.not_found",
-		fmt.Sprintf("region %d not found", regionID),
-	).WithMetadata(map[string]string{
-		"region_id": strconv.FormatUint(regionID, 10),
-	})
-}
-
-func regionLabelNotFound(labelID uint64) error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.region.label_not_found",
-		fmt.Sprintf("label %d not found", labelID),
-	).WithMetadata(map[string]string{
-		"label_id": strconv.FormatUint(labelID, 10),
-	})
-}
-
-func regionSyncReferenceNotFound(
-	layerID uint64,
-	labelID uint64,
-) error {
-	return fault.New(
-		fault.KindNotFound,
-		"tqd.region.sync_reference_not_found",
-		fmt.Sprintf(
-			"legend with landUse not found for layerId=%d labelId=%d",
-			layerID,
-			labelID,
-		),
-	).WithMetadata(map[string]string{
-		"layer_id": strconv.FormatUint(layerID, 10),
-		"label_id": strconv.FormatUint(labelID, 10),
-	})
-}
-
-func regionInternal(cause error, code string) error {
-	return fault.Wrap(
-		cause,
-		fault.KindInternal,
-		code,
-		"region operation failed",
+	return _errors.ReturnError(
+		service.RegionLayerNotFound,
+		_errors.WithCause(ErrLayerNotFound),
+		_errors.WithPublicMessage(fmt.Sprintf("layer %d not found", layerID)),
+		_errors.WithMetadata(map[string]string{"layer_id": strconv.FormatUint(layerID, 10)}),
 	)
+}
+func regionNotFound(regionID uint64) error {
+	return _errors.ReturnError(
+		service.RegionRecordNotFound,
+		_errors.WithPublicMessage(fmt.Sprintf("region %d not found", regionID)),
+		_errors.WithMetadata(map[string]string{"region_id": strconv.FormatUint(regionID, 10)}),
+	)
+}
+func regionLabelNotFound(labelID uint64) error {
+	return _errors.ReturnError(
+		service.RegionLabelNotFound,
+		_errors.WithPublicMessage(fmt.Sprintf("label %d not found", labelID)),
+		_errors.WithMetadata(map[string]string{"label_id": strconv.FormatUint(labelID, 10)}),
+	)
+}
+func regionSyncReferenceNotFound(layerID, labelID uint64) error {
+	return _errors.ReturnError(
+		service.RegionSyncReferenceNotFound,
+		_errors.WithPublicMessage(fmt.Sprintf("legend with landUse not found for layerId=%d labelId=%d", layerID, labelID)),
+		_errors.WithMetadata(map[string]string{
+			"layer_id": strconv.FormatUint(layerID, 10),
+			"label_id": strconv.FormatUint(labelID, 10),
+		}),
+	)
+}
+func regionInternal(cause error, code string) error {
+	if cause == nil {
+		return fmt.Errorf("region operation failed (%s)", code)
+	}
+	return fmt.Errorf("region operation failed (%s): %w", code, cause)
 }

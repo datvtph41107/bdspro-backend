@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_dto "common/domain/dto"
-	"common/fault"
+	_errors "common/errors"
 	_utils "common/utils"
 
 	"google.golang.org/grpc/codes"
@@ -176,18 +176,7 @@ func (h *QHLandUseGrpcHandler) ListClientLandUse(ctx context.Context, req *tqdpb
 }
 
 func mapLandUseGroupError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if _, ok := fault.As(err); ok {
-		return fault.ToGRPC(err)
-	}
-	return fault.ToGRPC(fault.Wrap(
-		err,
-		fault.KindInternal,
-		"tqd.land_use.internal",
-		"land use operation failed",
-	))
+	return _errors.ToGRPC(err)
 }
 
 func toQHLandUsePB(e *qh_domain.QHLandUse) *tqdpb.QHLandUseResponse {

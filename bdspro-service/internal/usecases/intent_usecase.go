@@ -5,7 +5,7 @@ import (
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
-	_routes "common/routes"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"encoding/json"
@@ -28,10 +28,7 @@ func NewIntentUsecase(intentRepo repo.IntentRepo) *IntentUsecase {
 func (u *IntentUsecase) DetectIntent(ctx context.Context, req *dto.IntentDetectionRequest) (*dto.IntentDetectionResponse, error) {
 	userInput := strings.TrimSpace(strings.ToLower(req.UserInput))
 	if userInput == "" {
-		return nil, &_routes.Except{
-			Code:    400,
-			Message: "User input không được rỗng",
-		}
+		return nil, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("User input không được rỗng"))
 	}
 
 	// Detect intent bằng keyword matching (simple version)

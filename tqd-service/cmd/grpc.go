@@ -147,8 +147,8 @@ func runGRPCServer() error {
 	s := grpc.NewServer(
 		grpc.MaxRecvMsgSize(grpcMaxMsgBytes),
 		grpc.MaxSendMsgSize(grpcMaxMsgBytes),
-		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), reportTargetOperationInterceptor),
-		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware),
+		grpc.ChainUnaryInterceptor(targetIngress(transportConfig), _middleware.UnaryErrorInterceptor(), reportTargetOperationInterceptor),
+		grpc.ChainStreamInterceptor(_middleware.ParseGrpcMetadataContextStreamMiddleware, _middleware.StreamErrorInterceptor()),
 	)
 	registerTQDServices(s, app)
 	reflection.Register(s)

@@ -5,6 +5,7 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"hub/internal"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -52,11 +53,11 @@ func (uc *UpdateDataUsecase) CheckVersionSync(ctx context.Context, resource stri
 	key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 	// client, err := u.cacheProvider.Client(ctx)
 	// if err != nil {
-	// 	return nil, _errors.InternalServerException("get user update data error: %w", err.Error())
+	// 	return nil, fmt.Errorf("get user update data: %w", err)
 	// }
 	resourceIdStrs, err := uc.cacheProvider.LRange(ctx, key, 0, -1)
 	if err != nil {
-		return nil, _errors.InternalServerException("get user update data error: %w", err.Error())
+		return nil, fmt.Errorf("get user update data: %w", err)
 	}
 	// if len(productIds) == 0 {
 	// 	return nil, _errors.NotFoundException("User products not found")
@@ -65,7 +66,7 @@ func (uc *UpdateDataUsecase) CheckVersionSync(ctx context.Context, resource stri
 	for i, resourceIdStr := range resourceIdStrs {
 		resourceIds[i], err = strconv.ParseUint(resourceIdStr, 10, 64)
 		if err != nil {
-			return nil, _errors.InternalServerException("parse resource id error: %w", err.Error())
+			return nil, fmt.Errorf("parse resource id %q: %w", resourceIdStr, err)
 		}
 	}
 	return resourceIds, nil
@@ -79,7 +80,7 @@ func (uc *UpdateDataUsecase) CheckVersionSyncById(ctx context.Context, resource 
 	// }
 	lastUpdateStr, err := uc.cacheProvider.Get(ctx, key)
 	if err != nil {
-		return -1, _errors.InternalServerException("get user update data error: %w", err.Error())
+		return -1, fmt.Errorf("get resource update data: %w", err)
 	}
 	lastUD := _utils.ParseInt64(lastUpdateStr)
 	if lastUD < 1 {
@@ -108,7 +109,7 @@ func (uc *UpdateDataUsecase) RefreshSyncIds(ctx context.Context, ownerID uint64,
 func (uc *UpdateDataUsecase) FlushSyncIds(ctx context.Context, ownerID uint64, resource string, limit int64) error {
 	ownerId := _utils.GetOriginIdFromContext(ctx)
 	if ownerId == 0 {
-		return _errors.ReturnError(400, "owner_id is required")
+		return _errors.ReturnError(service.OwnerIDRequired)
 	}
 	key := fmt.Sprintf(keyUserUpdate, resource, ownerId)
 	slog.InfoContext(ctx, strings.TrimSuffix(fmt.Sprintln("key_trimmed", key, limit), "\n"))

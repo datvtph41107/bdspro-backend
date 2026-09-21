@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc/codes"
 	"testing"
 
-	"common/fault"
+	_errors "common/errors"
 	qh_domain "tqd/internal/domain/qh"
 	"tqd/internal/interface/repo"
 )
@@ -51,7 +52,7 @@ func TestQHLabelMergeReturnsCanonicalSourceNotFoundFault(t *testing.T) {
 	service := NewQHLabelUsecase(repository, nil, nil)
 
 	_, err := service.Merge(context.Background(), 7, []uint64{42}, &qh_domain.QHLabel{Name: "merged"})
-	assertQHLabelFault(t, err, fault.KindNotFound, "tqd.qh_label.source_not_found")
+	assertQHLabelFault(t, err, codes.NotFound, "tqd.qh_label.source_not_found")
 }
 
 func TestQHLabelMergeReturnsCanonicalLayerMismatchFault(t *testing.T) {
@@ -63,7 +64,7 @@ func TestQHLabelMergeReturnsCanonicalLayerMismatchFault(t *testing.T) {
 	service := NewQHLabelUsecase(repository, nil, nil)
 
 	_, err := service.Merge(context.Background(), 7, []uint64{1}, &qh_domain.QHLabel{Name: "merged"})
-	assertQHLabelFault(t, err, fault.KindValidation, "tqd.qh_label.source_layer_mismatch")
+	assertQHLabelFault(t, err, codes.InvalidArgument, "tqd.qh_label.source_layer_mismatch")
 }
 
 func TestQHLabelMergeReturnsCanonicalNameConflictFault(t *testing.T) {
@@ -76,7 +77,7 @@ func TestQHLabelMergeReturnsCanonicalNameConflictFault(t *testing.T) {
 	service := NewQHLabelUsecase(repository, nil, nil)
 
 	_, err := service.Merge(context.Background(), 7, []uint64{1}, &qh_domain.QHLabel{Name: "merged"})
-	assertQHLabelFault(t, err, fault.KindConflict, "tqd.qh_label.name_conflict")
+	assertQHLabelFault(t, err, codes.AlreadyExists, "tqd.qh_label.name_conflict")
 }
 
 func TestQHLabelMergePreservesRepositoryFailureAsInternalCause(t *testing.T) {
@@ -91,21 +92,21 @@ func TestQHLabelMergePreservesRepositoryFailureAsInternalCause(t *testing.T) {
 	if !errors.Is(err, dependencyErr) {
 		t.Fatalf("error = %v, want wrapped repository failure", err)
 	}
-	if _, ok := fault.As(err); ok {
+	if _, ok := _errors.As(err); ok {
 		t.Fatalf("repository failure was incorrectly classified inside usecase: %v", err)
 	}
 }
 
-func assertQHLabelFault(t *testing.T, err error, kind fault.Kind, code string) {
+func assertQHLabelFault(t *testing.T, err error, rpcCode codes.Code, code string) {
 	t.Helper()
-	failure, ok := fault.As(err)
+	application, ok := _errors.As(err)
 	if !ok {
-		t.Fatalf("error type = %T, want canonical fault", err)
+		t.Fatalf("error type = %T, want canonical application error", err)
 	}
-	if failure.Kind() != kind {
-		t.Fatalf("kind = %q, want %q", failure.Kind(), kind)
+	if application.RPCCode() != rpcCode {
+		t.Fatalf("kind = %q, want %q", application.RPCCode(), rpcCode)
 	}
-	if failure.Code() != code {
-		t.Fatalf("code = %q, want %q", failure.Code(), code)
+	if application.Spec().LegacyProblemCode() != code {
+		t.Fatalf("code = %q, want %q", application.Spec().LegacyProblemCode(), code)
 	}
 }

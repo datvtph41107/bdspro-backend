@@ -4,6 +4,8 @@ import (
 	_errors "common/errors"
 	"context"
 	"errors"
+	"fmt"
+	"user/internal"
 	"user/internal/dto"
 	"user/internal/interface/providers"
 	"user/internal/interface/repo"
@@ -43,14 +45,14 @@ func NewAuthSecurityUsecase(
 // GetAuthSecurityData lấy thông tin status, pin và devices theo authId
 func (u *AuthSecurityUsecase) GetAuthSecurityData(ctx context.Context, authID uint64) (*dto.AuthSecurityDataDTO, error) {
 	if authID == 0 {
-		return nil, _errors.ReturnError(400, "authId là bắt buộc")
+		return nil, _errors.ReturnError(service.AuthIDRequiredLower)
 	}
 
 	var statusErr error
 	status, statusErr := u.statusRepo.GetByID(ctx, authID)
 	if statusErr != nil {
 		if !errors.Is(statusErr, gorm.ErrRecordNotFound) {
-			return nil, _errors.ReturnError(500, "Không thể lấy trạng thái người dùng")
+			return nil, fmt.Errorf("load user status: %w", statusErr)
 		}
 		status = nil
 	}
@@ -59,14 +61,14 @@ func (u *AuthSecurityUsecase) GetAuthSecurityData(ctx context.Context, authID ui
 	pin, pinErr := u.pinRepo.GetByAuthID(ctx, authID)
 	if pinErr != nil {
 		if !errors.Is(pinErr, gorm.ErrRecordNotFound) {
-			return nil, _errors.ReturnError(500, "Không thể lấy thông tin PIN")
+			return nil, fmt.Errorf("load PIN info: %w", pinErr)
 		}
 		pin = nil
 	}
 
 	devices, err := u.deviceRepo.ListByAuthID(ctx, authID)
 	if err != nil {
-		return nil, _errors.ReturnError(500, "Không thể lấy danh sách thiết bị")
+		return nil, fmt.Errorf("load device list: %w", err)
 	}
 
 	return &dto.AuthSecurityDataDTO{
@@ -80,15 +82,15 @@ func (u *AuthSecurityUsecase) GetAuthSecurityData(ctx context.Context, authID ui
 // GetAuthSecurityDataByProfileID lấy thông tin bảo mật thông qua profileId (userId)
 func (u *AuthSecurityUsecase) GetAuthSecurityDataByProfileID(ctx context.Context, profileID uint64) (*dto.AuthSecurityDataDTO, error) {
 	if profileID == 0 {
-		return nil, _errors.ReturnError(400, "profileId là bắt buộc")
+		return nil, _errors.ReturnError(service.ProfileIDRequired)
 	}
 
 	auth, err := u.authMethodRepo.GetFirstByUserID(ctx, profileID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, _errors.ReturnError(404, "Không tìm thấy tài khoản cho profile này")
+			return nil, _errors.ReturnError(service.AccountForProfileNotFound)
 		}
-		return nil, _errors.ReturnError(500, "Không thể lấy thông tin tài khoản")
+		return nil, fmt.Errorf("load account info: %w", err)
 	}
 
 	authSecurityData, err := u.GetAuthSecurityData(ctx, auth.ID)
@@ -99,7 +101,7 @@ func (u *AuthSecurityUsecase) GetAuthSecurityDataByProfileID(ctx context.Context
 	if u.profileProvider != nil {
 		profile, profileErr := u.profileProvider.GetByProfileIDV3(ctx, profileID)
 		if profileErr != nil {
-			return nil, _errors.ReturnError(500, "Không thể lấy thông tin hồ sơ người dùng")
+			return nil, fmt.Errorf("load user profile info: %w", profileErr)
 		}
 		authSecurityData.User = profile
 	}
@@ -107,7 +109,7 @@ func (u *AuthSecurityUsecase) GetAuthSecurityDataByProfileID(ctx context.Context
 	if u.notificationProvider != nil {
 		personConfigs, cfgErr := u.notificationProvider.GetPersonConfigs(ctx, profileID)
 		if cfgErr != nil {
-			return nil, _errors.ReturnError(500, "Không thể lấy cấu hình thông báo cá nhân")
+			return nil, fmt.Errorf("load personal notification config: %w", cfgErr)
 		}
 		authSecurityData.PersonConfigs = personConfigs
 	}

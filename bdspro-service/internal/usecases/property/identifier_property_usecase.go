@@ -1,6 +1,7 @@
 package property_usecases
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"bdspro/internal/enums"
@@ -20,7 +21,7 @@ func (u *PropertyUsecase) IdentifierProperty(ctx context.Context, lineageID uint
 		return 0, err
 	}
 	if lineage == nil {
-		return 0, _errors.NotFoundException("lineage not found")
+		return 0, _errors.ReturnError(service.PropertyLineageNotFound)
 	}
 	if lineage.PropertyIdentifyID != nil {
 		identifyID = *lineage.PropertyIdentifyID
@@ -159,7 +160,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 				"create property info failed",
 				slog.Any("error", err),
 			)
-			return _errors.InternalServerException("Create PropertyInfo: %s", err.Error())
+			return fmt.Errorf("create property info: %w", err)
 		}
 		infoID = &info.ID
 		txLogger.Debug(
@@ -175,7 +176,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property location failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyLocation: %s", err.Error())
+				return fmt.Errorf("create property location: %w", err)
 			}
 			idVal := loc.ID
 			locationID = &idVal
@@ -195,7 +196,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property land info failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyLandInfo: %s", err.Error())
+				return fmt.Errorf("create property land info: %w", err)
 			}
 			idVal := land.ID
 			landInfoID = &idVal
@@ -214,7 +215,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property building info failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyBuildingInfo: %s", err.Error())
+				return fmt.Errorf("create property building info: %w", err)
 			}
 			idVal := bld.ID
 			buildingID = &idVal
@@ -233,7 +234,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property evidence failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyEdvidence: %s", err.Error())
+				return fmt.Errorf("create property evidence: %w", err)
 			}
 			idVal := edv.ID
 			edvidenceID = &idVal
@@ -251,7 +252,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property external reference failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyExternalRef: %s", err.Error())
+				return fmt.Errorf("create property external ref: %w", err)
 			}
 			txLogger.Debug(
 				"created property external reference",
@@ -270,7 +271,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 				"create property statistic failed",
 				slog.Any("error", err),
 			)
-			return _errors.InternalServerException("Create PropertyStatistic: %s", err.Error())
+			return fmt.Errorf("create property statistic: %w", err)
 		}
 		statisticID := &statistic.ID
 		txLogger.Debug(
@@ -292,7 +293,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 				"create property lineage failed",
 				slog.Any("error", err),
 			)
-			return _errors.InternalServerException("Create PropertyLineage: %s", err.Error())
+			return fmt.Errorf("create property lineage: %w", err)
 		}
 		txLogger.Info(
 			"created property lineage",
@@ -343,7 +344,7 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 					"create property media batch failed",
 					slog.Any("error", err),
 				)
-				return _errors.InternalServerException("Create PropertyMedia: %s", err.Error())
+				return fmt.Errorf("create property media: %w", err)
 			}
 			txLogger.Debug(
 				"created property media items",
@@ -396,48 +397,48 @@ func (u *PropertyUsecase) ImportProperty(ctx context.Context, req *dto.CreatePro
 
 func (u *PropertyUsecase) validateImportRequest(req *dto.CreatePropertyProductRequest) error {
 	if req == nil {
-		return _errors.BadRequestException("request cannot be nil")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("request cannot be nil"))
 	}
 
 	// Kiểm tra Location
 	if req.Location == nil {
-		return _errors.BadRequestException("location is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("location is required"))
 	}
 	if req.Location.Latitude == nil {
-		return _errors.BadRequestException("latitude is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("latitude is required"))
 	}
 	if req.Location.Longitude == nil {
-		return _errors.BadRequestException("longitude is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("longitude is required"))
 	}
 	if *req.Location.Latitude < -90 || *req.Location.Latitude > 90 {
-		return _errors.BadRequestException("latitude must be between -90 and 90")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("latitude must be between -90 and 90"))
 	}
 	if *req.Location.Longitude < -180 || *req.Location.Longitude > 180 {
-		return _errors.BadRequestException("longitude must be between -180 and 180")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("longitude must be between -180 and 180"))
 	}
 
 	// Kiểm tra Info
 	if req.Info == nil {
-		return _errors.BadRequestException("info is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("info is required"))
 	}
 	if req.Info.PropertyTypeID == nil {
-		return _errors.BadRequestException("property_type_id is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("property_type_id is required"))
 	}
 
 	// Kiểm tra diện tích
 	if req.LandInfo == nil && req.BuildingInfo == nil {
-		return _errors.BadRequestException("either land_info or building_info is required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("either land_info or building_info is required"))
 	}
 
 	if req.LandInfo != nil && req.LandInfo.AreaTotal != nil {
 		if *req.LandInfo.AreaTotal <= 0 {
-			return _errors.BadRequestException("area_total must be positive")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("area_total must be positive"))
 		}
 	}
 
 	if req.BuildingInfo != nil && req.BuildingInfo.AreaActual != nil {
 		if *req.BuildingInfo.AreaActual <= 0 {
-			return _errors.BadRequestException("area_actual must be positive")
+			return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("area_actual must be positive"))
 		}
 	}
 

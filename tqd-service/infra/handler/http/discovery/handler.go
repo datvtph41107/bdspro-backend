@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"common/fault"
+	commonhttp "common/httpresponse"
 
 	"tqd/internal/domain/discovery/model"
 	"tqd/internal/usecase/discovery/application"
@@ -34,25 +34,11 @@ func (h *Handler) Identify(c *gin.Context) {
 }
 
 func identifyHTTPProblem(err error) (int, gin.H) {
-	failure, ok := fault.As(err)
-	if !ok {
-		failure = fault.Wrap(
-			err,
-			fault.KindInternal,
-			"tqd.discovery.identify_internal",
-			"discovery identify failed",
-		)
-	}
-
-	statusCode := http.StatusInternalServerError
-	if failure.Kind() == fault.KindValidation {
-		statusCode = http.StatusBadRequest
-	}
-
-	return statusCode, gin.H{
+	problem := commonhttp.ProblemFromError(err)
+	return problem.Status, gin.H{
 		"code":       "DISCOVERY_IDENTIFY_FAILED",
-		"message":    failure.PublicMessage(),
-		"error_code": failure.Code(),
+		"message":    problem.Detail,
+		"error_code": problem.Code,
 	}
 }
 

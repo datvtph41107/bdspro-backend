@@ -2,9 +2,10 @@ package postgres
 
 import (
 	_db "common/db"
-	_routes "common/routes"
+	_errors "common/errors"
 	"fmt"
 	"strconv"
+	"user/internal"
 	models "user/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -98,10 +99,7 @@ func (repo *GroupPostgres) DeleteGroup(profileId *uint64, id uint64) error {
 
 	// Kiểm tra quyền xóa
 	if group.CreatedBy != profileId {
-		return &_routes.Except{
-			Code:    401,
-			Message: "bạn không có quyền xóa nhóm này",
-		}
+		return _errors.ReturnError(service.FriendGroupDeleteDenied)
 	}
 
 	return repo.DB.Delete(&models.GroupEntity{}, id).Error

@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bdspro/internal"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_errors "common/errors"
@@ -129,10 +130,10 @@ func (u *dealUsecase) AddProductToDeal(
 	dealID, userID, productID uint64,
 ) error {
 	if userID == 0 {
-		return _errors.UnauthorizedException()
+		return _errors.ReturnError(_errors.AuthenticationRequired, _errors.WithPublicMessage("Unauthorized"), _errors.WithLegacyCode(401))
 	}
 	if dealID == 0 || productID == 0 {
-		return _errors.BadRequestException("deal_id and product_id are required")
+		return _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("deal_id and product_id are required"))
 	}
 
 	var deal *domain.Deal
@@ -144,7 +145,7 @@ func (u *dealUsecase) AddProductToDeal(
 		}
 
 		if !deal.IsModifiable() {
-			return _errors.ConflictException("deal is not modifiable")
+			return _errors.ReturnError(service.DealNotModifiable)
 		}
 
 		ok, err := u.dealRepository.IsAcceptedMember(txCtx, userID, dealID)
@@ -152,7 +153,7 @@ func (u *dealUsecase) AddProductToDeal(
 			return err
 		}
 		if !ok {
-			return _errors.ForbiddenException("user is not member of deal")
+			return _errors.ReturnError(service.DealMembershipDenied)
 		}
 
 		err = u.dealRepository.AddProductToDeal(
@@ -194,7 +195,7 @@ func (u *dealUsecase) GetDealsWithoutProduct(
 	pagable _dto.Pagable,
 ) ([]*domain.Deal, int64, error) {
 	if productID == 0 {
-		return nil, 0, _errors.BadRequestException("productId is required")
+		return nil, 0, _errors.ReturnError(_errors.RequestValidationFailed, _errors.WithPublicMessage("productId is required"))
 	}
 
 	return u.dealRepository.GetDealsWithoutProduct(

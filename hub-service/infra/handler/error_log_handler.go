@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 
-	_errors "common/errors"
 	"hub/infra/mapper"
 	_usecase "hub/internal/usecase"
 	hubpb "pb/types/hub"
@@ -40,9 +39,8 @@ func (h *ErrorLogHandler) LogError(
 	req *hubpb.LogErrorRequest,
 ) (*emptypb.Empty, error) {
 	dtoReq := h.ErrorLogMapper.MapLogErrorReq(req)
-	errDTO := h.ErrorLogUsecase.LogError(ctx, dtoReq)
-	if errDTO != nil {
-		return nil, _errors.ReturnError(int32(errDTO.Code), errDTO.Message)
+	if err := h.ErrorLogUsecase.LogError(ctx, dtoReq); err != nil {
+		return nil, err
 	}
 	return &emptypb.Empty{}, nil
 }

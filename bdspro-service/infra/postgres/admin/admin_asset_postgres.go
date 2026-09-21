@@ -1,6 +1,7 @@
 package admin_postgres
 
 import (
+	"bdspro/internal"
 	"bdspro/internal/domain"
 	"bdspro/internal/dto"
 	"common/case/crud"
@@ -26,7 +27,7 @@ func NewAdminAssetPostgres(db *_db.TransactionRepo) *AdminAssetPostgres {
 func (r *AdminAssetPostgres) GetList(ctx context.Context, pagable _dto.IPagable) ([]domain.Asset, int64, error) {
 	req, ok := pagable.(*dto.AssetSearchRequest)
 	if !ok {
-		return nil, 0, _errors.ReturnError(400, "invalid pagable")
+		return nil, 0, _errors.ReturnError(service.InvalidPagable)
 	}
 
 	var assets []domain.Asset

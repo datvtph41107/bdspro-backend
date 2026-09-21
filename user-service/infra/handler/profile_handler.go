@@ -13,6 +13,7 @@ import (
 	userpb "pb/types/user"
 	"strconv"
 	"time"
+	"user/internal"
 
 	"user/infra/client"
 	"user/infra/mapper"
@@ -502,7 +503,7 @@ func (s *GrpcProfileService) CheckAccountStatus(ctx context.Context, req *userpb
 func (s *GrpcProfileService) FindByPhone(ctx context.Context, req *userpb.FindByPhoneRequest) (*userpb.FindByPhoneResponse, error) {
 	// Validate phone number
 	if req.Phone == "" {
-		return nil, _errors.ReturnError(400, "Số điện thoại không đúng")
+		return nil, _errors.ReturnError(service.PhoneInvalid)
 	}
 
 	// Call usecase
@@ -513,7 +514,7 @@ func (s *GrpcProfileService) FindByPhone(ctx context.Context, req *userpb.FindBy
 
 	// Not found
 	if profile == nil {
-		return nil, _errors.ReturnError(404, "Số điện thoại không tồn tại")
+		return nil, _errors.ReturnError(service.PhoneNotFound)
 	}
 
 	// Convert to proto response
