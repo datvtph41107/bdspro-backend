@@ -18,6 +18,13 @@ QHPRO_DOCKER_CONFIG ?= $(CURDIR)/.tmp/docker-public
 # Keep image builds sequential by default so the canonical full-stack gate does
 # not start several Go compilers at once. CI or larger machines may override it.
 QHPRO_COMPOSE_PARALLEL_LIMIT ?= 1
+QHPRO_RELEASE_ROOT ?= $(CURDIR)/.tmp/releases
+QHPRO_RELEASE_NAMESPACE ?= bdspro-release
+QHPRO_RELEASE_COMMIT := $(shell git rev-parse HEAD 2>/dev/null)
+QHPRO_RELEASE_DIR ?= $(QHPRO_RELEASE_ROOT)/$(QHPRO_RELEASE_COMMIT)
+release_dir ?= $(QHPRO_RELEASE_DIR)
+current_release ?=
+previous_release ?=
 TAIL ?= 200
 FOLLOW ?= 1
 service ?=
@@ -64,7 +71,7 @@ OWNED_ENV_FILES := $(ENV_FILES) ./$(ACCEPTANCE_ENV_FILE)
 ROOT_REQUIRED_ENV_KEYS := QHPRO_ENVIRONMENT QHPRO_EXECUTION_MODE JWT_KEY_GENERATE \
 	QHPRO_INTERNAL_METADATA_SECRET QHPRO_TRUSTED_METADATA_MODE SERVICE_AUTH_KEY
 
-.PHONY: help setup deps deps-down up down status logs log-query smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation generate-backend build-backend test-backend \
+.PHONY: help setup deps deps-down up down status logs log-query smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation verify-release-contract generate-backend build-backend test-backend release-build release-verify release-up release-rollback release-down \
 	vet-backend race-backend diff-check-backend accept-code-backend migrate-backend verify-runtime-backend docker-backend compose-up compose-up-build compose-down \
 	compose-config compose-ps compose-logs integration-up integration-down integration-status integration-logs native-build native-up native-down native-status native-logs native-restart dev-up dev-status dev-logs dev-smoke dev-down dev-reset \
 	dev-dependencies dev-dependencies-down \
@@ -86,6 +93,10 @@ help:
 	  'Development accounts: admin/admin123 và 0900000000/client123' \
 	  'make test-e2e                      Chạy flow mua gói đến báo cáo' \
 	  'make integration-up                Full Compose, chỉ dùng khi kiểm tra image/package' \
+	  'make release-build                 Build exact-SHA release artifact + immutable image archive' \
+	  'make release-verify release_dir=…  Verify source/image/migration evidence' \
+	  'make release-up release_dir=…      Restore archive, activate --no-build --pull never, smoke' \
+	  'make release-rollback current_release=… previous_release=…  Roll back immutable artifact' \
 	  'make rebuild [service=payment-service] Build lại integration image (một/all)' \
 	  'make down                          Dừng process native + hạ tầng, giữ dữ liệu' \
 	  'make reset                         Xóa dữ liệu local có xác nhận' \
@@ -313,9 +324,15 @@ verify-config-isolation:
 	test $$status -eq 0 || exit $$status; \
 	echo 'runtime config isolation verification PASS'
 
+# Release/rollback is an engineering contract, not a production deployment side effect.
+# The regression harness uses an isolated Git fixture plus a fake Docker CLI, so
+# exact-SHA packaging, image archive restoration and rollback guards stay cheap.
+verify-release-contract:
+	@bash shared/code/development/test-release-artifact.sh
+
 # Guard có giá trị vận hành được đặt ngay tại owner Makefile, không phụ thuộc
 # vào một cây scripts trung gian khó truy vết.
-verify-backend: env-check verify-config-isolation verify-migrations
+verify-backend: env-check verify-config-isolation verify-migrations verify-release-contract
 	@bash shared/code/development/verify-source-layout.sh
 	@status=0; \
 	rg -q '^up: native-up$$' shared/code/development/root.mk || \
@@ -335,6 +352,8 @@ verify-backend: env-check verify-config-isolation verify-migrations
 	fi; \
 	rg -q 'QHPRO_EXECUTION_MODE=host' shared/code/development/native-stack.sh || \
 	  { echo 'Native supervisor phải khóa host runtime selection' >&2; status=1; }; \
+	rg -q '^  QHPRO_LOG_OUTPUT: stdout$$' "$(COMPOSE_FILE)" || \
+	  { echo 'Compose application runtime phải project canonical logs ra stdout/stderr' >&2; status=1; }; \
 	if rg -n 'docker compose.*(up|restart).*\b(auth|user|organization|payment|tqd|notification|file|gateway|hub|assistant)\b' shared/code/development/native-stack.sh >/dev/null; then \
 	  echo 'Native supervisor không được khởi chạy application container' >&2; status=1; \
 	fi; \
@@ -576,6 +595,38 @@ compose-ps:
 
 compose-logs:
 	docker compose --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" logs -f --tail=200
+
+# Release authority is separate from the protected historical deploy helper.
+# Build happens once at an exact Git SHA. The artifact owns the source ZIP,
+# migration identity, full Compose image set, immutable image IDs and image tar.
+# Activation/rollback restore that archive and explicitly forbid build/pull.
+release-build: env-check
+	@test -n "$(QHPRO_RELEASE_COMMIT)" || { echo 'release-build requires Git metadata' >&2; exit 2; }
+	@QHPRO_IMAGE_NAMESPACE="$(QHPRO_RELEASE_NAMESPACE)" \
+	  bash shared/code/development/release-artifact.sh prepare "$(release_dir)"
+	@QHPRO_IMAGE_NAMESPACE="$(QHPRO_RELEASE_NAMESPACE)" QHPRO_IMAGE_TAG="$(QHPRO_RELEASE_COMMIT)" \
+	  $(MAKE) docker-backend
+	@QHPRO_IMAGE_NAMESPACE="$(QHPRO_RELEASE_NAMESPACE)" QHPRO_IMAGE_TAG="$(QHPRO_RELEASE_COMMIT)" \
+	  docker compose --env-file "$(ENV_FILE)" -f "$(COMPOSE_FILE)" pull --ignore-buildable
+	@bash shared/code/development/release-artifact.sh capture-images "$(release_dir)"
+	@bash shared/code/development/release-artifact.sh verify "$(release_dir)"
+
+release-verify:
+	@test -n "$(release_dir)" || { echo 'release_dir=<release-dir> is required' >&2; exit 2; }
+	@bash shared/code/development/release-artifact.sh verify "$(release_dir)"
+
+release-up:
+	@test -n "$(release_dir)" || { echo 'release_dir=<release-dir> is required' >&2; exit 2; }
+	@bash shared/code/development/release-artifact.sh activate "$(release_dir)"
+	@$(MAKE) smoke
+
+release-rollback:
+	@test -n "$(current_release)" || { echo 'current_release=<release-dir> is required' >&2; exit 2; }
+	@test -n "$(previous_release)" || { echo 'previous_release=<release-dir> is required' >&2; exit 2; }
+	@bash shared/code/development/release-artifact.sh rollback "$(current_release)" "$(previous_release)"
+	@$(MAKE) smoke
+
+release-down: compose-down
 
 # Explicit packaging/image integration commands. They are deliberately absent
 # from the default developer path so `make up` never hides application code in

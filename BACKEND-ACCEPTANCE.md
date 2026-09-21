@@ -82,3 +82,39 @@ Manifest là generated/untracked evidence của đúng Git index: chỉ hash tra
 không đưa `.tmp`, local `.env`, generated protobuf output hay machine cache vào source
 identity. Sau khi ZIP được tạo, lưu checksum ZIP ở bên ngoài artifact. Nếu source đổi
 sau khi đóng gói, checksum/manifest cũ không còn đại diện candidate mới.
+
+## Release / rollback rule
+
+Release acceptance follows:
+
+`KNOWN COMMIT → BUILD → IMMUTABLE ARTIFACT → VERSION/CHECKSUM → CONFIG → MIGRATION STATE → DEPLOY → READINESS → BUSINESS SMOKE`
+
+Repository-owned commands:
+
+```bash
+make release-build
+make release-verify release_dir=.tmp/releases/<exact-commit-sha>
+make release-up release_dir=.tmp/releases/<exact-commit-sha>
+make release-rollback \
+  current_release=.tmp/releases/<current-exact-commit-sha> \
+  previous_release=.tmp/releases/<previous-exact-commit-sha>
+```
+
+`release-build` refuses tracked source drift, pins the application image tag to the
+full Git commit SHA, reuses each service Docker build owner, captures the complete
+Compose image set with immutable image IDs, saves that exact set to `images.tar`,
+and records checksums for source, migration and image evidence.
+
+`release-up` verifies checksums, restores `images.tar`, verifies every loaded image
+ID, then activates with `docker compose ... --no-build --pull never --wait`.
+The root target runs repository-owned business smoke after readiness.
+
+Automatic rollback is allowed only when the previous release is an ancestor of
+the current release and both release artifacts have the same migration-manifest
+digest. Rollback restores the previous archived image set and never rebuilds
+`latest`.
+
+This acceptance repository refuses production activation. Production promotion
+remains a later official-lineage gate. `shared/code/deploy.sh` stays protected and
+byte-identical; historical `shared/code/release.sh` is not the final-acceptance
+release authority.
