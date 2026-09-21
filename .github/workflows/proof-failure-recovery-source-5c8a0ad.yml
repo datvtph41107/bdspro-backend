@@ -1,0 +1,140 @@
+name: Proof Failure Recovery Source 5C8A0AD
+
+on:
+  push:
+    branches:
+      - proof/failure-recovery-source-5c8a0ad
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-failure-recovery-source-5c8a0ad-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  notification-broker-recovery:
+    name: Canonical RabbitMQ Notification recovery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify canonical ancestry and bounded correction scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical=5c8a0ad2bf73ab08e95a6eaa9b9d148bcaade859
+          workflow=.github/workflows/proof-failure-recovery-source-5c8a0ad.yml
+          test "$(git merge-base "$canonical" HEAD)" = "$canonical"
+          test "$(git diff --name-only "$canonical" HEAD)" = "$workflow"
+          git diff --check "$canonical" HEAD
+          test "$(git diff --name-only "$canonical" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
+          test "$(git hash-object shared/code/development/root.mk)" = '72b4b4adee01ff5d9045cef33575a83927492330'
+          test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'eca73df300fd2abe56f1b34fcc5fce40430dd541'
+          test "$(git hash-object payment-service/cmd/grpc/runtime.go)" = '3df25b91b4dfcb7de8dd74e083a186b290223e0f'
+          test "$(git hash-object payment-service/worker/outbox.go)" = 'fc8b51323dd1928acce2f111f5c1fddf628fe6bf'
+          test "$(git hash-object shared/code/development/native-stack.sh)" = '62f5b6caf5d929d989eed63a1cf7c5e3c7a49d26'
+          test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
+          grep -Fq 'runtime-notification-broker-recovery: env-check' shared/code/development/root.mk
+          grep -Fq 'accept-backend: accept-code-backend verify-runtime-backend runtime-notification-broker-recovery runtime-value-chain-acceptance runtime-admin-acceptance' shared/code/development/root.mk
+          echo 'Failure/recovery exact-source identity and protected-scope gate PASS'
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize canonical setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          make setup
+          make doctor
+
+      - name: Start from clean local data
+        shell: bash
+        run: |
+          set -euo pipefail
+          make reset CONFIRM=reset-development-data
+
+      - name: Establish canonical native runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          make verify-runtime-backend 2>&1 | tee /tmp/recovery-runtime.log
+
+      - name: Execute canonical RabbitMQ Notification recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          notification_before_pid="$(bash shared/code/development/native-stack.sh pid notification)"
+          payment_before_pid="$(bash shared/code/development/native-stack.sh pid payment)"
+          test -n "$notification_before_pid"
+          test -n "$payment_before_pid"
+          make runtime-notification-broker-recovery 2>&1 | tee /tmp/recovery-broker.log
+          notification_after_pid="$(bash shared/code/development/native-stack.sh pid notification)"
+          payment_after_pid="$(bash shared/code/development/native-stack.sh pid payment)"
+          test "$notification_after_pid" = "$notification_before_pid"
+          test "$payment_after_pid" = "$payment_before_pid"
+          kill -0 "$payment_after_pid"
+          grep -Fq 'Notification broker recovery PASS (native API stayed alive; consumer reconnected)' /tmp/recovery-broker.log
+          echo "Notification PID preserved across RabbitMQ restart: $notification_before_pid"
+          echo "Payment PID preserved across RabbitMQ restart: $payment_before_pid"
+
+      - name: Prove durable event flow after broker recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          make runtime-value-chain-acceptance 2>&1 | tee /tmp/recovery-value-chain.log
+          grep -Fq 'PASS value chain:' /tmp/recovery-value-chain.log
+          grep -Fq -- '--- PASS: TestQHPROValueChainRuntime' /tmp/recovery-value-chain.log
+          echo 'Failure/recovery value-chain PASS'
+
+      - name: Collect failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          make status > /tmp/recovery-status.txt 2>&1 || true
+          if test -f .env; then
+            docker compose --env-file .env -f compose.yaml ps -a > /tmp/recovery-compose-ps.txt 2>&1 || true
+            docker compose --env-file .env -f compose.yaml logs --no-color rabbitmq postgres redis > /tmp/recovery-dependency-logs.txt 2>&1 || true
+            docker compose --env-file .env -f compose.yaml exec -T rabbitmq rabbitmqctl list_connections name client_properties > /tmp/recovery-rabbit-connections.txt 2>&1 || true
+          fi
+          find .tmp/development -maxdepth 2 -type f -print -exec tail -n 260 {} \; > /tmp/recovery-native-logs.txt 2>&1 || true
+
+      - name: Upload failure/recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-recovery-source-5c8a0ad-${{ github.sha }}
+          path: |
+            /tmp/recovery-runtime.log
+            /tmp/recovery-broker.log
+            /tmp/recovery-value-chain.log
+            /tmp/recovery-status.txt
+            /tmp/recovery-compose-ps.txt
+            /tmp/recovery-dependency-logs.txt
+            /tmp/recovery-rabbit-connections.txt
+            /tmp/recovery-native-logs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f .env; then
+            make down || true
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
