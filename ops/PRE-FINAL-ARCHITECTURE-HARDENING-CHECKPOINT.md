@@ -34,46 +34,117 @@ Hosted exact-SHA:
 - run ID: `35612933219`
 - head SHA: `373663d955d2fcffac1cfc96736ce694e8ce5b73`
 - status/conclusion: `completed/success`
-- `inventory`: SUCCESS
-- `common-contracts`: SUCCESS
-- `boundary-contracts`: SUCCESS
-- exact-SHA artifact: `observability-error-inventory-373663d955d2fcffac1cfc96736ce694e8ce5b73`
+- `inventory`, `common-contracts`, `boundary-contracts`: SUCCESS
+- artifact: `observability-error-inventory-373663d955d2fcffac1cfc96736ce694e8ce5b73`
 - artifact ID: `10644069205`
 - expired: `false`
-- digest: `sha256:506b53ef09cfd654b856b8b6902563ae254cd0951cb027543dea6d0ac62bdafa`
 
 `SLICE_A=PROVED/CLOSED`
 
 ## Slice B — Redis transport/key-policy/secret ownership
 
-Read-only classification already proven before mutation:
-- `common/redis.RedisService` currently mixes technical transport/lifecycle with feature semantics;
-- tile-session keyspace `ss:k:`, TTL and AES session-key storage are owned inside `common/redis` rather than a semantic concern owner;
-- `sessionEncryptKey` is logged in plaintext in both `shared/common/redis/tile_session.go` and User `GenTileSessionToken`;
-- logging redaction is key-based and cannot redact secrets interpolated into message text;
-- live tile-session consumers are User session generation and TQD tile encryption;
-- common Redis token helper methods duplicate User-owned token-cache behavior and have no live external caller;
-- TQD standalone tile server still opens Redis through legacy `NewRedisService()`, so process-resource ownership must be traced within this slice.
+### Classification
 
-Authorized design constraints:
-- `common/redis` remains technical Redis transport/lifecycle owner, not a generic business manager;
-- introduce a narrow tile-session semantic owner only for proven tile-session invariants;
-- key prefix/TTL/secret representation have one owner;
-- no plaintext secret logging;
-- consumers receive semantic capability rather than redefining key/TTL;
-- retire proven-dead duplicate common Redis business helpers rather than preserve speculative APIs;
-- preserve wire behavior and protobuf schema; `shared/protobuf` remains no-touch.
+Proven pre-mutation:
+- `common/redis.RedisService` mixed technical transport/lifecycle with tile-session feature semantics;
+- tile-session keyspace `ss:k:`, TTL and AES session-key storage had no semantic owner;
+- `sessionEncryptKey` was logged in plaintext;
+- User handler retained a process-global `sessionKey`, creating shared mutable session truth;
+- common Redis token helpers duplicated User-owned token-cache semantics and had no live external caller;
+- TQD tile server used legacy `NewRedisService()` despite having typed Redis runtime configuration.
+
+### Bounded mutation
+
+Implemented:
+- `common/redis` remains the technical Redis transport/lifecycle owner;
+- new `common/tilesession.Store` owns tile-session keyspace, TTL and Redis persistence semantics;
+- production `ss:k:` literal now has one executable owner;
+- User creates a fresh tile session per request and no longer stores singleton `sessionKey` state;
+- User and TQD consume the semantic tile-session store instead of redefining Redis keys/TTL;
+- plaintext tile-session secret logging removed;
+- dead common Redis token helpers `SaveToken/GetToken/IsTokenValid/DeleteToken` retired;
+- TQD tile server now loads narrow typed Redis runtime config and uses explicit `Open/Close`;
+- Wire generation authority extended with service-scoped injection packages; `common/tilesession.NewStore` is scoped to User only;
+- detector zero-ratchets added for plaintext tile-session secret logging in `shared/common`, User and TQD.
+
+### Proof
+
+Focused proof PASS:
+- Wire generator tests PASS, including existing tests plus service-scope tests;
+- `common/redis` compile PASS;
+- `common/tilesession` tests PASS;
+- User handler tests PASS;
+- User Wire + gRPC compile PASS;
+- TQD config tests PASS;
+- TQD cmd compile PASS;
+- observability/error detector tests: 60 PASS;
+- all ratchets PASS, including tile-session secret logging = 0;
+- zero/removal proof PASS:
+  - production `ss:k:` literal count = 1 and owned by `common/tilesession/store.go`;
+  - legacy tile-session Redis APIs = 0;
+  - dead common Redis token helpers = 0;
+  - TQD `_redis.NewRedisService()` = 0;
+  - User process-global `sessionKey uint64` = 0;
+  - plaintext log of `sessionEncryptKey` = 0;
+- User Wire regeneration is hash-stable from generation authority;
+- protected paths unchanged: `shared/protobuf`, `organization-service`, `map-service`, `shared/code/deploy.sh`;
+- deploy script hash preserved: `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Immutable local evidence:
+- source candidate: `cf5e62e5ece1add747c7be77cbd468128bf4ba27`
+- source tree: `804cff3330a568346f2d6824dce755e6623f3f03`
+- harness-only child: `7a229202f8a0b31c8470cb14faf3ce2bf8dcfb1e`
+- harness tree: `cb357507b528beef25a799aa346278c1d0ed7798`
+- harness delta from source candidate: exactly `.github/workflows/refactor-observability-errors.yml`.
+
+Detached exact-SHA proof:
+- worktree: `/home/sprite/work/proof-pre-final-b-7a22920`
+- exact SHA `7a229202...` / tree `cb357507...`;
+- canonical `make setup` reconstruction PASS;
+- full focused tests/ratchets/removal/Wire reproducibility/protected-invariant/final-cleanliness proof PASS;
+- `SLICE_B_DETACHED_EXACT_SHA_PROOF=PASS`.
+
+### Safe publication
+
+Remote branch:
+- `refactor/pre-final-architecture-hardening-ca98ece`
+
+Publication mapping:
+- previous remote head: `373663d955d2fcffac1cfc96736ce694e8ce5b73`;
+- remote source commit: `eb745852c7cd888d7298e3e6500d862be780db81`;
+- remote source tree: `804cff3330a568346f2d6824dce755e6623f3f03`, exactly equal to local source tree;
+- remote harness/head: `b7317728721821225c2596a8b0b5597adb08a6fc`;
+- remote harness tree: `cb357507b528beef25a799aa346278c1d0ed7798`, exactly equal to local harness tree;
+- parent chain is `373663d... -> eb745852... -> b7317728...`;
+- a concurrent ref advance was detected before any ref update; it was classified as the exact tree-equivalent Slice B publication, so no overwrite/force update was performed.
+
+`SLICE_B_SOURCE_MUTATION=CLOSED`
+`SLICE_B_FOCUSED_PROOF=PASS`
+`SLICE_B_ZERO_REMOVAL_PROOF=PASS`
+`SLICE_B_DETACHED_EXACT_SHA_PROOF=PASS`
+`SLICE_B_PUBLICATION=PASS`
+`SLICE_B_HOSTED_PROOF=PENDING`
 
 Current writer:
 - `/home/sprite/work/arch-hardening-ca98ece`
 - branch: `work/pre-final-hardening`
-- HEAD: `bec7db04aa2502269eed7018d6c4e3898125c979`
+- HEAD: `7a229202f8a0b31c8470cb14faf3ce2bf8dcfb1e`
 - clean
 
-`SLICE_A_HOSTED_PROOF=PASS`
-`SLICE_A_PUBLICATION=PASS`
-`SLICE_B_SOURCE_MUTATION=AUTHORIZED`
+Preserved proof worktrees must not be removed/reset:
+- `/home/sprite/work/proof-pre-final-a-f7f4c98`
+- `/home/sprite/work/proof-pre-final-a-bec7db0`
+- `/home/sprite/work/proof-pre-final-a2-bec7db0`
+- `/home/sprite/work/proof-pre-final-b-7a22920`
 
-`NEXT_GATE=SLICE_B_BOUNDED_SOURCE_MUTATION`
+## Remaining hardening order
+
+1. Hosted exact-SHA proof for Slice B at remote head `b7317728...`.
+2. Slice C — Payment outbox degradation/backoff/health/idempotency proof and bounded fixes.
+3. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
+4. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
+5. Re-open Production Promotion only after hardening is PROVED/CLOSED.
+
+`NEXT_GATE=SLICE_B_HOSTED_EXACT_SHA_PROOF`
 
 `FINAL ACCEPTED=NO`
