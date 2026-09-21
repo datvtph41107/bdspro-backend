@@ -116,14 +116,32 @@ Publication mapping:
 - remote harness/head: `b7317728721821225c2596a8b0b5597adb08a6fc`;
 - remote harness tree: `cb357507b528beef25a799aa346278c1d0ed7798`, exactly equal to local harness tree;
 - parent chain is `373663d... -> eb745852... -> b7317728...`;
-- a concurrent ref advance was detected before any ref update; it was classified as the exact tree-equivalent Slice B publication, so no overwrite/force update was performed.
+- remote ref was re-read immediately before publication at exact prior head `373663d955d2fcffac1cfc96736ce694e8ce5b73`; it was then fast-forwarded to `b7317728721821225c2596a8b0b5597adb08a6fc` with `force=false`.
+
+
+### Hosted exact-SHA closure
+
+- workflow: `Refactor Observability and Error Contracts`;
+- run number: `104`;
+- run ID: `35619824787`;
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- exact head SHA: `b7317728721821225c2596a8b0b5597adb08a6fc`;
+- status/conclusion: `completed/success`;
+- `inventory`: SUCCESS;
+- `common-contracts`: SUCCESS, including Redis transport + tile-session semantic ownership;
+- `boundary-contracts`: SUCCESS, including canonical `make setup`, Wire service-scoping, User Wire reproducibility, User/TQD tile-session boundaries, ownership-retirement proof, and all existing shared/Gateway/User/Payment/TQD regressions;
+- exact-SHA artifact: `observability-error-inventory-b7317728721821225c2596a8b0b5597adb08a6fc`;
+- artifact ID: `10646784034`;
+- artifact expired: `false`;
+- artifact digest: `sha256:c8ab6d279734bbcb7f5fe8dba63910dc35c461b316592ec6821b22844d225753`.
 
 `SLICE_B_SOURCE_MUTATION=CLOSED`
 `SLICE_B_FOCUSED_PROOF=PASS`
 `SLICE_B_ZERO_REMOVAL_PROOF=PASS`
 `SLICE_B_DETACHED_EXACT_SHA_PROOF=PASS`
 `SLICE_B_PUBLICATION=PASS`
-`SLICE_B_HOSTED_PROOF=PENDING`
+`SLICE_B_HOSTED_PROOF=PASS/CLOSED`
+`SLICE_B=PROVED/CLOSED`
 
 Current writer:
 - `/home/sprite/work/arch-hardening-ca98ece`
@@ -139,12 +157,14 @@ Preserved proof worktrees must not be removed/reset:
 
 ## Remaining hardening order
 
-1. Hosted exact-SHA proof for Slice B at remote head `b7317728...`.
-2. Slice C — Payment outbox degradation/backoff/health/idempotency proof and bounded fixes.
-3. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
-4. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
-5. Re-open Production Promotion only after hardening is PROVED/CLOSED.
+1. Slice C — Payment outbox degradation/backoff/health/idempotency read-only classification, then bounded fixes only if source reality authorizes them.
+2. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
+3. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
+4. Re-open Production Promotion only after hardening is PROVED/CLOSED.
 
-`NEXT_GATE=SLICE_B_HOSTED_EXACT_SHA_PROOF`
+`SLICE_C_READ_ONLY_CLASSIFICATION=AUTHORIZED`
+`SLICE_C_SOURCE_MUTATION=NOT_AUTHORIZED`
+
+`NEXT_GATE=SLICE_C_PAYMENT_OUTBOX_READ_ONLY_CLASSIFICATION`
 
 `FINAL ACCEPTED=NO`
