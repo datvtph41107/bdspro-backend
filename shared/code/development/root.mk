@@ -471,8 +471,8 @@ verify-backend: env-check verify-config-isolation verify-migrations verify-relea
 	  { echo 'Relay Redis phải được process root inject vào WebSocket handler' >&2; status=1; }; \
 	rg -q 'tx\.Table\("notification"\)' notification-service/infra/postgres/eventing/payment_completed_store.go || \
 	  { echo 'PaymentCompleted phải tạo customer-visible Notification projection trong Inbox transaction' >&2; status=1; }; \
-	rg -q 'outboxPublisher\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
-	  { echo 'Payment process phải sở hữu durable outbox publisher' >&2; status=1; }; \
+	rg -q 'outboxSupervisor\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
+	  { echo 'Payment process phải sở hữu durable outbox supervisor' >&2; status=1; }; \
 	if rg -n '^  payment-publisher:' "$(COMPOSE_FILE)" >/dev/null; then \
 	  echo 'Payment outbox là component, không phải standing container riêng' >&2; status=1; \
 	fi; \
