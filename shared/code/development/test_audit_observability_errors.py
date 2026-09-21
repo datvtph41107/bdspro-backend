@@ -1755,6 +1755,126 @@ class PaymentPublisherUnavailableOwnershipPolicyTest(unittest.TestCase):
         )
 
 
+
+class DebtFingerprintBaselinePolicyTest(unittest.TestCase):
+    @staticmethod
+    def finding(
+        *,
+        category="go.legacy_std_log",
+        owner="map-service",
+        path="map-service/main.go",
+        line=10,
+        excerpt='log.Println("legacy")',
+    ):
+        return {
+            "category": category,
+            "severity": "debt",
+            "owner": owner,
+            "path": path,
+            "line": line,
+            "excerpt": excerpt,
+        }
+
+    def test_exact_fingerprint_multiset_matches(self):
+        finding = self.finding()
+        baseline = audit.debt_fingerprint_counts([finding])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [finding],
+            baseline,
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_line_number_and_whitespace_do_not_redefine_identity(self):
+        accepted = self.finding(
+            line=10,
+            excerpt='log.Printf(  "legacy %s", value )',
+        )
+        moved = self.finding(
+            line=999,
+            excerpt='  log.Printf( "legacy   %s",   value )  ',
+        )
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [moved],
+            baseline,
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_retirement_without_baseline_sync_fails(self):
+        accepted = self.finding()
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift([], baseline)
+
+        self.assertFalse(unexpected)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_synchronized_retirement_passes(self):
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [],
+            audit.debt_fingerprint_counts([]),
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_same_count_replacement_fails(self):
+        accepted = self.finding(
+            path="map-service/main.go",
+            excerpt='log.Println("accepted legacy")',
+        )
+        replacement = self.finding(
+            path="map-service/new.go",
+            excerpt='log.Println("new legacy")',
+        )
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [replacement],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_duplicate_reintroduction_fails_multiset_count(self):
+        accepted = self.finding()
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [accepted, accepted],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertFalse(stale)
+
+    def test_unknown_owner_fails_even_when_total_count_is_unchanged(self):
+        accepted = self.finding(owner="map-service")
+        moved = self.finding(owner="new-service")
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [moved],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_committed_baseline_is_canonical_and_has_44_findings(self):
+        baseline = audit.load_debt_fingerprint_baseline()
+
+        self.assertEqual(sum(baseline.values()), 44)
+        self.assertEqual(len(baseline), 43)
+
+
 class R5LoggingConvergencePolicyTest(unittest.TestCase):
     def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
         rule = next(

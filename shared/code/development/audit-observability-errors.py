@@ -2,14 +2,15 @@
 """Inventory backend observability/error-response debt without changing source.
 
 This is deliberately a measurement tool first. It emits stable TSV + JSON
-artifacts and supports narrow zero-debt ratchets only after a migration scope
-has a canonical owner and has actually reached zero.
+artifacts and enforces narrow zero-debt ratchets plus an explicit
+fingerprint baseline for accepted nonzero debt.
 """
 
 from __future__ import annotations
 
 import argparse
 import collections
+import csv
 import json
 import re
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUTPUT = ROOT / ".tmp" / "observability-errors" / "inventory.tsv"
 DEFAULT_SUMMARY = ROOT / ".tmp" / "observability-errors" / "summary.json"
+DEFAULT_DEBT_BASELINE = ROOT / "shared/code/development/observability-error-debt-baseline.tsv"
 
 SKIP_DIRS = {
     ".git",
@@ -535,6 +537,96 @@ def ratchet_counts(findings: list[dict[str, object]]) -> dict[str, int]:
     return counts
 
 
+DebtFingerprint = tuple[str, str, str, str]
+
+
+def normalize_debt_excerpt(value: object) -> str:
+    return " ".join(str(value).split())
+
+
+def debt_fingerprint(item: dict[str, object]) -> DebtFingerprint:
+    return (
+        str(item["category"]),
+        str(item["owner"]),
+        str(item["path"]),
+        normalize_debt_excerpt(item["excerpt"]),
+    )
+
+
+def debt_fingerprint_counts(
+    findings: list[dict[str, object]],
+) -> collections.Counter[DebtFingerprint]:
+    return collections.Counter(
+        debt_fingerprint(item)
+        for item in findings
+        if item["severity"] == "debt"
+    )
+
+
+def load_debt_fingerprint_baseline(
+    path: Path = DEFAULT_DEBT_BASELINE,
+) -> collections.Counter[DebtFingerprint]:
+    if not path.is_file():
+        raise ValueError(f"debt fingerprint baseline missing: {path}")
+
+    expected_fields = ["category", "owner", "path", "excerpt", "count"]
+    counts: collections.Counter[DebtFingerprint] = collections.Counter()
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if reader.fieldnames != expected_fields:
+            raise ValueError(
+                "debt fingerprint baseline header must be "
+                + "\t".join(expected_fields)
+            )
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                count = int(row["count"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"invalid debt baseline count at line {row_number}"
+                ) from exc
+            if count <= 0:
+                raise ValueError(
+                    f"debt baseline count must be positive at line {row_number}"
+                )
+
+            fingerprint = (
+                str(row["category"]).strip(),
+                str(row["owner"]).strip(),
+                str(row["path"]).strip(),
+                normalize_debt_excerpt(row["excerpt"]),
+            )
+            if not all(fingerprint):
+                raise ValueError(
+                    f"incomplete debt fingerprint baseline at line {row_number}"
+                )
+            if fingerprint in counts:
+                raise ValueError(
+                    "duplicate debt fingerprint baseline row at line "
+                    f"{row_number}: {fingerprint!r}"
+                )
+            counts[fingerprint] = count
+    return counts
+
+
+def debt_fingerprint_drift(
+    findings: list[dict[str, object]],
+    baseline: collections.Counter[DebtFingerprint],
+) -> tuple[
+    collections.Counter[DebtFingerprint],
+    collections.Counter[DebtFingerprint],
+]:
+    current = debt_fingerprint_counts(findings)
+    unexpected = current - baseline
+    stale = baseline - current
+    return unexpected, stale
+
+
+def format_debt_fingerprint(fingerprint: DebtFingerprint) -> str:
+    category, owner, path, excerpt = fingerprint
+    return f"{category}@{owner} {path}: {excerpt}"
+
+
 def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
     by_category = collections.Counter(str(item["category"]) for item in findings)
     debt_by_category = collections.Counter(
@@ -562,6 +654,10 @@ def build_summary(findings: list[dict[str, object]]) -> dict[str, object]:
             "gateway_http_error_facade": "gateway-service/internal/httpresponse.WriteProblem",
             "legacy_findings_fail_ci": False,
             "ratchets_fail_ci": True,
+            "accepted_debt_fingerprint_baseline": str(
+                DEFAULT_DEBT_BASELINE.relative_to(ROOT)
+            ),
+            "accepted_debt_fingerprint_policy": "exact_multiset",
         },
     }
 
@@ -599,11 +695,44 @@ def main() -> int:
     print(f"Summary: {args.summary.relative_to(ROOT)}")
 
     if args.enforce_ratchets:
-        violations = {scope: count for scope, count in summary["ratchets"].items() if count}
+        failed = False
+        violations = {
+            scope: count
+            for scope, count in summary["ratchets"].items()
+            if count
+        }
         if violations:
+            failed = True
             print("\nRatchet violation(s):")
             for scope, count in violations.items():
                 print(f"  {scope}: {count}")
+
+        try:
+            baseline = load_debt_fingerprint_baseline()
+        except ValueError as exc:
+            print(f"\nDebt fingerprint baseline error: {exc}")
+            return 1
+
+        unexpected, stale = debt_fingerprint_drift(findings, baseline)
+        if unexpected or stale:
+            failed = True
+            print("\nDebt fingerprint baseline drift:")
+            for fingerprint, count in sorted(unexpected.items()):
+                print(
+                    "  NEW "
+                    f"x{count}: {format_debt_fingerprint(fingerprint)}"
+                )
+            for fingerprint, count in sorted(stale.items()):
+                print(
+                    "  BASELINE_STALE "
+                    f"x{count}: {format_debt_fingerprint(fingerprint)}"
+                )
+            print(
+                "  Current accepted debt and the committed fingerprint "
+                "baseline must be updated atomically."
+            )
+
+        if failed:
             return 1
 
     if args.fail_on_debt and summary["total_debt_findings"]:
