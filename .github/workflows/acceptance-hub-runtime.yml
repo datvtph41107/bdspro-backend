@@ -134,7 +134,11 @@ jobs:
             exit 1
           fi
 
-          grep -Fq 'flogging.MustGetLogger(runtime.ServerName)' hub-service/initial/startup.go
+          grep -Fq 'logging.Configure("hub-service")' hub-service/main.go
+          if grep -RIn 'flogging\.' hub-service --include='*.go' --exclude='*_test.go' --exclude='wire_gen.go'; then
+            echo 'Hub legacy Fabric logging ownership reappeared' >&2
+            exit 1
+          fi
           if grep -Fq 'viper.AutomaticEnv()' hub-service/main.go; then
             echo 'Hub root duplicates configloader Viper setup' >&2
             exit 1
