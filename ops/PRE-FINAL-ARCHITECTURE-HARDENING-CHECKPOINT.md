@@ -467,7 +467,7 @@ Runtime/release environment classification:
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
+`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,73 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
+`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
+`FINAL ACCEPTED=NO`
+
+
+## Aggregate hosted harness local closure — PROVED/CLOSED
+
+Immutable application source authority remains:
+- source SHA: `3c8e341211dccff653b040466fec3480c5f7c8d5`
+- source tree: `478604fd04b0901f7e569ac8064c545679150cd4`
+- no application/source/migration/protobuf/Organization/Map/deploy mutation was made.
+
+Harness-only writer:
+- worktree: `/home/sprite/work/aggregate-hosted-harness-3c8e341`
+- branch: `work/aggregate-hosted-harness`
+- local harness commit: `1566ba003574a2ec1a74945491758853047ce55c`
+- harness tree: `79c9d6505519ea551d99d8284626b555439d35c4`
+- parent: exact source authority `3c8e341211dccff653b040466fec3480c5f7c8d5`
+- writer clean after commit.
+
+Exact harness delta is nine workflow paths only:
+1. `.github/workflows/acceptance-assistant-runtime.yml`
+2. `.github/workflows/acceptance-auth-runtime.yml`
+3. `.github/workflows/acceptance-bdspro-redis.yml`
+4. `.github/workflows/acceptance-hub-runtime.yml`
+5. `.github/workflows/acceptance-make-vocabulary.yml`
+6. `.github/workflows/acceptance-shared-runtime.yml`
+7. `.github/workflows/acceptance-source-integrity.yml`
+8. `.github/workflows/proof-pre-final-hardening-fresh-clone.yml`
+9. `.github/workflows/proof-pre-final-hardening-release-rollback.yml`
+
+Harness semantics:
+- the seven canonical workflows that previously lacked the hardening push trigger each received exactly one branch-trigger insertion;
+- `refactor-observability-errors.yml` was not changed and already carries the hardening branch trigger;
+- therefore eight canonical workflows now trigger on one aggregate harness publication;
+- fresh-clone proof is adapted from the previously accepted V4 workflow and pins exact source SHA/tree; it runs setup, doctor, `make accept`, post-acceptance source cleanliness and final source artifact verification;
+- release/rollback proof is adapted from the previously accepted V2 workflow and pins current source SHA/tree plus previous accepted baseline `ca98ece...` / tree `76b77be...`;
+- the release proof itself enforces previous/source ancestry, exact harness-only path set, protected/deploy invariants, current accepted-debt ratchets, current/previous migration-digest equality, immutable image archive activation and rollback before it can PASS.
+
+Detached exact-SHA proof:
+- worktree: `/home/sprite/work/proof-aggregate-hosted-harness-1566ba0`
+- exact harness SHA/tree: `1566ba003574a2ec1a74945491758853047ce55c` / `79c9d6505519ea551d99d8284626b555439d35c4`
+- identity/parent/source-tree proof: PASS;
+- exact nine-path scope: PASS;
+- protected hardening delta: PASS;
+- baseline-to-source protected delta: PASS;
+- canonical trigger count: 8;
+- YAML parse: PASS for all 10 workflows;
+- proof-workflow contract markers: PASS;
+- canonical `make setup` reconstruction: PASS;
+- release artifact contract: PASS;
+- config isolation: PASS;
+- migration contract: PASS;
+- docs/source layout: PASS;
+- observability/error detector tests: 71 PASS;
+- accepted-debt/zero-ratchet enforcement: PASS;
+- final tracked/untracked cleanliness: PASS;
+- terminal marker: `AGGREGATE_HARNESS_DETACHED_EXACT_SHA_PROOF=PASS`.
+
+The proof service was intentionally stopped after the PASS marker; its later exit code 143 is operator stop of the post-PASS sleep, not a proof failure.
+
+`AGGREGATE_HARNESS_LOCAL_CANDIDATE=1566ba003574a2ec1a74945491758853047ce55c`
+`AGGREGATE_HARNESS_LOCAL_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
+`AGGREGATE_HARNESS_DETACHED_EXACT_SHA_PROOF=PASS/CLOSED`
+`AGGREGATE_HARNESS_PUBLICATION=PENDING`
+`HOSTED_AGGREGATE_RUNTIME_RELEASE=PENDING`
+
+`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -525,6 +591,6 @@ Authorized harness-only mutation:
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=AGGREGATE_HARNESS_ONLY_MUTATION_AND_DETACHED_PROOF`
+`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
 
 `FINAL ACCEPTED=NO`
