@@ -68,11 +68,11 @@ jobs:
           go-version: '1.25.10'
           cache: true
           cache-dependency-path: shared/common/go.sum
-      - name: Test shared HTTP response, JWT, and logging contracts
+      - name: Test shared logging and request contracts
         working-directory: shared/common
         env:
           GOWORK: 'off'
-        run: go test ./httpresponse ./jwt ./logging ./request ./requestlog
+        run: go test ./logging ./request ./requestlog
 
   boundary-contracts:
     runs-on: ubuntu-latest
@@ -84,12 +84,12 @@ jobs:
           sudo apt-get install -y ripgrep
       - name: Materialize canonical toolchain and generated contracts once
         run: make setup
-      - name: Test shared canonical error and route boundaries
+      - name: Test shared canonical error and response boundaries
         working-directory: shared/common
         env:
           GOWORK: 'off'
         run: |
-          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./errors ./middleware ./routes
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./errors ./httpresponse ./jwt ./middleware ./routes
       - name: Test Gateway response and observability boundaries
         working-directory: gateway-service
         env:
