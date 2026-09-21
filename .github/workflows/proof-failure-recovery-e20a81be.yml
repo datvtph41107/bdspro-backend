@@ -31,20 +31,21 @@ jobs:
           set -euo pipefail
           canonical=e20a81be93277bbb34f5d008cfeccc0f4ab4bad5
           workflow=.github/workflows/proof-failure-recovery-e20a81be.yml
+          recovery=shared/code/development/recovery-notification-broker.sh
           test "$(git merge-base "$canonical" HEAD)" = "$canonical"
-          test "$(git diff --name-only "$canonical" HEAD)" = "$workflow"
+          test "$(git diff --name-only "$canonical" HEAD | sort)" = "$(printf '%s\n' "$workflow" "$recovery" | sort)"
           git diff --check "$canonical" HEAD
           test "$(git diff --name-only "$canonical" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
           test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
           test "$(git hash-object shared/code/development/root.mk)" = '72b4b4adee01ff5d9045cef33575a83927492330'
-          test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'e813de03361c8570620cc2f4f922351964bd8fb9'
+          test "$(git hash-object shared/code/development/recovery-notification-broker.sh)" = 'eca73df300fd2abe56f1b34fcc5fce40430dd541'
           test "$(git hash-object payment-service/cmd/grpc/runtime.go)" = '4047d9411c5b50767d27cb63d53658a41ca30e44'
           test "$(git hash-object payment-service/worker/outbox.go)" = '6af3319ba8c576677d31c4696975f1efe8d10305'
           test "$(git hash-object shared/code/development/native-stack.sh)" = '62f5b6caf5d929d989eed63a1cf7c5e3c7a49d26'
           test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
           grep -Fq 'runtime-notification-broker-recovery: env-check' shared/code/development/root.mk
           grep -Fq 'accept-backend: accept-code-backend verify-runtime-backend runtime-notification-broker-recovery runtime-value-chain-acceptance runtime-admin-acceptance' shared/code/development/root.mk
-          echo 'Failure/recovery exact-source identity and protected-scope gate PASS'
+          echo 'Failure/recovery exact-source identity, bounded recovery correction, and protected-scope gate PASS'
 
       - name: Install host runtime prerequisites
         shell: bash
