@@ -198,16 +198,122 @@ Preserved proof worktrees must not be removed/reset:
 - `/home/sprite/work/proof-pre-final-a2-bec7db0`
 - `/home/sprite/work/proof-pre-final-b-7a22920`
 
+## Slice C — Payment outbox degradation/backoff/idempotency operational hardening
+
+Read-only classification from immutable Slice B authority:
+- delivery semantics are intentionally at-least-once, not exactly-once;
+- producer outbox has durable unique `event_id`, `SKIP LOCKED` claim, lease recovery, claim version and attempt count;
+- Notification consumer has durable Inbox dedupe by `event_id` and malformed-event DLQ;
+- Rabbit publisher uses mandatory routing + publisher confirms; unknown confirm is retried and consumer Inbox absorbs duplicates;
+- Payment currently uses one fixed retry delay for both durable message retry and transport reconnect even though these own different invariants;
+- initial Rabbit connection failure can terminate `OutboxSupervisor` before establishment and therefore cancel the whole Payment process despite durable outbox safety;
+- reconnect and message retry have no exponential cap/jitter policy;
+- Payment compose health is TCP-port liveness only and the repository has no established gRPC-health/metrics consumer for this concern, so broker degradation must not redefine whole-service readiness without a consumer contract;
+- current logs do not expose explicit degraded/recovered state, failure count, retry delay or sustained-failure escalation.
+
+Authorized bounded direction:
+- preserve at-least-once + Inbox idempotency;
+- broker outage, including startup outage, is a recoverable actor degradation and must not terminate the Payment API process;
+- transport reconnect timing is owned by `OutboxSupervisor`;
+- durable message retry timing is owned by `internal/usecase/outbox`;
+- use exponential bounded backoff with jitter for both concerns, but keep separate owners and settings;
+- canonical publisher-unavailable classification belongs to the outbox port; Rabbit adapter wraps/projects it;
+- transport unavailability releases the durable claim without stacking a second message-level delay; reconnect policy controls transport recovery;
+- non-transport publish failures use attempt-aware durable retry backoff;
+- structured logs project degraded/retrying/recovered state with retry duration and attempt/failure count; sustained capped failure escalates to ERROR;
+- do not add producer terminal/DLQ state or a new health/metrics abstraction without a proven remediation/consumer contract;
+- preserve transaction boundaries, unique event identity, Notification Inbox semantics, protobuf, Organization/Map no-touch and deploy-script invariants.
+
+`SLICE_C_READ_ONLY_CLASSIFICATION=PASS/CLOSED`
+`SLICE_C_SOURCE_MUTATION=AUTHORIZED`
+
+
+
+## Slice C — Payment outbox operational hardening — PROVED/CLOSED
+
+Local immutable evidence:
+- source candidate: `70a59d3d2a60b16afb450d04118fcfcd9408798c`
+- source tree: `a0a446f013199e4608718ffbb8e9972dd497ffb5`
+- harness-only child: `0f40c937798f10f6e9c88f2f2f673ee84d26cce7`
+- harness tree: `c6885fc2df1f7ac80f7e414c32832efc38d10bbf`
+- harness delta from source candidate: exactly `.github/workflows/refactor-observability-errors.yml`.
+
+Implemented bounded outcomes:
+- at-least-once + durable Inbox semantics preserved;
+- canonical `ErrPublisherUnavailable` ownership moved to `internal/usecase/outbox`; Rabbit adapter only wraps/projects it;
+- durable event retry and broker reconnect now have separate typed policies/config ownership;
+- both use bounded exponential delay with deterministic equal jitter and caps;
+- transport unavailability releases the durable claim immediately so reconnect backoff is not stacked with message retry delay;
+- non-transport publish failures use attempt-aware durable retry timing;
+- broker unavailability at process startup is recoverable degradation and no longer terminates Payment API ownership;
+- reconnect logs project retry delay, failure count, degraded duration, one capped ERROR escalation and recovered state;
+- existing `PAYMENT_OUTBOX_RETRY_DELAY` remains a tested compatibility bridge while canonical base/max envs own the new policies;
+- no new health/metrics abstraction, producer terminal/DLQ state, event schema or delivery guarantee was introduced.
+
+Focused/local proof:
+- full `payment-service: go test -count=1 ./...`: PASS;
+- observability/error detector tests: 63 PASS;
+- all ratchets PASS, including `go.payment_parallel_publisher_unavailable@payment-service = 0`;
+- zero/removal proof PASS:
+  - exactly one `ErrPublisherUnavailable` definition, in canonical outbox owner;
+  - `rabbit.ErrPublisherUnavailable` refs = 0;
+  - legacy `PublisherRetry` owner = 0;
+  - legacy fixed `reconnectDelay time.Duration` owner = 0;
+  - canonical retry/reconnect base/max envs present;
+  - legacy retry env confined to compatibility owner/tests;
+- protected paths unchanged: `shared/protobuf`, `organization-service`, `map-service`, `shared/code/deploy.sh`;
+- deploy hash preserved: `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Detached exact-SHA proof:
+- worktree: `/home/sprite/work/proof-pre-final-c-0f40c93`;
+- exact local harness SHA/tree: `0f40c937...` / `c6885fc2...`;
+- canonical `make setup` reconstruction PASS;
+- full Payment suite PASS;
+- detector/ratchets PASS;
+- zero/removal + protected invariants + final cleanliness PASS;
+- `SLICE_C_DETACHED_EXACT_SHA_PROOF=PASS`.
+
+Safe publication mapping:
+- previous remote head: `b7317728721821225c2596a8b0b5597adb08a6fc`;
+- remote source commit: `e32cc99da6135d236123f9cf3e2d871e319e2023`;
+- remote source tree: `a0a446f013199e4608718ffbb8e9972dd497ffb5` (identical to local source tree);
+- remote harness/head: `4c4db1c60f044dea57df61b423c9c5b7b9620341`;
+- remote harness tree: `c6885fc2df1f7ac80f7e414c32832efc38d10bbf` (identical to local harness tree);
+- parent chain: `b7317728... -> e32cc99d... -> 4c4db1c...`.
+
+Hosted exact-SHA:
+- workflow: `Refactor Observability and Error Contracts`;
+- run number: `105`;
+- run ID: `35623544994`;
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- exact head SHA: `4c4db1c60f044dea57df61b423c9c5b7b9620341`;
+- status/conclusion: `completed/success`;
+- `inventory`: SUCCESS;
+- `common-contracts`: SUCCESS;
+- `boundary-contracts`: SUCCESS;
+- Payment-specific hosted steps `Test Payment durable outbox recovery contract` and `Verify Payment outbox ownership retirement`: SUCCESS;
+- exact-SHA artifact: `observability-error-inventory-4c4db1c60f044dea57df61b423c9c5b7b9620341`;
+- artifact ID: `10649819592`;
+- expired: false;
+- digest: `sha256:f90154075def4828bc724da234d02c6e1e69f40860f6acfa47206a0880ec9f89`.
+
+`SLICE_C_SOURCE_MUTATION=CLOSED`
+`SLICE_C_FOCUSED_PROOF=PASS`
+`SLICE_C_ZERO_REMOVAL_PROOF=PASS`
+`SLICE_C_DETACHED_EXACT_SHA_PROOF=PASS`
+`SLICE_C_PUBLICATION=PASS`
+`SLICE_C_HOSTED_PROOF=PASS/CLOSED`
+`SLICE_C=PROVED/CLOSED`
+
 ## Remaining hardening order
 
-1. Slice C — Payment outbox degradation/backoff/health/idempotency read-only classification, then bounded fixes only if source reality authorizes them.
-2. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
-3. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
-4. Re-open Production Promotion only after hardening is PROVED/CLOSED.
+1. Slice D — static enforcement for permanent canonical APIs where compatibility state permits.
+2. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
+3. Re-open Production Promotion only after hardening is PROVED/CLOSED.
 
-`SLICE_C_READ_ONLY_CLASSIFICATION=AUTHORIZED`
-`SLICE_C_SOURCE_MUTATION=NOT_AUTHORIZED`
+`SLICE_D_READ_ONLY_CLASSIFICATION=AUTHORIZED`
+`SLICE_D_SOURCE_MUTATION=NOT_AUTHORIZED`
 
-`NEXT_GATE=SLICE_C_PAYMENT_OUTBOX_READ_ONLY_CLASSIFICATION`
+`NEXT_GATE=SLICE_D_STATIC_ENFORCEMENT_READ_ONLY_CLASSIFICATION`
 
 `FINAL ACCEPTED=NO`
