@@ -82,3 +82,26 @@ Manifest là generated/untracked evidence của đúng Git index: chỉ hash tra
 không đưa `.tmp`, local `.env`, generated protobuf output hay machine cache vào source
 identity. Sau khi ZIP được tạo, lưu checksum ZIP ở bên ngoài artifact. Nếu source đổi
 sau khi đóng gói, checksum/manifest cũ không còn đại diện candidate mới.
+
+## Release / rollback rule
+
+Release acceptance follows the operator invariant:
+
+`KNOWN COMMIT → BUILD → IMMUTABLE ARTIFACT → VERSION/CHECKSUM → CONFIG → MIGRATION STATE → DEPLOY → READINESS → BUSINESS SMOKE`
+
+The repository-owned release API is:
+
+```bash
+make release-build
+make release-verify release_dir=.tmp/releases/<exact-commit-sha>
+make release-up release_dir=.tmp/releases/<exact-commit-sha>
+make release-rollback \
+  current_release=.tmp/releases/<current-exact-commit-sha> \
+  previous_release=.tmp/releases/<previous-exact-commit-sha>
+```
+
+`release-build` refuses tracked source drift, pins the image tag to the full Git commit SHA, regenerates the source manifest, creates a source ZIP plus external checksum, records migration-tree identities, builds the canonical Docker service set once, and records each content-addressed Docker image ID.
+
+`release-up` and `release-rollback` use `docker compose ... --no-build`: they may activate only image identities already recorded by a release. Rollback uses the previous immutable release artifact; it never rebuilds `latest`. Automatic rollback is refused when current and previous migration-tree identities differ, because schema rollback/compatibility then requires a separate explicit proof.
+
+`shared/code/deploy.sh` remains protected and byte-identical. The historical `shared/code/release.sh` is not the final-acceptance release authority because it builds/copies mutable server state; do not use it as proof for this gate. Production promotion remains a later, separate official-lineage gate.

@@ -18,10 +18,17 @@ QHPRO_DOCKER_CONFIG ?= $(CURDIR)/.tmp/docker-public
 # Keep image builds sequential by default so the canonical full-stack gate does
 # not start several Go compilers at once. CI or larger machines may override it.
 QHPRO_COMPOSE_PARALLEL_LIMIT ?= 1
+QHPRO_RELEASE_ROOT ?= $(CURDIR)/.tmp/releases
+QHPRO_RELEASE_NAMESPACE ?= bdspro-release
+QHPRO_RELEASE_COMMIT := $(shell git rev-parse HEAD 2>/dev/null)
+QHPRO_RELEASE_DIR ?= $(QHPRO_RELEASE_ROOT)/$(QHPRO_RELEASE_COMMIT)
 TAIL ?= 200
 FOLLOW ?= 1
 service ?=
 role ?=
+release_dir ?= $(QHPRO_RELEASE_DIR)
+current_release ?=
+previous_release ?=
 # Public commands use the readable deployable name (payment-service).  Keep
 # accepting the historical short form through SERVICE while old automation is
 # migrated.
@@ -64,7 +71,7 @@ OWNED_ENV_FILES := $(ENV_FILES) ./$(ACCEPTANCE_ENV_FILE)
 ROOT_REQUIRED_ENV_KEYS := QHPRO_ENVIRONMENT QHPRO_EXECUTION_MODE JWT_KEY_GENERATE \
 	QHPRO_INTERNAL_METADATA_SECRET QHPRO_TRUSTED_METADATA_MODE SERVICE_AUTH_KEY
 
-.PHONY: help setup deps deps-down up down status logs log-query smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation generate-backend build-backend test-backend \
+.PHONY: help setup deps deps-down up down status logs log-query smoke dev migrate test-e2e reset verify accept verify-migrations rebuild bootstrap-admin provision-development-identities doctor configure config-check env-check bootstrap generate build test verify-backend verify-config-isolation verify-release-contract generate-backend build-backend test-backend release-build release-verify release-up release-rollback release-down \
 	vet-backend race-backend diff-check-backend accept-code-backend migrate-backend verify-runtime-backend docker-backend compose-up compose-up-build compose-down \
 	compose-config compose-ps compose-logs integration-up integration-down integration-status integration-logs native-build native-up native-down native-status native-logs native-restart dev-up dev-status dev-logs dev-smoke dev-down dev-reset \
 	dev-dependencies dev-dependencies-down \
@@ -87,6 +94,10 @@ help:
 	  'make test-e2e                      Chạy flow mua gói đến báo cáo' \
 	  'make integration-up                Full Compose, chỉ dùng khi kiểm tra image/package' \
 	  'make rebuild [service=payment-service] Build lại integration image (một/all)' \
+	  'make release-build                 Build exact-SHA source/image release evidence' \
+	  'make release-verify [release_dir=...] Verify immutable release evidence/images' \
+	  'make release-up [release_dir=...]  Activate prebuilt exact-SHA images, no rebuild' \
+	  'make release-rollback current_release=... previous_release=...  Roll back to previous prebuilt artifact' \
 	  'make down                          Dừng process native + hạ tầng, giữ dữ liệu' \
 	  'make reset                         Xóa dữ liệu local có xác nhận' \
 	  '' \
@@ -313,9 +324,16 @@ verify-config-isolation:
 	test $$status -eq 0 || exit $$status; \
 	echo 'runtime config isolation verification PASS'
 
+# Release/rollback is an engineering contract, not a production deployment side effect.
+# The regression harness uses an isolated temporary Git repository and fake Docker CLI,
+# so normal source verification proves exact-SHA/rollback semantics without touching
+# a real registry or runtime.
+verify-release-contract:
+	@bash shared/code/development/test-release-candidate.sh
+
 # Guard có giá trị vận hành được đặt ngay tại owner Makefile, không phụ thuộc
 # vào một cây scripts trung gian khó truy vết.
-verify-backend: env-check verify-config-isolation verify-migrations
+verify-backend: env-check verify-config-isolation verify-migrations verify-release-contract
 	@bash shared/code/development/verify-source-layout.sh
 	@status=0; \
 	rg -q '^up: native-up$$' shared/code/development/root.mk || \
@@ -452,8 +470,8 @@ verify-backend: env-check verify-config-isolation verify-migrations
 	  { echo 'Relay Redis phải được process root inject vào WebSocket handler' >&2; status=1; }; \
 	rg -q 'tx\.Table\("notification"\)' notification-service/infra/postgres/eventing/payment_completed_store.go || \
 	  { echo 'PaymentCompleted phải tạo customer-visible Notification projection trong Inbox transaction' >&2; status=1; }; \
-	rg -q 'outboxPublisher\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
-	  { echo 'Payment process phải sở hữu durable outbox publisher' >&2; status=1; }; \
+	rg -q 'outboxSupervisor\.Run\(actorCtx\)' payment-service/cmd/grpc/runtime.go || \
+	  { echo 'Payment process phải sở hữu supervised durable outbox publisher' >&2; status=1; }; \
 	if rg -n '^  payment-publisher:' "$(COMPOSE_FILE)" >/dev/null; then \
 	  echo 'Payment outbox là component, không phải standing container riêng' >&2; status=1; \
 	fi; \
@@ -580,6 +598,32 @@ compose-logs:
 # Explicit packaging/image integration commands. They are deliberately absent
 # from the default developer path so `make up` never hides application code in
 # containers.
+# Release ownership is separate from the protected historical deploy helper.
+# A release is exact Git source plus exact-SHA-tagged prebuilt images. Activation
+# and rollback use --no-build so proof cannot silently rebuild mutable latest.
+# Automatic rollback is refused when migration trees differ.
+release-build:
+	@test -n "$(QHPRO_RELEASE_COMMIT)" || { echo 'release-build requires Git metadata' >&2; exit 2; }
+	@QHPRO_IMAGE_NAMESPACE="$(QHPRO_RELEASE_NAMESPACE)" QHPRO_RELEASE_SERVICES="$(DOCKER_SERVICES)" \
+	  bash shared/code/development/release-candidate.sh prepare "$(release_dir)"
+	@QHPRO_IMAGE_NAMESPACE="$(QHPRO_RELEASE_NAMESPACE)" QHPRO_IMAGE_TAG="$(QHPRO_RELEASE_COMMIT)" \
+	  $(MAKE) docker-backend
+	@bash shared/code/development/release-candidate.sh capture-images "$(release_dir)"
+	@bash shared/code/development/release-candidate.sh verify-images "$(release_dir)"
+
+release-verify:
+	@bash shared/code/development/release-candidate.sh verify-images "$(release_dir)"
+
+release-up:
+	@bash shared/code/development/release-candidate.sh activate "$(release_dir)"
+
+release-rollback:
+	@test -n "$(current_release)" || { echo 'current_release=<release-dir> is required' >&2; exit 2; }
+	@test -n "$(previous_release)" || { echo 'previous_release=<release-dir> is required' >&2; exit 2; }
+	@bash shared/code/development/release-candidate.sh rollback "$(current_release)" "$(previous_release)"
+
+release-down: compose-down
+
 integration-up: compose-up
 
 integration-down: compose-down
