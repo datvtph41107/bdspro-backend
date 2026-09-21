@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - refactor/canonical-observability-errors-a6d0722a
+      - final-acceptance/source-canonicalization
   pull_request:
     paths:
       - 'shared/common/errors/**'
