@@ -418,6 +418,59 @@ Writer preservation note:
 `SLICE_D_HOSTED_PROOF=PASS/CLOSED`
 `SLICE_D=PROVED/CLOSED`
 
+
+## Aggregate hardening exact-SHA code/fresh-clone proof — PROVED/CLOSED
+
+Immutable authority:
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- exact remote head: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- exact tree: `478604fd04b0901f7e569ac8064c545679150cd4`;
+- this is the published Slice D harness authority.
+
+Fresh reconstruction evidence:
+- fresh exact-SHA checkout reconstructed from GitHub;
+- repository-owned `make setup` / pinned toolchain/config generation PASS;
+- fresh-clone setup/static precheck recorded `AGGREGATE_FRESH_SETUP_AND_STATIC=PASS`;
+- transient shared toolchain cache races were traced to multiple historical auto-restarting setup lanes on the same Sprite and were removed from proof concurrency; no source mutation was authorized for that environment issue.
+
+Canonical repository code proof:
+- fresh checkout: `/home/sprite/work/aggregate-code-proof-3c8e341`;
+- service lane: `bdspro-aggregate-code-proof-v2`;
+- `make verify` PASS on exact `3c8e3412...`;
+- generation/Wire consistency PASS;
+- migration/release-contract/source-layout/docs checks PASS;
+- vet/test/race/build PASS for all core services;
+- vet/test/race/build PASS for repository modules: assistant, bdspro, chat, chat-v1, crm, relay, search, social, shared/base, shared/code, shared/common and shared/protobuf;
+- Payment hardening, CRM payment-event consumer, Redis/tile-session owner and shared error/logging contracts all pass inside the aggregate repository proof;
+- final `git diff --check` and tracked/untracked cleanliness checks PASS;
+- terminal markers:
+  - `AGGREGATE_CODE_VERIFY=PASS`
+  - `AGGREGATE_CODE_FINAL_CLEAN=PASS`
+  - `AGGREGATE_EXACT_SHA_CODE_PROOF=PASS`.
+
+WeasyPrint timing classification:
+- first aggregate run exposed one native-render timing failure: `TestEngineRendersUTF8HTMLWhenWeasyPrintIsAvailable` reached its existing 15s render context timeout while the recovery host had competing setup/proof processes;
+- no source mutation was made;
+- after proof concurrency was removed, the exact test passed 3/3 targeted runs;
+- full TQD suite on the idle exact-SHA checkout PASS;
+- canonical full `make verify` rerun PASSed the WeasyPrint package in the ordinary test phase and again under `go test -race`;
+- therefore the earlier failure is classified as transient host resource contention, not deterministic source regression.
+
+Runtime/release environment classification:
+- repository `make doctor` on the recovery Sprite reports pinned Go/tools, FFmpeg and WeasyPrint available;
+- Docker daemon / Docker Compose runtime is unavailable on this Sprite;
+- Docker/runtime/E2E/release-build/release-up/release-rollback cannot be honestly closed by local Sprite proof;
+- repository acceptance doctrine requires runtime/E2E and immutable release activation/rollback as separate gates, so these remain OPEN and must be proven on a capable hosted environment.
+
+`AGGREGATE_FRESH_CLONE_RECONSTRUCTION=PASS/CLOSED`
+`AGGREGATE_EXACT_SHA_CODE_PROOF=PASS/CLOSED`
+`AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
+`PRODUCTION_PROMOTION=PAUSED`
+
+`NEXT_GATE=HOSTED_CANONICAL_RUNTIME_RELEASE_EXACT_SHA_PROOF`
+
+`FINAL ACCEPTED=NO`
+
 ## Remaining hardening order
 
 1. Aggregate exact-SHA proof, canonical workflows, fresh-clone reconstruction, release build/verify/rollback proof.
@@ -429,6 +482,6 @@ Writer preservation note:
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=AGGREGATE_EXACT_SHA_AND_RELEASE_PROOF`
+`NEXT_GATE=HOSTED_CANONICAL_RUNTIME_RELEASE_EXACT_SHA_PROOF`
 
 `FINAL ACCEPTED=NO`
