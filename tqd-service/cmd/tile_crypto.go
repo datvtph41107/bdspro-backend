@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	_crypto "common/pkg/crypto"
-	_redis "common/redis"
+	_tilesession "common/tilesession"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -51,9 +51,9 @@ func sIdFromRequest(r *http.Request) string {
 	return strings.TrimSpace(r.URL.Query().Get(tileSessionIDQuery))
 }
 
-// tileEncryptorFromSessionID lấy sessionEncryptKey từ Redis ss:k:{sessionK} theo sId (sessionK).
-func tileEncryptorFromSessionID(ctx context.Context, redisSvc *_redis.RedisService, sId string) (*_crypto.AESEncryptor, error) {
-	if redisSvc == nil {
+// tileEncryptorFromSessionID resolves the encryption key through the canonical tile-session store.
+func tileEncryptorFromSessionID(ctx context.Context, sessions *_tilesession.Store, sId string) (*_crypto.AESEncryptor, error) {
+	if sessions == nil {
 		return nil, errors.New("redis not configured")
 	}
 	if sId == "" {
@@ -64,7 +64,7 @@ func tileEncryptorFromSessionID(ctx context.Context, redisSvc *_redis.RedisServi
 		return nil, redis.Nil
 	}
 
-	sessionEncryptKey, err := redisSvc.GetTileSessionEncryptKey(sessionK)
+	sessionEncryptKey, err := sessions.Get(ctx, sessionK)
 	if errors.Is(err, redis.Nil) {
 		return nil, redis.Nil
 	}

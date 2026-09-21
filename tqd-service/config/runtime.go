@@ -71,7 +71,7 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 		return nil, err
 	}
 	props.Server.GrpcPort = grpcPort
-	redisDB, err := parseRedisDBOverride(os.Getenv("TQD_REDIS_DB"), viper.GetInt("redis.db"))
+	redisRuntime, err := loadRedisRuntimeConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +79,7 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 	cfg := &RuntimeConfig{
 		Properties:  props,
 		DatabaseDSN: firstNonEmpty(os.Getenv("TQD_DATABASE_URL"), props.Database.DSN),
-		Redis: RedisRuntimeConfig{
-			Address:  firstNonEmpty(os.Getenv("TQD_REDIS_ADDR"), viper.GetString("redis.host")),
-			Password: firstNonEmpty(os.Getenv("TQD_REDIS_PASSWORD"), viper.GetString("redis.pass")),
-			DB:       redisDB,
-		},
+		Redis:       redisRuntime,
 		RPC: RPCRuntimeConfig{
 			User:      firstNonEmpty(os.Getenv("QHPRO_USER_GRPC_ADDR"), viper.GetString("rpc.user.address")),
 			Auth:      firstNonEmpty(os.Getenv("QHPRO_AUTH_GRPC_ADDR"), viper.GetString("rpc.auth.address")),
@@ -133,6 +129,29 @@ func LoadRuntimeConfig() (*RuntimeConfig, error) {
 	}
 	if cfg.Report.GeneratorMode != "disabled" && cfg.Report.GeneratorMode != "none" && strings.TrimSpace(cfg.File.ServiceAuthKey) == "" {
 		return nil, fmt.Errorf("QHPRO_FILE_HTTP_SERVICE_AUTH_KEY is required when report generation is enabled")
+	}
+	return cfg, nil
+}
+
+func LoadRedisRuntimeConfig() (RedisRuntimeConfig, error) {
+	if _, err := LoadConfig(); err != nil {
+		return RedisRuntimeConfig{}, err
+	}
+	return loadRedisRuntimeConfig()
+}
+
+func loadRedisRuntimeConfig() (RedisRuntimeConfig, error) {
+	redisDB, err := parseRedisDBOverride(os.Getenv("TQD_REDIS_DB"), viper.GetInt("redis.db"))
+	if err != nil {
+		return RedisRuntimeConfig{}, err
+	}
+	cfg := RedisRuntimeConfig{
+		Address:  firstNonEmpty(os.Getenv("TQD_REDIS_ADDR"), viper.GetString("redis.host")),
+		Password: firstNonEmpty(os.Getenv("TQD_REDIS_PASSWORD"), viper.GetString("redis.pass")),
+		DB:       redisDB,
+	}
+	if strings.TrimSpace(cfg.Address) == "" {
+		return RedisRuntimeConfig{}, fmt.Errorf("TQD Redis address is required")
 	}
 	return cfg, nil
 }

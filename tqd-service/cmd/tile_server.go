@@ -13,6 +13,7 @@ import (
 
 	"common/logging"
 	_redis "common/redis"
+	_tilesession "common/tilesession"
 	"tqd/config"
 
 	"github.com/protomaps/go-pmtiles/pmtiles"
@@ -30,18 +31,25 @@ func RunTileServer(port int) error {
 		*publicURL = fmt.Sprintf("http://localhost:%d", port)
 	}
 
-	if _, err := config.LoadConfig(); err != nil {
-		return fmt.Errorf("load TQD tile config: %w", err)
+	redisRuntime, err := config.LoadRedisRuntimeConfig()
+	if err != nil {
+		return fmt.Errorf("load TQD tile Redis config: %w", err)
 	}
 	logger := logging.StdLogger("pmtiles")
-	redisSvc := _redis.NewRedisService()
+	redisSvc, err := _redis.Open(_redis.Config{
+		Address:  redisRuntime.Address,
+		Password: redisRuntime.Password,
+		DB:       redisRuntime.DB,
+	})
+	if err != nil {
+		return fmt.Errorf("open TQD tile Redis: %w", err)
+	}
 	defer func() {
-		if redisSvc != nil && redisSvc.Client != nil {
-			if closeErr := redisSvc.Client.Close(); closeErr != nil {
-				logger.Printf("close PMTiles Redis client: %v", closeErr)
-			}
+		if closeErr := redisSvc.Close(); closeErr != nil {
+			logger.Printf("close PMTiles Redis client: %v", closeErr)
 		}
 	}()
+	tileSessions := _tilesession.NewStore(redisSvc)
 
 	blockedTilesets := make(map[string]struct{})
 	for _, name := range validatePMTilesDir(*tilesDir, logger) {
@@ -59,7 +67,7 @@ func RunTileServer(port int) error {
 	logger.Printf("PMTiles server đã khởi động")
 	logger.Printf("Thư mục tiles : %s", *tilesDir)
 	logger.Printf("Public URL    : %s", *publicURL)
-	logger.Printf("Tile ci_*     : query %s → Redis ss:k:{sessionK}", tileSessionIDQuery)
+	logger.Printf("Tile ci_*     : query %s → canonical tile session", tileSessionIDQuery)
 
 	// ── HTTP handler ───────────────────────────────────────────
 	corsOptions := cors.Options{
@@ -106,7 +114,7 @@ func RunTileServer(port int) error {
 
 			if isCIEncryptedTileset(tileset) && statusCode >= 200 && statusCode < 300 && len(body) > 0 {
 				sId := sIdFromRequest(r)
-				enc, err := tileEncryptorFromSessionID(r.Context(), redisSvc, sId)
+				enc, err := tileEncryptorFromSessionID(r.Context(), tileSessions, sId)
 				if err != nil || enc == nil {
 					logger.Printf("ci_* tile: invalid sId=%q err=%v", sId, err)
 					writeTileUnauthorized(w)

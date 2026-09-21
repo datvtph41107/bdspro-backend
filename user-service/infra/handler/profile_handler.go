@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	_provider "common/domain/provider"
 	_errors "common/errors"
-	_redis "common/redis"
+	_tilesession "common/tilesession"
 	_utils "common/utils"
 	"context"
 	"fmt"
@@ -42,8 +42,7 @@ type GrpcProfileService struct {
 	BdsproClient          *client.BdsproClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	SyncProvider          *_utils.SyncUtil
-	Redis                 *_redis.RedisService
-	sessionKey            uint64
+	TileSessions          *_tilesession.Store
 }
 
 // @bind: internal/usecases.IKYCUsecase
@@ -60,7 +59,7 @@ func NewGrpcProfileService(
 	bdsproClient *client.BdsproClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 	SyncProvider *_utils.SyncUtil,
-	redis *_redis.RedisService,
+	tileSessions *_tilesession.Store,
 ) *GrpcProfileService {
 	return &GrpcProfileService{
 		ProfileRepo:           profileRepo,
@@ -76,8 +75,7 @@ func NewGrpcProfileService(
 		BdsproClient:          bdsproClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
 		SyncProvider:          SyncProvider,
-		Redis:                 redis,
-		sessionKey:            0,
+		TileSessions:          tileSessions,
 	}
 }
 
@@ -305,15 +303,20 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 
 // GenTileSessionToken — POST /v2/user/profile/session
 func (s *GrpcProfileService) GenTileSessionToken(ctx context.Context, _ *sharepb.Empty) (*userpb.GenTileSessionTokenResponse, error) {
-	if s.Redis == nil {
-		return nil, status.Error(codes.Internal, "redis not configured")
+	if s.TileSessions == nil {
+		return nil, status.Error(codes.Internal, "tile session store not configured")
 	}
 	sessionK, sessionEncryptKey, expiresIn, err := s.genTileSession(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "gen tile session: %v", err)
 	}
 	sessionKStr := strconv.FormatUint(sessionK, 10)
-	slog.InfoContext(ctx, fmt.Sprintf("gen tile session: %s, %s, %v", sessionKStr, sessionEncryptKey, expiresIn))
+	slog.InfoContext(
+		ctx,
+		"tile session generated",
+		slog.String("event_name", "tile.session.generated"),
+		slog.Int64("expires_in_seconds", expiresIn),
+	)
 	return &userpb.GenTileSessionTokenResponse{
 		SessionK:          sessionKStr,
 		SessionEncryptKey: sessionEncryptKey,

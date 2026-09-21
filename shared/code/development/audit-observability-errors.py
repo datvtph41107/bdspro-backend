@@ -94,6 +94,9 @@ ZERO_RATCHETS = (
     ("go.text_error_classification", "user-service"),
     ("go.text_error_classification", "payment-service"),
     ("go.direct_grpc_error_projection", "payment-service"),
+    ("go.tile_session_secret_logging", "shared/common"),
+    ("go.tile_session_secret_logging", "user-service"),
+    ("go.tile_session_secret_logging", "tqd-service"),
     ("go.text_error_classification", "tqd-service"),
 ) + tuple(
     (category, owner)
@@ -167,6 +170,15 @@ RULES = (
         excluded_prefixes=(
             "shared/common/errors/",
             "shared/common/middleware/",
+        ),
+    ),
+    Rule(
+        "go.tile_session_secret_logging",
+        "debt",
+        (".go",),
+        re.compile(
+            r"\b(?:slog|log|logger)\.[A-Za-z_][A-Za-z0-9_]*"
+            r"[^\n]*\bsessionEncryptKey\b"
         ),
     ),
     Rule(

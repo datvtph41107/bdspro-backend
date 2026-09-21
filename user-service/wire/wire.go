@@ -7,6 +7,7 @@ import (
 	_db "common/db"
 	common_injection "common/injection"
 	_redis "common/redis"
+	common_tilesession "common/tilesession"
 	common_utils "common/utils"
 	"github.com/google/wire"
 	"gorm.io/gorm"
@@ -83,6 +84,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_usecase_useradmin.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
 	common_injection.NewHttpClient,
 	common_utils.NewSyncUtil,
+	common_tilesession.NewStore,
 	user_infra_postgres.NewAdminAccessPostgresRepo,
 	user_internal_usecase.NewAdminAccessUsecase,
 	user_infra_handler.NewAdminHandler,

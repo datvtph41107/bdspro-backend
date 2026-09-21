@@ -1668,6 +1668,43 @@ class ErrorBoundaryPolicyTest(unittest.TestCase):
         )
 
 
+
+class TileSessionSecretLoggingPolicyTest(unittest.TestCase):
+    def test_tile_session_secret_logging_rule_detects_plaintext_secret(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.tile_session_secret_logging"
+        )
+        source = (
+            'slog.InfoContext(ctx, fmt.Sprintf("session=%s", sessionEncryptKey))\n'
+        )
+        self.assertIsNotNone(rule.pattern.search(source))
+
+    def test_tile_session_secret_logging_zero_ratchets_are_registered(self):
+        expected = {
+            ("go.tile_session_secret_logging", "shared/common"),
+            ("go.tile_session_secret_logging", "user-service"),
+            ("go.tile_session_secret_logging", "tqd-service"),
+        }
+        self.assertTrue(expected.issubset(set(audit.ZERO_RATCHETS)))
+
+    def test_tile_session_secret_logging_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.tile_session_secret_logging",
+            "severity": "debt",
+            "owner": "user-service",
+            "path": "user-service/infra/handler/fixture.go",
+            "line": 1,
+            "excerpt": "slog.Info(sessionEncryptKey)",
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.tile_session_secret_logging@user-service"],
+            1,
+        )
+
+
 class R5LoggingConvergencePolicyTest(unittest.TestCase):
     def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
         rule = next(

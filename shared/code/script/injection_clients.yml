@@ -9,6 +9,12 @@ packages:
     constructors:
       - NewSyncUtil
 
+  - import: common/tilesession
+    constructors:
+      - NewStore
+    services:
+      - user
+
 
 # Packages below are operational transition code, not serving process dependencies.
 # They remain executable through their dedicated cmd entrypoints until cutover is proven,

@@ -49,6 +49,7 @@ type ProcessInputConfig struct {
 type InjectionPackage struct {
 	Import       string   `yaml:"import"`
 	Constructors []string `yaml:"constructors"`
+	Services     []string `yaml:"services"`
 }
 
 func main() {
@@ -367,6 +368,7 @@ func loadGenerationConfig(service string) ([]InjectionPackage, []string, Process
 	return filterInjectionPackages(
 		config.Packages,
 		config.Exclude[service],
+		service,
 	), normalizeScanExclude(config.ScanExclude[service]), config.ProcessInputs[service], nil
 }
 
@@ -404,11 +406,8 @@ func isScanExcluded(relative string, excluded []string) bool {
 func filterInjectionPackages(
 	packages []InjectionPackage,
 	excluded []string,
+	service string,
 ) []InjectionPackage {
-	if len(excluded) == 0 {
-		return packages
-	}
-
 	excludedSet := make(map[string]struct{}, len(excluded))
 	for _, item := range excluded {
 		item = strings.TrimSpace(item)
@@ -418,7 +417,20 @@ func filterInjectionPackages(
 	}
 
 	filtered := make([]InjectionPackage, 0, len(packages))
+	service = strings.TrimSpace(service)
 	for _, injection := range packages {
+		if len(injection.Services) > 0 {
+			allowed := false
+			for _, candidate := range injection.Services {
+				if strings.TrimSpace(candidate) == service {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				continue
+			}
+		}
 		packagePath := strings.TrimSpace(injection.Import)
 		constructors := make([]string, 0, len(injection.Constructors))
 
@@ -443,6 +455,7 @@ func filterInjectionPackages(
 		filtered = append(filtered, InjectionPackage{
 			Import:       packagePath,
 			Constructors: constructors,
+			Services:     injection.Services,
 		})
 	}
 

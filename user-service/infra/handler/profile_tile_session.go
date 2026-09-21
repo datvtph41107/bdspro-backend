@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	_redis "common/redis"
+	_tilesession "common/tilesession"
 )
 
 func randomSessionK() (uint64, error) {
@@ -24,30 +24,23 @@ func randomSessionK() (uint64, error) {
 }
 
 func (s *GrpcProfileService) genTileSession(ctx context.Context) (sessionK uint64, sessionEncryptKey string, expiresInSec int64, err error) {
-	if s.Redis == nil {
-		return 0, "", 0, fmt.Errorf("redis not configured")
-	}
-
-	sessionEncryptKey, err = s.Redis.GetTileSessionEncryptKey(s.sessionKey)
-	if err == nil && sessionEncryptKey != "" && s.sessionKey != 0 {
-		return s.sessionKey, sessionEncryptKey, int64(_redis.TileSessionTTL.Seconds()), nil
+	if s.TileSessions == nil {
+		return 0, "", 0, fmt.Errorf("tile session store not configured")
 	}
 
 	sessionK, err = randomSessionK()
 	if err != nil {
 		return 0, "", 0, err
 	}
-	s.sessionKey = sessionK
-
 	aesKey := make([]byte, 32)
 	if _, err = rand.Read(aesKey); err != nil {
 		return 0, "", 0, fmt.Errorf("generate aes key: %w", err)
 	}
 
 	sessionEncryptKey = base64.StdEncoding.EncodeToString(aesKey)
-	expiresAt := time.Now().Add(_redis.TileSessionTTL)
+	expiresAt := time.Now().Add(_tilesession.TTL)
 
-	if err = s.Redis.SaveTileSession(sessionK, sessionEncryptKey, expiresAt); err != nil {
+	if err = s.TileSessions.Save(ctx, sessionK, sessionEncryptKey, expiresAt); err != nil {
 		return 0, "", 0, err
 	}
 

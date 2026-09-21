@@ -22,8 +22,6 @@ type RedisService struct {
 	mu        sync.RWMutex
 }
 
-const userPrefix = "USER_"
-
 // errRedisUnavailable returned when Redis was down at boot / marked disconnected.
 // Callers (e.g. HasPermissions) should fall back to DB immediately — do not dial.
 var errRedisUnavailable = errors.New("redis unavailable")
@@ -174,35 +172,6 @@ func (r *RedisService) Instance() (*redis.Client, error) {
 	r.connected = true
 	logging.WithComponent(r.Ctx, "redis").Info("redis reconnected")
 	return r.Client, nil
-}
-
-// SaveToken lưu token với thời gian hết hạn (TTL)
-func (r *RedisService) SaveToken(userID uint64, token string, expirationInSeconds uint64) error {
-	client, err := r.Instance()
-	if err != nil {
-		return err
-	}
-	return client.Set(r.Ctx, userPrefix+strconv.FormatUint(userID, 10), token, time.Duration(expirationInSeconds)*time.Second).Err()
-}
-
-// GetToken lấy token từ Redis
-func (r *RedisService) GetToken(userID uint64) (string, error) {
-	key := userPrefix + strconv.FormatUint(userID, 10)
-	return r.Get(key)
-}
-
-// IsTokenValid kiểm tra token có hợp lệ không
-func (r *RedisService) IsTokenValid(userID uint64, token string) (bool, error) {
-	storedToken, err := r.GetToken(userID)
-	if err != nil {
-		return false, err
-	}
-	return storedToken == token, nil
-}
-
-// DeleteToken xóa token khi đăng xuất
-func (r *RedisService) DeleteToken(userID uint64) error {
-	return r.Delete(userPrefix + strconv.FormatUint(userID, 10))
 }
 
 // Set lưu một key-value vào Redis
