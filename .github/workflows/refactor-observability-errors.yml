@@ -150,6 +150,23 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test \
             ./internal/usecase/plan/admin \
             ./infra/handler/grpc
+      - name: Test Payment durable outbox recovery contract
+        working-directory: payment-service
+        env:
+          GOWORK: 'off'
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./config ./internal/usecase/outbox ./worker
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./cmd/grpc ./infra/broker/rabbitmq ./infra/postgres/payment -run '^$'
+      - name: Verify Payment outbox ownership retirement
+        run: |
+          test "$(grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' payment-service | wc -l)" -eq 1
+          grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' payment-service/internal/usecase/outbox/service.go
+          ! grep -R -n --include='*.go' 'rabbit.ErrPublisherUnavailable' payment-service
+          ! grep -R -n --include='*.go' 'PublisherRetry' payment-service
+          ! grep -R -n --include='*.go' -E 'reconnectDelay[[:space:]]+time\.Duration' payment-service
+          test "$(grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_DELAY' payment-service/config | wc -l)" -eq 3
+          grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_BASE' payment-service/config
+          grep -R -n --include='*.go' 'PAYMENT_RABBIT_RECONNECT_BASE' payment-service/config
       - name: Test Payment typed admin faults and canonical logging boundary
         working-directory: payment-service
         env:
