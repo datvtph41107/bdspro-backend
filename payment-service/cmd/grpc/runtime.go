@@ -127,22 +127,28 @@ func run(parent context.Context) error {
 	if strings.TrimSpace(cfg.Rabbit.URL) == "" {
 		return errors.New("PAYMENT_RABBIT_URL is required")
 	}
-	rabbitConnection, err := amqp.Dial(cfg.Rabbit.URL)
-	if err != nil {
-		return fmt.Errorf("connect Payment RabbitMQ: %w", err)
+	outboxFactory := func() (*outbox.Service, func(), error) {
+		rabbitConnection, err := amqp.Dial(cfg.Rabbit.URL)
+		if err != nil {
+			return nil, nil, fmt.Errorf("connect Payment RabbitMQ: %w", err)
+		}
+		rabbitPublisher, err := rabbit.NewPublisher(rabbitConnection, cfg.Rabbit.Exchange)
+		if err != nil {
+			_ = rabbitConnection.Close()
+			return nil, nil, fmt.Errorf("create Payment event publisher: %w", err)
+		}
+		closeResources := func() {
+			_ = rabbitPublisher.Close()
+			_ = rabbitConnection.Close()
+		}
+		return outbox.NewService(store, rabbitPublisher, time.Now, cfg.Rabbit.PublisherRetry), closeResources, nil
 	}
-	defer rabbitConnection.Close()
-	rabbitPublisher, err := rabbit.NewPublisher(rabbitConnection, cfg.Rabbit.Exchange)
-	if err != nil {
-		return fmt.Errorf("create Payment event publisher: %w", err)
-	}
-	defer rabbitPublisher.Close()
-	outboxService := outbox.NewService(store, rabbitPublisher, time.Now, cfg.Rabbit.PublisherRetry)
-	outboxPublisher := paymentworker.NewOutboxPublisher(
-		outboxService,
+	outboxSupervisor := paymentworker.NewOutboxSupervisor(
+		outboxFactory,
 		paymentworker.ProcessID("payment-outbox"),
 		cfg.Rabbit.PublisherLease,
 		cfg.Rabbit.PublisherPoll,
+		cfg.Rabbit.PublisherRetry,
 	)
 	now := time.Now
 	orderService := order.NewService(store, reference.New(), now, cfg.Commerce.OrderTTL)
@@ -205,7 +211,7 @@ func run(parent context.Context) error {
 		fulfillmentWorker.Run(actorCtx)
 		return nil
 	})
-	group.Go(func() error { return outboxPublisher.Run(actorCtx) })
+	group.Go(func() error { return outboxSupervisor.Run(actorCtx) })
 
 	<-actorCtx.Done()
 	gracefulStop(grpcServer, cfg.Server.ShutdownTimeout)
