@@ -1,0 +1,109 @@
+name: Proof Golden E2E Post Error 3711A283
+
+on:
+  push:
+    branches:
+      - proof/golden-e2e-post-error-3711a283
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proof-golden-e2e-post-error-3711a283-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  golden-e2e:
+    name: Canonical customer and admin value chains
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout exact proof commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify canonical ancestry and harness-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical=3711a2832b9f6c46e4810e9c3d1461c51af28a2d
+          workflow=.github/workflows/proof-golden-e2e-post-error-3711a283.yml
+
+          test "$(git merge-base "$canonical" HEAD)" = "$canonical"
+          test "$(git diff --name-only "$canonical" HEAD)" = "$workflow"
+          git diff --check "$canonical" HEAD
+          test "$(git diff --name-only "$canonical" HEAD -- shared/protobuf organization-service map-service shared/code/deploy.sh)" = ''
+          test "$(sha256sum shared/code/deploy.sh | awk '{print $1}')" = '80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e'
+          test "$(git hash-object shared/code/development/root.mk)" = '72b4b4adee01ff5d9045cef33575a83927492330'
+          test "$(git hash-object integration-test/qhpro_value_chain_runtime_test.go)" = '0b348263cb35e772af6af2a9b796a256ef9a3eea'
+          test "$(git hash-object integration-test/qhpro_commercial_runtime_test.go)" = '53e8580f2e376994eadb6bb6dd9f7477c5f30255'
+          grep -Fq 'test-e2e: native-up runtime-value-chain-acceptance runtime-admin-acceptance' shared/code/development/root.mk
+          echo 'Golden E2E exact-source identity and protected-scope gate PASS'
+
+      - name: Install host runtime prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-venv ffmpeg curl ripgrep \
+            libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Materialize canonical setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          make setup
+          make doctor
+
+      - name: Start from clean local data
+        shell: bash
+        run: |
+          set -euo pipefail
+          make reset CONFIRM=reset-development-data
+
+      - name: Execute canonical Golden E2E
+        shell: bash
+        run: |
+          set -euo pipefail
+          make test-e2e 2>&1 | tee /tmp/golden-e2e.log
+          grep -Fq 'PASS value chain:' /tmp/golden-e2e.log
+          grep -Fq -- '--- PASS: TestQHPROCommercialAdminRuntime' /tmp/golden-e2e.log
+          echo 'Golden E2E PASS'
+
+      - name: Collect failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          make status > /tmp/golden-status.txt 2>&1 || true
+          if test -f .env; then
+            docker compose --env-file .env -f compose.yaml ps -a > /tmp/golden-compose-ps.txt 2>&1 || true
+            docker compose --env-file .env -f compose.yaml logs --no-color postgres redis rabbitmq > /tmp/golden-dependency-logs.txt 2>&1 || true
+          fi
+          find .tmp/development -maxdepth 1 -type f -print -exec tail -n 220 {} \; > /tmp/golden-native-logs.txt 2>&1 || true
+
+      - name: Upload Golden E2E diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-e2e-post-error-3711a283-${{ github.sha }}
+          path: |
+            /tmp/golden-e2e.log
+            /tmp/golden-status.txt
+            /tmp/golden-compose-ps.txt
+            /tmp/golden-dependency-logs.txt
+            /tmp/golden-native-logs.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          if test -f .env; then
+            make down || true
+            docker compose --env-file .env -f compose.yaml down --volumes --remove-orphans || true
+          fi
