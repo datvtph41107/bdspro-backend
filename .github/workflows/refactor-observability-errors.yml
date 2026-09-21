@@ -14,6 +14,9 @@ on:
       - 'shared/common/httpresponse/**'
       - 'shared/common/jwt/**'
       - 'shared/common/logging/**'
+      - 'shared/common/redis/**'
+      - 'shared/common/tilesession/**'
+      - 'shared/code/script/**'
       - 'shared/code/development/audit-observability-errors.py'
       - 'shared/code/development/test_audit_observability_errors.py'
       - 'shared/code/development/root.mk'
@@ -75,6 +78,11 @@ jobs:
         env:
           GOWORK: 'off'
         run: go test ./logging ./request ./requestlog
+      - name: Test Redis transport and tile-session semantic ownership
+        working-directory: shared/common
+        env:
+          GOWORK: 'off'
+        run: go test ./redis ./tilesession
 
   boundary-contracts:
     runs-on: ubuntu-latest
@@ -86,6 +94,37 @@ jobs:
           sudo apt-get install -y ripgrep
       - name: Materialize canonical toolchain and generated contracts once
         run: make setup
+      - name: Test Wire generator service-scoped injection authority
+        working-directory: shared/code
+        env:
+          GOWORK: 'off'
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./script
+      - name: Verify User Wire remains reproducible after setup
+        run: git diff --exit-code -- user-service/wire/wire.go user-service/wire/wire_gen.go
+      - name: Test User tile-session boundary
+        working-directory: user-service
+        env:
+          GOWORK: 'off'
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./wire ./cmd/grpc -run '^$'
+      - name: Test TQD tile-session Redis runtime boundary
+        working-directory: tqd-service
+        env:
+          GOWORK: 'off'
+        run: |
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./config
+          "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./cmd -run '^$'
+      - name: Verify Redis/tile-session ownership retirement
+        run: |
+          test "$(grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' shared/common user-service tqd-service | wc -l)" -eq 1
+          grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' shared/common/tilesession/store.go
+          ! grep -R -n --include='*.go' -E 'TileSessionTTL|TileSessionAESPrefix|SaveTileSession|GetTileSessionEncryptKey|DeleteTileSession' shared/common user-service tqd-service
+          ! grep -R -n --include='*.go' -E 'func \(r \*RedisService\) (SaveToken|GetToken|IsTokenValid|DeleteToken)' shared/common/redis
+          ! grep -R -n --include='*.go' '_redis.NewRedisService()' tqd-service
+          ! grep -R -n --include='*.go' -E 'sessionKey[[:space:]]+uint64' user-service/infra/handler
+          ! grep -R -n --include='*.go' -E '(slog|log|logger)\.[A-Za-z_][A-Za-z0-9_]*.*sessionEncryptKey' shared/common user-service tqd-service
       - name: Test shared canonical error and response boundaries
         working-directory: shared/common
         env:
