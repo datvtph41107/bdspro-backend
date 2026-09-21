@@ -142,6 +142,24 @@ jobs:
           make smoke 2>&1 | tee /tmp/current-release-smoke.log
           echo "Current immutable release readiness/business smoke PASS"
 
+      - name: Diagnose activation failure
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          cd /tmp/bdspro-release-source
+          {
+            echo '=== docker compose ps -a ==='
+            QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$SOURCE_SHA"               docker compose --env-file .env -f compose.yaml ps -a
+            echo '=== user/user-migrate/postgres/redis logs ==='
+            QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$SOURCE_SHA"               docker compose --env-file .env -f compose.yaml logs --no-color --tail=400                 user user-migrate postgres redis
+            echo '=== user container inspection summary ==='
+            cid="$(QHPRO_IMAGE_NAMESPACE="$RELEASE_NAMESPACE" QHPRO_IMAGE_TAG="$SOURCE_SHA"               docker compose --env-file .env -f compose.yaml ps -aq user)"
+            if test -n "$cid"; then
+              docker inspect --format                 'id={{.Id}} image={{.Image}} status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'                 "$cid"
+            fi
+          } 2>&1 | tee /tmp/release-activation-diagnostics.log
+
       - name: Roll back to previous immutable release without rebuild
         shell: bash
         run: |
@@ -174,6 +192,7 @@ jobs:
           cp /tmp/current-compose.yaml /tmp/release-proof-evidence/current-compose.yaml 2>/dev/null || true
           cp /tmp/previous-compose.yaml /tmp/release-proof-evidence/previous-compose.yaml 2>/dev/null || true
           cp /tmp/current-release-smoke.log /tmp/release-proof-evidence/current-release-smoke.log 2>/dev/null || true
+          cp /tmp/release-activation-diagnostics.log /tmp/release-proof-evidence/release-activation-diagnostics.log 2>/dev/null || true
           cp /tmp/previous-release-smoke.log /tmp/release-proof-evidence/previous-release-smoke.log 2>/dev/null || true
           git -C /tmp/bdspro-release-source show -s --format='%H %T %P %s' > /tmp/release-proof-evidence/source-identity.txt 2>/dev/null || true
 
