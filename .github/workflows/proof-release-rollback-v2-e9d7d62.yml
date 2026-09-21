@@ -111,6 +111,7 @@ jobs:
           rm -rf shared/code/development/__pycache__
           grep -Fq 'QHPRO_LOG_OUTPUT: stdout' compose.yaml
           make help | grep -E 'release-(build|verify|up|rollback)'
+          rm -rf shared/code/development/__pycache__
           test -z "$(git status --porcelain)"
 
       - name: Build previous exact-SHA image set
