@@ -28,6 +28,8 @@ services:
     command: ["./main", "grpc"]
     networks:
       - internal
+    environment:
+      ENV_RUNTIME: develop
     volumes:
       - ./logs:/app/logs
   

@@ -106,6 +106,10 @@ func NewRouter(deps RouterDependencies, cfg RouterConfig) *gin.Engine {
 		deps.Signature.IssueSignedReadToken,
 	)
 
+	// Public map tile/config/font surface (restored after migrate dropped it
+	// from main.go). Served without JWT so data.bdspro.com tile clients work.
+	registerMapRoutes(r)
+
 	// Documentation is explicitly public and has no business authority.
 	r.Static("/swagger-doc", "docs")
 	r.GET("/swagger/file/*any", func(c *gin.Context) {

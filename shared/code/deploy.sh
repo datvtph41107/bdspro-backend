@@ -122,6 +122,8 @@ service_path=/common
 path_jar=''
 service_name=$1
 payload_build=$1
+# Go entry package relative to the service directory (override in case arms as needed).
+build_package="."
 case "$1" in
   "gateway")
     service_path=gateway-service
@@ -131,6 +133,7 @@ case "$1" in
     service_path=user-service
     path_jar=main
     payload_build=user
+    build_package="./cmd/grpc"
     ;;
   "auth")
     service_path=auth-service
@@ -141,6 +144,7 @@ case "$1" in
     service_path=user-service
     path_jar=main
     payload_build=user-grpc
+    build_package="./cmd/grpc"
     ;;
   "file")
     service_path=file-service
@@ -258,10 +262,25 @@ else
   cd "$service_path"
 fi
 
+# Prefer the service Makefile contract when present.
+if [ -f Makefile ]; then
+  makefile_pkg=$(awk -F'[: =]+' '/^BUILD_PACKAGE[[:space:]]*[?:]?=/ {print $NF; exit}' Makefile)
+  if [ -n "$makefile_pkg" ]; then
+    build_package="$makefile_pkg"
+  fi
+fi
+# Services that only keep the entrypoint under cmd/ (no root main package).
+if [ "$build_package" = "." ] && ! compgen -G "*.go" >/dev/null && [ -d cmd/grpc ]; then
+  build_package="./cmd/grpc"
+fi
+
 REMOTE_DIR=${REMOTE_PATH}/${service_path}
 
-echo "--- GO BUILDING ---"
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
+echo "--- GO BUILDING ($build_package) ---"
+if ! CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main "$build_package"; then
+  echo "Go build thất bại — dừng deploy (không đẩy binary cũ)."
+  exit 1
+fi
 echo "--- FINISH BUILDING ---"
 
 # Đẩy các file trong thư mục hiện tại lên server
@@ -277,12 +296,22 @@ fi
 ssh ${REMOTE_USER}@${REMOTE_HOST} "
 mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/config
+# Drop env-local / product overlays; deploy must not ship them.
+rm -f ${REMOTE_DIR}/config/local.yml ${REMOTE_DIR}/config/product.yml ${REMOTE_DIR}/config/production.yml
 "
 
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
-scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
+# Legacy deploy ships a prebuilt binary + config into a service-local context.
+# ENV_RUNTIME=develop (Dockerfile.develop) loads config/develop.yml; also ship
+# runtime.yml as canonical defaults for workstation overlays.
+if [ -f config/runtime.yml ]; then
+  scp config/runtime.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/runtime.yml
+fi
+if [ -f config/develop.yml ]; then
+  scp config/develop.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/develop.yml
+fi
 if [ "$1" = "tqd" ]; then
   scp ../shared/code/Dockerfile.tqd.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile.tqd
   scp -r template ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
@@ -292,6 +321,9 @@ elif [ "$1" = "file" ]; then
   # File owns an FFmpeg-capable runtime image; the generic service image is not equivalent.
   scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 else
+  # Keep Dockerfile.develop for remote deploy. Service Dockerfiles under
+  # *-service/Dockerfile expect repository-root context (compose.yaml), which
+  # this host layout does not provide.
   scp ../shared/code/Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 fi
 
@@ -303,23 +335,12 @@ fi
 if [ "$1" = "chat" ]; then
   scp -r configs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 fi
-CONFIG_COPY_SERVICES=("relay" "org" "payment" "appointment" "assistant")
-for service in "${CONFIG_COPY_SERVICES[@]}"; do
-  if [ "$1" = "$service" ]; then
-    scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-    break
-  fi
-done
-
-scp -r config ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+# Ship service config, but never local/product/production overlays.
+rsync -avz --exclude='local.yml' --exclude='product.yml' --exclude='production.yml' \
+  config/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/
 
 if [ "$1" = "swagger-chat" ]; then
   scp -r proto ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-fi
-if [ "$1" = "gateway" ]; then
-  # scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
-  scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
-  scp ../.env.backend.local ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/.env.backend.local
 fi
 if [ "$1" = "file" ]; then
   scp -r docs ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
@@ -348,9 +369,10 @@ docker compose up -d --force-recreate file
 "
 else
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
-cd ${REMOTE_DIR}
+set -e
+cd ${REMOTE_PATH}
 docker compose build --no-cache ${payload_build}
-docker compose up -d ${payload_build}
+docker compose up -d --force-recreate ${payload_build}
 "
 fi
 # docker compose build --no-cache ${payload_build}

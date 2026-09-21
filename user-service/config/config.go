@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// LoadProperties đọc cấu hình từ YAML theo môi trường (runtime.yml + local.yml,
-// hoặc CONFIG_FILE khi deploy). DSN/topology DB lấy từ file, không bị .env đè.
+// LoadProperties đọc cấu hình từ config/<ENV_RUNTIME>.yml (hoặc CONFIG_FILE
+// khi operator mount). DSN/topology DB lấy từ file, không bị .env đè.
 func LoadProperties() error {
 	_, err := configloader.LoadRuntimeYML()
 	if err != nil {

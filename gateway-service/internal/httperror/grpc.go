@@ -43,9 +43,11 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 	code := grpcErr.Code()
 	message := grpcErr.Message()
 	response := map[string]interface{}{}
+	legacyBusiness := false
 	for _, detail := range grpcErr.Details() {
 		if info, ok := detail.(*sharepb.ErrorResponse); ok {
-			// Lỗi HTTP cũ được nâng đúng transport status; không còn trả 200 khi lỗi.
+			// Client cũ đọc body; lỗi nghiệp vụ luôn HTTP 200.
+			legacyBusiness = true
 			code = _errors.RPCCodeForHTTP(info.Code)
 			response["legacy_code"] = info.Code
 			response["second"] = info.Second
@@ -54,7 +56,11 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 			}
 		}
 	}
-	httpStatus := statusFromCode(code)
+	semanticHTTP := statusFromCode(code)
+	httpStatus := semanticHTTP
+	if legacyBusiness {
+		httpStatus = http.StatusOK
+	}
 	response["code"] = code
 	response["message"] = publicMessage(code, message)
 	response["status"] = httpStatus
@@ -74,7 +80,7 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 		response["operation_id"] = operationID
 	}
 	// Chỉ business 4xx được mang detail công khai; không lộ metadata hạ tầng ở 5xx.
-	if httpStatus < 500 {
+	if semanticHTTP < 500 {
 		for _, detail := range grpcErr.Details() {
 			switch value := detail.(type) {
 			case *errdetails.BadRequest:
@@ -91,7 +97,7 @@ func WriteGRPCContext(ctx context.Context, w http.ResponseWriter, err error) {
 		}
 	}
 	level := slog.LevelWarn
-	if httpStatus >= 500 {
+	if semanticHTTP >= 500 {
 		level = slog.LevelError
 	}
 	route, _ := runtime.HTTPPathPattern(ctx)

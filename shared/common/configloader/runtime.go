@@ -1,12 +1,9 @@
 package configloader
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 const (
@@ -17,21 +14,27 @@ const (
 
 // RuntimeSelection là quyết định cấu hình duy nhất tại process boundary.
 // Environment diễn đạt vòng đời deploy; ExecutionMode chỉ diễn đạt process
-// đang chạy trực tiếp trên host hay trong container. Không trường nào trong
-// selection được dùng để chọn một committed YAML topology khác.
+// đang chạy trực tiếp trên host hay trong container.
 type RuntimeSelection struct {
 	Environment   string
 	ExecutionMode string
+	// ConfigProfile is the YAML stem loaded as config/<profile>.yml
+	// (from ENV_RUNTIME, or derived when only QHPRO_ENVIRONMENT is set).
+	ConfigProfile string
 }
 
-// ResolveRuntimeSelection ánh xạ một environment business-independent sang
-// đúng YAML topology. Compatibility ENV_RUNTIME chỉ được đọc khi canonical key
-// chưa tồn tại, để deployment cũ có thể chuyển đổi dần.
+// ResolveRuntimeSelection ánh xạ environment sang selection. Compatibility
+// ENV_RUNTIME chỉ được đọc khi QHPRO_ENVIRONMENT chưa tồn tại.
 func ResolveRuntimeSelection() (RuntimeSelection, error) {
 	rawEnvironment := strings.ToLower(strings.TrimSpace(os.Getenv(EnvironmentKey)))
 	rawMode := strings.ToLower(strings.TrimSpace(os.Getenv(ExecutionModeKey)))
 	if rawEnvironment == "" {
-		return resolveLegacyProfile(strings.ToLower(strings.TrimSpace(os.Getenv(legacyProfileKey))))
+		selection, err := resolveLegacyProfile(strings.ToLower(strings.TrimSpace(os.Getenv(legacyProfileKey))))
+		if err != nil {
+			return RuntimeSelection{}, err
+		}
+		selection.ConfigProfile = configProfileName(selection)
+		return selection, nil
 	}
 
 	environment := normalizeEnvironment(rawEnvironment)
@@ -45,50 +48,68 @@ func ResolveRuntimeSelection() (RuntimeSelection, error) {
 		return RuntimeSelection{}, fmt.Errorf("invalid %s %q", ExecutionModeKey, rawMode)
 	}
 
-	return RuntimeSelection{
+	selection := RuntimeSelection{
 		Environment:   environment,
 		ExecutionMode: rawMode,
-	}, nil
+	}
+	selection.ConfigProfile = configProfileName(selection)
+	return selection, nil
 }
 
-// LoadRuntimeYML resolve environment đúng một lần rồi nạp YAML tương ứng.
-// Canonical defaults sống trong config/runtime.yml. Nếu developer có
-// config/local.yml thì file đó được merge đè lên (secrets/DSN local) mà không
-// cần export .env khi chạy air/make run-dev.
+// LoadRuntimeYML resolve environment rồi nạp đúng một file:
+// config/<ENV_RUNTIME>.yml (aliases chuẩn hoá về stem file thực tế).
+// CONFIG_FILE / QHPRO_CONFIG_FILE vẫn override path tuyệt đối khi operator mount.
 func LoadRuntimeYML() (RuntimeSelection, error) {
 	selection, err := ResolveRuntimeSelection()
 	if err != nil {
 		return RuntimeSelection{}, err
 	}
-	if err := LoadYMLFile("runtime"); err != nil {
-		return RuntimeSelection{}, err
-	}
-	if err := mergeLocalYMLIfPresent(); err != nil {
+	if err := LoadYMLFile(selection.ConfigProfile); err != nil {
 		return RuntimeSelection{}, err
 	}
 	return selection, nil
 }
 
-const localConfigPath = "config/local.yml"
-
-// mergeLocalYMLIfPresent overlays optional workstation overrides onto the
-// already-loaded runtime.yml. Missing local.yml is normal for CI/production.
-func mergeLocalYMLIfPresent() error {
-	// Operator-mounted config is already the single source of truth.
-	if strings.TrimSpace(os.Getenv("QHPRO_CONFIG_FILE")) != "" || strings.TrimSpace(os.Getenv("CONFIG_FILE")) != "" {
-		return nil
+// configProfileName chọn stem YAML. ENV_RUNTIME thắng khi được set (kể cả khi
+// QHPRO_ENVIRONMENT cũng có), vì đó là tên file operator muốn load khi run.
+func configProfileName(selection RuntimeSelection) string {
+	if raw := strings.TrimSpace(os.Getenv(legacyProfileKey)); raw != "" {
+		return normalizeConfigProfile(raw)
 	}
-	data, err := os.ReadFile(localConfigPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
+	switch selection.Environment {
+	case "development":
+		if selection.ExecutionMode == "container" {
+			return "develop"
 		}
-		return fmt.Errorf("read config %s: %w", localConfigPath, err)
+		return "local"
+	case "test":
+		return "test"
+	case "staging":
+		return "staging"
+	case "production":
+		return "production"
+	default:
+		return "local"
 	}
-	if err := viper.MergeConfig(bytes.NewReader(data)); err != nil {
-		return fmt.Errorf("merge config %s: %w", localConfigPath, err)
+}
+
+func normalizeConfigProfile(raw string) string {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", "local":
+		return "local"
+	case "dev", "develop", "development", "docker":
+		return "develop"
+	case "test", "testing":
+		return "test"
+	case "stage", "staging":
+		return "staging"
+	case "prod", "product", "production":
+		return "production"
+	case "runtime":
+		return "runtime"
+	default:
+		return strings.ToLower(strings.TrimSpace(raw))
 	}
-	return nil
 }
 
 func normalizeEnvironment(value string) string {

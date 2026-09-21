@@ -88,8 +88,8 @@ func LoadDatabaseRuntime() (DatabaseRuntime, error) {
 
 func databaseRuntimeFromLoadedProperties() (DatabaseRuntime, error) {
 	// Database DSN is owned by the environment YAML:
-	// - workstation: config/runtime.yml merged with config/local.yml
-	// - deploy: CONFIG_FILE / QHPRO_CONFIG_FILE (develop.yml, release.yml, …)
+	// - workstation: ENV_RUNTIME unset/local → config/local.yml
+	// - deploy: ENV_RUNTIME=develop → config/develop.yml
 	dsn := strings.TrimSpace(Properties.Database.DSN)
 	if dsn == "" || strings.HasPrefix(dsn, "CHANGE_ME") {
 		return DatabaseRuntime{}, errors.New("database.dsn is required in the environment config YAML")

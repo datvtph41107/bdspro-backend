@@ -21,6 +21,9 @@ service PoiService {
   rpc GetPoi(sharepb.IdRequest) returns (Poi) {
     option (google.api.http) = {
       get: "/v2/tqd/pois/{id}"
+      additional_bindings {
+        get: "/v2/tqd/admin/pois/{id}"
+      }
     };
   }
 

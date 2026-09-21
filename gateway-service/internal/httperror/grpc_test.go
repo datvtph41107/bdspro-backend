@@ -130,12 +130,25 @@ func TestValidationResponseHasHTTP400AndCorrelation(t *testing.T) {
 	}
 }
 
-func TestLegacyErrorNeverReturnsHTTP200(t *testing.T) {
-	for _, code := range []int32{400, 401, 403, 404, 409, 429, 500, 501, 503, 0} {
+func TestLegacyBusinessErrorReturnsHTTP200(t *testing.T) {
+	for _, code := range []int32{400, 401, 403, 404, 409, 429, 500, 501, 503, 0, 1004, 1016} {
 		recorder := httptest.NewRecorder()
 		WriteGRPC(recorder, commonerrors.ReturnError(code, "diagnostic"))
-		if recorder.Code < 400 {
-			t.Fatalf("legacy %d returned %d", code, recorder.Code)
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("legacy %d returned HTTP %d, want 200", code, recorder.Code)
+		}
+		var response struct {
+			Status     int   `json:"status"`
+			LegacyCode int32 `json:"legacy_code"`
+		}
+		if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		if response.Status != http.StatusOK {
+			t.Fatalf("legacy %d body status = %d, want 200", code, response.Status)
+		}
+		if response.LegacyCode != code {
+			t.Fatalf("legacy %d legacy_code = %d", code, response.LegacyCode)
 		}
 	}
 }
@@ -152,18 +165,22 @@ func TestInternalErrorDetailsAreNotPublic(t *testing.T) {
 func TestAuthBusinessErrorMessageIsPublic(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	WriteGRPC(recorder, commonerrors.ReturnError(1004, "Mã không chính xác. Bạn còn 2 lần."))
-	if recorder.Code != http.StatusBadRequest {
-		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusBadRequest)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusOK)
 	}
 	var response struct {
 		Message    string `json:"message"`
 		LegacyCode int32  `json:"legacy_code"`
+		Status     int    `json:"status"`
 	}
 	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
 	if response.LegacyCode != 1004 {
 		t.Fatalf("legacy_code = %d", response.LegacyCode)
+	}
+	if response.Status != http.StatusOK {
+		t.Fatalf("status = %d", response.Status)
 	}
 	if response.Message != "Mã không chính xác. Bạn còn 2 lần." {
 		t.Fatalf("message = %q", response.Message)
@@ -173,8 +190,8 @@ func TestAuthBusinessErrorMessageIsPublic(t *testing.T) {
 func TestOwnerInternalBusinessMessageIsPublic(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	WriteGRPC(recorder, commonerrors.ReturnError(500, "Không tạo được hồ sơ người dùng. Vui lòng thử lại"))
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatalf("HTTP status = %d", recorder.Code)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusOK)
 	}
 	var response struct {
 		Message string `json:"message"`
@@ -183,6 +200,29 @@ func TestOwnerInternalBusinessMessageIsPublic(t *testing.T) {
 		t.Fatal(err)
 	}
 	if response.Message != "Không tạo được hồ sơ người dùng. Vui lòng thử lại" {
+		t.Fatalf("message = %q", response.Message)
+	}
+}
+
+func TestOTPActivatedBusinessErrorReturnsHTTP200(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	WriteGRPC(recorder, commonerrors.ReturnError(1016, "OTP đã kích hoạt"))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("HTTP status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	var response struct {
+		Code       int32  `json:"code"`
+		LegacyCode int32  `json:"legacy_code"`
+		Message    string `json:"message"`
+		Status     int    `json:"status"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.LegacyCode != 1016 || response.Status != http.StatusOK {
+		t.Fatalf("response = %+v", response)
+	}
+	if response.Message != "OTP đã kích hoạt" {
 		t.Fatalf("message = %q", response.Message)
 	}
 }

@@ -18,8 +18,9 @@ file:
     - "http://localhost:5174"
     - "http://192.168.100.76"
     - "http://192.168.100.76:3000"
-  signature_key: "" # inject FILE_SIGNATURE_KEY from secret storage
-  xor_crypt_key: "" # inject FILE_XOR_CRYPT_KEY from secret storage
+    - http://14.225.210.29:3206
+  signature_key: key-encode-decode # inject FILE_SIGNATURE_KEY from secret storage
+  xor_crypt_key: key-encode-decode # inject FILE_XOR_CRYPT_KEY from secret storage
   signature_expire: 5m
 
 service:

@@ -48,4 +48,16 @@ func TestResolveRuntimeSelectionKeepsLegacyCompatibility(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "development", selection.Environment)
 	require.Equal(t, "container", selection.ExecutionMode)
+	require.Equal(t, "develop", selection.ConfigProfile)
+}
+
+func TestConfigProfileFollowsEnvRuntime(t *testing.T) {
+	t.Setenv(EnvironmentKey, "production")
+	t.Setenv(ExecutionModeKey, "container")
+	t.Setenv(legacyProfileKey, "develop")
+
+	selection, err := ResolveRuntimeSelection()
+	require.NoError(t, err)
+	require.Equal(t, "production", selection.Environment)
+	require.Equal(t, "develop", selection.ConfigProfile)
 }

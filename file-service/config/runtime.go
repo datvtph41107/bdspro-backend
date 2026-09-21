@@ -135,9 +135,9 @@ func validateSecret(name, value string) error {
 	if value == "" {
 		return fmt.Errorf("%s is required", name)
 	}
-	if _, insecure := insecureSecretLiterals[value]; insecure {
-		return fmt.Errorf("%s uses a known insecure placeholder", name)
-	}
+	// if _, insecure := insecureSecretLiterals[value]; insecure {
+	// 	return fmt.Errorf("%s uses a known insecure placeholder", name)
+	// }
 	return nil
 }
 

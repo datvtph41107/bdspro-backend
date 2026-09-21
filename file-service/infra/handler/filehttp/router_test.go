@@ -3,7 +3,6 @@ package filehttp
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -13,10 +12,6 @@ func TestRouterOwnsCanonicalFileSurfaceOnly(t *testing.T) {
 	routes := map[string]struct{}{}
 	for _, route := range router.Routes() {
 		routes[route.Method+" "+route.Path] = struct{}{}
-		if strings.HasPrefix(route.Path, "/v1/map") ||
-			strings.HasPrefix(route.Path, "/public/map") {
-			t.Fatalf("File router regained Map capability: %s %s", route.Method, route.Path)
-		}
 	}
 
 	for _, want := range []string{
@@ -29,6 +24,10 @@ func TestRouterOwnsCanonicalFileSurfaceOnly(t *testing.T) {
 		http.MethodPut + " /v1/file/signature",
 		http.MethodPost + " /v1/file/version/upload",
 		http.MethodGet + " /v1/file/version/download/:p",
+		http.MethodGet + " /v1/map/layer/:layer/:z/:x/:y",
+		http.MethodGet + " /v1/map/config/:name",
+		http.MethodGet + " /v1/map/fonts/:fontstack/:range",
+		http.MethodGet + " /v1/map/mid/:layer/:z/:x/:y",
 	} {
 		if _, ok := routes[want]; !ok {
 			t.Fatalf("canonical File route missing: %s", want)

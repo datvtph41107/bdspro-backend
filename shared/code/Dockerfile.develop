@@ -2,6 +2,7 @@ FROM alpine:latest
 
 WORKDIR /
 
+# Loads config/<ENV_RUNTIME>.yml (develop.yml on this image).
 ENV ENV_RUNTIME=develop
 
 COPY config config
