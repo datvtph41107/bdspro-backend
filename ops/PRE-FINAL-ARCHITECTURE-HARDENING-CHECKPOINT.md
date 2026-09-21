@@ -467,7 +467,7 @@ Runtime/release environment classification:
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
+`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,7 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
+`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
 `FINAL ACCEPTED=NO`
 
 
@@ -574,10 +574,35 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARNESS_LOCAL_CANDIDATE=1566ba003574a2ec1a74945491758853047ce55c`
 `AGGREGATE_HARNESS_LOCAL_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
 `AGGREGATE_HARNESS_DETACHED_EXACT_SHA_PROOF=PASS/CLOSED`
-`AGGREGATE_HARNESS_PUBLICATION=PENDING`
+`AGGREGATE_HARNESS_PUBLICATION=PASS`
 `HOSTED_AGGREGATE_RUNTIME_RELEASE=PENDING`
 
-`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
+`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
+`FINAL ACCEPTED=NO`
+
+
+## Aggregate hosted harness publication — PASS
+
+Safe publication mapping:
+- remote branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- pre-publication remote head was re-read as exact source authority `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- local harness commit/tree: `1566ba003574a2ec1a74945491758853047ce55c` / `79c9d6505519ea551d99d8284626b555439d35c4`;
+- remote harness commit: `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- remote harness tree: `79c9d6505519ea551d99d8284626b555439d35c4`, exactly equal to the locally detached-proved harness tree;
+- remote parent: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- publication used a non-force fast-forward ref update;
+- application source authority is still the parent `3c8e3412...`; publication changed proof workflows only.
+
+Publication reconstruction note:
+- the first remote tree attempt produced a different tree solely because two existing canonical workflow files are intentionally mode `100755`;
+- all nine remote blob SHAs already matched local bytes;
+- rebuilding with the preserved `100755` modes for Assistant/Auth produced exact tree `79c9d650...`;
+- no mismatched tree was ever published.
+
+`AGGREGATE_HARNESS_PUBLICATION=PASS`
+`REMOTE_AGGREGATE_HARNESS_SHA=44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
+`REMOTE_AGGREGATE_HARNESS_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
+`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -591,6 +616,6 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=PAUSED`
 
-`NEXT_GATE=SAFE_NON_FORCE_AGGREGATE_HARNESS_PUBLICATION`
+`NEXT_GATE=HOSTED_AGGREGATE_EXACT_SHA_CLOSURE`
 
 `FINAL ACCEPTED=NO`
