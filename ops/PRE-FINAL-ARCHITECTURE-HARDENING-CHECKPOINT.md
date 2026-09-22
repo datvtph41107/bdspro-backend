@@ -467,7 +467,7 @@ Runtime/release environment classification:
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
 `PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
 
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,7 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 `FINAL ACCEPTED=NO`
 
 
@@ -577,7 +577,7 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `HOSTED_AGGREGATE_RUNTIME_RELEASE=PASS/CLOSED`
 
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 `FINAL ACCEPTED=NO`
 
 
@@ -602,7 +602,7 @@ Publication reconstruction note:
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `REMOTE_AGGREGATE_HARNESS_SHA=44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
 `REMOTE_AGGREGATE_HARNESS_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 `FINAL ACCEPTED=NO`
 
 
@@ -631,7 +631,7 @@ Exact-SHA retained artifacts:
 `AGGREGATE_CANONICAL_WORKFLOW_CLOSURE=PASS/CLOSED`
 `FRESH_CLONE_RUNTIME_PROOF=PASS/CLOSED`
 `IMMUTABLE_RELEASE_ROLLBACK_PROOF=PASS/CLOSED`
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 `FINAL ACCEPTED=NO`
 
 
@@ -699,10 +699,57 @@ Aggregate conclusion:
 `AGGREGATE_FRESH_CLONE_RUNTIME=PASS/CLOSED`
 `AGGREGATE_IMMUTABLE_RELEASE_ROLLBACK=PASS/CLOSED`
 `PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
-`PRODUCTION_PROMOTION_MUTATION=NOT_YET_AUTHORIZED`
+`PRODUCTION_PROMOTION_REF_MUTATION=AUTHORIZED`
 
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 
+`FINAL ACCEPTED=NO`
+
+
+## Production Promotion read-only reconciliation — PASS / REF-ONLY PROMOTION AUTHORIZED
+
+Live production-lineage reconciliation after hardening closure:
+- official production branch: `main`;
+- current live `main` SHA: `e80041326d251a86627d44fa70b2568bc0e1eae5`;
+- current live `main` tree: `c044bd163097f341e8a85d79a61a39f58147997a`;
+- current `main` subject: `chore: bootstrap BDSPro source for final acceptance`;
+- accepted application source SHA: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- accepted application source tree: `478604fd04b0901f7e569ac8064c545679150cd4`;
+- accepted source subject: `ci(observability):prove-debt-fingerprints`;
+- canonical pre-hardening `ca98eceb276dca8249b2f1d4d73cdce6248ec7dd` is an ancestor of accepted hardening source by 8 commits;
+- `main` is the merge-base of `main` and accepted source;
+- live graph count `main...source = 0 / 183`, so promotion is a pure fast-forward with no merge/rebase required.
+
+Promotion scope:
+- promote `main` directly to exact accepted source commit `3c8e3412...`;
+- do NOT promote aggregate harness child `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- aggregate proof workflows `proof-pre-final-hardening-fresh-clone.yml` and `proof-pre-final-hardening-release-rollback.yml` are absent from the accepted source tree;
+- no source commit, merge commit, rebase, tag rewrite, force update or application mutation is authorized;
+- promotion is ref-only, non-force fast-forward.
+
+Protected invariant reconciliation:
+- `git diff main..3c8e3412 -- shared/protobuf organization-service map-service shared/code/deploy.sh` is empty;
+- therefore protected `shared/protobuf/**`, Organization, Map and deploy script remain byte-identical across production-lineage promotion;
+- aggregate exact-SHA source/code, fresh-clone/runtime, 8/8 canonical hosted workflows and immutable release/rollback proofs are already PROVED/CLOSED for the accepted application source through the exact harness mapping.
+
+Production meaning:
+- this gate promotes official Git lineage only;
+- it does NOT authorize invoking legacy `shared/code/deploy.sh`, SSH/SCP deployment, mutable production activation or any external server mutation;
+- repository acceptance release tooling remains fail-closed for production activation by design.
+
+Post-promotion closure requirements:
+1. immediately re-read live `main`;
+2. require exact SHA `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+3. require exact tree `478604fd04b0901f7e569ac8064c545679150cd4`;
+4. require source/harness separation remains intact;
+5. synchronize durable state before any FINAL ACCEPTED declaration.
+
+`PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION=PASS/CLOSED`
+`PRODUCTION_PROMOTION_REF_MUTATION=AUTHORIZED`
+`PRODUCTION_DEPLOYMENT_MUTATION=NOT_AUTHORIZED`
+`PROMOTION_TARGET_SHA=3c8e341211dccff653b040466fec3480c5f7c8d5`
+`PROMOTION_TARGET_TREE=478604fd04b0901f7e569ac8064c545679150cd4`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -716,6 +763,6 @@ Aggregate conclusion:
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
 `PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
 
-`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
 
 `FINAL ACCEPTED=NO`
