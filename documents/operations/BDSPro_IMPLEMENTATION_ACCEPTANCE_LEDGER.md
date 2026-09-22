@@ -549,3 +549,451 @@ Status: PROVED/CLOSED
 This closes the Notification R5 logging slice only. R5 overall remains ACTIVE. Error/Response implementation remains PENDING.
 
 FINAL ACCEPTED = NO.
+
+## 2026-09-21 Error/Response publication transport + hosted closure
+
+Publication transport blocker is CLOSED.
+
+Authority:
+- active branch `refactor/canonical-observability-errors-a6d0722a`;
+- final hosted-proved SHA `cc5dbd53c648b7090a142eccead2a9a54d9b9f36`;
+- tree `38dcc5adc2820695f462b49a5a242698289b036e`;
+- parent `f6555f8f853459f0c4822bbb3cb4de4982698eb6`;
+- active ref update used GitHub connector with `force=false`;
+- direct Sprite `git push` remains unavailable because `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_PAT`, and `GH_ENTERPRISE_TOKEN` are unset. This is now a transport limitation, not a publication blocker.
+
+Publication lineage:
+- locally proved Error/Response convergence candidate `f984f66de096255bb1697f0bd4a6ab034085387b`, tree `d8ca9eca1869f5314f99c3c24f6c3c203b50eeca`, was reconciled/published through connector lineage as source convergence commit `987802cac987fa32293b56fd41ac4472f6bbe1e8`;
+- CI-alignment commit `f6555f8f853459f0c4822bbb3cb4de4982698eb6` produced tree `d150fce564417f45d35ec14d683e508e9cee17bd`;
+- hosted run #95 / `35552164784` on `f6555f8...`: inventory SUCCESS, boundary-contracts SUCCESS, common-contracts FAILURE only because `shared/common/errors/legacy_grpc.go` imports generated `pb/types/shared` while common-contracts had not materialized generated protobuf;
+- the failure was classified as CI job partition/materialization, not Error/Response source regression;
+- CI-only fix `cc5dbd53c648b7090a142eccead2a9a54d9b9f36` moves dependency-free logging/request tests to common-contracts and keeps generated-contract error/httpresponse/jwt/middleware/routes tests behind boundary `make setup`.
+
+Connector/tree safety:
+- GitHub tree reconstruction was required to match local Git tree byte-for-byte before any ref update;
+- source tree `d150fce...` and final CI-fix tree `38dcc5a...` both matched local tree SHA exactly;
+- orphan commits were fetched back by exact SHA and proved in detached local worktrees before publication;
+- no force push, reset, rebase, amend, or branch rewrite was used.
+
+Exact-SHA local proof for final candidate `cc5dbd53...`:
+- 54/54 audit detector tests PASS;
+- native runtime ownership PASS;
+- DEV raw-stream mirror PASS;
+- structured query contracts PASS;
+- ratchets PASS;
+- common logging/request/requestlog contracts PASS;
+- canonical `buf-shared` materialization PASS;
+- shared canonical errors/httpresponse/jwt/middleware/routes contracts PASS;
+- detached exact-SHA worktree clean after proof;
+- protected Map/Organization/protobuf diff remains empty;
+- `shared/code/deploy.sh` remains canonical.
+
+Hosted closure:
+- workflow run #96 / `35552516371`;
+- exact head SHA `cc5dbd53c648b7090a142eccead2a9a54d9b9f36`;
+- overall `completed/success`;
+- inventory SUCCESS;
+- common-contracts SUCCESS;
+- boundary-contracts SUCCESS, including canonical setup, shared error/response boundaries, Gateway, User, Payment and TQD;
+- artifact id `10618678871`;
+- artifact name `observability-error-inventory-cc5dbd53c648b7090a142eccead2a9a54d9b9f36`;
+- digest `sha256:b5cb366b6be049eff414435deaeccddc75e41a1228ed823d364779cd9d4ab762`;
+- expired=false.
+
+Hosted inventory truth at `cc5dbd53...`:
+- total findings = 2052;
+- total debt = 31;
+- categories:
+  - `go.legacy_numeric_return_error` = 2;
+  - `go.legacy_shared_error_response` = 2;
+  - `go.legacy_std_log` = 9;
+  - `go.third_party_logger` = 16;
+  - `go.transport_error_in_domain_or_usecase` = 2;
+- owners:
+  - Map = 8;
+  - Organization = 21;
+  - shared/common = 2.
+
+Residual interpretation:
+- Map 8 and Organization 21 remain under the established protected no-touch invariant and are not authorization for mutation;
+- the only non-protected debt rows are both in `shared/common/errors/legacy_grpc.go`, lines 16 and 35, where `sharepb.ErrorResponse` is encoded/decoded for legacy gRPC wire compatibility;
+- all service-level `go.legacy_numeric_return_error` ratchets outside protected Organization are zero;
+- publication/credential blocker is CLOSED;
+- Error/Response convergence is published and hosted-proved for the authorized non-protected migration scope;
+- do not call full Error/Response phase CLOSED until the two legacy-wire compatibility residuals are explicitly classified as retireable or intentionally carried with an acceptance rule.
+
+NEXT_GATE = `ERROR_RESPONSE_LEGACY_GRPC_COMPATIBILITY_CLASSIFICATION`.
+
+FINAL ACCEPTED = NO.
+
+## 2026-09-21 Legacy gRPC compatibility classification
+
+Gate `ERROR_RESPONSE_LEGACY_GRPC_COMPATIBILITY_CLASSIFICATION` = PASS/CLOSED as an intentional-compatibility classification. Source deletion is NOT authorized.
+
+Exact residuals:
+- `shared/common/errors/legacy_grpc.go:16` writes the historical `sharepb.ErrorResponse` detail;
+- `shared/common/errors/legacy_grpc.go:35` reads the same detail for compatibility consumers.
+
+Live consumer proof:
+- canonical `Error.GRPCStatus()` deliberately calls `withLegacyErrorDetail` whenever a Spec has `LegacyHTTP200()`;
+- Gateway still recognizes `sharepb.ErrorResponse` details and projects the historical HTTP-200 body-code contract;
+- `file-service/internal/fileauthorization/authgrpc/authorizer.go` calls `LegacyGRPCDetail` to preserve Auth permission decision semantics for legacy codes 401/403/503;
+- integration acceptance explicitly locks invalid-login compatibility to HTTP 200 with body code 401;
+- service tests in Hub/Social and File compatibility tests still assert historical `shared.ErrorResponse` details.
+
+Architecture consistency:
+- `ERROR-RESPONSE-ARCHITECTURE-FINAL.md` explicitly requires preservation of historical gRPC `Internal` + protected `sharepb.ErrorResponse` detail + Gateway HTTP 200 while `LegacyHTTP200` is active;
+- removal requires a separate frontend/direct-gRPC consumer-proof gate;
+- compatibility is a transport projection, not a second business truth.
+
+Classification:
+- the two shared/common scanner rows are intentional compatibility residuals, not missed service migration;
+- deleting or replacing them now would violate proven external compatibility;
+- no source mutation, protobuf mutation, or ratchet suppression is authorized by this classification;
+- Map/Organization remain protected no-touch residual owners.
+
+Phase status:
+- `ERROR_RESPONSE_CANONICAL_MIGRATION=PROVED/CLOSED` at hosted authority `cc5dbd53c648b7090a142eccead2a9a54d9b9f36`;
+- `LEGACY_HTTP200_GRPC_COMPATIBILITY=INTENTIONALLY_CARRIED`;
+- the compatibility-retirement gate is separate from canonical migration closure and remains OPEN/PARKED until consumer proof exists;
+- hosted inventory debt remains 31 by detector definition: 29 protected Map/Organization + 2 intentional shared/common compatibility rows.
+
+NEXT_GATE = `POST_ERROR_RESPONSE_ACCEPTANCE_RECONCILIATION`.
+Compatibility retirement may only be opened later as `LEGACY_HTTP200_GRPC_COMPATIBILITY_RETIREMENT` with explicit consumer proof.
+
+FINAL ACCEPTED = NO.
+
+## 2026-09-21 Post Error/Response canonical acceptance reconciliation
+
+Canonical acceptance reconciliation is CLOSED/PASS for the Runtime/Logging + Error/Response convergence source.
+
+Canonical authority:
+- branch `final-acceptance/source-canonicalization`;
+- exact SHA `e20a81be93277bbb34f5d008cfeccc0f4ab4bad5`;
+- tree `c238f89ae3548abd0b4080044e7d7e3166df4421`;
+- parent `3711a2832b9f6c46e4810e9c3d1461c51af28a2d`;
+- commit `ci(hub): align runtime acceptance with canonical logging`;
+- protected `shared/protobuf/**`, `organization-service/**`, `map-service/**` remain unchanged from the pre-refactor canonical authority;
+- `shared/code/deploy.sh` remains byte-identical SHA256 `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Reconciliation sequence:
+- post-refactor source/CI authority reached `3711a2832b9f6c46e4810e9c3d1461c51af28a2d`, tree `9e434ed680d1e053a8551c6d2e43dbebfd16a687`;
+- exact hosted observability run #97 / `35554170232` on the refactor branch completed SUCCESS;
+- post-refactor Golden E2E proof branch `proof/golden-e2e-post-error-3711a283`, harness-only SHA `5d80f1937558f3c8bb7768346de38edd0bbced44`, run `35554443284` completed SUCCESS; exact-source/protected gate, setup/doctor, clean reset, canonical `make test-e2e`, diagnostics upload and cleanup all passed;
+- live race guard then observed canonical already at `3711a283...`; the resulting canonical regression had one failure only: Hub Runtime Ownership run `35554841366`;
+- failure classification: stale acceptance harness assertion still required `flogging.MustGetLogger(runtime.ServerName)`, while accepted R5 logging convergence had deliberately removed Hub Fabric logger ownership and moved process logging to `logging.Configure("hub-service")`;
+- workflow-only proof commit `e20a81be...` replaced the stale assertion with the canonical logger owner plus a guard against Fabric logging reappearance;
+- proof run `35555752681` on `final-acceptance/proof-s5-hub-postlogging-3711b` completed SUCCESS through runtime ownership, protobuf/Wire generation, behavior tests and full compile/race/vet/build;
+- canonical was then fast-forwarded non-force to `e20a81be...`.
+
+Exact canonical regression at `e20a81be...`:
+- Acceptance Source Integrity `35556041185` SUCCESS;
+- Acceptance Make Vocabulary `35556041036` SUCCESS;
+- Acceptance Shared Runtime Ownership `35556041156` SUCCESS;
+- Acceptance BDSPro Redis Ownership `35556041033` SUCCESS;
+- Acceptance Assistant Runtime Ownership `35556041102` SUCCESS;
+- Acceptance Auth Runtime Ownership `35556041111` SUCCESS;
+- Acceptance Hub Runtime Ownership `35556041056` SUCCESS;
+- Refactor Observability and Error Contracts #99 / `35556041024` SUCCESS.
+
+Canonical observability artifact:
+- artifact id `10620585903`;
+- name `observability-error-inventory-e20a81be93277bbb34f5d008cfeccc0f4ab4bad5`;
+- digest `sha256:3aa24768e4d46f3e8a76dcae36407af57529ded0a966feca113d82e398d2f2c9`;
+- expired=false.
+
+Error/Response status remains:
+- `ERROR_RESPONSE_CANONICAL_MIGRATION=PROVED/CLOSED`;
+- `LEGACY_HTTP200_GRPC_COMPATIBILITY=INTENTIONALLY_CARRIED`;
+- compatibility retirement remains parked pending explicit consumer proof;
+- detector debt remains intentionally interpretable as protected Map/Organization plus shared compatibility residuals; no new source deletion is authorized by canonical promotion.
+
+## Current failure/recovery gate
+
+Historical branch `proof/failure-recovery-a6d0722a` contains Payment broker-recovery corrections, but its final run `34803643332` failed at the identity gate before runtime execution because the harness expected an obsolete Payment runtime blob after a later proof correction.
+
+Read-only comparison against canonical `e20a81be...` proves the old in-process Payment `OutboxSupervisor` recovery commits are NOT ancestors of current canonical source. Current Payment source returns `rabbit.ErrPublisherUnavailable` from the outbox actor and allows the Payment process to exit/restart rather than reconstructing RabbitMQ transport in-process. Therefore the old failure/recovery requirement cannot be assumed closed.
+
+A new harness-only proof has been created from exact canonical source:
+- branch `proof/failure-recovery-e20a81be`;
+- harness commit `5d35fb38a4d31d269373027a544923f4609ad97b`;
+- hosted run `35556502243`;
+- production source is unchanged;
+- the proof locks current exact source blobs, preserves protected invariants, then checks Notification and Payment PID preservation across RabbitMQ restart and durable value-chain continuation.
+
+NEXT_GATE = `FAILURE_RECOVERY_POST_REFACTOR_PROOF`.
+No Payment/source mutation is authorized until run `35556502243` reaches terminal and its exact failure/success is classified.
+
+FINAL ACCEPTED = NO.
+
+## 2026-09-21 Failure/recovery post-refactor closure
+
+Status: `FAILURE_RECOVERY_POST_REFACTOR_PROOF=PROVED/CLOSED`.
+
+Canonical authority:
+- branch: `final-acceptance/source-canonicalization`;
+- exact SHA: `5c8a0ad2bf73ab08e95a6eaa9b9d148bcaade859`;
+- tree: `c07de9672f5e318f776479852c313b71092eff5b`;
+- parent: `e20a81be93277bbb34f5d008cfeccc0f4ab4bad5`;
+- commit: `fix(runtime): recover Payment outbox after broker restart`;
+- canonical was advanced by non-force fast-forward only;
+- protected `shared/protobuf/**`, `organization-service/**`, `map-service/**` remain unchanged;
+- `shared/code/deploy.sh` remains SHA256 `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Failure classification and corrections:
+- first post-refactor proof run `35556502243` exposed a repository-owned recovery harness defect: `rabbitmqctl list_connections name` cannot observe AMQP `connection_name`;
+- bounded recovery-script correction uses `list_connections client_properties` and matches `connection_name.*notification-service`;
+- after that correction, proof run `35558541893` preserved Notification and Payment PIDs across RabbitMQ restart but value-chain continuation failed because Payment's outbox publisher returned `rabbit.ErrPublisherUnavailable` and terminated the Payment process;
+- exact runtime evidence therefore proved a real Payment lifecycle defect, not a harness failure;
+- Payment correction introduces `OutboxSupervisor`: durable outbox semantics remain in the existing outbox service, while the process composition root recreates failed RabbitMQ connection/publisher resources without terminating Payment;
+- reconnect logging uses canonical `common/logging`; Payment zero-debt logging ratchets remain zero.
+
+Local bounded proof before publication:
+- Payment `./worker ./cmd/grpc` compile/test PASS after canonical protobuf materialization;
+- observability/error detector suite 54/54 PASS;
+- ratchet inventory remained `findings=2052 / debt=31`, with debt owners unchanged: Map 8, Organization 21, shared/common compatibility 2;
+- no protected-path or deploy-script mutation.
+
+Hosted proof lineage:
+- proof candidate `957ad6ae998654d926b9ee03d42f5077c9ce9a73` proved the bounded corrections with run `35559549182` SUCCESS;
+- runtime evidence: Notification PID preserved `24359`; Payment PID preserved `24440`; `TestQHPROValueChainRuntime` PASS in 6.71s after RabbitMQ restart;
+- source-only candidate was then reconstructed from canonical without proof workflow as `5c8a0ad2...`;
+- child harness-only commit `a6e5e9c66b6e21b07921fe71b526b8d6536cbf1c` differs from source authority by exactly `.github/workflows/proof-failure-recovery-source-5c8a0ad.yml`;
+- source-only hosted run `35560123902` completed SUCCESS through exact-source identity, setup/doctor, clean reset, native runtime, RabbitMQ recovery, post-recovery durable value chain, artifact upload and cleanup;
+- proof artifact id `10621818021`, name `failure-recovery-source-5c8a0ad-a6e5e9c66b6e21b07921fe71b526b8d6536cbf1c`, digest `sha256:4022cec1ba95949b39491349ed4a538368bb0fde1bc1dbb01dad33f3de0a16f3`, expired=false.
+
+Canonical exact-SHA regression at `5c8a0ad2...`:
+- Acceptance Source Integrity run `35560704601` SUCCESS;
+- Acceptance Make Vocabulary run `35560704619` SUCCESS;
+- Acceptance Shared Runtime Ownership run `35560704637` SUCCESS;
+- Acceptance BDSPro Redis Ownership run `35560704646` SUCCESS;
+- Acceptance Assistant Runtime Ownership run `35560704649` SUCCESS;
+- Acceptance Auth Runtime Ownership run `35560704702` SUCCESS;
+- Acceptance Hub Runtime Ownership run `35560704771` SUCCESS;
+- Refactor Observability and Error Contracts #100 / `35560704647` SUCCESS.
+
+Canonical observability artifact:
+- artifact id `10622326904`;
+- name `observability-error-inventory-5c8a0ad2bf73ab08e95a6eaa9b9d148bcaade859`;
+- digest `sha256:b2588768aefa8225f49b9f20109d2e2acdab333fc1ecc6c54b26dbf893ca1d9f`;
+- expired=false.
+
+Interpretation:
+- Notification broker reconnection is now observed correctly;
+- Payment process remains alive across broker restart;
+- Payment reconstructs its failed RabbitMQ outbox transport in-process;
+- durable value-chain processing resumes after recovery;
+- Runtime/Logging + Error/Response canonical regressions remain green.
+
+NEXT_GATE = `ROADMAP_RECONCILIATION_AFTER_FAILURE_RECOVERY`.
+No new source mutation is authorized until durable roadmap/current acceptance documents are reconciled against live Git and exact-SHA proof.
+
+FINAL ACCEPTED = NO.
+
+
+## 2026-09-21 Release/Rollback post-refactor closure
+
+Status: `RELEASE_ROLLBACK_POST_REFACTOR_PROOF=PROVED/CLOSED`.
+
+Canonical authority:
+- branch: `final-acceptance/source-canonicalization`;
+- exact SHA: `e9d7d62222cf9cf41d89cb1cbd5ded323966e2a4`;
+- tree: `2475ca70d78f36471dd90417393298ac0aa94b3d`;
+- parent: `5c8a0ad2bf73ab08e95a6eaa9b9d148bcaade859`;
+- commit: `feat(release): add immutable rollback artifact contract`;
+- canonical advanced by non-force fast-forward only;
+- proof workflow was not promoted with source;
+- protected `shared/protobuf/**`, `organization-service/**`, `map-service/**` remain untouched;
+- `shared/code/deploy.sh` remains byte-identical SHA256 `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`;
+- official production lineage remains untouched.
+
+Bounded source closure:
+- repository-owned release owner: `shared/code/development/release-artifact.sh`;
+- release regression harness: `shared/code/development/test-release-artifact.sh`;
+- root release vocabulary: `release-build`, `release-verify`, `release-up`, `release-rollback`;
+- release version/tag is exact source SHA;
+- source ZIP + `SOURCE-MANIFEST.sha256` + external checksum evidence are recorded;
+- full Compose image set is recorded by image ref + immutable image ID;
+- exact image set is saved in `images.tar` and checksummed;
+- migration identity includes both `*-service/database/migrations` and `organization-service/migrate`;
+- activation restores the archived images and uses `docker compose ... --no-build --pull never --wait`;
+- acceptance repository fails closed for production activation;
+- automatic rollback requires previous release ancestry and identical migration-manifest digest;
+- rollback restores the previous archived images and never rebuilds `latest`;
+- Compose application runtime now explicitly injects `QHPRO_LOG_OUTPUT=stdout`, matching the container logging ownership contract and avoiding non-root `.tmp` write failure.
+
+Hosted proof:
+- source-only candidate: `e9d7d62222cf9cf41d89cb1cbd5ded323966e2a4`;
+- proof branch: `proof/release-rollback-v2-e9d7d62`;
+- successful proof SHA: `9acdc585a4c590bb4ddfa69e78504fbf52c18573`;
+- source -> proof net diff is exactly `.github/workflows/proof-release-rollback-v2-e9d7d62.yml`;
+- hosted run `35573023465` SUCCESS;
+- exact source identity/harness-only scope PASS;
+- repository setup and release source contract PASS;
+- previous exact-SHA image build/package PASS;
+- current exact-SHA release build/package PASS;
+- release tags were removed before activation, proving activation restored the archive;
+- current release `e9d7d622...` activation/readiness/business smoke PASS;
+- rollback compatibility `e9d7d622... -> 5c8a0ad2...` PASS;
+- previous immutable archive restore/readiness/business smoke PASS;
+- artifact id `10626953047`;
+- artifact name `release-rollback-v2-e9d7d62-9acdc585a4c590bb4ddfa69e78504fbf52c18573`;
+- artifact digest `sha256:5a9695fcd18531c818cdebb677cef2417e37f796a992fa9406fc010db465f02e`;
+- expired=false.
+
+Canonical exact-SHA regression at `e9d7d622...`:
+- Acceptance Source Integrity run `35574003447` SUCCESS;
+- Acceptance Make Vocabulary run `35574003481` SUCCESS;
+- Acceptance Shared Runtime Ownership run `35574003458` SUCCESS;
+- Acceptance BDSPro Redis Ownership run `35574003460` SUCCESS;
+- Acceptance Assistant Runtime Ownership run `35574003421` SUCCESS;
+- Acceptance Auth Runtime Ownership run `35574003575` SUCCESS;
+- Acceptance Hub Runtime Ownership run `35574003414` SUCCESS;
+- Refactor Observability and Error Contracts run `35574003436` SUCCESS.
+
+Canonical observability artifact:
+- artifact id `10627322506`;
+- name `observability-error-inventory-e9d7d62222cf9cf41d89cb1cbd5ded323966e2a4`;
+- digest `sha256:8660e87548da4e8d575f8dcc3ee436dc1da45261cf2ad51f05c6dc2d300e001f`;
+- expired=false.
+
+Interpretation:
+- known commit -> immutable release artifact -> readiness/smoke is now executable and proved;
+- rollback selects and restores the previous immutable artifact rather than rebuilding mutable source/tag state;
+- migration-different automatic rollback remains fail-closed;
+- acceptance release tooling cannot deploy production;
+- Runtime/Logging + Error/Response + Failure/Recovery regressions remain green.
+
+NEXT_GATE = `FRESH_CLONE_RECONSTRUCTION`.
+No production promotion is authorized until fresh-clone reconstruction/final clean artifact proof is closed.
+
+FINAL ACCEPTED = NO.
+
+
+## 2026-09-21 Fresh-Clone Reconstruction closure
+
+Status: `FRESH_CLONE_RECONSTRUCTION=PROVED/CLOSED`.
+
+Canonical authority:
+- branch: `final-acceptance/source-canonicalization`;
+- exact SHA: `ca98eceb276dca8249b2f1d4d73cdce6248ec7dd`;
+- tree: `76b77be3745d004a7c59cbfcd32cf544568b5000`;
+- parent: `e9d7d62222cf9cf41d89cb1cbd5ded323966e2a4`;
+- commit: `fix(acceptance): make fresh-clone source self-contained`;
+- canonical advanced by non-force fast-forward only;
+- proof workflow was not promoted with source;
+- official production lineage remains untouched.
+
+Bounded source closure:
+- `shared/code/development/root.mk`: stale Payment outbox ownership guard aligned to `outboxSupervisor.Run(actorCtx)`, and protected `map-service/**` excluded from the mutable repository-module verification loop;
+- `payment-service/infra/postgres/migrate_contract_test.go`: migration contract points to canonical `database/migrations`;
+- `file-service/models/migrate_contract_test.go`: migration contract points to canonical `database/migrations`;
+- `notification-service/db/migrate_contract_test.go`: migration contract points to canonical `database/migrations`;
+- `search-service/go.mod` + `search-service/go.sum`: standalone fresh-clone module metadata now owns the local `pb` replacement and required gRPC/genproto checksums;
+- no protected source was mutated: `shared/protobuf/**`, `organization-service/**`, `map-service/**` remain untouched;
+- `shared/code/deploy.sh` remains byte-identical SHA256 `80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e`.
+
+Fresh-clone hosted proof:
+- source-only candidate: `ca98eceb276dca8249b2f1d4d73cdce6248ec7dd`;
+- source tree: `76b77be3745d004a7c59cbfcd32cf544568b5000`;
+- proof branch: `proof/fresh-clone-v4-ca98ece`;
+- proof SHA: `6e6d207828340f9a1c559260d0a10a8ab9b2b98f`;
+- source -> proof net diff is exactly `.github/workflows/proof-fresh-clone-v4-ca98ece.yml`;
+- hosted run `35588223133` SUCCESS;
+- clean exact-source checkout PASS;
+- initial no-hidden-local-state check PASS;
+- repository-owned setup/generated reconstruction PASS;
+- final repository `make accept` PASS;
+- post-acceptance tracked/untracked source cleanliness PASS;
+- final exact-source release artifact PASS;
+- release metadata records exact commit `ca98ece...` and exact tree `76b77be...`;
+- source ZIP checksum and `SOURCE-MANIFEST.sha256` verification PASS;
+- extracted source manifest verification PASS;
+- final source artifact excludes `.env`, `.tmp`, and generated `shared/protobuf/types`;
+- migration digest recorded as `ee1b3b1fe20739404d77538146011e01897539daad943fde72ebfa05f8b04127`;
+- evidence artifact id `10633807925`;
+- artifact name `fresh-clone-v4-ca98ece-6e6d207828340f9a1c559260d0a10a8ab9b2b98f`;
+- artifact digest `sha256:d1d4050f2b7d35432a2982fc660318fb7080cc55fb8994db0456d69729ae158e`;
+- expired=false.
+
+Canonical exact-SHA regression at `ca98ece...`:
+- Acceptance Source Integrity run `35601814774` SUCCESS;
+- Acceptance Make Vocabulary run `35601814713` SUCCESS;
+- Acceptance Shared Runtime Ownership run `35601814900` SUCCESS;
+- Acceptance BDSPro Redis Ownership run `35601814814` SUCCESS;
+- Acceptance Assistant Runtime Ownership run `35601814913` SUCCESS;
+- Acceptance Auth Runtime Ownership run `35601814708` SUCCESS;
+- Acceptance Hub Runtime Ownership run `35601814887` SUCCESS;
+- Refactor Observability and Error Contracts run `35601814681` SUCCESS.
+
+Canonical observability artifact:
+- artifact id `10639197833`;
+- name `observability-error-inventory-ca98eceb276dca8249b2f1d4d73cdce6248ec7dd`;
+- digest `sha256:0bd59f2f897c9f07002f9780f6b743fe9e2bcbe4a7334e6bcd22df63a17cfe2f`;
+- expired=false.
+
+Interpretation:
+- an exact clean checkout can now reconstruct repository-owned setup/generated state and pass the complete acceptance surface without relying on hidden developer-machine state;
+- the final source ZIP is reproducible from exact Git truth and remains clean of runtime/local/generated residue;
+- the prior Fresh-clone failed candidates/proofs remain preserved as superseded evidence and do not outrank this completed exact-SHA proof;
+- production-lineage promotion is now the next authorized gate; it has not yet been executed.
+
+NEXT_GATE = `PRODUCTION_PROMOTION`.
+
+FINAL ACCEPTED = NO.
+
+## 2026-09-22 Production Promotion + Final Acceptance closure — PROVED/CLOSED
+
+Official production-lineage promotion:
+- production branch: `main`;
+- pre-promotion live SHA: `e80041326d251a86627d44fa70b2568bc0e1eae5`;
+- promotion target / accepted application source: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- accepted application tree: `478604fd04b0901f7e569ac8064c545679150cd4`;
+- promotion used GitHub ref update with `force=false`;
+- promotion was a pure fast-forward; pre-promotion graph was `main...source = 0 / 183`;
+- no merge commit, rebase, source mutation, tag rewrite or force update occurred;
+- post-promotion live `main` re-read equals exact `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- post-promotion live tree equals exact `478604fd04b0901f7e569ac8064c545679150cd4`;
+- post-promotion graph `main...accepted-source = 0 / 0`.
+
+Source / proof separation:
+- aggregate proof branch remains `refactor/pre-final-architecture-hardening-ca98ece` at `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- harness tree remains `79c9d6505519ea551d99d8284626b555439d35c4`;
+- harness parent is exact production source `3c8e3412...`;
+- live graph `main...aggregate-harness = 0 / 1`;
+- aggregate proof workflows are absent from `main`;
+- no harness-only commit was promoted to production lineage.
+
+Final acceptance evidence already closed before promotion:
+- aggregate source/code exact-SHA proof: PASS/CLOSED;
+- full fresh-clone reconstruction + repository `make accept` + post-acceptance cleanliness + clean source artifact: PASS/CLOSED at run `35637680820`;
+- all 8 canonical hosted workflows: SUCCESS on exact harness/source mapping;
+- immutable exact-SHA release build/verify/archive activation/readiness/smoke + rollback: PASS/CLOSED at run `35637680690`;
+- source-integrity artifact id `10656692607`, expired=false;
+- observability/error inventory artifact id `10655959940`, expired=false;
+- fresh-clone evidence artifact id `10657347871`, expired=false;
+- release/rollback evidence artifact id `10657252274`, expired=false;
+- protected `shared/protobuf/**`, `organization-service/**`, `map-service/**`, and byte-identical `shared/code/deploy.sh` remained preserved through promotion;
+- accepted-debt fingerprints and zero-ratchets passed on the accepted hardening source.
+
+Production scope:
+- this final acceptance is implementation/repository/official-Git-lineage acceptance;
+- no legacy `shared/code/deploy.sh` execution, SSH/SCP deployment, mutable server deployment or external production runtime mutation was authorized or performed;
+- production deployment remains an operator action outside this acceptance closure.
+
+Final gate state:
+- Runtime/Logging convergence: PROVED/CLOSED;
+- Error/Response canonical migration: PROVED/CLOSED;
+- explicit legacy compatibility classifications: CLOSED/INTENTIONALLY CARRIED where documented;
+- Failure/Recovery: PROVED/CLOSED;
+- immutable Release/Rollback: PROVED/CLOSED;
+- Fresh-Clone Reconstruction: PROVED/CLOSED;
+- Pre-Final Architecture Hardening: PROVED/CLOSED;
+- Production Promotion: PROVED/CLOSED.
+
+`PRODUCTION_PROMOTION=PROVED/CLOSED`
+`PRODUCTION_MAIN_SHA=3c8e341211dccff653b040466fec3480c5f7c8d5`
+`PRODUCTION_MAIN_TREE=478604fd04b0901f7e569ac8064c545679150cd4`
+`PRODUCTION_DEPLOYMENT_MUTATION=NOT_PERFORMED`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
+`FINAL_ACCEPTED=YES`
