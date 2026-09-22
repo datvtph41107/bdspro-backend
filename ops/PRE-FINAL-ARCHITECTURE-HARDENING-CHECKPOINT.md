@@ -4,7 +4,7 @@ Updated: 2026-09-21 Asia/Bangkok
 
 ## Status
 
-`PRE_FINAL_ARCHITECTURE_HARDENING=AUTHORIZED/ACTIVE`
+`PRE_FINAL_ARCHITECTURE_HARDENING=PROVED/CLOSED`
 
 Production Promotion remains paused. Official production lineage has not been mutated.
 
@@ -465,9 +465,9 @@ Runtime/release environment classification:
 `AGGREGATE_FRESH_CLONE_RECONSTRUCTION=PASS/CLOSED`
 `AGGREGATE_EXACT_SHA_CODE_PROOF=PASS/CLOSED`
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
-`PRODUCTION_PROMOTION=PAUSED`
+`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
 
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,7 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
 `FINAL ACCEPTED=NO`
 
 
@@ -575,9 +575,9 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARNESS_LOCAL_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
 `AGGREGATE_HARNESS_DETACHED_EXACT_SHA_PROOF=PASS/CLOSED`
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
-`HOSTED_AGGREGATE_RUNTIME_RELEASE=PENDING`
+`HOSTED_AGGREGATE_RUNTIME_RELEASE=PASS/CLOSED`
 
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
 `FINAL ACCEPTED=NO`
 
 
@@ -602,7 +602,7 @@ Publication reconstruction note:
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `REMOTE_AGGREGATE_HARNESS_SHA=44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
 `REMOTE_AGGREGATE_HARNESS_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
 `FINAL ACCEPTED=NO`
 
 
@@ -629,9 +629,80 @@ Exact-SHA retained artifacts:
 
 `AGGREGATE_CANONICAL_WORKFLOWS=8/8_SUCCESS`
 `AGGREGATE_CANONICAL_WORKFLOW_CLOSURE=PASS/CLOSED`
-`FRESH_CLONE_RUNTIME_PROOF=PENDING`
-`IMMUTABLE_RELEASE_ROLLBACK_PROOF=PENDING`
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`FRESH_CLONE_RUNTIME_PROOF=PASS/CLOSED`
+`IMMUTABLE_RELEASE_ROLLBACK_PROOF=PASS/CLOSED`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+`FINAL ACCEPTED=NO`
+
+
+## Pre-Final Architecture Hardening aggregate closure — PROVED/CLOSED
+
+Immutable hosted harness authority:
+- branch: `refactor/pre-final-architecture-hardening-ca98ece`;
+- harness commit: `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- harness tree: `79c9d6505519ea551d99d8284626b555439d35c4`;
+- application source parent: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- application source tree: `478604fd04b0901f7e569ac8064c545679150cd4`.
+
+Canonical hosted closure:
+- all 8 canonical acceptance/refactor workflows completed SUCCESS on exact harness SHA `44ef2ad8...`;
+- source-integrity artifact `source-manifest-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`, id `10656692607`, expired=false;
+- observability/error artifact `observability-error-inventory-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`, id `10655959940`, expired=false.
+
+Fresh-clone/runtime closure:
+- workflow: `Proof Pre-Final Hardening Fresh Clone`;
+- run: `35637680820` / #1;
+- status/conclusion: `completed/success`;
+- exact harness head SHA: `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- harness-only scope verification PASS;
+- exact canonical source checkout PASS;
+- zero-hidden-local-state proof PASS;
+- repository-owned setup/generated reconstruction PASS;
+- final repository `make accept` PASS;
+- post-acceptance clean source state PASS;
+- final clean source artifact PASS;
+- artifact: `pre-final-hardening-fresh-clone-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- artifact id: `10657347871`;
+- expired: false;
+- artifact digest: `sha256:c0dee1422a4688b27b8acccb319442a9693724ace810001f174aaf9d2e967c8d`.
+
+Immutable release/rollback closure:
+- workflow: `Proof Pre-Final Hardening Release Rollback`;
+- run: `35637680690` / #1;
+- status/conclusion: `completed/success`;
+- exact harness head SHA: `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- source identity + harness-only scope PASS;
+- source/previous repository setup PASS;
+- release contract PASS;
+- previous exact-SHA image build PASS;
+- previous immutable release packaging PASS;
+- current exact-SHA release build/verify PASS;
+- release tags removed before activation PASS;
+- current immutable archive activation + readiness/smoke PASS;
+- rollback to previous immutable archive + readiness/smoke PASS;
+- failure diagnostics step skipped because no failure occurred;
+- artifact: `pre-final-hardening-release-rollback-44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- artifact id: `10657252274`;
+- expired: false;
+- artifact digest: `sha256:5869d9d994f8b0006da8d4436c9b21fa4fa9b15a2be96e69a5045516fcfe848d`.
+
+Aggregate conclusion:
+- source/code exact-SHA proof: PASS/CLOSED;
+- fresh-clone reconstruction/runtime acceptance: PASS/CLOSED;
+- 8/8 canonical hosted workflows: PASS/CLOSED;
+- immutable release activation/rollback: PASS/CLOSED;
+- protected `shared/protobuf`, Organization, Map and `shared/code/deploy.sh` invariants preserved;
+- no production-lineage mutation occurred during hardening.
+
+`PRE_FINAL_ARCHITECTURE_HARDENING=PROVED/CLOSED`
+`AGGREGATE_HARDENING_PROOF=PASS/CLOSED`
+`AGGREGATE_FRESH_CLONE_RUNTIME=PASS/CLOSED`
+`AGGREGATE_IMMUTABLE_RELEASE_ROLLBACK=PASS/CLOSED`
+`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
+`PRODUCTION_PROMOTION_MUTATION=NOT_YET_AUTHORIZED`
+
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
+
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -643,8 +714,8 @@ Exact-SHA retained artifacts:
 `SLICE_D_SOURCE_MUTATION=AUTHORIZED`
 
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
-`PRODUCTION_PROMOTION=PAUSED`
+`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
 
-`NEXT_GATE=HOSTED_FRESH_CLONE_AND_RELEASE_ROLLBACK_CLOSURE`
+`NEXT_GATE=REOPEN_PRODUCTION_PROMOTION_READ_ONLY_RECONCILIATION`
 
 `FINAL ACCEPTED=NO`
