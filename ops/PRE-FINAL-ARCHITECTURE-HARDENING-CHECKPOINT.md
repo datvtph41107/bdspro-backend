@@ -465,9 +465,9 @@ Runtime/release environment classification:
 `AGGREGATE_FRESH_CLONE_RECONSTRUCTION=PASS/CLOSED`
 `AGGREGATE_EXACT_SHA_CODE_PROOF=PASS/CLOSED`
 `AGGREGATE_RUNTIME_RELEASE_PROOF=PENDING_HOSTED`
-`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
+`PRODUCTION_PROMOTION=PROVED/CLOSED`
 
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 
 `FINAL ACCEPTED=NO`
 
@@ -511,7 +511,7 @@ Authorized harness-only mutation:
 `HOSTED_AGGREGATE_HARNESS_MUTATION=AUTHORIZED`
 `APPLICATION_SOURCE_MUTATION=NOT_AUTHORIZED`
 `SOURCE_AUTHORITY=3c8e341211dccff653b040466fec3480c5f7c8d5`
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 `FINAL ACCEPTED=NO`
 
 
@@ -577,7 +577,7 @@ The proof service was intentionally stopped after the PASS marker; its later exi
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `HOSTED_AGGREGATE_RUNTIME_RELEASE=PASS/CLOSED`
 
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 `FINAL ACCEPTED=NO`
 
 
@@ -602,7 +602,7 @@ Publication reconstruction note:
 `AGGREGATE_HARNESS_PUBLICATION=PASS`
 `REMOTE_AGGREGATE_HARNESS_SHA=44ef2ad84681c0f68c3224cdffb2be29b4e9b129`
 `REMOTE_AGGREGATE_HARNESS_TREE=79c9d6505519ea551d99d8284626b555439d35c4`
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 `FINAL ACCEPTED=NO`
 
 
@@ -631,7 +631,7 @@ Exact-SHA retained artifacts:
 `AGGREGATE_CANONICAL_WORKFLOW_CLOSURE=PASS/CLOSED`
 `FRESH_CLONE_RUNTIME_PROOF=PASS/CLOSED`
 `IMMUTABLE_RELEASE_ROLLBACK_PROOF=PASS/CLOSED`
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 `FINAL ACCEPTED=NO`
 
 
@@ -698,10 +698,10 @@ Aggregate conclusion:
 `AGGREGATE_HARDENING_PROOF=PASS/CLOSED`
 `AGGREGATE_FRESH_CLONE_RUNTIME=PASS/CLOSED`
 `AGGREGATE_IMMUTABLE_RELEASE_ROLLBACK=PASS/CLOSED`
-`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
+`PRODUCTION_PROMOTION=PROVED/CLOSED`
 `PRODUCTION_PROMOTION_REF_MUTATION=AUTHORIZED`
 
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 
 `FINAL ACCEPTED=NO`
 
@@ -749,7 +749,7 @@ Post-promotion closure requirements:
 `PRODUCTION_DEPLOYMENT_MUTATION=NOT_AUTHORIZED`
 `PROMOTION_TARGET_SHA=3c8e341211dccff653b040466fec3480c5f7c8d5`
 `PROMOTION_TARGET_TREE=478604fd04b0901f7e569ac8064c545679150cd4`
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 `FINAL ACCEPTED=NO`
 
 ## Remaining hardening order
@@ -761,8 +761,64 @@ Post-promotion closure requirements:
 `SLICE_D_SOURCE_MUTATION=AUTHORIZED`
 
 `AGGREGATE_HARDENING_PROOF=AUTHORIZED`
-`PRODUCTION_PROMOTION=ELIGIBLE_TO_REOPEN`
+`PRODUCTION_PROMOTION=PROVED/CLOSED`
 
-`NEXT_GATE=SAFE_NON_FORCE_MAIN_FAST_FORWARD`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
 
 `FINAL ACCEPTED=NO`
+
+## 2026-09-22 Production Promotion + Final Acceptance closure — PROVED/CLOSED
+
+Official production-lineage promotion:
+- production branch: `main`;
+- pre-promotion live SHA: `e80041326d251a86627d44fa70b2568bc0e1eae5`;
+- promotion target / accepted application source: `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- accepted application tree: `478604fd04b0901f7e569ac8064c545679150cd4`;
+- promotion used GitHub ref update with `force=false`;
+- promotion was a pure fast-forward; pre-promotion graph was `main...source = 0 / 183`;
+- no merge commit, rebase, source mutation, tag rewrite or force update occurred;
+- post-promotion live `main` re-read equals exact `3c8e341211dccff653b040466fec3480c5f7c8d5`;
+- post-promotion live tree equals exact `478604fd04b0901f7e569ac8064c545679150cd4`;
+- post-promotion graph `main...accepted-source = 0 / 0`.
+
+Source / proof separation:
+- aggregate proof branch remains `refactor/pre-final-architecture-hardening-ca98ece` at `44ef2ad84681c0f68c3224cdffb2be29b4e9b129`;
+- harness tree remains `79c9d6505519ea551d99d8284626b555439d35c4`;
+- harness parent is exact production source `3c8e3412...`;
+- live graph `main...aggregate-harness = 0 / 1`;
+- aggregate proof workflows are absent from `main`;
+- no harness-only commit was promoted to production lineage.
+
+Final acceptance evidence already closed before promotion:
+- aggregate source/code exact-SHA proof: PASS/CLOSED;
+- full fresh-clone reconstruction + repository `make accept` + post-acceptance cleanliness + clean source artifact: PASS/CLOSED at run `35637680820`;
+- all 8 canonical hosted workflows: SUCCESS on exact harness/source mapping;
+- immutable exact-SHA release build/verify/archive activation/readiness/smoke + rollback: PASS/CLOSED at run `35637680690`;
+- source-integrity artifact id `10656692607`, expired=false;
+- observability/error inventory artifact id `10655959940`, expired=false;
+- fresh-clone evidence artifact id `10657347871`, expired=false;
+- release/rollback evidence artifact id `10657252274`, expired=false;
+- protected `shared/protobuf/**`, `organization-service/**`, `map-service/**`, and byte-identical `shared/code/deploy.sh` remained preserved through promotion;
+- accepted-debt fingerprints and zero-ratchets passed on the accepted hardening source.
+
+Production scope:
+- this final acceptance is implementation/repository/official-Git-lineage acceptance;
+- no legacy `shared/code/deploy.sh` execution, SSH/SCP deployment, mutable server deployment or external production runtime mutation was authorized or performed;
+- production deployment remains an operator action outside this acceptance closure.
+
+Final gate state:
+- Runtime/Logging convergence: PROVED/CLOSED;
+- Error/Response canonical migration: PROVED/CLOSED;
+- explicit legacy compatibility classifications: CLOSED/INTENTIONALLY CARRIED where documented;
+- Failure/Recovery: PROVED/CLOSED;
+- immutable Release/Rollback: PROVED/CLOSED;
+- Fresh-Clone Reconstruction: PROVED/CLOSED;
+- Pre-Final Architecture Hardening: PROVED/CLOSED;
+- Production Promotion: PROVED/CLOSED.
+
+`PRODUCTION_PROMOTION=PROVED/CLOSED`
+`PRODUCTION_MAIN_SHA=3c8e341211dccff653b040466fec3480c5f7c8d5`
+`PRODUCTION_MAIN_TREE=478604fd04b0901f7e569ac8064c545679150cd4`
+`PRODUCTION_DEPLOYMENT_MUTATION=NOT_PERFORMED`
+`NEXT_GATE=NONE_FINAL_ACCEPTANCE_CLOSED`
+`FINAL_ACCEPTED=YES`
