@@ -555,6 +555,12 @@ func (s *ProductHandler) ProductNew(ctx context.Context, req *bdspropb.ProductSa
 	if result.Product != nil {
 		id = result.Product.ID
 	}
+	// Client ProductMe short-circuits when Redis sync ts is unchanged; bump after create.
+	if s.SyncProvider != nil {
+		now := time.Now().UnixMilli()
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, 0), now)
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0), now)
+	}
 	return &bdspropb.Response{
 		Id:      id,
 		Message: "success",
@@ -808,18 +814,6 @@ func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest
 	if err != nil {
 		return nil, err
 	}
-	// var originProfile *sharepb.OriginProfile
-	// if product.SourceContactId != nil && *product.SourceContactId > 0 {
-	// 	pf, err := s.CrmProvider.GetContactByOriginId(ctx, *product.SourceContactId)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	} else if pf.OriginProfile != nil {
-	// 		originProfile = pf.OriginProfile
-	// 	}
-	// }
-	// if originProfile != nil {
-	// 	resp.OriginProfileContact = s.ProductMapper.MapOriginProfilePb(originProfile)
-	// }
 
 	resp := s.ProductMapper.MapDetailProductPb(ctx, product)
 	return resp, nil
@@ -903,16 +897,7 @@ func (s *ProductHandler) GetPosts(ctx context.Context, req *sharepb.SyncRequest)
 	if err != nil {
 		return nil, err
 	}
-	if req.Page == 0 {
-		time := time.Now().UnixMilli() - 24*60*60*1000
-		if len(posts) > 0 {
-			time = posts[0].ProductUpdatedAt.UnixMilli()
-		}
-		s.SyncProvider.PutTimestamp(ctx, key, time)
-	}
 	postResponse := s.PostMapper.PostToPbList(&posts)
-	// postResponse := make([]*bdspropb.PostItem, 0)
-	// copier.Copy(&postResponse, &posts)
 	return &bdspropb.PostResponse{
 		Data: postResponse,
 	}, nil
@@ -945,13 +930,6 @@ func (s *ProductHandler) GetDeals(ctx context.Context, req *sharepb.SyncRequest)
 	if err != nil {
 		return nil, err
 	}
-	// if req.Page == 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000
-	// 	if len(deals) > 0 {
-	// 		time = deals[0].UpdatedAt.UnixMilli()
-	// 	}
-	// 	s.SyncProvider.PutTimestamp(ctx, key, time)
-	// }
 	dealItems := s.DealMapper.EntityToGetOrganizationDealsResponse(deals, uint32(total))
 
 	return dealItems, nil
@@ -1033,8 +1011,13 @@ func (s *ProductHandler) DeleteProduct(ctx context.Context, req *bdspropb.IdRequ
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id), time.Now().UnixMilli())
-	s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, req.Id), time.Now().UnixMilli())
+	now := time.Now().UnixMilli()
+	if s.SyncProvider != nil {
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id), now)
+		// ProductMe sync key uses resourceId=0 (see ProductMe); product id would miss the list key.
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, 0), now)
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0), now)
+	}
 	return &bdspropb.Response{
 		Message: "ok",
 	}, nil
@@ -1443,13 +1426,6 @@ func (s *ProductHandler) GetPriceHistory(
 	if err != nil {
 		return nil, err
 	}
-	// if req.Page == 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000
-	// 	if len(items) > 0 {
-	// 		time = productUpdatedTime.UnixMilli()
-	// 	}
-	// 	s.SyncProvider.PutTimestamp(ctx, key, req.Timestamp)
-	// }
 
 	return &bdspropb.PriceHistoryResponse{
 		Data:  s.ProductPriceMapper.DTOListToPb(items),

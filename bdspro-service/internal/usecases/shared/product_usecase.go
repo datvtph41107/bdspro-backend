@@ -689,9 +689,13 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	}
 
 	// ownerId là id của tổ chức, hoặc của cá nhân
-	ownerId := s.GetOwnerID(c, product.OwnerType)
-	if err != nil {
-		return nil, err
+	ownerType := product.OwnerType
+	if ownerType == 0 {
+		ownerType = enums.EOwnerOfMember
+	}
+	ownerId := s.GetOwnerID(c, ownerType)
+	if ownerId == 0 {
+		return nil, _errors.ReturnError(401, "profileId không hợp lệ")
 	}
 
 	entity := &domain.Product{}
@@ -719,7 +723,7 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		}
 		entity.LastPriceID = &price.ID
 		entity.OwnerID = ownerId
-		entity.OwnerOf = product.OwnerType
+		entity.OwnerOf = ownerType
 		// _db.SaveWithContext(c, entity)
 		if err := s.ProductRepo.Create(c, entity); err != nil {
 			return err

@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	pbclients "pb/clients"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	tqdpb "pb/types/tqd"
 	userpb "pb/types/user"
 	"strconv"
 	"time"
@@ -43,6 +46,7 @@ type GrpcProfileService struct {
 	CrmClient             _provider.CrmProvider
 	HubClient             *client.HubClient
 	BdsproClient          *client.BdsproClient
+	TqdClient             *pbclients.TQDGrpcClient
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	SyncProvider          *_utils.SyncUtil
 	Redis                 *_redis.RedisService
@@ -62,6 +66,7 @@ func NewGrpcProfileService(
 	crmClient _provider.CrmProvider,
 	hubClient *client.HubClient,
 	bdsproClient *client.BdsproClient,
+	tqdClient *pbclients.TQDGrpcClient,
 	userDashboardStatsJob *job.UserDashboardStatsJob,
 	SyncProvider *_utils.SyncUtil,
 	redis *_redis.RedisService,
@@ -79,6 +84,7 @@ func NewGrpcProfileService(
 		CrmClient:             crmClient,
 		HubClient:             hubClient,
 		BdsproClient:          bdsproClient,
+		TqdClient:             tqdClient,
 		UserDashboardStatsJob: userDashboardStatsJob,
 		SyncProvider:          SyncProvider,
 		Redis:                 redis,
@@ -651,6 +657,13 @@ func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
 		return _errors.ReturnError(500, "không đọc được dữ liệu demo media: "+err.Error())
 	}
 
+	wardIDsByProvince, err := s.loadDemoWardIDsByProvince(ctx, products)
+	if err != nil {
+		s.bestEffortDeleteContacts(ctx, contactIDs)
+		_ = s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
+		return err
+	}
+
 	// ESourceStatus: 10 Chờ xác minh, 20 Thiết giấy tờ, 30 Đã xác minh số.
 	// Shuffle rồi round-robin để mỗi lần bật demo đều có đủ 3 trạng thái.
 	sourceStatuses := []uint32{10, 20, 30}
@@ -660,6 +673,7 @@ func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
 
 	createdIDs := make([]uint64, 0, len(products))
 	for i, product := range products {
+		product.OwnerType = 10 // EOwnerOfMember — ProductMe / ownership filter
 		product.SourceStatus = sourceStatuses[i%len(sourceStatuses)]
 		// sourceTime: ngày hiện tại trừ random 0–100 ngày
 		sourceTime := time.Now().AddDate(0, 0, -rand.Intn(101))
@@ -669,6 +683,7 @@ func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
 			originID := originIDs[i%len(originIDs)]
 			product.SourceContactId = &originID
 		}
+		s.assignDemoWard(product, wardIDsByProvince)
 		resp, err := s.BdsproClient.CreateProduct(ctx, product)
 		if err != nil {
 			s.bestEffortDeleteProducts(ctx, createdIDs)
@@ -749,6 +764,99 @@ func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfil
 	return originIDs, contactIDs, nil
 }
 
+// loadDemoWardIDsByProvince lấy danh sách ward source-id từ TQD theo provinceId
+// trong snapshot demo (thường provinceId=1), dùng để random khi seed sản phẩm.
+func (s *GrpcProfileService) loadDemoWardIDsByProvince(
+	ctx context.Context,
+	products []*bdspropb.ProductSaveRequest,
+) (map[uint64][]uint64, error) {
+	if s.TqdClient == nil || s.TqdClient.Client == nil {
+		return nil, _errors.ReturnError(500, "tqd client chưa được cấu hình")
+	}
+
+	provinceIDs := make(map[uint64]struct{})
+	for _, product := range products {
+		provinceID := product.GetProvinceId()
+		if provinceID == 0 {
+			provinceID = 1
+		}
+		provinceIDs[provinceID] = struct{}{}
+	}
+
+	out := make(map[uint64][]uint64, len(provinceIDs))
+	for provinceID := range provinceIDs {
+		wardIDs, err := s.listTQDWardSourceIDs(ctx, provinceID)
+		if err != nil {
+			return nil, err
+		}
+		if len(wardIDs) == 0 {
+			return nil, _errors.ReturnError(500, fmt.Sprintf("tqd không có ward cho provinceId=%d", provinceID))
+		}
+		out[provinceID] = wardIDs
+	}
+	return out, nil
+}
+
+func (s *GrpcProfileService) listTQDWardSourceIDs(ctx context.Context, provinceSourceID uint64) ([]uint64, error) {
+	compositeProvinceID, err := _utils.EncodeLocationID(provinceSourceID, _utils.LocationIDKindProvince)
+	if err != nil {
+		return nil, _errors.ReturnError(500, "provinceId demo không hợp lệ: "+err.Error())
+	}
+
+	pageSize := int32(100)
+	var (
+		page    int32 = 1
+		wardIDs []uint64
+		total   int32
+	)
+	for {
+		pageCopy := page
+		resp, err := s.TqdClient.Client.ListWardsByProvince(ctx, &tqdpb.ListWardsByProvinceRequest{
+			ProvinceId: compositeProvinceID,
+			Page:       &pageCopy,
+			PageSize:   &pageSize,
+			Timestamp:  0,
+		})
+		if err != nil {
+			return nil, _errors.ReturnError(500, "không lấy được ward từ tqd: "+err.Error())
+		}
+		if resp == nil || len(resp.Wards) == 0 {
+			break
+		}
+		total = resp.Total
+		for _, ward := range resp.Wards {
+			if ward != nil && ward.Id > 0 {
+				wardIDs = append(wardIDs, ward.Id)
+			}
+		}
+		if int32(len(wardIDs)) >= total || int32(len(resp.Wards)) < pageSize {
+			break
+		}
+		page++
+	}
+	return wardIDs, nil
+}
+
+func (s *GrpcProfileService) assignDemoWard(
+	product *bdspropb.ProductSaveRequest,
+	wardIDsByProvince map[uint64][]uint64,
+) {
+	if product == nil {
+		return
+	}
+	provinceID := product.GetProvinceId()
+	if provinceID == 0 {
+		provinceID = 1
+		product.ProvinceId = &provinceID
+	}
+	wardIDs := wardIDsByProvince[provinceID]
+	if len(wardIDs) == 0 {
+		return
+	}
+	wardID := wardIDs[rand.Intn(len(wardIDs))]
+	product.WardId = &wardID
+}
+
 func (s *GrpcProfileService) cleanupDemoProducts(ctx context.Context) error {
 	if s.BdsproClient == nil {
 		return _errors.ReturnError(500, "bdspro client chưa được cấu hình")
@@ -762,23 +870,114 @@ func (s *GrpcProfileService) cleanupDemoProducts(ctx context.Context) error {
 		return _errors.ReturnError(401, "profileId không hợp lệ")
 	}
 
-	productIDs, err := s.DemoProductLogRepo.ListProductIDsByProfileID(ctx, profileID)
+	loggedIDs, err := s.DemoProductLogRepo.ListProductIDsByProfileID(ctx, profileID)
 	if err != nil {
 		return err
 	}
-	for _, productID := range productIDs {
-		if err := s.BdsproClient.DeleteProduct(ctx, productID); err != nil {
-			return err
+	loggedSet := make(map[uint64]struct{}, len(loggedIDs))
+	for _, id := range loggedIDs {
+		if id > 0 {
+			loggedSet[id] = struct{}{}
 		}
 	}
-	if err := s.DemoProductLogRepo.DeleteByProfileID(ctx, profileID); err != nil {
+
+	// Orphan: sản phẩm demo còn sống nhưng không còn (hoặc chưa từng) trong demo_product_log.
+	orphanIDs, orphanErr := s.listActiveDemoProductIDs(ctx)
+	if orphanErr != nil {
+		log.Printf("cleanupDemoProducts list orphan: %v", orphanErr)
+	}
+
+	seen := make(map[uint64]struct{}, len(loggedIDs)+len(orphanIDs))
+	toDelete := make([]uint64, 0, len(loggedIDs)+len(orphanIDs))
+	for _, id := range append(loggedIDs, orphanIDs...) {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		toDelete = append(toDelete, id)
+	}
+
+	deletedLoggedIDs := make([]uint64, 0, len(loggedIDs))
+	var firstErr error
+	for _, productID := range toDelete {
+		if err := s.BdsproClient.DeleteProduct(ctx, productID); err != nil {
+			log.Printf("cleanupDemoProducts delete id=%d: %v", productID, err)
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		// Chỉ xoá log khi service con (bdspro) xoá thành công.
+		if _, ok := loggedSet[productID]; ok {
+			deletedLoggedIDs = append(deletedLoggedIDs, productID)
+		}
+	}
+	if err := s.DemoProductLogRepo.DeleteByProfileIDAndProductIDs(ctx, profileID, deletedLoggedIDs); err != nil {
 		return err
 	}
 
 	if err := s.cleanupDemoContacts(ctx, profileID); err != nil {
 		return err
 	}
+	if firstErr != nil {
+		return _errors.ReturnError(500, "không xoá hết sản phẩm demo: "+firstErr.Error())
+	}
 	return nil
+}
+
+// listActiveDemoProductIDs tìm sản phẩm đang active của user trùng tên snapshot demo.
+func (s *GrpcProfileService) listActiveDemoProductIDs(ctx context.Context) ([]uint64, error) {
+	products, err := demo.LoadDemoProducts()
+	if err != nil {
+		return nil, err
+	}
+	demoNames := make(map[string]struct{}, len(products))
+	for _, product := range products {
+		if product == nil || product.Name == "" {
+			continue
+		}
+		demoNames[product.Name] = struct{}{}
+	}
+	if len(demoNames) == 0 {
+		return nil, nil
+	}
+
+	const pageSize uint32 = 100
+	var (
+		page uint32
+		ids  []uint64
+	)
+	for {
+		resp, err := s.BdsproClient.ListMyProducts(ctx, page, pageSize)
+		if err != nil {
+			return nil, err
+		}
+		if resp == nil || len(resp.Data) == 0 {
+			break
+		}
+		for _, item := range resp.Data {
+			if item == nil || item.Id == 0 {
+				continue
+			}
+			if _, ok := demoNames[item.Name]; ok {
+				ids = append(ids, item.Id)
+			}
+		}
+		if uint32(len(resp.Data)) < pageSize {
+			break
+		}
+		if resp.TotalElements > 0 && int64((page+1)*pageSize) >= resp.TotalElements {
+			break
+		}
+		page++
+		if page > 50 {
+			break
+		}
+	}
+	return ids, nil
 }
 
 func (s *GrpcProfileService) cleanupDemoContacts(ctx context.Context, profileID uint64) error {
@@ -790,12 +989,21 @@ func (s *GrpcProfileService) cleanupDemoContacts(ctx context.Context, profileID 
 	if err != nil {
 		return err
 	}
+	loggedSet := make(map[uint64]struct{}, len(contactIDs))
 	seen := make(map[uint64]struct{}, len(contactIDs))
+	deletedLoggedIDs := make([]uint64, 0, len(contactIDs))
+
 	for _, contactID := range contactIDs {
+		if contactID == 0 {
+			continue
+		}
+		loggedSet[contactID] = struct{}{}
 		seen[contactID] = struct{}{}
 		if err := s.CrmClient.DeleteContact(ctx, contactID); err != nil {
 			log.Printf("cleanupDemoContacts delete id=%d: %v", contactID, err)
+			continue
 		}
+		deletedLoggedIDs = append(deletedLoggedIDs, contactID)
 	}
 
 	// Best-effort: xoá thêm contact demo cũ chưa kịp log (theo SĐT trong contacts.json).
@@ -815,11 +1023,15 @@ func (s *GrpcProfileService) cleanupDemoContacts(ctx context.Context, profileID 
 			seen[existingID] = struct{}{}
 			if err := s.CrmClient.DeleteContact(ctx, existingID); err != nil {
 				log.Printf("cleanupDemoContacts delete phone=%s id=%d: %v", contact.Phone, existingID, err)
+				continue
+			}
+			if _, ok := loggedSet[existingID]; ok {
+				deletedLoggedIDs = append(deletedLoggedIDs, existingID)
 			}
 		}
 	}
 
-	return s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
+	return s.DemoProductLogRepo.DeleteContactsByProfileIDAndContactIDs(ctx, profileID, deletedLoggedIDs)
 }
 
 func (s *GrpcProfileService) bestEffortDeleteProducts(ctx context.Context, productIDs []uint64) {

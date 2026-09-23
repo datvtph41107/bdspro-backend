@@ -19,6 +19,7 @@ var UserUpstreamServices = []string{
 	"bdspro",
 	"organization",
 	"auth",
+	"tqd",
 }
 
 // BootstrapGRPCConnections hỏi gateway service nào đang up rồi dial (auto-reconnect).

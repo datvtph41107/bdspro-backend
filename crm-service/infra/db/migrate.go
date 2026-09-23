@@ -24,7 +24,7 @@ func tableExists(name string) bool {
 }
 
 func AutoMigrate() {
-	// ensureSEOMigrations()
+	ensureSEOMigrations()
 
 	// if err := _db.DB.AutoMigrate(&seo_domain.SeoRef{}); err != nil {
 	// 	log.Printf("⚠️  AutoMigrate SeoRef: %v", err)

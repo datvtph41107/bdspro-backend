@@ -24,6 +24,7 @@ import (
 	_httpmiddleware "gateway/internal/httpmiddleware"
 	_httpresponse "gateway/internal/httpresponse"
 	_observability "gateway/internal/observability"
+	_requeststats "gateway/internal/requeststats"
 	_tqdmultipart "gateway/internal/tqdmultipart"
 	_upstream "gateway/internal/upstream"
 	_v1proxy "gateway/internal/v1proxy"
@@ -226,6 +227,16 @@ var HttpCmd = &cobra.Command{
 			_httpauth.WithProviderCredentialRoutes(authRoutes.ProviderCredential),
 		)
 
+		requestStatsTracker, trackerErr := _requeststats.New(
+			connections.Hub,
+			runtimeConfig.RequestStats.SpecURLs,
+			runtimeConfig.RequestStats.IgnorePrefixes,
+		)
+		if trackerErr != nil {
+			log.Printf("Gateway request stats tracker unavailable: %v", trackerErr)
+		}
+		requestStatsMiddleware := _requeststats.Middleware(requestStatsTracker)
+
 		// Register generated handlers against process-owned connections.
 		if err := _grpcgateway.RegisterNotificationService(processCtx, mux, connections.Notification); err != nil {
 			return fmt.Errorf("register Notification gateway handlers: %w", err)
@@ -269,7 +280,7 @@ var HttpCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("construct TQD multipart boundary: %w", err)
 		}
-		v2Import := r.Group("/form", authMiddleware)
+		v2Import := r.Group("/form", authMiddleware, requestStatsMiddleware)
 		multipartHandler.Register(v2Import)
 
 		// Gin không cho phép catch-all /v2/*any cùng tồn tại với các route cụ thể
@@ -309,9 +320,9 @@ var HttpCmd = &cobra.Command{
 		// 	authMiddleware,
 		// 	v2Fallback,
 		// )
-		r.Any("/v2/*any", authMiddleware, gin.WrapH(mux))
-		r.Any("/v2.1/*any", authMiddleware, gin.WrapH(mux))
-		r.Any("/v3/*any", authMiddleware, gin.WrapH(mux))
+		r.Any("/v2/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
+		r.Any("/v2.1/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
+		r.Any("/v3/*any", authMiddleware, requestStatsMiddleware, gin.WrapH(mux))
 
 		// Swagger documentation
 		r.Static("/swagger-doc", "docs")
@@ -338,7 +349,7 @@ var HttpCmd = &cobra.Command{
 		}
 		// Only true HTTP owners are reverse-proxied. Generated v1 contracts
 		// (currently TQD location) stay on the process-owned grpc-gateway mux.
-		r.Any("/v1/:service/*path", authMiddleware, v1.Handler(mux))
+		r.Any("/v1/:service/*path", authMiddleware, requestStatsMiddleware, v1.Handler(mux))
 
 		server := &http.Server{
 			Addr:              ":" + port,

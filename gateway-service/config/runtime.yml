@@ -56,3 +56,12 @@ http:
     - "http://14.225.210.29:3206"
     - "https://test.qhpro.vn"
     - "http://14.225.210.29:3110"
+
+# URL đặc biệt: ghi audit từng request (không gộp count) trong hub request_audit_log
+request_stats:
+  spec_urls:
+    - /v2/crm/sitemap.xml
+  # Bổ sung thêm prefix không đếm (merge với default dashboard/stats ignores trong code)
+  # ignore_prefixes:
+  #   - /v2/custom/admin/dashboard
+

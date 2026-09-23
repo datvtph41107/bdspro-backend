@@ -20,8 +20,12 @@ func RegisterHubService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.C
 		hubpb.RegisterVersionServiceHandler,
 		hubpb.RegisterApiKeyServiceHandler,
 		hubpb.RegisterInteractiveEventServiceHandler,
+		hubpb.RegisterClickURLServiceHandler,
 		hubpb.RegisterErrorLogServiceHandler,
 		hubpb.RegisterUpdateDataServiceHandler,
 		hubpb.RegisterApplinkServiceHandler,
+		hubpb.RegisterRequestStatsServiceHandler,
+		hubpb.RegisterKeywordSearchStatsServiceHandler,
+		hubpb.RegisterSearchLatencyStatsServiceHandler,
 	)
 }

@@ -26,8 +26,14 @@ func AutoMigrateModels() []any {
 		&domain.ApiKeyEntity{},
 		&domain.UserGuideStepEntity{},
 		&domain.InteractiveEvent{},
+		&domain.ClickURL{},
 		&domain.ErrorLog{},
 		&domain.UpdateData{},
+		&domain.RequestStatsLog{},
+		&domain.UserInteractionLog{},
+		&domain.RequestAuditLog{},
+		&domain.KeywordSearchLog{},
+		&domain.SearchLatencyLog{},
 	}
 }
 

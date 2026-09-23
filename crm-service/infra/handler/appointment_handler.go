@@ -327,13 +327,6 @@ func (h *AppointmentHandler) GetAppointmentsByProduct(ctx context.Context, req *
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// if req.Page == 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000
-	// 	if len(appointments) > 0 && appointments[0].ProductUpdatedAt != nil {
-	// 		time = appointments[0].ProductUpdatedAt.UnixMilli()
-	// 	}
-	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
-	// }
 	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
 }
 

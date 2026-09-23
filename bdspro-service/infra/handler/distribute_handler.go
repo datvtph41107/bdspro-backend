@@ -144,13 +144,6 @@ func (h *DistributionHandler) ListDistributions(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list distributions: %v", err)
 	}
-	// if req.Page == 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000 // trừ hẳn 1 ngày nếu ds đang rỗng
-	// 	if len(lists) > 0 {
-	// 		time = lists[0].ProductUpdatedAt.UnixMilli()
-	// 	}
-	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
-	// }
 
 	return &bdspropb.ListDistributionsResponse{
 		Data:  h.mapper.DistributionWithPartnersListToProto(ctx, lists),

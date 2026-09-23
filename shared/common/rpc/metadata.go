@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	_enum "common/domain/enum"
 	"common/identity"
 	"common/request"
 	"context"
@@ -109,6 +110,11 @@ func restoreIdempotencyKey(ctx context.Context, values []string) (context.Contex
 // Local service-originated calls receive internal_service when no logical
 // caller exists. If an Actor exists without an explicit Caller, the compatible
 // logical caller is user.
+//
+// Soft-mode hops: inbound middleware may leave only legacy ProfileIDKey (via
+// withLegacyActorContext) without BindActor. Service clients that use this
+// helper must still forward that actor or owner-scoped RPCs (CRM/bdspro) see
+// profileId=0.
 func AppendIdentityFromContext(ctx context.Context, md metadata.MD) metadata.MD {
 	if md == nil {
 		md = metadata.MD{}
@@ -117,6 +123,9 @@ func AppendIdentityFromContext(ctx context.Context, md metadata.MD) metadata.MD 
 	actor, hasActor := identity.ActorFromContext(ctx)
 	if hasActor {
 		appendActor(md, actor)
+	} else if legacy := actorFromLegacyContext(ctx); legacy.IsValid() {
+		appendActor(md, legacy)
+		hasActor = true
 	}
 
 	caller, hasCaller := identity.CallerFromContext(ctx)
@@ -129,6 +138,37 @@ func AppendIdentityFromContext(ctx context.Context, md metadata.MD) metadata.MD 
 	}
 	appendCaller(md, caller)
 	return md
+}
+
+// actorFromLegacyContext rebuilds Actor from middleware legacy enum keys.
+func actorFromLegacyContext(ctx context.Context) identity.Actor {
+	if ctx == nil {
+		return identity.Actor{}
+	}
+	actor := identity.Actor{}
+	if value, ok := ctx.Value(_enum.ProfileIDKey).(uint64); ok {
+		actor.ProfileID = value
+	}
+	if value, ok := ctx.Value(_enum.OriginIDKey).(uint64); ok {
+		actor.OriginID = value
+	}
+	if value, ok := ctx.Value(_enum.AuthIDKey).(uint64); ok {
+		actor.AuthID = value
+	}
+	if value, ok := ctx.Value(_enum.SessionKey).(uint64); ok {
+		actor.SessionID = value
+	}
+	if value, ok := ctx.Value(_enum.OrganizationIDKey).(uint64); ok && value > 0 {
+		organizationID := value
+		actor.OrganizationID = &organizationID
+	}
+	if value, ok := ctx.Value(_enum.RoleKey).(string); ok {
+		actor.Role = value
+	}
+	if value, ok := ctx.Value(_enum.TypeKey).(string); ok {
+		actor.TokenType = value
+	}
+	return actor
 }
 
 // RestoreIdentityFromMetadata validates the transported Actor/Caller pair. If

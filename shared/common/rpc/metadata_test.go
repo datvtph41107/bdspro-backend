@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	_enum "common/domain/enum"
 	"common/identity"
 	"common/request"
 	"context"
@@ -89,6 +90,19 @@ func TestAppendIdentityDefaultsLocalAndActorCallers(t *testing.T) {
 	md = AppendIdentityFromContext(ctx, metadata.MD{})
 	if got := md.Get(CallerKindMetadataKey); len(got) != 1 || got[0] != string(identity.CallerUser) {
 		t.Fatalf("actor caller = %v", got)
+	}
+}
+
+func TestAppendIdentityFromContextForwardsLegacyProfileID(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.WithValue(context.Background(), _enum.ProfileIDKey, uint64(40))
+	md := AppendIdentityFromContext(ctx, metadata.MD{})
+	if got := md.Get(ProfileIDMetadataKey); len(got) != 1 || got[0] != "40" {
+		t.Fatalf("profile metadata = %v, want [40]", got)
+	}
+	if got := md.Get(CallerKindMetadataKey); len(got) != 1 || got[0] != string(identity.CallerUser) {
+		t.Fatalf("caller = %v, want user", got)
 	}
 }
 

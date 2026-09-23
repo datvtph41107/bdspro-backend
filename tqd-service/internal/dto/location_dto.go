@@ -45,6 +45,11 @@ type GetWardRequest struct {
 	Code *string `json:"code,omitempty"`
 }
 
+type ListWardsRequest struct {
+	Page     *int32 `json:"page,omitempty"`
+	PageSize *int32 `json:"pageSize,omitempty"`
+}
+
 type ListWardsByProvinceRequest struct {
 	ProvinceID uint64 `json:"provinceId"`
 	Page       *int32 `json:"page,omitempty"`
@@ -134,6 +139,17 @@ type ListWardsResponse struct {
 	Total    int32      `json:"total"`
 	Page     int32      `json:"page"`
 	PageSize int32      `json:"pageSize"`
+}
+
+type LocationPagination struct {
+	Page     int32 `json:"page"`
+	PageSize int32 `json:"pageSize"`
+	Total    int64 `json:"total"`
+}
+
+type ClientListWardsResponse struct {
+	Data       []*WardDTO          `json:"data"`
+	Pagination *LocationPagination `json:"pagination"`
 }
 
 // ==================== DATA DTOs ====================

@@ -49,21 +49,21 @@ func LoadConfig() error {
 	// YAML giữ topology/default; các giá trị runtime nhạy cảm hoặc khác nhau
 	// giữa host và container phải override được tại process boundary. Bind rõ
 	// alias để Unmarshal và các compatibility provider cùng thấy một nguồn thật.
-	for key, names := range map[string][]string{
-		"database.dsn":             {"HUB_DATABASE_URL", "DATABASE_DSN"},
-		"redis.host":               {"REDIS_HOST", "HUB_REDIS_ADDRESS"},
-		"redis.db":                 {"REDIS_DB", "HUB_REDIS_DB"},
-		"jwt.key-generate":         {"JWT_KEY_GENERATE"},
-		"security.api_key":         {"HUB_API_KEY"},
-		"rpc.user.address":         {"HUB_USER_GRPC_ADDRESS"},
-		"rpc.bdspro.address":       {"HUB_BDSPRO_GRPC_ADDRESS"},
-		"rpc.notification.address": {"HUB_NOTIFICATION_GRPC_ADDRESS"},
-	} {
-		args := append([]string{key}, names...)
-		if err := viper.BindEnv(args...); err != nil {
-			return fmt.Errorf("bind %s env: %w", key, err)
-		}
-	}
+	// for key, names := range map[string][]string{
+	// 	"database.dsn":             {"HUB_DATABASE_URL", "DATABASE_DSN"},
+	// 	"redis.host":               {"REDIS_HOST", "HUB_REDIS_ADDRESS"},
+	// 	"redis.db":                 {"REDIS_DB", "HUB_REDIS_DB"},
+	// 	"jwt.key-generate":         {"JWT_KEY_GENERATE"},
+	// 	"security.api_key":         {"HUB_API_KEY"},
+	// 	"rpc.user.address":         {"HUB_USER_GRPC_ADDRESS"},
+	// 	"rpc.bdspro.address":       {"HUB_BDSPRO_GRPC_ADDRESS"},
+	// 	"rpc.notification.address": {"HUB_NOTIFICATION_GRPC_ADDRESS"},
+	// } {
+	// 	args := append([]string{key}, names...)
+	// 	if err := viper.BindEnv(args...); err != nil {
+	// 		return fmt.Errorf("bind %s env: %w", key, err)
+	// 	}
+	// }
 
 	if err := viper.Unmarshal(&AppProperties); err != nil {
 		return fmt.Errorf("unmarshal hub config: %w", err)

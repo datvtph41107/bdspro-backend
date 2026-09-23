@@ -2,6 +2,7 @@
 package mapper
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -56,6 +57,45 @@ func (m *LocationMapper) ToProtoProvince(dto *dto.ProvinceDTO) *tqdpb.Province {
 	if dto.PlanDocID != nil && *dto.PlanDocID > 0 {
 		planDocID := *dto.PlanDocID
 		resp.PlanDocId = &planDocID
+	}
+	return resp
+}
+
+func (m *LocationMapper) ToProtoWardListItem(dto *dto.WardDTO) *tqdpb.Ward {
+	if dto == nil {
+		return nil
+	}
+	resp := &tqdpb.Ward{
+		Id: dto.ID,
+		// Code: dto.Code,
+		// FullName:     dto.FullName,
+		ShortName: dto.ShortName,
+		Latitude:  dto.Lat,
+		Longitude: dto.Lng,
+		// DivisionType: dto.DivisionType,
+		ProvinceId: dto.ProvinceID,
+		// ProvinceCode:          dto.ProvinceCode,
+		// OfficialName:          dto.OfficialName,
+		// OfficialOperationDate: _utils.FormatTimeToString(dto.OfficialOperationDate),
+		// NaturalAreaKm2:    dto.NaturalAreaKm2,
+		// Population:        dto.Population,
+		// PopulationDensity: dto.PopulationDensity,
+		// Summary:           dto.Summary,
+		// Description:       dto.Description,
+		CompositeId:  dto.CompositeID,
+		UnitType:     dto.UnitType,
+		UnitTypeName: dto.UnitTypeName,
+		// DataSource:     dto.DataSource,
+		// DataSourceName: dto.DataSourceName,
+		// OfficialRole:          dto.OfficialRole,
+		// OfficialAddress:       dto.OfficialAddress,
+		// CreatedAt:             _utils.FormatTimeToString(dto.CreatedAt),
+		// UpdatedAt:             _utils.FormatTimeToString(dto.UpdatedAt),
+		Geometry: dto.Geometry,
+	}
+	if dto.SeoID != nil && *dto.SeoID > 0 {
+		seoID := *dto.SeoID
+		resp.SeoId = &seoID
 	}
 	return resp
 }
@@ -166,7 +206,7 @@ func (m *LocationMapper) ToProtoListWardsResponse(dto *dto.ListWardsResponse) *t
 
 	wards := make([]*tqdpb.Ward, len(dto.Wards))
 	for i, w := range dto.Wards {
-		wards[i] = m.ToProtoWard(w)
+		wards[i] = m.ToProtoWardListItem(w)
 	}
 
 	return &tqdpb.ListWardsResponse{
@@ -175,6 +215,28 @@ func (m *LocationMapper) ToProtoListWardsResponse(dto *dto.ListWardsResponse) *t
 		Page:     dto.Page,
 		PageSize: dto.PageSize,
 	}
+}
+
+func (m *LocationMapper) ToProtoClientListWardsResponse(resp *dto.ClientListWardsResponse) *tqdpb.ClientListWardsResponse {
+	if resp == nil {
+		return nil
+	}
+
+	data := make([]*tqdpb.Ward, len(resp.Data))
+	for i, w := range resp.Data {
+		data[i] = m.ToProtoWardListItem(w)
+	}
+
+	out := &tqdpb.ClientListWardsResponse{Data: data}
+	if resp.Pagination != nil {
+		log.Println("pagination", resp.Pagination.PageSize)
+		out.Pagination = &tqdpb.LocationPagination{
+			Page:  resp.Pagination.Page,
+			Size:  resp.Pagination.PageSize,
+			Total: resp.Pagination.Total,
+		}
+	}
+	return out
 }
 
 func (m *LocationMapper) ToProtoAdminListProvincesResponse(dto *dto.AdminListProvincesResponse) *tqdpb.AdminListProvincesResponse {
@@ -374,6 +436,16 @@ func (m *LocationMapper) FromProtoGetWardRequest(req *tqdpb.GetWardRequest) *dto
 		out.ID = &id
 	}
 	return out
+}
+
+func (m *LocationMapper) FromProtoListWardsRequest(req *tqdpb.ListWardsRequest) *dto.ListWardsRequest {
+	if req == nil {
+		return &dto.ListWardsRequest{}
+	}
+	return &dto.ListWardsRequest{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	}
 }
 
 func (m *LocationMapper) FromProtoListWardsByProvinceRequest(req *tqdpb.ListWardsByProvinceRequest) *dto.ListWardsByProvinceRequest {

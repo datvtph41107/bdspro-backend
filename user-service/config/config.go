@@ -32,6 +32,7 @@ func LoadProperties() error {
 		{key: "rpc.payment.address", envs: []string{"RPC_PAYMENT_ADDRESS"}},
 		{key: "rpc.chat.address", envs: []string{"RPC_CHAT_ADDRESS"}},
 		{key: "rpc.crm.address", envs: []string{"RPC_CRM_ADDRESS"}},
+		{key: "rpc.tqd.address", envs: []string{"RPC_TQD_ADDRESS"}},
 	} {
 		args := append([]string{binding.key}, binding.envs...)
 		if err := viper.BindEnv(args...); err != nil {

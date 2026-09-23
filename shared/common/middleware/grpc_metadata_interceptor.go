@@ -311,7 +311,7 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 	md := metadata.MD{}
 
 	appendUint64IfExists := func(ctxKey _enums.ContextKey, mdKey string) {
-		if val, ok := ctx.Value(ctxKey).(uint64); ok {
+		if val, ok := ctx.Value(ctxKey).(uint64); ok && val > 0 {
 			md.Append(mdKey, strconv.FormatUint(val, 10))
 		}
 	}
@@ -327,10 +327,8 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 			md.Append(mdKey, val.Format(time.RFC3339))
 		}
 	}
-	forwardPrivilegedMetadata := canForwardPrivilegedMetadata(ctx)
-	if actor, ok := _identity.ActorFromContext(ctx); ok {
-		_rpc.AppendActorMetadata(md, actor)
-	} else if forwardPrivilegedMetadata {
+
+	appendLegacyActorMetadata := func() bool {
 		appendUint64IfExists(_enums.ProfileIDKey, _rpc.ProfileIDMetadataKey)
 		appendUint64IfExists(_enums.OriginIDKey, _rpc.OriginIDMetadataKey)
 		appendUint64IfExists(_enums.OrganizationIDKey, _rpc.OrganizationIDMetadataKey)
@@ -338,12 +336,33 @@ func GrpcClientMetadataFromContext(ctx context.Context) metadata.MD {
 		appendUint64IfExists(_enums.SessionKey, _rpc.SessionIDMetadataKey)
 		appendStringIfExists(_enums.RoleKey, _rpc.RoleMetadataKey)
 		appendStringIfExists(_enums.TypeKey, _rpc.TokenTypeMetadataKey)
+		return len(md.Get(_rpc.ProfileIDMetadataKey)) > 0
+	}
+
+	forwardPrivilegedMetadata := canForwardPrivilegedMetadata(ctx)
+	hasActorMD := false
+	if actor, ok := _identity.ActorFromContext(ctx); ok {
+		_rpc.AppendActorMetadata(md, actor)
+		hasActorMD = true
+	} else if forwardPrivilegedMetadata {
+		// Verified soft/enforce path without a bound Actor still may carry
+		// legacy keys (e.g. internal hops).
+		hasActorMD = appendLegacyActorMetadata()
+	} else if _, ok := ctx.Value(_enums.ProfileIDKey).(uint64); ok {
+		// Soft-mode unverified inbound: handlers keep working via
+		// withLegacyActorContext, but service hops must forward the same
+		// profile identity or owner-scoped RPCs fail (CRM CreateContact).
+		hasActorMD = appendLegacyActorMetadata()
 	}
 
 	if caller, ok := _identity.CallerFromContext(ctx); ok {
 		_rpc.AppendCallerMetadata(md, caller)
 	} else if outgoingMD, ok := metadata.FromOutgoingContext(ctx); !ok || len(outgoingMD.Get(_rpc.CallerKindMetadataKey)) == 0 {
-		_rpc.AppendCallerMetadata(md, _identity.Caller{Kind: _identity.CallerInternalService})
+		if hasActorMD {
+			_rpc.AppendCallerMetadata(md, _identity.Caller{Kind: _identity.CallerUser})
+		} else {
+			_rpc.AppendCallerMetadata(md, _identity.Caller{Kind: _identity.CallerInternalService})
+		}
 	}
 
 	if forwardPrivilegedMetadata {

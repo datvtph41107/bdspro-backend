@@ -133,10 +133,20 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 		return nil, nil, err
 	}
 	bdsproClient := client.NewBdsproClient(bdsproGrpcClient)
+	tqdGrpcClient, cleanup7, err := injection.NewTQClient()
+	if err != nil {
+		cleanup6()
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
 	userUsecase := usecases.NewUserUsecase(profilePostgres)
 	userDashboardStatsJob := job.NewUserDashboardStatsJob(userUsecase, db)
 	syncUtil := _utils.NewSyncUtil(redisService)
-	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, demoProductLogPostgres, adminUsecase, profileUsecase, ikycUsecase, service, profileMapper, kycMapper, crmProvider, hubClient, bdsproClient, userDashboardStatsJob, syncUtil, redisService)
+	grpcProfileService := handler.NewGrpcProfileService(profilePostgres, demoProductLogPostgres, adminUsecase, profileUsecase, ikycUsecase, service, profileMapper, kycMapper, crmProvider, hubClient, bdsproClient, tqdGrpcClient, userDashboardStatsJob, syncUtil, redisService)
 	adminMapper := mapper.NewAdminMapper()
 	catalogAuthorizer := authpermission.NewCatalogAuthorizer(authGrpcClient)
 	adminHandler := handler.NewAdminHandler(adminUsecase, adminMapper, notificationProvider, catalogAuthorizer)
@@ -174,8 +184,9 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	iPriceTableUsecase := usecases2.NewPriceTableUsecase(iPriceTableRepo)
 	priceTableMapper := mapper.NewPriceTableMapper()
 	priceTableHandler := handler.NewPriceTableHandler(iPriceTableUsecase, priceTableMapper)
-	organizationClient, cleanup7, err := injection.NewOrganizationClient()
+	organizationClient, cleanup8, err := injection.NewOrganizationClient()
 	if err != nil {
+		cleanup7()
 		cleanup6()
 		cleanup5()
 		cleanup4()
@@ -191,8 +202,9 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	runtimeProperties := properties.NewRuntimeProperties()
 	otpUsecase := usecase.NewOtpUsecase(otpPostgres, statusPostgres, runtimeProperties, notificationProvider)
 	organizationProviderClient := client.NewOrganizationProviderClient(organizationClient, db)
-	chatProvider, cleanup8, err := injection.NewChatClient()
+	chatProvider, cleanup9, err := injection.NewChatClient()
 	if err != nil {
+		cleanup8()
 		cleanup7()
 		cleanup6()
 		cleanup5()
@@ -247,8 +259,9 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	cancelService := cancel.NewService(cancellationStore, v)
 	commercialProfileHandler := grpc.NewCommercialProfileHandler(commercialprofileService, cancelService)
 	checkoutStore := checkoutpostgres.NewCheckoutStore(transactionRepo)
-	commands, cleanup9, err := payment.NewCommands()
+	commands, cleanup10, err := payment.NewCommands()
 	if err != nil {
+		cleanup9()
 		cleanup8()
 		cleanup7()
 		cleanup6()
@@ -271,6 +284,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	planVersionAdminHandler := grpc.NewPlanVersionAdminHandler(adminService, catalogAuthorizer)
 	initialApp := initial.NewInitialApp(db, grpcProfileService, adminHandler, adminUserProfileHandler, bookmarkUserHandler, crmProvider, internalHandler, mainAreaHandler, purposeUseHandler, professionHandler, tagHandler, kycHandler, priceTableHandler, userDashboardStatsJob, organizationClient, authHandler, oAuthHandler, permissionHandler, roleGroupHandler, roleHandler, authUserProfileHandler, roleGroupRegistry, znsScheduler, accessgrpcHandler, commercialProfileHandler, subscriptionCheckoutHandler, subscriptionSettlementHandler, subscriptionAdminHandler, planVersionAdminHandler)
 	return initialApp, func() {
+		cleanup10()
 		cleanup9()
 		cleanup8()
 		cleanup7()

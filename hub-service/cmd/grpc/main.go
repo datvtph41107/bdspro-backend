@@ -41,6 +41,11 @@ var GrpcCmd = &cobra.Command{
 		}
 		defer cleanup()
 
+		// Canonical migrate/ is the schema authority: check version and apply
+		// any pending *.up.sql before the process serves traffic.
+		if err := db.RunPendingMigrations(app.DB); err != nil {
+			return fmt.Errorf("hub schema migrate: %w", err)
+		}
 		if err := common_db.EnsureSchema(app.DB, "hub", db.AutoMigrate); err != nil {
 			return err
 		}

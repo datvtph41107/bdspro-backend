@@ -11,7 +11,7 @@ import (
 var seoMigrateFS embed.FS
 
 // seoMigrationFiles — thứ tự apply schema SEO (migrate_v2).
-// Bỏ qua support_ticket / admin_opportunity (không thuộc SEO).
+// Bỏ qua support_ticket / admin_opportunity / payment_event_inbox (không thuộc SEO).
 var seoMigrationFiles = []string{
 	"000001_seo_domain_registry.up.sql",
 	"000002_seo_links.up.sql",
@@ -32,12 +32,12 @@ var seoMigrationFiles = []string{
 	"000019_planning_news_visibility_compatibility.up.sql",
 	"000023_user_saved_planning_news.up.sql",
 	"000024_simplify_seo_to_pages.up.sql",
-	"000025_seo_domain_category_id.up.sql",
 	"000026_seo_count.up.sql",
 	"000027_seo_count_aggregate.up.sql",
 	"000028_seo_domain_image_url.up.sql",
 	"000029_seo_domain_province_id.up.sql",
 	"000030_restore_seo_category.up.sql",
+	"000031_seo_domain_category_id.up.sql",
 }
 
 func ensureSEOMigrations() {
@@ -48,6 +48,10 @@ func ensureSEOMigrations() {
 		)`); err != nil {
 		log.Printf("⚠️  ensureSEOMigrations: không tạo được crm_seo_schema_migrations: %v", err)
 	}
+
+	// Legacy filename after renumber 000025 → 000031 (payment owns 000025).
+	_ = execSQL(`DELETE FROM crm_seo_schema_migrations WHERE filename = ?`,
+		"000025_seo_domain_category_id.up.sql")
 
 	// Bootstrap một lần: schema đã có sẵn mà chưa có ledger → đánh dấu các file hiện tại.
 	var ledgerCount int
@@ -68,8 +72,13 @@ func ensureSEOMigrations() {
 			`SELECT COUNT(1) FROM crm_seo_schema_migrations WHERE filename = ?`,
 			&applied,
 			name,
-		); err == nil && applied > 0 {
+		); err == nil && applied > 0 && !seoMigrationEffectMissing(name) {
 			continue
+		}
+
+		if applied > 0 && seoMigrationEffectMissing(name) {
+			log.Printf("⚠️  ensureSEOMigrations: %s đã ghi ledger nhưng schema thiếu — apply lại", name)
+			_ = execSQL(`DELETE FROM crm_seo_schema_migrations WHERE filename = ?`, name)
 		}
 
 		path := "migrate_v2/" + name
@@ -88,6 +97,37 @@ func ensureSEOMigrations() {
 		)
 		log.Printf("✅ SEO migrate: %s", name)
 	}
+}
+
+// seoMigrationEffectMissing reports ledger/schema drift for migrations whose
+// effect can be checked cheaply. Forces re-apply when marked applied but absent.
+func seoMigrationEffectMissing(name string) bool {
+	switch name {
+	case "000026_seo_count.up.sql", "000027_seo_count_aggregate.up.sql":
+		return !tableExists("seo_count_log") || !tableExists("seo_count")
+	case "000028_seo_domain_image_url.up.sql":
+		return !columnExists("seo_domain", "image_url")
+	case "000029_seo_domain_province_id.up.sql":
+		return !columnExists("seo_domain", "province_id")
+	case "000030_restore_seo_category.up.sql":
+		return !tableExists("seo_category")
+	case "000031_seo_domain_category_id.up.sql":
+		return !columnExists("seo_domain", "category_id") || !columnExists("seo_domain", "visible_on")
+	default:
+		return false
+	}
+}
+
+func columnExists(table, column string) bool {
+	var n int
+	_ = scanSQL(`
+		SELECT COUNT(1)
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+		  AND table_name = ?
+		  AND column_name = ?
+	`, &n, table, column)
+	return n > 0
 }
 
 func execSQLScript(script, label string) error {

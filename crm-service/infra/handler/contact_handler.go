@@ -385,13 +385,6 @@ func (s *ContactService) GetListContactByProductId(ctx context.Context, req *sha
 	if err != nil {
 		return nil, err
 	}
-	// if req.Page == 0 && len(contacts) > 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000
-	// 	if contacts[0].ContactProductUpdatedAt != nil {
-	// 		time = contacts[0].ContactProductUpdatedAt.UnixMilli()
-	// 	}
-	// 	s.SyncProvider.PutTimestamp(ctx, key, time)
-	// }
 	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 

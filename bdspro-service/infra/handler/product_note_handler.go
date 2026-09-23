@@ -62,14 +62,6 @@ func (h *ProductNoteHandler) ListProductNotes(
 	if err != nil {
 		return nil, err
 	}
-	// if req.Page == 0 && len(items) > 0 {
-	// 	time := time.Now().UnixMilli() - 24*60*60*1000
-	// 	if len(items) > 0 {
-	// 		time = items[0].Note.ProductNoteUpdatedAt.UnixMilli()
-	// 	}
-	// 	h.SyncProvider.PutTimestamp(ctx, key, time)
-	// 	// h.SyncProvider.PutTimestamp(ctx, fmt.Sprintf(key, req.ProductId, userId), items[0].Note.ProductNoteUpdatedAt.UnixMilli())
-	// }
 	h.enrichUsers(ctx, items)
 	return &bdspropb.ListProductNotesResponse{
 		Data:  h.ProductNoteMapper.ProductNoteListToProto(items),

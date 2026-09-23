@@ -47,6 +47,13 @@ service LocationService {
             get: "/v2/tqd/client/provinces"
         };
     }
+
+    // Danh mục ward công khai (toàn quốc), phân trang; pageSize tối đa 300.
+    rpc ListWards(ListWardsRequest) returns (ClientListWardsResponse) {
+        option (google.api.http) = {
+            get: "/v2/tqd/client/wards"
+        };
+    }
     
     // Lấy thông tin chi tiết của ward
     rpc GetWard(GetWardRequest) returns (Ward) {
@@ -337,6 +344,14 @@ message ListProvincesResponse {
     repeated Province provinces = 1;
 }
 
+message ListWardsRequest {
+    // Trang bắt đầu từ 1; mặc định 1.
+    optional int32 page = 1;
+    // Số phần tử mỗi trang; mặc định 300, tối đa 300.
+    optional int32 pageSize = 2;
+    int64 timestamp = 3;
+}
+
 message GetWardRequest {
     uint64 id = 1;                    // Public ID: {sourceId}2
     optional string code = 2;
@@ -350,11 +365,24 @@ message ListWardsByProvinceRequest {
     int64 timestamp = 4;
 }
 
+// Giữ contract cũ cho ListWardsByProvince.
 message ListWardsResponse {
     repeated Ward wards = 1;
     int32 total = 2;
     int32 page = 3;
     int32 pageSize = 4;
+}
+
+message LocationPagination {
+    int32 page = 1;
+    int32 size = 2;
+    int64 total = 3;
+}
+
+// Response chuẩn cho danh mục ward công khai: data + pagination.
+message ClientListWardsResponse {
+    repeated Ward data = 1;
+    LocationPagination pagination = 2;
 }
 
 message AdminGetAdministrativeUnitDetailByCompositeIdRequest {

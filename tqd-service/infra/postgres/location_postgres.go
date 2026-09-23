@@ -583,6 +583,26 @@ func (r *locationRepo) ListWardsByProvince(ctx context.Context, provinceID uint6
 	return wards, total, err
 }
 
+func (r *locationRepo) ListAllWards(ctx context.Context, page, pageSize int) ([]*domain.Ward, int64, error) {
+	var wards []*domain.Ward
+	var total int64
+
+	err := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).Count(&total).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("count wards: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	err = r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
+		Select(wardSelectSQL("", false)).
+		Order("full_name").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&wards).Error
+
+	return wards, total, err
+}
+
 func (r *locationRepo) AdminListWards(ctx context.Context, req *dto.AdminListWardsRequest) ([]*domain.Ward, int64, error) {
 	var wards []*domain.Ward
 	var total int64

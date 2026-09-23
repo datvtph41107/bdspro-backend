@@ -107,6 +107,7 @@ var publicRoutes = []_httpauth.Route{
 	_httpauth.Prefix("/v2/tqd/properties"),
 	_httpauth.PrefixMethod(http.MethodGet, "/v2/tqd/client/layers"),
 	_httpauth.ExactMethod(http.MethodGet, "/v2/tqd/client/provinces"),
+	_httpauth.ExactMethod(http.MethodGet, "/v2/tqd/client/wards"),
 	_httpauth.Exact("/v2/tqd/client/parcels/search"),
 	_httpauth.Exact("/v2/tqd/client/qh/layer-families/list"),
 	_httpauth.Prefix("/v2/tqd/parcels/public"),

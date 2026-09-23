@@ -226,6 +226,45 @@ func (u *LocationUsecase) GetWard(ctx context.Context, req *dto.GetWardRequest) 
 	return u.toWardDTO(ward), nil
 }
 
+const pageSizeMax = 500
+
+// ListWards returns the national ward catalog with pagination (pageSize max 300).
+func (u *LocationUsecase) ListWards(ctx context.Context, req *dto.ListWardsRequest) (*dto.ClientListWardsResponse, error) {
+	page := 1
+	pageSize := pageSizeMax
+	if req != nil {
+		if req.Page != nil {
+			page = int(*req.Page)
+		}
+		if req.PageSize != nil {
+			pageSize = int(*req.PageSize)
+		}
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = pageSizeMax
+	}
+	if pageSize > pageSizeMax {
+		pageSize = pageSizeMax
+	}
+
+	wards, total, err := u.repo.ListAllWards(ctx, page, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf("list wards: %w", err)
+	}
+
+	return &dto.ClientListWardsResponse{
+		Data: u.toWardDTOs(wards),
+		Pagination: &dto.LocationPagination{
+			Page:     int32(page),
+			PageSize: int32(pageSize),
+			Total:    total,
+		},
+	}, nil
+}
+
 // ListWardsByProvince - Lấy danh sách wards theo province
 func (u *LocationUsecase) ListWardsByProvince(ctx context.Context, req *dto.ListWardsByProvinceRequest) (*dto.ListWardsResponse, error) {
 	page := 1

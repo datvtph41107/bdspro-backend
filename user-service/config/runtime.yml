@@ -17,6 +17,8 @@ rpc:
     address: "localhost:8208"
   crm:
     address: "localhost:8206"
+  tqd:
+    address: "localhost:8219"
 
 server:
   name: user-service

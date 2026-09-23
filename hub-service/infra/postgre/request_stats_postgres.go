@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	_db "common/db"
@@ -24,14 +26,80 @@ func (r *RequestStatsPostgres) FlushCounts(ctx context.Context, logs []*domain.R
 	if len(logs) == 0 {
 		return nil
 	}
-	return r.db.GetDB(ctx).WithContext(ctx).CreateInBatches(logs, 100).Error
+	db := r.db.GetDB(ctx).WithContext(ctx)
+	const batchSize = 100
+	for i := 0; i < len(logs); i += batchSize {
+		end := i + batchSize
+		if end > len(logs) {
+			end = len(logs)
+		}
+		batch := logs[i:end]
+		placeholders := make([]string, 0, len(batch))
+		args := make([]interface{}, 0, len(batch)*7)
+		for _, item := range batch {
+			placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?)")
+			args = append(args,
+				item.Method,
+				item.Path,
+				item.Service,
+				item.StatusCode,
+				item.Count,
+				item.Timestamp,
+				item.BucketHour,
+			)
+		}
+		sql := fmt.Sprintf(`
+			INSERT INTO request_stats_log (method, path, service, status_code, count, timestamp, bucket_hour)
+			VALUES %s
+			ON CONFLICT (method, path, service, status_code, bucket_hour)
+			DO UPDATE SET
+				count = request_stats_log.count + EXCLUDED.count,
+				"timestamp" = EXCLUDED."timestamp"
+		`, strings.Join(placeholders, ", "))
+		if err := db.Exec(sql, args...).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RequestStatsPostgres) FlushUserInteractions(ctx context.Context, logs []*domain.UserInteractionLog) error {
 	if len(logs) == 0 {
 		return nil
 	}
-	return r.db.GetDB(ctx).WithContext(ctx).CreateInBatches(logs, 100).Error
+	db := r.db.GetDB(ctx).WithContext(ctx)
+	const batchSize = 100
+	for i := 0; i < len(logs); i += batchSize {
+		end := i + batchSize
+		if end > len(logs) {
+			end = len(logs)
+		}
+		batch := logs[i:end]
+		placeholders := make([]string, 0, len(batch))
+		args := make([]interface{}, 0, len(batch)*5)
+		for _, item := range batch {
+			placeholders = append(placeholders, "(?, ?, ?, ?, ?)")
+			args = append(args,
+				item.ProfileID,
+				item.OrganizationID,
+				item.Count,
+				item.Timestamp,
+				item.BucketHour,
+			)
+		}
+		sql := fmt.Sprintf(`
+			INSERT INTO user_interaction_log (profile_id, organization_id, count, timestamp, bucket_hour)
+			VALUES %s
+			ON CONFLICT (profile_id, organization_id, bucket_hour)
+			DO UPDATE SET
+				count = user_interaction_log.count + EXCLUDED.count,
+				"timestamp" = EXCLUDED."timestamp"
+		`, strings.Join(placeholders, ", "))
+		if err := db.Exec(sql, args...).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *RequestStatsPostgres) FlushAuditLogs(ctx context.Context, logs []*domain.RequestAuditLog) error {

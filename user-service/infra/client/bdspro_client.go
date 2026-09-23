@@ -68,3 +68,15 @@ func (c *BdsproClient) DeleteProduct(ctx context.Context, productID uint64) erro
 	_, err := c.Client.DeleteProduct(ctx, &bdspropb.IdRequest{Id: productID})
 	return err
 }
+
+// ListMyProducts lấy danh sách sản phẩm của profile hiện tại (ProductMe).
+func (c *BdsproClient) ListMyProducts(ctx context.Context, page, size uint32) (*bdspropb.SearchResponse, error) {
+	if c.BdsproGrpcClient == nil || c.Client == nil {
+		return nil, errors.New("bdspro grpc client not available")
+	}
+	return c.Client.ProductMe(ctx, &sharepb.SyncRequest{
+		Page:      page,
+		Size:      size,
+		Timestamp: 0,
+	})
+}

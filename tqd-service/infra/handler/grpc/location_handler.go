@@ -153,6 +153,21 @@ func (h *LocationHandler) ListProvinces(ctx context.Context, _ *tqdpb.ListProvin
 	return h.mapper.ToProtoListProvincesResponse(response), nil
 }
 
+// ListWards exposes the national ward catalog with pagination (pageSize max 300).
+func (h *LocationHandler) ListWards(ctx context.Context, req *tqdpb.ListWardsRequest) (*tqdpb.ClientListWardsResponse, error) {
+	if err := h.validateListWards(req); err != nil {
+		return nil, err
+	}
+
+	dtoReq := h.mapper.FromProtoListWardsRequest(req)
+	resp, err := h.locationUsecase.ListWards(ctx, dtoReq)
+	if err != nil {
+		return nil, h.handleError(err)
+	}
+
+	return h.mapper.ToProtoClientListWardsResponse(resp), nil
+}
+
 // GetWard - Lấy thông tin chi tiết của ward
 func (h *LocationHandler) GetWard(ctx context.Context, req *tqdpb.GetWardRequest) (*tqdpb.Ward, error) {
 	key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyTQDLocationSearch, 0)
@@ -639,6 +654,16 @@ func (h *LocationHandler) validateGetProvince(req *tqdpb.GetProvinceRequest) err
 func (h *LocationHandler) validateGetWard(req *tqdpb.GetWardRequest) error {
 	if req.Id == 0 && (req.Code == nil || *req.Code == "") {
 		return status.Error(codes.InvalidArgument, "either id or code must be provided")
+	}
+	return nil
+}
+
+func (h *LocationHandler) validateListWards(req *tqdpb.ListWardsRequest) error {
+	if req == nil {
+		return nil
+	}
+	if req.Page != nil && *req.Page < 1 {
+		return status.Error(codes.InvalidArgument, "page must be >= 1")
 	}
 	return nil
 }

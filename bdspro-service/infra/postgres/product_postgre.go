@@ -463,7 +463,7 @@ func (r *GormUserProductRepo) GetByIDContext(ctx context.Context, id uint64) (*d
 		// Preload("Amenities", "deleted_at IS NULL").
 		Preload("Apartment", "deleted_at IS NULL").
 		// Preload("MediaList", "deleted_at IS NULL").
-		// Preload("HouseInfo", "deleted_at IS NULL").
+		Preload("HouseInfo", "deleted_at IS NULL").
 		// Preload("Project", "deleted_at IS NULL").
 		// Preload("CreatedUser").
 		// Preload("UpdatedUser").
@@ -1143,9 +1143,11 @@ func (r *GormUserProductRepo) GetDetailByIds(ctx context.Context, ids []uint64) 
 	if err := r.DB.WithContext(ctx).
 		Preload("Price").
 		Preload("MediaList", "deleted_at IS NULL").
+		Preload("HouseInfo", "deleted_at IS NULL").
 		Preload("Property", "deleted_at IS NULL").
 		Preload("Property.PropertyInfo", "deleted_at IS NULL").
 		Preload("Property.PropertyInfo.Avatar", "deleted_at IS NULL").
+		Preload("Property.BuildingInfo").
 		Preload("Province", "deleted_at IS NULL").
 		// Preload("District", "deleted_at IS NULL").
 		Preload("Ward", "deleted_at IS NULL").

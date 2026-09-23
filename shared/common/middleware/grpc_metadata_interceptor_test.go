@@ -860,6 +860,46 @@ func TestParseGrpcMetadataAuditMarksLegacyActorUnverified(t *testing.T) {
 	}
 }
 
+func TestGrpcClientMetadataForwardsLegacyActorWhenInboundUnverified(t *testing.T) {
+	t.Parallel()
+
+	cfg := _rpc.TransportConfig{}
+	incoming := metadata.NewIncomingContext(
+		context.Background(),
+		metadata.Pairs(_rpc.ProfileIDMetadataKey, "42"),
+	)
+
+	var handlerCtx context.Context
+	_, err := parseGrpcMetadataContextMiddlewareWithTrust(
+		cfg,
+		incoming,
+		nil,
+		&grpc.UnaryServerInfo{FullMethod: "/userpb.ProfileService/SetDemoMode"},
+		func(ctx context.Context, req interface{}) (interface{}, error) {
+			handlerCtx = ctx
+			return nil, nil
+		},
+	)
+	if err != nil {
+		t.Fatalf("middleware error = %v", err)
+	}
+	if handlerCtx == nil {
+		t.Fatal("handler was not called")
+	}
+
+	md := GrpcClientMetadataFromContext(handlerCtx)
+	if got := md.Get(_rpc.ProfileIDMetadataKey); len(got) != 1 || got[0] != "42" {
+		t.Fatalf("profile metadata = %v, want [42]", got)
+	}
+	caller, ok, err := _rpc.CallerFromMetadata(md)
+	if err != nil || !ok {
+		t.Fatalf("caller metadata = %#v ok=%v err=%v", caller, ok, err)
+	}
+	if caller.Kind != _identity.CallerUser {
+		t.Fatalf("caller kind = %v, want user", caller.Kind)
+	}
+}
+
 func TestParseGrpcMetadataEnforceRejectsUnsignedDirectAnonymous(t *testing.T) {
 	cfg := _rpc.TransportConfig{
 		ServiceAssertion: _rpc.ServiceAssertionConfig{

@@ -22,6 +22,7 @@ type Runtime struct {
 	Service       ServiceRuntime      `yaml:"service"`
 	JWT           JWTRuntime          `yaml:"jwt"`
 	HTTP          HTTPRuntime         `yaml:"http"`
+	RequestStats  RequestStatsRuntime `yaml:"request_stats"`
 	RPCTransport  rpc.TransportConfig `yaml:"-"`
 }
 
@@ -46,6 +47,14 @@ type JWTRuntime struct {
 // HTTPRuntime contains Gateway-owned HTTP edge policy.
 type HTTPRuntime struct {
 	AllowedOrigins []string `yaml:"allowed_origins"`
+}
+
+// RequestStatsRuntime configures fire-and-forget request audit/stats collection.
+// SpecURLs are recorded as individual audit rows (no count aggregation) in hub.
+// IgnorePrefixes are merged with built-in dashboard/stats skips.
+type RequestStatsRuntime struct {
+	SpecURLs       []string `yaml:"spec_urls"`
+	IgnorePrefixes []string `yaml:"ignore_prefixes"`
 }
 
 // LoadRuntime loads the caller-owned typed Gateway runtime without installing

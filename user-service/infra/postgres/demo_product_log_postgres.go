@@ -39,6 +39,15 @@ func (r *DemoProductLogPostgres) DeleteByProfileID(ctx context.Context, profileI
 		Delete(&user.DemoProductLog{}).Error
 }
 
+func (r *DemoProductLogPostgres) DeleteByProfileIDAndProductIDs(ctx context.Context, profileID uint64, productIDs []uint64) error {
+	if len(productIDs) == 0 {
+		return nil
+	}
+	return r.DB.WithContext(ctx).
+		Where("profile_id = ? AND product_id IN ?", profileID, productIDs).
+		Delete(&user.DemoProductLog{}).Error
+}
+
 func (r *DemoProductLogPostgres) CreateContactBatch(ctx context.Context, logs []*user.DemoContactLog) error {
 	if len(logs) == 0 {
 		return nil
@@ -59,5 +68,14 @@ func (r *DemoProductLogPostgres) ListContactIDsByProfileID(ctx context.Context, 
 func (r *DemoProductLogPostgres) DeleteContactsByProfileID(ctx context.Context, profileID uint64) error {
 	return r.DB.WithContext(ctx).
 		Where("profile_id = ?", profileID).
+		Delete(&user.DemoContactLog{}).Error
+}
+
+func (r *DemoProductLogPostgres) DeleteContactsByProfileIDAndContactIDs(ctx context.Context, profileID uint64, contactIDs []uint64) error {
+	if len(contactIDs) == 0 {
+		return nil
+	}
+	return r.DB.WithContext(ctx).
+		Where("profile_id = ? AND contact_id IN ?", profileID, contactIDs).
 		Delete(&user.DemoContactLog{}).Error
 }

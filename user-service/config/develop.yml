@@ -17,6 +17,8 @@ rpc:
     address: "chat:8208"
   crm:
     address: "crm:8206"
+  tqd:
+    address: "tqd:8219"
 
 server:
   name: user-service

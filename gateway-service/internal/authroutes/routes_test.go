@@ -127,3 +127,13 @@ func TestProvinceCatalogIsPublicReadOnly(t *testing.T) {
 		assert.False(t, _httpauth.MatchRequest(route, "GET", "/v2/tqd/client/provinces/anything"))
 	}
 }
+
+func TestWardCatalogIsPublicReadOnly(t *testing.T) {
+	routes := AuthenticationRoutes()
+	assert.Contains(t, routes.Public, _httpauth.ExactMethod("GET", "/v2/tqd/client/wards"))
+
+	for _, route := range routes.Public {
+		assert.False(t, _httpauth.MatchRequest(route, "POST", "/v2/tqd/client/wards"))
+		assert.False(t, _httpauth.MatchRequest(route, "GET", "/v2/tqd/client/wards/anything"))
+	}
+}

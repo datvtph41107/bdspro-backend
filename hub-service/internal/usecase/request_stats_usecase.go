@@ -31,9 +31,9 @@ type userInteractionKey struct {
 }
 
 // RequestStatsUsecase buffers gateway request increments in-process and flushes
-// to DB every 10s (same pattern as seo_count). When profileId > 0 (JWT), also
-// buffers user interaction counts. Spec URLs (is_spec_audit) are stored as
-// individual audit rows without count aggregation.
+// to DB every 10s. Flush upserts theo hour: cùng method/path/service/status trong
+// giờ hiện tại thì tăng count và cập nhật timestamp = lần flush gần nhất; giờ
+// mới thì INSERT. Spec URLs (is_spec_audit) vẫn ghi từng lần (audit).
 type RequestStatsUsecase struct {
 	repo       repo.IRequestStatsRepo
 	userClient iprovider.IUserClient
@@ -134,7 +134,9 @@ func (u *RequestStatsUsecase) flush() {
 	u.audits = make([]*domain.RequestAuditLog, 0, len(auditSnapshot))
 	u.mu.Unlock()
 
+	// timestamp = lần flush gần nhất; bucket_hour = khóa giờ (chỉ INSERT khi giờ mới).
 	now := u.now().UTC()
+	bucketHour := now.Truncate(time.Hour)
 	flushFailed := false
 
 	if len(snapshot) > 0 && u.repo != nil {
@@ -150,6 +152,7 @@ func (u *RequestStatsUsecase) flush() {
 				StatusCode: key.StatusCode,
 				Count:      count,
 				Timestamp:  now,
+				BucketHour: bucketHour,
 			})
 		}
 		if len(logs) > 0 {
@@ -176,6 +179,7 @@ func (u *RequestStatsUsecase) flush() {
 				OrganizationID: key.OrganizationID,
 				Count:          count,
 				Timestamp:      now,
+				BucketHour:     bucketHour,
 			})
 		}
 		if len(logs) > 0 {
