@@ -251,6 +251,23 @@ func (r *RedisService) Get(key string) (string, error) {
 	return val, err
 }
 
+// MGet lấy nhiều key. Redis down → errRedisUnavailable ngay, không dial timeout.
+func (r *RedisService) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	if !r.isConnected() {
+		return nil, errRedisUnavailable
+	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	vals, err := r.Client.MGet(ctx, keys...).Result()
+	if err != nil {
+		fmt.Printf("Redis mget failed: %v\n", err)
+		r.markDisconnected()
+		return nil, err
+	}
+	return vals, nil
+}
+
 // Delete xóa một key khỏi Redis
 func (r *RedisService) Delete(key string) error {
 	if !r.isConnected() {

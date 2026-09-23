@@ -3,7 +3,9 @@ package handler
 import (
 	_routes "common/routes"
 	"context"
+	"log"
 	"net/http"
+	"strings"
 	authpb "pb/types/auth"
 	"user/infra/oauth"
 	"user/internal/dto"
@@ -161,7 +163,7 @@ func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCal
 	case "zalo":
 		result, err = h.ZaloAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.State, otpReq)
 	case "google":
-		result, err = h.GoogleAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.State, otpReq)
+		result, err = h.GoogleAuthService.HandleCallbackWithDeviceInfoAndRedirect(ctx, req.Code, req.State, req.GetRedirectUri(), otpReq)
 	case "facebook":
 		result, err = h.FacebookAuthService.HandleCallbackWithDeviceInfo(ctx, req.Code, req.Platform, req.State, otpReq)
 	default:
@@ -169,7 +171,18 @@ func (h *OAuthHandler) HandleCallback(ctx context.Context, req *authpb.HandleCal
 	}
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Lỗi xử lý callback: %v", err)
+		log.Printf("[OAuth.HandleCallback] provider=%s failed: %v", req.Provider, err)
+		msg := err.Error()
+		switch {
+		case strings.Contains(msg, "redirect_uri_mismatch"):
+			return nil, status.Errorf(codes.InvalidArgument, "%s", msg)
+		case strings.Contains(msg, "google oauth token exchange failed"):
+			return nil, status.Errorf(codes.InvalidArgument, "%s", msg)
+		case strings.Contains(msg, "Platform là bắt buộc"), strings.Contains(msg, "Version là bắt buộc"):
+			return nil, status.Errorf(codes.InvalidArgument, "%s", msg)
+		default:
+			return nil, status.Errorf(codes.Internal, "Lỗi xử lý callback: %v", err)
+		}
 	}
 
 	return &authpb.HandleCallbackResponse{

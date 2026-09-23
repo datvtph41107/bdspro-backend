@@ -94,6 +94,7 @@ type ProductRepo interface {
 	CountByAssetID(assetID uint64) (int64, error)
 	UpdateAssetID(c context.Context, id uint64, assetID uint64) error
 	UpdateImageID(c context.Context, id uint64, imageID *uint64) error
+	UpdatePropertyID(c context.Context, id uint64, propertyID uint64) error
 	GetByIDContext(ctx context.Context, id uint64) (*domain.Product, error)
 	// CancelDeposite(ctx context.Context, id uint64) error
 

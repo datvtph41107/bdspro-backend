@@ -62,8 +62,10 @@ type ProductSaveRequest struct {
 	PrivateData       *domain.ProductPrivate  `json:"productPrivate"`
 	GoogleMapLink     string                  `json:"googleMapLink"`
 	SourceType        uint32                  `json:"sourceType"`
+	SourceStatus      enums.ESourceStatus     `json:"sourceStatus"`
 	SourceContactId   *uint64                 `json:"sourceContactId,omitempty"`
 	SourceContactNote string                  `json:"sourceContactNote,omitempty"`
+	SourceTime        *time.Time              `json:"sourceTime,omitempty"`
 	PostCreate        *PostSaveRequest        `json:"post"`
 	AssetCreate       *AssetCreateWithProduct `json:"asset"`
 	SaleVisibility    enums.EVisibility       `json:"saleVisibility"`
@@ -121,6 +123,7 @@ type UpdateProductRequest struct {
 	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
 	Priority          enums.EPriority     `json:"priority"`
 	SourceTagIDs      []uint64            `json:"sourceTagIds"`
+	SourceTime        *time.Time          `json:"sourceTime,omitempty"`
 
 	// dự án
 	ProjectID         *uint64 `json:"projectId"`
@@ -142,6 +145,7 @@ type UpdateProductSourceRequest struct {
 	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
 	Priority          enums.EPriority     `json:"priority"`
 	SourceTagIDs      []uint64            `json:"sourceTagIds"`
+	SourceTime        *time.Time          `json:"sourceTime,omitempty"`
 	// AssignedUserID    *uint64           `json:"assignedUserId,omitempty"`
 }
 
@@ -354,6 +358,11 @@ type ProductListResponse struct {
 	SaleVisibility  uint32              `gorm:"column:sale_visibility" json:"saleVisibility"`
 	RentVisibility  uint32              `gorm:"column:rent_visibility" json:"rentVisibility"`
 	SourceType      uint32              `gorm:"column:source_type" json:"sourceType"`
+	SourceStatus    uint32              `gorm:"column:source_status" json:"sourceStatus"`
+	Priority        uint32              `gorm:"column:priority" json:"priority"`
+	SourceContactId *uint64             `gorm:"column:source_contact_id" json:"sourceContactId,omitempty"`
+	SourceContactNote string            `gorm:"column:source_contact_note" json:"sourceContactNote,omitempty"`
+	SourceTime      *time.Time          `gorm:"column:source_time" json:"sourceTime,omitempty"`
 	Price           domain.ProductPrice `gorm:"-" json:"price"`
 
 	PropertyTypeName string `gorm:"column:property_type_name" json:"propertyTypeName"`

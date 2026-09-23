@@ -7,11 +7,15 @@ const (
 	SourceTypeBroker ESourceType = 20
 	SourceTypeFloor  ESourceType = 30
 	SourceTypeOther  ESourceType = 40
+
+	SourceTypeCustomer ESourceType = 50
 )
 
 var SourceTypeMap = map[ESourceType]string{
-	SourceTypeOwner:  "Chủ đất",
-	SourceTypeBroker: "Môi giới",
-	SourceTypeFloor:  "Sàn",
+	SourceTypeOwner:  "Chủ nhà trực tiếp",
+	SourceTypeBroker: "Môi giới đối tác",
+	SourceTypeFloor:  "Sàn nội bộ",
 	SourceTypeOther:  "Khác",
+
+	SourceTypeCustomer: "Khách giới thiệu",
 }

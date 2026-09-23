@@ -78,9 +78,9 @@ func NewProfileUsecase(ProfileRepo repo.IProfileRepo,
 
 func (s *ProfileUsecase) GetInfoMe(c context.Context) (*user.UserProfileEntity, error) {
 	id := _utils.GetProfileIdWithContext(c)
-	userInfo, _ := s.ProfileRepo.GetByProfileID(id)
-	if userInfo == nil {
-		return nil, _errors.ReturnError(400, "Người dùng không tồn tại")
+	userInfo, err := s.ProfileRepo.GetByProfileID(id)
+	if err != nil || userInfo == nil {
+		return nil, _errors.ReturnError(404, "Người dùng không tồn tại")
 	}
 
 	professions, _ := s.ProfessionRepo.ListItemByProfileID(c, id)
@@ -917,6 +917,14 @@ func (s *ProfileUsecase) UpdatePrivacySetting(ctx context.Context, req *dto.Prof
 	}
 
 	return nil
+}
+
+func (s *ProfileUsecase) SetDemoMode(ctx context.Context, enable bool) error {
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return _errors.ReturnError(401, "profileId không hợp lệ")
+	}
+	return s.ProfileRepo.UpdateDemoMode(ctx, profileID, enable)
 }
 
 // QuickSetup thiết lập nhanh vai trò, khu vực và mục đích sử dụng cho hồ sơ người dùng

@@ -18,7 +18,7 @@ eureka:
 
 database:
   # Workstation overlay: config/local.yml. Deploy: CONFIG_FILE / QHPRO_CONFIG_FILE.
-  dsn: host=14.225.210.29 user=db_tqd password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
+  dsn: host=103.172.239.89 user=tqd_admin password=tqd_admin.1905 dbname=db_tqd port=5433 sslmode=disable
 key:
   jwt: key-generate-jwt-token-authentication
 

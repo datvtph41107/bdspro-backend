@@ -203,13 +203,14 @@ message ProductResponse {
     optional MediaItem avatar = 80;
     optional PropertyResponse property = 81;
 
-    // SOUURCE UPDATE RESPONE
-    uint32 sourceStatus = 82;  
+    // SOURCE UPDATE RESPONSE
+    sharepb.EnumItem sourceStatus = 82;
     uint32 priority = 83;  
     optional uint64 propertyId = 84;
     string sourceTypeName = 85;
     optional uint64 createdBy = 86;
     optional string deletedAt = 87;
+    string sourceTime = 88;
 }
 
 message PropertyLandInfo {

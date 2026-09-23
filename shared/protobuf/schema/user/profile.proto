@@ -92,6 +92,14 @@ service ProfileService {
             get: "/v2/user/status-online/{id}"
         };
     }
+
+    // Bật/tắt chế độ demo trên profile hiện tại
+    rpc SetDemoMode(DemoModeRequest) returns (sharepb.Empty) {
+        option (google.api.http) = {
+            post: "/v2/user/demo-mode"
+            body: "*"
+        };
+    }
 }
 
 service TagService {
@@ -207,6 +215,7 @@ message ProfilePublicInfo {
     repeated uint32 viewRoles = 51;
     string workplace = 52;
     string roleTitle = 53;
+    bool demo = 54;
 }
 
 message RateStats {
@@ -450,6 +459,10 @@ message StatusOnlineResponse {
     uint64 profileId = 1; // Profile ID của user
     bool online = 2;      // Trạng thái online (true) hoặc offline (false)
     optional string offAt = 3; // Thời gian offline (nếu offline)
+}
+
+message DemoModeRequest {
+    bool enable = 1;
 }
 
 

@@ -764,7 +764,7 @@ func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.
 
 	vals, err := s.SyncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.InternalServerException("error: %v", err.Error())
+		return nil, _errors.InternalServerException(err.Error())
 	}
 
 	names := []string{
@@ -1409,16 +1409,14 @@ func (h *ProductHandler) ApplyPriceUpdate(
 func (h *ProductHandler) UpdateProductSource(
 	ctx context.Context,
 	req *bdspropb.UpdateProductSourceRequest,
-) (*bdspropb.Response, error) {
+) (*bdspropb.ProductResponse, error) {
 	dtoReq := h.ProductMapper.PbToUpdateProductSourceDTO(req)
-	if err := h.UC.UpdateProductSource(ctx, dtoReq); err != nil {
+	product, err := h.UC.UpdateProductSource(ctx, dtoReq)
+	if err != nil {
 		return nil, err
 	}
 
-	return &bdspropb.Response{
-		Id:      req.ProductId,
-		Message: "successfully",
-	}, nil
+	return h.ProductMapper.MapDetailProductPb(ctx, product), nil
 }
 
 func (s *ProductHandler) GetPriceHistory(

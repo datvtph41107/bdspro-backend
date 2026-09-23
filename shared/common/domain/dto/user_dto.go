@@ -81,6 +81,7 @@ type UserV3DTO struct {
 	UpdateTags           bool          `json:"updateTags"`
 	Tags                 []ItemDTO     `json:"tags"`
 	SignatureVisible     bool          `json:"signatureVisible"`
+	Demo                 bool          `json:"demo"`
 	ProvinceID           *uint64       `json:"provinceId"`
 	WardID               *uint64       `json:"wardId"`
 	Gender               uint32        `json:"gender"`

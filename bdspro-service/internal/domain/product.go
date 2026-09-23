@@ -48,6 +48,7 @@ type Product struct {
 	SourceType        enums.ESourceType   `json:"sourceType,omitempty"`
 	SourceStatus      enums.ESourceStatus `json:"sourceStatus"`
 	SourceContactId   *uint64             `gorm:"type:int8" json:"sourceContactId,omitempty"`
+	SourceTime        *time.Time          `gorm:"column:source_time" json:"sourceTime,omitempty"`
 	Priority          enums.EPriority     `gorm:"type:smallint;default:20" json:"priority"`
 	SourceContactNote string              `gorm:"type:text" json:"sourceContactNote,omitempty"`
 

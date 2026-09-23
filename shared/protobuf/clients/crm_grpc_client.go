@@ -16,13 +16,15 @@ import (
 
 type CrmGrpcClient struct {
 	crmpb.CrmInternalServiceClient
-	FriendServiceClient crmpb.FriendServiceClient
+	FriendServiceClient  crmpb.FriendServiceClient
+	ContactServiceClient crmpb.ContactServiceClient
 }
 
 func BindCrmGrpcClient(conn grpc.ClientConnInterface) *CrmGrpcClient {
 	return &CrmGrpcClient{
 		CrmInternalServiceClient: crmpb.NewCrmInternalServiceClient(conn),
 		FriendServiceClient:      crmpb.NewFriendServiceClient(conn),
+		ContactServiceClient:     crmpb.NewContactServiceClient(conn),
 	}
 }
 
@@ -264,4 +266,72 @@ func (c *CrmGrpcClient) GetContactByOriginId(ctx context.Context, originId uint6
 		return nil, err
 	}
 	return resp, nil
+}
+
+// CreateContact tạo liên hệ thuộc profile hiện tại; trả originId (sourceContactId) và contactId.
+func (c *CrmGrpcClient) CreateContact(ctx context.Context, fullName, phone, email, avatar string) (uint64, uint64, error) {
+	if c.ContactServiceClient == nil {
+		return 0, 0, errors.New("crm contact service not initialized")
+	}
+
+	resp, err := c.ContactServiceClient.Create(ctx, &crmpb.ContactSaveDTO{
+		FullName: fullName,
+		Phone:    phone,
+		Email:    email,
+		Avatar:   avatar,
+		OwnerOf:  10, // EOwnerOfMember
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var contactID uint64
+	if resp != nil {
+		contactID = resp.Id
+	}
+
+	if resp != nil && resp.ProfileId != nil && *resp.ProfileId > 0 {
+		originID, originErr := c.GetOriginID(ctx, *resp.ProfileId)
+		if originErr != nil {
+			return 0, contactID, originErr
+		}
+		return originID, contactID, nil
+	}
+
+	return 0, contactID, nil
+}
+
+// DeleteContact soft-delete liên hệ theo id.
+func (c *CrmGrpcClient) DeleteContact(ctx context.Context, contactID uint64) error {
+	if c.ContactServiceClient == nil {
+		return errors.New("crm contact service not initialized")
+	}
+	if contactID == 0 {
+		return nil
+	}
+	_, err := c.ContactServiceClient.Delete(ctx, &sharepb.IdRequest{Id: contactID})
+	return err
+}
+
+// FindContactIDByPhone tìm contact thuộc owner hiện tại theo SĐT.
+func (c *CrmGrpcClient) FindContactIDByPhone(ctx context.Context, phone string) (uint64, error) {
+	if c.ContactServiceClient == nil {
+		return 0, errors.New("crm contact service not initialized")
+	}
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 || phone == "" {
+		return 0, nil
+	}
+	resp, err := c.ContactServiceClient.CheckPhone(ctx, &crmpb.CheckPhoneRequest{
+		Phone:   phone,
+		OwnerOf: sharepb.OwnerOf(10), // EOwnerOfMember
+		OwnerId: profileID,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if resp == nil || resp.Id == 0 {
+		return 0, nil
+	}
+	return resp.Id, nil
 }

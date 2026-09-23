@@ -30,7 +30,9 @@ func TimestampToTime(t *timestamppb.Timestamp) *time.Time {
 
 func FormatTimeToString(t *time.Time) string {
 	if t != nil {
-		return t.Format("2006-01-02T15:04:05.000+00:00")
+		// In(time.Local): TIMESTAMPTZ từ DB thường là UTC; format theo Local (+07)
+		// để offset thật (Z07:00), không hardcode literal "+00:00".
+		return t.In(time.Local).Format(RFC3339Milli)
 	}
 	return ""
 }
@@ -43,18 +45,28 @@ func ParseStringToTime(value string) *time.Time {
 		return nil
 	}
 
-	layouts := []string{
+	// Offset có trong chuỗi → parse tuyệt đối.
+	withZone := []string{
 		time.RFC3339Nano,
 		time.RFC3339,
 		RFC3339Milli,
-		"2006-01-02T15:04:05.000+00:00",
+	}
+	for _, layout := range withZone {
+		t, err := time.Parse(layout, value)
+		if err == nil {
+			return &t
+		}
+	}
+
+	// Không có offset → hiểu theo time.Local (không mặc định UTC).
+	localLayouts := []string{
 		"2006-01-02T15:04:05.000",
 		"2006-01-02T15:04:05",
 		TimeFormat,
 		"2006-01-02",
 	}
-	for _, layout := range layouts {
-		t, err := time.Parse(layout, value)
+	for _, layout := range localLayouts {
+		t, err := time.ParseInLocation(layout, value, time.Local)
 		if err == nil {
 			return &t
 		}

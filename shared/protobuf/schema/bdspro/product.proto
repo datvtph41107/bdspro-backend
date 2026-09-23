@@ -271,7 +271,7 @@ service ProductService {
     };
   };
 
-   rpc UpdateProductSource(UpdateProductSourceRequest) returns (Response) {
+   rpc UpdateProductSource(UpdateProductSourceRequest) returns (ProductResponse) {
       option (google.api.http) = {
         put: "/v2/bdspro/product/{productId}/source"
         body: "*"
@@ -429,6 +429,7 @@ message UpdateProductRequest {
   uint32 sourceStatus = 28; // ESourceStatus
   uint32 priority = 29; // EPriority
   repeated uint64 sourceTagIds = 30;
+  string sourceTime = 35;
   
   // Dự án
   optional uint64 projectId = 31;
@@ -469,6 +470,7 @@ message UpdateProductSourceRequest {
    uint32 sourceStatus = 5; 
   uint32 priority = 6;
   repeated uint64 sourceTagIds = 7;
+  string sourceTime = 8;
   // uint64 assignedUserId = 5;
 }
 
@@ -756,6 +758,8 @@ message ProductSaveRequest {
 	optional uint64 sourceContactId = 32;
 	string sourceContactNote = 33;
   string certificateHouseNote = 34;
+  string sourceTime = 35;
+  uint32 sourceStatus = 36; // ESourceStatus: 10/20/30
 }
 
 

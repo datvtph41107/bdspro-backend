@@ -153,6 +153,7 @@ message UserV3Proto {
     string roleTitle = 50;
     // sessionK — deprecated; dùng POST /v2/user/profile/session → sessionEncryptKey.
     string sessionK = 51;
+    bool demo = 52;
 }
 
 message OTPV3Proto {

@@ -331,11 +331,30 @@ func (r *PostgreContact) GetListContactByProductId(
 }
 
 func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	r.fillOriginProfileID(c, entity)
 	result := r.GetDB(c).Create(entity)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return entity, nil
+}
+
+// fillOriginProfileID gắn origin_profile_id theo profile_id nếu chưa có (dùng cho sourceContactId).
+func (r *PostgreContact) fillOriginProfileID(c context.Context, entity *domain.ContactEntity) {
+	if entity == nil || entity.OriginProfileID != nil || entity.ProfileID == nil || *entity.ProfileID == 0 {
+		return
+	}
+	var originID uint64
+	err := r.GetDB(c).Raw(`
+		SELECT origin_id
+		FROM origin_profile
+		WHERE owner_id = ? AND owner_of = 10 AND deleted_at IS NULL
+		LIMIT 1
+	`, *entity.ProfileID).Scan(&originID).Error
+	if err != nil || originID == 0 {
+		return
+	}
+	entity.OriginProfileID = &originID
 }
 
 func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
@@ -577,6 +596,7 @@ func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uin
 		OwnerID:   ownerId,
 		OwnerOf:   ownerType,
 	}
+	r.fillOriginProfileID(c, newContact)
 
 	err = r.GetDB(c).Create(newContact).Error
 	if err != nil {

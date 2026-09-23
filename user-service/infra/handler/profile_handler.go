@@ -9,13 +9,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strconv"
 	"time"
 
+	"user/data/demo"
 	"user/infra/client"
 	"user/infra/mapper"
+	"user/internal/domain/user"
 	"user/internal/interface/repo"
 	"user/internal/job"
 	organizationusecase "user/internal/usecase/organization"
@@ -29,6 +32,7 @@ import (
 type GrpcProfileService struct {
 	userpb.UnimplementedProfileServiceServer
 	ProfileRepo           repo.IProfileRepo
+	DemoProductLogRepo    repo.IDemoProductLogRepo
 	AdminUsecase          *usecases.AdminUsecase
 	ProfileUsecase        *usecases.ProfileUsecase
 	KYCUsecase            usecases.IKYCUsecase
@@ -48,6 +52,7 @@ type GrpcProfileService struct {
 // @bind: internal/usecases.IKYCUsecase
 func NewGrpcProfileService(
 	profileRepo repo.IProfileRepo,
+	demoProductLogRepo repo.IDemoProductLogRepo,
 	adminUsecase *usecases.AdminUsecase,
 	profileUsecase *usecases.ProfileUsecase,
 	kycUsecase usecases.IKYCUsecase,
@@ -63,6 +68,7 @@ func NewGrpcProfileService(
 ) *GrpcProfileService {
 	return &GrpcProfileService{
 		ProfileRepo:           profileRepo,
+		DemoProductLogRepo:    demoProductLogRepo,
 		ProfileUsecase:        profileUsecase,
 		AdminUsecase:          adminUsecase,
 		KYCUsecase:            kycUsecase,
@@ -275,6 +281,9 @@ func (s *GrpcProfileService) GetProfileInfoV3(ctx context.Context, req *sharepb.
 func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.Empty) (*sharepb.UserV3Proto, error) {
 	result, err := s.ProfileUsecase.GetInfoMe(ctx)
 	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get profile info: %v", err)
 	}
 
@@ -565,3 +574,266 @@ func (s *GrpcProfileService) GetStatusOnline(ctx context.Context, req *userpb.Id
 	}
 	return result, nil
 }
+
+// @Summary Bật/tắt chế độ demo
+// @Description Cập nhật trường demo trên profile hiện tại; khi bật sẽ tạo sẵn sản phẩm demo qua bdspro
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body userpb.DemoModeRequest true "enable true/false"
+// @Success 200 {object} sharepb.Empty
+// @Failure 401 {string} string "Unauthorized"
+// @Router /v2/user/demo-mode [post]
+func (s *GrpcProfileService) SetDemoMode(ctx context.Context, req *userpb.DemoModeRequest) (*sharepb.Empty, error) {
+	enable := req.GetEnable()
+	if enable {
+		if err := s.seedDemoProducts(ctx); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.cleanupDemoProducts(ctx); err != nil {
+			return nil, err
+		}
+	}
+	if err := s.ProfileUsecase.SetDemoMode(ctx, enable); err != nil {
+		return nil, err
+	}
+	return &sharepb.Empty{}, nil
+}
+
+func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
+	if s.BdsproClient == nil {
+		return _errors.ReturnError(500, "bdspro client chưa được cấu hình")
+	}
+	if s.DemoProductLogRepo == nil {
+		return _errors.ReturnError(500, "demo product log repo chưa được cấu hình")
+	}
+
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return _errors.ReturnError(401, "profileId không hợp lệ")
+	}
+
+	existing, err := s.DemoProductLogRepo.ListProductIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if len(existing) > 0 {
+		return nil
+	}
+
+	originIDs, contactIDs, err := s.seedDemoContacts(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if len(contactIDs) > 0 {
+		logs := make([]*user.DemoContactLog, 0, len(contactIDs))
+		for _, contactID := range contactIDs {
+			logs = append(logs, &user.DemoContactLog{
+				ProfileID: profileID,
+				ContactID: contactID,
+			})
+		}
+		if err := s.DemoProductLogRepo.CreateContactBatch(ctx, logs); err != nil {
+			s.bestEffortDeleteContacts(ctx, contactIDs)
+			return err
+		}
+	}
+
+	products, err := demo.LoadDemoProducts()
+	if err != nil {
+		return _errors.ReturnError(500, "không đọc được dữ liệu demo: "+err.Error())
+	}
+
+	medias, err := demo.LoadDemoMedias()
+	if err != nil {
+		return _errors.ReturnError(500, "không đọc được dữ liệu demo media: "+err.Error())
+	}
+
+	// ESourceStatus: 10 Chờ xác minh, 20 Thiết giấy tờ, 30 Đã xác minh số.
+	// Shuffle rồi round-robin để mỗi lần bật demo đều có đủ 3 trạng thái.
+	sourceStatuses := []uint32{10, 20, 30}
+	rand.Shuffle(len(sourceStatuses), func(i, j int) {
+		sourceStatuses[i], sourceStatuses[j] = sourceStatuses[j], sourceStatuses[i]
+	})
+
+	createdIDs := make([]uint64, 0, len(products))
+	for i, product := range products {
+		product.SourceStatus = sourceStatuses[i%len(sourceStatuses)]
+		// sourceTime: ngày hiện tại trừ random 0–100 ngày
+		sourceTime := time.Now().AddDate(0, 0, -rand.Intn(101))
+		product.SourceTime = _utils.FormatTimeToString(&sourceTime)
+		product.MediaItems = demo.MediaItemsForProduct(medias, i)
+		if len(originIDs) > 0 {
+			originID := originIDs[i%len(originIDs)]
+			product.SourceContactId = &originID
+		}
+		resp, err := s.BdsproClient.CreateProduct(ctx, product)
+		if err != nil {
+			s.bestEffortDeleteProducts(ctx, createdIDs)
+			s.bestEffortDeleteContacts(ctx, contactIDs)
+			_ = s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
+			return err
+		}
+		if resp != nil && resp.Id > 0 {
+			createdIDs = append(createdIDs, resp.Id)
+		}
+	}
+
+	logs := make([]*user.DemoProductLog, 0, len(createdIDs))
+	for _, productID := range createdIDs {
+		logs = append(logs, &user.DemoProductLog{
+			ProfileID: profileID,
+			ProductID: productID,
+		})
+	}
+	if err := s.DemoProductLogRepo.CreateBatch(ctx, logs); err != nil {
+		s.bestEffortDeleteProducts(ctx, createdIDs)
+		s.bestEffortDeleteContacts(ctx, contactIDs)
+		_ = s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
+		return err
+	}
+	return nil
+}
+
+// seedDemoContacts tạo liên hệ CRM từ snapshot contacts.json; trả originId + contactId.
+func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfileID uint64) ([]uint64, []uint64, error) {
+	if s.CrmClient == nil {
+		return nil, nil, _errors.ReturnError(500, "crm client chưa được cấu hình")
+	}
+
+	contacts, err := demo.LoadDemoContacts()
+	if err != nil {
+		return nil, nil, _errors.ReturnError(500, "không đọc được dữ liệu demo contacts: "+err.Error())
+	}
+
+	originIDs := make([]uint64, 0, len(contacts))
+	contactIDs := make([]uint64, 0, len(contacts))
+	seenContact := make(map[uint64]struct{}, len(contacts))
+
+	for _, contact := range contacts {
+		if contact.ProfileID == 0 || contact.ProfileID == currentProfileID {
+			continue
+		}
+		if contact.Phone == "" || contact.FullName == "" {
+			continue
+		}
+
+		originID, contactID, err := s.CrmClient.CreateContact(ctx, contact.FullName, contact.Phone, contact.Email, contact.Avatar)
+		if err != nil || contactID == 0 {
+			// Đã tồn tại / lỗi tạo — tìm lại theo SĐT thuộc owner hiện tại.
+			existingID, findErr := s.CrmClient.FindContactIDByPhone(ctx, contact.Phone)
+			if findErr != nil || existingID == 0 {
+				log.Printf("seedDemoContacts skip phone=%s: create=%v find=%v", contact.Phone, err, findErr)
+				continue
+			}
+			contactID = existingID
+			if originID == 0 {
+				originID, _ = s.CrmClient.GetOriginID(ctx, contact.ProfileID)
+			}
+		}
+		if originID == 0 {
+			originID, _ = s.CrmClient.GetOriginID(ctx, contact.ProfileID)
+		}
+		if originID > 0 {
+			originIDs = append(originIDs, originID)
+		}
+		if contactID > 0 {
+			if _, ok := seenContact[contactID]; !ok {
+				seenContact[contactID] = struct{}{}
+				contactIDs = append(contactIDs, contactID)
+			}
+		}
+	}
+	return originIDs, contactIDs, nil
+}
+
+func (s *GrpcProfileService) cleanupDemoProducts(ctx context.Context) error {
+	if s.BdsproClient == nil {
+		return _errors.ReturnError(500, "bdspro client chưa được cấu hình")
+	}
+	if s.DemoProductLogRepo == nil {
+		return _errors.ReturnError(500, "demo product log repo chưa được cấu hình")
+	}
+
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return _errors.ReturnError(401, "profileId không hợp lệ")
+	}
+
+	productIDs, err := s.DemoProductLogRepo.ListProductIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	for _, productID := range productIDs {
+		if err := s.BdsproClient.DeleteProduct(ctx, productID); err != nil {
+			return err
+		}
+	}
+	if err := s.DemoProductLogRepo.DeleteByProfileID(ctx, profileID); err != nil {
+		return err
+	}
+
+	if err := s.cleanupDemoContacts(ctx, profileID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *GrpcProfileService) cleanupDemoContacts(ctx context.Context, profileID uint64) error {
+	if s.CrmClient == nil {
+		return nil
+	}
+
+	contactIDs, err := s.DemoProductLogRepo.ListContactIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	seen := make(map[uint64]struct{}, len(contactIDs))
+	for _, contactID := range contactIDs {
+		seen[contactID] = struct{}{}
+		if err := s.CrmClient.DeleteContact(ctx, contactID); err != nil {
+			log.Printf("cleanupDemoContacts delete id=%d: %v", contactID, err)
+		}
+	}
+
+	// Best-effort: xoá thêm contact demo cũ chưa kịp log (theo SĐT trong contacts.json).
+	contacts, loadErr := demo.LoadDemoContacts()
+	if loadErr == nil {
+		for _, contact := range contacts {
+			if contact.Phone == "" {
+				continue
+			}
+			existingID, findErr := s.CrmClient.FindContactIDByPhone(ctx, contact.Phone)
+			if findErr != nil || existingID == 0 {
+				continue
+			}
+			if _, ok := seen[existingID]; ok {
+				continue
+			}
+			seen[existingID] = struct{}{}
+			if err := s.CrmClient.DeleteContact(ctx, existingID); err != nil {
+				log.Printf("cleanupDemoContacts delete phone=%s id=%d: %v", contact.Phone, existingID, err)
+			}
+		}
+	}
+
+	return s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
+}
+
+func (s *GrpcProfileService) bestEffortDeleteProducts(ctx context.Context, productIDs []uint64) {
+	for _, productID := range productIDs {
+		_ = s.BdsproClient.DeleteProduct(ctx, productID)
+	}
+}
+
+func (s *GrpcProfileService) bestEffortDeleteContacts(ctx context.Context, contactIDs []uint64) {
+	if s.CrmClient == nil {
+		return
+	}
+	for _, contactID := range contactIDs {
+		_ = s.CrmClient.DeleteContact(ctx, contactID)
+	}
+}
+

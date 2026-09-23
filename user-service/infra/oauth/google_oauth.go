@@ -1,18 +1,18 @@
 package oauth
 
 import (
-	_errors "common/errors"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"user/config"
 	"user/internal/domain/auth"
 	"user/internal/domain/user"
 	"user/internal/dto"
-	"user/internal/enums"
 	"user/internal/interface/repo"
 	"user/internal/usecase"
 	usecases "user/internal/usecase/user"
@@ -44,13 +44,15 @@ func NewGoogleAuthService(httpClient *http.Client,
 }
 
 func (g *OAuthGoogle) GetUrlLogin() string {
+	redirectURI := strings.TrimSpace(config.Properties.OAuth.Google.RedirectURI)
+	log.Printf("[OAuthGoogle] GetUrlLogin redirect_uri=%s", redirectURI)
 	return "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + config.Properties.OAuth.Google.ClientID +
-		"&redirect_uri=" + url.QueryEscape(config.Properties.OAuth.Google.RedirectURI) +
+		"&redirect_uri=" + url.QueryEscape(redirectURI) +
 		"&response_type=code&scope=openid%20email%20profile&state=xyz"
 }
 
 func (g *OAuthGoogle) HandleCallback(c *gin.Context, code string, state string) (*dto.AuthLoginResponse, error) {
-	accessToken, err := g.getAccessToken(code)
+	accessToken, err := g.getAccessToken(code, "")
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,17 @@ func (g *OAuthGoogle) HandleCallback(c *gin.Context, code string, state string) 
 }
 
 func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, code string, state string, otpReq *dto.OtpVerifyRequest) (*dto.AuthLoginResponse, error) {
-	accessToken, err := g.getAccessToken(code)
+	return g.HandleCallbackWithDeviceInfoAndRedirect(c, code, state, "", otpReq)
+}
+
+func (g *OAuthGoogle) HandleCallbackWithDeviceInfoAndRedirect(
+	c context.Context,
+	code string,
+	state string,
+	redirectURI string,
+	otpReq *dto.OtpVerifyRequest,
+) (*dto.AuthLoginResponse, error) {
+	accessToken, err := g.getAccessToken(code, redirectURI)
 	if err != nil {
 		return nil, err
 	}
@@ -77,15 +89,17 @@ func (g *OAuthGoogle) HandleCallbackWithDeviceInfo(c context.Context, code strin
 	return g.RegisterOrLogin(c, userInfo, otpReq)
 }
 
-func (g *OAuthGoogle) getAccessToken(code string) (string, error) {
+func (g *OAuthGoogle) getAccessToken(code string, redirectURI string) (string, error) {
+	resolvedRedirect := strings.TrimSpace(redirectURI)
+	if resolvedRedirect == "" {
+		resolvedRedirect = strings.TrimSpace(config.Properties.OAuth.Google.RedirectURI)
+	}
 	data := url.Values{}
 	data.Set("client_id", config.Properties.OAuth.Google.ClientID)
 	data.Set("client_secret", config.Properties.OAuth.Google.ClientSecret)
 	data.Set("code", code)
-	data.Set("redirect_uri", config.Properties.OAuth.Google.RedirectURI)
+	data.Set("redirect_uri", resolvedRedirect)
 	data.Set("grant_type", "authorization_code")
-
-	fmt.Println("data", data)
 
 	resp, err := g.HttpClient.PostForm("https://oauth2.googleapis.com/token", data)
 	if err != nil {
@@ -98,13 +112,19 @@ func (g *OAuthGoogle) getAccessToken(code string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("result", result)
-
-	token, ok := result["access_token"].(string)
-	if !ok {
-		return "", errors.New("failed to get access token")
+	if token, ok := result["access_token"].(string); ok && token != "" {
+		return token, nil
 	}
-	return token, nil
+
+	errCode, _ := result["error"].(string)
+	errDesc, _ := result["error_description"].(string)
+	if errCode == "" {
+		errCode = "unknown_error"
+	}
+	if errDesc == "" {
+		errDesc = "failed to get access token"
+	}
+	return "", fmt.Errorf("google oauth token exchange failed: %s (%s); redirect_uri=%s", errCode, errDesc, resolvedRedirect)
 }
 
 func (g *OAuthGoogle) getUserInfo(accessToken string) (map[string]interface{}, error) {
@@ -148,8 +168,11 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 	}
 
 	existingUser, err := g.AuthMethodRepo.FindByOAuthID(c, oauthId, "GOOGLE")
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, fmt.Errorf("lỗi khi tìm kiếm user: %v", err)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("lỗi khi tìm kiếm user: %v", err)
+		}
+		existingUser = nil
 	}
 
 	if existingUser == nil {
@@ -170,7 +193,6 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		}
 		existingUser = createdUser
 	} else {
-		// Cập nhật thông tin nếu có thay đổi
 		updated := false
 		if existingUser.FullName != fullName && fullName != "" {
 			existingUser.FullName = fullName
@@ -184,32 +206,16 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 			existingUser.Email = email
 			updated = true
 		}
-
 		if updated {
 			_, _ = g.AuthMethodRepo.Update(c, existingUser)
 		}
 	}
 
-	// Nếu chưa có UserID, tạo profile mới (không bắt buộc số điện thoại)
-	if existingUser.UserID == 0 {
-		profile, err := g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &user.UserProfileEntity{
-			FullName: fullName,
-			Email:    email,
-			Avatar:   avatar,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("lỗi khi tạo profile: %v", err)
-		}
-
-		// Cập nhật UserID cho AuthMethod
-		existingUser.UserID = profile.ProfileID
-		_, err = g.AuthMethodRepo.Update(c, existingUser)
-		if err != nil {
-			return nil, fmt.Errorf("lỗi khi cập nhật UserID: %v", err)
-		}
+	profile, err := g.ensureGoogleProfile(c, existingUser, fullName, email, avatar)
+	if err != nil {
+		return nil, err
 	}
 
-	// Nếu không có otpReq thì tạo mặc định
 	if otpReq == nil {
 		otpReq = &dto.OtpVerifyRequest{}
 	}
@@ -219,26 +225,8 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		return nil, fmt.Errorf("lỗi khi tạo session: %v", err)
 	}
 
-	profile, err := g.ProfileUsecase.ProfileRepo.GetByProfileID(existingUser.UserID)
-	if err != nil || profile == nil {
-		// Nếu không tìm thấy profile, thử tạo lại (trường hợp user_id đã có nhưng profile bị xóa)
-		profile, err = g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &user.UserProfileEntity{
-			ProfileID:    existingUser.UserID,
-			FullName:     fullName,
-			Email:        email,
-			Avatar:       avatar,
-			ReferralCode: "",
-		})
-
-		// profile = profileResponse
-		if err != nil {
-			return nil, _errors.ReturnError(int32(enums.NOT_FOUND_ACCOUNT), "không tìm thấy thông tin người dùng và không thể tạo mới")
-		}
-	}
-
 	refreshToken := g.AuthService.GenRefreshToken(c, existingUser, session.SessionID)
 
-	// Ghi log admin history
 	g.AuthService.LogLoginHistory(c, existingUser, &dto.ProfileDTO{
 		ProfileID:    profile.ProfileID,
 		FullName:     profile.FullName,
@@ -254,7 +242,42 @@ func (g *OAuthGoogle) RegisterOrLogin(c context.Context, userInfo map[string]int
 		Avatar:       profile.Avatar,
 		ReferralCode: profile.ReferralCode,
 	}, session.SessionID)
-	response.RefreshToken = refreshToken         // Set refreshToken vào response body
-	response.ReferralCode = profile.ReferralCode // Set mã giới thiệu vào response
+	response.RefreshToken = refreshToken
+	response.ReferralCode = profile.ReferralCode
 	return response, nil
+}
+
+// ensureGoogleProfile returns an alive profile for the Google auth method.
+// Missing profile (new user or orphaned user_id) creates a fresh row and relinks auth_method.
+func (g *OAuthGoogle) ensureGoogleProfile(
+	c context.Context,
+	existingUser *auth.AuthMethod,
+	fullName, email, avatar string,
+) (*user.UserProfileEntity, error) {
+	if existingUser == nil {
+		return nil, errors.New("auth method is required")
+	}
+	if existingUser.UserID != 0 {
+		profile, err := g.ProfileUsecase.ProfileRepo.GetByProfileID(existingUser.UserID)
+		if err == nil && profile != nil {
+			return profile, nil
+		}
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("lỗi khi đọc profile: %v", err)
+		}
+	}
+
+	profile, err := g.ProfileUsecase.ProfileRepo.CreateUserProfile(c, &user.UserProfileEntity{
+		FullName: fullName,
+		Email:    email,
+		Avatar:   avatar,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("lỗi khi đăng ký profile mới: %v", err)
+	}
+	existingUser.UserID = profile.ProfileID
+	if _, err := g.AuthMethodRepo.Update(c, existingUser); err != nil {
+		return nil, fmt.Errorf("lỗi khi gắn profile vào auth method: %v", err)
+	}
+	return profile, nil
 }

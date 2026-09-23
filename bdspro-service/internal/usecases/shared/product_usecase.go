@@ -698,6 +698,17 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 	houseInfoEntity := &domain.HouseInfo{}
 	copier.Copy(&entity, &product)
 	copier.Copy(&houseInfoEntity, &product.HouseInfo)
+	// ProductSaveRequest.AreaLand maps from proto `area`; domain.Product uses `Area`.
+	// copier does not map AreaLand → Area, so set explicitly.
+	entity.Area = product.AreaLand
+	entity.SourceType = enums.ESourceType(product.SourceType)
+	entity.SourceStatus = product.SourceStatus
+	if entity.SourceStatus == 0 {
+		entity.SourceStatus = enums.SourceStatusNew // mặc định: Chờ xác minh
+	}
+	entity.SourceContactId = product.SourceContactId
+	entity.SourceContactNote = product.SourceContactNote
+	entity.SourceTime = product.SourceTime
 	var postEntity *domain.Post
 	var assetEntity *domain.Asset
 
@@ -724,14 +735,21 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		if err := s.UpdateAmenity(c, entity.ID, product.AmenityIds); err != nil {
 			return err
 		}
-		mediaIDs, err := s.UpdateMediaItems(c, entity.ID, product.MediaItems)
-		if err != nil {
-			return err
+
+		// Property sync trong cùng transaction + gắn property_id
+		if s.PropertyUsecase != nil {
+			property, err := s.PropertyUsecase.CreateWithProduct(c, entity)
+			if err != nil {
+				return err
+			}
+			if property != nil {
+				entity.PropertyID = &property.ID
+			}
 		}
-		// Gán ID của ảnh đầu tiên vào ImageId
-		if len(mediaIDs) > 0 {
-			entity.ImageId = &mediaIDs[0]
-			if err := s.ProductRepo.UpdateImageID(c, entity.ID, entity.ImageId); err != nil {
+
+		// Ảnh đi vào property_media (lineage_id), không ghi product_media
+		if len(product.MediaItems) > 0 && entity.PropertyID != nil && s.PropertyUsecase != nil {
+			if _, err := s.UpdateMediaItems(c, *entity.PropertyID, product.MediaItems); err != nil {
 				return err
 			}
 		}
@@ -827,18 +845,6 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		return nil, err
 	}
 
-	// Tạo Property tương ứng cho Product (async) - chỉ chạy nếu tạo Product thành công
-	if s.PropertyUsecase != nil {
-		go func() {
-			cloneCtx := _utils.CloneContext(c)
-			_, err := s.PropertyUsecase.CreateWithProduct(cloneCtx, entity)
-			// Log error nhưng không fail transaction nếu tạo Property thất bại
-			if err != nil {
-				log.Printf("Failed to create Property for product %d: %v", entity.ID, err)
-			}
-		}()
-	}
-
 	return &dto.CreateResponse{
 		Product: entity,
 		Post:    postEntity,
@@ -891,6 +897,9 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 	if updateData.ProjectID != nil {
 		entity.ProjectID = updateData.ProjectID
 	}
+	if updateData.AreaLand > 0 {
+		entity.Area = updateData.AreaLand
+	}
 	// Update source fields
 	if updateData.ResourceType != 0 {
 		entity.SourceType = updateData.ResourceType
@@ -903,6 +912,9 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 	}
 	if updateData.SourceContactNote != "" {
 		entity.SourceContactNote = updateData.SourceContactNote
+	}
+	if updateData.SourceTime != nil {
+		entity.SourceTime = updateData.SourceTime
 	}
 	if updateData.Priority != 0 {
 		entity.Priority = updateData.Priority
@@ -958,18 +970,9 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 
 	// Update media items - sử dụng PropertyID từ entity
 	if len(updateData.MediaItems) > 0 && entity.PropertyID != nil && s.PropertyUsecase != nil {
-		mediaIDs, err := s.UpdateMediaItems(contextTx, *entity.PropertyID, updateData.MediaItems)
-		if err != nil {
+		if _, err := s.UpdateMediaItems(contextTx, *entity.PropertyID, updateData.MediaItems); err != nil {
 			s.Transaction.RollbackTransaction(contextTx)
 			return nil, err
-		}
-		// Gán ID của ảnh đầu tiên vào ImageId
-		if len(mediaIDs) > 0 {
-			entity.ImageId = &mediaIDs[0]
-			if err := s.ProductRepo.UpdateImageID(contextTx, entity.ID, entity.ImageId); err != nil {
-				s.Transaction.RollbackTransaction(contextTx)
-				return nil, err
-			}
 		}
 	}
 
@@ -2697,21 +2700,27 @@ func priceUpdateDescription(
 func (u *ProductUsecase) UpdateProductSource(
 	ctx context.Context,
 	req *dto.UpdateProductSourceRequest,
-) error {
+) (*domain.Product, error) {
 	ownerId := _utils.GetProfileIdWithContext(ctx)
 	if ownerId == 0 {
-		return _errors.UnauthorizedException()
+		return nil, _errors.UnauthorizedException()
 	}
 
 	hasRelation, err := u.CrmProvider.HasContactRelation(ctx, ownerId, req.SourceContactId)
 	if err != nil {
-		return _errors.InternalServerException("hasRelation productUsecase error: ", err.Error())
+		return nil, _errors.InternalServerException("hasRelation productUsecase error: ", err.Error())
 	}
 	if !hasRelation {
-		return _errors.ForbiddenException("You do not have permission to update this product source")
+		return nil, _errors.ForbiddenException("You do not have permission to update this product source")
 	}
 
-	return u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+	sourceTime := req.SourceTime
+	if sourceTime == nil {
+		now := time.Now()
+		sourceTime = &now
+	}
+
+	err = u.Transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		product, err := u.ProductRepo.GetProductByID(txCtx, &req.ProductID)
 		if err != nil {
 			return err
@@ -2726,6 +2735,7 @@ func (u *ProductUsecase) UpdateProductSource(
 			"source_type":         req.SourceType,
 			"source_status":       req.SourceStatus,
 			"source_contact_note": req.SourceContactNote,
+			"source_time":         sourceTime,
 		}
 
 		// if req.AssignedUserID != nil {
@@ -2746,6 +2756,11 @@ func (u *ProductUsecase) UpdateProductSource(
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return u.Detail(ctx, req.ProductID)
 }
 
 func (u *ProductUsecase) ArchiveProducts(ctx context.Context, req *dto.ArchiveProductsDTO) error {

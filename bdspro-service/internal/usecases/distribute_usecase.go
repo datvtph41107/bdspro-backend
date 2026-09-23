@@ -40,6 +40,7 @@ func NewDistributionUsecase(
 		distributionRepo: r,
 		productPriceRepo: productPriceRepo,
 		productRepo:      productRepo,
+		productUserRepo:  productUserRepo,
 		transaction:      transaction,
 		notifyProvider:   notificationProvider,
 		hubProvider:      hubProvider,

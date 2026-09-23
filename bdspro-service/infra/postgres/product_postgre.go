@@ -374,6 +374,7 @@ func (r *GormUserProductRepo) UpdateProduct(c context.Context, id uint64, entity
 		"priority":               entity.Priority,
 		"source_contact_id":      entity.SourceContactId,
 		"source_contact_note":    entity.SourceContactNote,
+		"source_time":            entity.SourceTime,
 		"certificate_house_note": entity.CertificateHouseNote,
 		// "district_id":      entity.DistrictID,
 	}
@@ -995,6 +996,13 @@ func (r *GormUserProductRepo) UpdateImageID(c context.Context, id uint64, imageI
 		Error
 }
 
+func (r *GormUserProductRepo) UpdatePropertyID(c context.Context, id uint64, propertyID uint64) error {
+	return GetDB(c, r.DB).Model(&domain.Product{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("property_id", propertyID).
+		Error
+}
+
 // func (r *GormUserProductRepo) SearchProductByOwner(ownerID *uint64, ownerType enums.EOwnerOf, dto *dto.ProductSearchRequest) ([]domain.Product, int64, error) {
 // 	var results []domain.Product
 
@@ -1417,10 +1425,8 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 
 	// Lấy originId từ context
 	originId := _utils.GetOriginIdFromContext(c)
+	// Luôn bỏ qua sản phẩm đã soft-delete — không trả stub {id, deletedAt} trong data list
 	syncQr := "AND products.deleted_at IS NULL"
-	if payload.Sync {
-		syncQr = ""
-	}
 
 	// Build base SQL - Bắt đầu từ product_user, sau đó join với products và các bảng khác
 	baseSQL := `
@@ -1447,6 +1453,11 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       products.sale_visibility,
 		       products.rent_visibility,
 		       products.source_type,
+		       products.source_status,
+		       products.priority,
+		       products.source_contact_id,
+		       products.source_contact_note,
+		       products.source_time,
 		       hi.num_bedroom,
 		       hi.num_bathroom,
 		       COALESCE(pp.id, 0) AS price_id,
@@ -1459,10 +1470,12 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		       COALESCE(pp.rent_commission, 0) AS price_rent_commission,
 		       COALESCE(pp.rent_commission_type, 0) AS price_rent_commission_type,
 		       COALESCE(pp.rent_payment_cycle, 0) AS price_rent_payment_cycle,
-		       COALESCE(avatar.media_url, '') AS avatar_url,
-		       COALESCE(avatar.thumb_url, '') AS avatar_thumb_url,
-		       COALESCE(avatar.media_type, '') AS avatar_media_type,
-		       COALESCE(avatar.sort_order, 0) AS avatar_sort_order,
+		       products.image_id,
+		       COALESCE(avatar.media_url, prop_first_media.media_url, product_image.media_url, '') AS image_url,
+		       COALESCE(avatar.media_url, prop_first_media.media_url, product_image.media_url, '') AS avatar_url,
+		       COALESCE(avatar.thumb_url, prop_first_media.thumb_url, '') AS avatar_thumb_url,
+		       COALESCE(NULLIF(avatar.media_type, ''), prop_first_media.media_type, product_image.media_type, '') AS avatar_media_type,
+		       COALESCE(avatar.sort_order, prop_first_media.sort_order, product_image."order", 0) AS avatar_sort_order,
 		       COALESCE(pt.name, '') AS property_type_name,
 		       COALESCE(pt.id, 0) AS property_type_id,
 		       pbi.building_type,
@@ -1503,6 +1516,16 @@ func (r *GormUserProductRepo) GetProducts(c context.Context, payload dto.Product
 		LEFT JOIN property_land_info pli ON p.land_info_id = pli.id AND pli.deleted_at IS NULL
 		LEFT JOIN property_building_info pbi ON p.building_info_id = pbi.id AND pbi.deleted_at IS NULL
 		LEFT JOIN property_media avatar ON pi.avatar_id = avatar.id AND avatar.deleted_at IS NULL
+		LEFT JOIN LATERAL (
+			SELECT pm.media_url, pm.thumb_url, pm.media_type, pm.sort_order
+			FROM property_media pm
+			WHERE pm.lineage_id = p.id AND pm.deleted_at IS NULL
+			ORDER BY pm.sort_order ASC, pm.id ASC
+			LIMIT 1
+		) prop_first_media ON true
+		LEFT JOIN product_media product_image ON products.image_id IS NOT NULL
+			AND product_image.id = products.image_id
+			AND product_image.deleted_at IS NULL
 		LEFT JOIN province_v2 prov ON COALESCE(ploc.province_id, products.province_id) = prov.id AND prov.deleted_at IS NULL
 		LEFT JOIN ward_v2 ward ON COALESCE(ploc.ward_id, products.ward_id) = ward.id AND ward.deleted_at IS NULL
 		LEFT JOIN projects proj ON COALESCE(pi.project_id, products.project_id) = proj.id AND proj.deleted_at IS NULL

@@ -30,6 +30,7 @@ type IProfileRepo interface {
 
 	PatchProfileV3(c context.Context, profileId uint64, req *_dto.UserV3DTO) error
 	UpdatePrivacySetting(ctx context.Context, profileID uint64, visibility uint8, profileVisibility uint8, statusOnline enums.EOnlineStatus) error
+	UpdateDemoMode(ctx context.Context, profileID uint64, enable bool) error
 	UpdateLastSeen(ctx context.Context, profileID uint64) error
 
 	// Thống kê user mới theo ngày (created_at) từ fromTime

@@ -145,10 +145,16 @@ func (s *SyncUtil) GetTimestamp(ctx context.Context, key string) int64 {
 	return ts
 }
 
+// MGet đọc nhiều timestamp. Redis down/unavailable → trả về slice nil (timestamp=0),
+// không error — FE coi như chưa cache và gọi detail bình thường.
 func (s *SyncUtil) MGet(ctx context.Context, keys []string) ([]interface{}, error) {
-	vals, err := s.redis.Client.MGet(ctx, keys...).Result()
+	empty := make([]interface{}, len(keys))
+	if len(keys) == 0 || s.redis == nil {
+		return empty, nil
+	}
+	vals, err := s.redis.MGet(ctx, keys...)
 	if err != nil {
-		return nil, err
+		return empty, nil
 	}
 	return vals, nil
 }

@@ -52,8 +52,8 @@ type PropertyLineage struct {
 	// ngày xác minh định danh quốc gia
 	VerifiedNationalAt *time.Time `gorm:"column:verified_national_at" json:"verifiedNationalAt,omitempty"`
 
-	// danh sách ảnh/video
-	MediaList []PropertyMedia `gorm:"many2many:lineage_media"`
+	// danh sách ảnh/video (lineage_id trên property_media — không dùng lineage_media join)
+	MediaList []PropertyMedia `gorm:"foreignKey:LineageID"`
 	// tiện ích
 	Amenities []AmenityItem `gorm:"many2many:property_amenity"`
 

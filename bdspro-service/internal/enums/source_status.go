@@ -9,7 +9,7 @@ const (
 )
 
 var SourceStatusNames = map[ESourceStatus]string{
-	SourceStatusNew:      "Mới",
-	SourceStatusTracking: "Đang chăm",
-	SourceStatusOwn:      "Đang sở hữu",
+	SourceStatusNew:      "Chờ xác minh",
+	SourceStatusTracking: "Thiết giấy tờ",
+	SourceStatusOwn:      "Đã xác minh số",
 }

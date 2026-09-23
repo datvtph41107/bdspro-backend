@@ -46,6 +46,9 @@ message HandleCallbackRequest {
     string version = 5;    // App version
     string os = 6;         // iOS, Android, Windows, MacOS, Linux
     string deviceName = 7; // Tên thiết bị: "iPhone 13 Pro", "Samsung Galaxy S21", "MacBook Pro"
+    // Must match the redirect_uri used when Google issued the authorization code.
+    // Empty falls back to oauth.google.redirect_uri in service config.
+    string redirectUri = 8;
 }
 
 message HandleCallbackResponse {

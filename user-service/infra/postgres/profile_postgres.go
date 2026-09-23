@@ -152,6 +152,13 @@ func (r *ProfilePostgres) UpdatePrivacySetting(ctx context.Context, profileID ui
 		}).Error
 }
 
+func (r *ProfilePostgres) UpdateDemoMode(ctx context.Context, profileID uint64, enable bool) error {
+	return r.DB.WithContext(ctx).
+		Model(&user.UserProfileEntity{}).
+		Where("profile_id = ? AND deleted_at IS NULL", profileID).
+		Update("demo", enable).Error
+}
+
 // GetByProfileId truy vấn UserProfileEntity theo profileId
 func (r *ProfilePostgres) GetByProfileID(profileId uint64) (*user.UserProfileEntity, error) {
 	var userProfile user.UserProfileEntity

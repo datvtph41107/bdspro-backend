@@ -131,6 +131,7 @@ func (m *ProductMapper) PbToUpdateProductSourceDTO(
 		// AssignedUserID:    assignedUserId,
 		Priority:     enums.EPriority(req.Priority),
 		SourceTagIDs: req.SourceTagIds,
+		SourceTime:   _utils.ParseStringToTime(req.SourceTime),
 	}
 }
 
@@ -290,6 +291,16 @@ func cleanAddressUnitPtr(input *string) *string {
 // 	return result
 // }
 
+func mapSourceStatusEnum(status enums.ESourceStatus) *sharepb.EnumItem {
+	if status == 0 {
+		status = enums.SourceStatusNew
+	}
+	return &sharepb.EnumItem{
+		Value: uint32(status),
+		Name:  enums.SourceStatusNames[status],
+	}
+}
+
 func (m *ProductMapper) MapOriginProfilePb(op *sharepb.OriginProfile) *sharepb.OriginProfile {
 	if op == nil {
 		return nil
@@ -337,10 +348,11 @@ func (m *ProductMapper) MapDetailProductPb(ctx context.Context, product *domain.
 		SourceType:     uint32(product.SourceType),
 		SourceTypeName: enums.SourceTypeMap[product.SourceType],
 		// UPDATE SOURCE RESPONSE
-		SourceStatus:      uint32(product.SourceStatus),
+		SourceStatus:      mapSourceStatusEnum(product.SourceStatus),
 		Priority:          uint32(product.Priority),
 		SourceContactId:   product.SourceContactId,
 		SourceContactNote: product.SourceContactNote,
+		SourceTime:        _utils.FormatTimeToString(product.SourceTime),
 		// CustomerId: product.CustomerID,
 		Note:            product.Note,
 		TransactionType: int32(product.TransactionType),
@@ -638,6 +650,12 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 		DocTypeId:       product.DocTypeId,
 		Visibility:      uint32(product.Visibility),
 		SourceType:      uint32(product.SourceType),
+		SourceTypeName:  enums.SourceTypeMap[product.SourceType],
+		SourceStatus:    mapSourceStatusEnum(product.SourceStatus),
+		Priority:        uint32(product.Priority),
+		SourceContactId: product.SourceContactId,
+		SourceContactNote: product.SourceContactNote,
+		SourceTime:      _utils.FormatTimeToString(product.SourceTime),
 		TransactionType: int32(product.TransactionType),
 		OwnerId:         &product.OwnerID,
 	}
@@ -712,15 +730,10 @@ func (m *ProductMapper) MapProductPb(product *domain.Product) *bdspropb.ProductR
 }
 
 func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListResponse) []*bdspropb.ProductResponse {
-	productList := make([]*bdspropb.ProductResponse, len(products))
-	for i, product := range products {
-
+	productList := make([]*bdspropb.ProductResponse, 0, len(products))
+	for _, product := range products {
+		// Bản ghi đã xóa: bỏ qua, không đưa vào data trả về
 		if product.DeletedAt != nil {
-			delAt := _utils.FormatTimeToString(product.DeletedAt)
-			productList[i] = &bdspropb.ProductResponse{
-				Id:        product.ID,
-				DeletedAt: &delAt,
-			}
 			continue
 		}
 		// Clean address data nếu có
@@ -744,12 +757,20 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			}
 		}
 
-		// Map Avatar nếu có
+		// Map Avatar: ưu tiên property avatar, fallback imageUrl từ product_media
 		var avatar *bdspropb.MediaItem
-		if product.AvatarURL != "" {
+		avatarURL := product.AvatarURL
+		if avatarURL == "" {
+			avatarURL = product.ImageURL
+		}
+		if avatarURL != "" {
+			mediaType := product.AvatarMediaType
+			if mediaType == "" {
+				mediaType = "image"
+			}
 			avatar = &bdspropb.MediaItem{
-				MediaUrl:  product.AvatarURL,
-				MediaType: product.AvatarMediaType,
+				MediaUrl:  avatarURL,
+				MediaType: mediaType,
 				Order:     int32(product.AvatarSortOrder),
 			}
 		}
@@ -774,7 +795,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 
 		println("product.BuildingInfo", product.PropertyId)
 
-		productList[i] = &bdspropb.ProductResponse{
+		productList = append(productList, &bdspropb.ProductResponse{
 			Id:              product.ID,
 			PropertyId:      &product.PropertyId,
 			Name:            product.Name,
@@ -804,6 +825,12 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			ImageId:        product.ImageID,
 			ImageUrl:       product.ImageURL,
 			SourceType:     product.SourceType,
+			SourceTypeName: enums.SourceTypeMap[enums.ESourceType(product.SourceType)],
+			SourceStatus:   mapSourceStatusEnum(enums.ESourceStatus(product.SourceStatus)),
+			Priority:       product.Priority,
+			SourceContactId: product.SourceContactId,
+			SourceContactNote: product.SourceContactNote,
+			SourceTime:     _utils.FormatTimeToString(product.SourceTime),
 			SaleStatus:     product.SaleStatus,
 			RentStatus:     product.RentStatus,
 			SaleVisibility: product.SaleVisibility,
@@ -820,7 +847,7 @@ func (m *ProductMapper) MapProductPbListResponse(products []dto.ProductListRespo
 			UpdatedAt:          _utils.FormatTimeToString(&product.UpdatedAt),
 			PostCount:          product.PostCount,
 			Avatar:             avatar,
-		}
+		})
 	}
 	return productList
 }
@@ -1097,6 +1124,7 @@ func (m *ProductMapper) UpdateProductPbToDTO(req *bdspropb.UpdateProductRequest)
 		SourceStatus:      enums.ESourceStatus(req.SourceStatus),
 		Priority:          enums.EPriority(req.Priority),
 		SourceTagIDs:      req.SourceTagIds,
+		SourceTime:        _utils.ParseStringToTime(req.SourceTime),
 
 		ProjectID: req.ProjectId,
 
@@ -1151,6 +1179,9 @@ func (m *ProductMapper) UpdateProductRequestToProductSaveRequest(updateReq *dto.
 	if updateReq.SourceContactId > 0 {
 		result.SourceContactId = &updateReq.SourceContactId
 	}
+	if updateReq.SourceTime != nil {
+		result.SourceTime = updateReq.SourceTime
+	}
 	if updateReq.ProjectID != nil {
 		result.ProjectId = updateReq.ProjectID
 	}
@@ -1195,8 +1226,10 @@ func (m *ProductMapper) ProductSavePbToDTO(req *bdspropb.ProductSaveRequest) *dt
 		// PrivateData:    req.PrivateData,
 		GoogleMapLink:     req.GoogleMapLink,
 		SourceType:        req.SourceType,
+		SourceStatus:      enums.ESourceStatus(req.SourceStatus),
 		SourceContactId:   req.SourceContactId,
 		SourceContactNote: req.SourceContactNote,
+		SourceTime:        _utils.ParseStringToTime(req.SourceTime),
 		// SaleStatus:     enums.EProductStatus(req.SaleStatus),
 		// RentStatus:     enums.EProductStatus(req.RentStatus),
 		SaleVisibility: enums.EVisibility(req.SaleVisibility),

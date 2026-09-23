@@ -282,7 +282,7 @@ mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/config
 "
 
-scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+# scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
 scp config/production.yml ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/config/production.yml

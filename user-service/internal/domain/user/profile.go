@@ -64,6 +64,7 @@ type UserProfileEntity struct {
 	ProfileVisibility _enum.EVisibility     `gorm:"column:profile_visibility" json:"profileVisibility"` // ai xem được liên hệ
 	TabDefault        enums.ESettingTab     `gorm:"column:tab_default" json:"tabDefault"`
 	SignatureVisible  bool                  `gorm:"column:signature_visible;default:false" json:"signatureVisible"`
+	Demo              bool                  `gorm:"column:demo;default:false" json:"demo"`
 
 	VisibilityIntroduce  _enum.EVisibility `gorm:"column:visibility_introduce" json:"visibilityIntroduce"`
 	VisibilityProfession _enum.EVisibility `gorm:"column:visibility_profession" json:"visibilityProfession"`

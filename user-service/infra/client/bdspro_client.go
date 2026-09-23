@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"pb/clients"
+	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"user/internal/dto"
 )
@@ -49,4 +50,21 @@ func (c *BdsproClient) GetDashboardByProfileId(ctx context.Context, profileID ui
 		return nil, nil
 	}
 	return resp, nil
+}
+
+// CreateProduct gọi bdspro ProductNew để tạo sản phẩm.
+func (c *BdsproClient) CreateProduct(ctx context.Context, product *bdspropb.ProductSaveRequest) (*bdspropb.Response, error) {
+	if c.BdsproGrpcClient == nil || c.Client == nil {
+		return nil, errors.New("bdspro grpc client not available")
+	}
+	return c.Client.ProductNew(ctx, product)
+}
+
+// DeleteProduct gọi bdspro DeleteProduct để xoá sản phẩm.
+func (c *BdsproClient) DeleteProduct(ctx context.Context, productID uint64) error {
+	if c.BdsproGrpcClient == nil || c.Client == nil {
+		return errors.New("bdspro grpc client not available")
+	}
+	_, err := c.Client.DeleteProduct(ctx, &bdspropb.IdRequest{Id: productID})
+	return err
 }

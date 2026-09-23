@@ -206,6 +206,10 @@ EOF
 
 gateway_env() { echo 'QHPRO_SERVICE_ID=gateway-service'; }
 
+bdspro_env() { echo 'QHPRO_SERVICE_ID=bdspro-service'; }
+
+crm_env() { echo 'QHPRO_SERVICE_ID=crm-service'; }
+
 hub_env() {
   cat <<EOF
 QHPRO_SERVICE_ID=hub-service
@@ -316,6 +320,8 @@ remove_value file-service/.env FILE_DATABASE_DSN
 install_missing_value file-service/.env AUTH_GRPC_ADDRESS localhost:8216
 install_missing_value file-service/.env HUB_GRPC_ADDRESS localhost:8280
 install_env gateway-service/.env gateway_env
+install_env bdspro-service/.env bdspro_env
+install_env crm-service/.env crm_env
 install_env hub-service/.env hub_env
 install_value hub-service/.env HUB_DATABASE_URL 'postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable'
 install_value hub-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable'

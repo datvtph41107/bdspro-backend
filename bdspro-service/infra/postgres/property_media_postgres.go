@@ -32,7 +32,7 @@ func (r *PostgrePropertyMediaRepo) CreateBatch(ctx context.Context, mediaList []
 func (r *PostgrePropertyMediaRepo) GetByPropertyID(ctx context.Context, propertyID uint64) ([]domain.PropertyMedia, error) {
 	var mediaList []domain.PropertyMedia
 	err := GetDB(ctx, r.DB).
-		Where("property_id = ? AND deleted_at IS NULL", propertyID).
+		Where("lineage_id = ? AND deleted_at IS NULL", propertyID).
 		Order("sort_order ASC").
 		Find(&mediaList).Error
 	if err != nil {
@@ -43,6 +43,6 @@ func (r *PostgrePropertyMediaRepo) GetByPropertyID(ctx context.Context, property
 
 func (r *PostgrePropertyMediaRepo) DeleteByPropertyID(ctx context.Context, propertyID uint64) error {
 	return GetDB(ctx, r.DB).
-		Where("property_id = ?", propertyID).
+		Where("lineage_id = ?", propertyID).
 		Delete(&domain.PropertyMedia{}).Error
 }

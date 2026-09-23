@@ -1,0 +1,73 @@
+server:
+  port: 8006
+  tcp_port: 8206
+  name: crm-service
+
+eureka:
+  url: localhost
+  port: 8761
+
+database:
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_crm port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15 # access token hết hạn 5 phút
+  refreshExpAfterMinutes: 129600 # refresh token có hạn l?|  3 tháng
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: 103.172.239.89:6379
+  pass: protected_redis_secure_password
+
+seo:
+  domain: "https://qhpro.vn"
+  parcelUrlTemplate: /quy-hoach/thua-dat/{id}-{slug}
+  public_base_url: "https://qhpro.vn"
+  internal_secret_key: "local-seo-secret"
+  timezone: "Asia/Ho_Chi_Minh"
+  layerUrlTemplate: /tin-tuc/lop/{id}/{slug}
+  planningProjectUrlTemplate: /tin-tuc/do-an-quy-hoach/{id}/{slug}
+  planningDocumentUrlTemplate: /tin-tuc/tai-lieu/{id}/{slug}
+  administrativeUnitUrlTemplate: /tin-tuc/dia-ban/{id}/{slug}
+  planningRegionUrlTemplate: /tin-tuc/vung-quy-hoach/{id}/{slug}
+  planningReportUrlTemplate: /tin-tuc/bao-cao/{id}/{slug}
+
+  sitemap:
+    default_change_freq: "daily"
+    default_priority: 0.5
+
+  generation_job:
+    enabled: true
+    cron: "0 0 * * *"
+    batch_size: 100
+# env thiết lập server
+# export ENV_RUNTIME=develop
+# export SEO_PUBLIC_BASE_URL=https://dev.bdspro.vn
+# export SEO_INTERNAL_SECRET_KEY='<secret>'
+
+rpc:
+  user:
+    address: "user:8201"
+  auth:
+    address: "auth:8216"
+  payment:
+    address: "payment:8205"
+  tqd:
+    address: "tqd:8219"
+  bdspro:
+    address: "bdspro:8202"
+  notification:
+    address: "notification:8204"
+  organization:
+    address: "organization:8207"
+  chat:
+    address: "chat:8208"
+  hub:
+    address: "hub:8280"

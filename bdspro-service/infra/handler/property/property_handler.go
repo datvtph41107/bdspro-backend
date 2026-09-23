@@ -335,7 +335,7 @@ func (h *PropertyHandler) GetPropertyTimestamps(ctx context.Context, req *sharep
 
 	vals, err := h.SyncProvider.MGet(ctx, redisKeys)
 	if err != nil {
-		return nil, _errors.InternalServerException("error: %v", err.Error())
+		return nil, _errors.InternalServerException(err.Error())
 	}
 
 	names := []string{"property_detail", "property_histories"}
