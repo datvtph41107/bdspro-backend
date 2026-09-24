@@ -131,4 +131,6 @@ message PoiCategoryIcon {
 
 message ListPoiCategoryIconsResponse {
   repeated PoiCategoryIcon data = 1;
+  // Sync timestamp (ms) — key Redis global SyncKeyPoiCategoryIcons (không theo user).
+  int64 timestamp = 2;
 }

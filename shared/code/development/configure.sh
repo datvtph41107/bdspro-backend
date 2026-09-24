@@ -165,7 +165,7 @@ QHPRO_SERVICE_ID=tqd-service
 TQD_DATABASE_URL=postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable
 MIGRATION_URL=postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable
 TQD_REDIS_ADDR=127.0.0.1:6379
-TQD_REDIS_DB=1
+TQD_REDIS_DB=0
 TQD_GRPC_PORT=8219
 QHPRO_USER_GRPC_ADDR=localhost:8201
 QHPRO_AUTH_GRPC_ADDR=localhost:8216
@@ -180,14 +180,8 @@ EOF
 notification_env() {
   cat <<'EOF'
 QHPRO_SERVICE_ID=notification-service
-NOTIFICATION_DATABASE_DSN=postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_notification?sslmode=disable
-MIGRATION_URL=postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_notification?sslmode=disable
-NOTIFICATION_REDIS_ADDR=127.0.0.1:6379
-NOTIFICATION_REDIS_DB=2
-QHPRO_RABBITMQ_URL=amqp://guest:guest@127.0.0.1:5672/
-QHPRO_BUSINESS_EVENTS_EXCHANGE=qhpro.payment.events
-NOTIFICATION_GRPC_PORT=8204
-QHPRO_USER_GRPC_ADDR=localhost:8201
+# Process topology: config/local.yml (host) hoặc CONFIG_FILE (deploy).
+MIGRATION_URL=postgres://postgres:postgres@localhost:5432/db_notification?sslmode=disable
 EOF
 }
 
@@ -216,7 +210,7 @@ QHPRO_SERVICE_ID=hub-service
 HUB_DATABASE_URL=postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable
 MIGRATION_URL=postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable
 HUB_REDIS_ADDRESS=localhost:6379
-HUB_REDIS_DB=3
+HUB_REDIS_DB=0
 HUB_USER_GRPC_ADDRESS=localhost:8201
 HUB_BDSPRO_GRPC_ADDRESS=localhost:8202
 HUB_NOTIFICATION_GRPC_ADDRESS=localhost:8204
@@ -295,7 +289,7 @@ install_env tqd-service/.env tqd_env
 install_value tqd-service/.env TQD_DATABASE_URL 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable'
 install_value tqd-service/.env MIGRATION_URL 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_tqd?sslmode=disable'
 install_value tqd-service/.env TQD_REDIS_ADDR '127.0.0.1:6379'
-install_value tqd-service/.env TQD_REDIS_DB 1
+install_value tqd-service/.env TQD_REDIS_DB 0
 install_missing_value tqd-service/.env TQD_GRPC_PORT 8219
 install_missing_value tqd-service/.env QHPRO_USER_GRPC_ADDR localhost:8201
 install_missing_value tqd-service/.env QHPRO_AUTH_GRPC_ADDR localhost:8216
@@ -305,14 +299,14 @@ install_missing_value tqd-service/.env QHPRO_FILE_PUBLIC_BASE_URL http://localho
 install_missing_value tqd-service/.env QHPRO_REPORT_GENERATOR_MODE disabled
 install_missing_value tqd-service/.env TQD_CLASSIFY_ENABLED false
 install_env notification-service/.env notification_env
-install_value notification-service/.env NOTIFICATION_DATABASE_DSN 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_notification?sslmode=disable'
-install_value notification-service/.env MIGRATION_URL 'postgres://qhpro:qhpro@127.0.0.1:5432/qhpro_notification?sslmode=disable'
-install_value notification-service/.env NOTIFICATION_REDIS_ADDR '127.0.0.1:6379'
-install_value notification-service/.env NOTIFICATION_REDIS_DB 2
-install_value notification-service/.env QHPRO_RABBITMQ_URL 'amqp://guest:guest@127.0.0.1:5672/'
-install_missing_value notification-service/.env QHPRO_BUSINESS_EVENTS_EXCHANGE qhpro.payment.events
-install_missing_value notification-service/.env NOTIFICATION_GRPC_PORT 8204
-install_missing_value notification-service/.env QHPRO_USER_GRPC_ADDR localhost:8201
+remove_value notification-service/.env NOTIFICATION_DATABASE_DSN
+remove_value notification-service/.env NOTIFICATION_REDIS_ADDR
+remove_value notification-service/.env NOTIFICATION_REDIS_DB
+remove_value notification-service/.env QHPRO_RABBITMQ_URL
+remove_value notification-service/.env QHPRO_BUSINESS_EVENTS_EXCHANGE
+remove_value notification-service/.env NOTIFICATION_GRPC_PORT
+remove_value notification-service/.env QHPRO_USER_GRPC_ADDR
+install_value notification-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/db_notification?sslmode=disable'
 install_env file-service/.env file_env
 install_value file-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/file_service?sslmode=disable'
 remove_value file-service/.env DATABASE_DSN
@@ -326,7 +320,7 @@ install_env hub-service/.env hub_env
 install_value hub-service/.env HUB_DATABASE_URL 'postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable'
 install_value hub-service/.env MIGRATION_URL 'postgres://postgres:postgres@localhost:5432/hub_service?sslmode=disable'
 install_value hub-service/.env HUB_REDIS_ADDRESS localhost:6379
-install_value hub-service/.env HUB_REDIS_DB 3
+install_value hub-service/.env HUB_REDIS_DB 0
 install_missing_value hub-service/.env HUB_USER_GRPC_ADDRESS localhost:8201
 install_missing_value hub-service/.env HUB_BDSPRO_GRPC_ADDRESS localhost:8202
 install_missing_value hub-service/.env HUB_NOTIFICATION_GRPC_ADDRESS localhost:8204

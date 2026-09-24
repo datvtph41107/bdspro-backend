@@ -17,10 +17,12 @@ type IRequestStatsRepo interface {
 	GetByService(ctx context.Context, fromTime time.Time) ([]dto.RequestServiceCountItem, error)
 	GetDailyStats(ctx context.Context, fromTime time.Time) ([]dto.RequestDailyItem, error)
 	GetHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.RequestDailyItem, error)
+	GetMinuteStats(ctx context.Context, fromTime time.Time) ([]dto.RequestDailyItem, error)
 	CountUserInteractionsFromTime(ctx context.Context, fromTime time.Time) (uint64, error)
 	CountActiveUsersFromTime(ctx context.Context, fromTime time.Time) (uint64, error)
 	GetTopUsers(ctx context.Context, fromTime time.Time, limit int) ([]dto.UserInteractionTopItem, error)
 	GetUserDailyStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error)
 	GetUserHourlyStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error)
+	GetUserMinuteStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error)
 	GetAuditLogs(ctx context.Context, path string, offset, limit int) ([]dto.RequestAuditLogItem, int64, error)
 }

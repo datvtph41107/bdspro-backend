@@ -41,6 +41,8 @@ message SyncRequest {
   string access = 5; // p: public, s: private
   uint32 page = 6;
   uint32 size = 7;
+  string text = 8;
+  optional bool archived = 9;
 }
 
 message IdDTO {

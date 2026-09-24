@@ -28,6 +28,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -81,6 +82,10 @@ type ProductUsecase struct {
 	CacheTTLProductVersion time.Duration
 	CacheTTLProductDetail  time.Duration
 	redisClient            *redis_cli.RedisClient
+
+	productMemCacheMu  sync.RWMutex
+	userProductsByKey  map[userProductsMemCacheKey]userProductsMemCacheEntry
+	productDetailByKey map[productDetailMemCacheKey]productDetailMemCacheEntry
 }
 
 func NewProductUsecase(
@@ -148,6 +153,11 @@ func NewProductUsecase(
 		UserProvider:     userProvider,
 		DistributionRepo: distributionRepo,
 		HubProvider:      hubProvider,
+		userProductsByKey:  make(map[userProductsMemCacheKey]userProductsMemCacheEntry),
+		productDetailByKey: make(map[productDetailMemCacheKey]productDetailMemCacheEntry),
+	}
+	if result.CacheTTLProductDetail == 0 {
+		result.CacheTTLProductDetail = 30 * time.Minute
 	}
 
 	result.PostUsecase.ProductUsecase = result
@@ -849,6 +859,8 @@ func (s *ProductUsecase) CreateProduct(c context.Context, product *dto.ProductSa
 		return nil, err
 	}
 
+	s.invalidateProductMemCache(ownerId, entity.ID)
+
 	return &dto.CreateResponse{
 		Product: entity,
 		Post:    postEntity,
@@ -1060,6 +1072,8 @@ func (s *ProductUsecase) Update(c context.Context, id uint64, updateData *dto.Up
 		s.HubProvider.PutUpdate(cloneCtx, "product", entity.ID, ids, time.Now().Unix())
 	}()
 
+	s.invalidateProductMemCache(entity.OwnerID, entity.ID)
+
 	return entity, nil
 }
 
@@ -1096,7 +1110,19 @@ func (s *ProductUsecase) GetProductOfGroup(c context.Context, groupId uint64, dt
 func (s *ProductUsecase) GetProductOfCurrentUser(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
 	profileId := _utils.GetProfileIdWithContext(c)
 	dto.RequestUserId = &profileId
-	return s.searchProduct(c, dto)
+	if dto.Sync {
+		if list, total, ok := s.getCachedUserProducts(profileId, dto); ok {
+			return list, total, nil
+		}
+	}
+	list, total, err := s.searchProduct(c, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	if dto.Sync {
+		s.setCachedUserProducts(profileId, dto, list, total)
+	}
+	return list, total, nil
 }
 
 func (s *ProductUsecase) GetProductOfCurrentOrganization(c context.Context, dto dto.ProductSearchRequest) ([]dto.ProductListResponse, int64, error) {
@@ -1161,6 +1187,11 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 		return nil, err
 	}
 
+	profileID := _utils.GetProfileIdWithContext(c)
+	if entity, ok := s.getCachedProductDetail(profileID, id); ok {
+		return entity, nil
+	}
+
 	entity, err := s.ProductRepo.GetByIDContext(c, id)
 	if err != nil {
 		return nil, err
@@ -1172,12 +1203,12 @@ func (s *ProductUsecase) Detail(c context.Context, id uint64) (*domain.Product, 
 	s.MapProductStatus(c, entity)
 
 	// Load privateData
-	profileID := _utils.GetProfileIdWithContext(c)
 	if profileID > 0 && entity.OwnerID != 0 && entity.OwnerID == profileID {
 		if privateData := s.ProductPrivate.FindByProductId(c, &entity.ID); privateData != nil {
 			entity.PrivateData = privateData
 		}
 	}
+	s.setCachedProductDetail(profileID, id, entity)
 	return entity, nil
 }
 
@@ -1505,7 +1536,17 @@ func (s *ProductUsecase) Delete(c context.Context, id uint64) error {
 			Message: "Không thể xóa sản phẩm này",
 		}
 	}
-	return s.ProductRepo.Delete(c, id)
+	if err := s.ProductRepo.Delete(c, id); err != nil {
+		return err
+	}
+
+	// Clear in-memory list/detail cache; Redis sync timestamp is left unchanged.
+	profileID := _utils.GetProfileIdWithContext(c)
+	s.invalidateProductMemCache(profileID, id)
+	if product.OwnerID != 0 && product.OwnerID != profileID {
+		s.invalidateProductMemCache(product.OwnerID, id)
+	}
+	return nil
 }
 
 // func (s *ProductUsecase) GetProductStatus(c context.Context, trans *domain.Transaction) enums.EProductStatus {

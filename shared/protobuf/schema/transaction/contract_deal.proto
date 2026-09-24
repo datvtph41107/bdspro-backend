@@ -6,7 +6,6 @@ import "google/api/annotations.proto";
 import "bdspro/common.proto";
 import "shared/common.proto";
 import "google/protobuf/empty.proto";
-import "organization/deal.proto";
 import "transaction/internal.proto";
 import "transaction/type.proto";
 import "transaction/transaction.proto";

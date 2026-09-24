@@ -63,14 +63,17 @@ type GetRequestDailyStatsRequest struct {
 }
 
 const (
-	RequestStatsGapDates = "dates"
-	RequestStatsGapHours = "hours"
+	RequestStatsGapDates   = "dates"
+	RequestStatsGapHours   = "hours"
+	RequestStatsGapMinutes = "minutes"
 )
 
 func NormalizeRequestStatsGap(gap string) string {
 	switch strings.ToLower(strings.TrimSpace(gap)) {
 	case RequestStatsGapHours, "hour", "h":
 		return RequestStatsGapHours
+	case RequestStatsGapMinutes, "minute", "min", "m":
+		return RequestStatsGapMinutes
 	default:
 		return RequestStatsGapDates
 	}
@@ -82,6 +85,10 @@ func (r *GetRequestDailyStatsRequest) Normalize() {
 	}
 	r.LastDates = NormalizeLastDates(r.LastDates)
 	r.Gap = NormalizeRequestStatsGap(r.Gap)
+	// minutes sinh nhiều điểm (~288 slot 5p/ngày) — giới hạn 2 ngày gần nhất.
+	if r.Gap == RequestStatsGapMinutes && r.LastDates > 2 {
+		r.LastDates = 2
+	}
 }
 
 type RequestDailyItem struct {
@@ -134,6 +141,9 @@ func (r *GetUserInteractionDailyStatsRequest) Normalize() {
 	}
 	r.LastDates = NormalizeLastDates(r.LastDates)
 	r.Gap = NormalizeRequestStatsGap(r.Gap)
+	if r.Gap == RequestStatsGapMinutes && r.LastDates > 2 {
+		r.LastDates = 2
+	}
 }
 
 type UserInteractionDailyItem struct {

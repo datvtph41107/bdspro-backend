@@ -31,6 +31,7 @@ type BdsproPublicService struct {
 	Mapper            *mapper.PublicMapper
 	ProductMapper     *mapper.ProductMapper
 	AreaRegionMapper  *mapper.AreaRegionMapper
+	SyncProvider      *_utils.SyncUtil
 	StartUpTime       int64
 }
 
@@ -41,16 +42,24 @@ func NewBdsproPublicService(
 	mapper *mapper.PublicMapper,
 	productMapper *mapper.ProductMapper,
 	areaRegionMapper *mapper.AreaRegionMapper,
+	syncProvider *_utils.SyncUtil,
 ) *BdsproPublicService {
-	return &BdsproPublicService{
+	svc := &BdsproPublicService{
 		UC:                uc,
 		ListUC:            listUC,
 		AreaRegionUsecase: areaRegionUsecase,
 		Mapper:            mapper,
 		ProductMapper:     productMapper,
 		AreaRegionMapper:  areaRegionMapper,
+		SyncProvider:      syncProvider,
 		StartUpTime:       time.Now().UnixMilli(),
 	}
+	// Global enums key: Redis đã có ts > 0 → giữ nguyên; thiếu/=0 → seed now.
+	// Không PutTimestamp(StartUpTime) mỗi lần boot (sẽ đè value Redis).
+	if svc.SyncProvider != nil {
+		svc.StartUpTime = svc.SyncProvider.EnsureTimestamp(context.Background(), _utils.SyncKeyBdsproEnums)
+	}
+	return svc
 }
 
 // @Summary Cấu hình app quy hoạch (public)
@@ -457,13 +466,30 @@ func (s *BdsproPublicService) GetEnumByName(ctx context.Context, req *sharepb.Id
 }
 
 func (s *BdsproPublicService) GetEnums(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.GetEnumsResponse, error) {
-	if req.Timestamp > 0 && req.Timestamp < s.StartUpTime {
+	clientTS := int64(0)
+	if req != nil {
+		clientTS = req.Timestamp
+	}
+
+	catalogTS := s.StartUpTime
+	if s.SyncProvider != nil {
+		catalogTS = s.SyncProvider.EnsureTimestamp(ctx, _utils.SyncKeyBdsproEnums)
+	}
+
+	updated := true
+	if s.SyncProvider != nil {
+		updated = s.SyncProvider.HasUpdated(ctx, _utils.SyncKeyBdsproEnums, clientTS)
+	} else if clientTS > 0 && clientTS >= catalogTS {
+		updated = false
+	}
+	if !updated {
 		return &bdspropb.GetEnumsResponse{
-			Timestamp: s.StartUpTime,
+			Timestamp: catalogTS,
 			Lastest:   false,
 		}, nil
 	}
-	result := []*bdspropb.GetEnumResponse{}
+
+	result := make([]*bdspropb.GetEnumResponse, 0, len(enumProviders))
 	for k, v := range enumProviders {
 		result = append(result, &bdspropb.GetEnumResponse{
 			Key:  k,
@@ -472,7 +498,7 @@ func (s *BdsproPublicService) GetEnums(ctx context.Context, req *sharepb.SyncReq
 	}
 	return &bdspropb.GetEnumsResponse{
 		Enums:     result,
-		Timestamp: s.StartUpTime,
+		Timestamp: catalogTS,
 		Lastest:   true,
 	}, nil
 }

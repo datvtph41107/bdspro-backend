@@ -64,6 +64,12 @@ func AutoMigrateModels() []any {
 		&models.Profile{},
 		&models.PriceTableDomain{},
 
+		// Demo-mode seed logs (product/contact/appointment/deal) for cleanup on disable.
+		&user.DemoProductLog{},
+		&user.DemoContactLog{},
+		&user.DemoAppointmentLog{},
+		&user.DemoDealLog{},
+
 		// Canonical commercial catalog/subscription read and write models.
 		&models.CatalogProduct{},
 		&models.CatalogPlan{},

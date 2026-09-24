@@ -24,6 +24,18 @@ const (
 	SyncKeyPropertyMe          = "ppt:me"
 	SyncKeyContactMe           = "ct:me"
 	SyncKeyContactDetail       = "ct:id"
+	// SyncKeyAppointmentMe: ds lịch hẹn của user (ListAppointments).
+	SyncKeyAppointmentMe = "appt:me"
+	// SyncKeyDealMe: ds thương vụ của user (GetDealsUser).
+	SyncKeyDealMe = "deal:me"
+	// SyncKeyPermissionMe: quyền của user (/v2/auth/permission/me).
+	SyncKeyPermissionMe = "perm:me"
+	// SyncKeyProfileInfoMe: profile info me (/v2/user/profile/info/me).
+	SyncKeyProfileInfoMe = "usr:info:me"
+	// SyncKeyBdsproEnums: enum bdspro public (global, không theo profile).
+	SyncKeyBdsproEnums = "bds:enums"
+	// SyncKeyPoiCategoryIcons: icon POI categories (global).
+	SyncKeyPoiCategoryIcons = "tqd:poi:icons"
 	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).
 	SyncKeyUserGuideByKey = "hub:ug:bykey"
 	// SyncKeyNotificationMe: ds thông báo + count chưa đọc của user.
@@ -55,8 +67,10 @@ const (
 	SyncKeyTQDPOIDetail        = "tqd:poi:id"
 	SyncKeyTQDPOIList          = "tqd:poi:me"
 	SyncKeyTQDLocationSearch   = "tqd:loc:me"
-	SyncKeyTQDReportList       = "tqd:report:me"
-	SyncKeyTQDFeatureList      = "tqd:feature:me"
+	// SyncKeyTQDProvincesWards: 1 key chung cho danh mục province + ward công khai.
+	SyncKeyTQDProvincesWards = "tqd:loc:provinces-wards"
+	SyncKeyTQDReportList     = "tqd:report:me"
+	SyncKeyTQDFeatureList    = "tqd:feature:me"
 )
 
 type SyncUtil struct {
@@ -115,6 +129,9 @@ func (s *SyncUtil) IsCacheChanged(ctx context.Context, key string, timestamp int
 }
 
 func (s *SyncUtil) PutTimestamp(ctx context.Context, key string, timestamp int64) error {
+	if timestamp <= 0 {
+		timestamp = time.Now().UnixMilli()
+	}
 	s.redis.SetWithTime(key, timestamp, 48*time.Hour)
 	return nil
 }
@@ -143,6 +160,21 @@ func (s *SyncUtil) GetTimestamp(ctx context.Context, key string) int64 {
 		return 0
 	}
 	return ts
+}
+
+// EnsureTimestamp trả timestamp hiện có trên Redis.
+// Nếu key chưa có, hoặc tồn tại mà = 0 / không parse được → ghi now (ms) rồi trả về.
+// Dùng cho catalog global (poi icons, provinces/wards, …) — không overwrite khi đã có ts > 0.
+func (s *SyncUtil) EnsureTimestamp(ctx context.Context, key string) int64 {
+	if ts := s.GetTimestamp(ctx, key); ts > 0 {
+		return ts
+	}
+	now := time.Now().UnixMilli()
+	_ = s.PutTimestamp(ctx, key, now)
+	if ts := s.GetTimestamp(ctx, key); ts > 0 {
+		return ts
+	}
+	return now
 }
 
 // MGet đọc nhiều timestamp. Redis down/unavailable → trả về slice nil (timestamp=0),

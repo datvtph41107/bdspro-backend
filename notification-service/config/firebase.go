@@ -13,18 +13,19 @@ import (
 )
 
 // FirebaseConfig là capability tùy chọn tại process boundary. Thiếu credential
-// sẽ tắt push delivery nhưng không làm Notification history/inbox fail. File
-// service-account thật phải nằm ngoài Git và được inject bằng env.
+// sẽ tắt push delivery nhưng không làm Notification history/inbox fail.
+// Credential path lấy từ config YAML (firebase.fileUrl / firebase.file).
 type FirebaseConfig struct {
 	CredentialFile string
 	App            *firebase.App
 }
 
 func NewFirebaseConfig() (*FirebaseConfig, error) {
-	credentialFile := strings.TrimSpace(os.Getenv("NOTIFICATION_FIREBASE_CREDENTIAL_FILE"))
-	if credentialFile == "" {
-		credentialFile = strings.TrimSpace(viper.GetString("firebase.fileUrl"))
-	}
+	credentialFile := firstNonBlank(
+		strings.TrimSpace(AppProperties.Firebase.FileURL),
+		strings.TrimSpace(viper.GetString("firebase.fileUrl")),
+		strings.TrimSpace(AppProperties.Firebase.File),
+	)
 	cfg := &FirebaseConfig{CredentialFile: credentialFile}
 	if credentialFile == "" {
 		return cfg, nil

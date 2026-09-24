@@ -11,6 +11,7 @@ import (
 	"crm/infra/job"
 	"crm/infra/mapper"
 	"crm/infra/validator"
+	"crm/internal/domain"
 	"crm/internal/usecase"
 
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,50 @@ type AppointmentHandler struct {
 	Validator          validator.AppointmentValidator
 	DashboardStatsJob  *job.DashboardStatsJob
 	SyncProvider       *_utils.SyncUtil
+}
+
+func participantIDsFromAppointment(appointment *domain.Appointment) []uint64 {
+	if appointment == nil {
+		return nil
+	}
+	ids := make([]uint64, 0, len(appointment.ParticipantIds))
+	for _, id := range appointment.ParticipantIds {
+		if id > 0 {
+			ids = append(ids, uint64(id))
+		}
+	}
+	return ids
+}
+
+func (h *AppointmentHandler) bumpAppointmentListSync(ctx context.Context, participantUserIDs ...uint64) {
+	h.bumpAppointmentListSyncWithProducts(ctx, nil, participantUserIDs...)
+}
+
+func (h *AppointmentHandler) bumpAppointmentListSyncWithProducts(ctx context.Context, productIDs []int64, participantUserIDs ...uint64) {
+	if h.SyncProvider == nil {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyAppointmentMe, 0), now)
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	for _, userID := range participantUserIDs {
+		if userID == 0 || userID == profileID {
+			continue
+		}
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKeyForProfile(userID, 0, _utils.SyncKeyAppointmentMe), now)
+	}
+	seen := make(map[uint64]struct{}, len(productIDs))
+	for _, productID := range productIDs {
+		if productID <= 0 {
+			continue
+		}
+		id := uint64(productID)
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductAppointments, id), now)
+	}
 }
 
 func NewAppointmentHandler(
@@ -62,6 +107,11 @@ func (h *AppointmentHandler) CreateAppointment(ctx context.Context, req *crmpb.C
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	productIDs := req.ProductIds
+	if createdAppointment != nil && len(createdAppointment.ProductIds) > 0 {
+		productIDs = createdAppointment.ProductIds
+	}
+	h.bumpAppointmentListSyncWithProducts(ctx, productIDs, participantIDsFromAppointment(createdAppointment)...)
 
 	return h.Transformer.EntityToAppointmentResponse(createdAppointment, nil, nil, nil, nil), nil
 }
@@ -109,6 +159,7 @@ func (h *AppointmentHandler) UpdateAppointment(ctx context.Context, req *crmpb.U
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	h.bumpAppointmentListSync(ctx, participantIDsFromAppointment(updatedAppointment)...)
 
 	return h.Transformer.EntityToAppointmentResponse(updatedAppointment, nil, nil, nil, nil), nil
 }
@@ -127,8 +178,18 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *crmpb.D
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	existing, err := h.AppointmentUsecase.GetAppointment(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	if err := h.AppointmentUsecase.DeleteAppointment(ctx, req.Id); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if existing != nil {
+		h.bumpAppointmentListSync(ctx, participantIDsFromAppointment(existing.Appointment)...)
+	} else {
+		h.bumpAppointmentListSync(ctx)
 	}
 
 	return &crmpb.DeleteAppointmentResponse{
@@ -157,12 +218,29 @@ func (h *AppointmentHandler) DeleteAppointment(ctx context.Context, req *crmpb.D
 // @Param containDeal query bool false "Lọc theo có deal (true = có, false = không có)"
 // @Param containTransaction query bool false "Lọc theo có transaction (true = có, false = không có)"
 // @Param statusFilter query string false "Lọc theo status (format: '10,20' - parse thành []int32)"
+// @Param timestamp query int false "Client sync timestamp (ms)"
+// @Param text query string false "Tìm kiếm (alias của title)"
 // @Security BearerAuth
 // @Success 200 {object} crmpb.ListAppointmentsResponse "Thành công"
 // @Router /v2.1/appointment [get]
 func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.ListAppointmentsRequest) (*crmpb.ListAppointmentsResponse, error) {
 	if err := h.Validator.ValidateListAppointmentsRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	page := int32(0)
+	if req.Page != nil {
+		page = *req.Page
+	}
+	syncKey := ""
+	if h.SyncProvider != nil {
+		syncKey = h.SyncProvider.GetKey(ctx, _utils.SyncKeyAppointmentMe, 0)
+		updated := h.SyncProvider.HasUpdated(ctx, syncKey, req.Timestamp)
+		if !updated && page == 0 {
+			return &crmpb.ListAppointmentsResponse{
+				Timestamp: h.SyncProvider.GetTimestamp(ctx, syncKey),
+			}, nil
+		}
 	}
 
 	pagable := _dto.Pagable{}
@@ -178,8 +256,12 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 
 	// Build filter từ request
 	filter := make(map[string]any)
-	if req.Title != "" {
-		filter["title"] = req.Title
+	title := req.Title
+	if title == "" && req.Text != "" {
+		title = req.Text
+	}
+	if title != "" {
+		filter["title"] = title
 	}
 	if req.Status != 0 {
 		filter["status"] = req.Status
@@ -225,7 +307,16 @@ func (h *AppointmentHandler) ListAppointments(ctx context.Context, req *crmpb.Li
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total)), nil
+	// Mỗi lần trả full data (page 0): ghi now vào Redis theo user và trả về client để sync lần sau.
+	ts := int64(0)
+	if h.SyncProvider != nil && syncKey != "" && page == 0 {
+		ts = time.Now().UnixMilli()
+		_ = h.SyncProvider.PutTimestamp(ctx, syncKey, ts)
+	}
+
+	resp := h.Transformer.EntityToListAppointmentsResponse(appointments, int32(total))
+	resp.Timestamp = ts
+	return resp, nil
 }
 
 // @Summary [Admin] Lấy danh sách tất cả lịch hẹn trong hệ thống
@@ -366,6 +457,7 @@ func (h *AppointmentHandler) UpdateAppointmentStatus(ctx context.Context, req *c
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	h.bumpAppointmentListSync(ctx, participantIDsFromAppointment(updatedAppointment)...)
 
 	// Lấy thông tin đầy đủ để trả về
 	appointmentDTO, err := h.AppointmentUsecase.GetAppointment(ctx, req.Id)

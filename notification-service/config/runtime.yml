@@ -1,33 +1,41 @@
-rpc:
-    user:
-        address: "localhost:8201"
-
 server:
-    tcp_port: 8204
-
-eureka:
-    url: localhost
-    port: 8761
+  tcp_port: 8204
 
 database:
-    dsn: ""
+  dsn: ""
 
 key:
-    jwt: ""
+  jwt: ""
 
 jwt:
-    key-generate: ""
-    tokenPrefix: Bearer
-    tokenExpirationAfterDays: 14
-    accessExpAfterMinutes: 15 # access token hết hạn 5 phút
-    refreshExpAfterMinutes: 129600 # refresh token có hạn là 3 tháng
-    listPermit:
-    authorizationHeader: Authorization
+  key-generate: ""
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15
+  refreshExpAfterMinutes: 129600
+  listPermit:
+  authorizationHeader: Authorization
 
 redis:
-    host: localhost:6379
-    pass: ""
+  host: localhost:6379
+  pass: ""
+  db: 0
+
+rpc:
+  user:
+    address: localhost:8201
+
+rabbit:
+  url: amqp://guest:guest@localhost:5672/
+  exchange: qhpro.payment.events
+
+delivery:
+  worker_id: notification-delivery
+  poll_interval: 1s
+  lease: 30s
+
+shutdown_timeout: 10s
 
 firebase:
-    file: ""
-    fileUrl: ""
+  file: ""
+  fileUrl: ""

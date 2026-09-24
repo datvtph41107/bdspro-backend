@@ -8,7 +8,6 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
-	"fmt"
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
@@ -33,6 +32,19 @@ type ContactService struct {
 	ContactMapper      *mapper.ContactMapper
 	FriendMapper       *mapper.FriendMapper
 	SyncProvider       *_utils.SyncUtil
+}
+
+const contactListUserMaxRecords = 20
+
+func (s *ContactService) bumpContactListSync(ctx context.Context, contactID uint64) {
+	if s.SyncProvider == nil {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0), now)
+	if contactID > 0 {
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactDetail, contactID), now)
+	}
 }
 
 func NewContactService(
@@ -106,12 +118,31 @@ func (s *ContactService) PinContact(ctx context.Context, req *crmpb.PinRequest) 
 // @Param leaded query bool false "Gán CRM"
 // @Param connected query bool false "Kết nối"
 // @Param appInstalled query bool false "Đã cài app"
+// @Param timestamp query int false "Client sync timestamp (ms)"
 // @Router /contact/list/{ownerOf} [get]
 func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
+	isUserList := req.OwnerOf == sharepb.OwnerOf_user
+	size := uint32(req.Size)
+	var syncKey string
+	if isUserList {
+		if size == 0 || size > contactListUserMaxRecords {
+			size = contactListUserMaxRecords
+		}
+		if s.SyncProvider != nil {
+			syncKey = s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0)
+			updated := s.SyncProvider.HasUpdated(ctx, syncKey, req.Timestamp)
+			if !updated && req.Page == 0 {
+				return &crmpb.ContactListDTO{
+					Timestamp: s.SyncProvider.GetTimestamp(ctx, syncKey),
+				}, nil
+			}
+		}
+	}
+
 	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOf(req.OwnerOf), dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
-			Size: uint32(req.Size),
+			Size: size,
 		},
 		Text:         req.Text,
 		FriendStatus: _utils.ParseInt32Array(req.FriendStatus),
@@ -126,8 +157,21 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 		return nil, err
 	}
 
-	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
-	s.UserClient.PbUserToContacts(ctx, contactsPb)
+	var contactsPb []*sharepb.ContactDTO
+	if isUserList {
+		contactsPb = make([]*sharepb.ContactDTO, 0, len(contacts))
+		for _, item := range contacts {
+			detail, err := s.UC.Detail(ctx, item.ID)
+			if err != nil {
+				return nil, err
+			}
+			contactsPb = append(contactsPb, s.ContactMapper.ContactEntityToSharePb(detail))
+		}
+		s.UserClient.PbUserToContacts(ctx, contactsPb)
+	} else {
+		contactsPb = s.ContactMapper.ListContactItemToPb(contacts)
+		s.UserClient.PbUserToContacts(ctx, contactsPb)
+	}
 
 	// Nếu có conversationId, map thông tin member vào contact
 	if req.ConversationId != nil && *req.ConversationId > 0 {
@@ -135,39 +179,67 @@ func (s *ContactService) Search(ctx context.Context, req *crmpb.ContactSearchReq
 		// s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
 	}
 
+	ts := int64(0)
+	if isUserList && s.SyncProvider != nil && syncKey != "" && req.Page == 0 {
+		ts = time.Now().UnixMilli()
+		_ = s.SyncProvider.PutTimestamp(ctx, syncKey, ts)
+	}
+
 	return &crmpb.ContactListDTO{
-		Data:  contactsPb,
-		Total: uint32(total),
+		Data:      contactsPb,
+		Total:     uint32(total),
+		Timestamp: ts,
 	}, nil
 }
 
 func (s *ContactService) ListMe(ctx context.Context, req *sharepb.SyncRequest) (*crmpb.ContactListDTO, error) {
-	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0)
-	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
-	s.SyncProvider.PutTimeRequest(ctx, key, req.Timestamp)
-	if !updated {
-		return &crmpb.ContactListDTO{}, nil
+	key := ""
+	if s.SyncProvider != nil {
+		key = s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0)
+		updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
+		if !updated && req.Page == 0 {
+			return &crmpb.ContactListDTO{
+				Timestamp: s.SyncProvider.GetTimestamp(ctx, key),
+			}, nil
+		}
 	}
-	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOfMember, dto.ContactSearchDTO{})
+
+	size := uint32(req.Size)
+	if size == 0 || size > contactListUserMaxRecords {
+		size = contactListUserMaxRecords
+	}
+
+	contacts, total, err := s.UC.Search(ctx, base_enum.EOwnerOfMember, dto.ContactSearchDTO{
+		Pagable: _dto.Pagable{
+			Page: uint32(req.Page),
+			Size: size,
+		},
+		Text: req.Text,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	contactsPb := s.ContactMapper.ListContactItemToPb(contacts)
+	contactsPb := make([]*sharepb.ContactDTO, 0, len(contacts))
+	for _, item := range contacts {
+		detail, err := s.UC.Detail(ctx, item.ID)
+		if err != nil {
+			return nil, err
+		}
+		contactsPb = append(contactsPb, s.ContactMapper.ContactEntityToSharePb(detail))
+	}
 	s.UserClient.PbUserToContacts(ctx, contactsPb)
 
-	// Nếu có conversationId, map thông tin member vào contact
-	// if req.ConversationId != nil && *req.ConversationId > 0 {
-	// 	s.ChatClient.MapParticipantToContact(ctx, *req.ConversationId, contactsPb)
-	// }
-
-	// if req.EndId == nil && len(contacts) > 0 {
-	// 	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("u:contact:%d", profileId), contacts[0].UpdatedAt.UnixMilli())
-	// }
+	ts := int64(0)
+	if s.SyncProvider != nil && key != "" && req.Page == 0 {
+		ts = time.Now().UnixMilli()
+		_ = s.SyncProvider.PutTimestamp(ctx, key, ts)
+	}
 
 	return &crmpb.ContactListDTO{
-		Data:  contactsPb,
-		Total: uint32(total),
+		Data:      contactsPb,
+		Total:     uint32(total),
+		Timestamp: ts,
 	}, nil
 }
 
@@ -217,6 +289,9 @@ func (s *ContactService) Create(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
+	if result != nil {
+		s.bumpContactListSync(ctx, result.ID)
+	}
 	return s.ContactMapper.ContactToPb(result), nil
 }
 
@@ -238,7 +313,7 @@ func (s *ContactService) Update(ctx context.Context, req *crmpb.ContactSaveDTO) 
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
+	s.bumpContactListSync(ctx, req.Id)
 	return s.ContactMapper.ContactToPb(result), nil
 }
 
@@ -255,7 +330,7 @@ func (s *ContactService) Delete(ctx context.Context, req *sharepb.IdRequest) (*s
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
+	s.bumpContactListSync(ctx, req.Id)
 	return &sharepb.SubmitResponse{
 		Id:      req.Id,
 		Message: "Delete contact success",
@@ -276,6 +351,7 @@ func (s *ContactService) Sync(ctx context.Context, req *crmpb.ContactSyncRequest
 	if err != nil {
 		return nil, err
 	}
+	s.bumpContactListSync(ctx, 0)
 	return &crmpb.ContactSyncResponse{
 		Data:  s.ContactMapper.ListContactToPb(result),
 		Total: uint32(len(result)),
@@ -321,7 +397,7 @@ func (s *ContactService) Note(ctx context.Context, req *crmpb.NoteContactDTO) (*
 	if err != nil {
 		return nil, err
 	}
-	s.SyncProvider.PutTimestamp(ctx, fmt.Sprintf("time:contact:%d", req.Id), time.Now().UnixMilli())
+	s.bumpContactListSync(ctx, req.Id)
 	return &crmpb.NoteContactDTO{
 		Id:   req.Id,
 		Note: req.Note,

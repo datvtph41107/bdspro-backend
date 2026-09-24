@@ -80,3 +80,30 @@ func (c *BdsproClient) ListMyProducts(ctx context.Context, page, size uint32) (*
 		Timestamp: 0,
 	})
 }
+
+// CreateGroupDeal tạo thương vụ cá nhân (ownerType=member).
+func (c *BdsproClient) CreateGroupDeal(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (uint64, error) {
+	if c.BdsproGrpcClient == nil || c.DealClient == nil {
+		return 0, errors.New("bdspro deal client not available")
+	}
+	resp, err := c.DealClient.CreateGroupDeal(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+	if resp == nil {
+		return 0, nil
+	}
+	return uint64(resp.Id), nil
+}
+
+// DeleteGroupDeal soft-delete thương vụ theo id.
+func (c *BdsproClient) DeleteGroupDeal(ctx context.Context, dealID uint64) error {
+	if c.BdsproGrpcClient == nil || c.DealClient == nil {
+		return errors.New("bdspro deal client not available")
+	}
+	if dealID == 0 {
+		return nil
+	}
+	_, err := c.DealClient.DeleteGroupDeal(ctx, &bdspropb.DeleteGroupDealRequest{Id: uint32(dealID)})
+	return err
+}

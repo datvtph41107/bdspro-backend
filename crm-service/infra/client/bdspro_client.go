@@ -1,6 +1,7 @@
 package client
 
 import (
+	_utils "common/utils"
 	"context"
 	"errors"
 	"pb/clients"
@@ -95,16 +96,7 @@ func (m *BdsproClient) MapDealMemberToContacts(ctx context.Context, dealId uint6
 		userIds = append(userIds, userId)
 	}
 
-	response, err := m.InternalClient.GetDealMembers(ctx, &bdspropb.DealMemberRequest{
-		DealId:  dealId,
-		UserIds: userIds,
-	})
-	dealMembers := response.Data
-	dealMemberMap := make(map[uint64]*sharepb.DealMember)
-	for _, dealMember := range dealMembers {
-		dealMemberMap[dealMember.MemberId] = dealMember
-	}
-
+	dealMemberMap, err := m.getDealMemberMap(ctx, dealId, userIds)
 	if err != nil {
 		return err
 	}
@@ -121,6 +113,53 @@ func (m *BdsproClient) MapDealMemberToContacts(ctx context.Context, dealId uint6
 	}
 
 	return nil
+}
+
+func (m *BdsproClient) MapDealMemberToFriend(ctx context.Context, dealId uint64, userPbs []*crmpb.Friend) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	profileIDSet := make(map[uint64]struct{})
+	for _, userPb := range userPbs {
+		profileIDSet[userPb.ReceiverId] = struct{}{}
+		profileIDSet[userPb.CreatedBy] = struct{}{}
+	}
+
+	userIds := make([]uint64, 0, len(profileIDSet))
+	for userId := range profileIDSet {
+		userIds = append(userIds, userId)
+	}
+
+	dealMemberMap, err := m.getDealMemberMap(ctx, dealId, userIds)
+	if err != nil {
+		return err
+	}
+
+	for _, friend := range userPbs {
+		if friend.CreatedBy == profileId {
+			if profile, ok := dealMemberMap[friend.ReceiverId]; ok {
+				friend.DealMember = profile
+			}
+		} else if profile, ok := dealMemberMap[friend.CreatedBy]; ok {
+			friend.DealMember = profile
+		}
+	}
+
+	return nil
+}
+
+func (m *BdsproClient) getDealMemberMap(ctx context.Context, dealId uint64, userIds []uint64) (map[uint64]*sharepb.DealMember, error) {
+	response, err := m.InternalClient.GetDealMembers(ctx, &bdspropb.DealMemberRequest{
+		DealId:  dealId,
+		UserIds: userIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dealMemberMap := make(map[uint64]*sharepb.DealMember, len(response.Data))
+	for _, dealMember := range response.Data {
+		dealMemberMap[dealMember.MemberId] = dealMember
+	}
+	return dealMemberMap, nil
 }
 
 func (c *BdsproClient) GetDealContractsByIds(ctx context.Context, dealContractIds []uint64) ([]*bdspropb.DealContractItem, error) {

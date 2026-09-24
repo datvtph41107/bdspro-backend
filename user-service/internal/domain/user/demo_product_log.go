@@ -25,3 +25,27 @@ type DemoContactLog struct {
 func (DemoContactLog) TableName() string {
 	return "demo_contact_log"
 }
+
+// DemoAppointmentLog lưu lịch hẹn tạo trong chế độ demo để xoá khi tắt.
+type DemoAppointmentLog struct {
+	ID            uint64    `gorm:"primaryKey;autoIncrement;column:id"`
+	ProfileID     uint64    `gorm:"column:profile_id;not null;index:idx_demo_appointment_log_profile_id"`
+	AppointmentID uint64    `gorm:"column:appointment_id;not null"`
+	CreatedAt     time.Time `gorm:"column:created_at;autoCreateTime"`
+}
+
+func (DemoAppointmentLog) TableName() string {
+	return "demo_appointment_log"
+}
+
+// DemoDealLog lưu thương vụ tạo trong chế độ demo để xoá khi tắt.
+type DemoDealLog struct {
+	ID        uint64    `gorm:"primaryKey;autoIncrement;column:id"`
+	ProfileID uint64    `gorm:"column:profile_id;not null;index:idx_demo_deal_log_profile_id"`
+	DealID    uint64    `gorm:"column:deal_id;not null"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+}
+
+func (DemoDealLog) TableName() string {
+	return "demo_deal_log"
+}

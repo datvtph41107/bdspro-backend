@@ -16,12 +16,38 @@ import (
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const productMeMaxRecords = 5
+
+func isMissingProductErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "record not found") ||
+		strings.Contains(msg, "Product not found") ||
+		strings.Contains(msg, "product not found")
+}
+
+func searchResponsePagination(page, size uint32, total int64) (int32, int32, int32) {
+	pageOut := int32(page)
+	sizeOut := int32(size)
+	if sizeOut <= 0 {
+		sizeOut = productMeMaxRecords
+	}
+	var totalPages int32
+	if total > 0 && sizeOut > 0 {
+		totalPages = int32((total + int64(sizeOut) - 1) / int64(sizeOut))
+	}
+	return pageOut, sizeOut, totalPages
+}
 
 type ProductHandler struct {
 	bdspropb.UnimplementedProductServiceServer
@@ -505,12 +531,22 @@ func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest
 	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
 	if !updated && req.Page == 0 {
-		return &bdspropb.SearchResponse{}, nil
+		ts := int64(0)
+		if s.SyncProvider != nil {
+			ts = s.SyncProvider.GetTimestamp(ctx, key)
+		}
+		return &bdspropb.SearchResponse{Timestamp: ts}, nil
 	}
-	body := s.ProductMapper.PbSearchRequestToDTO(&bdspropb.ProductSearch{
+	searchPb := &bdspropb.ProductSearch{
 		Page: req.Page,
-		Size: req.Size,
-	})
+		Size: productMeMaxRecords,
+		Text: req.GetText(),
+	}
+	if req.Archived != nil {
+		searchPb.Archived = req.Archived
+	}
+	body := s.ProductMapper.PbSearchRequestToDTO(searchPb)
+	body.Size = productMeMaxRecords
 	body.Sync = true
 
 	result, total, err := s.UC.GetProductOfCurrentUser(ctx, body)
@@ -518,17 +554,38 @@ func (s *ProductHandler) ProductMe(ctx context.Context, req *sharepb.SyncRequest
 		return nil, err
 	}
 
-	if req.Page == 0 && len(result) > 0 {
-		s.SyncProvider.PutTimestamp(ctx, key, result[0].UpdatedAt.UnixMilli())
+	products := make([]*bdspropb.ProductResponse, 0, len(result))
+	for _, item := range result {
+		if item.DeletedAt != nil {
+			continue
+		}
+		product, err := s.UC.Detail(ctx, item.ID)
+		if err != nil {
+			// Stale list/cache after delete (e.g. tắt demo): skip missing rows
+			// instead of failing the whole /product/me sync.
+			if isMissingProductErr(err) {
+				continue
+			}
+			return nil, err
+		}
+		products = append(products, s.ProductMapper.MapDetailProductPb(ctx, product))
 	}
 
-	products := s.ProductMapper.MapProductPbListResponse(result)
+	page, size, totalPages := searchResponsePagination(req.GetPage(), productMeMaxRecords, total)
 
-	// products := make([]*bdspropb.ProductResponse, 0)
-	// copier.Copy(&products, &result)
+	// Mỗi lần trả full data: ghi now vào Redis và trả về client để sync lần sau.
+	now := time.Now().UnixMilli()
+	if s.SyncProvider != nil && req.Page == 0 {
+		_ = s.SyncProvider.PutTimestamp(ctx, key, now)
+	}
+
 	return &bdspropb.SearchResponse{
 		Data:          products,
 		TotalElements: total,
+		Page:          page,
+		Size:          size,
+		TotalPages:    totalPages,
+		Timestamp:     now,
 	}, nil
 }
 
@@ -802,6 +859,82 @@ func (s *ProductHandler) GetProductTimestamps(ctx context.Context, req *sharepb.
 	}, nil
 }
 
+
+// @Summary Timestamps tổng hợp app (chỉ đọc Redis)
+// @Description FE gọi trước để so sánh cache: enum, permission_me, info_me, user_guides_by_key, product_me, poi_category_icons, provinces_wards, contact_me, appointment_me, deal_me, notification_me. Không gọi DB.
+// @Tags User: Sync
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} bdspropb.ProductTimestampsResponse "Map key -> timestamp (ms)"
+// @Router /v2/bdspro/ts [get]
+func (s *ProductHandler) GetAppTimestamps(ctx context.Context, _ *sharepb.Empty) (*bdspropb.ProductTimestampsResponse, error) {
+	redisKeys := []string{
+		_utils.SyncKeyBdsproEnums,
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyPermissionMe, 0),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0),
+		_utils.SyncKeyUserGuideByKey,
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, 0),
+		_utils.SyncKeyPoiCategoryIcons,
+		_utils.SyncKeyTQDProvincesWards,
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyAppointmentMe, 0),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMe, 0),
+		s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0),
+	}
+	names := []string{
+		"enum",
+		"permission_me",
+		"info_me",
+		"user_guides_by_key",
+		"product_me",
+		"poi_category_icons",
+		"provinces_wards",
+		"contact_me",
+		"appointment_me",
+		"deal_me",
+		"notification_me",
+	}
+
+	vals, err := s.SyncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException(err.Error())
+	}
+
+	timestamps := make(map[string]int64, len(names))
+	for i, v := range vals {
+		var ts int64
+		if v != nil {
+			switch x := v.(type) {
+			case string:
+				ts, _ = strconv.ParseInt(x, 10, 64)
+			case []byte:
+				ts, _ = strconv.ParseInt(string(x), 10, 64)
+			case int64:
+				ts = x
+			case int:
+				ts = int64(x)
+			}
+		}
+		// Mọi key: Redis đã có ts > 0 → trả đúng value đó.
+		// Key thiếu hoặc = 0 → EnsureTimestamp (seed now).
+		if ts > 0 {
+			timestamps[names[i]] = ts
+			continue
+		}
+		if s.SyncProvider != nil {
+			timestamps[names[i]] = s.SyncProvider.EnsureTimestamp(ctx, redisKeys[i])
+		} else {
+			timestamps[names[i]] = 0
+		}
+	}
+
+	return &bdspropb.ProductTimestampsResponse{
+		Timestamps: timestamps,
+	}, nil
+}
+
+
 func (s *ProductHandler) GetDetail(ctx context.Context, req *sharepb.SyncRequest) (*bdspropb.ProductResponse, error) {
 	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id)
 	updated := s.SyncProvider.HasUpdated(ctx, key, req.Timestamp)
@@ -1011,13 +1144,8 @@ func (s *ProductHandler) DeleteProduct(ctx context.Context, req *bdspropb.IdRequ
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().UnixMilli()
-	if s.SyncProvider != nil {
-		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDetail, req.Id), now)
-		// ProductMe sync key uses resourceId=0 (see ProductMe); product id would miss the list key.
-		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, 0), now)
-		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0), now)
-	}
+	// Mem-cache is cleared in UC.Delete. Do not bump SyncKeyProductMe /
+	// PropertyMe timestamps — client list sync ts stays as-is.
 	return &bdspropb.Response{
 		Message: "ok",
 	}, nil

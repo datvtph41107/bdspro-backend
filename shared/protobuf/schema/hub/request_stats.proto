@@ -95,14 +95,14 @@ message GetRequestStatsDashboardResponse {
 }
 
 message GetRequestDailyStatsRequest {
-  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30.
+  // Số ngày gần nhất; mặc định 3 nếu bỏ trống hoặc = 0. Giới hạn 1-30 (minutes tối đa 2).
   uint32 lastDates = 1;
-  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định) hoặc "hours" (theo khung giờ).
+  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định), "hours" (theo khung giờ), hoặc "minutes" (slot 5 phút).
   string gap = 2;
 }
 
 message RequestDailyItem {
-  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00
+  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00 | minutes: YYYY-MM-DD HH:MM (5 phút)
   string date = 1;
   uint64 count = 2;
 }
@@ -111,7 +111,7 @@ message GetRequestDailyStatsResponse {
   // Danh sách request theo gap, sắp xếp tăng dần theo date (slot trống thì count = 0)
   repeated RequestDailyItem data = 1;
   uint32 lastDates = 2;
-  // Gap đã áp dụng sau normalize: dates | hours
+  // Gap đã áp dụng sau normalize: dates | hours | minutes
   string gap = 3;
 }
 
@@ -142,12 +142,12 @@ message GetUserInteractionDashboardResponse {
 
 message GetUserInteractionDailyStatsRequest {
   uint32 lastDates = 1;
-  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định) hoặc "hours" (theo khung giờ).
+  // Khoảng gom dữ liệu: "dates" (theo ngày, mặc định), "hours" (theo khung giờ), hoặc "minutes" (slot 5 phút).
   string gap = 2;
 }
 
 message UserInteractionDailyItem {
-  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00
+  // dates: YYYY-MM-DD | hours: YYYY-MM-DD HH:00 | minutes: YYYY-MM-DD HH:MM (5 phút)
   string date = 1;
   // Tổng lượt tương tác trong slot
   uint64 interactions = 2;
@@ -158,7 +158,7 @@ message UserInteractionDailyItem {
 message GetUserInteractionDailyStatsResponse {
   repeated UserInteractionDailyItem data = 1;
   uint32 lastDates = 2;
-  // Gap đã áp dụng sau normalize: dates | hours
+  // Gap đã áp dụng sau normalize: dates | hours | minutes
   string gap = 3;
 }
 

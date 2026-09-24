@@ -314,6 +314,12 @@ func (s *GrpcProfileService) GetProfileInfoMe(ctx context.Context, req *sharepb.
 		}
 	}
 
+	now := time.Now().UnixMilli()
+	if s.SyncProvider != nil {
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0), now)
+	}
+	profilePb.Timestamp = now
+
 	return profilePb, nil
 }
 
@@ -417,6 +423,9 @@ func (s *GrpcProfileService) SetInfo(ctx context.Context, req *userpb.SetInfoReq
 
 	s.ProfileUsecase.UpdateUserInfo(ctx, dto)
 
+	if s.SyncProvider != nil {
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0), time.Now().UnixMilli())
+	}
 	return &sharepb.Empty{}, nil
 }
 
@@ -582,7 +591,7 @@ func (s *GrpcProfileService) GetStatusOnline(ctx context.Context, req *userpb.Id
 }
 
 // @Summary Bật/tắt chế độ demo
-// @Description Cập nhật trường demo trên profile hiện tại; khi bật sẽ tạo sẵn sản phẩm demo qua bdspro
+// @Description Cập nhật trường demo trên profile hiện tại; khi bật sẽ tạo sẵn sản phẩm, liên hệ, 2 thương vụ và 3 lịch hẹn demo; khi tắt sẽ xoá theo log
 // @Tags Profile
 // @Accept json
 // @Produce json
@@ -626,10 +635,19 @@ func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
 		return err
 	}
 	if len(existing) > 0 {
+		contactIDs, listErr := s.DemoProductLogRepo.ListContactIDsByProfileID(ctx, profileID)
+		if listErr != nil {
+			return listErr
+		}
+		contactProfileIDs := s.resolveContactProfileIDs(ctx, contactIDs)
+		if err := s.seedDemoDealsAndAppointments(ctx, profileID, existing, contactProfileIDs); err != nil {
+			return err
+		}
+		s.bumpDemoSyncKeys(ctx, existing)
 		return nil
 	}
 
-	originIDs, contactIDs, err := s.seedDemoContacts(ctx, profileID)
+	originIDs, contactIDs, contactProfileIDs, err := s.seedDemoContacts(ctx, profileID)
 	if err != nil {
 		return err
 	}
@@ -709,22 +727,28 @@ func (s *GrpcProfileService) seedDemoProducts(ctx context.Context) error {
 		_ = s.DemoProductLogRepo.DeleteContactsByProfileID(ctx, profileID)
 		return err
 	}
+
+	if err := s.seedDemoDealsAndAppointments(ctx, profileID, createdIDs, contactProfileIDs); err != nil {
+		return err
+	}
+	s.bumpDemoSyncKeys(ctx, createdIDs)
 	return nil
 }
 
-// seedDemoContacts tạo liên hệ CRM từ snapshot contacts.json; trả originId + contactId.
-func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfileID uint64) ([]uint64, []uint64, error) {
+// seedDemoContacts tạo liên hệ CRM từ snapshot contacts.json; trả originId + contactId + profileId.
+func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfileID uint64) ([]uint64, []uint64, []uint64, error) {
 	if s.CrmClient == nil {
-		return nil, nil, _errors.ReturnError(500, "crm client chưa được cấu hình")
+		return nil, nil, nil, _errors.ReturnError(500, "crm client chưa được cấu hình")
 	}
 
 	contacts, err := demo.LoadDemoContacts()
 	if err != nil {
-		return nil, nil, _errors.ReturnError(500, "không đọc được dữ liệu demo contacts: "+err.Error())
+		return nil, nil, nil, _errors.ReturnError(500, "không đọc được dữ liệu demo contacts: "+err.Error())
 	}
 
 	originIDs := make([]uint64, 0, len(contacts))
 	contactIDs := make([]uint64, 0, len(contacts))
+	contactProfileIDs := make([]uint64, 0, len(contacts))
 	seenContact := make(map[uint64]struct{}, len(contacts))
 
 	for _, contact := range contacts {
@@ -735,7 +759,7 @@ func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfil
 			continue
 		}
 
-		originID, contactID, err := s.CrmClient.CreateContact(ctx, contact.FullName, contact.Phone, contact.Email, contact.Avatar)
+		originID, contactID, profileID, err := s.CrmClient.CreateContact(ctx, contact.FullName, contact.Phone, contact.Email, contact.Avatar)
 		if err != nil || contactID == 0 {
 			// Đã tồn tại / lỗi tạo — tìm lại theo SĐT thuộc owner hiện tại.
 			existingID, findErr := s.CrmClient.FindContactIDByPhone(ctx, contact.Phone)
@@ -744,12 +768,18 @@ func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfil
 				continue
 			}
 			contactID = existingID
+			if profileID == 0 {
+				profileID, _ = s.CrmClient.GetContactProfileID(ctx, contactID)
+			}
+			if originID == 0 && profileID > 0 {
+				originID, _ = s.CrmClient.GetOriginID(ctx, profileID)
+			}
 			if originID == 0 {
 				originID, _ = s.CrmClient.GetOriginID(ctx, contact.ProfileID)
 			}
 		}
-		if originID == 0 {
-			originID, _ = s.CrmClient.GetOriginID(ctx, contact.ProfileID)
+		if originID == 0 && profileID > 0 {
+			originID, _ = s.CrmClient.GetOriginID(ctx, profileID)
 		}
 		if originID > 0 {
 			originIDs = append(originIDs, originID)
@@ -758,10 +788,13 @@ func (s *GrpcProfileService) seedDemoContacts(ctx context.Context, currentProfil
 			if _, ok := seenContact[contactID]; !ok {
 				seenContact[contactID] = struct{}{}
 				contactIDs = append(contactIDs, contactID)
+				if profileID > 0 {
+					contactProfileIDs = append(contactProfileIDs, profileID)
+				}
 			}
 		}
 	}
-	return originIDs, contactIDs, nil
+	return originIDs, contactIDs, contactProfileIDs, nil
 }
 
 // loadDemoWardIDsByProvince lấy danh sách ward source-id từ TQD theo provinceId
@@ -900,6 +933,13 @@ func (s *GrpcProfileService) cleanupDemoProducts(ctx context.Context) error {
 		toDelete = append(toDelete, id)
 	}
 
+	if err := s.cleanupDemoAppointments(ctx, profileID); err != nil {
+		return err
+	}
+	if err := s.cleanupDemoDeals(ctx, profileID); err != nil {
+		return err
+	}
+
 	deletedLoggedIDs := make([]uint64, 0, len(loggedIDs))
 	var firstErr error
 	for _, productID := range toDelete {
@@ -922,6 +962,7 @@ func (s *GrpcProfileService) cleanupDemoProducts(ctx context.Context) error {
 	if err := s.cleanupDemoContacts(ctx, profileID); err != nil {
 		return err
 	}
+	s.bumpDemoSyncKeys(ctx, deletedLoggedIDs)
 	if firstErr != nil {
 		return _errors.ReturnError(500, "không xoá hết sản phẩm demo: "+firstErr.Error())
 	}
@@ -1032,6 +1073,286 @@ func (s *GrpcProfileService) cleanupDemoContacts(ctx context.Context, profileID 
 	}
 
 	return s.DemoProductLogRepo.DeleteContactsByProfileIDAndContactIDs(ctx, profileID, deletedLoggedIDs)
+}
+
+
+
+func (s *GrpcProfileService) bumpDemoSyncKeys(ctx context.Context, productIDs []uint64) {
+	if s.SyncProvider == nil {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyContactMe, 0), now)
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductMe, 0), now)
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyPropertyMe, 0), now)
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyAppointmentMe, 0), now)
+	_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMe, 0), now)
+	seen := make(map[uint64]struct{}, len(productIDs))
+	for _, productID := range productIDs {
+		if productID == 0 {
+			continue
+		}
+		if _, ok := seen[productID]; ok {
+			continue
+		}
+		seen[productID] = struct{}{}
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDeals, productID), now)
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductAppointments, productID), now)
+		_ = s.SyncProvider.PutTimestamp(ctx, s.SyncProvider.GetKey(ctx, _utils.SyncKeyProductContacts, productID), now)
+	}
+}
+
+func (s *GrpcProfileService) resolveContactProfileIDs(ctx context.Context, contactIDs []uint64) []uint64 {
+	if s.CrmClient == nil || len(contactIDs) == 0 {
+		return nil
+	}
+	out := make([]uint64, 0, len(contactIDs))
+	seen := make(map[uint64]struct{}, len(contactIDs))
+	for _, contactID := range contactIDs {
+		profileID, err := s.CrmClient.GetContactProfileID(ctx, contactID)
+		if err != nil || profileID == 0 {
+			continue
+		}
+		if _, ok := seen[profileID]; ok {
+			continue
+		}
+		seen[profileID] = struct{}{}
+		out = append(out, profileID)
+	}
+	return out
+}
+
+func (s *GrpcProfileService) seedDemoDealsAndAppointments(
+	ctx context.Context,
+	profileID uint64,
+	productIDs []uint64,
+	contactProfileIDs []uint64,
+) error {
+	dealIDs, err := s.seedDemoDeals(ctx, profileID, productIDs, contactProfileIDs)
+	if err != nil {
+		return err
+	}
+	if err := s.seedDemoAppointments(ctx, profileID, productIDs, contactProfileIDs, dealIDs); err != nil {
+		s.bestEffortDeleteDeals(ctx, dealIDs)
+		_ = s.DemoProductLogRepo.DeleteDealsByProfileID(ctx, profileID)
+		return err
+	}
+	return nil
+}
+
+func (s *GrpcProfileService) seedDemoDeals(
+	ctx context.Context,
+	profileID uint64,
+	productIDs []uint64,
+	contactProfileIDs []uint64,
+) ([]uint64, error) {
+	if s.BdsproClient == nil {
+		return nil, _errors.ReturnError(500, "bdspro client chưa được cấu hình")
+	}
+
+	existing, err := s.DemoProductLogRepo.ListDealIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+	if len(existing) > 0 {
+		return existing, nil
+	}
+
+	dealNames := []string{"Thương vụ demo bán căn hộ", "Thương vụ demo cho thuê nhà phố"}
+	dealTypes := []uint32{40, 50} // Sale, Rent
+	createdIDs := make([]uint64, 0, 2)
+
+	for i := 0; i < 2; i++ {
+		var customers []uint64
+		if len(contactProfileIDs) > 0 {
+			customers = []uint64{contactProfileIDs[i%len(contactProfileIDs)]}
+		}
+		var products []uint64
+		if len(productIDs) > 0 {
+			products = []uint64{productIDs[i%len(productIDs)]}
+		}
+		req := &bdspropb.CreateGroupDealRequest{
+			Name:           dealNames[i],
+			Status:         10, // Processing
+			DealType:       dealTypes[i%len(dealTypes)],
+			TargetProfit:   float64(500000000 + rand.Intn(500000000)),
+			Note:           "Dữ liệu demo — sẽ xoá khi tắt chế độ demo",
+			Description:    "Thương vụ được tạo tự động khi bật demo",
+			CustomerIds:    customers,
+			ProductIds:     products,
+			OwnerType:      10, // EOwnerOfMember
+			ChargePersonId: profileID,
+			OwnerId:        profileID,
+		}
+		dealID, err := s.BdsproClient.CreateGroupDeal(ctx, req)
+		if err != nil {
+			s.bestEffortDeleteDeals(ctx, createdIDs)
+			return nil, err
+		}
+		if dealID > 0 {
+			createdIDs = append(createdIDs, dealID)
+		}
+	}
+
+	if len(createdIDs) == 0 {
+		return nil, nil
+	}
+	logs := make([]*user.DemoDealLog, 0, len(createdIDs))
+	for _, dealID := range createdIDs {
+		logs = append(logs, &user.DemoDealLog{ProfileID: profileID, DealID: dealID})
+	}
+	if err := s.DemoProductLogRepo.CreateDealBatch(ctx, logs); err != nil {
+		s.bestEffortDeleteDeals(ctx, createdIDs)
+		return nil, err
+	}
+	return createdIDs, nil
+}
+
+func (s *GrpcProfileService) seedDemoAppointments(
+	ctx context.Context,
+	profileID uint64,
+	productIDs []uint64,
+	contactProfileIDs []uint64,
+	dealIDs []uint64,
+) error {
+	if s.CrmClient == nil {
+		return _errors.ReturnError(500, "crm client chưa được cấu hình")
+	}
+
+	existing, err := s.DemoProductLogRepo.ListAppointmentIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if len(existing) > 0 {
+		return nil
+	}
+
+	titles := []string{
+		"Xem nhà demo cùng khách",
+		"Ký gửi sản phẩm demo",
+		"Tư vấn đầu tư demo",
+	}
+	places := []string{
+		"Văn phòng giao dịch Quận 1",
+		"Căn hộ mẫu Thuận An",
+		"Nhà phố Thủ Đức",
+	}
+	statuses := []uint32{10, 20, 30} // pending, confirmed, completed
+	createdIDs := make([]uint64, 0, 3)
+
+	for i := 0; i < 3; i++ {
+		start := time.Now().Add(time.Duration(24*(i+1)+rand.Intn(48)) * time.Hour)
+		start = time.Date(start.Year(), start.Month(), start.Day(), 9+rand.Intn(8), 0, 0, 0, start.Location())
+		end := start.Add(time.Duration(1+rand.Intn(2)) * time.Hour)
+
+		var participants []int64
+		if len(contactProfileIDs) > 0 {
+			participants = []int64{int64(contactProfileIDs[i%len(contactProfileIDs)])}
+		}
+		var products []int64
+		if len(productIDs) > 0 {
+			products = []int64{int64(productIDs[i%len(productIDs)])}
+		}
+		var dealID uint32
+		if len(dealIDs) > 0 {
+			dealID = uint32(dealIDs[i%len(dealIDs)])
+		}
+
+		appointmentID, err := s.CrmClient.CreateAppointment(
+			ctx,
+			titles[i],
+			"Lịch hẹn demo — sẽ xoá khi tắt chế độ demo",
+			places[i],
+			start.Format(time.RFC3339),
+			end.Format(time.RFC3339),
+			participants,
+			dealID,
+			products,
+			statuses[i%len(statuses)],
+		)
+		if err != nil {
+			s.bestEffortDeleteAppointments(ctx, createdIDs)
+			return err
+		}
+		if appointmentID > 0 {
+			createdIDs = append(createdIDs, appointmentID)
+		}
+	}
+
+	if len(createdIDs) == 0 {
+		return nil
+	}
+	logs := make([]*user.DemoAppointmentLog, 0, len(createdIDs))
+	for _, appointmentID := range createdIDs {
+		logs = append(logs, &user.DemoAppointmentLog{ProfileID: profileID, AppointmentID: appointmentID})
+	}
+	if err := s.DemoProductLogRepo.CreateAppointmentBatch(ctx, logs); err != nil {
+		s.bestEffortDeleteAppointments(ctx, createdIDs)
+		return err
+	}
+	return nil
+}
+
+func (s *GrpcProfileService) cleanupDemoAppointments(ctx context.Context, profileID uint64) error {
+	if s.CrmClient == nil {
+		return nil
+	}
+	appointmentIDs, err := s.DemoProductLogRepo.ListAppointmentIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	deleted := make([]uint64, 0, len(appointmentIDs))
+	for _, appointmentID := range appointmentIDs {
+		if appointmentID == 0 {
+			continue
+		}
+		if err := s.CrmClient.DeleteAppointment(ctx, appointmentID); err != nil {
+			log.Printf("cleanupDemoAppointments delete id=%d: %v", appointmentID, err)
+			continue
+		}
+		deleted = append(deleted, appointmentID)
+	}
+	return s.DemoProductLogRepo.DeleteAppointmentsByProfileIDAndIDs(ctx, profileID, deleted)
+}
+
+func (s *GrpcProfileService) cleanupDemoDeals(ctx context.Context, profileID uint64) error {
+	if s.BdsproClient == nil {
+		return nil
+	}
+	dealIDs, err := s.DemoProductLogRepo.ListDealIDsByProfileID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	deleted := make([]uint64, 0, len(dealIDs))
+	for _, dealID := range dealIDs {
+		if dealID == 0 {
+			continue
+		}
+		if err := s.BdsproClient.DeleteGroupDeal(ctx, dealID); err != nil {
+			log.Printf("cleanupDemoDeals delete id=%d: %v", dealID, err)
+			continue
+		}
+		deleted = append(deleted, dealID)
+	}
+	return s.DemoProductLogRepo.DeleteDealsByProfileIDAndIDs(ctx, profileID, deleted)
+}
+
+func (s *GrpcProfileService) bestEffortDeleteAppointments(ctx context.Context, appointmentIDs []uint64) {
+	if s.CrmClient == nil {
+		return
+	}
+	for _, appointmentID := range appointmentIDs {
+		_ = s.CrmClient.DeleteAppointment(ctx, appointmentID)
+	}
+}
+
+func (s *GrpcProfileService) bestEffortDeleteDeals(ctx context.Context, dealIDs []uint64) {
+	if s.BdsproClient == nil {
+		return
+	}
+	for _, dealID := range dealIDs {
+		_ = s.BdsproClient.DeleteGroupDeal(ctx, dealID)
+	}
 }
 
 func (s *GrpcProfileService) bestEffortDeleteProducts(ctx context.Context, productIDs []uint64) {

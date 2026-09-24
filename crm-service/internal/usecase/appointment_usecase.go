@@ -5,6 +5,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"sync"
+
 	bdspropb "pb/types/bdspro"
 
 	sharepb "pb/types/shared"
@@ -35,6 +37,9 @@ type appointmentUsecase struct {
 	// organizationClient client.OrganizationClient
 	bdsproClient provider.BdsproProvider
 	userClient   *client.UserClient
+
+	listMemCacheMu sync.RWMutex
+	listByKey      map[appointmentListMemCacheKey]appointmentListMemCacheEntry
 }
 
 func NewAppointmentUsecase(
@@ -50,6 +55,7 @@ func NewAppointmentUsecase(
 		// organizationClient: organizationClient,
 		bdsproClient: bdsproClient,
 		userClient:   userClient,
+		listByKey:    make(map[appointmentListMemCacheKey]appointmentListMemCacheEntry),
 	}
 }
 
@@ -124,6 +130,13 @@ func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment
 		return nil, err
 	}
 
+	uc.invalidateAppointmentListMemCache(profileId)
+	for _, userId := range participantIds {
+		if userId != profileId {
+			uc.invalidateAppointmentListMemCache(userId)
+		}
+	}
+
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
 	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
 
@@ -194,6 +207,13 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 		return nil, err
 	}
 
+	uc.invalidateAppointmentListMemCache(profileId)
+	for _, userId := range participantIds {
+		if userId != profileId {
+			uc.invalidateAppointmentListMemCache(userId)
+		}
+	}
+
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
 	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
 
@@ -201,6 +221,7 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 }
 
 func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) error {
+	profileId := _utils.GetProfileIdWithContext(ctx)
 	// Lấy appointment trước khi xóa để biết ProductIds
 	appointment, err := uc.appointmentRepo.GetByID(ctx, id)
 	if err != nil {
@@ -210,6 +231,15 @@ func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) 
 	err = uc.appointmentRepo.Delete(ctx, id)
 	if err != nil {
 		return err
+	}
+
+	if profileId > 0 {
+		uc.invalidateAppointmentListMemCache(profileId)
+	}
+	for _, userId := range appointment.ParticipantIds {
+		if uint64(userId) != profileId {
+			uc.invalidateAppointmentListMemCache(uint64(userId))
+		}
 	}
 
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
@@ -223,6 +253,9 @@ func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[s
 	if profileId == 0 {
 		return nil, 0, fmt.Errorf("profileId not found in context")
 	}
+	if list, total, ok := uc.getCachedAppointmentList(profileId, filter, pagable); ok {
+		return list, total, nil
+	}
 	appointments, total, err := uc.appointmentRepo.List(ctx, profileId, filter, pagable)
 	if err != nil {
 		return nil, 0, err
@@ -231,14 +264,7 @@ func (uc *appointmentUsecase) ListAppointments(ctx context.Context, filter map[s
 	if err != nil {
 		return nil, 0, err
 	}
-
-	// for _, appointment := range appointments {
-	// 	appointmentDTO, _ := uc.mapAppointmentDTO(ctx, appointment)
-	// 	// if err != nil {
-	// 	// 	return nil, 0, err
-	// 	// }
-	// 	appointmentsDTO = append(appointmentsDTO, appointmentDTO)
-	// }
+	uc.setCachedAppointmentList(profileId, filter, pagable, appointmentsDTO, total)
 	return appointmentsDTO, total, nil
 }
 
@@ -587,6 +613,16 @@ func (uc *appointmentUsecase) UpdateAppointmentStatus(ctx context.Context, id ui
 	err = uc.appointmentRepo.UpdateStatus(ctx, id, newStatus)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update appointment status: %v", err)
+	}
+
+	profileId := _utils.GetProfileIdWithContext(ctx)
+	if profileId > 0 {
+		uc.invalidateAppointmentListMemCache(profileId)
+	}
+	for _, userId := range appointment.ParticipantIds {
+		if uint64(userId) != profileId {
+			uc.invalidateAppointmentListMemCache(uint64(userId))
+		}
 	}
 
 	// Lấy lại appointment đã update

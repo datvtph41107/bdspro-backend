@@ -3,7 +3,7 @@ package domain
 import "time"
 
 // RequestStatsLog stores request counts for one API path.
-// bucket_hour is the UTC hour key (unique); timestamp is the latest flush time.
+// bucket_hour is the UTC 5-minute bucket key (unique); timestamp is the latest flush time.
 type RequestStatsLog struct {
 	ID         uint64    `gorm:"primaryKey;autoIncrement"`
 	Method     string    `gorm:"size:16;not null;index;column:method"`
@@ -20,7 +20,7 @@ func (RequestStatsLog) TableName() string {
 }
 
 // UserInteractionLog stores JWT-user interaction counts.
-// bucket_hour is the UTC hour key (unique); timestamp is the latest flush time.
+// bucket_hour is the UTC 5-minute bucket key (unique); timestamp is the latest flush time.
 type UserInteractionLog struct {
 	ID             uint64    `gorm:"primaryKey;autoIncrement"`
 	ProfileID      uint64    `gorm:"not null;index;column:profile_id"`

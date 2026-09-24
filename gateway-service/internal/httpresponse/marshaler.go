@@ -58,6 +58,8 @@ type StandardResponse struct {
 	Total         int64 `json:"total,omitempty"`
 	// pagination object
 	Pagination *PaginationInfo `json:"pagination,omitempty"` // Thông tin phân trang đầy đủ
+	// Sync timestamp (ms) — proto field Timestamp, dùng cho client cache/sync.
+	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
 func (c *Marshaler) Marshal(v interface{}) ([]byte, error) {
@@ -209,38 +211,43 @@ func (c *Marshaler) Marshal(v interface{}) ([]byte, error) {
 			}
 		}
 
-		// Pagination key
+		// Pagination key (optional nested message — nil pointer must not Elem()/FieldByName)
 		paginationField := val.FieldByName("Pagination")
 		if paginationField.IsValid() && paginationField.CanInterface() {
 			if paginationField.Kind() == reflect.Ptr {
-				paginationField = paginationField.Elem()
-			}
-
-			if pageField := paginationField.FieldByName("Page"); pageField.IsValid() {
-				if page, ok := pageField.Interface().(int32); ok {
-					pagination.Page = page
+				if paginationField.IsNil() {
+					paginationField = reflect.Value{}
+				} else {
+					paginationField = paginationField.Elem()
 				}
 			}
-			if sizeField := paginationField.FieldByName("Size"); sizeField.IsValid() {
-				if size, ok := sizeField.Interface().(int32); ok {
-					pagination.Size = size
+			if paginationField.IsValid() && paginationField.Kind() == reflect.Struct {
+				if pageField := paginationField.FieldByName("Page"); pageField.IsValid() {
+					if page, ok := pageField.Interface().(int32); ok {
+						pagination.Page = page
+					}
 				}
-			}
-			if totalField := paginationField.FieldByName("Total"); totalField.IsValid() {
-				if total, ok := totalField.Interface().(int64); ok {
-					pagination.Total = total
-					resp.Total = total
-					resp.TotalElements = total
+				if sizeField := paginationField.FieldByName("Size"); sizeField.IsValid() {
+					if size, ok := sizeField.Interface().(int32); ok {
+						pagination.Size = size
+					}
 				}
-			}
-			if pagesField := paginationField.FieldByName("Pages"); pagesField.IsValid() {
-				if pages, ok := pagesField.Interface().(int32); ok {
-					pagination.Pages = pages
+				if totalField := paginationField.FieldByName("Total"); totalField.IsValid() {
+					if total, ok := totalField.Interface().(int64); ok {
+						pagination.Total = total
+						resp.Total = total
+						resp.TotalElements = total
+					}
 				}
-			}
-			if hasNextField := paginationField.FieldByName("HasNext"); hasNextField.IsValid() {
-				if hasNext, ok := hasNextField.Interface().(bool); ok {
-					pagination.HasNext = hasNext
+				if pagesField := paginationField.FieldByName("Pages"); pagesField.IsValid() {
+					if pages, ok := pagesField.Interface().(int32); ok {
+						pagination.Pages = pages
+					}
+				}
+				if hasNextField := paginationField.FieldByName("HasNext"); hasNextField.IsValid() {
+					if hasNext, ok := hasNextField.Interface().(bool); ok {
+						pagination.HasNext = hasNext
+					}
 				}
 			}
 		}
@@ -254,11 +261,86 @@ func (c *Marshaler) Marshal(v interface{}) ([]byte, error) {
 			resp.Pagination = pagination
 		}
 
+		liftSyncTimestamp(val, &resp)
+
 		return json.Marshal(resp)
 	}
 
-	resp.Data = v
+	// Responses không có field Data (vd GetEnumsResponse / PermissionKeysResponse):
+	// nâng timestamp lên cùng cấp code/data; dùng Enums/Keys làm data nếu có.
+	liftSyncTimestamp(val, &resp)
+	if enumsField := val.FieldByName("Enums"); enumsField.IsValid() && enumsField.CanInterface() {
+		if enumsField.Kind() != reflect.Slice || enumsField.Len() > 0 {
+			resp.Data = enumsField.Interface()
+		}
+		return json.Marshal(resp)
+	}
+	if keysField := val.FieldByName("Keys"); keysField.IsValid() && keysField.CanInterface() {
+		// Giữ contract cũ: data.keys (không flatten keys lên data như enums).
+		payload := map[string]any{}
+		if keysField.Kind() == reflect.Slice && !keysField.IsNil() && keysField.Len() > 0 {
+			payload["keys"] = keysField.Interface()
+		} else {
+			payload["keys"] = json.RawMessage("[]")
+		}
+		if roleField := val.FieldByName("Role"); roleField.IsValid() && roleField.CanInterface() {
+			if roleField.Kind() == reflect.Ptr && !roleField.IsNil() {
+				rawRole, err := protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: false}.Marshal(roleField.Interface().(proto.Message))
+				if err == nil {
+					var roleObj any
+					if json.Unmarshal(rawRole, &roleObj) == nil {
+						payload["role"] = roleObj
+					}
+				}
+			}
+		}
+		resp.Data = payload
+		return json.Marshal(resp)
+	}
+
+	// Proto message không có Data/Enums/Keys: serialize bằng protojson
+	// (encoding/json với protobuf opaque dễ ra {}).
+	raw, err := protojson.MarshalOptions{
+		UseProtoNames:   false,
+		EmitUnpopulated: false,
+	}.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+	var envelope any
+	if err := json.Unmarshal(raw, &envelope); err != nil {
+		return nil, err
+	}
+	if m, ok := envelope.(map[string]any); ok {
+		delete(m, "timestamp") // đã lift lên root
+		if len(m) > 0 {
+			resp.Data = m
+		}
+	} else {
+		resp.Data = envelope
+	}
 	return json.Marshal(resp)
+}
+
+// liftSyncTimestamp copies proto Timestamp (ms) onto the HTTP envelope root.
+func liftSyncTimestamp(val reflect.Value, resp *StandardResponse) {
+	if resp == nil {
+		return
+	}
+	tsField := val.FieldByName("Timestamp")
+	if !tsField.IsValid() || !tsField.CanInterface() {
+		return
+	}
+	switch tsField.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if ts := tsField.Int(); ts > 0 {
+			resp.Timestamp = ts
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if ts := int64(tsField.Uint()); ts > 0 {
+			resp.Timestamp = ts
+		}
+	}
 }
 
 func (c *Marshaler) Unmarshal(data []byte, v interface{}) error {
@@ -310,7 +392,7 @@ func hasProtoSiblingPayload(val reflect.Value) bool {
 	}
 	skip := map[string]struct{}{
 		"Data": {}, "Total": {}, "TotalElements": {}, "Page": {}, "Size": {}, "PageSize": {}, "TotalPages": {}, "Pagination": {},
-		"Code": {}, "Message": {}, "state": {}, "sizeCache": {}, "unknownFields": {},
+		"Code": {}, "Message": {}, "Timestamp": {}, "state": {}, "sizeCache": {}, "unknownFields": {},
 	}
 	typ := val.Type()
 	for i := 0; i < val.NumField(); i++ {

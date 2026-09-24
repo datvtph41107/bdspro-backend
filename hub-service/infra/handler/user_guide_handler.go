@@ -328,11 +328,13 @@ func (h *UserGuideHandler) GetAllUserGuidesByKey(ctx context.Context, req *hubpb
 	clientTs := req.GetTimestamp()
 
 	if h.syncProvider != nil && clientTs > 0 {
-		h.syncProvider.PutTimeRequest(ctx, key, clientTs)
 		updated := h.syncProvider.HasUpdated(ctx, key, clientTs)
 		if !updated {
 			// Client đã có bản mới, không cần trả full data
 			ts := h.syncProvider.GetTimestamp(ctx, key)
+			if ts == 0 {
+				ts = clientTs
+			}
 			return &hubpb.GetAllUserGuidesByKeyResponse{
 				Data:      nil,
 				Timestamp: ts,

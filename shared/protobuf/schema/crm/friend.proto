@@ -6,7 +6,6 @@ option go_package = "pb/types/crm;crmpb";
 
 import "shared/common.proto";
 import "google/api/annotations.proto";
-import "organization/deal.proto";
 import "organization/organization_member.proto";
 import "organization/group_member.proto";
 
@@ -82,7 +81,7 @@ message Friend {
     optional sharepb.ProfileItem createdUser = 8;
     optional sharepb.ProfileItem receiverUser = 9;
     string createdAt = 10;
-    optional organizationpb.DealMember dealMember = 11;
+    optional sharepb.DealMember dealMember = 11;
     optional organizationpb.OrganizationMember organizationMember = 12;
     optional organizationpb.GroupMember groupMember = 13;
 }

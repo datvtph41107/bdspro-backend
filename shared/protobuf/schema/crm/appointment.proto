@@ -168,11 +168,17 @@ message ListAppointmentsRequest {
   optional bool containDeal = 14; // Filter theo có deal (true = có, false = không có)
   optional bool containTransaction = 15; // Filter theo có transaction (true = có, false = không có)
   optional string statusFilters = 16; // Filter theo status (format: "10,20" - parse thành []int32)
+  // Client sync timestamp (ms). Unchanged → empty list (same pattern as product/me, contact).
+  int64 timestamp = 17;
+  // Alias search text (FE thường gửi text=); nếu title rỗng thì dùng text.
+  string text = 18;
 }
 
 message ListAppointmentsResponse {
   repeated Appointment data = 1;
   int32 total = 2;
+  // Sync timestamp (ms) — Redis SyncKeyAppointmentMe (/v2.1/appointment).
+  int64 timestamp = 3;
 }
 
 message AdminListAppointmentsRequest {

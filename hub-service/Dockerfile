@@ -16,6 +16,9 @@ RUN apk add --no-cache ca-certificates tzdata netcat-openbsd && addgroup -S app 
 WORKDIR /app
 COPY --from=build /out/hub-service /app/hub-service
 COPY hub-service/config /app/config
+# Startup RunPendingMigrations đọc SQL từ đây (hoặc HUB_MIGRATION_DIR).
+COPY hub-service/migrate /app/migrate
+ENV HUB_MIGRATION_DIR=/app/migrate
 USER app
 EXPOSE 8280
 ENTRYPOINT ["/app/hub-service", "grpc"]

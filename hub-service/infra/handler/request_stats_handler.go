@@ -101,12 +101,12 @@ func (h *RequestStatsHandler) GetRequestStatsDashboard(
 	}, nil
 }
 
-// @Summary Thống kê request theo ngày/giờ
-// @Description Tổng request theo gap=dates (YYYY-MM-DD) hoặc gap=hours (YYYY-MM-DD HH:00) trong lastDates ngày gần nhất
+// @Summary Thống kê request theo ngày/giờ/phút
+// @Description Tổng request theo gap=dates (YYYY-MM-DD), hours (YYYY-MM-DD HH:00) hoặc minutes (YYYY-MM-DD HH:MM, slot 5 phút) trong lastDates ngày gần nhất. minutes giới hạn lastDates tối đa 2.
 // @Tags RequestStats
 // @Produce json
-// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
-// @Param gap query string false "Khoảng gom: dates (mặc định) hoặc hours"
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3; gap=minutes tối đa 2)"
+// @Param gap query string false "Khoảng gom: dates (mặc định) | hours | minutes"
 // @Success 200 {object} hubpb.GetRequestDailyStatsResponse
 // @Router /v2/hub/request-stats/daily [get]
 func (h *RequestStatsHandler) GetRequestDailyStats(
@@ -194,12 +194,12 @@ func (h *RequestStatsHandler) GetUserInteractionDashboard(
 	}, nil
 }
 
-// @Summary Thống kê tương tác user theo ngày/giờ
-// @Description Lượt tương tác và active users theo gap=dates hoặc gap=hours trong lastDates ngày gần nhất
+// @Summary Thống kê tương tác user theo ngày/giờ/phút
+// @Description Lượt tương tác và active users theo gap=dates|hours|minutes trong lastDates ngày gần nhất. minutes giới hạn lastDates tối đa 2.
 // @Tags RequestStats
 // @Produce json
-// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3)"
-// @Param gap query string false "Khoảng gom: dates (mặc định) hoặc hours"
+// @Param lastDates query int false "Số ngày gần nhất (1-30, mặc định 3; gap=minutes tối đa 2)"
+// @Param gap query string false "Khoảng gom: dates (mặc định) | hours | minutes"
 // @Success 200 {object} hubpb.GetUserInteractionDailyStatsResponse
 // @Router /v2/hub/request-stats/users/daily [get]
 func (h *RequestStatsHandler) GetUserInteractionDailyStats(

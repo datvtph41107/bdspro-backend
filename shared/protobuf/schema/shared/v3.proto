@@ -154,6 +154,8 @@ message UserV3Proto {
     // sessionK — deprecated; dùng POST /v2/user/profile/session → sessionEncryptKey.
     string sessionK = 51;
     bool demo = 52;
+    // Sync timestamp (ms) — server ghi Redis SyncKeyProfileInfoMe khi trả /info/me.
+    int64 timestamp = 53;
 }
 
 message OTPV3Proto {

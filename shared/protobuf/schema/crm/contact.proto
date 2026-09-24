@@ -154,6 +154,8 @@ message ContactSearchRequest {
   uint64 ownerId = 11;
   optional uint64 conversationId = 12;
   optional uint64 distributeId = 13;
+  // Client sync timestamp (ms). Unchanged → empty list (same pattern as product/me).
+  int64 timestamp = 14;
 }
 
 message ContactSaveDTO {
@@ -174,7 +176,9 @@ message ContactSaveDTO {
 }
 
 message ContactListDTO {
-  repeated sharepb.ContactDTO data = 1; 
+  repeated sharepb.ContactDTO data = 1;
+  // Sync timestamp (ms) — Redis SyncKeyContactMe khi list user (/list/user/0, /list/me).
+  int64 timestamp = 2;
   uint32 total = 3;
 }
 

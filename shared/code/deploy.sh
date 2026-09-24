@@ -303,6 +303,13 @@ rm -f ${REMOTE_DIR}/config/local.yml ${REMOTE_DIR}/config/product.yml ${REMOTE_D
 scp ${path_jar} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 # scp ../common/target/common-1.0.jar ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
 
+# Dockerfile.develop/production always COPY migrate — hub/user need real SQL;
+# other services get an empty dir so the image build still succeeds.
+if [ ! -d migrate ]; then
+  mkdir -p migrate
+fi
+rsync -avz --delete migrate/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/migrate/
+
 # Legacy deploy ships a prebuilt binary + config into a service-local context.
 # ENV_RUNTIME=develop (Dockerfile.develop) loads config/develop.yml; also ship
 # runtime.yml as canonical defaults for workstation overlays.

@@ -141,8 +141,8 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	directoryCategoryGrpcHandler := handler_grpc.NewDirectoryCategoryGrpcHandler(directoryCategoryUsecase, directoryCategoryMapper, directoryCategoryValidator)
 	directorySourceGrpcHandler := handler_grpc.NewDirectorySourceGrpcHandler(directorySourceUsecase, directorySourceMapper, directorySourceValidator)
 	directorySupplierGrpcHandler := handler_grpc.NewDirectorySupplierGrpcHandler(directorySupplierUsecase, directorySupplierMapper)
-	poiCategoryGrpcHandler := handler_grpc.NewPoiCategoryGrpcHandler(poiCategoryUsecase, poiCategoryMapper)
 	syncUtil := _utils.NewSyncUtil(redisService)
+	poiCategoryGrpcHandler := handler_grpc.NewPoiCategoryGrpcHandler(poiCategoryUsecase, poiCategoryMapper, syncUtil)
 	hubGrpcClient, cleanup3, err := injection.NewHubClient()
 	if err != nil {
 		cleanup2()

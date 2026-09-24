@@ -4,8 +4,10 @@
 
 - `000001_user_schema.up.sql` builds the current fresh database schema.
 - `000001_user_schema.down.sql` is only for disposable/local rollback labs.
-- Serving startup defaults to `QHPRO_USER_DB_SCHEMA_MODE=sql`, so the process
-  performs no DDL and the canonical runner remains the schema owner.
+- Serving startup always applies pending `migrate/*.up.sql` via
+  `RunPendingMigrations` before traffic is accepted (same pattern as hub-service).
+- `QHPRO_USER_DB_SCHEMA_MODE=sql` (default) skips GORM AutoMigrate after SQL
+  has already been applied; the canonical `migrate/` runner remains schema owner.
 - `QHPRO_USER_DB_SCHEMA_MODE=automigrate` explicitly enables the current GORM
   model registry for local/development bootstrap. SQL and AutoMigrate are never
   executed by the same process startup.

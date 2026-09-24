@@ -5,6 +5,8 @@ import (
 	_utils "common/utils"
 	"context"
 	"errors"
+	"time"
+
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
@@ -26,6 +28,7 @@ type DealHandler struct {
 	UserClient         *client.UserClient
 	PaymentClient      *client.PaymentClient
 	ProductRepo        repo.ProductRepo
+	SyncProvider       *_utils.SyncUtil
 }
 
 func NewDealHandler(
@@ -36,6 +39,7 @@ func NewDealHandler(
 	userClient *client.UserClient,
 	paymentClient *client.PaymentClient,
 	productRepo repo.ProductRepo,
+	syncProvider *_utils.SyncUtil,
 ) *DealHandler {
 	return &DealHandler{
 		DealUsecase:        dealUsecase,
@@ -45,6 +49,26 @@ func NewDealHandler(
 		UserClient:         userClient,
 		PaymentClient:      paymentClient,
 		ProductRepo:        productRepo,
+		SyncProvider:       syncProvider,
+	}
+}
+
+func (h *DealHandler) bumpDealSync(ctx context.Context, productIDs ...uint64) {
+	if h.SyncProvider == nil {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMe, 0), now)
+	seen := make(map[uint64]struct{}, len(productIDs))
+	for _, productID := range productIDs {
+		if productID == 0 {
+			continue
+		}
+		if _, ok := seen[productID]; ok {
+			continue
+		}
+		seen[productID] = struct{}{}
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDeals, productID), now)
 	}
 }
 
@@ -144,6 +168,7 @@ func (h *DealHandler) CreateGroupDeal(ctx context.Context, req *bdspropb.CreateG
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealSync(ctx, req.ProductIds...)
 
 	return h.DealTransformer.EntityToCreateGroupDealResponse(deal), nil
 }
@@ -190,6 +215,7 @@ func (h *DealHandler) DeleteGroupDeal(ctx context.Context, req *bdspropb.DeleteG
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealSync(ctx)
 
 	return &bdspropb.DeleteGroupDealResponse{Id: req.Id}, nil
 }
@@ -451,8 +477,19 @@ func (h *DealHandler) GetOrganizationDealsCurrent(ctx context.Context, req *shar
 // @Param request body bdspropb.DealSearchRequest true "Thông tin tìm kiếm deals"
 // @Security BearerAuth
 // @Success 200 {object} bdspropb.GetDealsResponse "Thành công"
-// @Router /v2/org/deals/user [get]
+// @Router /v2.1/org/deals/user [get]
 func (h *DealHandler) GetDealsUser(ctx context.Context, req *bdspropb.DealSearchRequest) (*bdspropb.GetDealsResponse, error) {
+	var syncKey string
+	if h.SyncProvider != nil {
+		syncKey = h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMe, 0)
+		updated := h.SyncProvider.HasUpdated(ctx, syncKey, req.GetTimestamp())
+		if !updated && req.GetPage() == 0 {
+			return &bdspropb.GetDealsResponse{
+				Timestamp: h.SyncProvider.GetTimestamp(ctx, syncKey),
+			}, nil
+		}
+	}
+
 	searchRequest := &dto.DealSearchRequest{
 		Pagable: _dto.Pagable{
 			Page: req.GetPage(),
@@ -461,11 +498,7 @@ func (h *DealHandler) GetDealsUser(ctx context.Context, req *bdspropb.DealSearch
 		Text:           req.GetText(),
 		OrganizationID: req.OrganizationId,
 		GroupID:        req.GroupId,
-		// OwnerID:        req.OwnerId,
 	}
-	// if req.OwnerOf != nil {
-	// 	searchRequest.OwnerType = enums.TxOwnerType(*req.OwnerOf)
-	// }
 
 	deals, total, err := h.DealUsecase.GetDeals(ctx, searchRequest)
 	if err != nil {
@@ -474,6 +507,12 @@ func (h *DealHandler) GetDealsUser(ctx context.Context, req *bdspropb.DealSearch
 
 	response := h.DealTransformer.EntityToGetDealsResponse(deals, total)
 	h.UserClient.MapMemberToDealPb(ctx, response.Data)
+
+	if h.SyncProvider != nil && syncKey != "" && req.GetPage() == 0 {
+		ts := time.Now().UnixMilli()
+		_ = h.SyncProvider.PutTimestamp(ctx, syncKey, ts)
+		response.Timestamp = ts
+	}
 	return response, nil
 }
 

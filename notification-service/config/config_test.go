@@ -1,48 +1,37 @@
 package config
 
 import (
-	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestPaymentEventExchangeMatchesPublishedContract(t *testing.T) {
+func TestDefaultBusinessEventsExchange(t *testing.T) {
 	t.Parallel()
-
-	contents, err := os.ReadFile("../.env")
-	require.NoError(t, err)
-	require.Contains(t, string(contents),
-		"QHPRO_BUSINESS_EVENTS_EXCHANGE="+defaultBusinessEventsExchange)
+	require.Equal(t, "qhpro.payment.events", defaultBusinessEventsExchange)
 }
 
-func TestParseRedisDBOverride(t *testing.T) {
+func TestParseDurationOr(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		raw      string
-		fallback int
-		want     int
-		wantErr  bool
-	}{
-		{name: "fallback", fallback: 2, want: 2},
-		{name: "zero", raw: "0", fallback: 2, want: 0},
-		{name: "highest logical database", raw: "15", want: 15},
-		{name: "negative", raw: "-1", wantErr: true},
-		{name: "too high", raw: "16", wantErr: true},
-		{name: "not a number", raw: "two", wantErr: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := parseRedisDBOverride(tt.raw, tt.fallback)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
-		})
-	}
+	require.Equal(t, time.Second, parseDurationOr("", time.Second))
+	require.Equal(t, 5*time.Second, parseDurationOr("5s", time.Second))
+	require.Equal(t, time.Second, parseDurationOr("bad", time.Second))
+	require.Equal(t, time.Second, parseDurationOr("0s", time.Second))
+}
+
+func TestValidateRedisDB(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, validateRedisDB(0))
+	require.NoError(t, validateRedisDB(15))
+	require.Error(t, validateRedisDB(-1))
+	require.Error(t, validateRedisDB(16))
+}
+
+func TestDatabaseDSNPrefersYAMLField(t *testing.T) {
+	AppProperties = UserProperties{}
+	AppProperties.Database.DSN = "host=yml user=u password=p dbname=db port=5432 sslmode=disable"
+	require.Equal(t, AppProperties.Database.DSN, databaseDSN())
 }

@@ -180,6 +180,8 @@ service PermissionService {
 message PermissionKeysResponse {
   repeated string keys = 1;
   optional sharepb.Role role = 2;
+  // Sync timestamp (ms) — server ghi Redis SyncKeyPermissionMe khi trả /permission/me.
+  int64 timestamp = 3;
 }
 
 // Get roles by group key request

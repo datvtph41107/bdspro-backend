@@ -255,6 +255,13 @@ service ProductService {
     option (google.api.http) = {
       get: "/v2/bdspro/v2/product/{id}/timestamp"
     };
+  }
+  // Timestamps tổng hợp để FE check cache trước khi gọi lại các API nặng.
+  // Keys: enum, permission_me, info_me, user_guides_by_key, product_me, poi_category_icons
+  rpc GetAppTimestamps (sharepb.Empty) returns (ProductTimestampsResponse) {
+    option (google.api.http) = {
+      get: "/v2/bdspro/ts"
+    };
   };
   
   rpc GetProductNavigation (ProductSearch) returns (ProductNavigationResponse) {
@@ -684,6 +691,11 @@ message UserProductSearch {
 message SearchResponse {
   repeated ProductResponse data = 1;
   int64 totalElements = 2;
+  int32 page = 3;
+  int32 size = 4;
+  int32 totalPages = 5;
+  // Sync timestamp (ms) — server ghi Redis SyncKeyProductMe = now khi trả full data.
+  int64 timestamp = 6;
 }
 
 message MemberResponse {

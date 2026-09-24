@@ -102,6 +102,7 @@ type AdministrativeUnitRef struct {
 
 type ListProvincesResponse struct {
 	Provinces []*ProvinceDTO `json:"provinces"`
+	Timestamp int64          `json:"timestamp"`
 }
 
 // ==================== RESPONSE DTOs ====================
@@ -150,6 +151,7 @@ type LocationPagination struct {
 type ClientListWardsResponse struct {
 	Data       []*WardDTO          `json:"data"`
 	Pagination *LocationPagination `json:"pagination"`
+	Timestamp  int64               `json:"timestamp"`
 }
 
 // ==================== DATA DTOs ====================

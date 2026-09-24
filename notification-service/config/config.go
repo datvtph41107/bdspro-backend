@@ -3,8 +3,6 @@ package config
 import (
 	"common/configloader"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,14 +12,16 @@ import (
 const (
 	C_SESSION_ID                  = "C_SESSION_ID"
 	defaultBusinessEventsExchange = "qhpro.payment.events"
+	defaultDeliveryWorkerID       = "notification-delivery"
 )
 
-// UserProperties chứa cấu hình của ứng dụng
+// UserProperties — process config từ config/<profile>.yml (local/develop/…).
 type UserProperties struct {
 	Server struct {
 		TCPPort int `mapstructure:"tcp_port"`
 	} `mapstructure:"server"`
 	Database struct {
+		DSN      string `mapstructure:"dsn"`
 		Host     string `mapstructure:"host"`
 		Port     int    `mapstructure:"port"`
 		Name     string `mapstructure:"name"`
@@ -37,7 +37,6 @@ type UserProperties struct {
 		ListPermit          []string `mapstructure:"listPermit"`
 		AuthorizationHeader string   `mapstructure:"authorizationHeader"`
 	} `mapstructure:"jwt"`
-
 	Firebase struct {
 		File    string `mapstructure:"file"`
 		FileURL string `mapstructure:"fileUrl"`
@@ -45,28 +44,39 @@ type UserProperties struct {
 	Redis struct {
 		Host     string `mapstructure:"host"`
 		Password string `mapstructure:"pass"`
+		DB       int    `mapstructure:"db"`
 	} `mapstructure:"redis"`
+	RPC struct {
+		User struct {
+			Address string `mapstructure:"address"`
+		} `mapstructure:"user"`
+	} `mapstructure:"rpc"`
+	Rabbit struct {
+		URL      string `mapstructure:"url"`
+		Exchange string `mapstructure:"exchange"`
+	} `mapstructure:"rabbit"`
+	Delivery struct {
+		WorkerID     string `mapstructure:"worker_id"`
+		PollInterval string `mapstructure:"poll_interval"`
+		Lease        string `mapstructure:"lease"`
+	} `mapstructure:"delivery"`
+	ShutdownTimeout string `mapstructure:"shutdown_timeout"`
 }
 
 var AppProperties UserProperties
 
-// LoadConfig đọc cấu hình từ file config.yml
+// LoadConfig đọc đúng một file config/<profile>.yml vào Viper + AppProperties.
 func LoadConfig() error {
-	_, err := configloader.LoadRuntimeYML()
-	if err != nil {
+	if _, err := configloader.LoadRuntimeYML(); err != nil {
 		return err
 	}
-
 	if err := viper.Unmarshal(&AppProperties); err != nil {
 		return fmt.Errorf("unmarshal notification config: %w", err)
 	}
-
 	return nil
 }
 
-// RuntimeConfig contains process-owned technical configuration that must not be
-// read from business packages. Values may come from the existing YAML/Viper
-// configuration or explicit environment overrides used by containers.
+// RuntimeConfig — wiring kỹ thuật của gRPC process (không đọc os.Getenv).
 type RuntimeConfig struct {
 	ServerPort             int
 	DatabaseDSN            string
@@ -89,93 +99,33 @@ func LoadRuntimeConfig() (RuntimeConfig, error) {
 	cfg := RuntimeConfig{
 		ServerPort:             AppProperties.Server.TCPPort,
 		DatabaseDSN:            databaseDSN(),
-		RedisAddress:           strings.TrimSpace(os.Getenv("NOTIFICATION_REDIS_ADDR")),
-		RedisPassword:          os.Getenv("NOTIFICATION_REDIS_PASSWORD"),
-		RedisDB:                viper.GetInt("redis.db"),
-		UserGRPCTarget:         strings.TrimSpace(os.Getenv("QHPRO_USER_GRPC_ADDR")),
-		RabbitURL:              strings.TrimSpace(os.Getenv("QHPRO_RABBITMQ_URL")),
-		BusinessEventsExchange: strings.TrimSpace(os.Getenv("QHPRO_BUSINESS_EVENTS_EXCHANGE")),
-		DeliveryWorkerID:       strings.TrimSpace(os.Getenv("NOTIFICATION_DELIVERY_WORKER_ID")),
-		DeliveryPollInterval:   time.Second,
-		DeliveryLease:          30 * time.Second,
-		ShutdownTimeout:        10 * time.Second,
+		RedisAddress:           strings.TrimSpace(AppProperties.Redis.Host),
+		RedisPassword:          AppProperties.Redis.Password,
+		RedisDB:                AppProperties.Redis.DB,
+		UserGRPCTarget:         strings.TrimSpace(AppProperties.RPC.User.Address),
+		RabbitURL:              strings.TrimSpace(AppProperties.Rabbit.URL),
+		BusinessEventsExchange: firstNonBlank(strings.TrimSpace(AppProperties.Rabbit.Exchange), defaultBusinessEventsExchange),
+		DeliveryWorkerID:       firstNonBlank(strings.TrimSpace(AppProperties.Delivery.WorkerID), defaultDeliveryWorkerID),
+		DeliveryPollInterval:   parseDurationOr(AppProperties.Delivery.PollInterval, time.Second),
+		DeliveryLease:          parseDurationOr(AppProperties.Delivery.Lease, 30*time.Second),
+		ShutdownTimeout:        parseDurationOr(AppProperties.ShutdownTimeout, 10*time.Second),
 	}
-	if raw := strings.TrimSpace(os.Getenv("NOTIFICATION_GRPC_PORT")); raw != "" {
-		port, err := strconv.Atoi(raw)
-		if err != nil || port <= 0 || port > 65535 {
-			return RuntimeConfig{}, fmt.Errorf("invalid NOTIFICATION_GRPC_PORT %q", raw)
-		}
-		cfg.ServerPort = port
-	}
-	if cfg.RedisAddress == "" {
-		cfg.RedisAddress = strings.TrimSpace(AppProperties.Redis.Host)
-	}
-	if cfg.RedisPassword == "" {
-		cfg.RedisPassword = AppProperties.Redis.Password
-	}
-	redisDB, err := parseRedisDBOverride(os.Getenv("NOTIFICATION_REDIS_DB"), cfg.RedisDB)
-	if err != nil {
+	if err := validateRedisDB(cfg.RedisDB); err != nil {
 		return RuntimeConfig{}, err
 	}
-	cfg.RedisDB = redisDB
-	if cfg.UserGRPCTarget == "" {
-		cfg.UserGRPCTarget = strings.TrimSpace(viper.GetString("rpc.user.address"))
-	}
-	if cfg.BusinessEventsExchange == "" {
-		cfg.BusinessEventsExchange = defaultBusinessEventsExchange
-	}
-	if cfg.DeliveryWorkerID == "" {
-		cfg.DeliveryWorkerID = "notification-delivery"
-	}
-	if raw := strings.TrimSpace(os.Getenv("NOTIFICATION_DELIVERY_POLL_INTERVAL")); raw != "" {
-		d, err := time.ParseDuration(raw)
-		if err != nil || d <= 0 {
-			return RuntimeConfig{}, fmt.Errorf("invalid NOTIFICATION_DELIVERY_POLL_INTERVAL %q", raw)
-		}
-		cfg.DeliveryPollInterval = d
-	}
-	if raw := strings.TrimSpace(os.Getenv("NOTIFICATION_DELIVERY_LEASE")); raw != "" {
-		d, err := time.ParseDuration(raw)
-		if err != nil || d <= 0 {
-			return RuntimeConfig{}, fmt.Errorf("invalid NOTIFICATION_DELIVERY_LEASE %q", raw)
-		}
-		cfg.DeliveryLease = d
-	}
-	if raw := strings.TrimSpace(os.Getenv("NOTIFICATION_SHUTDOWN_TIMEOUT")); raw != "" {
-		d, err := time.ParseDuration(raw)
-		if err != nil || d <= 0 {
-			return RuntimeConfig{}, fmt.Errorf("invalid NOTIFICATION_SHUTDOWN_TIMEOUT %q", raw)
-		}
-		cfg.ShutdownTimeout = d
-	}
 	if strings.TrimSpace(cfg.DatabaseDSN) == "" {
-		return RuntimeConfig{}, fmt.Errorf("notification database DSN is required")
+		return RuntimeConfig{}, fmt.Errorf("notification database.dsn is required in config YAML")
 	}
 	if strings.TrimSpace(cfg.RedisAddress) == "" {
-		return RuntimeConfig{}, fmt.Errorf("notification Redis address is required")
+		return RuntimeConfig{}, fmt.Errorf("notification redis.host is required in config YAML")
 	}
 	if strings.TrimSpace(cfg.UserGRPCTarget) == "" {
-		return RuntimeConfig{}, fmt.Errorf("notification User gRPC target is required")
+		return RuntimeConfig{}, fmt.Errorf("notification rpc.user.address is required in config YAML")
 	}
-	if cfg.ServerPort <= 0 {
-		return RuntimeConfig{}, fmt.Errorf("notification gRPC server port is required")
+	if cfg.ServerPort <= 0 || cfg.ServerPort > 65535 {
+		return RuntimeConfig{}, fmt.Errorf("notification server.tcp_port is required in config YAML")
 	}
 	return cfg, nil
-}
-
-func parseRedisDBOverride(raw string, fallback int) (int, error) {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		if fallback < 0 || fallback > 15 {
-			return 0, fmt.Errorf("invalid redis.db %d: must be between 0 and 15", fallback)
-		}
-		return fallback, nil
-	}
-	db, err := strconv.Atoi(raw)
-	if err != nil || db < 0 || db > 15 {
-		return 0, fmt.Errorf("invalid NOTIFICATION_REDIS_DB %q: must be between 0 and 15", raw)
-	}
-	return db, nil
 }
 
 type EventingConfig struct {
@@ -191,18 +141,15 @@ func LoadEventingConfig() (EventingConfig, error) {
 	}
 	cfg := EventingConfig{
 		DatabaseDSN:     databaseDSN(),
-		RabbitURL:       strings.TrimSpace(os.Getenv("QHPRO_RABBITMQ_URL")),
-		Exchange:        strings.TrimSpace(os.Getenv("QHPRO_BUSINESS_EVENTS_EXCHANGE")),
-		ShutdownTimeout: durationEnv("NOTIFICATION_SHUTDOWN_TIMEOUT", 10*time.Second),
-	}
-	if cfg.Exchange == "" {
-		cfg.Exchange = defaultBusinessEventsExchange
+		RabbitURL:       strings.TrimSpace(AppProperties.Rabbit.URL),
+		Exchange:        firstNonBlank(strings.TrimSpace(AppProperties.Rabbit.Exchange), defaultBusinessEventsExchange),
+		ShutdownTimeout: parseDurationOr(AppProperties.ShutdownTimeout, 10*time.Second),
 	}
 	if cfg.DatabaseDSN == "" {
-		return EventingConfig{}, fmt.Errorf("notification database DSN is required")
+		return EventingConfig{}, fmt.Errorf("notification database.dsn is required in config YAML")
 	}
 	if cfg.RabbitURL == "" {
-		return EventingConfig{}, fmt.Errorf("QHPRO_RABBITMQ_URL is required")
+		return EventingConfig{}, fmt.Errorf("notification rabbit.url is required in config YAML")
 	}
 	return cfg, nil
 }
@@ -221,22 +168,25 @@ func LoadDeliveryConfig() (DeliveryConfig, error) {
 	}
 	cfg := DeliveryConfig{
 		DatabaseDSN:    databaseDSN(),
-		UserGRPCTarget: firstNonBlank(strings.TrimSpace(os.Getenv("QHPRO_USER_GRPC_ADDR")), strings.TrimSpace(viper.GetString("rpc.user.address"))),
-		WorkerID:       firstNonBlank(strings.TrimSpace(os.Getenv("NOTIFICATION_DELIVERY_WORKER_ID")), "notification-delivery"),
-		PollInterval:   durationEnv("NOTIFICATION_DELIVERY_POLL_INTERVAL", time.Second),
-		Lease:          durationEnv("NOTIFICATION_DELIVERY_LEASE", 30*time.Second),
+		UserGRPCTarget: strings.TrimSpace(AppProperties.RPC.User.Address),
+		WorkerID:       firstNonBlank(strings.TrimSpace(AppProperties.Delivery.WorkerID), defaultDeliveryWorkerID),
+		PollInterval:   parseDurationOr(AppProperties.Delivery.PollInterval, time.Second),
+		Lease:          parseDurationOr(AppProperties.Delivery.Lease, 30*time.Second),
 	}
 	if cfg.DatabaseDSN == "" {
-		return DeliveryConfig{}, fmt.Errorf("notification database DSN is required")
+		return DeliveryConfig{}, fmt.Errorf("notification database.dsn is required in config YAML")
 	}
 	if cfg.UserGRPCTarget == "" {
-		return DeliveryConfig{}, fmt.Errorf("notification User gRPC target is required")
+		return DeliveryConfig{}, fmt.Errorf("notification rpc.user.address is required in config YAML")
 	}
 	return cfg, nil
 }
 
 func databaseDSN() string {
-	if dsn := strings.TrimSpace(os.Getenv("NOTIFICATION_DATABASE_DSN")); dsn != "" {
+	if dsn := strings.TrimSpace(AppProperties.Database.DSN); dsn != "" {
+		return dsn
+	}
+	if dsn := strings.TrimSpace(viper.GetString("database.dsn")); dsn != "" {
 		return dsn
 	}
 	if strings.TrimSpace(AppProperties.Database.Host) == "" || AppProperties.Database.Port <= 0 || strings.TrimSpace(AppProperties.Database.Name) == "" {
@@ -260,8 +210,8 @@ func firstNonBlank(values ...string) string {
 	return ""
 }
 
-func durationEnv(key string, fallback time.Duration) time.Duration {
-	raw := strings.TrimSpace(os.Getenv(key))
+func parseDurationOr(raw string, fallback time.Duration) time.Duration {
+	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return fallback
 	}
@@ -270,4 +220,11 @@ func durationEnv(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return value
+}
+
+func validateRedisDB(db int) error {
+	if db < 0 || db > 15 {
+		return fmt.Errorf("invalid redis.db %d: must be between 0 and 15", db)
+	}
+	return nil
 }

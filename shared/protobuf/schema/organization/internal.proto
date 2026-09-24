@@ -3,12 +3,11 @@ syntax = "proto3";
 package organizationpb;
 
 option go_package = "pb/types/organization;organizationpb";
-import "organization/deal_invitation.proto";
 import "organization/group_member.proto";
 import "organization/organization_member.proto";
-import "organization/deal.proto";
 import "organization/organization_branch.proto";
 import "shared/common.proto";
+import "bdspro/deal.proto";
 
 service InternalOrganizationService {
     rpc GetOrganizationByIds(GetOrganizationByIdsRequest) returns (GetOrganizationByIdsResponse);
@@ -67,7 +66,7 @@ message GetBranchMemberByIdsResponse {
 }
 
 message GetDealMemberByIdsResponse {
-    repeated DealMember data = 1;
+    repeated sharepb.DealMember data = 1;
 }
 
 message GetGroupMemberByIdsResponse {
@@ -109,7 +108,7 @@ message GetDealByIdRequest {
 }
 
 message GetDealByIdResponse {
-    GroupDeal deal = 1;
+    bdspropb.GroupDeal deal = 1;
 }
 
 message GetDealTransactionsByIdsRequest {

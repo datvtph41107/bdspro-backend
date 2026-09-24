@@ -259,6 +259,38 @@ func (r *RequestStatsPostgres) GetHourlyStats(ctx context.Context, fromTime time
 	return result, nil
 }
 
+func (r *RequestStatsPostgres) GetMinuteStats(ctx context.Context, fromTime time.Time) ([]dto.RequestDailyItem, error) {
+	type row struct {
+		Date  string `gorm:"column:date"`
+		Count uint64 `gorm:"column:count"`
+	}
+
+	var rows []row
+	err := r.db.GetDB(ctx).WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((bucket_hour AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:MI') AS date,
+				COALESCE(SUM(count), 0)::bigint AS count
+			FROM request_stats_log
+			WHERE "timestamp" >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.RequestDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.RequestDailyItem{
+			Date:  item.Date,
+			Count: item.Count,
+		})
+	}
+	return result, nil
+}
+
 func (r *RequestStatsPostgres) CountUserInteractionsFromTime(ctx context.Context, fromTime time.Time) (uint64, error) {
 	var total int64
 	err := r.db.GetDB(ctx).WithContext(ctx).
@@ -372,6 +404,41 @@ func (r *RequestStatsPostgres) GetUserHourlyStats(ctx context.Context, fromTime 
 		Raw(`
 			SELECT
 				to_char(("timestamp" AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:00') AS date,
+				COALESCE(SUM(count), 0)::bigint AS interactions,
+				COUNT(DISTINCT profile_id)::bigint AS active_users
+			FROM user_interaction_log
+			WHERE "timestamp" >= ?
+			GROUP BY 1
+			ORDER BY 1 ASC
+		`, fromTime).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.UserInteractionDailyItem, 0, len(rows))
+	for _, item := range rows {
+		result = append(result, dto.UserInteractionDailyItem{
+			Date:         item.Date,
+			Interactions: item.Interactions,
+			ActiveUsers:  item.ActiveUsers,
+		})
+	}
+	return result, nil
+}
+
+func (r *RequestStatsPostgres) GetUserMinuteStats(ctx context.Context, fromTime time.Time) ([]dto.UserInteractionDailyItem, error) {
+	type row struct {
+		Date         string `gorm:"column:date"`
+		Interactions uint64 `gorm:"column:interactions"`
+		ActiveUsers  uint64 `gorm:"column:active_users"`
+	}
+
+	var rows []row
+	err := r.db.GetDB(ctx).WithContext(ctx).
+		Raw(`
+			SELECT
+				to_char((bucket_hour AT TIME ZONE 'Asia/Ho_Chi_Minh'), 'YYYY-MM-DD HH24:MI') AS date,
 				COALESCE(SUM(count), 0)::bigint AS interactions,
 				COUNT(DISTINCT profile_id)::bigint AS active_users
 			FROM user_interaction_log

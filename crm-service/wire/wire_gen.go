@@ -124,7 +124,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	friendGroupUsecase := usecase.NewFriendGroupUsecase(friendGroupRepo)
 	friendGroupService := handler.NewFriendGroupService(friendGroupUsecase)
 	friendUsecase := usecase.NewFriendUsecase(friendPostgre, postgreContact, followPostgre, blockRepo, blockUsecase, userClient, notificationProvider, transactionGorm)
-	friendService := handler.NewFriendService(friendUsecase, contactUsecase, userClient, clientOrganizationClient, friendMapper, contactMapper)
+	friendService := handler.NewFriendService(friendUsecase, contactUsecase, userClient, bdsproClient, friendMapper, contactMapper)
 	sharingAccessPostgre := postgre.NewSharingAccessPostgre(db)
 	sharingAccessUsecase := usecase.NewSharingAccessUsecase(sharingAccessPostgre, postgreContact, userClient)
 	sharingAccessService := handler.NewSharingAccessService(sharingAccessUsecase)

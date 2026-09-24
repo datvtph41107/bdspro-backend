@@ -235,7 +235,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	roleGroupRepository := postgres.NewRoleGroupRepo(transactionRepo)
 	roleGroupRegistry := usecase.NewRoleGroupRegistry(roleGroupRepository)
 	roleUsecase := usecase.NewRoleUsecase(roleRepository, organizationProviderClient, roleGroupRegistry)
-	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper, roleUsecase)
+	permissionHandler := handler.NewPermissionHandler(permissionUsecase, roleMapper, roleUsecase, syncUtil)
 	roleGroupUsecase := usecase.NewRoleGroupUsecase(roleGroupRepository, permissionUsecase)
 	roleGroupMapper := mapper.NewRoleGroupMapper()
 	roleGroupValidator := validator.NewRoleGroupValidator()

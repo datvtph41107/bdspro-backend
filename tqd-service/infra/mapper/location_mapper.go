@@ -2,7 +2,6 @@
 package mapper
 
 import (
-	"log"
 	"strings"
 	"time"
 
@@ -227,9 +226,11 @@ func (m *LocationMapper) ToProtoClientListWardsResponse(resp *dto.ClientListWard
 		data[i] = m.ToProtoWardListItem(w)
 	}
 
-	out := &tqdpb.ClientListWardsResponse{Data: data}
+	out := &tqdpb.ClientListWardsResponse{
+		Data:      data,
+		Timestamp: resp.Timestamp,
+	}
 	if resp.Pagination != nil {
-		log.Println("pagination", resp.Pagination.PageSize)
 		out.Pagination = &tqdpb.LocationPagination{
 			Page:  resp.Pagination.Page,
 			Size:  resp.Pagination.PageSize,
@@ -361,7 +362,10 @@ func (m *LocationMapper) ToProtoListProvincesResponse(response *dto.ListProvince
 		provinces[i] = m.ToProtoProvince(province)
 	}
 
-	return &tqdpb.ListProvincesResponse{Provinces: provinces}
+	return &tqdpb.ListProvincesResponse{
+		Provinces: provinces,
+		Timestamp: response.Timestamp,
+	}
 }
 
 // ==================== PROTO -> DTO ====================

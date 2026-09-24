@@ -1,7 +1,10 @@
 package handler
 
 import (
+	_utils "common/utils"
 	"context"
+	"time"
+
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	"user/infra/mapper"
@@ -13,17 +16,20 @@ type PermissionHandler struct {
 	permissionUsecase *usecase.PermissionUsecase
 	roleMapper        *mapper.RoleMapper
 	roleUsecase       *usecase.RoleUsecase
+	SyncProvider      *_utils.SyncUtil
 }
 
 func NewPermissionHandler(
 	permissionUsecase *usecase.PermissionUsecase,
 	roleMapper *mapper.RoleMapper,
 	roleUsecase *usecase.RoleUsecase,
+	syncProvider *_utils.SyncUtil,
 ) *PermissionHandler {
 	return &PermissionHandler{
 		permissionUsecase: permissionUsecase,
 		roleMapper:        roleMapper,
 		roleUsecase:       roleUsecase,
+		SyncProvider:      syncProvider,
 	}
 }
 
@@ -97,9 +103,13 @@ func (h *PermissionHandler) GetPermissionKeys(ctx context.Context, req *sharepb.
 	if err != nil {
 		return nil, err
 	}
-
+	now := time.Now().UnixMilli()
+	if h.SyncProvider != nil {
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyPermissionMe, 0), now)
+	}
 	return &authpb.PermissionKeysResponse{
-		Keys: keys,
+		Keys:      keys,
+		Timestamp: now,
 	}, nil
 }
 

@@ -180,7 +180,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	listUsecase := usecases.NewListUsecase(postgrePropertyType, postgreRegion, areaRegionRepo, postgreDocType, postgreProject, propertyAmenityRepo, postgreProjectBuild)
 	publicMapper := mapper.NewPublicMapper()
 	areaRegionMapper := mapper.NewAreaRegionMapper()
-	bdsproPublicService := handler.NewBdsproPublicService(productUsecase, listUsecase, areaRegionUsecase, publicMapper, productMapper, areaRegionMapper)
+	bdsproPublicService := handler.NewBdsproPublicService(productUsecase, listUsecase, areaRegionUsecase, publicMapper, productMapper, areaRegionMapper, syncUtil)
 	assetService := handler.NewGrpcAssetService(assetUsecase, assetMapper, userClient)
 	postgreAssetExploitation := postgres.NewPostgreAssetExploitation(db)
 	assetExploitationUsecase := shared_usecase.NewAssetExploitationUc(postgreAssetExploitation, requestUsecase)
@@ -298,7 +298,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 		return nil, nil, err
 	}
 	clientPaymentClient := client.NewPaymentClient(paymentClient)
-	dealHandler := handler.NewDealHandler(dealUsecase, dealMapper, dealValidator, clientOrganizationClient, userClient, clientPaymentClient, productRepo)
+	dealHandler := handler.NewDealHandler(dealUsecase, dealMapper, dealValidator, clientOrganizationClient, userClient, clientPaymentClient, productRepo, syncUtil)
 	dealCommissionUsecase := usecases.NewDealCommissionUsecase(dealMemberPostgresRepository, dealRepository)
 	dealCommissionTransformer := mapper.NewDealCommissionTransformer()
 	dealCommissionValidator := validator.NewDealCommissionValidator()

@@ -16,8 +16,9 @@ import (
 
 type CrmGrpcClient struct {
 	crmpb.CrmInternalServiceClient
-	FriendServiceClient  crmpb.FriendServiceClient
-	ContactServiceClient crmpb.ContactServiceClient
+	FriendServiceClient      crmpb.FriendServiceClient
+	ContactServiceClient     crmpb.ContactServiceClient
+	AppointmentServiceClient crmpb.AppointmentServiceClient
 }
 
 func BindCrmGrpcClient(conn grpc.ClientConnInterface) *CrmGrpcClient {
@@ -25,6 +26,7 @@ func BindCrmGrpcClient(conn grpc.ClientConnInterface) *CrmGrpcClient {
 		CrmInternalServiceClient: crmpb.NewCrmInternalServiceClient(conn),
 		FriendServiceClient:      crmpb.NewFriendServiceClient(conn),
 		ContactServiceClient:     crmpb.NewContactServiceClient(conn),
+		AppointmentServiceClient: crmpb.NewAppointmentServiceClient(conn),
 	}
 }
 
@@ -268,10 +270,10 @@ func (c *CrmGrpcClient) GetContactByOriginId(ctx context.Context, originId uint6
 	return resp, nil
 }
 
-// CreateContact tạo liên hệ thuộc profile hiện tại; trả originId (sourceContactId) và contactId.
-func (c *CrmGrpcClient) CreateContact(ctx context.Context, fullName, phone, email, avatar string) (uint64, uint64, error) {
+// CreateContact tạo liên hệ thuộc profile hiện tại; trả originId, contactId và profileId.
+func (c *CrmGrpcClient) CreateContact(ctx context.Context, fullName, phone, email, avatar string) (uint64, uint64, uint64, error) {
 	if c.ContactServiceClient == nil {
-		return 0, 0, errors.New("crm contact service not initialized")
+		return 0, 0, 0, errors.New("crm contact service not initialized")
 	}
 
 	resp, err := c.ContactServiceClient.Create(ctx, &crmpb.ContactSaveDTO{
@@ -282,23 +284,87 @@ func (c *CrmGrpcClient) CreateContact(ctx context.Context, fullName, phone, emai
 		OwnerOf:  10, // EOwnerOfMember
 	})
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
-	var contactID uint64
+	var contactID, profileID uint64
 	if resp != nil {
 		contactID = resp.Id
-	}
-
-	if resp != nil && resp.ProfileId != nil && *resp.ProfileId > 0 {
-		originID, originErr := c.GetOriginID(ctx, *resp.ProfileId)
-		if originErr != nil {
-			return 0, contactID, originErr
+		if resp.ProfileId != nil {
+			profileID = *resp.ProfileId
 		}
-		return originID, contactID, nil
 	}
 
-	return 0, contactID, nil
+	if profileID > 0 {
+		originID, originErr := c.GetOriginID(ctx, profileID)
+		if originErr != nil {
+			return 0, contactID, profileID, originErr
+		}
+		return originID, contactID, profileID, nil
+	}
+
+	return 0, contactID, profileID, nil
+}
+
+// GetContactProfileID lấy profileId của contact theo contact id.
+func (c *CrmGrpcClient) GetContactProfileID(ctx context.Context, contactID uint64) (uint64, error) {
+	if contactID == 0 {
+		return 0, nil
+	}
+	contact, err := c.GetContactById(ctx, contactID)
+	if err != nil {
+		return 0, err
+	}
+	if contact == nil || contact.ProfileId == nil {
+		return 0, nil
+	}
+	return *contact.ProfileId, nil
+}
+
+// CreateAppointment tạo lịch hẹn qua AppointmentService.
+func (c *CrmGrpcClient) CreateAppointment(
+	ctx context.Context,
+	title, description, place, startTime, endTime string,
+	participantIDs []int64,
+	dealID uint32,
+	productIDs []int64,
+	status uint32,
+) (uint64, error) {
+	if c.AppointmentServiceClient == nil {
+		return 0, errors.New("crm appointment service not initialized")
+	}
+	resp, err := c.AppointmentServiceClient.CreateAppointment(ctx, &crmpb.CreateAppointmentRequest{
+		Title:          title,
+		Description:    description,
+		Place:          place,
+		StartTime:      startTime,
+		EndTime:        endTime,
+		ParticipantIds: participantIDs,
+		DealId:         dealID,
+		ProductIds:     productIDs,
+		Status:         status,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if resp == nil {
+		return 0, nil
+	}
+	return uint64(resp.Id), nil
+}
+
+// DeleteAppointment xoá lịch hẹn theo id.
+func (c *CrmGrpcClient) DeleteAppointment(ctx context.Context, appointmentID uint64) error {
+	if c.AppointmentServiceClient == nil {
+		return errors.New("crm appointment service not initialized")
+	}
+	if appointmentID == 0 {
+		return nil
+	}
+	_, err := c.AppointmentServiceClient.DeleteAppointment(ctx, &crmpb.DeleteAppointmentRequest{
+		Id: uint32(appointmentID),
+	})
+	return err
 }
 
 // DeleteContact soft-delete liên hệ theo id.

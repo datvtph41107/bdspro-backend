@@ -5,11 +5,12 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strings"
+	"time"
 
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
-	"strings"
 	"tqd/infra/mapper"
 	"tqd/infra/validator"
 	"tqd/internal/dto"
@@ -141,22 +142,37 @@ func (h *LocationHandler) GetProvince(ctx context.Context, req *tqdpb.GetProvinc
 }
 
 // ListProvinces exposes the read-only province catalog used by the guest map.
-// Always return the current snapshot: the province table currently has no
-// durable catalog-version authority, so treating a client timestamp as one
-// would make cache invalidation silently incorrect.
-func (h *LocationHandler) ListProvinces(ctx context.Context, _ *tqdpb.ListProvincesRequest) (*tqdpb.ListProvincesResponse, error) {
+// Shares SyncKeyTQDProvincesWards with ListWards: client gửi timestamp;
+// nếu catalog chưa đổi thì trả rỗng (chỉ kèm timestamp hiện tại).
+func (h *LocationHandler) ListProvinces(ctx context.Context, req *tqdpb.ListProvincesRequest) (*tqdpb.ListProvincesResponse, error) {
+	ts := req.GetTimestamp()
+	catalogTS, updated := h.checkProvincesWardsCatalog(ctx, ts)
+	if !updated {
+		return &tqdpb.ListProvincesResponse{Timestamp: catalogTS}, nil
+	}
+
 	response, err := h.locationUsecase.ListProvinces(ctx)
 	if err != nil {
 		return nil, h.handleError(err)
 	}
-
+	response.Timestamp = catalogTS
 	return h.mapper.ToProtoListProvincesResponse(response), nil
 }
 
 // ListWards exposes the national ward catalog with pagination (pageSize max 300).
+// Shares SyncKeyTQDProvincesWards with ListProvinces.
 func (h *LocationHandler) ListWards(ctx context.Context, req *tqdpb.ListWardsRequest) (*tqdpb.ClientListWardsResponse, error) {
 	if err := h.validateListWards(req); err != nil {
 		return nil, err
+	}
+
+	ts := int64(0)
+	if req != nil {
+		ts = req.Timestamp
+	}
+	catalogTS, updated := h.checkProvincesWardsCatalog(ctx, ts)
+	if !updated {
+		return &tqdpb.ClientListWardsResponse{Timestamp: catalogTS}, nil
 	}
 
 	dtoReq := h.mapper.FromProtoListWardsRequest(req)
@@ -164,7 +180,7 @@ func (h *LocationHandler) ListWards(ctx context.Context, req *tqdpb.ListWardsReq
 	if err != nil {
 		return nil, h.handleError(err)
 	}
-
+	resp.Timestamp = catalogTS
 	return h.mapper.ToProtoClientListWardsResponse(resp), nil
 }
 
@@ -361,6 +377,7 @@ func (h *LocationHandler) AdminCreateProvince(ctx context.Context, req *tqdpb.Pr
 	if err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return h.mapper.ToProtoProvince(resp), nil
 }
 
@@ -393,6 +410,7 @@ func (h *LocationHandler) AdminUpdateProvince(ctx context.Context, req *tqdpb.Pr
 	if err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return h.mapper.ToProtoProvince(resp), nil
 }
 
@@ -411,6 +429,7 @@ func (h *LocationHandler) AdminDeleteProvince(ctx context.Context, req *tqdpb.Ad
 	if err := h.locationUsecase.AdminDeleteProvince(ctx, req.Id); err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return &sharepb.SubmitResponse{Message: "province deleted successfully"}, nil
 }
 
@@ -432,6 +451,7 @@ func (h *LocationHandler) AdminCreateWard(ctx context.Context, req *tqdpb.Ward) 
 	if err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return h.mapper.ToProtoWard(resp), nil
 }
 
@@ -486,6 +506,7 @@ func (h *LocationHandler) AdminUpdateWard(ctx context.Context, req *tqdpb.Ward) 
 	if err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return h.mapper.ToProtoWard(resp), nil
 }
 
@@ -504,6 +525,7 @@ func (h *LocationHandler) AdminDeleteWard(ctx context.Context, req *tqdpb.AdminD
 	if err := h.locationUsecase.AdminDeleteWard(ctx, req.Id); err != nil {
 		return nil, h.handleError(err)
 	}
+	h.touchProvincesWardsCatalog(ctx)
 	return &sharepb.SubmitResponse{Message: "ward deleted successfully"}, nil
 }
 
@@ -936,6 +958,33 @@ func (h *LocationHandler) AdminSyncAreaFromGeometry(ctx context.Context, req *tq
 		// Failed:  0,
 		Errors: result.Errors,
 	}, nil
+}
+
+// ==================== CATALOG SYNC (provinces + wards) ====================
+
+// provincesWardsSyncKey — 1 key Redis global (không theo user), dùng chung
+// /v2/tqd/client/provinces và /v2/tqd/client/wards.
+func (h *LocationHandler) provincesWardsSyncKey() string {
+	return _utils.SyncKeyTQDProvincesWards
+}
+
+// checkProvincesWardsCatalog returns current catalog timestamp and whether client should refetch.
+// Redis chưa có → seed now; đã có → giữ nguyên (giống poi category icons).
+func (h *LocationHandler) checkProvincesWardsCatalog(ctx context.Context, clientTimestamp int64) (int64, bool) {
+	if h.SyncProvider == nil {
+		now := time.Now().UnixMilli()
+		return now, true
+	}
+	key := h.provincesWardsSyncKey()
+	catalogTS := h.SyncProvider.EnsureTimestamp(ctx, key)
+	return catalogTS, h.SyncProvider.HasUpdated(ctx, key, clientTimestamp)
+}
+
+func (h *LocationHandler) touchProvincesWardsCatalog(ctx context.Context) {
+	if h.SyncProvider == nil {
+		return
+	}
+	_ = h.SyncProvider.PutTimestamp(ctx, h.provincesWardsSyncKey(), time.Now().UnixMilli())
 }
 
 // ==================== ERROR HANDLING ====================

@@ -89,9 +89,8 @@ func (s *NotificationHandler) Count(ctx context.Context, req *notipb.CountReques
 	clientTs := req.GetTimestamp()
 	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
 	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
-	println("updated", updated)
 	if !updated {
-		ts := s.SyncProvider.GetTimestamp(ctx, key)
+		ts := s.SyncProvider.EnsureTimestamp(ctx, key)
 		return &notipb.CountResponse{
 			Count:     0,
 			Unread:    0,
@@ -101,11 +100,14 @@ func (s *NotificationHandler) Count(ctx context.Context, req *notipb.CountReques
 	}
 
 	count := s.Usecase.Count(ctx)
-	s.SyncProvider.PutTimeRequest(ctx, key, 0)
+	now := time.Now().UnixMilli()
+	_ = s.SyncProvider.PutTimestamp(ctx, key, now)
 
 	return &notipb.CountResponse{
-		Count:  count,
-		Unread: count,
+		Count:     count,
+		Unread:    count,
+		Timestamp: now,
+		Unchanged: false,
 	}, nil
 }
 
@@ -219,7 +221,7 @@ func (s *NotificationHandler) List(ctx context.Context, req *notipb.ListRequest)
 	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
 	s.SyncProvider.PutTimeRequest(ctx, key, clientTs)
 	if !updated && req.Page == 0 {
-		ts := s.SyncProvider.GetTimestamp(ctx, key)
+		ts := s.SyncProvider.EnsureTimestamp(ctx, key)
 		return &notipb.ListResponse{
 			Data:      nil,
 			Total:     0,

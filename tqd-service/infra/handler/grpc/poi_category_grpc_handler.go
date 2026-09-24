@@ -3,8 +3,10 @@ package handler_grpc
 import (
 	"context"
 	"log"
+	"time"
 
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
 	"tqd/infra/mapper"
@@ -19,18 +21,21 @@ import (
 // PoiCategoryGrpcHandler handles gRPC requests for POI category
 type PoiCategoryGrpcHandler struct {
 	tqdpb.UnimplementedPoiCategoryServiceServer
-	usecase usecase.PoiCategoryUsecase
-	mapper  *mapper.PoiCategoryMapper
+	usecase      usecase.PoiCategoryUsecase
+	mapper       *mapper.PoiCategoryMapper
+	SyncProvider *_utils.SyncUtil
 }
 
 // NewPoiCategoryGrpcHandler creates new handler
 func NewPoiCategoryGrpcHandler(
 	usecase usecase.PoiCategoryUsecase,
 	mapper *mapper.PoiCategoryMapper,
+	syncProvider *_utils.SyncUtil,
 ) *PoiCategoryGrpcHandler {
 	return &PoiCategoryGrpcHandler{
-		usecase: usecase,
-		mapper:  mapper,
+		usecase:      usecase,
+		mapper:       mapper,
+		SyncProvider: syncProvider,
 	}
 }
 
@@ -56,7 +61,9 @@ func (h *PoiCategoryGrpcHandler) CreatePoiCategory(ctx context.Context, req *tqd
 		log.Printf("error creating poi category: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to create poi category: %v", err)
 	}
-
+	if h.SyncProvider != nil {
+		_ = h.SyncProvider.PutTimestamp(ctx, _utils.SyncKeyPoiCategoryIcons, time.Now().UnixMilli())
+	}
 	return h.mapper.ToProtoFromResponse(result), nil
 }
 
@@ -114,7 +121,9 @@ func (h *PoiCategoryGrpcHandler) UpdatePoiCategory(ctx context.Context, req *tqd
 		log.Printf("error updating poi category: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to update poi category: %v", err)
 	}
-
+	if h.SyncProvider != nil {
+		_ = h.SyncProvider.PutTimestamp(ctx, _utils.SyncKeyPoiCategoryIcons, time.Now().UnixMilli())
+	}
 	return h.mapper.ToProtoFromResponse(result), nil
 }
 
@@ -128,7 +137,9 @@ func (h *PoiCategoryGrpcHandler) DeletePoiCategory(ctx context.Context, req *sha
 		log.Printf("error deleting poi category: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to delete poi category: %v", err)
 	}
-
+	if h.SyncProvider != nil {
+		_ = h.SyncProvider.PutTimestamp(ctx, _utils.SyncKeyPoiCategoryIcons, time.Now().UnixMilli())
+	}
 	return &sharepb.SubmitResponse{
 		Message: "POI category deleted successfully",
 	}, nil
@@ -219,7 +230,12 @@ func (h *PoiCategoryGrpcHandler) ListPoiCategoryIcons(ctx context.Context, req *
 		})
 	}
 
-	return &tqdpb.ListPoiCategoryIconsResponse{Data: data}, nil
+	ts := int64(0)
+	if h.SyncProvider != nil {
+		// Global key: chỉ seed lần đầu; không overwrite mỗi lần GET.
+		ts = h.SyncProvider.EnsureTimestamp(ctx, _utils.SyncKeyPoiCategoryIcons)
+	}
+	return &tqdpb.ListPoiCategoryIconsResponse{Data: data, Timestamp: ts}, nil
 }
 
 // buildProtoTree builds proto tree from tree responses

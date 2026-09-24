@@ -87,7 +87,12 @@ func resolveMigrationDir() (string, error) {
 	candidates := []string{
 		strings.TrimSpace(os.Getenv("HUB_MIGRATION_DIR")),
 		"migrate",
+		"/migrate",     // Dockerfile.develop WORKDIR /
+		"/app/migrate", // hub-service/Dockerfile runtime layout
 		filepath.Join("hub-service", "migrate"),
+	}
+	if exe, err := os.Executable(); err == nil {
+		candidates = append(candidates, filepath.Join(filepath.Dir(exe), "migrate"))
 	}
 	for _, candidate := range candidates {
 		if candidate == "" {

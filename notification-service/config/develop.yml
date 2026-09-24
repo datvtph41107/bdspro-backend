@@ -1,0 +1,42 @@
+server:
+  tcp_port: 8204
+
+database:
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_notification port=5432 sslmode=disable
+
+key:
+  jwt: key-generate-jwt-token-authentication
+
+jwt:
+  key-generate: key-generate-jwt-token-authentication
+  tokenPrefix: Bearer
+  tokenExpirationAfterDays: 14
+  accessExpAfterMinutes: 15
+  refreshExpAfterMinutes: 129600
+  listPermit:
+  authorizationHeader: Authorization
+
+redis:
+  host: redis:6379
+  pass: ""
+  # Shared with bdspro for sync keys (notification_me).
+  db: 0
+
+rpc:
+  user:
+    address: user:8201
+
+rabbit:
+  url: amqp://guest:guest@rabbitmq:5672/
+  exchange: qhpro.payment.events
+
+delivery:
+  worker_id: notification-delivery
+  poll_interval: 1s
+  lease: 30s
+
+shutdown_timeout: 10s
+
+firebase:
+  file: bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json
+  fileUrl: config/bdspro-5e599-firebase-adminsdk-fbsvc-5aff064187.json

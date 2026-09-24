@@ -8,3 +8,5 @@ ENV CONFIG_FILE=config/production.yml
 COPY config config
 
 COPY main .
+# Hub/user startup schema migrate; deploy always ships this dir (empty OK).
+COPY migrate migrate

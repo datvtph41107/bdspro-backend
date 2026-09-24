@@ -109,6 +109,44 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 	return result
 }
 
+// ContactEntityToSharePb maps full contact detail into list response item (sharepb.ContactDTO).
+func (m *ContactMapper) ContactEntityToSharePb(contact *domain.ContactEntity) *sharepb.ContactDTO {
+	if contact == nil {
+		return nil
+	}
+	result := &sharepb.ContactDTO{
+		Id:            contact.ID,
+		FullName:      contact.FullName,
+		Avatar:        contact.Avatar,
+		Phone:         contact.Phone,
+		OwnerId:       contact.OwnerID,
+		Birthday:      _utils.FormatTimeToString(contact.Birthday),
+		OwnerOf:       int32(contact.OwnerOf),
+		ProfileId:     contact.ProfileID,
+		UpdatedAt:     _utils.FormatTimeToString(contact.UpdatedAt),
+		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
+		CreatedBy:     contact.CreatedBy,
+		ContactStatus: 20,
+		Email:         contact.Email,
+		Zalo:          contact.Zalo,
+		Company:       contact.Company,
+		Note:          contact.Note,
+		ProductIds:    contact.ProductIDs,
+	}
+
+	if contact.FriendStatus != nil {
+		result.FriendStatus = &sharepb.FriendItem{
+			Id:         contact.FriendStatus.ID,
+			Status:     uint32(contact.FriendStatus.Status),
+			CreatedBy:  contact.FriendStatus.CreatedBy,
+			ReceiverId: contact.FriendStatus.ReceiverID,
+		}
+		result.FriendId = &contact.FriendStatus.ID
+	}
+
+	return result
+}
+
 func (m *ContactMapper) PbToContact(pb *crmpb.ContactDTO) *domain.ContactEntity {
 	return &domain.ContactEntity{
 		BaseEntity: _models.BaseEntity{

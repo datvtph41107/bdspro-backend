@@ -18,28 +18,28 @@ import (
 
 type FriendService struct {
 	crmpb.UnimplementedFriendServiceServer
-	UC                 *usecase.FriendUsecase
-	ContactUC          *usecase.ContactUsecase
-	userClient         *client.UserClient
-	organizationClient *client.OrganizationClient
-	FriendMapper       *mapper.FriendMapper
-	ContactMapper      *mapper.ContactMapper
+	UC           *usecase.FriendUsecase
+	ContactUC    *usecase.ContactUsecase
+	userClient   *client.UserClient
+	bdsproClient *client.BdsproClient
+	FriendMapper *mapper.FriendMapper
+	ContactMapper *mapper.ContactMapper
 }
 
 func NewFriendService(uc *usecase.FriendUsecase,
 	contactUC *usecase.ContactUsecase,
 	userClient *client.UserClient,
-	organizationClient *client.OrganizationClient,
+	bdsproClient *client.BdsproClient,
 	friendMapper *mapper.FriendMapper,
 	contactMapper *mapper.ContactMapper,
 ) *FriendService {
 	return &FriendService{
-		UC:                 uc,
-		ContactUC:          contactUC,
-		userClient:         userClient,
-		organizationClient: organizationClient,
-		FriendMapper:       friendMapper,
-		ContactMapper:      contactMapper,
+		UC:            uc,
+		ContactUC:     contactUC,
+		userClient:    userClient,
+		bdsproClient:  bdsproClient,
+		FriendMapper:  friendMapper,
+		ContactMapper: contactMapper,
 	}
 }
 
@@ -68,7 +68,7 @@ func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListR
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
 	if req.DealId != nil {
-		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+		s.bdsproClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
 	}
 	userPbs, _ := s.userClient.FriendToUserPbs(ctx, pbs)
 	// s.userClient.PbUserToReceiverFriends(ctx, pbs)
@@ -93,11 +93,8 @@ func (s *FriendService) FriendList(ctx context.Context, req *sharepb.FriendListR
 			}
 		}
 	}
-	if req.GroupId != nil {
-		// s.organizationClient.MapGroupMemberToFriend(ctx, *req.GroupId, userPbs)
-	}
 	if req.DealId != nil {
-		s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+		s.bdsproClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
 	}
 	return &crmpb.FriendProfileListResponse{
 		Data:  userPbs,
@@ -169,7 +166,7 @@ func (s *FriendService) FriendListWithLead(ctx context.Context, req *sharepb.Fri
 	}
 	pbs := s.FriendMapper.ListFriendToPb(result)
 	s.userClient.PbUserToReceiverFriends(ctx, pbs)
-	s.organizationClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
+	s.bdsproClient.MapDealMemberToFriend(ctx, *req.DealId, pbs)
 	return &crmpb.FriendListResponse{
 		Data:  pbs,
 		Total: int32(total),

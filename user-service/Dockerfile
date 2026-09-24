@@ -22,6 +22,9 @@ WORKDIR /app
 
 COPY --from=build /out/user /app/user
 COPY user-service/config /app/config
+# Startup RunPendingMigrations đọc SQL từ đây (hoặc USER_MIGRATION_DIR).
+COPY user-service/migrate /app/migrate
+ENV USER_MIGRATION_DIR=/app/migrate
 
 USER app
 EXPOSE 8201
