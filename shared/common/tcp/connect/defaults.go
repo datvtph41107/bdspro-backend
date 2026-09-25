@@ -8,7 +8,7 @@ var DefaultPorts = map[string]string{
 	"notification": "8204",
 	"payment":      "8205",
 	"crm":          "8206",
-	"organization": "8207",
+	"organization": "8201",
 	"chat":         "8208",
 	"social":       "8209",
 	"map":          "8210",

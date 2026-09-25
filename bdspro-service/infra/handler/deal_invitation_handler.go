@@ -2,6 +2,9 @@ package handler
 
 import (
 	"context"
+	"time"
+
+	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
 	"bdspro/infra/client"
@@ -17,6 +20,7 @@ type DealInvitationHandler struct {
 	dealInvitationValidator   validator.DealInvitationValidator
 	userClient                *client.UserClient
 	authClient                *client.AuthClient
+	SyncProvider              *_utils.SyncUtil
 }
 
 func NewDealInvitationHandler(
@@ -25,6 +29,7 @@ func NewDealInvitationHandler(
 	dealInvitationValidator validator.DealInvitationValidator,
 	userClient *client.UserClient,
 	authClient *client.AuthClient,
+	syncProvider *_utils.SyncUtil,
 ) *DealInvitationHandler {
 	return &DealInvitationHandler{
 		dealInvitationUsecase:     dealInvitationUsecase,
@@ -32,7 +37,18 @@ func NewDealInvitationHandler(
 		dealInvitationValidator:   dealInvitationValidator,
 		userClient:                userClient,
 		authClient:                authClient,
+		SyncProvider:              syncProvider,
 	}
+}
+
+func (h *DealInvitationHandler) bumpInvitationSync(ctx context.Context, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvitation, dealID), now)
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMembers, dealID), now)
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealPermission, dealID), now)
 }
 
 // @Summary Gửi lời mời tham gia thương vụ
@@ -56,6 +72,7 @@ func (h *DealInvitationHandler) SendDealInvitation(ctx context.Context, req *bds
 		return nil, err
 	}
 
+	h.bumpInvitationSync(ctx, req.DealId)
 	return h.dealInvitationTransformer.EntityToSendInvitationResponse(createdInvitation), nil
 }
 
@@ -327,6 +344,15 @@ func (h *DealInvitationHandler) GetDealInvitationsByDeal(ctx context.Context, re
 		return nil, err
 	}
 
+	if h.SyncProvider != nil && req.DealId > 0 {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvitation, req.DealId)
+		if !h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp()) && req.GetPage() == 0 {
+			return &bdspropb.GetDealInvitationsByDealResponse{
+				Timestamp: h.SyncProvider.GetTimestamp(ctx, key),
+			}, nil
+		}
+	}
+
 	page := 0
 	size := 10
 
@@ -345,5 +371,9 @@ func (h *DealInvitationHandler) GetDealInvitationsByDeal(ctx context.Context, re
 	pbs := h.dealInvitationTransformer.EntitiesToGetInvitationsByDealResponse(invitations, total)
 	h.userClient.MapToDealInvitationPb(ctx, pbs.Data)
 	h.authClient.MapRoleToDealInvitationPb(ctx, pbs.Data)
+
+	if h.SyncProvider != nil && req.DealId > 0 {
+		pbs.Timestamp = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvitation, req.DealId))
+	}
 	return pbs, nil
 }

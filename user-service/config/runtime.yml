@@ -4,7 +4,7 @@ rpc:
   auth:
     address: "localhost:8216"
   organization:
-    address: "localhost:8207"
+    address: "localhost:8201"
   hub:
     address: "localhost:8280"
   bdspro:
@@ -105,9 +105,9 @@ otp:
 
 grpc:
   organization:
-    host: :8207
+    host: :8201
   group:
-    host: :8207
+    host: :8201
   payment:
     host: :8205
   auth:

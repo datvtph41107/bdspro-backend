@@ -7,6 +7,8 @@ service:
     # Public Auth/OAuth/role/permission surface có serving owner là User.
     # auth-service:8216 chỉ dành cho RPC AuthInternal service-to-service.
     auth: user
+    # Tổ chức (organization) hiện do User Service phục vụ.
+    organization: user
   port:
     gateway: 8000
     user: 8201
@@ -15,7 +17,8 @@ service:
     notification: 8204
     payment: 8205
     crm: 8206
-    organization: 8207
+    # Organization protobuf/public surface hiện do User phục vụ (cùng 8201).
+    organization: 8201
     chat: 8208
     social: 8209
     map: 8210

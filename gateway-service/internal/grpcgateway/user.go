@@ -2,6 +2,7 @@ package grpcgateway
 
 import (
 	"context"
+	organizationpb "pb/types/organization"
 	userpb "pb/types/user"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -28,5 +29,6 @@ func RegisterUserService(ctx context.Context, mux *runtime.ServeMux, conn *grpc.
 		userpb.RegisterKYCServiceHandler,
 		userpb.RegisterPriceTableServiceHandler,
 		userpb.RegisterCheckoutServiceHandler,
+		organizationpb.RegisterOrganizationServiceHandler,
 	)
 }

@@ -150,6 +150,7 @@ message GetDealContractRequest {
     uint64 dealId = 1;
     int32 page = 2;
     int32 size = 3;
+    int64 timestamp = 4; // client sync timestamp (ms)
 }
 
 // Request phê duyệt giao dịch
@@ -176,6 +177,8 @@ message DealContractItem {
 message DealContractListResponse {
     repeated DealContractItem data = 1;
     int32 total = 2;
+    // Sync timestamp (ms) — Redis SyncKeyDealContracts theo deal.
+    int64 timestamp = 3;
 }
 
 // Request lấy thống kê tài chính
@@ -227,6 +230,7 @@ message DealCostStatisticsRequestDTO {
     uint64 dealId = 1;
     bool payment = 2;
     bool cost = 3;
+    int64 timestamp = 4; // client sync timestamp (ms)
 }
 
 message ContractDealStatisticsDTO {

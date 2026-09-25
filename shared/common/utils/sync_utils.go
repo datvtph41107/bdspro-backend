@@ -28,6 +28,26 @@ const (
 	SyncKeyAppointmentMe = "appt:me"
 	// SyncKeyDealMe: ds thương vụ của user (GetDealsUser).
 	SyncKeyDealMe = "deal:me"
+	// Deal-scoped sync keys (resourceId = dealId) — /v2.1/org/deal/{id}/ts
+	SyncKeyDealDetail     = "deal:id"
+	SyncKeyDealMembers    = "deal:mems"
+	SyncKeyDealProducts   = "deal:prds"
+	SyncKeyDealInvestment = "deal:inv"
+	SyncKeyDealBank       = "deal:bank"
+	SyncKeyDealProcess    = "deal:proc"
+	SyncKeyDealCommission = "deal:comm"
+	SyncKeyDealHistory    = "deal:his"
+	SyncKeyDealSummary    = "deal:sum"
+	// SyncKeyDealPermission: /v2/auth/permission/deal/{id}
+	SyncKeyDealPermission = "deal:perm"
+	// SyncKeyDealContracts: /v2.1/transaction/contract/deal/list/{dealId} — FE key trong /ts: "transaction"
+	SyncKeyDealContracts = "deal:ctr"
+	// SyncKeyDealInvitation: /v2.1/org/deal-invitation/list/{dealId}
+	SyncKeyDealInvitation = "deal:invt"
+	// SyncKeyDealStatistics: /v2.1/transaction/contract/deal/statistics/{dealId}
+	SyncKeyDealStatistics = "deal:stat"
+	// SyncKeyDealCost: /v2.1/transaction/deal-cost/list/{dealId}
+	SyncKeyDealCost = "deal:cost"
 	// SyncKeyPermissionMe: quyền của user (/v2/auth/permission/me).
 	SyncKeyPermissionMe = "perm:me"
 	// SyncKeyProfileInfoMe: profile info me (/v2/user/profile/info/me).

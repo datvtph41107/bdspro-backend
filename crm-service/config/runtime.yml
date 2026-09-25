@@ -14,7 +14,7 @@ rpc:
   notification:
     address: "localhost:8204"
   organization:
-    address: "localhost:8207"
+    address: "localhost:8201"
   chat:
     address: "localhost:8208"
   hub:

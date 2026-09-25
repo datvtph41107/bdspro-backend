@@ -121,7 +121,7 @@ REDIS_ADDRESS=localhost:6379
 USER_REDIS_DB=0
 RPC_USER_ADDRESS=localhost:8201
 RPC_AUTH_ADDRESS=localhost:8216
-RPC_ORGANIZATION_ADDRESS=localhost:8207
+RPC_ORGANIZATION_ADDRESS=localhost:8201
 RPC_HUB_ADDRESS=localhost:8280
 RPC_BDSPRO_ADDRESS=localhost:8202
 RPC_NOTIFICATION_ADDRESS=localhost:8204
@@ -263,7 +263,7 @@ install_value user-service/.env REDIS_ADDRESS localhost:6379
 install_value user-service/.env USER_REDIS_DB 0
 install_missing_value user-service/.env RPC_USER_ADDRESS localhost:8201
 install_missing_value user-service/.env RPC_AUTH_ADDRESS localhost:8216
-install_missing_value user-service/.env RPC_ORGANIZATION_ADDRESS localhost:8207
+install_missing_value user-service/.env RPC_ORGANIZATION_ADDRESS localhost:8201
 install_missing_value user-service/.env RPC_HUB_ADDRESS localhost:8280
 install_missing_value user-service/.env RPC_BDSPRO_ADDRESS localhost:8202
 install_missing_value user-service/.env RPC_NOTIFICATION_ADDRESS localhost:8204

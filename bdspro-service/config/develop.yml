@@ -27,7 +27,7 @@ rpc:
   auth:
     address: "auth:8201"
   organization:
-    address: "organization:8207"
+    address: "user:8201"
   hub:
     address: "hub:8280"
   bdspro:

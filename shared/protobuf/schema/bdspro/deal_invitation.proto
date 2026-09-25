@@ -204,9 +204,12 @@ message GetDealInvitationsByDealRequest {
     uint64 dealId = 1;
     int32 page = 2;
     int32 size = 3;
+    int64 timestamp = 4; // client sync timestamp (ms)
 }
 
 message GetDealInvitationsByDealResponse {
     repeated sharepb.DealMember data = 1;
     int64 total = 2;
+    // Sync timestamp (ms) — Redis SyncKeyDealInvitation theo deal.
+    int64 timestamp = 3;
 }

@@ -180,7 +180,7 @@ service PermissionService {
 message PermissionKeysResponse {
   repeated string keys = 1;
   optional sharepb.Role role = 2;
-  // Sync timestamp (ms) — server ghi Redis SyncKeyPermissionMe khi trả /permission/me.
+  // Sync timestamp (ms) — Redis SyncKeyPermissionMe (/permission/me) hoặc SyncKeyDealPermission (/permission/deal/{id}).
   int64 timestamp = 3;
 }
 

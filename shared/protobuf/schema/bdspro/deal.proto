@@ -73,6 +73,15 @@ service DealService {
         };
     }
 
+    // GetDealTimestamps — chỉ đọc Redis; FE check cache trước khi gọi API deal detail.
+    // Keys: permission, products, contracts, investment, summary, bank, invitation, statistics, cost
+    // (+ detail, members, process, commission, history nếu còn dùng).
+    rpc GetDealTimestamps(sharepb.IdRequest) returns (DealTimestampsResponse) {
+        option (google.api.http) = {
+            get: "/v2.1/org/deal/{id}/ts"
+        };
+    }
+
 
     // API lấy danh sách thương vụ theo tổ chức
     rpc GetOrganizationDeals(GetOrganizationDealsRequest) returns (GetOrganizationDealsResponse) {
@@ -152,7 +161,7 @@ service DealService {
         };
     }
 
-    rpc AccountInvestment(sharepb.IdDTO) returns (BankAccountItem) {
+    rpc AccountInvestment(sharepb.IdRequest) returns (BankAccountItem) {
         option (google.api.http) = {
             get: "/v2.1/org/deal/{id}/bank-account"
         };
@@ -376,6 +385,7 @@ message DeleteGroupDealResponse {
 
 message GetGroupDealRequest {
     uint32 id = 1;
+    int64 timestamp = 2; // client sync timestamp (ms)
 }
 
 message GetGroupDealResponse {
@@ -459,6 +469,8 @@ message GroupDeal {
     optional authpb.Role role = 35;
     uint32 shareVisibility = 36;
     string description = 37;
+    // Sync timestamp (ms) — Redis SyncKeyDealDetail theo deal.
+    int64 timestamp = 38;
 }
 
 message DocumentItem {
@@ -475,6 +487,8 @@ message BankAccountItem {
     string accountName = 4;
     uint64 bankId = 5;
     paymentpb.Bank bank = 6;
+    // Sync timestamp (ms) — Redis SyncKeyDealBank theo deal.
+    int64 timestamp = 7;
 }
 
 message InfoInvestmentResponse {
@@ -742,6 +756,7 @@ message SummaryRequest {
     bool amountProfit = 14;
     bool numTransaction = 15;
     bool all = 16;
+    int64 timestamp = 17; // client sync timestamp (ms)
 }
 
 message SummaryResponse {
@@ -911,4 +926,9 @@ message AdminDealItem {
     bool isManual = 25;
     optional string cancelReason = 26;
     string note = 27;
+}
+// DealTimestampsResponse: map key -> timestamp (ms) cho FE check cache.
+// Keys: detail, members, products, investment, bank, process, commission, history, summary
+message DealTimestampsResponse {
+    map<string, int64> timestamps = 1;
 }

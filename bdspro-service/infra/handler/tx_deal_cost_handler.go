@@ -2,7 +2,9 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_utils "common/utils"
 	"context"
+	"time"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
@@ -13,12 +15,22 @@ import (
 
 type TxDealCostHandler struct {
 	bdspropb.UnimplementedDealCostServiceServer
-	usecase usecases.DealCostUsecase
-	mapper  *mapper.DealCostMapper
+	usecase      usecases.DealCostUsecase
+	mapper       *mapper.DealCostMapper
+	SyncProvider *_utils.SyncUtil
 }
 
-func NewDealCostHandler(uc usecases.DealCostUsecase, mapper *mapper.DealCostMapper) *TxDealCostHandler {
-	return &TxDealCostHandler{usecase: uc, mapper: mapper}
+func NewDealCostHandler(uc usecases.DealCostUsecase, mapper *mapper.DealCostMapper, syncProvider *_utils.SyncUtil) *TxDealCostHandler {
+	return &TxDealCostHandler{usecase: uc, mapper: mapper, SyncProvider: syncProvider}
+}
+
+func (h *TxDealCostHandler) bumpDealCostSync(ctx context.Context, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealCost, dealID), now)
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealStatistics, dealID), now)
 }
 
 // @Summary Tạo Chi phí/Doanh thu thương vụ
@@ -35,6 +47,7 @@ func (h *TxDealCostHandler) Create(ctx context.Context, req *bdspropb.DealCostDT
 	if err := h.usecase.Create(ctx, model); err != nil {
 		return nil, err
 	}
+	h.bumpDealCostSync(ctx, req.DealId)
 	return h.mapper.DealCostModelToProto(model), nil
 }
 
@@ -52,6 +65,7 @@ func (h *TxDealCostHandler) Update(ctx context.Context, req *bdspropb.DealCostDT
 	if err := h.usecase.Update(ctx, model); err != nil {
 		return nil, err
 	}
+	h.bumpDealCostSync(ctx, req.DealId)
 	return h.mapper.DealCostModelToProto(model), nil
 }
 
@@ -99,6 +113,15 @@ func (h *TxDealCostHandler) Detail(ctx context.Context, req *sharepb.IdRequest) 
 // @Param dto query bdspropb.DealCostSearchDTO true "Thông tin tìm kiếm"
 // @Router /deal/deal-cost/{dealId} [get]
 func (h *TxDealCostHandler) Search(ctx context.Context, req *bdspropb.DealCostSearchDTO) (*bdspropb.DealCostListDTO, error) {
+	if h.SyncProvider != nil && req.DealId > 0 {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealCost, req.DealId)
+		if !h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp()) && req.GetPage() == 0 {
+			return &bdspropb.DealCostListDTO{
+				Timestamp: h.SyncProvider.GetTimestamp(ctx, key),
+			}, nil
+		}
+	}
+
 	search := &dto.TxDealCostSearchDTO{
 		Pagable: _dto.Pagable{
 			Page: uint32(req.Page),
@@ -116,8 +139,14 @@ func (h *TxDealCostHandler) Search(ctx context.Context, req *bdspropb.DealCostSe
 		data = append(data, h.mapper.DealCostModelToProto(item))
 	}
 
+	var ts int64
+	if h.SyncProvider != nil && req.DealId > 0 {
+		ts = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealCost, req.DealId))
+	}
+
 	return &bdspropb.DealCostListDTO{
 		Data:          data,
 		TotalElements: uint32(len(data)),
+		Timestamp:     ts,
 	}, nil
 }

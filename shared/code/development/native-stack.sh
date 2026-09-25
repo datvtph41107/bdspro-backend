@@ -47,7 +47,7 @@ service_port() {
     user) printf '8201' ;;
     notification) printf '8204' ;;
     payment) printf '8205' ;;
-    organization) printf '8207' ;;
+    organization) printf '8201' ;;
     auth) printf '8216' ;;
     assistant) printf '8218' ;;
     tqd) printf '8219' ;;

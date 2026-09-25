@@ -13,7 +13,7 @@ service GatewayNotificationService {
       body: "*"
     };
   };
-  rpc Count (CountRequest) returns (CountResponse) {
+  rpc Count(CountRequest) returns (CountResponse) {
     option (google.api.http) = {
       get: "/v2/notification/count"
     };

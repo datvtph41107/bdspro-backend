@@ -21,7 +21,7 @@ services:
         notification:
             addresses: ["localhost:8204"]
         organization:
-            addresses: ["localhost:8207"]
+            addresses: ["localhost:8201"]
         social:
             addresses: ["localhost:8209"]
         map:

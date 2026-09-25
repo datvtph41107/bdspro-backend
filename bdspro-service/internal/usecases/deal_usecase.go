@@ -18,6 +18,7 @@ import (
 	"bdspro/internal/repo"
 
 	sharepb "pb/types/shared"
+	"gorm.io/gorm"
 )
 
 type DealUsecase interface {
@@ -997,16 +998,18 @@ func (u *dealUsecase) AccountInvestment(ctx context.Context, id uint64) (*domain
 	}
 
 	if deal.BankAccountID == nil {
-		return nil, errors.New("bank account not found")
+		return nil, nil
 	}
 
 	bankAccount, err := u.bankAccountRepository.GetByID(ctx, deal.BankAccountID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
-
 	if bankAccount == nil {
-		return nil, errors.New("bank account not found")
+		return nil, nil
 	}
 
 	return bankAccount, nil

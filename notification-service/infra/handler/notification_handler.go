@@ -86,18 +86,18 @@ func (s *NotificationHandler) Create(ctx context.Context, req *notipb.GatewayNot
 // @Failure 500 {object} map[string]string "error"
 // @Router /count [get]
 func (s *NotificationHandler) Count(ctx context.Context, req *notipb.CountRequest) (*notipb.CountResponse, error) {
-	clientTs := req.GetTimestamp()
+	// clientTs := req.GetTimestamp()
 	key := s.SyncProvider.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
-	updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
-	if !updated {
-		ts := s.SyncProvider.EnsureTimestamp(ctx, key)
-		return &notipb.CountResponse{
-			Count:     0,
-			Unread:    0,
-			Timestamp: ts,
-			Unchanged: true,
-		}, nil
-	}
+	// updated := s.SyncProvider.HasUpdated(ctx, key, clientTs)
+	// if !updated {
+	// 	ts := s.SyncProvider.EnsureTimestamp(ctx, key)
+	// 	return &notipb.CountResponse{
+	// 		Count:     0,
+	// 		Unread:    0,
+	// 		Timestamp: ts,
+	// 		Unchanged: true,
+	// 	}, nil
+	// }
 
 	count := s.Usecase.Count(ctx)
 	now := time.Now().UnixMilli()

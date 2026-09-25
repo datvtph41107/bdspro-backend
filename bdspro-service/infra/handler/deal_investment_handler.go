@@ -6,7 +6,9 @@ import (
 	"bdspro/infra/validator"
 	"bdspro/internal/dto"
 	"bdspro/internal/usecases"
+	_utils "common/utils"
 	"context"
+	"time"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
@@ -17,6 +19,7 @@ type DealInvestmentHandler struct {
 	InvestmentValidator *validator.InvestmentValidator
 	InvestmentMapper    *mapper.InvestmentMapper
 	UserClient          *client.UserClient
+	SyncProvider        *_utils.SyncUtil
 }
 
 func NewDealInvestmentHandler(
@@ -24,13 +27,24 @@ func NewDealInvestmentHandler(
 	investmentValidator *validator.InvestmentValidator,
 	investmentMapper *mapper.InvestmentMapper,
 	userClient *client.UserClient,
+	syncProvider *_utils.SyncUtil,
 ) *DealInvestmentHandler {
 	return &DealInvestmentHandler{
 		InvestmentUsecase:   investmentUsecase,
 		InvestmentValidator: investmentValidator,
 		InvestmentMapper:    investmentMapper,
 		UserClient:          userClient,
+		SyncProvider:        syncProvider,
 	}
+}
+
+func (h *DealInvestmentHandler) bumpInvestmentSync(ctx context.Context, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvestment, dealID), now)
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealSummary, dealID), now)
 }
 
 // @Summary submit form khai báo góp vốn
@@ -51,6 +65,7 @@ func (h *DealInvestmentHandler) CreateInvestment(ctx context.Context, req *bdspr
 	if err != nil {
 		return nil, err
 	}
+	h.bumpInvestmentSync(ctx, req.DealId)
 	return &sharepb.IdDTO{Id: *id}, nil
 }
 
@@ -121,6 +136,13 @@ func (h *DealInvestmentHandler) DetailInvestment(ctx context.Context, req *share
 // @Param dealId path uint64 true "Deal ID"
 // @Router /investments/{dealId} [get]
 func (h *DealInvestmentHandler) GetInvestments(ctx context.Context, req *bdspropb.InvestmentListRequest) (*bdspropb.ListInvestment, error) {
+	if h.SyncProvider != nil && req.DealId > 0 {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvestment, req.DealId)
+		if !h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp()) {
+			return &bdspropb.ListInvestment{}, nil
+		}
+	}
+
 	dto := &dto.InvestmentDTO{
 		DealID: req.DealId,
 	}
@@ -139,6 +161,10 @@ func (h *DealInvestmentHandler) GetInvestments(ctx context.Context, req *bdsprop
 		result[i] = h.InvestmentMapper.EntityToPb(&investment)
 	}
 	h.UserClient.MapToInvestPb(ctx, result)
+
+	if h.SyncProvider != nil && req.DealId > 0 {
+		_ = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvestment, req.DealId))
+	}
 
 	return &bdspropb.ListInvestment{
 		Data:  result,

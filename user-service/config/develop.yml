@@ -4,7 +4,7 @@ rpc:
   auth:
     address: "user:8201"
   organization:
-    address: "organization:8207"
+    address: "user:8201"
   hub:
     address: "hub:8280"
   bdspro:
@@ -100,9 +100,9 @@ otp:
 
 grpc:
   organization:
-    host: :8207
+    host: :8201
   group:
-    host: :8207
+    host: :8201
   payment:
     host: :8205
   auth:

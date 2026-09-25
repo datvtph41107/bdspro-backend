@@ -6,6 +6,7 @@ import (
 	"context"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
+	"time"
 
 	"bdspro/infra/client"
 	"bdspro/infra/mapper"
@@ -26,6 +27,7 @@ type TxContractDealHandler struct {
 	mapper              *mapper.ContractDealMapper
 	txtMapper           *mapper.TxMapper
 	userClient          *client.UserClient
+	SyncProvider        *_utils.SyncUtil
 }
 
 func NewTxContractDealHandler(
@@ -36,6 +38,7 @@ func NewTxContractDealHandler(
 	mapper *mapper.ContractDealMapper,
 	txtMapper *mapper.TxMapper,
 	userClient *client.UserClient,
+	syncProvider *_utils.SyncUtil,
 ) *TxContractDealHandler {
 	return &TxContractDealHandler{
 		contractDealUsecase: contractDealUsecase,
@@ -45,7 +48,16 @@ func NewTxContractDealHandler(
 		mapper:              mapper,
 		txtMapper:           txtMapper,
 		userClient:          userClient,
+		SyncProvider:        syncProvider,
 	}
+}
+
+func (h *TxContractDealHandler) bumpContractsSync(ctx context.Context, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	now := time.Now().UnixMilli()
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealContracts, dealID), now)
 }
 
 // @Summary Lấy quá trình giao dịch thương vụ
@@ -66,6 +78,10 @@ func (h *TxContractDealHandler) DealContractProcess(ctx context.Context, req *sh
 	}
 
 	data := h.txtMapper.ProcessDTOsToPb(processes)
+	now := time.Now().UnixMilli()
+	if h.SyncProvider != nil && req.Id > 0 {
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealProcess, req.Id), now)
+	}
 	return &bdspropb.ContractProcessResponse{Data: data}, nil
 }
 
@@ -103,6 +119,7 @@ func (h *TxContractDealHandler) CreateContractPayment(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "failed to create contract transfer: %v", err)
 	}
 
+	h.bumpContractsSync(ctx, req.DealId)
 	result := h.mapper.DealContractToPb(response)
 
 	return result, nil
@@ -139,11 +156,16 @@ func (h *TxContractDealHandler) CreateContractPayment(ctx context.Context, req *
 // @Param id path int true "ID của giao dịch"
 // @Router /contract/deal/delete/{id} [delete]
 func (h *TxContractDealHandler) DeleteContract(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.IdResponse, error) {
-	// Delete contract
+	var dealID uint64
+	if contract, _ := h.contractDealUsecase.GetContractDealByTransactionID(ctx, req.Id); contract != nil {
+		dealID = contract.DealID
+	}
+
 	if err := h.contractDealUsecase.DeleteContract(ctx, req.Id); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete contract: %v", err)
 	}
 
+	h.bumpContractsSync(ctx, dealID)
 	return &bdspropb.IdResponse{Id: req.Id}, nil
 }
 
@@ -185,10 +207,18 @@ func (h *TxContractDealHandler) GetContract(ctx context.Context, req *sharepb.Id
 // @Failure 500 {object} status.Error "Lỗi server"
 // @Router /contract/deal/list/{id} [get]
 func (h *TxContractDealHandler) GetContracts(ctx context.Context, req *bdspropb.GetDealContractRequest) (*bdspropb.DealContractListResponse, error) {
-	// Get user ID from context
 	userID := _utils.GetProfileIdWithContext(ctx)
 	if userID == 0 {
 		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+
+	if h.SyncProvider != nil && req.DealId > 0 {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealContracts, req.DealId)
+		if !h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp()) && req.GetPage() == 0 {
+			return &bdspropb.DealContractListResponse{
+				Timestamp: h.SyncProvider.GetTimestamp(ctx, key),
+			}, nil
+		}
 	}
 
 	query := dto.TxDealSearch{
@@ -197,19 +227,22 @@ func (h *TxContractDealHandler) GetContracts(ctx context.Context, req *bdspropb.
 			Size: uint32(req.Size),
 		},
 	}
-	// Get contracts
 	response, total, err := h.contractDealUsecase.GetDealContractByDealID(ctx, req.DealId, query)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get contracts: %v", err)
 	}
 
 	data := h.mapper.DealContractItemToPbs(ctx, response)
-	// todo:
-	// h.userClient.MapProfileToDealContractPbs(ctx, data)
+
+	var ts int64
+	if h.SyncProvider != nil && req.DealId > 0 {
+		ts = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealContracts, req.DealId))
+	}
 
 	return &bdspropb.DealContractListResponse{
-		Data:  data,
-		Total: int32(total),
+		Data:      data,
+		Total:     int32(total),
+		Timestamp: ts,
 	}, nil
 }
 
@@ -247,9 +280,19 @@ func (h *TxContractDealHandler) CreateActionPayment(ctx context.Context, req *bd
 // @Success 200 {object} bdspropb.ContractDealStatisticsDTO
 // @Router /contract/deal/statistics/{dealId} [get]
 func (h *TxContractDealHandler) GetStatistics(ctx context.Context, req *bdspropb.DealCostStatisticsRequestDTO) (*bdspropb.ContractDealStatisticsDTO, error) {
+	if h.SyncProvider != nil && req.DealId > 0 {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealStatistics, req.DealId)
+		if !h.SyncProvider.HasUpdated(ctx, key, req.GetTimestamp()) {
+			return &bdspropb.ContractDealStatisticsDTO{}, nil
+		}
+	}
+
 	statistics, err := h.contractDealUsecase.GetStatisticsByDealID(ctx, req.DealId, req.Payment, req.Cost)
 	if err != nil {
 		return nil, err
+	}
+	if h.SyncProvider != nil && req.DealId > 0 {
+		_ = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealStatistics, req.DealId))
 	}
 	return h.mapper.StatisticsToPb(statistics), nil
 }

@@ -40,15 +40,22 @@ func TestRuntimeEndpointUsesServiceDNSWhenEnabled(t *testing.T) {
 func TestRuntimeEndpointUsesServingOwnerAlias(t *testing.T) {
 	cfg := Runtime{UseServiceDNS: true, Service: ServiceRuntime{
 		Domain: "localhost",
-		Host:   map[string]string{"auth": "user"},
-		Port:   map[string]int{"auth": 8201},
+		Host:   map[string]string{"auth": "user", "organization": "user"},
+		Port:   map[string]int{"auth": 8201, "organization": 8201},
 	}}
 	got, err := cfg.Endpoint("auth")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got != "user:8201" {
-		t.Fatalf("endpoint = %q", got)
+		t.Fatalf("auth endpoint = %q", got)
+	}
+	got, err = cfg.Endpoint("organization")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "user:8201" {
+		t.Fatalf("organization endpoint = %q", got)
 	}
 }
 

@@ -2,9 +2,11 @@ package handler
 
 import (
 	_dto "common/domain/dto"
+	_errors "common/errors"
 	_utils "common/utils"
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	bdspropb "pb/types/bdspro"
@@ -17,6 +19,9 @@ import (
 	"bdspro/internal/enums"
 	"bdspro/internal/repo"
 	"bdspro/internal/usecases"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type DealHandler struct {
@@ -70,6 +75,100 @@ func (h *DealHandler) bumpDealSync(ctx context.Context, productIDs ...uint64) {
 		seen[productID] = struct{}{}
 		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyProductDeals, productID), now)
 	}
+}
+
+// bumpDealKey cập nhật timestamp Redis theo dealId cho 1 resource (products/bank/summary/…).
+func (h *DealHandler) bumpDealKey(ctx context.Context, prefix string, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, prefix, dealID), time.Now().UnixMilli())
+}
+
+// dealSyncUnchanged: client đã có bản mới → true (bỏ qua DB). Seed key nếu thiếu sau khi fetch.
+func (h *DealHandler) dealSyncUnchanged(ctx context.Context, prefix string, dealID uint64, clientTs int64) bool {
+	if h.SyncProvider == nil || dealID == 0 {
+		return false
+	}
+	key := h.SyncProvider.GetKey(ctx, prefix, dealID)
+	return !h.SyncProvider.HasUpdated(ctx, key, clientTs)
+}
+
+func (h *DealHandler) touchDealKey(ctx context.Context, prefix string, dealID uint64) {
+	if h.SyncProvider == nil || dealID == 0 {
+		return
+	}
+	_ = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, prefix, dealID))
+}
+
+// @Summary Lấy timestamps các loại data của thương vụ (chỉ đọc Redis)
+// @Description API check sync — lấy timestamp từ Redis cho từng key; FE so sánh cache rồi mới gọi API detail. Không gọi DB.
+// @Tags Thương vụ
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Deal ID"
+// @Success 200 {object} bdspropb.DealTimestampsResponse "Map key -> timestamp (ms)"
+// @Router /v2.1/org/deal/{id}/ts [get]
+func (h *DealHandler) GetDealTimestamps(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.DealTimestampsResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "deal id is required")
+	}
+	if h.SyncProvider == nil {
+		return nil, _errors.InternalServerException("sync provider unavailable")
+	}
+
+	redisKeys := []string{
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealPermission, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealProducts, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealContracts, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvestment, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealSummary, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealBank, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealInvitation, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealStatistics, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealCost, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealDetail, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealMembers, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealProcess, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealCommission, req.Id),
+		h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealHistory, req.Id),
+	}
+	names := []string{
+		"permission",
+		"products",
+		"transaction", // /v2.1/transaction/contract/deal/list/{dealId}
+		"investment",
+		"summary",
+		"bank",
+		"invitation",
+		"statistics",
+		"cost",
+		"detail",
+		"members",
+		"process",
+		"commission",
+		"history",
+	}
+
+	vals, err := h.SyncProvider.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException(err.Error())
+	}
+
+	timestamps := make(map[string]int64, len(names))
+	for i, v := range vals {
+		if v == nil {
+			timestamps[names[i]] = 0
+			continue
+		}
+		ts, _ := strconv.ParseInt(v.(string), 10, 64)
+		timestamps[names[i]] = ts
+	}
+
+	return &bdspropb.DealTimestampsResponse{
+		Timestamps: timestamps,
+	}, nil
 }
 
 func (h *DealHandler) GetDealsWithoutProduct(
@@ -168,6 +267,7 @@ func (h *DealHandler) CreateGroupDeal(ctx context.Context, req *bdspropb.CreateG
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealKey(ctx, _utils.SyncKeyDealDetail, deal.ID)
 	h.bumpDealSync(ctx, req.ProductIds...)
 
 	return h.DealTransformer.EntityToCreateGroupDealResponse(deal), nil
@@ -193,6 +293,8 @@ func (h *DealHandler) UpdateGroupDeal(ctx context.Context, req *bdspropb.UpdateG
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealKey(ctx, _utils.SyncKeyDealDetail, deal.ID)
+	h.bumpDealSync(ctx)
 
 	return h.DealTransformer.EntityToUpdateGroupDealResponse(deal), nil
 }
@@ -215,6 +317,7 @@ func (h *DealHandler) DeleteGroupDeal(ctx context.Context, req *bdspropb.DeleteG
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealKey(ctx, _utils.SyncKeyDealDetail, uint64(req.Id))
 	h.bumpDealSync(ctx)
 
 	return &bdspropb.DeleteGroupDealResponse{Id: req.Id}, nil
@@ -234,6 +337,11 @@ func (h *DealHandler) GetGroupDeal(ctx context.Context, req *bdspropb.GetGroupDe
 		return nil, err
 	}
 
+	if h.dealSyncUnchanged(ctx, _utils.SyncKeyDealDetail, uint64(req.Id), req.GetTimestamp()) {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealDetail, uint64(req.Id))
+		return &bdspropb.GroupDeal{Timestamp: h.SyncProvider.GetTimestamp(ctx, key)}, nil
+	}
+
 	deal, err := h.DealUsecase.GetGroupDealByID(ctx, uint64(req.Id))
 	if err != nil {
 		return nil, err
@@ -245,6 +353,11 @@ func (h *DealHandler) GetGroupDeal(ctx context.Context, req *bdspropb.GetGroupDe
 	if response.BankAccount != nil {
 		bank, _ := h.PaymentClient.GetBankById(ctx, response.BankAccount.BankId)
 		response.BankAccount.Bank = bank
+	}
+
+	if h.SyncProvider != nil {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealDetail, uint64(req.Id))
+		response.Timestamp = h.SyncProvider.EnsureTimestamp(ctx, key)
 	}
 
 	return response, nil
@@ -269,6 +382,8 @@ func (h *DealHandler) UpdateGroupDealStatus(ctx context.Context, req *bdspropb.U
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealKey(ctx, _utils.SyncKeyDealDetail, uint64(req.Id))
+	h.bumpDealSync(ctx)
 
 	return &bdspropb.UpdateGroupDealStatusResponse{Id: req.Id}, nil
 }
@@ -312,10 +427,24 @@ func (h *DealHandler) InfoInvestment(ctx context.Context, req *sharepb.IdDTO) (*
 // @Security BearerAuth
 // @Success 200 {object} bdspropb.BankAccountItem "Thành công"
 // @Router /deal/{id}/bank-account [get]
-func (h *DealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdDTO) (*bdspropb.BankAccountItem, error) {
+func (h *DealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.BankAccountItem, error) {
+	if h.dealSyncUnchanged(ctx, _utils.SyncKeyDealBank, req.Id, req.GetTimestamp()) {
+		key := h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealBank, req.Id)
+		return &bdspropb.BankAccountItem{Timestamp: h.SyncProvider.GetTimestamp(ctx, key)}, nil
+	}
+
 	account, err := h.DealUsecase.AccountInvestment(ctx, req.Id)
 	if err != nil {
 		return nil, err
+	}
+
+	var ts int64
+	if h.SyncProvider != nil {
+		ts = h.SyncProvider.EnsureTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealBank, req.Id))
+	}
+
+	if account == nil {
+		return &bdspropb.BankAccountItem{Timestamp: ts}, nil
 	}
 
 	result := &bdspropb.BankAccountItem{
@@ -324,6 +453,7 @@ func (h *DealHandler) AccountInvestment(ctx context.Context, req *sharepb.IdDTO)
 		AccountNumber: account.AccountNumber,
 		AccountName:   account.AccountName,
 		BankId:        account.BankId,
+		Timestamp:     ts,
 	}
 
 	bank, _ := h.PaymentClient.GetBankById(ctx, account.BankId)
@@ -716,6 +846,8 @@ func (h *DealHandler) SaveDealProduct(ctx context.Context, req *bdspropb.SaveDea
 	if err != nil {
 		return nil, err
 	}
+	h.bumpDealKey(ctx, _utils.SyncKeyDealProducts, req.DealId)
+	h.bumpDealSync(ctx, req.ProductIds...)
 	return &bdspropb.SaveDealProductResponse{Status: 1}, nil
 }
 
@@ -729,6 +861,10 @@ func (h *DealHandler) SaveDealProduct(ctx context.Context, req *bdspropb.SaveDea
 // @Success 200 {object} bdspropb.GetDealProductsResponse "Thành công"
 // @Router /deal/{dealId}/products [get]
 func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdRequest) (*bdspropb.GetDealProductsResponse, error) {
+	if h.dealSyncUnchanged(ctx, _utils.SyncKeyDealProducts, req.Id, req.GetTimestamp()) && req.GetPage() == 0 {
+		return &bdspropb.GetDealProductsResponse{}, nil
+	}
+
 	pagable := _dto.Pagable{
 		Page: req.GetPage(),
 		Size: req.GetSize(),
@@ -738,6 +874,7 @@ func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdReques
 		return nil, err
 	}
 	if len(products) == 0 {
+		h.touchDealKey(ctx, _utils.SyncKeyDealProducts, req.Id)
 		return &bdspropb.GetDealProductsResponse{
 			Data: []*bdspropb.ProductAttachment{},
 		}, nil
@@ -775,6 +912,7 @@ func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdReques
 			productAttachments[i].Image = product.MediaList[0].MediaURL
 		}
 	}
+	h.touchDealKey(ctx, _utils.SyncKeyDealProducts, req.Id)
 	return &bdspropb.GetDealProductsResponse{
 		Data: productAttachments,
 	}, nil
@@ -791,6 +929,10 @@ func (h *DealHandler) GetDealProducts(ctx context.Context, req *sharepb.IdReques
 // @Success 200 {object} bdspropb.SummaryResponse "Thành công"
 // @Router /deal/{dealId}/summary [get]
 func (h *DealHandler) Summary(ctx context.Context, req *bdspropb.SummaryRequest) (*bdspropb.SummaryResponse, error) {
+	if h.dealSyncUnchanged(ctx, _utils.SyncKeyDealSummary, req.DealId, req.GetTimestamp()) {
+		return &bdspropb.SummaryResponse{}, nil
+	}
+
 	summary, err := h.DealUsecase.Summary(ctx, &dto.SummaryRequest{
 		DealId:          req.DealId,
 		AmountPending:   req.AmountPending,
@@ -813,6 +955,7 @@ func (h *DealHandler) Summary(ctx context.Context, req *bdspropb.SummaryRequest)
 		return nil, err
 	}
 
+	h.touchDealKey(ctx, _utils.SyncKeyDealSummary, req.DealId)
 	return &bdspropb.SummaryResponse{
 		AmountPending:   summary.AmountPending,
 		AmountApproved:  summary.AmountApproved,

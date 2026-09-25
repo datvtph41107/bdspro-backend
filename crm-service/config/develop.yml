@@ -66,7 +66,7 @@ rpc:
   notification:
     address: "notification:8204"
   organization:
-    address: "organization:8207"
+    address: "user:8201"
   chat:
     address: "chat:8208"
   hub:

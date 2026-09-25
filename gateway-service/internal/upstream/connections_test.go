@@ -12,7 +12,7 @@ func TestOpenBuildsAndClosesExplicitGatewayTopology(t *testing.T) {
 		"payment":      8205,
 		"bdspro":       8202,
 		"crm":          8206,
-		"organization": 8207,
+		"organization": 8201,
 		"social":       8209,
 		"user":         8201,
 		"chat":         8208,

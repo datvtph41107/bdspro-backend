@@ -191,7 +191,7 @@ services:
             USER_REDIS_DB: 0
             RPC_USER_ADDRESS: user:8201
             RPC_AUTH_ADDRESS: auth:8216
-            RPC_ORGANIZATION_ADDRESS: organization:8207
+            RPC_ORGANIZATION_ADDRESS: user:8201
             RPC_HUB_ADDRESS: hub:8280
             RPC_BDSPRO_ADDRESS: bdspro:8202
             RPC_NOTIFICATION_ADDRESS: notification:8204

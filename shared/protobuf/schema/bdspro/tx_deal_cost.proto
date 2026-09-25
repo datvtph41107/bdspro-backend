@@ -23,11 +23,14 @@ message DealCostSearchDTO {
   uint64 dealId = 1;
   uint32 page = 2;
   uint32 size = 3;
+  int64 timestamp = 4; // client sync timestamp (ms)
 }
 
 message DealCostListDTO {
   repeated DealCostDTO data = 1;
   uint32 totalElements = 2;
+  // Sync timestamp (ms) — Redis SyncKeyDealCost theo deal.
+  int64 timestamp = 3;
 }
 
 service DealCostService {

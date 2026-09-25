@@ -176,9 +176,15 @@ func (h *PermissionHandler) GetPermissionByDealId(ctx context.Context, req *shar
 		return nil, err
 	}
 
+	now := time.Now().UnixMilli()
+	if h.SyncProvider != nil && req.Id > 0 {
+		_ = h.SyncProvider.PutTimestamp(ctx, h.SyncProvider.GetKey(ctx, _utils.SyncKeyDealPermission, req.Id), now)
+	}
+
 	return &authpb.PermissionKeysResponse{
-		Keys: permissions,
-		Role: h.roleMapper.MapRoleToPb(role),
+		Keys:      permissions,
+		Role:      h.roleMapper.MapRoleToPb(role),
+		Timestamp: now,
 	}, nil
 }
 
