@@ -2,6 +2,7 @@ package _utils
 
 import (
 	_enums "common/domain/enum"
+	"common/identity"
 	_jwt "common/jwt"
 	"context"
 
@@ -20,16 +21,19 @@ type Principal struct {
 }
 
 func GetProfileIdWithContext(ctx context.Context) uint64 {
-	// clms := ctx.Value("claims")
-	// if claims, ok := clms.(*Principal); ok {
-	// 	return claims.ProfileId
-	// }
-	// return 0
-	profileId := ctx.Value(_enums.ProfileIDKey)
-	if profileId == nil {
+	if ctx == nil {
 		return 0
 	}
-	return profileId.(uint64)
+	if profileId := ctx.Value(_enums.ProfileIDKey); profileId != nil {
+		if id, ok := profileId.(uint64); ok {
+			return id
+		}
+	}
+	// HTTP JWT middleware binds Actor without always writing ProfileIDKey.
+	if actor, ok := identity.ActorFromContext(ctx); ok && actor.ProfileID > 0 {
+		return actor.ProfileID
+	}
+	return 0
 }
 
 func GetOriginIdFromContext(ctx context.Context) uint64 {

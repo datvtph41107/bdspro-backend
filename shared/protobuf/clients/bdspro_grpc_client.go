@@ -20,6 +20,8 @@ type BdsproGrpcClient struct {
 	AdminRegionClient     bdspropb.AdminRegionServiceClient
 	AdminAreaRegionClient bdspropb.AdminAreaRegionServiceClient
 	DealClient            bdspropb.DealServiceClient
+	PropertyClient        bdspropb.PropertyServiceClient
+	PublicClient          bdspropb.BdsproPublicServiceClient
 }
 
 func BindBdsproGrpcClient(conn grpc.ClientConnInterface) *BdsproGrpcClient {
@@ -31,6 +33,8 @@ func BindBdsproGrpcClient(conn grpc.ClientConnInterface) *BdsproGrpcClient {
 		AdminRegionClient:     bdspropb.NewAdminRegionServiceClient(conn),
 		AdminAreaRegionClient: bdspropb.NewAdminAreaRegionServiceClient(conn),
 		DealClient:            bdspropb.NewDealServiceClient(conn),
+		PropertyClient:        bdspropb.NewPropertyServiceClient(conn),
+		PublicClient:          bdspropb.NewBdsproPublicServiceClient(conn),
 	}
 }
 

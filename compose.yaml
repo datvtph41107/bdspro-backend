@@ -216,6 +216,44 @@ services:
         networks: [backend]
         ports: ["${USER_GRPC_PORT:-8201}:8201"]
 
+    # Sandbox clone of user-service (v4). Default process is HTTP Gin on :8004.
+    v4:
+        <<: *service-defaults
+        image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/userv4:${QHPRO_IMAGE_TAG:-local}
+        build: { context: ., dockerfile: v4/Dockerfile }
+        env_file: [./user-service/.env]
+        entrypoint: ["/app/userv4-http"]
+        environment:
+            <<: *runtime-environment
+            HTTP_ADDRESS: ":8004"
+            REDIS_ADDRESS: redis:6379
+            USER_REDIS_ADDRESS: redis:6379
+            USER_REDIS_DB: 0
+            RPC_USER_ADDRESS: user:8201
+            RPC_AUTH_ADDRESS: auth:8216
+            RPC_ORGANIZATION_ADDRESS: user:8201
+            RPC_HUB_ADDRESS: hub:8280
+            RPC_BDSPRO_ADDRESS: bdspro:8202
+            RPC_NOTIFICATION_ADDRESS: notification:8204
+            RPC_PAYMENT_ADDRESS: payment:8205
+            RPC_CHAT_ADDRESS: chat:8208
+            RPC_CRM_ADDRESS: crm:8206
+            JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}
+            QHPRO_SERVICE_ID: userv4
+            QHPRO_USER_MODULE_WARMUP_ENABLED: "false"
+            QHPRO_USER_DASHBOARD_STATS_ENABLED: "false"
+            QHPRO_USER_ZNS_SCHEDULER_ENABLED: "false"
+            QHPRO_USER_OUTBOUND_MESSAGING_ENABLED: "false"
+        healthcheck:
+            test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8004/health"]
+            interval: 5s
+            timeout: 3s
+            retries: 30
+        depends_on:
+            redis: { condition: service_healthy }
+        networks: [backend]
+        ports: ["${V4_HTTP_PORT:-8004}:8004"]
+
     organization-migrate:
         <<: *service-defaults
         image: migrate/migrate:v4.19.1

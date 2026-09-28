@@ -99,6 +99,16 @@
       }
     },
     {
+      "label": "BDSPro · Dev · UserV4 (gRPC)",
+      "type": "shell",
+      "command": "lsof -ti tcp:8211 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; [ -f ../user-service/.env ] && . ../user-service/.env; set +a; export PATH=\"$PATH:$HOME/go/bin\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" air -c .air.toml",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "BDSPro · Dev · Organization",
       "type": "process",
       "command": "make",
@@ -268,6 +278,18 @@
       },
       "runOptions": {
         // "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🥈 HTTP V4 (8288)",
+      "type": "shell",
+      "command": "lsof -ti tcp:8288 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; [ -f ../user-service/.env ] && . ../user-service/.env; set +a; export PATH=\"$PATH:$HOME/go/bin\"; export HTTP_ADDRESS=\":8288\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" air -c .air.http.toml",
+      "args": [],
+      "problemMatcher": ["$go"],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
       }
     },
     {

@@ -22,6 +22,8 @@ type HubGrpcClient struct {
 	LocationV2Client hubpb.LocationV2ServiceClient
 	ApiKeyClient     hubpb.ApiKeyServiceClient
 	UserGuideClient  hubpb.UserGuideServiceClient
+	FAQClient        hubpb.FAQServiceClient
+	VersionClient    hubpb.VersionServiceClient
 }
 
 func BindHubGrpcClient(conn grpc.ClientConnInterface) *HubGrpcClient {
@@ -31,6 +33,8 @@ func BindHubGrpcClient(conn grpc.ClientConnInterface) *HubGrpcClient {
 		LocationV2Client: hubpb.NewLocationV2ServiceClient(conn),
 		ApiKeyClient:     hubpb.NewApiKeyServiceClient(conn),
 		UserGuideClient:  hubpb.NewUserGuideServiceClient(conn),
+		FAQClient:        hubpb.NewFAQServiceClient(conn),
+		VersionClient:    hubpb.NewVersionServiceClient(conn),
 	}
 }
 

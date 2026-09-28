@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS deal_members;
+DROP TABLE IF EXISTS deals;
+DROP TABLE IF EXISTS property_user;
+DROP TABLE IF EXISTS property_lineage;
+DROP TABLE IF EXISTS property_location;
+DROP TABLE IF EXISTS property_info;
+DROP TABLE IF EXISTS product_user;
+DROP TABLE IF EXISTS product_price;
+DROP TABLE IF EXISTS products;

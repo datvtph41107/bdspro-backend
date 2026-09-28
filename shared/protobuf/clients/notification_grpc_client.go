@@ -15,12 +15,14 @@ import (
 
 type NotificationClient struct {
 	Client        notificationpb.InternalNotificationServiceClient
+	GatewayClient notificationpb.GatewayNotificationServiceClient
 	historyClient notificationpb.HistoryServiceClient
 }
 
 func BindNotificationClient(conn grpc.ClientConnInterface) *NotificationClient {
 	return &NotificationClient{
 		Client:        notificationpb.NewInternalNotificationServiceClient(conn),
+		GatewayClient: notificationpb.NewGatewayNotificationServiceClient(conn),
 		historyClient: notificationpb.NewHistoryServiceClient(conn),
 	}
 }

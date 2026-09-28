@@ -24,5 +24,6 @@ use (
 	./shared/protobuf
 	./social-service
 	./tqd-service
+	./v4
 	./user-service
 )

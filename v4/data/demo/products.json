@@ -1,0 +1,301 @@
+[
+  {
+    "name": "Căn hộ demo Vinhomes Central Park",
+    "code": "DEMO-APT-001",
+    "area": 78.5,
+    "description": "Sản phẩm demo căn hộ 2PN view sông",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 10,
+    "sourceContactNote": "Chủ nhà trực tiếp — anh Minh, liên hệ sau 18h",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 3500000000,
+      "saleCommission": 2,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 2,
+      "numBathroom": 2,
+      "numToilet": 2,
+      "numFloor": 1,
+      "frontWidth": 6,
+      "roadWidth": 8
+    }
+  },
+  {
+    "name": "Nhà phố demo Quận 7",
+    "code": "DEMO-HOUSE-002",
+    "area": 120,
+    "description": "Sản phẩm demo nhà phố 1 trệt 2 lầu",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 20,
+    "sourceContactNote": "Môi giới đối tác — chị Lan (Hotline 0901xxx222)",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 9800000000,
+      "saleCommission": 1.5,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 4,
+      "numBathroom": 3,
+      "numToilet": 3,
+      "numFloor": 3,
+      "frontWidth": 5,
+      "height": 18,
+      "roadWidth": 10
+    }
+  },
+  {
+    "name": "Căn hộ cho thuê demo Landmark 81",
+    "code": "DEMO-RENT-003",
+    "area": 55,
+    "description": "Sản phẩm demo căn hộ cho thuê 1PN",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 20,
+    "rentStatus": 10,
+    "rentVisibility": 10,
+    "visibility": 10,
+    "sourceType": 30,
+    "sourceContactNote": "Sàn nội bộ — mã nội bộ SÀN-L81-03",
+    "priceData": {
+      "currency": "VND",
+      "rentPrice": 18000000,
+      "rentCommission": 50,
+      "rentCommissionType": 10,
+      "rentPaymentCycle": 1
+    },
+    "houseInfo": {
+      "numBedroom": 1,
+      "numBathroom": 1,
+      "numToilet": 1,
+      "numFloor": 1
+    }
+  },
+  {
+    "name": "Biệt thự demo Thảo Điền",
+    "code": "DEMO-VILLA-004",
+    "area": 320,
+    "description": "Sản phẩm demo biệt thự sân vườn",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 50,
+    "sourceContactNote": "Khách giới thiệu — ủy quyền người thân giới thiệu",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 45000000000,
+      "saleCommission": 1,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 5,
+      "numBathroom": 5,
+      "numToilet": 5,
+      "numFloor": 3,
+      "frontWidth": 12,
+      "height": 25,
+      "roadWidth": 12,
+      "numCarPark": 2
+    }
+  },
+  {
+    "name": "Đất nền demo Nhà Bè",
+    "code": "DEMO-LAND-005",
+    "area": 100,
+    "description": "Sản phẩm demo đất nền thổ cư",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 10,
+    "sourceContactNote": "Chủ nhà trực tiếp — đang ở nước ngoài, gọi sau 20h",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 4200000000,
+      "saleCommission": 2,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "frontWidth": 5,
+      "height": 20,
+      "roadWidth": 6
+    }
+  },
+  {
+    "name": "Căn hộ demo Masteri Thảo Điền",
+    "code": "DEMO-APT-006",
+    "area": 92,
+    "description": "Sản phẩm demo căn hộ 3PN full nội thất",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 20,
+    "sourceContactNote": "Môi giới đối tác — anh Hùng team Masteri",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 6200000000,
+      "saleCommission": 2,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 3,
+      "numBathroom": 2,
+      "numToilet": 2,
+      "numFloor": 1,
+      "frontWidth": 8
+    }
+  },
+  {
+    "name": "Nhà phố cho thuê demo Tân Bình",
+    "code": "DEMO-RENT-007",
+    "area": 85,
+    "description": "Sản phẩm demo nhà phố cho thuê làm văn phòng",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 20,
+    "rentStatus": 10,
+    "rentVisibility": 10,
+    "visibility": 10,
+    "sourceType": 30,
+    "sourceContactNote": "Sàn nội bộ — ưu tiên thuê dài hạn 12 tháng",
+    "priceData": {
+      "currency": "VND",
+      "rentPrice": 35000000,
+      "rentCommission": 50,
+      "rentCommissionType": 10,
+      "rentPaymentCycle": 1
+    },
+    "houseInfo": {
+      "numBedroom": 3,
+      "numBathroom": 2,
+      "numToilet": 2,
+      "numFloor": 2,
+      "frontWidth": 4,
+      "roadWidth": 8
+    }
+  },
+  {
+    "name": "Shophouse demo Sala",
+    "code": "DEMO-SHOP-008",
+    "area": 150,
+    "description": "Sản phẩm demo shophouse mặt tiền kinh doanh",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 50,
+    "sourceContactNote": "Khách giới thiệu — khách cũ giới thiệu shophouse Sala",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 18500000000,
+      "saleCommission": 1.5,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 3,
+      "numBathroom": 3,
+      "numToilet": 3,
+      "numFloor": 4,
+      "frontWidth": 6,
+      "height": 16,
+      "roadWidth": 16
+    }
+  },
+  {
+    "name": "Căn hộ studio cho thuê demo Q1",
+    "code": "DEMO-RENT-009",
+    "area": 35,
+    "description": "Sản phẩm demo studio gần trung tâm",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 20,
+    "rentStatus": 10,
+    "rentVisibility": 10,
+    "visibility": 10,
+    "sourceType": 10,
+    "sourceContactNote": "Chủ nhà trực tiếp — chị Hương, xem nhà cuối tuần",
+    "priceData": {
+      "currency": "VND",
+      "rentPrice": 12000000,
+      "rentCommission": 50,
+      "rentCommissionType": 10,
+      "rentPaymentCycle": 1
+    },
+    "houseInfo": {
+      "numBedroom": 1,
+      "numBathroom": 1,
+      "numToilet": 1,
+      "numFloor": 1
+    }
+  },
+  {
+    "name": "Penthouse demo Empire City",
+    "code": "DEMO-PENT-010",
+    "area": 210,
+    "description": "Sản phẩm demo penthouse view sông Sài Gòn",
+    "note": "Dữ liệu demo — có thể xoá",
+    "propertyTypeId": 1,
+    "provinceId": 1,
+    "wardId": 1,
+    "transactionType": 10,
+    "saleStatus": 10,
+    "saleVisibility": 10,
+    "visibility": 10,
+    "sourceType": 20,
+    "sourceContactNote": "Môi giới đối tác — anh Khoa, chỉ tiếp khách đã xác minh",
+    "priceData": {
+      "currency": "VND",
+      "salePrice": 32000000000,
+      "saleCommission": 1,
+      "saleCommissionType": 10
+    },
+    "houseInfo": {
+      "numBedroom": 4,
+      "numBathroom": 4,
+      "numToilet": 4,
+      "numFloor": 2,
+      "frontWidth": 15,
+      "numCarPark": 2
+    }
+  }
+]

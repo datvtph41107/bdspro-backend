@@ -12,6 +12,8 @@ type userProductsMemCacheKey struct {
 	userID   uint64
 	text     string
 	archived string
+	page     uint32
+	size     uint32
 }
 
 type userProductsMemCacheEntry struct {
@@ -45,6 +47,8 @@ func userProductsMemCacheKeyFromDTO(userID uint64, req dto.ProductSearchRequest)
 		userID:   userID,
 		text:     req.Text,
 		archived: archivedKeyForUserProducts(req.Archived),
+		page:     req.Page,
+		size:     req.Size,
 	}
 }
 

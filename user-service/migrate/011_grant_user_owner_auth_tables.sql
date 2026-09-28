@@ -1,6 +1,5 @@
 -- Cấp quyền cho user_owner trên các bảng auth/user mà app cần (OAuth callback, login, session...).
 -- Chạy bằng superuser/owner (vd: admin) trên DB production:
---   psql -h 103.172.239.89 -U admin -d db_user -f 011_grant_user_owner_auth_tables.sql
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
     admin_access_control,
