@@ -52,6 +52,60 @@ func writeProtoData(w http.ResponseWriter, msg proto.Message) {
 	writeOK(w, data)
 }
 
+func protoDataResult(msg proto.Message) (*httpapi.Result, error) {
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data), nil
+}
+
+func emptyProtoListResult() (*httpapi.Result, error) {
+	return httpapi.OK([]any{}, httpapi.WithPagination(&httpapi.Pagination{Total: 0})), nil
+}
+
+func protoListWithTotalResult[T proto.Message](items []T, total int64) (*httpapi.Result, error) {
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		data = []any{}
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
+}
+
+func wrappedDataResult(msg proto.Message) (*httpapi.Result, error) {
+	if msg == nil {
+		return httpapi.OK(nil), nil
+	}
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	if m, ok := data.(map[string]any); ok {
+		if inner, has := m["data"]; has && len(m) == 1 {
+			return httpapi.OK(inner), nil
+		}
+	}
+	return httpapi.OK(data), nil
+}
+
+func allUserGuidesByKeyResult(resp *hubpb.GetAllUserGuidesByKeyResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	var opts []httpapi.OKOption
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
 func writeListWithTotal(w http.ResponseWriter, items []any, total int64) {
 	writeOK(w, items, httpapi.WithPagination(&httpapi.Pagination{Total: total}))
 }

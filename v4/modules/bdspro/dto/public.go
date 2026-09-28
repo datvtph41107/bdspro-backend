@@ -4,3 +4,8 @@ package dto
 type GetEnumsRequest struct {
 	Timestamp int64 `form:"timestamp"`
 }
+
+// GetEnumByNameRequest is GET /v2/bdspro/public/enums/{text}.
+type GetEnumByNameRequest struct {
+	Text string `path:"text"`
+}

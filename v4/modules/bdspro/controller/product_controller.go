@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	bdspropb "pb/types/bdspro"
 	"userv4/internal/httpapi"
@@ -21,112 +21,60 @@ func NewProductController(product services.ProductService, deal services.DealSer
 }
 
 func (c *ProductController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/bdspro/v2/product/me", c.httpProductMe)
-	mux.HandleFunc("GET /v2/bdspro/v2/product/{id}/timestamp", c.httpGetTimestamps)
-	mux.HandleFunc("GET /v2/bdspro/v2/product/{id}/detail", c.httpGetDetail)
-	mux.HandleFunc("GET /v2/bdspro/v2/product/{id}/deals", c.httpGetDeals)
-	mux.HandleFunc("POST /v2/bdspro/v2/product/new", c.httpProductNew)
-	mux.HandleFunc("DELETE /v2/bdspro/v2/product/{id}", c.httpDeleteProduct)
+	httpapi.GET(mux, "/v2/bdspro/v2/product/me", c.productMe)
+	httpapi.GET(mux, "/v2/bdspro/v2/product/{id}/timestamp", c.getTimestamps)
+	httpapi.GET(mux, "/v2/bdspro/v2/product/{id}/detail", c.getDetail)
+	httpapi.GET(mux, "/v2/bdspro/v2/product/{id}/deals", c.getDeals)
+	httpapi.POST(mux, "/v2/bdspro/v2/product/new", c.productNew)
+	httpapi.DELETE(mux, "/v2/bdspro/v2/product/{id}", c.deleteProduct)
 }
 
-func (c *ProductController) httpProductMe(w http.ResponseWriter, r *http.Request) {
-	var req dto.SyncListRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.product.ProductMe(r.Context(), req)
+func (c *ProductController) productMe(ctx context.Context, req dto.SyncListRequest) (*httpapi.Result, error) {
+	result, err := c.product.ProductMe(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeSearchResponse(w, result)
+	return searchResponseResult(result)
 }
 
-func (c *ProductController) httpGetDetail(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.SyncListRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.ID = id
-	result, ts, err := c.product.GetDetail(r.Context(), req)
+func (c *ProductController) getDetail(ctx context.Context, req dto.SyncListByIDRequest) (*httpapi.Result, error) {
+	result, ts, err := c.product.GetDetail(ctx, req.ToSyncListRequest())
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
-	}
-	writeProtoData(w, result, opts...)
+	return protoResult(result, timestampOpt(ts)...)
 }
 
-func (c *ProductController) httpGetDeals(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.SyncByIDRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.deal.GetDealsByProduct(r.Context(), id, req)
+func (c *ProductController) getDeals(ctx context.Context, req dto.SyncByIDPathRequest) (*httpapi.Result, error) {
+	result, err := c.deal.GetDealsByProduct(ctx, req.ID, req.ToSyncByIDRequest())
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeOrganizationDealsResponse(w, result)
+	return organizationDealsResult(result)
 }
 
-func (c *ProductController) httpProductNew(w http.ResponseWriter, r *http.Request) {
-	var req bdspropb.ProductSaveRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.product.ProductNew(r.Context(), &req)
+func (c *ProductController) productNew(ctx context.Context, req bdspropb.ProductSaveRequest) (*httpapi.Result, error) {
+	result, err := c.product.ProductNew(ctx, &req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoResult(result)
 }
 
-func (c *ProductController) httpDeleteProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
+func (c *ProductController) deleteProduct(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	if err := c.product.DeleteProduct(ctx, req.ID); err != nil {
+		return nil, err
 	}
-	if err := c.product.DeleteProduct(r.Context(), id); err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	writeProtoData(w, &bdspropb.Response{Id: id, Message: "success"})
+	return protoResult(&bdspropb.Response{Id: req.ID, Message: "success"})
 }
 
-func (c *ProductController) httpGetTimestamps(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := c.product.GetTimestamps(r.Context(), id)
+func (c *ProductController) getTimestamps(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := c.product.GetTimestamps(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, map[string]int64{})
-		return
+		return httpapi.OK(map[string]int64{}), nil
 	}
-	writeOK(w, result.Timestamps)
+	return httpapi.OK(result.Timestamps), nil
 }

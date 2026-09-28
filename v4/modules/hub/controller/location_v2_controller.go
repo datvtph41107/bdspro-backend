@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	"userv4/internal/httpapi"
 	"userv4/modules/hub/dto"
@@ -19,96 +19,58 @@ func NewLocationV2Controller(location services.LocationV2Service) *LocationV2Con
 }
 
 func (c *LocationV2Controller) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/hub/v2/provinces", c.httpGetProvinces)
-	mux.HandleFunc("GET /v2/hub/v2/province/{code}", c.httpGetProvinceByCode)
-	mux.HandleFunc("GET /v2/hub/v2/wards", c.httpGetWards)
-	mux.HandleFunc("GET /v2/hub/v2/ward/{code}", c.httpGetWardByCode)
-	mux.HandleFunc("GET /v2/hub/v2/location/search", c.httpSearchLocation)
+	httpapi.GET(mux, "/v2/hub/v2/provinces", c.getProvinces)
+	httpapi.GET(mux, "/v2/hub/v2/province/{code}", c.getProvinceByCode)
+	httpapi.GET(mux, "/v2/hub/v2/wards", c.getWards)
+	httpapi.GET(mux, "/v2/hub/v2/ward/{code}", c.getWardByCode)
+	httpapi.GET(mux, "/v2/hub/v2/location/search", c.searchLocation)
 }
 
-func (c *LocationV2Controller) httpGetProvinces(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetProvincesV2Request
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.location.GetProvincesV2(r.Context(), req)
+func (c *LocationV2Controller) getProvinces(ctx context.Context, req dto.GetProvincesV2Request) (*httpapi.Result, error) {
+	result, err := c.location.GetProvincesV2(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeListWithTotal(w, []any{}, 0)
-		return
+		return emptyProtoListResult()
 	}
-	writeProtoListWithTotal(w, result.GetData(), result.GetTotal())
+	return protoListWithTotalResult(result.GetData(), result.GetTotal())
 }
 
-func (c *LocationV2Controller) httpGetProvinceByCode(w http.ResponseWriter, r *http.Request) {
-	code, err := strconv.ParseInt(r.PathValue("code"), 10, 32)
-	if err != nil || code == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "code is required")
-		return
-	}
-	var req dto.GetProvinceV2ByCodeRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.location.GetProvinceV2ByCode(r.Context(), int32(code), req)
+func (c *LocationV2Controller) getProvinceByCode(ctx context.Context, req dto.GetProvinceV2ByCodeRequest) (*httpapi.Result, error) {
+	result, err := c.location.GetProvinceV2ByCode(ctx, req.Code, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeWrappedData(w, result)
+	return wrappedDataResult(result)
 }
 
-func (c *LocationV2Controller) httpGetWards(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetWardsV2Request
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.location.GetWardsV2(r.Context(), req)
+func (c *LocationV2Controller) getWards(ctx context.Context, req dto.GetWardsV2Request) (*httpapi.Result, error) {
+	result, err := c.location.GetWardsV2(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeListWithTotal(w, []any{}, 0)
-		return
+		return emptyProtoListResult()
 	}
-	writeProtoListWithTotal(w, result.GetData(), result.GetTotal())
+	return protoListWithTotalResult(result.GetData(), result.GetTotal())
 }
 
-func (c *LocationV2Controller) httpGetWardByCode(w http.ResponseWriter, r *http.Request) {
-	code, err := strconv.ParseInt(r.PathValue("code"), 10, 32)
-	if err != nil || code == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "code is required")
-		return
-	}
-	result, err := c.location.GetWardV2ByCode(r.Context(), int32(code))
+func (c *LocationV2Controller) getWardByCode(ctx context.Context, req dto.GetWardV2ByCodeRequest) (*httpapi.Result, error) {
+	result, err := c.location.GetWardV2ByCode(ctx, req.Code)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeWrappedData(w, result)
+	return wrappedDataResult(result)
 }
 
-func (c *LocationV2Controller) httpSearchLocation(w http.ResponseWriter, r *http.Request) {
-	var req dto.SearchLocationV2Request
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.location.SearchLocationV2(r.Context(), req)
+func (c *LocationV2Controller) searchLocation(ctx context.Context, req dto.SearchLocationV2Request) (*httpapi.Result, error) {
+	result, err := c.location.SearchLocationV2(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeListWithTotal(w, []any{}, 0)
-		return
+		return emptyProtoListResult()
 	}
-	writeProtoListWithTotal(w, result.GetData(), result.GetTotal())
+	return protoListWithTotalResult(result.GetData(), result.GetTotal())
 }

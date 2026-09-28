@@ -16,22 +16,22 @@ type DealSearchRequest struct {
 
 // DealDetailRequest is GET /v4/deal/{id} query (sync timestamp).
 type DealDetailRequest struct {
-	ID        uint64 `form:"-"`
+	ID        uint64 `path:"id"`
 	Timestamp int64  `form:"timestamp"`
 }
 
 // DealListByIDRequest is shared page/size/timestamp for deal-scoped lists.
 type DealListByIDRequest struct {
-	DealID    uint64  `form:"-"`
+	DealID    uint64  `path:"id|dealId"`
 	Page      uint32  `form:"page"`
 	Size      uint32  `form:"size"`
 	Timestamp int64   `form:"timestamp"`
 	MemberID  *uint64 `form:"memberId"`
 }
 
-// DealMembersRequest is GET /v4/deal/{id}/member (was /v2.1/org/deal/{id}/members).
+// DealMembersRequest is GET /v4/deal/{id}/members (was /v2.1/org/deal/{id}/members).
 type DealMembersRequest struct {
-	DealID         uint64 `form:"-"`
+	DealID         uint64 `path:"id"`
 	Keyword        string `form:"keyword"`
 	Page           uint32 `form:"page"`
 	Size           uint32 `form:"size"`
@@ -41,7 +41,7 @@ type DealMembersRequest struct {
 
 // DealSummaryRequest is GET /v4/deal/{id}/summary query flags (was /v2.1/org/deal/{dealId}/summary).
 type DealSummaryRequest struct {
-	DealID          uint64 `form:"-"`
+	DealID          uint64 `path:"id"`
 	AmountPending   bool   `form:"amountPending"`
 	AmountApproved  bool   `form:"amountApproved"`
 	AmountRejected  bool   `form:"amountRejected"`
@@ -75,7 +75,7 @@ type DealSummaryRow struct {
 
 // DealStatisticsRequest is GET /v4/transaction/contract/deal/{id}/statistic.
 type DealStatisticsRequest struct {
-	DealID    uint64 `form:"-"`
+	DealID    uint64 `path:"id"`
 	Payment   bool   `form:"payment"`
 	Cost      bool   `form:"cost"`
 	Timestamp int64  `form:"timestamp"`

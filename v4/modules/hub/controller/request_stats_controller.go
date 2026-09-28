@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
 	"userv4/internal/httpapi"
@@ -18,98 +19,62 @@ func NewRequestStatsController(stats services.RequestStatsService) *RequestStats
 }
 
 func (c *RequestStatsController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v2/hub/request-stats/track", c.httpTrack)
-	mux.HandleFunc("GET /v2/hub/request-stats/dashboard", c.httpDashboard)
-	mux.HandleFunc("GET /v2/hub/request-stats/daily", c.httpDaily)
-	mux.HandleFunc("GET /v2/hub/request-stats/users/dashboard", c.httpUsersDashboard)
-	mux.HandleFunc("GET /v2/hub/request-stats/users/daily", c.httpUsersDaily)
-	mux.HandleFunc("GET /v2/hub/request-stats/audit", c.httpAudit)
+	httpapi.POST(mux, "/v2/hub/request-stats/track", c.track)
+	httpapi.GET(mux, "/v2/hub/request-stats/dashboard", c.dashboard)
+	httpapi.GET(mux, "/v2/hub/request-stats/daily", c.daily)
+	httpapi.GET(mux, "/v2/hub/request-stats/users/dashboard", c.usersDashboard)
+	httpapi.GET(mux, "/v2/hub/request-stats/users/daily", c.usersDaily)
+	httpapi.GET(mux, "/v2/hub/request-stats/audit", c.audit)
 }
 
-func (c *RequestStatsController) httpTrack(w http.ResponseWriter, r *http.Request) {
-	var req dto.TrackRequestBody
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	c.stats.Track(r.Context(), req)
-	writeOK(w, map[string]any{})
+func (c *RequestStatsController) track(ctx context.Context, req dto.TrackRequestBody) (*httpapi.Result, error) {
+	c.stats.Track(ctx, req)
+	return httpapi.OK(map[string]any{}), nil
 }
 
-func (c *RequestStatsController) httpDashboard(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetRequestStatsDashboardRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.stats.GetDashboard(r.Context(), req)
+func (c *RequestStatsController) dashboard(ctx context.Context, req dto.GetRequestStatsDashboardRequest) (*httpapi.Result, error) {
+	result, err := c.stats.GetDashboard(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *RequestStatsController) httpDaily(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetRequestDailyStatsRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.stats.GetDailyStats(r.Context(), req)
+func (c *RequestStatsController) daily(ctx context.Context, req dto.GetRequestDailyStatsRequest) (*httpapi.Result, error) {
+	result, err := c.stats.GetDailyStats(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *RequestStatsController) httpUsersDashboard(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetUserInteractionDashboardRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.stats.GetUserInteractionDashboard(r.Context(), req)
+func (c *RequestStatsController) usersDashboard(ctx context.Context, req dto.GetUserInteractionDashboardRequest) (*httpapi.Result, error) {
+	result, err := c.stats.GetUserInteractionDashboard(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *RequestStatsController) httpUsersDaily(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetUserInteractionDailyStatsRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.stats.GetUserInteractionDailyStats(r.Context(), req)
+func (c *RequestStatsController) usersDaily(ctx context.Context, req dto.GetUserInteractionDailyStatsRequest) (*httpapi.Result, error) {
+	result, err := c.stats.GetUserInteractionDailyStats(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *RequestStatsController) httpAudit(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetRequestAuditLogsRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.stats.GetAuditLogs(r.Context(), req)
+func (c *RequestStatsController) audit(ctx context.Context, req dto.GetRequestAuditLogsRequest) (*httpapi.Result, error) {
+	result, err := c.stats.GetAuditLogs(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
-	writeOK(w, result.Data, httpapi.WithPagination(&httpapi.Pagination{
+	return httpapi.OK(result.Data, httpapi.WithPagination(&httpapi.Pagination{
 		Page:  int32(result.Page),
 		Size:  int32(result.Size),
 		Total: result.Total,
-	}))
+	})), nil
 }

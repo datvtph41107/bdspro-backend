@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
+	crmpb "pb/types/crm"
 	"userv4/internal/httpapi"
 	"userv4/modules/crm/dto"
 	"userv4/modules/crm/services"
@@ -19,24 +20,36 @@ func NewContactController(contact services.ContactService) *ContactController {
 }
 
 func (c *ContactController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/crm/contact/list/user/{ownerId}", c.httpListUser)
+	httpapi.GET(mux, "/v2/crm/contact/list/user/{ownerId}", c.listUser)
 }
 
-func (c *ContactController) httpListUser(w http.ResponseWriter, r *http.Request) {
-	ownerID, err := strconv.ParseUint(r.PathValue("ownerId"), 10, 64)
+func (c *ContactController) listUser(ctx context.Context, req dto.ContactListUserRequest) (*httpapi.Result, error) {
+	search := dto.ContactSearchRequest{
+		Page:      req.Page,
+		Size:      req.Size,
+		Text:      req.Text,
+		Timestamp: req.Timestamp,
+	}
+	result, err := c.contact.ListUser(ctx, req.OwnerID, search)
 	if err != nil {
-		writeHTTPError(w, http.StatusBadRequest, "ownerId is required")
-		return
+		return nil, err
 	}
-	var req dto.ContactSearchRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
+	return contactListResult(result)
+}
+
+func contactListResult(resp *crmpb.ContactListDTO) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
 	}
-	result, err := c.contact.ListUser(r.Context(), ownerID, req)
+	data, err := protoMessages(resp.GetData())
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeContactListResponse(w, result)
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
+	}
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
 }

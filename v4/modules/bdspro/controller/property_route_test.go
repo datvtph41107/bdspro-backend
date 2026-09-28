@@ -30,7 +30,7 @@ func TestPropertyRoutes_RegisterNoConflict(t *testing.T) {
 
 	for _, path := range []string{
 		"/v2/bdspro/v2/property/me",
-		"/v2/bdspro/v2/property/detail/30",
+		"/v2/bdspro/v2/property/30/detail",
 		"/v2/bdspro/v2/property/30/timestamp",
 	} {
 		rr := httptest.NewRecorder()

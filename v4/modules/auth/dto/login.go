@@ -98,3 +98,8 @@ type PhoneCheckResponse struct {
 	Existed bool    `json:"existed"`
 	UserId  *uint64 `json:"userId,omitempty"`
 }
+
+// PhoneCheckPath is GET {prefix}/auth/phone/check/{phone}.
+type PhoneCheckPath struct {
+	Phone string `path:"phone"`
+}

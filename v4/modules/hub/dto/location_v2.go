@@ -7,9 +7,15 @@ type GetProvincesV2Request struct {
 	Size    int32  `form:"size"`
 }
 
-// GetProvinceV2ByCodeRequest mirrors hubpb.GetProvinceV2ByCodeRequest query params.
+// GetProvinceV2ByCodeRequest mirrors hubpb.GetProvinceV2ByCodeRequest path and query params.
 type GetProvinceV2ByCodeRequest struct {
-	IncludeWards bool `form:"includeWards"`
+	Code         int32 `path:"code"`
+	IncludeWards bool  `form:"includeWards"`
+}
+
+// GetWardV2ByCodeRequest is the path payload for ward lookup by administrative code.
+type GetWardV2ByCodeRequest struct {
+	Code int32 `path:"code"`
 }
 
 // GetWardsV2Request mirrors hubpb.GetWardsV2Request query params.

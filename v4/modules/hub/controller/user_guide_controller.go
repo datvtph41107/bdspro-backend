@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	"userv4/internal/httpapi"
 	"userv4/modules/hub/dto"
@@ -20,87 +20,59 @@ func NewUserGuideController(userGuide services.UserGuideService) *UserGuideContr
 
 func (c *UserGuideController) RegisterHTTP(mux *http.ServeMux) {
 	// Static / multi-segment paths before {id}.
-	mux.HandleFunc("GET /v2/hub/user-guides/groups", c.httpGetGroups)
-	mux.HandleFunc("GET /v2/hub/user-guides/by-key", c.httpGetAllByKey)
-	mux.HandleFunc("GET /v2/hub/user-guides/by-key/{key}", c.httpGetByKey)
-	mux.HandleFunc("GET /v2/hub/user-guides", c.httpListSimple)
-	mux.HandleFunc("GET /v2/hub/user-guides/{id}", c.httpGetByID)
+	httpapi.GET(mux, "/v2/hub/user-guides/groups", c.getGroups)
+	httpapi.GET(mux, "/v2/hub/user-guides/by-key", c.getAllByKey)
+	httpapi.GET(mux, "/v2/hub/user-guides/by-key/{key}", c.getByKey)
+	httpapi.GET(mux, "/v2/hub/user-guides", c.listSimple)
+	httpapi.GET(mux, "/v2/hub/user-guides/{id}", c.getByID)
 }
 
-func (c *UserGuideController) httpListSimple(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetUserGuideSimpleRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.userGuide.GetUserGuideSimple(r.Context(), req)
+func (c *UserGuideController) listSimple(ctx context.Context, req dto.GetUserGuideSimpleRequest) (*httpapi.Result, error) {
+	result, err := c.userGuide.GetUserGuideSimple(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeListWithTotal(w, []any{}, 0)
-		return
+		return emptyProtoListResult()
 	}
-	writeProtoListWithTotal(w, result.GetData(), result.GetTotal())
+	return protoListWithTotalResult(result.GetData(), result.GetTotal())
 }
 
-func (c *UserGuideController) httpGetByID(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := c.userGuide.GetUserGuide(r.Context(), id)
+func (c *UserGuideController) getByID(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := c.userGuide.GetUserGuide(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeWrappedData(w, result)
+	return wrappedDataResult(result)
 }
 
-func (c *UserGuideController) httpGetByKey(w http.ResponseWriter, r *http.Request) {
-	key := r.PathValue("key")
-	if key == "" {
-		writeHTTPError(w, http.StatusBadRequest, "key is required")
-		return
-	}
-	result, err := c.userGuide.GetUserGuideByKey(r.Context(), key)
+func (c *UserGuideController) getByKey(ctx context.Context, req dto.UserGuideByKeyPath) (*httpapi.Result, error) {
+	result, err := c.userGuide.GetUserGuideByKey(ctx, req.Key)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeWrappedData(w, result)
+	return wrappedDataResult(result)
 }
 
-func (c *UserGuideController) httpGetAllByKey(w http.ResponseWriter, r *http.Request) {
-	var req dto.GetAllUserGuidesByKeyRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.userGuide.GetAllUserGuidesByKey(r.Context(), req)
+func (c *UserGuideController) getAllByKey(ctx context.Context, req dto.GetAllUserGuidesByKeyRequest) (*httpapi.Result, error) {
+	result, err := c.userGuide.GetAllUserGuidesByKey(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeAllUserGuidesByKey(w, result)
+	return allUserGuidesByKeyResult(result)
 }
 
-func (c *UserGuideController) httpGetGroups(w http.ResponseWriter, r *http.Request) {
-	result, err := c.userGuide.GetUserGuideGroups(r.Context())
+func (c *UserGuideController) getGroups(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	result, err := c.userGuide.GetUserGuideGroups(ctx)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
-	writeOK(w, data)
+	return httpapi.OK(data), nil
 }

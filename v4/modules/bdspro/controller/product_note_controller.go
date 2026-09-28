@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/dto"
@@ -19,24 +19,13 @@ func NewProductNoteController(notes services.ProductNoteService) *ProductNoteCon
 }
 
 func (c *ProductNoteController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/bdspro/product-notes/all/{productId}", c.httpListByProduct)
+	httpapi.GET(mux, "/v2/bdspro/product-notes/all/{productId}", c.listByProduct)
 }
 
-func (c *ProductNoteController) httpListByProduct(w http.ResponseWriter, r *http.Request) {
-	productID, err := strconv.ParseUint(r.PathValue("productId"), 10, 64)
-	if err != nil || productID == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "productId is required")
-		return
-	}
-	var req dto.SyncByIDRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.notes.ListByProduct(r.Context(), productID, req)
+func (c *ProductNoteController) listByProduct(ctx context.Context, req dto.SyncByIDPathRequest) (*httpapi.Result, error) {
+	result, err := c.notes.ListByProduct(ctx, req.ID, req.ToSyncByIDRequest())
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoList(w, result.GetData(), result.GetTotal())
+	return protoListResult(result.GetData(), result.GetTotal())
 }

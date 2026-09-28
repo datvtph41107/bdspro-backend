@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/dto"
@@ -19,74 +19,34 @@ func NewPropertyController(property services.PropertyService) *PropertyControlle
 }
 
 func (c *PropertyController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/bdspro/v2/property/me", c.httpListMe)
-	// One pattern covers both public paths — ServeMux rejects registering
-	// detail/{id} and {id}/timestamp together (overlap on .../detail/timestamp).
-	mux.HandleFunc("GET /v2/bdspro/v2/property/{a}/{b}", c.httpPropertyTwoSeg)
+	httpapi.GET(mux, "/v2/bdspro/v2/property/me", c.listMe)
+	httpapi.GET(mux, "/v2/bdspro/v2/property/{id}/detail", c.getDetail)
+	httpapi.GET(mux, "/v2/bdspro/v2/property/{id}/timestamp", c.getTimestamps)
 }
 
-func (c *PropertyController) httpListMe(w http.ResponseWriter, r *http.Request) {
-	var req dto.PropertyListRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.property.ListMe(r.Context(), req)
+func (c *PropertyController) listMe(ctx context.Context, req dto.PropertyListRequest) (*httpapi.Result, error) {
+	result, err := c.property.ListMe(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writePropertyListResponse(w, result)
+	return propertyListResult(result)
 }
 
-func (c *PropertyController) httpPropertyTwoSeg(w http.ResponseWriter, r *http.Request) {
-	a, b := r.PathValue("a"), r.PathValue("b")
-	switch {
-	case a == "detail":
-		c.httpGetDetail(w, r, b)
-	case b == "detail":
-		c.httpGetDetail(w, r, a)
-	case b == "timestamp":
-		c.httpGetTimestamps(w, r, a)
-	default:
-		writeHTTPError(w, http.StatusNotFound, "not found")
-	}
-}
-
-func (c *PropertyController) httpGetDetail(w http.ResponseWriter, r *http.Request, idRaw string) {
-	id, err := strconv.ParseUint(idRaw, 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.PropertyListRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.ID = id
-	result, err := c.property.GetDetail(r.Context(), req)
+func (c *PropertyController) getDetail(ctx context.Context, req dto.PropertyDetailRequest) (*httpapi.Result, error) {
+	result, err := c.property.GetDetail(ctx, req.ToListRequest())
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoResult(result)
 }
 
-func (c *PropertyController) httpGetTimestamps(w http.ResponseWriter, r *http.Request, idRaw string) {
-	id, err := strconv.ParseUint(idRaw, 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := c.property.GetTimestamps(r.Context(), id)
+func (c *PropertyController) getTimestamps(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := c.property.GetTimestamps(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, map[string]int64{})
-		return
+		return httpapi.OK(map[string]int64{}), nil
 	}
-	writeOK(w, result.Timestamps)
+	return httpapi.OK(result.Timestamps), nil
 }

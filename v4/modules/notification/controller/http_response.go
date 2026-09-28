@@ -88,6 +88,47 @@ func writeProtoData(w http.ResponseWriter, msg proto.Message) {
 	writeOK(w, data)
 }
 
+func countResult(resp *notificationpb.CountResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK(map[string]any{"count": 0, "unread": 0}), nil
+	}
+	data := map[string]any{
+		"count":     resp.GetCount(),
+		"unread":    resp.GetUnread(),
+		"unchanged": resp.GetUnchanged(),
+	}
+	var opts []httpapi.OKOption
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func listResult(resp *notificationpb.ListResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
+	}
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func protoDataResult(msg proto.Message) (*httpapi.Result, error) {
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data), nil
+}
+
 func protoMessages[T proto.Message](items []T) ([]any, error) {
 	out := make([]any, 0, len(items))
 	for _, item := range items {

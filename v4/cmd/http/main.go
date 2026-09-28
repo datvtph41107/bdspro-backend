@@ -138,6 +138,8 @@ func runHTTP() error {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
+	// Controllers register via httpapi.GET/Bind: path+query decode into DTO,
+	// handlers are func(ctx, req DTO) (*httpapi.Result, error).
 	app.AuthHandler.LoginController.RegisterHTTP(mux)
 	app.PermissionHandler.PermissionController.RegisterHTTP(mux)
 	app.UserHandler.RegisterHTTP(mux)

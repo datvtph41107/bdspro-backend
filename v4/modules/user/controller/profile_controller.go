@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	_errors "common/errors"
 	sharepb "pb/types/shared"
@@ -56,52 +55,33 @@ func (c *ProfileController) SetDemoMode(ctx context.Context, enable bool) error 
 //	GET  /v3/user/profile/{access}/{id}
 func (c *ProfileController) RegisterHTTP(mux *http.ServeMux) {
 	for _, prefix := range APIVersionPrefixes {
-		mux.HandleFunc("GET "+prefix+"/user/profile/info/me", c.httpGetInfoMe)
-		mux.HandleFunc("POST "+prefix+"/user/demo-mode", c.httpSetDemoMode)
+		httpapi.GET(mux, prefix+"/user/profile/info/me", c.getInfoMe)
+		httpapi.POST(mux, prefix+"/user/demo-mode", c.setDemoMode)
 	}
-	mux.HandleFunc("GET /v3/user/profile/{access}/{id}", c.httpGetProfileInfoV3)
+	httpapi.GET(mux, "/v3/user/profile/{access}/{id}", c.getProfileInfoV3)
 }
 
-func (c *ProfileController) httpGetInfoMe(w http.ResponseWriter, r *http.Request) {
-	result, err := c.GetInfoMe(r.Context())
+func (c *ProfileController) getInfoMe(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	result, err := c.GetInfoMe(ctx)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeUserV3HTTP(w, result)
+	return userV3Result(result)
 }
 
-func (c *ProfileController) httpGetProfileInfoV3(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+func (c *ProfileController) getProfileInfoV3(ctx context.Context, req dto.ProfileInfoV3Request) (*httpapi.Result, error) {
+	result, err := c.GetProfileInfoV3(ctx, req.ID, req.Access, req.Timestamp)
 	if err != nil {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
+		return nil, err
 	}
-	access := r.PathValue("access")
-	var req dto.ProfileInfoV3Request
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.GetProfileInfoV3(r.Context(), id, access, req.Timestamp)
-	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	writeTotalResponseHTTP(w, result)
+	return totalResponseResult(result)
 }
 
-func (c *ProfileController) httpSetDemoMode(w http.ResponseWriter, r *http.Request) {
-	var req dto.DemoModeRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
+func (c *ProfileController) setDemoMode(ctx context.Context, req dto.DemoModeRequest) (*httpapi.Result, error) {
+	if err := c.SetDemoMode(ctx, req.Enable); err != nil {
+		return nil, err
 	}
-	if err := c.SetDemoMode(r.Context(), req.Enable); err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	httpapi.WriteOK(w, nil)
+	return httpapi.OK(nil), nil
 }
 
 // Handler aggregates user-module HTTP controllers.
@@ -120,59 +100,41 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.profile.RegisterHTTP(mux)
 }
 
-func writeUserV3HTTP(w http.ResponseWriter, msg *sharepb.UserV3Proto) {
+func userV3Result(msg *sharepb.UserV3Proto) (*httpapi.Result, error) {
 	if msg == nil {
-		writeHTTPError(w, http.StatusInternalServerError, "empty profile")
-		return
+		return nil, _errors.ReturnError(500, "empty profile")
 	}
 	timestamp := msg.GetTimestamp()
 	body, err := protoJSON.Marshal(msg)
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	var data map[string]any
 	if err := json.Unmarshal(body, &data); err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	delete(data, "timestamp")
-	// Match gateway UserV3Proto marshal: timestamp at root, remaining fields under data.
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"code":      0,
-		"message":   "Success",
-		"data":      data,
-		"timestamp": timestamp,
-	})
+	opts := []httpapi.OKOption{}
+	if timestamp > 0 {
+		opts = append(opts, httpapi.WithTimestamp(timestamp))
+	}
+	return httpapi.OK(data, opts...), nil
 }
 
-func writeTotalResponseHTTP(w http.ResponseWriter, msg *sharepb.TotalResponseProto) {
+func totalResponseResult(msg *sharepb.TotalResponseProto) (*httpapi.Result, error) {
 	if msg == nil {
-		httpapi.WriteOK(w, map[string]any{})
-		return
+		return httpapi.OK(map[string]any{}), nil
 	}
 	body, err := protoJSON.Marshal(msg)
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	var data map[string]any
 	if err := json.Unmarshal(body, &data); err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	if data == nil {
 		data = map[string]any{}
 	}
-	httpapi.WriteOK(w, data)
-}
-
-func writeHTTPError(w http.ResponseWriter, httpStatus int, message string) {
-	httpapi.WriteError(w, httpStatus, message)
-}
-
-func writeServiceError(w http.ResponseWriter, err error) {
-	httpapi.WriteServiceError(w, err)
+	return httpapi.OK(data), nil
 }

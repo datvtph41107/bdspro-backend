@@ -1,12 +1,15 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
+	bdspropb "pb/types/bdspro"
 	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/dto"
 	"userv4/modules/bdspro/services"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // DealController owns deal HTTP routes under /v4 (migrated from /v2.1/...).
@@ -19,358 +22,219 @@ func NewDealController(deal services.DealService) *DealController {
 }
 
 func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v4/deals/me", c.httpGetDealsMe)
-	mux.HandleFunc("GET /v4/deal/{id}/ts", c.httpGetTimestamps)
-	mux.HandleFunc("GET /v4/deal/{id}/products", c.httpGetProducts)
-	mux.HandleFunc("GET /v4/deal/{id}/summary", c.httpGetSummary)
-	mux.HandleFunc("GET /v4/deal/{id}/bank-account", c.httpGetBankAccount)
-	mux.HandleFunc("GET /v4/deal/{id}/members", c.httpGetMembers)
-	mux.HandleFunc("GET /v4/deal/{id}", c.httpGetDetail)
-	mux.HandleFunc("GET /v4/deal/invitation/list/{dealId}", c.httpGetInvitations)
-	mux.HandleFunc("GET /v4/deal/investments/list/{dealId}", c.httpGetInvestments)
-	mux.HandleFunc("GET /v4/transaction/contract/deal/{id}/list", c.httpGetContracts)
-	mux.HandleFunc("GET /v4/transaction/contract/deal/{id}/statistic", c.httpGetContractStatistics)
-	mux.HandleFunc("GET /v4/transaction/contract/deal/{id}/process", c.httpGetContractProcess)
-	mux.HandleFunc("GET /v4/transaction/deal-cost/list/{dealId}", c.httpGetCosts)
+	httpapi.GET(mux, "/v4/deals/me", c.getDealsMe)
+	httpapi.GET(mux, "/v4/deal/{id}/ts", c.getTimestamps)
+	httpapi.GET(mux, "/v4/deal/{id}/products", c.getProducts)
+	httpapi.GET(mux, "/v4/deal/{id}/summary", c.getSummary)
+	httpapi.GET(mux, "/v4/deal/{id}/bank-account", c.getBankAccount)
+	httpapi.GET(mux, "/v4/deal/{id}/members", c.getMembers)
+	httpapi.GET(mux, "/v4/deal/{id}", c.getDetail)
+	httpapi.GET(mux, "/v4/deal/invitation/list/{dealId}", c.getInvitations)
+	httpapi.GET(mux, "/v4/deal/investments/list/{dealId}", c.getInvestments)
+	httpapi.GET(mux, "/v4/transaction/contract/deal/{id}/list", c.getContracts)
+	httpapi.GET(mux, "/v4/transaction/contract/deal/{id}/statistic", c.getContractStatistics)
+	httpapi.GET(mux, "/v4/transaction/contract/deal/{id}/process", c.getContractProcess)
+	httpapi.GET(mux, "/v4/transaction/deal-cost/list/{dealId}", c.getCosts)
 }
 
-func (c *DealController) httpGetDealsMe(w http.ResponseWriter, r *http.Request) {
-	var req dto.DealSearchRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.deal.GetDealsUser(r.Context(), req)
+func (c *DealController) getDealsMe(ctx context.Context, req dto.DealSearchRequest) (*httpapi.Result, error) {
+	result, err := c.deal.GetDealsUser(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeGetDealsResponse(w, result)
+	return dealsListResult(result)
 }
 
-func (c *DealController) httpGetTimestamps(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := c.deal.GetTimestamps(r.Context(), id)
+func (c *DealController) getTimestamps(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := c.deal.GetTimestamps(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, map[string]int64{})
-		return
+		return httpapi.OK(map[string]int64{}), nil
 	}
-	writeOK(w, result.Timestamps)
+	return httpapi.OK(result.Timestamps), nil
 }
 
-func (c *DealController) httpGetDetail(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.DealDetailRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.ID = id
-	result, ts, err := c.deal.GetDetail(r.Context(), req)
+func (c *DealController) getDetail(ctx context.Context, req dto.DealDetailRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetDetail(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
-	}
-	writeProtoData(w, result, opts...)
+	return protoResult(result, timestampOpt(ts)...)
 }
 
-func (c *DealController) httpGetContractProcess(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, ts, err := c.deal.GetContractProcess(r.Context(), id)
+func (c *DealController) getContractProcess(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetContractProcess(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{}, opts...)
-		return
+		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, timestampOpt(ts)...), nil
 }
 
-func (c *DealController) decodeDealList(w http.ResponseWriter, r *http.Request, idRaw string) (dto.DealListByIDRequest, bool) {
-	var req dto.DealListByIDRequest
-	id, err := strconv.ParseUint(idRaw, 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return req, false
-	}
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return req, false
-	}
-	req.DealID = id
-	return req, true
-}
-
-func (c *DealController) httpGetProducts(w http.ResponseWriter, r *http.Request) {
-	req, ok := c.decodeDealList(w, r, r.PathValue("id"))
-	if !ok {
-		return
-	}
-	result, ts, err := c.deal.GetDealProducts(r.Context(), req)
+func (c *DealController) getProducts(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetDealProducts(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{}, opts...)
-		return
+		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, timestampOpt(ts)...), nil
 }
 
-func (c *DealController) httpGetSummary(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.DealSummaryRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.DealID = id
-	result, ts, err := c.deal.GetSummary(r.Context(), req)
+func (c *DealController) getSummary(ctx context.Context, req dto.DealSummaryRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetSummary(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
-	}
-	writeProtoData(w, result, opts...)
+	return protoResult(result, timestampOpt(ts)...)
 }
 
-func (c *DealController) httpGetBankAccount(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.DealDetailRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.ID = id
-	result, ts, err := c.deal.GetBankAccount(r.Context(), req)
+func (c *DealController) getBankAccount(ctx context.Context, req dto.DealDetailRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetBankAccount(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
-	}
-	writeProtoData(w, result, opts...)
+	return protoResult(result, timestampOpt(ts)...)
 }
 
-func (c *DealController) httpGetMembers(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.DealMembersRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.DealID = id
-	result, ts, err := c.deal.GetMembers(r.Context(), req)
+func (c *DealController) getMembers(ctx context.Context, req dto.DealMembersRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetMembers(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{}, opts...)
-		return
+		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
+	opts := timestampOpt(ts)
 	opts = append(opts, httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}))
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, opts...), nil
 }
 
-func (c *DealController) httpGetContracts(w http.ResponseWriter, r *http.Request) {
-	req, ok := c.decodeDealList(w, r, r.PathValue("id"))
-	if !ok {
-		return
-	}
-	result, err := c.deal.GetContracts(r.Context(), req)
+func (c *DealController) getContracts(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, err := c.deal.GetContracts(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	opts := []httpapi.OKOption{
 		httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}),
 	}
-	if result.GetTimestamp() > 0 {
-		opts = append(opts, httpapi.WithTimestamp(result.GetTimestamp()))
-	}
-	writeOK(w, data, opts...)
+	opts = append(opts, timestampOpt(result.GetTimestamp())...)
+	return httpapi.OK(data, opts...), nil
 }
 
-func (c *DealController) httpGetContractStatistics(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	var req dto.DealStatisticsRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.DealID = id
-	result, ts, err := c.deal.GetContractStatistics(r.Context(), req)
+func (c *DealController) getContractStatistics(ctx context.Context, req dto.DealStatisticsRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetContractStatistics(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
-	}
-	writeProtoData(w, result, opts...)
+	return protoResult(result, timestampOpt(ts)...)
 }
 
-func (c *DealController) httpGetInvestments(w http.ResponseWriter, r *http.Request) {
-	req, ok := c.decodeDealList(w, r, r.PathValue("dealId"))
-	if !ok {
-		return
-	}
-	result, ts, err := c.deal.GetInvestments(r.Context(), req)
+func (c *DealController) getInvestments(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetInvestments(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
-	var opts []httpapi.OKOption
-	if ts > 0 {
-		opts = append(opts, httpapi.WithTimestamp(ts))
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{}, opts...)
-		return
+		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
+	opts := timestampOpt(ts)
 	opts = append(opts, httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}))
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, opts...), nil
 }
 
-func (c *DealController) httpGetInvitations(w http.ResponseWriter, r *http.Request) {
-	req, ok := c.decodeDealList(w, r, r.PathValue("dealId"))
-	if !ok {
-		return
-	}
-	result, err := c.deal.GetInvitations(r.Context(), req)
+func (c *DealController) getInvitations(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, err := c.deal.GetInvitations(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	opts := []httpapi.OKOption{
 		httpapi.WithPagination(&httpapi.Pagination{Total: result.GetTotal()}),
 	}
-	if result.GetTimestamp() > 0 {
-		opts = append(opts, httpapi.WithTimestamp(result.GetTimestamp()))
-	}
-	writeOK(w, data, opts...)
+	opts = append(opts, timestampOpt(result.GetTimestamp())...)
+	return httpapi.OK(data, opts...), nil
 }
 
-func (c *DealController) httpGetCosts(w http.ResponseWriter, r *http.Request) {
-	req, ok := c.decodeDealList(w, r, r.PathValue("dealId"))
-	if !ok {
-		return
-	}
-	result, err := c.deal.GetDealCosts(r.Context(), req)
+func (c *DealController) getCosts(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, err := c.deal.GetDealCosts(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 	if result == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(result.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	opts := []httpapi.OKOption{
 		httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotalElements())}),
 	}
-	if result.GetTimestamp() > 0 {
-		opts = append(opts, httpapi.WithTimestamp(result.GetTimestamp()))
+	opts = append(opts, timestampOpt(result.GetTimestamp())...)
+	return httpapi.OK(data, opts...), nil
+}
+
+func timestampOpt(ts int64) []httpapi.OKOption {
+	if ts <= 0 {
+		return nil
 	}
-	writeOK(w, data, opts...)
+	return []httpapi.OKOption{httpapi.WithTimestamp(ts)}
+}
+
+func protoResult(msg proto.Message, opts ...httpapi.OKOption) (*httpapi.Result, error) {
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func dealsListResult(resp *bdspropb.GetDealsResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
+	}
+	opts = append(opts, timestampOpt(resp.GetTimestamp())...)
+	return httpapi.OK(data, opts...), nil
 }

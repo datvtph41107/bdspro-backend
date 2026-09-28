@@ -1,5 +1,10 @@
 package dto
 
+// UserGuideByKeyPath is the path payload for user-guide lookup by key.
+type UserGuideByKeyPath struct {
+	Key string `path:"key"`
+}
+
 // GetUserGuideSimpleRequest mirrors hubpb.GetUserGuideSimpleRequest query params.
 type GetUserGuideSimpleRequest struct {
 	GroupKey string `form:"groupKey"`

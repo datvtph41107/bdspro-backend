@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	bdspropb "pb/types/bdspro"
+	crmpb "pb/types/crm"
 	"userv4/internal/httpapi"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -148,4 +149,100 @@ func protoMessages[T proto.Message](items []T) ([]any, error) {
 		out = append(out, v)
 	}
 	return out, nil
+}
+
+func searchResponseResult(resp *bdspropb.SearchResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{
+			Page:       resp.GetPage(),
+			Size:       resp.GetSize(),
+			Total:      resp.GetTotalElements(),
+			TotalPages: resp.GetTotalPages(),
+		}),
+	}
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func organizationDealsResult(resp *bdspropb.GetOrganizationDealsResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	return protoListResult(resp.GetData(), int64(resp.GetTotal()))
+}
+
+func propertyListResult(resp *bdspropb.PropertyListResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	var opts []httpapi.OKOption
+	if p := resp.GetPagination(); p != nil {
+		hasNext := p.GetHasNext()
+		hasPrev := p.GetHasPrevious()
+		opts = append(opts, httpapi.WithPagination(&httpapi.Pagination{
+			Page:        p.GetPage(),
+			Size:        p.GetSize(),
+			Total:       p.GetTotal(),
+			TotalPages:  p.GetPages(),
+			HasNext:     &hasNext,
+			HasPrevious: &hasPrev,
+		}))
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func getEnumsResult(resp *bdspropb.GetEnumsResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetEnums())
+	if err != nil {
+		return nil, err
+	}
+	var opts []httpapi.OKOption
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	if !resp.GetLastest() {
+		return httpapi.OK([]any{}, opts...), nil
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func protoListResult[T proto.Message](items []T, total int64) (*httpapi.Result, error) {
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
+}
+
+func appointmentListResult(resp *crmpb.ListAppointmentsResponse) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
+	}
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
 }

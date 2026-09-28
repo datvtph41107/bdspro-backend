@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
 	hubpb "pb/types/hub"
@@ -19,44 +20,32 @@ func NewVersionController(version services.VersionService) *VersionController {
 }
 
 func (c *VersionController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/hub/app-bundle/update-check/{appName}", c.httpCheckAppUpdate)
-	mux.HandleFunc("POST /v2/hub/app-bundle/version", c.httpCreateVersionFromDev)
+	httpapi.GET(mux, "/v2/hub/app-bundle/update-check/{appName}", c.checkAppUpdate)
+	mux.HandleFunc("POST /v2/hub/app-bundle/version", withHubAPIKey(httpapi.BindJSON(c.createVersionFromDev)))
 }
 
-func (c *VersionController) httpCheckAppUpdate(w http.ResponseWriter, r *http.Request) {
-	appName := r.PathValue("appName")
-	if appName == "" {
-		writeHTTPError(w, http.StatusBadRequest, "appName is required")
-		return
-	}
-	var req dto.CheckAppUpdateRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.version.CheckAppUpdate(r.Context(), appName, req)
+func (c *VersionController) checkAppUpdate(ctx context.Context, req dto.CheckAppUpdateRequest) (*httpapi.Result, error) {
+	result, err := c.version.CheckAppUpdate(ctx, req.AppName, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
 }
 
-func (c *VersionController) httpCreateVersionFromDev(w http.ResponseWriter, r *http.Request) {
-	var req hubpb.CreateVersionRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	apiKey := r.Header.Get("api-key")
-	if apiKey == "" {
-		apiKey = r.Header.Get("x-api-key")
-	}
-	reqCtx := services.WithAPIKey(r.Context(), apiKey)
-	result, err := c.version.CreateVersionFromDev(reqCtx, &req)
+func (c *VersionController) createVersionFromDev(ctx context.Context, req hubpb.CreateVersionRequest) (*httpapi.Result, error) {
+	result, err := c.version.CreateVersionFromDev(ctx, &req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
+}
+
+func withHubAPIKey(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		apiKey := r.Header.Get("api-key")
+		if apiKey == "" {
+			apiKey = r.Header.Get("x-api-key")
+		}
+		next(w, r.WithContext(services.WithAPIKey(r.Context(), apiKey)))
+	}
 }

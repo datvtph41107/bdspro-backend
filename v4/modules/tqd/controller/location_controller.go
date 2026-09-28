@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
+	_errors "common/errors"
 	tqdpb "pb/types/tqd"
 	"userv4/internal/httpapi"
 	"userv4/modules/tqd/dto"
@@ -19,68 +21,51 @@ func NewLocationController(location services.LocationService) *LocationControlle
 }
 
 func (c *LocationController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/tqd/client/provinces", c.httpListProvinces)
-	mux.HandleFunc("GET /v2/tqd/client/wards", c.httpListWards)
+	httpapi.GET(mux, "/v2/tqd/client/provinces", c.listProvinces)
+	httpapi.GET(mux, "/v2/tqd/client/wards", c.listWards)
 }
 
-func (c *LocationController) httpListProvinces(w http.ResponseWriter, r *http.Request) {
-	var req dto.ListProvincesRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.location.ListProvinces(r.Context(), req)
+func (c *LocationController) listProvinces(ctx context.Context, req dto.ListProvincesRequest) (*httpapi.Result, error) {
+	result, err := c.location.ListProvinces(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeListProvincesResponse(w, result)
+	return listProvincesResult(result)
 }
 
-func (c *LocationController) httpListWards(w http.ResponseWriter, r *http.Request) {
-	var req dto.ListWardsRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+func (c *LocationController) listWards(ctx context.Context, req dto.ListWardsRequest) (*httpapi.Result, error) {
 	if req.Page != nil && *req.Page < 1 {
-		writeHTTPError(w, http.StatusBadRequest, "page must be >= 1")
-		return
+		return nil, _errors.ReturnError(400, "page must be >= 1")
 	}
-	result, err := c.location.ListWards(r.Context(), req)
+	result, err := c.location.ListWards(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeListWardsResponse(w, result)
+	return listWardsResult(result)
 }
 
-func writeListProvincesResponse(w http.ResponseWriter, resp *tqdpb.ListProvincesResponse) {
+func listProvincesResult(resp *tqdpb.ListProvincesResponse) (*httpapi.Result, error) {
 	if resp == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(resp.GetProvinces())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	var opts []httpapi.OKOption
 	if resp.GetTimestamp() > 0 {
 		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
 	}
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, opts...), nil
 }
 
-func writeListWardsResponse(w http.ResponseWriter, resp *tqdpb.ClientListWardsResponse) {
+func listWardsResult(resp *tqdpb.ClientListWardsResponse) (*httpapi.Result, error) {
 	if resp == nil {
-		writeOK(w, []any{})
-		return
+		return httpapi.OK([]any{}), nil
 	}
 	data, err := protoMessages(resp.GetData())
 	if err != nil {
-		writeHTTPError(w, http.StatusInternalServerError, err.Error())
-		return
+		return nil, err
 	}
 	var opts []httpapi.OKOption
 	if p := resp.GetPagination(); p != nil {
@@ -93,5 +78,5 @@ func writeListWardsResponse(w http.ResponseWriter, resp *tqdpb.ClientListWardsRe
 	if resp.GetTimestamp() > 0 {
 		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
 	}
-	writeOK(w, data, opts...)
+	return httpapi.OK(data, opts...), nil
 }

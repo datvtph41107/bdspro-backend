@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
+	_errors "common/errors"
 	"userv4/internal/httpapi"
 	"userv4/modules/auth/dto"
 )
@@ -28,143 +30,85 @@ func (c *LoginController) RegisterHTTP(mux *http.ServeMux) {
 
 func (c *LoginController) registerAuthHTTP(mux *http.ServeMux, prefix string) {
 	auth := prefix + "/auth"
-	mux.HandleFunc("GET "+auth+"/phone/check/{phone}", c.httpPhoneCheck)
-	mux.HandleFunc("POST "+auth+"/otp/request", c.httpRequestOTP)
-	mux.HandleFunc("POST "+auth+"/otp/verify", c.httpVerifyOTP)
-	mux.HandleFunc("POST "+auth+"/otp/resend", c.httpResendOTP)
-	mux.HandleFunc("POST "+auth+"/password/login", c.httpLoginWithPassword)
-	mux.HandleFunc("POST "+auth+"/login/key", c.httpLoginWithKey)
-	mux.HandleFunc("POST "+auth+"/admin/login", c.httpAdminLogin)
-	mux.HandleFunc("POST "+auth+"/token/refresh", c.httpRefreshToken)
+	httpapi.GET(mux, auth+"/phone/check/{phone}", c.phoneCheck)
+	httpapi.POST(mux, auth+"/otp/request", c.requestOTP)
+	httpapi.POST(mux, auth+"/otp/verify", c.verifyOTP)
+	httpapi.POST(mux, auth+"/otp/resend", c.resendOTP)
+	httpapi.POST(mux, auth+"/password/login", c.loginWithPassword)
+	httpapi.POST(mux, auth+"/login/key", c.loginWithKey)
+	httpapi.POST(mux, auth+"/admin/login", c.adminLogin)
+	httpapi.POST(mux, auth+"/token/refresh", c.refreshToken)
 }
 
-func (c *LoginController) httpPhoneCheck(w http.ResponseWriter, r *http.Request) {
-	result, err := c.PhoneCheckEncoded(r.Context(), r.PathValue("phone"))
+func (c *LoginController) phoneCheck(ctx context.Context, req dto.PhoneCheckPath) (*httpapi.Result, error) {
+	result, err := c.PhoneCheckEncoded(ctx, req.Phone)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpRequestOTP(w http.ResponseWriter, r *http.Request) {
-	var req dto.OtpRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.login.RequestOTP(r.Context(), req)
+func (c *LoginController) requestOTP(ctx context.Context, req dto.OtpRequest) (*httpapi.Result, error) {
+	result, err := c.login.RequestOTP(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpVerifyOTP(w http.ResponseWriter, r *http.Request) {
-	var req dto.OtpVerifyRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+func (c *LoginController) verifyOTP(ctx context.Context, req dto.OtpVerifyRequest) (*httpapi.Result, error) {
 	if req.Platform == "" || req.Version == "" || req.OS == "" {
-		writeHTTPError(w, http.StatusBadRequest, "platform, version và os là bắt buộc")
-		return
+		return nil, _errors.ReturnError(400, "platform, version và os là bắt buộc")
 	}
-	result, err := c.login.VerifyOTP(r.Context(), req)
+	result, err := c.login.VerifyOTP(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpResendOTP(w http.ResponseWriter, r *http.Request) {
-	var req dto.OtpRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.login.ResendOTP(r.Context(), req)
+func (c *LoginController) resendOTP(ctx context.Context, req dto.OtpRequest) (*httpapi.Result, error) {
+	result, err := c.login.ResendOTP(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpLoginWithPassword(w http.ResponseWriter, r *http.Request) {
-	var req dto.LoginWithPasswordRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+func (c *LoginController) loginWithPassword(ctx context.Context, req dto.LoginWithPasswordRequest) (*httpapi.Result, error) {
 	if req.Platform == "" || req.Version == "" || req.OS == "" {
-		writeHTTPError(w, http.StatusBadRequest, "platform, version và os là bắt buộc")
-		return
+		return nil, _errors.ReturnError(400, "platform, version và os là bắt buộc")
 	}
-	result, err := c.login.LoginWithPassword(r.Context(), req)
+	result, err := c.login.LoginWithPassword(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpLoginWithKey(w http.ResponseWriter, r *http.Request) {
-	var req dto.LoginWithKeyRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.login.LoginWithKey(r.Context(), req)
+func (c *LoginController) loginWithKey(ctx context.Context, req dto.LoginWithKeyRequest) (*httpapi.Result, error) {
+	result, err := c.login.LoginWithKey(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpAdminLogin(w http.ResponseWriter, r *http.Request) {
-	var req dto.AdminLoginRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
+func (c *LoginController) adminLogin(ctx context.Context, req dto.AdminLoginRequest) (*httpapi.Result, error) {
 	if req.Platform == "" || req.Version == "" || req.OS == "" {
-		writeHTTPError(w, http.StatusBadRequest, "platform, version và os là bắt buộc")
-		return
+		return nil, _errors.ReturnError(400, "platform, version và os là bắt buộc")
 	}
-	result, err := c.login.AdminLogin(r.Context(), req)
+	result, err := c.login.AdminLogin(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
+	return httpapi.OK(result), nil
 }
 
-func (c *LoginController) httpRefreshToken(w http.ResponseWriter, r *http.Request) {
-	var req dto.RefreshTokenHTTPRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := c.login.RefreshToken(r.Context(), req.RefreshToken)
+func (c *LoginController) refreshToken(ctx context.Context, req dto.RefreshTokenHTTPRequest) (*httpapi.Result, error) {
+	result, err := c.login.RefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeHTTPOK(w, result)
-}
-
-func writeHTTPOK(w http.ResponseWriter, data any) {
-	httpapi.WriteOK(w, data)
-}
-
-func writeHTTPError(w http.ResponseWriter, httpStatus int, message string) {
-	httpapi.WriteError(w, httpStatus, message)
-}
-
-func writeServiceError(w http.ResponseWriter, err error) {
-	httpapi.WriteServiceError(w, err)
+	return httpapi.OK(result), nil
 }

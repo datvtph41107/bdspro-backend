@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
+	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/services"
 )
 
@@ -16,19 +18,16 @@ func NewSyncController(sync services.SyncService) *SyncController {
 }
 
 func (c *SyncController) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/bdspro/ts", c.httpGetAppTimestamps)
+	httpapi.GET(mux, "/v2/bdspro/ts", c.getAppTimestamps)
 }
 
-func (c *SyncController) httpGetAppTimestamps(w http.ResponseWriter, r *http.Request) {
-	result, err := c.sync.GetAppTimestamps(r.Context())
+func (c *SyncController) getAppTimestamps(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	result, err := c.sync.GetAppTimestamps(ctx)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	// data = timestamps map; no pagination/timestamp at envelope root.
 	if result == nil {
-		writeOK(w, map[string]int64{})
-		return
+		return httpapi.OK(map[string]int64{}), nil
 	}
-	writeOK(w, result.Timestamps)
+	return httpapi.OK(result.Timestamps), nil
 }

@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"context"
 	"net/http"
-	"strconv"
 
 	_utils "common/utils"
 	"userv4/internal/httpapi"
@@ -22,100 +22,68 @@ func NewHandler(notification services.NotificationService, sync *_utils.SyncUtil
 
 // RegisterHTTP mounts phase-1 notification routes with gateway path parity.
 func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
-	mux.HandleFunc("GET /v2/notification/count", h.httpCount)
-	mux.HandleFunc("GET /v2/notification/list", h.httpList)
-	mux.HandleFunc("PUT /v2/notification/read/{id}", h.httpRead)
-	mux.HandleFunc("PUT /v2/notification/read-many", h.httpReadMany)
-	mux.HandleFunc("PUT /v2/notification/read-all", h.httpReadAll)
-	mux.HandleFunc("DELETE /v2/notification/remove/{id}", h.httpRemove)
+	httpapi.GET(mux, "/v2/notification/count", h.count)
+	httpapi.GET(mux, "/v2/notification/list", h.list)
+	httpapi.PUT(mux, "/v2/notification/read/{id}", h.read)
+	httpapi.PUT(mux, "/v2/notification/read-many", h.readMany)
+	httpapi.PUT(mux, "/v2/notification/read-all", h.readAll)
+	httpapi.DELETE(mux, "/v2/notification/remove/{id}", h.remove)
 }
 
-func (h *Handler) httpCount(w http.ResponseWriter, r *http.Request) {
-	var req dto.CountRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	reqCtx := r.Context()
-	result, err := h.notification.Count(reqCtx, req)
+func (h *Handler) count(ctx context.Context, req dto.CountRequest) (*httpapi.Result, error) {
+	result, err := h.notification.Count(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
 
 	// Ensure SyncKeyNotificationMe exists for /v2/bdspro/ts; do not overwrite if already set.
 	if h.sync != nil {
-		key := h.sync.GetKey(reqCtx, _utils.SyncKeyNotificationMe, 0)
-		ts := h.sync.EnsureTimestamp(reqCtx, key)
+		key := h.sync.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
+		ts := h.sync.EnsureTimestamp(ctx, key)
 		if result != nil && result.Timestamp <= 0 && ts > 0 {
 			result.Timestamp = ts
 		}
 	}
 
-	writeCountResponse(w, result)
+	return countResult(result)
 }
 
-func (h *Handler) httpList(w http.ResponseWriter, r *http.Request) {
-	var req dto.ListRequest
-	if err := httpapi.DecodeQuery(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := h.notification.List(r.Context(), req)
+func (h *Handler) list(ctx context.Context, req dto.ListRequest) (*httpapi.Result, error) {
+	result, err := h.notification.List(ctx, req)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeListResponse(w, result)
+	return listResult(result)
 }
 
-func (h *Handler) httpRead(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := h.notification.Read(r.Context(), id)
+func (h *Handler) read(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := h.notification.Read(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
 }
 
-func (h *Handler) httpReadMany(w http.ResponseWriter, r *http.Request) {
-	var req dto.ReadManyRequest
-	if err := httpapi.DecodeJSON(r, &req); err != nil {
-		writeHTTPError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	result, err := h.notification.ReadMany(r.Context(), req.IDs)
+func (h *Handler) readMany(ctx context.Context, req dto.ReadManyRequest) (*httpapi.Result, error) {
+	result, err := h.notification.ReadMany(ctx, req.IDs)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
 }
 
-func (h *Handler) httpReadAll(w http.ResponseWriter, r *http.Request) {
-	result, err := h.notification.ReadAll(r.Context())
+func (h *Handler) readAll(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	result, err := h.notification.ReadAll(ctx)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
 }
 
-func (h *Handler) httpRemove(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeHTTPError(w, http.StatusBadRequest, "id is required")
-		return
-	}
-	result, err := h.notification.Remove(r.Context(), id)
+func (h *Handler) remove(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	result, err := h.notification.Remove(ctx, req.ID)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writeProtoData(w, result)
+	return protoDataResult(result)
 }

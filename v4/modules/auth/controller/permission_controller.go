@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	authpb "pb/types/auth"
 
+	"userv4/internal/httpapi"
 	"userv4/modules/auth/dto"
 	"userv4/modules/auth/services"
 )
@@ -44,20 +44,19 @@ func (c *PermissionController) GetPermissionKeysPB(ctx context.Context) (*authpb
 //	GET {prefix}/auth/permission/me
 func (c *PermissionController) RegisterHTTP(mux *http.ServeMux) {
 	for _, prefix := range APIVersionPrefixes {
-		mux.HandleFunc("GET "+prefix+"/auth/permission/me", c.httpGetPermissionMe)
+		httpapi.GET(mux, prefix+"/auth/permission/me", c.getPermissionMe)
 	}
 }
 
-func (c *PermissionController) httpGetPermissionMe(w http.ResponseWriter, r *http.Request) {
-	result, err := c.GetPermissionKeys(r.Context())
+func (c *PermissionController) getPermissionMe(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	result, err := c.GetPermissionKeys(ctx)
 	if err != nil {
-		writeServiceError(w, err)
-		return
+		return nil, err
 	}
-	writePermissionKeysHTTP(w, result)
+	return permissionKeysResult(result), nil
 }
 
-func writePermissionKeysHTTP(w http.ResponseWriter, result *dto.PermissionKeysResponse) {
+func permissionKeysResult(result *dto.PermissionKeysResponse) *httpapi.Result {
 	keys := []string{}
 	var timestamp int64
 	if result != nil {
@@ -66,15 +65,9 @@ func writePermissionKeysHTTP(w http.ResponseWriter, result *dto.PermissionKeysRe
 		}
 		timestamp = result.Timestamp
 	}
-	// Match gateway PermissionKeysResponse marshal: timestamp at root, keys under data.
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"code":    0,
-		"message": "Success",
-		"data": map[string]any{
-			"keys": keys,
-		},
-		"timestamp": timestamp,
-	})
+	opts := []httpapi.OKOption{}
+	if timestamp > 0 {
+		opts = append(opts, httpapi.WithTimestamp(timestamp))
+	}
+	return httpapi.OK(map[string]any{"keys": keys}, opts...)
 }

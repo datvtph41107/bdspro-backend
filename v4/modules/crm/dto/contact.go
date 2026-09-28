@@ -7,3 +7,12 @@ type ContactSearchRequest struct {
 	Text      string `form:"text"`
 	Timestamp int64  `form:"timestamp"`
 }
+
+// ContactListUserRequest is GET /v2/crm/contact/list/user/{ownerId}.
+type ContactListUserRequest struct {
+	OwnerID   uint64 `path:"ownerId"`
+	Page      uint32 `form:"page"`
+	Size      uint32 `form:"size"`
+	Text      string `form:"text"`
+	Timestamp int64  `form:"timestamp"`
+}
