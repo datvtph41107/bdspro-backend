@@ -38,6 +38,9 @@ database:
   # TQD-owned PostGIS DB (province_v2 / ward_v2). Distinct from hub province_v2 on the v4 DSN.
   tqd:
     dsn: ""
+  # CRM-owned contact DB (tb_contact / friend / …). Distinct from thinner v4 stub tb_contact.
+  crm:
+    dsn: ""
 
 service:
   name: "user service"

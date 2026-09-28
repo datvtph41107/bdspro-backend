@@ -20,7 +20,7 @@ buf:
 	$(MAKE) -C ../shared/code buf-user-service
 
 wire:
-	$(MAKE) -C ../shared/code wire user
+	(cd wire && wire gen)
 
 generate: buf wire
 

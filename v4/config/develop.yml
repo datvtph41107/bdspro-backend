@@ -28,7 +28,9 @@ server:
 database:
   dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
   tqd:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+  crm:
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
 
 logging:
   level:

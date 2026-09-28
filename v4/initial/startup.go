@@ -12,6 +12,7 @@ import (
 	usecase "userv4/internal/usecase"
 	usecases "userv4/internal/usecase/user"
 	bdsprocontroller "userv4/modules/bdspro/controller"
+	crmcontroller "userv4/modules/crm/controller"
 	hubcontroller "userv4/modules/hub/controller"
 	notificationcontroller "userv4/modules/notification/controller"
 	tqdcontroller "userv4/modules/tqd/controller"
@@ -53,6 +54,7 @@ type InitialApp struct {
 	HubHandler          *hubcontroller.Handler
 	NotificationHandler *notificationcontroller.Handler
 	TqdHandler          *tqdcontroller.Handler
+	CrmHandler          *crmcontroller.Handler
 	UserHandler         *usercontroller.Handler
 
 	// Role-group lookup used by role resolution.
@@ -99,6 +101,7 @@ func NewInitialApp(
 	hubHandler *hubcontroller.Handler,
 	notificationHandler *notificationcontroller.Handler,
 	tqdHandler *tqdcontroller.Handler,
+	crmHandler *crmcontroller.Handler,
 	userHandler *usercontroller.Handler,
 	roleGroupRegistry *usecase.RoleGroupRegistry,
 	znsScheduler *scheduler.ZnsScheduler,
@@ -137,6 +140,7 @@ func NewInitialApp(
 		HubHandler:          hubHandler,
 		NotificationHandler: notificationHandler,
 		TqdHandler:          tqdHandler,
+		CrmHandler:          crmHandler,
 		UserHandler:         userHandler,
 		RoleGroupRegistry:   roleGroupRegistry,
 		ZnsScheduler:      znsScheduler,

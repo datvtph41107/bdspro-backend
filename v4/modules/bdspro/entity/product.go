@@ -44,13 +44,30 @@ type Product struct {
 	RentVisibility    uint32         `gorm:"column:rent_visibility;default:30"`
 	OwnerID           uint64         `gorm:"column:owner_id;index"`
 	OwnerOf           uint32         `gorm:"column:owner_of;default:10"`
+	OwnerType         uint32         `gorm:"column:owner_type;default:10"`
+	MiningMode        uint32         `gorm:"column:mining_mode;default:10"`
+	Version           uint64         `gorm:"column:version;default:1"`
 	ProvinceID        *uint64        `gorm:"column:province_id"`
 	WardID            *uint64        `gorm:"column:ward_id"`
 	Address           string         `gorm:"column:address;size:255"`
 	GoogleMapLink     string         `gorm:"column:google_map_link;size:255"`
 	Archived          bool           `gorm:"column:archived;default:false"`
+	ShareCount        uint32         `gorm:"column:share_count"`
+	AssetCount        uint32         `gorm:"column:asset_count"`
+	BuildCount        uint32         `gorm:"column:build_count"`
+	PostCount         uint32         `gorm:"column:post_count"`
+	DealCount         uint32         `gorm:"column:deal_count"`
+	ContactCount      uint32         `gorm:"column:contact_count"`
+	AppointmentCount  uint32         `gorm:"column:appointment_count"`
 
-	Price *ProductPrice `gorm:"foreignKey:ProductID;references:ID"`
+	Price     *ProductPrice       `gorm:"foreignKey:ProductID;references:ID"`
+	Property  *PropertyLineage    `gorm:"foreignKey:PropertyID;references:ID"`
+	HouseInfo *HouseInfo          `gorm:"foreignKey:ProductID;references:ID"`
+	MediaList []ProductMediaInput `gorm:"-"`
+
+	// Resolved names (not persisted).
+	ProvinceName string `gorm:"-"`
+	WardName     string `gorm:"-"`
 }
 
 func (Product) TableName() string { return "products" }
@@ -89,6 +106,7 @@ type ProductUser struct {
 	IsOwner         bool           `gorm:"column:is_owner;default:true"`
 	RoleID          uint64         `gorm:"column:role_id;default:0"`
 	OwnerOf         uint32         `gorm:"column:owner_of;default:10"`
+	Version         uint64         `gorm:"column:version;default:1"`
 	OriginProfileID *uint64        `gorm:"column:origin_profile_id;index"`
 }
 

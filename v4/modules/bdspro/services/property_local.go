@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 	"time"
 
 	_errors "common/errors"
@@ -22,6 +22,32 @@ type LocalPropertyService struct {
 
 func NewLocalPropertyService(sync *_utils.SyncUtil, repo repository.PropertyRepository) *LocalPropertyService {
 	return &LocalPropertyService{sync: sync, repo: repo}
+}
+
+func (s *LocalPropertyService) GetTimestamps(ctx context.Context, id uint64) (*bdspropb.PropertyTimestampsResponse, error) {
+	if id == 0 {
+		return nil, _errors.BadRequestException("property id is required")
+	}
+	if s.sync == nil {
+		return &bdspropb.PropertyTimestampsResponse{Timestamps: map[string]int64{}}, nil
+	}
+
+	redisKeys := []string{
+		s.sync.GetKey(ctx, _utils.SyncKeyPropertyDetail, id),
+		s.sync.GetKey(ctx, _utils.SyncKeyPropertyHistories, id),
+	}
+	names := []string{"property_detail", "property_histories"}
+
+	vals, err := s.sync.MGet(ctx, redisKeys)
+	if err != nil {
+		return nil, _errors.InternalServerException(err.Error())
+	}
+
+	timestamps := make(map[string]int64, len(names))
+	for i, v := range vals {
+		timestamps[names[i]] = parseSyncTimestamp(v)
+	}
+	return &bdspropb.PropertyTimestampsResponse{Timestamps: timestamps}, nil
 }
 
 func (s *LocalPropertyService) ListMe(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyListResponse, error) {
@@ -97,57 +123,166 @@ func (s *LocalPropertyService) GetDetail(ctx context.Context, req dto.PropertyLi
 	return mapPropertyToPB(p), nil
 }
 
+// mapPropertyToPB mirrors bdspro PropertyDetailToProto for response parity.
 func mapPropertyToPB(p *entity.PropertyLineage) *bdspropb.PropertyDetailResponse {
 	if p == nil {
 		return nil
 	}
 	out := &bdspropb.PropertyDetailResponse{Id: p.ID}
 	if p.CreatedAt != nil {
-		out.CreatedAt = strconv.FormatInt(p.CreatedAt.UnixMilli(), 10)
+		out.CreatedAt = _utils.FormatTimeToString(p.CreatedAt)
 	}
 	if p.UpdatedAt != nil {
-		out.UpdatedAt = strconv.FormatInt(p.UpdatedAt.UnixMilli(), 10)
+		out.UpdatedAt = _utils.FormatTimeToString(p.UpdatedAt)
 	}
+	if p.NationalID != "" {
+		out.Lineage = &bdspropb.PropertyLineageInfo{NationalId: p.NationalID}
+	}
+
+	if p.Identify != nil && p.Identify.ID != 0 {
+		out.Identifier = &bdspropb.PropertyIdentify{
+			Id:        p.Identify.ID,
+			Pid:       p.Identify.PID,
+			Version:   p.Identify.Version,
+			Code:      fmt.Sprintf("BDS%d", p.Identify.PID),
+			LineageId: p.ID,
+		}
+		if p.Identify.LineageID != nil {
+			out.Identifier.LineageId = *p.Identify.LineageID
+		}
+	}
+
+	if p.Statistic != nil {
+		out.Statistic = &bdspropb.PropertyStatistic{
+			Id:           p.Statistic.ID,
+			ProductCount: &p.Statistic.ProductCount,
+			AssetCount:   &p.Statistic.AssetCount,
+			ListingCount: &p.Statistic.ListingCount,
+		}
+	}
+
 	if p.Info != nil {
-		title := p.Info.Title
-		ident := p.Info.Identifier
+		pi := p.Info
 		info := &bdspropb.PropertyInfo{
-			Title:      &title,
-			Identifier: &ident,
+			PropertyTypeId: pi.PropertyTypeID,
+			ProjectId:      pi.ProjectID,
+			AvatarId:       pi.AvatarID,
 		}
-		if p.Info.PropertyTypeID != nil {
-			info.PropertyTypeId = p.Info.PropertyTypeID
+		if pi.Title != "" {
+			t := pi.Title
+			info.Title = &t
 		}
-		if p.Info.ProjectID != nil {
-			info.ProjectId = p.Info.ProjectID
+		if pi.Identifier != "" {
+			id := pi.Identifier
+			info.Identifier = &id
 		}
-		if p.Info.AvatarID != nil {
-			info.AvatarId = p.Info.AvatarID
+		if pi.UnitCode != "" {
+			u := pi.UnitCode
+			info.UnitCode = &u
+		}
+		if pi.Level != "" {
+			l := pi.Level
+			info.Level = &l
+		}
+		if pi.Note != "" {
+			n := pi.Note
+			info.Note = &n
+		}
+		if pi.LegalStatus != 0 {
+			v := pi.LegalStatus
+			info.LegalStatus = &v
 		}
 		out.Info = info
+
+		if pi.Avatar != nil {
+			out.Avatar = &bdspropb.MediaItem{
+				Id:        pi.Avatar.ID,
+				MediaType: pi.Avatar.MediaType,
+				MediaUrl:  pi.Avatar.MediaURL,
+			}
+		}
+		if pi.PropertyType != nil {
+			out.PropertyType = &bdspropb.PropertyType{
+				Id:   pi.PropertyType.ID,
+				Name: pi.PropertyType.Name,
+			}
+		}
 	}
+
 	if p.Location != nil {
-		loc := &bdspropb.PropertyLocationInfo{
-			Id:     p.Location.ID,
-			Detail: p.Location.AddressDetail,
-			MapUrl: p.Location.MapURL,
+		loc := p.Location
+		location := &bdspropb.PropertyLocationInfo{
+			Id:         loc.ID,
+			Detail:     loc.AddressDetail,
+			MapUrl:     loc.MapURL,
+			RegionId:   loc.RegionID,
+			ProvinceId: loc.ProvinceID,
+			DistrictId: loc.DistrictID,
+			WardId:     loc.WardID,
+			Latitude:   loc.Latitude,
+			Longitude:  loc.Longitude,
 		}
-		if p.Location.ProvinceID != nil {
-			loc.ProvinceId = p.Location.ProvinceID
+		if loc.Province != nil {
+			location.ProvinceName = loc.Province.Name
 		}
-		if p.Location.DistrictID != nil {
-			loc.DistrictId = p.Location.DistrictID
+		if loc.Ward != nil {
+			location.WardName = loc.Ward.Name
 		}
-		if p.Location.WardID != nil {
-			loc.WardId = p.Location.WardID
+		out.Location = location
+	}
+
+	if p.LandInfo != nil {
+		li := p.LandInfo
+		land := &bdspropb.PropertyLandInfoDetail{
+			Id:           li.ID,
+			DocumentNo:   li.DocumentNo,
+			IssuringAuth: li.IssuringAuth,
+			Note:         li.Note,
+			LandNote:     li.LandNote,
+			DocumentType: li.DocumentType,
+			AreaTotal:    li.AreaTotal,
+			AreaLand:     li.AreaLand,
+			AreaPlant:    li.AreaPlant,
+			FrontWidth:   li.FrontWidth,
+			Depth:        li.Depth,
+			StreetWidth:  li.StreetWidth,
 		}
-		if p.Location.Latitude != nil {
-			loc.Latitude = p.Location.Latitude
+		if li.Plot > 0 {
+			v := li.Plot
+			land.Plot = &v
 		}
-		if p.Location.Longitude != nil {
-			loc.Longitude = p.Location.Longitude
+		if li.Sheet > 0 {
+			v := li.Sheet
+			land.Sheet = &v
 		}
-		out.Location = loc
+		if li.PurposeUsed != 0 {
+			v := li.PurposeUsed
+			land.PurposeUsed = &v
+		}
+		out.LandInfo = land
+	}
+
+	if p.BuildingInfo != nil {
+		out.BuildingInfo = mapBuildingInfoToPB(p.BuildingInfo)
+	}
+
+	if len(p.MediaList) > 0 {
+		out.MediaList = make([]*bdspropb.MediaItem, 0, len(p.MediaList))
+		for _, m := range p.MediaList {
+			out.MediaList = append(out.MediaList, &bdspropb.MediaItem{
+				Id:        m.ID,
+				MediaUrl:  m.MediaURL,
+				MediaType: m.MediaType,
+			})
+		}
+		if out.Avatar == nil {
+			first := p.MediaList[0]
+			out.Avatar = &bdspropb.MediaItem{
+				Id:        first.ID,
+				MediaUrl:  first.MediaURL,
+				MediaType: first.MediaType,
+			}
+		}
 	}
 	return out
 }

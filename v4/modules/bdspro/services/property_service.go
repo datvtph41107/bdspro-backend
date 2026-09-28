@@ -8,8 +8,9 @@ import (
 	"userv4/modules/bdspro/dto"
 )
 
-// PropertyService owns property list/detail flows for modules/bdspro.
+// PropertyService owns property list/detail/timestamps flows for modules/bdspro.
 type PropertyService interface {
 	ListMe(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyListResponse, error)
 	GetDetail(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyDetailResponse, error)
+	GetTimestamps(ctx context.Context, id uint64) (*bdspropb.PropertyTimestampsResponse, error)
 }

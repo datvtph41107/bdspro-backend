@@ -145,6 +145,7 @@ func runHTTP() error {
 	app.HubHandler.RegisterHTTP(mux)
 	app.NotificationHandler.RegisterHTTP(mux)
 	app.TqdHandler.RegisterHTTP(mux)
+	app.CrmHandler.RegisterHTTP(mux)
 
 	handler := chain(
 		mux,

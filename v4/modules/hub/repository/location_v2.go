@@ -14,6 +14,7 @@ type LocationV2Repository interface {
 	GetProvinceByCode(ctx context.Context, code string, includeWards bool) (*entity.ProvinceV2, error)
 	GetProvinceByID(ctx context.Context, id uint64) (*entity.ProvinceV2, error)
 	ListWards(ctx context.Context, provinceCode *string, keyword string, page, size int) ([]entity.WardV2, int64, error)
+	ListWardIDsByProvinceID(ctx context.Context, provinceID uint64) ([]uint64, error)
 	GetWardByCode(ctx context.Context, code string) (*entity.WardV2, error)
 	GetWardByID(ctx context.Context, id uint64) (*entity.WardV2, error)
 	Search(ctx context.Context, keyword string, page, size int) ([]entity.LocationSearchResultV2, int64, error)
@@ -109,6 +110,20 @@ func (r *locationV2Postgres) ListWards(ctx context.Context, provinceCode *string
 	var list []entity.WardV2
 	err := q.Order("code ASC").Offset(page * size).Limit(size).Find(&list).Error
 	return list, total, err
+}
+
+// ListWardIDsByProvinceID returns active ward_v2 ids on the v4 DSN for a province.
+func (r *locationV2Postgres) ListWardIDsByProvinceID(ctx context.Context, provinceID uint64) ([]uint64, error) {
+	if r.db == nil || provinceID == 0 {
+		return nil, nil
+	}
+	var ids []uint64
+	err := r.db.WithContext(ctx).
+		Model(&entity.WardV2{}).
+		Where("province_id = ? AND deleted_at IS NULL", provinceID).
+		Order("id ASC").
+		Pluck("id", &ids).Error
+	return ids, err
 }
 
 func (r *locationV2Postgres) GetWardByCode(ctx context.Context, code string) (*entity.WardV2, error) {

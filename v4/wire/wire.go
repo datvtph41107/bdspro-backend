@@ -58,6 +58,9 @@ import (
 	user_modules_bdspro_controller "userv4/modules/bdspro/controller"
 	user_modules_bdspro_repository "userv4/modules/bdspro/repository"
 	user_modules_bdspro_services "userv4/modules/bdspro/services"
+	user_modules_crm_controller "userv4/modules/crm/controller"
+	user_modules_crm_repository "userv4/modules/crm/repository"
+	user_modules_crm_services "userv4/modules/crm/services"
 	user_modules_hub_controller "userv4/modules/hub/controller"
 	user_modules_hub_repository "userv4/modules/hub/repository"
 	user_modules_hub_services "userv4/modules/hub/services"
@@ -195,6 +198,11 @@ var wireSet = wire.NewSet(
 	user_modules_tqd_repository.NewLocationPostgres,
 	user_modules_tqd_services.NewLocalLocationService,
 	wire.Bind(new(user_modules_tqd_services.LocationService), new(*user_modules_tqd_services.LocalLocationService)),
+	user_modules_crm_controller.NewHandler,
+	user_infra_postgres.NewCrmDB,
+	user_modules_crm_repository.NewContactPostgres,
+	user_modules_crm_services.NewLocalContactService,
+	wire.Bind(new(user_modules_crm_services.ContactService), new(*user_modules_crm_services.LocalContactService)),
 	user_modules_notification_controller.NewHandler,
 	user_modules_notification_repository.NewNotificationPostgres,
 	user_modules_notification_services.NewLocalNotificationService,
@@ -205,6 +213,8 @@ var wireSet = wire.NewSet(
 	user_modules_user_controller.NewProfileController,
 	user_modules_user_services.NewProfileUsecaseInfoService,
 	wire.Bind(new(user_modules_user_services.ProfileService), new(*user_modules_user_services.ProfileUsecaseInfoService)),
+	user_modules_user_services.NewLocalDemoService,
+	wire.Bind(new(user_modules_user_services.DemoService), new(*user_modules_user_services.LocalDemoService)),
 	user_infra_mapper.NewAuthMethodMapper,
 	user_infra_postgres.NewAuthRepository,
 	user_infra_mapper.NewAuthSecurityMapper,

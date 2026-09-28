@@ -20,7 +20,9 @@ func NewPropertyController(property services.PropertyService) *PropertyControlle
 
 func (c *PropertyController) RegisterHTTP(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v2/bdspro/v2/property/me", c.httpListMe)
-	mux.HandleFunc("GET /v2/bdspro/v2/property/detail/{id}", c.httpGetDetail)
+	// One pattern covers both public paths — ServeMux rejects registering
+	// detail/{id} and {id}/timestamp together (overlap on .../detail/timestamp).
+	mux.HandleFunc("GET /v2/bdspro/v2/property/{a}/{b}", c.httpPropertyTwoSeg)
 }
 
 func (c *PropertyController) httpListMe(w http.ResponseWriter, r *http.Request) {
@@ -37,8 +39,22 @@ func (c *PropertyController) httpListMe(w http.ResponseWriter, r *http.Request) 
 	writePropertyListResponse(w, result)
 }
 
-func (c *PropertyController) httpGetDetail(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+func (c *PropertyController) httpPropertyTwoSeg(w http.ResponseWriter, r *http.Request) {
+	a, b := r.PathValue("a"), r.PathValue("b")
+	switch {
+	case a == "detail":
+		c.httpGetDetail(w, r, b)
+	case b == "detail":
+		c.httpGetDetail(w, r, a)
+	case b == "timestamp":
+		c.httpGetTimestamps(w, r, a)
+	default:
+		writeHTTPError(w, http.StatusNotFound, "not found")
+	}
+}
+
+func (c *PropertyController) httpGetDetail(w http.ResponseWriter, r *http.Request, idRaw string) {
+	id, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil || id == 0 {
 		writeHTTPError(w, http.StatusBadRequest, "id is required")
 		return
@@ -55,4 +71,22 @@ func (c *PropertyController) httpGetDetail(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	writeProtoData(w, result)
+}
+
+func (c *PropertyController) httpGetTimestamps(w http.ResponseWriter, r *http.Request, idRaw string) {
+	id, err := strconv.ParseUint(idRaw, 10, 64)
+	if err != nil || id == 0 {
+		writeHTTPError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+	result, err := c.property.GetTimestamps(r.Context(), id)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	if result == nil {
+		writeOK(w, map[string]int64{})
+		return
+	}
+	writeOK(w, result.Timestamps)
 }
