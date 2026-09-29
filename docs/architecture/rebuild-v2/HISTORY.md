@@ -95,3 +95,16 @@ Purpose:
 - checkpoint decisions only after analysis + implementation + proof meet the gate.
 
 Current phase at creation: `R0 — Workspace & Architecture Charter`.
+
+
+## H6 — Clean repository reset
+
+On 2026-09-29 active greenfield work moved to:
+
+`datvtph41107/bdspro`
+
+The move deliberately separates new Go learning/source decisions from legacy
+workspace, service topology and earlier architecture assumptions.
+
+This repository remains historical evidence and a future comparison/migration
+source. It is no longer the active clean-slate design authority.
