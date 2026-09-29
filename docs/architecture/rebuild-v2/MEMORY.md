@@ -223,3 +223,19 @@ PROGRAM GOAL
 Questions should be derived from fundamentals and observed behavior, not from a
 preselected pattern. The user should progressively gain the reflex to predict what
 a command/code change will do before running it.
+
+
+## Foundational Go engineering references
+
+`uber-go/guide` is a durable foundational reference for idiomatic Go engineering
+and production coding practices.
+
+Local durable index:
+
+`docs/architecture/rebuild-v2/research/go/UBER-GO-GUIDE.md`
+
+Use it problem-first rather than reading/copying it as architecture law. When a
+real BDSPro problem reaches interfaces, receivers, errors, lifecycle, concurrency,
+construction, testing, naming or tooling, consult the matching section, explain
+the underlying Go mechanism, and then decide ADOPT / ADAPT / REJECT / OPEN for
+the actual BDSPro context.
