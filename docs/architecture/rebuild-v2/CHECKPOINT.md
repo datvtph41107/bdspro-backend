@@ -71,7 +71,19 @@ R5  TQD / Spatial Architecture
 R6  Convergence & Migration
 ```
 
-## Next authorized gate
+## Immediate recovery/alignment gate
+
+`R0.1 — Align preferred local workspace to live architecture/rebuild-v2`
+
+Preferred local workspace:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+The remote durable state is ahead of the user's observed local checkout. Before
+R1.1 implementation/reasoning continues in that workspace, fetch/reconcile the
+remote branch and verify the local worktree is clean/preserved.
+
+## Next authorized design gate
 
 `R1.1 — What exactly is Core?`
 
@@ -80,6 +92,9 @@ framework or migrate all existing modules.
 
 The first code must be intentionally small and make responsibilities visible.
 Every abstraction must be earned by a demonstrated problem.
+
+The branch now contains `bdspro/` as a greenfield learning/rebuild area. This is
+not yet a claim about final production topology.
 
 ## Only bootstrap prompt
 

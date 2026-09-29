@@ -171,3 +171,52 @@ Read ARCHITECTURE-REBUILD-V2.md and follow it exactly.
 ```
 
 No previous chat transcript should be required.
+
+
+## Scenario N — Preferred existing WSL workspace
+
+Preferred working copy:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+Before aligning it to Rebuild V2:
+
+```bash
+cd ~/projects/bdspro-canonical-bootstrap-20260908
+
+git status --short --branch
+git worktree list
+git remote -v
+git branch -vv
+git log --oneline --decorate -5
+```
+
+If the worktree is clean and `architecture/rebuild-v2` is not checked out in a
+different worktree:
+
+```bash
+git fetch origin --prune
+
+git show-ref --verify --quiet refs/heads/architecture/rebuild-v2 \
+  && git switch architecture/rebuild-v2 \
+  || git switch --track -c architecture/rebuild-v2 origin/architecture/rebuild-v2
+
+git merge --ff-only origin/architecture/rebuild-v2
+
+git status --short --branch
+git log -1 --oneline --decorate
+```
+
+If the worktree is dirty, preserve/classify the changes first. Do not stash,
+reset or clean automatically.
+
+Expected target is the current live remote HEAD, not a hard-coded historical SHA.
+
+After alignment, verify the durable root and the greenfield learning area exist:
+
+```bash
+test -f docs/architecture/rebuild-v2/MASTER-PROMPT.md
+test -f bdspro/README.md
+```
+
+Only then continue the current authorized gate.

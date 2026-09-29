@@ -24,5 +24,9 @@ Status vocabulary:
 | ARV2-012 | One canonical master prompt orchestrates recovery through final convergence | CLOSED | Eliminates competing bootstrap procedures and lets a zero-context session self-recover from durable Git state | Validate in a future fresh context |
 | ARV2-013 | Every material decision must be reviewed and synchronized into durable state | CLOSED | Long-lived architecture training requires decisions, proof and checkpoint history to survive chat/account/context loss | Enforce through MASTER-PROMPT session-close protocol |
 
+| ARV2-014 | Use `~/projects/bdspro-canonical-bootstrap-20260908` as the preferred local WSL working copy for Rebuild V2, with mandatory live-state reconciliation before mutation | CLOSED | The existing local repository carries historical branches/worktrees and is the intended daily workspace | Validate alignment to live `architecture/rebuild-v2` before R1.1 |
+| ARV2-015 | Create a root `bdspro/` greenfield learning/rebuild area inside Rebuild V2 | PROVISIONAL | Separates from legacy implementation while allowing fundamentals-to-production learning on real BDSPro problems | Prove during R1/R2; do not treat as final topology yet |
+| ARV2-016 | Local workspace alignment is an explicit R0.1 gate before new Rebuild V2 source work | CLOSED | Prevents remote durable state and local historical checkout from silently diverging | Verify local branch/head/worktree after fetch/switch |
+
 When a decision changes, do not erase the old row. Mark it SUPERSEDED and add a
 new decision with the reason and evidence.

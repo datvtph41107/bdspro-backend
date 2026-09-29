@@ -97,3 +97,40 @@ CHECKPOINT STATUS:
 END SHA:
 NEXT AUTHORIZED ACTION:
 ```
+
+
+---
+
+## 2026-09-29 — Preferred local workspace and greenfield learning area
+
+### Local state supplied for reconciliation
+
+Preferred WSL workspace:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+Observed before Rebuild V2 alignment:
+
+```text
+branch: refactor/canonical-observability-errors-a6d0722a
+HEAD: fca4682
+```
+
+Historical/local branches are present and another worktree is in use, so no
+destructive cleanup is authorized.
+
+### Durable decisions
+
+- make this path the preferred daily Rebuild V2 workspace;
+- require a fetch + worktree/status reconciliation before switching it;
+- create `bdspro/` as an intentionally greenfield training/rebuild subtree;
+- keep `bdspro/` provisional until R1/R2 prove its role and shape.
+
+### Immediate gate
+
+`R0.1 — Local Workspace Alignment`
+
+After the user verifies the local checkout tracks the live
+`architecture/rebuild-v2` branch, continue:
+
+`R1.1 — What exactly is Core?`

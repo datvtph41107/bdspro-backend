@@ -139,3 +139,32 @@ Examples:
 - asynchronous delivery through Notification/outbox;
 - spatial design through TQD/PostGIS;
 - authorization through Membership/Role/Permission.
+
+
+## Preferred local development workspace
+
+The user's primary WSL working copy for Rebuild V2 is:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+A durable recovery must treat local state as something to reconcile, not assume.
+The initial observed local snapshot before alignment to Rebuild V2 was:
+
+```text
+working directory: ~/projects/bdspro-canonical-bootstrap-20260908
+HEAD branch: refactor/canonical-observability-errors-a6d0722a
+HEAD commit: fca4682
+```
+
+The repository also contains multiple historical/local branches and at least one
+branch checked out in another worktree. Therefore recovery must inspect
+`git status`, `git worktree list`, branch tracking and the live remote before
+switching or deleting anything.
+
+Target local working branch for the rebuild program:
+
+`architecture/rebuild-v2`
+
+The `bdspro/` subtree on that branch is the greenfield learning/rebuild area. It
+is a training and architecture laboratory until a later decision promotes any of
+its structure into canonical production topology.

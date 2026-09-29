@@ -77,6 +77,31 @@ higher authority.
 
 ---
 
+## 1.1 Preferred local workspace
+
+When the user's WSL filesystem is available, the preferred working copy is:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+Do not assume it is aligned merely because it is the preferred path. Inspect:
+
+```bash
+git status --short --branch
+git worktree list
+git remote -v
+git branch -vv
+git log --oneline --decorate -5
+```
+
+Then reconcile it with the live `architecture/rebuild-v2` remote branch. Preserve
+dirty, interrupted, unrelated or unknown work.
+
+The `bdspro/` subtree is the greenfield Go/backend learning and architecture
+rebuild area. It is provisional and must not be treated as final production
+topology until later gates prove that decision.
+
+---
+
 ## 2. Required recovery report
 
 Before continuing substantive work in a fresh session, establish this internal
