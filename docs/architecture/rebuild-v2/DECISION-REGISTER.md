@@ -28,5 +28,6 @@ Status vocabulary:
 | ARV2-015 | Create a root `bdspro/` greenfield learning/rebuild area inside Rebuild V2 | PROVISIONAL | Separates from legacy implementation while allowing fundamentals-to-production learning on real BDSPro problems | Prove during R1/R2; do not treat as final topology yet |
 | ARV2-016 | Local workspace alignment is an explicit R0.1 gate before new Rebuild V2 source work | CLOSED | Prevents remote durable state and local historical checkout from silently diverging | Verify local branch/head/worktree after fetch/switch |
 
+| ARV2-017 | Use `uber-go/guide` as a foundational Go engineering reference, consulted problem-first and never as BDSPro architecture authority | CLOSED | The guide covers interfaces, receivers, errors, lifecycle, concurrency, construction, testing, naming and tooling; Rebuild V2 already requires external sources to be evaluated through BDSPro value/cost and ADOPT/ADAPT/REJECT/OPEN | Apply only when a matching real problem appears and prove the choice in BDSPro code/tests |
 When a decision changes, do not erase the old row. Mark it SUPERSEDED and add a
 new decision with the reason and evidence.
