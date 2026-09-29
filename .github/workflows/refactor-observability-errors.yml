@@ -6,29 +6,30 @@ on:
       - refactor/canonical-observability-errors-a6d0722a
       - final-acceptance/source-canonicalization
       - refactor/pre-final-architecture-hardening-ca98ece
+      - architecture/source-migration-v1
   pull_request:
     paths:
-      - 'shared/common/errors/**'
-      - 'shared/common/middleware/**'
-      - 'shared/common/routes/**'
-      - 'shared/common/httpresponse/**'
-      - 'shared/common/jwt/**'
-      - 'shared/common/logging/**'
-      - 'shared/common/redis/**'
-      - 'shared/common/tilesession/**'
-      - 'shared/code/script/**'
-      - 'shared/code/development/audit-observability-errors.py'
-      - 'shared/code/development/test_audit_observability_errors.py'
-      - 'shared/code/development/observability-error-debt-baseline.tsv'
-      - 'shared/code/development/root.mk'
-      - 'shared/code/development/query-structured-logs.py'
-      - 'shared/code/development/test_query_structured_logs.py'
-      - 'shared/code/development/test-structured-log-query.sh'
-      - 'shared/code/development/verify-source-layout.sh'
-      - 'gateway-service/**'
-      - 'user-service/**'
-      - 'payment-service/**'
-      - 'tqd-service/**'
+      - 'infrastructure/runtime/errors/**'
+      - 'infrastructure/runtime/middleware/**'
+      - 'infrastructure/runtime/routes/**'
+      - 'infrastructure/runtime/httpresponse/**'
+      - 'infrastructure/runtime/jwt/**'
+      - 'infrastructure/runtime/logging/**'
+      - 'infrastructure/runtime/redis/**'
+      - 'infrastructure/runtime/tilesession/**'
+      - 'tools/development/script/**'
+      - 'tools/development/audit-observability-errors.py'
+      - 'tools/development/test_audit_observability_errors.py'
+      - 'tools/development/observability-error-debt-baseline.tsv'
+      - 'tools/development/root.mk'
+      - 'tools/development/query-structured-logs.py'
+      - 'tools/development/test_query_structured_logs.py'
+      - 'tools/development/test-structured-log-query.sh'
+      - 'tools/development/verify-source-layout.sh'
+      - 'api/gateway/**'
+      - 'internal/user/**'
+      - 'internal/payment/**'
+      - 'internal/planning/**'
       - '.github/workflows/refactor-observability-errors.yml'
 
 permissions:
@@ -44,17 +45,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test observability/error inventory detector
-        run: python3 shared/code/development/test_audit_observability_errors.py
+        run: python3 tools/development/test_audit_observability_errors.py
       - name: Test native runtime ownership contract
-        run: bash shared/code/development/test-native-stack-ownership.sh
+        run: bash tools/development/test-native-stack-ownership.sh
       - name: Test DEV raw process-stream mirror contract
-        run: bash shared/code/development/test-dev-stream-mirror.sh
+        run: bash tools/development/test-dev-stream-mirror.sh
       - name: Test structured runtime log query contract
         run: |
-          python3 shared/code/development/test_query_structured_logs.py
-          bash shared/code/development/test-structured-log-query.sh
+          python3 tools/development/test_query_structured_logs.py
+          bash tools/development/test-structured-log-query.sh
       - name: Build migration inventory and enforce ratchets plus accepted-debt fingerprints
-        run: python3 shared/code/development/audit-observability-errors.py --enforce-ratchets
+        run: python3 tools/development/audit-observability-errors.py --enforce-ratchets
       - name: Upload migration inventory
         uses: actions/upload-artifact@v4
         with:
@@ -73,14 +74,14 @@ jobs:
         with:
           go-version: '1.25.10'
           cache: true
-          cache-dependency-path: shared/common/go.sum
+          cache-dependency-path: infrastructure/runtime/go.sum
       - name: Test shared logging and request contracts
-        working-directory: shared/common
+        working-directory: infrastructure/runtime
         env:
           GOWORK: 'off'
         run: go test ./logging ./request ./requestlog
       - name: Test Redis transport and tile-session semantic ownership
-        working-directory: shared/common
+        working-directory: infrastructure/runtime
         env:
           GOWORK: 'off'
         run: go test ./redis ./tilesession
@@ -96,22 +97,22 @@ jobs:
       - name: Materialize canonical toolchain and generated contracts once
         run: make setup
       - name: Test Wire generator service-scoped injection authority
-        working-directory: shared/code
+        working-directory: tools/development
         env:
           GOWORK: 'off'
         run: |
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./script
       - name: Verify User Wire remains reproducible after setup
-        run: git diff --exit-code -- user-service/wire/wire.go user-service/wire/wire_gen.go
+        run: git diff --exit-code -- internal/user/wire/wire.go internal/user/wire/wire_gen.go
       - name: Test User tile-session boundary
-        working-directory: user-service
+        working-directory: internal/user
         env:
           GOWORK: 'off'
         run: |
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./infra/handler
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./wire ./cmd/grpc -run '^$'
       - name: Test TQD tile-session Redis runtime boundary
-        working-directory: tqd-service
+        working-directory: internal/planning
         env:
           GOWORK: 'off'
         run: |
@@ -119,21 +120,21 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./cmd -run '^$'
       - name: Verify Redis/tile-session ownership retirement
         run: |
-          test "$(grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' shared/common user-service tqd-service | wc -l)" -eq 1
-          grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' shared/common/tilesession/store.go
-          ! grep -R -n --include='*.go' -E 'TileSessionTTL|TileSessionAESPrefix|SaveTileSession|GetTileSessionEncryptKey|DeleteTileSession' shared/common user-service tqd-service
-          ! grep -R -n --include='*.go' -E 'func \(r \*RedisService\) (SaveToken|GetToken|IsTokenValid|DeleteToken)' shared/common/redis
-          ! grep -R -n --include='*.go' '_redis.NewRedisService()' tqd-service
-          ! grep -R -n --include='*.go' -E 'sessionKey[[:space:]]+uint64' user-service/infra/handler
-          ! grep -R -n --include='*.go' -E '(slog|log|logger)\.[A-Za-z_][A-Za-z0-9_]*.*sessionEncryptKey' shared/common user-service tqd-service
+          test "$(grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' infrastructure/runtime internal/user internal/planning | wc -l)" -eq 1
+          grep -R -n --include='*.go' --exclude='*_test.go' 'ss:k:' infrastructure/runtime/tilesession/store.go
+          ! grep -R -n --include='*.go' -E 'TileSessionTTL|TileSessionAESPrefix|SaveTileSession|GetTileSessionEncryptKey|DeleteTileSession' infrastructure/runtime internal/user internal/planning
+          ! grep -R -n --include='*.go' -E 'func \(r \*RedisService\) (SaveToken|GetToken|IsTokenValid|DeleteToken)' infrastructure/runtime/redis
+          ! grep -R -n --include='*.go' '_redis.NewRedisService()' internal/planning
+          ! grep -R -n --include='*.go' -E 'sessionKey[[:space:]]+uint64' internal/user/infra/handler
+          ! grep -R -n --include='*.go' -E '(slog|log|logger)\.[A-Za-z_][A-Za-z0-9_]*.*sessionEncryptKey' infrastructure/runtime internal/user internal/planning
       - name: Test shared canonical error and response boundaries
-        working-directory: shared/common
+        working-directory: infrastructure/runtime
         env:
           GOWORK: 'off'
         run: |
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./errors ./httpresponse ./jwt ./middleware ./routes
       - name: Test Gateway response and observability boundaries
-        working-directory: gateway-service
+        working-directory: api/gateway
         env:
           GOWORK: 'off'
         run: |
@@ -144,7 +145,7 @@ jobs:
             ./internal/observability \
             ./cmd/http
       - name: Test User typed PlanVersion faults through gRPC boundary
-        working-directory: user-service
+        working-directory: internal/user
         env:
           GOWORK: 'off'
         run: |
@@ -152,7 +153,7 @@ jobs:
             ./internal/usecase/plan/admin \
             ./infra/handler/grpc
       - name: Test Payment durable outbox recovery contract
-        working-directory: payment-service
+        working-directory: internal/payment
         env:
           GOWORK: 'off'
         run: |
@@ -160,16 +161,16 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./cmd/grpc ./infra/broker/rabbitmq ./infra/postgres/payment -run '^$'
       - name: Verify Payment outbox ownership retirement
         run: |
-          test "$(grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' payment-service | wc -l)" -eq 1
-          grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' payment-service/internal/usecase/outbox/service.go
-          ! grep -R -n --include='*.go' 'rabbit.ErrPublisherUnavailable' payment-service
-          ! grep -R -n --include='*.go' 'PublisherRetry' payment-service
-          ! grep -R -n --include='*.go' -E 'reconnectDelay[[:space:]]+time\.Duration' payment-service
-          test "$(grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_DELAY' payment-service/config | wc -l)" -eq 3
-          grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_BASE' payment-service/config
-          grep -R -n --include='*.go' 'PAYMENT_RABBIT_RECONNECT_BASE' payment-service/config
+          test "$(grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' internal/payment | wc -l)" -eq 1
+          grep -R -n --include='*.go' 'var ErrPublisherUnavailable = ' internal/payment/internal/usecase/outbox/service.go
+          ! grep -R -n --include='*.go' 'rabbit.ErrPublisherUnavailable' internal/payment
+          ! grep -R -n --include='*.go' 'PublisherRetry' internal/payment
+          ! grep -R -n --include='*.go' -E 'reconnectDelay[[:space:]]+time\.Duration' internal/payment
+          test "$(grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_DELAY' internal/payment/config | wc -l)" -eq 3
+          grep -R -n --include='*.go' 'PAYMENT_OUTBOX_RETRY_BASE' internal/payment/config
+          grep -R -n --include='*.go' 'PAYMENT_RABBIT_RECONNECT_BASE' internal/payment/config
       - name: Test Payment typed admin faults and canonical logging boundary
-        working-directory: payment-service
+        working-directory: internal/payment
         env:
           GOWORK: 'off'
         run: |
@@ -177,7 +178,7 @@ jobs:
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test ./internal/server/grpc/interceptors ./infra/postgres -run '^(TestUnaryLoggerInterceptorProjectsSuccessfulCompletion|TestUnaryLoggerInterceptorProjectsCanonicalFailureWithoutOwningSeverity|TestSlogGormLoggerProjectsSlowQuery)$'
           "$HOME/.cache/qhpro/toolchain/go1.25.10/bin/go" test . ./cmd/grpc ./infra/worker/fulfillment ./worker -run '^$'
       - name: Test TQD typed faults through gRPC boundary
-        working-directory: tqd-service
+        working-directory: internal/planning
         env:
           GOWORK: 'off'
         run: |

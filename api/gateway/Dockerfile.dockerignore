@@ -1,0 +1,11 @@
+.git
+.git/**
+**/.git
+**/.git/**
+**/.DS_Store
+**/*.log
+**/.env
+**/.env.*
+api/gateway/main
+api/gateway/app/logs
+api/gateway/app/logs/**

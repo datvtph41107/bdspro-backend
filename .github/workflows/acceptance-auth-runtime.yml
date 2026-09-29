@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           printf 'go_version=%s\n' "$GO_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up canonical Go patch version
@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           test "$(go env GOVERSION)" = "go${GO_VERSION}"
           go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
@@ -56,11 +56,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -f auth-service/config/runtime.go
-          test -f auth-service/config/runtime_test.go
+          test -f internal/authentication/config/runtime.go
+          test -f internal/authentication/config/runtime_test.go
 
           escaped="$(
-            grep -RInE               'os\.(Getenv|LookupEnv)|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)|configloader\.RequiredString|rpcenv\.LoadTransportConfig'               auth-service               --include='*.go'               --exclude='*_test.go'             | grep -v '^auth-service/config/'             || true
+            grep -RInE               'os\.(Getenv|LookupEnv)|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)|configloader\.RequiredString|rpcenv\.LoadTransportConfig'               auth-service               --include='*.go'               --exclude='*_test.go'             | grep -v '^internal/authentication/config/'             || true
           )"
           if [ -n "$escaped" ]; then
             echo 'Auth runtime reader escaped auth/config:' >&2
@@ -70,39 +70,39 @@ jobs:
 
           test "$(
             grep -RIl               'rpcenv\.LoadTransportConfig'               auth-service               --include='*.go'               --exclude='*_test.go'             | sort
-          )" = 'auth-service/config/runtime.go'
+          )" = 'internal/authentication/config/runtime.go'
 
           test "$(
             grep -RIl               'QHPRO_PERMISSION_'               auth-service               --include='*.go'               --exclude='*_test.go'             | sort
-          )" = 'auth-service/config/runtime.go'
+          )" = 'internal/authentication/config/runtime.go'
 
-          grep -Fq 'type Runtime struct {' auth-service/config/runtime.go
-          grep -Fq 'type PermissionRuntime struct {' auth-service/config/runtime.go
-          grep -Fq 'Transport     qhprorpc.TransportConfig' auth-service/config/runtime.go
+          grep -Fq 'type Runtime struct {' internal/authentication/config/runtime.go
+          grep -Fq 'type PermissionRuntime struct {' internal/authentication/config/runtime.go
+          grep -Fq 'Transport     qhprorpc.TransportConfig' internal/authentication/config/runtime.go
 
-          grep -Fq 'runtime, err := config.NewRuntime()' auth-service/main.go
-          grep -Fq 'runtime.UserRPCTarget' auth-service/main.go
-          grep -Fq 'runtime.Transport' auth-service/main.go
-          grep -Fq 'runtime.Permission.RefreshInterval' auth-service/main.go
+          grep -Fq 'runtime, err := config.NewRuntime()' internal/authentication/main.go
+          grep -Fq 'runtime.UserRPCTarget' internal/authentication/main.go
+          grep -Fq 'runtime.Transport' internal/authentication/main.go
+          grep -Fq 'runtime.Permission.RefreshInterval' internal/authentication/main.go
 
-          grep -Fq 'transport qhprorpc.TransportConfig' auth-service/infra/rpc/providers.go
-          grep -Fq 'type PermissionConfig struct {' auth-service/infra/services/permission_service.go
+          grep -Fq 'transport qhprorpc.TransportConfig' internal/authentication/infra/rpc/providers.go
+          grep -Fq 'type PermissionConfig struct {' internal/authentication/infra/services/permission_service.go
 
-          if grep -Eq             'viper\.|configloader\.|rpcenv\.LoadTransportConfig|os\.(Getenv|LookupEnv)'             auth-service/main.go             auth-service/infra/rpc/providers.go             auth-service/infra/services/permission_service.go
+          if grep -Eq             'viper\.|configloader\.|rpcenv\.LoadTransportConfig|os\.(Getenv|LookupEnv)'             internal/authentication/main.go             internal/authentication/infra/rpc/providers.go             internal/authentication/infra/services/permission_service.go
           then
             echo 'Auth composition or infra reads process runtime directly' >&2
             exit 1
           fi
 
-          if grep -Fq 'durationFromEnv(' auth-service/infra/services/permission_service.go; then
+          if grep -Fq 'durationFromEnv(' internal/authentication/infra/services/permission_service.go; then
             echo 'PermissionService still owns process environment timing' >&2
             exit 1
           fi
 
-          grep -Fq 'refresh_interval: 30s' auth-service/config/runtime.yml
-          grep -Fq 'max_staleness: 2m' auth-service/config/runtime.yml
-          grep -Fq 'role_cache_ttl: 15s' auth-service/config/runtime.yml
-          grep -Fq 'request_timeout: 2s' auth-service/config/runtime.yml
+          grep -Fq 'refresh_interval: 30s' internal/authentication/config/runtime.yml
+          grep -Fq 'max_staleness: 2m' internal/authentication/config/runtime.yml
+          grep -Fq 'role_cache_ttl: 15s' internal/authentication/config/runtime.yml
+          grep -Fq 'request_timeout: 2s' internal/authentication/config/runtime.yml
 
           git diff --check
 
@@ -110,7 +110,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
+          make -C tools/development buf-all
 
           # Generated protobuf is intentionally ignored. Canonical generation
           # must not mutate tracked candidate source.
@@ -119,14 +119,14 @@ jobs:
 
       - name: Prove Auth runtime behavior
         shell: bash
-        working-directory: auth-service
+        working-directory: internal/authentication
         run: |
           set -euo pipefail
           go test ./config ./infra/rpc ./infra/services ./internal/permissioncatalog
 
       - name: Compile Auth
         shell: bash
-        working-directory: auth-service
+        working-directory: internal/authentication
         run: |
           set -euo pipefail
           go test ./...

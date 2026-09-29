@@ -14,16 +14,16 @@ __debug_bin*
 **/app/logs/
 
 # Generated source reconstructed from canonical repository contracts.
-/shared/protobuf/types/
+/proto/types/
 
 # Generated acceptance evidence. Recreate from the Git index immediately before packaging.
 /SOURCE-MANIFEST.sha256
 
 # Legacy binaries previously written beside source. Canonical builds use bin/.
 /*-service/*-service
-/user-service/user
-/crm-service/crm
-/tqd-service/tqd
+/internal/user/user
+/internal/crm/crm
+/internal/planning/tqd
 
 # Runtime/local configuration. `make setup` recreates canonical .env files.
 **/.env
@@ -44,4 +44,4 @@ __debug_bin*
 
 # Runtime data / local research
 /research/
-/tqd-service/files/
+/internal/planning/files/

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - final-acceptance/source-canonicalization
+      - architecture/source-migration-v1
   pull_request:
     branches:
       - main
@@ -32,11 +33,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -d shared/protobuf
+          test -d proto
           test ! -e contracts
-          test -d organization-service
-          test -d map-service
-          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  shared/code/deploy.sh" | sha256sum -c -
+          test -d internal/organization-legacy
+          test -d internal/map-legacy
+          echo "80b70e3ea1375b4a959438da92011574c084bdb14d6ee2399ff3d7ddf023e56e  tools/development/deploy.sh" | sha256sum -c -
           if git ls-files | grep -Eq '(^|/)\.env($|\.local$|\.runtime$)'; then
             echo 'Tracked runtime .env file detected' >&2
             git ls-files | grep -E '(^|/)\.env($|\.local$|\.runtime$)' >&2
@@ -44,131 +45,140 @@ jobs:
           fi
           git diff --check
           make help >/dev/null
+          python3 tools/development/verify-source-topology.py
+          python3 tools/development/verify-docker-topology.py
 
       - name: Verify User migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d user-service/database/migrations
-          test ! -e user-service/migrate
-          test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 10
-          test "$(find user-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 10
-          test -f user-service/database/migrations/000010_add_payment_funds_confirm_permission.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' user-service/Makefile
-          grep -Fq './user-service/database/migrations:/migrations:ro' compose.yaml
-          grep -Fq 'user:user-service/database/migrations' shared/code/development/verify-migrations.sh
+          test -d internal/user/database/migrations
+          test ! -e internal/user/migrate
+          test "$(find internal/user/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 10
+          test "$(find internal/user/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 10
+          test -f internal/user/database/migrations/000010_add_payment_funds_confirm_permission.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/user/Makefile
+          grep -Fq './internal/user/database/migrations:/migrations:ro' compose.yaml
+          grep -Fq 'user:internal/user/database/migrations' tools/development/verify-migrations.sh
 
       - name: Verify Payment migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d payment-service/database/migrations
-          test ! -e payment-service/migrate
-          test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 7
-          test "$(find payment-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 7
-          test -f payment-service/database/migrations/000007_canonical_order_reference.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' payment-service/Makefile
-          grep -Fq 'payment:payment-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './payment-service/database/migrations:/migrations:ro' compose.yaml
+          test -d internal/payment/database/migrations
+          test ! -e internal/payment/migrate
+          test "$(find internal/payment/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 7
+          test "$(find internal/payment/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 7
+          test -f internal/payment/database/migrations/000007_canonical_order_reference.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/payment/Makefile
+          grep -Fq 'payment:internal/payment/database/migrations' tools/development/verify-migrations.sh
+          grep -Fq './internal/payment/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify TQD migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d tqd-service/database/migrations
-          test ! -e tqd-service/migrate
-          test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 44
-          test "$(find tqd-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 44
-          test -f tqd-service/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' tqd-service/Makefile
-          grep -Fq 'tqd:tqd-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './tqd-service/database/migrations:/migrations:ro' compose.yaml
+          test -d internal/planning/database/migrations
+          test ! -e internal/planning/migrate
+          test "$(find internal/planning/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 44
+          test "$(find internal/planning/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 44
+          test -f internal/planning/database/migrations/000044_canonicalize_vn_administrative_catalog.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/planning/Makefile
+          grep -Fq 'tqd:internal/planning/database/migrations' tools/development/verify-migrations.sh
+          grep -Fq './internal/planning/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify Notification migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d notification-service/database/migrations
-          test ! -e notification-service/migrate
-          test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 2
-          test "$(find notification-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 2
-          test -f notification-service/database/migrations/000002_payment_eventing.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' notification-service/Makefile
-          grep -Fq 'notification:notification-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './notification-service/database/migrations:/migrations:ro' compose.yaml
+          test -d internal/notification/database/migrations
+          test ! -e internal/notification/migrate
+          test "$(find internal/notification/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 2
+          test "$(find internal/notification/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 2
+          test -f internal/notification/database/migrations/000002_payment_eventing.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/notification/Makefile
+          grep -Fq 'notification:internal/notification/database/migrations' tools/development/verify-migrations.sh
+          grep -Fq './internal/notification/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify File migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d file-service/database/migrations
-          test ! -e file-service/migrate
-          test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 4
-          test "$(find file-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 4
-          test -f file-service/database/migrations/000004_drop_physical_path_authority.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' file-service/Makefile
-          grep -Fq 'file:file-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './file-service/database/migrations:/migrations:ro' compose.yaml
+          test -d internal/file/database/migrations
+          test ! -e internal/file/migrate
+          test "$(find internal/file/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 4
+          test "$(find internal/file/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 4
+          test -f internal/file/database/migrations/000004_drop_physical_path_authority.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/file/Makefile
+          grep -Fq 'file:internal/file/database/migrations' tools/development/verify-migrations.sh
+          grep -Fq './internal/file/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify Hub migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d hub-service/database/migrations
-          test ! -e hub-service/migrate
-          test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
-          test "$(find hub-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
-          test -f hub-service/database/migrations/000003_hub_fix_planning_faq_link.up.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
-          grep -Fq 'hub:hub-service/database/migrations' shared/code/development/verify-migrations.sh
-          grep -Fq './hub-service/database/migrations:/migrations:ro' compose.yaml
+          test -d internal/hub/database/migrations
+          test ! -e internal/hub/migrate
+          test "$(find internal/hub/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
+          test "$(find internal/hub/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
+          test -f internal/hub/database/migrations/000003_hub_fix_planning_faq_link.up.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/hub/Makefile
+          grep -Fq 'hub:internal/hub/database/migrations' tools/development/verify-migrations.sh
+          grep -Fq './internal/hub/database/migrations:/migrations:ro' compose.yaml
 
       - name: Verify BDSPro migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d bdspro-service/database/migrations
-          test ! -e bdspro-service/infra/db/migrations/v2
-          test "$(find bdspro-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
-          test "$(find bdspro-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
-          test -f bdspro-service/database/migrations/000003_create_property_partition_table.up.sql
-          test -f bdspro-service/database/migrations/000003_create_property_partition_table.down.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' bdspro-service/Makefile
-          grep -Fq 'bdspro:bdspro-service/database/migrations' shared/code/development/verify-migrations.sh
+          test -d internal/property/database/migrations
+          test ! -e internal/property/infra/db/migrations/v2
+          test "$(find internal/property/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 3
+          test "$(find internal/property/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 3
+          test -f internal/property/database/migrations/000003_create_property_partition_table.up.sql
+          test -f internal/property/database/migrations/000003_create_property_partition_table.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/property/Makefile
+          grep -Fq 'bdspro:internal/property/database/migrations' tools/development/verify-migrations.sh
 
       - name: Verify CRM migration authority
         shell: bash
         run: |
           set -euo pipefail
-          test -d crm-service/database/migrations
-          test ! -e crm-service/infra/db/migrate_v2
-          test "$(find crm-service/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 25
-          test "$(find crm-service/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 25
-          test -f crm-service/database/migrations/000025_payment_event_inbox.up.sql
-          test -f crm-service/database/migrations/000025_payment_event_inbox.down.sql
-          grep -Fq 'MIGRATION_DIR := database/migrations' crm-service/Makefile
-          grep -Fq 'crm:crm-service/database/migrations' shared/code/development/verify-migrations.sh
+          test -d internal/crm/database/migrations
+          test ! -e internal/crm/infra/db/migrate_v2
+          test "$(find internal/crm/database/migrations -maxdepth 1 -type f -name '*.up.sql' | wc -l)" -eq 25
+          test "$(find internal/crm/database/migrations -maxdepth 1 -type f -name '*.down.sql' | wc -l)" -eq 25
+          test -f internal/crm/database/migrations/000025_payment_event_inbox.up.sql
+          test -f internal/crm/database/migrations/000025_payment_event_inbox.down.sql
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/crm/Makefile
+          grep -Fq 'crm:internal/crm/database/migrations' tools/development/verify-migrations.sh
 
       - name: Verify canonical root migration mounts
         shell: bash
         run: |
           set -euo pipefail
-          for service in payment tqd notification file hub; do
-            test ! -e "${service}-service/migrate"
-            test "$(grep -Fc "./${service}-service/database/migrations:/migrations:ro" compose.yaml)" -eq 1
+          for row in \
+            "payment:internal/payment" \
+            "tqd:internal/planning" \
+            "notification:internal/notification" \
+            "file:internal/file" \
+            "hub:internal/hub"; do
+            service="${row%%:*}"
+            dir="${row#*:}"
+            test ! -e "${dir}/migrate"
+            test "$(grep -Fc "./${dir}/database/migrations:/migrations:ro" compose.yaml)" -eq 1
           done
           if grep -Eq '\./(payment|tqd|notification|file|hub)-service/migrate:/migrations:ro' compose.yaml; then
             echo 'legacy root migration mount detected' >&2
             grep -En '\./(payment|tqd|notification|file|hub)-service/migrate:/migrations:ro' compose.yaml >&2
             exit 1
           fi
-          test "$(grep -Fc './organization-service/migrate:/migrations:ro' compose.yaml)" -eq 1
+          test "$(grep -Fc './internal/organization-legacy/migrate:/migrations:ro' compose.yaml)" -eq 1
 
       - name: Build tracked-source manifest evidence
         shell: bash
         run: |
           set -euo pipefail
-          bash shared/code/development/source-manifest.sh SOURCE-MANIFEST.ci.sha256
+          bash tools/development/source-manifest.sh SOURCE-MANIFEST.ci.sha256
           git ls-files -s > SOURCE-MANIFEST.ci.git-index.txt
           sha256sum SOURCE-MANIFEST.ci.sha256 SOURCE-MANIFEST.ci.git-index.txt > SOURCE-MANIFEST.ci.evidence.sha256
 

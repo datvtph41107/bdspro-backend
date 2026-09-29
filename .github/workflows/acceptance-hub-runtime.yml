@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           printf 'go_version=%s\n' "$GO_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up canonical Go patch version
@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           test "$(go env GOVERSION)" = "go${GO_VERSION}"
           go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
@@ -57,9 +57,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -f hub-service/config/runtime.go
-          test -f hub-service/config/runtime_test.go
-          test -f hub-service/infra/db/provider.go
+          test -f internal/hub/config/runtime.go
+          test -f internal/hub/config/runtime_test.go
+          test -f internal/hub/infra/db/provider.go
 
           readers="$(
             grep -RInE \
@@ -74,7 +74,7 @@ jobs:
 
           escaped="$(
             printf '%s\n' "$readers" \
-            | grep -v '^hub-service/config/' \
+            | grep -v '^internal/hub/config/' \
             || true
           )"
           if [ -n "$escaped" ]; then
@@ -85,7 +85,7 @@ jobs:
 
           if grep -nE \
             'GetEncryptedSystemConfigByKey|GetEncryptedUserSettingsByGroup|CONFIG_ENCRYPTION_PASSPHRASE|encryption\.enabled|GetGlobalKeyManager|InitializeWithPassphrase' \
-            hub-service/internal/usecase/system_config_usecase.go
+            internal/hub/internal/usecase/system_config_usecase.go
           then
             echo 'Dormant Hub system-config encryption ownership reappeared' >&2
             exit 1
@@ -95,65 +95,65 @@ jobs:
             grep -RIl 'rpcenv\.LoadTransportConfig' hub-service \
               --include='*.go' --exclude='*_test.go' --exclude='wire_gen.go' \
             | sort
-          )" = 'hub-service/config/runtime.go'
+          )" = 'internal/hub/config/runtime.go'
 
-          grep -Fq 'type Runtime struct {' hub-service/config/runtime.go
-          grep -Fq 'Transport             qhprorpc.TransportConfig' hub-service/config/runtime.go
-          grep -Fq 'runtime, err := config.NewRuntime()' hub-service/cmd/grpc/main.go
-          grep -Fq 'wire.InitializeApp(runtime)' hub-service/cmd/grpc/main.go
-          grep -Fq 'runtime.GRPCPort' hub-service/cmd/grpc/main.go
-          grep -Fq 'qhprorpc.ServerTransport(runtime.Transport)' hub-service/cmd/grpc/main.go
+          grep -Fq 'type Runtime struct {' internal/hub/config/runtime.go
+          grep -Fq 'Transport             qhprorpc.TransportConfig' internal/hub/config/runtime.go
+          grep -Fq 'runtime, err := config.NewRuntime()' internal/hub/cmd/grpc/main.go
+          grep -Fq 'wire.InitializeApp(runtime)' internal/hub/cmd/grpc/main.go
+          grep -Fq 'runtime.GRPCPort' internal/hub/cmd/grpc/main.go
+          grep -Fq 'qhprorpc.ServerTransport(runtime.Transport)' internal/hub/cmd/grpc/main.go
 
           if grep -Eq 'viper\.|configloader\.|rpcenv\.LoadTransportConfig|os\.(Getenv|LookupEnv)' \
-            hub-service/main.go \
-            hub-service/cmd/grpc/main.go \
-            hub-service/initial/startup.go \
-            hub-service/infra/rpc/providers.go \
-            hub-service/infra/rpc/user.go \
-            hub-service/infra/db/provider.go \
-            hub-service/infra/redis/provider.go \
-            hub-service/infra/middleware/api_key_interceptor.go
+            internal/hub/main.go \
+            internal/hub/cmd/grpc/main.go \
+            internal/hub/initial/startup.go \
+            internal/hub/infra/rpc/providers.go \
+            internal/hub/infra/rpc/user.go \
+            internal/hub/infra/db/provider.go \
+            internal/hub/infra/redis/provider.go \
+            internal/hub/infra/middleware/api_key_interceptor.go
           then
             echo 'Hub composition/infra reads process runtime directly' >&2
             exit 1
           fi
 
-          grep -Fq 'common_db.Open(common_db.DatabaseConfig{' hub-service/infra/db/provider.go
-          grep -Fq 'common_redis.Open(common_redis.Config{' hub-service/infra/redis/provider.go
-          grep -Fq 'func NewRedisService(runtime config.Runtime)' hub-service/infra/redis/provider.go
-          grep -Fq 'func NewRedisProvider(service *common_redis.RedisService)' hub-service/infra/redis/provider.go
-          grep -Fq 'runtime.BDSProRPCTarget' hub-service/infra/rpc/providers.go
-          grep -Fq 'runtime.NotificationRPCTarget' hub-service/infra/rpc/providers.go
-          grep -Fq 'runtime.UserRPCTarget' hub-service/infra/rpc/user.go
-          grep -Fq 'runtime.Transport' hub-service/infra/rpc/providers.go
-          grep -Fq 'runtime.Transport' hub-service/infra/rpc/user.go
+          grep -Fq 'common_db.Open(common_db.DatabaseConfig{' internal/hub/infra/db/provider.go
+          grep -Fq 'common_redis.Open(common_redis.Config{' internal/hub/infra/redis/provider.go
+          grep -Fq 'func NewRedisService(runtime config.Runtime)' internal/hub/infra/redis/provider.go
+          grep -Fq 'func NewRedisProvider(service *common_redis.RedisService)' internal/hub/infra/redis/provider.go
+          grep -Fq 'runtime.BDSProRPCTarget' internal/hub/infra/rpc/providers.go
+          grep -Fq 'runtime.NotificationRPCTarget' internal/hub/infra/rpc/providers.go
+          grep -Fq 'runtime.UserRPCTarget' internal/hub/infra/rpc/user.go
+          grep -Fq 'runtime.Transport' internal/hub/infra/rpc/providers.go
+          grep -Fq 'runtime.Transport' internal/hub/infra/rpc/user.go
 
-          grep -Fq 'protectedMethods []string' hub-service/infra/middleware/api_key_interceptor.go
-          if grep -Fq 'config.AppProperties' hub-service/infra/middleware/api_key_interceptor.go; then
+          grep -Fq 'protectedMethods []string' internal/hub/infra/middleware/api_key_interceptor.go
+          if grep -Fq 'config.AppProperties' internal/hub/infra/middleware/api_key_interceptor.go; then
             echo 'Hub API-key middleware still reads global AppProperties' >&2
             exit 1
           fi
 
-          grep -Fq 'logging.Configure("hub-service")' hub-service/main.go
+          grep -Fq 'logging.Configure("hub-service")' internal/hub/main.go
           if grep -RIn 'flogging\.' hub-service --include='*.go' --exclude='*_test.go' --exclude='wire_gen.go'; then
             echo 'Hub legacy Fabric logging ownership reappeared' >&2
             exit 1
           fi
-          if grep -Fq 'viper.AutomaticEnv()' hub-service/main.go; then
+          if grep -Fq 'viper.AutomaticEnv()' internal/hub/main.go; then
             echo 'Hub root duplicates configloader Viper setup' >&2
             exit 1
           fi
 
-          grep -Fq '"notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub"' shared/code/script.sh
-          grep -Fq 'hub_infra_redis.NewRedisService' hub-service/wire/wire.go
-          grep -Fq 'hub_infra_redis.NewRedisProvider' hub-service/wire/wire.go
-          if grep -Fq '_provider.SyncProviderSet' hub-service/wire/wire.go; then
+          grep -Fq '"notification" || "$SERVICE" == "tqd" || "$SERVICE" == "hub"' tools/development/script.sh
+          grep -Fq 'hub_infra_redis.NewRedisService' internal/hub/wire/wire.go
+          grep -Fq 'hub_infra_redis.NewRedisProvider' internal/hub/wire/wire.go
+          if grep -Fq '_provider.SyncProviderSet' internal/hub/wire/wire.go; then
             echo 'Hub authored Wire graph still imports legacy shared Redis provider set' >&2
             exit 1
           fi
 
-          grep -Fq '../../database/migrations/000001_hub_schema.up.sql' hub-service/infra/db/migrate_contract_test.go
-          grep -Fq 'MIGRATION_DIR := database/migrations' hub-service/Makefile
+          grep -Fq '../../database/migrations/000001_hub_schema.up.sql' internal/hub/infra/db/migrate_contract_test.go
+          grep -Fq 'MIGRATION_DIR := database/migrations' internal/hub/Makefile
 
           git diff --check
 
@@ -161,30 +161,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
+          make -C tools/development buf-all
 
-          rm -f hub-service/wire/wire_gen.go
-          make -C shared/code wire hub
+          rm -f internal/hub/wire/wire_gen.go
+          make -C tools/development wire hub
 
-          test -f hub-service/wire/wire_gen.go
-          git check-ignore -q hub-service/wire/wire_gen.go
+          test -f internal/hub/wire/wire_gen.go
+          git check-ignore -q internal/hub/wire/wire_gen.go
 
-          grep -Fq 'func InitializeApp(runtime config.Runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewDB(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewBdsproRPCClient(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewNotificationRPCClient(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewAdminUserProfileClient(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewRedisService(runtime)' hub-service/wire/wire_gen.go
-          grep -Fq 'NewRedisProvider(' hub-service/wire/wire_gen.go
-          grep -Fq 'NewInitialApp(' hub-service/wire/wire_gen.go
+          grep -Fq 'func InitializeApp(runtime config.Runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewDB(runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewBdsproRPCClient(runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewNotificationRPCClient(runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewAdminUserProfileClient(runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewRedisService(runtime)' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewRedisProvider(' internal/hub/wire/wire_gen.go
+          grep -Fq 'NewInitialApp(' internal/hub/wire/wire_gen.go
 
-          wire_source_first="$(sha256sum hub-service/wire/wire.go | awk '{print $1}')"
-          wire_gen_first="$(sha256sum hub-service/wire/wire_gen.go | awk '{print $1}')"
+          wire_source_first="$(sha256sum internal/hub/wire/wire.go | awk '{print $1}')"
+          wire_gen_first="$(sha256sum internal/hub/wire/wire_gen.go | awk '{print $1}')"
 
-          make -C shared/code wire hub
+          make -C tools/development wire hub
 
-          wire_source_second="$(sha256sum hub-service/wire/wire.go | awk '{print $1}')"
-          wire_gen_second="$(sha256sum hub-service/wire/wire_gen.go | awk '{print $1}')"
+          wire_source_second="$(sha256sum internal/hub/wire/wire.go | awk '{print $1}')"
+          wire_gen_second="$(sha256sum internal/hub/wire/wire_gen.go | awk '{print $1}')"
 
           test "$wire_source_first" = "$wire_source_second"
           test "$wire_gen_first" = "$wire_gen_second"
@@ -194,14 +194,14 @@ jobs:
 
       - name: Prove Hub runtime behavior
         shell: bash
-        working-directory: hub-service
+        working-directory: internal/hub
         run: |
           set -euo pipefail
           go test ./config ./infra/db ./infra/rpc ./infra/redis ./infra/middleware
 
       - name: Compile Hub
         shell: bash
-        working-directory: hub-service
+        working-directory: internal/hub
         run: |
           set -euo pipefail
           go test ./...

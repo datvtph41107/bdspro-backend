@@ -59,7 +59,7 @@ services:
     ports: ["${POSTGRES_PORT:-5432}:5432"]
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./shared/code/development/postgres-init.sql:/docker-entrypoint-initdb.d/10-bdspro-databases.sql:ro
+      - ./tools/development/postgres-init.sql:/docker-entrypoint-initdb.d/10-bdspro-databases.sql:ro
 
   redis:
     <<: *service-defaults
@@ -80,7 +80,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./hub-service/database/migrations:/migrations:ro]
+    volumes: [./internal/hub/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/hub_service?sslmode=disable", "up"]
     # A fresh PostgreSQL volume briefly exposes its bootstrap server before
     # switching to the final server. Retry the one-shot migration if it lands
@@ -90,8 +90,8 @@ services:
   hub:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/hub-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: hub-service/Dockerfile}
-    env_file: [./hub-service/.env]
+    build: {context: ., dockerfile: internal/hub/Dockerfile}
+    env_file: [./internal/hub/.env]
     environment:
       <<: *runtime-environment
       HUB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/hub_service?sslmode=disable
@@ -122,7 +122,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./user-service/database/migrations:/migrations:ro]
+    volumes: [./internal/user/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/user_service?sslmode=disable", "up"]
     restart: on-failure
 
@@ -181,8 +181,8 @@ services:
   user:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/user-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: user-service/Dockerfile}
-    env_file: [./user-service/.env]
+    build: {context: ., dockerfile: internal/user/Dockerfile}
+    env_file: [./internal/user/.env]
     environment:
       <<: *runtime-environment
       GRPC_ADDRESS: ":8201"
@@ -223,15 +223,15 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./organization-service/migrate:/migrations:ro]
+    volumes: [./internal/organization-legacy/migrate:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/organization?sslmode=disable", "up"]
     restart: on-failure
 
   organization:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/organization-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: organization-service/Dockerfile}
-    env_file: [./organization-service/.env]
+    build: {context: ., dockerfile: internal/organization-legacy/Dockerfile}
+    env_file: [./internal/organization-legacy/.env]
     environment:
       <<: *runtime-environment
       ORGANIZATION_DATABASE_URL: host=postgres user=postgres password=postgres dbname=organization port=5432 sslmode=disable
@@ -260,12 +260,12 @@ services:
   auth:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/auth-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: auth-service/Dockerfile}
-    env_file: [./auth-service/.env]
+    build: {context: ., dockerfile: internal/authentication/Dockerfile}
+    env_file: [./internal/authentication/.env]
     environment:
       <<: *runtime-environment
       QHPRO_SERVICE_ID: auth-service
-      # Host wiring from auth-service/.env must be overridden by container DNS.
+      # Host wiring from internal/authentication/.env must be overridden by container DNS.
       RPC_USER_ADDRESS: user:8201
     healthcheck:
       test: ["CMD", "nc", "-z", "127.0.0.1", "8216"]
@@ -300,15 +300,15 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./payment-service/database/migrations:/migrations:ro]
+    volumes: [./internal/payment/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/payment_service?sslmode=disable", "up"]
     restart: on-failure
 
   payment:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/payment-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: payment-service/Dockerfile}
-    env_file: [./payment-service/.env]
+    build: {context: ., dockerfile: internal/payment/Dockerfile}
+    env_file: [./internal/payment/.env]
     environment:
       <<: *runtime-environment
       PAYMENT_GRPC_ADDRESS: 0.0.0.0:8205
@@ -340,15 +340,15 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./tqd-service/database/migrations:/migrations:ro]
+    volumes: [./internal/planning/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_tqd?sslmode=disable", "up"]
     restart: on-failure
 
   tqd:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/tqd-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: tqd-service/Dockerfile}
-    env_file: [./tqd-service/.env]
+    build: {context: ., dockerfile: internal/planning/Dockerfile}
+    env_file: [./internal/planning/.env]
     environment:
       <<: *runtime-environment
       TQD_GRPC_PORT: 8219
@@ -385,15 +385,15 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./notification-service/database/migrations:/migrations:ro]
+    volumes: [./internal/notification/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://qhpro:qhpro@postgres:5432/qhpro_notification?sslmode=disable", "up"]
     restart: on-failure
 
   notification:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/notification-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: notification-service/Dockerfile}
-    env_file: [./notification-service/.env]
+    build: {context: ., dockerfile: internal/notification/Dockerfile}
+    env_file: [./internal/notification/.env]
     environment:
       <<: *runtime-environment
       NOTIFICATION_GRPC_PORT: 8204
@@ -425,15 +425,15 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
     networks: [backend]
-    volumes: [./file-service/database/migrations:/migrations:ro]
+    volumes: [./internal/file/database/migrations:/migrations:ro]
     command: ["-path=/migrations", "-database=postgres://postgres:postgres@postgres:5432/file_service?sslmode=disable", "up"]
     restart: on-failure
 
   file:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/file-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: file-service/Dockerfile}
-    env_file: [./file-service/.env]
+    build: {context: ., dockerfile: internal/file/Dockerfile}
+    env_file: [./internal/file/.env]
     environment:
       <<: *runtime-environment
       DATABASE_DSN: host=postgres user=postgres password=postgres dbname=file_service port=5432 sslmode=disable
@@ -460,8 +460,8 @@ services:
   assistant:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/assistant-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: assistant-service/Dockerfile}
-    env_file: [./assistant-service/.env]
+    build: {context: ., dockerfile: internal/assistant/Dockerfile}
+    env_file: [./internal/assistant/.env]
     environment:
       <<: *runtime-environment
       QHPRO_SERVICE_ID: assistant-service
@@ -481,8 +481,8 @@ services:
   gateway:
     <<: *service-defaults
     image: ${QHPRO_IMAGE_NAMESPACE:-bdspro}/gateway-service:${QHPRO_IMAGE_TAG:-local}
-    build: {context: ., dockerfile: gateway-service/Dockerfile}
-    env_file: [./gateway-service/.env]
+    build: {context: ., dockerfile: api/gateway/Dockerfile}
+    env_file: [./api/gateway/.env]
     environment:
       <<: *runtime-environment
       JWT_KEY_GENERATE: ${JWT_KEY_GENERATE:?JWT_KEY_GENERATE is required}

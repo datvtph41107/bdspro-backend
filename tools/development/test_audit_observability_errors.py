@@ -1,0 +1,1943 @@
+#!/usr/bin/env python3
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+from unittest import mock
+
+SCRIPT = Path(__file__).with_name("audit-observability-errors.py")
+
+spec = importlib.util.spec_from_file_location(
+    "audit_observability_errors",
+    SCRIPT,
+)
+audit = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = audit
+
+assert spec.loader is not None
+spec.loader.exec_module(audit)
+
+TEXT_RULE = next(
+    rule
+    for rule in audit.RULES
+    if rule.category == "go.text_error_classification"
+)
+
+
+class TextErrorClassifierDetectorTest(unittest.TestCase):
+    def classify(self, source: str) -> set[int]:
+        return audit.text_error_classifier_lines(
+            Path("fixture.go"),
+            source,
+            TEXT_RULE.pattern,
+        )
+
+    def test_direct_error_string_classifier(self):
+        source = (
+            "package fixture\n"
+            "func f(err error) {\n"
+            '\tif strings.Contains(err.Error(), "not found") {}\n'
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), {3})
+
+    def test_alias_derived_from_error_string_is_classified(self):
+        source = (
+            "package fixture\n"
+            "func f(err error) {\n"
+            "\tmsg := err.Error()\n"
+            '\tif strings.Contains(msg, "not found") {}\n'
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), {4})
+
+    def test_reassignment_clears_error_string_taint(self):
+        source = (
+            "package fixture\n"
+            "func f(err error) {\n"
+            "\tmsg := err.Error()\n"
+            '\tmsg = "safe presentation text"\n'
+            '\tif strings.Contains(msg, "not found") {}\n'
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), set())
+
+    def test_duplicate_classifiers_on_one_line_are_one_finding(self):
+        source = (
+            "package fixture\n"
+            "func f(err error) {\n"
+            "\tmsg := err.Error()\n"
+            '\tif strings.Contains(msg, "required") || '
+            'strings.Contains(msg, "invalid") {}\n'
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), {4})
+
+    def test_plain_string_alias_is_not_error_classification(self):
+        source = (
+            "package fixture\n"
+            "func f() {\n"
+            '\tmsg := "not found"\n'
+            '\tif strings.Contains(msg, "not found") {}\n'
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), set())
+
+    def test_alias_remains_tainted_in_nested_scope(self):
+        source = (
+            "package fixture\n"
+            "func f(err error, ok bool) {\n"
+            "\tmsg := err.Error()\n"
+            "\tif ok {\n"
+            '\t\tif strings.Contains(msg, "not found") {}\n'
+            "\t}\n"
+            "}\n"
+        )
+
+        self.assertEqual(self.classify(source), {5})
+
+
+    def test_tqd_text_classifier_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.text_error_classification",
+                "tqd-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_tqd_text_classifier_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.text_error_classification",
+            "severity": "debt",
+            "owner": "tqd-service",
+            "path": "internal/planning/fixture.go",
+            "line": 1,
+            "excerpt": (
+                'strings.Contains(err.Error(), "not found")'
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "ratchet-regression.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "ratchet-regression.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_shared_common_direct_http_writer_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.direct_http_error_writer",
+                "infrastructure/runtime",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_shared_common_direct_http_writer_ratchet_enforces_regression(
+        self,
+    ):
+        finding = {
+            "category": "go.direct_http_error_writer",
+            "severity": "debt",
+            "owner": "infrastructure/runtime",
+            "path": (
+                "infrastructure/runtime/jwt/"
+                "regression_fixture.go"
+            ),
+            "line": 1,
+            "excerpt": (
+                "c.AbortWithStatusJSON("
+                "http.StatusUnauthorized, payload)"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-common-ratchet-regression.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-common-ratchet-regression.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+    def test_user_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "user-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_user_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        finding = {
+            "category": "go.legacy_shared_error_response",
+            "severity": "debt",
+            "owner": "user-service",
+            "path": "internal/user/fixture.go",
+            "line": 1,
+            "excerpt": "&sharepb.ErrorResponse{Code: 404}",
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "user-service-legacy-error-response-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "user-service-legacy-error-response-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+    def test_bdspro_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "bdspro-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_bdspro_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        finding = {
+            "category": "go.legacy_shared_error_response",
+            "severity": "debt",
+            "owner": "bdspro-service",
+            "path": "internal/property/fixture.go",
+            "line": 1,
+            "excerpt": "&sharepb.ErrorResponse{Code: 400}",
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-service-legacy-error-response-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-service-legacy-error-response-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+    def assert_legacy_shared_error_response_ratchet_enforces(
+        self,
+        owner: str,
+    ):
+        finding = {
+            "category": "go.legacy_shared_error_response",
+            "severity": "debt",
+            "owner": owner,
+            "path": f"{owner}/fixture.go",
+            "line": 1,
+            "excerpt": "&sharepb.ErrorResponse{Code: 401}",
+        }
+
+        slug = owner.replace("/", "-")
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / f"{slug}-legacy-error-response-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / f"{slug}-legacy-error-response-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+    def test_chat_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "chat-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "chat-service",
+        )
+
+    def test_chat_v1_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "chat-v1-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_v1_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "chat-v1-service",
+        )
+
+    def test_relay_service_legacy_shared_error_response_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_shared_error_response",
+                "relay-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_relay_service_legacy_shared_error_response_ratchet_enforces_regression(
+        self,
+    ):
+        self.assert_legacy_shared_error_response_ratchet_enforces(
+            "relay-service",
+        )
+
+
+    def test_search_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "search-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_search_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "search-service",
+            "path": "internal/search/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("search service failed: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "search-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "search-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_file_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "file-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_file_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "file-service",
+            "path": "internal/file/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("File-service stopped with error: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "file-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "file-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_social_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "social-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_social_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "social-service",
+            "path": "internal/social/cmd/grpc/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("GRPC Listen: %v", port)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "social-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "social-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_assistant_service_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "assistant-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_assistant_service_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "assistant-service",
+            "path": "internal/assistant/cmd/grpc/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("Assistant Service is ready")',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "assistant-service-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "assistant-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+
+    def test_notification_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "notification-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_notification_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "notification-service",
+            "path": "internal/notification/cmd/grpc_server.go",
+            "line": 1,
+            "excerpt": 'log.Printf("notification gRPC listening")',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "notification-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "notification-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+
+    def test_chat_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "chat-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "chat-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "chat-service",
+            "path": "internal/chat/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("chat startup failed: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+    def test_chat_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "chat-service",
+            "path": "internal/chat/infra/server/http_server.go",
+            "line": 1,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-third-party-logger-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-third-party-logger-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_chat_v1_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "chat-v1-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "chat-v1-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_chat_v1_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "chat-v1-service",
+            "path": "internal/chat-legacy/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("chat-v1 startup failed: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-legacy-std-log-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+    def test_chat_v1_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "chat-v1-service",
+            "path": "internal/chat-legacy/infrastructure/server/http_server.go",
+            "line": 1,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-third-party-logger-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "chat-v1-third-party-logger-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+    def test_relay_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "relay-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "relay-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_relay_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "relay-service",
+            "path": "internal/realtime-relay/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("relay startup failed: %v", err)',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "relay-legacy-std-log-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "relay-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+    def test_relay_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "relay-service",
+            "path": "internal/realtime-relay/server/ws_server.go",
+            "line": 1,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "relay-third-party-logger-ratchet.tsv"
+        )
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "relay-third-party-logger-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+
+    def test_payment_logging_zero_ratchets_are_registered(self):
+        self.assertIn(
+            ("go.legacy_std_log", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+        self.assertIn(
+            ("go.third_party_logger", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "internal/payment/worker/outbox.go",
+            "line": 1,
+            "excerpt": 'log.Printf("payment failed: %v", err)',
+        }
+        output = audit.ROOT / ".tmp" / "observability-errors" / "payment-std-log-ratchet.tsv"
+        summary = audit.ROOT / ".tmp" / "observability-errors" / "payment-std-log-ratchet.json"
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+        with (
+            mock.patch.object(audit, "scan", return_value=[finding]),
+            mock.patch.object(sys, "argv", argv),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(audit.main(), 1)
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+    def test_payment_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "internal/payment/cmd/grpc/runtime.go",
+            "line": 1,
+            "excerpt": 'github.com/hyperledger/fabric/common/flogging',
+        }
+        output = audit.ROOT / ".tmp" / "observability-errors" / "payment-third-party-ratchet.tsv"
+        summary = audit.ROOT / ".tmp" / "observability-errors" / "payment-third-party-ratchet.json"
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+        with (
+            mock.patch.object(audit, "scan", return_value=[finding]),
+            mock.patch.object(sys, "argv", argv),
+            mock.patch("builtins.print"),
+        ):
+            try:
+                self.assertEqual(audit.main(), 1)
+            finally:
+                output.unlink(missing_ok=True)
+                summary.unlink(missing_ok=True)
+
+
+    def test_canonical_http_error_serializer_owner_is_shared(self):
+        summary = audit.build_summary([])
+
+        self.assertEqual(
+            summary["policy"]["canonical_http_error_serializer"],
+            "infrastructure/runtime/httpresponse.WriteProblem",
+        )
+
+        self.assertEqual(
+            summary["policy"]["gateway_http_error_facade"],
+            "api/gateway/internal/httpresponse.WriteProblem",
+        )
+
+
+
+    def test_user_service_third_party_logger_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.third_party_logger",
+                "user-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "user-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_user_service_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "user-service",
+            "path": "internal/user/initial/startup.go",
+            "line": 1,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "user-third-party-logger-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "user-third-party-logger-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+
+    def test_shared_legacy_std_log_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "shared",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_shared_legacy_std_log_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "shared",
+            "path": (
+                "infrastructure/base/dashboard/"
+                "dashboard_stats_job.go"
+            ),
+            "line": 1,
+            "excerpt": (
+                'log.Printf("dashboard stats job failed")'
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-legacy-std-log-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "shared-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+    def test_bdspro_third_party_logger_zero_ratchet_is_registered(self):
+        self.assertIn(
+            (
+                "go.third_party_logger",
+                "bdspro-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+
+    def test_bdspro_third_party_logger_ratchet_enforces_regression(self):
+        finding = {
+            "category": "go.third_party_logger",
+            "severity": "debt",
+            "owner": "bdspro-service",
+            "path": "internal/property/infra/redis/runtime.go",
+            "line": 10,
+            "excerpt": (
+                "github.com/hyperledger/"
+                "fabric/common/flogging"
+            ),
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-third-party-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-third-party-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+    def test_bdspro_service_legacy_std_log_zero_ratchet_is_registered(
+        self,
+    ):
+        self.assertIn(
+            (
+                "go.legacy_std_log",
+                "bdspro-service",
+            ),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_bdspro_service_legacy_std_log_ratchet_enforces_regression(
+        self,
+    ):
+        finding = {
+            "category": "go.legacy_std_log",
+            "severity": "debt",
+            "owner": "bdspro-service",
+            "path": "internal/property/main.go",
+            "line": 1,
+            "excerpt": 'log.Printf("legacy bdspro regression")',
+        }
+
+        output = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-service-legacy-std-log-ratchet.tsv"
+        )
+
+        summary = (
+            audit.ROOT
+            / ".tmp"
+            / "observability-errors"
+            / "bdspro-service-legacy-std-log-ratchet.json"
+        )
+
+        argv = [
+            "audit-observability-errors.py",
+            "--output",
+            str(output),
+            "--summary",
+            str(summary),
+            "--enforce-ratchets",
+        ]
+
+        with (
+            mock.patch.object(
+                audit,
+                "scan",
+                return_value=[finding],
+            ),
+            mock.patch.object(
+                sys,
+                "argv",
+                argv,
+            ),
+            mock.patch(
+                "builtins.print",
+            ),
+        ):
+            try:
+                self.assertEqual(
+                    audit.main(),
+                    1,
+                )
+            finally:
+                output.unlink(
+                    missing_ok=True,
+                )
+                summary.unlink(
+                    missing_ok=True,
+                )
+
+
+
+
+class ErrorBoundaryPolicyTest(unittest.TestCase):
+    def test_direct_grpc_projection_rule_excludes_canonical_owners(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.direct_grpc_error_projection"
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "infrastructure/runtime/errors/grpc.go",
+                Path("grpc.go"),
+            )
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "infrastructure/runtime/middleware/error_interceptor.go",
+                Path("error_interceptor.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "internal/payment/infra/handler/grpc/fixture.go",
+                Path("fixture.go"),
+            )
+        )
+
+    def test_payment_direct_grpc_projection_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.direct_grpc_error_projection", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_direct_grpc_projection_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.direct_grpc_error_projection",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "internal/payment/infra/handler/grpc/fixture.go",
+            "line": 1,
+            "excerpt": "_errors.ToGRPC(err)",
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.direct_grpc_error_projection@payment-service"],
+            1,
+        )
+
+
+
+class TileSessionSecretLoggingPolicyTest(unittest.TestCase):
+    def test_tile_session_secret_logging_rule_detects_plaintext_secret(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.tile_session_secret_logging"
+        )
+        source = (
+            'slog.InfoContext(ctx, fmt.Sprintf("session=%s", sessionEncryptKey))\n'
+        )
+        self.assertIsNotNone(rule.pattern.search(source))
+
+    def test_tile_session_secret_logging_zero_ratchets_are_registered(self):
+        expected = {
+            ("go.tile_session_secret_logging", "infrastructure/runtime"),
+            ("go.tile_session_secret_logging", "user-service"),
+            ("go.tile_session_secret_logging", "tqd-service"),
+        }
+        self.assertTrue(expected.issubset(set(audit.ZERO_RATCHETS)))
+
+    def test_tile_session_secret_logging_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.tile_session_secret_logging",
+            "severity": "debt",
+            "owner": "user-service",
+            "path": "internal/user/infra/handler/fixture.go",
+            "line": 1,
+            "excerpt": "slog.Info(sessionEncryptKey)",
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.tile_session_secret_logging@user-service"],
+            1,
+        )
+
+
+
+class PaymentPublisherUnavailableOwnershipPolicyTest(unittest.TestCase):
+    def test_parallel_publisher_unavailable_definition_excludes_canonical_owner(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.payment_parallel_publisher_unavailable"
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "internal/payment/internal/usecase/outbox/service.go",
+                Path("service.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "internal/payment/infra/broker/rabbitmq/fixture.go",
+                Path("fixture.go"),
+            )
+        )
+        self.assertIsNotNone(
+            rule.pattern.search(
+                'var ErrPublisherUnavailable = errors.New("parallel owner")'
+            )
+        )
+
+    def test_payment_parallel_publisher_unavailable_zero_ratchet_is_registered(self):
+        self.assertIn(
+            ("go.payment_parallel_publisher_unavailable", "payment-service"),
+            audit.ZERO_RATCHETS,
+        )
+
+    def test_payment_parallel_publisher_unavailable_ratchet_counts_regression(self):
+        finding = {
+            "category": "go.payment_parallel_publisher_unavailable",
+            "severity": "debt",
+            "owner": "payment-service",
+            "path": "internal/payment/infra/broker/rabbitmq/fixture.go",
+            "line": 1,
+            "excerpt": 'var ErrPublisherUnavailable = errors.New("parallel owner")',
+        }
+        counts = audit.ratchet_counts([finding])
+        self.assertEqual(
+            counts["go.payment_parallel_publisher_unavailable@payment-service"],
+            1,
+        )
+
+
+
+class DebtFingerprintBaselinePolicyTest(unittest.TestCase):
+    @staticmethod
+    def finding(
+        *,
+        category="go.legacy_std_log",
+        owner="map-service",
+        path="internal/map-legacy/main.go",
+        line=10,
+        excerpt='log.Println("legacy")',
+    ):
+        return {
+            "category": category,
+            "severity": "debt",
+            "owner": owner,
+            "path": path,
+            "line": line,
+            "excerpt": excerpt,
+        }
+
+    def test_exact_fingerprint_multiset_matches(self):
+        finding = self.finding()
+        baseline = audit.debt_fingerprint_counts([finding])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [finding],
+            baseline,
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_line_number_and_whitespace_do_not_redefine_identity(self):
+        accepted = self.finding(
+            line=10,
+            excerpt='log.Printf(  "legacy %s", value )',
+        )
+        moved = self.finding(
+            line=999,
+            excerpt='  log.Printf( "legacy   %s",   value )  ',
+        )
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [moved],
+            baseline,
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_retirement_without_baseline_sync_fails(self):
+        accepted = self.finding()
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift([], baseline)
+
+        self.assertFalse(unexpected)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_synchronized_retirement_passes(self):
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [],
+            audit.debt_fingerprint_counts([]),
+        )
+
+        self.assertFalse(unexpected)
+        self.assertFalse(stale)
+
+    def test_same_count_replacement_fails(self):
+        accepted = self.finding(
+            path="internal/map-legacy/main.go",
+            excerpt='log.Println("accepted legacy")',
+        )
+        replacement = self.finding(
+            path="internal/map-legacy/new.go",
+            excerpt='log.Println("new legacy")',
+        )
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [replacement],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_duplicate_reintroduction_fails_multiset_count(self):
+        accepted = self.finding()
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [accepted, accepted],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertFalse(stale)
+
+    def test_unknown_owner_fails_even_when_total_count_is_unchanged(self):
+        accepted = self.finding(owner="map-service")
+        moved = self.finding(owner="new-service")
+        baseline = audit.debt_fingerprint_counts([accepted])
+
+        unexpected, stale = audit.debt_fingerprint_drift(
+            [moved],
+            baseline,
+        )
+
+        self.assertEqual(sum(unexpected.values()), 1)
+        self.assertEqual(sum(stale.values()), 1)
+
+    def test_committed_baseline_is_canonical_and_has_44_findings(self):
+        baseline = audit.load_debt_fingerprint_baseline()
+
+        self.assertEqual(sum(baseline.values()), 44)
+        self.assertEqual(len(baseline), 43)
+
+
+class R5LoggingConvergencePolicyTest(unittest.TestCase):
+    def test_stdlog_bridge_is_the_only_exact_legacy_std_log_exclusion(self):
+        rule = next(
+            rule
+            for rule in audit.RULES
+            if rule.category == "go.legacy_std_log"
+        )
+        self.assertEqual(
+            rule.excluded_paths,
+            ("infrastructure/runtime/logging/stdlog_bridge.go",),
+        )
+        self.assertFalse(
+            audit.rule_applies(
+                rule,
+                "infrastructure/runtime/logging/stdlog_bridge.go",
+                Path("stdlog_bridge.go"),
+            )
+        )
+        self.assertTrue(
+            audit.rule_applies(
+                rule,
+                "infrastructure/runtime/logging/regression.go",
+                Path("regression.go"),
+            )
+        )
+
+    def test_r5_logging_zero_ratchets_are_registered(self):
+        expected = {
+            ("go.legacy_std_log", "hub-service"),
+            ("go.legacy_std_log", "crm-service"),
+            ("go.legacy_std_log", "infrastructure/runtime"),
+            ("go.legacy_std_log", "tools/development"),
+            ("go.legacy_std_log", "tqd-service"),
+            ("go.legacy_std_log", "user-service"),
+            ("go.third_party_logger", "hub-service"),
+            ("go.third_party_logger", "crm-service"),
+            ("go.third_party_logger", "infrastructure/runtime"),
+        }
+        self.assertTrue(expected.issubset(set(audit.ZERO_RATCHETS)))
+
+    def test_r5_logging_ratchets_count_regressions(self):
+        findings = [
+            {
+                "category": "go.legacy_std_log",
+                "severity": "debt",
+                "owner": "tqd-service",
+                "path": "internal/planning/fixture.go",
+                "line": 1,
+                "excerpt": 'log.Printf("regression")',
+            },
+            {
+                "category": "go.third_party_logger",
+                "severity": "debt",
+                "owner": "crm-service",
+                "path": "internal/crm/fixture.go",
+                "line": 1,
+                "excerpt": "github.com/hyperledger/fabric/common/flogging",
+            },
+        ]
+        counts = audit.ratchet_counts(findings)
+        self.assertEqual(counts["go.legacy_std_log@tqd-service"], 1)
+        self.assertEqual(counts["go.third_party_logger@crm-service"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()

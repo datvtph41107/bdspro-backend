@@ -17,4 +17,4 @@
 # Full verification/acceptance remains available to CI and release maintainers
 # as `make accept`; it is not a prerequisite for opening an accepted clone.
 # Implementations live in the repository engineering application below.
-include shared/code/development/root.mk
+include tools/development/root.mk

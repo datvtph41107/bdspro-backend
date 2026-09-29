@@ -91,14 +91,15 @@ Developer không bắt đầu từ container. Developer bắt đầu từ owner 
 
 | Vùng                             | Sở hữu                                                                             |
 | -------------------------------- | ---------------------------------------------------------------------------------- |
-| Root                             | workspace UX: `README`, public `Makefile`, `compose.yaml`, `go.work`, IDE config   |
-| `*-service/`                     | product/application truth của service                                              |
-| `shared/code/`                   | repository engineering application: setup/dev/generate/build/verify/deploy/release |
-| `shared/common/`, `shared/base/` | generic runtime mechanics dùng lại                                                 |
-| `shared/protobuf/`               | communication contracts + generated contract code                                  |
-| `integration-test/`              | cross-owner runtime proof                                                          |
+| Root | workspace UX: `README`, public `Makefile`, `compose.yaml`, `go.work`, IDE config |
+| `api/gateway/` | external HTTP/API edge source; không phải business authority |
+| `internal/*` | current business/runtime implementation areas; source path không tự định nghĩa network boundary |
+| `infrastructure/runtime/`, `infrastructure/base/` | reusable technical/runtime mechanics |
+| `proto/` | communication contracts + generated contract code |
+| `tools/development/` | repository engineering application: setup/dev/generate/build/verify/release |
+| `integration-test/` | cross-owner runtime proof |
 
-Nguyên tắc: **Root tổ chức hệ thống. Service tổ chức application/business. Shared runtime tổ chức mechanics. Contracts tổ chức giao tiếp. `shared/code` tổ chức engineering workflow.**
+Nguyên tắc: **Root tổ chức hệ thống. Business/runtime source nằm dưới `internal/` hoặc `api/`. Infrastructure chỉ sở hữu mechanics. `proto/` sở hữu wire contracts. `tools/development/` sở hữu engineering workflow. Runtime service identity và source path là hai khái niệm độc lập.**
 
 ## Public command API
 
@@ -134,7 +135,7 @@ Các target dài bên trong là implementation/compatibility API và không ph�
 Ví dụ nhận task Payment settlement:
 
 ```text
-payment-service/README.md
+internal/payment/README.md
   ↓
 main.go / cmd/<role>/main.go
   ↓
@@ -173,11 +174,11 @@ Các `*-migrate` container trong Compose là **one-shot jobs**: chờ database, 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — luật thay đổi source/PR.
 - [`BACKEND-ARCHITECTURE.md`](BACKEND-ARCHITECTURE.md) — ownership và dependency boundaries.
 - [`BACKEND-ACCEPTANCE.md`](BACKEND-ACCEPTANCE.md) — proof ladder và final gate.
-- [`shared/code/README.md`](shared/code/README.md) — engineering application.
-- [`documents/DEVELOPER-OPERATING-GUIDE.md`](documents/DEVELOPER-OPERATING-GUIDE.md) — clone → first change → integration.
-- [`documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md`](documents/DEVELOPMENT-ARCHITECTURE-STANDARD.md) — quy chuẩn dài hạn.
-- [`documents/SERVICE-MAP.md`](documents/SERVICE-MAP.md) — service owners/entrypoints.
-- [`documents/MIGRATIONS.md`](documents/MIGRATIONS.md) — migration authorities.
-- [`documents/THREE-SOURCE-ONBOARDING.md`](documents/THREE-SOURCE-ONBOARDING.md) — fresh clone → config → ba runtime → quota proof.
-- [`documents/QHPRO-COMMERCIAL-OPERATIONS.md`](documents/QHPRO-COMMERCIAL-OPERATIONS.md) — vận hành Admin/Client từ gói đến quota và report.
-- [`documents/FINAL-ACCEPTANCE-20260904.md`](documents/FINAL-ACCEPTANCE-20260904.md) — trạng thái proof của artifact này.
+- [`tools/development/README.md`](tools/development/README.md) — engineering application.
+- [`docs/reference/DEVELOPER-OPERATING-GUIDE.md`](docs/reference/DEVELOPER-OPERATING-GUIDE.md) — clone → first change → integration.
+- [`docs/reference/DEVELOPMENT-ARCHITECTURE-STANDARD.md`](docs/reference/DEVELOPMENT-ARCHITECTURE-STANDARD.md) — quy chuẩn dài hạn.
+- [`docs/reference/SERVICE-MAP.md`](docs/reference/SERVICE-MAP.md) — service owners/entrypoints.
+- [`docs/reference/MIGRATIONS.md`](docs/reference/MIGRATIONS.md) — migration authorities.
+- [`docs/reference/THREE-SOURCE-ONBOARDING.md`](docs/reference/THREE-SOURCE-ONBOARDING.md) — fresh clone → config → ba runtime → quota proof.
+- [`docs/reference/QHPRO-COMMERCIAL-OPERATIONS.md`](docs/reference/QHPRO-COMMERCIAL-OPERATIONS.md) — vận hành Admin/Client từ gói đến quota và report.
+- [`docs/reference/FINAL-ACCEPTANCE-20260904.md`](docs/reference/FINAL-ACCEPTANCE-20260904.md) — trạng thái proof của artifact này.

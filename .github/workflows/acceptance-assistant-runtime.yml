@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           printf 'go_version=%s\n' "$GO_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up canonical Go patch version
@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           test "$(go env GOVERSION)" = "go${GO_VERSION}"
           go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
@@ -57,11 +57,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -f assistant-service/config/runtime.go
-          test -f assistant-service/config/runtime_test.go
+          test -f internal/assistant/config/runtime.go
+          test -f internal/assistant/config/runtime_test.go
 
           escaped="$(
-            grep -RInE               'os\.Getenv|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)'               assistant-service               --include='*.go'               --exclude='wire_gen.go'             | grep -v '^assistant-service/config/runtime.go:'             || true
+            grep -RInE               'os\.Getenv|viper\.(Get|GetString|GetInt|GetBool|GetDuration|GetStringSlice)'               assistant-service               --include='*.go'               --exclude='wire_gen.go'             | grep -v '^internal/assistant/config/runtime.go:'             || true
           )"
           if [ -n "$escaped" ]; then
             echo 'Assistant runtime config reader escaped assistant/config:' >&2
@@ -70,34 +70,34 @@ jobs:
           fi
 
           test "$(grep -RIl 'QHPRO_AI_PROVIDER_MODE' assistant-service --include='*.go' --exclude='wire_gen.go' | wc -l)" -eq 1
-          grep -Fq 'const providerModeEnv = "QHPRO_AI_PROVIDER_MODE"' assistant-service/config/runtime.go
+          grep -Fq 'const providerModeEnv = "QHPRO_AI_PROVIDER_MODE"' internal/assistant/config/runtime.go
 
-          grep -Fq 'func NewDeepseekClient(runtime config.Runtime)' assistant-service/infra/client/deepseek_client.go
-          grep -Fq 'func NewOpenAIClient(runtime config.Runtime)' assistant-service/infra/client/openai_client.go
-          grep -Fq 'func NewGeminiClient(runtime config.Runtime)' assistant-service/infra/client/gemini_client.go
+          grep -Fq 'func NewDeepseekClient(runtime config.Runtime)' internal/assistant/infra/client/deepseek_client.go
+          grep -Fq 'func NewOpenAIClient(runtime config.Runtime)' internal/assistant/infra/client/openai_client.go
+          grep -Fq 'func NewGeminiClient(runtime config.Runtime)' internal/assistant/infra/client/gemini_client.go
 
-          if grep -REn 'func New(Deepseek|OpenAI|Gemini)Client\(\)' assistant-service/infra/client; then
+          if grep -REn 'func New(Deepseek|OpenAI|Gemini)Client\(\)' internal/assistant/infra/client; then
             echo 'Legacy zero-argument AI constructor detected' >&2
             exit 1
           fi
 
-          grep -Fq 'func validateProviderCall(provider, mode, apiKey string) error' assistant-service/infra/client/provider_mode.go
-          if grep -Eq 'os\.Getenv|viper\.' assistant-service/infra/client/provider_mode.go; then
+          grep -Fq 'func validateProviderCall(provider, mode, apiKey string) error' internal/assistant/infra/client/provider_mode.go
+          if grep -Eq 'os\.Getenv|viper\.' internal/assistant/infra/client/provider_mode.go; then
             echo 'Provider validator reads process configuration directly' >&2
             exit 1
           fi
 
-          grep -Eq '^[[:space:]]*Runtime[[:space:]]+config\.Runtime$' assistant-service/initial/runtime.go
-          grep -Fq 'assistant_config.NewRuntime' assistant-service/wire/wire.go
+          grep -Eq '^[[:space:]]*Runtime[[:space:]]+config\.Runtime$' internal/assistant/initial/runtime.go
+          grep -Fq 'assistant_config.NewRuntime' internal/assistant/wire/wire.go
 
-          grep -Fq '$(MAKE) -C ../shared/code wire assistant' assistant-service/Makefile
-          if grep -Fq 'wire-assistant' assistant-service/Makefile; then
+          grep -Fq '$(MAKE) -C ../tools/development wire assistant' internal/assistant/Makefile
+          if grep -Fq 'wire-assistant' internal/assistant/Makefile; then
             echo 'Retired wire-assistant vocabulary detected' >&2
             exit 1
           fi
 
-          grep -Fq 'assistantHandler.Runtime.GRPCPort' assistant-service/cmd/grpc/main.go
-          if grep -Eq 'viper\.|os\.Getenv' assistant-service/cmd/grpc/main.go; then
+          grep -Fq 'assistantHandler.Runtime.GRPCPort' internal/assistant/cmd/grpc/main.go
+          if grep -Eq 'viper\.|os\.Getenv' internal/assistant/cmd/grpc/main.go; then
             echo 'Assistant process entrypoint reads runtime values directly' >&2
             exit 1
           fi
@@ -108,28 +108,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
+          make -C tools/development buf-all
 
-          rm -f assistant-service/wire/wire_gen.go
-          make -C shared/code wire assistant
+          rm -f internal/assistant/wire/wire_gen.go
+          make -C tools/development wire assistant
 
-          test -f assistant-service/wire/wire_gen.go
-          git check-ignore -q assistant-service/wire/wire_gen.go
+          test -f internal/assistant/wire/wire_gen.go
+          git check-ignore -q internal/assistant/wire/wire_gen.go
 
-          grep -Fq 'runtime, err := config.NewRuntime()' assistant-service/wire/wire_gen.go
-          grep -Fq 'client.NewDeepseekClient(runtime)' assistant-service/wire/wire_gen.go
-          grep -Fq 'client.NewOpenAIClient(runtime)' assistant-service/wire/wire_gen.go
-          grep -Fq 'client.NewGeminiClient(runtime)' assistant-service/wire/wire_gen.go
-          grep -Fq 'handler.NewAssistantHandler(assistantUsecase, runtime)' assistant-service/wire/wire_gen.go
-          grep -Fq 'initial.NewInitialApp(assistantHandler, runtime)' assistant-service/wire/wire_gen.go
+          grep -Fq 'runtime, err := config.NewRuntime()' internal/assistant/wire/wire_gen.go
+          grep -Fq 'client.NewDeepseekClient(runtime)' internal/assistant/wire/wire_gen.go
+          grep -Fq 'client.NewOpenAIClient(runtime)' internal/assistant/wire/wire_gen.go
+          grep -Fq 'client.NewGeminiClient(runtime)' internal/assistant/wire/wire_gen.go
+          grep -Fq 'handler.NewAssistantHandler(assistantUsecase, runtime)' internal/assistant/wire/wire_gen.go
+          grep -Fq 'initial.NewInitialApp(assistantHandler, runtime)' internal/assistant/wire/wire_gen.go
 
-          wire_go_first="$(sha256sum assistant-service/wire/wire.go | awk '{print $1}')"
-          wire_gen_first="$(sha256sum assistant-service/wire/wire_gen.go | awk '{print $1}')"
+          wire_go_first="$(sha256sum internal/assistant/wire/wire.go | awk '{print $1}')"
+          wire_gen_first="$(sha256sum internal/assistant/wire/wire_gen.go | awk '{print $1}')"
 
-          make -C shared/code wire assistant
+          make -C tools/development wire assistant
 
-          wire_go_second="$(sha256sum assistant-service/wire/wire.go | awk '{print $1}')"
-          wire_gen_second="$(sha256sum assistant-service/wire/wire_gen.go | awk '{print $1}')"
+          wire_go_second="$(sha256sum internal/assistant/wire/wire.go | awk '{print $1}')"
+          wire_gen_second="$(sha256sum internal/assistant/wire/wire_gen.go | awk '{print $1}')"
 
           test "$wire_go_first" = "$wire_go_second"
           test "$wire_gen_first" = "$wire_gen_second"
@@ -141,14 +141,14 @@ jobs:
 
       - name: Prove typed runtime behavior
         shell: bash
-        working-directory: assistant-service
+        working-directory: internal/assistant
         run: |
           set -euo pipefail
           go test ./config ./infra/client
 
       - name: Compile Assistant
         shell: bash
-        working-directory: assistant-service
+        working-directory: internal/assistant
         run: |
           set -euo pipefail
           go test ./...

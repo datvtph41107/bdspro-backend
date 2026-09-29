@@ -5,6 +5,7 @@ on:
     branches:
       - final-acceptance/source-canonicalization
       - 'final-acceptance/proof-s4-bdspro-redis-*'
+      - architecture/source-migration-v1
   workflow_dispatch:
 
 permissions:
@@ -44,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           printf 'go_version=%s\n' "$GO_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up canonical Go patch version
@@ -57,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source shared/code/development/toolchain.versions
+          source tools/development/toolchain.versions
           test "$(go env GOVERSION)" = "go${GO_VERSION}"
           go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@v${PROTOC_GEN_GO_VERSION}"
@@ -74,37 +75,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          count="$(git grep -n 'redis.NewClient(' -- bdspro-service | wc -l)"
+          count="$(git grep -n 'redis.NewClient(' -- internal/property | wc -l)"
           test "$count" = "1"
-          git grep -n 'redis.NewClient(' -- bdspro-service/infra/redis/runtime.go
-          test ! -e bdspro-service/infra/providers/redis_provider.go
-          ! git grep -n 'NewRedisProvider' -- bdspro-service
-          grep -Fq 'func NewClient() (*RedisClient, func(), error)' bdspro-service/infra/redis/runtime.go
-          grep -q 'return r.client.Close()' bdspro-service/infra/redis/runtime.go
-          ! grep -q 'connected bool' bdspro-service/infra/redis/runtime.go
-          ! grep -q 'ensureConnection' bdspro-service/infra/redis/runtime.go
-          ! grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' bdspro-service/initial/runtime.go
-          ! grep -q 'app.RedisClient.Close()' bdspro-service/cmd/grpc/main.go
-          grep -q 'ensureSyncCache(ctx, profileID)' bdspro-service/internal/usecases/shared/product_usecase.go
-          grep -q 'client.Del(ctx, userHash, changeZSet)' bdspro-service/internal/usecases/shared/product_usecase.go
-          grep -q 'GetAllTimestampsForSync' bdspro-service/internal/usecases/shared/product_usecase.go
+          git grep -n 'redis.NewClient(' -- internal/property/infra/redis/runtime.go
+          test ! -e internal/property/infra/providers/redis_provider.go
+          ! git grep -n 'NewRedisProvider' -- internal/property
+          grep -Fq 'func NewClient() (*RedisClient, func(), error)' internal/property/infra/redis/runtime.go
+          grep -q 'return r.client.Close()' internal/property/infra/redis/runtime.go
+          ! grep -q 'connected bool' internal/property/infra/redis/runtime.go
+          ! grep -q 'ensureConnection' internal/property/infra/redis/runtime.go
+          ! grep -q 'RedisClient[[:space:]]*\*redis_cli.RedisClient' internal/property/initial/runtime.go
+          ! grep -q 'app.RedisClient.Close()' internal/property/cmd/grpc/main.go
+          grep -q 'ensureSyncCache(ctx, profileID)' internal/property/internal/usecases/shared/product_usecase.go
+          grep -q 'client.Del(ctx, userHash, changeZSet)' internal/property/internal/usecases/shared/product_usecase.go
+          grep -q 'GetAllTimestampsForSync' internal/property/internal/usecases/shared/product_usecase.go
 
       - name: Generate protobuf and prove Wire cleanliness
         shell: bash
         run: |
           set -euo pipefail
-          make -C shared/code buf-all
-          make -C shared/code wire bdspro
-          git diff --exit-code -- bdspro-service/wire/wire_gen.go
+          make -C tools/development buf-all
+          make -C tools/development wire bdspro
+          git diff --exit-code -- internal/property/wire/wire_gen.go
           git diff --check
-          grep -q 'redis_cli.NewClient()' bdspro-service/wire/wire_gen.go
+          grep -q 'redis_cli.NewClient()' internal/property/wire/wire_gen.go
 
       - name: Prove Redis lifecycle and cache-loss recovery at runtime
         shell: bash
         run: |
           set -euo pipefail
 
-          cat > bdspro-service/infra/redis/s4_acceptance_test.go <<'GOEOF'
+          cat > internal/property/infra/redis/s4_acceptance_test.go <<'GOEOF'
           package redis_cli
 
           import (
@@ -142,7 +143,7 @@ jobs:
           }
           GOEOF
 
-          cat > bdspro-service/internal/usecases/shared/s4_redis_recovery_acceptance_test.go <<'GOEOF'
+          cat > internal/property/internal/usecases/shared/s4_redis_recovery_acceptance_test.go <<'GOEOF'
           package shared_usecase
 
           import (
@@ -343,20 +344,20 @@ jobs:
           GOEOF
 
           (
-            cd bdspro-service
+            cd internal/property
             go test ./infra/redis -run '^TestS4RedisLifecycleCleanup$' -count=1 -v
             go test ./internal/usecases/shared -run '^TestS4' -count=1 -v
           )
 
           rm -f \
-            bdspro-service/infra/redis/s4_acceptance_test.go \
-            bdspro-service/internal/usecases/shared/s4_redis_recovery_acceptance_test.go
+            internal/property/infra/redis/s4_acceptance_test.go \
+            internal/property/internal/usecases/shared/s4_redis_recovery_acceptance_test.go
 
           git diff --check
 
       - name: Compile test vet and build BDSPro
         shell: bash
-        working-directory: bdspro-service
+        working-directory: internal/property
         run: |
           set -euo pipefail
           go test ./...
