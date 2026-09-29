@@ -125,3 +125,35 @@ Repository: datvtph41107/bdspro-backend
 Branch: architecture/rebuild-v2
 Read docs/architecture/rebuild-v2/MASTER-PROMPT.md and follow it exactly.
 ```
+
+
+---
+
+## 2026-09-29 — Active work moved to clean repository
+
+This checkpoint is now historical for active rebuild work.
+
+New active repository:
+
+`datvtph41107/bdspro`
+
+Preferred new local workspace:
+
+`~/projects/bdspro`
+
+Reason:
+
+- remove legacy multi-module/workspace/source noise from first-principles Go work;
+- stop inheriting architecture assumptions that have not been independently
+  re-derived;
+- keep this repository as historical/production evidence without allowing it to
+  constrain the new clean source.
+
+Transition source identity:
+
+`architecture/rebuild-v2@c1245796e320d533ca29d7b92bb23fa28e8380a1`
+
+Future architecture/source work should recover from the new repository's
+`docs/continuity/MASTER.md`.
+
+Do not delete or rewrite this historical branch.
