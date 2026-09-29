@@ -184,3 +184,87 @@ For Rebuild V2:
 9. benchmark/profile performance claims separately from naming/style decisions.
 
 This policy remains PROVISIONAL until exercised by the first real BDSPro packages.
+
+
+## Evidence ladder: official guidance to production repositories
+
+### Official Go sources
+
+Primary sources to consult first:
+
+- Go Blog — Package names: package names provide caller context, help maintainers
+  decide what belongs, and generic names such as util/common are warning signs.
+- Effective Go — package names should be short, concise, evocative, lowercase and
+  normally single-word; exported names should avoid repeating package context.
+- Go Code Review Comments — avoid meaningless package names such as util, common,
+  misc, api, types and interfaces.
+- Organizing a Go module — start simple; a command may begin as package main and
+  supporting packages should be extracted only as complexity warrants; internal/
+  is recommended for packages not intended as public API.
+- Organizing Go code talk — packages collect related code, can be large or small,
+  and names should be chosen for users/callers.
+
+Secondary high-quality style sources:
+
+- Google Go Style — design package names from call sites; avoid util/helper/common
+  buckets and routine import renaming/shadowing.
+- Uber Go Style Guide — concise lowercase package names; avoid package/exported
+  symbol stuttering and generic package buckets.
+
+### Open-source observations
+
+Go standard library `net/http`:
+- one coherent package spans many files and types: Client, Server, Request,
+  Response, Transport;
+- it does not split files into model/service/repository packages simply because
+  they have different technical roles;
+- exported names rely on the `http.` prefix for context.
+
+Kubernetes:
+- packages such as `pkg/controller/deployment` and
+  `pkg/controller/volume/ephemeral` are named after the concrete capability
+  handled by the package;
+- package documentation explicitly states responsibility;
+- technical subpackages such as `util` still exist where history/scale demands
+  them, demonstrating that real repositories contain compromises rather than a
+  perfect template.
+
+Prometheus:
+- top-level packages such as `scrape`, `discovery`, `rules`, and `storage`
+  map to major system capabilities;
+- several related source files remain in the same package when they cooperate
+  closely;
+- utility subpackages also exist, showing extraction should be judged by actual
+  cohesion/dependencies rather than ideology.
+
+etcd:
+- repository is multi-module at scale;
+- packages such as `server/etcdserver`, `server/.../storage/mvcc`,
+  `server/.../auth`, and client packages reflect concrete subsystem
+  responsibilities;
+- the architecture shows that module/package topology evolves with ownership and
+  release boundaries, not from a universal folder skeleton.
+
+go-chi/chi:
+- the root package is deliberately small and capability-focused (`chi`);
+- optional concerns are split into subpackages such as middleware;
+- the project explicitly optimizes for maintainability and decomposition into
+  small composable parts.
+
+### Interpretation rule
+
+Do not copy repository trees.
+
+For every observed OSS package ask:
+
+```text
+WHAT RESPONSIBILITY DOES IT OWN?
+WHO CALLS IT?
+WHAT DOES THE PACKAGE NAME ADD AT THE CALL SITE?
+WHY IS THIS CODE TOGETHER?
+WHY IS THIS CODE SEPARATE?
+WHAT DEPENDENCY / RELEASE / VISIBILITY PRESSURE JUSTIFIES THE BOUNDARY?
+WOULD BDSPro HAVE THE SAME PRESSURE?
+```
+
+Only then ADOPT / ADAPT / REJECT / OPEN.
