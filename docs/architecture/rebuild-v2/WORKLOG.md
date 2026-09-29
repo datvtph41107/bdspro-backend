@@ -185,3 +185,26 @@ program-level goals.
 
 The working style now explicitly maintains a goal hierarchy and derives the next
 question from observed fundamentals rather than from a predetermined pattern.
+
+
+---
+
+## 2026-09-29 — Uber Go Guide added as problem-indexed foundation
+
+The user selected `https://github.com/uber-go/guide` as a foundational Go
+reference for the hands-on rebuild/training program.
+
+Verified repository:
+
+- `uber-go/guide`
+- default branch: `master`
+- observed latest commit: `1d60a91aa5e87d443002e23c21903c49489dbde5`
+- primary generated guide: `style.md`
+
+A durable research index was added at:
+
+`docs/architecture/rebuild-v2/research/go/UBER-GO-GUIDE.md`
+
+Policy: consult matching sections only when a real problem appears; first
+understand/reproduce the Go mechanism, then compare the guide, and finally decide
+ADOPT / ADAPT / REJECT / OPEN for BDSPro.
