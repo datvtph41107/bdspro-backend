@@ -73,15 +73,36 @@ R6  Convergence & Migration
 
 ## Immediate recovery/alignment gate
 
-`R0.1 — Align preferred local workspace to live architecture/rebuild-v2`
+`R0.1 — Align preferred local workspace to live architecture/rebuild-v2` — CLOSED
 
 Preferred local workspace:
 
 `~/projects/bdspro-canonical-bootstrap-20260908`
 
-The remote durable state is ahead of the user's observed local checkout. Before
-R1.1 implementation/reasoning continues in that workspace, fetch/reconcile the
-remote branch and verify the local worktree is clean/preserved.
+Local branch alignment was verified by the user:
+
+```text
+LOCAL  = 033f0964956cc049e3237e343bc8fcc037312015
+REMOTE = 033f0964956cc049e3237e343bc8fcc037312015
+branch = architecture/rebuild-v2 tracking origin/architecture/rebuild-v2
+MASTER-PROMPT.md = present
+bdspro/README.md = present
+```
+
+After switching, these residual untracked paths appeared and must be preserved
+until classified:
+
+```text
+assistant-service/
+file-service/
+hub-service/
+shared/
+tqd-service/
+```
+
+They do not invalidate branch alignment, but root-wide cleanup is not authorized.
+R1.1 work may proceed inside the tracked `bdspro/` subtree while the residuals
+remain untouched.
 
 ## Next authorized design gate
 

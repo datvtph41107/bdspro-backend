@@ -168,3 +168,31 @@ Target local working branch for the rebuild program:
 The `bdspro/` subtree on that branch is the greenfield learning/rebuild area. It
 is a training and architecture laboratory until a later decision promotes any of
 its structure into canonical production topology.
+
+
+## Hands-on developer training style
+
+The user will type and rebuild the code personally to train engineering reflexes.
+Guidance should therefore optimize for real developer workflow rather than
+presentation-only explanations.
+
+Default interaction style:
+
+- give the exact small command(s) to type;
+- explain what the command changes and why it is being run;
+- predict the important output/state to observe;
+- let the user run it and return the real output;
+- inspect that output before advancing;
+- provide complete small code files when code is introduced, so the user can type
+  or paste them without reconstructing fragments;
+- run the code/test immediately after each meaningful change;
+- use real BDSPro problems to explain the Go primitive;
+- avoid large scaffolds, magic generators and premature abstractions;
+- use one learning/engineering concept at a time;
+- preserve failures and unexpected outputs as training evidence rather than
+  hiding them;
+- after the mechanism is understood, connect it to architecture trade-offs and
+  checkpoint only when evidence is sufficient.
+
+The goal is to build production-working reflexes: inspect -> change -> run ->
+observe -> reason -> prove -> record.

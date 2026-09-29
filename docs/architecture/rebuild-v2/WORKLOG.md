@@ -134,3 +134,42 @@ After the user verifies the local checkout tracks the live
 `architecture/rebuild-v2` branch, continue:
 
 `R1.1 — What exactly is Core?`
+
+
+---
+
+## 2026-09-29 — Local Rebuild V2 alignment verified
+
+The user aligned the preferred WSL workspace:
+
+`~/projects/bdspro-canonical-bootstrap-20260908`
+
+Verified:
+
+```text
+branch: architecture/rebuild-v2
+local HEAD: 033f0964956cc049e3237e343bc8fcc037312015
+remote HEAD: 033f0964956cc049e3237e343bc8fcc037312015
+LOCAL == REMOTE: OK
+MASTER PROMPT: OK
+BDSPro learning workspace: OK
+```
+
+After the branch switch, residual untracked directories appeared:
+
+```text
+assistant-service/
+file-service/
+hub-service/
+shared/
+tqd-service/
+```
+
+They are preserved as unknown/historical local residue. No cleanup is authorized
+until classified.
+
+R0.1 branch alignment is CLOSED. R1.1 may proceed inside `bdspro/`.
+
+The user also explicitly chose a hands-on learning style: personally type/run the
+commands and code, return real terminal output, and build engineering reflexes
+through small production-relevant steps. This style is now a durable working rule.
