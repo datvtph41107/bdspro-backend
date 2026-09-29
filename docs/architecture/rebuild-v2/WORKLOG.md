@@ -229,3 +229,24 @@ Key result:
   health indirectly;
 - caller readability, discoverability and dependency clarity are the main value;
 - BDSPro package naming policy remains PROVISIONAL until tested by real packages.
+
+
+---
+
+## 2026-09-29 — Active rebuild transferred to clean repository
+
+The user created/selected `datvtph41107/bdspro` as a completely clean repository
+for continued Go/backend work.
+
+The previous rebuild lane remains preserved as evidence, but its mentor-derived
+architecture assumptions are no longer inherited by default.
+
+New local working path:
+
+`~/projects/bdspro`
+
+New durable recovery entry:
+
+`datvtph41107/bdspro:docs/continuity/MASTER.md`
+
+This repository/branch is historical from this point for the clean rebuild.
