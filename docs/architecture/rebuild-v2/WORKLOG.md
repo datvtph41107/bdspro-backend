@@ -173,3 +173,15 @@ R0.1 branch alignment is CLOSED. R1.1 may proceed inside `bdspro/`.
 The user also explicitly chose a hands-on learning style: personally type/run the
 commands and code, return real terminal output, and build engineering reflexes
 through small production-relevant steps. This style is now a durable working rule.
+
+
+---
+
+## 2026-09-29 — Natural-reflex training rule strengthened
+
+The user requested that every command and code fragment be explained from:
+immediate purpose, underlying mechanism, and relationship to the current and
+program-level goals.
+
+The working style now explicitly maintains a goal hierarchy and derives the next
+question from observed fundamentals rather than from a predetermined pattern.

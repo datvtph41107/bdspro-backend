@@ -196,3 +196,30 @@ Default interaction style:
 
 The goal is to build production-working reflexes: inspect -> change -> run ->
 observe -> reason -> prove -> record.
+
+
+## Natural-reflex learning rule
+
+Every command and code change must be taught at three levels:
+
+1. immediate purpose — what this exact command/line/file does;
+2. mechanism — how Go/Git/Linux/runtime actually makes it work;
+3. architectural purpose — which small goal it serves and how that goal contributes
+   to the current gate and the overall Rebuild V2 objective.
+
+Maintain a visible goal hierarchy:
+
+```text
+PROGRAM GOAL
+  -> PHASE/GATE GOAL
+  -> CURRENT PROBLEM
+  -> CURRENT SMALL GOAL
+  -> COMMAND / CODE
+  -> OBSERVATION
+  -> LESSON
+  -> NEXT QUESTION
+```
+
+Questions should be derived from fundamentals and observed behavior, not from a
+preselected pattern. The user should progressively gain the reflex to predict what
+a command/code change will do before running it.
