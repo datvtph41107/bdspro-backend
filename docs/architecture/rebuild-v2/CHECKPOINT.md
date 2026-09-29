@@ -16,9 +16,8 @@ Historical parent checkpoint:
 
 `architecture/source-migration-v1@5fa292903f74396a07b9a4eeb21540a76ddbe83c`
 
-The durable-state publication commit is the branch commit containing this file.
-On recovery, resolve the current branch HEAD from Git and compare it with this
-checkpoint rather than assuming a hard-coded future HEAD.
+On recovery, resolve the current branch HEAD from Git. Never assume this document's
+publication SHA remains the branch HEAD forever.
 
 ## Program state
 
@@ -32,10 +31,14 @@ Completed in R0:
 
 - dedicated rebuild branch created;
 - V1 baseline preserved;
-- recovery/bootstrap protocol defined;
+- durable recovery ecosystem created;
+- one canonical `MASTER-PROMPT.md` established for all new contexts;
 - authority hierarchy defined;
-- architecture operating model defined;
-- durable history/memory/decision register/worklog defined;
+- reasoning/training protocol defined;
+- decision lifecycle and review protocol defined;
+- source mutation guard defined;
+- checkpoint closure protocol defined;
+- session-close/handoff synchronization defined;
 - recovery scenarios defined.
 
 Not yet done:
@@ -72,16 +75,17 @@ R6  Convergence & Migration
 
 `R1.1 — What exactly is Core?`
 
-R1.1 should define the Architecture Core first. Do not create a broad shared
+R1.1 defines Architecture Core before Code Core. Do not create a broad shared
 framework or migrate all existing modules.
 
-The first code must be intentionally small and should make responsibilities
-visible. Abstractions are introduced only in response to a demonstrated problem.
+The first code must be intentionally small and make responsibilities visible.
+Every abstraction must be earned by a demonstrated problem.
 
-## Restart sentence
+## Only bootstrap prompt
 
-When continuing in a new session:
-
-"Continue BDSPro Architecture Rebuild V2 from durable state. Read
-ARCHITECTURE-REBUILD-V2.md and follow its recovery order exactly. Reconcile live
-Git/worktree/proof before changing source."
+```text
+Continue BDSPro Architecture Rebuild V2 from durable state.
+Repository: datvtph41107/bdspro-backend
+Branch: architecture/rebuild-v2
+Read docs/architecture/rebuild-v2/MASTER-PROMPT.md and follow it exactly.
+```

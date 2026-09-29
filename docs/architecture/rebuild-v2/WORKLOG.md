@@ -31,20 +31,52 @@ A separate lane was needed to:
 Created the Rebuild V2 continuity ecosystem:
 
 - root entry point;
-- continuation prompt;
 - operating model;
 - durable history;
 - durable memory;
 - decision register;
 - current checkpoint;
 - recovery scenarios;
-- this worklog.
+- worklog.
 
 ### Current frontier
 
 `R0 — Workspace & Architecture Charter`
 
 Next: `R1.1 — What exactly is Core?`
+
+---
+
+## 2026-09-29 — Single master prompt
+
+### Goal
+
+Remove the need for multiple recovery prompts and make one zero-context prompt
+sufficient from the start of Rebuild V2 through final convergence.
+
+### Changes
+
+- added `docs/architecture/rebuild-v2/MASTER-PROMPT.md`;
+- made it the only canonical orchestration prompt;
+- converted the old continuation prompt to a compatibility pointer;
+- added mandatory recovery report, thinking/training model, decision review,
+  mutation guard, checkpoint closure and durable synchronization protocols;
+- added rules for context-limit handoff and final-program completion;
+- updated the decision register and current checkpoint.
+
+### Decision
+
+A new chat/account/session must bootstrap from the master prompt, then dynamically
+resolve the current gate from durable state and live Git. The bootstrap prompt
+must not encode a current SHA or phase that will become stale.
+
+### Current frontier
+
+Still `R0 — Workspace & Architecture Charter`.
+
+Next authorized design gate remains:
+
+`R1.1 — What exactly is Core?`
 
 ### Session-close template
 

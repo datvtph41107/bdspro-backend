@@ -3,7 +3,26 @@
 Branch: `architecture/rebuild-v2`
 Baseline: `architecture/source-migration-v1@5fa292903f74396a07b9a4eeb21540a76ddbe83c`
 
-This file is the single durable entry point for Architecture Rebuild V2.
+This file is the durable project entry point.
+
+## One-prompt rule
+
+There is exactly one canonical orchestration prompt for the complete program:
+
+`docs/architecture/rebuild-v2/MASTER-PROMPT.md`
+
+A completely new chat/account/session needs only:
+
+```text
+Continue BDSPro Architecture Rebuild V2 from durable state.
+Repository: datvtph41107/bdspro-backend
+Branch: architecture/rebuild-v2
+Read docs/architecture/rebuild-v2/MASTER-PROMPT.md and follow it exactly.
+```
+
+Do not create competing continuation prompts. The master prompt owns recovery,
+reasoning, training, decision review, mutation guards, proof, checkpointing,
+durable synchronization and final convergence.
 
 ## Purpose
 
@@ -21,7 +40,7 @@ The program has four long-lived pillars:
 4. careful reconstruction of TQD/planning/spatial workloads, including PostGIS,
    after the baseline is proven.
 
-The execution order is intentionally not the same as that list:
+Execution direction:
 
 ```text
 FIRST PRINCIPLES
@@ -34,37 +53,20 @@ FIRST PRINCIPLES
   -> SYSTEM CONVERGENCE
 ```
 
-## Recovery
+## Durable state
 
-A new chat, new account, new machine or context-limited session must not rely on
-conversation memory.
+The master prompt recovers and reconciles:
 
-Read these files in this exact order:
-
-1. `ARCHITECTURE-REBUILD-V2.md`
-2. `docs/architecture/rebuild-v2/CONTINUATION-PROMPT.md`
-3. `docs/architecture/rebuild-v2/OPERATING-MODEL.md`
-4. `docs/architecture/rebuild-v2/HISTORY.md`
-5. `docs/architecture/rebuild-v2/MEMORY.md`
-6. `docs/architecture/rebuild-v2/DECISION-REGISTER.md`
-7. `docs/architecture/rebuild-v2/CHECKPOINT.md`
-8. `docs/architecture/rebuild-v2/WORKLOG.md`
-9. `docs/architecture/rebuild-v2/RECOVERY-SCENARIOS.md`
-
-Then reconcile those documents against immutable live Git, current branch HEAD,
-the current worktree and completed exact-SHA proof before changing source.
+- operating model;
+- history;
+- durable project memory;
+- decision register;
+- current checkpoint;
+- worklog;
+- recovery scenarios;
+- live Git/source/worktree;
+- exact-SHA proof.
 
 If prose and immutable Git/source/proof disagree, immutable Git/source/proof wins.
 
-## Current phase
-
-```text
-Program: BDSPro Architecture Rebuild V2
-Branch: architecture/rebuild-v2
-Baseline source checkpoint: 5fa292903f74396a07b9a4eeb21540a76ddbe83c
-Phase: R0 — Workspace & Architecture Charter
-Status: ACTIVE
-Next design gate: R1.1 — What exactly is Core?
-```
-
-No production/business rewrite is implied by the existence of this branch.
+No production/business rewrite is implied merely by the existence of this branch.
