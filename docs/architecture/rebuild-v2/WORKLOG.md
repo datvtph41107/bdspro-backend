@@ -208,3 +208,24 @@ A durable research index was added at:
 Policy: consult matching sections only when a real problem appears; first
 understand/reproduce the Go mechanism, then compare the guide, and finally decide
 ADOPT / ADAPT / REJECT / OPEN for BDSPro.
+
+
+---
+
+## 2026-09-29 — R1.1 package-name research
+
+Researched Go specification, official Go package-name guidance, Effective Go,
+Google/Uber style guidance, Rakyll package guidance, and Go community discussions.
+
+Durable research:
+`docs/architecture/rebuild-v2/research/go/PACKAGE-NAMING.md`
+
+Key result:
+
+- package name is caller-facing API context, not merely a folder label;
+- package-name spelling does not materially improve runtime performance;
+- good naming exposes/coheres good boundaries;
+- vague packages tend to become dependency magnets and can hurt compile/build
+  health indirectly;
+- caller readability, discoverability and dependency clarity are the main value;
+- BDSPro package naming policy remains PROVISIONAL until tested by real packages.

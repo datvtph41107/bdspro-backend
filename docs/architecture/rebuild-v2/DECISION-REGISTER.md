@@ -29,5 +29,7 @@ Status vocabulary:
 | ARV2-016 | Local workspace alignment is an explicit R0.1 gate before new Rebuild V2 source work | CLOSED | Prevents remote durable state and local historical checkout from silently diverging | Verify local branch/head/worktree after fetch/switch |
 
 | ARV2-017 | Use `uber-go/guide` as a foundational Go engineering reference, consulted problem-first and never as BDSPro architecture authority | CLOSED | The guide covers interfaces, receivers, errors, lifecycle, concurrency, construction, testing, naming and tooling; Rebuild V2 already requires external sources to be evaluated through BDSPro value/cost and ADOPT/ADAPT/REJECT/OPEN | Apply only when a matching real problem appears and prove the choice in BDSPro code/tests |
+| ARV2-018 | Package names are designed from caller-facing responsibility; vague buckets are avoided and inability to find a meaningful name is treated as a boundary signal | PROVISIONAL | Official Go guidance couples package names with exported API and warns generic packages accumulate dependencies; community experience reinforces readability/consistency and avoiding grab bags | Prove with first real greenfield packages and call-site tests |
+
 When a decision changes, do not erase the old row. Mark it SUPERSEDED and add a
 new decision with the reason and evidence.
