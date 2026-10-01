@@ -73,6 +73,9 @@ type AdminHistory struct {
 	AdminRole  string                     `gorm:"column:admin_role"`
 	IPAddress  string                     `gorm:"column:ip_address"`
 	UserAgent  string                     `gorm:"column:user_agent"`
+	AdminName   *string `json:"adminName,omitempty" gorm:"-"`
+	AdminAvatar *string `json:"adminAvatar,omitempty" gorm:"-"`
+	Status      *string `json:"status,omitempty" gorm:"-"`
 }
 
 func (AdminHistory) TableName() string { return "admin_histories" }

@@ -330,7 +330,7 @@ func (r *newsPostgres) ListCategories(ctx context.Context) ([]dto.ContentCategor
 		FROM seo_category c
 		LEFT JOIN seo_domain sd ON sd.category_id = c.id
 		WHERE c.deleted_at IS NULL AND c.status = 'active'
-		GROUP BY c.id
+		GROUP BY c.id, c.code, c.slug, c.name, c.description, c.status, c.sort_order
 		ORDER BY c.sort_order, c.name, c.id`).Scan(&items).Error
 	return items, err
 }
@@ -344,7 +344,8 @@ func (r *newsPostgres) GetCategory(ctx context.Context, id uint64) (*dto.Content
 		FROM seo_category c
 		LEFT JOIN seo_domain sd ON sd.category_id = c.id
 		WHERE c.deleted_at IS NULL AND c.id = ?
-		GROUP BY c.id LIMIT 1`, id).Scan(&item).Error
+		GROUP BY c.id, c.code, c.slug, c.name, c.description, c.status, c.sort_order
+		LIMIT 1`, id).Scan(&item).Error
 	if err != nil {
 		return nil, err
 	}

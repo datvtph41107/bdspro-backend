@@ -98,6 +98,7 @@ func NewHandler(
 	regionExtendUC services.RegionExtendUsecase,
 	importUC services.ImportUsecase,
 	aiJobUC qh_usecase.IProAIJobUsecase,
+	analytics provider.SearchAnalytics,
 ) *Handler {
 	return &Handler{
 		location:       NewLocationController(locationSvc, locationUC),
@@ -109,12 +110,12 @@ func NewHandler(
 		label:          NewLabelController(labelUC),
 		landUse:        NewLandUseController(landUseUC),
 		legend:         NewLegendController(legendUC),
-		planningClient: NewPlanningClientController(planningClient, qhProjects, qhEvents, qhDocuments),
+		planningClient: NewPlanningClientController(planningClient, qhProjects, qhEvents, qhDocuments, analytics),
 		mapWorkspace:   NewMapWorkspaceController(workspaceUC, createReport),
-		discovery:      NewDiscoveryController(discoverySvc),
+		discovery:      NewDiscoveryController(discoverySvc, analytics),
 		parcelUser:     NewParcelUserController(parcelUC, layerLegalUC),
 		publicExt: NewPublicExtendedController(
-			parcelUC, locationUC, legendUC, poiUC, planningClient, relatedSvc, publicContent, crmSeo,
+			parcelUC, locationUC, legendUC, poiUC, planningClient, relatedSvc, publicContent, crmSeo, analytics,
 		),
 		subscription: NewSubscriptionController(subUC, notifUC, parcelUC),
 		commercial:   NewCommercialController(profileUsage),

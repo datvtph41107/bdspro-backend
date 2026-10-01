@@ -19,4 +19,4 @@ Phase-1 routes:
 - `PUT /v2/notification/read-all`
 - `DELETE /v2/notification/remove/{id}`
 
-Push / admin-history / account-warning are out of scope.
+Push is out of scope. Admin history search is available at `GET /v2/admin-history/search`.

@@ -101,14 +101,9 @@ func (r *locationV2Postgres) ListWards(ctx context.Context, provinceCode *string
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	if size <= 0 {
-		size = 20
-	}
-	if page < 0 {
-		page = 0
-	}
+	offset, size := pageOffset(page, size)
 	var list []entity.WardV2
-	err := q.Order("code ASC").Offset(page * size).Limit(size).Find(&list).Error
+	err := q.Order("code ASC").Offset(offset).Limit(size).Find(&list).Error
 	return list, total, err
 }
 
@@ -166,9 +161,7 @@ func (r *locationV2Postgres) Search(ctx context.Context, keyword string, page, s
 	if size > 100 {
 		size = 100
 	}
-	if page < 0 {
-		page = 0
-	}
+	offset, size := pageOffset(page, size)
 	pattern := "%" + keyword + "%"
 	const listQ = `
 SELECT w.id as ward_id, w.name as ward_name, w.division_type as ward_type,
@@ -182,7 +175,7 @@ WHERE w.deleted_at IS NULL AND p.deleted_at IS NULL
 ORDER BY w.name ASC
 LIMIT ? OFFSET ?`
 	var results []entity.LocationSearchResultV2
-	err := r.db.WithContext(ctx).Raw(listQ, pattern, pattern, size, page*size).Scan(&results).Error
+	err := r.db.WithContext(ctx).Raw(listQ, pattern, pattern, size, offset).Scan(&results).Error
 	if err != nil {
 		return nil, 0, err
 	}

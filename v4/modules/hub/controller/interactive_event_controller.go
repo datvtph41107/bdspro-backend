@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	_enums "common/domain/enum"
+	_utils "common/utils"
 	"userv4/internal/httpapi"
 	"userv4/modules/hub/dto"
 	"userv4/modules/hub/services"
@@ -25,7 +25,7 @@ func (c *InteractiveEventController) RegisterHTTP(mux *http.ServeMux) {
 
 func (c *InteractiveEventController) track(ctx context.Context, req dto.TrackInteractiveEventBatchRequest) (*httpapi.Result, error) {
 	var profileID *uint64
-	if pid, ok := ctx.Value(_enums.ProfileIDKey).(uint64); ok && pid > 0 {
+	if pid := _utils.GetProfileIdWithContext(ctx); pid > 0 {
 		profileID = &pid
 	}
 	if err := c.svc.TrackBatch(ctx, req, profileID); err != nil {

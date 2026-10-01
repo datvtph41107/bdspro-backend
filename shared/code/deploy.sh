@@ -250,6 +250,12 @@ case "$1" in
     path_jar=main
     payload_build=hub
     ;;
+  "v4"|"userv4")
+    service_path=v4
+    path_jar=main
+    payload_build=v4
+    build_package="./cmd/http"
+    ;;
   *)
     echo "Tham số không hợp lệ."
     exit 1
@@ -263,7 +269,9 @@ else
 fi
 
 # Prefer the service Makefile contract when present.
-if [ -f Makefile ]; then
+# userv4 keeps BUILD_PACKAGE=./cmd/grpc for local make build, but remote
+# compose service `v4` runs the modular HTTP surface by default.
+if [ "$1" != "v4" ] && [ "$1" != "userv4" ] && [ -f Makefile ]; then
   makefile_pkg=$(awk -F'[: =]+' '/^BUILD_PACKAGE[[:space:]]*[?:]?=/ {print $NF; exit}' Makefile)
   if [ -n "$makefile_pkg" ]; then
     build_package="$makefile_pkg"
@@ -327,6 +335,8 @@ elif [ "$1" = "pmtiles" ]; then
 elif [ "$1" = "file" ]; then
   # File owns an FFmpeg-capable runtime image; the generic service image is not equivalent.
   scp Dockerfile ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
+elif [ "$1" = "v4" ] || [ "$1" = "userv4" ]; then
+  scp Dockerfile.develop ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/Dockerfile
 else
   # Keep Dockerfile.develop for remote deploy. Service Dockerfiles under
   # *-service/Dockerfile expect repository-root context (compose.yaml), which

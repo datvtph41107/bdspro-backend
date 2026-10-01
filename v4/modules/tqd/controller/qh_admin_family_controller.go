@@ -27,6 +27,9 @@ func NewQHAdminFamilyController(uc services.QHLayerFamilyUsecase) *QHAdminFamily
 func (c *QHAdminFamilyController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.POST(mux, "/v2/tqd/qh/admin/layer-families", c.create)
 	httpapi.GET(mux, "/v2/tqd/qh/admin/layer-families/list", c.list)
+	// FE alias: /layers/groups = danh mục họ lớp (qh_layer_families).
+	// Must be a literal path so it does not match /layers/{id}.
+	httpapi.GET(mux, "/v2/tqd/qh/admin/layers/groups", c.list)
 	httpapi.GET(mux, "/v2/tqd/qh/admin/layer-families/{id}", c.get)
 	httpapi.PUT(mux, "/v2/tqd/qh/admin/layer-families/{id}", c.update)
 	httpapi.DELETE(mux, "/v2/tqd/qh/admin/layer-families/{id}", c.delete)

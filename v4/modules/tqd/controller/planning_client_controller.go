@@ -15,17 +15,19 @@ import (
 	qh_dto "userv4/modules/tqd/dto/qh"
 	planningdomain "userv4/modules/tqd/entity/planningclient"
 	"userv4/modules/tqd/mapper"
+	"userv4/modules/tqd/provider"
 	planningapp "userv4/modules/tqd/services/planningclient/application"
 	qh_usecase "userv4/modules/tqd/services/qh"
 )
 
 // PlanningClientController owns /v2/tqd/client planning-project and planning-document routes.
 type PlanningClientController struct {
-	planning *planningapp.Service
-	projects qh_usecase.IQHPlanningProjectUsecase
-	events   qh_usecase.IQHPlanningEventUsecase
-	docs     qh_usecase.IQHPlanningDocumentUsecase
-	qhMapper *mapper.QHPlanningMapper
+	planning  *planningapp.Service
+	projects  qh_usecase.IQHPlanningProjectUsecase
+	events    qh_usecase.IQHPlanningEventUsecase
+	docs      qh_usecase.IQHPlanningDocumentUsecase
+	qhMapper  *mapper.QHPlanningMapper
+	analytics provider.SearchAnalytics
 }
 
 func NewPlanningClientController(
@@ -33,13 +35,18 @@ func NewPlanningClientController(
 	projects qh_usecase.IQHPlanningProjectUsecase,
 	events qh_usecase.IQHPlanningEventUsecase,
 	docs qh_usecase.IQHPlanningDocumentUsecase,
+	analytics provider.SearchAnalytics,
 ) *PlanningClientController {
+	if analytics == nil {
+		analytics = provider.NoopSearchAnalytics{}
+	}
 	return &PlanningClientController{
-		planning: planning,
-		projects: projects,
-		events:   events,
-		docs:     docs,
-		qhMapper: mapper.NewQHPlanningMapper(),
+		planning:  planning,
+		projects:  projects,
+		events:    events,
+		docs:      docs,
+		qhMapper:  mapper.NewQHPlanningMapper(),
+		analytics: analytics,
 	}
 }
 
@@ -89,6 +96,13 @@ func pageSize(size int32, fallback int) int {
 	return fallback
 }
 
+func planningPageResult[T any](page *planningdomain.Page[T]) (*httpapi.Result, error) {
+	if page == nil {
+		return jsonListResult([]any{}, 0, 1, 0)
+	}
+	return jsonListResult(page.Data, page.Total, uint32(page.Page), uint32(page.Size))
+}
+
 func (c *PlanningClientController) listProjects(ctx context.Context, req dto.ClientListPlanningProjectsRequest) (*httpapi.Result, error) {
 	if err := c.requirePlanning(); err != nil {
 		return nil, err
@@ -96,6 +110,9 @@ func (c *PlanningClientController) listProjects(ctx context.Context, req dto.Cli
 	search := strings.TrimSpace(req.Keyword)
 	if search == "" {
 		search = strings.TrimSpace(req.Search)
+	}
+	if search != "" && c.analytics != nil {
+		c.analytics.TrackKeyword(search, "tqd")
 	}
 	layerIDs := _utils.ParseUint64Array(req.LayerIDs)
 	page := int(req.Page)
@@ -106,14 +123,14 @@ func (c *PlanningClientController) listProjects(ctx context.Context, req dto.Cli
 		if err != nil {
 			return nil, err
 		}
-		return jsonOK(result)
+		return planningPageResult(result)
 	}
 	if req.ParcelID > 0 {
 		result, err := c.planning.ListProjectsByParcelRelation(ctx, req.ParcelID, page, size)
 		if err != nil {
 			return nil, err
 		}
-		return jsonOK(result)
+		return planningPageResult(result)
 	}
 
 	var hasLayer *bool
@@ -162,7 +179,7 @@ func (c *PlanningClientController) listProjects(ctx context.Context, req dto.Cli
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func parseOptionalPlanningTime(raw string, endOfDay bool) (*time.Time, error) {
@@ -208,7 +225,7 @@ func (c *PlanningClientController) listDocuments(ctx context.Context, req dto.Cl
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func (c *PlanningClientController) listEvents(ctx context.Context, req dto.ClientPlanningProjectIDRequest) (*httpapi.Result, error) {
@@ -222,7 +239,7 @@ func (c *PlanningClientController) listEvents(ctx context.Context, req dto.Clien
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func (c *PlanningClientController) follow(ctx context.Context, req dto.ClientFollowPlanningProjectRequest) (*httpapi.Result, error) {
@@ -293,7 +310,7 @@ func (c *PlanningClientController) listFollowed(ctx context.Context, req dto.Cli
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func (c *PlanningClientController) listByParcelRelation(ctx context.Context, req dto.ClientListParcelPlanningRelationRequest) (*httpapi.Result, error) {
@@ -307,7 +324,7 @@ func (c *PlanningClientController) listByParcelRelation(ctx context.Context, req
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func (c *PlanningClientController) listLayers(ctx context.Context, req dto.ClientPlanningProjectIDRequest) (*httpapi.Result, error) {
@@ -321,7 +338,7 @@ func (c *PlanningClientController) listLayers(ctx context.Context, req dto.Clien
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return jsonListResult(result, int64(len(result)), 1, uint32(len(result)))
 }
 
 func (c *PlanningClientController) projection(ctx context.Context, req dto.ClientPlanningProjectProjectionRequest) (*httpapi.Result, error) {
@@ -392,7 +409,7 @@ func (c *PlanningClientController) listDocsByParcelRelation(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(result)
+	return planningPageResult(result)
 }
 
 func (c *PlanningClientController) getDocument(ctx context.Context, req dto.ClientPlanningDocumentIDRequest) (*httpapi.Result, error) {

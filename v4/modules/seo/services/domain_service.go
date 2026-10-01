@@ -10,6 +10,8 @@ import (
 	"userv4/modules/seo/dto"
 	"userv4/modules/seo/entity"
 	"userv4/modules/seo/repository"
+
+	"gorm.io/datatypes"
 )
 
 // SeoDomainService manages the full SEO domain lifecycle.
@@ -18,6 +20,7 @@ type SeoDomainService interface {
 	GetByID(ctx context.Context, id uint64) (*entity.SeoDomain, error)
 	GetByRef(ctx context.Context, refType uint32, refID uint64) (*entity.SeoDomain, error)
 	ListPublicByRef(ctx context.Context, refType uint32, refID uint64) ([]entity.SeoDomain, error)
+	ListByLinkedRef(ctx context.Context, filter dto.SeoDomainRefsFilter) (*dto.SeoDomainListResult, error)
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*entity.SeoDomain, error)
 	GetBySlug(ctx context.Context, slug string) (*entity.SeoDomain, error)
 	Create(ctx context.Context, req dto.CreateSeoDomainRequest) (*entity.SeoDomain, error)
@@ -103,6 +106,16 @@ func (s *LocalSeoDomainService) GetByRef(ctx context.Context, refType uint32, re
 
 func (s *LocalSeoDomainService) ListPublicByRef(ctx context.Context, refType uint32, refID uint64) ([]entity.SeoDomain, error) {
 	return s.repo.ListByRef(ctx, refType, refID)
+}
+
+func (s *LocalSeoDomainService) ListByLinkedRef(ctx context.Context, filter dto.SeoDomainRefsFilter) (*dto.SeoDomainListResult, error) {
+	if filter.RefType == 0 {
+		return nil, _errors.ReturnError(400, "refType không hợp lệ")
+	}
+	if filter.RefID == 0 {
+		return nil, _errors.ReturnError(400, "refId không hợp lệ")
+	}
+	return s.repo.ListByLinkedRef(ctx, filter)
 }
 
 func (s *LocalSeoDomainService) CreateDraft(ctx context.Context, req dto.CreateSeoDomainRequest) (*entity.SeoDomain, error) {
@@ -379,13 +392,27 @@ func (s *LocalSeoDomainService) GetBySlug(ctx context.Context, slug string) (*en
 }
 
 func (s *LocalSeoDomainService) Create(ctx context.Context, req dto.CreateSeoDomainRequest) (*entity.SeoDomain, error) {
-	if strings.TrimSpace(req.CanonicalURL) == "" {
+	refType := entity.SEORefType(req.RefType)
+	isManual := entity.IsManualSEORefType(refType)
+	canonical := strings.TrimSpace(req.CanonicalURL)
+	slug := strings.TrimSpace(req.Slug)
+	if isManual {
+		// Temporary placeholders; finalize after insert when seo_domain.id is known.
+		if canonical == "" {
+			seg := entity.ExtractSeoSlugSegment(firstNonEmpty(slug, req.Title, "seo-page"))
+			if seg == "" {
+				seg = "seo-page"
+			}
+			canonical = seg
+			slug = seg
+		}
+	} else if canonical == "" {
 		return nil, _errors.BadRequestException("canonicalUrl is required")
 	}
 	seo := &entity.SeoDomain{
-		Slug:              req.Slug,
-		CanonicalURL:      req.CanonicalURL,
-		OriginURL:         req.OriginURL,
+		Slug:              slug,
+		CanonicalURL:      canonical,
+		OriginURL:         firstNonEmpty(req.OriginURL, canonical),
 		Title:             req.Title,
 		Description:       req.Description,
 		Summary:           req.Summary,
@@ -393,7 +420,7 @@ func (s *LocalSeoDomainService) Create(ctx context.Context, req dto.CreateSeoDom
 		ImageURL:          req.ImageURL,
 		Scope:             firstNonEmpty(req.Scope, entity.ScopePublic),
 		PageStatus:        firstNonEmpty(req.PageStatus, entity.PageStatusDraft),
-		RefType:           entity.SEORefType(req.RefType),
+		RefType:           refType,
 		RefID:             req.RefID,
 		RefSource:         firstNonEmpty(req.RefSource, entity.SourceStatusManual),
 		RefLabel:          req.RefLabel,
@@ -418,7 +445,37 @@ func (s *LocalSeoDomainService) Create(ctx context.Context, req dto.CreateSeoDom
 	if seo.VisibleOn == 0 {
 		seo.VisibleOn = 30
 	}
-	return s.repo.Create(ctx, seo)
+	created, err := s.repo.Create(ctx, seo)
+	if err != nil {
+		return nil, err
+	}
+	return s.finalizeManualTinTucPaths(ctx, created)
+}
+
+// finalizeManualTinTucPaths sets /tin-tuc/tin/{id}/{slug} after manual create.
+func (s *LocalSeoDomainService) finalizeManualTinTucPaths(ctx context.Context, seo *entity.SeoDomain) (*entity.SeoDomain, error) {
+	if seo == nil || seo.ID == 0 || !entity.IsManualSEORefType(seo.RefType) {
+		return seo, nil
+	}
+	segment := entity.ExtractSeoSlugSegment(seo.Slug)
+	if segment == "" || segment == "seo-page" {
+		if alt := entity.ExtractSeoSlugSegment(seo.CanonicalURL); alt != "" {
+			segment = alt
+		}
+	}
+	if segment == "" {
+		segment = entity.SeoSlugSegment(seo.Title, seo.ID)
+	}
+	path := entity.FormatPublicURL(entity.PublicURLPatternTin, seo.ID, segment)
+	slugField := entity.CompoundSeoSlug(seo.ID, segment)
+	if seo.Slug == slugField && seo.CanonicalURL == path && seo.OriginURL == path {
+		return seo, nil
+	}
+	return s.repo.Update(ctx, seo.ID, map[string]any{
+		"slug":          slugField,
+		"origin_url":    path,
+		"canonical_url": path,
+	})
 }
 
 func firstNonEmpty(vals ...string) string {
@@ -620,6 +677,7 @@ func (s *LocalSeoDomainService) DeleteRelative(ctx context.Context, id uint64) e
 }
 
 // GenerateFromRef creates or updates a SEO page from a reference entity.
+// Canonical path follows /tin-tuc/<loại>/<id>/<slug> via PublicURLPattern.
 func (s *LocalSeoDomainService) GenerateFromRef(ctx context.Context, req dto.GenerateFromRefRequest) (*entity.SeoDomain, bool, error) {
 	if req.RefType == 0 {
 		return nil, false, _errors.BadRequestException("refType is required")
@@ -628,29 +686,34 @@ func (s *LocalSeoDomainService) GenerateFromRef(ctx context.Context, req dto.Gen
 		return nil, false, _errors.BadRequestException("refId is required")
 	}
 	refType := entity.SEORefType(req.RefType)
-	slug := fmt.Sprintf("%s-%d", strings.ToLower(refType.Name()), req.RefID)
-	slug = strings.ReplaceAll(slug, " ", "-")
-	canonicalURL := fmt.Sprintf("/seo/%s/%d", firstNonEmpty(strings.ToLower(req.RefSource), "ref"), req.RefID)
+	refSource := entity.NormalizeSeoResolverKey(req.RefSource)
+	pattern := entity.ResolvePublicURLPattern(refType, refSource)
+	label := firstNonEmpty(refType.Name(), "seo")
+	slugSeg := entity.SeoSlugSegment(label, req.RefID)
+	canonicalURL := entity.FormatPublicURL(pattern, req.RefID, slugSeg)
+	slugField := entity.CompoundSeoSlug(req.RefID, slugSeg)
 	title := fmt.Sprintf("%s #%d", refType.Name(), req.RefID)
 	refID := req.RefID
 	seo := &entity.SeoDomain{
-		Slug:         slug,
-		CanonicalURL: canonicalURL,
-		OriginURL:    canonicalURL,
-		Title:        title,
-		Scope:        entity.ScopePublic,
-		PageStatus:   entity.PageStatusDraft,
-		RefType:      refType,
-		RefID:        &refID,
-		RefSource:    firstNonEmpty(req.RefSource, entity.SourceStatusManual),
-		RefLabel:     title,
-		RefURL:       canonicalURL,
-		SourceStatus: entity.SourceStatusLinked,
-		NeedGenerate: true,
-		RenderStatus: entity.RenderStatusPending,
-		VisibleOn:    30,
-		IsIndex:      true,
-		IsSiteMap:    true,
+		Slug:            slugField,
+		CanonicalURL:    canonicalURL,
+		OriginURL:       canonicalURL,
+		Title:           title,
+		Scope:           entity.ScopePublic,
+		PageStatus:      entity.PageStatusDraft,
+		RefType:         refType,
+		RefID:           &refID,
+		RefSource:       firstNonEmpty(refSource, entity.SourceStatusManual),
+		RefLabel:        title,
+		RefURL:          canonicalURL,
+		SourceStatus:    entity.SourceStatusLinked,
+		NeedGenerate:    true,
+		RenderStatus:    entity.RenderStatusPending,
+		VisibleOn:       30,
+		IsIndex:         true,
+		IsSiteMap:       true,
+		RefSnapshotJSON: datatypes.JSON([]byte("{}")),
+		Metadata:        datatypes.JSON([]byte("{}")),
 	}
 	return s.repo.UpsertFromRef(ctx, seo)
 }

@@ -59,10 +59,12 @@ http:
     - "http://14.225.210.29:3108"
     - "https://admin.bdspro.com"
 
-# URL đặc biệt: ghi audit từng request (không gộp count) trong hub request_audit_log
+# URL đặc biệt: ghi audit từng request (không gộp count) trong v4 request_audit_log
 request_stats:
   spec_urls:
     - /v2/crm/sitemap.xml
+  # Ghi thẳng vào userv4 (db_v4). Để trống = fallback hub gRPC (db_hub).
+  track_url: http://v4:8004/v2/hub/request-stats/track
   # ignore_prefixes:
   #   - /v2/custom/admin/dashboard
 

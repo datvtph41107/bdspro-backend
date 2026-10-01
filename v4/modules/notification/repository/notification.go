@@ -24,6 +24,7 @@ type NotificationRepository interface {
 
 	CreateActivityHistory(ctx context.Context, h *entity.ActivityHistory) error
 	CreateAdminHistory(ctx context.Context, h *entity.AdminHistory) error
+	SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error)
 	CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error
 	ListPersonConfigs(ctx context.Context, userID uint64) ([]*entity.PersonConfig, error)
 	BatchUpsertPersonConfigs(ctx context.Context, configs []*entity.PersonConfig) error
@@ -137,6 +138,59 @@ func (r *notificationPostgres) CreateAdminHistory(ctx context.Context, h *entity
 		return nil
 	}
 	return r.db.WithContext(ctx).Create(h).Error
+}
+
+func (r *notificationPostgres) SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error) {
+	if r.db == nil {
+		return []*entity.AdminHistory{}, 0, nil
+	}
+	q := r.db.WithContext(ctx).Model(&entity.AdminHistory{}).Where("deleted_at IS NULL")
+	if filter.AdminID != nil {
+		q = q.Where("admin_id = ?", *filter.AdminID)
+	}
+	if filter.OwnerID != nil {
+		q = q.Where("owner_id = ?", *filter.OwnerID)
+	}
+	if filter.OwnerType != nil {
+		q = q.Where("owner_of = ?", *filter.OwnerType)
+	}
+	if filter.TargetID != nil {
+		q = q.Where("target_id = ?", *filter.TargetID)
+	}
+	if filter.TargetType != nil {
+		q = q.Where("target_type = ?", *filter.TargetType)
+	}
+	if filter.ActionType != nil {
+		q = q.Where("action_type = ?", *filter.ActionType)
+	}
+	if filter.AdminRole != nil && *filter.AdminRole != "" {
+		q = q.Where("admin_role = ?", *filter.AdminRole)
+	}
+	if filter.FromDate != nil && *filter.FromDate != "" {
+		q = q.Where("created_at >= ?", *filter.FromDate)
+	}
+	if filter.ToDate != nil && *filter.ToDate != "" {
+		q = q.Where("created_at <= ?", *filter.ToDate)
+	}
+	if filter.IsInternal != nil {
+		q = q.Where("is_internal = ?", *filter.IsInternal)
+	}
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	size := filter.Size
+	if size <= 0 {
+		size = 20
+	}
+	page := filter.Page
+	if page < 0 {
+		page = 0
+	}
+	var rows []*entity.AdminHistory
+	err := q.Order("created_at DESC").Offset(page * size).Limit(size).Find(&rows).Error
+	return rows, total, err
 }
 
 func (r *notificationPostgres) CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error {

@@ -8,6 +8,7 @@ import (
 	"userv4/modules/seo/dto"
 	"userv4/modules/seo/entity"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +19,7 @@ type SeoDomainRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entity.SeoDomain, error)
 	GetByRef(ctx context.Context, refType uint32, refID uint64) (*entity.SeoDomain, error)
 	ListByRef(ctx context.Context, refType uint32, refID uint64) ([]entity.SeoDomain, error)
+	ListByLinkedRef(ctx context.Context, filter dto.SeoDomainRefsFilter) (*dto.SeoDomainListResult, error)
 	GetByCanonicalURL(ctx context.Context, canonicalURL string) (*entity.SeoDomain, error)
 	UpdateLink(ctx context.Context, id uint64, updates map[string]any) (*entity.SeoLink, error)
 	TouchByRef(ctx context.Context, refType uint32, refID uint64) (int64, error)
@@ -94,6 +96,46 @@ func (r *seoDomainPostgres) ListByRef(ctx context.Context, refType uint32, refID
 		Order("published_at DESC NULLS LAST, id DESC").
 		Find(&list).Error
 	return list, err
+}
+
+func (r *seoDomainPostgres) ListByLinkedRef(ctx context.Context, filter dto.SeoDomainRefsFilter) (*dto.SeoDomainListResult, error) {
+	page, size := normalizePage(filter.Page, filter.Size)
+
+	q := r.db.WithContext(ctx).Table("seo_domain sd").
+		Select(`sd.id, sd.slug, sd.canonical_url, sd.origin_url, sd.title, sd.description, sd.summary,
+		        sd.scope, sd.page_status, sd.published, sd.published_at,
+		        sd.ref_type, sd.ref_id, sd.ref_source, sd.ref_label, sd.source_status,
+		        sd.category_id, sd.province_id, sd.image_url, sd.template_key,
+		        sd.render_status, sd.need_generate, sd.is_site_map, sd.is_index,
+		        sd.visible_on, sd.deep_link, sd.created_at, sd.updated_at,
+		        COALESCE(sc.click_count, 0) AS click_count,
+		        COALESCE(c.name, '') AS category_name`).
+		Joins("LEFT JOIN seo_count sc ON sc.seo_domain_id = sd.id").
+		Joins("LEFT JOIN seo_category c ON c.id = sd.category_id AND c.deleted_at IS NULL").
+		Where("sd.deleted_at IS NULL").
+		Where(`(
+			(sd.ref_type = ? AND sd.ref_id = ?)
+			OR EXISTS (
+				SELECT 1 FROM seo_refs sr
+				WHERE sr.seo_domain_id = sd.id
+				  AND sr.ref_type = ?
+				  AND sr.ref_id = ?
+			)
+		)`, filter.RefType, filter.RefID, filter.RefType, filter.RefID)
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, fmt.Errorf("count seo domains by linked ref: %w", err)
+	}
+	var rows []dto.SeoDomainItem
+	if err := q.Order("sd.published_at DESC NULLS LAST, sd.updated_at DESC, sd.id DESC").
+		Offset((page - 1) * size).Limit(size).Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("list seo domains by linked ref: %w", err)
+	}
+	for i := range rows {
+		rows[i].RefTypeName = entity.SEORefType(rows[i].RefType).Name()
+	}
+	return &dto.SeoDomainListResult{Data: rows, Total: total, Page: page, Size: size}, nil
 }
 
 func (r *seoDomainPostgres) TouchByRef(ctx context.Context, refType uint32, refID uint64) (int64, error) {
@@ -211,6 +253,13 @@ func (r *seoDomainPostgres) Create(ctx context.Context, seo *entity.SeoDomain) (
 	}
 	if seo.RenderStatus == "" {
 		seo.RenderStatus = entity.RenderStatusNone
+	}
+	// GORM zero-value datatypes.JSON inserts SQL NULL; columns are NOT NULL without reliable DEFAULT on older DBs.
+	if len(seo.RefSnapshotJSON) == 0 {
+		seo.RefSnapshotJSON = datatypes.JSON([]byte("{}"))
+	}
+	if len(seo.Metadata) == 0 {
+		seo.Metadata = datatypes.JSON([]byte("{}"))
 	}
 	if err := r.db.WithContext(ctx).Create(seo).Error; err != nil {
 		return nil, err

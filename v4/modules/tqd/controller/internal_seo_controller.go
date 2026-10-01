@@ -108,7 +108,7 @@ func (c *InternalSEOController) parcelSeoSources(ctx context.Context, req dto.Li
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": out})
+	return jsonOK(out)
 }
 
 func (c *InternalSEOController) projectSeoSource(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {

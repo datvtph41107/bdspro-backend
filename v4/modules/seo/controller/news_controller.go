@@ -54,7 +54,7 @@ func (c *NewsController) listNews(ctx context.Context, req dto.PlanningNewsListF
 	if result == nil {
 		return listResult([]dto.PlanningNewsItem{}, 0)
 	}
-	return httpapi.OK(result), nil
+	return listResult(result.Data, result.Total)
 }
 
 func (c *NewsController) getNews(ctx context.Context, req dto.GetNewsDetailRequest) (*httpapi.Result, error) {
@@ -103,7 +103,7 @@ func (c *NewsController) listSaved(ctx context.Context, req dto.SavedNewsFilter)
 	if result == nil {
 		return listResult([]dto.PlanningNewsItem{}, 0)
 	}
-	return httpapi.OK(result), nil
+	return listResult(result.Data, result.Total)
 }
 
 func (c *NewsController) saveNews(ctx context.Context, req dto.NewsIDPath) (*httpapi.Result, error) {

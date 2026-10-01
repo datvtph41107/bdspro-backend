@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,7 +23,7 @@ func NewOpenHourController(uc services.OpenHourUsecase) *OpenHourController {
 
 func (c *OpenHourController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.POST(mux, "/v2/tqd/open-hours", c.create)
-	httpapi.GET(mux, "/v2/tqd/open-hours", c.list)
+	httpapi.GET(mux, "/v2/tqd/open-hours/times", c.list)
 	httpapi.GET(mux, "/v2/tqd/open-hours/by-day/{dayOfWeek}", c.byDay)
 	httpapi.GET(mux, "/v2/tqd/open-hours/{id}", c.get)
 	httpapi.PUT(mux, "/v2/tqd/open-hours/{id}", c.update)
@@ -130,14 +129,19 @@ func (c *OpenHourController) list(ctx context.Context, req listOpenHourReq) (*ht
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.OpenHourResponse{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *OpenHourController) byDay(ctx context.Context, req byDayReq) (*httpapi.Result, error) {
-	dayName := strconv.Itoa(req.DayOfWeek)
-	out, err := c.uc.GetTimesByDay(ctx, &dto.GetTimesByDayRequest{DayOfWeek: dayName, POIID: req.POIID})
+	out, err := c.uc.GetTimesByDay(ctx, &dto.GetTimesByDayRequest{DayOfWeek: strconv.Itoa(req.DayOfWeek), POIID: req.POIID})
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": out, "dayOfWeek": fmt.Sprintf("%d", req.DayOfWeek)})
+	if out == nil {
+		return jsonListResult([]any{}, 0, 1, 0)
+	}
+	return jsonListResult(out, int64(len(out)), 1, uint32(len(out)))
 }

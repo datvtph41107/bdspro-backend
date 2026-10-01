@@ -64,7 +64,11 @@ func authenticateRequest(r *http.Request, pubRoutes, tempRoutes []string, cfg au
 			claims, tokenErr = ParseJWT(tokenString)
 		}
 		if tokenErr != nil || claims == nil {
-			return r, http.StatusUnauthorized, "Invalid or expired token", false
+			if !ignoreToken {
+				return r, http.StatusUnauthorized, "Invalid or expired token", false
+			}
+			// Public/optional-auth: keep expired-but-signed claims for profileId;
+			// unusable tokens fall through as anonymous (claims may already be nil).
 		}
 	}
 
@@ -77,7 +81,7 @@ func authenticateRequest(r *http.Request, pubRoutes, tempRoutes []string, cfg au
 		}
 		req = req.WithContext(boundActorCtx)
 
-		if claims.Type == string(TempToken) {
+		if claims.Type == string(TempToken) && !ignoreToken {
 			isTempRoute := false
 			for _, route := range tempRoutes {
 				if matchRoute(route, req.URL.Path) {

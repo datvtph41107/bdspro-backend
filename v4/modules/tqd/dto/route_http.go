@@ -239,6 +239,7 @@ type PublicPoisHTTPRequest struct {
 	Lng      float64 `form:"lng"`
 	Radius   float64 `form:"radius"`
 	Search   string  `form:"search"`
+	Mode     string  `form:"mode"`
 }
 
 type PublicParcelsSearchHTTPRequest struct {

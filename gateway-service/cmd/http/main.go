@@ -231,6 +231,7 @@ var HttpCmd = &cobra.Command{
 			connections.Hub,
 			runtimeConfig.RequestStats.SpecURLs,
 			runtimeConfig.RequestStats.IgnorePrefixes,
+			runtimeConfig.RequestStats.TrackURL,
 		)
 		if trackerErr != nil {
 			log.Printf("Gateway request stats tracker unavailable: %v", trackerErr)

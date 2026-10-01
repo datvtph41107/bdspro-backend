@@ -88,14 +88,9 @@ func (r *versionPostgres) List(ctx context.Context, appName, platform string, pa
 	}
 	var total int64
 	q.Count(&total)
-	if size <= 0 {
-		size = 20
-	}
-	if page < 0 {
-		page = 0
-	}
+	offset, size := pageOffset(page, size)
 	var rows []*entity.Version
-	err := q.Order("build_number DESC, id DESC").Offset(page * size).Limit(size).Find(&rows).Error
+	err := q.Order("build_number DESC, id DESC").Offset(offset).Limit(size).Find(&rows).Error
 	return rows, total, err
 }
 

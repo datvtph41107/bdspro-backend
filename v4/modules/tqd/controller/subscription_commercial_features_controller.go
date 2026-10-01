@@ -55,7 +55,7 @@ func (c *SubscriptionController) listParcelSubs(ctx context.Context, req dto.Sub
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total, "page": pagable.GetPage(), "size": pagable.GetSize()})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *SubscriptionController) parcelStatus(ctx context.Context, req dto.SubscriptionParcelIDHTTPRequest) (*httpapi.Result, error) {
@@ -100,11 +100,11 @@ func (c *SubscriptionController) listRegionSubs(ctx context.Context, req dto.Sub
 	}
 	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
 	pagable.Normalize()
-	subs, regions, total, err := c.subs.ListUserRegionSubscriptions(ctx, userID, int(pagable.GetPage()), int(pagable.GetSize()))
+	subs, _, total, err := c.subs.ListUserRegionSubscriptions(ctx, userID, int(pagable.GetPage()), int(pagable.GetSize()))
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": subs, "regions": regions, "total": total, "page": pagable.GetPage(), "size": pagable.GetSize()})
+	return jsonListResult(subs, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *SubscriptionController) createRegionSub(ctx context.Context, req dto.CreateRegionSubscriptionHTTPRequest) (*httpapi.Result, error) {
@@ -238,7 +238,7 @@ func (c *FeatureController) nearby(ctx context.Context, req dto.FeaturesNearbyHT
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, 0, uint32(req.Limit))
 }
 
 func (c *FeatureController) byPolygon(ctx context.Context, req dto.FeaturesPolygonHTTPRequest) (*httpapi.Result, error) {
@@ -253,7 +253,7 @@ func (c *FeatureController) byPolygon(ctx context.Context, req dto.FeaturesPolyg
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, 0, uint32(req.Limit))
 }
 
 // ReportController owns /v2/tqd/reports/*.
@@ -337,7 +337,7 @@ func (c *ReportController) list(ctx context.Context, req dto.ListReportsHTTPRequ
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total, "page": pagable.GetPage(), "size": pagable.GetSize()})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *ReportController) delete(ctx context.Context, req dto.ReportIDHTTPRequest) (*httpapi.Result, error) {

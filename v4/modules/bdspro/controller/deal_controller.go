@@ -80,16 +80,43 @@ func (c *DealController) getContractProcess(ctx context.Context, req httpapi.Pat
 }
 
 func (c *DealController) getProducts(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
-	result, ts, err := c.deal.GetDealProducts(ctx, req)
+	items, ts, err := c.deal.GetDealProducts(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if result == nil {
-		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
-	}
-	data, err := protoMessages(result.GetData())
-	if err != nil {
-		return nil, err
+	data := make([]any, 0, len(items))
+	for _, item := range items {
+		row := map[string]any{
+			"id":        item.ID,
+			"dealId":    item.DealID,
+			"productId": item.ProductID,
+		}
+		if item.CreatedAt != "" {
+			row["createdAt"] = item.CreatedAt
+		}
+		if item.UpdatedAt != "" {
+			row["updatedAt"] = item.UpdatedAt
+		}
+		if item.CreatedBy != nil {
+			row["createdBy"] = *item.CreatedBy
+		}
+		if item.UpdatedBy != nil {
+			row["updatedBy"] = *item.UpdatedBy
+		}
+		if item.Product != nil {
+			if msg, ok := item.Product.(proto.Message); ok {
+				product, err := protoToAny(msg)
+				if err != nil {
+					return nil, err
+				}
+				row["product"] = product
+			} else {
+				row["product"] = item.Product
+			}
+		} else {
+			row["product"] = map[string]any{}
+		}
+		data = append(data, row)
 	}
 	return httpapi.OK(data, timestampOpt(ts)...), nil
 }

@@ -143,6 +143,7 @@ http:
 
 # URL đặc biệt: ghi audit từng request (không gộp count) trong request_audit_log
 request_stats:
-  spec_urls: []
+  spec_urls:
+    - /v2/crm/sitemap.xml
   # ignore_prefixes:
   #   - /v2/custom/admin/dashboard

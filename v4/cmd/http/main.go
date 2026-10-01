@@ -159,7 +159,7 @@ func runHTTP() error {
 		loggingMiddleware,
 		corsMiddleware(runtimeConfig.HTTP.AllowedOrigins),
 		_jwt.JWTAuthHTTPMiddleware(publicHTTPRoutes, nil),
-		bridgeActorProfileID(),
+		bridgeTrustedHTTPIdentity(),
 		requeststats.Middleware(requeststats.New(
 			app.HubHandler.RequestStatsCollector(),
 			runtimeConfig.RequestStats.SpecURLs,

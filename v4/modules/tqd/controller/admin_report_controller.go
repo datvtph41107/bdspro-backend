@@ -55,7 +55,7 @@ func (c *AdminReportController) list(ctx context.Context, req adminReportListReq
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminReportController) summary(ctx context.Context, _ dto.EmptyJSON) (*httpapi.Result, error) {
@@ -79,7 +79,7 @@ func (c *AdminReportController) queue(ctx context.Context, req struct {
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminReportController) queueSummary(ctx context.Context, _ dto.EmptyJSON) (*httpapi.Result, error) {
@@ -106,7 +106,7 @@ func (c *AdminReportController) listEvents(ctx context.Context, req adminReportL
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminReportController) getEvent(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {
@@ -127,7 +127,7 @@ func (c *AdminReportController) reportEvents(ctx context.Context, req dto.IDPath
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows})
+	return jsonListResult(rows, int64(len(rows)), 1, uint32(len(rows)))
 }
 
 func (c *AdminReportController) createInternal(ctx context.Context, req dto.AdminCreateReportRequest) (*httpapi.Result, error) {

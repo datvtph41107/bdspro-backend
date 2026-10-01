@@ -60,6 +60,7 @@ import (
 	user_modules_bdspro_services "userv4/modules/bdspro/services"
 	user_modules_crm "userv4/modules/crm"
 	user_modules_hub_controller "userv4/modules/hub/controller"
+	user_modules_hub_provider "userv4/modules/hub/provider"
 	user_modules_seo_controller "userv4/modules/seo/controller"
 	user_modules_seo_provider "userv4/modules/seo/provider"
 	user_modules_seo_repository "userv4/modules/seo/repository"
@@ -221,6 +222,8 @@ var wireSet = wire.NewSet(
 	user_modules_hub_repository.NewSearchLatencyPostgres,
 	user_modules_hub_services.NewLocalSearchLatencyService,
 	wire.Bind(new(user_modules_hub_services.SearchLatencyService), new(*user_modules_hub_services.LocalSearchLatencyService)),
+	user_modules_hub_provider.NewLocalSearchAnalytics,
+	wire.Bind(new(user_modules_tqd_provider.SearchAnalytics), new(*user_modules_hub_provider.LocalSearchAnalytics)),
 	user_modules_hub_repository.NewAPIKeyPostgres,
 	user_modules_hub_services.NewLocalAPIKeyService,
 	wire.Bind(new(user_modules_hub_services.APIKeyService), new(*user_modules_hub_services.LocalAPIKeyService)),

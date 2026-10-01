@@ -23,7 +23,7 @@ func NewLocalCrmSeoProvider(svc services.SeoDomainService) *LocalCrmSeoProvider 
 }
 
 func (p *LocalCrmSeoProvider) GenerateSeoFromParcelIDs(ctx context.Context, parcelIDs []uint64) (*tqddto.AdminGenParcelSeoResult, error) {
-	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeParcel, "tqd_parcel", parcelIDs)
+	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeParcel, entity.SeoRefSourceTqdParcel, parcelIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (p *LocalCrmSeoProvider) GenerateSeoFromParcelIDs(ctx context.Context, parc
 }
 
 func (p *LocalCrmSeoProvider) GenerateSeoFromLayerIDs(ctx context.Context, layerIDs []uint64) (*tqddto.AdminGenLayerSeoResult, error) {
-	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeMap, "tqd_layer", layerIDs)
+	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeMap, entity.SeoRefSourceTqdLayer, layerIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (p *LocalCrmSeoProvider) GenerateSeoFromLayerIDs(ctx context.Context, layer
 }
 
 func (p *LocalCrmSeoProvider) GenerateSeoFromPlanningProjectIDs(ctx context.Context, planningProjectIDs []uint64) (*qh_dto.AdminGenPlanningProjectSeoResult, error) {
-	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeProject, "tqd_planning_project", planningProjectIDs)
+	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeProject, entity.SeoRefSourceTqdPlanningProject, planningProjectIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (p *LocalCrmSeoProvider) GenerateSeoFromPlanningProjectIDs(ctx context.Cont
 }
 
 func (p *LocalCrmSeoProvider) GenerateSeoFromPlanningDocumentIDs(ctx context.Context, documentIDs []uint64) (*qh_dto.AdminGenPlanningDocumentSeoResult, error) {
-	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeDocument, "tqd_planning_document", documentIDs)
+	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeDocument, entity.SeoRefSourceTqdDocument, documentIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (p *LocalCrmSeoProvider) GenerateSeoFromPlanningDocumentIDs(ctx context.Con
 }
 
 func (p *LocalCrmSeoProvider) GenerateSeoFromAdministrativeUnitIdentities(ctx context.Context, identities []uint64) (*tqddto.AdminGenAdministrativeUnitSeoResult, error) {
-	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeAdmUnit, "tqd_adm_unit", identities)
+	batch, err := p.svc.GenerateBatch(ctx, entity.SEORefTypeAdmUnit, entity.SeoRefSourceTqdAdministrativeUnit, identities)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (p *LocalCrmSeoProvider) CreateOrGetDefaultSeoByRef(ctx context.Context, re
 	seo, created, err := p.svc.GenerateFromRef(ctx, dto.GenerateFromRefRequest{
 		RefType:   refType,
 		RefID:     refID,
-		RefSource: fmt.Sprintf("ref-%d", refType),
+		RefSource: entity.NormalizeSeoResolverKey(fmt.Sprintf("ref-%d", refType)),
 	})
 	if err != nil {
 		return nil, err

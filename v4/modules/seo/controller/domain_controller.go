@@ -37,13 +37,17 @@ func (c *SeoDomainController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v2/crm/admin/seo/sources", c.listRefTypes)
 
 	// Admin CRUD (CRM path parity: /v2/crm/admin/seo-domains)
+	// Literal paths must be registered so they are not captured by {id}.
 	httpapi.GET(mux, "/v2/crm/admin/seo-domains", c.adminList)
-	httpapi.GET(mux, "/v2/crm/admin/seo-domains/{id}", c.adminGetByID)
+	httpapi.GET(mux, "/v2/crm/admin/seo-domains/refs", c.adminListByLinkedRef)
 	httpapi.GET(mux, "/v2/crm/admin/seo-domains/by-ref", c.adminGetByRef)
+	httpapi.GET(mux, "/v2/crm/admin/seo-domains/internal-links", c.adminListLinksQuery)
+	httpapi.GET(mux, "/v2/crm/admin/seo-domains/relatives", c.adminListRelativesQuery)
+	httpapi.PUT(mux, "/v2/crm/admin/seo-domains/batch", c.adminBatchUpdate)
+	httpapi.GET(mux, "/v2/crm/admin/seo-domains/{id}", c.adminGetByID)
 	httpapi.POST(mux, "/v2/crm/admin/seo-domains", c.adminCreate)
 	httpapi.POST(mux, "/v2/crm/admin/seo-pages/drafts", c.adminCreateDraft)
 	httpapi.PUT(mux, "/v2/crm/admin/seo-domains/{id}", c.adminUpdate)
-	httpapi.PUT(mux, "/v2/crm/admin/seo-domains/batch", c.adminBatchUpdate)
 	mux.HandleFunc("DELETE /v2/crm/admin/seo-domains/{id}", httpapi.Bind(c.adminDelete))
 
 	// Lifecycle (CRM seo-pages paths + domains/{id} aliases)
@@ -78,7 +82,6 @@ func (c *SeoDomainController) RegisterHTTP(mux *http.ServeMux) {
 	// Internal links
 	httpapi.GET(mux, "/v2/crm/admin/seo-domains/{id}/links", c.adminListLinks)
 	httpapi.POST(mux, "/v2/crm/admin/seo-domains/{id}/links", c.adminCreateLink)
-	httpapi.GET(mux, "/v2/crm/admin/seo-domains/internal-links", c.adminListLinksQuery)
 	httpapi.POST(mux, "/v2/crm/admin/seo-domains/internal-links", c.adminCreateLinkBody)
 	httpapi.PUT(mux, "/v2/crm/admin/seo-domains/internal-links/{id}", c.adminUpdateLink)
 	mux.HandleFunc("DELETE /v2/crm/admin/seo-domains/internal-links/{id}", httpapi.Bind(c.adminDeleteLink))
@@ -87,7 +90,6 @@ func (c *SeoDomainController) RegisterHTTP(mux *http.ServeMux) {
 	// Relatives
 	httpapi.GET(mux, "/v2/crm/admin/seo-domains/{id}/relatives", c.adminListRelatives)
 	httpapi.POST(mux, "/v2/crm/admin/seo-domains/{id}/relatives", c.adminCreateRelative)
-	httpapi.GET(mux, "/v2/crm/admin/seo-domains/relatives", c.adminListRelativesQuery)
 	httpapi.POST(mux, "/v2/crm/admin/seo-domains/relatives", c.adminCreateRelativeBody)
 	mux.HandleFunc("DELETE /v2/crm/admin/seo-domains/relatives/{id}", httpapi.Bind(c.adminDeleteRelative))
 	mux.HandleFunc("DELETE /v2/crm/admin/seo/relatives/{id}", httpapi.Bind(c.adminDeleteRelative))
@@ -155,7 +157,18 @@ func (c *SeoDomainController) adminList(ctx context.Context, req dto.SeoDomainLi
 	if result == nil {
 		return listResult([]dto.SeoDomainItem{}, 0)
 	}
-	return httpapi.OK(result), nil
+	return listResult(result.Data, result.Total)
+}
+
+func (c *SeoDomainController) adminListByLinkedRef(ctx context.Context, req dto.SeoDomainRefsFilter) (*httpapi.Result, error) {
+	result, err := c.svc.ListByLinkedRef(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return listResult([]dto.SeoDomainItem{}, 0)
+	}
+	return listResult(result.Data, result.Total)
 }
 
 func (c *SeoDomainController) adminGetByID(ctx context.Context, req dto.SeoDomainIDPath) (*httpapi.Result, error) {

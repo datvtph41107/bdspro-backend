@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
@@ -37,6 +38,7 @@ type PublicExtendedController struct {
 	related       *relatedapp.Service
 	publicContent *publiccontentpg.Repository
 	crmSeo        provider.CrmSeoProvider
+	analytics     provider.SearchAnalytics
 	parcelMapper  *mapper.ParcelMapper
 
 	processedConfigs map[string]bool
@@ -56,7 +58,11 @@ func NewPublicExtendedController(
 	related *relatedapp.Service,
 	publicContent *publiccontentpg.Repository,
 	crmSeo provider.CrmSeoProvider,
+	analytics provider.SearchAnalytics,
 ) *PublicExtendedController {
+	if analytics == nil {
+		analytics = provider.NoopSearchAnalytics{}
+	}
 	return &PublicExtendedController{
 		parcels:          parcels,
 		locationUC:       locationUC,
@@ -66,6 +72,7 @@ func NewPublicExtendedController(
 		related:          related,
 		publicContent:    publicContent,
 		crmSeo:           crmSeo,
+		analytics:        analytics,
 		parcelMapper:     mapper.NewParcelMapper(),
 		processedConfigs: map[string]bool{},
 		domainAPI:        strings.TrimRight(os.Getenv("TQD_DOMAIN_API"), "/"),
@@ -174,12 +181,22 @@ func (c *PublicExtendedController) listPois(ctx context.Context, req dto.PublicP
 	if c.poi == nil {
 		return nil, _errors.ReturnError(501, "poi service not configured")
 	}
+	search := strings.TrimSpace(req.Search)
 	listReq := &dto.PublicPoiListRequest{
 		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size},
-		Search:  req.Search,
+		Search:  search,
+		Mode:    req.Mode,
 	}
 	listReq.Normalize()
+	start := time.Now()
 	rows, err := c.poi.ListPublic(ctx, listReq)
+	durationMs := time.Since(start).Milliseconds()
+	if c.analytics != nil {
+		c.analytics.TrackLatency("GET", "/v2/tqd/public/pois", "tqd", durationMs)
+		if search != "" {
+			c.analytics.TrackKeyword(search, "tqd")
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +250,16 @@ func (c *PublicExtendedController) clientSearch(ctx context.Context, req dto.Pub
 	if q == "" {
 		q = strings.TrimSpace(req.Q)
 	}
-	rows, err := c.locationUC.SearchTxtClient(ctx, _utils.CleanSearchText(q), 20)
+	cleaned := _utils.CleanSearchText(q)
+	start := time.Now()
+	rows, err := c.locationUC.SearchTxtClient(ctx, cleaned, 20)
+	durationMs := time.Since(start).Milliseconds()
+	if c.analytics != nil {
+		c.analytics.TrackLatency("GET", "/v2/tqd/public/client/search", "tqd", durationMs)
+		if strings.TrimSpace(cleaned) != "" {
+			c.analytics.TrackKeyword(cleaned, "tqd")
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +277,7 @@ func (c *PublicExtendedController) clientSearch(ctx context.Context, req dto.Pub
 		}
 		items = append(items, row)
 	}
-	return jsonOK(map[string]any{"data": items})
+	return jsonOK(items)
 }
 
 func (c *PublicExtendedController) qhConfig(ctx context.Context, req dto.QhPublicConfigHTTPRequest) (*httpapi.Result, error) {
@@ -270,7 +296,7 @@ func (c *PublicExtendedController) qhConfig(ctx context.Context, req dto.QhPubli
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"code": 8500, "data": parsed})
+	return jsonOK(parsed)
 }
 
 func (c *PublicExtendedController) ensureQhConfigProcessed(configName string) (string, error) {
@@ -323,7 +349,7 @@ func (c *PublicExtendedController) legendsAll(ctx context.Context, _ dto.QhPubli
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, 1, uint32(total))
 }
 
 func (c *PublicExtendedController) parcelQuickLayers(ctx context.Context, req dto.QhPublicParcelQuickLayersHTTPRequest) (*httpapi.Result, error) {

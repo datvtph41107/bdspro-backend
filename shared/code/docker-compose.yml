@@ -32,6 +32,26 @@ services:
       ENV_RUNTIME: develop
     volumes:
       - ./logs:/app/logs
+
+  # userv4 modular HTTP surface (deploy via v4/deploy.sh).
+  v4:
+    build:
+      context: ./v4
+      dockerfile: Dockerfile
+    container_name: v4
+    command: ["./main"]
+    ports:
+      - "8004:8004"
+    networks:
+      - internal
+    environment:
+      ENV_RUNTIME: develop
+      HTTP_ADDRESS: ":8004"
+      USER_MIGRATION_DIR: /migrate
+      QHPRO_SERVICE_ID: userv4
+    volumes:
+      - ./logs/v4:/app/logs
+    restart: unless-stopped
   
   bdspro:
     build:

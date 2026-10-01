@@ -90,7 +90,7 @@ func (c *ParcelUserController) createBatch(ctx context.Context, req dto.ParcelBa
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": c.mapper.ToProtoFromDomainList(result)})
+	return jsonOK(c.mapper.ToProtoFromDomainList(result))
 }
 
 func (c *ParcelUserController) findByLocation(ctx context.Context, req dto.FindByLocationHTTPRequest) (*httpapi.Result, error) {

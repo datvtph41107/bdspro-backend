@@ -16,8 +16,8 @@ func (routeStubDeal) GetDealsUser(context.Context, dto.DealSearchRequest) (*bdsp
 	return &bdspropb.GetDealsResponse{}, nil
 }
 
-func (routeStubDeal) GetDealsByProduct(context.Context, uint64, dto.SyncByIDRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
-	return &bdspropb.GetOrganizationDealsResponse{}, nil
+func (routeStubDeal) GetDealsByProduct(context.Context, uint64, dto.SyncByIDRequest) ([]dto.ProductDealItem, int64, error) {
+	return []dto.ProductDealItem{}, 1, nil
 }
 
 func (routeStubDeal) GetTimestamps(context.Context, uint64) (*bdspropb.DealTimestampsResponse, error) {
@@ -32,8 +32,8 @@ func (routeStubDeal) GetContractProcess(context.Context, uint64) (*bdspropb.Cont
 	return &bdspropb.ContractProcessResponse{}, 456, nil
 }
 
-func (routeStubDeal) GetDealProducts(context.Context, dto.DealListByIDRequest) (*bdspropb.GetDealProductsResponse, int64, error) {
-	return &bdspropb.GetDealProductsResponse{}, 1, nil
+func (routeStubDeal) GetDealProducts(context.Context, dto.DealListByIDRequest) ([]dto.DealProductItem, int64, error) {
+	return []dto.DealProductItem{}, 1, nil
 }
 
 func (routeStubDeal) GetContracts(context.Context, dto.DealListByIDRequest) (*bdspropb.DealContractListResponse, error) {

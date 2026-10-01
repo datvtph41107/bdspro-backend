@@ -16,11 +16,12 @@ import (
 // DealRepository is the deal-facing store on the v4 DSN.
 type DealRepository interface {
 	ListForUser(ctx context.Context, userID uint64, page, size uint32, filter dto.DealSearchRequest) ([]*entity.Deal, uint32, error)
-	ListByProductID(ctx context.Context, productID uint64, page, size uint32) ([]*entity.Deal, uint32, error)
+	ListIDsByProductID(ctx context.Context, productID uint64, page, size uint32) ([]uint64, error)
+	ListDealProductsByProductID(ctx context.Context, productID uint64, page, size uint32) ([]*entity.DealProduct, error)
 	GetByID(ctx context.Context, id uint64) (*entity.Deal, error)
 	ListByIDs(ctx context.Context, ids []uint64) ([]*entity.Deal, error)
 	GetContractProcess(ctx context.Context, dealID uint64) ([]dto.TxProcessRow, error)
-	ListDealProductIDs(ctx context.Context, dealID uint64, page, size uint32) ([]uint64, error)
+	ListDealProducts(ctx context.Context, dealID uint64, page, size uint32) ([]*entity.DealProduct, error)
 	ListContractsByDealID(ctx context.Context, dealID uint64) ([]dto.TxContractDealListRow, int64, error)
 	ListMembersByDealID(ctx context.Context, dealID uint64, page, size int) ([]*entity.DealMember, uint32, error)
 	ListAcceptedMembers(ctx context.Context, filter dto.DealMembersRequest) ([]*entity.DealMember, error)
@@ -91,24 +92,10 @@ func (r *dealPostgres) ListForUser(ctx context.Context, userID uint64, page, siz
 	return list, uint32(total), err
 }
 
-func (r *dealPostgres) ListByProductID(ctx context.Context, productID uint64, page, size uint32) ([]*entity.Deal, uint32, error) {
+func (r *dealPostgres) ListIDsByProductID(ctx context.Context, productID uint64, page, size uint32) ([]uint64, error) {
 	if r.db == nil || productID == 0 {
-		return nil, 0, nil
+		return nil, nil
 	}
-	q := r.db.WithContext(ctx).Model(&entity.Deal{}).
-		Where("deals.deleted_at IS NULL").
-		Where(`EXISTS (
-			SELECT 1 FROM deal_products dp
-			WHERE dp.deal_id = deals.id
-			  AND dp.product_id = ?
-			  AND dp.deleted_at IS NULL
-		)`, productID)
-
-	var total int64
-	if err := q.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
 	limit := int(size)
 	if limit <= 0 {
 		limit = 20
@@ -118,12 +105,36 @@ func (r *dealPostgres) ListByProductID(ctx context.Context, productID uint64, pa
 	}
 	offset := int(page) * limit
 
-	var list []*entity.Deal
-	err := q.Preload("Members", "deleted_at IS NULL").
-		Order("deals.created_at DESC").
-		Limit(limit).Offset(offset).
-		Find(&list).Error
-	return list, uint32(total), err
+	var ids []uint64
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT dp.deal_id
+			FROM deal_products dp
+			WHERE dp.product_id = ?
+			  AND dp.deleted_at IS NULL
+		LIMIT ? OFFSET ?
+	`, productID, limit, offset).Scan(&ids).Error
+	return ids, err
+}
+
+func (r *dealPostgres) ListDealProductsByProductID(ctx context.Context, productID uint64, page, size uint32) ([]*entity.DealProduct, error) {
+	if r.db == nil || productID == 0 {
+		return nil, nil
+	}
+	limit := int(size)
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 999 {
+		limit = 999
+	}
+	offset := int(page) * limit
+	var rows []*entity.DealProduct
+	err := r.db.WithContext(ctx).
+		Where("product_id = ? AND deleted_at IS NULL", productID).
+		Order("id ASC").
+		Offset(offset).Limit(limit).
+		Find(&rows).Error
+	return rows, err
 }
 
 func (r *dealPostgres) GetByID(ctx context.Context, id uint64) (*entity.Deal, error) {

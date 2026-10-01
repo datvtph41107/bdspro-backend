@@ -86,7 +86,16 @@ func (c *LocationController) listAdministrativeUnits(ctx context.Context, req dt
 	if err != nil {
 		return nil, err
 	}
-	return protoResult(c.locMapper.ToProtoListAdministrativeUnitsResponse(resp))
+	items := make([]*tqdpb.AdministrativeUnitListItem, 0)
+	total := int64(0)
+	if resp != nil {
+		total = resp.Total
+		proto := c.locMapper.ToProtoListAdministrativeUnitsResponse(resp)
+		if proto != nil {
+			items = proto.GetData()
+		}
+	}
+	return protoListResult(items, total, req.Page, req.Size)
 }
 
 func (c *LocationController) getAdministrativeUnit(ctx context.Context, req dto.ClientCompositeIDRequest) (*httpapi.Result, error) {
@@ -141,7 +150,16 @@ func (c *LocationController) listFollowedAdministrativeUnits(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	return protoResult(c.locMapper.ToProtoListAdministrativeUnitsResponse(resp))
+	items := make([]*tqdpb.AdministrativeUnitListItem, 0)
+	total := int64(0)
+	if resp != nil {
+		total = resp.Total
+		proto := c.locMapper.ToProtoListAdministrativeUnitsResponse(resp)
+		if proto != nil {
+			items = proto.GetData()
+		}
+	}
+	return protoListResult(items, total, req.Page, req.Size)
 }
 
 func (c *LocationController) followAdministrativeUnit(ctx context.Context, req dto.ClientCompositeIDRequest) (*httpapi.Result, error) {

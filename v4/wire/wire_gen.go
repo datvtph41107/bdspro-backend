@@ -68,6 +68,7 @@ import (
 	repository3 "userv4/modules/crm/repository"
 	services3 "userv4/modules/crm/services"
 	controller4 "userv4/modules/hub/controller"
+	hubprovider "userv4/modules/hub/provider"
 	"userv4/modules/hub/repository"
 	services6 "userv4/modules/hub/services"
 	controller5 "userv4/modules/notification/controller"
@@ -308,10 +309,11 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	localKeywordSearchService := services6.NewLocalKeywordSearchService(keywordSearchRepository)
 	searchLatencyRepository := repository.NewSearchLatencyPostgres(db)
 	localSearchLatencyService := services6.NewLocalSearchLatencyService(searchLatencyRepository)
+	localSearchAnalytics := hubprovider.NewLocalSearchAnalytics(localKeywordSearchService, localSearchLatencyService)
 	apiKeyRepository := repository.NewAPIKeyPostgres(db)
 	localAPIKeyService := services6.NewLocalAPIKeyService(apiKeyRepository)
 	handler2 := controller4.NewHandler(localLocationService, localLocationV2Service, localUserGuideService, localFAQService, localVersionService, localRequestStatsService, localErrorLogService, localApplinkService, localSystemConfigService, localEventQueueService, localInteractiveEventService, localClickURLService, localUpdateDataService, localKeywordSearchService, localSearchLatencyService, localAPIKeyService)
-	localNotificationService := services.NewLocalNotificationService(notificationRepository, syncUtil)
+	localNotificationService := services.NewLocalNotificationService(notificationRepository, syncUtil, profileProvider)
 	handler3 := controller5.NewHandler(localNotificationService, syncUtil)
 	tqdDB, cleanup8, err := postgres.NewTqdDB()
 	if err != nil {
@@ -408,7 +410,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	regionExtendUsecase := services7.NewRegionExtendUsecase(regionExtendRepository)
 	importUsecase := services7.NewImportUsecase(regionRepository, regionExtendRepository, qhLabelRepository, layerRepository)
 	iProAIJobUsecase := qh_usecase.NewProAIJobUsecase(iProAIJobRepo)
-	handler4 := controller6.NewHandler(servicesLocalLocationService, locationUsecase, servicesLocalPublicService, layerUsecase, regionUsecase, parcelUsecase, qhLayerFamilyUsecase, qhLabelUsecase, qhLayerLandUseGroupUsecase, qhLayerLegendUsecase, applicationService, iqhPlanningProjectUsecase, iqhPlanningEventUsecase, iqhPlanningDocumentUsecase, mapWorkspaceUsecase, service2, service3, layerLegalUsecase, poiUsecase, service4, publiccontentRepository, localCrmSeoProvider, subscriptionUsecase, notificationUsecase, profileUsageService, featureUsecase, reportUsecase, oneHouseUsecase, qhAuthorityIssuringUsecase, amenityUsecase, contactLabelUsecase, openHourUsecase, poiCategoryUsecase, directorySourceUsecase, directorySupplierUsecase, directoryCategoryUsecase, regionExtendUsecase, importUsecase, iProAIJobUsecase)
+	handler4 := controller6.NewHandler(servicesLocalLocationService, locationUsecase, servicesLocalPublicService, layerUsecase, regionUsecase, parcelUsecase, qhLayerFamilyUsecase, qhLabelUsecase, qhLayerLandUseGroupUsecase, qhLayerLegendUsecase, applicationService, iqhPlanningProjectUsecase, iqhPlanningEventUsecase, iqhPlanningDocumentUsecase, mapWorkspaceUsecase, service2, service3, layerLegalUsecase, poiUsecase, service4, publiccontentRepository, localCrmSeoProvider, subscriptionUsecase, notificationUsecase, profileUsageService, featureUsecase, reportUsecase, oneHouseUsecase, qhAuthorityIssuringUsecase, amenityUsecase, contactLabelUsecase, openHourUsecase, poiCategoryUsecase, directorySourceUsecase, directorySupplierUsecase, directoryCategoryUsecase, regionExtendUsecase, importUsecase, iProAIJobUsecase, localSearchAnalytics)
 	contactRepo := crm.ProvideContactRepo(crmDB)
 	friendRepo := crm.ProvideFriendRepo(crmDB)
 	followRepo := crm.ProvideFollowRepo(crmDB)

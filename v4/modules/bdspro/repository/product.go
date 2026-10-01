@@ -146,11 +146,26 @@ func (r *productPostgres) ListByIDs(ctx context.Context, ids []uint64) ([]*entit
 		return nil, nil
 	}
 	var list []*entity.Product
-	err := r.db.WithContext(ctx).
-		Preload("Price").
+	err := productDetailPreload(r.db.WithContext(ctx)).
 		Where("id IN ? AND deleted_at IS NULL", ids).
 		Find(&list).Error
-	return list, err
+	if err != nil {
+		return nil, err
+	}
+	// Preserve caller order.
+	byID := make(map[uint64]*entity.Product, len(list))
+	for _, p := range list {
+		if p != nil {
+			byID[p.ID] = p
+		}
+	}
+	ordered := make([]*entity.Product, 0, len(ids))
+	for _, id := range ids {
+		if p, ok := byID[id]; ok {
+			ordered = append(ordered, p)
+		}
+	}
+	return ordered, nil
 }
 
 func (r *productPostgres) Create(ctx context.Context, product *entity.Product) error {

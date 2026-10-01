@@ -56,7 +56,7 @@ func (c *AdminParcelPoiSubController) listParcels(ctx context.Context, req admin
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminParcelPoiSubController) getParcel(ctx context.Context, req dto.ParcelIDPath) (*httpapi.Result, error) {
@@ -72,7 +72,7 @@ func (c *AdminParcelPoiSubController) parcelNeighbors(ctx context.Context, req d
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": out})
+	return jsonOK(out)
 }
 
 type updateParcelHTTP struct {
@@ -160,7 +160,7 @@ func (c *AdminParcelPoiSubController) listSubs(ctx context.Context, req adminSub
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminParcelPoiSubController) listParcelSubs(ctx context.Context, req adminSubListReq) (*httpapi.Result, error) {
@@ -170,7 +170,7 @@ func (c *AdminParcelPoiSubController) listParcelSubs(ctx context.Context, req ad
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminParcelPoiSubController) deleteSub(ctx context.Context, req dto.SubscriptionIDPath) (*httpapi.Result, error) {

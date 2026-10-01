@@ -124,7 +124,7 @@ func (c *AdminRegionImportController) listRegions(ctx context.Context, req listR
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminRegionImportController) listByLayer(ctx context.Context, req struct {
@@ -138,7 +138,7 @@ func (c *AdminRegionImportController) listByLayer(ctx context.Context, req struc
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminRegionImportController) syncRegion(ctx context.Context, req dto.AdminSyncRegionRequest) (*httpapi.Result, error) {
@@ -239,7 +239,7 @@ func (c *AdminRegionImportController) listExtendsByLayer(ctx context.Context, re
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminRegionImportController) importPreview(ctx context.Context, req dto.AdminImportPreviewRequest) (*httpapi.Result, error) {
@@ -281,7 +281,7 @@ func (c *AdminRegionImportController) importErrors(ctx context.Context, req dto.
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 var _ = _errors.ReturnError

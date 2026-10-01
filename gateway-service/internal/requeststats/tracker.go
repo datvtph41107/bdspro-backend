@@ -1,7 +1,9 @@
 package requeststats
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,19 +24,34 @@ var (
 	uuidPathSegment    = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 )
 
-// Tracker gửi thống kê request sang hub (fire-and-forget) qua connection process-owned.
+// Tracker gửi thống kê request (fire-and-forget).
+// Ưu tiên TrackURL → v4 HTTP; fallback hub gRPC khi TrackURL trống.
 type Tracker struct {
 	client         hubpb.RequestStatsServiceClient
+	httpClient     *http.Client
+	trackURL       string
 	timeout        time.Duration
 	specURLs       map[string]struct{}
 	ignorePrefixes []string
 }
 
-// New tạo tracker từ Hub ClientConn đã mở sẵn. Không sở hữu/ đóng connection.
+type trackHTTPBody struct {
+	Method         string `json:"method"`
+	Path           string `json:"path"`
+	Service        string `json:"service"`
+	StatusCode     int32  `json:"statusCode"`
+	DurationMs     int64  `json:"durationMs"`
+	ProfileID      uint64 `json:"profileId"`
+	OrganizationID uint64 `json:"organizationId"`
+	IsSpecAudit    bool   `json:"isSpecAudit"`
+}
+
+// New tạo tracker. trackURL (nếu set) ghi vào v4 request_audit/stats; ngược lại dùng hub conn.
 // ignorePrefixes bổ sung (từ config) được merge với defaultIgnorePrefixes.
-func New(conn *grpc.ClientConn, specURLs, ignorePrefixes []string) (*Tracker, error) {
-	if conn == nil {
-		return nil, fmt.Errorf("hub connection is required for request stats tracker")
+func New(conn *grpc.ClientConn, specURLs, ignorePrefixes []string, trackURL string) (*Tracker, error) {
+	trackURL = strings.TrimSpace(trackURL)
+	if trackURL == "" && conn == nil {
+		return nil, fmt.Errorf("hub connection or track_url is required for request stats tracker")
 	}
 	set := make(map[string]struct{}, len(specURLs))
 	for _, raw := range specURLs {
@@ -44,15 +61,20 @@ func New(conn *grpc.ClientConn, specURLs, ignorePrefixes []string) (*Tracker, er
 		}
 		set[path] = struct{}{}
 	}
-	return &Tracker{
-		client:         hubpb.NewRequestStatsServiceClient(conn),
+	t := &Tracker{
 		timeout:        2 * time.Second,
 		specURLs:       set,
 		ignorePrefixes: mergeIgnorePrefixes(ignorePrefixes),
-	}, nil
+		trackURL:       trackURL,
+		httpClient:     &http.Client{Timeout: 2 * time.Second},
+	}
+	if trackURL == "" {
+		t.client = hubpb.NewRequestStatsServiceClient(conn)
+	}
+	return t, nil
 }
 
-// Middleware sau mỗi request tạo goroutine bắn sang hub để đếm.
+// Middleware sau mỗi request tạo goroutine bắn sang v4/hub để đếm.
 func Middleware(tracker *Tracker) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method == http.MethodOptions {
@@ -63,7 +85,7 @@ func Middleware(tracker *Tracker) gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 
-		if tracker == nil || tracker.client == nil {
+		if tracker == nil || (tracker.trackURL == "" && tracker.client == nil) {
 			return
 		}
 
@@ -91,21 +113,60 @@ func Middleware(tracker *Tracker) gin.HandlerFunc {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), tracker.timeout)
 			defer cancel()
-			_, err := tracker.client.TrackRequest(ctx, &hubpb.TrackRequestRequest{
+			if err := tracker.track(ctx, trackHTTPBody{
 				Method:         method,
 				Path:           normalizedPath,
 				Service:        serviceName,
 				StatusCode:     statusCode,
 				DurationMs:     durationMs,
-				ProfileId:      profileID,
-				OrganizationId: organizationID,
+				ProfileID:      profileID,
+				OrganizationID: organizationID,
 				IsSpecAudit:    isSpecAudit,
-			})
-			if err != nil {
+			}); err != nil {
 				log.Printf("request_stats track error: %v", err)
 			}
 		}()
 	}
+}
+
+func (t *Tracker) track(ctx context.Context, body trackHTTPBody) error {
+	if t == nil {
+		return nil
+	}
+	if t.trackURL != "" {
+		payload, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.trackURL, bytes.NewReader(payload))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := t.httpClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode >= 300 {
+			return fmt.Errorf("track_url status %d", resp.StatusCode)
+		}
+		return nil
+	}
+	if t.client == nil {
+		return fmt.Errorf("request stats client is nil")
+	}
+	_, err := t.client.TrackRequest(ctx, &hubpb.TrackRequestRequest{
+		Method:         body.Method,
+		Path:           body.Path,
+		Service:        body.Service,
+		StatusCode:     body.StatusCode,
+		DurationMs:     body.DurationMs,
+		ProfileId:      body.ProfileID,
+		OrganizationId: body.OrganizationID,
+		IsSpecAudit:    body.IsSpecAudit,
+	})
+	return err
 }
 
 // defaultIgnorePrefixes: path bắt đầu bằng prefix này sẽ không bị đếm.

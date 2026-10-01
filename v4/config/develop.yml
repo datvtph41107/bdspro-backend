@@ -26,11 +26,12 @@ server:
   tcp_port: 8211
 
 database:
-  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+  dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
+  # Planning/geo tables live on db_tqd (same as tqd-service develop). db_v4 is incomplete for qh_planning_*.
   tqd:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
   crm:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_user port=5432 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
 
 logging:
   level:

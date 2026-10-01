@@ -74,6 +74,17 @@ func protoListResult[T proto.Message](items []T, total int64, page, size uint32)
 	})), nil
 }
 
+func jsonListResult(items any, total int64, page, size uint32) (*httpapi.Result, error) {
+	if items == nil {
+		items = []any{}
+	}
+	return httpapi.OK(items, httpapi.WithPagination(&httpapi.Pagination{
+		Page:  int32(page),
+		Size:  int32(size),
+		Total: total,
+	})), nil
+}
+
 func jsonOK(data any, opts ...httpapi.OKOption) (*httpapi.Result, error) {
 	return httpapi.OK(data, opts...), nil
 }

@@ -28,6 +28,39 @@ func TestSEORefTypeName(t *testing.T) {
 	}
 }
 
+func TestResolvePublicURLPattern_FiveGenerateSources(t *testing.T) {
+	cases := []struct {
+		refType entity.SEORefType
+		source  string
+		want    string
+	}{
+		{entity.SEORefTypeParcel, entity.SeoRefSourceTqdParcel, entity.PublicURLPatternThuaDat},
+		{entity.SEORefTypeMap, entity.SeoRefSourceTqdLayer, entity.PublicURLPatternLop},
+		{entity.SEORefTypeProject, entity.SeoRefSourceTqdPlanningProject, entity.PublicURLPatternDoAnQuyHoach},
+		{entity.SEORefTypeDocument, entity.SeoRefSourceTqdDocument, entity.PublicURLPatternTaiLieu},
+		{entity.SEORefTypeAdmUnit, entity.SeoRefSourceTqdAdministrativeUnit, entity.PublicURLPatternDiaBan},
+		{entity.SEORefTypeProject, "tqd_planning_project", entity.PublicURLPatternDoAnQuyHoach},
+		{entity.SEORefTypeLegacy, "manual", entity.PublicURLPatternTin},
+	}
+	for _, tc := range cases {
+		got := entity.ResolvePublicURLPattern(tc.refType, tc.source)
+		if got != tc.want {
+			t.Fatalf("ResolvePublicURLPattern(%d,%q)=%q want %q", tc.refType, tc.source, got, tc.want)
+		}
+	}
+}
+
+func TestFormatPublicURL_PlanningProject(t *testing.T) {
+	got := entity.FormatPublicURL(entity.PublicURLPatternDoAnQuyHoach, 11, "da-001")
+	want := "/tin-tuc/do-an-quy-hoach/11/da-001"
+	if got != want {
+		t.Fatalf("FormatPublicURL=%q want %q", got, want)
+	}
+	if compound := entity.CompoundSeoSlug(11, "da-001"); compound != "11/da-001" {
+		t.Fatalf("CompoundSeoSlug=%q want 11/da-001", compound)
+	}
+}
+
 func TestSeoDomainNormalizeLifecycle(t *testing.T) {
 	seo := &entity.SeoDomain{Published: true, NeedGenerate: true}
 	seo.NormalizeLifecycle()

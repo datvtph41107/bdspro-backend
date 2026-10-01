@@ -123,3 +123,33 @@ type TxContractDealListRow struct {
 	Amount          float64    `gorm:"column:amount"`
 	Timestamp       *time.Time `gorm:"column:timestamp"`
 }
+
+// DealProductItem is one deal_products row plus nested product detail
+// (same shape as GET product detail) for GET /v4/deal/{id}/products.
+type DealProductItem struct {
+	ID        uint64  `json:"id"`
+	CreatedAt string  `json:"createdAt,omitempty"`
+	UpdatedAt string  `json:"updatedAt,omitempty"`
+	CreatedBy *uint64 `json:"createdBy,omitempty"`
+	UpdatedBy *uint64 `json:"updatedBy,omitempty"`
+	DealID    uint64  `json:"dealId"`
+	ProductID uint64  `json:"productId"`
+	// Product is set by the service as *bdspropb.ProductResponse; controller
+	// converts it to the HTTP envelope object.
+	Product any `json:"product,omitempty"`
+}
+
+// ProductDealItem is one deal_products row plus nested deal detail
+// (same shape as GET /v4/deal/{id}) for GET /v4/bdspro/product/{id}/deals.
+type ProductDealItem struct {
+	ID        uint64  `json:"id"`
+	CreatedAt string  `json:"createdAt,omitempty"`
+	UpdatedAt string  `json:"updatedAt,omitempty"`
+	CreatedBy *uint64 `json:"createdBy,omitempty"`
+	UpdatedBy *uint64 `json:"updatedBy,omitempty"`
+	DealID    uint64  `json:"dealId"`
+	ProductID uint64  `json:"productId"`
+	// Deal is set by the service as *bdspropb.GroupDeal; controller
+	// converts it to the HTTP envelope object.
+	Deal any `json:"deal,omitempty"`
+}

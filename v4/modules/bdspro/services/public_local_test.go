@@ -151,8 +151,12 @@ func (r *stubDealRepo) ListForUser(context.Context, uint64, uint32, uint32, dto.
 	return nil, 0, nil
 }
 
-func (r *stubDealRepo) ListByProductID(context.Context, uint64, uint32, uint32) ([]*entity.Deal, uint32, error) {
-	return nil, 0, nil
+func (r *stubDealRepo) ListIDsByProductID(context.Context, uint64, uint32, uint32) ([]uint64, error) {
+	return nil, nil
+}
+
+func (r *stubDealRepo) ListDealProductsByProductID(context.Context, uint64, uint32, uint32) ([]*entity.DealProduct, error) {
+	return nil, nil
 }
 
 func (r *stubDealRepo) GetByID(context.Context, uint64) (*entity.Deal, error) {
@@ -167,7 +171,7 @@ func (r *stubDealRepo) GetContractProcess(context.Context, uint64) ([]dto.TxProc
 	return nil, nil
 }
 
-func (r *stubDealRepo) ListDealProductIDs(context.Context, uint64, uint32, uint32) ([]uint64, error) {
+func (r *stubDealRepo) ListDealProducts(context.Context, uint64, uint32, uint32) ([]*entity.DealProduct, error) {
 	return nil, nil
 }
 

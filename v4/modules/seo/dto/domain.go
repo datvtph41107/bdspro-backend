@@ -125,6 +125,14 @@ type SeoDomainByRefRequest struct {
 	RefID   uint64 `form:"refId"`
 }
 
+// SeoDomainRefsFilter is GET /v2/crm/admin/seo-domains/refs.
+type SeoDomainRefsFilter struct {
+	Page    int    `form:"page"`
+	Size    int    `form:"size"`
+	RefType uint32 `form:"refType"`
+	RefID   uint64 `form:"refId"`
+}
+
 // ── Document / page ───────────────────────────────────────────────────────────
 
 type GetDocumentRequest struct {

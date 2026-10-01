@@ -3,6 +3,7 @@ package qh_usecase
 import (
 	_err "common/domain/err"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	qh "userv4/modules/tqd/entity/qh"
@@ -10,6 +11,8 @@ import (
 	"userv4/modules/tqd/enums"
 	"userv4/modules/tqd/provider"
 	repo "userv4/modules/tqd/repository"
+
+	"gorm.io/gorm"
 )
 
 type IQHPlanningProjectUsecase interface {
@@ -98,9 +101,15 @@ func (u *qhPlanningProjectUsecase) Delete(ctx context.Context, id uint64) (bool,
 func (u *qhPlanningProjectUsecase) GetByID(ctx context.Context, id uint64) (*qh.QHPlanningProject, error) {
 	entity, err := u.repo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, &_err.ErrorDTO{
+				Code:    404,
+				Message: "Không tìm thấy dữ liệu",
+			}
+		}
 		return nil, &_err.ErrorDTO{
-			Code:    404,
-			Message: "Không tìm thấy dữ liệu",
+			Code:    500,
+			Message: err.Error(),
 		}
 	}
 	return entity, nil

@@ -93,11 +93,16 @@ func (c *ContactLabelController) delete(ctx context.Context, req dto.IDPath) (*h
 }
 
 func (c *ContactLabelController) list(ctx context.Context, req listContactLabelReq) (*httpapi.Result, error) {
+	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
+	pagable.Normalize()
 	out, err := c.uc.List(ctx, &dto.ListContactLabelsRequestDTO{
-		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size}, Search: req.Search,
+		Pagable: pagable, Search: req.Search,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.ContactLabelDTO{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }

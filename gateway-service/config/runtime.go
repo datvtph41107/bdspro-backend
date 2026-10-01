@@ -50,11 +50,14 @@ type HTTPRuntime struct {
 }
 
 // RequestStatsRuntime configures fire-and-forget request audit/stats collection.
-// SpecURLs are recorded as individual audit rows (no count aggregation) in hub.
+// SpecURLs are recorded as individual audit rows (no count aggregation).
+// TrackURL, when set, POSTs to v4 /v2/hub/request-stats/track (db_v4).
+// When empty, falls back to hub gRPC TrackRequest (legacy db_hub).
 // IgnorePrefixes are merged with built-in dashboard/stats skips.
 type RequestStatsRuntime struct {
 	SpecURLs       []string `yaml:"spec_urls"`
 	IgnorePrefixes []string `yaml:"ignore_prefixes"`
+	TrackURL       string   `yaml:"track_url"`
 }
 
 // LoadRuntime loads the caller-owned typed Gateway runtime without installing

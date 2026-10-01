@@ -45,6 +45,7 @@ var publicHTTPRoutes = []string{
 	"/v2/hub/v2/wards",
 	"/v2/hub/v2/ward",
 	"/v2/hub/v2/location/search",
+	"/v2/hub/v2/interactive-event",
 	"/v2/hub/user-guides",
 	"/v2/hub/faqs",
 	"/v2/hub/app-bundle/version",
@@ -55,6 +56,8 @@ var publicHTTPRoutes = []string{
 	"/v2/hub/system-config/by-group",
 	"/v2/hub/system-config/key",
 	"/v2/hub/settings",
+	// Gateway fire-and-forget request stats (no user JWT)
+	"/v2/hub/request-stats/track",
 	// Bdspro public
 	"/v2/bdspro/public/enums",
 	// SEO public (CRM path parity)
@@ -108,17 +111,23 @@ var publicHTTPRoutes = []string{
 	"/v2/user/commercial/plans",
 }
 
-// bridgeActorProfileID copies JWT Actor onto legacy ProfileIDKey
-// so SyncUtil.GetKey builds `{profileId}:0:nt:me` (and siblings) correctly.
-func bridgeActorProfileID() func(http.Handler) http.Handler {
+// bridgeTrustedHTTPIdentity copies JWT Actor onto legacy ProfileIDKey and binds
+// a local ServiceCaller for the userv4 HTTP edge. Admin authorization requires
+// a verified service hop + access-token actor; gateway→gRPC used to supply the
+// hop, but monorepo HTTP has no separate caller service.
+func bridgeTrustedHTTPIdentity() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			if id := profileIDFromRequest(ctx); id > 0 {
 				ctx = context.WithValue(ctx, _enums.ProfileIDKey, id)
-				r = r.WithContext(ctx)
 			}
-			next.ServeHTTP(w, r)
+			if _, ok := identity.ServiceCallerFromContext(ctx); !ok {
+				if bound, err := identity.BindServiceCaller(ctx, identity.ServiceCaller{ServiceID: "userv4-http"}); err == nil {
+					ctx = bound
+				}
+			}
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

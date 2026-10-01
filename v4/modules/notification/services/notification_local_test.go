@@ -31,6 +31,9 @@ func (s *stubRepo) CreateActivityHistory(ctx context.Context, h *entity.Activity
 	return nil
 }
 func (s *stubRepo) CreateAdminHistory(ctx context.Context, h *entity.AdminHistory) error { return nil }
+func (s *stubRepo) SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error) {
+	return nil, 0, nil
+}
 func (s *stubRepo) CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error   { return nil }
 func (s *stubRepo) ListPersonConfigs(ctx context.Context, userID uint64) ([]*entity.PersonConfig, error) {
 	return nil, nil
@@ -40,7 +43,7 @@ func (s *stubRepo) BatchUpsertPersonConfigs(ctx context.Context, configs []*enti
 }
 
 func TestLocalNotificationServiceCount(t *testing.T) {
-	svc := services.NewLocalNotificationService(&stubRepo{unread: 7}, (*_utils.SyncUtil)(nil))
+	svc := services.NewLocalNotificationService(&stubRepo{unread: 7}, (*_utils.SyncUtil)(nil), nil)
 	resp, err := svc.Count(context.Background(), dto.CountRequest{})
 	if err != nil {
 		t.Fatalf("Count: %v", err)

@@ -35,14 +35,9 @@ func (r *eventQueuePostgres) Search(ctx context.Context, text string, page, size
 	}
 	var total int64
 	q.Count(&total)
-	if size <= 0 {
-		size = 20
-	}
-	if page < 0 {
-		page = 0
-	}
+	offset, size := pageOffset(page, size)
 	var rows []*entity.EventQueue
-	err := q.Order("created_at DESC").Offset(page * size).Limit(size).Find(&rows).Error
+	err := q.Order("created_at DESC").Offset(offset).Limit(size).Find(&rows).Error
 	return rows, total, err
 }
 

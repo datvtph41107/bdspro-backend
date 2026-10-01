@@ -1,0 +1,17 @@
+FROM alpine:latest
+
+WORKDIR /
+
+# Loads config/<ENV_RUNTIME>.yml (develop.yml on this image).
+ENV ENV_RUNTIME=develop
+ENV HTTP_ADDRESS=:8004
+ENV USER_MIGRATION_DIR=/migrate
+
+RUN apk add --no-cache ca-certificates tzdata wget
+
+COPY config config
+COPY main .
+COPY migrate migrate
+
+EXPOSE 8004 8211
+CMD ["./main"]

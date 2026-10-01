@@ -21,11 +21,12 @@ import (
 // DealService owns deal list/detail/timestamps/process flows for modules/bdspro.
 type DealService interface {
 	GetDealsUser(ctx context.Context, req dto.DealSearchRequest) (*bdspropb.GetDealsResponse, error)
-	GetDealsByProduct(ctx context.Context, productID uint64, req dto.SyncByIDRequest) (*bdspropb.GetOrganizationDealsResponse, error)
+	// GetDealsByProduct returns deal_products rows for the product, each with nested deal detail.
+	GetDealsByProduct(ctx context.Context, productID uint64, req dto.SyncByIDRequest) ([]dto.ProductDealItem, int64, error)
 	GetTimestamps(ctx context.Context, id uint64) (*bdspropb.DealTimestampsResponse, error)
 	GetDetail(ctx context.Context, req dto.DealDetailRequest) (*bdspropb.GroupDeal, int64, error)
 	GetContractProcess(ctx context.Context, dealID uint64) (*bdspropb.ContractProcessResponse, int64, error)
-	GetDealProducts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealProductsResponse, int64, error)
+	GetDealProducts(ctx context.Context, req dto.DealListByIDRequest) ([]dto.DealProductItem, int64, error)
 	GetContracts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.DealContractListResponse, error)
 	GetInvestments(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.ListInvestment, int64, error)
 	GetInvitations(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealInvitationsByDealResponse, error)
@@ -221,29 +222,89 @@ func (s *LocalDealService) GetDealsUser(ctx context.Context, req dto.DealSearchR
 	return resp, nil
 }
 
-func (s *LocalDealService) GetDealsByProduct(ctx context.Context, productID uint64, req dto.SyncByIDRequest) (*bdspropb.GetOrganizationDealsResponse, error) {
+func (s *LocalDealService) GetDealsByProduct(ctx context.Context, productID uint64, req dto.SyncByIDRequest) ([]dto.ProductDealItem, int64, error) {
 	if productID == 0 {
-		return &bdspropb.GetOrganizationDealsResponse{}, nil
+		return []dto.ProductDealItem{}, 0, nil
 	}
 	if s.sync != nil {
 		key := s.sync.GetKey(ctx, _utils.SyncKeyProductDeals, productID)
 		if !s.sync.HasUpdated(ctx, key, req.Timestamp) && req.Page == 0 && req.Timestamp > 0 {
-			return &bdspropb.GetOrganizationDealsResponse{}, nil
+			ts := s.sync.GetTimestamp(ctx, key)
+			if ts <= 0 {
+				ts = req.Timestamp
+			}
+			return []dto.ProductDealItem{}, ts, nil
 		}
 	}
 	size := req.Size
 	if size == 0 {
 		size = 20
 	}
-	list, total, err := s.repo.ListByProductID(ctx, productID, req.Page, size)
+	rows, err := s.repo.ListDealProductsByProductID(ctx, productID, req.Page, size)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	data := make([]*bdspropb.GroupDeal, 0, len(list))
-	for _, d := range list {
-		data = append(data, mapDealToPB(d))
+
+	var ts int64
+	if s.sync != nil {
+		key := s.sync.GetKey(ctx, _utils.SyncKeyProductDeals, productID)
+		ts = s.sync.EnsureTimestamp(ctx, key)
 	}
-	return &bdspropb.GetOrganizationDealsResponse{Data: data, Total: total}, nil
+	if ts <= 0 {
+		ts = time.Now().UnixMilli()
+	}
+	if len(rows) == 0 {
+		return []dto.ProductDealItem{}, ts, nil
+	}
+
+	dealIDs := make([]uint64, 0, len(rows))
+	seen := make(map[uint64]struct{}, len(rows))
+	for _, row := range rows {
+		if row == nil || row.DealID == 0 {
+			continue
+		}
+		if _, ok := seen[row.DealID]; ok {
+			continue
+		}
+		seen[row.DealID] = struct{}{}
+		dealIDs = append(dealIDs, row.DealID)
+	}
+
+	byID := map[uint64]*entity.Deal{}
+	if len(dealIDs) > 0 {
+		deals, err := s.repo.ListByIDs(ctx, dealIDs)
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, d := range deals {
+			if d != nil {
+				byID[d.ID] = d
+			}
+		}
+	}
+
+	out := make([]dto.ProductDealItem, 0, len(rows))
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		item := dto.ProductDealItem{
+			ID:        row.ID,
+			CreatedAt: _utils.FormatTimeToString(row.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(row.UpdatedAt),
+			CreatedBy: row.CreatedBy,
+			UpdatedBy: row.UpdatedBy,
+			DealID:    row.DealID,
+			ProductID: row.ProductID,
+		}
+		if d := byID[row.DealID]; d != nil {
+			item.Deal = mapDealDetailToPB(d)
+		} else {
+			item.Deal = mapDealDetailToPB(&entity.Deal{ID: row.DealID})
+		}
+		out = append(out, item)
+	}
+	return out, ts, nil
 }
 
 // CreateGroupDeal inserts a deal with its owner member, customers and products.
@@ -495,57 +556,80 @@ func (s *LocalDealService) syncUnchanged(ctx context.Context, prefix string, dea
 	return ts, true
 }
 
-func (s *LocalDealService) GetDealProducts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealProductsResponse, int64, error) {
+func (s *LocalDealService) GetDealProducts(ctx context.Context, req dto.DealListByIDRequest) ([]dto.DealProductItem, int64, error) {
 	if req.DealID == 0 {
 		return nil, 0, _errors.BadRequestException("deal id is required")
 	}
 	if ts, skip := s.syncUnchanged(ctx, _utils.SyncKeyDealProducts, req.DealID, req.Timestamp, req.Page); skip {
-		return &bdspropb.GetDealProductsResponse{}, ts, nil
+		return []dto.DealProductItem{}, ts, nil
 	}
 
-	ids, err := s.repo.ListDealProductIDs(ctx, req.DealID, req.Page, req.Size)
+	rows, err := s.repo.ListDealProducts(ctx, req.DealID, req.Page, req.Size)
 	if err != nil {
 		return nil, 0, err
 	}
 	ts := s.syncTS(ctx, _utils.SyncKeyDealProducts, req.DealID, false)
-	if len(ids) == 0 || s.products == nil {
-		return &bdspropb.GetDealProductsResponse{Data: []*bdspropb.ProductAttachment{}}, ts, nil
+	if len(rows) == 0 {
+		return []dto.DealProductItem{}, ts, nil
 	}
 
-	products, err := s.products.ListByIDs(ctx, ids)
-	if err != nil {
-		return nil, 0, err
-	}
-	byID := make(map[uint64]*bdspropb.ProductAttachment, len(products))
-	for _, p := range products {
-		if p == nil {
+	productIDs := make([]uint64, 0, len(rows))
+	seen := make(map[uint64]struct{}, len(rows))
+	for _, row := range rows {
+		if row == nil || row.ProductID == 0 {
 			continue
 		}
-		att := &bdspropb.ProductAttachment{
-			Id:             p.ID,
-			Name:           p.Name,
-			Code:           p.Code,
-			Area:           p.Area,
-			RentStatus:     p.RentStatus,
-			SaleStatus:     p.SaleStatus,
-			SourceType:     int32(p.SourceType),
-			SourceTypeName: enums.SourceTypeMap[enums.ESourceType(p.SourceType)],
+		if _, ok := seen[row.ProductID]; ok {
+			continue
 		}
-		if p.AssetID != nil {
-			att.AssetId = p.AssetID
-		}
-		if p.Price != nil && p.Price.SalePrice != nil {
-			att.Price = *p.Price.SalePrice
-		}
-		byID[p.ID] = att
+		seen[row.ProductID] = struct{}{}
+		productIDs = append(productIDs, row.ProductID)
 	}
-	data := make([]*bdspropb.ProductAttachment, 0, len(ids))
-	for _, id := range ids {
-		if att, ok := byID[id]; ok {
-			data = append(data, att)
+
+	byID := map[uint64]*entity.Product{}
+	if s.products != nil && len(productIDs) > 0 {
+		products, err := s.products.ListByIDs(ctx, productIDs)
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, p := range products {
+			if p != nil {
+				byID[p.ID] = p
+			}
 		}
 	}
-	return &bdspropb.GetDealProductsResponse{Data: data}, ts, nil
+
+	out := make([]dto.DealProductItem, 0, len(rows))
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		item := dto.DealProductItem{
+			ID:        row.ID,
+			CreatedAt: _utils.FormatTimeToString(row.CreatedAt),
+			UpdatedAt: _utils.FormatTimeToString(row.UpdatedAt),
+			CreatedBy: row.CreatedBy,
+			UpdatedBy: row.UpdatedBy,
+			DealID:    row.DealID,
+			ProductID: row.ProductID,
+		}
+		if p := byID[row.ProductID]; p != nil {
+			item.Product = mapProductToPB(p)
+		} else {
+			item.Product = mapProductToPB(&entity.Product{ID: row.ProductID})
+		}
+		out = append(out, item)
+	}
+
+	// Client already received product detail here — stamp prd:id so later
+	// GET product/{id}/detail can skip when unchanged.
+	if s.sync != nil && len(productIDs) > 0 {
+		now := time.Now().UnixMilli()
+		for _, pid := range productIDs {
+			_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyProductDetail, pid), now)
+		}
+	}
+	return out, ts, nil
 }
 
 func (s *LocalDealService) GetContracts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.DealContractListResponse, error) {

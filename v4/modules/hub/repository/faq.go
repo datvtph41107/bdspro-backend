@@ -38,16 +38,9 @@ func (r *faqPostgres) ListSimple(ctx context.Context, req dto.GetFAQSimpleReques
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	size := int(req.Size)
-	if size <= 0 {
-		size = 20
-	}
-	page := int(req.Page)
-	if page < 0 {
-		page = 0
-	}
+	offset, size := pageOffset(int(req.Page), int(req.Size))
 	var list []*entity.FAQ
-	err := q.Order("id ASC").Offset(page * size).Limit(size).Find(&list).Error
+	err := q.Order("id ASC").Offset(offset).Limit(size).Find(&list).Error
 	return list, total, err
 }
 

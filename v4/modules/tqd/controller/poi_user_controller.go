@@ -68,7 +68,7 @@ func (c *PoiUserController) byCategory(ctx context.Context, req dto.CategoryIDPa
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": out})
+	return jsonListResult(out, int64(len(out)), 1, uint32(len(out)))
 }
 
 type nearbyPoiHTTP struct {
@@ -85,7 +85,10 @@ func (c *PoiUserController) nearby(ctx context.Context, req nearbyPoiHTTP) (*htt
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.PoiResponse{}, 0, 1, 0)
+	}
+	return jsonListResult(out.Data, out.Total, out.Page, out.Size)
 }
 
 func (c *PoiUserController) updateRating(ctx context.Context, req dto.UpdateRatingRequest) (*httpapi.Result, error) {
@@ -143,7 +146,10 @@ func (c *PoiUserController) listCategories(ctx context.Context, req listCatReq) 
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.PoiCategoryResponse{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *PoiUserController) tree(ctx context.Context, _ dto.EmptyJSON) (*httpapi.Result, error) {
@@ -151,7 +157,7 @@ func (c *PoiUserController) tree(ctx context.Context, _ dto.EmptyJSON) (*httpapi
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": out})
+	return jsonListResult(out, int64(len(out)), 1, uint32(len(out)))
 }
 
 func (c *PoiUserController) listIcons(ctx context.Context, _ dto.EmptyJSON) (*httpapi.Result, error) {
@@ -159,6 +165,9 @@ func (c *PoiUserController) listIcons(ctx context.Context, _ dto.EmptyJSON) (*ht
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.PoiCategoryIconResponse{}, 0, 1, 0)
+	}
+	return jsonListResult(out.Data, int64(len(out.Data)), 1, uint32(len(out.Data)))
 }
 

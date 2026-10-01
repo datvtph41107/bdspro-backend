@@ -4,12 +4,14 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	_errors "common/errors"
 	"userv4/internal/httpapi"
 	"userv4/modules/tqd/dto"
 	domain "userv4/modules/tqd/entity/discovery"
 	"userv4/modules/tqd/mapper"
+	"userv4/modules/tqd/provider"
 	discoveryapp "userv4/modules/tqd/services/discovery/application"
 )
 
@@ -17,12 +19,17 @@ import (
 type DiscoveryController struct {
 	discovery *discoveryapp.Service
 	mapper    *mapper.DiscoveryMapper
+	analytics provider.SearchAnalytics
 }
 
-func NewDiscoveryController(discovery *discoveryapp.Service) *DiscoveryController {
+func NewDiscoveryController(discovery *discoveryapp.Service, analytics provider.SearchAnalytics) *DiscoveryController {
+	if analytics == nil {
+		analytics = provider.NoopSearchAnalytics{}
+	}
 	return &DiscoveryController{
 		discovery: discovery,
 		mapper:    mapper.NewDiscoveryMapper(),
+		analytics: analytics,
 	}
 }
 
@@ -109,7 +116,13 @@ func (c *DiscoveryController) search(ctx context.Context, req dto.DiscoverySearc
 			}
 		}
 	}
+	start := time.Now()
 	resp, err := c.discovery.Search(ctx, domainReq)
+	durationMs := time.Since(start).Milliseconds()
+	if q != "" && c.analytics != nil {
+		c.analytics.TrackKeyword(q, "tqd")
+		c.analytics.TrackLatency("GET", "/v2/tqd/discovery/search", "tqd", durationMs)
+	}
 	if err != nil {
 		return nil, err
 	}

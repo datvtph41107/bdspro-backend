@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	_err "common/domain/err"
 	_errors "common/errors"
 	sharepb "pb/types/shared"
 
@@ -102,6 +103,21 @@ func WriteServiceError(w http.ResponseWriter, err error) {
 	var appErr *_errors.AppError
 	if errors.As(err, &appErr) {
 		WriteError(w, appErr.Code, appErr.Message)
+		return
+	}
+
+	// TQD/legacy usecases still return common/domain/err.ErrorDTO.
+	var dtoErr *_err.ErrorDTO
+	if errors.As(err, &dtoErr) && dtoErr != nil {
+		code := dtoErr.Code
+		if code < 100 || code > 599 {
+			code = http.StatusInternalServerError
+		}
+		msg := dtoErr.Message
+		if msg == "" {
+			msg = err.Error()
+		}
+		WriteError(w, code, msg)
 		return
 	}
 

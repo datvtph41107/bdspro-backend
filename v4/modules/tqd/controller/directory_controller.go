@@ -40,6 +40,14 @@ func (c *DirectoryController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.PUT(mux, "/v2/tqd/directory/suppliers/{id}", c.updateSupplier)
 	httpapi.DELETE(mux, "/v2/tqd/directory/suppliers/{id}", c.deleteSupplier)
 
+	// Canonical directory category routes (tqd-service parity).
+	httpapi.POST(mux, "/v2/tqd/directory/categories", c.createCategory)
+	httpapi.GET(mux, "/v2/tqd/directory/categories", c.listCategories)
+	httpapi.GET(mux, "/v2/tqd/directory/categories/{id}", c.getCategory)
+	httpapi.PUT(mux, "/v2/tqd/directory/categories/{id}", c.updateCategory)
+	httpapi.DELETE(mux, "/v2/tqd/directory/categories/{id}", c.deleteCategory)
+
+	// Legacy aliases kept for older clients/swagger that used /service/categories.
 	httpapi.POST(mux, "/v2/tqd/service/categories", c.createCategory)
 	httpapi.GET(mux, "/v2/tqd/service/categories", c.listCategories)
 	httpapi.GET(mux, "/v2/tqd/service/categories/active", c.activeCategories)
@@ -84,9 +92,10 @@ func (c *DirectoryController) deleteSource(ctx context.Context, req dto.IDPath) 
 }
 
 type listDirPage struct {
-	Page   uint32 `form:"page"`
-	Size   uint32 `form:"size"`
-	Search string `form:"search"`
+	Page     uint32 `form:"page"`
+	Size     uint32 `form:"size"`
+	Search   string `form:"search"`
+	IsActive *bool  `form:"isActive"`
 }
 
 func (c *DirectoryController) listSources(ctx context.Context, req listDirPage) (*httpapi.Result, error) {
@@ -96,7 +105,7 @@ func (c *DirectoryController) listSources(ctx context.Context, req listDirPage) 
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *DirectoryController) createSupplier(ctx context.Context, req dto.CreateDirectorySupplierRequestDTO) (*httpapi.Result, error) {
@@ -140,7 +149,10 @@ func (c *DirectoryController) listSuppliers(ctx context.Context, req listDirPage
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]dto.DirectorySupplierDTO{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *DirectoryController) createCategory(ctx context.Context, req dto.CreateDirectoryCategoryRequestDTO) (*httpapi.Result, error) {
@@ -193,11 +205,15 @@ func (c *DirectoryController) deleteCategory(ctx context.Context, req dto.IDPath
 func (c *DirectoryController) listCategories(ctx context.Context, req listDirPage) (*httpapi.Result, error) {
 	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
 	pagable.Normalize()
-	rows, total, err := c.categories.ListDirectoryCategories(ctx, &dto.ListDirectoryCategoriesRequest{Pagable: pagable, Search: req.Search})
+	rows, total, err := c.categories.ListDirectoryCategories(ctx, &dto.ListDirectoryCategoriesRequest{
+		Pagable:  pagable,
+		Search:   req.Search,
+		IsActive: req.IsActive,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *DirectoryController) activeCategories(ctx context.Context, _ dto.EmptyJSON) (*httpapi.Result, error) {
@@ -208,7 +224,7 @@ func (c *DirectoryController) activeCategories(ctx context.Context, _ dto.EmptyJ
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, 1, 1000)
 }
 
 func (c *DirectoryController) categoriesByLevel(ctx context.Context, req dto.LevelPath) (*httpapi.Result, error) {
@@ -224,5 +240,5 @@ func (c *DirectoryController) categoriesByLevel(ctx context.Context, req dto.Lev
 			filtered = append(filtered, row)
 		}
 	}
-	return jsonOK(map[string]any{"data": filtered, "total": len(filtered)})
+	return jsonListResult(filtered, int64(len(filtered)), 1, uint32(len(filtered)))
 }

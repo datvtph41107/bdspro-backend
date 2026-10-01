@@ -6,6 +6,7 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	tqdpb "pb/types/tqd"
 	"userv4/internal/httpapi"
 	"userv4/modules/tqd/dto"
 	"userv4/modules/tqd/mapper"
@@ -50,13 +51,24 @@ type adminListPage struct {
 }
 
 func (c *AdminLocationController) listProvinces(ctx context.Context, req adminListPage) (*httpapi.Result, error) {
+	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
+	pagable.Normalize()
 	out, err := c.uc.AdminListProvinces(ctx, &dto.AdminListProvincesRequest{
-		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size}, Search: req.Search,
+		Pagable: pagable, Search: req.Search,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return protoResult(c.mapper.ToProtoAdminListProvincesResponse(out))
+	items := make([]*tqdpb.Province, 0)
+	total := int64(0)
+	if out != nil {
+		total = out.Total
+		items = make([]*tqdpb.Province, 0, len(out.Data))
+		for _, p := range out.Data {
+			items = append(items, c.mapper.ToProtoProvince(p))
+		}
+	}
+	return protoListResult(items, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminLocationController) getProvince(ctx context.Context, req dto.CompositeIDPath) (*httpapi.Result, error) {
@@ -94,13 +106,18 @@ func (c *AdminLocationController) deleteProvince(ctx context.Context, req dto.ID
 }
 
 func (c *AdminLocationController) listWards(ctx context.Context, req adminListPage) (*httpapi.Result, error) {
+	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
+	pagable.Normalize()
 	out, err := c.uc.AdminListWards(ctx, &dto.AdminListWardsRequest{
-		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size}, Search: req.Search,
+		Pagable: pagable, Search: req.Search,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]*dto.WardDTO{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminLocationController) createWard(ctx context.Context, req dto.WardDTO) (*httpapi.Result, error) {
@@ -150,17 +167,25 @@ func (c *AdminLocationController) listNeighbors(ctx context.Context, req dto.War
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]*dto.WardDTO{}, 0, 1, 0)
+	}
+	return jsonListResult(out.Data, out.Total, 1, uint32(len(out.Data)))
 }
 
 func (c *AdminLocationController) listAdminUnits(ctx context.Context, req adminListPage) (*httpapi.Result, error) {
+	pagable := _dto.Pagable{Page: req.Page, Size: req.Size}
+	pagable.Normalize()
 	out, err := c.uc.AdminListAdministrativeUnits(ctx, &dto.ListAdministrativeUnitsRequest{
-		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size}, Search: req.Search,
+		Pagable: pagable, Search: req.Search,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(out)
+	if out == nil {
+		return jsonListResult([]*dto.AdministrativeUnitListItem{}, 0, pagable.GetPage(), pagable.GetSize())
+	}
+	return jsonListResult(out.Data, out.Total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminLocationController) getAdminUnit(ctx context.Context, req dto.CompositeIDPath) (*httpapi.Result, error) {

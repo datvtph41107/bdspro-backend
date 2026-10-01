@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *dealPostgres) ListDealProductIDs(ctx context.Context, dealID uint64, page, size uint32) ([]uint64, error) {
+func (r *dealPostgres) ListDealProducts(ctx context.Context, dealID uint64, page, size uint32) ([]*entity.DealProduct, error) {
 	if r.db == nil || dealID == 0 {
 		return nil, nil
 	}
@@ -19,15 +19,17 @@ func (r *dealPostgres) ListDealProductIDs(ctx context.Context, dealID uint64, pa
 	if limit <= 0 {
 		limit = 20
 	}
+	if limit > 999 {
+		limit = 999
+	}
 	offset := int(page) * limit
-	var ids []uint64
+	var rows []*entity.DealProduct
 	err := r.db.WithContext(ctx).
-		Model(&entity.DealProduct{}).
 		Where("deal_id = ? AND deleted_at IS NULL", dealID).
 		Order("id ASC").
 		Offset(offset).Limit(limit).
-		Pluck("product_id", &ids).Error
-	return ids, err
+		Find(&rows).Error
+	return rows, err
 }
 
 func (r *dealPostgres) ListContractsByDealID(ctx context.Context, dealID uint64) ([]dto.TxContractDealListRow, int64, error) {

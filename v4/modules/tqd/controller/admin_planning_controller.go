@@ -99,7 +99,7 @@ func (c *AdminPlanningController) listProjects(ctx context.Context, req pageSear
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) getProject(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {
@@ -175,7 +175,7 @@ func (c *AdminPlanningController) projectLayers(ctx context.Context, req struct 
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) unassignLayer(ctx context.Context, req dto.PlanningLayerPath) (*httpapi.Result, error) {
@@ -268,7 +268,7 @@ func (c *AdminPlanningController) listDocuments(ctx context.Context, req pageSea
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) getDocument(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {
@@ -348,7 +348,7 @@ func (c *AdminPlanningController) listEvents(ctx context.Context, req pageSearch
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) getEvent(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {
@@ -389,7 +389,7 @@ func (c *AdminPlanningController) listRelations(ctx context.Context, req pageSea
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) getRelation(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {
@@ -436,7 +436,7 @@ func (c *AdminPlanningController) listAIJobs(ctx context.Context, req pageSearch
 	if err != nil {
 		return nil, err
 	}
-	return jsonOK(map[string]any{"data": rows, "total": total})
+	return jsonListResult(rows, total, pagable.GetPage(), pagable.GetSize())
 }
 
 func (c *AdminPlanningController) getAIJob(ctx context.Context, req dto.IDPath) (*httpapi.Result, error) {

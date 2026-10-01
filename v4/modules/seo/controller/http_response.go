@@ -11,6 +11,9 @@ func dataResult(v any) (*httpapi.Result, error) {
 }
 
 func listResult(items any, total int64) (*httpapi.Result, error) {
+	if items == nil {
+		items = []any{}
+	}
 	return httpapi.OK(items, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
 }
 

@@ -28,6 +28,7 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.PUT(mux, "/v2/notification/read-many", h.readMany)
 	httpapi.PUT(mux, "/v2/notification/read-all", h.readAll)
 	httpapi.DELETE(mux, "/v2/notification/remove/{id}", h.remove)
+	httpapi.GET(mux, "/v2/admin-history/search", h.searchAdminHistory)
 }
 
 func (h *Handler) count(ctx context.Context, req dto.CountRequest) (*httpapi.Result, error) {
@@ -86,4 +87,23 @@ func (h *Handler) remove(ctx context.Context, req httpapi.PathUint64) (*httpapi.
 		return nil, err
 	}
 	return protoDataResult(result)
+}
+
+func (h *Handler) searchAdminHistory(ctx context.Context, req dto.AdminHistorySearchRequest) (*httpapi.Result, error) {
+	items, total, err := h.notification.SearchAdminHistory(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		data = []any{}
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{
+		Page:  req.Page,
+		Size:  req.Size,
+		Total: total,
+	})), nil
 }

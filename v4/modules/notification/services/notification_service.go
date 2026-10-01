@@ -6,7 +6,9 @@ import (
 	"time"
 
 	_utils "common/utils"
+	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
+	"userv4/internal/interface/providers"
 	"userv4/modules/notification/dto"
 	"userv4/modules/notification/entity"
 	"userv4/modules/notification/repository"
@@ -20,16 +22,22 @@ type NotificationService interface {
 	ReadMany(ctx context.Context, ids []uint64) (*notificationpb.StatusResponse, error)
 	ReadAll(ctx context.Context) (*notificationpb.StatusResponse, error)
 	Remove(ctx context.Context, id uint64) (*notificationpb.StatusResponse, error)
+	SearchAdminHistory(ctx context.Context, req dto.AdminHistorySearchRequest) ([]*notificationpb.AdminHistoryDTO, int64, error)
 }
 
 // LocalNotificationService owns inbox flows against the v4 Postgres DSN.
 type LocalNotificationService struct {
-	repo repository.NotificationRepository
-	sync *_utils.SyncUtil
+	repo     repository.NotificationRepository
+	sync     *_utils.SyncUtil
+	profiles providers.ProfileProvider
 }
 
-func NewLocalNotificationService(repo repository.NotificationRepository, sync *_utils.SyncUtil) *LocalNotificationService {
-	return &LocalNotificationService{repo: repo, sync: sync}
+func NewLocalNotificationService(
+	repo repository.NotificationRepository,
+	sync *_utils.SyncUtil,
+	profiles providers.ProfileProvider,
+) *LocalNotificationService {
+	return &LocalNotificationService{repo: repo, sync: sync, profiles: profiles}
 }
 
 func (s *LocalNotificationService) Count(ctx context.Context, _ dto.CountRequest) (*notificationpb.CountResponse, error) {
@@ -138,6 +146,89 @@ func (s *LocalNotificationService) Remove(ctx context.Context, id uint64) (*noti
 	}, nil
 }
 
+func (s *LocalNotificationService) SearchAdminHistory(ctx context.Context, req dto.AdminHistorySearchRequest) ([]*notificationpb.AdminHistoryDTO, int64, error) {
+	filter := dto.AdminHistoryFilter{
+		Page:       int(req.Page),
+		Size:       int(req.Size),
+		AdminID:    req.AdminID,
+		OwnerID:    req.OwnerID,
+		TargetID:   req.TargetID,
+		AdminRole:  req.AdminRole,
+		FromDate:   req.FromDate,
+		ToDate:     req.ToDate,
+		IsInternal: req.IsInternal,
+	}
+	if req.OwnerType != nil {
+		v := shared_enum.EOwnerType(*req.OwnerType)
+		filter.OwnerType = &v
+	}
+	if req.TargetType != nil {
+		v := shared_enum.ETargetHistory(*req.TargetType)
+		filter.TargetType = &v
+	}
+	if req.ActionType != nil {
+		v := shared_enum.EHistory(*req.ActionType)
+		filter.ActionType = &v
+	}
+
+	rows, total, err := s.repo.SearchAdminHistory(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	s.populateAdminInfo(ctx, rows)
+
+	out := make([]*notificationpb.AdminHistoryDTO, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, mapAdminHistoryPB(row))
+	}
+	return out, total, nil
+}
+
+func (s *LocalNotificationService) populateAdminInfo(ctx context.Context, rows []*entity.AdminHistory) {
+	if s.profiles == nil || len(rows) == 0 {
+		return
+	}
+	ids := make([]uint64, 0, len(rows))
+	seen := make(map[uint64]struct{}, len(rows))
+	for _, row := range rows {
+		if row == nil || row.AdminID == 0 {
+			continue
+		}
+		if _, ok := seen[row.AdminID]; ok {
+			continue
+		}
+		seen[row.AdminID] = struct{}{}
+		ids = append(ids, row.AdminID)
+	}
+	if len(ids) == 0 {
+		return
+	}
+	profiles, err := s.profiles.GetMapProfileByIds(ctx, ids)
+	if err != nil || len(profiles) == 0 {
+		return
+	}
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		empty := ""
+		row.AdminName = &empty
+		row.AdminAvatar = &empty
+		status := "success"
+		row.Status = &status
+		if p := profiles[row.AdminID]; p != nil {
+			if p.FullName != "" {
+				name := p.FullName
+				row.AdminName = &name
+			}
+			if p.Avatar != "" {
+				avatar := p.Avatar
+				row.AdminAvatar = &avatar
+			}
+		}
+	}
+}
+
 func (s *LocalNotificationService) invalidateSync(ctx context.Context) {
 	if s.sync == nil {
 		return
@@ -161,4 +252,32 @@ func mapNotificationPB(n *entity.Notification) *notificationpb.NotificationDTO {
 		TargetId:         &targetID,
 		IsRead:           n.IsRead,
 	}
+}
+
+func mapAdminHistoryPB(h *entity.AdminHistory) *notificationpb.AdminHistoryDTO {
+	if h == nil {
+		return nil
+	}
+	out := &notificationpb.AdminHistoryDTO{
+		Id:         h.ID,
+		TargetId:   h.TargetID,
+		TargetType: int32(h.TargetType),
+		ActionType: int32(h.ActionType),
+		Title:      h.Title,
+		Note:       []string(h.Note),
+		PreStage:   h.PreStage,
+		AfterStage: h.AfterStage,
+		AdminId:    h.AdminID,
+		OwnerId:    h.OwnerID,
+		OwnerType:  int32(h.OwnerOf),
+		IsInternal: h.IsInternal,
+		AdminRole:  h.AdminRole,
+		IpAddress:  h.IPAddress,
+		UserAgent:  h.UserAgent,
+		CreatedAt:  _utils.FormatTimeToString(h.CreatedAt),
+		UpdatedAt:  _utils.FormatTimeToString(h.UpdatedAt),
+		AdminName:  h.AdminName,
+		AdminAvatar: h.AdminAvatar,
+	}
+	return out
 }

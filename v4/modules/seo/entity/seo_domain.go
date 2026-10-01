@@ -271,8 +271,8 @@ func (SeoCategory) TableName() string { return "seo_category" }
 
 type UserSavedPlanningNews struct {
 	ID          uint64         `gorm:"primaryKey;autoIncrement"`
-	UserID      uint64         `gorm:"column:user_id;not null"`
-	SeoDomainID uint64         `gorm:"column:seo_domain_id;not null"`
+	UserID      uint64         `gorm:"column:user_id;not null;uniqueIndex:uq_user_saved_planning_news"`
+	SeoDomainID uint64         `gorm:"column:seo_domain_id;not null;uniqueIndex:uq_user_saved_planning_news"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at"`

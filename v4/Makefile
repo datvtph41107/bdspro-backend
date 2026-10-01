@@ -32,6 +32,13 @@ bootstrap-admin:
 docker-build:
 	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/userv4:$${QHPRO_IMAGE_TAG:-local}" ..
 
+# Ship linux binary + config to production (see ./deploy.sh).
+deploy:
+	./deploy.sh $(if $(target),$(target),http)
+
+deploy-compose:
+	./deploy.sh compose
+
 compose-up:
 	$(MAKE) -C .. up
 
@@ -47,7 +54,8 @@ help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
 	  'deps-up deps-down migrateup migratedown1 migrate-version new_migration' \
-	  'bootstrap-admin buf wire generate docker-build compose-up compose-down compose-logs clean'
+	  'bootstrap-admin buf wire generate docker-build compose-up compose-down compose-logs clean' \
+	  'deploy [target=http|grpc] deploy-compose'
 
-.PHONY: help buf wire generate bootstrap-admin docker-build \
+.PHONY: help buf wire generate bootstrap-admin docker-build deploy deploy-compose \
 	compose-up compose-down compose-logs acceptance-static
