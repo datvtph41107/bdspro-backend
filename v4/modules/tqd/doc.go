@@ -1,4 +1,4 @@
-// Package tqd owns the v4 modular TQD surface for location catalogs and related
-// planning/map client APIs. Controllers expose gateway HTTP paths; services and
-// repositories own persistence on the TQD database DSN (database.tqd.dsn).
+// Package tqd owns the v4 modular TQD surface (domain/usecase ported from
+// tqd-service into entity/ and services/). Controllers expose gateway HTTP
+// paths; repositories own persistence on the TQD database DSN (database.tqd.dsn).
 package tqd

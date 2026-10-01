@@ -191,6 +191,11 @@ func PUT[Req any](mux *http.ServeMux, pattern string, h Handler[Req]) {
 	mux.HandleFunc(normalize("PUT", pattern), BindJSON(h))
 }
 
+// PATCH registers a path+JSON bound handler.
+func PATCH[Req any](mux *http.ServeMux, pattern string, h Handler[Req]) {
+	mux.HandleFunc(normalize("PATCH", pattern), BindJSON(h))
+}
+
 // DELETE registers a path(+query) bound handler.
 func DELETE[Req any](mux *http.ServeMux, pattern string, h Handler[Req]) {
 	mux.HandleFunc(normalize("DELETE", pattern), Bind(h))

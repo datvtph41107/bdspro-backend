@@ -19,7 +19,7 @@ var lineCommentPattern = regexp.MustCompile(`(?m)--[^\n]*$`)
 
 func TestCanonicalMigrationSequence(t *testing.T) {
 	t.Parallel()
-	const latestMigration = 45
+	const latestMigration = 48
 
 	entries, err := os.ReadDir(filepath.Join("..", "..", "migrate"))
 	require.NoError(t, err)

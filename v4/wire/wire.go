@@ -58,18 +58,19 @@ import (
 	user_modules_bdspro_controller "userv4/modules/bdspro/controller"
 	user_modules_bdspro_repository "userv4/modules/bdspro/repository"
 	user_modules_bdspro_services "userv4/modules/bdspro/services"
-	user_modules_crm_controller "userv4/modules/crm/controller"
-	user_modules_crm_repository "userv4/modules/crm/repository"
-	user_modules_crm_services "userv4/modules/crm/services"
+	user_modules_crm "userv4/modules/crm"
 	user_modules_hub_controller "userv4/modules/hub/controller"
+	user_modules_seo_controller "userv4/modules/seo/controller"
+	user_modules_seo_provider "userv4/modules/seo/provider"
+	user_modules_seo_repository "userv4/modules/seo/repository"
+	user_modules_seo_services "userv4/modules/seo/services"
 	user_modules_hub_repository "userv4/modules/hub/repository"
 	user_modules_hub_services "userv4/modules/hub/services"
 	user_modules_notification_controller "userv4/modules/notification/controller"
 	user_modules_notification_repository "userv4/modules/notification/repository"
 	user_modules_notification_services "userv4/modules/notification/services"
-	user_modules_tqd_controller "userv4/modules/tqd/controller"
-	user_modules_tqd_repository "userv4/modules/tqd/repository"
-	user_modules_tqd_services "userv4/modules/tqd/services"
+	user_modules_tqd "userv4/modules/tqd"
+	user_modules_tqd_provider "userv4/modules/tqd/provider"
 	user_modules_user_controller "userv4/modules/user/controller"
 	user_modules_user_services "userv4/modules/user/services"
 	user_internal_requeststats "userv4/internal/requeststats"
@@ -193,16 +194,50 @@ var wireSet = wire.NewSet(
 	user_internal_requeststats.NewCollector,
 	user_modules_hub_services.NewLocalRequestStatsService,
 	wire.Bind(new(user_modules_hub_services.RequestStatsService), new(*user_modules_hub_services.LocalRequestStatsService)),
-	user_modules_tqd_controller.NewHandler,
+	user_modules_hub_repository.NewErrorLogPostgres,
+	user_modules_hub_services.NewLocalErrorLogService,
+	wire.Bind(new(user_modules_hub_services.ErrorLogService), new(*user_modules_hub_services.LocalErrorLogService)),
+	user_modules_hub_repository.NewApplinkPostgres,
+	user_modules_hub_services.NewLocalApplinkService,
+	wire.Bind(new(user_modules_hub_services.ApplinkService), new(*user_modules_hub_services.LocalApplinkService)),
+	user_modules_hub_repository.NewSystemConfigPostgres,
+	user_modules_hub_services.NewLocalSystemConfigService,
+	wire.Bind(new(user_modules_hub_services.SystemConfigService), new(*user_modules_hub_services.LocalSystemConfigService)),
+	user_modules_hub_repository.NewEventQueuePostgres,
+	user_modules_hub_services.NewLocalEventQueueService,
+	wire.Bind(new(user_modules_hub_services.EventQueueService), new(*user_modules_hub_services.LocalEventQueueService)),
+	user_modules_hub_repository.NewInteractiveEventPostgres,
+	user_modules_hub_services.NewLocalInteractiveEventService,
+	wire.Bind(new(user_modules_hub_services.InteractiveEventService), new(*user_modules_hub_services.LocalInteractiveEventService)),
+	user_modules_hub_repository.NewClickURLPostgres,
+	user_modules_hub_services.NewLocalClickURLService,
+	wire.Bind(new(user_modules_hub_services.ClickURLService), new(*user_modules_hub_services.LocalClickURLService)),
+	user_modules_hub_repository.NewUpdateDataPostgres,
+	user_modules_hub_services.NewLocalUpdateDataService,
+	wire.Bind(new(user_modules_hub_services.UpdateDataService), new(*user_modules_hub_services.LocalUpdateDataService)),
+	user_modules_hub_repository.NewKeywordSearchPostgres,
+	user_modules_hub_services.NewLocalKeywordSearchService,
+	wire.Bind(new(user_modules_hub_services.KeywordSearchService), new(*user_modules_hub_services.LocalKeywordSearchService)),
+	user_modules_hub_repository.NewSearchLatencyPostgres,
+	user_modules_hub_services.NewLocalSearchLatencyService,
+	wire.Bind(new(user_modules_hub_services.SearchLatencyService), new(*user_modules_hub_services.LocalSearchLatencyService)),
+	user_modules_hub_repository.NewAPIKeyPostgres,
+	user_modules_hub_services.NewLocalAPIKeyService,
+	wire.Bind(new(user_modules_hub_services.APIKeyService), new(*user_modules_hub_services.LocalAPIKeyService)),
 	user_infra_postgres.NewTqdDB,
-	user_modules_tqd_repository.NewLocationPostgres,
-	user_modules_tqd_services.NewLocalLocationService,
-	wire.Bind(new(user_modules_tqd_services.LocationService), new(*user_modules_tqd_services.LocalLocationService)),
-	user_modules_crm_controller.NewHandler,
+	user_modules_tqd.ProviderSet,
 	user_infra_postgres.NewCrmDB,
-	user_modules_crm_repository.NewContactPostgres,
-	user_modules_crm_services.NewLocalContactService,
-	wire.Bind(new(user_modules_crm_services.ContactService), new(*user_modules_crm_services.LocalContactService)),
+	user_modules_crm.ProviderSet,
+	// modules/seo
+	user_modules_seo_controller.NewHandler,
+	user_modules_seo_repository.NewNewsPostgres,
+	user_modules_seo_services.NewLocalNewsService,
+	wire.Bind(new(user_modules_seo_services.NewsService), new(*user_modules_seo_services.LocalNewsService)),
+	user_modules_seo_repository.NewSeoDomainPostgres,
+	user_modules_seo_services.NewLocalSeoDomainService,
+	wire.Bind(new(user_modules_seo_services.SeoDomainService), new(*user_modules_seo_services.LocalSeoDomainService)),
+	user_modules_seo_provider.NewLocalCrmSeoProvider,
+	wire.Bind(new(user_modules_tqd_provider.CrmSeoProvider), new(*user_modules_seo_provider.LocalCrmSeoProvider)),
 	user_modules_notification_controller.NewHandler,
 	user_modules_notification_repository.NewNotificationPostgres,
 	user_modules_notification_services.NewLocalNotificationService,
@@ -211,10 +246,27 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_internal_interface_providers.NotificationProvider), new(*user_modules_notification_services.LocalNotificationProvider)),
 	user_modules_user_controller.NewHandler,
 	user_modules_user_controller.NewProfileController,
+	user_modules_user_controller.NewCatalogController,
+	user_modules_user_controller.NewTagController,
+	user_modules_user_controller.NewKYCController,
+	user_modules_user_controller.NewBookmarkController,
+	user_modules_user_controller.NewAdminUserController,
 	user_modules_user_services.NewProfileUsecaseInfoService,
 	wire.Bind(new(user_modules_user_services.ProfileService), new(*user_modules_user_services.ProfileUsecaseInfoService)),
 	user_modules_user_services.NewLocalDemoService,
 	wire.Bind(new(user_modules_user_services.DemoService), new(*user_modules_user_services.LocalDemoService)),
+	user_modules_user_services.NewLocalTileSessionService,
+	wire.Bind(new(user_modules_user_services.TileSessionService), new(*user_modules_user_services.LocalTileSessionService)),
+	user_modules_user_services.NewLocalCatalogService,
+	wire.Bind(new(user_modules_user_services.CatalogService), new(*user_modules_user_services.LocalCatalogService)),
+	user_modules_user_services.NewLocalTagService,
+	wire.Bind(new(user_modules_user_services.TagService), new(*user_modules_user_services.LocalTagService)),
+	user_modules_user_services.NewLocalKYCService,
+	wire.Bind(new(user_modules_user_services.KYCService), new(*user_modules_user_services.LocalKYCService)),
+	user_modules_user_services.NewLocalBookmarkService,
+	wire.Bind(new(user_modules_user_services.BookmarkService), new(*user_modules_user_services.LocalBookmarkService)),
+	user_modules_user_services.NewLocalAdminUserService,
+	wire.Bind(new(user_modules_user_services.AdminUserService), new(*user_modules_user_services.LocalAdminUserService)),
 	user_infra_mapper.NewAuthMethodMapper,
 	user_infra_postgres.NewAuthRepository,
 	user_infra_mapper.NewAuthSecurityMapper,

@@ -53,3 +53,27 @@ func protoMessages[T proto.Message](items []T) ([]any, error) {
 	}
 	return out, nil
 }
+
+func protoResult(msg proto.Message, opts ...httpapi.OKOption) (*httpapi.Result, error) {
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data, opts...), nil
+}
+
+func protoListResult[T proto.Message](items []T, total int64, page, size uint32) (*httpapi.Result, error) {
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{
+		Page:  int32(page),
+		Size:  int32(size),
+		Total: total,
+	})), nil
+}
+
+func jsonOK(data any, opts ...httpapi.OKOption) (*httpapi.Result, error) {
+	return httpapi.OK(data, opts...), nil
+}

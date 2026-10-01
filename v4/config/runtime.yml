@@ -26,12 +26,6 @@ server:
   tcp_port: 8211
 
 database:
-  host: localhost
-  port: 5432
-  name: user_service
-  user: postgres
-  password: ""
-  dsn: ""
   max_open_conns: 50
   max_idle_conns: 10
   conn_max_lifetime: 5m
@@ -152,4 +146,3 @@ request_stats:
   spec_urls: []
   # ignore_prefixes:
   #   - /v2/custom/admin/dashboard
-

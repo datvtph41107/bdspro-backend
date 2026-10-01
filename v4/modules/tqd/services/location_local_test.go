@@ -23,6 +23,10 @@ func (s stubLocationRepo) ListAllWards(context.Context, int, int) ([]*entity.War
 	return s.wards, s.wardTotal, nil
 }
 
+func (s stubLocationRepo) GetLocationByParcelID(context.Context, uint64) (*entity.Province, *entity.Ward, error) {
+	return nil, nil, nil
+}
+
 func TestLocalLocationService_ListProvinces(t *testing.T) {
 	svc := NewLocalLocationService(stubLocationRepo{
 		provinces: []*entity.Province{{

@@ -17,6 +17,7 @@ import (
 	bdsproentity "userv4/modules/bdspro/entity"
 	hubentity "userv4/modules/hub/entity"
 	notificationentity "userv4/modules/notification/entity"
+	seoentity "userv4/modules/seo/entity"
 
 	"gorm.io/gorm"
 )
@@ -108,6 +109,26 @@ func AutoMigrateModels() []any {
 		&hubentity.FAQ{},
 		&hubentity.Version{},
 		&hubentity.APIKey{},
+		// modules/hub remaining capabilities (migrated from hub-service).
+		&hubentity.ErrorLog{},
+		&hubentity.Applink{},
+		&hubentity.SystemConfig{},
+		&hubentity.EventQueue{},
+		&hubentity.InteractiveEvent{},
+		&hubentity.ClickURL{},
+		&hubentity.UpdateData{},
+		&hubentity.KeywordSearchLog{},
+		&hubentity.SearchLatencyLog{},
+
+		// modules/seo SEO domain + support tables (v4 DSN).
+		&seoentity.SeoDomain{},
+		&seoentity.SeoLink{},
+		&seoentity.SeoRelative{},
+		&seoentity.SeoGenerationLog{},
+		&seoentity.SeoCount{},
+		&seoentity.SeoCountLog{},
+		&seoentity.SeoCategory{},
+		&seoentity.UserSavedPlanningNews{},
 
 		// modules/notification inbox + history tables (v4 DSN).
 		&notificationentity.Notification{},

@@ -49,11 +49,63 @@ var publicHTTPRoutes = []string{
 	"/v2/hub/faqs",
 	"/v2/hub/app-bundle/version",
 	"/v2/hub/app-bundle/update-check",
+	// Hub remaining public endpoints (migrated from hub-service)
+	"/v2/hub/error/log",
+	"/v2/hub/applinks",
+	"/v2/hub/system-config/by-group",
+	"/v2/hub/system-config/key",
+	"/v2/hub/settings",
 	// Bdspro public
 	"/v2/bdspro/public/enums",
-	// TQD public client catalogs (guest map)
+	// SEO public (CRM path parity)
+	"/v2/crm/public",
+	"/v2/crm/sitemap.xml",
+	"/v2/seo/sitemap.xml",
+	// CRM guest (gateway Prefix("/v2/crm/contact/relation-ship"))
+	"/v2/crm/contact/relation-ship",
+	// TQD public / guest map catalogs (gateway Prefix("/v2/tqd/public") parity)
+	"/v2/tqd/public",
+	// Guest parcels + discovery + map-target + qh/public (gateway authroutes)
+	"/v2/tqd/parcels/batch",
+	"/v2/tqd/parcels/by-location",
+	"/v2/tqd/parcels/by-polygon",
+	"/v2/tqd/parcels/public",
+	"/v2/tqd/parcels/preview",
+	"/v2/tqd/properties",
+	"/v2/tqd/map-target/by-location",
+	"/v2/tqd/discovery",
+	"/v2/tqd/qh/public",
+	// Guest client catalogs (gateway authroutes + frontend guest map flows)
 	"/v2/tqd/client/provinces",
 	"/v2/tqd/client/wards",
+	"/v2/tqd/client/layers",
+	"/v2/tqd/client/regions",
+	"/v2/tqd/client/parcels/search",
+	"/v2/tqd/client/families",
+	"/v2/tqd/client/qh/layer-families/list",
+	"/v2/tqd/client/labels",
+	"/v2/tqd/client/planning-projects",
+	"/v2/tqd/client/planning-documents",
+	"/v2/tqd/client/administrative-units",
+	"/v2/tqd/client/nearby-areas",
+	// User public (gateway authroutes parity)
+	"/v2/user/profile/session",
+	"/v2.1/user/profile/session",
+	"/v3/user/profile/session",
+	"/v2/user/profile/info",
+	"/v2.1/user/profile/info",
+	"/v3/user/profile/info",
+	"/v2/user/profile/search/public",
+	"/v2.1/user/profile/search/public",
+	"/v3/user/profile/search/public",
+	"/v2/user/profile/find-by-phone",
+	"/v2.1/user/profile/find-by-phone",
+	"/v3/user/profile/find-by-phone",
+	"/v2/user/main-area",
+	"/v2/user/purpose-use",
+	"/v2/user/professions",
+	"/v2/pub/user/profile/tags",
+	"/v2/user/commercial/plans",
 }
 
 // bridgeActorProfileID copies JWT Actor onto legacy ProfileIDKey

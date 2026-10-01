@@ -493,8 +493,6 @@ func (s *LocalDemoService) cleanupDemoContacts(ctx context.Context, profileID ui
 	return s.logs.DeleteContactsByProfileIDAndContactIDs(ctx, profileID, deletedLoggedIDs)
 }
 
-
-
 func (s *LocalDemoService) bumpDemoSyncKeys(ctx context.Context, productIDs []uint64) {
 	if s.sync == nil {
 		return
@@ -808,4 +806,3 @@ func (s *LocalDemoService) bestEffortDeleteContacts(ctx context.Context, contact
 		_ = s.contacts.DeleteContact(ctx, contactID)
 	}
 }
-

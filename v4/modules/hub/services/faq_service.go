@@ -11,10 +11,13 @@ import (
 	"userv4/modules/hub/repository"
 )
 
-// FAQService owns user-facing FAQ flows for modules/hub.
+// FAQService owns user-facing and admin FAQ flows for modules/hub.
 type FAQService interface {
 	GetFAQSimple(ctx context.Context, req dto.GetFAQSimpleRequest) (*hubpb.GetFAQSimpleResponse, error)
 	GetFAQSimpleDetail(ctx context.Context, id uint64) (*hubpb.FAQDetail, error)
+	AdminCreate(ctx context.Context, req dto.CreateFAQRequest) (*hubpb.FAQDetail, error)
+	AdminUpdate(ctx context.Context, id uint64, req dto.CreateFAQRequest) (*hubpb.FAQDetail, error)
+	AdminDelete(ctx context.Context, id uint64) error
 }
 
 type LocalFAQService struct {
@@ -50,6 +53,45 @@ func (s *LocalFAQService) GetFAQSimpleDetail(ctx context.Context, id uint64) (*h
 		return nil, _errors.NotFoundException("faq not found")
 	}
 	return mapFAQDetail(row), nil
+}
+
+func (s *LocalFAQService) AdminCreate(ctx context.Context, req dto.CreateFAQRequest) (*hubpb.FAQDetail, error) {
+	if req.Question == "" || req.Answer == "" {
+		return nil, _errors.BadRequestException("question and answer are required")
+	}
+	row := &entity.FAQ{Question: req.Question, Answer: req.Answer, GroupKey: req.GroupKey}
+	if err := s.repo.Create(ctx, row); err != nil {
+		return nil, err
+	}
+	return mapFAQDetail(row), nil
+}
+
+func (s *LocalFAQService) AdminUpdate(ctx context.Context, id uint64, req dto.CreateFAQRequest) (*hubpb.FAQDetail, error) {
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, _errors.NotFoundException("faq not found")
+	}
+	existing.Question = req.Question
+	existing.Answer = req.Answer
+	existing.GroupKey = req.GroupKey
+	if err := s.repo.Update(ctx, existing); err != nil {
+		return nil, err
+	}
+	return mapFAQDetail(existing), nil
+}
+
+func (s *LocalFAQService) AdminDelete(ctx context.Context, id uint64) error {
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return _errors.NotFoundException("faq not found")
+	}
+	return s.repo.Delete(ctx, id)
 }
 
 func mapFAQDetail(row *entity.FAQ) *hubpb.FAQDetail {

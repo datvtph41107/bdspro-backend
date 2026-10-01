@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	_db "common/db"
+	tqddb "userv4/modules/tqd/db"
 
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -17,7 +18,8 @@ type TqdDB struct {
 	DB *gorm.DB
 }
 
-// NewTqdDB opens the TQD database pool from database.tqd.dsn.
+// NewTqdDB opens the TQD database pool from database.tqd.dsn and applies any
+// pending canonical migrations from tqd-service/migrate before serving traffic.
 func NewTqdDB() (*TqdDB, func(), error) {
 	dsn := strings.TrimSpace(viper.GetString("database.tqd.dsn"))
 	if dsn == "" {
@@ -30,6 +32,10 @@ func NewTqdDB() (*TqdDB, func(), error) {
 	sqlDB, err := database.DB()
 	if err != nil {
 		return nil, nil, fmt.Errorf("tqd database pool: %w", err)
+	}
+	if err := tqddb.RunPendingMigrations(database); err != nil {
+		_ = sqlDB.Close()
+		return nil, nil, fmt.Errorf("tqd schema migrate: %w", err)
 	}
 	return &TqdDB{DB: database}, func() { _ = sqlDB.Close() }, nil
 }

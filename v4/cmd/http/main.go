@@ -111,6 +111,9 @@ func runHTTP() error {
 	if app.UserHandler == nil {
 		return fmt.Errorf("initialize userv4 app: user handler is nil")
 	}
+	if app.SeoHandler == nil {
+		return fmt.Errorf("initialize userv4 app: seo handler is nil")
+	}
 
 	if err := userdb.RunPendingMigrations(app.DB); err != nil {
 		return fmt.Errorf("userv4 schema migrate: %w", err)
@@ -148,6 +151,7 @@ func runHTTP() error {
 	app.NotificationHandler.RegisterHTTP(mux)
 	app.TqdHandler.RegisterHTTP(mux)
 	app.CrmHandler.RegisterHTTP(mux)
+	app.SeoHandler.RegisterHTTP(mux)
 
 	handler := chain(
 		mux,

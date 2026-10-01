@@ -14,6 +14,10 @@ type VersionRepository interface {
 	GetLatest(ctx context.Context, appName, platform string, activeOnly bool) (*entity.Version, error)
 	Create(ctx context.Context, v *entity.Version) error
 	ValidateAPIKey(ctx context.Context, apiKey string) error
+	GetByID(ctx context.Context, id uint64) (*entity.Version, error)
+	List(ctx context.Context, appName, platform string, page, size int) ([]*entity.Version, int64, error)
+	Update(ctx context.Context, v *entity.Version) error
+	Delete(ctx context.Context, id uint64) error
 }
 
 type versionPostgres struct{ db *gorm.DB }
@@ -57,6 +61,56 @@ func (r *versionPostgres) Create(ctx context.Context, v *entity.Version) error {
 		return errors.New("phiên bản đã tồn tại")
 	}
 	return r.db.WithContext(ctx).Create(v).Error
+}
+
+func (r *versionPostgres) GetByID(ctx context.Context, id uint64) (*entity.Version, error) {
+	if r.db == nil {
+		return nil, nil
+	}
+	var row entity.Version
+	err := r.db.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &row, err
+}
+
+func (r *versionPostgres) List(ctx context.Context, appName, platform string, page, size int) ([]*entity.Version, int64, error) {
+	if r.db == nil {
+		return nil, 0, nil
+	}
+	q := r.db.WithContext(ctx).Model(&entity.Version{}).Where("deleted_at IS NULL")
+	if appName != "" {
+		q = q.Where("app_name = ?", appName)
+	}
+	if platform != "" {
+		q = q.Where("platform = ?", platform)
+	}
+	var total int64
+	q.Count(&total)
+	if size <= 0 {
+		size = 20
+	}
+	if page < 0 {
+		page = 0
+	}
+	var rows []*entity.Version
+	err := q.Order("build_number DESC, id DESC").Offset(page * size).Limit(size).Find(&rows).Error
+	return rows, total, err
+}
+
+func (r *versionPostgres) Update(ctx context.Context, v *entity.Version) error {
+	if r.db == nil {
+		return nil
+	}
+	return r.db.WithContext(ctx).Save(v).Error
+}
+
+func (r *versionPostgres) Delete(ctx context.Context, id uint64) error {
+	if r.db == nil {
+		return nil
+	}
+	return r.db.WithContext(ctx).Delete(&entity.Version{}, id).Error
 }
 
 func (r *versionPostgres) ValidateAPIKey(ctx context.Context, apiKey string) error {

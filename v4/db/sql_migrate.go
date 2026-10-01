@@ -135,7 +135,12 @@ func readMigrationVersion(database *gorm.DB) (uint, bool, error) {
 		Version uint
 		Dirty   bool
 	}
-	if err := database.Raw(`SELECT version, dirty FROM schema_migrations LIMIT 1`).Scan(&row).Error; err != nil {
+	// Prefer the highest version. A stale lower dirty row must not mask a
+	// newer clean watermark (golang-migrate is a single-row table in practice).
+	if err := database.Raw(`
+SELECT version, dirty FROM schema_migrations
+ORDER BY version DESC
+LIMIT 1`).Scan(&row).Error; err != nil {
 		return 0, false, fmt.Errorf("read schema_migrations: %w", err)
 	}
 	return row.Version, row.Dirty, nil
@@ -198,34 +203,24 @@ func applyMigration(database *gorm.DB, migration pendingMigration) error {
 }
 
 func markMigrationDirty(database *gorm.DB, version uint) error {
-	var count int64
-	if err := database.Raw(`SELECT COUNT(1) FROM schema_migrations`).Scan(&count).Error; err != nil {
-		return fmt.Errorf("count schema_migrations before dirty mark: %w", err)
-	}
-	if count == 0 {
-		if err := database.Exec(
-			`INSERT INTO schema_migrations(version, dirty) VALUES (?, TRUE)`,
-			version,
-		).Error; err != nil {
-			return fmt.Errorf("insert dirty migration %d: %w", version, err)
-		}
-		return nil
-	}
-	if err := database.Exec(
-		`UPDATE schema_migrations SET version = ?, dirty = TRUE`,
-		version,
-	).Error; err != nil {
-		return fmt.Errorf("mark dirty migration %d: %w", version, err)
-	}
-	return nil
+	return upsertMigrationVersion(database, version, true)
 }
 
 func markMigrationClean(database *gorm.DB, version uint) error {
+	return upsertMigrationVersion(database, version, false)
+}
+
+func upsertMigrationVersion(database *gorm.DB, version uint, dirty bool) error {
+	// Keep a single watermark row (golang-migrate layout). Extra rows from
+	// older tools/manual edits confuse LIMIT reads and dirty checks.
+	if err := database.Exec(`DELETE FROM schema_migrations`).Error; err != nil {
+		return fmt.Errorf("clear schema_migrations before version %d: %w", version, err)
+	}
 	if err := database.Exec(
-		`UPDATE schema_migrations SET version = ?, dirty = FALSE`,
-		version,
+		`INSERT INTO schema_migrations(version, dirty) VALUES (?, ?)`,
+		version, dirty,
 	).Error; err != nil {
-		return fmt.Errorf("mark clean migration %d: %w", version, err)
+		return fmt.Errorf("set schema_migrations version=%d dirty=%v: %w", version, dirty, err)
 	}
 	return nil
 }

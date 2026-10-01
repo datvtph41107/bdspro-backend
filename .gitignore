@@ -42,3 +42,5 @@ __debug_bin*
 /tqd-service/files/
 **/main
 config/production/**
+v4/http
+v4/files

@@ -23,6 +23,9 @@ type UserGuideRepository interface {
 	GetByKey(ctx context.Context, key string) (*entity.UserGuide, error)
 	ListAllByKey(ctx context.Context) ([]*entity.UserGuide, error)
 	ListGroups(ctx context.Context) ([]UserGuideGroupCount, error)
+	Create(ctx context.Context, ug *entity.UserGuide) error
+	Update(ctx context.Context, ug *entity.UserGuide) error
+	Delete(ctx context.Context, id uint64) error
 }
 
 type userGuidePostgres struct{ db *gorm.DB }
@@ -121,6 +124,21 @@ func (r *userGuidePostgres) ListGroups(ctx context.Context) ([]UserGuideGroupCou
 		Order("group_key ASC").
 		Scan(&groups).Error
 	return groups, err
+}
+
+func (r *userGuidePostgres) Create(ctx context.Context, ug *entity.UserGuide) error {
+	return r.db.WithContext(ctx).Create(ug).Error
+}
+
+func (r *userGuidePostgres) Update(ctx context.Context, ug *entity.UserGuide) error {
+	return r.db.WithContext(ctx).Model(ug).Updates(map[string]interface{}{
+		"title": ug.Title, "description": ug.Description,
+		"group_key": ug.GroupKey, "key": ug.Key, "mode": ug.Mode,
+	}).Error
+}
+
+func (r *userGuidePostgres) Delete(ctx context.Context, id uint64) error {
+	return r.db.WithContext(ctx).Delete(&entity.UserGuide{}, id).Error
 }
 
 // Touch sync helper for callers that bump Redis after guide reads.

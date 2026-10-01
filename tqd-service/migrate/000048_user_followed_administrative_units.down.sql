@@ -1,0 +1,3 @@
+DROP INDEX IF EXISTS idx_user_followed_administrative_units_composite;
+DROP INDEX IF EXISTS idx_user_followed_administrative_units_user;
+DROP TABLE IF EXISTS user_followed_administrative_units;

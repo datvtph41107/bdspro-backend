@@ -1,281 +1,562 @@
 package services
 
 import (
-	"context"
-	"time"
-
 	base_enum "base/enum"
+	_dto "common/domain/dto"
+	_enum "common/domain/enum"
 	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
-	crmpb "pb/types/crm"
-	sharepb "pb/types/shared"
-
-	"userv4/internal/interface/providers"
+	"context"
+	domain "userv4/modules/crm/entity"
 	"userv4/modules/crm/dto"
-	"userv4/modules/crm/entity"
-	"userv4/modules/crm/repository"
+	"userv4/modules/crm/enums"
+	"userv4/modules/crm/provider"
+	repo "userv4/modules/crm/repository"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
 )
 
-const contactListUserMaxRecords = 20
+type ContactUsecase struct {
+	repo               repo.ContactRepo
+	friendRepo         repo.FriendRepo
+	followRepo         repo.FollowRepo
+	leadUsecase        *LeadUsecase // forward reference
+	contactProductRepo repo.ContactProductRepo
+	userClient         provider.UserClient
+	bdsproProvider     provider.BdsproProvider
+	ownerUsecase       *OwnerUsecase
+	tagUsecase         *TagUsecase
 
-// ContactService owns user-facing CRM contact flows for modules/crm.
-type ContactService interface {
-	// ListUser returns contacts owned by the authenticated user (ownerOf=user).
-	// Path ownerId is ignored when 0; owner resolves from JWT profile.
-	ListUser(ctx context.Context, ownerID uint64, req dto.ContactSearchRequest) (*crmpb.ContactListDTO, error)
-	// CreateContact creates a personal contact (ownerOf=member). Returns originID, contactID, profileID.
-	// linkedProfileID may be 0 when the contact has no linked profile.
-	CreateContact(ctx context.Context, fullName, phone, email, avatar string, linkedProfileID uint64) (originID, contactID, profileID uint64, err error)
-	// FindContactIDByPhone finds the contact id owned by the current user for the given phone.
-	FindContactIDByPhone(ctx context.Context, phone string) (uint64, error)
-	// GetContactProfileID returns the profileId linked to a contact.
-	GetContactProfileID(ctx context.Context, contactID uint64) (uint64, error)
-	// GetOriginID returns the origin_id for a profile from origin_profile.
-	GetOriginID(ctx context.Context, profileID uint64) (uint64, error)
-	// DeleteContact soft-deletes a contact by id.
-	DeleteContact(ctx context.Context, contactID uint64) error
+	notificationClient provider.NotificationProvider
+	transaction        provider.ITransaction
 }
 
-// LocalContactService serves contact list/user from the CRM DSN + SyncUtil.
-type LocalContactService struct {
-	repo    repository.ContactRepository
-	sync    *_utils.SyncUtil
-	profile providers.ProfileProvider
+func NewContactUsecase(
+	repo repo.ContactRepo,
+	friendRepo repo.FriendRepo,
+	followRepo repo.FollowRepo,
+	contactProductRepo repo.ContactProductRepo,
+	userClient provider.UserClient,
+	bdsproProvider provider.BdsproProvider,
+	ownerUsecase *OwnerUsecase,
+	tagUsecase *TagUsecase,
+
+	notificationClient provider.NotificationProvider,
+	transaction provider.ITransaction,
+) *ContactUsecase {
+	return &ContactUsecase{
+		repo:               repo,
+		friendRepo:         friendRepo,
+		followRepo:         followRepo,
+		contactProductRepo: contactProductRepo,
+		userClient:         userClient,
+		bdsproProvider:     bdsproProvider,
+		ownerUsecase:       ownerUsecase,
+		tagUsecase:         tagUsecase,
+		notificationClient: notificationClient,
+		transaction:        transaction,
+	}
 }
 
-func NewLocalContactService(
-	repo repository.ContactRepository,
-	sync *_utils.SyncUtil,
-	profile providers.ProfileProvider,
-) *LocalContactService {
-	return &LocalContactService{repo: repo, sync: sync, profile: profile}
-}
-
-func (s *LocalContactService) ListUser(ctx context.Context, _ uint64, req dto.ContactSearchRequest) (*crmpb.ContactListDTO, error) {
-	profileID := _utils.GetProfileIdWithContext(ctx)
-	if profileID == 0 {
-		return nil, _errors.UnauthorizedException()
+func (u *ContactUsecase) GetInterestedContactsByProduct(ctx context.Context, req *dto.ContactProductInterestedFilter) ([]*dto.ContactProductInterestedDTO, int64, error) {
+	userID := _utils.GetProfileIdWithContext(ctx)
+	if userID == 0 {
+		return nil, 0, _errors.UnauthorizedException()
 	}
 
-	size := req.Size
-	if size == 0 || size > contactListUserMaxRecords {
-		size = contactListUserMaxRecords
+	items, total, err := u.repo.GetInterestedContactsByProduct(
+		ctx,
+		&userID,
+		req,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
+}
+
+func (u *ContactUsecase) PinContact(ctx context.Context, req *dto.PinRequestDTO) error {
+	meta, ok := enums.PinTargetMetaMap[req.Target]
+	if !ok {
+		return errors.New("unsupported pin target")
 	}
 
-	var syncKey string
-	if s.sync != nil {
-		syncKey = s.sync.GetKey(ctx, _utils.SyncKeyContactMe, 0)
-		if !s.sync.HasUpdated(ctx, syncKey, req.Timestamp) && req.Page == 0 {
-			return &crmpb.ContactListDTO{
-				Timestamp: s.sync.GetTimestamp(ctx, syncKey),
-			}, nil
+	var now *time.Time
+	if req.Action != "" && req.Action == "pin" {
+		t := time.Now()
+		now = &t
+	}
+
+	return u.repo.UpdatePinnedAtDynamic(
+		ctx,
+		meta,
+		req.TargetIDs,
+		now,
+	)
+}
+
+// updateContactCountForProducts cập nhật ContactCount cho các products bị ảnh hưởng
+func (s *ContactUsecase) updateContactCountForProducts(c context.Context, productIds []uint64) {
+	fmt.Println("updateContactCountForProducts", productIds)
+	if len(productIds) == 0 || s.bdsproProvider == nil {
+		return
+	}
+
+	// Lấy ContactCount cho các products
+	counts, err := s.contactProductRepo.GetContactCountsByProductIds(c, productIds)
+	if err != nil {
+		fmt.Println("error", err)
+		// Log error nhưng không fail transaction
+		return
+	}
+
+	fmt.Println("counts", counts)
+
+	// Update ContactCount cho từng product
+	go func() {
+		cloneCtx := _utils.CloneContext(c)
+		for productID, count := range counts {
+			fmt.Println("productID", productID, "count", count)
+			_ = s.bdsproProvider.UpdateContactCount(cloneCtx, productID, count)
+			fmt.Println("UpdateContactCount success", productID, count)
+
+		}
+	}()
+}
+
+func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*domain.ContactEntity, error) {
+	entity, err := s.repo.GetByID(c, contactId)
+	if err != nil {
+		return nil, err
+	}
+	if entity.OwnerOf == base_enum.EOwnerOfMember {
+		profileId := _utils.GetProfileIdWithContext(c)
+		if profileId != entity.OwnerID {
+			return nil, &_routes.Except{
+				Code:    403,
+				Message: "Bạn không có quyền truy cập",
+			}
 		}
 	}
+	return entity, nil
+}
 
-	items, total, err := s.repo.SearchByOwner(ctx, profileID, base_enum.EOwnerOfMember, req.Page, size, req.Text)
+func (s *ContactUsecase) Search(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, ownerType, dto.OwnerId)
+	if err != nil {
+		return nil, 0, err
+	}
+	contacts, total, err := s.repo.Search(c, ownerId, ownerType, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return contacts, total, nil
+}
+
+func (s *ContactUsecase) GetListContactByProductId(c context.Context, productId uint64, dto dto.ContactSearchDTO) ([]domain.ContactItem, int64, error) {
+	// Lấy ownerId từ context (thường là organizationId)
+	ownerId := _utils.GetProfileIdWithContext(c)
+	if ownerId == 0 {
+		return nil, 0, &_routes.Except{
+			Code:    400,
+			Message: "Không tìm thấy thông tin liên hệ",
+		}
+	}
+	ownerType := base_enum.EOwnerOfMember
+	contacts, total, err := s.repo.GetListContactByProductId(c, productId, ownerId, ownerType, dto)
+	if err != nil {
+		return nil, 0, err
+	}
+	return contacts, total, nil
+}
+
+func (s *ContactUsecase) UpdateProductIds(c context.Context, contactId uint64, productIds []uint64) error {
+	// Kiểm tra quyền truy cập contact
+	_, err := s.CheckPermission(c, contactId)
+	if err != nil {
+		return err
+	}
+
+	// Sync products vào bảng tb_contact_product
+	return s.contactProductRepo.Bulk(c, productIds, contactId)
+}
+
+func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	var result *domain.ContactEntity
+	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		ownerId, err := s.ownerUsecase.GetOwnerInfo(txCtx, entity.OwnerOf, entity.OwnerID)
+		if err != nil {
+			return err
+		}
+		entity.OwnerID = ownerId
+
+		// Kiểm tra ProfileID đã tồn tại
+		if entity.ProfileID != nil && *entity.ProfileID != 0 {
+			existing, err := s.repo.GetByProfileID(txCtx, *entity.ProfileID, ownerId, entity.OwnerOf)
+			if err != nil {
+				return err
+			}
+			if existing != nil {
+				return _errors.ConflictException("Contact already exists for this profile")
+			}
+		}
+
+		// Kiểm tra phone và lấy ProfileID từ user service
+		if entity.Phone != "" {
+			profiles, err := s.userClient.GetProfileByPhones(txCtx, []string{entity.Phone})
+			if err == nil && len(profiles) > 0 {
+				if profile, exists := profiles[entity.Phone]; exists {
+					if profile.ProfileId == ownerId {
+						return _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+					}
+					entity.ProfileID = &profile.ProfileId
+				}
+			}
+		}
+
+		// Tạo contact
+		created, err := s.repo.Create(txCtx, entity)
+		if err != nil {
+			return err
+		}
+		result = created
+
+		// Xử lý tags
+		if len(entity.Tags) > 0 && result.ID > 0 {
+			if err := s.tagUsecase.ReplaceContactTags(txCtx, result.ID, entity.Tags); err != nil {
+				return err
+			}
+			tags, _ := s.tagUsecase.ListTagsByContactID(txCtx, result.ID)
+			result.Tags = tags
+		}
+
+		// Xử lý products
+		if len(entity.ProductIDs) > 0 && result.ID > 0 {
+			if err := s.contactProductRepo.Bulk(txCtx, entity.ProductIDs, result.ID); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*sharepb.ContactDTO, 0, len(items))
-	for _, item := range items {
-		detail, err := s.detailForList(ctx, profileID, item)
-		if err != nil {
+	if len(entity.ProductIDs) > 0 {
+		s.updateContactCountForProducts(ctx, entity.ProductIDs)
+	}
+
+	// Tạo notification
+	go func() {
+		s.notificationClient.CreateNotification(ctx,
+			result.Avatar,
+			"Tạo liên hệ",
+			[]string{result.FullName},
+			_enum.NotificationContactCreate,
+			&result.ID,
+			result.OwnerID,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(result.ID, 10)},
+		)
+	}()
+
+	return result, nil
+}
+
+func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	_, err := s.CheckPermission(c, id)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.repo.Update(c, id, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Xử lý tags nếu có
+	if len(entity.Tags) > 0 {
+		if err := s.tagUsecase.ReplaceContactTags(c, id, entity.Tags); err != nil {
 			return nil, err
 		}
-		out = append(out, detail)
+		// Load lại tags để trả về
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+		result.Tags = tags
+	} else {
+		// Nếu không có tags trong request, vẫn load tags hiện có
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+		result.Tags = tags
 	}
-	s.enrichProfiles(ctx, out)
 
-	resp := &crmpb.ContactListDTO{
-		Data:  out,
-		Total: uint32(total),
+	// Xử lý products nếu có
+	if len(entity.ProductIDs) > 0 {
+		// Lấy productIds bị ảnh hưởng (cũ và mới)
+		affectedProductIds, _ := s.contactProductRepo.GetAffectedProductIds(c, id, entity.ProductIDs)
+		// Sync products vào bảng tb_contact_product
+		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, id); err != nil {
+			return nil, err
+		}
+		// Cập nhật ContactCount cho các products bị ảnh hưởng
+		s.updateContactCountForProducts(c, affectedProductIds)
 	}
-	if s.sync != nil && syncKey != "" && req.Page == 0 {
-		ts := time.Now().UnixMilli()
-		_ = s.sync.PutTimestamp(ctx, syncKey, ts)
-		resp.Timestamp = ts
-	}
-	return resp, nil
+
+	return result, nil
 }
 
-// CreateContact inserts a personal contact (ownerOf=member) and bumps SyncKeyContactMe.
-// Returns originID (from origin_profile), contactID, profileID.
-func (s *LocalContactService) CreateContact(ctx context.Context, fullName, phone, email, avatar string, linkedProfileID uint64) (uint64, uint64, uint64, error) {
-	ownerID := _utils.GetProfileIdWithContext(ctx)
-	if ownerID == 0 {
-		return 0, 0, 0, _errors.UnauthorizedException()
-	}
-
-	contact := &entity.Contact{
-		FullName: fullName,
-		Phone:    phone,
-		Email:    email,
-		Avatar:   avatar,
-		OwnerID:  ownerID,
-		OwnerOf:  base_enum.EOwnerOfMember,
-	}
-	if linkedProfileID > 0 {
-		contact.ProfileID = &linkedProfileID
-	}
-	if err := s.repo.Create(ctx, contact); err != nil {
-		return 0, 0, 0, err
-	}
-
-	if s.sync != nil {
-		key := s.sync.GetKey(ctx, _utils.SyncKeyContactMe, 0)
-		_ = s.sync.PutTimestamp(ctx, key, 0)
-	}
-
-	var originID uint64
-	if linkedProfileID > 0 {
-		originID, _ = s.repo.GetOriginIDByProfileID(ctx, linkedProfileID)
-	}
-
-	var retProfileID uint64
-	if contact.ProfileID != nil {
-		retProfileID = *contact.ProfileID
-	}
-
-	return originID, contact.ID, retProfileID, nil
-}
-
-// FindContactIDByPhone finds the contact id owned by the current user for the given phone.
-func (s *LocalContactService) FindContactIDByPhone(ctx context.Context, phone string) (uint64, error) {
-	ownerID := _utils.GetProfileIdWithContext(ctx)
-	if ownerID == 0 {
-		return 0, _errors.UnauthorizedException()
-	}
-	return s.repo.FindIDByPhone(ctx, ownerID, base_enum.EOwnerOfMember, phone)
-}
-
-// GetContactProfileID returns the profileId linked to the given contact.
-func (s *LocalContactService) GetContactProfileID(ctx context.Context, contactID uint64) (uint64, error) {
-	contact, err := s.repo.GetByID(ctx, contactID)
+func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
+	_, err := s.CheckPermission(c, id)
 	if err != nil {
-		return 0, err
-	}
-	if contact == nil || contact.ProfileID == nil {
-		return 0, nil
-	}
-	return *contact.ProfileID, nil
-}
-
-// GetOriginID returns the origin_id for a profile from origin_profile.
-func (s *LocalContactService) GetOriginID(ctx context.Context, profileID uint64) (uint64, error) {
-	return s.repo.GetOriginIDByProfileID(ctx, profileID)
-}
-
-// DeleteContact soft-deletes a contact and bumps SyncKeyContactMe.
-func (s *LocalContactService) DeleteContact(ctx context.Context, contactID uint64) error {
-	if err := s.repo.SoftDelete(ctx, contactID); err != nil {
 		return err
 	}
-	if s.sync != nil {
-		key := s.sync.GetKey(ctx, _utils.SyncKeyContactMe, 0)
-		_ = s.sync.PutTimestamp(ctx, key, 0)
+
+	// Lấy productIds trước khi xóa để cập nhật ContactCount
+	productIds, _ := s.contactProductRepo.GetProductIds(c, id)
+
+	// Xóa contact
+	err = s.repo.Delete(c, id)
+	if err != nil {
+		return err
 	}
+
+	// Cập nhật ContactCount cho các products bị ảnh hưởng
+	if len(productIds) > 0 {
+		s.updateContactCountForProducts(c, productIds)
+	}
+
 	return nil
 }
 
-func (s *LocalContactService) detailForList(ctx context.Context, currentProfileID uint64, item entity.ContactListItem) (*sharepb.ContactDTO, error) {
-	contact, err := s.repo.GetByID(ctx, item.ID)
+func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
+	phones := make([]string, len(contacts))
+	for i := 0; i < len(contacts); i++ {
+		phones[i] = contacts[i].Phone
+	}
+	profiles, _ := s.userClient.GetProfileByPhones(c, phones)
+	if len(profiles) > 0 {
+		for i := 0; i < len(contacts); i++ {
+			existedProfile, ok := profiles[contacts[i].Phone]
+			if ok {
+				contacts[i].ProfileID = &existedProfile.ProfileId
+			}
+		}
+	}
+
+	profileId := _utils.GetProfileIdWithContext(c)
+	for i := 0; i < len(contacts); i++ {
+		contacts[i].OwnerID = profileId
+		contacts[i].OwnerOf = ownerType
+		contacts[i].Phone = strings.TrimSpace(contacts[i].Phone)
+		contacts[i].FullName = strings.TrimSpace(contacts[i].FullName)
+	}
+	contacts, err := s.repo.Bulk(c, contacts)
 	if err != nil {
 		return nil, err
 	}
+	return contacts, nil
+}
+
+func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEntity, error) {
+	entity, err := s.CheckPermission(c, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if entity.ProfileID != nil {
+		friendStatus, _ := s.friendRepo.GetByUserID(c, *entity.ProfileID)
+		entity.FriendStatus = friendStatus
+	}
+
+	// Load tags
+	tags, _ := s.tagUsecase.ListTagsByContactID(c, id)
+	entity.Tags = tags
+
+	// Load products
+	productIds, _ := s.contactProductRepo.GetProductIds(c, id)
+	entity.ProductIDs = productIds
+
+	return entity, nil
+}
+
+func (s *ContactUsecase) GetContactProducts(c context.Context, contactId uint64, pagable _dto.Pagable) ([]uint64, int64, error) {
+	// Kiểm tra quyền truy cập contact
+	_, err := s.CheckPermission(c, contactId)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy product IDs với phân trang
+	productIds, total, err := s.contactProductRepo.GetProductIdsWithPagination(c, contactId, pagable)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return productIds, total, nil
+}
+
+func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *_dto.RelationShipDTO {
+	currentUserId := _utils.GetProfileIdWithContext(c)
+	var relationShip *domain.FriendItem
+	var following bool
+	if currentUserId != 0 {
+		relationShip, _ = s.friendRepo.GetRelationShip(c, currentUserId, profileId)
+		following, _ = s.followRepo.GetFollowing(c, currentUserId, profileId)
+	}
+
+	numFollower, numFollowing, friendNumber, _ := s.followRepo.GetFollowInfoCount(c, profileId)
+
+	return &_dto.RelationShipDTO{
+		FriendStatus: &_dto.FriendItemDTO{
+			ID:         relationShip.ID,
+			ReceiverID: relationShip.ReceiverID,
+			CreatedBy:  relationShip.CreatedBy,
+			Status:     uint32(relationShip.Status), // TODO: convert to uint32
+		},
+		Following:    following,
+		NumFollower:  numFollower,
+		NumFollowing: numFollowing,
+		NumFriend:    friendNumber,
+	}
+}
+
+func (s *ContactUsecase) Note(c context.Context, id uint64, note string) error {
+	_, err := s.CheckPermission(c, id)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdateNote(c, id, note)
+}
+
+// SearchByPhone tìm kiếm liên hệ theo số điện thoại
+// Trả về contact và existed=true nếu tìm thấy, existed=false nếu không tìm thấy
+func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EOwnerOf, ownerId uint64, phone string) (*domain.ContactEntity, bool, error) {
+	realOwnerId, err := s.ownerUsecase.GetOwnerInfo(c, ownerType, ownerId)
+	if err != nil {
+		return nil, false, err
+	}
+
+	contact, err := s.repo.GetByPhone(c, realOwnerId, ownerType, phone)
+	if err != nil {
+		return nil, false, err
+	}
+
 	if contact == nil {
-		return nil, &_routes.Except{Code: 404, Message: "contact not found"}
-	}
-	if contact.OwnerOf == base_enum.EOwnerOfMember && contact.OwnerID != currentProfileID {
-		return nil, &_routes.Except{Code: 403, Message: "Bạn không có quyền truy cập"}
+		return nil, false, nil
 	}
 
-	dto := mapContactToSharePB(contact)
+	return contact, true, nil
+}
 
-	if contact.ProfileID != nil && *contact.ProfileID > 0 {
-		if rel, err := s.repo.GetFriendBetween(ctx, currentProfileID, *contact.ProfileID); err == nil && rel != nil {
-			createdBy := rel.CreatedBy
-			dto.FriendStatus = &sharepb.FriendItem{
-				Id:         rel.ID,
-				Status:     rel.Status,
-				CreatedBy:  &createdBy,
-				ReceiverId: rel.ReceiverID,
+// CreateOrRestore tạo contact mới hoặc khôi phục contact đã bị xóa
+// Nếu contact đã tồn tại và đang bị xóa (deleted_at IS NOT NULL), sẽ khôi phục và cập nhật thông tin
+func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, entity.OwnerOf, entity.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+	entity.OwnerID = ownerId
+
+	// Kiểm tra contact đã tồn tại chưa (bao gồm cả đã bị xóa)
+	if entity.Phone != "" {
+		existedContact, err := s.repo.GetByPhoneIncludingDeleted(c, ownerId, entity.OwnerOf, entity.Phone)
+		if err != nil {
+			return nil, err
+		}
+
+		// Nếu contact đã tồn tại và đang bị xóa, khôi phục và cập nhật
+		if existedContact != nil && existedContact.ID > 0 {
+			if existedContact.DeletedAt != nil {
+				// Khôi phục contact đã bị xóa
+				if err := s.repo.Restore(c, existedContact.ID); err != nil {
+					return nil, err
+				}
+				// Cập nhật thông tin contact
+				entity.ID = existedContact.ID
+				result, err := s.repo.Update(c, existedContact.ID, entity)
+				if err != nil {
+					return nil, err
+				}
+
+				// Xử lý tags nếu có
+				if len(entity.Tags) > 0 {
+					if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
+						return nil, err
+					}
+					tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
+					result.Tags = tags
+				}
+
+				// Xử lý products nếu có
+				if len(entity.ProductIDs) > 0 {
+					if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
+						return nil, err
+					}
+					// Cập nhật ContactCount cho các products
+					s.updateContactCountForProducts(c, entity.ProductIDs)
+				}
+
+				return result, nil
 			}
-			friendID := rel.ID
-			dto.FriendId = &friendID
+			// Nếu contact đã tồn tại và chưa bị xóa, trả về lỗi hoặc contact hiện tại
+			return existedContact, nil
 		}
 	}
 
-	if productIDs, err := s.repo.ListProductIDs(ctx, contact.ID); err == nil {
-		dto.ProductIds = productIDs
+	// Kiểm tra số điện thoại trong profile service
+	if entity.Phone != "" {
+		profiles, err := s.userClient.GetProfileByPhones(c, []string{entity.Phone})
+		if err == nil && len(profiles) > 0 {
+			if profile, exists := profiles[entity.Phone]; exists {
+				if profile.ProfileId == ownerId {
+					return nil, _errors.ReturnError(400, "Bạn không thể tạo liên hệ với chính mình")
+				}
+				entity.ProfileID = &profile.ProfileId
+			}
+		}
 	}
-	dto.Following = item.Following
-	return dto, nil
-}
 
-func (s *LocalContactService) enrichProfiles(ctx context.Context, contacts []*sharepb.ContactDTO) {
-	if s.profile == nil || len(contacts) == 0 {
-		return
+	// Tạo contact mới
+	result, err := s.repo.Create(c, entity)
+	if err != nil {
+		return nil, err
 	}
-	ids := make([]uint64, 0)
-	seen := map[uint64]struct{}{}
-	for _, c := range contacts {
-		if c == nil || c.ProfileId == nil || *c.ProfileId == 0 {
-			continue
-		}
-		id := *c.ProfileId
-		if _, ok := seen[id]; ok {
-			continue
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-	if len(ids) == 0 {
-		return
-	}
-	m, err := s.profile.GetMapProfileByIds(ctx, ids)
-	if err != nil || len(m) == 0 {
-		return
-	}
-	for _, c := range contacts {
-		if c == nil || c.ProfileId == nil {
-			continue
-		}
-		p, ok := m[*c.ProfileId]
-		if !ok || p == nil {
-			continue
-		}
-		c.ProfileInfo = &sharepb.ProfileItem{
-			Id:       p.ProfileID,
-			FullName: p.FullName,
-			Avatar:   p.Avatar,
-			Phone:    p.Phone,
-		}
-	}
-}
 
-func mapContactToSharePB(contact *entity.Contact) *sharepb.ContactDTO {
-	if contact == nil {
-		return nil
+	// Xử lý tags nếu có
+	if len(entity.Tags) > 0 && result.ID > 0 {
+		if err := s.tagUsecase.ReplaceContactTags(c, result.ID, entity.Tags); err != nil {
+			return nil, err
+		}
+		tags, _ := s.tagUsecase.ListTagsByContactID(c, result.ID)
+		result.Tags = tags
 	}
-	out := &sharepb.ContactDTO{
-		Id:            contact.ID,
-		FullName:      contact.FullName,
-		Avatar:        contact.Avatar,
-		Phone:         contact.Phone,
-		OwnerId:       contact.OwnerID,
-		Birthday:      _utils.FormatTimeToString(contact.Birthday),
-		OwnerOf:       int32(contact.OwnerOf),
-		ProfileId:     contact.ProfileID,
-		UpdatedAt:     _utils.FormatTimeToString(contact.UpdatedAt),
-		CreatedAt:     _utils.FormatTimeToString(contact.CreatedAt),
-		CreatedBy:     contact.CreatedBy,
-		ContactStatus: 20,
-		Email:         contact.Email,
-		Zalo:          contact.Zalo,
-		Company:       contact.Company,
-		Note:          contact.Note,
+
+	// Xử lý products nếu có
+	if len(entity.ProductIDs) > 0 && result.ID > 0 {
+		if err := s.contactProductRepo.Bulk(c, entity.ProductIDs, result.ID); err != nil {
+			return nil, err
+		}
+		// Cập nhật ContactCount cho các products
+		s.updateContactCountForProducts(c, entity.ProductIDs)
 	}
-	return out
+
+	// Tạo thông báo khi tạo liên hệ thành công
+	go func() {
+		s.notificationClient.CreateNotification(c,
+			result.Avatar,
+			"Tạo liên hệ",
+			[]string{result.FullName},
+			_enum.NotificationContactCreate,
+			&result.ID,
+			ownerId,
+			_enum.EOwnerOfMember,
+			[]string{strconv.FormatUint(result.ID, 10)},
+		)
+	}()
+
+	return result, nil
 }

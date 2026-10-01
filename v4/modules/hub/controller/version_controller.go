@@ -22,6 +22,12 @@ func NewVersionController(version services.VersionService) *VersionController {
 func (c *VersionController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v2/hub/app-bundle/update-check/{appName}", c.checkAppUpdate)
 	mux.HandleFunc("POST /v2/hub/app-bundle/version", withHubAPIKey(httpapi.BindJSON(c.createVersionFromDev)))
+	// Admin CRUD
+	httpapi.GET(mux, "/v2/hub/admin/versions/{id}", c.adminGet)
+	httpapi.GET(mux, "/v2/hub/admin/versions", c.adminList)
+	mux.HandleFunc("POST /v2/hub/admin/versions", httpapi.BindJSON(c.adminCreate))
+	mux.HandleFunc("PUT /v2/hub/admin/versions/{id}", httpapi.BindJSON(c.adminUpdate))
+	mux.HandleFunc("DELETE /v2/hub/admin/versions/{id}", httpapi.BindJSON(c.adminDelete))
 }
 
 func (c *VersionController) checkAppUpdate(ctx context.Context, req dto.CheckAppUpdateRequest) (*httpapi.Result, error) {
@@ -38,6 +44,55 @@ func (c *VersionController) createVersionFromDev(ctx context.Context, req hubpb.
 		return nil, err
 	}
 	return protoDataResult(result)
+}
+
+func (c *VersionController) adminList(ctx context.Context, req dto.VersionListQuery) (*httpapi.Result, error) {
+	items, total, err := c.version.AdminList(ctx, req.AppName, req.Platform, int(req.Page), int(req.Size))
+	if err != nil {
+		return nil, err
+	}
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
+}
+
+func (c *VersionController) adminGet(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
+	item, err := c.version.AdminGet(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
+	return protoDataResult(item)
+}
+
+func (c *VersionController) adminCreate(ctx context.Context, req dto.CreateVersionAdminRequest) (*httpapi.Result, error) {
+	item, err := c.version.AdminCreate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return protoDataResult(item)
+}
+
+func (c *VersionController) adminUpdate(ctx context.Context, req dto.UpdateVersionRequest) (*httpapi.Result, error) {
+	createReq := dto.CreateVersionAdminRequest{
+		AppName: req.AppName, Platform: req.Platform, VersionName: req.VersionName,
+		BuildNumber: req.BuildNumber, ForceUpdate: req.ForceUpdate, Active: req.Active,
+		DownloadURL: req.DownloadURL, ReleaseNotes: req.ReleaseNotes,
+		BundleName: req.BundleName, BundleSize: req.BundleSize,
+	}
+	item, err := c.version.AdminUpdate(ctx, req.ID, createReq)
+	if err != nil {
+		return nil, err
+	}
+	return protoDataResult(item)
+}
+
+func (c *VersionController) adminDelete(ctx context.Context, req dto.DeleteVersionPath) (*httpapi.Result, error) {
+	if err := c.version.AdminDelete(ctx, req.ID); err != nil {
+		return nil, err
+	}
+	return httpapi.OK(map[string]string{"message": "deleted"}), nil
 }
 
 func withHubAPIKey(next http.HandlerFunc) http.HandlerFunc {

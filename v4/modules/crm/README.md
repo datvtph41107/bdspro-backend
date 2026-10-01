@@ -1,23 +1,30 @@
 # modules/crm
 
-CRM contact ownership for the v4 modular layout.
+CRM ownership for the v4 modular layout (ported from `crm-service`).
 
 ```
-controller/   HTTP entry (gateway path parity)
-services/     Local contact list (+ SyncUtil, profile enrichment)
-dto/          Request shapes for HTTP
-entity/       GORM models for CRM-owned tables
-repository/   Postgres stores on database.crm.dsn
+controller/     HTTP entry (gateway path parity for /v2/crm/*)
+services/       Usecase layer (from crm-service/internal/usecase)
+dto/            Request/response shapes
+entity/         Domain models (from crm-service/internal/domain)
+repository/     Store ports
+postgres/       Store implementations (from crm-service/infra/postgre)
+enums/          Domain catalogs
+mapper/         Domain ↔ DTO/protobuf mappers
+provider/       Outbound provider ports
 ```
 
-Phase-1 routes (local on CRM DSN, no crm-service TCP for these reads):
+## Wired `/v2/crm` surface (core CRM)
 
-- `GET /v2/crm/contact/list/user/{ownerId}` — contacts of the authenticated user
-  (`ownerId=0` → JWT profile; size capped at 20; Redis `SyncKeyContactMe`)
+| Group | Status |
+|-------|--------|
+| `admin/sales` (incl. `contacts`) | wired |
+| `contact` | wired |
+| `friend` / `friend-group` / `follow` / `block` | wired |
+| `tag` / `pipeline` / `stage` / `lead` / `rule` | wired |
+| `sharing` / `invitation` | wired |
+| `admin/support` | wired |
 
-Schema: CRM-owned `tb_contact` / `friend` / `tb_contact_product` / `origin_profile`
-on `database.crm.dsn` (crm-service `db_crm`). Distinct from the thinner
-`tb_contact` stub on the v4 user DSN.
+SEO / public content stays under `modules/seo` (`/v2/crm/admin/seo*`, `/v2/crm/public/*` content).
 
-Create/update/delete, org/group owner lists, leads, and pipelines remain out of
-scope for phase-1.
+Schema: CRM-owned tables on `database.crm.dsn` (`db_crm` in prod).

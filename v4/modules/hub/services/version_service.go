@@ -16,6 +16,11 @@ import (
 type VersionService interface {
 	CheckAppUpdate(ctx context.Context, appName string, req dto.CheckAppUpdateRequest) (*hubpb.CheckAppUpdateResponse, error)
 	CreateVersionFromDev(ctx context.Context, req *hubpb.CreateVersionRequest) (*hubpb.CreateVersionResponse, error)
+	AdminList(ctx context.Context, appName, platform string, page, size int) ([]*hubpb.VersionItem, int64, error)
+	AdminGet(ctx context.Context, id uint64) (*hubpb.VersionItem, error)
+	AdminCreate(ctx context.Context, req dto.CreateVersionAdminRequest) (*hubpb.VersionItem, error)
+	AdminUpdate(ctx context.Context, id uint64, req dto.CreateVersionAdminRequest) (*hubpb.VersionItem, error)
+	AdminDelete(ctx context.Context, id uint64) error
 }
 
 type LocalVersionService struct {
@@ -72,6 +77,80 @@ func (s *LocalVersionService) CreateVersionFromDev(ctx context.Context, req *hub
 		return nil, err
 	}
 	return &hubpb.CreateVersionResponse{Data: mapVersionItem(v)}, nil
+}
+
+func (s *LocalVersionService) AdminList(ctx context.Context, appName, platform string, page, size int) ([]*hubpb.VersionItem, int64, error) {
+	rows, total, err := s.repo.List(ctx, appName, platform, page, size)
+	if err != nil {
+		return nil, 0, err
+	}
+	items := make([]*hubpb.VersionItem, 0, len(rows))
+	for _, r := range rows {
+		items = append(items, mapVersionItem(r))
+	}
+	return items, total, nil
+}
+
+func (s *LocalVersionService) AdminGet(ctx context.Context, id uint64) (*hubpb.VersionItem, error) {
+	row, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, _errors.NotFoundException("version not found")
+	}
+	return mapVersionItem(row), nil
+}
+
+func (s *LocalVersionService) AdminCreate(ctx context.Context, req dto.CreateVersionAdminRequest) (*hubpb.VersionItem, error) {
+	if req.AppName == "" || req.Platform == "" || req.VersionName == "" {
+		return nil, _errors.BadRequestException("appName, platform and versionName are required")
+	}
+	v := &entity.Version{
+		AppName: req.AppName, Platform: req.Platform, VersionName: req.VersionName,
+		BuildNumber: req.BuildNumber, ForceUpdate: req.ForceUpdate, Active: req.Active,
+		DownloadURL: req.DownloadURL, ReleaseNotes: req.ReleaseNotes,
+		BundleName: req.BundleName, BundleSize: req.BundleSize,
+	}
+	if err := s.repo.Create(ctx, v); err != nil {
+		return nil, err
+	}
+	return mapVersionItem(v), nil
+}
+
+func (s *LocalVersionService) AdminUpdate(ctx context.Context, id uint64, req dto.CreateVersionAdminRequest) (*hubpb.VersionItem, error) {
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, _errors.NotFoundException("version not found")
+	}
+	existing.AppName = req.AppName
+	existing.Platform = req.Platform
+	existing.VersionName = req.VersionName
+	existing.BuildNumber = req.BuildNumber
+	existing.ForceUpdate = req.ForceUpdate
+	existing.Active = req.Active
+	existing.DownloadURL = req.DownloadURL
+	existing.ReleaseNotes = req.ReleaseNotes
+	existing.BundleName = req.BundleName
+	existing.BundleSize = req.BundleSize
+	if err := s.repo.Update(ctx, existing); err != nil {
+		return nil, err
+	}
+	return mapVersionItem(existing), nil
+}
+
+func (s *LocalVersionService) AdminDelete(ctx context.Context, id uint64) error {
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return _errors.NotFoundException("version not found")
+	}
+	return s.repo.Delete(ctx, id)
 }
 
 type apiKeyContextKey struct{}

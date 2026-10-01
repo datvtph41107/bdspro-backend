@@ -55,6 +55,32 @@ func protoMessages[T proto.Message](items []T) ([]any, error) {
 	return out, nil
 }
 
+func protoDataResult(msg proto.Message) (*httpapi.Result, error) {
+	data, err := protoToAny(msg)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(data), nil
+}
+
+func protoListWithTotalResult[T proto.Message](items []T, total int64) (*httpapi.Result, error) {
+	data, err := protoMessages(items)
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		data = []any{}
+	}
+	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
+}
+
+func submitResult(id uint64, message string) (*httpapi.Result, error) {
+	return httpapi.OK(map[string]any{
+		"id":      id,
+		"message": message,
+	}), nil
+}
+
 func writeContactListResponse(w http.ResponseWriter, resp *crmpb.ContactListDTO) {
 	if resp == nil {
 		writeOK(w, []any{})
@@ -72,4 +98,21 @@ func writeContactListResponse(w http.ResponseWriter, resp *crmpb.ContactListDTO)
 		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
 	}
 	writeOK(w, data, opts...)
+}
+
+func contactListResult(resp *crmpb.ContactListDTO) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
+	}
+	if resp.GetTimestamp() > 0 {
+		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
+	}
+	return httpapi.OK(data, opts...), nil
 }
