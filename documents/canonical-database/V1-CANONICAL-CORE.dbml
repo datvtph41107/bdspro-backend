@@ -1,0 +1,734 @@
+// BDSPro Canonical Database — v1 Logical Model
+// Cross-service Refs in this file are LOGICAL references.
+// v2 decides which references become physical PostgreSQL FKs.
+
+Table parties {
+  id bigint [pk]
+}
+
+Table persons {
+  party_id bigint [pk, ref: > parties.id]
+}
+
+Table profiles {
+  person_id bigint [pk, ref: > persons.party_id]
+  display_name varchar
+  avatar_url text
+  bio text
+  email varchar
+  phone varchar
+  website_url text
+}
+
+Table accounts {
+  id bigint [pk]
+  person_id bigint [not null, ref: > persons.party_id]
+  closed_at timestamptz
+}
+
+Table account_password_credentials {
+  account_id bigint [pk, ref: > accounts.id]
+  login_name varchar [not null, unique]
+  password_hash text [not null]
+  changed_at timestamptz [not null]
+}
+
+Table account_federated_identities {
+  id bigint [pk]
+  account_id bigint [not null, ref: > accounts.id]
+  provider varchar [not null]
+  provider_subject varchar [not null]
+
+  indexes {
+    (provider, provider_subject) [unique]
+  }
+}
+
+Table account_passkeys {
+  id bigint [pk]
+  account_id bigint [not null, ref: > accounts.id]
+  credential_id varchar [not null, unique]
+  public_key text [not null]
+  sign_count bigint [not null]
+  created_at timestamptz [not null]
+  revoked_at timestamptz
+}
+
+Table account_sessions {
+  id bigint [pk]
+  account_id bigint [not null, ref: > accounts.id]
+  client_id varchar
+  device_key varchar
+  created_at timestamptz [not null]
+  last_seen_at timestamptz
+  ended_at timestamptz
+}
+
+Table account_blocks {
+  id bigint [pk]
+  account_id bigint [not null, ref: > accounts.id]
+  blocked_at timestamptz [not null]
+  expires_at timestamptz
+  ended_at timestamptz
+}
+
+Table permissions {
+  code varchar [pk]
+}
+
+
+// -----------------------------------------------------------------------------
+// Organization / IAM
+// -----------------------------------------------------------------------------
+
+Table organizations {
+  party_id bigint [pk, ref: > parties.id]
+  name varchar [not null]
+  tax_code varchar
+  phone varchar
+  email varchar
+  website varchar
+  description text
+  archived_at timestamptz
+}
+
+Table organization_invitations {
+  id bigint [pk]
+  organization_id bigint [not null, ref: > organizations.party_id]
+
+  invitee_person_id bigint [ref: > persons.party_id]
+  invitee_email varchar
+  invitee_phone varchar
+
+  intended_role_id bigint [not null, ref: > organization_roles.id]
+
+  invited_at timestamptz [not null]
+  expires_at timestamptz [not null]
+
+  // NULL while unresolved; terminal: ACCEPTED / DECLINED / REVOKED
+  outcome varchar
+  resolved_at timestamptz
+}
+
+Table organization_memberships {
+  id bigint [pk]
+  organization_id bigint [not null, ref: > organizations.party_id]
+  person_id bigint [not null, ref: > persons.party_id]
+
+  originating_invitation_id bigint [ref: > organization_invitations.id, unique]
+
+  joined_at timestamptz [not null]
+  ended_at timestamptz
+}
+
+Table organization_membership_blocks {
+  id bigint [pk]
+  membership_id bigint [not null, ref: > organization_memberships.id]
+  blocked_at timestamptz [not null]
+  ended_at timestamptz
+}
+
+Table organization_roles {
+  id bigint [pk]
+  organization_id bigint [not null, ref: > organizations.party_id]
+  name varchar [not null]
+}
+
+Table organization_role_permissions {
+  role_id bigint [not null, ref: > organization_roles.id]
+  permission_code varchar [not null, ref: > permissions.code]
+
+  indexes {
+    (role_id, permission_code) [pk]
+  }
+}
+
+Table organization_role_assignments {
+  id bigint [pk]
+  membership_id bigint [not null, ref: > organization_memberships.id]
+  role_id bigint [not null, ref: > organization_roles.id]
+  assigned_at timestamptz [not null]
+  ended_at timestamptz
+}
+
+Table organization_ownerships {
+  organization_id bigint [pk, ref: > organizations.party_id]
+  membership_id bigint [not null, unique, ref: > organization_memberships.id]
+}
+
+Table organization_branches {
+  id bigint [pk]
+  organization_id bigint [not null, ref: > organizations.party_id]
+  name varchar [not null]
+
+  // Current manager capacity; must be a current Membership of same Organization.
+  manager_membership_id bigint [ref: > organization_memberships.id]
+
+  // Terminal business retirement. Temporary disable is not currently modeled.
+  retired_at timestamptz
+}
+
+Table organization_branch_assignments {
+  branch_id bigint [not null, ref: > organization_branches.id]
+  membership_id bigint [not null, ref: > organization_memberships.id]
+
+  indexes {
+    (branch_id, membership_id) [pk]
+  }
+}
+
+
+// -----------------------------------------------------------------------------
+// Group collaboration
+// -----------------------------------------------------------------------------
+
+Table groups {
+  id bigint [pk]
+  name varchar [not null]
+  description text
+  avatar_url text
+  disbanded_at timestamptz
+}
+
+Table group_memberships {
+  id bigint [pk]
+  group_id bigint [not null, ref: > groups.id]
+  person_id bigint [not null, ref: > persons.party_id]
+  joined_at timestamptz [not null]
+  ended_at timestamptz
+}
+
+Table group_leaderships {
+  group_id bigint [pk, ref: > groups.id]
+  membership_id bigint [not null, unique, ref: > group_memberships.id]
+}
+
+Table group_documents {
+  group_id bigint [not null, ref: > groups.id]
+  file_id bigint [not null]
+
+  indexes {
+    (group_id, file_id) [pk]
+  }
+}
+
+Table group_chat_links {
+  group_id bigint [pk, ref: > groups.id]
+  conversation_id bigint [not null, unique]
+}
+
+
+// -----------------------------------------------------------------------------
+// Deal
+// -----------------------------------------------------------------------------
+
+Table deals {
+  id bigint [pk]
+
+  // Exactly one context is present.
+  organization_id bigint [ref: > organizations.party_id]
+  group_id bigint [ref: > groups.id]
+
+  // Only valid for Organization Deal and must belong to organization_id.
+  branch_id bigint [ref: > organization_branches.id]
+
+  name varchar [not null]
+
+  // BROKERAGE / INVESTMENT / JOINT
+  kind varchar [not null]
+
+  target_profit_amount decimal
+  currency_code varchar
+
+  note text
+
+  from_date timestamptz
+  to_date timestamptz
+
+  allow_sharing boolean [not null]
+  participant_can_add_transaction boolean [not null]
+  only_lead_get_commission boolean [not null]
+  allow_manual_input boolean [not null]
+
+  // External logical reference to Payment-owned bank account.
+  bank_account_id bigint
+
+  // NULL while processing; COMPLETED / CANCELED terminal.
+  outcome varchar
+  ended_at timestamptz
+  cancel_reason text
+}
+
+Table deal_invitations {
+  id bigint [pk]
+  deal_id bigint [not null, ref: > deals.id]
+  invitee_person_id bigint [not null, ref: > persons.party_id]
+
+  // Independent offer terms. Ordinary participation needs no MEMBER flag.
+  as_customer boolean [not null]
+  as_partner boolean [not null]
+  as_administrator boolean [not null]
+
+  message text
+  invited_at timestamptz [not null]
+
+  // NULL while unresolved; ACCEPTED / DECLINED / REVOKED terminal.
+  outcome varchar
+  resolved_at timestamptz
+}
+
+Table deal_participations {
+  id bigint [pk]
+  deal_id bigint [not null, ref: > deals.id]
+  person_id bigint [not null, ref: > persons.party_id]
+
+  originating_invitation_id bigint [ref: > deal_invitations.id, unique]
+
+  joined_at timestamptz [not null]
+  ended_at timestamptz
+}
+
+Table deal_customer_relationships {
+  participation_id bigint [pk, ref: > deal_participations.id]
+}
+
+Table deal_partner_relationships {
+  participation_id bigint [pk, ref: > deal_participations.id]
+}
+
+Table deal_administrator_assignments {
+  participation_id bigint [pk, ref: > deal_participations.id]
+}
+
+Table deal_leaderships {
+  deal_id bigint [pk, ref: > deals.id]
+  participation_id bigint [not null, unique, ref: > deal_participations.id]
+}
+
+Table deal_participant_commissions {
+  participation_id bigint [pk, ref: > deal_participations.id]
+
+  // PERCENT / FIXED_AMOUNT
+  kind varchar [not null]
+  value decimal [not null]
+
+  // Required for FIXED_AMOUNT; absent for PERCENT.
+  currency_code varchar
+
+  note text
+}
+
+Table deal_investment_commitments {
+  participation_id bigint [pk, ref: > deal_participations.id]
+  amount decimal [not null]
+  currency_code varchar [not null]
+}
+
+Table deal_investments {
+  id bigint [pk]
+  participation_id bigint [not null, ref: > deal_participations.id]
+
+  amount decimal [not null]
+  currency_code varchar [not null]
+
+  transferred_at timestamptz
+  transfer_proof_file_id bigint
+  note text
+
+  // NULL while pending; APPROVED / REJECTED terminal.
+  outcome varchar
+  resolved_at timestamptz
+}
+
+Table deal_products {
+  deal_id bigint [not null, ref: > deals.id]
+
+  // External logical reference to BDSPro Product/Property authority.
+  product_id bigint [not null]
+
+  indexes {
+    (deal_id, product_id) [pk]
+  }
+}
+
+Table deal_milestones {
+  id bigint [pk]
+  deal_id bigint [not null, ref: > deals.id]
+
+  title varchar [not null]
+  description text
+  expected_at timestamptz
+  completed_at timestamptz
+  position int [not null]
+}
+
+Table deal_cost_types {
+  id bigint [pk]
+  code varchar [not null, unique]
+  name varchar [not null]
+}
+
+Table deal_costs {
+  id bigint [pk]
+  deal_id bigint [not null, ref: > deals.id]
+  cost_type_id bigint [not null, ref: > deal_cost_types.id]
+
+  amount decimal [not null]
+  currency_code varchar [not null]
+}
+
+Table deal_internal_notes {
+  id bigint [pk]
+  deal_id bigint [not null, ref: > deals.id]
+  author_person_id bigint [ref: > persons.party_id]
+  content text [not null]
+  created_at timestamptz [not null]
+}
+
+Table deal_documents {
+  deal_id bigint [not null, ref: > deals.id]
+  file_id bigint [not null]
+
+  indexes {
+    (deal_id, file_id) [pk]
+  }
+}
+
+Table deal_investment_documents {
+  investment_id bigint [not null, ref: > deal_investments.id]
+  file_id bigint [not null]
+
+  indexes {
+    (investment_id, file_id) [pk]
+  }
+}
+
+
+// -----------------------------------------------------------------------------
+// Catalog / subscription authority (user-service)
+// -----------------------------------------------------------------------------
+
+Table catalog_products {
+  id bigint [pk]
+  code varchar [not null, unique]
+  display_name varchar [not null]
+  status varchar [not null]
+}
+
+Table catalog_plans {
+  id bigint [pk]
+  product_id bigint [not null, ref: > catalog_products.id]
+  code varchar [not null]
+  tier_rank int
+  status varchar [not null]
+
+  indexes {
+    (product_id, code) [unique]
+  }
+}
+
+Table catalog_plan_versions {
+  id bigint [pk]
+  plan_id bigint [not null, ref: > catalog_plans.id]
+  version varchar [not null]
+  status varchar [not null]
+
+  indexes {
+    (plan_id, version) [unique]
+  }
+}
+
+Table catalog_plan_entitlements {
+  id bigint [pk]
+  plan_version_id bigint [not null, ref: > catalog_plan_versions.id]
+  code varchar [not null]
+
+  indexes {
+    (plan_version_id, code) [unique]
+  }
+}
+
+Table catalog_plan_operation_policies {
+  id bigint [pk]
+  plan_version_id bigint [not null, ref: > catalog_plan_versions.id]
+  operation_code varchar [not null]
+
+  indexes {
+    (plan_version_id, operation_code) [unique]
+  }
+}
+
+Table catalog_price_items {
+  id bigint [pk]
+  plan_version_id bigint [not null, ref: > catalog_plan_versions.id]
+  code varchar [not null]
+  amount_minor bigint [not null]
+  currency_code varchar [not null]
+
+  indexes {
+    (plan_version_id, code) [unique]
+  }
+}
+
+Table catalog_subscriptions {
+  id bigint [pk]
+
+  // Logical Party subject; replaces profile/organization type+id ambiguity.
+  party_id bigint [not null, ref: > parties.id]
+
+  product_id bigint [not null, ref: > catalog_products.id]
+  plan_version_id bigint [not null, ref: > catalog_plan_versions.id]
+
+  subscription_key varchar [not null, unique]
+  status varchar [not null]
+  starts_at timestamptz [not null]
+  ends_at timestamptz
+}
+
+Table catalog_subscription_events {
+  id bigint [pk]
+  subscription_id bigint [not null, ref: > catalog_subscriptions.id]
+  event_type varchar [not null]
+  occurred_at timestamptz [not null]
+  payload jsonb
+}
+
+
+// -----------------------------------------------------------------------------
+// Payment
+// -----------------------------------------------------------------------------
+
+Table banks {
+  id bigint [pk]
+  code varchar [not null, unique]
+  name varchar [not null]
+  logo_url text
+  retired_at timestamptz
+}
+
+Table bank_accounts {
+  id bigint [pk]
+
+  // Logical cross-service Party reference.
+  party_id bigint [not null, ref: > parties.id]
+
+  bank_id bigint [not null, ref: > banks.id]
+  account_number varchar [not null]
+  account_name varchar [not null]
+
+  closed_at timestamptz
+
+  indexes {
+    (bank_id, account_number) [unique]
+  }
+}
+
+Table wallets {
+  id bigint [pk]
+
+  // Current evidence supports personal wallets.
+  person_id bigint [not null, ref: > persons.party_id, unique]
+
+  balance_minor bigint [not null]
+  currency_code varchar [not null]
+  closed_at timestamptz
+}
+
+Table wallet_transactions {
+  id bigint [pk]
+  wallet_id bigint [not null, ref: > wallets.id]
+  transaction_code varchar [not null, unique]
+  kind varchar [not null]
+  amount_minor bigint [not null]
+  status varchar [not null]
+  external_reference varchar
+  created_at timestamptz [not null]
+}
+
+Table commerce_orders {
+  id bigint [pk]
+
+  // Logical cross-service Party billing subject.
+  party_id bigint [not null, ref: > parties.id]
+
+  product_code varchar [not null]
+  plan_code varchar [not null]
+  plan_version_id bigint [not null]
+
+  currency_code varchar [not null]
+  amount_minor bigint [not null]
+
+  command_key varchar [not null]
+  command_fingerprint varchar [not null]
+  reference varchar [not null, unique]
+
+  status varchar [not null]
+  expires_at timestamptz [not null]
+  funds_confirmed_at timestamptz
+
+  created_at timestamptz [not null]
+}
+
+Table commerce_payment_attempts {
+  id bigint [pk]
+  order_id bigint [not null, ref: > commerce_orders.id]
+
+  command_key varchar [not null]
+  command_fingerprint varchar [not null]
+
+  method varchar [not null]
+  provider varchar [not null]
+  provider_reference varchar [not null]
+
+  status varchar [not null]
+
+  created_at timestamptz [not null]
+
+  indexes {
+    (order_id, command_key) [unique]
+    (provider, provider_reference) [unique]
+  }
+}
+
+Table commerce_settlements {
+  id bigint [pk]
+  order_id bigint [ref: > commerce_orders.id]
+
+  provider varchar [not null]
+  provider_transaction_id varchar [not null]
+
+  reference varchar [not null]
+  currency_code varchar [not null]
+  amount_minor bigint [not null]
+
+  occurred_at timestamptz [not null]
+  evidence_hash varchar [not null]
+
+  status varchar [not null]
+
+  indexes {
+    (provider, provider_transaction_id) [unique]
+  }
+}
+
+Table commerce_fulfillments {
+  id bigint [pk]
+  order_id bigint [not null, unique, ref: > commerce_orders.id]
+
+  status varchar [not null]
+  attempt_count int [not null]
+  available_at timestamptz [not null]
+  lease_until timestamptz
+  completed_at timestamptz
+}
+
+Table commerce_command_effects {
+  id bigint [pk]
+  effect_type varchar [not null]
+  scope_id bigint [not null]
+  command_key varchar [not null]
+  actor_reference varchar [not null]
+  outcome varchar [not null]
+  created_at timestamptz [not null]
+
+  indexes {
+    (effect_type, scope_id, command_key) [unique]
+  }
+}
+
+Table commerce_outbox_events {
+  id bigint [pk]
+  event_id varchar [not null, unique]
+  event_type varchar [not null]
+  schema_version int [not null]
+  routing_key varchar [not null]
+  payload jsonb [not null]
+
+  status varchar [not null]
+  available_at timestamptz [not null]
+  published_at timestamptz
+  created_at timestamptz [not null]
+}
+
+
+// -----------------------------------------------------------------------------
+// Logical groups for dbdiagram.io
+// -----------------------------------------------------------------------------
+
+TableGroup identity {
+  parties
+  persons
+  profiles
+  accounts
+  account_password_credentials
+  account_federated_identities
+  account_passkeys
+  account_sessions
+  account_blocks
+  permissions
+}
+
+TableGroup organization_iam {
+  organizations
+  organization_invitations
+  organization_memberships
+  organization_membership_blocks
+  organization_roles
+  organization_role_permissions
+  organization_role_assignments
+  organization_ownerships
+  organization_branches
+  organization_branch_assignments
+}
+
+TableGroup collaboration {
+  groups
+  group_memberships
+  group_leaderships
+  group_documents
+  group_chat_links
+}
+
+TableGroup deal {
+  deals
+  deal_invitations
+  deal_participations
+  deal_customer_relationships
+  deal_partner_relationships
+  deal_administrator_assignments
+  deal_leaderships
+  deal_participant_commissions
+  deal_investment_commitments
+  deal_investments
+  deal_products
+  deal_milestones
+  deal_cost_types
+  deal_costs
+  deal_internal_notes
+  deal_documents
+  deal_investment_documents
+}
+
+TableGroup catalog {
+  catalog_products
+  catalog_plans
+  catalog_plan_versions
+  catalog_plan_entitlements
+  catalog_plan_operation_policies
+  catalog_price_items
+  catalog_subscriptions
+  catalog_subscription_events
+}
+
+TableGroup payment {
+  banks
+  bank_accounts
+  wallets
+  wallet_transactions
+  commerce_orders
+  commerce_payment_attempts
+  commerce_settlements
+  commerce_fulfillments
+  commerce_command_effects
+  commerce_outbox_events
+}
