@@ -19,10 +19,15 @@ type Runtime struct {
 	Redis        RedisRuntime
 	HTTP         HTTPRuntime
 	RequestStats RequestStatsRuntime
+	Seo          SeoRuntime
 }
 
 type HTTPRuntime struct {
 	AllowedOrigins []string
+}
+
+type SeoRuntime struct {
+	InternalSecretKey string
 }
 
 // RequestStatsRuntime configures local request audit/stats collection.
@@ -53,6 +58,9 @@ func LoadRuntime() (Runtime, error) {
 		return Runtime{}, err
 	}
 
+	// Listen addresses: YAML server.port / server.tcp_port are the default.
+	// HTTP_ADDRESS / GRPC_ADDRESS remain optional process overrides so one
+	// binary tree can run http (:8288) and grpc (:8211) side by side.
 	grpcAddress := strings.TrimSpace(os.Getenv("GRPC_ADDRESS"))
 	if grpcAddress == "" {
 		if Properties.Server.TCPPort <= 0 {
@@ -71,13 +79,10 @@ func LoadRuntime() (Runtime, error) {
 		return Runtime{}, err
 	}
 
-	redisAddress := firstNonEmpty(
-		os.Getenv("USER_REDIS_ADDRESS"),
-		os.Getenv("REDIS_ADDRESS"),
-		Properties.Redis.Host,
-	)
+	// Redis / JWT / DSN: owned exclusively by config/<profile>.yml.
+	redisAddress := strings.TrimSpace(Properties.Redis.Host)
 	if redisAddress == "" || strings.HasPrefix(redisAddress, "CHANGE_ME") {
-		return Runtime{}, errors.New("redis address is required")
+		return Runtime{}, errors.New("redis.host is required in the environment config YAML")
 	}
 
 	jwtKey := strings.TrimSpace(Properties.JWT.SecretKey)
@@ -98,7 +103,7 @@ func LoadRuntime() (Runtime, error) {
 		Database:    database,
 		Redis: RedisRuntime{
 			Address:  redisAddress,
-			Password: firstNonEmpty(os.Getenv("USER_REDIS_PASSWORD"), os.Getenv("REDIS_PASSWORD"), Properties.Redis.Password),
+			Password: strings.TrimSpace(Properties.Redis.Password),
 			DB:       Properties.Redis.DB,
 		},
 		HTTP: HTTPRuntime{
@@ -107,6 +112,9 @@ func LoadRuntime() (Runtime, error) {
 		RequestStats: RequestStatsRuntime{
 			SpecURLs:       append([]string(nil), Properties.RequestStats.SpecURLs...),
 			IgnorePrefixes: append([]string(nil), Properties.RequestStats.IgnorePrefixes...),
+		},
+		Seo: SeoRuntime{
+			InternalSecretKey: strings.TrimSpace(Properties.Seo.InternalSecretKey),
 		},
 	}, nil
 }

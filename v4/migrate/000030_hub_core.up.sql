@@ -1,6 +1,26 @@
 -- Hub domain tables for modules/hub (local v4 DSN).
--- Idempotent: CREATE IF NOT EXISTS. Indexes are non-unique so existing
--- db_v4 hub dumps with duplicate slug/code rows can still migrate cleanly.
+-- Idempotent: CREATE IF NOT EXISTS. Indexes are created only when the target
+-- column exists so a shared db_v4 that already owns TQD-shaped
+-- provinces/wards/province_v2 does not fail migrate-on-start.
+CREATE OR REPLACE FUNCTION _hub_create_index_if_column(
+    p_index_name text,
+    p_table_name text,
+    p_column_name text,
+    p_index_sql text
+) RETURNS void AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+          FROM information_schema.columns c
+         WHERE c.table_schema = current_schema()
+           AND c.table_name = p_table_name
+           AND c.column_name = p_column_name
+    ) THEN
+        EXECUTE p_index_sql;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS provinces (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -15,8 +35,14 @@ CREATE TABLE IF NOT EXISTS provinces (
     created_by BIGINT,
     updated_by BIGINT
 );
-CREATE INDEX IF NOT EXISTS idx_provinces_slug ON provinces (slug);
-CREATE INDEX IF NOT EXISTS idx_provinces_deleted_at ON provinces (deleted_at);
+SELECT _hub_create_index_if_column(
+    'idx_provinces_slug', 'provinces', 'slug',
+    'CREATE INDEX IF NOT EXISTS idx_provinces_slug ON provinces (slug)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_provinces_deleted_at', 'provinces', 'deleted_at',
+    'CREATE INDEX IF NOT EXISTS idx_provinces_deleted_at ON provinces (deleted_at)'
+);
 
 CREATE TABLE IF NOT EXISTS districts (
     id BIGSERIAL PRIMARY KEY,
@@ -32,8 +58,14 @@ CREATE TABLE IF NOT EXISTS districts (
     created_by BIGINT,
     updated_by BIGINT
 );
-CREATE INDEX IF NOT EXISTS idx_districts_province_id ON districts (province_id);
-CREATE INDEX IF NOT EXISTS idx_districts_deleted_at ON districts (deleted_at);
+SELECT _hub_create_index_if_column(
+    'idx_districts_province_id', 'districts', 'province_id',
+    'CREATE INDEX IF NOT EXISTS idx_districts_province_id ON districts (province_id)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_districts_deleted_at', 'districts', 'deleted_at',
+    'CREATE INDEX IF NOT EXISTS idx_districts_deleted_at ON districts (deleted_at)'
+);
 
 CREATE TABLE IF NOT EXISTS wards (
     id BIGSERIAL PRIMARY KEY,
@@ -49,8 +81,14 @@ CREATE TABLE IF NOT EXISTS wards (
     created_by BIGINT,
     updated_by BIGINT
 );
-CREATE INDEX IF NOT EXISTS idx_wards_district_id ON wards (district_id);
-CREATE INDEX IF NOT EXISTS idx_wards_deleted_at ON wards (deleted_at);
+SELECT _hub_create_index_if_column(
+    'idx_wards_district_id', 'wards', 'district_id',
+    'CREATE INDEX IF NOT EXISTS idx_wards_district_id ON wards (district_id)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_wards_deleted_at', 'wards', 'deleted_at',
+    'CREATE INDEX IF NOT EXISTS idx_wards_deleted_at ON wards (deleted_at)'
+);
 
 CREATE TABLE IF NOT EXISTS province_v2 (
     id BIGSERIAL PRIMARY KEY,
@@ -65,8 +103,14 @@ CREATE TABLE IF NOT EXISTS province_v2 (
     created_by BIGINT,
     updated_by BIGINT
 );
-CREATE INDEX IF NOT EXISTS idx_province_v2_code ON province_v2 (code);
-CREATE INDEX IF NOT EXISTS idx_province_v2_deleted_at ON province_v2 (deleted_at);
+SELECT _hub_create_index_if_column(
+    'idx_province_v2_code', 'province_v2', 'code',
+    'CREATE INDEX IF NOT EXISTS idx_province_v2_code ON province_v2 (code)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_province_v2_deleted_at', 'province_v2', 'deleted_at',
+    'CREATE INDEX IF NOT EXISTS idx_province_v2_deleted_at ON province_v2 (deleted_at)'
+);
 
 CREATE TABLE IF NOT EXISTS ward_v2 (
     id BIGSERIAL PRIMARY KEY,
@@ -83,10 +127,22 @@ CREATE TABLE IF NOT EXISTS ward_v2 (
     created_by BIGINT,
     updated_by BIGINT
 );
-CREATE INDEX IF NOT EXISTS idx_ward_v2_code ON ward_v2 (code);
-CREATE INDEX IF NOT EXISTS idx_ward_v2_province_code ON ward_v2 (province_code);
-CREATE INDEX IF NOT EXISTS idx_ward_v2_province_id ON ward_v2 (province_id);
-CREATE INDEX IF NOT EXISTS idx_ward_v2_deleted_at ON ward_v2 (deleted_at);
+SELECT _hub_create_index_if_column(
+    'idx_ward_v2_code', 'ward_v2', 'code',
+    'CREATE INDEX IF NOT EXISTS idx_ward_v2_code ON ward_v2 (code)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_ward_v2_province_code', 'ward_v2', 'province_code',
+    'CREATE INDEX IF NOT EXISTS idx_ward_v2_province_code ON ward_v2 (province_code)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_ward_v2_province_id', 'ward_v2', 'province_id',
+    'CREATE INDEX IF NOT EXISTS idx_ward_v2_province_id ON ward_v2 (province_id)'
+);
+SELECT _hub_create_index_if_column(
+    'idx_ward_v2_deleted_at', 'ward_v2', 'deleted_at',
+    'CREATE INDEX IF NOT EXISTS idx_ward_v2_deleted_at ON ward_v2 (deleted_at)'
+);
 
 CREATE TABLE IF NOT EXISTS tb_user_guide (
     id BIGSERIAL PRIMARY KEY,
@@ -173,3 +229,5 @@ CREATE TABLE IF NOT EXISTS user_guide_steps (
 );
 CREATE INDEX IF NOT EXISTS idx_user_guide_steps_user_guide_id ON user_guide_steps (user_guide_id);
 CREATE INDEX IF NOT EXISTS idx_user_guide_steps_deleted_at ON user_guide_steps (deleted_at);
+
+DROP FUNCTION IF EXISTS _hub_create_index_if_column(text, text, text, text);

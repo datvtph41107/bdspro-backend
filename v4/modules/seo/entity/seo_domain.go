@@ -59,10 +59,10 @@ const (
 	ScopeApp      = "app"
 	ScopeAdmin    = "admin"
 
-	SourceStatusManual          = "manual"
-	SourceStatusLinked          = "linked"
-	SourceStatusStale           = "stale"
-	SourceStatusMissing         = "missing"
+	SourceStatusManual           = "manual"
+	SourceStatusLinked           = "linked"
+	SourceStatusStale            = "stale"
+	SourceStatusMissing          = "missing"
 	SourceStatusPermissionDenied = "permission_denied"
 
 	RenderStatusNone      = "none"

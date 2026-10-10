@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS feedback_report_proofs;
+DROP TABLE IF EXISTS feedback_reports;
+DROP TABLE IF EXISTS feedback_report_reasons;
+DROP TABLE IF EXISTS feedback_rate_attachments;
+DROP TABLE IF EXISTS feedback_rates;
+DROP TABLE IF EXISTS feedback_registry;
+DROP TABLE IF EXISTS appointment_stats;
+DROP TABLE IF EXISTS appointment_reminders;
+DROP TABLE IF EXISTS tb_contact_tag_relation;
+DROP TABLE IF EXISTS tb_contact_tag;
+DROP TABLE IF EXISTS tb_contact_product;

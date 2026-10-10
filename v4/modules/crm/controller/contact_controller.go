@@ -25,26 +25,48 @@ func NewContactController(local services.ContactService, uc *services.ContactUse
 }
 
 func (c *ContactController) RegisterHTTP(mux *http.ServeMux) {
-	// Proto-aligned contact routes (id-first actions to avoid ServeMux conflicts).
+	// Paths follow shared/protobuf/schema/crm/contact.proto (frontend contract).
 	httpapi.GET(mux, "/v2/crm/contact/list/me", c.listMe)
+	httpapi.GET(mux, "/v2/crm/contact/list/user/{ownerId}", c.listUser)
 	httpapi.GET(mux, "/v2/crm/contact/list/{ownerOf}/{ownerId}", c.search)
-	httpapi.GET(mux, "/v2/crm/contact/{id}/products", c.products)
-	httpapi.GET(mux, "/v2/crm/contact/{id}/detail", c.detail)
+	httpapi.GET(mux, "/v2/crm/contact/detail/{id}/products", c.products)
+	httpapi.GET(mux, "/v2/crm/contact/detail/{id}", c.detail)
 	httpapi.POST(mux, "/v2/crm/contact", c.create)
-	httpapi.PUT(mux, "/v2/crm/contact/{id}/edit", c.update)
-	httpapi.PUT(mux, "/v2/crm/contact/{id}/note", c.note)
-	httpapi.PUT(mux, "/v2/crm/contact/{id}/products", c.updateProducts)
+	// PUT edit/{id}, note/{id} and {contactId}/products overlap (e.g. /edit/products),
+	// which ServeMux rejects, so a single pattern dispatches them.
+	mux.HandleFunc("PUT /v2/crm/contact/{first}/{second}", c.putDispatch(
+		httpapi.BindJSON(c.update),
+		httpapi.BindJSON(c.note),
+		httpapi.BindJSON(c.updateProducts),
+	))
 	httpapi.DELETE(mux, "/v2/crm/contact/{id}", c.delete)
 	httpapi.POST(mux, "/v2/crm/contact/sync", c.sync)
-	httpapi.GET(mux, "/v2/crm/contact/{id}/relation-ship", c.relationShip)
+	httpapi.GET(mux, "/v2/crm/contact/relation-ship/{id}", c.relationShip)
 	httpapi.GET(mux, "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}", c.checkPhone)
-	httpapi.GET(mux, "/v2/crm/contact/{id}/by-product", c.byProduct)
+	httpapi.GET(mux, "/v2/crm/contact/by-product/{id}", c.byProduct)
 	httpapi.GET(mux, "/v2/crm/contact/with-member", c.withMember)
 	httpapi.GET(mux, "/v2/crm/contact/friends", c.friends)
 	httpapi.GET(mux, "/v2/crm/contact/interested/product/{productId}", c.interested)
 	httpapi.POST(mux, "/v2/crm/contact/pin", c.pin)
-	// Phase-1 compatibility path
-	httpapi.GET(mux, "/v2/crm/contact/list/user/{ownerId}", c.listUser)
+}
+
+func (c *ContactController) putDispatch(edit, note, products http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		first, second := r.PathValue("first"), r.PathValue("second")
+		switch {
+		case first == "edit":
+			r.SetPathValue("id", second)
+			edit.ServeHTTP(w, r)
+		case first == "note":
+			r.SetPathValue("id", second)
+			note.ServeHTTP(w, r)
+		case second == "products":
+			r.SetPathValue("id", first)
+			products.ServeHTTP(w, r)
+		default:
+			httpapi.WriteError(w, http.StatusNotFound, "route not found")
+		}
+	}
 }
 
 func (c *ContactController) requireLocal() error {

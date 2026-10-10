@@ -207,10 +207,15 @@ func (h *handler) WithGroup(name string) slog.Handler {
 func newHandler(c Config, out io.Writer, directory string) *handler {
 	h := &handler{config: c}
 	if c.Console {
-		if c.Format == "text" {
-			h.console = slog.NewTextHandler(out, options(c))
-		} else {
-			h.console = slog.NewJSONHandler(out, options(c))
+		switch c.ConsoleFormat {
+		case "dev":
+			h.console = newDevConsoleHandler(out, options(c))
+		case "structured":
+			if c.Format == "text" {
+				h.console = slog.NewTextHandler(out, options(c))
+			} else {
+				h.console = slog.NewJSONHandler(out, options(c))
+			}
 		}
 	}
 	if c.Files {

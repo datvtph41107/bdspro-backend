@@ -227,6 +227,12 @@ func (r *stubDealRepo) Create(_ context.Context, deal *entity.Deal, members []en
 
 func (r *stubDealRepo) SoftDelete(context.Context, uint64) error { return nil }
 
+func (r *stubDealRepo) IsAcceptedMember(context.Context, uint64, uint64) (bool, error) {
+	return true, nil
+}
+
+func (r *stubDealRepo) UpdateDoneInvestment(context.Context, uint64, uint64) error { return nil }
+
 func TestLocalDealService_GetTimestamps_RequiresID(t *testing.T) {
 	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
 	_, err := svc.GetTimestamps(context.Background(), 0)

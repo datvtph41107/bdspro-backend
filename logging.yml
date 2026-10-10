@@ -5,6 +5,7 @@ defaults:
     level: info
     console: true
     format: text
+    console_format: dev
     add_source: true
     files: true
     root: .tmp/development/logs

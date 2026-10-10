@@ -83,7 +83,9 @@ func (r *locationPostgres) active(db *gorm.DB) *gorm.DB {
 }
 
 func provinceSelectSQL() string {
-	return `id, full_name, short_name, lat, lng, code,
+	return `id, name AS full_name,
+		COALESCE(NULLIF(btrim(short_name), ''), NULLIF(btrim(codename), ''), '') AS short_name,
+		lat, lng, code::text AS code,
 		ward_count, qh_order, zoom,
 		'' AS description,
 		COALESCE(official_name, '') AS official_name,
@@ -101,7 +103,9 @@ func provinceSelectSQL() string {
 }
 
 func wardSelectSQL() string {
-	return `id, full_name, short_name, lat, lng, code,
+	return `id, name AS full_name,
+		COALESCE(NULLIF(btrim(short_name), ''), NULLIF(btrim(codename), ''), NULLIF(btrim(short_codename), ''), '') AS short_name,
+		lat, lng, code::text AS code,
 		province_id, province_code,
 		'' AS description, COALESCE(summary, '') AS summary,
 		COALESCE(official_name, '') AS official_name,
@@ -124,7 +128,7 @@ func (r *locationPostgres) ListAllProvinces(ctx context.Context) ([]*entity.Prov
 	var provinces []*entity.Province
 	err := r.active(r.db.WithContext(ctx).Model(&entity.Province{})).
 		Select(provinceSelectSQL()).
-		Order("full_name").
+		Order("name").
 		Find(&provinces).Error
 	if err != nil {
 		return nil, fmt.Errorf("list provinces: %w", err)
@@ -147,7 +151,7 @@ func (r *locationPostgres) ListAllWards(ctx context.Context, page, pageSize int)
 	offset := (page - 1) * pageSize
 	err = r.active(r.db.WithContext(ctx).Model(&entity.Ward{})).
 		Select(wardSelectSQL()).
-		Order("full_name").
+		Order("name").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&wards).Error

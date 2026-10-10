@@ -10,7 +10,8 @@ type ContactSearchRequest struct {
 
 // ContactListUserRequest is GET /v2/crm/contact/list/user/{ownerId}.
 type ContactListUserRequest struct {
-	OwnerID   uint64 `path:"ownerId"`
+	// ownerId 0 means current user (legacy FE contract for list/me alias).
+	OwnerID   uint64 `path:"ownerId" pathAllowZero:"true"`
 	Page      uint32 `form:"page"`
 	Size      uint32 `form:"size"`
 	Text      string `form:"text"`

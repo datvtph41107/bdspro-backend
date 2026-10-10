@@ -32,7 +32,7 @@ type ContactDetailHTTPRequest struct {
 	Timestamp int64  `form:"timestamp"`
 }
 
-// ContactSaveHTTPRequest is POST /v2/crm/contact and PUT /v2/crm/contact/{id}/edit.
+// ContactSaveHTTPRequest is POST /v2/crm/contact and PUT /v2/crm/contact/edit/{id}.
 type ContactSaveHTTPRequest struct {
 	ID           uint64   `path:"id" json:"id"`
 	Phone        string   `json:"phone"`
@@ -55,7 +55,7 @@ type ContactSyncHTTPRequest struct {
 	OwnerType int32                    `json:"ownerType"`
 }
 
-// ContactNoteHTTPRequest is PUT /v2/crm/contact/{id}/note.
+// ContactNoteHTTPRequest is PUT /v2/crm/contact/note/{id}.
 type ContactNoteHTTPRequest struct {
 	ID   uint64 `path:"id" json:"id"`
 	Note string `json:"note"`
@@ -68,7 +68,7 @@ type ContactCheckPhoneHTTPRequest struct {
 	Phone   string `path:"phone"`
 }
 
-// ContactByProductHTTPRequest is GET /v2/crm/contact/{id}/by-product.
+// ContactByProductHTTPRequest is GET /v2/crm/contact/by-product/{id}.
 type ContactByProductHTTPRequest struct {
 	ID        uint64 `path:"id"`
 	Page      uint32 `form:"page"`
@@ -76,13 +76,13 @@ type ContactByProductHTTPRequest struct {
 	Timestamp int64  `form:"timestamp"`
 }
 
-// ContactUpdateProductsHTTPRequest is PUT /v2/crm/contact/{id}/products.
+// ContactUpdateProductsHTTPRequest is PUT /v2/crm/contact/{contactId}/products.
 type ContactUpdateProductsHTTPRequest struct {
 	ContactID  uint64   `path:"id" json:"contactId"`
 	ProductIDs []uint64 `json:"productIds"`
 }
 
-// ContactProductsHTTPRequest is GET /v2/crm/contact/{id}/products.
+// ContactProductsHTTPRequest is GET /v2/crm/contact/detail/{id}/products.
 type ContactProductsHTTPRequest struct {
 	ID   uint64 `path:"id"`
 	Page uint32 `form:"page"`

@@ -16,6 +16,21 @@ include ../shared/code/development/service.mk
 include ../shared/code/development/deps.mk
 include ../shared/code/development/migration.mk
 
+# Override service.mk with_env: YAML owns DSN/Redis/JWT/RPC. Root .env may still
+# supply process secrets (QHPRO_INTERNAL_METADATA_*), but must not clobber YAML.
+define with_env
+set -a; \
+if [ -f "$(ROOT_ENV_FILE)" ]; then . "$(abspath $(ROOT_ENV_FILE))"; fi; \
+if [ -f "$(ENV_FILE)" ]; then . "$(abspath $(ENV_FILE))"; fi; \
+set +a; \
+unset USER_REDIS_ADDRESS REDIS_ADDRESS REDIS_HOST REDIS_PASSWORD USER_REDIS_PASSWORD \
+  DATABASE_URL USER_DATABASE_URL DATABASE_DSN JWT_KEY_GENERATE \
+  RPC_USER_ADDRESS RPC_AUTH_ADDRESS RPC_ORGANIZATION_ADDRESS RPC_HUB_ADDRESS \
+  RPC_BDSPRO_ADDRESS RPC_NOTIFICATION_ADDRESS RPC_PAYMENT_ADDRESS RPC_CHAT_ADDRESS \
+  RPC_CRM_ADDRESS RPC_TQD_ADDRESS QHPRO_USER_OUTBOUND_MESSAGING_ENABLED 2>/dev/null || true; \
+QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG="$${QHPRO_LOG_CONFIG:-$(abspath ../logging.yml)}" $(1)
+endef
+
 buf:
 	$(MAKE) -C ../shared/code buf-user-service
 

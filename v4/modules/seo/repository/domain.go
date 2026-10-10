@@ -34,6 +34,7 @@ type SeoDomainRepository interface {
 	GetClickStats(ctx context.Context, seoDomainID uint64) (*dto.ClickStatsItem, error)
 	ListGenerationLogs(ctx context.Context, filter dto.GenerationLogFilter) ([]dto.GenerationLogItem, int64, error)
 	ListForSitemap(ctx context.Context, limit, offset int) ([]entity.SeoDomain, error)
+	ListPublishedStaticPaths(ctx context.Context, limit, offset int) ([]entity.SeoDomain, int64, error)
 	UpdateByIDs(ctx context.Context, ids []uint64, updates map[string]any) error
 	CountByRef(ctx context.Context, refType uint32, refID uint64) (int64, error)
 	CountRecentByRefType(ctx context.Context, days uint32) ([]dto.SeoRefTypeCountItem, error)
@@ -366,6 +367,24 @@ func (r *seoDomainPostgres) ListForSitemap(ctx context.Context, limit, offset in
 		Limit(limit).Offset(offset).
 		Find(&list).Error
 	return list, err
+}
+
+func (r *seoDomainPostgres) ListPublishedStaticPaths(ctx context.Context, limit, offset int) ([]entity.SeoDomain, int64, error) {
+	q := r.db.WithContext(ctx).Model(&entity.SeoDomain{}).
+		Where("deleted_at IS NULL AND published = TRUE AND is_index = TRUE AND scope = ? AND page_status = ?",
+			entity.ScopePublic, entity.PageStatusPublished)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var list []entity.SeoDomain
+	if err := q.Order("updated_at DESC").Limit(limit).Offset(offset).Find(&list).Error; err != nil {
+		return nil, 0, err
+	}
+	for i := range list {
+		list[i].NormalizeLifecycle()
+	}
+	return list, total, nil
 }
 
 func (r *seoDomainPostgres) UpdateByIDs(ctx context.Context, ids []uint64, updates map[string]any) error {

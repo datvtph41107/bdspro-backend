@@ -60,7 +60,9 @@ func provinceSelectSQL(alias string, includeDescription bool) string {
 	if alias != "" {
 		p = alias + "."
 	}
-	return fmt.Sprintf(`%[1]sid, %[1]sfull_name, %[1]sshort_name, %[1]slat, %[1]slng, %[1]scode,
+	return fmt.Sprintf(`%[1]sid, %[1]sname AS full_name,
+		COALESCE(NULLIF(btrim(%[1]sshort_name), ''), NULLIF(btrim(%[1]scodename), ''), '') AS short_name,
+		%[1]slat, %[1]slng, %[1]scode::text AS code,
 		%[1]sward_count, %[1]sqh_order, %[1]szoom,
 		%[2]s,
 		COALESCE(%[1]sofficial_name, '') AS official_name,
@@ -82,7 +84,9 @@ func wardSelectSQL(alias string, includeDescription bool) string {
 	if alias != "" {
 		p = alias + "."
 	}
-	return fmt.Sprintf(`%[1]sid, %[1]sfull_name, %[1]sshort_name, %[1]slat, %[1]slng, %[1]scode,
+	return fmt.Sprintf(`%[1]sid, %[1]sname AS full_name,
+		COALESCE(NULLIF(btrim(%[1]sshort_name), ''), NULLIF(btrim(%[1]scodename), ''), NULLIF(btrim(%[1]sshort_codename), ''), '') AS short_name,
+		%[1]slat, %[1]slng, %[1]scode::text AS code,
 		%[1]sprovince_id, %[1]sprovince_code,
 		%[2]s,
 		COALESCE(%[1]sofficial_name, '') AS official_name,
@@ -186,15 +190,15 @@ func (r *locationRepo) SearchProvinces(ctx context.Context, query string, limit 
 
 	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
 		Select(provinceSelectSQL("", false)).
-		Where("LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR code = ?",
+		Where("LOWER(name) LIKE ? OR LOWER(COALESCE(short_name, codename, '')) LIKE ? OR code::text = ?",
 			searchPattern, searchPattern, query).
 		Order(clause.Expr{
 			SQL: `CASE
-				WHEN LOWER(full_name) = LOWER(?) THEN 1
-				WHEN LOWER(short_name) = LOWER(?) THEN 2
-				WHEN LOWER(full_name) LIKE LOWER(?) THEN 3
-				WHEN LOWER(short_name) LIKE LOWER(?) THEN 4
-				ELSE 5 END, LENGTH(full_name)`,
+				WHEN LOWER(name) = LOWER(?) THEN 1
+				WHEN LOWER(COALESCE(short_name, codename, '')) = LOWER(?) THEN 2
+				WHEN LOWER(name) LIKE LOWER(?) THEN 3
+				WHEN LOWER(COALESCE(short_name, codename, '')) LIKE LOWER(?) THEN 4
+				ELSE 5 END, LENGTH(name)`,
 			Vars:               []interface{}{query, query, query + "%", query + "%"},
 			WithoutParentheses: true,
 		}).
@@ -208,7 +212,7 @@ func (r *locationRepo) ListAllProvinces(ctx context.Context) ([]*domain.Province
 	var provinces []*domain.Province
 	err := r.active(r.db.WithContext(ctx).Model(&domain.Province{})).
 		Select(provinceSelectSQL("", false)).
-		Order("full_name").
+		Order("name").
 		Find(&provinces).Error
 	return provinces, err
 }
@@ -230,7 +234,7 @@ func (r *locationRepo) AdminListProvinces(ctx context.Context, req *dto.AdminLis
 	query := r.active(r.db.WithContext(ctx).Model(&domain.Province{}))
 	if p := locationLikePattern(req.Search); p != "" {
 		query = query.Where(
-			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
+			"LOWER(name) LIKE ? OR LOWER(COALESCE(short_name, codename, '')) LIKE ? OR LOWER(code::text) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
 			p, p, p, p,
 		)
 	}
@@ -258,9 +262,9 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 			1 AS unit_type,
 			p.id AS province_id,
 			NULL::bigint AS ward_id,
-			p.full_name,
-			p.short_name,
-			p.code,
+			p.name AS full_name,
+			COALESCE(NULLIF(btrim(p.short_name), ''), NULLIF(btrim(p.codename), ''), '') AS short_name,
+			p.code::text AS code,
 			COALESCE(p.official_name, '') AS official_name,
 			p.created_at,
 			p.updated_at
@@ -272,9 +276,9 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 			2 AS unit_type,
 			NULL::bigint AS province_id,
 			w.id AS ward_id,
-			w.full_name,
-			w.short_name,
-			w.code,
+			w.name AS full_name,
+			COALESCE(NULLIF(btrim(w.short_name), ''), NULLIF(btrim(w.codename), ''), NULLIF(btrim(w.short_codename), ''), '') AS short_name,
+			w.code::text AS code,
 			COALESCE(w.official_name, '') AS official_name,
 			w.created_at,
 			w.updated_at
@@ -310,17 +314,17 @@ func (r *locationRepo) ListAdministrativeUnitRefs(ctx context.Context, req *dto.
 	if p := locationLikePattern(req.Search); p != "" {
 		provinceSQL += `
 			AND (
-				LOWER(p.full_name) LIKE ?
-				OR LOWER(p.short_name) LIKE ?
-				OR LOWER(p.code) LIKE ?
+				LOWER(p.name) LIKE ?
+				OR LOWER(COALESCE(p.short_name, p.codename, '')) LIKE ?
+				OR LOWER(p.code::text) LIKE ?
 				OR LOWER(COALESCE(p.official_name, '')) LIKE ?
 			)
 		`
 		wardSQL += `
 			AND (
-				LOWER(w.full_name) LIKE ?
-				OR LOWER(w.short_name) LIKE ?
-				OR LOWER(w.code) LIKE ?
+				LOWER(w.name) LIKE ?
+				OR LOWER(COALESCE(w.short_name, w.codename, w.short_codename, '')) LIKE ?
+				OR LOWER(w.code::text) LIKE ?
 				OR LOWER(COALESCE(w.official_name, '')) LIKE ?
 			)
 		`
@@ -535,7 +539,7 @@ func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID
 
 	db := r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
 		Select(wardSelectSQL("", false)).
-		Where("LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ?",
+		Where("LOWER(name) LIKE ? OR LOWER(COALESCE(short_name, codename, short_codename, '')) LIKE ?",
 			searchPattern, searchPattern)
 
 	if provinceID != 0 { // Changed from "" to 0
@@ -544,11 +548,11 @@ func (r *locationRepo) SearchWards(ctx context.Context, query string, provinceID
 
 	err := db.Order(clause.Expr{
 		SQL: `CASE
-				WHEN LOWER(full_name) = LOWER(?) THEN 1
-				WHEN LOWER(short_name) = LOWER(?) THEN 2
-				WHEN LOWER(full_name) LIKE LOWER(?) THEN 3
-				WHEN LOWER(short_name) LIKE LOWER(?) THEN 4
-				ELSE 5 END, LENGTH(full_name)`,
+				WHEN LOWER(name) = LOWER(?) THEN 1
+				WHEN LOWER(COALESCE(short_name, codename, short_codename, '')) = LOWER(?) THEN 2
+				WHEN LOWER(name) LIKE LOWER(?) THEN 3
+				WHEN LOWER(COALESCE(short_name, codename, short_codename, '')) LIKE LOWER(?) THEN 4
+				ELSE 5 END, LENGTH(name)`,
 		Vars:               []interface{}{query, query, query + "%", query + "%"},
 		WithoutParentheses: true,
 	}).
@@ -575,7 +579,7 @@ func (r *locationRepo) ListWardsByProvince(ctx context.Context, provinceID uint6
 	err = r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
 		Select(wardSelectSQL("", false)).
 		Where("province_id = ?", provinceID).
-		Order("full_name").
+		Order("name").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&wards).Error
@@ -595,7 +599,7 @@ func (r *locationRepo) ListAllWards(ctx context.Context, page, pageSize int) ([]
 	offset := (page - 1) * pageSize
 	err = r.active(r.db.WithContext(ctx).Model(&domain.Ward{})).
 		Select(wardSelectSQL("", false)).
-		Order("full_name").
+		Order("name").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&wards).Error
@@ -613,7 +617,7 @@ func (r *locationRepo) AdminListWards(ctx context.Context, req *dto.AdminListWar
 	}
 	if p := locationLikePattern(req.Search); p != "" {
 		query = query.Where(
-			"LOWER(full_name) LIKE ? OR LOWER(short_name) LIKE ? OR LOWER(code) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
+			"LOWER(name) LIKE ? OR LOWER(COALESCE(short_name, codename, short_codename, '')) LIKE ? OR LOWER(code::text) LIKE ? OR LOWER(COALESCE(official_name, '')) LIKE ?",
 			p, p, p, p,
 		)
 	}
@@ -818,7 +822,7 @@ func adminLocationOrder(sort, fallback string) string {
 
 	switch strings.ToLower(field) {
 	case "fullname", "full_name":
-		return "full_name " + dir
+		return "name " + dir
 	case "shortname", "short_name":
 		return "short_name " + dir
 	case "code":
@@ -847,7 +851,7 @@ func adminAdministrativeUnitOrder(sort, fallback string) string {
 
 	switch strings.ToLower(field) {
 	case "fullname", "full_name":
-		return "full_name " + dir
+		return "name " + dir
 	case "shortname", "short_name":
 		return "short_name " + dir
 	case "code":
@@ -1190,7 +1194,7 @@ func (r *locationRepo) recalcProvinceWardCount(ctx context.Context, provinceID u
 
 func adminProvinceUpdates(p *domain.Province) map[string]interface{} {
 	return map[string]interface{}{
-		"full_name":               p.FullName,
+		"name":                    p.FullName,
 		"short_name":              p.ShortName,
 		"lat":                     p.Lat,
 		"lng":                     p.Lng,
@@ -1213,7 +1217,7 @@ func adminProvinceUpdates(p *domain.Province) map[string]interface{} {
 
 func adminWardUpdates(w *domain.Ward) map[string]interface{} {
 	return map[string]interface{}{
-		"full_name":               w.FullName,
+		"name":                    w.FullName,
 		"short_name":              w.ShortName,
 		"lat":                     w.Lat,
 		"lng":                     w.Lng,
@@ -1286,7 +1290,7 @@ func (r *locationRepo) GetWardNeighbors(ctx context.Context, wardID uint64) ([]*
 		)
 		WHERE wn.deleted_at IS NULL
 		  AND w.deleted_at IS NULL
-		ORDER BY w.full_name
+		ORDER BY w.name
 	`
 	if err := r.db.WithContext(ctx).Raw(query, wardID, wardID).Scan(&wards).Error; err != nil {
 		return nil, fmt.Errorf("query ward neighbors: %w", err)

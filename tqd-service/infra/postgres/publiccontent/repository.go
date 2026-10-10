@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"tqd/internal/domain/publiccontent/model"
+	domain "tqd/internal/domain/publiccontent/model"
 	"tqd/internal/enums"
 
 	"gorm.io/gorm"

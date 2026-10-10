@@ -29,10 +29,10 @@ database:
   max_open_conns: 50
   max_idle_conns: 10
   conn_max_lifetime: 5m
-  # TQD-owned PostGIS DB (province_v2 / ward_v2). Distinct from hub province_v2 on the v4 DSN.
+  # Empty tqd/crm dsn → modules reuse database.dsn (shared-DB develop/local).
+  # Production sets distinct DSNs in the environment overlay.
   tqd:
     dsn: ""
-  # CRM-owned contact DB (tb_contact / friend / …). Distinct from thinner v4 stub tb_contact.
   crm:
     dsn: ""
 
@@ -40,11 +40,12 @@ service:
   name: "user service"
   feature: "Enabled only for Service User"
 
-redis:
-  host: localhost:6379
-  # host: localhost:6379
-  pass: ""
-  db: 0
+config-app:
+  qhpro:
+    domain_api: "https://api.bdspro.com"
+    domain_file: "https://data.bdspro.com"
+    domain_pmtile: "https://data-map.bdspro.com"
+    domain_style: "https://map.qhpro.vn"
 
 oauth:
   google:
@@ -116,10 +117,12 @@ grpc:
     host: :8208
 
 admin:
+  bootstrap_confirm: ""
   username: admin
   password: ""
   email: admin@example.com
   full_name: Administrator
+  phone: ""
 
 cskh:
   # Danh sách profile ID của đội chăm sóc khách hàng BDSPro
@@ -147,3 +150,7 @@ request_stats:
     - /v2/crm/sitemap.xml
   # ignore_prefixes:
   #   - /v2/custom/admin/dashboard
+
+seo:
+  # Shared key for /v2/internal/seo/* (header X-Seo-Secret-Key). Empty rejects every call.
+  internal_secret_key: ""

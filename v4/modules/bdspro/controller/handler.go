@@ -10,6 +10,10 @@ import (
 type Handler struct {
 	sync            *SyncController
 	deal            *DealController
+	dealCost        *DealCostController
+	dealContract    *DealContractController
+	investment      *InvestmentController
+	costType        *CostTypeController
 	product         *ProductController
 	property        *PropertyController
 	public          *PublicController
@@ -21,6 +25,10 @@ type Handler struct {
 func NewHandler(
 	syncSvc services.SyncService,
 	dealSvc services.DealService,
+	dealCostSvc services.DealCostService,
+	contractDealSvc services.ContractDealService,
+	investmentSvc services.InvestmentService,
+	costTypeSvc services.CostTypeService,
 	productSvc services.ProductService,
 	propertySvc services.PropertyService,
 	publicSvc services.PublicService,
@@ -31,6 +39,10 @@ func NewHandler(
 	return &Handler{
 		sync:            NewSyncController(syncSvc),
 		deal:            NewDealController(dealSvc),
+		dealCost:        NewDealCostController(dealCostSvc),
+		dealContract:    NewDealContractController(dealSvc, contractDealSvc),
+		investment:      NewInvestmentController(investmentSvc),
+		costType:        NewCostTypeController(costTypeSvc),
 		product:         NewProductController(productSvc, dealSvc),
 		property:        NewPropertyController(propertySvc),
 		public:          NewPublicController(publicSvc),
@@ -44,6 +56,10 @@ func NewHandler(
 func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.sync.RegisterHTTP(mux)
 	h.deal.RegisterHTTP(mux)
+	h.dealCost.RegisterHTTP(mux)
+	h.dealContract.RegisterHTTP(mux)
+	h.investment.RegisterHTTP(mux)
+	h.costType.RegisterHTTP(mux)
 	h.product.RegisterHTTP(mux)
 	h.property.RegisterHTTP(mux)
 	h.public.RegisterHTTP(mux)

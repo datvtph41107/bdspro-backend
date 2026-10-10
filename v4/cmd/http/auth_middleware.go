@@ -66,6 +66,10 @@ var publicHTTPRoutes = []string{
 	"/v2/seo/sitemap.xml",
 	// CRM guest (gateway Prefix("/v2/crm/contact/relation-ship"))
 	"/v2/crm/contact/relation-ship",
+	// Feedback guest (gateway Prefix rate/report). GET /v2/feedback/report-reason stays
+	// authenticated: this matcher is method-agnostic and POST on that path is admin-only.
+	"/v2/feedback/rate",
+	"/v2/feedback/report",
 	// TQD public / guest map catalogs (gateway Prefix("/v2/tqd/public") parity)
 	"/v2/tqd/public",
 	// Guest parcels + discovery + map-target + qh/public (gateway authroutes)
@@ -91,6 +95,8 @@ var publicHTTPRoutes = []string{
 	"/v2/tqd/client/planning-documents",
 	"/v2/tqd/client/administrative-units",
 	"/v2/tqd/client/nearby-areas",
+	// Guest POI category icons (gateway PrefixMethod GET parity)
+	"/v2/tqd/poi/categories/icons",
 	// User public (gateway authroutes parity)
 	"/v2/user/profile/session",
 	"/v2.1/user/profile/session",
@@ -109,6 +115,9 @@ var publicHTTPRoutes = []string{
 	"/v2/user/professions",
 	"/v2/pub/user/profile/tags",
 	"/v2/user/commercial/plans",
+	// OAuth login/callback only; /v2/auth/oauth/connected-accounts needs a token.
+	"/v2/auth/oauth/:provider/login",
+	"/v2/auth/oauth/:provider/callback",
 }
 
 // bridgeTrustedHTTPIdentity copies JWT Actor onto legacy ProfileIDKey and binds

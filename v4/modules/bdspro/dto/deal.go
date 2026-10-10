@@ -73,9 +73,9 @@ type DealSummaryRow struct {
 	AmountCost      float64 `gorm:"column:amount_cost"`
 }
 
-// DealStatisticsRequest is GET /v4/transaction/contract/deal/{id}/statistic.
+// DealStatisticsRequest is GET .../contract/deal/{id}/statistic(s).
 type DealStatisticsRequest struct {
-	DealID    uint64 `path:"id"`
+	DealID    uint64 `path:"id|dealId"`
 	Payment   bool   `form:"payment"`
 	Cost      bool   `form:"cost"`
 	Timestamp int64  `form:"timestamp"`

@@ -26,12 +26,12 @@ server:
   tcp_port: 8211
 
 database:
+  # Develop: user + crm dùng db_v4; TQD (parcels, quota, migrations) ở db_tqd.
   dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
-  # Planning/geo tables live on db_tqd (same as tqd-service develop). db_v4 is incomplete for qh_planning_*.
   tqd:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
+    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
   crm:
-    dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_v4 port=5433 sslmode=disable
+    dsn: "" # empty → reuse database.dsn
 
 logging:
   level:
@@ -47,6 +47,13 @@ redis:
   host: redis:6379
   # host: localhost:6379
   pass: protected_redis_secure_password
+
+config-app:
+  qhpro:
+    domain_api: "https://api.bdspro.com"
+    domain_file: "https://data.bdspro.com"
+    domain_pmtile: "https://data-map.bdspro.com"
+    domain_style: "https://map.qhpro.vn"
 
 oauth:
   google:
@@ -116,12 +123,64 @@ grpc:
     host: :8208
 
 admin:
+  # Leave bootstrap_confirm empty until an operator intentionally bootstraps.
+  bootstrap_confirm: ""
   username: admin
   password: admin123
   email: admin@example.com
   full_name: Administrator
+  phone: ""
 
 cskh:
   # Danh sách profile ID của đội chăm sóc khách hàng BDSPro
   # Những user này sẽ được thêm vào nhóm chat "Hỗ trợ khách hàng" khi user mới đăng ký
   team_ids: [] # Ví dụ: [1, 2, 3] - cần cập nhật với ID thực tế của đội CSKH
+
+seo:
+  internal_secret_key: "local-seo-secret"
+
+tqd:
+  layer:
+    # Base URL configuration
+    base_url: "ciproto://data-map.bdspro.com"
+
+    # Default style templates
+    default_styles:
+      vector:
+        - id: "{sourceCode}_fill"
+          type: "fill"
+          maxzoom: 22
+          paint:
+            fill-color: ["get", "color"]
+            fill-opacity: 0.8
+          source: "{sourceCode}"
+          source-layer: "{sourceCode}"
+        - id: "{sourceCode}_outline"
+          type: "line"
+          minzoom: 16
+          paint:
+            line-color: ["get", "color"]
+            line-width: 1
+          source: "{sourceCode}"
+          source-layer: "{sourceCode}"
+        - id: "{sourceCode}_label"
+          type: "symbol"
+          minzoom: 16
+          layout:
+            text-field: ["get", "name"]
+            text-size: 12
+            text-allow-overlap: false
+            text-padding: 12
+          paint:
+            text-color: "#ff0000"
+            text-halo-color: "#ffffff"
+            text-halo-width: 2
+          source: "{sourceCode}"
+          source-layer: "{sourceCode}"
+
+      raster:
+        - id: "{sourceCode}"
+          type: "raster"
+          paint:
+            raster-opacity: 1.0
+          source: "{sourceCode}"

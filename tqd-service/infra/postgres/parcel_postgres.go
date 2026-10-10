@@ -416,11 +416,20 @@ func (p *ParcelPostgres) CreateBatch(ctx context.Context, parcels []qh_domain.Pa
 			var args []interface{}
 
 			for _, parcel := range parcels[i:end] {
-				values = append(values, `(ST_SetSRID(ST_GeomFromGeoJSON(?),4326), ?, ?, ?, ?)`)
-				args = append(args, parcel.Geometry.Raw, parcel.Lat, parcel.Lng, parcel.RefID, parcel.RefType)
+				values = append(values, `(
+					SELECT s.geometry, s.lat, s.lon, ?, ?,
+					       s.centroid_geom, s.bbox_min_lon, s.bbox_min_lat, s.bbox_max_lon, s.bbox_max_lat,
+					       s.geometry_type_label, s.area_geography_sqm
+					FROM parcel_spatial_from_geojson(?) s
+				)`)
+				args = append(args, parcel.RefID, parcel.RefType, parcel.Geometry.Raw)
 			}
 
-			query := `INSERT INTO parcels (geometry, lat, lon, ref_id, ref_type) VALUES ` + strings.Join(values, ",")
+			query := `INSERT INTO parcels (
+				geometry, lat, lon, ref_id, ref_type,
+				centroid_geom, bbox_min_lon, bbox_min_lat, bbox_max_lon, bbox_max_lat,
+				geometry_type_label, area_geography_sqm
+			) VALUES ` + strings.Join(values, ",")
 			if err := tx.Exec(query, args...).Error; err != nil {
 				return err
 			}

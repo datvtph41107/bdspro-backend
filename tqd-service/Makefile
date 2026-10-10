@@ -28,10 +28,19 @@ docker-build:
 
 acceptance: check
 
+# Backfill parcel spatial cache after 000051 (batched; safe to interrupt and rerun).
+backfill-parcel-spatial:
+	@$(call with_env,while true; do \
+	  n=$$(psql "$(MIGRATION_DATABASE)" -Atq -c "SELECT parcels_backfill_spatial_read_cache(500);"); \
+	  echo "parcel spatial cache: $$n rows"; \
+	  test "$$n" = "0" && break; \
+	done)
+
 help:
 	@printf '%s\n' \
 	  'fmt vet test test-race build server dev check' \
 	  'deps-up deps-down migrateup migratedown1 migrate-version new_migration' \
+	  'backfill-parcel-spatial' \
 	  'buf wire generate pmtiles docker-build clean'
 
-.PHONY: help buf wire generate pmtiles run-grpc run-pmtiles docker-build acceptance
+.PHONY: help buf wire generate pmtiles run-grpc run-pmtiles docker-build acceptance backfill-parcel-spatial

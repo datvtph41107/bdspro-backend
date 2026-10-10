@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -38,85 +37,87 @@ func NewOAuthRouter(
 	}
 }
 
-func OAuthRoutes(mux *http.ServeMux, router *OAuthHandler) {
-	mux.HandleFunc("GET /user/oauth/{provider}/login", router.RedirectToLogin)
-	mux.HandleFunc("GET /user/oauth/{provider}/callback", router.OauthCallback)
+// RegisterHTTP mounts the OAuthService HTTP contract (shared/protobuf/schema/auth/oauth.proto).
+//
+//	GET /v2/auth/oauth/{provider}/login
+//	GET /v2/auth/oauth/{provider}/callback
+//	GET /v2/auth/oauth/connected-accounts
+func (h *OAuthHandler) RegisterHTTP(mux *http.ServeMux) {
+	httpapi.GET(mux, "/v2/auth/oauth/connected-accounts", h.connectedAccountsHTTP)
+	httpapi.GET(mux, "/v2/auth/oauth/{provider}/login", h.loginURLHTTP)
+	httpapi.GET(mux, "/v2/auth/oauth/{provider}/callback", h.callbackHTTP)
 }
 
-// OAuthRoutes thiết lập các route liên quan đến OAuth.
-// @Summary OAuth Login
-// @Description Chuyển hướng người dùng đến trang đăng nhập của provider (Google, Facebook, Zalo, v.v.).
-// @Tags OAuth
-// @Accept json
-// @Produce json
-// @Param provider path string true "Tên của provider (google, facebook, zalo, ...)"
-// @Success 302 "Chuyển hướng đến trang đăng nhập của provider"
-// @Failure 400 {object} map[string]interface{} "Lỗi khi provider không hợp lệ"
-// @Router /oauth/{provider}/login [get]
-func (route *OAuthHandler) RedirectToLogin(w http.ResponseWriter, r *http.Request) {
-	provider := r.PathValue("provider")
-	var url string
-
-	switch provider {
-	case "zalo":
-		url = route.ZaloAuthService.GetUrlLogin()
-	case "google":
-		url = route.GoogleAuthService.GetUrlLogin()
-	case "facebook":
-		url = route.FacebookAuthService.GetUrlLogin()
-	default:
-		writeOAuthJSON(w, http.StatusBadRequest, map[string]string{"error": "Vui lòng chọn provider hợp lệ"})
-		return
-	}
-
-	writeOAuthJSON(w, http.StatusOK, map[string]string{"url": url})
+type oauthLoginHTTPRequest struct {
+	Provider string `path:"provider"`
 }
 
-// @Summary OAuth Callback
-// @Description Nhận callback từ provider sau khi người dùng đăng nhập và xử lý xác thực.
-// @Tags OAuth
-// @Accept json
-// @Produce json
-// @Param provider path string true "Tên của provider (google, facebook, zalo, ...)"
-// @Param code query string true "Mã xác thực từ provider"
-// @Param state query string false "Chuỗi state để bảo vệ chống tấn công CSRF"
-// @Success 200 {object} map[string]interface{} "Thông tin người dùng từ provider"
-// @Failure 400 {object} map[string]interface{} "Lỗi khi xử lý callback"
-// @Router /oauth/{provider}/callback [get]
-func (route *OAuthHandler) OauthCallback(w http.ResponseWriter, r *http.Request) {
-	provider := r.PathValue("provider")
-	q := r.URL.Query()
-	code := q.Get("code")
-	state := q.Get("state")
-	platform := q.Get("platform")
-	ctx := r.Context()
+type oauthCallbackHTTPRequest struct {
+	Provider    string `path:"provider"`
+	Code        string `form:"code"`
+	State       string `form:"state"`
+	Platform    string `form:"platform"`
+	Version     string `form:"version"`
+	OS          string `form:"os"`
+	DeviceName  string `form:"deviceName"`
+	RedirectURI string `form:"redirectUri"`
+}
 
-	var result *dto.AuthLoginResponse
-	var err error
+type oauthCallbackHTTPResponse struct {
+	AuthID       uint64 `json:"authId"`
+	ProfileID    uint64 `json:"profileId"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	FullName     string `json:"fullName,omitempty"`
+	Provider     string `json:"provider"`
+	ReferralCode string `json:"referralCode,omitempty"`
+}
 
-	switch provider {
-	case "zalo":
-		result, err = route.ZaloAuthService.HandleCallback(ctx, code, state)
-	case "google":
-		result, err = route.GoogleAuthService.HandleCallback(ctx, code, state)
-	case "facebook":
-		result, err = route.FacebookAuthService.HandleCallback(ctx, code, platform, state)
-	default:
-		writeOAuthJSON(w, http.StatusBadRequest, map[string]string{"error": "Provider không hợp lệ"})
-		return
-	}
-
+func (h *OAuthHandler) loginURLHTTP(ctx context.Context, req oauthLoginHTTPRequest) (*httpapi.Result, error) {
+	resp, err := h.GetLoginURL(ctx, &authpb.GetLoginURLRequest{Provider: req.Provider})
 	if err != nil {
-		httpapi.WriteServiceError(w, err)
-		return
+		return nil, err
 	}
-	httpapi.WriteOK(w, result)
+	return httpapi.OK(dto.GetLoginURLResponse{URL: resp.GetUrl(), State: resp.GetState()}), nil
 }
 
-func writeOAuthJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+func (h *OAuthHandler) callbackHTTP(ctx context.Context, req oauthCallbackHTTPRequest) (*httpapi.Result, error) {
+	if strings.TrimSpace(req.Code) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "code là bắt buộc")
+	}
+	resp, err := h.HandleCallback(ctx, &authpb.HandleCallbackRequest{
+		Provider:    req.Provider,
+		Code:        req.Code,
+		State:       req.State,
+		Platform:    req.Platform,
+		Version:     req.Version,
+		Os:          req.OS,
+		DeviceName:  req.DeviceName,
+		RedirectUri: req.RedirectURI,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(oauthCallbackHTTPResponse{
+		AuthID:       resp.GetAuthId(),
+		ProfileID:    resp.GetProfileId(),
+		AccessToken:  resp.GetAccessToken(),
+		RefreshToken: resp.GetRefreshToken(),
+		FullName:     resp.GetFullName(),
+		Provider:     resp.GetProvider(),
+		ReferralCode: resp.GetReferralCode(),
+	}), nil
+}
+
+func (h *OAuthHandler) connectedAccountsHTTP(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+	accounts, err := h.OAuthUsecase.GetConnectedAccounts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if accounts == nil {
+		accounts = []*dto.ConnectedAccountDTO{}
+	}
+	return httpapi.OK(accounts), nil
 }
 
 // GetLoginURL - gRPC method để lấy URL đăng nhập OAuth

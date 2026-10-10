@@ -9,14 +9,17 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	tqdconfig "userv4/modules/tqd/config"
 )
 
-// LoadProperties nạp config theo lớp:
+// LoadProperties nạp config theo lớp (YAML là nguồn duy nhất cho topology/secrets app):
 //  1. config/runtime.yml (base: CORS, ports, defaults)
-//  2. config/<ENV>.yml (môi trường: DSN, secrets) — merge đè lên base
+//  2. config/<ENV>.yml (môi trường: DSN, Redis, JWT, RPC, …) — merge đè lên base
 //  3. QHPRO_CONFIG_FILE / CONFIG_FILE (nếu có) — merge cuối cùng
 //
-// DSN/topology DB lấy từ YAML, không bị .env đè qua AutomaticEnv cho database.dsn.
+// Không BindEnv / AutomaticEnv cho redis, database, jwt, rpc, oauth, …
+// Process env chỉ chọn profile (QHPRO_ENVIRONMENT / ENV_RUNTIME) hoặc đường dẫn
+// operator overlay — không đè giá trị trong YAML.
 func LoadProperties() error {
 	selection, err := configloader.ResolveRuntimeSelection()
 	if err != nil {
@@ -44,42 +47,18 @@ func LoadProperties() error {
 		}
 	}
 
-	for _, binding := range []struct {
-		key  string
-		envs []string
-	}{
-		{key: "redis.host", envs: []string{"USER_REDIS_ADDRESS", "REDIS_ADDRESS", "REDIS_HOST"}},
-		{key: "redis.pass", envs: []string{"USER_REDIS_PASSWORD", "REDIS_PASSWORD"}},
-		{key: "redis.db", envs: []string{"USER_REDIS_DB", "REDIS_DB"}},
-		{key: "jwt.key-generate", envs: []string{"JWT_KEY_GENERATE"}},
-		{key: "outbound_messaging.enabled", envs: []string{"QHPRO_USER_OUTBOUND_MESSAGING_ENABLED"}},
-		{key: "rpc.user.address", envs: []string{"RPC_USER_ADDRESS"}},
-		{key: "rpc.auth.address", envs: []string{"RPC_AUTH_ADDRESS"}},
-		{key: "rpc.organization.address", envs: []string{"RPC_ORGANIZATION_ADDRESS"}},
-		{key: "rpc.hub.address", envs: []string{"RPC_HUB_ADDRESS"}},
-		{key: "rpc.bdspro.address", envs: []string{"RPC_BDSPRO_ADDRESS"}},
-		{key: "rpc.notification.address", envs: []string{"RPC_NOTIFICATION_ADDRESS"}},
-		{key: "rpc.payment.address", envs: []string{"RPC_PAYMENT_ADDRESS"}},
-		{key: "rpc.chat.address", envs: []string{"RPC_CHAT_ADDRESS"}},
-		{key: "rpc.crm.address", envs: []string{"RPC_CRM_ADDRESS"}},
-		{key: "rpc.tqd.address", envs: []string{"RPC_TQD_ADDRESS"}},
-	} {
-		args := append([]string{binding.key}, binding.envs...)
-		if err := viper.BindEnv(args...); err != nil {
-			return fmt.Errorf("bind %s env: %w", binding.key, err)
-		}
-	}
 	if err := viper.Unmarshal(&Properties); err != nil {
 		return fmt.Errorf("parse user properties: %w", err)
 	}
+	tqdconfig.InitLayerResolver(&Properties.TQD.Layer)
 	return nil
 }
 
 func configureViper() {
 	viper.Reset()
 	viper.SetConfigType("yaml")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
-	viper.AutomaticEnv()
+	// No AutomaticEnv / BindEnv: workstation often sources root/.env and
+	// legacy user-service/.env which would otherwise clobber local.yml.
 }
 
 func readConfigFile(path string, merge bool) error {

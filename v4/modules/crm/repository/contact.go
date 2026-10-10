@@ -47,7 +47,6 @@ func (r *contactPostgres) SearchByOwner(
 	profileID := _utils.GetProfileIdWithContext(ctx)
 
 	baseQuery := r.db.WithContext(ctx).Table("tb_contact tb").
-		Joins("LEFT JOIN origin_profile op ON tb.origin_profile_id = op.origin_id").
 		Joins("LEFT JOIN friend fr ON fr.id = tb.friend_id").
 		Joins("LEFT JOIN follow fl ON fl.following_id = tb.profile_id and fl.created_by = ? and fl.deleted_at is null", profileID).
 		Where("tb.deleted_at IS NULL AND tb.owner_id = ? AND tb.owner_of = ?", ownerID, ownerOf)

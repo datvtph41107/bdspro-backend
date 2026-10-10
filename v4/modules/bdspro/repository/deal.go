@@ -34,6 +34,8 @@ type DealRepository interface {
 	Create(ctx context.Context, deal *entity.Deal, members []entity.DealMember, productIDs []uint64) error
 	SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error
 	SoftDelete(ctx context.Context, id uint64) error
+	IsAcceptedMember(ctx context.Context, dealID, memberID uint64) (bool, error)
+	UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error
 }
 
 type dealPostgres struct {
@@ -415,6 +417,27 @@ func (r *dealPostgres) SeedDemoRelated(ctx context.Context, dealID, profileID, c
 		}
 		return nil
 	})
+}
+
+func (r *dealPostgres) IsAcceptedMember(ctx context.Context, dealID, memberID uint64) (bool, error) {
+	if r.db == nil || dealID == 0 || memberID == 0 {
+		return false, nil
+	}
+	var count int64
+	err := r.db.WithContext(ctx).Model(&entity.DealMember{}).
+		Where("deal_id = ? AND member_id = ? AND status = ? AND deleted_at IS NULL",
+			dealID, memberID, enums.DealMemberStatusAccepted).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func (r *dealPostgres) UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error {
+	if r.db == nil || dealID == 0 || memberID == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Model(&entity.DealMember{}).
+		Where("deal_id = ? AND member_id = ? AND deleted_at IS NULL", dealID, memberID).
+		Update("done_investment", true).Error
 }
 
 // SoftDelete sets deleted_at on the deal row.

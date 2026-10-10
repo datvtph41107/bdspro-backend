@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	tqdconfig "userv4/modules/tqd/config"
+)
 
 // AppProperties cấu hình tổng thể của ứng dụng
 type AppProperties struct {
@@ -85,10 +89,12 @@ type AppProperties struct {
 		IpCooldownSeconds int   `mapstructure:"ip-cooldown-seconds"`
 	} `mapstructure:"otp"`
 	Admin struct {
-		Username string `mapstructure:"username"`
-		Password string `mapstructure:"password"`
-		Email    string `mapstructure:"email"`
-		FullName string `mapstructure:"full_name"`
+		Username         string `mapstructure:"username"`
+		Password         string `mapstructure:"password"`
+		Email            string `mapstructure:"email"`
+		FullName         string `mapstructure:"full_name"`
+		Phone            string `mapstructure:"phone"`
+		BootstrapConfirm string `mapstructure:"bootstrap_confirm"`
 	} `mapstructure:"admin"`
 	// CSKH Team IDs - danh sách profile ID của đội chăm sóc khách hàng
 	CSKH struct {
@@ -102,6 +108,13 @@ type AppProperties struct {
 		SpecURLs       []string `mapstructure:"spec_urls"`
 		IgnorePrefixes []string `mapstructure:"ignore_prefixes"`
 	} `mapstructure:"request_stats"`
+	TQD struct {
+		Layer tqdconfig.LayerConfig `mapstructure:"layer"`
+	} `mapstructure:"tqd"`
+	Seo struct {
+		// InternalSecretKey guards /v2/internal/seo/* (header X-Seo-Secret-Key); empty disables them.
+		InternalSecretKey string `mapstructure:"internal_secret_key"`
+	} `mapstructure:"seo"`
 }
 
 var Properties AppProperties

@@ -15,6 +15,7 @@ import (
 
 	_db "common/db"
 	_jwt "common/jwt"
+	"common/requestlog"
 	"userv4/config"
 	userdb "userv4/db"
 	"userv4/internal/requeststats"
@@ -48,11 +49,19 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+// logUnmatchedRoutes warns when no registered pattern matches, since ServeMux
+// answers 404/405 itself without reaching any handler.
+func logUnmatchedRoutes(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+		if _, pattern := mux.Handler(r); pattern == "" {
+			ctx := r.Context()
+			requestlog.FromContext(ctx, nil).WarnContext(ctx, "HTTP route not registered",
+				"category", "application",
+				"http_method", r.Method,
+				"http_path", r.URL.Path,
+			)
+		}
+		mux.ServeHTTP(w, r)
 	})
 }
 
@@ -144,6 +153,7 @@ func runHTTP() error {
 	// Controllers register via httpapi.GET/Bind: path+query decode into DTO,
 	// handlers are func(ctx, req DTO) (*httpapi.Result, error).
 	app.AuthHandler.LoginController.RegisterHTTP(mux)
+	app.OAuthHandler.RegisterHTTP(mux)
 	app.PermissionHandler.PermissionController.RegisterHTTP(mux)
 	app.UserHandler.RegisterHTTP(mux)
 	app.BdsproHandler.RegisterHTTP(mux)
@@ -152,11 +162,12 @@ func runHTTP() error {
 	app.TqdHandler.RegisterHTTP(mux)
 	app.CrmHandler.RegisterHTTP(mux)
 	app.SeoHandler.RegisterHTTP(mux)
+	app.SeoHandler.RegisterInternalHTTP(mux, runtimeConfig.Seo.InternalSecretKey)
 
 	handler := chain(
-		mux,
+		logUnmatchedRoutes(mux),
 		recoveryMiddleware,
-		loggingMiddleware,
+		logging.AccessLogMiddleware,
 		corsMiddleware(runtimeConfig.HTTP.AllowedOrigins),
 		_jwt.JWTAuthHTTPMiddleware(publicHTTPRoutes, nil),
 		bridgeTrustedHTTPIdentity(),

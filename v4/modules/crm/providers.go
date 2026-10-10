@@ -1,16 +1,22 @@
 package crm
 
 import (
+	"context"
+
+	dashboard "base/dashboard"
 	_db "common/db"
 
 	"github.com/google/wire"
 
 	infra_postgres "userv4/infra/postgres"
+	"userv4/modules/crm/client"
 	"userv4/modules/crm/controller"
+	"userv4/modules/crm/mapper"
 	crmpostgres "userv4/modules/crm/postgres"
 	"userv4/modules/crm/provider"
 	repo "userv4/modules/crm/repository"
 	"userv4/modules/crm/services"
+	"userv4/modules/crm/validator"
 )
 
 // ProviderSet wires CRM core HTTP (repos + usecases + NewHandler) on CrmDB.
@@ -65,6 +71,27 @@ var ProviderSet = wire.NewSet(
 	services.NewInvitationInstallUsecase,
 	services.NewSupportTicketUsecase,
 	services.NewAdminSalesUsecase,
+
+	ProvideRateRepo,
+	ProvideRegistryRepo,
+	ProvideReportRepo,
+	ProvideReportReasonRepo,
+	ProvideAppointmentRepo,
+	ProvideAppointmentStatsJob,
+	client.NewUserClient,
+	services.NewRegistryUsecase,
+	services.NewRateUsecase,
+	services.NewReportUsecase,
+	services.NewReportReasonUsecase,
+	services.NewEnumUsecase,
+	services.NewAppointmentUsecase,
+	mapper.NewRateMapper,
+	mapper.NewReportMapper,
+	mapper.NewAppointmentTransformer,
+	validator.NewAppointmentValidator,
+	controller.NewFeedbackController,
+	controller.NewAppointmentController,
+	controller.NewEnumController,
 
 	controller.NewHandler,
 )
@@ -139,4 +166,35 @@ func ProvideDocumentRepo(crm *infra_postgres.CrmDB) repo.DocumentRepo {
 
 func ProvideProductCareRepo(crm *infra_postgres.CrmDB) repo.ProductCareRepo {
 	return crmpostgres.NewProductCarePostgre(crm.DB)
+}
+
+func ProvideRateRepo(crm *infra_postgres.CrmDB) repo.RateRepo {
+	return crmpostgres.NewRatePostgres(crm.DB)
+}
+
+func ProvideRegistryRepo(crm *infra_postgres.CrmDB) repo.RegistryRepo {
+	return crmpostgres.NewRegistryPostgres(crm.DB)
+}
+
+func ProvideReportRepo(crm *infra_postgres.CrmDB) repo.ReportRepo {
+	return crmpostgres.NewReportPostgres(crm.DB)
+}
+
+func ProvideReportReasonRepo(crm *infra_postgres.CrmDB) repo.ReportReasonRepo {
+	return crmpostgres.NewReportReasonPostgres(crm.DB)
+}
+
+func ProvideAppointmentRepo(crm *infra_postgres.CrmDB) repo.AppointmentRepository {
+	return crmpostgres.NewAppointmentPostgresRepository(crm.DB)
+}
+
+// ProvideAppointmentStatsJob reads appointment_stats snapshots; the daily writer is not scheduled in v4.
+func ProvideAppointmentStatsJob(crm *infra_postgres.CrmDB, appointments services.AppointmentUsecase) dashboard.DashboardStatsJob {
+	return dashboard.NewDashboardStatsJob(crm.DB, "appointment_stats", func(ctx context.Context) int64 {
+		count, err := appointments.CountCurrent(ctx)
+		if err != nil {
+			return 0
+		}
+		return count
+	})
 }

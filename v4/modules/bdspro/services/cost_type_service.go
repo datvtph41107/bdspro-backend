@@ -1,0 +1,105 @@
+package services
+
+import (
+	"context"
+
+	_errors "common/errors"
+	bdspropb "pb/types/bdspro"
+
+	"userv4/modules/bdspro/dto"
+	"userv4/modules/bdspro/entity"
+	"userv4/modules/bdspro/repository"
+)
+
+// CostTypeService owns tx_cost_types CRUD (migrated from bdspro CostTypeService).
+type CostTypeService interface {
+	Create(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error)
+	Update(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error)
+	Delete(ctx context.Context, id uint64) error
+	List(ctx context.Context, req dto.CostTypeSearchRequest) (*bdspropb.CostTypeListDTO, error)
+}
+
+type LocalCostTypeService struct {
+	repo repository.CostTypeRepository
+}
+
+func NewLocalCostTypeService(repo repository.CostTypeRepository) *LocalCostTypeService {
+	return &LocalCostTypeService{repo: repo}
+}
+
+func (s *LocalCostTypeService) Create(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error) {
+	if req == nil {
+		return nil, _errors.BadRequestException("cost type body is required")
+	}
+	model := costTypeProtoToEntity(req)
+	if err := s.repo.Create(ctx, model); err != nil {
+		return nil, err
+	}
+	return costTypeEntityToProto(model), nil
+}
+
+func (s *LocalCostTypeService) Update(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error) {
+	if req == nil {
+		return nil, _errors.BadRequestException("cost type body is required")
+	}
+	if req.GetId() == 0 {
+		return nil, _errors.BadRequestException("cost type id is required")
+	}
+	existing, err := s.repo.GetByID(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, _errors.NotFoundException("cost type not found")
+	}
+	model := costTypeProtoToEntity(req)
+	if err := s.repo.Update(ctx, model); err != nil {
+		return nil, err
+	}
+	return costTypeEntityToProto(model), nil
+}
+
+func (s *LocalCostTypeService) Delete(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return _errors.BadRequestException("cost type id is required")
+	}
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *LocalCostTypeService) List(ctx context.Context, req dto.CostTypeSearchRequest) (*bdspropb.CostTypeListDTO, error) {
+	rows, err := s.repo.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	out := &bdspropb.CostTypeListDTO{
+		Data:  make([]*bdspropb.CostTypeDTO, 0, len(rows)),
+		Total: uint32(len(rows)),
+	}
+	for _, row := range rows {
+		out.Data = append(out.Data, costTypeEntityToProto(row))
+	}
+	return out, nil
+}
+
+func costTypeEntityToProto(model *entity.TxCostType) *bdspropb.CostTypeDTO {
+	if model == nil {
+		return nil
+	}
+	return &bdspropb.CostTypeDTO{
+		Id:          model.ID,
+		TypeName:    model.TypeName,
+		IsCustom:    model.IsCustom,
+		CostType:    model.CostType,
+		Description: model.Description,
+	}
+}
+
+func costTypeProtoToEntity(proto *bdspropb.CostTypeDTO) *entity.TxCostType {
+	return &entity.TxCostType{
+		ID:          proto.GetId(),
+		TypeName:    proto.GetTypeName(),
+		IsCustom:    proto.GetIsCustom(),
+		CostType:    proto.GetCostType(),
+		Description: proto.GetDescription(),
+	}
+}

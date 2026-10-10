@@ -29,15 +29,15 @@ func (c *LoginController) RegisterHTTP(mux *http.ServeMux) {
 }
 
 func (c *LoginController) registerAuthHTTP(mux *http.ServeMux, prefix string) {
-	auth := prefix + "/auth"
-	httpapi.GET(mux, auth+"/phone/check/{phone}", c.phoneCheck)
-	httpapi.POST(mux, auth+"/otp/request", c.requestOTP)
-	httpapi.POST(mux, auth+"/otp/verify", c.verifyOTP)
-	httpapi.POST(mux, auth+"/otp/resend", c.resendOTP)
-	httpapi.POST(mux, auth+"/password/login", c.loginWithPassword)
-	httpapi.POST(mux, auth+"/login/key", c.loginWithKey)
-	httpapi.POST(mux, auth+"/admin/login", c.adminLogin)
-	httpapi.POST(mux, auth+"/token/refresh", c.refreshToken)
+	auth := prefix
+	httpapi.GET(mux, auth+"/auth/phone/check/{phone}", c.phoneCheck)
+	httpapi.POST(mux, auth+"/auth/otp/request", c.requestOTP)
+	httpapi.POST(mux, auth+"/auth/otp/verify", c.verifyOTP)
+	httpapi.POST(mux, auth+"/auth/otp/resend", c.resendOTP)
+	httpapi.POST(mux, auth+"/auth/password/login", c.loginWithPassword)
+	httpapi.POST(mux, auth+"/auth/login/key", c.loginWithKey)
+	httpapi.POST(mux, auth+"/auth/admin/login", c.adminLogin)
+	httpapi.POST(mux, auth+"/auth/token/refresh", c.refreshToken)
 }
 
 func (c *LoginController) phoneCheck(ctx context.Context, req dto.PhoneCheckPath) (*httpapi.Result, error) {

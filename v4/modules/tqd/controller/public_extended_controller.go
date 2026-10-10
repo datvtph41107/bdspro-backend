@@ -24,6 +24,8 @@ import (
 	"userv4/modules/tqd/services"
 	planningapp "userv4/modules/tqd/services/planningclient/application"
 	relatedapp "userv4/modules/tqd/services/relatedentity/application"
+
+	"github.com/spf13/viper"
 )
 
 var qhConfigNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
@@ -75,10 +77,10 @@ func NewPublicExtendedController(
 		analytics:        analytics,
 		parcelMapper:     mapper.NewParcelMapper(),
 		processedConfigs: map[string]bool{},
-		domainAPI:        strings.TrimRight(os.Getenv("TQD_DOMAIN_API"), "/"),
-		domainFile:       os.Getenv("TQD_DOMAIN_FILE"),
-		domainPMTile:     os.Getenv("TQD_DOMAIN_PMTILE"),
-		domainStyle:      os.Getenv("TQD_DOMAIN_STYLE"),
+		domainAPI:        strings.TrimRight(viper.GetString("config-app.qhpro.domain_api"), "/"),
+		domainFile:       viper.GetString("config-app.qhpro.domain_file"),
+		domainPMTile:     viper.GetString("config-app.qhpro.domain_pmtile"),
+		domainStyle:      viper.GetString("config-app.qhpro.domain_style"),
 	}
 }
 

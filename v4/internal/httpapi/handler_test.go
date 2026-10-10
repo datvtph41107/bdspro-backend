@@ -53,6 +53,21 @@ func TestDecodeRequest_DealIdAlias(t *testing.T) {
 	}
 }
 
+func TestDecodeRequest_PathAllowZero(t *testing.T) {
+	type allowZeroReq struct {
+		OwnerID uint64 `path:"ownerId" pathAllowZero:"true"`
+	}
+	mux := http.NewServeMux()
+	httpapi.GET(mux, "/list/user/{ownerId}", func(ctx context.Context, req allowZeroReq) (*httpapi.Result, error) {
+		return httpapi.OK(req.OwnerID), nil
+	})
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/list/user/0", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", rr.Code, rr.Body.String())
+	}
+}
+
 func TestDecodeRequest_MissingPathID(t *testing.T) {
 	mux := http.NewServeMux()
 	httpapi.GET(mux, "/v4/deal/{id}/x", func(ctx context.Context, req sampleReq) (*httpapi.Result, error) {

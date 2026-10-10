@@ -76,9 +76,66 @@ func (routeStubDeal) SeedDemoRelated(context.Context, uint64, uint64, uint64, ui
 
 func (routeStubDeal) DeleteGroupDeal(context.Context, uint64) error { return nil }
 
+type stubDealCost struct{}
+
+func (stubDealCost) Search(context.Context, dto.DealCostSearchRequest) (*bdspropb.DealCostListDTO, error) {
+	return &bdspropb.DealCostListDTO{}, nil
+}
+func (stubDealCost) Detail(context.Context, uint64) (*bdspropb.DealCostDTO, error) {
+	return &bdspropb.DealCostDTO{}, nil
+}
+func (stubDealCost) Create(context.Context, *bdspropb.DealCostDTO) (*bdspropb.DealCostDTO, error) {
+	return &bdspropb.DealCostDTO{}, nil
+}
+func (stubDealCost) Update(context.Context, *bdspropb.DealCostDTO) (*bdspropb.DealCostDTO, error) {
+	return &bdspropb.DealCostDTO{}, nil
+}
+func (stubDealCost) Delete(context.Context, uint64) error { return nil }
+
+type stubContractDeal struct{}
+
+func (stubContractDeal) GetContract(context.Context, uint64) (*bdspropb.DealContractResponse, error) {
+	return &bdspropb.DealContractResponse{}, nil
+}
+func (stubContractDeal) DeleteContract(context.Context, uint64) (uint64, error) { return 1, nil }
+func (stubContractDeal) CreateContractPayment(context.Context, *bdspropb.DealContractPaymentRequest) (*bdspropb.DealContractResponse, error) {
+	return &bdspropb.DealContractResponse{}, nil
+}
+func (stubContractDeal) CreateActionPayment(context.Context, *bdspropb.PaymentActionRequest) (*bdspropb.ActionResponse, error) {
+	return &bdspropb.ActionResponse{}, nil
+}
+func (stubContractDeal) GetMyContracts(context.Context, uint32, uint32) (*bdspropb.DealContractListResponse, error) {
+	return &bdspropb.DealContractListResponse{}, nil
+}
+
+type stubInvestment struct{}
+
+func (stubInvestment) Create(context.Context, *bdspropb.SubmitInvestRequest) (uint64, error) {
+	return 1, nil
+}
+func (stubInvestment) Update(context.Context, *bdspropb.SubmitInvestRequest) (uint64, error) {
+	return 1, nil
+}
+func (stubInvestment) Delete(context.Context, uint64) error { return nil }
+func (stubInvestment) Detail(context.Context, uint64) (*bdspropb.Investment, error) {
+	return &bdspropb.Investment{}, nil
+}
+func (stubInvestment) List(context.Context, *bdspropb.InvestmentListRequest) (*bdspropb.ListInvestment, error) {
+	return &bdspropb.ListInvestment{}, nil
+}
+func (stubInvestment) Approve(context.Context, uint64) (uint64, error)  { return 1, nil }
+func (stubInvestment) Reject(context.Context, uint64) (uint64, error)   { return 1, nil }
+func (stubInvestment) Confirm(context.Context, uint64, bool) (uint64, error) { return 1, nil }
+func (stubInvestment) MemberHistories(context.Context, uint64, uint64) (*bdspropb.GetInvestmentHistoriesResponse, error) {
+	return &bdspropb.GetInvestmentHistoriesResponse{}, nil
+}
+
 func TestDealRoutes_RegisterNoConflict(t *testing.T) {
 	mux := http.NewServeMux()
 	NewDealController(routeStubDeal{}).RegisterHTTP(mux)
+	NewDealCostController(stubDealCost{}).RegisterHTTP(mux)
+	NewDealContractController(routeStubDeal{}, stubContractDeal{}).RegisterHTTP(mux)
+	NewInvestmentController(stubInvestment{}).RegisterHTTP(mux)
 
 	for _, path := range []string{
 		"/v4/deals/me",
@@ -92,8 +149,17 @@ func TestDealRoutes_RegisterNoConflict(t *testing.T) {
 		"/v4/deal/investments/list/14",
 		"/v4/transaction/contract/deal/14/list",
 		"/v4/transaction/contract/deal/13/statistic",
+		"/v4/transaction/contract/deal/14/statistics?payment=true&cost=true",
 		"/v4/transaction/contract/deal/14/process",
+		"/v2.1/transaction/contract/deal/list/14",
+		"/v2.1/transaction/contract/deal/statistics/13",
+		"/v2.1/transaction/contract/deal/14/process",
+		"/v2.1/transaction/deal-cost/list/14",
 		"/v4/transaction/deal-cost/list/14",
+		"/v2.1/org/investment/1",
+		"/v2.1/org/investments/list/14",
+		"/v4/org/investment/1",
+		"/v4/deal/investments/list/14",
 	} {
 		rr := httptest.NewRecorder()
 		mux.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, path, nil))

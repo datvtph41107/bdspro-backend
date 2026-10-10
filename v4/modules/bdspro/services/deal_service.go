@@ -744,6 +744,7 @@ func (s *LocalDealService) GetInvitations(ctx context.Context, req dto.DealListB
 	if err != nil {
 		return nil, err
 	}
+	profilesMap := s.profileItemsByMemberIDs(ctx, list)
 	data := make([]*sharepb.DealMember, 0, len(list))
 	for _, m := range list {
 		if m == nil {
@@ -760,6 +761,7 @@ func (s *LocalDealService) GetInvitations(ctx context.Context, req dto.DealListB
 			IsOwner:      m.IsOwner,
 			AmountCommit: m.AmountCommit,
 			RoleId:       &m.RoleID,
+			Profile:      profilesMap[m.MemberID],
 		}
 		if m.InvitedAt != nil {
 			item.InvitedAt = _utils.FormatTimeToString(m.InvitedAt)
@@ -790,35 +792,7 @@ func (s *LocalDealService) GetMembers(ctx context.Context, req dto.DealMembersRe
 		return nil, 0, err
 	}
 
-	profileIDs := make([]uint64, 0, len(list))
-	seen := map[uint64]struct{}{}
-	for _, m := range list {
-		if m == nil || m.MemberID == 0 {
-			continue
-		}
-		if _, ok := seen[m.MemberID]; ok {
-			continue
-		}
-		seen[m.MemberID] = struct{}{}
-		profileIDs = append(profileIDs, m.MemberID)
-	}
-
-	profilesMap := map[uint64]*sharepb.ProfileItem{}
-	if s.profile != nil && len(profileIDs) > 0 {
-		if m, err := s.profile.GetMapProfileByIds(ctx, profileIDs); err == nil {
-			for id, p := range m {
-				if p == nil {
-					continue
-				}
-				profilesMap[id] = &sharepb.ProfileItem{
-					Id:       id,
-					FullName: p.FullName,
-					Avatar:   p.Avatar,
-				}
-			}
-		}
-	}
-
+	profilesMap := s.profileItemsByMemberIDs(ctx, list)
 	data := make([]*sharepb.DealMember, 0, len(list))
 	for _, m := range list {
 		if m == nil {
@@ -1044,4 +1018,42 @@ func (s *LocalDealService) GetContractStatistics(ctx context.Context, req dto.De
 
 	ts := s.syncTS(ctx, _utils.SyncKeyDealStatistics, req.DealID, false)
 	return result, ts, nil
+}
+
+func (s *LocalDealService) profileItemsByMemberIDs(ctx context.Context, members []*entity.DealMember) map[uint64]*sharepb.ProfileItem {
+	out := map[uint64]*sharepb.ProfileItem{}
+	if s.profile == nil || len(members) == 0 {
+		return out
+	}
+	ids := make([]uint64, 0, len(members))
+	seen := map[uint64]struct{}{}
+	for _, m := range members {
+		if m == nil || m.MemberID == 0 {
+			continue
+		}
+		if _, ok := seen[m.MemberID]; ok {
+			continue
+		}
+		seen[m.MemberID] = struct{}{}
+		ids = append(ids, m.MemberID)
+	}
+	if len(ids) == 0 {
+		return out
+	}
+	profiles, err := s.profile.GetMapProfileByIds(ctx, ids)
+	if err != nil {
+		return out
+	}
+	for id, p := range profiles {
+		if p == nil {
+			continue
+		}
+		out[id] = &sharepb.ProfileItem{
+			Id:       id,
+			FullName: p.FullName,
+			Avatar:   p.Avatar,
+			Phone:    p.Phone,
+		}
+	}
+	return out
 }

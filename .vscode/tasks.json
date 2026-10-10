@@ -101,7 +101,7 @@
     {
       "label": "BDSPro · Dev · UserV4 (gRPC)",
       "type": "shell",
-      "command": "lsof -ti tcp:8211 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; [ -f ../user-service/.env ] && . ../user-service/.env; set +a; export PATH=\"$PATH:$HOME/go/bin\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" air -c .air.toml",
+      "command": "lsof -ti tcp:8211 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; set +a; unset USER_REDIS_ADDRESS REDIS_ADDRESS REDIS_HOST REDIS_PASSWORD USER_REDIS_PASSWORD DATABASE_URL USER_DATABASE_URL DATABASE_DSN JWT_KEY_GENERATE RPC_USER_ADDRESS RPC_AUTH_ADDRESS RPC_ORGANIZATION_ADDRESS RPC_HUB_ADDRESS RPC_BDSPRO_ADDRESS RPC_NOTIFICATION_ADDRESS RPC_PAYMENT_ADDRESS RPC_CHAT_ADDRESS RPC_CRM_ADDRESS RPC_TQD_ADDRESS QHPRO_USER_OUTBOUND_MESSAGING_ENABLED; AIR_BIN=\"${QHPRO_TOOLCHAIN_ROOT:-$HOME/.cache/qhpro/toolchain}/bin/air\"; test -x \"$AIR_BIN\" || { echo \"missing air-verse air at $AIR_BIN (Homebrew air is the R formatter); run: make setup\" >&2; exit 2; }; export PATH=\"$(dirname \"$AIR_BIN\"):$HOME/go/bin:$PATH\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" \"$AIR_BIN\" -c .air.toml",
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
@@ -283,7 +283,7 @@
     {
       "label": "🥈 HTTP V4 (8288)",
       "type": "shell",
-      "command": "lsof -ti tcp:8288 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; [ -f ../user-service/.env ] && . ../user-service/.env; set +a; export PATH=\"$PATH:$HOME/go/bin\"; export HTTP_ADDRESS=\":8288\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" air -c .air.http.toml",
+      "command": "lsof -ti tcp:8288 | xargs kill -9 2>/dev/null || true; mkdir -p v4/.tmp/air; cd v4 && set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . .env; set +a; unset USER_REDIS_ADDRESS REDIS_ADDRESS REDIS_HOST REDIS_PASSWORD USER_REDIS_PASSWORD DATABASE_URL USER_DATABASE_URL DATABASE_DSN JWT_KEY_GENERATE RPC_USER_ADDRESS RPC_AUTH_ADDRESS RPC_ORGANIZATION_ADDRESS RPC_HUB_ADDRESS RPC_BDSPRO_ADDRESS RPC_NOTIFICATION_ADDRESS RPC_PAYMENT_ADDRESS RPC_CHAT_ADDRESS RPC_CRM_ADDRESS RPC_TQD_ADDRESS QHPRO_USER_OUTBOUND_MESSAGING_ENABLED; AIR_BIN=\"${QHPRO_TOOLCHAIN_ROOT:-$HOME/.cache/qhpro/toolchain}/bin/air\"; test -x \"$AIR_BIN\" || { echo \"missing air-verse air at $AIR_BIN (Homebrew air is the R formatter); run: make setup\" >&2; exit 2; }; export PATH=\"$(dirname \"$AIR_BIN\"):$HOME/go/bin:$PATH\"; export HTTP_ADDRESS=\":8288\"; QHPRO_EXECUTION_MODE=host QHPRO_LOG_CONFIG=\"${QHPRO_LOG_CONFIG:-../logging.yml}\" \"$AIR_BIN\" -c .air.http.toml",
       "args": [],
       "problemMatcher": ["$go"],
       "presentation": {

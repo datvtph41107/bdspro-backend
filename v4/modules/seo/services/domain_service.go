@@ -65,6 +65,10 @@ type SeoDomainService interface {
 	// Public document
 	GetPublicDocument(ctx context.Context, module, slug string) (*dto.PublicSEODocument, error)
 	GetPageHTML(ctx context.Context, path string) (string, error)
+	// Internal render data (/v2/internal/seo/*)
+	GetRenderDataByRef(ctx context.Context, refType uint32, refID uint64) (*entity.SeoDomain, error)
+	GetRenderDataBySlug(ctx context.Context, slug string) (*entity.SeoDomain, error)
+	ListStaticPaths(ctx context.Context, page, size uint32) ([]entity.SeoDomain, int64, error)
 }
 
 type LocalSeoDomainService struct {
@@ -102,6 +106,49 @@ func (s *LocalSeoDomainService) GetByRef(ctx context.Context, refType uint32, re
 		return nil, _errors.NotFoundException("seo domain not found for ref")
 	}
 	return seo, nil
+}
+
+// GetRenderDataByRef returns the ref's SEO page with internal links and relatives loaded.
+func (s *LocalSeoDomainService) GetRenderDataByRef(ctx context.Context, refType uint32, refID uint64) (*entity.SeoDomain, error) {
+	seo, err := s.GetByRef(ctx, refType, refID)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetByID(ctx, seo.ID)
+}
+
+// GetRenderDataBySlug only serves published, indexable pages.
+func (s *LocalSeoDomainService) GetRenderDataBySlug(ctx context.Context, slug string) (*entity.SeoDomain, error) {
+	slug = strings.Trim(strings.TrimSpace(slug), "/")
+	if slug == "" {
+		return nil, _errors.BadRequestException("slug không được để trống")
+	}
+	seo, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case seo == nil:
+		return nil, _errors.NotFoundException("seo domain không tồn tại")
+	case !seo.Published:
+		return nil, _errors.NotFoundException("seo domain chưa publish")
+	case !seo.IsIndex:
+		return nil, _errors.NotFoundException("seo domain không cho index")
+	}
+	return s.GetByID(ctx, seo.ID)
+}
+
+func (s *LocalSeoDomainService) ListStaticPaths(ctx context.Context, page, size uint32) ([]entity.SeoDomain, int64, error) {
+	if page == 0 {
+		page = 1
+	}
+	if size == 0 {
+		size = 500
+	}
+	if size > 1000 {
+		size = 1000
+	}
+	return s.repo.ListPublishedStaticPaths(ctx, int(size), int((page-1)*size))
 }
 
 func (s *LocalSeoDomainService) ListPublicByRef(ctx context.Context, refType uint32, refID uint64) ([]entity.SeoDomain, error) {

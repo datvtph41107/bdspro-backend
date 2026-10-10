@@ -35,6 +35,11 @@ func (c *SeoDomainController) RegisterHTTP(mux *http.ServeMux) {
 	// Admin ref-types catalog
 	httpapi.GET(mux, "/v2/crm/admin/seo/ref-types", c.listRefTypes)
 	httpapi.GET(mux, "/v2/crm/admin/seo/sources", c.listRefTypes)
+	httpapi.GET(mux, "/v2/crm/admin/seo/sources/{sourceKey}", c.getSource)
+	httpapi.GET(mux, "/v2/crm/admin/seo/sources/{sourceKey}/values", c.searchSourceValues)
+	httpapi.GET(mux, "/v2/crm/admin/seo/sources/{sourceKey}/values/{refId}", c.resolveSourceValue)
+	httpapi.GET(mux, "/v2/crm/admin/seo/ref-values", c.searchRefValues)
+	httpapi.GET(mux, "/v2/crm/admin/seo/ref-values/{refType}/{refId}", c.resolveRefValue)
 
 	// Admin CRUD (CRM path parity: /v2/crm/admin/seo-domains)
 	// Literal paths must be registered so they are not captured by {id}.
@@ -454,6 +459,50 @@ func (c *SeoDomainController) countByRef(ctx context.Context, req dto.PublicSeoB
 
 func (c *SeoDomainController) listRefTypes(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
 	return dataResult(c.svc.ListRefTypes(ctx))
+}
+
+type seoSourceKeyPath struct {
+	SourceKey string `path:"sourceKey"`
+}
+
+func (c *SeoDomainController) getSource(ctx context.Context, req seoSourceKeyPath) (*httpapi.Result, error) {
+	item, err := c.svc.GetSource(ctx, req.SourceKey)
+	if err != nil {
+		return nil, err
+	}
+	return dataResult(item)
+}
+
+func (c *SeoDomainController) searchSourceValues(ctx context.Context, req dto.SearchSeoSourceValuesRequest) (*httpapi.Result, error) {
+	items, total, err := c.svc.SearchSourceValues(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return listResult(items, total)
+}
+
+func (c *SeoDomainController) resolveSourceValue(ctx context.Context, req dto.ResolveSeoSourceValuePath) (*httpapi.Result, error) {
+	item, err := c.svc.ResolveSourceValue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return dataResult(item)
+}
+
+func (c *SeoDomainController) searchRefValues(ctx context.Context, req dto.SearchSeoRefValuesRequest) (*httpapi.Result, error) {
+	items, total, err := c.svc.SearchRefValues(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return listResult(items, total)
+}
+
+func (c *SeoDomainController) resolveRefValue(ctx context.Context, req dto.ResolveSeoRefValuePath) (*httpapi.Result, error) {
+	item, err := c.svc.ResolveRefValue(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return dataResult(item)
 }
 
 func (c *SeoDomainController) adminCreateDraft(ctx context.Context, req dto.CreateSeoDomainRequest) (*httpapi.Result, error) {

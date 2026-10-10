@@ -22,6 +22,8 @@ type Config struct {
 	Level     string `yaml:"level"`
 	Console   bool   `yaml:"console"`
 	Format    string `yaml:"format"`
+	// ConsoleFormat: structured (slog text/json) or dev (Gin-style access + compact SQL).
+	ConsoleFormat string `yaml:"console_format"`
 	AddSource bool   `yaml:"add_source"`
 	Files     bool   `yaml:"files"`
 	Root      string `yaml:"root"`
@@ -42,7 +44,7 @@ type fileConfig struct {
 }
 
 func defaults() Config {
-	return Config{Level: "info", Console: true, Format: "json", Mode: "session", MaxSizeMB: 20, MaxBackups: 3, MaxAgeDays: 7, KeepRuns: 10, SQL: SQLConfig{SlowThreshold: time.Second}}
+	return Config{Level: "info", Console: true, Format: "json", ConsoleFormat: "structured", Mode: "session", MaxSizeMB: 20, MaxBackups: 3, MaxAgeDays: 7, KeepRuns: 10, SQL: SQLConfig{SlowThreshold: time.Second}}
 }
 
 // Load đọc đúng một file chỉ định, không dò tìm config theo cwd hay âm thầm dùng file khác.
@@ -84,6 +86,9 @@ func Load(path, service string) (Config, error) {
 	if c.Root != "" && !filepath.IsAbs(c.Root) {
 		c.Root = filepath.Join(filepath.Dir(path), c.Root)
 	}
+	if c.ConsoleFormat == "" {
+		c.ConsoleFormat = "structured"
+	}
 	return c, c.validate()
 }
 
@@ -93,6 +98,9 @@ func (c Config) validate() error {
 	}
 	if c.Format != "json" && c.Format != "text" {
 		return errors.New("logging format must be json or text")
+	}
+	if c.ConsoleFormat != "structured" && c.ConsoleFormat != "dev" {
+		return errors.New("logging console_format must be structured or dev")
 	}
 	if c.Mode != "session" && c.Mode != "append" && c.Mode != "truncate" {
 		return errors.New("logging mode must be session, append or truncate")

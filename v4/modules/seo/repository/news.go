@@ -455,20 +455,25 @@ func (r *newsPostgres) UnsavePlanningNews(ctx context.Context, userID, newsID ui
 }
 
 func (r *newsPostgres) RecordClick(ctx context.Context, seoDomainID uint64, userID *uint64, ipAddr string) error {
-	log := &entity.SeoCountLog{
-		SeoDomainID: seoDomainID,
-		EventType:   "click",
-		IPAddr:      ipAddr,
-		UserID:      userID,
+	if seoDomainID == 0 {
+		return fmt.Errorf("seo domain id is required")
 	}
-	if err := r.db.WithContext(ctx).Create(log).Error; err != nil {
-		return err
-	}
-	return r.db.WithContext(ctx).Exec(`
-		INSERT INTO seo_count (seo_domain_id, click_count, view_count, updated_at)
-		VALUES (?, 1, 0, NOW())
-		ON CONFLICT (seo_domain_id) DO UPDATE SET click_count = seo_count.click_count + 1, updated_at = NOW()
-	`, seoDomainID).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		log := &entity.SeoCountLog{
+			SeoDomainID: seoDomainID,
+			EventType:   "click",
+			IPAddr:      ipAddr,
+			UserID:      userID,
+		}
+		if err := tx.Create(log).Error; err != nil {
+			return err
+		}
+		return tx.Exec(`
+			INSERT INTO seo_count (seo_domain_id, click_count, view_count, updated_at)
+			VALUES (?, 1, 0, NOW())
+			ON CONFLICT (seo_domain_id) DO UPDATE SET click_count = seo_count.click_count + 1, updated_at = NOW()
+		`, seoDomainID).Error
+	})
 }
 
 type contentSearchRow struct {

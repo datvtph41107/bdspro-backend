@@ -1,14 +1,63 @@
 package httpapi_test
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	_routes "common/routes"
 	"userv4/internal/httpapi"
 )
+
+func captureDefaultLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+	return &buf
+}
+
+func TestWriteServiceError_LegacyExceptKeepsStatus(t *testing.T) {
+	logs := captureDefaultLog(t)
+	w := httptest.NewRecorder()
+	httpapi.WriteServiceError(w, &_routes.Except{Code: 401, Message: "invalid token"})
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), `"message":"invalid token"`) {
+		t.Fatalf("body=%s", w.Body.String())
+	}
+	if logs.Len() != 0 {
+		t.Fatalf("4xx should not be logged as error: %s", logs.String())
+	}
+}
+
+func TestBindJSON_LogsCauseOfServerError(t *testing.T) {
+	logs := captureDefaultLog(t)
+	h := httpapi.BindJSON(func(_ context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
+		return nil, errors.New("redis: connection refused")
+	})
+	w := httptest.NewRecorder()
+	h(w, httptest.NewRequest(http.MethodPost, "/v2/auth/token/refresh", nil))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("status=%d", w.Code)
+	}
+	got := logs.String()
+	for _, want := range []string{"redis: connection refused", "/v2/auth/token/refresh", "http_status_code=500"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("log missing %q: %s", want, got)
+		}
+	}
+}
 
 func TestWriteOK_OmitsEmptyOptionalFields(t *testing.T) {
 	w := httptest.NewRecorder()

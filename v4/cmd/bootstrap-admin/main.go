@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	_db "common/db"
@@ -29,14 +29,21 @@ func main() {
 }
 
 func run() error {
-	if os.Getenv("QHPRO_BOOTSTRAP_CONFIRM") != requiredConfirmation {
-		return fmt.Errorf("refusing bootstrap: set QHPRO_BOOTSTRAP_CONFIRM=%s", requiredConfirmation)
-	}
-
+	// Topology + admin credentials come from config/<profile>.yml only.
 	databaseConfig, err := config.LoadDatabaseRuntime()
 	if err != nil {
 		return fmt.Errorf("load User database config: %w", err)
 	}
+
+	admin := config.Properties.Admin
+	confirm := strings.TrimSpace(admin.BootstrapConfirm)
+	if confirm != requiredConfirmation {
+		return fmt.Errorf(
+			"refusing bootstrap: set admin.bootstrap_confirm: %q in config/<profile>.yml",
+			requiredConfirmation,
+		)
+	}
+
 	database, err := _db.Open(_db.DatabaseConfig{
 		DSN:             databaseConfig.DSN,
 		MaxOpenConns:    databaseConfig.MaxOpenConns,
@@ -57,11 +64,11 @@ func run() error {
 
 	service := bootstrapadmin.NewService(bootstrapstore.NewStore(database), _utils.HashPassword)
 	result, err := service.Bootstrap(ctx, bootstrapadmin.Input{
-		Username: os.Getenv("QHPRO_BOOTSTRAP_ADMIN_USERNAME"),
-		Password: os.Getenv("QHPRO_BOOTSTRAP_ADMIN_PASSWORD"),
-		FullName: os.Getenv("QHPRO_BOOTSTRAP_ADMIN_FULL_NAME"),
-		Email:    os.Getenv("QHPRO_BOOTSTRAP_ADMIN_EMAIL"),
-		Phone:    os.Getenv("QHPRO_BOOTSTRAP_ADMIN_PHONE"),
+		Username: admin.Username,
+		Password: admin.Password,
+		FullName: admin.FullName,
+		Email:    admin.Email,
+		Phone:    admin.Phone,
 	})
 	if err != nil {
 		switch {
@@ -75,8 +82,8 @@ func run() error {
 	}
 
 	log.Printf(
-		"root operator created: profile_id=%d auth_id=%d role_id=%d permissions_granted=%d",
-		result.ProfileID, result.AuthID, result.RoleID, result.PermissionCount,
+		"root operator created: profile_id=%d auth_id=%d role_id=%d permissions_granted=%d username=%s",
+		result.ProfileID, result.AuthID, result.RoleID, result.PermissionCount, admin.Username,
 	)
 	return nil
 }

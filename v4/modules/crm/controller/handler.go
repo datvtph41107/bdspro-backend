@@ -22,6 +22,9 @@ type Handler struct {
 	sharing      *SharingController
 	invitation   *InvitationController
 	support      *SupportTicketController
+	feedback     *FeedbackController
+	appointment  *AppointmentController
+	enum         *EnumController
 }
 
 func NewHandler(
@@ -40,6 +43,9 @@ func NewHandler(
 	sharing *services.SharingAccessUsecase,
 	invitation *services.InvitationInstallUsecase,
 	support *services.SupportTicketUsecase,
+	feedback *FeedbackController,
+	appointment *AppointmentController,
+	enum *EnumController,
 ) *Handler {
 	return &Handler{
 		contact:     NewContactController(contactSvc, contactUC),
@@ -56,6 +62,9 @@ func NewHandler(
 		sharing:     NewSharingController(sharing),
 		invitation:  NewInvitationController(invitation),
 		support:     NewSupportTicketController(support),
+		feedback:    feedback,
+		appointment: appointment,
+		enum:        enum,
 	}
 }
 
@@ -78,4 +87,7 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.sharing.RegisterHTTP(mux)
 	h.invitation.RegisterHTTP(mux)
 	h.support.RegisterHTTP(mux)
+	h.feedback.RegisterHTTP(mux)
+	h.appointment.RegisterHTTP(mux)
+	h.enum.RegisterHTTP(mux)
 }

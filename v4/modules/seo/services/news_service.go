@@ -3,11 +3,14 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	_errors "common/errors"
 	"userv4/modules/seo/dto"
 	"userv4/modules/seo/entity"
 	"userv4/modules/seo/repository"
+
+	"gorm.io/gorm"
 )
 
 // NewsService handles planning news, categories and saved-news flows.
@@ -46,6 +49,9 @@ func (s *LocalNewsService) GetPlanningNews(ctx context.Context, id uint64) (*dto
 		return nil, _errors.NotFoundException("news not found")
 	}
 	result, err := s.repo.GetPlanningNews(ctx, id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, _errors.NotFoundException("news not found")
+	}
 	if err != nil {
 		return nil, err
 	}

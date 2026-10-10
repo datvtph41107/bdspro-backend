@@ -42,7 +42,23 @@ func RunPendingMigrations(database *gorm.DB) error {
 		return err
 	}
 	if dirty {
-		return fmt.Errorf("user schema_migrations is dirty at version %d; fix manually before start", current)
+		// Incomplete apply (shared-DB collisions, statement timeout, …).
+		// Roll watermark back one version so migrate can retry on boot.
+		if current == 0 {
+			return fmt.Errorf("user schema_migrations is dirty at version 0; fix manually before start")
+		}
+		prev := current - 1
+		slog.Warn(
+			"User schema_migrations dirty; rolling watermark back to retry",
+			"category", "lifecycle",
+			"event_name", "database.schema.migrate.dirty_heal",
+			"dirty_version", current,
+			"retry_from", prev,
+		)
+		if err := markMigrationClean(database, prev); err != nil {
+			return fmt.Errorf("heal dirty user migration %d: %w", current, err)
+		}
+		current = prev
 	}
 
 	pending, err := listPendingMigrations(dir, current)

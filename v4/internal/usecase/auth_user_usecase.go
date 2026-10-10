@@ -962,7 +962,10 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		// 	return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
 		// }
 
+		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %v", props)
+
 		profile, err := s.ProfileProvider.GetByProfileID(c, props.ProfileID)
+		log.Printf("✅ [RefreshToken] Profile: %v", profile)
 		if err != nil {
 			return nil, err
 		}

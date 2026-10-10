@@ -10,7 +10,7 @@ import (
 
 	_utils "common/utils"
 	"tqd/infra/postgres/entitycandidate"
-	"tqd/internal/domain/discovery/model"
+	domain "tqd/internal/domain/discovery/model"
 	"tqd/internal/usecase/discovery/ports"
 
 	"gorm.io/gorm"

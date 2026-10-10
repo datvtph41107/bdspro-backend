@@ -98,13 +98,14 @@ func bindPath(v reflect.Value, r *http.Request) error {
 		if err := setQueryField(valueField, raw, []string{raw}); err != nil {
 			return fmt.Errorf("invalid %s: %w", primaryPathKey(tag), err)
 		}
+		allowZero := field.Tag.Get("pathAllowZero") == "true"
 		switch valueField.Kind() {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if valueField.Uint() == 0 {
+			if !allowZero && valueField.Uint() == 0 {
 				return fmt.Errorf("%s is required", primaryPathKey(tag))
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if valueField.Int() == 0 {
+			if !allowZero && valueField.Int() == 0 {
 				return fmt.Errorf("%s is required", primaryPathKey(tag))
 			}
 		}
@@ -143,7 +144,7 @@ func wrap[Req any](decode func(*http.Request, any) error, h Handler[Req]) http.H
 		}
 		result, err := h(r.Context(), req)
 		if err != nil {
-			WriteServiceError(w, err)
+			writeServiceError(r.Context(), w, err, r)
 			return
 		}
 		if result == nil {

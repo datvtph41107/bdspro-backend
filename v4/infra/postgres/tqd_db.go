@@ -2,28 +2,27 @@ package postgres
 
 import (
 	"fmt"
-	"strings"
 
 	_db "common/db"
-	tqddb "userv4/modules/tqd/db"
 
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
-// TqdDB is the process-owned PostgreSQL pool for modules/tqd (database.tqd.dsn).
-// It is distinct from the v4 user DSN so TQD province_v2 / ward_v2 do not collide
-// with hub's province_v2 on db_v4.
+// TqdDB is the process-owned PostgreSQL pool for modules/tqd.
+// DSN: database.tqd.dsn, falling back to database.dsn when empty (shared-DB develop).
 type TqdDB struct {
 	DB *gorm.DB
 }
 
-// NewTqdDB opens the TQD database pool from database.tqd.dsn and applies any
-// pending canonical migrations from tqd-service/migrate before serving traffic.
+// NewTqdDB opens the TQD database pool and applies pending tqd-service/migrate files (userv4/db).
 func NewTqdDB() (*TqdDB, func(), error) {
-	dsn := strings.TrimSpace(viper.GetString("database.tqd.dsn"))
+	dsn := firstNonEmptyDSN(
+		viper.GetString("database.tqd.dsn"),
+		viper.GetString("database.dsn"),
+	)
 	if dsn == "" {
-		return nil, nil, fmt.Errorf("database.tqd.dsn is required for modules/tqd")
+		return nil, nil, fmt.Errorf("database.tqd.dsn or database.dsn is required for modules/tqd")
 	}
 	database, err := _db.Open(_db.DatabaseConfig{DSN: dsn})
 	if err != nil {
@@ -33,9 +32,9 @@ func NewTqdDB() (*TqdDB, func(), error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("tqd database pool: %w", err)
 	}
-	if err := tqddb.RunPendingMigrations(database); err != nil {
+	if err := ensureTqdLocationCatalogSchema(database); err != nil {
 		_ = sqlDB.Close()
-		return nil, nil, fmt.Errorf("tqd schema migrate: %w", err)
+		return nil, nil, fmt.Errorf("tqd location catalog schema: %w", err)
 	}
 	return &TqdDB{DB: database}, func() { _ = sqlDB.Close() }, nil
 }

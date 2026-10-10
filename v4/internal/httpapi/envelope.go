@@ -1,12 +1,15 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	_err "common/domain/err"
 	_errors "common/errors"
+	"common/requestlog"
+	_routes "common/routes"
 	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/status"
@@ -84,7 +87,24 @@ func WriteError(w http.ResponseWriter, httpStatus int, message string) {
 }
 
 // WriteServiceError maps gRPC / AppError into the standard error envelope.
+// 5xx causes are logged; prefer the Bind/BindJSON path so the log carries request fields.
 func WriteServiceError(w http.ResponseWriter, err error) {
+	writeServiceError(context.Background(), w, err, nil)
+}
+
+func writeServiceError(ctx context.Context, w http.ResponseWriter, err error, r *http.Request) {
+	code, message := serviceErrorStatus(err)
+	if code >= http.StatusInternalServerError {
+		attrs := []any{"category", "application", "http_status_code", code, "error", err.Error()}
+		if r != nil {
+			attrs = append(attrs, "http_method", r.Method, "http_path", r.URL.Path)
+		}
+		requestlog.FromContext(ctx, nil).ErrorContext(ctx, "HTTP handler failed", attrs...)
+	}
+	WriteError(w, code, message)
+}
+
+func serviceErrorStatus(err error) (int, string) {
 	if st, ok := status.FromError(err); ok {
 		httpCode := _errors.HTTPStatusForRPC(st.Code())
 		message := st.Message()
@@ -96,30 +116,39 @@ func WriteServiceError(w http.ResponseWriter, err error) {
 				}
 			}
 		}
-		WriteError(w, httpCode, message)
-		return
+		return httpCode, message
 	}
 
 	var appErr *_errors.AppError
 	if errors.As(err, &appErr) {
-		WriteError(w, appErr.Code, appErr.Message)
-		return
+		return appErr.Code, appErr.Message
+	}
+
+	// Legacy gin-era usecases return *routes.Except{Code, Message}.
+	var exceptErr *_routes.Except
+	if errors.As(err, &exceptErr) && exceptErr != nil {
+		return validHTTPStatus(exceptErr.Code), firstMessage(exceptErr.Message, err)
 	}
 
 	// TQD/legacy usecases still return common/domain/err.ErrorDTO.
 	var dtoErr *_err.ErrorDTO
 	if errors.As(err, &dtoErr) && dtoErr != nil {
-		code := dtoErr.Code
-		if code < 100 || code > 599 {
-			code = http.StatusInternalServerError
-		}
-		msg := dtoErr.Message
-		if msg == "" {
-			msg = err.Error()
-		}
-		WriteError(w, code, msg)
-		return
+		return validHTTPStatus(dtoErr.Code), firstMessage(dtoErr.Message, err)
 	}
 
-	WriteError(w, http.StatusInternalServerError, err.Error())
+	return http.StatusInternalServerError, err.Error()
+}
+
+func validHTTPStatus(code int) int {
+	if code < 100 || code > 599 {
+		return http.StatusInternalServerError
+	}
+	return code
+}
+
+func firstMessage(message string, err error) string {
+	if message == "" {
+		return err.Error()
+	}
+	return message
 }
