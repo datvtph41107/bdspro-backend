@@ -36,6 +36,7 @@ type DealService interface {
 	GetBankAccount(ctx context.Context, req dto.DealDetailRequest) (*bdspropb.BankAccountItem, int64, error)
 	GetContractStatistics(ctx context.Context, req dto.DealStatisticsRequest) (*bdspropb.ContractDealStatisticsDTO, int64, error)
 	CreateGroupDeal(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (uint64, error)
+	UpdateGroupDeal(ctx context.Context, req *bdspropb.UpdateGroupDealRequest) (uint64, error)
 	SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error
 	DeleteGroupDeal(ctx context.Context, id uint64) error
 }
@@ -199,9 +200,25 @@ func (s *LocalDealService) GetDealsUser(ctx context.Context, req dto.DealSearchR
 		return nil, err
 	}
 
+	invitationMemberID := profileID
+	if req.InvitedProfileID != nil && *req.InvitedProfileID > 0 {
+		invitationMemberID = *req.InvitedProfileID
+	}
+	invitationRows := make([]*entity.DealMember, 0, len(list))
+	for _, d := range list {
+		if m := dealMemberForProfile(d.Members, invitationMemberID); m != nil {
+			invitationRows = append(invitationRows, m)
+		}
+	}
+	profilesMap := s.profileItemsByMemberIDs(ctx, invitationRows)
+
 	data := make([]*bdspropb.GroupDeal, 0, len(list))
 	for _, d := range list {
-		data = append(data, mapDealToPB(d))
+		pb := mapDealToPB(d)
+		if m := dealMemberForProfile(d.Members, invitationMemberID); m != nil {
+			pb.Invitation = mapDealMemberToSharePB(m, profilesMap[m.MemberID])
+		}
+		data = append(data, pb)
 	}
 
 	resp := &bdspropb.GetDealsResponse{
@@ -404,6 +421,44 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 	return deal.ID, nil
 }
 
+// UpdateGroupDeal updates core deal fields (parity with bdspro UpdateGroupDeal).
+func (s *LocalDealService) UpdateGroupDeal(ctx context.Context, req *bdspropb.UpdateGroupDealRequest) (uint64, error) {
+	id := uint64(req.GetId())
+	if id == 0 {
+		return 0, _errors.BadRequestException("deal id is required")
+	}
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	if existing == nil {
+		return 0, _errors.NotFoundException("deal not found")
+	}
+
+	patch := &entity.Deal{
+		ID:              id,
+		Name:            req.GetName(),
+		Status:          req.GetStatus(),
+		ShareVisibility: req.GetShareVisibility(),
+		Description:     req.GetDescription(),
+		TargetProfit:    req.GetAmount(),
+	}
+	if pid := _utils.GetProfileIdWithContext(ctx); pid > 0 {
+		patch.UpdatedBy = &pid
+	}
+	if err := s.repo.Update(ctx, patch); err != nil {
+		return 0, err
+	}
+
+	if s.sync != nil {
+		key := s.sync.GetKey(ctx, _utils.SyncKeyDealMe, 0)
+		_ = s.sync.PutTimestamp(ctx, key, time.Now().UnixMilli())
+	}
+	_ = s.syncTS(ctx, _utils.SyncKeyDealDetail, id, true)
+
+	return id, nil
+}
+
 // SeedDemoRelated ensures bank/investment/cost/contract rows exist for a demo deal.
 func (s *LocalDealService) SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error {
 	if dealID == 0 {
@@ -437,9 +492,67 @@ func (s *LocalDealService) DeleteGroupDeal(ctx context.Context, id uint64) error
 	}
 	if s.sync != nil {
 		key := s.sync.GetKey(ctx, _utils.SyncKeyDealMe, 0)
-		_ = s.sync.PutTimestamp(ctx, key, 0)
+		_ = s.sync.PutTimestamp(ctx, key, time.Now().UnixMilli())
+	}
+	_ = s.syncTS(ctx, _utils.SyncKeyDealDetail, id, true)
+	return nil
+}
+
+func dealMemberForProfile(members []entity.DealMember, profileID uint64) *entity.DealMember {
+	if profileID == 0 {
+		return nil
+	}
+	for i := range members {
+		if members[i].MemberID == profileID {
+			return &members[i]
+		}
 	}
 	return nil
+}
+
+func mapDealMemberToSharePB(m *entity.DealMember, profile *sharepb.ProfileItem) *sharepb.DealMember {
+	if m == nil {
+		return nil
+	}
+	item := &sharepb.DealMember{
+		Id:              m.ID,
+		DealId:          m.DealID,
+		InviterId:       m.InviterID,
+		MemberId:        m.MemberID,
+		Status:          m.Status,
+		Message:         m.Message,
+		RoleKey:         m.RoleKey,
+		IsOwner:         m.IsOwner,
+		AmountCommit:    m.AmountCommit,
+		CommissionValue: m.CommissionValue,
+		CommissionType:  m.CommissionType,
+		Note:            m.Note,
+		DoneInvestment:  m.DoneInvestment,
+		RoleId:          &m.RoleID,
+		Profile:         profile,
+	}
+	if m.InvitedAt != nil {
+		item.InvitedAt = _utils.FormatTimeToString(m.InvitedAt)
+	}
+	if m.RespondedAt != nil {
+		item.RespondedAt = _utils.FormatTimeToString(m.RespondedAt)
+	}
+	if m.WithdrawnAt != nil {
+		item.WithdrawnAt = _utils.FormatTimeToString(m.WithdrawnAt)
+	}
+	if m.RoleKey != 0 {
+		item.Role = dealMemberRoleFromKey(m.RoleKey)
+	}
+	return item
+}
+
+func dealMemberRoleFromKey(roleKey uint32) *sharepb.Role {
+	name := enums.RoleKeyMap[enums.RoleKey(roleKey)]
+	return &sharepb.Role{
+		RoleKey:  roleKey,
+		Key:      strconv.FormatUint(uint64(roleKey), 10),
+		RoleName: name,
+	}
 }
 
 func mapDealToPB(d *entity.Deal) *bdspropb.GroupDeal {
@@ -750,26 +863,7 @@ func (s *LocalDealService) GetInvitations(ctx context.Context, req dto.DealListB
 		if m == nil {
 			continue
 		}
-		item := &sharepb.DealMember{
-			Id:           m.ID,
-			DealId:       m.DealID,
-			InviterId:    m.InviterID,
-			MemberId:     m.MemberID,
-			Status:       m.Status,
-			Message:      m.Message,
-			RoleKey:      m.RoleKey,
-			IsOwner:      m.IsOwner,
-			AmountCommit: m.AmountCommit,
-			RoleId:       &m.RoleID,
-			Profile:      profilesMap[m.MemberID],
-		}
-		if m.InvitedAt != nil {
-			item.InvitedAt = _utils.FormatTimeToString(m.InvitedAt)
-		}
-		if m.RespondedAt != nil {
-			item.RespondedAt = _utils.FormatTimeToString(m.RespondedAt)
-		}
-		data = append(data, item)
+		data = append(data, mapDealMemberToSharePB(m, profilesMap[m.MemberID]))
 	}
 	ts := s.syncTS(ctx, _utils.SyncKeyDealInvitation, req.DealID, false)
 	return &bdspropb.GetDealInvitationsByDealResponse{
@@ -798,22 +892,7 @@ func (s *LocalDealService) GetMembers(ctx context.Context, req dto.DealMembersRe
 		if m == nil {
 			continue
 		}
-		item := &sharepb.DealMember{
-			Id:              m.ID,
-			DealId:          m.DealID,
-			MemberId:        m.MemberID,
-			AmountCommit:    m.AmountCommit,
-			CommissionValue: m.CommissionValue,
-			CommissionType:  m.CommissionType,
-			Note:            m.Note,
-			RoleId:          &m.RoleID,
-			IsOwner:         m.IsOwner,
-			DoneInvestment:  m.DoneInvestment,
-			RoleKey:         m.RoleKey,
-			Status:          m.Status,
-			Profile:         profilesMap[m.MemberID],
-		}
-		data = append(data, item)
+		data = append(data, mapDealMemberToSharePB(m, profilesMap[m.MemberID]))
 	}
 
 	ts := s.syncTS(ctx, _utils.SyncKeyDealMembers, req.DealID, false)

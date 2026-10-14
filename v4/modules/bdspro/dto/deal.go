@@ -9,9 +9,10 @@ type DealSearchRequest struct {
 	Text           string  `form:"text"`
 	OrganizationID *uint64 `form:"organizationId"`
 	GroupID        *uint64 `form:"groupId"`
-	OwnerID        *uint64 `form:"ownerId"`
-	OwnerOf        uint32  `form:"ownerOf"`
-	Timestamp      int64   `form:"timestamp"`
+	OwnerID          *uint64 `form:"ownerId"`
+	OwnerOf          uint32  `form:"ownerOf"`
+	InvitedProfileID *uint64 `form:"invitedProfileId"`
+	Timestamp        int64   `form:"timestamp"`
 }
 
 // DealDetailRequest is GET /v4/deal/{id} query (sync timestamp).

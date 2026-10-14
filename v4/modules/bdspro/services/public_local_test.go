@@ -108,6 +108,54 @@ func TestLocalDealService_EmptyRepo(t *testing.T) {
 	}
 }
 
+func TestLocalDealService_GetDealsUser_IncludesInvitationForInvitedProfile(t *testing.T) {
+	pid := uint64(40)
+	repo := &stubDealRepoList{
+		deals: []*entity.Deal{{
+			ID:   7,
+			Name: "Deal 7",
+			Members: []entity.DealMember{{
+				ID:       501,
+				DealID:   7,
+				MemberID: pid,
+				Status:   uint32(enums.DealMemberStatusAccepted),
+				RoleKey:  uint32(enums.RoleKeyDealOwner),
+				IsOwner:  true,
+			}},
+		}},
+		total: 1,
+	}
+	svc := NewLocalDealService(nil, repo, stubProductRepo{}, nil)
+	invited := pid
+	resp, err := svc.GetDealsUser(context.Background(), dto.DealSearchRequest{
+		InvitedProfileID: &invited,
+	})
+	if err != nil {
+		t.Fatalf("GetDealsUser: %v", err)
+	}
+	if len(resp.GetData()) != 1 {
+		t.Fatalf("expected 1 deal, got %d", len(resp.GetData()))
+	}
+	inv := resp.GetData()[0].GetInvitation()
+	if inv == nil || inv.GetId() != 501 || inv.GetMemberId() != pid {
+		t.Fatalf("expected invitation for profile 40, got %+v", inv)
+	}
+	role := inv.GetRole()
+	if role == nil || role.GetRoleKey() != uint32(enums.RoleKeyDealOwner) || role.GetRoleName() != enums.RoleKeyMap[enums.RoleKeyDealOwner] {
+		t.Fatalf("expected owner role on invitation, got %+v", role)
+	}
+}
+
+type stubDealRepoList struct {
+	stubDealRepo
+	deals []*entity.Deal
+	total uint32
+}
+
+func (r *stubDealRepoList) ListForUser(context.Context, uint64, uint32, uint32, dto.DealSearchRequest) ([]*entity.Deal, uint32, error) {
+	return r.deals, r.total, nil
+}
+
 func TestLocalPropertyService_EmptyRepo(t *testing.T) {
 	svc := NewLocalPropertyService(nil, stubPropertyRepo{})
 	resp, err := svc.ListMe(context.Background(), dto.PropertyListRequest{Size: 10})
@@ -214,6 +262,8 @@ func (r *stubDealRepo) GetPaymentStatisticsByDealID(context.Context, uint64) (*d
 func (r *stubDealRepo) SeedDemoRelated(context.Context, uint64, uint64, uint64, uint32) error {
 	return nil
 }
+
+func (r *stubDealRepo) Update(context.Context, *entity.Deal) error { return nil }
 
 func (r *stubDealRepo) Create(_ context.Context, deal *entity.Deal, members []entity.DealMember, productIDs []uint64) error {
 	if deal != nil {

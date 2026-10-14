@@ -60,6 +60,9 @@ var publicHTTPRoutes = []string{
 	"/v2/hub/request-stats/track",
 	// Bdspro public
 	"/v2/bdspro/public/enums",
+	"/v2/bdspro/v2/list/project",
+	"/v2/bdspro/v2/list/project-build",
+	"/v2/bdspro/v2/project-build/items",
 	// SEO public (CRM path parity)
 	"/v2/crm/public",
 	"/v2/crm/sitemap.xml",

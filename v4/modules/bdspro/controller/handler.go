@@ -20,6 +20,9 @@ type Handler struct {
 	productNote     *ProductNoteController
 	appointment     *AppointmentController
 	propertyHistory *PropertyHistoryController
+	catalog         *CatalogController
+	projectBuild    *ProjectBuildController
+	adminProject    *AdminProjectController
 }
 
 func NewHandler(
@@ -35,6 +38,9 @@ func NewHandler(
 	noteSvc services.ProductNoteService,
 	appointmentSvc services.AppointmentService,
 	historySvc services.PropertyHistoryService,
+	catalogSvc services.CatalogService,
+	projectBuildSvc services.ProjectBuildService,
+	adminProjectSvc services.AdminProjectService,
 ) *Handler {
 	return &Handler{
 		sync:            NewSyncController(syncSvc),
@@ -49,6 +55,9 @@ func NewHandler(
 		productNote:     NewProductNoteController(noteSvc),
 		appointment:     NewAppointmentController(appointmentSvc),
 		propertyHistory: NewPropertyHistoryController(historySvc),
+		catalog:         NewCatalogController(catalogSvc),
+		projectBuild:    NewProjectBuildController(projectBuildSvc),
+		adminProject:    NewAdminProjectController(adminProjectSvc),
 	}
 }
 
@@ -66,4 +75,7 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.productNote.RegisterHTTP(mux)
 	h.appointment.RegisterHTTP(mux)
 	h.propertyHistory.RegisterHTTP(mux)
+	h.catalog.RegisterHTTP(mux)
+	h.projectBuild.RegisterHTTP(mux)
+	h.adminProject.RegisterHTTP(mux)
 }

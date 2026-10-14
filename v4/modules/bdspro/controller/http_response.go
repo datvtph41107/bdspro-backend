@@ -230,6 +230,26 @@ func protoListResult[T proto.Message](items []T, total int64) (*httpapi.Result, 
 	return httpapi.OK(data, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
 }
 
+// listItemResponseResult maps bdspropb.ListItemResponse to envelope data=[] + pagination.total.
+func listItemResponseResult(resp *bdspropb.ListItemResponse, page, size uint32) (*httpapi.Result, error) {
+	if resp == nil {
+		return httpapi.OK([]any{}), nil
+	}
+	data, err := protoMessages(resp.GetData())
+	if err != nil {
+		return nil, err
+	}
+	if data == nil {
+		data = []any{}
+	}
+	p := &httpapi.Pagination{Total: int64(resp.GetTotal())}
+	if size > 0 {
+		p.Page = int32(page)
+		p.Size = int32(size)
+	}
+	return httpapi.OK(data, httpapi.WithPagination(p)), nil
+}
+
 func appointmentListResult(resp *crmpb.ListAppointmentsResponse) (*httpapi.Result, error) {
 	if resp == nil {
 		return httpapi.OK([]any{}), nil

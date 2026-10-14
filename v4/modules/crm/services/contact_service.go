@@ -239,6 +239,9 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 			if err := s.contactProductRepo.Bulk(txCtx, entity.ProductIDs, result.ID); err != nil {
 				return err
 			}
+			result.ProductIDs = append([]uint64(nil), entity.ProductIDs...)
+		} else {
+			result.ProductIDs = []uint64{}
 		}
 
 		return nil
@@ -378,6 +381,9 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEn
 
 	// Load products
 	productIds, _ := s.contactProductRepo.GetProductIds(c, id)
+	if productIds == nil {
+		productIds = []uint64{}
+	}
 	entity.ProductIDs = productIds
 
 	return entity, nil

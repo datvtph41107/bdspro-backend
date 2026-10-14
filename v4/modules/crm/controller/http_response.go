@@ -6,6 +6,8 @@ import (
 
 	crmpb "pb/types/crm"
 	"userv4/internal/httpapi"
+	domain "userv4/modules/crm/entity"
+	"userv4/modules/crm/mapper"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -61,6 +63,29 @@ func protoDataResult(msg proto.Message) (*httpapi.Result, error) {
 		return nil, err
 	}
 	return httpapi.OK(data), nil
+}
+
+// contactDetailResult maps ContactEntity to crmpb.ContactDTO JSON (gateway contract)
+// and always includes productIds (protojson omits empty repeated fields).
+func contactDetailResult(entity *domain.ContactEntity) (*httpapi.Result, error) {
+	if entity == nil {
+		return httpapi.OK(nil), nil
+	}
+	pb := (&mapper.ContactMapper{}).ContactToPb(entity)
+	data, err := protoToAny(pb)
+	if err != nil {
+		return nil, err
+	}
+	m, ok := data.(map[string]any)
+	if !ok {
+		return httpapi.OK(data), nil
+	}
+	ids := entity.ProductIDs
+	if ids == nil {
+		ids = []uint64{}
+	}
+	m["productIds"] = ids
+	return httpapi.OK(m), nil
 }
 
 func protoListWithTotalResult[T proto.Message](items []T, total int64) (*httpapi.Result, error) {

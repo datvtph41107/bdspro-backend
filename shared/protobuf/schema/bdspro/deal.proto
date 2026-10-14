@@ -471,6 +471,8 @@ message GroupDeal {
     string description = 37;
     // Sync timestamp (ms) — Redis SyncKeyDealDetail theo deal.
     int64 timestamp = 38;
+    // Membership/invitation row of the requesting (or invitedProfileId) user on this deal.
+    optional sharepb.DealMember invitation = 39;
 }
 
 message DocumentItem {
@@ -662,6 +664,8 @@ message DealSearchRequest {
     optional uint32 ownerOf = 7;
     // Client sync timestamp (ms). Unchanged → empty list (same pattern as product/me).
     int64 timestamp = 8;
+    // Profile id whose deal_members row is returned as GroupDeal.invitation (default: JWT profile).
+    optional uint64 invitedProfileId = 9;
 }
 
 message GetDealsResponse {

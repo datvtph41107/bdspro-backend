@@ -32,6 +32,7 @@ type DealRepository interface {
 	GetCostStatisticsByDealID(ctx context.Context, dealID uint64) (*dto.DealCostStatsRow, error)
 	GetPaymentStatisticsByDealID(ctx context.Context, dealID uint64) (*dto.DealPaymentStatsRow, error)
 	Create(ctx context.Context, deal *entity.Deal, members []entity.DealMember, productIDs []uint64) error
+	Update(ctx context.Context, deal *entity.Deal) error
 	SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error
 	SoftDelete(ctx context.Context, id uint64) error
 	IsAcceptedMember(ctx context.Context, dealID, memberID uint64) (bool, error)
@@ -222,6 +223,27 @@ func (r *dealPostgres) Create(ctx context.Context, deal *entity.Deal, members []
 		}
 		return nil
 	})
+}
+
+// Update patches deal fields (name, status, description, share_visibility, target_profit).
+func (r *dealPostgres) Update(ctx context.Context, deal *entity.Deal) error {
+	if r.db == nil || deal == nil || deal.ID == 0 {
+		return nil
+	}
+	updates := map[string]interface{}{
+		"name":             deal.Name,
+		"status":           deal.Status,
+		"share_visibility": deal.ShareVisibility,
+		"description":      deal.Description,
+		"target_profit":    deal.TargetProfit,
+	}
+	if deal.UpdatedBy != nil {
+		updates["updated_by"] = *deal.UpdatedBy
+	}
+	return r.db.WithContext(ctx).
+		Model(&entity.Deal{}).
+		Where("id = ? AND deleted_at IS NULL", deal.ID).
+		Updates(updates).Error
 }
 
 // SeedDemoRelated fills bank / investment / cost / contract rows for a demo deal (idempotent).

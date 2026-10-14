@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	bdspropb "pb/types/bdspro"
@@ -69,7 +70,11 @@ func (routeStubDeal) GetContractStatistics(context.Context, dto.DealStatisticsRe
 }
 
 func (routeStubDeal) CreateGroupDeal(context.Context, *bdspropb.CreateGroupDealRequest) (uint64, error) {
-	return 0, nil
+	return 14, nil
+}
+
+func (routeStubDeal) UpdateGroupDeal(context.Context, *bdspropb.UpdateGroupDealRequest) (uint64, error) {
+	return 14, nil
 }
 
 func (routeStubDeal) SeedDemoRelated(context.Context, uint64, uint64, uint64, uint32) error { return nil }
@@ -165,6 +170,28 @@ func TestDealRoutes_RegisterNoConflict(t *testing.T) {
 		mux.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, path, nil))
 		if rr.Code == http.StatusNotFound {
 			t.Fatalf("%s => %d", path, rr.Code)
+		}
+	}
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodPost, "/v4/deal", `{"name":"TV demo"}`},
+		{http.MethodPut, "/v4/deal/14", `{"name":"TV updated"}`},
+		{http.MethodDelete, "/v4/deal/14", ""},
+	} {
+		var req *http.Request
+		if tc.body != "" {
+			req = httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body))
+		} else {
+			req = httptest.NewRequest(tc.method, tc.path, nil)
+		}
+		rr := httptest.NewRecorder()
+		mux.ServeHTTP(rr, req)
+		if rr.Code == http.StatusNotFound {
+			t.Fatalf("%s %s => %d", tc.method, tc.path, rr.Code)
 		}
 	}
 }

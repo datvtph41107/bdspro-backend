@@ -32,12 +32,29 @@ type ContactDetailHTTPRequest struct {
 	Timestamp int64  `form:"timestamp"`
 }
 
-// ContactSaveHTTPRequest is POST /v2/crm/contact and PUT /v2/crm/contact/edit/{id}.
+// ContactCreateHTTPRequest is POST /v2/crm/contact (no path id — matches ContactSaveDTO).
+type ContactCreateHTTPRequest struct {
+	Phone       string   `json:"phone"`
+	FullName    string   `json:"fullName"`
+	OwnerOf     int32    `json:"ownerOf"`
+	OwnerID     uint64   `json:"ownerId"`
+	Email       string   `json:"email"`
+	Zalo        string   `json:"zalo"`
+	Company     string   `json:"company"`
+	Note        string   `json:"note"`
+	Avatar      string   `json:"avatar"`
+	Visibility  int32    `json:"visibility"`
+	AssignedCrm bool     `json:"assignedCrm"`
+	ProductIds  []uint64 `json:"productIds"`
+}
+
+// ContactSaveHTTPRequest is PUT /v2/crm/contact/edit/{id} and sync payload rows.
 type ContactSaveHTTPRequest struct {
 	ID           uint64   `path:"id" json:"id"`
 	Phone        string   `json:"phone"`
 	FullName     string   `json:"fullName"`
 	OwnerOf      int32    `json:"ownerOf"`
+	OwnerID      uint64   `json:"ownerId"`
 	Email        string   `json:"email"`
 	Zalo         string   `json:"zalo"`
 	Company      string   `json:"company"`

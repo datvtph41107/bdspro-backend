@@ -2,11 +2,14 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"strconv"
 
 	bdspropb "pb/types/bdspro"
 	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/dto"
+	"userv4/modules/bdspro/enums"
 	"userv4/modules/bdspro/services"
 
 	"google.golang.org/protobuf/proto"
@@ -22,6 +25,9 @@ func NewDealController(deal services.DealService) *DealController {
 }
 
 func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deal", c.createProto)
+	httpapi.HandleProto(mux, http.MethodPut, "/v4/deal/{id}", c.updateProto)
+	httpapi.HandleProto(mux, http.MethodDelete, "/v4/deal/{id}", c.deleteProto)
 	httpapi.GET(mux, "/v4/deals/me", c.getDealsMe)
 	httpapi.GET(mux, "/v4/deal/{id}/ts", c.getTimestamps)
 	httpapi.GET(mux, "/v4/deal/{id}/products", c.getProducts)
@@ -30,6 +36,29 @@ func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v4/deal/{id}/members", c.getMembers)
 	httpapi.GET(mux, "/v4/deal/{id}", c.getDetail)
 	httpapi.GET(mux, "/v4/deal/invitation/list/{dealId}", c.getInvitations)
+}
+
+func (c *DealController) createProto(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (*bdspropb.CreateGroupDealResponse, error) {
+	id, err := c.deal.CreateGroupDeal(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.CreateGroupDealResponse{Id: uint32(id)}, nil
+}
+
+func (c *DealController) updateProto(ctx context.Context, req *bdspropb.UpdateGroupDealRequest) (*bdspropb.UpdateGroupDealResponse, error) {
+	id, err := c.deal.UpdateGroupDeal(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.UpdateGroupDealResponse{Id: uint32(id)}, nil
+}
+
+func (c *DealController) deleteProto(ctx context.Context, req *bdspropb.DeleteGroupDealRequest) (*bdspropb.DeleteGroupDealResponse, error) {
+	if err := c.deal.DeleteGroupDeal(ctx, uint64(req.GetId())); err != nil {
+		return nil, err
+	}
+	return &bdspropb.DeleteGroupDealResponse{Id: req.GetId()}, nil
 }
 
 func (c *DealController) getDealsMe(ctx context.Context, req dto.DealSearchRequest) (*httpapi.Result, error) {
@@ -176,9 +205,56 @@ func dealsListResult(resp *bdspropb.GetDealsResponse) (*httpapi.Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i, row := range data {
+		if m, ok := row.(map[string]any); ok {
+			compactDealInvitationRole(m)
+			data[i] = m
+		}
+	}
 	opts := []httpapi.OKOption{
 		httpapi.WithPagination(&httpapi.Pagination{Total: int64(resp.GetTotal())}),
 	}
 	opts = append(opts, timestampOpt(resp.GetTimestamp())...)
 	return httpapi.OK(data, opts...), nil
+}
+
+// compactDealInvitationRole shapes invitation.role as {key, name} for deals/me.
+func compactDealInvitationRole(deal map[string]any) {
+	inv, ok := deal["invitation"].(map[string]any)
+	if !ok || inv == nil {
+		return
+	}
+	var roleKey uint32
+	if role, ok := inv["role"].(map[string]any); ok && role != nil {
+		roleKey = jsonUint32(role["roleKey"])
+		if roleKey == 0 {
+			roleKey = jsonUint32(role["key"])
+		}
+	}
+	if roleKey == 0 {
+		roleKey = jsonUint32(inv["roleKey"])
+	}
+	if roleKey == 0 {
+		return
+	}
+	name := enums.RoleKeyMap[enums.RoleKey(roleKey)]
+	inv["role"] = map[string]any{
+		"key":  roleKey,
+		"name": name,
+	}
+}
+
+func jsonUint32(v any) uint32 {
+	switch n := v.(type) {
+	case float64:
+		return uint32(n)
+	case json.Number:
+		u, _ := n.Int64()
+		return uint32(u)
+	case string:
+		u, _ := strconv.ParseUint(n, 10, 32)
+		return uint32(u)
+	default:
+		return 0
+	}
 }

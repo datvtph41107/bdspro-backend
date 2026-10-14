@@ -18,7 +18,7 @@ type ContactEntity struct {
 	Email      string             `gorm:"column:email" json:"email"`
 	Zalo       string             `gorm:"column:zalo" json:"zalo"`
 	Company    string             `gorm:"column:company" json:"company"`
-	Address    string             `json:"address"`
+	Address    string             `gorm:"column:address" json:"address"`
 	Birthday   *time.Time         `gorm:"column:birthday" json:"birthday"`
 	Note       string             `gorm:"column:note" json:"note"`
 	Visibility enums.EVisibility  `gorm:"column:visibility;default:30" json:"visibility"`

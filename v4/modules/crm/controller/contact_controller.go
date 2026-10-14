@@ -130,21 +130,27 @@ func (c *ContactController) detail(ctx context.Context, req dto.ContactDetailHTT
 	if err != nil {
 		return nil, err
 	}
-	return httpapi.OK(out), nil
+	return contactDetailResult(out)
 }
 
-func (c *ContactController) create(ctx context.Context, req dto.ContactSaveHTTPRequest) (*httpapi.Result, error) {
+func (c *ContactController) create(ctx context.Context, req dto.ContactCreateHTTPRequest) (*httpapi.Result, error) {
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
 	out, err := c.uc.Create(ctx, &domain.ContactEntity{
 		Phone: req.Phone, FullName: req.FullName, Email: req.Email, Zalo: req.Zalo,
-		Company: req.Company, Note: req.Note, Avatar: req.Avatar, OwnerOf: base_enum.EOwnerOf(req.OwnerOf),
+		Company: req.Company, Note: req.Note, Avatar: req.Avatar,
+		OwnerOf: base_enum.EOwnerOf(req.OwnerOf), OwnerID: req.OwnerID,
+		ProductIDs: req.ProductIds,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return httpapi.OK(out), nil
+	detail, err := c.uc.Detail(ctx, out.ID)
+	if err != nil {
+		return contactDetailResult(out)
+	}
+	return contactDetailResult(detail)
 }
 
 func (c *ContactController) update(ctx context.Context, req dto.ContactSaveHTTPRequest) (*httpapi.Result, error) {
@@ -154,11 +160,16 @@ func (c *ContactController) update(ctx context.Context, req dto.ContactSaveHTTPR
 	out, err := c.uc.Update(ctx, req.ID, &domain.ContactEntity{
 		Phone: req.Phone, FullName: req.FullName, Email: req.Email, Zalo: req.Zalo,
 		Company: req.Company, Note: req.Note, Avatar: req.Avatar,
+		ProductIDs: req.ProductIds,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return httpapi.OK(out), nil
+	detail, err := c.uc.Detail(ctx, out.ID)
+	if err != nil {
+		return contactDetailResult(out)
+	}
+	return contactDetailResult(detail)
 }
 
 func (c *ContactController) delete(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {

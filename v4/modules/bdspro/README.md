@@ -15,7 +15,8 @@ Phase-1 routes (local, no bdspro/crm/notification TCP for these reads):
 
 - `GET /v2/bdspro/ts` — app sync timestamps (Redis / SyncUtil)
 - `GET /v4/deals/me` — deals of current user (was `/v2.1/org/deals/user`)
-- `GET /v4/deal/{id}`, `{id}/ts`, `{id}/products`, `{id}/summary`, `{id}/bank-account`, `{id}/member` — deal detail / timestamps / products / summary / bank / members (was `/v2.1/org/deal/...`)
+- `POST /v4/deal`, `PUT /v4/deal/{id}`, `DELETE /v4/deal/{id}` — create / update / delete deal (was `POST|PUT|DELETE /v2.1/org/deal[/{id}]`)
+- `GET /v4/deal/{id}`, `{id}/ts`, `{id}/products`, `{id}/summary`, `{id}/bank-account`, `{id}/members` — deal detail / timestamps / products / summary / bank / members (was `/v2.1/org/deal/...`)
 - `GET /v4/deal/invitation/list/{dealId}` — deal invitations (was `/v2.1/org/deal-invitation/list/{id}`)
 - `GET|POST|PUT|DELETE /v2.1/org/investment...` and `/v4/org/investment...` — investment CRUD, approve/reject/confirm, member histories
 - `GET /v2.1/org/investments/list/{dealId}` and `/v4/deal/investments/list/{dealId}` — investment list
@@ -33,6 +34,9 @@ Phase-1 routes (local, no bdspro/crm/notification TCP for these reads):
 - `GET /v2.1/appointment/list/by-product/:id`
 - `GET /v2/notification/property-history/:id`
 - `GET /v2/bdspro/v2/property/me`, detail, `:id/timestamp`
+- Public catalog: `GET /v2/bdspro/v2/list/project`, `GET /v2/bdspro/v2/list/project-build`, `GET /v2/bdspro/v2/project-build/items`
+- Project build CRUD: `GET/POST /v2/bdspro/v2/project-build`, `GET /v2/bdspro/v2/project-build/me` (tòa nhà do user tạo), `GET /v2/bdspro/v2/project-build/detail/{id}`, `PUT/DELETE /v2/bdspro/v2/project-build/{id}`
+- Admin project CRUD: `GET /v2/bdspro/admin/project/list`, `POST/PUT/DELETE /v2/bdspro/admin/project[/{id}]`
 - `GET /v2/bdspro/public/enums`, `/enums/{text}`
 
 Schema: `000029_bdspro_core` + `000031_bdspro_product_tab` + `000033_bdspro_deal_contract` + `000034_bdspro_deal_lists` + `000035_bdspro_bank_accounts` on the v4 Postgres DSN.
