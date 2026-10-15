@@ -6,6 +6,8 @@ import (
 )
 
 // ORM::TABLE
+// tạo người dùng/tổ chức/admin hệ thống thì tạo bản ghi này
+// id của người dùng/tổ chức/admin hệ thống lấy theo originId trong đây
 type OriginProfile struct {
 	_models.BaseEntityNotId
 	OriginID    uint64 `gorm:"column:origin_id;primaryKey" json:"originId"`

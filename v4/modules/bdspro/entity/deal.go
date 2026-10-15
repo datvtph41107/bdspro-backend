@@ -14,8 +14,6 @@ type Deal struct {
 	DeletedAt               gorm.DeletedAt `gorm:"column:deleted_at;index"`
 	CreatedBy               *uint64        `gorm:"column:created_by"`
 	UpdatedBy               *uint64        `gorm:"column:updated_by"`
-	OwnerID                 uint64         `gorm:"column:owner_id;index"`
-	OwnerType               uint32         `gorm:"column:owner_type;default:10"`
 	Name                    string         `gorm:"column:name;size:255"`
 	TargetProfit            float64        `gorm:"column:target_profit;default:0"`
 	Status                  uint32         `gorm:"column:status;default:10"`
@@ -35,6 +33,13 @@ type Deal struct {
 	AllowManualInput        bool           `gorm:"column:allow_manual_input;default:false"`
 	Description             string         `gorm:"column:description;type:text"`
 	ShareVisibility         uint32         `gorm:"column:share_visibility;default:10"`
+
+	// hiện tại đang trỏ vào UserProfile.ProfileID
+	// mục tiêu là đổi sang OriginProfile.OriginID
+	OwnerID uint64 `gorm:"column:owner_id;index"`
+	// deprecated: sau có thể bỏ do thông qua OwnerID -> OriginProfile.OriginId là xác định được
+	// ownerType rồi
+	OwnerType uint32 `gorm:"column:owner_type;default:10"`
 
 	Members []DealMember `gorm:"foreignKey:DealID;references:ID"`
 }

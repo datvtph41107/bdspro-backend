@@ -73,6 +73,7 @@ type Product struct {
 func (Product) TableName() string { return "products" }
 
 // ProductPrice maps to product_price.
+// ORM::TABLE
 type ProductPrice struct {
 	ID                 uint64         `gorm:"primaryKey;autoIncrement"`
 	CreatedAt          *time.Time     `gorm:"column:created_at;autoCreateTime"`
@@ -101,16 +102,19 @@ func (ProductPrice) TableName() string { return "product_price" }
 type ProductUser struct {
 	ID              uint64         `gorm:"primaryKey;autoIncrement"`
 	CreatedAt       *time.Time     `gorm:"column:created_at;autoCreateTime"`
+	OriginProfileID *uint64        `gorm:"column:origin_profile_id;index"`
 	UpdatedAt       *time.Time     `gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt       gorm.DeletedAt `gorm:"column:deleted_at;index"`
-	ProfileID       uint64         `gorm:"column:profile_id;index;not null"`
 	ProductID       uint64         `gorm:"column:product_id;index;not null"`
-	IsOwner         bool           `gorm:"column:is_owner;default:true"`
-	RoleID          uint64         `gorm:"column:role_id;default:0"`
-	OwnerOf         uint32         `gorm:"column:owner_of;default:10"`
-	Version         uint64         `gorm:"column:version;default:1"`
-	OriginProfileID *uint64        `gorm:"column:origin_profile_id;index"`
-	DistributeID    *uint64        `gorm:"column:distribute_id;type:bigint;index"`
+	// chủ sở hữu chính
+	IsOwner      bool    `gorm:"column:is_owner;default:true"`
+	Version      uint64  `gorm:"column:version;default:1"`
+	DistributeID *uint64 `gorm:"column:distribute_id;type:bigint;index"`
+
+	// deprecated: sau có thể bỏ do OriginProfileID -> OriginProfile.OriginId
+	// là xác định được user/org có thể truy cập sản phẩm
+	ProfileID uint64 `gorm:"column:profile_id;index;not null"`
+	OwnerOf   uint32 `gorm:"column:owner_of;default:10"`
 }
 
 func (ProductUser) TableName() string { return "product_user" }
