@@ -3,10 +3,13 @@ package _utils
 import (
 	_redis "common/redis"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 )
+
+var errSyncRedisUnavailable = errors.New("redis unavailable")
 
 // Prefix key Redis cho sync timestamp (format: prefix:profileId:resourceId)
 const (
@@ -54,6 +57,8 @@ const (
 	SyncKeyProfileInfoMe = "usr:info:me"
 	// SyncKeyBdsproEnums: enum bdspro public (global, không theo profile).
 	SyncKeyBdsproEnums = "bds:enums"
+	// SyncKeyPaymentBankAll: danh mục ngân hàng GET /v2/payment/bank/all (global).
+	SyncKeyPaymentBankAll = "pay:bank:all"
 	// SyncKeyPoiCategoryIcons: icon POI categories (global).
 	SyncKeyPoiCategoryIcons = "tqd:poi:icons"
 	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).
@@ -124,8 +129,10 @@ func (s *SyncUtil) GetKeyForProfile(profileId, resourceId uint64, prefix string)
 func (s *SyncUtil) HasUpdated(ctx context.Context, key string, timestamp int64) bool {
 	str, err := s.redis.Get(key)
 	if err != nil {
+		fmt.Println("err", err)
 		return true
 	}
+	fmt.Println("str", str)
 	ts, err := strconv.ParseInt(str, 10, 64)
 	if ts > 0 {
 		return timestamp < ts
@@ -149,11 +156,13 @@ func (s *SyncUtil) IsCacheChanged(ctx context.Context, key string, timestamp int
 }
 
 func (s *SyncUtil) PutTimestamp(ctx context.Context, key string, timestamp int64) error {
+	if s.redis == nil {
+		return errSyncRedisUnavailable
+	}
 	if timestamp <= 0 {
 		timestamp = time.Now().UnixMilli()
 	}
-	s.redis.SetWithTime(key, timestamp, 48*time.Hour)
-	return nil
+	return s.redis.SetWithTime(key, timestamp, 48*time.Hour)
 }
 
 func (s *SyncUtil) PutTimeRequest(ctx context.Context, key string, timestamp int64) {
@@ -190,11 +199,13 @@ func (s *SyncUtil) EnsureTimestamp(ctx context.Context, key string) int64 {
 		return ts
 	}
 	now := time.Now().UnixMilli()
-	_ = s.PutTimestamp(ctx, key, now)
+	if err := s.PutTimestamp(ctx, key, now); err != nil {
+		return 0
+	}
 	if ts := s.GetTimestamp(ctx, key); ts > 0 {
 		return ts
 	}
-	return now
+	return 0
 }
 
 // MGet đọc nhiều timestamp. Redis down/unavailable → trả về slice nil (timestamp=0),

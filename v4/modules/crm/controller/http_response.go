@@ -85,6 +85,9 @@ func contactDetailResult(entity *domain.ContactEntity) (*httpapi.Result, error) 
 		ids = []uint64{}
 	}
 	m["productIds"] = ids
+	if entity.ProfileID != nil {
+		m["profileId"] = *entity.ProfileID
+	}
 	return httpapi.OK(m), nil
 }
 

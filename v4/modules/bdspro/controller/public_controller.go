@@ -32,6 +32,9 @@ func (c *PublicController) getEnums(ctx context.Context, req dto.GetEnumsRequest
 }
 
 func (c *PublicController) getEnumByName(ctx context.Context, req dto.GetEnumByNameRequest) (*httpapi.Result, error) {
+	if req.Text == services.DealSettingEnumKey {
+		return httpapi.OK(map[string]any{"data": services.DealSettingEnumPayload()}), nil
+	}
 	result, err := c.public.GetEnumByName(ctx, req.Text)
 	if err != nil {
 		return nil, err

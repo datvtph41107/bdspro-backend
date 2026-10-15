@@ -7,6 +7,7 @@ import (
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	"userv4/internal/httpapi"
+	"userv4/modules/bdspro/services"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -219,6 +220,7 @@ func getEnumsResult(resp *bdspropb.GetEnumsResponse) (*httpapi.Result, error) {
 	if !resp.GetLastest() {
 		return httpapi.OK([]any{}, opts...), nil
 	}
+	data = append(data, services.DealSettingEnumListEntry())
 	return httpapi.OK(data, opts...), nil
 }
 

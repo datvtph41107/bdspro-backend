@@ -9,6 +9,7 @@ import (
 	"github.com/google/wire"
 
 	infra_postgres "userv4/infra/postgres"
+	repoiface "userv4/internal/interface/repo"
 	"userv4/modules/crm/client"
 	"userv4/modules/crm/controller"
 	"userv4/modules/crm/mapper"
@@ -24,12 +25,12 @@ import (
 var ProviderSet = wire.NewSet(
 	ProvideCrmNoopTransaction,
 	provider.NewNoopNotification,
-	provider.NewNoopUserClient,
+	ProvideCRMUserClient,
 	provider.NewNoopBdspro,
 	provider.NewAllowAllPermission,
 	wire.Bind(new(provider.ITransaction), new(*provider.NoopTransaction)),
 	wire.Bind(new(provider.NotificationProvider), new(*provider.NoopNotification)),
-	wire.Bind(new(provider.UserClient), new(*provider.NoopUserClient)),
+	wire.Bind(new(provider.UserClient), new(*provider.LocalUserClient)),
 	wire.Bind(new(provider.BdsproProvider), new(*provider.NoopBdspro)),
 	wire.Bind(new(services.PermissionUsecase), new(*provider.AllowAllPermission)),
 
@@ -98,6 +99,10 @@ var ProviderSet = wire.NewSet(
 
 func ProvideCrmNoopTransaction() *provider.NoopTransaction {
 	return provider.NewNoopTransaction()
+}
+
+func ProvideCRMUserClient(profiles repoiface.IProfileRepo) *provider.LocalUserClient {
+	return provider.NewLocalUserClient(profiles)
 }
 
 func ProvideContactRepo(crm *infra_postgres.CrmDB) repo.ContactRepo {

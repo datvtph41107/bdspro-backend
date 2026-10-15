@@ -33,6 +33,7 @@ type DealRepository interface {
 	GetPaymentStatisticsByDealID(ctx context.Context, dealID uint64) (*dto.DealPaymentStatsRow, error)
 	Create(ctx context.Context, deal *entity.Deal, members []entity.DealMember, productIDs []uint64) error
 	Update(ctx context.Context, deal *entity.Deal) error
+	UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error
 	SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error
 	SoftDelete(ctx context.Context, id uint64) error
 	IsAcceptedMember(ctx context.Context, dealID, memberID uint64) (bool, error)
@@ -244,6 +245,81 @@ func (r *dealPostgres) Update(ctx context.Context, deal *entity.Deal) error {
 		Model(&entity.Deal{}).
 		Where("id = ? AND deleted_at IS NULL", deal.ID).
 		Updates(updates).Error
+}
+
+// UpdateSetting patches deal settings and linked bank account (parity with bdspro UpdateSetting).
+func (r *dealPostgres) UpdateSetting(ctx context.Context, id uint64, setting *dto.DealSetting) error {
+	if r.db == nil || id == 0 || setting == nil {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var model entity.Deal
+		if err := tx.Where("id = ? AND deleted_at IS NULL", id).First(&model).Error; err != nil {
+			return err
+		}
+
+		bankAccount, err := dealUpdateBankAccount(tx, model.BankAccountID, &entity.BankAccount{
+			BankID:        setting.BankID,
+			AccountNumber: setting.AccountNumber,
+			AccountName:   setting.AccountName,
+		})
+		if err != nil {
+			return err
+		}
+
+		status := setting.Status
+		if !status.IsValid() {
+			status = enums.DealStatus(model.Status)
+		}
+
+		return tx.Model(&entity.Deal{}).
+			Where("id = ? AND deleted_at IS NULL", id).
+			Updates(map[string]interface{}{
+				"from_date":                  setting.FromDate,
+				"to_date":                    setting.ToDate,
+				"allow_sharing":              setting.AllowSharing,
+				"member_can_add_transaction": setting.MemberCanAddTransaction,
+				"only_owner_get_commission":  setting.OnlyOwnerGetCommission,
+				"internal_note":              setting.InternalNote,
+				"status":                     status,
+				"allow_manual_input":         setting.AllowManualInput,
+				"bank_account_id":            bankAccount.ID,
+				"name":                       setting.Name,
+				"target_profit":              setting.TargetProfit,
+				"share_visibility":           setting.ShareVisibility,
+				"description":                setting.Description,
+			}).Error
+	})
+}
+
+func dealUpdateBankAccount(tx *gorm.DB, accountID *uint64, model *entity.BankAccount) (*entity.BankAccount, error) {
+	if accountID == nil || *accountID == 0 {
+		bankAccount := &entity.BankAccount{
+			BankName:      model.BankName,
+			AccountNumber: model.AccountNumber,
+			AccountName:   model.AccountName,
+			BankID:        model.BankID,
+		}
+		if err := tx.Create(bankAccount).Error; err != nil {
+			return nil, err
+		}
+		return bankAccount, nil
+	}
+	if err := tx.Model(&entity.BankAccount{}).
+		Where("id = ? AND deleted_at IS NULL", *accountID).
+		Updates(map[string]interface{}{
+			"bank_name":      model.BankName,
+			"account_number": model.AccountNumber,
+			"account_name":   model.AccountName,
+			"bank_id":        model.BankID,
+		}).Error; err != nil {
+		return nil, err
+	}
+	var bankAccount entity.BankAccount
+	if err := tx.Where("id = ? AND deleted_at IS NULL", *accountID).First(&bankAccount).Error; err != nil {
+		return nil, err
+	}
+	return &bankAccount, nil
 }
 
 // SeedDemoRelated fills bank / investment / cost / contract rows for a demo deal (idempotent).

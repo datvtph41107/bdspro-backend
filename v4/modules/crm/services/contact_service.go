@@ -188,6 +188,9 @@ func (s *ContactUsecase) UpdateProductIds(c context.Context, contactId uint64, p
 func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
 	var result *domain.ContactEntity
 	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
+		entity.Phone = strings.TrimSpace(entity.Phone)
+		entity.FullName = strings.TrimSpace(entity.FullName)
+
 		ownerId, err := s.ownerUsecase.GetOwnerInfo(txCtx, entity.OwnerOf, entity.OwnerID)
 		if err != nil {
 			return err

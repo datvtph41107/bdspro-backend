@@ -39,6 +39,23 @@ func TestContactDetailResult_IncludesProductIds(t *testing.T) {
 	}
 }
 
+func TestContactDetailResult_IncludesProfileId(t *testing.T) {
+	pid := uint64(267)
+	entity := &domain.ContactEntity{ProfileID: &pid, ProductIDs: []uint64{}}
+	entity.ID = 1
+	entity.FullName = "Test"
+	entity.Phone = "0961745160"
+
+	res, err := contactDetailResult(entity)
+	if err != nil {
+		t.Fatalf("contactDetailResult: %v", err)
+	}
+	m := res.Data.(map[string]any)
+	if m["profileId"] != pid {
+		t.Fatalf("expected profileId %d, got %+v", pid, m["profileId"])
+	}
+}
+
 func TestContactDetailResult_EmptyProductIds(t *testing.T) {
 	entity := &domain.ContactEntity{ProductIDs: nil}
 	entity.ID = 1

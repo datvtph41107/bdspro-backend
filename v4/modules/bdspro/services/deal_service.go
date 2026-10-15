@@ -37,6 +37,7 @@ type DealService interface {
 	GetContractStatistics(ctx context.Context, req dto.DealStatisticsRequest) (*bdspropb.ContractDealStatisticsDTO, int64, error)
 	CreateGroupDeal(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (uint64, error)
 	UpdateGroupDeal(ctx context.Context, req *bdspropb.UpdateGroupDealRequest) (uint64, error)
+	UpdateDealSetting(ctx context.Context, req *bdspropb.UpdateDealSettingRequest) (uint64, error)
 	SeedDemoRelated(ctx context.Context, dealID, profileID, customerID uint64, dealType uint32) error
 	DeleteGroupDeal(ctx context.Context, id uint64) error
 }
@@ -181,6 +182,7 @@ func (s *LocalDealService) GetDealsUser(ctx context.Context, req dto.DealSearchR
 	var syncKey string
 	if s.sync != nil {
 		syncKey = s.sync.GetKey(ctx, _utils.SyncKeyDealMe, 0)
+		fmt.Println("syncKey", syncKey)
 		if !s.sync.HasUpdated(ctx, syncKey, req.Timestamp) && req.Page == 0 && req.Timestamp > 0 {
 			ts := s.sync.GetTimestamp(ctx, syncKey)
 			if ts <= 0 {
@@ -413,12 +415,48 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		return 0, err
 	}
 
-	if s.sync != nil {
-		key := s.sync.GetKey(ctx, _utils.SyncKeyDealMe, 0)
-		_ = s.sync.PutTimestamp(ctx, key, time.Now().UnixMilli())
-	}
+	s.clearDealMeSyncForProfiles(ctx, dealMemberProfileIDs(ctx, req, members)...)
 
 	return deal.ID, nil
+}
+
+// clearDealMeSyncForProfiles removes deal:me Redis keys so GET /v4/deals/me refetches for those users.
+func (s *LocalDealService) clearDealMeSyncForProfiles(ctx context.Context, profileIDs ...uint64) {
+	if s.sync == nil {
+		return
+	}
+	seen := make(map[uint64]struct{}, len(profileIDs))
+	for _, id := range profileIDs {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		key := s.sync.GetKeyForProfile(id, 0, _utils.SyncKeyDealMe)
+		_ = s.sync.Del(ctx, key)
+	}
+}
+
+func dealMemberProfileIDs(ctx context.Context, req *bdspropb.CreateGroupDealRequest, members []entity.DealMember) []uint64 {
+	out := make([]uint64, 0, len(members)+4)
+	if pid := _utils.GetProfileIdWithContext(ctx); pid > 0 {
+		out = append(out, pid)
+	}
+	ownerID := req.GetOwnerId()
+	if ownerID == 0 {
+		ownerID = _utils.GetProfileIdWithContext(ctx)
+	}
+	if ownerID > 0 {
+		out = append(out, ownerID)
+	}
+	for _, m := range members {
+		if m.MemberID > 0 {
+			out = append(out, m.MemberID)
+		}
+	}
+	return out
 }
 
 // UpdateGroupDeal updates core deal fields (parity with bdspro UpdateGroupDeal).
@@ -457,6 +495,58 @@ func (s *LocalDealService) UpdateGroupDeal(ctx context.Context, req *bdspropb.Up
 	_ = s.syncTS(ctx, _utils.SyncKeyDealDetail, id, true)
 
 	return id, nil
+}
+
+// UpdateDealSetting updates deal settings (parity with bdspro UpdateDealSetting).
+func (s *LocalDealService) UpdateDealSetting(ctx context.Context, req *bdspropb.UpdateDealSettingRequest) (uint64, error) {
+	dealID := uint64(req.GetDealId())
+	if dealID == 0 {
+		return 0, _errors.BadRequestException("deal id is required")
+	}
+	existing, err := s.repo.GetByID(ctx, dealID)
+	if err != nil {
+		return 0, err
+	}
+	if existing == nil {
+		return 0, _errors.NotFoundException("deal not found")
+	}
+
+	setting := &dto.DealSetting{
+		FromDate:                _utils.ParseStringToTime(req.GetFromDate()),
+		ToDate:                  _utils.ParseStringToTime(req.GetToDate()),
+		AllowSharing:            req.GetAllowSharing(),
+		MemberCanAddTransaction: req.GetMemberCanAddTransaction(),
+		OnlyOwnerGetCommission:  req.GetOnlyOwnerGetCommission(),
+		InternalNote:            req.GetInternalNote(),
+		OwnerID:                 req.GetOwnerId(),
+		Status:                  enums.DealStatus(req.GetStatus()),
+		AllowManualInput:        req.GetAllowManualInput(),
+		AccountNumber:           req.GetAccountNumber(),
+		AccountName:             req.GetAccountName(),
+		BankID:                  req.GetBankId(),
+		TargetProfit:            req.GetTargetProfit(),
+		Name:                    req.GetName(),
+		ShareVisibility:         enums.EVisibility(req.GetShareVisibility()),
+		Description:             req.GetDescription(),
+	}
+	if err := s.repo.UpdateSetting(ctx, dealID, setting); err != nil {
+		return 0, err
+	}
+
+	if s.sync != nil {
+		key := s.sync.GetKey(ctx, _utils.SyncKeyDealMe, 0)
+		_ = s.sync.PutTimestamp(ctx, key, time.Now().UnixMilli())
+		now := time.Now().UnixMilli()
+		for _, prefix := range []string{
+			_utils.SyncKeyDealDetail,
+			_utils.SyncKeyDealBank,
+			_utils.SyncKeyDealSummary,
+		} {
+			_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, prefix, dealID), now)
+		}
+	}
+
+	return dealID, nil
 }
 
 // SeedDemoRelated ensures bank/investment/cost/contract rows exist for a demo deal.

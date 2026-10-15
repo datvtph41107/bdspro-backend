@@ -55,6 +55,7 @@ http:
     - "http://127.0.0.1:5174"
     - "https://bdspro.com"
     - "https://qhpro.vn"
+    - "https://test.qhpro.vn"
     - "http://14.225.210.29:3206"
     - "http://14.225.210.29:3108"
     - "https://admin.bdspro.com"

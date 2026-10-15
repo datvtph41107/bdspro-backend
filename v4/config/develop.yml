@@ -32,6 +32,8 @@ database:
     dsn: host=14.225.210.29 user=hieubap password=Matkhau.1 dbname=db_tqd port=5433 sslmode=disable
   crm:
     dsn: "" # empty → reuse database.dsn
+  payment:
+    dsn: "" # empty → reuse database.dsn (must have `banks` table / payment migrate)
 
 logging:
   level:
@@ -184,3 +186,18 @@ tqd:
           paint:
             raster-opacity: 1.0
           source: "{sourceCode}"
+
+http:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+    - "http://127.0.0.1:3001"
+    - "http://localhost:3001"
+    - "http://localhost:8000"
+    - "http://localhost:5173"
+    - "http://127.0.0.1:5173"
+    - "http://localhost:5174"
+    - "http://127.0.0.1:5174"
+    - "http://14.225.210.29:3206"
+    - "https://test.qhpro.vn"
+    - "http://14.225.210.29:3110"

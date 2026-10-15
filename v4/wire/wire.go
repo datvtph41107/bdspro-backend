@@ -70,6 +70,7 @@ import (
 	user_modules_notification_controller "userv4/modules/notification/controller"
 	user_modules_notification_repository "userv4/modules/notification/repository"
 	user_modules_notification_services "userv4/modules/notification/services"
+	user_modules_payment "userv4/modules/payment"
 	user_modules_tqd "userv4/modules/tqd"
 	user_modules_tqd_provider "userv4/modules/tqd/provider"
 	user_modules_user_controller "userv4/modules/user/controller"
@@ -252,6 +253,8 @@ var wireSet = wire.NewSet(
 	user_modules_tqd.ProviderSet,
 	user_infra_postgres.NewCrmDB,
 	user_modules_crm.ProviderSet,
+	user_infra_postgres.NewPaymentDB,
+	user_modules_payment.ProviderSet,
 	// modules/seo
 	user_modules_seo_controller.NewHandler,
 	user_modules_seo_repository.NewNewsPostgres,

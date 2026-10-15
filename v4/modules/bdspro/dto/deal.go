@@ -1,6 +1,30 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"userv4/modules/bdspro/enums"
+)
+
+// DealSetting is PUT deal setting payload (parity with bdspro-service dto.DealSetting).
+type DealSetting struct {
+	FromDate                *time.Time
+	ToDate                  *time.Time
+	AllowSharing            bool
+	MemberCanAddTransaction bool
+	OnlyOwnerGetCommission  bool
+	InternalNote            string
+	OwnerID                 uint64
+	Status                  enums.DealStatus
+	Name                    string
+	AccountNumber           string
+	AccountName             string
+	BankID                  uint64
+	AllowManualInput        bool
+	TargetProfit            float64
+	ShareVisibility         enums.EVisibility
+	Description             string
+}
 
 // DealSearchRequest mirrors bdspropb.DealSearchRequest query params.
 type DealSearchRequest struct {

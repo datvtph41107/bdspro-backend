@@ -15,6 +15,7 @@ import (
 	crmcontroller "userv4/modules/crm/controller"
 	hubcontroller "userv4/modules/hub/controller"
 	notificationcontroller "userv4/modules/notification/controller"
+	paymentcontroller "userv4/modules/payment/controller"
 	seocontroller "userv4/modules/seo/controller"
 	tqdcontroller "userv4/modules/tqd/controller"
 	usercontroller "userv4/modules/user/controller"
@@ -57,6 +58,7 @@ type InitialApp struct {
 	TqdHandler          *tqdcontroller.Handler
 	CrmHandler          *crmcontroller.Handler
 	SeoHandler          *seocontroller.Handler
+	PaymentHandler      *paymentcontroller.Handler
 	UserHandler         *usercontroller.Handler
 
 	// Role-group lookup used by role resolution.
@@ -105,6 +107,7 @@ func NewInitialApp(
 	tqdHandler *tqdcontroller.Handler,
 	crmHandler *crmcontroller.Handler,
 	seoHandler *seocontroller.Handler,
+	paymentHandler *paymentcontroller.Handler,
 	userHandler *usercontroller.Handler,
 	roleGroupRegistry *usecase.RoleGroupRegistry,
 	znsScheduler *scheduler.ZnsScheduler,
@@ -145,6 +148,7 @@ func NewInitialApp(
 		TqdHandler:          tqdHandler,
 		CrmHandler:          crmHandler,
 		SeoHandler:          seoHandler,
+		PaymentHandler:      paymentHandler,
 		UserHandler:         userHandler,
 		RoleGroupRegistry:   roleGroupRegistry,
 		ZnsScheduler:      znsScheduler,

@@ -35,6 +35,8 @@ database:
     dsn: ""
   crm:
     dsn: ""
+  payment:
+    dsn: ""
 
 service:
   name: "user service"

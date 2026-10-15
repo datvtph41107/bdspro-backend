@@ -265,6 +265,8 @@ func (r *stubDealRepo) SeedDemoRelated(context.Context, uint64, uint64, uint64, 
 
 func (r *stubDealRepo) Update(context.Context, *entity.Deal) error { return nil }
 
+func (r *stubDealRepo) UpdateSetting(context.Context, uint64, *dto.DealSetting) error { return nil }
+
 func (r *stubDealRepo) Create(_ context.Context, deal *entity.Deal, members []entity.DealMember, productIDs []uint64) error {
 	if deal != nil {
 		deal.ID = 99

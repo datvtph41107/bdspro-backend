@@ -33,6 +33,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 
 	redisKeys := []string{
 		_utils.SyncKeyBdsproEnums,
+		_utils.SyncKeyPaymentBankAll,
 		s.sync.GetKey(ctx, _utils.SyncKeyPermissionMe, 0),
 		s.sync.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0),
 		_utils.SyncKeyUserGuideByKey,
@@ -46,6 +47,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	}
 	names := []string{
 		"enum",
+		"bank_all",
 		"permission_me",
 		"info_me",
 		"user_guides_by_key",
@@ -60,6 +62,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	// Keys that are not profile-scoped — safe to EnsureTimestamp without a profile.
 	globalKey := map[string]bool{
 		_utils.SyncKeyBdsproEnums:       true,
+		_utils.SyncKeyPaymentBankAll:    true,
 		_utils.SyncKeyUserGuideByKey:    true,
 		_utils.SyncKeyPoiCategoryIcons:  true,
 		_utils.SyncKeyTQDProvincesWards: true,
@@ -73,8 +76,11 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	timestamps := make(map[string]int64, len(names))
 	for i, v := range vals {
 		ts := parseSyncTimestamp(v)
+		if ts == 0 {
+			// MGet can miss while GET still works (e.g. transient pool / nil slot).
+			ts = s.sync.GetTimestamp(ctx, redisKeys[i])
+		}
 		if ts > 0 {
-			// Redis already has a value — return it as-is (do not reseed).
 			timestamps[names[i]] = ts
 			continue
 		}

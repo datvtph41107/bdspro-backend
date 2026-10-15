@@ -13,9 +13,10 @@ enums/        In-process enum catalogs (public/enums)
 
 Phase-1 routes (local, no bdspro/crm/notification TCP for these reads):
 
-- `GET /v2/bdspro/ts` — app sync timestamps (Redis / SyncUtil)
+- `GET /v2/bdspro/ts` — app sync timestamps (Redis / SyncUtil), includes `bank_all` for `/v2/payment/bank/all`
 - `GET /v4/deals/me` — deals of current user (was `/v2.1/org/deals/user`)
 - `POST /v4/deal`, `PUT /v4/deal/{id}`, `DELETE /v4/deal/{id}` — create / update / delete deal (was `POST|PUT|DELETE /v2.1/org/deal[/{id}]`)
+- `PUT /v4/deal/{id}/setting` — update deal settings (was `PUT /v2.1/org/deal/{dealId}/setting`)
 - `GET /v4/deal/{id}`, `{id}/ts`, `{id}/products`, `{id}/summary`, `{id}/bank-account`, `{id}/members` — deal detail / timestamps / products / summary / bank / members (was `/v2.1/org/deal/...`)
 - `GET /v4/deal/invitation/list/{dealId}` — deal invitations (was `/v2.1/org/deal-invitation/list/{id}`)
 - `GET|POST|PUT|DELETE /v2.1/org/investment...` and `/v4/org/investment...` — investment CRUD, approve/reject/confirm, member histories

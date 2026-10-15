@@ -58,6 +58,8 @@ var publicHTTPRoutes = []string{
 	"/v2/hub/settings",
 	// Gateway fire-and-forget request stats (no user JWT)
 	"/v2/hub/request-stats/track",
+	// Payment public (gateway whitelist parity)
+	"/v2/payment/bank/all",
 	// Bdspro public
 	"/v2/bdspro/public/enums",
 	"/v2/bdspro/v2/list/project",

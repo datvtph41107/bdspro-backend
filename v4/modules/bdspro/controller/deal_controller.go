@@ -27,6 +27,7 @@ func NewDealController(deal services.DealService) *DealController {
 func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.HandleProto(mux, http.MethodPost, "/v4/deal", c.createProto)
 	httpapi.HandleProto(mux, http.MethodPut, "/v4/deal/{id}", c.updateProto)
+	httpapi.HandleProto(mux, http.MethodPut, "/v4/deal/{dealId}/setting", c.updateSettingProto)
 	httpapi.HandleProto(mux, http.MethodDelete, "/v4/deal/{id}", c.deleteProto)
 	httpapi.GET(mux, "/v4/deals/me", c.getDealsMe)
 	httpapi.GET(mux, "/v4/deal/{id}/ts", c.getTimestamps)
@@ -52,6 +53,14 @@ func (c *DealController) updateProto(ctx context.Context, req *bdspropb.UpdateGr
 		return nil, err
 	}
 	return &bdspropb.UpdateGroupDealResponse{Id: uint32(id)}, nil
+}
+
+func (c *DealController) updateSettingProto(ctx context.Context, req *bdspropb.UpdateDealSettingRequest) (*bdspropb.UpdateDealSettingResponse, error) {
+	dealID, err := c.deal.UpdateDealSetting(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &bdspropb.UpdateDealSettingResponse{DealId: dealID}, nil
 }
 
 func (c *DealController) deleteProto(ctx context.Context, req *bdspropb.DeleteGroupDealRequest) (*bdspropb.DeleteGroupDealResponse, error) {

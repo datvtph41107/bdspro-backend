@@ -123,6 +123,9 @@ func runHTTP() error {
 	if app.SeoHandler == nil {
 		return fmt.Errorf("initialize userv4 app: seo handler is nil")
 	}
+	if app.PaymentHandler == nil {
+		return fmt.Errorf("initialize userv4 app: payment handler is nil")
+	}
 
 	if err := userdb.RunPendingMigrations(app.DB); err != nil {
 		return fmt.Errorf("userv4 schema migrate: %w", err)
@@ -163,6 +166,7 @@ func runHTTP() error {
 	app.CrmHandler.RegisterHTTP(mux)
 	app.SeoHandler.RegisterHTTP(mux)
 	app.SeoHandler.RegisterInternalHTTP(mux, runtimeConfig.Seo.InternalSecretKey)
+	app.PaymentHandler.RegisterHTTP(mux)
 
 	handler := chain(
 		logUnmatchedRoutes(mux),

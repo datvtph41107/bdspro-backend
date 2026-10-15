@@ -109,14 +109,19 @@ Table  api_client_credentials {
 }
 
 // AUTHORIZATION / ORGANIZATION
+// bảng này là bảng quyền thành viên trong tổ chức
+// cái này sẽ import trực tiếp từ backend vào chứ ko cho sửa
 Table permissions {
-  code varchar [pk]
+  id bigint [pk]
+  name varchar
 }
 
 Table organization_roles {
   id bigint [pk]
   organization_id bigint [not null, ref: > organizations.party_id]
   name varchar [not null]
+-- true là hệ thống thiết lập mặc định, false là do người dùng tạo
+  is_default boolean [not null, default: false]
 
   indexes {
     (organization_id, id) [unique]
@@ -125,10 +130,10 @@ Table organization_roles {
 
 Table organization_role_permissions {
   role_id bigint [not null, ref: > organization_roles.id]
-  permission_code varchar [not null, ref: > permissions.code]
+  permission_id bigint [not null, ref: > permissions.id]
 
   indexes {
-    (role_id, permission_code) [pk]
+    (role_id, permission_id) [pk]
   }
 }
 
@@ -153,6 +158,8 @@ Table organization_memberships {
   originating_invitation_id bigint [ref: > organization_invitations.id, unique]
   joined_at timestamptz [not null]
   ended_at timestamptz
+  role_id bigint [not null, ref: > organization_roles.id]
+  left_at timestamptz
 
   // Candidate composite FK target; redundant unique key buys relational integrity.
   indexes {
@@ -164,14 +171,6 @@ Table organization_membership_blocks {
   id bigint [pk]
   membership_id bigint [not null, ref: > organization_memberships.id]
   blocked_at timestamptz [not null]
-  ended_at timestamptz
-}
-
-Table organization_role_assignments {
-  id bigint [pk]
-  membership_id bigint [not null, ref: > organization_memberships.id]
-  role_id bigint [not null, ref: > organization_roles.id]
-  assigned_at timestamptz [not null]
   ended_at timestamptz
 }
 

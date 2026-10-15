@@ -77,6 +77,10 @@ func (routeStubDeal) UpdateGroupDeal(context.Context, *bdspropb.UpdateGroupDealR
 	return 14, nil
 }
 
+func (routeStubDeal) UpdateDealSetting(context.Context, *bdspropb.UpdateDealSettingRequest) (uint64, error) {
+	return 14, nil
+}
+
 func (routeStubDeal) SeedDemoRelated(context.Context, uint64, uint64, uint64, uint32) error { return nil }
 
 func (routeStubDeal) DeleteGroupDeal(context.Context, uint64) error { return nil }
@@ -180,6 +184,7 @@ func TestDealRoutes_RegisterNoConflict(t *testing.T) {
 	}{
 		{http.MethodPost, "/v4/deal", `{"name":"TV demo"}`},
 		{http.MethodPut, "/v4/deal/14", `{"name":"TV updated"}`},
+		{http.MethodPut, "/v4/deal/14/setting", `{"allowSharing":true}`},
 		{http.MethodDelete, "/v4/deal/14", ""},
 	} {
 		var req *http.Request
