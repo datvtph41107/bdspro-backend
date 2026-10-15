@@ -16,15 +16,19 @@ import (
 	user_infra_handler "userv4/infra/handler"
 	user_infra_handler_grpc "userv4/infra/handler/grpc"
 	user_infra_handler_grpc_entitlement "userv4/infra/handler/grpc/entitlement"
-	user_infra_mapper "userv4/infra/mapper"
-	user_infra_oauth "userv4/infra/oauth"
+	user_modules_auth_mapper "userv4/modules/auth/mapper"
+	user_modules_user_mapper "userv4/modules/user/mapper"
+	user_modules_auth_oauth "userv4/modules/auth/oauth"
 	user_infra_postgres "userv4/infra/postgres"
-	user_infra_postgres_bootstrapadmin "userv4/infra/postgres/bootstrapadmin"
-	user_infra_postgres_checkout "userv4/infra/postgres/checkout"
-	user_infra_postgres_entitlement "userv4/infra/postgres/entitlement"
-	user_infra_postgres_iampermission "userv4/infra/postgres/iampermission"
-	user_infra_postgres_organization "userv4/infra/postgres/organization"
-	user_infra_postgres_subscription "userv4/infra/postgres/subscription"
+	user_modules_auth_postgres "userv4/modules/auth/postgres"
+	user_modules_user_postgres "userv4/modules/user/postgres"
+	user_modules_crm_postgres_maindb "userv4/modules/crm/postgres/maindb"
+	user_modules_user_postgres_bootstrapadmin "userv4/modules/user/postgres/bootstrapadmin"
+	user_modules_user_postgres_checkout "userv4/modules/user/postgres/checkout"
+	user_modules_user_postgres_entitlement "userv4/modules/user/postgres/entitlement"
+	user_modules_user_postgres_iampermission "userv4/modules/user/postgres/iampermission"
+	user_modules_user_postgres_organization "userv4/modules/user/postgres/organization"
+	user_modules_user_postgres_subscription "userv4/modules/user/postgres/subscription"
 	user_infra_properties "userv4/infra/properties"
 	user_infra_provider "userv4/infra/provider"
 	user_infra_providers "userv4/infra/providers"
@@ -33,29 +37,30 @@ import (
 	user_infra_sms "userv4/infra/sms"
 	user_infra_zns "userv4/infra/zns"
 	user_initial "userv4/initial"
-	user_internal_domain_user "userv4/internal/domain/user"
+	user_internal_domain_user "userv4/modules/user/domain/user"
 	user_internal_interface "userv4/internal/interface"
 	user_internal_interface_factory "userv4/internal/interface/factory"
 	user_internal_interface_providers "userv4/internal/interface/providers"
 	user_internal_interface_repo "userv4/internal/interface/repo"
 	user_internal_job "userv4/internal/job"
-	user_internal_usecase "userv4/internal/usecase"
-	user_internal_usecase_bootstrapadmin "userv4/internal/usecase/bootstrapadmin"
-	user_internal_usecase_commercialprofile "userv4/internal/usecase/commercialprofile"
-	user_internal_usecase_entitlement "userv4/internal/usecase/entitlement"
-	user_internal_usecase_organization "userv4/internal/usecase/organization"
-	user_internal_usecase_plan_admin "userv4/internal/usecase/plan/admin"
-	user_internal_usecase_plan_publish "userv4/internal/usecase/plan/publish"
-	user_internal_usecase_subscription "userv4/internal/usecase/subscription"
-	user_internal_usecase_subscription_cancel "userv4/internal/usecase/subscription/cancel"
-	user_internal_usecase_subscription_checkout "userv4/internal/usecase/subscription/checkout"
-	user_internal_usecase_subscription_settlement "userv4/internal/usecase/subscription/settlement"
-	user_internal_usecase_user "userv4/internal/usecase/user"
-	user_internal_usecase_useradmin "userv4/internal/usecase/useradmin"
-	user_internal_usecases "userv4/internal/usecases"
+	user_internal_usecase "userv4/modules/auth/services"
+	user_internal_usecase_bootstrapadmin "userv4/modules/user/services/bootstrapadmin"
+	user_internal_usecase_commercialprofile "userv4/modules/user/services/commercialprofile"
+	user_internal_usecase_entitlement "userv4/modules/user/services/entitlement"
+	user_internal_usecase_organization "userv4/modules/user/services/organization"
+	user_internal_usecase_plan_admin "userv4/modules/user/services/plan/admin"
+	user_internal_usecase_plan_publish "userv4/modules/user/services/plan/publish"
+	user_internal_usecase_subscription "userv4/modules/user/services/subscription"
+	user_internal_usecase_subscription_cancel "userv4/modules/user/services/subscription/cancel"
+	user_internal_usecase_subscription_checkout "userv4/modules/user/services/subscription/checkout"
+	user_internal_usecase_subscription_settlement "userv4/modules/user/services/subscription/settlement"
+	user_internal_usecase_user "userv4/modules/user/services/user"
+	user_internal_usecase_useradmin "userv4/modules/user/services/useradmin"
+	user_internal_usecases "userv4/modules/user/services"
 	user_modules_auth_controller "userv4/modules/auth/controller"
 	user_modules_auth_services "userv4/modules/auth/services"
 	user_modules_bdspro_controller "userv4/modules/bdspro/controller"
+	user_modules_bdspro_mapper "userv4/modules/bdspro/mapper"
 	user_modules_bdspro_repository "userv4/modules/bdspro/repository"
 	user_modules_bdspro_services "userv4/modules/bdspro/services"
 	user_modules_crm "userv4/modules/crm"
@@ -84,68 +89,68 @@ var wireSet = wire.NewSet(
 	_db.NewDB,
 	_db.NewTransactionRepo,
 	_provider.SyncProviderSet,
-	wire.Bind(new(user_infra_handler_grpc.OrganizationCheckoutAuthorizer), new(*user_infra_postgres_organization.CheckoutAuthorizer)),
+	wire.Bind(new(user_infra_handler_grpc.OrganizationCheckoutAuthorizer), new(*user_modules_user_postgres_organization.CheckoutAuthorizer)),
 	wire.Bind(new(user_internal_interface.ITransaction), new(*user_infra_postgres.TransactionGorm)),
 	wire.Bind(new(user_internal_interface_factory.IFactory), new(*user_infra_properties.RuntimeProperties)),
 	wire.Bind(new(user_internal_interface_providers.BdsproProvider), new(*user_infra_client.BdsproClient)),
 	wire.Bind(new(user_internal_interface_providers.HubProvider), new(*user_infra_client.HubClient)),
 	wire.Bind(new(user_internal_interface_providers.OrganizationProvider), new(*user_infra_client.OrganizationProviderClient)),
 	wire.Bind(new(user_internal_interface_providers.ProfileProvider), new(*user_infra_provider.ProfileProvider)),
-	wire.Bind(new(user_internal_interface_repo.AdminAccessRepository), new(*user_infra_postgres.AdminAccessPostgresRepo)),
-	wire.Bind(new(user_internal_interface_repo.AuthStatusRepository), new(*user_infra_postgres.StatusPostgres)),
-	wire.Bind(new(user_internal_interface_repo.DeviceRepository), new(*user_infra_postgres.DevicePostgresRepo)),
-	wire.Bind(new(user_internal_interface_repo.IAuthConfigRepo), new(*user_infra_postgres.AuthConfigPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IBlockRepo), new(*user_infra_postgres.BlockPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IContactRepo), new(*user_infra_postgres.ContactPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IDemoProductLogRepo), new(*user_infra_postgres.DemoProductLogPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IFollowRepo), new(*user_infra_postgres.FollowPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IProfileDeletedRepo), new(*user_infra_postgres.ProfileDeletedPostgres)),
-	wire.Bind(new(user_internal_interface_repo.IProfileRepo), new(*user_infra_postgres.ProfilePostgres)),
-	wire.Bind(new(user_internal_interface_repo.OTPRepository), new(*user_infra_postgres.OTPPostgres)),
-	wire.Bind(new(user_internal_interface_repo.PINRepository), new(*user_infra_postgres.PINPostgres)),
-	wire.Bind(new(user_internal_interface_repo.PermissionRepository), new(*user_infra_postgres.PermissionRepo)),
-	wire.Bind(new(user_internal_interface_repo.SessionRepository), new(*user_infra_postgres.SessionPostgres)),
+	wire.Bind(new(user_internal_interface_repo.AdminAccessRepository), new(*user_modules_auth_postgres.AdminAccessPostgresRepo)),
+	wire.Bind(new(user_internal_interface_repo.AuthStatusRepository), new(*user_modules_auth_postgres.StatusPostgres)),
+	wire.Bind(new(user_internal_interface_repo.DeviceRepository), new(*user_modules_auth_postgres.DevicePostgresRepo)),
+	wire.Bind(new(user_internal_interface_repo.IAuthConfigRepo), new(*user_modules_auth_postgres.AuthConfigPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IBlockRepo), new(*user_modules_crm_postgres_maindb.BlockPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IContactRepo), new(*user_modules_crm_postgres_maindb.ContactPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IDemoProductLogRepo), new(*user_modules_user_postgres.DemoProductLogPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IFollowRepo), new(*user_modules_crm_postgres_maindb.FollowPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IProfileDeletedRepo), new(*user_modules_user_postgres.ProfileDeletedPostgres)),
+	wire.Bind(new(user_internal_interface_repo.IProfileRepo), new(*user_modules_user_postgres.ProfilePostgres)),
+	wire.Bind(new(user_internal_interface_repo.OTPRepository), new(*user_modules_auth_postgres.OTPPostgres)),
+	wire.Bind(new(user_internal_interface_repo.PINRepository), new(*user_modules_auth_postgres.PINPostgres)),
+	wire.Bind(new(user_internal_interface_repo.PermissionRepository), new(*user_modules_auth_postgres.PermissionRepo)),
+	wire.Bind(new(user_internal_interface_repo.SessionRepository), new(*user_modules_auth_postgres.SessionPostgres)),
 	wire.Bind(new(user_internal_usecase.AccessTokenIssuer), new(*user_internal_usecase.AuthUsecase)),
 	wire.Bind(new(user_internal_usecase_commercialprofile.CatalogReader), new(*user_internal_usecase_plan_admin.Service)),
 	wire.Bind(new(user_internal_usecase_commercialprofile.SubscriptionReader), new(*user_internal_usecase_subscription.AdminService)),
-	wire.Bind(new(user_internal_usecase_entitlement.PlanAccessStore), new(*user_infra_postgres_entitlement.PlanAccessStore)),
-	wire.Bind(new(user_internal_usecase_entitlement.SubscriptionStore), new(*user_infra_postgres_entitlement.SubscriptionStore)),
-	wire.Bind(new(user_internal_usecase_organization.Repository), new(*user_infra_postgres_organization.Repository)),
+	wire.Bind(new(user_internal_usecase_entitlement.PlanAccessStore), new(*user_modules_user_postgres_entitlement.PlanAccessStore)),
+	wire.Bind(new(user_internal_usecase_entitlement.SubscriptionStore), new(*user_modules_user_postgres_entitlement.SubscriptionStore)),
+	wire.Bind(new(user_internal_usecase_organization.Repository), new(*user_modules_user_postgres_organization.Repository)),
 	wire.Bind(new(user_internal_usecase_plan_admin.PermissionAuthorizer), new(*user_infra_client_authpermission.CatalogAuthorizer)),
 	wire.Bind(new(user_internal_usecase_plan_admin.Publisher), new(*user_internal_usecase_plan_publish.Service)),
-	wire.Bind(new(user_internal_usecase_plan_admin.Repository), new(*user_infra_postgres.PlanVersionRepo)),
-	wire.Bind(new(user_internal_usecase_plan_publish.Repository), new(*user_infra_postgres.PlanVersionRepo)),
-	wire.Bind(new(user_internal_usecase_subscription.AdminRepository), new(*user_infra_postgres_subscription.AdminProjectionStore)),
-	wire.Bind(new(user_internal_usecase_subscription.PermissionAuthorizer), new(*user_infra_postgres_iampermission.Checker)),
-	wire.Bind(new(user_internal_usecase_subscription_cancel.Store), new(*user_infra_postgres_subscription.CancellationStore)),
-	wire.Bind(new(user_internal_usecase_subscription_checkout.CommandStore), new(*user_infra_postgres_checkout.CheckoutStore)),
-	wire.Bind(new(user_internal_usecase_subscription_checkout.ContactStore), new(*user_infra_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_plan_admin.Repository), new(*user_modules_user_postgres.PlanVersionRepo)),
+	wire.Bind(new(user_internal_usecase_plan_publish.Repository), new(*user_modules_user_postgres.PlanVersionRepo)),
+	wire.Bind(new(user_internal_usecase_subscription.AdminRepository), new(*user_modules_user_postgres_subscription.AdminProjectionStore)),
+	wire.Bind(new(user_internal_usecase_subscription.PermissionAuthorizer), new(*user_modules_user_postgres_iampermission.Checker)),
+	wire.Bind(new(user_internal_usecase_subscription_cancel.Store), new(*user_modules_user_postgres_subscription.CancellationStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.CommandStore), new(*user_modules_user_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.ContactStore), new(*user_modules_user_postgres_checkout.CheckoutStore)),
 	wire.Bind(new(user_internal_usecase_subscription_checkout.PaymentAttemptPort), new(*user_infra_client_payment.Commands)),
 	wire.Bind(new(user_internal_usecase_subscription_checkout.PaymentMethodReader), new(*user_infra_client_payment.Commands)),
 	wire.Bind(new(user_internal_usecase_subscription_checkout.PaymentOrderPort), new(*user_infra_client_payment.Commands)),
-	wire.Bind(new(user_internal_usecase_subscription_checkout.PlanResolver), new(*user_infra_postgres_checkout.CheckoutStore)),
-	wire.Bind(new(user_internal_usecase_subscription_checkout.SubscriptionReader), new(*user_infra_postgres_checkout.CheckoutStore)),
-	wire.Bind(new(user_internal_usecase_subscription_settlement.Store), new(*user_infra_postgres_subscription.SettlementStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.PlanResolver), new(*user_modules_user_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_checkout.SubscriptionReader), new(*user_modules_user_postgres_checkout.CheckoutStore)),
+	wire.Bind(new(user_internal_usecase_subscription_settlement.Store), new(*user_modules_user_postgres_subscription.SettlementStore)),
 	wire.Bind(new(user_internal_usecase_useradmin.PermissionAuthorizer), new(*user_infra_client_authpermission.CatalogAuthorizer)),
 	injection.RPCClientSet,
 	injection.NewHttpClient,
 	common_utils.NewSyncUtil,
-	user_infra_postgres.NewAdminAccessPostgresRepo,
+	user_modules_auth_postgres.NewAdminAccessPostgresRepo,
 	user_internal_usecase.NewAdminAccessUsecase,
 	user_infra_handler.NewAdminHandler,
 	user_internal_usecase_user.NewAdminKYCUsecase,
 	user_internal_usecases.NewAdminMainAreaUsecase,
-	user_infra_mapper.NewAdminMapper,
+	user_modules_user_mapper.NewAdminMapper,
 	user_infra_handler_grpc.NewAdminOrganizationHandler,
-	user_infra_postgres.NewAdminPostgres,
-	user_infra_postgres_subscription.NewAdminProjectionStore,
+	user_modules_user_postgres.NewAdminPostgres,
+	user_modules_user_postgres_subscription.NewAdminProjectionStore,
 	user_internal_usecase_user.NewAdminPurposeUseUsecase,
 	user_internal_usecase_subscription.NewAdminService,
 	user_internal_usecase.NewAdminUsecase,
 	user_internal_usecase_user.NewAdminUsecase,
 	user_infra_handler.NewAdminUserProfileHandler,
 	user_infra_client.NewAuthClient,
-	user_infra_postgres.NewAuthConfigRepository,
+	user_modules_auth_postgres.NewAuthConfigRepository,
 	user_infra_handler.NewAuthHandler,
 	user_modules_auth_controller.NewLoginController,
 	user_modules_auth_services.NewAuthUsecaseLoginService,
@@ -174,6 +179,11 @@ var wireSet = wire.NewSet(
 	user_modules_bdspro_repository.NewProductPostgres,
 	user_modules_bdspro_services.NewLocalProductService,
 	wire.Bind(new(user_modules_bdspro_services.ProductService), new(*user_modules_bdspro_services.LocalProductService)),
+	user_modules_bdspro_repository.NewDistributePostgres,
+	user_modules_bdspro_repository.NewProductPricePostgres,
+	user_modules_bdspro_mapper.NewDistributionMapper,
+	user_modules_bdspro_services.NewLocalDistributionService,
+	wire.Bind(new(user_modules_bdspro_services.DistributionService), new(*user_modules_bdspro_services.LocalDistributionService)),
 	user_modules_bdspro_repository.NewPropertyPostgres,
 	user_modules_bdspro_services.NewLocalPropertyService,
 	wire.Bind(new(user_modules_bdspro_services.PropertyService), new(*user_modules_bdspro_services.LocalPropertyService)),
@@ -294,41 +304,37 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(user_modules_user_services.BookmarkService), new(*user_modules_user_services.LocalBookmarkService)),
 	user_modules_user_services.NewLocalAdminUserService,
 	wire.Bind(new(user_modules_user_services.AdminUserService), new(*user_modules_user_services.LocalAdminUserService)),
-	user_infra_mapper.NewAuthMethodMapper,
-	user_infra_postgres.NewAuthRepository,
-	user_infra_mapper.NewAuthSecurityMapper,
+	user_modules_auth_mapper.NewAuthMethodMapper,
+	user_modules_auth_postgres.NewAuthRepository,
+	user_modules_auth_mapper.NewAuthSecurityMapper,
 	user_internal_usecase.NewAuthSecurityUsecase,
 	user_internal_usecase.NewAuthService,
 	user_infra_client.NewBdsproClient,
-	user_infra_postgres.NewBlockPostgres,
-	user_internal_usecases.NewBlockUsecase,
+	user_modules_crm_postgres_maindb.NewBlockPostgres,
 	user_infra_handler.NewBookmarkUserHandler,
-	user_infra_postgres.NewBookmarkUserPostgres,
+	user_modules_user_postgres.NewBookmarkUserPostgres,
 	user_internal_usecase_user.NewBookmarkUserUsecase,
 	user_infra_providers.NewCancelClock,
-	user_infra_postgres_subscription.NewCancellationStore,
+	user_modules_user_postgres_subscription.NewCancellationStore,
 	user_infra_client_authpermission.NewCatalogAuthorizer,
-	user_infra_postgres.NewCertificationPostgres,
-	user_internal_usecases.NewCertificationUsecase,
-	user_infra_postgres_iampermission.NewChecker,
-	user_infra_postgres_organization.NewCheckoutAuthorizer,
+	user_modules_user_postgres.NewCertificationPostgres,
+	user_modules_user_postgres_iampermission.NewChecker,
+	user_modules_user_postgres_organization.NewCheckoutAuthorizer,
 	user_infra_providers.NewCheckoutClock,
-	user_infra_postgres_checkout.NewCheckoutStore,
+	user_modules_user_postgres_checkout.NewCheckoutStore,
 	user_infra_client_payment.NewCommands,
 	user_infra_handler_grpc.NewCommercialProfileHandler,
-	user_infra_postgres.NewContactPostgres,
+	user_modules_crm_postgres_maindb.NewContactPostgres,
 	user_infra_cookie.NewCookieProvider,
-	user_infra_postgres.NewDemoProductLogPostgres,
-	user_infra_mapper.NewDeviceMapper,
-	user_infra_postgres.NewDevicePostgresRepo,
+	user_modules_user_postgres.NewDemoProductLogPostgres,
+	user_modules_auth_mapper.NewDeviceMapper,
+	user_modules_auth_postgres.NewDevicePostgresRepo,
 	user_internal_usecase.NewDeviceUsecase,
-	user_infra_oauth.NewFacebookAuthService,
-	user_infra_postgres.NewFollowPostgres,
-	user_internal_usecases.NewFollowUsecase,
-	user_infra_postgres.NewFriendPostgres,
-	user_internal_usecases.NewFriendUsecase,
-	user_infra_oauth.NewGoogleAuthService,
-	user_infra_postgres.NewGroupPostgres,
+	user_modules_auth_oauth.NewFacebookAuthService,
+	user_modules_crm_postgres_maindb.NewFollowPostgres,
+	user_modules_crm_postgres_maindb.NewFriendPostgres,
+	user_modules_auth_oauth.NewGoogleAuthService,
+	user_modules_crm_postgres_maindb.NewGroupPostgres,
 	user_infra_handler.NewGrpcProfileService,
 	user_infra_handler_grpc_entitlement.NewHandler,
 	user_infra_client.NewHubClient,
@@ -336,55 +342,55 @@ var wireSet = wire.NewSet(
 	user_infra_handler.NewInternalHandler,
 	user_infra_handler_grpc.NewInternalOrganizationMembershipHandler,
 	user_infra_handler.NewKYCHandler,
-	user_infra_mapper.NewKYCMapper,
-	user_infra_postgres.NewKYCRepo,
+	user_modules_user_mapper.NewKYCMapper,
+	user_modules_user_postgres.NewKYCRepo,
 	user_internal_usecase_user.NewKYCUsecase,
 	user_infra_handler.NewMainAreaHandler,
-	user_infra_mapper.NewMainAreaMapper,
-	user_infra_postgres.NewMainAreaPostgres,
+	user_modules_user_mapper.NewMainAreaMapper,
+	user_modules_user_postgres.NewMainAreaPostgres,
 	user_infra_handler.NewOAuthRouter,
 	user_internal_usecase.NewOAuthUsecase,
-	user_infra_postgres.NewOTPRepository,
+	user_modules_auth_postgres.NewOTPRepository,
 	user_infra_client.NewOrganizationProviderClient,
 	user_internal_usecase.NewOtpUsecase,
-	user_infra_postgres.NewPINRepository,
+	user_modules_auth_postgres.NewPINRepository,
 	user_internal_usecase.NewPINUsecase,
 	user_infra_handler.NewPermissionHandler,
-	user_infra_postgres.NewPermissionRepo,
+	user_modules_auth_postgres.NewPermissionRepo,
 	user_internal_usecase.NewPermissionUsecase,
-	user_infra_postgres_entitlement.NewPlanAccessStore,
+	user_modules_user_postgres_entitlement.NewPlanAccessStore,
 	user_infra_providers.NewPlanPublishTransaction,
 	user_infra_handler_grpc.NewPlanVersionAdminHandler,
-	user_infra_postgres.NewPlanVersionRepo,
+	user_modules_user_postgres.NewPlanVersionRepo,
 	user_infra_handler.NewPriceTableHandler,
-	user_infra_mapper.NewPriceTableMapper,
-	user_infra_postgres.NewPriceTableRepo,
+	user_modules_user_mapper.NewPriceTableMapper,
+	user_modules_user_postgres.NewPriceTableRepo,
 	user_internal_usecases.NewPriceTableUsecase,
 	user_infra_handler.NewProfessionHandler,
-	user_infra_mapper.NewProfessionMapper,
-	user_infra_postgres.NewProfessionPostgres,
+	user_modules_user_mapper.NewProfessionMapper,
+	user_modules_user_postgres.NewProfessionPostgres,
 	user_internal_usecase_user.NewProfessionUsecase,
 	user_internal_domain_user.NewProfileDeleted,
-	user_infra_postgres.NewProfileDeletedPostgres,
-	user_infra_mapper.NewProfileMapper,
-	user_infra_postgres.NewProfileMediaPostgres,
-	user_infra_postgres.NewProfilePostgres,
+	user_modules_user_postgres.NewProfileDeletedPostgres,
+	user_modules_user_mapper.NewProfileMapper,
+	user_modules_user_postgres.NewProfileMediaPostgres,
+	user_modules_user_postgres.NewProfilePostgres,
 	user_infra_provider.NewProfileProvider,
 	user_internal_usecase_user.NewProfileUsecase,
 	user_infra_handler.NewPurposeUseHandler,
-	user_infra_mapper.NewPurposeUseMapper,
-	user_infra_postgres.NewPurposeUseRepo,
+	user_modules_user_mapper.NewPurposeUseMapper,
+	user_modules_user_postgres.NewPurposeUseRepo,
 	user_infra_redis.NewRedisProvider,
-	user_infra_postgres_organization.NewRepository,
+	user_modules_user_postgres_organization.NewRepository,
 	user_infra_handler.NewRoleGroupHandler,
-	user_infra_mapper.NewRoleGroupMapper,
+	user_modules_auth_mapper.NewRoleGroupMapper,
 	user_internal_usecase.NewRoleGroupRegistry,
-	user_infra_postgres.NewRoleGroupRepo,
+	user_modules_auth_postgres.NewRoleGroupRepo,
 	user_internal_usecase.NewRoleGroupUsecase,
 	user_validator.NewRoleGroupValidator,
 	user_infra_handler.NewRoleHandler,
-	user_infra_mapper.NewRoleMapper,
-	user_infra_postgres.NewRoleRepo,
+	user_modules_auth_mapper.NewRoleMapper,
+	user_modules_auth_postgres.NewRoleRepo,
 	user_internal_usecase.NewRoleUsecase,
 	user_infra_properties.NewRuntimeProperties,
 	user_infra_sms.NewSMSProvider,
@@ -397,28 +403,28 @@ var wireSet = wire.NewSet(
 	user_internal_usecase_subscription_cancel.NewService,
 	user_internal_usecase_subscription_checkout.NewService,
 	user_internal_usecase_subscription_settlement.NewService,
-	user_infra_mapper.NewSessionMapper,
-	user_infra_postgres.NewSessionRepository,
-	user_infra_postgres_subscription.NewSettlementStore,
-	user_infra_postgres.NewStatusRepository,
-	user_infra_postgres_bootstrapadmin.NewStore,
+	user_modules_auth_mapper.NewSessionMapper,
+	user_modules_auth_postgres.NewSessionRepository,
+	user_modules_user_postgres_subscription.NewSettlementStore,
+	user_modules_auth_postgres.NewStatusRepository,
+	user_modules_user_postgres_bootstrapadmin.NewStore,
 	user_infra_handler_grpc.NewSubscriptionAdminHandler,
 	user_infra_handler_grpc.NewSubscriptionCheckoutHandler,
 	user_infra_handler_grpc.NewSubscriptionSettlementHandler,
-	user_infra_postgres_entitlement.NewSubscriptionStore,
+	user_modules_user_postgres_entitlement.NewSubscriptionStore,
 	user_infra_handler.NewTagHandler,
-	user_infra_mapper.NewTagMapper,
-	user_infra_postgres.NewTagPostgres,
+	user_modules_user_mapper.NewTagMapper,
+	user_modules_user_postgres.NewTagPostgres,
 	user_internal_usecase_user.NewTagUsecase,
 	user_infra_postgres.NewTransactionGorm,
 	user_internal_job.NewUserDashboardStatsJob,
 	user_infra_handler.NewUserInfoHandler,
-	user_infra_mapper.NewUserInfoMapper,
-	user_infra_postgres.NewUserInfoRepository,
+	user_modules_auth_mapper.NewUserInfoMapper,
+	user_modules_auth_postgres.NewUserInfoRepository,
 	user_internal_usecase.NewUserInfoUsecase,
 	user_internal_domain_user.NewUserProfileEntityWithRequest,
 	user_internal_usecase_user.NewUserUsecase,
-	user_infra_oauth.NewZaloAuthService,
+	user_modules_auth_oauth.NewZaloAuthService,
 	user_infra_zns.NewZnsProvider,
 	user_infra_scheduler.NewZnsScheduler,
 )

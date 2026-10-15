@@ -8,7 +8,7 @@ import (
 	organizationpb "pb/types/organization"
 	"testing"
 
-	"userv4/internal/usecase/subscription/checkout"
+	"userv4/modules/user/services/subscription/checkout"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

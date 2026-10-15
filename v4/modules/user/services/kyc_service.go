@@ -7,9 +7,9 @@ import (
 	_errors "common/errors"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/infra/mapper"
-	"userv4/internal/dto"
-	usecases "userv4/internal/usecase/user"
+	mapper "userv4/modules/user/mapper"
+	"userv4/modules/user/dto"
+	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/status"
 )

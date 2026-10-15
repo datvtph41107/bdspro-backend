@@ -7,10 +7,9 @@ import (
 	_dto "common/domain/dto"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/infra/mapper"
-	"userv4/internal/models"
-	userusecase "userv4/internal/usecase/user"
-	"userv4/internal/usecases"
+	mapper "userv4/modules/user/mapper"
+	"userv4/modules/user/entity"
+	userusecase "userv4/modules/user/services/user"
 )
 
 // CatalogService owns main-area / purpose-use / profession HTTP surface.
@@ -36,7 +35,7 @@ type CatalogService interface {
 
 // LocalCatalogService adapts catalog usecases into modules/user.
 type LocalCatalogService struct {
-	mainArea   usecases.IAdminMainAreaUsecase
+	mainArea   IAdminMainAreaUsecase
 	mainMapper *mapper.MainAreaMapper
 
 	purpose       userusecase.IAdminPurposeUseUsecase
@@ -47,7 +46,7 @@ type LocalCatalogService struct {
 }
 
 func NewLocalCatalogService(
-	mainArea usecases.IAdminMainAreaUsecase,
+	mainArea IAdminMainAreaUsecase,
 	mainMapper *mapper.MainAreaMapper,
 	purpose userusecase.IAdminPurposeUseUsecase,
 	purposeMapper *mapper.PurposeUseMapper,
@@ -115,7 +114,7 @@ func (s *LocalCatalogService) GetMainAreaItems(ctx context.Context, text string,
 	searchText := strings.TrimSpace(text)
 	if searchText != "" {
 		searchTextLower := strings.ToLower(searchText)
-		filtered = make([]models.MainAreaEntity, 0, len(entities))
+		filtered = make([]entity.MainAreaEntity, 0, len(entities))
 		for _, entity := range entities {
 			nameMatch := strings.Contains(strings.ToLower(entity.Name), searchTextLower)
 			descMatch := entity.Description != "" && strings.Contains(strings.ToLower(entity.Description), searchTextLower)

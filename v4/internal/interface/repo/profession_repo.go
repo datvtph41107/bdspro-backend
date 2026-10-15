@@ -4,7 +4,7 @@ import (
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
 	"context"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/domain/user"
 )
 
 type IProfessionRepo interface {

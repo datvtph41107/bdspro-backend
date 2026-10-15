@@ -3,7 +3,7 @@ package user
 import (
 	_models "common/models"
 	"time"
-	"userv4/enums"
+	"userv4/modules/user/enums"
 )
 
 type ProfessionEntity struct {

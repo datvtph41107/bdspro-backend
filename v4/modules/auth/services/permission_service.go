@@ -5,7 +5,6 @@ import (
 	"time"
 
 	_utils "common/utils"
-	"userv4/internal/usecase"
 	"userv4/modules/auth/dto"
 )
 
@@ -18,11 +17,11 @@ type PermissionService interface {
 // Permission ownership lives here; RoleUsecase remains the lookup backend until
 // role_profiles / org-member resolution moves into this package.
 type RoleUsecasePermissionService struct {
-	role *usecase.RoleUsecase
+	role *RoleUsecase
 	sync *_utils.SyncUtil
 }
 
-func NewRoleUsecasePermissionService(role *usecase.RoleUsecase, sync *_utils.SyncUtil) *RoleUsecasePermissionService {
+func NewRoleUsecasePermissionService(role *RoleUsecase, sync *_utils.SyncUtil) *RoleUsecasePermissionService {
 	return &RoleUsecasePermissionService{role: role, sync: sync}
 }
 

@@ -3,8 +3,6 @@ package tqd
 import (
 	_db "common/db"
 
-	"github.com/google/wire"
-	infra_postgres "userv4/infra/postgres"
 	"userv4/modules/tqd/controller"
 	"userv4/modules/tqd/mapper"
 	tqdpostgres "userv4/modules/tqd/postgres"
@@ -24,6 +22,9 @@ import (
 	relatedapp "userv4/modules/tqd/services/relatedentity/application"
 	relatedports "userv4/modules/tqd/services/relatedentity/ports"
 	"userv4/modules/tqd/services/resolver/layer_resolver/rule"
+
+	"github.com/google/wire"
+	"gorm.io/gorm"
 )
 
 // ProviderSet wires the TQD client HTTP stack (repos + usecases + NewHandler).
@@ -119,156 +120,156 @@ var ProviderSet = wire.NewSet(
 	controller.NewHandler,
 )
 
-func ProvideLocationRepository(tqd *infra_postgres.TqdDB) repo.LocationRepository {
-	return tqdpostgres.NewLocationRepository(tqd.DB)
+func ProvideLocationRepository(db *gorm.DB) repo.LocationRepository {
+	return tqdpostgres.NewLocationRepository(db)
 }
 
-func ProvideLayerRepository(tqd *infra_postgres.TqdDB) repo.LayerRepository {
-	return tqdpostgres.NewLayerRepository(tqd.DB)
+func ProvideLayerRepository(db *gorm.DB) repo.LayerRepository {
+	return tqdpostgres.NewLayerRepository(db)
 }
 
-func ProvideRegionRepository(tqd *infra_postgres.TqdDB) repo.RegionRepository {
-	return tqdpostgres.NewRegionRepository(tqd.DB)
+func ProvideRegionRepository(db *gorm.DB) repo.RegionRepository {
+	return tqdpostgres.NewRegionRepository(db)
 }
 
-func ProvideRegionExtendRepository(tqd *infra_postgres.TqdDB) repo.RegionExtendRepository {
-	return tqdpostgres.NewRegionExtendRepository(tqd.DB)
+func ProvideRegionExtendRepository(db *gorm.DB) repo.RegionExtendRepository {
+	return tqdpostgres.NewRegionExtendRepository(db)
 }
 
-func ProvideQHLabelRepository(tqd *infra_postgres.TqdDB) repo.QHLabelRepository {
-	return tqdpostgres.NewQHLabelRepository(tqd.DB)
+func ProvideQHLabelRepository(db *gorm.DB) repo.QHLabelRepository {
+	return tqdpostgres.NewQHLabelRepository(db)
 }
 
-func ProvideQHLayerLegendRepository(tqd *infra_postgres.TqdDB) repo.QHLayerLegendRepository {
-	return tqdpostgres.NewQHLayerLegendRepository(tqd.DB)
+func ProvideQHLayerLegendRepository(db *gorm.DB) repo.QHLayerLegendRepository {
+	return tqdpostgres.NewQHLayerLegendRepository(db)
 }
 
-func ProvideQHLandUseRepository(tqd *infra_postgres.TqdDB) repo.QHLandUseRepository {
-	return tqdpostgres.NewQHLayerLandUseRepository(tqd.DB)
+func ProvideQHLandUseRepository(db *gorm.DB) repo.QHLandUseRepository {
+	return tqdpostgres.NewQHLayerLandUseRepository(db)
 }
 
-func ProvideLayerLegalRepo(tqd *infra_postgres.TqdDB) repo.ILayerLegalRepo {
-	return tqdpostgres.NewLayerLegalPostgres(tqd.DB)
+func ProvideLayerLegalRepo(db *gorm.DB) repo.ILayerLegalRepo {
+	return tqdpostgres.NewLayerLegalPostgres(db)
 }
 
-func ProvideParcelRepo(tqd *infra_postgres.TqdDB) repo.IParcelRepo {
-	return tqdpostgres.NewParcelPostgres(tqd.DB)
+func ProvideParcelRepo(db *gorm.DB) repo.IParcelRepo {
+	return tqdpostgres.NewParcelPostgres(db)
 }
 
-func ProvideLegalDocumentRepo(tqd *infra_postgres.TqdDB) repo.ILegalDocumentRepo {
-	return tqdpostgres.NewLegalDocumentPostgres(tqd.DB)
+func ProvideLegalDocumentRepo(db *gorm.DB) repo.ILegalDocumentRepo {
+	return tqdpostgres.NewLegalDocumentPostgres(db)
 }
 
-func ProvideAuditRepository(tqd *infra_postgres.TqdDB) rule.AuditRepository {
-	return tqdpostgres.NewQHAuditPostgres(tqd.DB)
+func ProvideAuditRepository(db *gorm.DB) rule.AuditRepository {
+	return tqdpostgres.NewQHAuditPostgres(db)
 }
 
-func ProvideLifecycleLayerRepository(tqd *infra_postgres.TqdDB) rule.LayerRepository {
-	return tqdpostgres.NewQHLayerLifecyclePostgres(tqd.DB)
+func ProvideLifecycleLayerRepository(db *gorm.DB) rule.LayerRepository {
+	return tqdpostgres.NewQHLayerLifecyclePostgres(db)
 }
 
-func ProvideQHLayerFamilyRepository(tqd *infra_postgres.TqdDB) repo.QHLayerFamilyRepository {
-	return tqdpostgres.NewQHLayerFamilyRepository(tqd.DB)
+func ProvideQHLayerFamilyRepository(db *gorm.DB) repo.QHLayerFamilyRepository {
+	return tqdpostgres.NewQHLayerFamilyRepository(db)
 }
 
-func ProvidePlanningClientRepository(tqd *infra_postgres.TqdDB) *planningclientpg.Repository {
-	return planningclientpg.NewRepository(tqd.DB)
+func ProvidePlanningClientRepository(db *gorm.DB) *planningclientpg.Repository {
+	return planningclientpg.NewRepository(db)
 }
 
-func ProvidePublicContentRepository(tqd *infra_postgres.TqdDB) *publiccontentpg.Repository {
-	return publiccontentpg.NewRepository(tqd.DB)
+func ProvidePublicContentRepository(db *gorm.DB) *publiccontentpg.Repository {
+	return publiccontentpg.NewRepository(db)
 }
 
-func ProvideTqdTransactionRepo(tqd *infra_postgres.TqdDB) *_db.TransactionRepo {
-	return _db.NewTransactionRepo(tqd.DB)
+func ProvideTqdTransactionRepo(db *gorm.DB) *_db.TransactionRepo {
+	return _db.NewTransactionRepo(db)
 }
 
-func ProvideQHPlanningProjectRepo(tqd *infra_postgres.TqdDB) repo.IQHPlanningProjectRepo {
-	return tqdpostgres.NewQHPlanningProjectRepo(ProvideTqdTransactionRepo(tqd))
+func ProvideQHPlanningProjectRepo(db *gorm.DB) repo.IQHPlanningProjectRepo {
+	return tqdpostgres.NewQHPlanningProjectRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideQHPlanningDocumentRepo(tqd *infra_postgres.TqdDB) repo.IQHPlanningDocumentRepo {
-	return tqdpostgres.NewQHPlanningDocumentRepo(ProvideTqdTransactionRepo(tqd))
+func ProvideQHPlanningDocumentRepo(db *gorm.DB) repo.IQHPlanningDocumentRepo {
+	return tqdpostgres.NewQHPlanningDocumentRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideQHPlanningEventRepo(tqd *infra_postgres.TqdDB) repo.IQHPlanningEventRepo {
-	return tqdpostgres.NewQHPlanningEventRepo(ProvideTqdTransactionRepo(tqd))
+func ProvideQHPlanningEventRepo(db *gorm.DB) repo.IQHPlanningEventRepo {
+	return tqdpostgres.NewQHPlanningEventRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideProAIJobRepo(tqd *infra_postgres.TqdDB) repo.IProAIJobRepo {
-	return tqdpostgres.NewProAIJobRepo(ProvideTqdTransactionRepo(tqd))
+func ProvideProAIJobRepo(db *gorm.DB) repo.IProAIJobRepo {
+	return tqdpostgres.NewProAIJobRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideMapWorkspaceRepo(tqd *infra_postgres.TqdDB) repo.IMapWorkspaceRepo {
-	return tqdpostgres.NewMapWorkspacePostgres(tqd.DB)
+func ProvideMapWorkspaceRepo(db *gorm.DB) repo.IMapWorkspaceRepo {
+	return tqdpostgres.NewMapWorkspacePostgres(db)
 }
 
-func ProvideDiscoveryRepository(tqd *infra_postgres.TqdDB) discoveryports.Repository {
-	return discoverypg.NewDiscoveryRepository(tqd.DB)
+func ProvideDiscoveryRepository(db *gorm.DB) discoveryports.Repository {
+	return discoverypg.NewDiscoveryRepository(db)
 }
 
 func ProvideRelatedEntityReader(discoveryRepo discoveryports.Repository) relatedports.EntityReader {
 	return relatedpg.NewEntityReader(discoveryRepo)
 }
 
-func ProvideRelatedEntityRepository(tqd *infra_postgres.TqdDB, reader relatedports.EntityReader) relatedports.Repository {
-	return relatedpg.NewRepository(tqd.DB, reader)
+func ProvideRelatedEntityRepository(db *gorm.DB, reader relatedports.EntityReader) relatedports.Repository {
+	return relatedpg.NewRepository(db, reader)
 }
 
-func ProvideSubscriptionRepository(tqd *infra_postgres.TqdDB) repo.SubscriptionRepository {
-	return tqdpostgres.NewSubscriptionRepository(tqd.DB)
+func ProvideSubscriptionRepository(db *gorm.DB) repo.SubscriptionRepository {
+	return tqdpostgres.NewSubscriptionRepository(db)
 }
 
-func ProvideNotificationRepository(tqd *infra_postgres.TqdDB) repo.NotificationRepository {
-	return tqdpostgres.NewNotificationRepository(tqd.DB)
+func ProvideNotificationRepository(db *gorm.DB) repo.NotificationRepository {
+	return tqdpostgres.NewNotificationRepository(db)
 }
 
-func ProvideFeatureRepository(tqd *infra_postgres.TqdDB) repo.FeatureRepository {
-	return tqdpostgres.NewFeatureRepository(tqd.DB)
+func ProvideFeatureRepository(db *gorm.DB) repo.FeatureRepository {
+	return tqdpostgres.NewFeatureRepository(db)
 }
 
-func ProvideReportRepository(tqd *infra_postgres.TqdDB) repo.ReportRepository {
-	return tqdpostgres.NewReportRepository(tqd.DB)
+func ProvideReportRepository(db *gorm.DB) repo.ReportRepository {
+	return tqdpostgres.NewReportRepository(db)
 }
 
-func ProvideOneHouseRepo(tqd *infra_postgres.TqdDB) repo.OneHouseRepo {
-	return tqdpostgres.NewOneHouseRepo(tqd.DB)
+func ProvideOneHouseRepo(db *gorm.DB) repo.OneHouseRepo {
+	return tqdpostgres.NewOneHouseRepo(db)
 }
 
-func ProvidePOIRepo(tqd *infra_postgres.TqdDB) repo.IPOIRepo {
-	return tqdpostgres.NewPOIRepo(ProvideTqdTransactionRepo(tqd))
+func ProvidePOIRepo(db *gorm.DB) repo.IPOIRepo {
+	return tqdpostgres.NewPOIRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideAmenityRepo(tqd *infra_postgres.TqdDB) repo.IAmenityRepo {
-	return tqdpostgres.NewAmenityRepo(ProvideTqdTransactionRepo(tqd))
+func ProvideAmenityRepo(db *gorm.DB) repo.IAmenityRepo {
+	return tqdpostgres.NewAmenityRepo(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideContactLabelRepo(tqd *infra_postgres.TqdDB) repo.ContactLabelRepository {
-	return tqdpostgres.NewContactLabelPostgresRepo(tqd.DB)
+func ProvideContactLabelRepo(db *gorm.DB) repo.ContactLabelRepository {
+	return tqdpostgres.NewContactLabelPostgresRepo(db)
 }
 
-func ProvideOpenHourRepo(tqd *infra_postgres.TqdDB) repo.IOpenHourRepo {
-	return tqdpostgres.NewOpenHourPostgres(ProvideTqdTransactionRepo(tqd))
+func ProvideOpenHourRepo(db *gorm.DB) repo.IOpenHourRepo {
+	return tqdpostgres.NewOpenHourPostgres(ProvideTqdTransactionRepo(db))
 }
 
-func ProvidePoiCategoryRepo(tqd *infra_postgres.TqdDB) repo.IPoiCategoryRepo {
-	return tqdpostgres.NewPoiCategoryPostgres(ProvideTqdTransactionRepo(tqd))
+func ProvidePoiCategoryRepo(db *gorm.DB) repo.IPoiCategoryRepo {
+	return tqdpostgres.NewPoiCategoryPostgres(ProvideTqdTransactionRepo(db))
 }
 
-func ProvideDirectorySourceRepo(tqd *infra_postgres.TqdDB) repo.DirectorySourceRepository {
-	return tqdpostgres.NewDirectorySourcePostgres(tqd.DB)
+func ProvideDirectorySourceRepo(db *gorm.DB) repo.DirectorySourceRepository {
+	return tqdpostgres.NewDirectorySourcePostgres(db)
 }
 
-func ProvideDirectorySupplierRepo(tqd *infra_postgres.TqdDB) repo.DirectorySupplierRepository {
-	return tqdpostgres.NewDirectorySupplierPostgres(tqd.DB)
+func ProvideDirectorySupplierRepo(db *gorm.DB) repo.DirectorySupplierRepository {
+	return tqdpostgres.NewDirectorySupplierPostgres(db)
 }
 
-func ProvideDirectoryCategoryRepo(tqd *infra_postgres.TqdDB) repo.DirectoryCategoryRepository {
-	return tqdpostgres.NewDirectoryCategoryPostgresRepo(tqd.DB)
+func ProvideDirectoryCategoryRepo(db *gorm.DB) repo.DirectoryCategoryRepository {
+	return tqdpostgres.NewDirectoryCategoryPostgresRepo(db)
 }
 
-func ProvideQHAuthorityIssuringRepo(tqd *infra_postgres.TqdDB) repo.QHAuthorityIssuringRepository {
-	return tqdpostgres.NewQHAuthorityIssuringRepository(tqd.DB)
+func ProvideQHAuthorityIssuringRepo(db *gorm.DB) repo.QHAuthorityIssuringRepository {
+	return tqdpostgres.NewQHAuthorityIssuringRepository(db)
 }
 
 func ProvideReportUsecase(reportRepo repo.ReportRepository) services.ReportUsecase {

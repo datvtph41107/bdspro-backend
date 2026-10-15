@@ -2,8 +2,8 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/user"
-	"userv4/internal/dto"
+	"userv4/modules/user/domain/user"
+	"userv4/modules/user/dto"
 )
 
 // IBookmarkUserRepo interface cho bookmark user repository

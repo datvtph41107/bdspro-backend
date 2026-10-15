@@ -9,6 +9,7 @@ import (
 )
 
 // PropertyLineage is the property aggregate root (property_lineage).
+// ORM::TABLE
 type PropertyLineage struct {
 	ID                 uint64         `gorm:"primaryKey;autoIncrement"`
 	CreatedAt          *time.Time     `gorm:"column:created_at;autoCreateTime"`

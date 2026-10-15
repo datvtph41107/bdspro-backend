@@ -3,14 +3,24 @@ package entity
 import (
 	base_enum "base/enum"
 	_models "common/models"
-	"userv4/modules/crm/enums"
 	"time"
+	"userv4/modules/crm/enums"
+	user_entity "userv4/modules/user/domain"
 
 	"github.com/lib/pq"
 )
 
+// ORM::TABLE
 type ContactEntity struct {
 	_models.BaseEntity
+	// người dùng tạo ra liên hệ
+	// foreign key origin_profile.OriginID
+	OwnerID uint64 `gorm:"column:owner_id;" json:"ownerId"`
+
+	// lưu liên hệ với người dùng originProfileId
+	// foreign key origin_profile.ProfileID
+	OriginProfileID *uint64 `gorm:"column:origin_profile_id" json:"originProfileId"`
+
 	// OwnerID   uint64  `gorm:"column:owner_id" json:"ownerId"` => createdBy
 	FullName   string             `gorm:"column:full_name" json:"fullName" binding:"required"`
 	Phone      string             `gorm:"column:phone" json:"phone"`
@@ -23,20 +33,19 @@ type ContactEntity struct {
 	Note       string             `gorm:"column:note" json:"note"`
 	Visibility enums.EVisibility  `gorm:"column:visibility;default:30" json:"visibility"`
 	LeadID     uint64             `gorm:"column:lead_id" json:"leadId"`
-	OwnerID    uint64             `gorm:"column:owner_id;" json:"ownerId"`
 	OwnerOf    base_enum.EOwnerOf `gorm:"column:owner_of;default:30;" json:"ownerOf" binding:"required"`
 
-	ProfileID       *uint64              `gorm:"column:profile_id;" json:"profileId"`
-	FriendID        *uint64              `gorm:"column:friend_id;" json:"friendId"`
-	FriendStatus    *FriendEntity        `gorm:"-" json:"friendStatus" binding:"required"`
-	Status          enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
-	ContactTags     pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
-	OriginProfileID *uint64              `gorm:"column:origin_profile_id"`
+	ProfileID    *uint64              `gorm:"column:profile_id;" json:"profileId"`
+	FriendID     *uint64              `gorm:"column:friend_id;" json:"friendId"`
+	FriendStatus *FriendEntity        `gorm:"-" json:"friendStatus" binding:"required"`
+	Status       enums.EStatusContact `gorm:"column:status;default:10" json:"status"`
+	ContactTags  pq.Int32Array        `gorm:"type:integer[];column:contact_tags" json:"contactTags"`
 
 	// transient
-	Tags          []TagEntity    `gorm:"-" json:"tags"`
-	ProductIDs    []uint64       `gorm:"-" json:"productIds"`
-	OriginProfile *OriginProfile `gorm:"foreignKey:OriginProfileID;references:OriginID"`
+	Tags       []TagEntity `gorm:"-" json:"tags"`
+	ProductIDs []uint64    `gorm:"-" json:"productIds"`
+
+	OriginProfile *user_entity.OriginProfile `gorm:"foreignKey:OriginProfileID;references:OriginID"`
 
 	// reorderPinAt
 	PriorityPinAt *time.Time `gorm:"column:priority_pin_at;index"`

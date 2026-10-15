@@ -1,0 +1,109 @@
+package maindb
+
+import (
+	_db "common/db"
+	_routes "common/routes"
+	"context"
+	"fmt"
+	entity "userv4/modules/crm/entity"
+
+	"gorm.io/gorm"
+)
+
+type GroupPostgres struct {
+	DB *gorm.DB
+}
+
+// NewGroupPostgres creates a new instance of GroupPostgres
+func NewGroupPostgres(db *gorm.DB) *GroupPostgres {
+	return &GroupPostgres{DB: db}
+}
+
+// // Search retrieves FriendGroupEntity records based on the provided criteria
+// func (repo *GroupPostgres) Search(dto *entity.GroupEntity, pageable *_db.Page) ([]entity.GroupEntity, error) {
+// 	var groups []entity.GroupEntity
+
+// 	// Building the query
+// 	query := repo.DB.Model(&entity.GroupEntity{}).
+// 		Where("deleted_at is null")
+
+// 	// Add name filtering condition if needed
+// 	if dto.Name != "" {
+// 		query = query.Where("lower(name) LIKE ?", "%"+dto.Name+"%")
+// 	}
+
+// 	// Execute the query with pagination
+// 	err := query.Offset(int(pageable.Skip)).
+// 		Limit(int(pageable.Limit)).
+// 		Find(&groups).Error
+
+// 	return groups, err
+// }
+
+// // GetByID retrieves a FriendGroupEntity by its ID
+// func (repo *GroupPostgres) GetByID(id uint64) (*entity.GroupEntity, error) {
+// 	var group entity.GroupEntity
+// 	// Find the group by ID
+// 	if err := repo.DB.Where("id = ? AND deleted_at is null", id).First(&group).Error; err != nil {
+// 		// If no record is found, return an error
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return nil, nil // or you could return an error here
+// 		}
+// 		// For any other error, return it
+// 		return nil, err
+// 	}
+// 	return &group, nil
+// }
+
+// type GroupRepo struct {
+// 	DB *gorm.DB
+// }
+
+// func NewGroupRepo(DB *gorm.DB) *GroupRepo {
+// 	return &GroupRepo{DB: DB}
+// }
+
+// Thêm nhóm mới
+func (repo *GroupPostgres) CreateGroup(ctx context.Context, group *entity.GroupEntity) error {
+	return _db.SaveWithContext(ctx, &group)
+}
+
+// Cập nhật nhóm
+func (repo *GroupPostgres) UpdateGroup(ctx context.Context, group *entity.GroupEntity) error {
+	return _db.SaveWithContext(ctx, group)
+}
+
+// Xóa nhóm
+func (repo *GroupPostgres) DeleteGroup(profileId *uint64, id uint64) error {
+	var group entity.GroupEntity
+
+	// Tìm nhóm theo ID
+	err := repo.DB.First(&group, id).Error
+	if err != nil {
+		return fmt.Errorf("nhóm không tồn tại hoặc đã bị xóa")
+	}
+
+	// Kiểm tra quyền xóa
+	if group.CreatedBy != profileId {
+		return &_routes.Except{
+			Code:    401,
+			Message: "bạn không có quyền xóa nhóm này",
+		}
+	}
+
+	return repo.DB.Delete(&entity.GroupEntity{}, id).Error
+}
+
+// Lấy danh sách nhóm
+func (repo *GroupPostgres) ListGroups(createdBy uint64) ([]entity.GroupEntity, error) {
+	var groups []entity.GroupEntity
+	err := repo.DB.Where("deleted_at is null and created_by = ?", createdBy).Find(&groups).Error
+	return groups, err
+}
+
+// Lấy thông tin chi tiết nhóm theo ID
+func (repo *GroupPostgres) GetGroupByID(id uint) (*entity.GroupEntity, error) {
+	var group entity.GroupEntity
+	err := repo.DB.First(&group, id).Error
+	return &group, err
+}

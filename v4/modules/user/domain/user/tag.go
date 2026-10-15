@@ -2,7 +2,7 @@ package user
 
 import (
 	_models "common/models"
-	"userv4/enums"
+	"userv4/modules/user/enums"
 )
 
 // TagEntity biểu diễn thẻ tùy chỉnh của người dùng.

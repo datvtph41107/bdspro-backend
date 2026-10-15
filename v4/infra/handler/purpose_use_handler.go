@@ -4,8 +4,8 @@ import (
 	"context"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/infra/mapper"
-	usecases "userv4/internal/usecase/user"
+	mapper "userv4/modules/user/mapper"
+	usecases "userv4/modules/user/services/user"
 )
 
 type PurposeUseHandler struct {

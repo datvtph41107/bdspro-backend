@@ -89,6 +89,7 @@ type ProductPrice struct {
 	RentCommissionType *uint32        `gorm:"column:rent_commission_type"`
 	RentPaymentCycle   *uint32        `gorm:"column:rent_payment_cycle"`
 	ChannelPrice       bool           `gorm:"column:channel_price;default:false"`
+	DistributeID       *uint64        `gorm:"column:distribute_id;index"`
 	ChangeNote         string         `gorm:"column:change_note;type:text"`
 	ChangedBy          uint64         `gorm:"column:changed_by"`
 }
@@ -96,6 +97,7 @@ type ProductPrice struct {
 func (ProductPrice) TableName() string { return "product_price" }
 
 // ProductUser links a profile to a product for /product/me listing.
+// ORM::TABLE
 type ProductUser struct {
 	ID              uint64         `gorm:"primaryKey;autoIncrement"`
 	CreatedAt       *time.Time     `gorm:"column:created_at;autoCreateTime"`
@@ -108,6 +110,7 @@ type ProductUser struct {
 	OwnerOf         uint32         `gorm:"column:owner_of;default:10"`
 	Version         uint64         `gorm:"column:version;default:1"`
 	OriginProfileID *uint64        `gorm:"column:origin_profile_id;index"`
+	DistributeID    *uint64        `gorm:"column:distribute_id;type:bigint;index"`
 }
 
 func (ProductUser) TableName() string { return "product_user" }

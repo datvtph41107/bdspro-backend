@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	"time"
-	"userv4/internal/dto"
+	"userv4/modules/user/dto"
 )
 
 // ProfileProvider interface cho việc xử lý logic liên quan đến profile

@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/access"
+	"userv4/modules/auth/domain/access"
 )
 
 type AdminAccessRepository interface {

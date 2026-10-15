@@ -2,7 +2,7 @@ package providers
 
 import (
 	"context"
-	"userv4/internal/dto"
+	"userv4/modules/user/dto"
 )
 
 type OrganizationProvider interface {

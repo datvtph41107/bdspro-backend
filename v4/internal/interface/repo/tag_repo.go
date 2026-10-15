@@ -3,8 +3,8 @@ package repo
 import (
 	_dto "common/domain/dto"
 	"context"
-	"userv4/enums"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/enums"
+	"userv4/modules/user/domain/user"
 )
 
 type ITagRepo interface {

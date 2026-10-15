@@ -6,8 +6,8 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 	userpb "pb/types/user"
-	"userv4/internal/dto"
-	usecases "userv4/internal/usecase/user"
+	"userv4/modules/user/dto"
+	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

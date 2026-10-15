@@ -5,8 +5,8 @@ import (
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
 	"time"
-	domain "userv4/modules/tqd/entity"
 	"userv4/modules/tqd/dto"
+	domain "userv4/modules/tqd/entity"
 )
 
 type PoiCategoryMapper struct{}
@@ -347,7 +347,6 @@ func (m *PoiCategoryMapper) uint64PtrToValue(ptr *uint64) uint64 {
 
 func (m *PoiCategoryMapper) resolveIconPath(icon string) string {
 	return icon
-	// domainFile := ""
 	// if config.AppConfig != nil {
 	// 	domainFile = config.AppConfig.ConfigApp.Qhpro.DomainFile
 	// }

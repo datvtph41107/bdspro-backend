@@ -7,8 +7,8 @@ import (
 
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-	"userv4/infra/mapper"
-	"userv4/internal/usecase"
+	mapper "userv4/modules/auth/mapper"
+	usecase "userv4/modules/auth/services"
 	authcontroller "userv4/modules/auth/controller"
 )
 

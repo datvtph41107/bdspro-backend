@@ -5,8 +5,8 @@ import (
 	"context"
 	userpb "pb/types/user"
 
-	"userv4/internal/models"
-	"userv4/internal/usecase/subscription/settlement"
+	"userv4/modules/user/entity"
+	"userv4/modules/user/services/subscription/settlement"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,7 +28,7 @@ func (h *SubscriptionSettlementHandler) ApplySettlement(ctx context.Context, req
 	if h == nil || h.service == nil || req == nil || req.GetOccurredAt() == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid settlement effect")
 	}
-	e := settlement.Effect{EffectKey: req.GetEffectKey(), OrderID: req.GetOrderId(), SubjectKind: models.SubscriptionSubjectKind(req.GetSubjectKind()), SubjectID: req.GetSubjectId(), ProductCode: req.GetProductCode(), PlanCode: req.GetPlanCode(), PlanVersionID: req.GetPlanVersionId(), PlanVersion: req.GetPlanVersion(), TierRank: req.GetTierRank(), SubscriptionTermDays: req.GetSubscriptionTermDays(), TermsChecksum: req.GetTermsChecksum(), OccurredAt: req.GetOccurredAt().AsTime()}
+	e := settlement.Effect{EffectKey: req.GetEffectKey(), OrderID: req.GetOrderId(), SubjectKind: entity.SubscriptionSubjectKind(req.GetSubjectKind()), SubjectID: req.GetSubjectId(), ProductCode: req.GetProductCode(), PlanCode: req.GetPlanCode(), PlanVersionID: req.GetPlanVersionId(), PlanVersion: req.GetPlanVersion(), TierRank: req.GetTierRank(), SubscriptionTermDays: req.GetSubscriptionTermDays(), TermsChecksum: req.GetTermsChecksum(), OccurredAt: req.GetOccurredAt().AsTime()}
 	r, err := h.service.ApplySettlement(ctx, e)
 	if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())

@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 	authpb "pb/types/auth"
-	"userv4/infra/oauth"
-	"userv4/internal/dto"
+	"userv4/modules/auth/oauth"
+	"userv4/modules/auth/dto"
 	"userv4/internal/httpapi"
-	"userv4/internal/usecase"
+	usecase "userv4/modules/auth/services"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

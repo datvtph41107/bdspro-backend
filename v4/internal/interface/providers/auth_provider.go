@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"context"
 	"time"
-	"userv4/internal/models"
+	"userv4/modules/auth/dto"
 )
 
 // UserStatusInfo chứa thông tin trạng thái của user
@@ -91,7 +91,7 @@ type AuthProvider interface {
 	GetAuthUsersByProfileIDs(ctx context.Context, profileIDs []uint64) (map[uint64]*_dto.AuthUserProfileDTO, error)
 
 	// GetRolesByIds lấy danh sách roles theo IDs
-	GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*models.RoleDTO, error)
+	GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*dto.ProviderRoleDTO, error)
 
 	// AssignRoleToUser gắn role vào role_profiles (profileId = auth.user_id)
 	AssignRoleToUser(ctx context.Context, profileID, roleID uint64) error

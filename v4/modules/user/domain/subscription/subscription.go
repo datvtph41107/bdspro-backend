@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	catalogdomain "userv4/internal/domain/plan"
-	"userv4/internal/models"
+	catalogdomain "userv4/modules/user/domain/plan"
+	"userv4/modules/user/entity"
 )
 
 /** Aggregate is one durable subscription with its plan identity. */
 type Aggregate struct {
 	ID                 uint64
 	SubscriptionKey    string
-	SubjectKind        models.SubscriptionSubjectKind
+	SubjectKind        entity.SubscriptionSubjectKind
 	SubjectID          string
 	ProductID          uint64
 	ProductCode        string
@@ -23,7 +23,7 @@ type Aggregate struct {
 	PlanVersion        string
 	PlanTermsChecksum  string
 	PlanStatus         catalogdomain.Status
-	Status             models.SubscriptionStatus
+	Status             entity.SubscriptionStatus
 	StartedAt          time.Time
 	CurrentPeriodStart time.Time
 	CurrentPeriodEnd   time.Time
@@ -53,19 +53,19 @@ func (a Aggregate) Validate() error {
 	if strings.TrimSpace(a.SubscriptionKey) == "" {
 		return fmt.Errorf("subscription key is required")
 	}
-	if a.SubjectKind != models.SubscriptionSubjectProfile &&
-		a.SubjectKind != models.SubscriptionSubjectOrganization {
+	if a.SubjectKind != entity.SubscriptionSubjectProfile &&
+		a.SubjectKind != entity.SubscriptionSubjectOrganization {
 		return fmt.Errorf("unsupported subject kind %q", a.SubjectKind)
 	}
 	if strings.TrimSpace(a.SubjectID) == "" {
 		return fmt.Errorf("subscription subject is required")
 	}
 	switch a.Status {
-	case models.SubscriptionPending,
-		models.SubscriptionActive,
-		models.SubscriptionPastDue,
-		models.SubscriptionCanceled,
-		models.SubscriptionExpired:
+	case entity.SubscriptionPending,
+		entity.SubscriptionActive,
+		entity.SubscriptionPastDue,
+		entity.SubscriptionCanceled,
+		entity.SubscriptionExpired:
 	default:
 		return fmt.Errorf("unsupported subscription status %q", a.Status)
 	}

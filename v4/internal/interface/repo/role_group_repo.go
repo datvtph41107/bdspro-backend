@@ -3,8 +3,8 @@ package repo
 import (
 	"common/case/crud"
 	"context"
-	"userv4/internal/domain/access"
-	"userv4/internal/enums"
+	"userv4/modules/auth/domain/access"
+	"userv4/modules/auth/enums"
 )
 
 type RoleGroupRepository interface {

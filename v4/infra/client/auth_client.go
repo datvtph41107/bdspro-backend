@@ -7,10 +7,10 @@ import (
 	"errors"
 	"pb/clients"
 	"strings"
-	domainauth "userv4/internal/domain/auth"
+	domainauth "userv4/modules/auth/domain/auth"
 	"userv4/internal/interface/providers"
 	"userv4/internal/interface/repo"
-	"userv4/internal/models"
+	"userv4/modules/auth/dto"
 
 	"gorm.io/gorm"
 )
@@ -263,19 +263,19 @@ func (c *AuthClient) GetAuthAdminByIds(ctx context.Context, ids []uint64) ([]*Au
 	return result, nil
 }
 
-func (c *AuthClient) GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*models.RoleDTO, error) {
+func (c *AuthClient) GetRolesByIds(ctx context.Context, roleIds []uint64) (map[uint64]*dto.ProviderRoleDTO, error) {
 	if len(roleIds) == 0 {
-		return make(map[uint64]*models.RoleDTO), nil
+		return make(map[uint64]*dto.ProviderRoleDTO), nil
 	}
 
-	roleMap := make(map[uint64]*models.RoleDTO)
+	roleMap := make(map[uint64]*dto.ProviderRoleDTO)
 
 	rolesResp, err := c.userClient.GetRolesByIds(ctx, roleIds)
 	if err != nil {
 		return nil, err
 	}
 	for _, role := range rolesResp.Data {
-		roleMap[role.Id] = &models.RoleDTO{
+		roleMap[role.Id] = &dto.ProviderRoleDTO{
 			ID:              role.Id,
 			RoleName:        role.RoleName,
 			RoleKey:         role.RoleKey,

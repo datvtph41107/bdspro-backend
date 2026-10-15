@@ -7,8 +7,8 @@ import (
 
 	"common/identity"
 	userpb "pb/types/user"
-	"userv4/internal/usecase/commercialprofile"
-	cancelapp "userv4/internal/usecase/subscription/cancel"
+	"userv4/modules/user/services/commercialprofile"
+	cancelapp "userv4/modules/user/services/subscription/cancel"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

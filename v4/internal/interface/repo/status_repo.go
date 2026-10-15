@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/auth"
+	"userv4/modules/auth/domain/auth"
 )
 
 // AuthStatusRepository owns registration/credential lifecycle rows in auth_status.

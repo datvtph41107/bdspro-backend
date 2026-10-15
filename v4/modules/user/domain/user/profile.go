@@ -6,7 +6,7 @@ import (
 	_model "common/models"
 	"fmt"
 	"time"
-	"userv4/enums"
+	"userv4/modules/user/enums"
 
 	"github.com/lib/pq"
 )
@@ -19,14 +19,20 @@ type UserProfileSearch struct {
 }
 
 // UserProfileEntity chứa thông tin hồ sơ người dùng
+// ORM::TABLE
 type UserProfileEntity struct {
 	_model.BaseEntityNotId
-	ProfileID         uint64                `gorm:"primaryKey;autoIncrement;column:profile_id" copier:"-" json:"profileId"`
-	Phone             string                `gorm:"size:20" json:"phone"`
+	// khi đăng ký và xác thực tài khoản thành công thì tạo ra
+	// bản ghi này. đây là người dùng thực trong hệ thống
+	// foreign key origin_profile.OriginID
+	ProfileID uint64 `gorm:"primaryKey;autoIncrement;column:profile_id" copier:"-" json:"profileId"`
+	Phone     string `gorm:"size:20" json:"phone"`
+	// deprecated: sau đổi sang dùng OriginProfile.DisplayName
+	FullName string `gorm:"size:255" json:"fullName"`
+
 	Phone2            string                `gorm:"size:20" json:"phone2"`
 	Email             string                `gorm:"size:50" json:"email"`
 	TaxCode           string                `gorm:"size:13" json:"taxCode"`
-	FullName          string                `gorm:"size:255" json:"fullName"`
 	Address           string                `gorm:"size:255" json:"address"`
 	Gender            uint32                `json:"gender"`
 	Avatar            string                `gorm:"size:255" json:"avatar"`

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	userpb "pb/types/user"
-	domain "userv4/internal/domain/organization"
-	organization "userv4/internal/usecase/organization"
+	domain "userv4/modules/user/domain/organization"
+	organization "userv4/modules/user/services/organization"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

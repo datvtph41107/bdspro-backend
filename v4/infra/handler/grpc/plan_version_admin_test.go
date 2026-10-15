@@ -10,9 +10,9 @@ import (
 
 	"common/identity"
 	userpb "pb/types/user"
-	catalogdomain "userv4/internal/domain/plan"
-	"userv4/internal/usecase/plan/admin"
-	"userv4/internal/usecase/plan/publish"
+	catalogdomain "userv4/modules/user/domain/plan"
+	"userv4/modules/user/services/plan/admin"
+	"userv4/modules/user/services/plan/publish"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

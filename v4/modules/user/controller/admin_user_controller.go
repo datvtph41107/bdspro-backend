@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"time"
 
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
@@ -64,7 +65,7 @@ func (c *AdminUserController) lockUser(ctx context.Context, req dto.LockUserRequ
 	if err := c.svc.LockUser(ctx, &userpb.LockUserRequest{
 		ProfileId: req.ProfileID,
 		Reason:    req.Reason,
-		LockType:  req.LockType,
+		LockType:  uint32(req.LockType),
 	}); err != nil {
 		return nil, err
 	}
@@ -122,17 +123,29 @@ func (c *AdminUserController) createUser(ctx context.Context, req userpb.CreateU
 }
 
 func (c *AdminUserController) updateUser(ctx context.Context, req dto.UpdateUserRequest) (*httpapi.Result, error) {
+	var roleID uint64
+	if req.RoleID != nil {
+		roleID = *req.RoleID
+	}
+	var gender uint32
+	if req.Gender != nil {
+		gender = *req.Gender
+	}
+	var birth string
+	if req.Birth != nil {
+		birth = req.Birth.Format(time.RFC3339)
+	}
 	result, err := c.svc.UpdateUser(ctx, &userpb.UpdateUserRequest{
 		ProfileId:    req.ProfileID,
 		FullName:     req.FullName,
 		Email:        req.Email,
 		Phone:        req.Phone,
 		Avatar:       req.Avatar,
-		RoleId:       req.RoleID,
-		Gender:       req.Gender,
+		RoleId:       roleID,
+		Gender:       gender,
 		Address:      req.Address,
-		Birth:        req.Birth,
-		Status:       req.Status,
+		Birth:        birth,
+		Status:       uint32(req.Status),
 		IdVerifiedAt: req.IDVerifiedAt,
 	})
 	if err != nil {

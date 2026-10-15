@@ -3,7 +3,7 @@ package repo
 import (
 	_crud "common/domain/crud"
 	"context"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/domain/user"
 )
 
 type IKYCRepo interface {

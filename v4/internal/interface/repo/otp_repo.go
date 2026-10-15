@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/auth"
+	"userv4/modules/auth/domain/auth"
 )
 
 // OTPRepository contains the OTP state operations consumed by serving usecases.

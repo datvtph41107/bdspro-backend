@@ -5,7 +5,7 @@ import (
 
 	"common/identity"
 	userpb "pb/types/user"
-	organization "userv4/internal/usecase/organization"
+	organization "userv4/modules/user/services/organization"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

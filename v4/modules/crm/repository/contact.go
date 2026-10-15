@@ -7,7 +7,6 @@ import (
 
 	base_enum "base/enum"
 	_utils "common/utils"
-	"userv4/infra/postgres"
 	"userv4/modules/crm/entity"
 
 	"gorm.io/gorm"
@@ -27,11 +26,11 @@ type ContactRepository interface {
 
 type contactPostgres struct{ db *gorm.DB }
 
-func NewContactPostgres(crm *postgres.CrmDB) ContactRepository {
-	if crm == nil {
+func NewContactPostgres(db *gorm.DB) ContactRepository {
+	if db == nil {
 		return &contactPostgres{}
 	}
-	return &contactPostgres{db: crm.DB}
+	return &contactPostgres{db: db}
 }
 
 func (r *contactPostgres) SearchByOwner(

@@ -9,10 +9,10 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"time"
-	"userv4/infra/mapper"
+	mapper "userv4/modules/user/mapper"
 	"userv4/internal/interface/providers"
-	usecase "userv4/internal/usecase/user"
-	"userv4/internal/usecase/useradmin"
+	usecase "userv4/modules/user/services/user"
+	"userv4/modules/user/services/useradmin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

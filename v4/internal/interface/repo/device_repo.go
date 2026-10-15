@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/auth"
+	"userv4/modules/auth/domain/auth"
 )
 
 // DeviceRepository định nghĩa các hành vi thao tác thiết bị trong database

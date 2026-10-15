@@ -62,7 +62,7 @@ func (c *TagController) adminDeleteTag(ctx context.Context, req dto.TagIDPath) (
 	return httpapi.OK(nil), nil
 }
 
-func (c *TagController) adminListTags(ctx context.Context, req dto.AdminTagListRequest) (*httpapi.Result, error) {
+func (c *TagController) adminListTags(ctx context.Context, req dto.AdminTagListQuery) (*httpapi.Result, error) {
 	result, err := c.svc.AdminListTags(ctx, &userpb.AdminTagListRequest{
 		TagTypes:  req.TagTypes,
 		Page:      req.Page,

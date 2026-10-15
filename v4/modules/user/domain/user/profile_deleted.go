@@ -3,7 +3,7 @@ package user
 import (
 	_enum "common/domain/enum"
 	"time"
-	"userv4/enums"
+	"userv4/modules/user/enums"
 )
 
 // ProfileDeleted lưu thông tin profile đã bị xóa

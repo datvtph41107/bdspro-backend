@@ -4,7 +4,7 @@ import (
 	"common/operation"
 	"testing"
 	"time"
-	"userv4/internal/domain/entitlement"
+	"userv4/modules/user/domain/entitlement"
 )
 
 func TestToProtoCarriesMeteringEvidence(t *testing.T) {

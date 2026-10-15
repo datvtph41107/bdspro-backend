@@ -4,7 +4,7 @@ import (
 	"context"
 	"pb/clients"
 	organizationpb "pb/types/organization"
-	"userv4/internal/dto"
+	"userv4/modules/user/dto"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

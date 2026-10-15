@@ -2,8 +2,8 @@ package payment
 
 import (
 	"github.com/google/wire"
+	"gorm.io/gorm"
 
-	infra_postgres "userv4/infra/postgres"
 	"userv4/modules/payment/controller"
 	paymentpostgres "userv4/modules/payment/postgres"
 	"userv4/modules/payment/repository"
@@ -18,6 +18,6 @@ var ProviderSet = wire.NewSet(
 	controller.NewHandler,
 )
 
-func ProvideBankRepository(paymentDB *infra_postgres.PaymentDB) repository.BankRepository {
-	return paymentpostgres.NewBankPostgres(paymentDB.DB)
+func ProvideBankRepository(db *gorm.DB) repository.BankRepository {
+	return paymentpostgres.NewBankPostgres(db)
 }

@@ -1,7 +1,7 @@
 package entity
 
 // AuthMethod is the credential identity used by login flows.
-// Full persistence shape still lives in internal/domain/auth during migration.
+// Full persistence shape lives in modules/auth/domain/auth.
 type AuthMethod struct {
 	ID       uint64
 	UserID   uint64

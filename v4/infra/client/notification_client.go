@@ -8,7 +8,7 @@ import (
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 	"time"
-	"userv4/internal/dto"
+	"userv4/modules/auth/dto"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )

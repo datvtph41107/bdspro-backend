@@ -12,9 +12,9 @@ import (
 	bdspropb "pb/types/bdspro"
 
 	"userv4/data/demo"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/domain/user"
 	"userv4/internal/interface/repo"
-	usecases "userv4/internal/usecase/user"
+	usecases "userv4/modules/user/services/user"
 	bdsprodto "userv4/modules/bdspro/dto"
 	bdsprosvc "userv4/modules/bdspro/services"
 	crmsvc "userv4/modules/crm/services"

@@ -10,7 +10,7 @@ const (
 )
 
 var OwnerOfNames = map[EOwnerOf]string{
-	EOwnerOfMember:      "Thành viên",
+	EOwnerOfMember:      "Cá nhân",
 	EOwnerOfGroup:       "Nhóm",
 	EOwnerOfOrgnization: "Tổ chức",
 	EOwnerOfAdmin:       "Admin",

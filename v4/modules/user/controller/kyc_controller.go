@@ -34,7 +34,7 @@ func (c *KYCController) submitKYC(ctx context.Context, req userpb.SubmitKYCReque
 	return protoMessageResult(result, false)
 }
 
-func (c *KYCController) listKYCs(ctx context.Context, req dto.ListKYCsRequest) (*httpapi.Result, error) {
+func (c *KYCController) listKYCs(ctx context.Context, req dto.ListKYCsQuery) (*httpapi.Result, error) {
 	result, err := c.svc.ListKYCs(ctx, &userpb.ListKYCsRequest{
 		Page:      req.Page,
 		Size:      req.Size,

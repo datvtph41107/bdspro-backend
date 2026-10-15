@@ -2,7 +2,7 @@ package properties
 
 import (
 	"userv4/config"
-	"userv4/internal/dto"
+	"userv4/modules/auth/dto"
 )
 
 // @bind: user/internal/interface/factory.IFactory

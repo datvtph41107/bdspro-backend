@@ -1,30 +1,42 @@
 package dto
 
-// ProfileInfoV3Request is GET /v3/user/profile/{access}/{id}.
-type ProfileInfoV3Request struct {
-	Access    string `path:"access"`
-	ID        uint64 `path:"id"`
-	Timestamp int64  `form:"timestamp"`
-}
+import (
+	_dto "common/domain/dto"
+	authdto "userv4/modules/auth/dto"
+	"userv4/modules/user/enums"
+)
 
-// ProfileInfoRequest is GET /v2/user/profile/info/{id}.
-type ProfileInfoRequest struct {
-	ID uint64 `path:"id"`
-}
-
-// SearchProfilePublicRequest is GET /v2/user/profile/search/public.
-type SearchProfilePublicRequest struct {
+type ProfileSearch struct {
+	_dto.Pagable
+	// Page int64  `form:"page"`
+	// Size int64  `form:"size"`
 	Text string `form:"text"`
-	Page uint32 `form:"page"`
-	Size uint32 `form:"size"`
 }
 
-// FindByPhoneRequest is GET /v2/user/profile/find-by-phone.
-type FindByPhoneRequest struct {
-	Phone string `form:"phone"`
+type AccountItemDTO struct {
+	ID       uint64 `json:"id"`
+	FullName string `json:"fullName"`
+	Avatar   string `json:"avatar"`
+	Phone    string `json:"phone"`
 }
 
-// StatusOnlineRequest is GET /v2/user/status-online/{id}.
-type StatusOnlineRequest struct {
-	ID uint64 `path:"id"`
+// Warning/Alert DTOs
+type SendWarningRequest struct {
+	UserID      uint64 `json:"userId" binding:"required"`
+	WarningType int32  `json:"warningType" binding:"required"` // 0: vi phạm, 1: nhắc nhở, 2: hướng dẫn
+	Content     string `json:"content" binding:"required"`
+	Title       string `json:"title,omitempty"`
+}
+
+type SendWarningResponse struct {
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	NotificationID uint64 `json:"notificationId,omitempty"`
+}
+
+type ProfilePrivacyRequest struct {
+	Visibility        uint8
+	ProfileVisibility uint8
+	StatusOnline      enums.EOnlineStatus
+	PersonConfigs     []*authdto.PersonConfigDTO
 }

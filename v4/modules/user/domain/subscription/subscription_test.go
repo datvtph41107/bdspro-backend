@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	catalogdomain "userv4/internal/domain/plan"
-	"userv4/internal/models"
+	catalogdomain "userv4/modules/user/domain/plan"
+	"userv4/modules/user/entity"
 )
 
 func validAggregate() Aggregate {
@@ -14,7 +14,7 @@ func validAggregate() Aggregate {
 	return Aggregate{
 		ID:                 1,
 		SubscriptionKey:    "sub_1",
-		SubjectKind:        models.SubscriptionSubjectProfile,
+		SubjectKind:        entity.SubscriptionSubjectProfile,
 		SubjectID:          "42",
 		ProductID:          2,
 		ProductCode:        "qhpro",
@@ -23,7 +23,7 @@ func validAggregate() Aggregate {
 		PlanVersion:        "1.0.0",
 		PlanTermsChecksum:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		PlanStatus:         catalogdomain.StatusActive,
-		Status:             models.SubscriptionActive,
+		Status:             entity.SubscriptionActive,
 		StartedAt:          start,
 		CurrentPeriodStart: start,
 		CurrentPeriodEnd:   end,

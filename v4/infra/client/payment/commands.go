@@ -10,7 +10,7 @@ import (
 	qhprorpc "common/rpc"
 	"common/rpcenv"
 	paymentpb "pb/types/payment"
-	"userv4/internal/usecase/subscription/checkout"
+	"userv4/modules/user/services/subscription/checkout"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

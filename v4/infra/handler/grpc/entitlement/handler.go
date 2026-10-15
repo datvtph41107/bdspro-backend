@@ -7,8 +7,8 @@ import (
 	"errors"
 	"strings"
 	"time"
-	"userv4/internal/domain/entitlement"
-	internalaccess "userv4/internal/usecase/entitlement"
+	"userv4/modules/user/domain/entitlement"
+	internalaccess "userv4/modules/user/services/entitlement"
 
 	userpb "pb/types/user"
 

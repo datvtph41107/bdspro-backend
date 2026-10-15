@@ -3,6 +3,8 @@ package controller
 import (
 	"net/http"
 
+	_utils "common/utils"
+	"userv4/modules/bdspro/mapper"
 	"userv4/modules/bdspro/services"
 )
 
@@ -23,6 +25,7 @@ type Handler struct {
 	catalog         *CatalogController
 	projectBuild    *ProjectBuildController
 	adminProject    *AdminProjectController
+	distribute      *DistributeController
 }
 
 func NewHandler(
@@ -41,6 +44,9 @@ func NewHandler(
 	catalogSvc services.CatalogService,
 	projectBuildSvc services.ProjectBuildService,
 	adminProjectSvc services.AdminProjectService,
+	distributionSvc services.DistributionService,
+	distributionMapper *mapper.DistributionMapper,
+	syncUtil *_utils.SyncUtil,
 ) *Handler {
 	return &Handler{
 		sync:            NewSyncController(syncSvc),
@@ -58,6 +64,7 @@ func NewHandler(
 		catalog:         NewCatalogController(catalogSvc),
 		projectBuild:    NewProjectBuildController(projectBuildSvc),
 		adminProject:    NewAdminProjectController(adminProjectSvc),
+		distribute:      NewDistributeController(distributionSvc, distributionMapper, syncUtil),
 	}
 }
 
@@ -78,4 +85,5 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.catalog.RegisterHTTP(mux)
 	h.projectBuild.RegisterHTTP(mux)
 	h.adminProject.RegisterHTTP(mux)
+	h.distribute.RegisterHTTP(mux)
 }

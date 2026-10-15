@@ -5,12 +5,12 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	"time"
-	userenums "userv4/enums"
-	"userv4/internal/dto"
-	internalenums "userv4/internal/enums"
+	userenums "userv4/modules/user/enums"
+	"userv4/modules/user/dto"
+	internalenums "userv4/modules/auth/enums"
 	"userv4/internal/interface/repo"
-	"userv4/internal/domain/user"
-	"userv4/internal/utils"
+	"userv4/modules/user/domain/user"
+	"userv4/modules/user/utils"
 )
 
 // @bind: user/internal/interface/providers.ProfileProvider

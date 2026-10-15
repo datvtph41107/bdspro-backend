@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"userv4/infra/postgres"
 	"userv4/modules/tqd/dto"
 	"userv4/modules/tqd/entity"
 
@@ -71,11 +70,8 @@ type LocationRepository interface {
 
 type locationPostgres struct{ db *gorm.DB }
 
-func NewLocationPostgres(tqd *postgres.TqdDB) LocationRepository {
-	if tqd == nil {
-		return &locationPostgres{}
-	}
-	return &locationPostgres{db: tqd.DB}
+func NewLocationPostgres(db *gorm.DB) LocationRepository {
+	return &locationPostgres{db: db}
 }
 
 func (r *locationPostgres) active(db *gorm.DB) *gorm.DB {

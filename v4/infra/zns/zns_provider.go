@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 	"userv4/config"
-	"userv4/internal/domain/auth"
+	"userv4/modules/auth/domain/auth"
 	"userv4/internal/interface/providers"
 	"userv4/internal/interface/repo"
 

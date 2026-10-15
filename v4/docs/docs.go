@@ -986,7 +986,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
+                            "$ref": "#/definitions/entity.GroupEntity"
                         }
                     }
                 ],
@@ -1031,7 +1031,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.GroupEntity"
+                            "$ref": "#/definitions/entity.GroupEntity"
                         }
                     },
                     {
@@ -1753,7 +1753,7 @@ const docTemplate = `{
                 "Reject"
             ]
         },
-        "models.GroupEntity": {
+        "entity.GroupEntity": {
             "type": "object",
             "properties": {
                 "backgroundColor": {

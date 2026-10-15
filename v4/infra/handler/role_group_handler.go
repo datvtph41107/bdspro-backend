@@ -5,9 +5,9 @@ import (
 	"context"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-	"userv4/infra/mapper"
-	"userv4/internal/enums"
-	"userv4/internal/usecase"
+	mapper "userv4/modules/auth/mapper"
+	"userv4/modules/auth/enums"
+	usecase "userv4/modules/auth/services"
 	"userv4/validator"
 )
 

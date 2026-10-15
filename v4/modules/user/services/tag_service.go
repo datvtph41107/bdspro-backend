@@ -4,8 +4,8 @@ import (
 	"context"
 
 	userpb "pb/types/user"
-	"userv4/infra/mapper"
-	usecases "userv4/internal/usecase/user"
+	mapper "userv4/modules/user/mapper"
+	usecases "userv4/modules/user/services/user"
 )
 
 // TagService owns tag HTTP surface migrated into modules/user.

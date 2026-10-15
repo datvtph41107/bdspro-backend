@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sharepb "pb/types/shared"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/domain/user"
 	repo "userv4/internal/interface/repo"
 	domain "userv4/modules/crm/entity"
 )

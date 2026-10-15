@@ -2,7 +2,7 @@ package access
 
 import (
 	_models "common/models"
-	"userv4/internal/enums"
+	"userv4/modules/auth/enums"
 )
 
 // RoleGroup đại diện cho nhóm vai trò

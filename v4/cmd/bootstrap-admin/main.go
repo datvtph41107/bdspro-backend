@@ -14,8 +14,8 @@ import (
 	_db "common/db"
 	_utils "common/utils"
 	"userv4/config"
-	bootstrapstore "userv4/infra/postgres/bootstrapadmin"
-	"userv4/internal/usecase/bootstrapadmin"
+	bootstrapstore "userv4/modules/user/postgres/bootstrapadmin"
+	"userv4/modules/user/services/bootstrapadmin"
 )
 
 const requiredConfirmation = "CREATE_ROOT_OPERATOR"

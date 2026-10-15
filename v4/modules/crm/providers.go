@@ -7,8 +7,8 @@ import (
 	_db "common/db"
 
 	"github.com/google/wire"
+	"gorm.io/gorm"
 
-	infra_postgres "userv4/infra/postgres"
 	repoiface "userv4/internal/interface/repo"
 	"userv4/modules/crm/client"
 	"userv4/modules/crm/controller"
@@ -105,97 +105,97 @@ func ProvideCRMUserClient(profiles repoiface.IProfileRepo) *provider.LocalUserCl
 	return provider.NewLocalUserClient(profiles)
 }
 
-func ProvideContactRepo(crm *infra_postgres.CrmDB) repo.ContactRepo {
-	return crmpostgres.NewContactRepo(crm.DB)
+func ProvideContactRepo(crm *gorm.DB) repo.ContactRepo {
+	return crmpostgres.NewContactRepo(crm)
 }
 
-func ProvideContactProductRepo(crm *infra_postgres.CrmDB) repo.ContactProductRepo {
-	return crmpostgres.NewContactProductPostgre(crm.DB)
+func ProvideContactProductRepo(crm *gorm.DB) repo.ContactProductRepo {
+	return crmpostgres.NewContactProductPostgre(crm)
 }
 
-func ProvideFriendRepo(crm *infra_postgres.CrmDB) repo.FriendRepo {
-	return crmpostgres.NewFriendRepo(crm.DB)
+func ProvideFriendRepo(crm *gorm.DB) repo.FriendRepo {
+	return crmpostgres.NewFriendRepo(crm)
 }
 
-func ProvideFriendGroupRepo(crm *infra_postgres.CrmDB) repo.FriendGroupRepo {
-	return crmpostgres.NewGroupRepo(crm.DB)
+func ProvideFriendGroupRepo(crm *gorm.DB) repo.FriendGroupRepo {
+	return crmpostgres.NewGroupRepo(crm)
 }
 
-func ProvideFollowRepo(crm *infra_postgres.CrmDB) repo.FollowRepo {
-	return crmpostgres.NewFollowPostgre(crm.DB)
+func ProvideFollowRepo(crm *gorm.DB) repo.FollowRepo {
+	return crmpostgres.NewFollowPostgre(crm)
 }
 
-func ProvideBlockRepo(crm *infra_postgres.CrmDB) repo.BlockRepo {
-	return crmpostgres.NewBlockRepo(crm.DB)
+func ProvideBlockRepo(crm *gorm.DB) repo.BlockRepo {
+	return crmpostgres.NewBlockRepo(crm)
 }
 
-func ProvideLeadRepo(crm *infra_postgres.CrmDB) repo.LeadRepo {
-	return crmpostgres.NewPostgreCustomer(crm.DB)
+func ProvideLeadRepo(crm *gorm.DB) repo.LeadRepo {
+	return crmpostgres.NewPostgreCustomer(crm)
 }
 
-func ProvideStageRepo(crm *infra_postgres.CrmDB) repo.StageRepo {
-	return crmpostgres.NewPostgreStage(crm.DB)
+func ProvideStageRepo(crm *gorm.DB) repo.StageRepo {
+	return crmpostgres.NewPostgreStage(crm)
 }
 
-func ProvidePipelineRepo(crm *infra_postgres.CrmDB) repo.PipelineRepo {
-	return crmpostgres.NewPostgrePipeline(crm.DB)
+func ProvidePipelineRepo(crm *gorm.DB) repo.PipelineRepo {
+	return crmpostgres.NewPostgrePipeline(crm)
 }
 
-func ProvideRuleRepo(crm *infra_postgres.CrmDB) repo.RuleRepo {
-	return crmpostgres.NewPostgreRule(crm.DB)
+func ProvideRuleRepo(crm *gorm.DB) repo.RuleRepo {
+	return crmpostgres.NewPostgreRule(crm)
 }
 
-func ProvideTagRepo(crm *infra_postgres.CrmDB) repo.TagRepo {
-	return crmpostgres.NewTagPostgres(_db.NewTransactionRepo(crm.DB))
+func ProvideTagRepo(crm *gorm.DB) repo.TagRepo {
+	return crmpostgres.NewTagPostgres(_db.NewTransactionRepo(crm))
 }
 
-func ProvideSharingRepo(crm *infra_postgres.CrmDB) repo.SharingAccessRepo {
-	return crmpostgres.NewSharingAccessPostgre(crm.DB)
+func ProvideSharingRepo(crm *gorm.DB) repo.SharingAccessRepo {
+	return crmpostgres.NewSharingAccessPostgre(crm)
 }
 
-func ProvideInvitationRepo(crm *infra_postgres.CrmDB) repo.InvitationInstallRepo {
-	return crmpostgres.NewInvitationInstallPostgre(crm.DB)
+func ProvideInvitationRepo(crm *gorm.DB) repo.InvitationInstallRepo {
+	return crmpostgres.NewInvitationInstallPostgre(crm)
 }
 
-func ProvideSupportTicketRepo(crm *infra_postgres.CrmDB) repo.SupportTicketRepo {
-	return crmpostgres.NewSupportTicketPostgres(crm.DB)
+func ProvideSupportTicketRepo(crm *gorm.DB) repo.SupportTicketRepo {
+	return crmpostgres.NewSupportTicketPostgres(crm)
 }
 
-func ProvideAdminOpportunityEventRepo(crm *infra_postgres.CrmDB) repo.AdminOpportunityEventRepo {
-	return crmpostgres.NewAdminOpportunityEventPostgres(crm.DB)
+func ProvideAdminOpportunityEventRepo(crm *gorm.DB) repo.AdminOpportunityEventRepo {
+	return crmpostgres.NewAdminOpportunityEventPostgres(crm)
 }
 
-func ProvideDocumentRepo(crm *infra_postgres.CrmDB) repo.DocumentRepo {
-	return crmpostgres.NewDocumentPostgre(crm.DB)
+func ProvideDocumentRepo(crm *gorm.DB) repo.DocumentRepo {
+	return crmpostgres.NewDocumentPostgre(crm)
 }
 
-func ProvideProductCareRepo(crm *infra_postgres.CrmDB) repo.ProductCareRepo {
-	return crmpostgres.NewProductCarePostgre(crm.DB)
+func ProvideProductCareRepo(crm *gorm.DB) repo.ProductCareRepo {
+	return crmpostgres.NewProductCarePostgre(crm)
 }
 
-func ProvideRateRepo(crm *infra_postgres.CrmDB) repo.RateRepo {
-	return crmpostgres.NewRatePostgres(crm.DB)
+func ProvideRateRepo(crm *gorm.DB) repo.RateRepo {
+	return crmpostgres.NewRatePostgres(crm)
 }
 
-func ProvideRegistryRepo(crm *infra_postgres.CrmDB) repo.RegistryRepo {
-	return crmpostgres.NewRegistryPostgres(crm.DB)
+func ProvideRegistryRepo(crm *gorm.DB) repo.RegistryRepo {
+	return crmpostgres.NewRegistryPostgres(crm)
 }
 
-func ProvideReportRepo(crm *infra_postgres.CrmDB) repo.ReportRepo {
-	return crmpostgres.NewReportPostgres(crm.DB)
+func ProvideReportRepo(crm *gorm.DB) repo.ReportRepo {
+	return crmpostgres.NewReportPostgres(crm)
 }
 
-func ProvideReportReasonRepo(crm *infra_postgres.CrmDB) repo.ReportReasonRepo {
-	return crmpostgres.NewReportReasonPostgres(crm.DB)
+func ProvideReportReasonRepo(crm *gorm.DB) repo.ReportReasonRepo {
+	return crmpostgres.NewReportReasonPostgres(crm)
 }
 
-func ProvideAppointmentRepo(crm *infra_postgres.CrmDB) repo.AppointmentRepository {
-	return crmpostgres.NewAppointmentPostgresRepository(crm.DB)
+func ProvideAppointmentRepo(crm *gorm.DB) repo.AppointmentRepository {
+	return crmpostgres.NewAppointmentPostgresRepository(crm)
 }
 
 // ProvideAppointmentStatsJob reads appointment_stats snapshots; the daily writer is not scheduled in v4.
-func ProvideAppointmentStatsJob(crm *infra_postgres.CrmDB, appointments services.AppointmentUsecase) dashboard.DashboardStatsJob {
-	return dashboard.NewDashboardStatsJob(crm.DB, "appointment_stats", func(ctx context.Context) int64 {
+func ProvideAppointmentStatsJob(crm *gorm.DB, appointments services.AppointmentUsecase) dashboard.DashboardStatsJob {
+	return dashboard.NewDashboardStatsJob(crm, "appointment_stats", func(ctx context.Context) int64 {
 		count, err := appointments.CountCurrent(ctx)
 		if err != nil {
 			return 0

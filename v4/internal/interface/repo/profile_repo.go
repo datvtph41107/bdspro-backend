@@ -5,9 +5,9 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	"time"
-	"userv4/enums"
-	"userv4/internal/domain/user"
-	"userv4/internal/dto"
+	"userv4/modules/user/enums"
+	"userv4/modules/user/domain/user"
+	"userv4/modules/user/dto"
 )
 
 type IProfileRepo interface {

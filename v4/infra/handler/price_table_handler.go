@@ -6,22 +6,22 @@ import (
 	_errors "common/errors"
 	"context"
 	pb "pb/types/user"
-	"userv4/infra/mapper"
-	"userv4/internal/usecases"
+	mapper "userv4/modules/user/mapper"
+	userservices "userv4/modules/user/services"
 
 	"google.golang.org/grpc/status"
 )
 
 type PriceTableHandler struct {
 	pb.UnimplementedPriceTableServiceServer
-	priceTableUsecase usecases.IPriceTableUsecase
+	priceTableUsecase userservices.IPriceTableUsecase
 	mapper            *mapper.PriceTableMapper
 }
 
-// @bind: internal/usecases.IPriceTableUsecase
+// @bind: internal/userservices.IPriceTableUsecase
 // @bind: infra/mapper.PriceTableMapper
 func NewPriceTableHandler(
-	priceTableUsecase usecases.IPriceTableUsecase,
+	priceTableUsecase userservices.IPriceTableUsecase,
 	mapper *mapper.PriceTableMapper,
 ) *PriceTableHandler {
 	return &PriceTableHandler{

@@ -6,19 +6,19 @@ import (
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strings"
-	"userv4/infra/mapper"
-	"userv4/internal/models"
-	"userv4/internal/usecases"
+	mapper "userv4/modules/user/mapper"
+	"userv4/modules/user/entity"
+	userservices "userv4/modules/user/services"
 )
 
 type MainAreaHandler struct {
 	userpb.UnimplementedMainAreaServiceServer
-	areaUsecase usecases.IAdminMainAreaUsecase
+	areaUsecase userservices.IAdminMainAreaUsecase
 	mapper      *mapper.MainAreaMapper
 }
 
 func NewMainAreaHandler(
-	areaUsecase usecases.IAdminMainAreaUsecase,
+	areaUsecase userservices.IAdminMainAreaUsecase,
 	mapper *mapper.MainAreaMapper,
 ) *MainAreaHandler {
 	return &MainAreaHandler{
@@ -146,7 +146,7 @@ func (h *MainAreaHandler) GetMainAreaItems(ctx context.Context, req *sharepb.Req
 	searchText := strings.TrimSpace(req.GetText())
 	if searchText != "" {
 		searchTextLower := strings.ToLower(searchText)
-		filtered = make([]models.MainAreaEntity, 0, len(entities))
+		filtered = make([]entity.MainAreaEntity, 0, len(entities))
 		for _, entity := range entities {
 			nameMatch := strings.Contains(strings.ToLower(entity.Name), searchTextLower)
 			descMatch := entity.Description != "" && strings.Contains(strings.ToLower(entity.Description), searchTextLower)

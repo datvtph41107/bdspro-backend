@@ -6,7 +6,7 @@ import (
 
 	dashboard "base/dashboard"
 
-	userusecase "userv4/internal/usecase/user"
+	userusecase "userv4/modules/user/services/user"
 
 	"gorm.io/gorm"
 )

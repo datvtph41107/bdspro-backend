@@ -9,7 +9,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 	shared_enum "pb/enums"
-	"userv4/internal/dto"
+	"userv4/modules/auth/dto"
 	"userv4/modules/notification/entity"
 	"userv4/modules/notification/repository"
 

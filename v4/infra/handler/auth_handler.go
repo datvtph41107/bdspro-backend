@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"userv4/infra/mapper"
-	"userv4/internal/dto"
-	"userv4/internal/usecase"
-	"userv4/internal/usecase/useradmin"
+	mapper "userv4/modules/auth/mapper"
+	"userv4/modules/auth/dto"
+	userdto "userv4/modules/user/dto"
+	usecase "userv4/modules/auth/services"
+	"userv4/modules/user/services/useradmin"
 	authcontroller "userv4/modules/auth/controller"
 
 	"google.golang.org/grpc/codes"
@@ -645,7 +646,7 @@ func (h *AuthHandler) ListAdmins(ctx context.Context, req *authpb.AdminListReque
 		size = 100
 	}
 
-	listReq := dto.AdminListRequest{
+	listReq := userdto.AdminListRequest{
 		Pagable: _dto.Pagable{
 			Page: uint32(page),
 			Size: uint32(size),

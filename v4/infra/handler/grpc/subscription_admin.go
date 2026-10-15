@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	userpb "pb/types/user"
-	subscriptiondomain "userv4/internal/domain/subscription"
-	subscriptionusecase "userv4/internal/usecase/subscription"
+	subscriptiondomain "userv4/modules/user/domain/subscription"
+	subscriptionusecase "userv4/modules/user/services/subscription"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

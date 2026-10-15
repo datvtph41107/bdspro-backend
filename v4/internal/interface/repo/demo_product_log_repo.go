@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/internal/domain/user"
+	"userv4/modules/user/domain/user"
 )
 
 type IDemoProductLogRepo interface {

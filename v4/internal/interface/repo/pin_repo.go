@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"time"
-	"userv4/internal/domain/auth"
+	"userv4/modules/auth/domain/auth"
 )
 
 // PINRepository interface cho việc tương tác với dữ liệu PIN

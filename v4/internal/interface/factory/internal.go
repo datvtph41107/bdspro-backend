@@ -1,7 +1,7 @@
 package factory
 
-import "userv4/internal/dto"
+import authdto "userv4/modules/auth/dto"
 
 type IFactory interface {
-	GetProperties() dto.PropertiesDTO
+	GetProperties() authdto.PropertiesDTO
 }

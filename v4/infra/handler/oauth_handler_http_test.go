@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"userv4/internal/usecase"
+	usecase "userv4/modules/auth/services"
 )
 
 func serveOAuth(t *testing.T, path string) (int, map[string]any) {

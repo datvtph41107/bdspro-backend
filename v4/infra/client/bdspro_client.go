@@ -6,7 +6,7 @@ import (
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/dto"
+	"userv4/modules/user/dto"
 )
 
 // @bind: user/internal/interface/providers.BdsproProvider

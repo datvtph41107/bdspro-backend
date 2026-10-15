@@ -5,7 +5,7 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	sharepb "pb/types/shared"
-	"userv4/internal/dto"
+	authdto "userv4/modules/auth/dto"
 )
 
 // NotificationProvider định nghĩa interface cho việc tương tác với notification-service
@@ -48,7 +48,7 @@ type NotificationProvider interface {
 		ipAddress string,
 		userAgent string) error
 
-	CreateHistoryAuth(ctx context.Context, payload *dto.HistoryAuthCreateDTO) error
+	CreateHistoryAuth(ctx context.Context, payload *authdto.HistoryAuthCreateDTO) error
 
-	GetPersonConfigs(ctx context.Context, userID uint64) ([]*dto.PersonConfigDTO, error)
+	GetPersonConfigs(ctx context.Context, userID uint64) ([]*authdto.PersonConfigDTO, error)
 }
