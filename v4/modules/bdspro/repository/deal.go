@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -38,6 +39,8 @@ type DealRepository interface {
 	SoftDelete(ctx context.Context, id uint64) error
 	IsAcceptedMember(ctx context.Context, dealID, memberID uint64) (bool, error)
 	UpdateDoneInvestment(ctx context.Context, dealID, memberID uint64) error
+	AddDealProducts(ctx context.Context, dealID uint64, productIDs []uint64, createdBy uint64) error
+	RemoveDealProductsByCreator(ctx context.Context, dealID uint64, productIDs []uint64, createdBy uint64) (int64, error)
 }
 
 type dealPostgres struct {
@@ -271,6 +274,8 @@ func (r *dealPostgres) UpdateSetting(ctx context.Context, id uint64, setting *dt
 		if !status.IsValid() {
 			status = enums.DealStatus(model.Status)
 		}
+
+		log.Println("setting", setting.AllowManualInput)
 
 		return tx.Model(&entity.Deal{}).
 			Where("id = ? AND deleted_at IS NULL", id).

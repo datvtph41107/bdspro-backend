@@ -37,15 +37,6 @@ func (h *Handler) count(ctx context.Context, req dto.CountRequest) (*httpapi.Res
 		return nil, err
 	}
 
-	// Ensure SyncKeyNotificationMe exists for /v2/bdspro/ts; do not overwrite if already set.
-	if h.sync != nil {
-		key := h.sync.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
-		ts := h.sync.EnsureTimestamp(ctx, key)
-		if result != nil && result.Timestamp <= 0 && ts > 0 {
-			result.Timestamp = ts
-		}
-	}
-
 	return countResult(result)
 }
 

@@ -59,6 +59,8 @@ const (
 	SyncKeyBdsproEnums = "bds:enums"
 	// SyncKeyPaymentBankAll: danh mục ngân hàng GET /v2/payment/bank/all (global).
 	SyncKeyPaymentBankAll = "pay:bank:all"
+	// SyncKeyTxCostTypes: danh mục loại chi phí GET /v4/transaction/cost-type (global, mọi costType).
+	SyncKeyTxCostTypes = "tx:cost:types"
 	// SyncKeyPoiCategoryIcons: icon POI categories (global).
 	SyncKeyPoiCategoryIcons = "tqd:poi:icons"
 	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).

@@ -21,7 +21,7 @@ type InvestmentService interface {
 	Update(ctx context.Context, req *bdspropb.SubmitInvestRequest) (uint64, error)
 	Delete(ctx context.Context, id uint64) error
 	Detail(ctx context.Context, id uint64) (*bdspropb.Investment, error)
-	List(ctx context.Context, req *bdspropb.InvestmentListRequest) (*bdspropb.ListInvestment, error)
+	List(ctx context.Context, q dto.InvestmentListQuery) ([]*entity.DealInvestment, int64, int64, error)
 	Approve(ctx context.Context, id uint64) (uint64, error)
 	Reject(ctx context.Context, id uint64) (uint64, error)
 	Confirm(ctx context.Context, id uint64, confirmed bool) (uint64, error)
@@ -162,38 +162,41 @@ func (s *LocalInvestmentService) Detail(ctx context.Context, id uint64) (*bdspro
 	return out, nil
 }
 
-func (s *LocalInvestmentService) List(ctx context.Context, req *bdspropb.InvestmentListRequest) (*bdspropb.ListInvestment, error) {
-	if req == nil || req.GetDealId() == 0 {
-		return nil, _errors.BadRequestException("deal id is required")
+func (s *LocalInvestmentService) List(ctx context.Context, q dto.InvestmentListQuery) ([]*entity.DealInvestment, int64, int64, error) {
+	if q.DealID == 0 {
+		return nil, 0, 0, _errors.BadRequestException("dealId is required")
 	}
-	if s.sync != nil && req.GetTimestamp() > 0 {
-		key := s.sync.GetKey(ctx, _utils.SyncKeyDealInvestment, req.GetDealId())
-		if !s.sync.HasUpdated(ctx, key, req.GetTimestamp()) {
-			return &bdspropb.ListInvestment{}, nil
+	dealID := q.DealID
+	if s.sync != nil && q.Timestamp > 0 {
+		key := s.sync.GetKey(ctx, _utils.SyncKeyDealInvestment, dealID)
+		if !s.sync.HasUpdated(ctx, key, q.Timestamp) {
+			ts := s.sync.GetTimestamp(ctx, key)
+			if ts <= 0 {
+				ts = q.Timestamp
+			}
+			return nil, 0, ts, nil
 		}
-	}
-	q := dto.InvestmentListQuery{
-		DealID:     req.GetDealId(),
-		InvestType: req.GetInvestType(),
-		Status:     req.GetStatus(),
-		Timestamp:  req.GetTimestamp(),
-	}
-	if req.MemberId != nil {
-		q.MemberID = req.MemberId
 	}
 	rows, total, err := s.repo.List(ctx, q)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
-	data := make([]*bdspropb.Investment, 0, len(rows))
-	for _, row := range rows {
-		data = append(data, entityToInvestmentPb(row))
+
+	// s.attachProfiles(ctx, rows)
+	ts := s.investmentSyncTS(ctx, dealID)
+	return rows, total, ts, nil
+}
+
+func (s *LocalInvestmentService) investmentSyncTS(ctx context.Context, dealID uint64) int64 {
+	if s.sync == nil || dealID == 0 {
+		return time.Now().UnixMilli()
 	}
-	s.attachProfiles(ctx, data)
-	if s.sync != nil {
-		_ = s.sync.EnsureTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyDealInvestment, req.GetDealId()))
+	key := s.sync.GetKey(ctx, _utils.SyncKeyDealInvestment, dealID)
+	ts := s.sync.EnsureTimestamp(ctx, key)
+	if ts <= 0 {
+		return time.Now().UnixMilli()
 	}
-	return &bdspropb.ListInvestment{Data: data, Total: int32(total)}, nil
+	return ts
 }
 
 func (s *LocalInvestmentService) Approve(ctx context.Context, id uint64) (uint64, error) {

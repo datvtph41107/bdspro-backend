@@ -22,7 +22,8 @@ func NewCostTypeController(costType services.CostTypeService) *CostTypeControlle
 
 func (c *CostTypeController) RegisterHTTP(mux *http.ServeMux) {
 	registerCostTypeRoutes(mux, "/v2.1/transaction/cost-type", c)
-	registerCostTypeRoutes(mux, "/v4/transaction/cost-type", c)
+	httpapi.GET(mux, "/v4/transaction/cost-type", c.listHTTP)
+	registerCostTypeWriteRoutes(mux, "/v4/transaction/cost-type", c)
 }
 
 func registerCostTypeRoutes(mux *http.ServeMux, base string, c *CostTypeController) {
@@ -32,6 +33,20 @@ func registerCostTypeRoutes(mux *http.ServeMux, base string, c *CostTypeControll
 	httpapi.HandleProto(mux, http.MethodDelete, base+"/{id}", c.deleteProto)
 }
 
+func registerCostTypeWriteRoutes(mux *http.ServeMux, base string, c *CostTypeController) {
+	httpapi.HandleProto(mux, http.MethodPost, base, c.createProto)
+	httpapi.HandleProto(mux, http.MethodPut, base+"/{id}", c.updateProto)
+	httpapi.HandleProto(mux, http.MethodDelete, base+"/{id}", c.deleteProto)
+}
+
+func (c *CostTypeController) listHTTP(ctx context.Context, req dto.CostTypeSearchRequest) (*httpapi.Result, error) {
+	out, err := c.costType.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return costTypeListResult(out)
+}
+
 func (c *CostTypeController) listProto(ctx context.Context, req *bdspropb.CostTypeSearchDTO) (*bdspropb.CostTypeListDTO, error) {
 	search := dto.CostTypeSearchRequest{
 		TypeName: req.GetTypeName(),
@@ -39,7 +54,14 @@ func (c *CostTypeController) listProto(ctx context.Context, req *bdspropb.CostTy
 	}
 	search.Page = req.GetPage()
 	search.Size = req.GetSize()
-	return c.costType.List(ctx, search)
+	out, err := c.costType.List(ctx, search)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil || out.Unchanged || out.List == nil {
+		return &bdspropb.CostTypeListDTO{}, nil
+	}
+	return out.List, nil
 }
 
 func (c *CostTypeController) createProto(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error) {

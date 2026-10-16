@@ -12,21 +12,21 @@ service DealMemberService {
     // API lấy danh sách thành viên của deal
   rpc SendDealInvitation(SendDealInvitationRequest) returns (SendDealInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2.1/org/deal-invitation"
+      post: "/v4/deals/{dealId}/invitation"
       body: "*"
     };
   }
 
   rpc AcceptDealInvitation(AcceptDealInvitationRequest) returns (AcceptDealInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2.1/org/deal-invitation/accept"
+      post: "/v4/deals/{dealId}/invitation/accept"
       body: "*"
     };
   }
 
   rpc RejectDealInvitation(RejectDealInvitationRequest) returns (RejectDealInvitationResponse) {
     option (google.api.http) = {
-      post: "/v2.1/org/deal-invitation/reject"
+      post: "/v4/deals/{dealId}/invitation/reject"
       body: "*"
     };
   }
@@ -53,7 +53,7 @@ service DealMemberService {
 
   rpc RemoveFromDeal(RemoveFromDealRequest) returns (RemoveFromDealResponse) {
     option (google.api.http) = {
-      post: "/v2.1/org/deal-invitation/remove"
+      post: "/v4/deals/invitation/remove"
       body: "*"
     };
   }
@@ -85,7 +85,7 @@ service DealMemberService {
 
   rpc GetDealInvitationsByDeal(GetDealInvitationsByDealRequest) returns (GetDealInvitationsByDealResponse) {
     option (google.api.http) = {
-      get: "/v2.1/org/deal-invitation/list/{dealId}"
+      get: "/v4/deals/{dealId}/invitations"
     };
   }
 }
@@ -112,6 +112,7 @@ message SendDealInvitationResponse {
 
 message AcceptDealInvitationRequest {
   uint64 invitationId = 1;
+  uint64 dealId = 2;
 }
 
 message AcceptDealInvitationResponse {
@@ -122,6 +123,7 @@ message AcceptDealInvitationResponse {
 message RejectDealInvitationRequest {
   uint64 invitationId = 1;
   string reason = 2;
+  uint64 dealId = 3;
 }
 
 message RejectDealInvitationResponse {

@@ -60,16 +60,20 @@ func (s *LocalNotificationService) Count(ctx context.Context, _ dto.CountRequest
 }
 
 func (s *LocalNotificationService) List(ctx context.Context, req dto.ListRequest) (*notificationpb.ListResponse, error) {
+	var syncTS int64
 	if s.sync != nil {
 		key := s.sync.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
 		updated := s.sync.HasUpdated(ctx, key, req.Timestamp)
 		s.sync.PutTimeRequest(ctx, key, req.Timestamp)
+		syncTS = s.sync.GetTimestamp(ctx, key)
 		if !updated && req.Page == 0 {
-			ts := s.sync.EnsureTimestamp(ctx, key)
+			if syncTS == 0 {
+				syncTS = s.sync.EnsureTimestamp(ctx, key)
+			}
 			return &notificationpb.ListResponse{
 				Data:      nil,
 				Total:     0,
-				Timestamp: ts,
+				Timestamp: syncTS,
 				Unchanged: true,
 			}, nil
 		}
@@ -84,9 +88,14 @@ func (s *LocalNotificationService) List(ctx context.Context, req dto.ListRequest
 	for _, row := range rows {
 		data = append(data, mapNotificationPB(row))
 	}
+	if s.sync != nil && syncTS == 0 {
+		key := s.sync.GetKey(ctx, _utils.SyncKeyNotificationMe, 0)
+		syncTS = s.sync.GetTimestamp(ctx, key)
+	}
 	return &notificationpb.ListResponse{
 		Data:      data,
 		Total:     total,
+		Timestamp: syncTS,
 		Unchanged: false,
 	}, nil
 }

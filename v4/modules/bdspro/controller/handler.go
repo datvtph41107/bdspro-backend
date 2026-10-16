@@ -12,6 +12,7 @@ import (
 type Handler struct {
 	sync            *SyncController
 	deal            *DealController
+	dealInvitation  *DealInvitationController
 	dealCost        *DealCostController
 	dealContract    *DealContractController
 	investment      *InvestmentController
@@ -31,6 +32,7 @@ type Handler struct {
 func NewHandler(
 	syncSvc services.SyncService,
 	dealSvc services.DealService,
+	dealInvitationSvc services.DealInvitationService,
 	dealCostSvc services.DealCostService,
 	contractDealSvc services.ContractDealService,
 	investmentSvc services.InvestmentService,
@@ -51,6 +53,7 @@ func NewHandler(
 	return &Handler{
 		sync:            NewSyncController(syncSvc),
 		deal:            NewDealController(dealSvc),
+		dealInvitation:  NewDealInvitationController(dealInvitationSvc),
 		dealCost:        NewDealCostController(dealCostSvc),
 		dealContract:    NewDealContractController(dealSvc, contractDealSvc),
 		investment:      NewInvestmentController(investmentSvc),
@@ -72,6 +75,7 @@ func NewHandler(
 func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.sync.RegisterHTTP(mux)
 	h.deal.RegisterHTTP(mux)
+	h.dealInvitation.RegisterHTTP(mux)
 	h.dealCost.RegisterHTTP(mux)
 	h.dealContract.RegisterHTTP(mux)
 	h.investment.RegisterHTTP(mux)

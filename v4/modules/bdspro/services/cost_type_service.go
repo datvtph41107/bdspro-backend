@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"time"
 
 	_errors "common/errors"
+	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
 	"userv4/modules/bdspro/dto"
@@ -11,20 +13,28 @@ import (
 	"userv4/modules/bdspro/repository"
 )
 
+// CostTypeListOutcome is the cost-type catalog response + sync metadata.
+type CostTypeListOutcome struct {
+	List      *bdspropb.CostTypeListDTO
+	Timestamp int64
+	Unchanged bool
+}
+
 // CostTypeService owns tx_cost_types CRUD (migrated from bdspro CostTypeService).
 type CostTypeService interface {
 	Create(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error)
 	Update(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error)
 	Delete(ctx context.Context, id uint64) error
-	List(ctx context.Context, req dto.CostTypeSearchRequest) (*bdspropb.CostTypeListDTO, error)
+	List(ctx context.Context, req dto.CostTypeSearchRequest) (*CostTypeListOutcome, error)
 }
 
 type LocalCostTypeService struct {
 	repo repository.CostTypeRepository
+	sync *_utils.SyncUtil
 }
 
-func NewLocalCostTypeService(repo repository.CostTypeRepository) *LocalCostTypeService {
-	return &LocalCostTypeService{repo: repo}
+func NewLocalCostTypeService(repo repository.CostTypeRepository, sync *_utils.SyncUtil) *LocalCostTypeService {
+	return &LocalCostTypeService{repo: repo, sync: sync}
 }
 
 func (s *LocalCostTypeService) Create(ctx context.Context, req *bdspropb.CostTypeDTO) (*bdspropb.CostTypeDTO, error) {
@@ -35,6 +45,7 @@ func (s *LocalCostTypeService) Create(ctx context.Context, req *bdspropb.CostTyp
 	if err := s.repo.Create(ctx, model); err != nil {
 		return nil, err
 	}
+	s.bumpCostTypesSync(ctx)
 	return costTypeEntityToProto(model), nil
 }
 
@@ -56,6 +67,7 @@ func (s *LocalCostTypeService) Update(ctx context.Context, req *bdspropb.CostTyp
 	if err := s.repo.Update(ctx, model); err != nil {
 		return nil, err
 	}
+	s.bumpCostTypesSync(ctx)
 	return costTypeEntityToProto(model), nil
 }
 
@@ -63,22 +75,45 @@ func (s *LocalCostTypeService) Delete(ctx context.Context, id uint64) error {
 	if id == 0 {
 		return _errors.BadRequestException("cost type id is required")
 	}
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.bumpCostTypesSync(ctx)
+	return nil
 }
 
-func (s *LocalCostTypeService) List(ctx context.Context, req dto.CostTypeSearchRequest) (*bdspropb.CostTypeListDTO, error) {
+func (s *LocalCostTypeService) List(ctx context.Context, req dto.CostTypeSearchRequest) (*CostTypeListOutcome, error) {
+	if s.sync != nil {
+		catalogTS := s.sync.EnsureTimestamp(ctx, _utils.SyncKeyTxCostTypes)
+		if req.Timestamp > 0 && !s.sync.HasUpdated(ctx, _utils.SyncKeyTxCostTypes, req.Timestamp) {
+			return &CostTypeListOutcome{Timestamp: catalogTS, Unchanged: true}, nil
+		}
+	}
+
 	rows, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	out := &bdspropb.CostTypeListDTO{
+	list := &bdspropb.CostTypeListDTO{
 		Data:  make([]*bdspropb.CostTypeDTO, 0, len(rows)),
 		Total: uint32(len(rows)),
 	}
 	for _, row := range rows {
-		out.Data = append(out.Data, costTypeEntityToProto(row))
+		list.Data = append(list.Data, costTypeEntityToProto(row))
 	}
-	return out, nil
+
+	ts := time.Now().UnixMilli()
+	if s.sync != nil {
+		ts = s.sync.EnsureTimestamp(ctx, _utils.SyncKeyTxCostTypes)
+	}
+	return &CostTypeListOutcome{List: list, Timestamp: ts}, nil
+}
+
+func (s *LocalCostTypeService) bumpCostTypesSync(ctx context.Context) {
+	if s.sync == nil {
+		return
+	}
+	_ = s.sync.PutTimestamp(ctx, _utils.SyncKeyTxCostTypes, time.Now().UnixMilli())
 }
 
 func costTypeEntityToProto(model *entity.TxCostType) *bdspropb.CostTypeDTO {

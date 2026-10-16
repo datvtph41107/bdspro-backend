@@ -285,6 +285,12 @@ func (r *stubDealRepo) IsAcceptedMember(context.Context, uint64, uint64) (bool, 
 
 func (r *stubDealRepo) UpdateDoneInvestment(context.Context, uint64, uint64) error { return nil }
 
+func (r *stubDealRepo) AddDealProducts(context.Context, uint64, []uint64, uint64) error { return nil }
+
+func (r *stubDealRepo) RemoveDealProductsByCreator(context.Context, uint64, []uint64, uint64) (int64, error) {
+	return 0, nil
+}
+
 func TestLocalDealService_GetTimestamps_RequiresID(t *testing.T) {
 	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
 	_, err := svc.GetTimestamps(context.Background(), 0)
@@ -299,8 +305,8 @@ func TestLocalDealService_GetTimestamps_NilSync(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetTimestamps: %v", err)
 	}
-	if resp == nil || len(resp.Timestamps) != 0 {
-		t.Fatalf("expected empty timestamps, got %+v", resp)
+	if resp == nil || resp.Timestamps["invitation"] != 0 {
+		t.Fatalf("expected invitation=0 in timestamps, got %+v", resp)
 	}
 }
 
@@ -350,6 +356,29 @@ type stubDealRepoDetail struct {
 
 func (r *stubDealRepoDetail) GetByID(context.Context, uint64) (*entity.Deal, error) {
 	return r.deal, nil
+}
+
+func TestBuildCreateDealMembers_DedupesChargePersonInMemberIds(t *testing.T) {
+	members, _ := buildCreateDealMembers(&bdspropb.CreateGroupDealRequest{
+		OwnerId:        40,
+		ChargePersonId: 285,
+		MemberIds:      []uint64{285, 70, 98},
+	}, 40)
+	count285 := 0
+	for _, m := range members {
+		if m.MemberID == 285 {
+			count285++
+			if m.RoleKey != uint32(enums.RoleKeyDealAdmin) {
+				t.Fatalf("charge person should be admin, got role %d", m.RoleKey)
+			}
+		}
+	}
+	if count285 != 1 {
+		t.Fatalf("expected one row for member 285, got %d members total=%d", count285, len(members))
+	}
+	if len(members) != 4 { // owner 40 + admin 285 + 70 + 98
+		t.Fatalf("expected 4 members, got %d: %+v", len(members), members)
+	}
 }
 
 func TestLocalDealService_CreateGroupDeal_OwnerAccepted(t *testing.T) {

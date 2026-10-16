@@ -240,7 +240,7 @@ service DealService {
     // API cập nhật vai trò thành viên thương vụ
     rpc UpdateDealMemberRole(UpdateDealMemberRoleRequest) returns (UpdateDealMemberRoleResponse) {
         option (google.api.http) = {
-            put: "/v2.1/org/deal/member/role"
+            put: "/v4/deals/invitation/role"
             body: "*"
         };
     }
@@ -473,6 +473,7 @@ message GroupDeal {
     int64 timestamp = 38;
     // Membership/invitation row of the requesting (or invitedProfileId) user on this deal.
     optional sharepb.DealMember invitation = 39;
+    bool allowManualInput = 40;
 }
 
 message DocumentItem {

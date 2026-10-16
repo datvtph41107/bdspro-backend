@@ -21,24 +21,16 @@ func NewInvestmentController(investment services.InvestmentService) *InvestmentC
 }
 
 func (c *InvestmentController) RegisterHTTP(mux *http.ServeMux) {
-	registerInvestmentRoutes(mux, "/v2.1/org", c)
-	registerInvestmentRoutes(mux, "/v4/org", c)
-	httpapi.GET(mux, "/v4/deal/investments/list/{dealId}", c.listHTTP)
-}
-
-func registerInvestmentRoutes(mux *http.ServeMux, orgBase string, c *InvestmentController) {
-	base := orgBase + "/investment"
-	httpapi.HandleProto(mux, http.MethodPost, base, c.createProto)
-	httpapi.HandleProto(mux, http.MethodPut, base+"/{id}", c.updateProto)
-	httpapi.HandleProto(mux, http.MethodDelete, base+"/{id}", c.deleteProto)
-	httpapi.HandleProto(mux, http.MethodGet, base+"/{id}", c.detailProto)
-	httpapi.HandleProto(mux, http.MethodGet, base+"/member-histories/{dealId}/{memberId}", c.historiesProto)
-	httpapi.HandleProto(mux, http.MethodPost, base+"/{id}/approve", c.approveProto)
-	httpapi.HandleProto(mux, http.MethodPost, base+"/{id}/reject", c.rejectProto)
-	httpapi.HandleProto(mux, http.MethodPost, base+"/{id}/confirm", c.confirmProto)
-	httpapi.HandleProto(mux, http.MethodPost, base+"/{id}/unconfirm", c.unconfirmProto)
-	listBase := orgBase + "/investments/list/{dealId}"
-	httpapi.HandleProto(mux, http.MethodGet, listBase, c.listProto)
+	httpapi.GET(mux, "/v4/deal/{dealId}/investments", c.listHTTP)
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deals/investment", c.createProto)
+	httpapi.HandleProto(mux, http.MethodPut, "/v4/deals/investment/{id}", c.updateProto)
+	httpapi.HandleProto(mux, http.MethodDelete, "/v4/deals/investment/{id}", c.deleteProto)
+	httpapi.HandleProto(mux, http.MethodGet, "/v4/deals/investment/{id}", c.detailProto)
+	httpapi.HandleProto(mux, http.MethodGet, "/v4/deals/investment/member-histories/{dealId}/{memberId}", c.historiesProto)
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deals/investment/{id}/approve", c.approveProto)
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deals/investment/{id}/reject", c.rejectProto)
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deals/investment/{id}/confirm", c.confirmProto)
+	httpapi.HandleProto(mux, http.MethodPost, "/v4/deals/investment/{id}/unconfirm", c.unconfirmProto)
 }
 
 func (c *InvestmentController) createProto(ctx context.Context, req *bdspropb.SubmitInvestRequest) (*sharepb.IdDTO, error) {
@@ -68,35 +60,19 @@ func (c *InvestmentController) detailProto(ctx context.Context, req *sharepb.IdD
 	return c.investment.Detail(ctx, req.GetId())
 }
 
-func (c *InvestmentController) listProto(ctx context.Context, req *bdspropb.InvestmentListRequest) (*bdspropb.ListInvestment, error) {
-	return c.investment.List(ctx, req)
-}
-
 func (c *InvestmentController) listHTTP(ctx context.Context, req dto.InvestmentListQuery) (*httpapi.Result, error) {
-	protoReq := &bdspropb.InvestmentListRequest{
-		DealId:     req.DealID,
-		InvestType: req.InvestType,
-		Status:     req.Status,
-		Timestamp:  req.Timestamp,
-	}
-	if req.MemberID != nil {
-		protoReq.MemberId = req.MemberID
-	}
-	result, err := c.investment.List(ctx, protoReq)
+	result, total, ts, err := c.investment.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if result == nil {
 		return httpapi.OK([]any{}), nil
 	}
-	data, err := protoMessages(result.GetData())
-	if err != nil {
-		return nil, err
-	}
 	opts := []httpapi.OKOption{
-		httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}),
+		httpapi.WithPagination(&httpapi.Pagination{Total: total}),
 	}
-	return httpapi.OK(data, opts...), nil
+	opts = append(opts, httpapi.WithTimestamp(ts))
+	return httpapi.OK(result, opts...), nil
 }
 
 func (c *InvestmentController) approveProto(ctx context.Context, req *sharepb.IdDTO) (*sharepb.IdDTO, error) {

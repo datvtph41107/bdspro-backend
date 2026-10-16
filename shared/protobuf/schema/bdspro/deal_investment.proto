@@ -80,6 +80,8 @@ message SubmitInvestRequest {
 message ListInvestment {
     repeated Investment data = 1;
     int32 total = 2;
+    int64 timestamp = 3; // sync timestamp (ms), key deal:inv
+    bool unchanged = 4;  // true when client cache is still valid
 }
 
 message Investment {

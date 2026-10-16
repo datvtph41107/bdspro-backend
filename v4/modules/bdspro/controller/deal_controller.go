@@ -32,11 +32,11 @@ func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v4/deals/me", c.getDealsMe)
 	httpapi.GET(mux, "/v4/deal/{id}/ts", c.getTimestamps)
 	httpapi.GET(mux, "/v4/deal/{id}/products", c.getProducts)
+	httpapi.POST(mux, "/v4/deal/{id}/products", c.saveProducts)
 	httpapi.GET(mux, "/v4/deal/{id}/summary", c.getSummary)
 	httpapi.GET(mux, "/v4/deal/{id}/bank-account", c.getBankAccount)
 	httpapi.GET(mux, "/v4/deal/{id}/members", c.getMembers)
 	httpapi.GET(mux, "/v4/deal/{id}", c.getDetail)
-	httpapi.GET(mux, "/v4/deal/invitation/list/{dealId}", c.getInvitations)
 }
 
 func (c *DealController) createProto(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (*bdspropb.CreateGroupDealResponse, error) {
@@ -139,6 +139,14 @@ func (c *DealController) getProducts(ctx context.Context, req dto.DealListByIDRe
 	return httpapi.OK(data, timestampOpt(ts)...), nil
 }
 
+func (c *DealController) saveProducts(ctx context.Context, req dto.SaveDealProductsRequest) (*httpapi.Result, error) {
+	ts, err := c.deal.SaveDealProducts(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return httpapi.OK(map[string]any{"status": 1}, timestampOpt(ts)...), nil
+}
+
 func (c *DealController) getSummary(ctx context.Context, req dto.DealSummaryRequest) (*httpapi.Result, error) {
 	result, ts, err := c.deal.GetSummary(ctx, req)
 	if err != nil {
@@ -169,25 +177,6 @@ func (c *DealController) getMembers(ctx context.Context, req dto.DealMembersRequ
 	}
 	opts := timestampOpt(ts)
 	opts = append(opts, httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}))
-	return httpapi.OK(data, opts...), nil
-}
-
-func (c *DealController) getInvitations(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
-	result, err := c.deal.GetInvitations(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if result == nil {
-		return httpapi.OK([]any{}), nil
-	}
-	data, err := protoMessages(result.GetData())
-	if err != nil {
-		return nil, err
-	}
-	opts := []httpapi.OKOption{
-		httpapi.WithPagination(&httpapi.Pagination{Total: result.GetTotal()}),
-	}
-	opts = append(opts, timestampOpt(result.GetTimestamp())...)
 	return httpapi.OK(data, opts...), nil
 }
 

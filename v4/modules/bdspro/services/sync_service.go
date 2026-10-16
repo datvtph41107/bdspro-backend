@@ -34,6 +34,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	redisKeys := []string{
 		_utils.SyncKeyBdsproEnums,
 		_utils.SyncKeyPaymentBankAll,
+		_utils.SyncKeyTxCostTypes,
 		s.sync.GetKey(ctx, _utils.SyncKeyPermissionMe, 0),
 		s.sync.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0),
 		_utils.SyncKeyUserGuideByKey,
@@ -48,6 +49,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	names := []string{
 		"enum",
 		"bank_all",
+		"cost_types",
 		"permission_me",
 		"info_me",
 		"user_guides_by_key",
@@ -63,6 +65,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 	globalKey := map[string]bool{
 		_utils.SyncKeyBdsproEnums:       true,
 		_utils.SyncKeyPaymentBankAll:    true,
+		_utils.SyncKeyTxCostTypes:       true,
 		_utils.SyncKeyUserGuideByKey:    true,
 		_utils.SyncKeyPoiCategoryIcons:  true,
 		_utils.SyncKeyTQDProvincesWards: true,

@@ -8,6 +8,7 @@ import (
 
 	bdspropb "pb/types/bdspro"
 	"userv4/modules/bdspro/dto"
+	"userv4/modules/bdspro/services"
 )
 
 type stubCostTypeService struct{}
@@ -22,8 +23,10 @@ func (stubCostTypeService) Update(context.Context, *bdspropb.CostTypeDTO) (*bdsp
 
 func (stubCostTypeService) Delete(context.Context, uint64) error { return nil }
 
-func (stubCostTypeService) List(context.Context, dto.CostTypeSearchRequest) (*bdspropb.CostTypeListDTO, error) {
-	return &bdspropb.CostTypeListDTO{Data: []*bdspropb.CostTypeDTO{}}, nil
+func (stubCostTypeService) List(context.Context, dto.CostTypeSearchRequest) (*services.CostTypeListOutcome, error) {
+	return &services.CostTypeListOutcome{
+		List: &bdspropb.CostTypeListDTO{Data: []*bdspropb.CostTypeDTO{}},
+	}, nil
 }
 
 func TestCostTypeListRouteCostTypeQuery(t *testing.T) {
@@ -36,5 +39,12 @@ func TestCostTypeListRouteCostTypeQuery(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+
+	reqV4 := httptest.NewRequest(http.MethodGet, "/v4/transaction/cost-type?costType=10", nil)
+	recV4 := httptest.NewRecorder()
+	mux.ServeHTTP(recV4, reqV4)
+	if recV4.Code != http.StatusOK {
+		t.Fatalf("v4 status = %d, body = %s", recV4.Code, recV4.Body.String())
 	}
 }

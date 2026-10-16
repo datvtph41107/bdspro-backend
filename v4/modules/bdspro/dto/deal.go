@@ -54,6 +54,13 @@ type DealListByIDRequest struct {
 	MemberID  *uint64 `form:"memberId"`
 }
 
+// SaveDealProductsRequest is POST /v4/deal/{id}/products (add + remove by creator).
+type SaveDealProductsRequest struct {
+	DealID           uint64   `path:"id|dealId"`
+	ProductIDs       []uint64 `json:"productIds"`
+	RemoveProductIDs []uint64 `json:"removeProductIds"`
+}
+
 // DealMembersRequest is GET /v4/deal/{id}/members (was /v2.1/org/deal/{id}/members).
 type DealMembersRequest struct {
 	DealID         uint64 `path:"id"`

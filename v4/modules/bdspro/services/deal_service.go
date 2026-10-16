@@ -27,6 +27,7 @@ type DealService interface {
 	GetDetail(ctx context.Context, req dto.DealDetailRequest) (*bdspropb.GroupDeal, int64, error)
 	GetContractProcess(ctx context.Context, dealID uint64) (*bdspropb.ContractProcessResponse, int64, error)
 	GetDealProducts(ctx context.Context, req dto.DealListByIDRequest) ([]dto.DealProductItem, int64, error)
+	SaveDealProducts(ctx context.Context, req dto.SaveDealProductsRequest) (int64, error)
 	GetContracts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.DealContractListResponse, error)
 	GetInvestments(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.ListInvestment, int64, error)
 	GetInvitations(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealInvitationsByDealResponse, error)
@@ -59,12 +60,30 @@ func NewLocalDealService(
 	return &LocalDealService{sync: sync, repo: repo, products: products, profile: profile}
 }
 
+func dealTimestampNames() []string {
+	return []string{
+		"permission", "products", "transaction", "investment", "summary",
+		"bank", "invitation", "statistics", "cost", "detail",
+		"members", "process", "commission", "history",
+	}
+}
+
+func emptyDealTimestamps() map[string]int64 {
+	names := dealTimestampNames()
+	out := make(map[string]int64, len(names))
+	for _, name := range names {
+		out[name] = 0
+	}
+	return out
+}
+
 func (s *LocalDealService) GetTimestamps(ctx context.Context, id uint64) (*bdspropb.DealTimestampsResponse, error) {
 	if id == 0 {
 		return nil, _errors.BadRequestException("deal id is required")
 	}
+	names := dealTimestampNames()
 	if s.sync == nil {
-		return &bdspropb.DealTimestampsResponse{Timestamps: map[string]int64{}}, nil
+		return &bdspropb.DealTimestampsResponse{Timestamps: emptyDealTimestamps()}, nil
 	}
 
 	redisKeys := []string{
@@ -83,20 +102,23 @@ func (s *LocalDealService) GetTimestamps(ctx context.Context, id uint64) (*bdspr
 		s.sync.GetKey(ctx, _utils.SyncKeyDealCommission, id),
 		s.sync.GetKey(ctx, _utils.SyncKeyDealHistory, id),
 	}
-	names := []string{
-		"permission", "products", "transaction", "investment", "summary",
-		"bank", "invitation", "statistics", "cost", "detail",
-		"members", "process", "commission", "history",
-	}
 
 	vals, err := s.sync.MGet(ctx, redisKeys)
 	if err != nil {
 		return nil, _errors.InternalServerException(err.Error())
 	}
 
-	timestamps := make(map[string]int64, len(names))
-	for i, v := range vals {
-		timestamps[names[i]] = parseSyncTimestamp(v)
+	timestamps := emptyDealTimestamps()
+	for i, name := range names {
+		var v any
+		if i < len(vals) {
+			v = vals[i]
+		}
+		ts := parseSyncTimestamp(v)
+		if ts == 0 {
+			ts = s.sync.GetTimestamp(ctx, redisKeys[i])
+		}
+		timestamps[name] = ts
 	}
 	return &bdspropb.DealTimestampsResponse{Timestamps: timestamps}, nil
 }
@@ -360,9 +382,34 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		deal.BankAccountID = &bid
 	}
 
+	members, _ := buildCreateDealMembers(req, ownerID)
+
+	if err := s.repo.Create(ctx, deal, members, req.GetProductIds()); err != nil {
+		return 0, err
+	}
+
+	s.clearDealMeSyncForProfiles(ctx, dealMemberProfileIDs(ctx, req, members)...)
+
+	return deal.ID, nil
+}
+
+// buildCreateDealMembers assembles deal_members for create; one row per memberId (chargePerson before memberIds).
+func buildCreateDealMembers(req *bdspropb.CreateGroupDealRequest, ownerID uint64) ([]entity.DealMember, map[uint64]struct{}) {
+	seen := map[uint64]struct{}{}
 	var members []entity.DealMember
+	add := func(m entity.DealMember) {
+		if m.MemberID == 0 {
+			return
+		}
+		if _, ok := seen[m.MemberID]; ok {
+			return
+		}
+		seen[m.MemberID] = struct{}{}
+		members = append(members, m)
+	}
+
 	// Creator/owner: Accepted so deals/me lists this deal (same as bdspro CreateDeal).
-	members = append(members, entity.DealMember{
+	add(entity.DealMember{
 		MemberID:   ownerID,
 		MemberType: uint32(enums.DealMemberTypeMember),
 		IsOwner:    true,
@@ -370,7 +417,7 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		Status:     uint32(enums.DealMemberStatusAccepted),
 	})
 	if cid := req.GetChargePersonId(); cid > 0 && cid != ownerID {
-		members = append(members, entity.DealMember{
+		add(entity.DealMember{
 			MemberID:   cid,
 			MemberType: uint32(enums.DealMemberTypeMember),
 			RoleKey:    uint32(enums.RoleKeyDealAdmin),
@@ -381,7 +428,7 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		if cid == 0 || cid == ownerID {
 			continue
 		}
-		members = append(members, entity.DealMember{
+		add(entity.DealMember{
 			MemberID:   cid,
 			MemberType: uint32(enums.DealMemberTypeCustomer),
 			RoleKey:    uint32(enums.RoleKeyDealCustomer),
@@ -392,7 +439,7 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		if mid == 0 || mid == ownerID {
 			continue
 		}
-		members = append(members, entity.DealMember{
+		add(entity.DealMember{
 			MemberID:   mid,
 			MemberType: uint32(enums.DealMemberTypeMember),
 			RoleKey:    uint32(enums.RoleKeyDealMember),
@@ -403,21 +450,14 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 		if pid == 0 || pid == ownerID {
 			continue
 		}
-		members = append(members, entity.DealMember{
+		add(entity.DealMember{
 			MemberID:   pid,
 			MemberType: uint32(enums.DealMemberTypePartner),
 			RoleKey:    uint32(enums.RoleKeyDealPartner),
 			Status:     uint32(enums.DealMemberStatusInvited),
 		})
 	}
-
-	if err := s.repo.Create(ctx, deal, members, req.GetProductIds()); err != nil {
-		return 0, err
-	}
-
-	s.clearDealMeSyncForProfiles(ctx, dealMemberProfileIDs(ctx, req, members)...)
-
-	return deal.ID, nil
+	return members, seen
 }
 
 // clearDealMeSyncForProfiles removes deal:me Redis keys so GET /v4/deals/me refetches for those users.
@@ -664,6 +704,7 @@ func mapDealToPB(d *entity.Deal) *bdspropb.GroupDeal {
 		AllowSharing:            d.AllowSharing,
 		MemberCanAddTransaction: d.MemberCanAddTransaction,
 		OnlyOwnerGetCommission:  d.OnlyOwnerGetCommission,
+		AllowManualInput:        d.AllowManualInput,
 		InternalNote:            d.InternalNote,
 		ShareVisibility:         d.ShareVisibility,
 		Description:             d.Description,
@@ -835,6 +876,79 @@ func (s *LocalDealService) GetDealProducts(ctx context.Context, req dto.DealList
 	return out, ts, nil
 }
 
+func (s *LocalDealService) SaveDealProducts(ctx context.Context, req dto.SaveDealProductsRequest) (int64, error) {
+	if req.DealID == 0 {
+		return 0, _errors.BadRequestException("deal id is required")
+	}
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if profileID == 0 {
+		return 0, _errors.ForbiddenException("profile is required")
+	}
+	if err := s.ensureAcceptedMember(ctx, req.DealID, profileID); err != nil {
+		return 0, err
+	}
+
+	addIDs := dedupeProductIDs(req.ProductIDs)
+	removeIDs := dedupeProductIDs(req.RemoveProductIDs)
+	if len(addIDs) == 0 && len(removeIDs) == 0 {
+		return 0, _errors.BadRequestException("productIds or removeProductIds is required")
+	}
+
+	if len(removeIDs) > 0 {
+		removed, err := s.repo.RemoveDealProductsByCreator(ctx, req.DealID, removeIDs, profileID)
+		if err != nil {
+			return 0, err
+		}
+		if removed != int64(len(removeIDs)) {
+			return 0, _errors.ForbiddenException("cannot remove products you did not add")
+		}
+	}
+	if len(addIDs) > 0 {
+		if err := s.repo.AddDealProducts(ctx, req.DealID, addIDs, profileID); err != nil {
+			return 0, err
+		}
+	}
+
+	ts := s.syncTS(ctx, _utils.SyncKeyDealProducts, req.DealID, true)
+	if s.sync != nil {
+		now := time.Now().UnixMilli()
+		for _, pid := range append(append([]uint64(nil), addIDs...), removeIDs...) {
+			_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyProductDetail, pid), now)
+		}
+	}
+	return ts, nil
+}
+
+func (s *LocalDealService) ensureAcceptedMember(ctx context.Context, dealID, profileID uint64) error {
+	ok, err := s.repo.IsAcceptedMember(ctx, dealID, profileID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return _errors.ForbiddenException("you are not allowed to access this deal")
+	}
+	return nil
+}
+
+func dedupeProductIDs(ids []uint64) []uint64 {
+	if len(ids) == 0 {
+		return nil
+	}
+	seen := make(map[uint64]struct{}, len(ids))
+	out := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
 func (s *LocalDealService) GetContracts(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.DealContractListResponse, error) {
 	if req.DealID == 0 {
 		return nil, _errors.BadRequestException("deal id is required")
@@ -935,6 +1049,9 @@ func (s *LocalDealService) GetInvitations(ctx context.Context, req dto.DealListB
 		return nil, _errors.BadRequestException("deal id is required")
 	}
 	if ts, skip := s.syncUnchanged(ctx, _utils.SyncKeyDealInvitation, req.DealID, req.Timestamp, req.Page); skip {
+		if ts <= 0 {
+			ts = s.syncTS(ctx, _utils.SyncKeyDealInvitation, req.DealID, false)
+		}
 		return &bdspropb.GetDealInvitationsByDealResponse{Timestamp: ts}, nil
 	}
 
