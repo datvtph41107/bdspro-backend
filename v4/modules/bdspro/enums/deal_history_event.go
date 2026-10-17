@@ -32,6 +32,29 @@ const (
 	DealHistoryEventWithdrawFromDeal  // 17
 	DealHistoryEventRemoveFromDeal    // 18
 	DealHistoryEventConfirmWithdrawal // 19
+
+	// Deal cost events
+	DealHistoryEventAddDealCost    // 20
+	DealHistoryEventUpdateDealCost // 21
+	DealHistoryEventRemoveDealCost // 22
+
+	// Appointment events (linked deal)
+	DealHistoryEventCreateAppointment       // 23
+	DealHistoryEventUpdateAppointment       // 24
+	DealHistoryEventDeleteAppointment       // 25
+	DealHistoryEventUpdateAppointmentStatus // 26
+
+	// Deal product link events
+	DealHistoryEventAddDealProduct    // 27
+	DealHistoryEventRemoveDealProduct // 28
+
+	DealHistoryEventUpdateMemberRole // 29
+
+	// Internal note events
+	DealHistoryEventAddInternalNote    // 30
+	DealHistoryEventEditInternalNote   // 31
+
+	DealHistoryEventUpdateMembersCommission // 32
 )
 
 // DealHistoryEventNameMap mapping từ event type sang tên hiển thị
@@ -55,6 +78,19 @@ var DealHistoryEventNameMap = map[DealHistoryEventType]string{
 	DealHistoryEventWithdrawFromDeal:       "Rút khỏi thương vụ",
 	DealHistoryEventRemoveFromDeal:         "Gỡ khỏi thương vụ",
 	DealHistoryEventConfirmWithdrawal:      "Xác nhận rút khỏi thương vụ",
+	DealHistoryEventAddDealCost:            "Thêm chi phí thương vụ",
+	DealHistoryEventUpdateDealCost:         "Cập nhật chi phí thương vụ",
+	DealHistoryEventRemoveDealCost:         "Xóa chi phí thương vụ",
+	DealHistoryEventCreateAppointment:       "Tạo lịch hẹn thương vụ",
+	DealHistoryEventUpdateAppointment:       "Cập nhật lịch hẹn thương vụ",
+	DealHistoryEventDeleteAppointment:       "Xóa lịch hẹn thương vụ",
+	DealHistoryEventUpdateAppointmentStatus: "Cập nhật trạng thái lịch hẹn",
+	DealHistoryEventAddDealProduct:          "Thêm sản phẩm vào thương vụ",
+	DealHistoryEventRemoveDealProduct:       "Gỡ sản phẩm khỏi thương vụ",
+	DealHistoryEventUpdateMemberRole:        "Cập nhật vai trò thành viên",
+	DealHistoryEventAddInternalNote:         "Thêm ghi chú nội bộ",
+	DealHistoryEventEditInternalNote:            "Sửa ghi chú nội bộ",
+	DealHistoryEventUpdateMembersCommission:     "Cập nhật hoa hồng thành viên",
 }
 
 // GetEventName trả về tên hiển thị của event type

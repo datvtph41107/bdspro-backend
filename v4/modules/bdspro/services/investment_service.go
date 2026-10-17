@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	_errors "common/errors"
@@ -13,6 +14,7 @@ import (
 	"userv4/modules/bdspro/entity"
 	"userv4/modules/bdspro/enums"
 	"userv4/modules/bdspro/repository"
+	bdsutils "userv4/modules/bdspro/utils"
 )
 
 // InvestmentService owns deal investment flows (migrated from /v2.1/org/investment).
@@ -33,6 +35,7 @@ type LocalInvestmentService struct {
 	repo     repository.InvestmentRepository
 	dealRepo repository.DealRepository
 	profile  providers.ProfileProvider
+	history  *bdsutils.DealHistoryLogger
 }
 
 func NewLocalInvestmentService(
@@ -40,8 +43,9 @@ func NewLocalInvestmentService(
 	repo repository.InvestmentRepository,
 	dealRepo repository.DealRepository,
 	profile providers.ProfileProvider,
+	history *bdsutils.DealHistoryLogger,
 ) *LocalInvestmentService {
-	return &LocalInvestmentService{sync: sync, repo: repo, dealRepo: dealRepo, profile: profile}
+	return &LocalInvestmentService{sync: sync, repo: repo, dealRepo: dealRepo, profile: profile, history: history}
 }
 
 func (s *LocalInvestmentService) Create(ctx context.Context, req *bdspropb.SubmitInvestRequest) (uint64, error) {
@@ -76,6 +80,8 @@ func (s *LocalInvestmentService) Create(ctx context.Context, req *bdspropb.Submi
 		_ = s.dealRepo.UpdateDoneInvestment(ctx, row.DealID, row.MemberID)
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logInvestmentHistory(ctx, row, enums.DealHistoryEventAddInvestment,
+		fmt.Sprintf("Thêm khoản góp ID %d với số tiền %.2f", row.ID, row.Amount))
 	return row.ID, nil
 }
 
@@ -109,6 +115,8 @@ func (s *LocalInvestmentService) Update(ctx context.Context, req *bdspropb.Submi
 		_ = s.dealRepo.UpdateDoneInvestment(ctx, row.DealID, row.MemberID)
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logInvestmentHistory(ctx, row, enums.DealHistoryEventUpdateInvestment,
+		fmt.Sprintf("Cập nhật khoản góp ID %d với số tiền %.2f", row.ID, row.Amount))
 	return row.ID, nil
 }
 
@@ -131,6 +139,8 @@ func (s *LocalInvestmentService) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 	s.bumpSync(ctx, current.DealID)
+	s.logInvestmentHistory(ctx, current, enums.DealHistoryEventRemoveInvestment,
+		fmt.Sprintf("Xóa khoản góp ID %d với số tiền %.2f", current.ID, current.Amount))
 	return nil
 }
 
@@ -211,6 +221,8 @@ func (s *LocalInvestmentService) Approve(ctx context.Context, id uint64) (uint64
 		return 0, err
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logInvestmentHistory(ctx, row, enums.DealHistoryEventApproveInvestment,
+		fmt.Sprintf("Duyệt khoản góp ID %d với số tiền %.2f", row.ID, row.Amount))
 	return id, nil
 }
 
@@ -226,6 +238,8 @@ func (s *LocalInvestmentService) Reject(ctx context.Context, id uint64) (uint64,
 		return 0, err
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logInvestmentHistory(ctx, row, enums.DealHistoryEventRejectInvestment,
+		fmt.Sprintf("Từ chối khoản góp ID %d với số tiền %.2f", row.ID, row.Amount))
 	return id, nil
 }
 
@@ -241,6 +255,12 @@ func (s *LocalInvestmentService) Confirm(ctx context.Context, id uint64, confirm
 		return 0, err
 	}
 	s.bumpSync(ctx, row.DealID)
+	action := "Hủy xác nhận"
+	if confirmed {
+		action = "Xác nhận"
+	}
+	s.logInvestmentHistory(ctx, row, enums.DealHistoryEventUpdateInvestment,
+		fmt.Sprintf("%s khoản góp ID %d với số tiền %.2f", action, row.ID, row.Amount))
 	return id, nil
 }
 
@@ -283,6 +303,24 @@ func (s *LocalInvestmentService) canManage(row *entity.DealInvestment, userID ui
 		return false
 	}
 	return row.MemberID == userID
+}
+
+func (s *LocalInvestmentService) logInvestmentHistory(
+	ctx context.Context,
+	row *entity.DealInvestment,
+	event enums.DealHistoryEventType,
+	content string,
+) {
+	if s.history == nil || row == nil {
+		return
+	}
+	s.history.LogDealHistory(ctx, row.DealID, event, content, map[string]interface{}{
+		"deal_id":       row.DealID,
+		"investment_id": row.ID,
+		"amount":        row.Amount,
+		"status":        row.Status,
+		"member_id":     row.MemberID,
+	})
 }
 
 func (s *LocalInvestmentService) bumpSync(ctx context.Context, dealID uint64) {

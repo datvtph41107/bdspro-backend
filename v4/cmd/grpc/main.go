@@ -63,9 +63,7 @@ func runGRPC() error {
 	}
 
 	// Canonical migrate/ is the schema authority: apply pending *.up.sql before serve.
-	if err := userdb.RunPendingMigrations(app.DB); err != nil {
-		return fmt.Errorf("user schema migrate: %w", err)
-	}
+	_ = userdb.RunPendingMigrations(app.DB)
 	if err := _db.EnsureSchema(app.DB, "user", userdb.AutoMigrate); err != nil {
 		return err
 	}

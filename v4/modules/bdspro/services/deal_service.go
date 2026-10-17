@@ -16,6 +16,8 @@ import (
 	"userv4/modules/bdspro/entity"
 	"userv4/modules/bdspro/enums"
 	"userv4/modules/bdspro/repository"
+	bdsutils "userv4/modules/bdspro/utils"
+	notifentity "userv4/modules/notification/entity"
 )
 
 // DealService owns deal list/detail/timestamps/process flows for modules/bdspro.
@@ -36,6 +38,7 @@ type DealService interface {
 	GetSummary(ctx context.Context, req dto.DealSummaryRequest) (*bdspropb.SummaryResponse, int64, error)
 	GetBankAccount(ctx context.Context, req dto.DealDetailRequest) (*bdspropb.BankAccountItem, int64, error)
 	GetContractStatistics(ctx context.Context, req dto.DealStatisticsRequest) (*bdspropb.ContractDealStatisticsDTO, int64, error)
+	GetHistories(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealHistoryResponse, int64, error)
 	CreateGroupDeal(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (uint64, error)
 	UpdateGroupDeal(ctx context.Context, req *bdspropb.UpdateGroupDealRequest) (uint64, error)
 	UpdateDealSetting(ctx context.Context, req *bdspropb.UpdateDealSettingRequest) (uint64, error)
@@ -49,6 +52,7 @@ type LocalDealService struct {
 	repo     repository.DealRepository
 	products repository.ProductRepository
 	profile  providers.ProfileProvider
+	history  *bdsutils.DealHistoryLogger
 }
 
 func NewLocalDealService(
@@ -56,8 +60,9 @@ func NewLocalDealService(
 	repo repository.DealRepository,
 	products repository.ProductRepository,
 	profile providers.ProfileProvider,
+	history *bdsutils.DealHistoryLogger,
 ) *LocalDealService {
-	return &LocalDealService{sync: sync, repo: repo, products: products, profile: profile}
+	return &LocalDealService{sync: sync, repo: repo, products: products, profile: profile, history: history}
 }
 
 func dealTimestampNames() []string {
@@ -390,6 +395,17 @@ func (s *LocalDealService) CreateGroupDeal(ctx context.Context, req *bdspropb.Cr
 
 	s.clearDealMeSyncForProfiles(ctx, dealMemberProfileIDs(ctx, req, members)...)
 
+	if s.history != nil {
+		s.history.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventCreate,
+			fmt.Sprintf("Tạo thương vụ '%s' với mục tiêu lợi nhuận %.2f", deal.Name, deal.TargetProfit),
+			map[string]interface{}{
+				"deal_name":     deal.Name,
+				"target_profit": deal.TargetProfit,
+				"deal_type":     deal.DealType,
+				"owner_type":    deal.OwnerType,
+			})
+	}
+
 	return deal.ID, nil
 }
 
@@ -534,6 +550,16 @@ func (s *LocalDealService) UpdateGroupDeal(ctx context.Context, req *bdspropb.Up
 	}
 	_ = s.syncTS(ctx, _utils.SyncKeyDealDetail, id, true)
 
+	if s.history != nil {
+		s.history.LogDealHistory(ctx, id, enums.DealHistoryEventUpdate,
+			fmt.Sprintf("Cập nhật thông tin thương vụ '%s'", patch.Name),
+			map[string]interface{}{
+				"deal_name":     patch.Name,
+				"target_profit": patch.TargetProfit,
+				"deal_type":     existing.DealType,
+			})
+	}
+
 	return id, nil
 }
 
@@ -586,6 +612,23 @@ func (s *LocalDealService) UpdateDealSetting(ctx context.Context, req *bdspropb.
 		}
 	}
 
+	if s.history != nil {
+		s.history.LogDealHistory(ctx, dealID, enums.DealHistoryEventUpdateSetting,
+			"Cập nhật cài đặt thương vụ",
+			map[string]interface{}{
+				"deal_id": dealID,
+				"setting": setting,
+			})
+		if setting.AllowManualInput != existing.AllowManualInput {
+			s.history.LogDealHistory(ctx, dealID, enums.DealHistoryEventUpdateAllowManualInput,
+				fmt.Sprintf("Cập nhật cho phép nhập tay: %t", setting.AllowManualInput),
+				map[string]interface{}{
+					"deal_id":            dealID,
+					"allow_manual_input": setting.AllowManualInput,
+				})
+		}
+	}
+
 	return dealID, nil
 }
 
@@ -617,6 +660,14 @@ func (s *LocalDealService) SeedDemoRelated(ctx context.Context, dealID, profileI
 
 // DeleteGroupDeal soft-deletes a deal by id.
 func (s *LocalDealService) DeleteGroupDeal(ctx context.Context, id uint64) error {
+	deal, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if deal == nil {
+		return _errors.NotFoundException("deal not found")
+	}
+
 	if err := s.repo.SoftDelete(ctx, id); err != nil {
 		return err
 	}
@@ -625,6 +676,15 @@ func (s *LocalDealService) DeleteGroupDeal(ctx context.Context, id uint64) error
 		_ = s.sync.PutTimestamp(ctx, key, time.Now().UnixMilli())
 	}
 	_ = s.syncTS(ctx, _utils.SyncKeyDealDetail, id, true)
+
+	if s.history != nil {
+		s.history.LogDealHistory(ctx, deal.ID, enums.DealHistoryEventDelete,
+			fmt.Sprintf("Xóa thương vụ '%s'", deal.Name),
+			map[string]interface{}{
+				"deal_name":     deal.Name,
+				"target_profit": deal.TargetProfit,
+			})
+	}
 	return nil
 }
 
@@ -900,12 +960,25 @@ func (s *LocalDealService) SaveDealProducts(ctx context.Context, req dto.SaveDea
 			return 0, err
 		}
 		if removed != int64(len(removeIDs)) {
-			return 0, _errors.ForbiddenException("cannot remove products you did not add")
+			// return 0, _errors.ForbiddenException("cannot remove products you did not add")
+			return 0, _errors.ForbiddenException("Bạn không thể gỡ sản phẩm này")
 		}
 	}
 	if len(addIDs) > 0 {
 		if err := s.repo.AddDealProducts(ctx, req.DealID, addIDs, profileID); err != nil {
 			return 0, err
+		}
+	}
+	if s.history != nil {
+		if len(addIDs) > 0 {
+			s.history.LogDealHistory(ctx, req.DealID, enums.DealHistoryEventAddDealProduct,
+				fmt.Sprintf("Thêm %d sản phẩm vào thương vụ", len(addIDs)),
+				map[string]interface{}{"deal_id": req.DealID, "product_ids": addIDs})
+		}
+		if len(removeIDs) > 0 {
+			s.history.LogDealHistory(ctx, req.DealID, enums.DealHistoryEventRemoveDealProduct,
+				fmt.Sprintf("Gỡ %d sản phẩm khỏi thương vụ", len(removeIDs)),
+				map[string]interface{}{"deal_id": req.DealID, "product_ids": removeIDs})
 		}
 	}
 
@@ -1149,6 +1222,60 @@ func (s *LocalDealService) GetDealCosts(ctx context.Context, req dto.DealListByI
 	}, nil
 }
 
+func (s *LocalDealService) GetHistories(ctx context.Context, req dto.DealListByIDRequest) (*bdspropb.GetDealHistoryResponse, int64, error) {
+	if req.DealID == 0 {
+		return nil, 0, _errors.BadRequestException("deal id is required")
+	}
+	if ts, skip := s.syncUnchanged(ctx, _utils.SyncKeyDealHistory, req.DealID, req.Timestamp, req.Page); skip {
+		return &bdspropb.GetDealHistoryResponse{}, ts, nil
+	}
+
+	deal, err := s.repo.GetByID(ctx, req.DealID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if deal == nil {
+		return nil, 0, _errors.NotFoundException("deal not found")
+	}
+
+	var rows []*notifentity.DealHistory
+	var total int64
+	if s.history != nil {
+		rows, total, err = s.history.ListByDeal(ctx, req.DealID, req.Page, req.Size)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	items := make([]*bdspropb.DealHistoryItem, 0, len(rows))
+	for _, row := range rows {
+		if row == nil {
+			continue
+		}
+		actionName := row.ActionName
+		if actionName == "" {
+			actionName = row.ActionType
+		}
+		items = append(items, &bdspropb.DealHistoryItem{
+			Id:          row.ID,
+			DealId:      row.DealID,
+			ActorId:     row.ActorID,
+			ActorName:   row.ActorName,
+			ActorAvatar: row.ActorAvatar,
+			ActionType:  bdsutils.EventTypeFromActionName(row.ActionType),
+			ActionName:  actionName,
+			Content:     row.Content,
+			CreatedAt:   row.CreatedAt.Format(time.RFC3339),
+		})
+	}
+
+	ts := s.syncTS(ctx, _utils.SyncKeyDealHistory, req.DealID, false)
+	return &bdspropb.GetDealHistoryResponse{
+		Data:  items,
+		Total: uint32(total),
+	}, ts, nil
+}
+
 func (s *LocalDealService) GetSummary(ctx context.Context, req dto.DealSummaryRequest) (*bdspropb.SummaryResponse, int64, error) {
 	if req.DealID == 0 {
 		return nil, 0, _errors.BadRequestException("deal id is required")
@@ -1165,6 +1292,7 @@ func (s *LocalDealService) GetSummary(ctx context.Context, req dto.DealSummaryRe
 		return nil, 0, _errors.NotFoundException("deal not found")
 	}
 
+	req = dealSummaryWithDefaults(req)
 	info, err := s.repo.CountDashboard(ctx, req)
 	if err != nil {
 		return nil, 0, err
@@ -1174,12 +1302,27 @@ func (s *LocalDealService) GetSummary(ctx context.Context, req dto.DealSummaryRe
 	}
 
 	percentDone := 0.0
-	if deal.TargetProfit > 0 && (req.AmountApproved || req.All) {
+	if deal.TargetProfit > 0 {
 		percentDone = info.AmountApproved / deal.TargetProfit
 	}
 	amountRest := 0.0
-	if deal.TargetProfit > info.AmountApproved && (req.AmountApproved || req.All) {
+	if deal.TargetProfit > info.AmountApproved {
 		amountRest = deal.TargetProfit - info.AmountApproved
+	}
+	amountTotal := info.AmountPending + info.AmountApproved + info.AmountRejected
+	amountProfit := info.AmountApproved - info.AmountCost
+
+	var numTransaction uint32
+	var totalPayment float64
+	if true || req.All || req.NumTransaction || req.AmountTotal {
+		payStats, payErr := s.repo.GetPaymentStatisticsByDealID(ctx, req.DealID)
+		if payErr != nil {
+			return nil, 0, payErr
+		}
+		if payStats != nil {
+			numTransaction = uint32(payStats.NumPayment.Total)
+			totalPayment = payStats.Payment.Total
+		}
 	}
 
 	ts := s.syncTS(ctx, _utils.SyncKeyDealSummary, req.DealID, false)
@@ -1196,9 +1339,27 @@ func (s *LocalDealService) GetSummary(ctx context.Context, req dto.DealSummaryRe
 		AmountTarget:    deal.TargetProfit,
 		PercentDone:     percentDone,
 		AmountCost:      info.AmountCost,
-		AmountProfit:    info.AmountApproved,
-		AmountTotal:     10000000000,
+		AmountProfit:    amountProfit,
+		AmountTotal:     amountTotal,
+		NumTransaction:  numTransaction,
+		TotalPayment:    totalPayment,
 	}, ts, nil
+}
+
+// dealSummaryWithDefaults returns all dashboard fields when the client omits query flags.
+func dealSummaryWithDefaults(req dto.DealSummaryRequest) dto.DealSummaryRequest {
+	if req.All {
+		return req
+	}
+	hasField := req.AmountPending || req.AmountApproved || req.AmountRejected ||
+		req.NumPending || req.NumApproved || req.NumRejected ||
+		req.NumInvestment || req.NumMemberSubmit || req.AmountTarget ||
+		req.PercentDone || req.AmountTotal || req.AmountCost || req.AmountProfit ||
+		req.NumTransaction
+	if !hasField {
+		req.All = true
+	}
+	return req
 }
 
 func (s *LocalDealService) GetBankAccount(ctx context.Context, req dto.DealDetailRequest) (*bdspropb.BankAccountItem, int64, error) {

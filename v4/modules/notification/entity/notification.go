@@ -6,9 +6,10 @@ import (
 	_enum "common/domain/enum"
 	_models "common/models"
 
+	shared_enum "pb/enums"
+
 	"github.com/lib/pq"
 	"gorm.io/datatypes"
-	shared_enum "pb/enums"
 )
 
 // Notification is the user inbox row (table: notification).
@@ -59,43 +60,26 @@ func (ActivityHistory) TableName() string { return "noti_histories" }
 // AdminHistory is admin audit trail.
 type AdminHistory struct {
 	_models.BaseEntity
-	TargetID   uint64                     `gorm:"column:target_id"`
-	TargetType shared_enum.ETargetHistory `gorm:"column:target_type"`
-	ActionType shared_enum.EHistory       `gorm:"column:action_type"`
-	Title      string                     `gorm:"column:title"`
-	Note       pq.StringArray             `gorm:"column:note;type:text[]"`
-	PreStage   string                     `gorm:"column:pre_stage"`
-	AfterStage string                     `gorm:"column:after_stage"`
-	AdminID    uint64                     `gorm:"column:admin_id"`
-	OwnerID    *uint64                    `gorm:"column:owner_id"`
-	OwnerOf    shared_enum.EOwnerType     `gorm:"column:owner_of"`
-	IsInternal bool                       `gorm:"column:is_internal"`
-	AdminRole  string                     `gorm:"column:admin_role"`
-	IPAddress  string                     `gorm:"column:ip_address"`
-	UserAgent  string                     `gorm:"column:user_agent"`
-	AdminName   *string `json:"adminName,omitempty" gorm:"-"`
-	AdminAvatar *string `json:"adminAvatar,omitempty" gorm:"-"`
-	Status      *string `json:"status,omitempty" gorm:"-"`
+	TargetID    uint64                     `gorm:"column:target_id"`
+	TargetType  shared_enum.ETargetHistory `gorm:"column:target_type"`
+	ActionType  shared_enum.EHistory       `gorm:"column:action_type"`
+	Title       string                     `gorm:"column:title"`
+	Note        pq.StringArray             `gorm:"column:note;type:text[]"`
+	PreStage    string                     `gorm:"column:pre_stage"`
+	AfterStage  string                     `gorm:"column:after_stage"`
+	AdminID     uint64                     `gorm:"column:admin_id"`
+	OwnerID     *uint64                    `gorm:"column:owner_id"`
+	OwnerOf     shared_enum.EOwnerType     `gorm:"column:owner_of"`
+	IsInternal  bool                       `gorm:"column:is_internal"`
+	AdminRole   string                     `gorm:"column:admin_role"`
+	IPAddress   string                     `gorm:"column:ip_address"`
+	UserAgent   string                     `gorm:"column:user_agent"`
+	AdminName   *string                    `json:"adminName,omitempty" gorm:"-"`
+	AdminAvatar *string                    `json:"adminAvatar,omitempty" gorm:"-"`
+	Status      *string                    `json:"status,omitempty" gorm:"-"`
 }
 
 func (AdminHistory) TableName() string { return "admin_histories" }
-
-// DealHistory is deal timeline entries.
-type DealHistory struct {
-	ID          uint64            `gorm:"primaryKey;autoIncrement"`
-	DealID      uint64            `gorm:"column:deal_id;index;not null"`
-	ActorID     uint64            `gorm:"column:actor_id;index;not null"`
-	ActorName   string            `gorm:"column:actor_name;size:255"`
-	ActorAvatar string            `gorm:"column:actor_avatar;size:500"`
-	ActionType  string            `gorm:"column:action_type;size:50;index;not null"`
-	ActionName  string            `gorm:"column:action_name;size:255;not null"`
-	Content     string            `gorm:"column:content;type:text;not null"`
-	Metadata    datatypes.JSONMap `gorm:"column:metadata;type:jsonb;default:'{}'"`
-	CreatedAt   time.Time         `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt   time.Time         `gorm:"column:updated_at;autoUpdateTime"`
-}
-
-func (DealHistory) TableName() string { return "deal_history" }
 
 // HistoryAuth is auth-service user action log.
 type HistoryAuth struct {
@@ -167,23 +151,23 @@ func (AccountWarningTemplate) TableName() string { return "account_warning_templ
 // AccountWarning is a sent warning to a user/org.
 type AccountWarning struct {
 	_models.BaseEntity
-	TargetID    uint64         `gorm:"column:target_id;index;not null"`
-	TargetType  string         `gorm:"column:target_type;size:20;not null"`
-	WarningType string         `gorm:"column:warning_type;size:50;not null"`
-	Title       string         `gorm:"column:title;size:255;not null"`
-	Content     string         `gorm:"column:content;type:text;not null"`
-	Severity    string         `gorm:"column:severity;size:20;default:medium"`
-	Status      string         `gorm:"column:status;size:20;default:sent"`
-	IsRead      bool           `gorm:"column:is_read;default:false"`
-	ReadAt      *time.Time     `gorm:"column:read_at"`
-	SentBy      uint64         `gorm:"column:sent_by;not null"`
-	SentAt      time.Time      `gorm:"column:sent_at"`
-	EmailSent   bool           `gorm:"column:email_sent;default:false"`
-	EmailSentAt *time.Time     `gorm:"column:email_sent_at"`
-	RelatedID   *uint64        `gorm:"column:related_id"`
-	RelatedType string         `gorm:"column:related_type;size:50"`
-	ExpiresAt  *time.Time `gorm:"column:expires_at"`
-	TemplateID *uint64    `gorm:"column:template_id;index"`
+	TargetID    uint64     `gorm:"column:target_id;index;not null"`
+	TargetType  string     `gorm:"column:target_type;size:20;not null"`
+	WarningType string     `gorm:"column:warning_type;size:50;not null"`
+	Title       string     `gorm:"column:title;size:255;not null"`
+	Content     string     `gorm:"column:content;type:text;not null"`
+	Severity    string     `gorm:"column:severity;size:20;default:medium"`
+	Status      string     `gorm:"column:status;size:20;default:sent"`
+	IsRead      bool       `gorm:"column:is_read;default:false"`
+	ReadAt      *time.Time `gorm:"column:read_at"`
+	SentBy      uint64     `gorm:"column:sent_by;not null"`
+	SentAt      time.Time  `gorm:"column:sent_at"`
+	EmailSent   bool       `gorm:"column:email_sent;default:false"`
+	EmailSentAt *time.Time `gorm:"column:email_sent_at"`
+	RelatedID   *uint64    `gorm:"column:related_id"`
+	RelatedType string     `gorm:"column:related_type;size:50"`
+	ExpiresAt   *time.Time `gorm:"column:expires_at"`
+	TemplateID  *uint64    `gorm:"column:template_id;index"`
 }
 
 func (AccountWarning) TableName() string { return "account_warnings" }

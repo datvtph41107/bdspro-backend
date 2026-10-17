@@ -3,6 +3,7 @@ package postgres
 import (
 	_dto "common/domain/dto"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -33,39 +34,26 @@ func (r *appointmentPostgresRepository) Create(ctx context.Context, appointment 
 		tx.Rollback()
 		return nil, err
 	}
+	if appointment.Id == 0 {
+		tx.Rollback()
+		return nil, errors.New("appointment id was not generated")
+	}
 
 	// Tạo/cập nhật participants từ AppointmentParticipants array
 	if len(appointment.AppointmentParticipants) > 0 {
 		participantModels := make([]*domain.AppointmentParticipant, 0, len(appointment.AppointmentParticipants))
 		for _, participant := range appointment.AppointmentParticipants {
-			participant.AppointmentId = appointment.Id
-			if participant.JoinedAt.IsZero() {
-				participant.JoinedAt = time.Now()
+			p := participant
+			p.Id = 0
+			p.AppointmentId = appointment.Id
+			if p.JoinedAt.IsZero() {
+				p.JoinedAt = time.Now()
 			}
-			participantModels = append(participantModels, &participant)
+			participantModels = append(participantModels, &p)
 		}
+		participantModels = dedupeParticipantModelsByUserID(participantModels)
 
-		// Sử dụng upsert (ON CONFLICT) để tạo mới hoặc cập nhật
-		// Nếu record đã tồn tại (kể cả đã bị xóa), khôi phục và cập nhật
-		// Sử dụng (appointment_id, user_id) thay vì (appointment_id, contact_id) vì không dùng contact nữa
-		assignments := append(
-			clause.AssignmentColumns([]string{"role", "status", "joined_at", "contact_id"}),
-			clause.Assignment{
-				Column: clause.Column{Name: "deleted_at"},
-				Value:  gorm.Expr("NULL"),
-			},
-			clause.Assignment{
-				Column: clause.Column{Name: "is_deleted"},
-				Value:  gorm.Expr("false"),
-			},
-		)
-		err = tx.Clauses(clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "appointment_id"},
-				{Name: "user_id"},
-			},
-			DoUpdates: clause.Set(assignments),
-		}).Create(participantModels).Error
+		err = upsertAppointmentParticipants(tx, participantModels)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -131,33 +119,18 @@ func (r *appointmentPostgresRepository) Update(ctx context.Context, appointment 
 		userIdsInNewList := make(map[uint32]bool)
 
 		for _, participant := range appointmentParticipants {
-			participant.AppointmentId = appointment.Id
-			if participant.JoinedAt.IsZero() {
-				participant.JoinedAt = time.Now()
+			p := participant
+			p.Id = 0
+			p.AppointmentId = appointment.Id
+			if p.JoinedAt.IsZero() {
+				p.JoinedAt = time.Now()
 			}
-			participantModels = append(participantModels, &participant)
-			userIdsInNewList[participant.UserId] = true
+			participantModels = append(participantModels, &p)
+			userIdsInNewList[p.UserId] = true
 		}
+		participantModels = dedupeParticipantModelsByUserID(participantModels)
 
-		// Sử dụng upsert (ON CONFLICT) để cập nhật hoặc thêm mới participants
-		assignments := append(
-			clause.AssignmentColumns([]string{"role", "status", "joined_at", "contact_id"}),
-			clause.Assignment{
-				Column: clause.Column{Name: "deleted_at"},
-				Value:  gorm.Expr("NULL"),
-			},
-			clause.Assignment{
-				Column: clause.Column{Name: "is_deleted"},
-				Value:  gorm.Expr("false"),
-			},
-		)
-		err = tx.Model(&domain.AppointmentParticipant{}).Clauses(clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "appointment_id"},
-				{Name: "user_id"},
-			},
-			DoUpdates: clause.Set(assignments),
-		}).Create(participantModels).Error
+		err = upsertAppointmentParticipants(tx, participantModels)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -484,6 +457,53 @@ func (r *appointmentPostgresRepository) UpdateStatus(ctx context.Context, id uin
 }
 
 // CountAppointmentsByProductID đếm số appointment theo productId
+func dedupeParticipantModelsByUserID(models []*domain.AppointmentParticipant) []*domain.AppointmentParticipant {
+	if len(models) == 0 {
+		return models
+	}
+	seen := make(map[uint32]struct{}, len(models))
+	out := make([]*domain.AppointmentParticipant, 0, len(models))
+	for _, m := range models {
+		if m == nil || m.UserId == 0 {
+			continue
+		}
+		if _, ok := seen[m.UserId]; ok {
+			continue
+		}
+		seen[m.UserId] = struct{}{}
+		out = append(out, m)
+	}
+	return out
+}
+
+func participantUpsertAssignments() clause.Set {
+	assignments := append(
+		clause.AssignmentColumns([]string{"role", "status", "joined_at", "contact_id"}),
+		clause.Assignment{
+			Column: clause.Column{Name: "deleted_at"},
+			Value:  gorm.Expr("NULL"),
+		},
+		clause.Assignment{
+			Column: clause.Column{Name: "is_deleted"},
+			Value:  gorm.Expr("false"),
+		},
+	)
+	return clause.Set(assignments)
+}
+
+func upsertAppointmentParticipants(tx *gorm.DB, models []*domain.AppointmentParticipant) error {
+	if len(models) == 0 {
+		return nil
+	}
+	return tx.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "appointment_id"},
+			{Name: "user_id"},
+		},
+		DoUpdates: participantUpsertAssignments(),
+	}).Create(models).Error
+}
+
 func (r *appointmentPostgresRepository) CountAppointmentsByProductID(ctx context.Context, productID uint64) (uint32, error) {
 	var count int64
 

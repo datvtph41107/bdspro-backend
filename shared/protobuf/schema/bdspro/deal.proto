@@ -266,7 +266,7 @@ service DealCommissionService {
     // API cập nhật lợi nhuận cho nhiều deal members
     rpc UpdateDealMembersCommission(UpdateDealMembersCommissionRequest) returns (UpdateDealMembersCommissionResponse) {
         option (google.api.http) = {
-            put: "/v2.1/org/deal/{dealId}/members/commission"
+            post: "/v4/deal/{dealId}/commission"
             body: "*"
         };
     }
@@ -283,7 +283,7 @@ service DealInternalNoteService {
     // API thêm ghi chú nội bộ
     rpc AddInternalNote(AddInternalNoteRequest) returns (AddInternalNoteResponse) {
         option (google.api.http) = {
-            post: "/v2.1/org/deal/{dealId}/internal-note"
+            post: "/v4/deal/{dealId}/internal-note"
             body: "*"
         };
     }
@@ -291,7 +291,7 @@ service DealInternalNoteService {
     // API lấy danh sách lịch sử
     rpc GetDealHistory(GetDealHistoryRequest) returns (GetDealHistoryResponse) {
         option (google.api.http) = {
-            get: "/v2.1/org/deal/{dealId}/history"
+            get: "/v4/deal/{dealId}/histories"
         };
     }
 }

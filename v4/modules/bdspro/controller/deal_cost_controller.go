@@ -23,16 +23,16 @@ func NewDealCostController(dealCost services.DealCostService) *DealCostControlle
 }
 
 func (c *DealCostController) RegisterHTTP(mux *http.ServeMux) {
-	registerDealCostRoutes(mux, "/v2.1/transaction/deal-cost", c)
-	registerDealCostRoutes(mux, "/v4/transaction/deal-cost", c)
+	registerDealCostRoutes(mux, "/v2.1", c)
+	registerDealCostRoutes(mux, "/v4", c)
 }
 
 func registerDealCostRoutes(mux *http.ServeMux, base string, c *DealCostController) {
-	httpapi.HandleProto(mux, http.MethodGet, base+"/list/{dealId}", c.searchProto)
-	httpapi.HandleProto(mux, http.MethodGet, base+"/detail/{id}", c.detailProto)
-	httpapi.HandleProto(mux, http.MethodPost, base, c.createProto)
-	httpapi.HandleProto(mux, http.MethodPut, base+"/{id}", c.updateProto)
-	httpapi.HandleProto(mux, http.MethodDelete, base+"/{id}", c.deleteProto)
+	httpapi.HandleProto(mux, http.MethodGet, base+"/transaction/deal-cost/list/{dealId}", c.searchProto)
+	httpapi.HandleProto(mux, http.MethodGet, base+"/transaction/deal-cost/detail/{id}", c.detailProto)
+	httpapi.HandleProto(mux, http.MethodPost, base+"/transaction/deal-cost", c.createProto)
+	httpapi.HandleProto(mux, http.MethodPut, base+"/transaction/deal-cost/{id}", c.updateProto)
+	httpapi.HandleProto(mux, http.MethodDelete, base+"/transaction/deal-cost/{id}", c.deleteProto)
 }
 
 func (c *DealCostController) searchProto(ctx context.Context, req *bdspropb.DealCostSearchDTO) (*bdspropb.DealCostListDTO, error) {

@@ -63,6 +63,7 @@ import (
 	user_modules_bdspro_mapper "userv4/modules/bdspro/mapper"
 	user_modules_bdspro_repository "userv4/modules/bdspro/repository"
 	user_modules_bdspro_services "userv4/modules/bdspro/services"
+	user_modules_bdspro_utils "userv4/modules/bdspro/utils"
 	user_modules_crm "userv4/modules/crm"
 	user_modules_hub_controller "userv4/modules/hub/controller"
 	user_modules_hub_provider "userv4/modules/hub/provider"
@@ -162,9 +163,16 @@ var wireSet = wire.NewSet(
 	user_modules_bdspro_services.NewLocalSyncService,
 	wire.Bind(new(user_modules_bdspro_services.SyncService), new(*user_modules_bdspro_services.LocalSyncService)),
 	user_modules_bdspro_repository.NewDealPostgres,
+	user_modules_notification_repository.NewDealHistoryPostgres,
+	user_modules_bdspro_utils.NewDealHistoryLogger,
 	user_modules_bdspro_services.NewLocalDealService,
 	wire.Bind(new(user_modules_bdspro_services.DealService), new(*user_modules_bdspro_services.LocalDealService)),
 	user_modules_bdspro_repository.NewDealMemberPostgres,
+	user_modules_bdspro_repository.NewDealInternalNotePostgres,
+	user_modules_bdspro_services.NewLocalDealInternalNoteService,
+	wire.Bind(new(user_modules_bdspro_services.DealInternalNoteService), new(*user_modules_bdspro_services.LocalDealInternalNoteService)),
+	user_modules_bdspro_services.NewLocalDealCommissionService,
+	wire.Bind(new(user_modules_bdspro_services.DealCommissionService), new(*user_modules_bdspro_services.LocalDealCommissionService)),
 	user_modules_bdspro_services.NewLocalDealInvitationService,
 	wire.Bind(new(user_modules_bdspro_services.DealInvitationService), new(*user_modules_bdspro_services.LocalDealInvitationService)),
 	user_modules_bdspro_repository.NewCostTypePostgres,

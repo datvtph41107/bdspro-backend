@@ -95,7 +95,7 @@ func TestMapProductToPB_Nil(t *testing.T) {
 }
 
 func TestLocalDealService_EmptyRepo(t *testing.T) {
-	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil, nil)
 	resp, err := svc.GetDealsUser(context.Background(), dto.DealSearchRequest{})
 	if err != nil {
 		t.Fatalf("GetDealsUser: %v", err)
@@ -125,7 +125,7 @@ func TestLocalDealService_GetDealsUser_IncludesInvitationForInvitedProfile(t *te
 		}},
 		total: 1,
 	}
-	svc := NewLocalDealService(nil, repo, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, repo, stubProductRepo{}, nil, nil)
 	invited := pid
 	resp, err := svc.GetDealsUser(context.Background(), dto.DealSearchRequest{
 		InvitedProfileID: &invited,
@@ -292,7 +292,7 @@ func (r *stubDealRepo) RemoveDealProductsByCreator(context.Context, uint64, []ui
 }
 
 func TestLocalDealService_GetTimestamps_RequiresID(t *testing.T) {
-	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil, nil)
 	_, err := svc.GetTimestamps(context.Background(), 0)
 	if err == nil {
 		t.Fatal("expected error for id=0")
@@ -300,7 +300,7 @@ func TestLocalDealService_GetTimestamps_RequiresID(t *testing.T) {
 }
 
 func TestLocalDealService_GetTimestamps_NilSync(t *testing.T) {
-	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil, nil)
 	resp, err := svc.GetTimestamps(context.Background(), 14)
 	if err != nil {
 		t.Fatalf("GetTimestamps: %v", err)
@@ -311,7 +311,7 @@ func TestLocalDealService_GetTimestamps_NilSync(t *testing.T) {
 }
 
 func TestLocalDealService_GetContractProcess_Empty(t *testing.T) {
-	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil, nil)
 	resp, ts, err := svc.GetContractProcess(context.Background(), 14)
 	if err != nil {
 		t.Fatalf("GetContractProcess: %v", err)
@@ -325,7 +325,7 @@ func TestLocalDealService_GetContractProcess_Empty(t *testing.T) {
 }
 
 func TestLocalDealService_GetDetail_NotFound(t *testing.T) {
-	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepo{}, stubProductRepo{}, nil, nil)
 	_, _, err := svc.GetDetail(context.Background(), dto.DealDetailRequest{ID: 14})
 	if err == nil {
 		t.Fatal("expected not found")
@@ -336,7 +336,7 @@ func TestLocalDealService_GetDetail_ReturnsTimestamp(t *testing.T) {
 	repo := &stubDealRepo{}
 	repo.createdDeal = &entity.Deal{ID: 14, Name: "D14"}
 	// reuse Create capture style — override GetByID via dedicated stub
-	svc := NewLocalDealService(nil, &stubDealRepoDetail{deal: &entity.Deal{ID: 14, Name: "D14"}}, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, &stubDealRepoDetail{deal: &entity.Deal{ID: 14, Name: "D14"}}, stubProductRepo{}, nil, nil)
 	resp, ts, err := svc.GetDetail(context.Background(), dto.DealDetailRequest{ID: 14})
 	if err != nil {
 		t.Fatalf("GetDetail: %v", err)
@@ -383,7 +383,7 @@ func TestBuildCreateDealMembers_DedupesChargePersonInMemberIds(t *testing.T) {
 
 func TestLocalDealService_CreateGroupDeal_OwnerAccepted(t *testing.T) {
 	repo := &stubDealRepo{}
-	svc := NewLocalDealService(nil, repo, stubProductRepo{}, nil)
+	svc := NewLocalDealService(nil, repo, stubProductRepo{}, nil, nil)
 	ctx := context.WithValue(context.Background(), struct{}{}, nil)
 	// Profile id via common utils key if available — CreateGroupDeal falls back to req.OwnerId.
 	id, err := svc.CreateGroupDeal(ctx, &bdspropb.CreateGroupDealRequest{

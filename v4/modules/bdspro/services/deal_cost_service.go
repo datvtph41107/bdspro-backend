@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	_errors "common/errors"
@@ -12,6 +13,7 @@ import (
 	"userv4/modules/bdspro/entity"
 	"userv4/modules/bdspro/enums"
 	"userv4/modules/bdspro/repository"
+	bdsutils "userv4/modules/bdspro/utils"
 )
 
 // DealCostService owns tx_deal_costs (migrated from bdspro DealCostService).
@@ -27,14 +29,16 @@ type LocalDealCostService struct {
 	sync     *_utils.SyncUtil
 	repo     repository.DealCostRepository
 	costType repository.CostTypeRepository
+	history  *bdsutils.DealHistoryLogger
 }
 
 func NewLocalDealCostService(
 	sync *_utils.SyncUtil,
 	repo repository.DealCostRepository,
 	costType repository.CostTypeRepository,
+	history *bdsutils.DealHistoryLogger,
 ) *LocalDealCostService {
-	return &LocalDealCostService{sync: sync, repo: repo, costType: costType}
+	return &LocalDealCostService{sync: sync, repo: repo, costType: costType, history: history}
 }
 
 func (s *LocalDealCostService) Search(ctx context.Context, req dto.DealCostSearchRequest) (*bdspropb.DealCostListDTO, error) {
@@ -90,6 +94,8 @@ func (s *LocalDealCostService) Create(ctx context.Context, req *bdspropb.DealCos
 		return nil, err
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logDealCostHistory(ctx, row, enums.DealHistoryEventAddDealCost,
+		fmt.Sprintf("Thêm chi phí ID %d với số tiền %.2f", row.ID, row.Amount))
 	return dealCostEntityToProto(row), nil
 }
 
@@ -102,6 +108,8 @@ func (s *LocalDealCostService) Update(ctx context.Context, req *bdspropb.DealCos
 		return nil, err
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logDealCostHistory(ctx, row, enums.DealHistoryEventUpdateDealCost,
+		fmt.Sprintf("Cập nhật chi phí ID %d với số tiền %.2f", row.ID, row.Amount))
 	return dealCostEntityToProto(row), nil
 }
 
@@ -120,7 +128,27 @@ func (s *LocalDealCostService) Delete(ctx context.Context, id uint64) error {
 		return err
 	}
 	s.bumpSync(ctx, row.DealID)
+	s.logDealCostHistory(ctx, row, enums.DealHistoryEventRemoveDealCost,
+		fmt.Sprintf("Xóa chi phí ID %d với số tiền %.2f", row.ID, row.Amount))
 	return nil
+}
+
+func (s *LocalDealCostService) logDealCostHistory(
+	ctx context.Context,
+	row *entity.TxDealCost,
+	event enums.DealHistoryEventType,
+	content string,
+) {
+	if s.history == nil || row == nil {
+		return
+	}
+	s.history.LogDealHistory(ctx, row.DealID, event, content, map[string]interface{}{
+		"deal_id":      row.DealID,
+		"deal_cost_id": row.ID,
+		"amount":       row.Amount,
+		"cost_type_id": row.CostTypeID,
+		"status":       row.Status,
+	})
 }
 
 func (s *LocalDealCostService) bumpSync(ctx context.Context, dealID uint64) {

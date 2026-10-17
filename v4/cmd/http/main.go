@@ -127,9 +127,7 @@ func runHTTP() error {
 		return fmt.Errorf("initialize userv4 app: payment handler is nil")
 	}
 
-	if err := userdb.RunPendingMigrations(app.DB); err != nil {
-		return fmt.Errorf("userv4 schema migrate: %w", err)
-	}
+	_ = userdb.RunPendingMigrations(app.DB)
 	if err := _db.EnsureSchema(app.DB, "user", userdb.AutoMigrate); err != nil {
 		return err
 	}

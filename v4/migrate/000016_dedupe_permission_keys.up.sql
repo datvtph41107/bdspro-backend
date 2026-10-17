@@ -38,6 +38,79 @@ UPDATE permissions
    AND key = 'CRM'
    AND deleted_at IS NULL;
 
+-- 000007 could insert catalog-plan rows on auto-ids before 000015 pinned 302-304.
+DO $$
+DECLARE
+    rec RECORD;
+    occupant_key TEXT;
+BEGIN
+    FOR rec IN
+        SELECT p.id AS legacy_id, seed.canon_id, seed.perm_key
+          FROM permissions p
+          JOIN (VALUES
+              ('CATALOG_PLAN_VIEW', 302::bigint),
+              ('CATALOG_PLAN_MANAGE', 303::bigint),
+              ('CATALOG_PLAN_PUBLISH', 304::bigint)
+          ) AS seed(perm_key, canon_id) ON seed.perm_key = p.key
+         WHERE p.deleted_at IS NULL
+           AND p.id <> seed.canon_id
+    LOOP
+        IF EXISTS (
+            SELECT 1 FROM permissions
+             WHERE id = rec.canon_id AND deleted_at IS NULL
+        ) THEN
+            INSERT INTO role_permissions (role_id, permission_id)
+            SELECT rp.role_id, rec.canon_id
+              FROM role_permissions rp
+             WHERE rp.permission_id = rec.legacy_id
+            ON CONFLICT DO NOTHING;
+
+            DELETE FROM role_permissions WHERE permission_id = rec.legacy_id;
+
+            INSERT INTO group_permissions (role_group_id, permission_id)
+            SELECT gp.role_group_id, rec.canon_id
+              FROM group_permissions gp
+             WHERE gp.permission_id = rec.legacy_id
+            ON CONFLICT DO NOTHING;
+
+            DELETE FROM group_permissions WHERE permission_id = rec.legacy_id;
+
+            UPDATE permissions
+               SET deleted_at = NOW(), updated_at = NOW()
+             WHERE id = rec.legacy_id;
+            CONTINUE;
+        END IF;
+
+        SELECT key INTO occupant_key
+          FROM permissions
+         WHERE id = rec.canon_id
+           AND deleted_at IS NULL
+           AND key IS DISTINCT FROM rec.perm_key;
+
+        IF occupant_key IS NOT NULL THEN
+            RAISE EXCEPTION
+                'cannot remap % to id %: id already owned by key %',
+                rec.perm_key, rec.canon_id, occupant_key;
+        END IF;
+
+        DELETE FROM permissions
+         WHERE id = rec.canon_id
+           AND deleted_at IS NOT NULL;
+
+        UPDATE role_permissions
+           SET permission_id = rec.canon_id
+         WHERE permission_id = rec.legacy_id;
+
+        UPDATE group_permissions
+           SET permission_id = rec.canon_id
+         WHERE permission_id = rec.legacy_id;
+
+        UPDATE permissions
+           SET id = rec.canon_id, updated_at = NOW()
+         WHERE id = rec.legacy_id;
+    END LOOP;
+END $$;
+
 DO $$
 DECLARE
     dup RECORD;

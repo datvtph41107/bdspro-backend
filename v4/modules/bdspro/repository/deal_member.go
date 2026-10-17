@@ -17,6 +17,9 @@ type DealMemberRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entity.DealMember, error)
 	ExistsByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (bool, error)
 	UpdateRole(ctx context.Context, dealID, memberID uint64, roleKey uint32) error
+	GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*entity.DealMember, error)
+	UpdateCommission(ctx context.Context, dealID, memberID uint64, commissionValue float64, commissionType enums.CommissionType, note string) error
+	CalculateTotalCommission(ctx context.Context, dealID uint64) (float64, error)
 }
 
 type dealMemberPostgres struct {
@@ -90,4 +93,59 @@ func (r *dealMemberPostgres) UpdateRole(ctx context.Context, dealID, memberID ui
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func (r *dealMemberPostgres) GetByDealIDAndMemberID(ctx context.Context, dealID, memberID uint64) (*entity.DealMember, error) {
+	if r.db == nil || dealID == 0 || memberID == 0 {
+		return nil, nil
+	}
+	var row entity.DealMember
+	err := r.db.WithContext(ctx).
+		Where("deal_id = ? AND member_id = ? AND deleted_at IS NULL", dealID, memberID).
+		First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (r *dealMemberPostgres) UpdateCommission(
+	ctx context.Context,
+	dealID, memberID uint64,
+	commissionValue float64,
+	commissionType enums.CommissionType,
+	note string,
+) error {
+	if r.db == nil || dealID == 0 || memberID == 0 {
+		return nil
+	}
+	res := r.db.WithContext(ctx).Model(&entity.DealMember{}).
+		Where("deal_id = ? AND member_id = ? AND deleted_at IS NULL", dealID, memberID).
+		Updates(map[string]interface{}{
+			"commission_value": commissionValue,
+			"commission_type":  uint32(commissionType),
+			"note":             note,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *dealMemberPostgres) CalculateTotalCommission(ctx context.Context, dealID uint64) (float64, error) {
+	if r.db == nil || dealID == 0 {
+		return 0, nil
+	}
+	var total float64
+	err := r.db.WithContext(ctx).Model(&entity.DealMember{}).
+		Select("COALESCE(SUM(commission_value), 0)").
+		Where("deal_id = ? AND deleted_at IS NULL", dealID).
+		Scan(&total).Error
+	return total, err
 }

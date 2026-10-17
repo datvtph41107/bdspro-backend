@@ -45,13 +45,34 @@ type DealDetailRequest struct {
 	Timestamp int64  `form:"timestamp"`
 }
 
-// DealListByIDRequest is shared page/size/timestamp for deal-scoped lists.
+// DealListByIDRequest is shared page/size/timestamp for deal-scoped lists (products, invitations, histories, …).
 type DealListByIDRequest struct {
 	DealID    uint64  `path:"id|dealId"`
 	Page      uint32  `form:"page"`
 	Size      uint32  `form:"size"`
 	Timestamp int64   `form:"timestamp"`
 	MemberID  *uint64 `form:"memberId"`
+}
+
+// AddDealInternalNoteRequest is POST /v4/deal/{id}/internal-note.
+type AddDealInternalNoteRequest struct {
+	DealID     uint64 `path:"id|dealId"`
+	Content    string `json:"content"`
+	ActionType uint32 `json:"actionType"`
+}
+
+// DealMemberCommissionUpdate is one member commission row (batch update).
+type DealMemberCommissionUpdate struct {
+	MemberID        uint64  `json:"memberId"`
+	CommissionValue float64 `json:"commissionValue"`
+	CommissionType  uint32  `json:"commissionType"`
+	Note            string  `json:"note"`
+}
+
+// UpdateDealMembersCommissionRequest is POST /v4/deal/{id}/commission.
+type UpdateDealMembersCommissionRequest struct {
+	DealID  uint64                       `path:"id|dealId"`
+	Members []DealMemberCommissionUpdate `json:"members"`
 }
 
 // SaveDealProductsRequest is POST /v4/deal/{id}/products (add + remove by creator).
@@ -71,7 +92,7 @@ type DealMembersRequest struct {
 	Timestamp      int64  `form:"timestamp"`
 }
 
-// DealSummaryRequest is GET /v4/deal/{id}/summary query flags (was /v2.1/org/deal/{dealId}/summary).
+// DealSummaryRequest is GET /v4/deal/{id}/summary. With no query flags, all summary fields are returned.
 type DealSummaryRequest struct {
 	DealID          uint64 `path:"id"`
 	AmountPending   bool   `form:"amountPending"`

@@ -22,30 +22,41 @@ type pendingMigration struct {
 }
 
 // RunPendingMigrations kiểm tra schema_migrations và apply các file *.up.sql
-// mới hơn trong user-service/migrate (layout golang-migrate).
+// mới hơn trong v4/migrate (layout golang-migrate). Lỗi migrate được log và
+// không chặn startup (best-effort).
 func RunPendingMigrations(database *gorm.DB) error {
 	if database == nil {
 		return fmt.Errorf("user migrate database is nil")
 	}
 
+	if schemaMigrateSkipped() {
+		slog.Warn(
+			"User schema migrations skipped by env (dev only)",
+			"category", "lifecycle",
+			"event_name", "database.schema.migrate.skipped",
+			"env", "QHPRO_USER_SKIP_SCHEMA_MIGRATE",
+		)
+		return nil
+	}
+
 	dir, err := resolveMigrationDir()
 	if err != nil {
-		return err
+		return logMigrateFailedContinue("resolve migration dir", err)
 	}
 
 	if err := ensureGolangMigrateTable(database); err != nil {
-		return err
+		return logMigrateFailedContinue("ensure schema_migrations table", err)
 	}
 
 	current, dirty, err := readMigrationVersion(database)
 	if err != nil {
-		return err
+		return logMigrateFailedContinue("read schema_migrations", err)
 	}
 	if dirty {
 		// Incomplete apply (shared-DB collisions, statement timeout, …).
 		// Roll watermark back one version so migrate can retry on boot.
 		if current == 0 {
-			return fmt.Errorf("user schema_migrations is dirty at version 0; fix manually before start")
+			return logMigrateFailedContinue("schema_migrations dirty at version 0", nil)
 		}
 		prev := current - 1
 		slog.Warn(
@@ -56,14 +67,14 @@ func RunPendingMigrations(database *gorm.DB) error {
 			"retry_from", prev,
 		)
 		if err := markMigrationClean(database, prev); err != nil {
-			return fmt.Errorf("heal dirty user migration %d: %w", current, err)
+			return logMigrateFailedContinue("heal dirty schema_migrations", err)
 		}
 		current = prev
 	}
 
 	pending, err := listPendingMigrations(dir, current)
 	if err != nil {
-		return err
+		return logMigrateFailedContinue("list pending migrations", err)
 	}
 	if len(pending) == 0 {
 		slog.Info(
@@ -85,7 +96,7 @@ func RunPendingMigrations(database *gorm.DB) error {
 			"file", migration.name,
 		)
 		if err := applyMigration(database, migration); err != nil {
-			return err
+			return logMigrateFailedContinue("apply "+migration.name, err)
 		}
 		current = migration.version
 	}
@@ -97,6 +108,29 @@ func RunPendingMigrations(database *gorm.DB) error {
 		"version", current,
 	)
 	return nil
+}
+
+func logMigrateFailedContinue(reason string, err error) error {
+	args := []any{
+		"category", "lifecycle",
+		"event_name", "database.schema.migrate.failed_continue",
+		"reason", reason,
+	}
+	if err != nil {
+		args = append(args, "error", err.Error())
+	}
+	slog.Error("User schema migrate failed; continuing startup", args...)
+	return nil
+}
+
+func schemaMigrateSkipped() bool {
+	v := strings.TrimSpace(os.Getenv("QHPRO_USER_SKIP_SCHEMA_MIGRATE"))
+	switch strings.ToLower(v) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func resolveMigrationDir() (string, error) {

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	_errors "common/errors"
@@ -13,6 +14,7 @@ import (
 	"userv4/modules/bdspro/entity"
 	"userv4/modules/bdspro/enums"
 	"userv4/modules/bdspro/repository"
+	bdsutils "userv4/modules/bdspro/utils"
 
 	"gorm.io/gorm"
 )
@@ -32,6 +34,7 @@ type LocalDealInvitationService struct {
 	deal    repository.DealRepository
 	members repository.DealMemberRepository
 	deals   DealService
+	history *bdsutils.DealHistoryLogger
 }
 
 func NewLocalDealInvitationService(
@@ -39,8 +42,9 @@ func NewLocalDealInvitationService(
 	deal repository.DealRepository,
 	members repository.DealMemberRepository,
 	deals DealService,
+	history *bdsutils.DealHistoryLogger,
 ) *LocalDealInvitationService {
-	return &LocalDealInvitationService{sync: sync, deal: deal, members: members, deals: deals}
+	return &LocalDealInvitationService{sync: sync, deal: deal, members: members, deals: deals, history: history}
 }
 
 func (s *LocalDealInvitationService) List(ctx context.Context, req dto.DealInvitationListRequest) (*bdspropb.GetDealInvitationsByDealResponse, error) {
@@ -110,6 +114,17 @@ func (s *LocalDealInvitationService) Send(ctx context.Context, req dto.SendDealI
 	s.bumpInvitationSync(ctx, req.DealID)
 	s.clearDealMeSync(ctx, req.MemberID)
 
+	s.logInvitationHistory(ctx, req.DealID, enums.DealHistoryEventSendInvitation,
+		fmt.Sprintf("Gửi lời mời tham gia thương vụ '%s' cho thành viên %d", deal.Name, req.MemberID),
+		map[string]interface{}{
+			"deal_id":       req.DealID,
+			"deal_name":     deal.Name,
+			"member_id":     req.MemberID,
+			"inviter_id":    profileID,
+			"invitation_id": created.ID,
+			"role_key":      roleKey,
+		})
+
 	return &bdspropb.SendDealInvitationResponse{
 		InvitationId: created.ID,
 		Success:      true,
@@ -135,6 +150,18 @@ func (s *LocalDealInvitationService) Accept(ctx context.Context, req dto.AcceptD
 	}
 	s.bumpInvitationSync(ctx, dealID)
 	s.clearDealMeSync(ctx, row.MemberID)
+
+	dealName := s.dealName(ctx, dealID)
+	actorID := _utils.GetProfileIdWithContext(ctx)
+	s.logInvitationHistory(ctx, dealID, enums.DealHistoryEventAcceptInvitation,
+		fmt.Sprintf("Chấp nhận lời mời tham gia thương vụ '%s'", dealName),
+		map[string]interface{}{
+			"deal_id":       dealID,
+			"deal_name":     dealName,
+			"member_id":     actorID,
+			"invitation_id": req.InvitationID,
+		})
+
 	return &bdspropb.AcceptDealInvitationResponse{
 		InvitationId: req.InvitationID,
 		Success:      true,
@@ -160,6 +187,14 @@ func (s *LocalDealInvitationService) UpdateMemberRole(ctx context.Context, req d
 		return nil, err
 	}
 	s.bumpInvitationSync(ctx, req.DealID)
+
+	s.logInvitationHistory(ctx, req.DealID, enums.DealHistoryEventUpdateMemberRole,
+		fmt.Sprintf("Cập nhật vai trò thành viên %d (role_key=%d)", req.MemberID, req.RoleKey),
+		map[string]interface{}{
+			"deal_id":   req.DealID,
+			"member_id": req.MemberID,
+			"role_key":  req.RoleKey,
+		})
 
 	const msg = "Update deal member role successfully"
 	return &bdspropb.UpdateDealMemberRoleResponse{
@@ -204,6 +239,18 @@ func (s *LocalDealInvitationService) Remove(ctx context.Context, req dto.RemoveF
 	s.bumpInvitationSync(ctx, row.DealID)
 	s.clearDealMeSync(ctx, row.MemberID)
 
+	dealName := s.dealName(ctx, row.DealID)
+	s.logInvitationHistory(ctx, row.DealID, enums.DealHistoryEventRemoveFromDeal,
+		fmt.Sprintf("Gỡ thành viên %d khỏi thương vụ '%s' với lý do: %s", row.MemberID, dealName, req.Reason),
+		map[string]interface{}{
+			"deal_id":       row.DealID,
+			"deal_name":     dealName,
+			"member_id":     row.MemberID,
+			"removed_by":    profileID,
+			"invitation_id": req.InvitationID,
+			"reason":        req.Reason,
+		})
+
 	return &bdspropb.RemoveFromDealResponse{
 		InvitationId: req.InvitationID,
 		Success:      true,
@@ -230,6 +277,18 @@ func (s *LocalDealInvitationService) Reject(ctx context.Context, req dto.RejectD
 		return nil, err
 	}
 	s.bumpInvitationSync(ctx, dealID)
+
+	dealName := s.dealName(ctx, dealID)
+	s.logInvitationHistory(ctx, dealID, enums.DealHistoryEventRejectInvitation,
+		fmt.Sprintf("Từ chối lời mời tham gia thương vụ '%s' với lý do: %s", dealName, req.Reason),
+		map[string]interface{}{
+			"deal_id":       dealID,
+			"deal_name":     dealName,
+			"member_id":     profileID,
+			"invitation_id": req.InvitationID,
+			"reason":        req.Reason,
+		})
+
 	return &bdspropb.RejectDealInvitationResponse{
 		InvitationId: req.InvitationID,
 		Success:      true,
@@ -251,6 +310,30 @@ func (s *LocalDealInvitationService) loadInvitationForDeal(ctx context.Context, 
 		return nil, 0, _errors.BadRequestException("invitation does not belong to this deal")
 	}
 	return row, dealID, nil
+}
+
+func (s *LocalDealInvitationService) dealName(ctx context.Context, dealID uint64) string {
+	if dealID == 0 || s.deal == nil {
+		return ""
+	}
+	d, err := s.deal.GetByID(ctx, dealID)
+	if err != nil || d == nil {
+		return ""
+	}
+	return d.Name
+}
+
+func (s *LocalDealInvitationService) logInvitationHistory(
+	ctx context.Context,
+	dealID uint64,
+	event enums.DealHistoryEventType,
+	content string,
+	metadata map[string]interface{},
+) {
+	if s.history == nil || dealID == 0 {
+		return
+	}
+	s.history.LogDealHistory(ctx, dealID, event, content, metadata)
 }
 
 func (s *LocalDealInvitationService) bumpInvitationSync(ctx context.Context, dealID uint64) {

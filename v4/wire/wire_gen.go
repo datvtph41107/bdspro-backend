@@ -42,6 +42,7 @@ import (
 	controller3 "userv4/modules/bdspro/controller"
 	mapper3 "userv4/modules/bdspro/mapper"
 	repository4 "userv4/modules/bdspro/repository"
+	bdsutils "userv4/modules/bdspro/utils"
 	services5 "userv4/modules/bdspro/services"
 	"userv4/modules/crm"
 	client2 "userv4/modules/crm/client"
@@ -172,9 +173,14 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	productRepository := repository4.NewProductPostgres(db)
 	localProductService := services5.NewLocalProductService(syncUtil, productRepository)
 	dealRepository := repository4.NewDealPostgres(db)
-	localDealService := services5.NewLocalDealService(syncUtil, dealRepository, productRepository, profileProvider)
+	dealHistoryRepository := repository2.NewDealHistoryPostgres(db)
+	dealHistoryLogger := bdsutils.NewDealHistoryLogger(dealHistoryRepository, syncUtil, profileProvider)
+	localDealService := services5.NewLocalDealService(syncUtil, dealRepository, productRepository, profileProvider, dealHistoryLogger)
 	dealMemberRepository := repository4.NewDealMemberPostgres(db)
-	localDealInvitationService := services5.NewLocalDealInvitationService(syncUtil, dealRepository, dealMemberRepository, localDealService)
+	dealInternalNoteRepository := repository4.NewDealInternalNotePostgres(db)
+	localDealInternalNoteService := services5.NewLocalDealInternalNoteService(dealRepository, dealInternalNoteRepository, dealHistoryLogger)
+	localDealCommissionService := services5.NewLocalDealCommissionService(syncUtil, dealRepository, dealMemberRepository, dealHistoryLogger)
+	localDealInvitationService := services5.NewLocalDealInvitationService(syncUtil, dealRepository, dealMemberRepository, localDealService, dealHistoryLogger)
 	appointmentRepository := repository4.NewAppointmentPostgres(db)
 	localAppointmentService := services5.NewLocalAppointmentService(syncUtil, appointmentRepository, productRepository, dealRepository, profileProvider)
 	localDemoService := services3.NewLocalDemoService(demoProductLogPostgres, profileUsecase, localContactService, localProductService, localDealService, localAppointmentService, locationV2Repository, syncUtil)
@@ -276,11 +282,11 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	localSyncService := services5.NewLocalSyncService(syncUtil)
 	dealCostRepository := repository4.NewDealCostPostgres(db)
 	costTypeRepository := repository4.NewCostTypePostgres(db)
-	localDealCostService := services5.NewLocalDealCostService(syncUtil, dealCostRepository, costTypeRepository)
+	localDealCostService := services5.NewLocalDealCostService(syncUtil, dealCostRepository, costTypeRepository, dealHistoryLogger)
 	contractDealRepository := repository4.NewContractDealPostgres(db)
 	localContractDealService := services5.NewLocalContractDealService(syncUtil, contractDealRepository)
 	investmentRepository := repository4.NewInvestmentPostgres(db)
-	localInvestmentService := services5.NewLocalInvestmentService(syncUtil, investmentRepository, dealRepository, profileProvider)
+	localInvestmentService := services5.NewLocalInvestmentService(syncUtil, investmentRepository, dealRepository, profileProvider, dealHistoryLogger)
 	localCostTypeService := services5.NewLocalCostTypeService(costTypeRepository, syncUtil)
 	propertyRepository := repository4.NewPropertyPostgres(db)
 	localPropertyService := services5.NewLocalPropertyService(syncUtil, propertyRepository)
@@ -300,7 +306,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	transactionGorm := postgres3.NewTransactionGorm(db)
 	localDistributionService := services5.NewLocalDistributionService(distributeRepository, productPriceRepository, transactionGorm)
 	distributionMapper := mapper3.NewDistributionMapper(crmProvider)
-	controllerHandler := controller3.NewHandler(localSyncService, localDealService, localDealInvitationService, localDealCostService, localContractDealService, localInvestmentService, localCostTypeService, localProductService, localPropertyService, localPublicService, localProductNoteService, localAppointmentService, localPropertyHistoryService, localCatalogService, localProjectBuildService, localAdminProjectService, localDistributionService, distributionMapper, syncUtil)
+	controllerHandler := controller3.NewHandler(localSyncService, localDealService, localDealInternalNoteService, localDealCommissionService, localDealInvitationService, localDealCostService, localContractDealService, localInvestmentService, localCostTypeService, localProductService, localPropertyService, localPublicService, localProductNoteService, localAppointmentService, localPropertyHistoryService, localCatalogService, localProjectBuildService, localAdminProjectService, localDistributionService, distributionMapper, syncUtil)
 	localLocationService := services7.NewLocalLocationService(locationRepository)
 	localLocationV2Service := services7.NewLocalLocationV2Service(locationV2Repository)
 	localUserGuideService := services7.NewLocalUserGuideService(userGuideRepository, syncUtil)
@@ -470,7 +476,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	reportMapper := mapper5.NewReportMapper()
 	feedbackController := controller7.NewFeedbackController(rateUsecase, servicesReportUsecase, reportReasonUsecase, registryUsecase, rateMapper, reportMapper)
 	repositoryAppointmentRepository := crm.ProvideAppointmentRepo(db)
-	appointmentUsecase := services4.NewAppointmentUsecase(repositoryAppointmentRepository, contactRepo, noopBdspro, userClient)
+	appointmentUsecase := services4.NewAppointmentUsecase(repositoryAppointmentRepository, contactRepo, noopBdspro, userClient, dealHistoryLogger)
 	appointmentTransformer := mapper5.NewAppointmentTransformer()
 	appointmentValidator := validator2.NewAppointmentValidator()
 	dashboardStatsJob := crm.ProvideAppointmentStatsJob(db, appointmentUsecase)

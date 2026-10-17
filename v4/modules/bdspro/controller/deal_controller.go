@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	_errors "common/errors"
 	bdspropb "pb/types/bdspro"
 	"userv4/internal/httpapi"
 	"userv4/modules/bdspro/dto"
@@ -17,11 +18,12 @@ import (
 
 // DealController owns deal HTTP routes under /v4 (migrated from /v2.1/...).
 type DealController struct {
-	deal services.DealService
+	deal       services.DealService
+	commission services.DealCommissionService
 }
 
-func NewDealController(deal services.DealService) *DealController {
-	return &DealController{deal: deal}
+func NewDealController(deal services.DealService, commission services.DealCommissionService) *DealController {
+	return &DealController{deal: deal, commission: commission}
 }
 
 func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
@@ -36,7 +38,20 @@ func (c *DealController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v4/deal/{id}/summary", c.getSummary)
 	httpapi.GET(mux, "/v4/deal/{id}/bank-account", c.getBankAccount)
 	httpapi.GET(mux, "/v4/deal/{id}/members", c.getMembers)
+	httpapi.GET(mux, "/v4/deal/{id}/histories", c.getHistories)
+	httpapi.POST(mux, "/v4/deal/{id}/commission", c.updateMembersCommission)
 	httpapi.GET(mux, "/v4/deal/{id}", c.getDetail)
+}
+
+func (c *DealController) updateMembersCommission(ctx context.Context, req dto.UpdateDealMembersCommissionRequest) (*httpapi.Result, error) {
+	if c.commission == nil {
+		return nil, _errors.InternalServerException("deal commission service unavailable")
+	}
+	result, err := c.commission.UpdateMembersCommission(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return protoResult(result)
 }
 
 func (c *DealController) createProto(ctx context.Context, req *bdspropb.CreateGroupDealRequest) (*bdspropb.CreateGroupDealResponse, error) {
@@ -161,6 +176,25 @@ func (c *DealController) getBankAccount(ctx context.Context, req dto.DealDetailR
 		return nil, err
 	}
 	return protoResult(result, timestampOpt(ts)...)
+}
+
+func (c *DealController) getHistories(ctx context.Context, req dto.DealListByIDRequest) (*httpapi.Result, error) {
+	result, ts, err := c.deal.GetHistories(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return httpapi.OK([]any{}, timestampOpt(ts)...), nil
+	}
+	data, err := protoMessages(result.GetData())
+	if err != nil {
+		return nil, err
+	}
+	opts := []httpapi.OKOption{
+		httpapi.WithPagination(&httpapi.Pagination{Total: int64(result.GetTotal())}),
+	}
+	opts = append(opts, timestampOpt(ts)...)
+	return httpapi.OK(data, opts...), nil
 }
 
 func (c *DealController) getMembers(ctx context.Context, req dto.DealMembersRequest) (*httpapi.Result, error) {

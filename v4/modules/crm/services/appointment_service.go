@@ -17,6 +17,8 @@ import (
 	"userv4/modules/crm/enums"
 	"userv4/modules/crm/provider"
 	repo "userv4/modules/crm/repository"
+	bdsenums "userv4/modules/bdspro/enums"
+	bdsutils "userv4/modules/bdspro/utils"
 )
 
 type AppointmentUsecase interface {
@@ -37,6 +39,7 @@ type appointmentUsecase struct {
 	// organizationClient client.OrganizationClient
 	bdsproClient provider.BdsproProvider
 	userClient   *client.UserClient
+	dealHistory  *bdsutils.DealHistoryLogger
 
 	listMemCacheMu sync.RWMutex
 	listByKey      map[appointmentListMemCacheKey]appointmentListMemCacheEntry
@@ -48,6 +51,7 @@ func NewAppointmentUsecase(
 	// organizationClient client.OrganizationClient,
 	bdsproClient provider.BdsproProvider,
 	userClient *client.UserClient,
+	dealHistory *bdsutils.DealHistoryLogger,
 ) AppointmentUsecase {
 	return &appointmentUsecase{
 		appointmentRepo: appointmentRepo,
@@ -55,6 +59,7 @@ func NewAppointmentUsecase(
 		// organizationClient: organizationClient,
 		bdsproClient: bdsproClient,
 		userClient:   userClient,
+		dealHistory:  dealHistory,
 		listByKey:    make(map[appointmentListMemCacheKey]appointmentListMemCacheEntry),
 	}
 }
@@ -140,6 +145,8 @@ func (uc *appointmentUsecase) CreateAppointment(ctx context.Context, appointment
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
 	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
 
+	uc.logDealAppointmentHistory(ctx, appointment.DealId, bdsenums.DealHistoryEventCreateAppointment, appointment, "")
+
 	return appointment, nil
 }
 
@@ -156,6 +163,8 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 	if profileId == 0 {
 		return nil, fmt.Errorf("profileId not found in context")
 	}
+
+	previous, _ := uc.appointmentRepo.GetByID(ctx, appointment.Id)
 
 	// Lấy danh sách participantIds từ appointment
 	participantIds := make([]uint64, 0)
@@ -217,6 +226,12 @@ func (uc *appointmentUsecase) UpdateAppointment(ctx context.Context, appointment
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
 	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
 
+	if previous != nil && previous.DealId > 0 && previous.DealId != appointment.DealId {
+		uc.logDealAppointmentHistory(ctx, previous.DealId, bdsenums.DealHistoryEventDeleteAppointment, previous,
+			"Lịch hẹn không còn gắn với thương vụ này")
+	}
+	uc.logDealAppointmentHistory(ctx, appointment.DealId, bdsenums.DealHistoryEventUpdateAppointment, appointment, "")
+
 	return appointment, nil
 }
 
@@ -244,6 +259,8 @@ func (uc *appointmentUsecase) DeleteAppointment(ctx context.Context, id uint32) 
 
 	// Cập nhật ScheduleCount cho tất cả products trong appointment
 	uc.updateScheduleCountsForProducts(ctx, appointment.ProductIds)
+
+	uc.logDealAppointmentHistory(ctx, appointment.DealId, bdsenums.DealHistoryEventDeleteAppointment, appointment, "")
 
 	return nil
 }
@@ -631,7 +648,32 @@ func (uc *appointmentUsecase) UpdateAppointmentStatus(ctx context.Context, id ui
 		return nil, fmt.Errorf("failed to get updated appointment: %v", err)
 	}
 
+	uc.logDealAppointmentHistory(ctx, updatedAppointment.DealId, bdsenums.DealHistoryEventUpdateAppointmentStatus,
+		updatedAppointment, fmt.Sprintf("action=%s", action))
+
 	return updatedAppointment, nil
+}
+
+func (uc *appointmentUsecase) logDealAppointmentHistory(
+	ctx context.Context,
+	dealID uint32,
+	event bdsenums.DealHistoryEventType,
+	appointment *domain.Appointment,
+	contentSuffix string,
+) {
+	if uc.dealHistory == nil || dealID == 0 || appointment == nil {
+		return
+	}
+	content := fmt.Sprintf("%s: \"%s\" (ID %d)", event.GetEventName(), appointment.Title, appointment.Id)
+	if contentSuffix != "" {
+		content = content + " — " + contentSuffix
+	}
+	uc.dealHistory.LogDealHistory(ctx, uint64(dealID), event, content, map[string]interface{}{
+		"deal_id":        dealID,
+		"appointment_id": appointment.Id,
+		"title":          appointment.Title,
+		"status":         appointment.Status,
+	})
 }
 
 // updateScheduleCountsForProducts cập nhật ScheduleCount cho tất cả products

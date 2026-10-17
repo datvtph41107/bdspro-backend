@@ -159,13 +159,18 @@ CREATE TABLE IF NOT EXISTS seo_category (
 
 CREATE INDEX IF NOT EXISTS idx_seo_category_status ON seo_category (status) WHERE deleted_at IS NULL;
 
+-- Legacy/AutoMigrate tables may exist without column defaults.
+ALTER TABLE seo_category
+    ALTER COLUMN created_at SET DEFAULT NOW(),
+    ALTER COLUMN updated_at SET DEFAULT NOW();
+
 -- Seed default categories (slug = public URL <loại> segment under /tin-tuc/<loại>/...)
-INSERT INTO seo_category (code, slug, name, description, status, sort_order) VALUES
-    ('planning_news',    'tin',                'Tin tức quy hoạch',     'Tin tức và thông báo liên quan đến quy hoạch', 'active', 10),
-    ('planning_project', 'do-an-quy-hoach',     'Đồ án quy hoạch',       'Các đồ án quy hoạch đô thị và nông thôn',      'active', 20),
-    ('legal_document',   'tai-lieu',            'Văn bản pháp lý',       'Văn bản và tài liệu pháp lý quy hoạch',        'active', 30),
-    ('analysis_report',  'bao-cao',             'Báo cáo & Phân tích',   'Báo cáo nghiên cứu và phân tích thị trường',   'active', 40),
-    ('planning_region',  'vung-quy-hoach',      'Vùng quy hoạch',        'Thông tin quy hoạch theo vùng địa lý',         'active', 50)
+INSERT INTO seo_category (code, slug, name, description, status, sort_order, created_at, updated_at) VALUES
+    ('planning_news',    'tin',                'Tin tức quy hoạch',     'Tin tức và thông báo liên quan đến quy hoạch', 'active', 10, NOW(), NOW()),
+    ('planning_project', 'do-an-quy-hoach',     'Đồ án quy hoạch',       'Các đồ án quy hoạch đô thị và nông thôn',      'active', 20, NOW(), NOW()),
+    ('legal_document',   'tai-lieu',            'Văn bản pháp lý',       'Văn bản và tài liệu pháp lý quy hoạch',        'active', 30, NOW(), NOW()),
+    ('analysis_report',  'bao-cao',             'Báo cáo & Phân tích',   'Báo cáo nghiên cứu và phân tích thị trường',   'active', 40, NOW(), NOW()),
+    ('planning_region',  'vung-quy-hoach',      'Vùng quy hoạch',        'Thông tin quy hoạch theo vùng địa lý',         'active', 50, NOW(), NOW())
 ON CONFLICT (code) DO NOTHING;
 
 -- ── user_saved_planning_news ──────────────────────────────────────────────────
