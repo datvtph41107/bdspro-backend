@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
-	"userv4/modules/crm/infra/impl"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/infra/impl"
+	repo "mdn4/modules/crm/repository"
 
 	"gorm.io/gorm"
 )

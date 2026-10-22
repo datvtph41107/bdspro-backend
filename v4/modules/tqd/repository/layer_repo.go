@@ -3,9 +3,9 @@ package repository
 import (
 	_dto "common/domain/dto"
 	"context"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
 )
 
 type LayerRepository interface {

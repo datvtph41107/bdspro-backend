@@ -5,7 +5,7 @@ package postgres
 import (
 	"context"
 	"crm/infra/impl"
-	seo_domain "userv4/modules/crm/entity/seo"
+	seo_domain "mdn4/modules/crm/entity/seo"
 	"time"
 
 	"gorm.io/gorm"

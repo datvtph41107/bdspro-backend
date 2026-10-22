@@ -11,14 +11,14 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/data/demo"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
-	usecases "userv4/modules/user/services/user"
-	bdsprodto "userv4/modules/bdspro/dto"
-	bdsprosvc "userv4/modules/bdspro/services"
-	crmsvc "userv4/modules/crm/services"
-	hubrepo "userv4/modules/hub/repository"
+	"mdn4/data/demo"
+	"mdn4/internal/interface/repo"
+	bdsprodto "mdn4/modules/bdspro/dto"
+	bdsprosvc "mdn4/modules/bdspro/services"
+	crmsvc "mdn4/modules/crm/services"
+	hubrepo "mdn4/modules/hub/repository"
+	"mdn4/modules/user/domain/user"
+	usecases "mdn4/modules/user/services/user"
 )
 
 // DemoService owns POST /v2/user/demo-mode seed/cleanup for modules/user.
@@ -28,6 +28,7 @@ type DemoService interface {
 
 // LocalDemoService seeds contacts/products/deals/appointments via in-process
 // modules (no TCP to bdspro/crm/tqd). Snapshots live under v4/data/demo.
+// @bind: mdn4/modules/user/services.DemoService
 type LocalDemoService struct {
 	logs         repo.IDemoProductLogRepo
 	profile      *usecases.ProfileUsecase

@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"context"
-	"userv4/modules/crm/data"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/data"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.FriendRepo
+// @bind: mdn4/modules/crm/repository.FriendRepo
 type FriendPostgre struct {
 	DB *gorm.DB
 }

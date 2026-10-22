@@ -9,26 +9,95 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/repository"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/repository"
 )
 
 // PropertyService owns property list/detail/timestamps flows for modules/bdspro.
 type PropertyService interface {
 	ListMe(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyListResponse, error)
-	GetDetail(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyDetailResponse, error)
+	GetDetail(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyDetailResponse, int64, error)
 	GetTimestamps(ctx context.Context, id uint64) (*bdspropb.PropertyTimestampsResponse, error)
+	CreateProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error)
 }
 
 // LocalPropertyService owns property list/detail against the v4 DSN + SyncUtil.
+// @bind: mdn4/modules/bdspro/services.PropertyService
 type LocalPropertyService struct {
-	sync *_utils.SyncUtil
-	repo repository.PropertyRepository
+	sync     *_utils.SyncUtil
+	repo     repository.PropertyRepository
+	products repository.ProductRepository
+	listings repository.ListingRepository
 }
 
-func NewLocalPropertyService(sync *_utils.SyncUtil, repo repository.PropertyRepository) *LocalPropertyService {
-	return &LocalPropertyService{sync: sync, repo: repo}
+func NewLocalPropertyService(
+	sync *_utils.SyncUtil,
+	repo repository.PropertyRepository,
+	products repository.ProductRepository,
+	listings repository.ListingRepository,
+) *LocalPropertyService {
+	return &LocalPropertyService{sync: sync, repo: repo, products: products, listings: listings}
+}
+
+func (s *LocalPropertyService) CreateProperty(ctx context.Context, req *bdspropb.CreatePropertyRequest) (*bdspropb.Response, error) {
+	if req == nil {
+		return nil, _errors.BadRequestException("body is required")
+	}
+	originID := _utils.GetOriginIdFromContext(ctx)
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	if originID == 0 || profileID == 0 {
+		return nil, _errors.UnauthorizedException()
+	}
+	bundle := mapper.CreatePropertyRequestToBundle(req, profileID)
+	if bundle.IncludePost && bundle.Product == nil {
+		return nil, _errors.BadRequestException("product is required when creating listing")
+	}
+
+	lineage, err := s.repo.UserCreate(ctx, originID, bundle)
+	if err != nil {
+		return nil, err
+	}
+	if lineage == nil {
+		return nil, _errors.InternalServerException("property create failed")
+	}
+
+	var productID uint64
+	if bundle.Product != nil && s.products != nil {
+		if err := s.products.CreateAttachedToProperty(ctx, lineage.ID, bundle.Product); err != nil {
+			return nil, err
+		}
+		productID = bundle.Product.ID
+	}
+
+	if bundle.Listing != nil {
+		if productID == 0 {
+			return nil, _errors.BadRequestException("product id is required for listing")
+		}
+		if s.listings == nil {
+			return nil, _errors.InternalServerException("listing store unavailable")
+		}
+		bundle.Listing.ProductID = productID
+		if bundle.Listing.OwnerID == 0 {
+			bundle.Listing.OwnerID = profileID
+		}
+		if err := s.listings.CreateForProduct(ctx, bundle.Listing); err != nil {
+			return nil, err
+		}
+	}
+
+	now := time.Now().UnixMilli()
+	if s.sync != nil {
+		_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyPropertyMe, 0), now)
+		_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyProductMe, 0), now)
+		if bundle.Listing != nil {
+			_ = s.sync.Del(ctx, s.sync.GetKey(ctx, _utils.SyncKeyListingMe, 0))
+		}
+		_ = s.sync.PutTimestamp(ctx, s.sync.GetKey(ctx, _utils.SyncKeyPropertyDetail, lineage.ID), now)
+	}
+
+	return &bdspropb.Response{Id: lineage.ID, Message: "successfully"}, nil
 }
 
 func (s *LocalPropertyService) GetTimestamps(ctx context.Context, id uint64) (*bdspropb.PropertyTimestampsResponse, error) {
@@ -110,24 +179,28 @@ func (s *LocalPropertyService) ListMe(ctx context.Context, req dto.PropertyListR
 	}, nil
 }
 
-func (s *LocalPropertyService) GetDetail(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyDetailResponse, error) {
+func (s *LocalPropertyService) GetDetail(ctx context.Context, req dto.PropertyListRequest) (*bdspropb.PropertyDetailResponse, int64, error) {
 	if req.ID == 0 {
-		return nil, _errors.BadRequestException("id is required")
+		return nil, 0, _errors.BadRequestException("id is required")
 	}
+	var catalogTS int64 = time.Now().UnixMilli()
 	if s.sync != nil {
 		key := s.sync.GetKey(ctx, _utils.SyncKeyPropertyDetail, req.ID)
+		catalogTS = s.sync.EnsureTimestamp(ctx, key)
+		s.sync.PutTimeRequest(ctx, key, req.Timestamp)
 		if !s.sync.HasUpdated(ctx, key, req.Timestamp) && req.Timestamp > 0 {
-			return &bdspropb.PropertyDetailResponse{Id: req.ID}, nil
+			return &bdspropb.PropertyDetailResponse{}, catalogTS, nil
 		}
 	}
-	p, err := s.repo.GetByID(ctx, req.ID)
+	originID := _utils.GetOriginIdFromContext(ctx)
+	detail, err := s.repo.GetDetail(ctx, req.ID, originID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if p == nil {
-		return nil, _errors.NotFoundException("property not found")
+	if detail == nil {
+		return &bdspropb.PropertyDetailResponse{}, catalogTS, nil
 	}
-	return mapPropertyToPB(p), nil
+	return mapper.PropertyLineageDetailToProto(detail), catalogTS, nil
 }
 
 // mapPropertyToPB mirrors bdspro PropertyDetailToProto for response parity.
@@ -135,7 +208,7 @@ func mapPropertyToPB(p *entity.PropertyLineage) *bdspropb.PropertyDetailResponse
 	if p == nil {
 		return nil
 	}
-	out := &bdspropb.PropertyDetailResponse{Id: p.ID}
+	out := &bdspropb.PropertyDetailResponse{Id: p.ID, PropertyIdentifyId: p.PropertyIdentifyID}
 	if p.CreatedAt != nil {
 		out.CreatedAt = _utils.FormatTimeToString(p.CreatedAt)
 	}

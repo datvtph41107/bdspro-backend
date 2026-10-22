@@ -2,8 +2,8 @@ package user
 
 import (
 	_models "common/models"
+	"mdn4/modules/user/enums"
 	"time"
-	"userv4/modules/user/enums"
 )
 
 type CertificationEntity struct {

@@ -6,8 +6,8 @@ import (
 	"context"
 
 	impl "common/db"
-	seo_domain "userv4/modules/crm/entity/seo"
-	repo "userv4/modules/crm/repository"
+	seo_domain "mdn4/modules/crm/entity/seo"
+	repo "mdn4/modules/crm/repository"
 
 	"gorm.io/gorm"
 )

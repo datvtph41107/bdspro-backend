@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/services"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/internal/httpapi"
-	"userv4/modules/user/dto"
-	"userv4/modules/user/services"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

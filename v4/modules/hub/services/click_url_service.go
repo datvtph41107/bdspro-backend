@@ -4,9 +4,9 @@ import (
 	"context"
 
 	_errors "common/errors"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 // ClickURLService tracks link-click events.
@@ -14,6 +14,7 @@ type ClickURLService interface {
 	TrackBatch(ctx context.Context, req dto.TrackClickURLBatchRequest, profileID *uint64) error
 }
 
+// @bind: mdn4/modules/hub/services.ClickURLService
 type LocalClickURLService struct {
 	repo repository.ClickURLRepository
 }

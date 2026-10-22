@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 
-	qh "userv4/modules/tqd/entity/qh"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	repo "userv4/modules/tqd/repository"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

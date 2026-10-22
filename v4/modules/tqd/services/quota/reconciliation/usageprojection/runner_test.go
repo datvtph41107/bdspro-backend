@@ -5,11 +5,11 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"mdn4/modules/tqd/access"
+	memoryquota "mdn4/modules/tqd/services/quota/memory"
+	memoryusage "mdn4/modules/tqd/services/usage/memory"
 	"testing"
 	"time"
-	"userv4/modules/tqd/access"
-	"userv4/modules/tqd/services/quota/memory"
-	"userv4/modules/tqd/services/usage/memory"
 )
 
 type pagingScopeStore struct {

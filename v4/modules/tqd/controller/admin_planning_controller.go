@@ -6,11 +6,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	qh "userv4/modules/tqd/entity/qh"
-	qh_usecase "userv4/modules/tqd/services/qh"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	qh "mdn4/modules/tqd/entity/qh"
+	qh_usecase "mdn4/modules/tqd/services/qh"
 )
 
 // AdminPlanningController owns admin planning projects/documents/events/relations/layer-docs/ai-jobs.
@@ -188,9 +188,9 @@ func (c *AdminPlanningController) unassignLayer(ctx context.Context, req dto.Pla
 }
 
 type idsBody struct {
-	IDs []uint64 `json:"ids"`
+	IDs         []uint64 `json:"ids"`
 	ProvinceIDs []uint64 `json:"provinceIds"`
-	WardIDs []uint64 `json:"wardIds"`
+	WardIDs     []uint64 `json:"wardIds"`
 }
 
 func (c *AdminPlanningController) assignProvinces(ctx context.Context, req struct {

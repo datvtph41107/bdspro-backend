@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/entity"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/entity"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"

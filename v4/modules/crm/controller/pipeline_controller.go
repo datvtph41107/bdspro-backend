@@ -6,10 +6,10 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/services"
 )
 
 type PipelineController struct{ uc *services.PipelineUsecase }

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	qh "userv4/modules/tqd/entity/qh"
-	qh_dto "userv4/modules/tqd/dto/qh"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 type IQHPlanningEventRepo interface {

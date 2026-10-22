@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	repo "mdn4/modules/tqd/repository"
 )
 
 type parcelForkJoinProbe struct {

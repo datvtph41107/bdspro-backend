@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mdn4/config"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
+	usecase "mdn4/modules/auth/services"
 	"net/http"
 	"net/url"
-	"userv4/config"
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
-	"userv4/internal/interface/repo"
-	usecase "userv4/modules/auth/services"
 
 	"gorm.io/gorm"
 )

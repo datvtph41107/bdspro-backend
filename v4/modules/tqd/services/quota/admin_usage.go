@@ -8,8 +8,8 @@ import (
 	"time"
 
 	commonmetering "common/metering"
-	"userv4/modules/tqd/access"
-	quotadomain "userv4/modules/tqd/entity/quota"
+	"mdn4/modules/tqd/access"
+	quotadomain "mdn4/modules/tqd/entity/quota"
 )
 
 type AdminUsageQuery struct {

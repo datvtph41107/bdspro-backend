@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/dto"
+	"common/httpapi"
+	"mdn4/modules/crm/dto"
 )
 
 func TestContactCreate_DecodeWithoutPathID(t *testing.T) {

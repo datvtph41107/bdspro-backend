@@ -7,7 +7,7 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 
-	"userv4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/dto"
 )
 
 // SyncService owns the app-wide sync timestamp aggregator (GET /v2/bdspro/ts).
@@ -16,6 +16,7 @@ type SyncService interface {
 }
 
 // LocalSyncService ports ProductHandler.GetAppTimestamps onto SyncUtil.
+// @bind: mdn4/modules/bdspro/services.SyncService
 type LocalSyncService struct {
 	sync *_utils.SyncUtil
 }
@@ -35,10 +36,12 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 		_utils.SyncKeyBdsproEnums,
 		_utils.SyncKeyPaymentBankAll,
 		_utils.SyncKeyTxCostTypes,
+		_utils.SyncKeyPropertyTypes,
 		s.sync.GetKey(ctx, _utils.SyncKeyPermissionMe, 0),
 		s.sync.GetKey(ctx, _utils.SyncKeyProfileInfoMe, 0),
 		_utils.SyncKeyUserGuideByKey,
 		s.sync.GetKey(ctx, _utils.SyncKeyProductMe, 0),
+		s.sync.GetKey(ctx, _utils.SyncKeyListingMe, 0),
 		_utils.SyncKeyPoiCategoryIcons,
 		_utils.SyncKeyTQDProvincesWards,
 		s.sync.GetKey(ctx, _utils.SyncKeyContactMe, 0),
@@ -50,10 +53,12 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 		"enum",
 		"bank_all",
 		"cost_types",
+		"property_types",
 		"permission_me",
 		"info_me",
 		"user_guides_by_key",
 		"product_me",
+		"listing_me",
 		"poi_category_icons",
 		"provinces_wards",
 		"contact_me",
@@ -66,6 +71,7 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 		_utils.SyncKeyBdsproEnums:       true,
 		_utils.SyncKeyPaymentBankAll:    true,
 		_utils.SyncKeyTxCostTypes:       true,
+		_utils.SyncKeyPropertyTypes:     true,
 		_utils.SyncKeyUserGuideByKey:    true,
 		_utils.SyncKeyPoiCategoryIcons:  true,
 		_utils.SyncKeyTQDProvincesWards: true,

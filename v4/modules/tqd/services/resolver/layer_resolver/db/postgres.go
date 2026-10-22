@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 
 	"gorm.io/gorm"
 )

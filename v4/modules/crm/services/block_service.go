@@ -4,9 +4,9 @@ import (
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 )
 
 type BlockUsecase struct {

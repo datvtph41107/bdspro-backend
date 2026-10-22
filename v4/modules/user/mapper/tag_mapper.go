@@ -2,10 +2,10 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/enums"
 	"strings"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
 
 	userpb "pb/types/user"
 )

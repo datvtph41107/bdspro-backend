@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	subscriptionusecase "mdn4/modules/user/services/subscription"
 	userpb "pb/types/user"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	subscriptionusecase "userv4/modules/user/services/subscription"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

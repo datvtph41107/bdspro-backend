@@ -5,11 +5,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"mdn4/modules/user/dto"
+	mapper "mdn4/modules/user/mapper"
+	usecases "mdn4/modules/user/services/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	"userv4/modules/user/dto"
-	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/status"
 )
@@ -23,6 +23,7 @@ type KYCService interface {
 }
 
 // LocalKYCService adapts KYC usecases into modules/user.
+// @bind: mdn4/modules/user/services.KYCService
 type LocalKYCService struct {
 	kyc      usecases.IKYCUsecase
 	adminKYC usecases.IAdminKYCUsecase

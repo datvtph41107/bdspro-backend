@@ -2,66 +2,63 @@ package controller
 
 import (
 	"net/http"
-
-	"userv4/modules/crm/services"
 )
 
 // Handler is the modules/crm HTTP entry for core CRM routes (not SEO).
 type Handler struct {
-	contact      *ContactController
-	adminSales   *AdminSalesController
-	friend       *FriendController
-	friendGroup  *FriendGroupController
-	follow       *FollowController
-	block        *BlockController
-	tag          *TagController
-	pipeline     *PipelineController
-	stage        *StageController
-	lead         *LeadController
-	rule         *RuleController
-	sharing      *SharingController
-	invitation   *InvitationController
-	support      *SupportTicketController
-	feedback     *FeedbackController
-	appointment  *AppointmentController
-	enum         *EnumController
+	contact     *ContactController
+	adminSales  *AdminSalesController
+	friend      *FriendController
+	friendGroup *FriendGroupController
+	follow      *FollowController
+	block       *BlockController
+	tag         *TagController
+	pipeline    *PipelineController
+	stage       *StageController
+	lead        *LeadController
+	rule        *RuleController
+	sharing     *SharingController
+	invitation  *InvitationController
+	support     *SupportTicketController
+	feedback    *FeedbackController
+	appointment *AppointmentController
+	enum        *EnumController
 }
 
 func NewHandler(
-	contactSvc services.ContactService,
-	contactUC *services.ContactUsecase,
-	adminSales *services.AdminSalesUsecase,
-	friend *services.FriendUsecase,
-	friendGroup *services.FriendGroupUsecase,
-	follow *services.FollowUsecase,
-	block *services.BlockUsecase,
-	tag *services.TagUsecase,
-	pipeline *services.PipelineUsecase,
-	stage *services.StageUsecase,
-	lead *services.LeadUsecase,
-	rule *services.RuleUsecase,
-	sharing *services.SharingAccessUsecase,
-	invitation *services.InvitationInstallUsecase,
-	support *services.SupportTicketUsecase,
+	contact *ContactController,
+	adminSales *AdminSalesController,
+	friend *FriendController,
+	friendGroup *FriendGroupController,
+	follow *FollowController,
+	block *BlockController,
+	tag *TagController,
+	pipeline *PipelineController,
+	stage *StageController,
+	lead *LeadController,
+	rule *RuleController,
+	sharing *SharingController,
+	invitation *InvitationController,
+	support *SupportTicketController,
 	feedback *FeedbackController,
 	appointment *AppointmentController,
 	enum *EnumController,
 ) *Handler {
 	return &Handler{
-		contact:     NewContactController(contactSvc, contactUC),
-		adminSales:  NewAdminSalesController(adminSales),
-		friend:      NewFriendController(friend),
-		friendGroup: NewFriendGroupController(friendGroup),
-		follow:      NewFollowController(follow),
-		block:       NewBlockController(block),
-		tag:         NewTagController(tag),
-		pipeline:    NewPipelineController(pipeline),
-		stage:       NewStageController(stage),
-		lead:        NewLeadController(lead),
-		rule:        NewRuleController(rule),
-		sharing:     NewSharingController(sharing),
-		invitation:  NewInvitationController(invitation),
-		support:     NewSupportTicketController(support),
+		contact:     contact,
+		adminSales:  adminSales,
+		friend:      friend,
+		friendGroup: friendGroup,
+		follow:      follow,
+		block:       block,
+		tag:         tag,
+		pipeline:    pipeline,
+		stage:       stage,
+		lead:        lead,
+		rule:        rule,
+		sharing:     sharing,
+		invitation:  invitation,
+		support:     support,
 		feedback:    feedback,
 		appointment: appointment,
 		enum:        enum,

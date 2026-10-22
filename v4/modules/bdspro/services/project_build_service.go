@@ -5,10 +5,10 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/repository"
 	bdspropb "pb/types/bdspro"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/mapper"
-	"userv4/modules/bdspro/repository"
 )
 
 // ProjectBuildService owns /v2/bdspro/v2/project-build/* (migrated from bdspro-service).
@@ -21,6 +21,7 @@ type ProjectBuildService interface {
 	Delete(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/bdspro/services.ProjectBuildService
 type LocalProjectBuildService struct {
 	repo repository.ProjectBuildRepository
 }

@@ -1,17 +1,17 @@
-# v4 (userv4)
+# v4 (mdn4)
 
 Sandbox clone of `user-service` for side-by-side experiments.
 
 ## Module
 
-Go module: `userv4` (folder `v4/` at repo root). Do not conflate with owner `user-service`.
+Go module: `mdn4` (folder `v4/` at repo root). Do not conflate with owner `user-service`.
 
 ## Entrypoints
 
-| Entrypoint | Default listen | Notes |
-|---|---|---|
-| `cmd/grpc` | `:8211` (`GRPC_ADDRESS` / `server.tcp_port`) | Legacy gRPC (same as user-service) |
-| `cmd/http` | `:8288` (`HTTP_ADDRESS` / `server.port`) | **Real HTTP (Gin)** — modular surface |
+| Entrypoint | Default listen                               | Notes                                 |
+| ---------- | -------------------------------------------- | ------------------------------------- |
+| `cmd/grpc` | `:8211` (`GRPC_ADDRESS` / `server.tcp_port`) | Legacy gRPC (same as user-service)    |
+| `cmd/http` | `:8288` (`HTTP_ADDRESS` / `server.port`)     | **Real HTTP (Gin)** — modular surface |
 
 ## HTTP routes (`cmd/http`)
 

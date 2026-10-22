@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/plan/publish"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/plan/publish"
 )
 
 type fakeRepository struct {

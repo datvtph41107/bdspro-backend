@@ -3,9 +3,9 @@ package postgres
 import (
 	"common/case/crud3"
 	"context"
-	"userv4/modules/crm/enums"
-	repo "userv4/modules/crm/repository"
-	entity "userv4/modules/user/domain"
+	"mdn4/modules/crm/enums"
+	repo "mdn4/modules/crm/repository"
+	entity "mdn4/modules/user/domain"
 
 	"gorm.io/gorm"
 )

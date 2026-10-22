@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
+	catalogdomain "mdn4/modules/user/domain/plan"
 )
 
 /** CatalogProduct stores one stable product family. */

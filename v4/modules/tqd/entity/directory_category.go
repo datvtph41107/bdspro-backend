@@ -2,7 +2,7 @@ package entity
 
 import (
 	_entity "common/domain/entity"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 // DirectoryCategory represents categories for directory entries

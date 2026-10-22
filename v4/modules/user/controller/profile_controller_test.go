@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"mdn4/modules/user/controller"
+	"mdn4/modules/user/services"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/modules/user/controller"
-	"userv4/modules/user/services"
 )
 
 type stubProfileService struct {

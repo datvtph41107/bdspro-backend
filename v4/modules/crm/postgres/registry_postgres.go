@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	repo "userv4/modules/crm/repository"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 	"strings"
 
 	"gorm.io/gorm"
@@ -13,7 +13,6 @@ type RegistryPostgres struct {
 	db *gorm.DB
 }
 
-// @bind: crm/internal/repo.RegistryRepo
 func NewRegistryPostgres(db *gorm.DB) repo.RegistryRepo {
 	return &RegistryPostgres{db: db}
 }

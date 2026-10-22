@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/enums"
 )
 
 // Distribution maps to table distributions (product channel distribution).

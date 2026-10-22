@@ -4,10 +4,10 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/enums"
 	"time"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
 )
 
 type IProfileRepo interface {

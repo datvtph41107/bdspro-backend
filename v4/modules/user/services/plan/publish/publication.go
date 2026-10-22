@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
+	catalogdomain "mdn4/modules/user/domain/plan"
 )
 
 var (
@@ -68,7 +68,7 @@ type Result struct {
 }
 
 /** Service validates and publishes plan versions. */
-// @bind: user/internal/usecase/plan/admin.Publisher
+// @bind: mdn4/modules/user/services/plan/admin.Publisher
 type Service struct {
 	transaction Transaction
 	repository  Repository

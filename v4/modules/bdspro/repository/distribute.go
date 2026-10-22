@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	infpostgres "userv4/infra/postgres"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	infpostgres "mdn4/infra/postgres"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

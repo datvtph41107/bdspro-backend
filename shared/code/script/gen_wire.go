@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"os"
@@ -41,6 +42,12 @@ type InjectionConfig struct {
 	ProcessInputs map[string]ProcessInputConfig `yaml:"process_inputs"`
 }
 
+type GenerationConfig struct {
+	Injections    []InjectionPackage
+	ScanExclude   []string
+	ProcessInputs ProcessInputConfig
+}
+
 type ProcessInputConfig struct {
 	Database bool `yaml:"database"`
 	Redis    bool `yaml:"redis"`
@@ -58,18 +65,26 @@ func main() {
 	}
 
 	rootPackage := strings.TrimSpace(os.Args[1])
-	moduleName := rootPackage
-	if moduleName == "transaction" {
-		moduleName = "tx"
+	moduleName, err := readModuleName("go.mod")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "read go.mod:", err)
+		os.Exit(1)
+	}
+	if moduleName == "" {
+		moduleName = rootPackage
+		if moduleName == "transaction" {
+			moduleName = "tx"
+		}
 	}
 
 	wireFile := filepath.Join("wire", "wire.go")
-	injections, scanExclude, processInputs, err := loadGenerationConfig(rootPackage)
+	config, err := loadGenerationConfig(rootPackage)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "load wire generation config:", err)
 		os.Exit(1)
 	}
-	constructors, err := findNewFunctions(rootPackage, ".", scanExclude)
+	injections, scanExclude, processInputs := config.Injections, config.ScanExclude, config.ProcessInputs
+	constructors, err := findNewFunctions(moduleName, ".", scanExclude)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan constructors:", err)
 		os.Exit(1)
@@ -83,7 +98,7 @@ func main() {
 		}
 	}
 
-	binds, err := findBinds(".", rootPackage, scanExclude)
+	binds, err := findBinds(".", moduleName, scanExclude)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "scan binds:", err)
 		os.Exit(1)
@@ -105,6 +120,38 @@ func main() {
 	}
 
 	fmt.Println("✅ wire generate successfully")
+}
+
+// isBuildableGoFile reports whether path is a non-test Go file the compiler would include
+// (honours //go:build constraints such as `ignore` and GOOS/GOARCH file suffixes).
+func isBuildableGoFile(path string) bool {
+	if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		return false
+	}
+	ok, err := build.Default.MatchFile(filepath.Dir(path), filepath.Base(path))
+	return err == nil && ok
+}
+
+// readModuleName returns the `module` path declared in go.mod, or "" when the file is absent.
+func readModuleName(goModPath string) (string, error) {
+	content, err := os.ReadFile(goModPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return parseModuleName(string(content)), nil
+}
+
+func parseModuleName(goMod string) string {
+	for _, line := range strings.Split(goMod, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && fields[0] == "module" {
+			return strings.Trim(fields[1], `"`)
+		}
+	}
+	return ""
 }
 
 func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, error) {
@@ -132,11 +179,11 @@ func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, e
 
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		if !isBuildableGoFile(path) {
 			return nil
 		}
 
-		file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments|parser.SkipObjectResolution)
 		if err != nil {
 			return fmt.Errorf("parse %s: %w", path, err)
 		}
@@ -147,12 +194,21 @@ func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, e
 
 		for _, declaration := range file.Decls {
 			function, ok := declaration.(*ast.FuncDecl)
-			if !ok || function.Recv != nil || !strings.HasPrefix(function.Name.Name, "New") {
+			if !ok || function.Recv != nil {
+				continue
+			}
+			doc := commentText(function.Doc)
+			// Non-New providers (e.g. Provide* wrappers with fixed args) opt in with `@wire:provider`.
+			if !strings.HasPrefix(function.Name.Name, "New") && !strings.Contains(doc, "@wire:provider") {
 				continue
 			}
 			// Shared RPC clients live in common/injection. Skip per-service
 			// New*RPCClient duplicates so Wire does not see two providers.
 			if isSharedRPCClientConstructor(function.Name.Name) {
+				continue
+			}
+			// Constructors composed by hand (e.g. in cmd/) opt out with `@wire:skip`.
+			if strings.Contains(doc, "@wire:skip") {
 				continue
 			}
 			item := NewFunc{
@@ -240,7 +296,7 @@ func findBinds(root, rootPackage string, excluded []string) ([]BindEntry, error)
 			}
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		if !isBuildableGoFile(path) {
 			return nil
 		}
 
@@ -353,26 +409,27 @@ func scriptDir() string {
 	return filepath.Dir(filename)
 }
 
-func loadGenerationConfig(service string) ([]InjectionPackage, []string, ProcessInputConfig, error) {
+func loadGenerationConfig(service string) (GenerationConfig, error) {
 	configPath := filepath.Join(scriptDir(), "injection_clients.yml")
 	content, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil, ProcessInputConfig{}, nil
+			return GenerationConfig{}, nil
 		}
-		return nil, nil, ProcessInputConfig{}, fmt.Errorf("read %s: %w", configPath, err)
+		return GenerationConfig{}, fmt.Errorf("read %s: %w", configPath, err)
 	}
 
 	var config InjectionConfig
 	if err := yaml.Unmarshal(content, &config); err != nil {
-		return nil, nil, ProcessInputConfig{}, fmt.Errorf("parse %s: %w", configPath, err)
+		return GenerationConfig{}, fmt.Errorf("parse %s: %w", configPath, err)
 	}
 
 	service = strings.TrimSpace(service)
-	return filterInjectionPackages(
-		config.Packages,
-		config.Exclude[service],
-	), normalizeScanExclude(config.ScanExclude[service]), config.ProcessInputs[service], nil
+	return GenerationConfig{
+		Injections:    filterInjectionPackages(config.Packages, config.Exclude[service]),
+		ScanExclude:   normalizeScanExclude(config.ScanExclude[service]),
+		ProcessInputs: config.ProcessInputs[service],
+	}, nil
 }
 
 func isSharedRPCClientConstructor(name string) bool {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
 
 	"gorm.io/gorm"
 )

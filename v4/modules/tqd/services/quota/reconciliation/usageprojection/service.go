@@ -3,10 +3,10 @@ package usageprojection
 import (
 	commonmetering "common/metering"
 	"context"
+	"mdn4/modules/tqd/access"
+	"mdn4/modules/tqd/services/quota"
+	"mdn4/modules/tqd/services/usage"
 	"time"
-	"userv4/modules/tqd/access"
-	"userv4/modules/tqd/services/quota"
-	"userv4/modules/tqd/services/usage"
 )
 
 /**

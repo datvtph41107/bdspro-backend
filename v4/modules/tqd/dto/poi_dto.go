@@ -6,7 +6,7 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	domain "userv4/modules/tqd/entity"
+	domain "mdn4/modules/tqd/entity"
 )
 
 // ==================== REQUEST DTOs ====================

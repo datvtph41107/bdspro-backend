@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/plan/publish"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/plan/publish"
 )
 
 var ErrPlanVersionNotFound = errors.New("plan version not found")
@@ -70,7 +70,7 @@ type Publisher interface {
 }
 
 /** Service exposes bounded PlanVersion read/publish operations. */
-// @bind: user/internal/usecase/commercialprofile.CatalogReader
+// @bind: mdn4/modules/user/services/commercialprofile.CatalogReader
 type Service struct {
 	repository Repository
 	publisher  Publisher

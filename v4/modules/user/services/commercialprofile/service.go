@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	plandomain "userv4/modules/user/domain/plan"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	planadmin "userv4/modules/user/services/plan/admin"
-	subscriptionusecase "userv4/modules/user/services/subscription"
+	plandomain "mdn4/modules/user/domain/plan"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	planadmin "mdn4/modules/user/services/plan/admin"
+	subscriptionusecase "mdn4/modules/user/services/subscription"
 )
 
 var (

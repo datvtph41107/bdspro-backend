@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // CompareRepository — interface cho Compare Engine

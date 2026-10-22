@@ -8,9 +8,10 @@ import (
 
 	commonmetering "common/metering"
 	commonoperation "common/operation"
+	"mdn4/modules/tqd/access"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"userv4/modules/tqd/access"
 )
 
 type mockProfileAccessReader struct{ mock.Mock }

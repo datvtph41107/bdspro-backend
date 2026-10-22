@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 // LayerConfig holds tile/style settings used by LayerResolver (ported from tqd-service/config).
 type LayerConfig struct {
-	BaseURL       string                     `mapstructure:"base_url"`
-	Overrides     map[string]LayerOverride   `mapstructure:"overrides"`
-	DefaultStyles LayerDefaultStyles         `mapstructure:"default_styles"`
+	BaseURL       string                   `mapstructure:"base_url"`
+	Overrides     map[string]LayerOverride `mapstructure:"overrides"`
+	DefaultStyles LayerDefaultStyles       `mapstructure:"default_styles"`
 }
 
 type LayerOverride struct {

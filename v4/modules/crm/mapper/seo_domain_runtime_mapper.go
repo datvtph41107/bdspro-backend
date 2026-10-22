@@ -3,7 +3,7 @@
 package mapper
 
 import (
-	seo_domain "userv4/modules/crm/entity/seo"
+	seo_domain "mdn4/modules/crm/entity/seo"
 
 	crmpb "pb/types/crm"
 )

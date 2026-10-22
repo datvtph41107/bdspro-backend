@@ -12,94 +12,133 @@ import (
 	"common/provider"
 	"common/utils"
 	"github.com/google/wire"
-	"userv4/infra/client"
-	"userv4/infra/client/authpermission"
-	payment2 "userv4/infra/client/payment"
-	"userv4/infra/cookie"
-	"userv4/infra/handler"
-	"userv4/infra/handler/grpc"
-	"userv4/infra/handler/grpc/entitlement"
-	postgres3 "userv4/infra/postgres"
-	"userv4/infra/properties"
-	"userv4/infra/provider"
-	"userv4/infra/providers"
-	"userv4/infra/redis"
-	"userv4/infra/scheduler"
-	"userv4/infra/sms"
-	"userv4/infra/zns"
-	"userv4/initial"
-	"userv4/internal/interface"
-	"userv4/internal/interface/factory"
-	providers2 "userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
-	"userv4/internal/job"
-	"userv4/internal/requeststats"
-	controller2 "userv4/modules/auth/controller"
-	mapper2 "userv4/modules/auth/mapper"
-	"userv4/modules/auth/oauth"
-	postgres2 "userv4/modules/auth/postgres"
-	services6 "userv4/modules/auth/services"
-	controller3 "userv4/modules/bdspro/controller"
-	mapper3 "userv4/modules/bdspro/mapper"
-	repository4 "userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
-	services5 "userv4/modules/bdspro/services"
-	"userv4/modules/crm"
-	client2 "userv4/modules/crm/client"
-	controller7 "userv4/modules/crm/controller"
-	mapper5 "userv4/modules/crm/mapper"
-	"userv4/modules/crm/postgres/maindb"
-	provider5 "userv4/modules/crm/provider"
-	repository3 "userv4/modules/crm/repository"
-	services4 "userv4/modules/crm/services"
-	validator2 "userv4/modules/crm/validator"
-	controller4 "userv4/modules/hub/controller"
-	provider4 "userv4/modules/hub/provider"
-	"userv4/modules/hub/repository"
-	services7 "userv4/modules/hub/services"
-	controller5 "userv4/modules/notification/controller"
-	repository2 "userv4/modules/notification/repository"
-	services2 "userv4/modules/notification/services"
-	"userv4/modules/payment"
-	controller9 "userv4/modules/payment/controller"
-	services10 "userv4/modules/payment/services"
-	controller8 "userv4/modules/seo/controller"
-	provider2 "userv4/modules/seo/provider"
-	repository5 "userv4/modules/seo/repository"
-	services9 "userv4/modules/seo/services"
-	"userv4/modules/tqd"
-	controller6 "userv4/modules/tqd/controller"
-	mapper4 "userv4/modules/tqd/mapper"
-	provider3 "userv4/modules/tqd/provider"
-	services8 "userv4/modules/tqd/services"
-	application2 "userv4/modules/tqd/services/discovery/application"
-	"userv4/modules/tqd/services/planningclient/application"
-	"userv4/modules/tqd/services/qh"
-	application3 "userv4/modules/tqd/services/relatedentity/application"
-	"userv4/modules/user/controller"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/mapper"
-	"userv4/modules/user/postgres"
-	bootstrapadmin2 "userv4/modules/user/postgres/bootstrapadmin"
-	"userv4/modules/user/postgres/checkout"
-	"userv4/modules/user/postgres/entitlement"
-	"userv4/modules/user/postgres/iampermission"
-	"userv4/modules/user/postgres/organization"
-	"userv4/modules/user/postgres/subscription"
-	services3 "userv4/modules/user/services"
-	"userv4/modules/user/services/bootstrapadmin"
-	"userv4/modules/user/services/commercialprofile"
-	"userv4/modules/user/services/entitlement"
-	organization2 "userv4/modules/user/services/organization"
-	"userv4/modules/user/services/plan/admin"
-	"userv4/modules/user/services/plan/publish"
-	"userv4/modules/user/services/subscription"
-	"userv4/modules/user/services/subscription/cancel"
-	"userv4/modules/user/services/subscription/checkout"
-	"userv4/modules/user/services/subscription/settlement"
-	"userv4/modules/user/services/user"
-	"userv4/modules/user/services/useradmin"
-	"userv4/validator"
+	"mdn4/infra/client"
+	"mdn4/infra/client/authpermission"
+	"mdn4/infra/client/payment"
+	"mdn4/infra/cookie"
+	"mdn4/infra/handler"
+	"mdn4/infra/handler/grpc"
+	"mdn4/infra/handler/grpc/entitlement"
+	postgres3 "mdn4/infra/postgres"
+	"mdn4/infra/properties"
+	"mdn4/infra/provider"
+	"mdn4/infra/providers"
+	"mdn4/infra/redis"
+	"mdn4/infra/scheduler"
+	"mdn4/infra/sms"
+	"mdn4/infra/zns"
+	"mdn4/initial"
+	"mdn4/internal/interface"
+	"mdn4/internal/interface/factory"
+	providers2 "mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/internal/job"
+	"mdn4/internal/requeststats"
+	client3 "mdn4/modules/assistant/client"
+	controller10 "mdn4/modules/assistant/controller"
+	provider6 "mdn4/modules/assistant/provider"
+	services11 "mdn4/modules/assistant/services"
+	controller2 "mdn4/modules/auth/controller"
+	dto2 "mdn4/modules/auth/dto"
+	mapper2 "mdn4/modules/auth/mapper"
+	"mdn4/modules/auth/oauth"
+	postgres2 "mdn4/modules/auth/postgres"
+	services6 "mdn4/modules/auth/services"
+	controller3 "mdn4/modules/bdspro/controller"
+	mapper3 "mdn4/modules/bdspro/mapper"
+	repository4 "mdn4/modules/bdspro/repository"
+	services5 "mdn4/modules/bdspro/services"
+	"mdn4/modules/bdspro/utils"
+	"mdn4/modules/crm"
+	client2 "mdn4/modules/crm/client"
+	controller7 "mdn4/modules/crm/controller"
+	mapper5 "mdn4/modules/crm/mapper"
+	postgres5 "mdn4/modules/crm/postgres"
+	"mdn4/modules/crm/postgres/maindb"
+	provider5 "mdn4/modules/crm/provider"
+	repository3 "mdn4/modules/crm/repository"
+	services4 "mdn4/modules/crm/services"
+	validator2 "mdn4/modules/crm/validator"
+	controller4 "mdn4/modules/hub/controller"
+	provider4 "mdn4/modules/hub/provider"
+	"mdn4/modules/hub/repository"
+	services7 "mdn4/modules/hub/services"
+	controller5 "mdn4/modules/notification/controller"
+	repository2 "mdn4/modules/notification/repository"
+	services2 "mdn4/modules/notification/services"
+	controller9 "mdn4/modules/payment/controller"
+	postgres6 "mdn4/modules/payment/postgres"
+	repository6 "mdn4/modules/payment/repository"
+	services10 "mdn4/modules/payment/services"
+	controller8 "mdn4/modules/seo/controller"
+	provider2 "mdn4/modules/seo/provider"
+	repository5 "mdn4/modules/seo/repository"
+	services9 "mdn4/modules/seo/services"
+	"mdn4/modules/tqd"
+	"mdn4/modules/tqd/config"
+	controller6 "mdn4/modules/tqd/controller"
+	"mdn4/modules/tqd/dto"
+	discovery2 "mdn4/modules/tqd/entity/discovery"
+	"mdn4/modules/tqd/entity/usage"
+	mapper4 "mdn4/modules/tqd/mapper"
+	postgres4 "mdn4/modules/tqd/postgres"
+	"mdn4/modules/tqd/postgres/discovery"
+	"mdn4/modules/tqd/postgres/generatedreport/job"
+	"mdn4/modules/tqd/postgres/generatedreport/render"
+	"mdn4/modules/tqd/postgres/generatedreport/report"
+	"mdn4/modules/tqd/postgres/mappoint"
+	"mdn4/modules/tqd/postgres/planningclient"
+	"mdn4/modules/tqd/postgres/publiccontent"
+	quota2 "mdn4/modules/tqd/postgres/quota"
+	"mdn4/modules/tqd/postgres/relatedentity"
+	"mdn4/modules/tqd/postgres/usage"
+	provider3 "mdn4/modules/tqd/provider"
+	services8 "mdn4/modules/tqd/services"
+	application2 "mdn4/modules/tqd/services/discovery/application"
+	admin2 "mdn4/modules/tqd/services/generatedreport/admin"
+	"mdn4/modules/tqd/services/generatedreport/memoryjob"
+	"mdn4/modules/tqd/services/generatedreport/processing"
+	"mdn4/modules/tqd/services/generatedreport/rendering"
+	mappoint2 "mdn4/modules/tqd/services/mappoint"
+	"mdn4/modules/tqd/services/planningclient/application"
+	"mdn4/modules/tqd/services/qh"
+	"mdn4/modules/tqd/services/quota"
+	"mdn4/modules/tqd/services/quota/memory"
+	"mdn4/modules/tqd/services/quota/reconciliation/reservationcleanup"
+	"mdn4/modules/tqd/services/quota/reconciliation/usageprojection"
+	application3 "mdn4/modules/tqd/services/relatedentity/application"
+	"mdn4/modules/tqd/services/resolver/layer_resolver"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/builder"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/db"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/engine"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/engine/parcel_engine"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/rule"
+	"mdn4/modules/tqd/services/usage/memory"
+	"mdn4/modules/user/controller"
+	"mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/mapper"
+	"mdn4/modules/user/postgres"
+	bootstrapadmin2 "mdn4/modules/user/postgres/bootstrapadmin"
+	"mdn4/modules/user/postgres/checkout"
+	"mdn4/modules/user/postgres/entitlement"
+	"mdn4/modules/user/postgres/iampermission"
+	"mdn4/modules/user/postgres/organization"
+	"mdn4/modules/user/postgres/subscription"
+	services3 "mdn4/modules/user/services"
+	"mdn4/modules/user/services/bootstrapadmin"
+	"mdn4/modules/user/services/commercialprofile"
+	"mdn4/modules/user/services/entitlement"
+	organization2 "mdn4/modules/user/services/organization"
+	"mdn4/modules/user/services/plan/admin"
+	"mdn4/modules/user/services/plan/publish"
+	"mdn4/modules/user/services/subscription"
+	"mdn4/modules/user/services/subscription/cancel"
+	"mdn4/modules/user/services/subscription/checkout"
+	"mdn4/modules/user/services/subscription/settlement"
+	"mdn4/modules/user/services/user"
+	"mdn4/modules/user/services/useradmin"
+	"mdn4/validator"
 )
 
 // Injectors from wire.go:
@@ -174,13 +213,8 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	localProductService := services5.NewLocalProductService(syncUtil, productRepository)
 	dealRepository := repository4.NewDealPostgres(db)
 	dealHistoryRepository := repository2.NewDealHistoryPostgres(db)
-	dealHistoryLogger := bdsutils.NewDealHistoryLogger(dealHistoryRepository, syncUtil, profileProvider)
+	dealHistoryLogger := utils.NewDealHistoryLogger(dealHistoryRepository, syncUtil, profileProvider)
 	localDealService := services5.NewLocalDealService(syncUtil, dealRepository, productRepository, profileProvider, dealHistoryLogger)
-	dealMemberRepository := repository4.NewDealMemberPostgres(db)
-	dealInternalNoteRepository := repository4.NewDealInternalNotePostgres(db)
-	localDealInternalNoteService := services5.NewLocalDealInternalNoteService(dealRepository, dealInternalNoteRepository, dealHistoryLogger)
-	localDealCommissionService := services5.NewLocalDealCommissionService(syncUtil, dealRepository, dealMemberRepository, dealHistoryLogger)
-	localDealInvitationService := services5.NewLocalDealInvitationService(syncUtil, dealRepository, dealMemberRepository, localDealService, dealHistoryLogger)
 	appointmentRepository := repository4.NewAppointmentPostgres(db)
 	localAppointmentService := services5.NewLocalAppointmentService(syncUtil, appointmentRepository, productRepository, dealRepository, profileProvider)
 	localDemoService := services3.NewLocalDemoService(demoProductLogPostgres, profileUsecase, localContactService, localProductService, localDealService, localAppointmentService, locationV2Repository, syncUtil)
@@ -250,7 +284,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	authConfigPostgres := postgres2.NewAuthConfigRepository(db)
 	iZnsProvider := zns.NewZnsProvider(authConfigPostgres, redisService)
 	iSmsProvider := sms.NewSMSProvider()
-	authUsecase := services6.NewAuthService(cookieProvider, cacheProvider, profileProvider, authMethodRepository, profileAccountRepository, sessionPostgres, otpPostgres, statusPostgres, devicePostgresRepo, deviceUsecase, otpUsecase, organizationProviderClient, localNotificationProvider, chatProvider, iZnsProvider, iSmsProvider, runtimeProperties, crmProvider)
+	authUsecase := services6.NewAuthService(cookieProvider, cacheProvider, profileProvider, authMethodRepository, profileAccountRepository, sessionPostgres, otpPostgres, statusPostgres, devicePostgresRepo, deviceUsecase, otpUsecase, organizationProviderClient, localNotificationProvider, chatProvider, iZnsProvider, iSmsProvider, runtimeProperties, crmProvider, localContactService)
 	authUsecaseLoginService := services6.NewAuthUsecaseLoginService(authUsecase)
 	loginController := controller2.NewLoginController(authUsecaseLoginService)
 	adminAccessPostgresRepo := postgres2.NewAdminAccessPostgresRepo(db)
@@ -280,6 +314,11 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	roleHandler := handler.NewRoleHandler(roleUsecase, roleMapper, internalHandler)
 	authUserProfileHandler := handler.NewUserInfoHandler(authUserProfileUsecase)
 	localSyncService := services5.NewLocalSyncService(syncUtil)
+	dealInternalNoteRepository := repository4.NewDealInternalNotePostgres(db)
+	localDealInternalNoteService := services5.NewLocalDealInternalNoteService(dealRepository, dealInternalNoteRepository, dealHistoryLogger)
+	dealMemberRepository := repository4.NewDealMemberPostgres(db)
+	localDealCommissionService := services5.NewLocalDealCommissionService(syncUtil, dealRepository, dealMemberRepository, dealHistoryLogger)
+	localDealInvitationService := services5.NewLocalDealInvitationService(syncUtil, dealRepository, dealMemberRepository, localDealService, dealHistoryLogger)
 	dealCostRepository := repository4.NewDealCostPostgres(db)
 	costTypeRepository := repository4.NewCostTypePostgres(db)
 	localDealCostService := services5.NewLocalDealCostService(syncUtil, dealCostRepository, costTypeRepository, dealHistoryLogger)
@@ -289,14 +328,17 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	localInvestmentService := services5.NewLocalInvestmentService(syncUtil, investmentRepository, dealRepository, profileProvider, dealHistoryLogger)
 	localCostTypeService := services5.NewLocalCostTypeService(costTypeRepository, syncUtil)
 	propertyRepository := repository4.NewPropertyPostgres(db)
-	localPropertyService := services5.NewLocalPropertyService(syncUtil, propertyRepository)
+	listingRepository := repository4.NewListingPostgres(db)
+	localPropertyService := services5.NewLocalPropertyService(syncUtil, propertyRepository, productRepository, listingRepository)
+	propertyTypeRepository := repository4.NewPropertyTypePostgres(db)
+	localPropertyTypeService := services5.NewLocalPropertyTypeService(propertyTypeRepository, syncUtil)
 	localPublicService := services5.NewLocalPublicService(syncUtil)
 	productNoteRepository := repository4.NewProductNotePostgres(db)
 	localProductNoteService := services5.NewLocalProductNoteService(syncUtil, productNoteRepository, profileProvider)
 	propertyHistoryRepository := repository4.NewPropertyHistoryPostgres(db)
 	localPropertyHistoryService := services5.NewLocalPropertyHistoryService(syncUtil, propertyHistoryRepository, profileProvider)
 	catalogRepository := repository4.NewCatalogPostgres(db)
-	localCatalogService := services5.NewLocalCatalogService(catalogRepository)
+	catalogService := services5.NewLocalCatalogService(catalogRepository, syncUtil)
 	projectBuildRepository := repository4.NewProjectBuildPostgres(db)
 	localProjectBuildService := services5.NewLocalProjectBuildService(projectBuildRepository)
 	projectAdminRepository := repository4.NewProjectAdminPostgres(db)
@@ -305,8 +347,9 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	productPriceRepository := repository4.NewProductPricePostgres(db)
 	transactionGorm := postgres3.NewTransactionGorm(db)
 	localDistributionService := services5.NewLocalDistributionService(distributeRepository, productPriceRepository, transactionGorm)
+	localListingService := services5.NewLocalListingService(listingRepository, syncUtil)
 	distributionMapper := mapper3.NewDistributionMapper(crmProvider)
-	controllerHandler := controller3.NewHandler(localSyncService, localDealService, localDealInternalNoteService, localDealCommissionService, localDealInvitationService, localDealCostService, localContractDealService, localInvestmentService, localCostTypeService, localProductService, localPropertyService, localPublicService, localProductNoteService, localAppointmentService, localPropertyHistoryService, localCatalogService, localProjectBuildService, localAdminProjectService, localDistributionService, distributionMapper, syncUtil)
+	controllerHandler := controller3.NewHandler(localSyncService, localDealService, localDealInternalNoteService, localDealCommissionService, localDealInvitationService, localDealCostService, localContractDealService, localInvestmentService, localCostTypeService, localProductService, localPropertyService, localPropertyTypeService, localPublicService, localProductNoteService, localAppointmentService, localPropertyHistoryService, catalogService, localProjectBuildService, localAdminProjectService, localDistributionService, localListingService, distributionMapper, syncUtil)
 	localLocationService := services7.NewLocalLocationService(locationRepository)
 	localLocationV2Service := services7.NewLocalLocationV2Service(locationV2Repository)
 	localUserGuideService := services7.NewLocalUserGuideService(userGuideRepository, syncUtil)
@@ -340,167 +383,185 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	handler2 := controller4.NewHandler(localLocationService, localLocationV2Service, localUserGuideService, localFAQService, localVersionService, localRequestStatsService, localErrorLogService, localApplinkService, localSystemConfigService, localEventQueueService, localInteractiveEventService, localClickURLService, localUpdateDataService, localKeywordSearchService, localSearchLatencyService, localAPIKeyService)
 	localNotificationService := services2.NewLocalNotificationService(notificationRepository, syncUtil, profileProvider)
 	handler3 := controller5.NewHandler(localNotificationService, syncUtil)
-	repositoryLocationRepository := tqd.ProvideLocationRepository(db)
+	repositoryLocationRepository := postgres4.NewLocationRepository(db)
 	servicesLocalLocationService := services8.NewLocalLocationService(repositoryLocationRepository, syncUtil)
 	seoDomainRepository := repository5.NewSeoDomainPostgres(db)
 	localSeoDomainService := services9.NewLocalSeoDomainService(seoDomainRepository)
 	localCrmSeoProvider := provider2.NewLocalCrmSeoProvider(localSeoDomainService)
 	locationUsecase := services8.NewLocationUsecase(repositoryLocationRepository, localCrmSeoProvider)
 	servicesLocalPublicService := services8.NewLocalPublicService(syncUtil)
-	layerRepository := tqd.ProvideLayerRepository(db)
-	regionRepository := tqd.ProvideRegionRepository(db)
-	regionExtendRepository := tqd.ProvideRegionExtendRepository(db)
-	qhLabelRepository := tqd.ProvideQHLabelRepository(db)
-	qhLayerLegendRepository := tqd.ProvideQHLayerLegendRepository(db)
-	qhLandUseRepository := tqd.ProvideQHLandUseRepository(db)
-	iLayerLegalRepo := tqd.ProvideLayerLegalRepo(db)
+	layerRepository := postgres4.NewLayerRepository(db)
+	regionRepository := postgres4.NewRegionRepository(db)
+	regionExtendRepository := postgres4.NewRegionExtendRepository(db)
+	qhLabelRepository := postgres4.NewQHLabelRepository(db)
+	qhLayerLegendRepository := postgres4.NewQHLayerLegendRepository(db)
+	qhLandUseRepository := postgres4.NewQHLayerLandUseRepository(db)
+	iLayerLegalRepo := postgres4.NewLayerLegalPostgres(db)
 	layerUsecase := services8.NewLayerUsecase(layerRepository, regionRepository, regionExtendRepository, qhLabelRepository, qhLayerLegendRepository, qhLandUseRepository, iLayerLegalRepo, localCrmSeoProvider)
 	regionUsecase := services8.NewRegionUsecase(regionRepository, layerRepository, qhLabelRepository)
-	iParcelRepo := tqd.ProvideParcelRepo(db)
-	iLegalDocumentRepo := tqd.ProvideLegalDocumentRepo(db)
-	auditRepository := tqd.ProvideAuditRepository(db)
-	ruleLayerRepository := tqd.ProvideLifecycleLayerRepository(db)
+	iParcelRepo := postgres4.NewParcelPostgres(db)
+	iLegalDocumentRepo := postgres4.NewLegalDocumentPostgres(db)
+	auditRepository := postgres4.NewQHAuditPostgres(db)
+	ruleLayerRepository := postgres4.NewQHLayerLifecyclePostgres(db)
 	parcelUsecase := services8.NewParcelUsecase(iParcelRepo, iLayerLegalRepo, iLegalDocumentRepo, auditRepository, ruleLayerRepository, repositoryLocationRepository, localCrmSeoProvider)
-	qhLayerFamilyRepository := tqd.ProvideQHLayerFamilyRepository(db)
+	qhLayerFamilyRepository := postgres4.NewQHLayerFamilyRepository(db)
 	qhLayerFamilyUsecase := services8.NewQHLayerFamilyUsecase(qhLayerFamilyRepository, layerRepository, regionRepository)
 	qhLabelUsecase := services8.NewQHLabelUsecase(qhLabelRepository, regionRepository, qhLayerLegendRepository)
 	qhLayerLandUseGroupUsecase := services8.NewQHLayerLandUseGroupUsecase(qhLandUseRepository, layerRepository)
 	qhLayerLegendUsecase := services8.NewQHLayerLegendUsecase(qhLayerLegendRepository, layerRepository, qhLabelRepository)
-	planningclientRepository := tqd.ProvidePlanningClientRepository(db)
-	publiccontentRepository := tqd.ProvidePublicContentRepository(db)
+	planningclientRepository := planningclient.NewRepository(db)
+	publiccontentRepository := publiccontent.NewRepository(db)
 	applicationService := application.NewService(planningclientRepository, publiccontentRepository)
-	iqhPlanningProjectRepo := tqd.ProvideQHPlanningProjectRepo(db)
-	iqhPlanningDocumentRepo := tqd.ProvideQHPlanningDocumentRepo(db)
-	iqhPlanningEventRepo := tqd.ProvideQHPlanningEventRepo(db)
-	iProAIJobRepo := tqd.ProvideProAIJobRepo(db)
+	iqhPlanningProjectRepo := postgres4.NewQHPlanningProjectRepo(transactionRepo)
+	iqhPlanningDocumentRepo := postgres4.NewQHPlanningDocumentRepo(transactionRepo)
+	iqhPlanningEventRepo := postgres4.NewQHPlanningEventRepo(transactionRepo)
+	iProAIJobRepo := postgres4.NewProAIJobRepo(transactionRepo)
 	iqhPlanningProjectUsecase := qh_usecase.NewQHPlanningProjectUsecase(iqhPlanningProjectRepo, iqhPlanningDocumentRepo, iqhPlanningEventRepo, iProAIJobRepo, localCrmSeoProvider)
 	iqhPlanningEventUsecase := qh_usecase.NewQHPlanningEventUsecase(iqhPlanningEventRepo)
 	iqhPlanningDocumentUsecase := qh_usecase.NewQHPlanningDocumentUsecase(iqhPlanningDocumentRepo, iqhPlanningProjectRepo, iProAIJobRepo, localCrmSeoProvider)
-	iMapWorkspaceRepo := tqd.ProvideMapWorkspaceRepo(db)
+	iMapWorkspaceRepo := postgres4.NewMapWorkspacePostgres(db)
 	mapWorkspaceUsecase := services8.NewMapWorkspaceUsecase(iMapWorkspaceRepo)
 	service2 := tqd.ProvideGeneratedReportService()
-	portsRepository := tqd.ProvideDiscoveryRepository(db)
+	portsRepository := discovery.NewDiscoveryRepository(db)
 	service3 := application2.NewService(portsRepository)
 	layerLegalUsecase := services8.NewLayerLegalUsecase(iLayerLegalRepo)
-	ipoiRepo := tqd.ProvidePOIRepo(db)
+	ipoiRepo := postgres4.NewPOIRepo(transactionRepo)
 	poiMapper := mapper4.NewPoiMapper()
 	poiUsecase := services8.NewPoiUsecase(ipoiRepo, poiMapper)
-	entityReader := tqd.ProvideRelatedEntityReader(portsRepository)
-	repository6 := tqd.ProvideRelatedEntityRepository(db, entityReader)
+	entityReader := relatedentity.NewEntityReader(portsRepository)
+	repository6 := relatedentity.NewRepository(db, entityReader)
 	service4 := application3.NewService(repository6)
-	subscriptionRepository := tqd.ProvideSubscriptionRepository(db)
+	subscriptionRepository := postgres4.NewSubscriptionRepository(db)
 	subscriptionUsecase := services8.NewSubscriptionUsecase(subscriptionRepository, regionRepository, iParcelRepo)
-	repositoryNotificationRepository := tqd.ProvideNotificationRepository(db)
+	repositoryNotificationRepository := postgres4.NewNotificationRepository(db)
 	notificationUsecase := services8.NewNotificationUsecase(repositoryNotificationRepository)
 	profileUsageService := tqd.ProvideProfileUsageService()
-	featureRepository := tqd.ProvideFeatureRepository(db)
+	featureRepository := postgres4.NewFeatureRepository(db)
 	featureUsecase := services8.NewFeatureUsecase(featureRepository)
-	reportRepository := tqd.ProvideReportRepository(db)
+	reportRepository := postgres4.NewReportRepository(db)
 	reportUsecase := tqd.ProvideReportUsecase(reportRepository)
-	oneHouseRepo := tqd.ProvideOneHouseRepo(db)
+	oneHouseRepo := postgres4.NewOneHouseRepo(db)
 	oneHouseUsecase := services8.NewOneHouseUsecase(oneHouseRepo)
-	qhAuthorityIssuringRepository := tqd.ProvideQHAuthorityIssuringRepo(db)
+	qhAuthorityIssuringRepository := postgres4.NewQHAuthorityIssuringRepository(db)
 	qhAuthorityIssuringUsecase := services8.NewQHAuthorityIssuringUsecase(qhAuthorityIssuringRepository)
-	iAmenityRepo := tqd.ProvideAmenityRepo(db)
+	iAmenityRepo := postgres4.NewAmenityRepo(transactionRepo)
 	amenityUsecase := services8.NewAmenityUsecase(iAmenityRepo)
-	contactLabelRepository := tqd.ProvideContactLabelRepo(db)
+	contactLabelRepository := postgres4.NewContactLabelPostgresRepo(db)
 	userProvider := provider3.NewNoopUserProvider()
 	permissionProvider := provider3.NewAllowAllPermissionProvider()
 	contactLabelMapper := mapper4.NewContactLabelMapper()
 	contactLabelUsecase := services8.NewContactLabelUsecase(contactLabelRepository, userProvider, permissionProvider, contactLabelMapper)
-	iOpenHourRepo := tqd.ProvideOpenHourRepo(db)
+	iOpenHourRepo := postgres4.NewOpenHourPostgres(transactionRepo)
 	openHourMapper := mapper4.NewOpenHourMapper()
 	openHourUsecase := services8.NewOpenHourUsecase(iOpenHourRepo, openHourMapper)
-	iPoiCategoryRepo := tqd.ProvidePoiCategoryRepo(db)
+	iPoiCategoryRepo := postgres4.NewPoiCategoryPostgres(transactionRepo)
 	poiCategoryMapper := mapper4.NewPoiCategoryMapper()
 	poiCategoryUsecase := services8.NewPoiCategoryUsecase(iPoiCategoryRepo, poiCategoryMapper)
-	directorySourceRepository := tqd.ProvideDirectorySourceRepo(db)
+	directorySourceRepository := postgres4.NewDirectorySourcePostgres(db)
 	directorySourceUsecase := services8.NewDirectorySourceUsecase(directorySourceRepository, userProvider, permissionProvider)
-	directorySupplierRepository := tqd.ProvideDirectorySupplierRepo(db)
+	directorySupplierRepository := postgres4.NewDirectorySupplierPostgres(db)
 	directorySupplierMapper := mapper4.NewDirectorySupplierMapper()
 	directorySupplierUsecase := services8.NewDirectorySupplierUsecase(directorySupplierRepository, userProvider, permissionProvider, directorySupplierMapper)
-	directoryCategoryRepository := tqd.ProvideDirectoryCategoryRepo(db)
+	directoryCategoryRepository := postgres4.NewDirectoryCategoryPostgresRepo(db)
 	directoryCategoryUsecase := services8.NewDirectoryCategoryUsecase(directoryCategoryRepository, userProvider, permissionProvider)
 	regionExtendUsecase := services8.NewRegionExtendUsecase(regionExtendRepository)
 	importUsecase := services8.NewImportUsecase(regionRepository, regionExtendRepository, qhLabelRepository, layerRepository)
 	iProAIJobUsecase := qh_usecase.NewProAIJobUsecase(iProAIJobRepo)
 	localSearchAnalytics := provider4.NewLocalSearchAnalytics(localKeywordSearchService, localSearchLatencyService)
 	handler4 := controller6.NewHandler(servicesLocalLocationService, locationUsecase, servicesLocalPublicService, layerUsecase, regionUsecase, parcelUsecase, qhLayerFamilyUsecase, qhLabelUsecase, qhLayerLandUseGroupUsecase, qhLayerLegendUsecase, applicationService, iqhPlanningProjectUsecase, iqhPlanningEventUsecase, iqhPlanningDocumentUsecase, mapWorkspaceUsecase, service2, service3, layerLegalUsecase, poiUsecase, service4, publiccontentRepository, localCrmSeoProvider, subscriptionUsecase, notificationUsecase, profileUsageService, featureUsecase, reportUsecase, oneHouseUsecase, qhAuthorityIssuringUsecase, amenityUsecase, contactLabelUsecase, openHourUsecase, poiCategoryUsecase, directorySourceUsecase, directorySupplierUsecase, directoryCategoryUsecase, regionExtendUsecase, importUsecase, iProAIJobUsecase, localSearchAnalytics)
-	contactRepo := crm.ProvideContactRepo(db)
-	friendRepo := crm.ProvideFriendRepo(db)
-	followRepo := crm.ProvideFollowRepo(db)
-	contactProductRepo := crm.ProvideContactProductRepo(db)
-	localUserClient := crm.ProvideCRMUserClient(profilePostgres)
+	postgreContact := postgres5.NewContactRepo(db)
+	friendPostgre := postgres5.NewFriendRepo(db)
+	followPostgre := postgres5.NewFollowPostgre(db)
+	contactProductPostgre := postgres5.NewContactProductPostgre(db)
+	localUserClient := provider5.NewLocalUserClient(profilePostgres)
 	noopBdspro := provider5.NewNoopBdspro()
 	ownerUsecase := services4.NewOwnerUsecase()
-	tagRepo := crm.ProvideTagRepo(db)
+	tagRepo := postgres5.NewTagPostgres(transactionRepo)
 	servicesTagUsecase := services4.NewTagUsecase(tagRepo)
 	noopNotification := provider5.NewNoopNotification()
-	noopTransaction := crm.ProvideCrmNoopTransaction()
-	contactUsecase := services4.NewContactUsecase(contactRepo, friendRepo, followRepo, contactProductRepo, localUserClient, noopBdspro, ownerUsecase, servicesTagUsecase, noopNotification, noopTransaction)
-	leadRepo := crm.ProvideLeadRepo(db)
-	stageRepo := crm.ProvideStageRepo(db)
-	adminOpportunityEventRepo := crm.ProvideAdminOpportunityEventRepo(db)
-	adminSalesUsecase := services4.NewAdminSalesUsecase(leadRepo, contactRepo, stageRepo, adminOpportunityEventRepo, noopTransaction, ownerUsecase)
-	blockRepo := crm.ProvideBlockRepo(db)
-	blockUsecase := services4.NewBlockUsecase(blockRepo, contactRepo, friendRepo, followRepo, localUserClient)
-	friendUsecase := services4.NewFriendUsecase(friendRepo, contactRepo, followRepo, blockRepo, blockUsecase, localUserClient, noopNotification, noopTransaction)
-	friendGroupRepo := crm.ProvideFriendGroupRepo(db)
+	noopTransaction := provider5.NewNoopTransaction()
+	contactUsecase := services4.NewContactUsecase(postgreContact, friendPostgre, followPostgre, contactProductPostgre, localUserClient, noopBdspro, ownerUsecase, servicesTagUsecase, noopNotification, noopTransaction)
+	contactController := controller7.NewContactController(localContactService, contactUsecase)
+	leadPostgre := postgres5.NewPostgreCustomer(db)
+	postgreStage := postgres5.NewPostgreStage(db)
+	adminOpportunityEventRepo := postgres5.NewAdminOpportunityEventPostgres(db)
+	adminSalesUsecase := services4.NewAdminSalesUsecase(leadPostgre, postgreContact, postgreStage, adminOpportunityEventRepo, noopTransaction, ownerUsecase)
+	adminSalesController := controller7.NewAdminSalesController(adminSalesUsecase)
+	blockRepo := postgres5.NewBlockRepo(db)
+	blockUsecase := services4.NewBlockUsecase(blockRepo, postgreContact, friendPostgre, followPostgre, localUserClient)
+	friendUsecase := services4.NewFriendUsecase(friendPostgre, postgreContact, followPostgre, blockRepo, blockUsecase, localUserClient, noopNotification, noopTransaction)
+	friendController := controller7.NewFriendController(friendUsecase)
+	friendGroupRepo := postgres5.NewGroupRepo(db)
 	friendGroupUsecase := services4.NewFriendGroupUsecase(friendGroupRepo)
-	followUsecase := services4.NewFollowUsecase(followRepo, contactRepo, blockRepo, blockUsecase, localUserClient, noopTransaction, noopNotification)
-	pipelineRepo := crm.ProvidePipelineRepo(db)
+	friendGroupController := controller7.NewFriendGroupController(friendGroupUsecase)
+	followUsecase := services4.NewFollowUsecase(followPostgre, postgreContact, blockRepo, blockUsecase, localUserClient, noopTransaction, noopNotification)
+	followController := controller7.NewFollowController(followUsecase)
+	blockController := controller7.NewBlockController(blockUsecase)
+	tagController := controller7.NewTagController(servicesTagUsecase)
+	postgrePipeline := postgres5.NewPostgrePipeline(db)
 	allowAllPermission := provider5.NewAllowAllPermission()
-	pipelineUsecase := services4.NewPipelineUsecase(pipelineRepo, allowAllPermission, noopNotification, leadRepo, stageRepo, noopTransaction)
-	stageUsecase := services4.NewStageUsecase(stageRepo, allowAllPermission, pipelineRepo, noopNotification, leadRepo)
-	documentRepo := crm.ProvideDocumentRepo(db)
-	productCareRepo := crm.ProvideProductCareRepo(db)
-	leadUsecase := services4.NewLeadUsecase(leadRepo, allowAllPermission, contactRepo, contactUsecase, stageRepo, pipelineRepo, documentRepo, productCareRepo, noopTransaction, noopNotification, ownerUsecase)
-	ruleRepo := crm.ProvideRuleRepo(db)
-	ruleUsecase := services4.NewRuleUsecase(ruleRepo, allowAllPermission, noopNotification, leadRepo)
-	sharingAccessRepo := crm.ProvideSharingRepo(db)
-	sharingAccessUsecase := services4.NewSharingAccessUsecase(sharingAccessRepo, contactRepo, localUserClient)
-	invitationInstallRepo := crm.ProvideInvitationRepo(db)
-	invitationInstallUsecase := services4.NewInvitationInstallUsecase(invitationInstallRepo, noopNotification, localUserClient)
-	supportTicketRepo := crm.ProvideSupportTicketRepo(db)
+	pipelineUsecase := services4.NewPipelineUsecase(postgrePipeline, allowAllPermission, noopNotification, leadPostgre, postgreStage, noopTransaction)
+	pipelineController := controller7.NewPipelineController(pipelineUsecase)
+	stageUsecase := services4.NewStageUsecase(postgreStage, allowAllPermission, postgrePipeline, noopNotification, leadPostgre)
+	stageController := controller7.NewStageController(stageUsecase)
+	documentPostgre := postgres5.NewDocumentPostgre(db)
+	productCarePostgre := postgres5.NewProductCarePostgre(db)
+	leadUsecase := services4.NewLeadUsecase(leadPostgre, allowAllPermission, postgreContact, contactUsecase, postgreStage, postgrePipeline, documentPostgre, productCarePostgre, noopTransaction, noopNotification, ownerUsecase)
+	leadController := controller7.NewLeadController(leadUsecase)
+	postgreRule := postgres5.NewPostgreRule(db)
+	ruleUsecase := services4.NewRuleUsecase(postgreRule, allowAllPermission, noopNotification, leadPostgre)
+	ruleController := controller7.NewRuleController(ruleUsecase)
+	sharingAccessPostgre := postgres5.NewSharingAccessPostgre(db)
+	sharingAccessUsecase := services4.NewSharingAccessUsecase(sharingAccessPostgre, postgreContact, localUserClient)
+	sharingController := controller7.NewSharingController(sharingAccessUsecase)
+	invitationInstallPostgre := postgres5.NewInvitationInstallPostgre(db)
+	invitationInstallUsecase := services4.NewInvitationInstallUsecase(invitationInstallPostgre, noopNotification, localUserClient)
+	invitationController := controller7.NewInvitationController(invitationInstallUsecase)
+	supportTicketRepo := postgres5.NewSupportTicketPostgres(db)
 	supportTicketUsecase := services4.NewSupportTicketUsecase(supportTicketRepo)
-	rateRepo := crm.ProvideRateRepo(db)
-	registryRepo := crm.ProvideRegistryRepo(db)
+	supportTicketController := controller7.NewSupportTicketController(supportTicketUsecase)
+	rateRepo := postgres5.NewRatePostgres(db)
+	registryRepo := postgres5.NewRegistryPostgres(db)
 	registryUsecase := services4.NewRegistryUsecase(registryRepo)
 	rateUsecase := services4.NewRateUsecase(rateRepo, noopTransaction, registryUsecase, noopNotification)
-	reportRepo := crm.ProvideReportRepo(db)
-	reportReasonRepo := crm.ProvideReportReasonRepo(db)
+	reportRepo := postgres5.NewReportPostgres(db)
+	reportReasonRepo := postgres5.NewReportReasonPostgres(db)
 	servicesReportUsecase := services4.NewReportUsecase(reportRepo, reportReasonRepo, noopTransaction, registryUsecase)
 	reportReasonUsecase := services4.NewReportReasonUsecase(reportReasonRepo)
 	userClient := client2.NewUserClient()
 	rateMapper := mapper5.NewRateMapper(userClient)
 	reportMapper := mapper5.NewReportMapper()
 	feedbackController := controller7.NewFeedbackController(rateUsecase, servicesReportUsecase, reportReasonUsecase, registryUsecase, rateMapper, reportMapper)
-	repositoryAppointmentRepository := crm.ProvideAppointmentRepo(db)
-	appointmentUsecase := services4.NewAppointmentUsecase(repositoryAppointmentRepository, contactRepo, noopBdspro, userClient, dealHistoryLogger)
+	repositoryAppointmentRepository := postgres5.NewAppointmentPostgresRepository(db)
+	appointmentUsecase := services4.NewAppointmentUsecase(repositoryAppointmentRepository, postgreContact, noopBdspro, userClient, dealHistoryLogger)
 	appointmentTransformer := mapper5.NewAppointmentTransformer()
 	appointmentValidator := validator2.NewAppointmentValidator()
 	dashboardStatsJob := crm.ProvideAppointmentStatsJob(db, appointmentUsecase)
 	appointmentController := controller7.NewAppointmentController(appointmentUsecase, appointmentTransformer, appointmentValidator, dashboardStatsJob, syncUtil)
 	enumUsecase := services4.NewEnumUsecase()
 	enumController := controller7.NewEnumController(enumUsecase)
-	handler5 := controller7.NewHandler(localContactService, contactUsecase, adminSalesUsecase, friendUsecase, friendGroupUsecase, followUsecase, blockUsecase, servicesTagUsecase, pipelineUsecase, stageUsecase, leadUsecase, ruleUsecase, sharingAccessUsecase, invitationInstallUsecase, supportTicketUsecase, feedbackController, appointmentController, enumController)
+	handler5 := controller7.NewHandler(contactController, adminSalesController, friendController, friendGroupController, followController, blockController, tagController, pipelineController, stageController, leadController, ruleController, sharingController, invitationController, supportTicketController, feedbackController, appointmentController, enumController)
 	newsRepository := repository5.NewNewsPostgres(db)
 	localNewsService := services9.NewLocalNewsService(newsRepository, seoDomainRepository)
 	handler6 := controller8.NewHandler(localNewsService, localSeoDomainService)
-	bankRepository := payment.ProvideBankRepository(db)
-	localBankService := services10.NewLocalBankService(bankRepository, syncUtil)
+	bankPostgres := postgres6.NewBankPostgres(db)
+	localBankService := services10.NewLocalBankService(bankPostgres, syncUtil)
 	handler7 := controller9.NewHandler(localBankService)
-	servicesLocalCatalogService := services3.NewLocalCatalogService(iAdminMainAreaUsecase, mainAreaMapper, iAdminPurposeUseUsecase, purposeUseMapper, iAdminProfessionUsecase, professionMapper)
-	catalogController := controller.NewCatalogController(servicesLocalCatalogService)
+	geminiClient := client3.NewGeminiClient()
+	productSuggestProvider := provider6.NewBdsproSuggestProvider(bdsproGrpcClient)
+	localProductAnalyzeService := services11.NewLocalProductAnalyzeService(geminiClient, productSuggestProvider, localLocationV2Service)
+	handler8 := controller10.NewHandler(localProductAnalyzeService)
+	localCatalogService := services3.NewLocalCatalogService(iAdminMainAreaUsecase, mainAreaMapper, iAdminPurposeUseUsecase, purposeUseMapper, iAdminProfessionUsecase, professionMapper)
+	catalogController := controller.NewCatalogController(localCatalogService)
 	localTagService := services3.NewLocalTagService(tagUsecase, tagMapper)
-	tagController := controller.NewTagController(localTagService)
+	controllerTagController := controller.NewTagController(localTagService)
 	localKYCService := services3.NewLocalKYCService(ikycUsecase, iAdminKYCUsecase, kycMapper)
 	kycController := controller.NewKYCController(localKYCService)
 	localBookmarkService := services3.NewLocalBookmarkService(bookmarkUserUsecase)
 	bookmarkController := controller.NewBookmarkController(localBookmarkService)
 	localAdminUserService := services3.NewLocalAdminUserService(adminUsecase, profileUsecase, adminMapper, localNotificationProvider, userDashboardStatsJob, catalogAuthorizer)
 	adminUserController := controller.NewAdminUserController(localAdminUserService)
-	handler8 := controller.NewHandler(profileController, catalogController, tagController, kycController, bookmarkController, adminUserController)
+	handler9 := controller.NewHandler(profileController, catalogController, controllerTagController, kycController, bookmarkController, adminUserController)
 	znsScheduler := scheduler.NewZnsScheduler(iZnsProvider)
 	subscriptionStore := accesspostgres.NewSubscriptionStore(db)
 	planAccessStore := accesspostgres.NewPlanAccessStore(db)
@@ -518,7 +579,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	cancelService := cancel.NewService(cancellationStore, v)
 	commercialProfileHandler := grpc.NewCommercialProfileHandler(commercialprofileService, cancelService)
 	checkoutStore := checkoutpostgres.NewCheckoutStore(transactionRepo)
-	commands, cleanup7, err := payment2.NewCommands()
+	commands, cleanup7, err := payment.NewCommands()
 	if err != nil {
 		cleanup6()
 		cleanup5()
@@ -538,7 +599,7 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 	checker := iampermission.NewChecker(db)
 	subscriptionAdminHandler := grpc.NewSubscriptionAdminHandler(subscriptionAdminService, checker)
 	planVersionAdminHandler := grpc.NewPlanVersionAdminHandler(adminService, catalogAuthorizer)
-	initialApp := initial.NewInitialApp(db, grpcProfileService, adminHandler, adminUserProfileHandler, bookmarkUserHandler, crmProvider, internalHandler, mainAreaHandler, purposeUseHandler, professionHandler, tagHandler, kycHandler, priceTableHandler, userDashboardStatsJob, organizationClient, authHandler, oAuthHandler, permissionHandler, roleGroupHandler, roleHandler, authUserProfileHandler, controllerHandler, handler2, handler3, handler4, handler5, handler6, handler7, handler8, roleGroupRegistry, znsScheduler, accessgrpcHandler, commercialProfileHandler, subscriptionCheckoutHandler, subscriptionSettlementHandler, subscriptionAdminHandler, planVersionAdminHandler)
+	initialApp := initial.NewInitialApp(db, grpcProfileService, adminHandler, adminUserProfileHandler, bookmarkUserHandler, crmProvider, internalHandler, mainAreaHandler, purposeUseHandler, professionHandler, tagHandler, kycHandler, priceTableHandler, userDashboardStatsJob, organizationClient, authHandler, oAuthHandler, permissionHandler, roleGroupHandler, roleHandler, authUserProfileHandler, controllerHandler, handler2, handler3, handler4, handler5, handler6, handler7, handler8, handler9, roleGroupRegistry, znsScheduler, accessgrpcHandler, commercialProfileHandler, subscriptionCheckoutHandler, subscriptionSettlementHandler, subscriptionAdminHandler, planVersionAdminHandler)
 	return initialApp, func() {
 		cleanup7()
 		cleanup6()
@@ -553,4 +614,4 @@ func InitializeApp() (*initial.InitialApp, func(), error) {
 // wire.go:
 
 // Inject dependencies
-var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(grpc.OrganizationCheckoutAuthorizer), new(*organization.CheckoutAuthorizer)), wire.Bind(new(iusecase.ITransaction), new(*postgres3.TransactionGorm)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(providers2.BdsproProvider), new(*client.BdsproClient)), wire.Bind(new(providers2.HubProvider), new(*client.HubClient)), wire.Bind(new(providers2.OrganizationProvider), new(*client.OrganizationProviderClient)), wire.Bind(new(providers2.ProfileProvider), new(*provider.ProfileProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgres2.AdminAccessPostgresRepo)), wire.Bind(new(repo.AuthStatusRepository), new(*postgres2.StatusPostgres)), wire.Bind(new(repo.DeviceRepository), new(*postgres2.DevicePostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgres2.AuthConfigPostgres)), wire.Bind(new(repo.IBlockRepo), new(*maindb.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*maindb.ContactPostgres)), wire.Bind(new(repo.IDemoProductLogRepo), new(*postgres.DemoProductLogPostgres)), wire.Bind(new(repo.IFollowRepo), new(*maindb.FollowPostgres)), wire.Bind(new(repo.IProfileDeletedRepo), new(*postgres.ProfileDeletedPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.OTPRepository), new(*postgres2.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgres2.PINPostgres)), wire.Bind(new(repo.PermissionRepository), new(*postgres2.PermissionRepo)), wire.Bind(new(repo.SessionRepository), new(*postgres2.SessionPostgres)), wire.Bind(new(services6.AccessTokenIssuer), new(*services6.AuthUsecase)), wire.Bind(new(commercialprofile.CatalogReader), new(*admin.Service)), wire.Bind(new(commercialprofile.SubscriptionReader), new(*subscription.AdminService)), wire.Bind(new(evaluate.PlanAccessStore), new(*accesspostgres.PlanAccessStore)), wire.Bind(new(evaluate.SubscriptionStore), new(*accesspostgres.SubscriptionStore)), wire.Bind(new(organization2.Repository), new(*organization.Repository)), wire.Bind(new(admin.PermissionAuthorizer), new(*authpermission.CatalogAuthorizer)), wire.Bind(new(admin.Publisher), new(*publish.Service)), wire.Bind(new(admin.Repository), new(*postgres.PlanVersionRepo)), wire.Bind(new(publish.Repository), new(*postgres.PlanVersionRepo)), wire.Bind(new(subscription.AdminRepository), new(*subscriptionpostgres.AdminProjectionStore)), wire.Bind(new(subscription.PermissionAuthorizer), new(*iampermission.Checker)), wire.Bind(new(cancel.Store), new(*subscriptionpostgres.CancellationStore)), wire.Bind(new(checkout.CommandStore), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.ContactStore), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.PaymentAttemptPort), new(*payment2.Commands)), wire.Bind(new(checkout.PaymentMethodReader), new(*payment2.Commands)), wire.Bind(new(checkout.PaymentOrderPort), new(*payment2.Commands)), wire.Bind(new(checkout.PlanResolver), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.SubscriptionReader), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(settlement.Store), new(*subscriptionpostgres.SettlementStore)), wire.Bind(new(useradmin.PermissionAuthorizer), new(*authpermission.CatalogAuthorizer)), injection.RPCClientSet, injection.NewHttpClient, _utils.NewSyncUtil, postgres2.NewAdminAccessPostgresRepo, services6.NewAdminAccessUsecase, handler.NewAdminHandler, services.NewAdminKYCUsecase, services3.NewAdminMainAreaUsecase, mapper.NewAdminMapper, grpc.NewAdminOrganizationHandler, postgres.NewAdminPostgres, subscriptionpostgres.NewAdminProjectionStore, services.NewAdminPurposeUseUsecase, subscription.NewAdminService, services6.NewAdminUsecase, services.NewAdminUsecase, handler.NewAdminUserProfileHandler, client.NewAuthClient, postgres2.NewAuthConfigRepository, handler.NewAuthHandler, controller2.NewLoginController, services6.NewAuthUsecaseLoginService, wire.Bind(new(services6.LoginService), new(*services6.AuthUsecaseLoginService)), controller2.NewPermissionController, services6.NewRoleUsecasePermissionService, wire.Bind(new(services6.PermissionService), new(*services6.RoleUsecasePermissionService)), controller3.NewHandler, services5.NewLocalSyncService, wire.Bind(new(services5.SyncService), new(*services5.LocalSyncService)), repository4.NewDealPostgres, services5.NewLocalDealService, wire.Bind(new(services5.DealService), new(*services5.LocalDealService)), repository4.NewCostTypePostgres, services5.NewLocalCostTypeService, wire.Bind(new(services5.CostTypeService), new(*services5.LocalCostTypeService)), repository4.NewDealCostPostgres, services5.NewLocalDealCostService, wire.Bind(new(services5.DealCostService), new(*services5.LocalDealCostService)), repository4.NewContractDealPostgres, services5.NewLocalContractDealService, wire.Bind(new(services5.ContractDealService), new(*services5.LocalContractDealService)), repository4.NewInvestmentPostgres, services5.NewLocalInvestmentService, wire.Bind(new(services5.InvestmentService), new(*services5.LocalInvestmentService)), repository4.NewProductPostgres, services5.NewLocalProductService, wire.Bind(new(services5.ProductService), new(*services5.LocalProductService)), repository4.NewDistributePostgres, repository4.NewProductPricePostgres, mapper3.NewDistributionMapper, services5.NewLocalDistributionService, wire.Bind(new(services5.DistributionService), new(*services5.LocalDistributionService)), repository4.NewPropertyPostgres, services5.NewLocalPropertyService, wire.Bind(new(services5.PropertyService), new(*services5.LocalPropertyService)), services5.NewLocalPublicService, wire.Bind(new(services5.PublicService), new(*services5.LocalPublicService)), repository4.NewCatalogPostgres, services5.NewLocalCatalogService, wire.Bind(new(services5.CatalogService), new(*services5.LocalCatalogService)), repository4.NewProjectBuildPostgres, services5.NewLocalProjectBuildService, wire.Bind(new(services5.ProjectBuildService), new(*services5.LocalProjectBuildService)), repository4.NewProjectAdminPostgres, services5.NewLocalAdminProjectService, wire.Bind(new(services5.AdminProjectService), new(*services5.LocalAdminProjectService)), repository4.NewProductNotePostgres, services5.NewLocalProductNoteService, wire.Bind(new(services5.ProductNoteService), new(*services5.LocalProductNoteService)), repository4.NewAppointmentPostgres, services5.NewLocalAppointmentService, wire.Bind(new(services5.AppointmentService), new(*services5.LocalAppointmentService)), repository4.NewPropertyHistoryPostgres, services5.NewLocalPropertyHistoryService, wire.Bind(new(services5.PropertyHistoryService), new(*services5.LocalPropertyHistoryService)), controller4.NewHandler, repository.NewLocationPostgres, services7.NewLocalLocationService, wire.Bind(new(services7.LocationService), new(*services7.LocalLocationService)), repository.NewLocationV2Postgres, services7.NewLocalLocationV2Service, wire.Bind(new(services7.LocationV2Service), new(*services7.LocalLocationV2Service)), repository.NewUserGuidePostgres, services7.NewLocalUserGuideService, wire.Bind(new(services7.UserGuideService), new(*services7.LocalUserGuideService)), repository.NewFAQPostgres, services7.NewLocalFAQService, wire.Bind(new(services7.FAQService), new(*services7.LocalFAQService)), repository.NewVersionPostgres, services7.NewLocalVersionService, wire.Bind(new(services7.VersionService), new(*services7.LocalVersionService)), requeststats.NewStore, requeststats.NewCollector, services7.NewLocalRequestStatsService, wire.Bind(new(services7.RequestStatsService), new(*services7.LocalRequestStatsService)), repository.NewErrorLogPostgres, services7.NewLocalErrorLogService, wire.Bind(new(services7.ErrorLogService), new(*services7.LocalErrorLogService)), repository.NewApplinkPostgres, services7.NewLocalApplinkService, wire.Bind(new(services7.ApplinkService), new(*services7.LocalApplinkService)), repository.NewSystemConfigPostgres, services7.NewLocalSystemConfigService, wire.Bind(new(services7.SystemConfigService), new(*services7.LocalSystemConfigService)), repository.NewEventQueuePostgres, services7.NewLocalEventQueueService, wire.Bind(new(services7.EventQueueService), new(*services7.LocalEventQueueService)), repository.NewInteractiveEventPostgres, services7.NewLocalInteractiveEventService, wire.Bind(new(services7.InteractiveEventService), new(*services7.LocalInteractiveEventService)), repository.NewClickURLPostgres, services7.NewLocalClickURLService, wire.Bind(new(services7.ClickURLService), new(*services7.LocalClickURLService)), repository.NewUpdateDataPostgres, services7.NewLocalUpdateDataService, wire.Bind(new(services7.UpdateDataService), new(*services7.LocalUpdateDataService)), repository.NewKeywordSearchPostgres, services7.NewLocalKeywordSearchService, wire.Bind(new(services7.KeywordSearchService), new(*services7.LocalKeywordSearchService)), repository.NewSearchLatencyPostgres, services7.NewLocalSearchLatencyService, wire.Bind(new(services7.SearchLatencyService), new(*services7.LocalSearchLatencyService)), provider4.NewLocalSearchAnalytics, wire.Bind(new(provider3.SearchAnalytics), new(*provider4.LocalSearchAnalytics)), repository.NewAPIKeyPostgres, services7.NewLocalAPIKeyService, wire.Bind(new(services7.APIKeyService), new(*services7.LocalAPIKeyService)), postgres3.NewTqdDB, tqd.ProviderSet, postgres3.NewCrmDB, crm.ProviderSet, postgres3.NewPaymentDB, payment.ProviderSet, controller8.NewHandler, repository5.NewNewsPostgres, services9.NewLocalNewsService, wire.Bind(new(services9.NewsService), new(*services9.LocalNewsService)), repository5.NewSeoDomainPostgres, services9.NewLocalSeoDomainService, wire.Bind(new(services9.SeoDomainService), new(*services9.LocalSeoDomainService)), provider2.NewLocalCrmSeoProvider, wire.Bind(new(provider3.CrmSeoProvider), new(*provider2.LocalCrmSeoProvider)), controller5.NewHandler, repository2.NewNotificationPostgres, services2.NewLocalNotificationService, wire.Bind(new(services2.NotificationService), new(*services2.LocalNotificationService)), services2.NewLocalNotificationProvider, wire.Bind(new(providers2.NotificationProvider), new(*services2.LocalNotificationProvider)), controller.NewHandler, controller.NewProfileController, controller.NewCatalogController, controller.NewTagController, controller.NewKYCController, controller.NewBookmarkController, controller.NewAdminUserController, services3.NewProfileUsecaseInfoService, wire.Bind(new(services3.ProfileService), new(*services3.ProfileUsecaseInfoService)), services3.NewLocalDemoService, wire.Bind(new(services3.DemoService), new(*services3.LocalDemoService)), services3.NewLocalTileSessionService, wire.Bind(new(services3.TileSessionService), new(*services3.LocalTileSessionService)), services3.NewLocalCatalogService, wire.Bind(new(services3.CatalogService), new(*services3.LocalCatalogService)), services3.NewLocalTagService, wire.Bind(new(services3.TagService), new(*services3.LocalTagService)), services3.NewLocalKYCService, wire.Bind(new(services3.KYCService), new(*services3.LocalKYCService)), services3.NewLocalBookmarkService, wire.Bind(new(services3.BookmarkService), new(*services3.LocalBookmarkService)), services3.NewLocalAdminUserService, wire.Bind(new(services3.AdminUserService), new(*services3.LocalAdminUserService)), mapper2.NewAuthMethodMapper, postgres2.NewAuthRepository, mapper2.NewAuthSecurityMapper, services6.NewAuthSecurityUsecase, services6.NewAuthService, client.NewBdsproClient, maindb.NewBlockPostgres, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, services.NewBookmarkUserUsecase, providers.NewCancelClock, subscriptionpostgres.NewCancellationStore, authpermission.NewCatalogAuthorizer, postgres.NewCertificationPostgres, iampermission.NewChecker, organization.NewCheckoutAuthorizer, providers.NewCheckoutClock, checkoutpostgres.NewCheckoutStore, payment2.NewCommands, grpc.NewCommercialProfileHandler, maindb.NewContactPostgres, cookie.NewCookieProvider, postgres.NewDemoProductLogPostgres, mapper2.NewDeviceMapper, postgres2.NewDevicePostgresRepo, services6.NewDeviceUsecase, oauth.NewFacebookAuthService, maindb.NewFollowPostgres, maindb.NewFriendPostgres, oauth.NewGoogleAuthService, maindb.NewGroupPostgres, handler.NewGrpcProfileService, accessgrpc.NewHandler, client.NewHubClient, initial.NewInitialApp, handler.NewInternalHandler, grpc.NewInternalOrganizationMembershipHandler, handler.NewKYCHandler, mapper.NewKYCMapper, postgres.NewKYCRepo, services.NewKYCUsecase, handler.NewMainAreaHandler, mapper.NewMainAreaMapper, postgres.NewMainAreaPostgres, handler.NewOAuthRouter, services6.NewOAuthUsecase, postgres2.NewOTPRepository, client.NewOrganizationProviderClient, services6.NewOtpUsecase, postgres2.NewPINRepository, services6.NewPINUsecase, handler.NewPermissionHandler, postgres2.NewPermissionRepo, services6.NewPermissionUsecase, accesspostgres.NewPlanAccessStore, providers.NewPlanPublishTransaction, grpc.NewPlanVersionAdminHandler, postgres.NewPlanVersionRepo, handler.NewPriceTableHandler, mapper.NewPriceTableMapper, postgres.NewPriceTableRepo, services3.NewPriceTableUsecase, handler.NewProfessionHandler, mapper.NewProfessionMapper, postgres.NewProfessionPostgres, services.NewProfessionUsecase, user.NewProfileDeleted, postgres.NewProfileDeletedPostgres, mapper.NewProfileMapper, postgres.NewProfileMediaPostgres, postgres.NewProfilePostgres, provider.NewProfileProvider, services.NewProfileUsecase, handler.NewPurposeUseHandler, mapper.NewPurposeUseMapper, postgres.NewPurposeUseRepo, redis.NewRedisProvider, organization.NewRepository, handler.NewRoleGroupHandler, mapper2.NewRoleGroupMapper, services6.NewRoleGroupRegistry, postgres2.NewRoleGroupRepo, services6.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper2.NewRoleMapper, postgres2.NewRoleRepo, services6.NewRoleUsecase, properties.NewRuntimeProperties, sms.NewSMSProvider, bootstrapadmin.NewService, commercialprofile.NewService, evaluate.NewService, organization2.NewService, admin.NewService, publish.NewService, cancel.NewService, checkout.NewService, settlement.NewService, mapper2.NewSessionMapper, postgres2.NewSessionRepository, subscriptionpostgres.NewSettlementStore, postgres2.NewStatusRepository, bootstrapadmin2.NewStore, grpc.NewSubscriptionAdminHandler, grpc.NewSubscriptionCheckoutHandler, grpc.NewSubscriptionSettlementHandler, accesspostgres.NewSubscriptionStore, handler.NewTagHandler, mapper.NewTagMapper, postgres.NewTagPostgres, services.NewTagUsecase, postgres3.NewTransactionGorm, job.NewUserDashboardStatsJob, handler.NewUserInfoHandler, mapper2.NewUserInfoMapper, postgres2.NewUserInfoRepository, services6.NewUserInfoUsecase, user.NewUserProfileEntityWithRequest, services.NewUserUsecase, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler)
+var wireSet = wire.NewSet(_db.NewDB, _db.NewTransactionRepo, _provider.SyncProviderSet, wire.Bind(new(grpc.OrganizationCheckoutAuthorizer), new(*organization.CheckoutAuthorizer)), wire.Bind(new(iusecase.ITransaction), new(*postgres3.TransactionGorm)), wire.Bind(new(factory.IFactory), new(*properties.RuntimeProperties)), wire.Bind(new(providers2.BdsproProvider), new(*client.BdsproClient)), wire.Bind(new(providers2.HubProvider), new(*client.HubClient)), wire.Bind(new(providers2.NotificationProvider), new(*services2.LocalNotificationProvider)), wire.Bind(new(providers2.OrganizationProvider), new(*client.OrganizationProviderClient)), wire.Bind(new(providers2.OriginIDProvider), new(*services4.LocalContactService)), wire.Bind(new(providers2.ProfileProvider), new(*provider.ProfileProvider)), wire.Bind(new(repo.AdminAccessRepository), new(*postgres2.AdminAccessPostgresRepo)), wire.Bind(new(repo.AuthStatusRepository), new(*postgres2.StatusPostgres)), wire.Bind(new(repo.DeviceRepository), new(*postgres2.DevicePostgresRepo)), wire.Bind(new(repo.IAuthConfigRepo), new(*postgres2.AuthConfigPostgres)), wire.Bind(new(repo.IBlockRepo), new(*maindb.BlockPostgres)), wire.Bind(new(repo.IContactRepo), new(*maindb.ContactPostgres)), wire.Bind(new(repo.IDemoProductLogRepo), new(*postgres.DemoProductLogPostgres)), wire.Bind(new(repo.IFollowRepo), new(*maindb.FollowPostgres)), wire.Bind(new(repo.IProfileDeletedRepo), new(*postgres.ProfileDeletedPostgres)), wire.Bind(new(repo.IProfileRepo), new(*postgres.ProfilePostgres)), wire.Bind(new(repo.OTPRepository), new(*postgres2.OTPPostgres)), wire.Bind(new(repo.PINRepository), new(*postgres2.PINPostgres)), wire.Bind(new(repo.PermissionRepository), new(*postgres2.PermissionRepo)), wire.Bind(new(repo.SessionRepository), new(*postgres2.SessionPostgres)), wire.Bind(new(services11.ProductAnalyzeService), new(*services11.LocalProductAnalyzeService)), wire.Bind(new(services6.AccessTokenIssuer), new(*services6.AuthUsecase)), wire.Bind(new(services6.LoginService), new(*services6.AuthUsecaseLoginService)), wire.Bind(new(services6.PermissionService), new(*services6.RoleUsecasePermissionService)), wire.Bind(new(services5.AdminProjectService), new(*services5.LocalAdminProjectService)), wire.Bind(new(services5.AppointmentService), new(*services5.LocalAppointmentService)), wire.Bind(new(services5.ContractDealService), new(*services5.LocalContractDealService)), wire.Bind(new(services5.CostTypeService), new(*services5.LocalCostTypeService)), wire.Bind(new(services5.DealCommissionService), new(*services5.LocalDealCommissionService)), wire.Bind(new(services5.DealCostService), new(*services5.LocalDealCostService)), wire.Bind(new(services5.DealInternalNoteService), new(*services5.LocalDealInternalNoteService)), wire.Bind(new(services5.DealInvitationService), new(*services5.LocalDealInvitationService)), wire.Bind(new(services5.DealService), new(*services5.LocalDealService)), wire.Bind(new(services5.DistributionService), new(*services5.LocalDistributionService)), wire.Bind(new(services5.InvestmentService), new(*services5.LocalInvestmentService)), wire.Bind(new(services5.ListingService), new(*services5.LocalListingService)), wire.Bind(new(services5.ProductNoteService), new(*services5.LocalProductNoteService)), wire.Bind(new(services5.ProductService), new(*services5.LocalProductService)), wire.Bind(new(services5.ProjectBuildService), new(*services5.LocalProjectBuildService)), wire.Bind(new(services5.PropertyHistoryService), new(*services5.LocalPropertyHistoryService)), wire.Bind(new(services5.PropertyService), new(*services5.LocalPropertyService)), wire.Bind(new(services5.PropertyTypeService), new(*services5.LocalPropertyTypeService)), wire.Bind(new(services5.PublicService), new(*services5.LocalPublicService)), wire.Bind(new(services5.SyncService), new(*services5.LocalSyncService)), wire.Bind(new(provider5.BdsproProvider), new(*provider5.NoopBdspro)), wire.Bind(new(provider5.ITransaction), new(*provider5.NoopTransaction)), wire.Bind(new(provider5.NotificationProvider), new(*provider5.NoopNotification)), wire.Bind(new(provider5.UserClient), new(*provider5.LocalUserClient)), wire.Bind(new(repository3.BlockRepo), new(*postgres5.BlockRepo)), wire.Bind(new(repository3.ContactProductRepo), new(*postgres5.ContactProductPostgre)), wire.Bind(new(repository3.ContactRepo), new(*postgres5.PostgreContact)), wire.Bind(new(repository3.DocumentRepo), new(*postgres5.DocumentPostgre)), wire.Bind(new(repository3.FollowRepo), new(*postgres5.FollowPostgre)), wire.Bind(new(repository3.FriendGroupRepo), new(*postgres5.FriendGroupRepo)), wire.Bind(new(repository3.FriendRepo), new(*postgres5.FriendPostgre)), wire.Bind(new(repository3.InvitationInstallRepo), new(*postgres5.InvitationInstallPostgre)), wire.Bind(new(repository3.LeadRepo), new(*postgres5.LeadPostgre)), wire.Bind(new(repository3.PipelineRepo), new(*postgres5.PostgrePipeline)), wire.Bind(new(repository3.ProductCareRepo), new(*postgres5.ProductCarePostgre)), wire.Bind(new(repository3.RuleRepo), new(*postgres5.PostgreRule)), wire.Bind(new(repository3.SharingAccessRepo), new(*postgres5.SharingAccessPostgre)), wire.Bind(new(repository3.StageRepo), new(*postgres5.PostgreStage)), wire.Bind(new(services4.ContactService), new(*services4.LocalContactService)), wire.Bind(new(services4.PermissionUsecase), new(*provider5.AllowAllPermission)), wire.Bind(new(services7.APIKeyService), new(*services7.LocalAPIKeyService)), wire.Bind(new(services7.ApplinkService), new(*services7.LocalApplinkService)), wire.Bind(new(services7.ClickURLService), new(*services7.LocalClickURLService)), wire.Bind(new(services7.ErrorLogService), new(*services7.LocalErrorLogService)), wire.Bind(new(services7.EventQueueService), new(*services7.LocalEventQueueService)), wire.Bind(new(services7.FAQService), new(*services7.LocalFAQService)), wire.Bind(new(services7.InteractiveEventService), new(*services7.LocalInteractiveEventService)), wire.Bind(new(services7.KeywordSearchService), new(*services7.LocalKeywordSearchService)), wire.Bind(new(services7.LocationService), new(*services7.LocalLocationService)), wire.Bind(new(services7.LocationV2Service), new(*services7.LocalLocationV2Service)), wire.Bind(new(services7.RequestStatsService), new(*services7.LocalRequestStatsService)), wire.Bind(new(services7.SearchLatencyService), new(*services7.LocalSearchLatencyService)), wire.Bind(new(services7.SystemConfigService), new(*services7.LocalSystemConfigService)), wire.Bind(new(services7.UpdateDataService), new(*services7.LocalUpdateDataService)), wire.Bind(new(services7.UserGuideService), new(*services7.LocalUserGuideService)), wire.Bind(new(services7.VersionService), new(*services7.LocalVersionService)), wire.Bind(new(services2.NotificationService), new(*services2.LocalNotificationService)), wire.Bind(new(repository6.BankRepository), new(*postgres6.BankPostgres)), wire.Bind(new(services10.BankService), new(*services10.LocalBankService)), wire.Bind(new(services9.NewsService), new(*services9.LocalNewsService)), wire.Bind(new(services9.SeoDomainService), new(*services9.LocalSeoDomainService)), wire.Bind(new(provider3.CrmSeoProvider), new(*provider2.LocalCrmSeoProvider)), wire.Bind(new(provider3.SearchAnalytics), new(*provider4.LocalSearchAnalytics)), wire.Bind(new(services8.LocationService), new(*services8.LocalLocationService)), wire.Bind(new(services8.PublicService), new(*services8.LocalPublicService)), wire.Bind(new(application.PlanningRepository), new(*planningclient.Repository)), wire.Bind(new(application.ProjectionRepository), new(*publiccontent.Repository)), wire.Bind(new(services3.AdminUserService), new(*services3.LocalAdminUserService)), wire.Bind(new(services3.BookmarkService), new(*services3.LocalBookmarkService)), wire.Bind(new(services3.CatalogService), new(*services3.LocalCatalogService)), wire.Bind(new(services3.DemoService), new(*services3.LocalDemoService)), wire.Bind(new(services3.KYCService), new(*services3.LocalKYCService)), wire.Bind(new(services3.ProfileService), new(*services3.ProfileUsecaseInfoService)), wire.Bind(new(services3.TagService), new(*services3.LocalTagService)), wire.Bind(new(services3.TileSessionService), new(*services3.LocalTileSessionService)), wire.Bind(new(commercialprofile.CatalogReader), new(*admin.Service)), wire.Bind(new(commercialprofile.SubscriptionReader), new(*subscription.AdminService)), wire.Bind(new(evaluate.PlanAccessStore), new(*accesspostgres.PlanAccessStore)), wire.Bind(new(evaluate.SubscriptionStore), new(*accesspostgres.SubscriptionStore)), wire.Bind(new(organization2.Repository), new(*organization.Repository)), wire.Bind(new(admin.PermissionAuthorizer), new(*authpermission.CatalogAuthorizer)), wire.Bind(new(admin.Publisher), new(*publish.Service)), wire.Bind(new(admin.Repository), new(*postgres.PlanVersionRepo)), wire.Bind(new(publish.Repository), new(*postgres.PlanVersionRepo)), wire.Bind(new(subscription.AdminRepository), new(*subscriptionpostgres.AdminProjectionStore)), wire.Bind(new(subscription.PermissionAuthorizer), new(*iampermission.Checker)), wire.Bind(new(cancel.Store), new(*subscriptionpostgres.CancellationStore)), wire.Bind(new(checkout.CommandStore), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.ContactStore), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.PaymentAttemptPort), new(*payment.Commands)), wire.Bind(new(checkout.PaymentMethodReader), new(*payment.Commands)), wire.Bind(new(checkout.PaymentOrderPort), new(*payment.Commands)), wire.Bind(new(checkout.PlanResolver), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(checkout.SubscriptionReader), new(*checkoutpostgres.CheckoutStore)), wire.Bind(new(settlement.Store), new(*subscriptionpostgres.SettlementStore)), wire.Bind(new(useradmin.PermissionAuthorizer), new(*authpermission.CatalogAuthorizer)), injection.RPCClientSet, injection.NewHttpClient, _utils.NewSyncUtil, controller4.NewAPIKeyController, repository.NewAPIKeyPostgres, quota.NewActionService, postgres2.NewAdminAccessPostgresRepo, services6.NewAdminAccessUsecase, controller6.NewAdminCommercialController, handler.NewAdminHandler, services.NewAdminKYCUsecase, controller6.NewAdminLocationController, services3.NewAdminMainAreaUsecase, mapper.NewAdminMapper, postgres5.NewAdminOpportunityEventPostgres, grpc.NewAdminOrganizationHandler, controller6.NewAdminParcelPoiSubController, controller6.NewAdminPlanningController, postgres.NewAdminPostgres, controller3.NewAdminProjectController, subscriptionpostgres.NewAdminProjectionStore, services.NewAdminPurposeUseUsecase, controller6.NewAdminRegionImportController, controller6.NewAdminReportController, controller7.NewAdminSalesController, services4.NewAdminSalesUsecase, subscription.NewAdminService, quota.NewAdminUsageService, quota2.NewAdminUsageStore, services6.NewAdminUsecase, services.NewAdminUsecase, controller.NewAdminUserController, handler.NewAdminUserProfileHandler, postgres5.NewAdvertisingSettingsPostgresRepository, services4.NewAdvertisingSettingsUsecase, provider5.NewAllowAllPermission, provider3.NewAllowAllPermissionProvider, controller6.NewAmenityController, mapper4.NewAmenityMapper, postgres4.NewAmenityRepo, services8.NewAmenityUsecase, controller4.NewApplinkController, repository.NewApplinkPostgres, controller3.NewAppointmentController, controller7.NewAppointmentController, repository4.NewAppointmentPostgres, postgres5.NewAppointmentPostgresRepository, postgres5.NewAppointmentReminderPostgresRepository, services4.NewAppointmentReminderUsecase, mapper5.NewAppointmentTransformer, services4.NewAppointmentUsecase, validator2.NewAppointmentValidator, rule.NewAssessEngine, rule.NewAuditEngine, client.NewAuthClient, postgres2.NewAuthConfigRepository, handler.NewAuthHandler, mapper2.NewAuthMethodMapper, postgres2.NewAuthRepository, mapper2.NewAuthSecurityMapper, services6.NewAuthSecurityUsecase, services6.NewAuthService, services6.NewAuthUsecaseLoginService, controller9.NewBankController, postgres6.NewBankPostgres, services8.NewBaseUsecase, client.NewBdsproClient, client2.NewBdsproClient, provider6.NewBdsproSuggestProvider, controller7.NewBlockController, maindb.NewBlockPostgres, postgres5.NewBlockRepo, services4.NewBlockUsecase, controller.NewBookmarkController, handler.NewBookmarkUserHandler, postgres.NewBookmarkUserPostgres, services.NewBookmarkUserUsecase, postgres5.NewBudgetPostgresRepository, services4.NewBudgetUsecase, services4.NewCampaignDetailUsecase, postgres5.NewCampaignPostgresRepository, services4.NewCampaignUsecase, providers.NewCancelClock, subscriptionpostgres.NewCancellationStore, builder.NewCandidateBuilder, authpermission.NewCatalogAuthorizer, controller3.NewCatalogController, controller.NewCatalogController, repository4.NewCatalogPostgres, postgres.NewCertificationPostgres, services3.NewCertificationUsecase, iampermission.NewChecker, organization.NewCheckoutAuthorizer, providers.NewCheckoutClock, checkoutpostgres.NewCheckoutStore, controller4.NewClickURLController, repository.NewClickURLPostgres, services2.NewClientNotificationService, requeststats.NewCollector, payment.NewCommands, controller6.NewCommercialController, grpc.NewCommercialProfileHandler, rule.NewCompareEngine, db.NewConfigLoader, db.NewConfigPostgres, rule.NewConflictClassifier, rule.NewConflictEngine, controller7.NewContactController, controller6.NewContactLabelController, mapper4.NewContactLabelMapper, postgres4.NewContactLabelPostgresRepo, services8.NewContactLabelUsecase, mapper5.NewContactMapper, maindb.NewContactPostgres, repository3.NewContactPostgres, postgres5.NewContactProductPostgre, postgres5.NewContactRepo, services4.NewContactUsecase, repository4.NewContractDealPostgres, cookie.NewCookieProvider, controller3.NewCostTypeController, repository4.NewCostTypePostgres, postgres3.NewCrmDB, controller3.NewDealContractController, controller3.NewDealController, controller3.NewDealCostController, repository4.NewDealCostPostgres, utils.NewDealHistoryLogger, repository2.NewDealHistoryPostgres, controller3.NewDealInternalNoteController, repository4.NewDealInternalNotePostgres, controller3.NewDealInvitationController, repository4.NewDealMemberPostgres, repository4.NewDealPostgres, postgres.NewDemoProductLogPostgres, mapper2.NewDeviceMapper, postgres2.NewDevicePostgresRepo, services6.NewDeviceUsecase, mapper4.NewDirectoryCategoryMapper, postgres4.NewDirectoryCategoryPostgresRepo, services8.NewDirectoryCategoryUsecase, controller6.NewDirectoryController, mapper4.NewDirectorySourceMapper, postgres4.NewDirectorySourcePostgres, services8.NewDirectorySourceUsecase, mapper4.NewDirectorySupplierMapper, postgres4.NewDirectorySupplierPostgres, services8.NewDirectorySupplierUsecase, controller6.NewDiscoveryController, mapper4.NewDiscoveryMapper, discovery.NewDiscoveryRepository, controller3.NewDistributeController, repository4.NewDistributePostgres, mapper3.NewDistributionMapper, postgres5.NewDocumentPostgre, relatedentity.NewEntityReader, discovery2.NewEntityRef, controller7.NewEnumController, services4.NewEnumUsecase, controller4.NewErrorLogController, repository.NewErrorLogPostgres, usage.NewEvent, controller4.NewEventQueueController, repository.NewEventQueuePostgres, controller4.NewFAQController, repository.NewFAQPostgres, oauth.NewFacebookAuthService, controller6.NewFamilyController, controller6.NewFeatureController, postgres4.NewFeatureRepository, services8.NewFeatureUsecase, controller7.NewFeedbackController, controller7.NewFollowController, postgres5.NewFollowPostgre, maindb.NewFollowPostgres, services4.NewFollowUsecase, controller7.NewFriendController, controller7.NewFriendGroupController, services4.NewFriendGroupUsecase, mapper5.NewFriendMapper, maindb.NewFriendPostgres, postgres5.NewFriendRepo, services4.NewFriendUsecase, client3.NewGeminiClient, dto.NewGeometryParser, oauth.NewGoogleAuthService, maindb.NewGroupPostgres, postgres5.NewGroupRepo, handler.NewGrpcProfileService, accessgrpc.NewHandler, controller10.NewHandler, controller3.NewHandler, controller7.NewHandler, controller4.NewHandler, controller5.NewHandler, controller9.NewHandler, controller8.NewHandler, controller6.NewHandler, controller.NewHandler, rule.NewHistoricalRiskEngine, client.NewHubClient, mapper4.NewImportMapper, services8.NewImportUsecase, initial.NewInitialApp, controller4.NewInteractiveEventController, repository.NewInteractiveEventPostgres, controller8.NewInternalController, handler.NewInternalHandler, grpc.NewInternalOrganizationMembershipHandler, controller6.NewInternalSEOController, controller3.NewInvestmentController, repository4.NewInvestmentPostgres, controller7.NewInvitationController, postgres5.NewInvitationInstallPostgre, services4.NewInvitationInstallUsecase, controller.NewKYCController, handler.NewKYCHandler, mapper.NewKYCMapper, postgres.NewKYCRepo, services.NewKYCUsecase, controller4.NewKeywordSearchController, repository.NewKeywordSearchPostgres, controller6.NewLabelController, mapper4.NewLabelMapper, controller6.NewLandUseController, controller6.NewLayerController, postgres4.NewLayerLegalPostgres, services8.NewLayerLegalUsecase, postgres4.NewLayerRepository, config.NewLayerResolver, postgres4.NewLayerResolverConfigPostgres, services8.NewLayerUsecase, controller7.NewLeadController, mapper5.NewLeadMapper, services4.NewLeadUsecase, postgres4.NewLegalDocumentPostgres, rule.NewLegalStatusResolver, controller6.NewLegendController, rule.NewLifecycleEngine, controller3.NewListingController, repository4.NewListingPostgres, services7.NewLocalAPIKeyService, services5.NewLocalAdminProjectService, services3.NewLocalAdminUserService, services7.NewLocalApplinkService, services5.NewLocalAppointmentService, services10.NewLocalBankService, services3.NewLocalBookmarkService, services5.NewLocalCatalogService, services3.NewLocalCatalogService, services7.NewLocalClickURLService, services4.NewLocalContactService, services5.NewLocalContractDealService, services5.NewLocalCostTypeService, provider2.NewLocalCrmSeoProvider, services5.NewLocalDealCommissionService, services5.NewLocalDealCostService, services5.NewLocalDealInternalNoteService, services5.NewLocalDealInvitationService, services5.NewLocalDealService, services3.NewLocalDemoService, services5.NewLocalDistributionService, services7.NewLocalErrorLogService, services7.NewLocalEventQueueService, services7.NewLocalFAQService, services7.NewLocalInteractiveEventService, services5.NewLocalInvestmentService, services3.NewLocalKYCService, services7.NewLocalKeywordSearchService, services5.NewLocalListingService, services7.NewLocalLocationService, services8.NewLocalLocationService, services7.NewLocalLocationV2Service, services9.NewLocalNewsService, services2.NewLocalNotificationProvider, services2.NewLocalNotificationService, services11.NewLocalProductAnalyzeService, services5.NewLocalProductNoteService, services5.NewLocalProductService, services5.NewLocalProjectBuildService, services5.NewLocalPropertyHistoryService, services5.NewLocalPropertyService, services5.NewLocalPropertyTypeService, services5.NewLocalPublicService, services8.NewLocalPublicService, services7.NewLocalRequestStatsService, provider4.NewLocalSearchAnalytics, services7.NewLocalSearchLatencyService, services9.NewLocalSeoDomainService, services5.NewLocalSyncService, services7.NewLocalSystemConfigService, services3.NewLocalTagService, services3.NewLocalTileSessionService, services7.NewLocalUpdateDataService, provider5.NewLocalUserClient, services7.NewLocalUserGuideService, services7.NewLocalVersionService, controller4.NewLocationController, controller6.NewLocationController, mapper4.NewLocationMapper, repository.NewLocationPostgres, postgres4.NewLocationRepository, services8.NewLocationUsecase, controller4.NewLocationV2Controller, repository.NewLocationV2Postgres, controller2.NewLoginController, handler.NewMainAreaHandler, mapper.NewMainAreaMapper, postgres.NewMainAreaPostgres, controller6.NewMapWorkspaceController, postgres4.NewMapWorkspacePostgres, services8.NewMapWorkspaceUsecase, controller8.NewNewsController, repository5.NewNewsPostgres, provider5.NewNoopBdspro, provider5.NewNoopNotification, provider5.NewNoopTransaction, provider5.NewNoopUserClient, provider3.NewNoopUserProvider, client.NewNotificationClient, repository2.NewNotificationPostgres, postgres4.NewNotificationRepository, services8.NewNotificationUsecase, handler.NewOAuthRouter, services6.NewOAuthUsecase, postgres2.NewOTPRepository, postgres4.NewOneHouseRepo, services8.NewOneHouseUsecase, controller6.NewOpenHourController, mapper4.NewOpenHourMapper, postgres4.NewOpenHourPostgres, services8.NewOpenHourUsecase, client.NewOrganizationProviderClient, services6.NewOtpUsecase, services4.NewOwnerUsecase, postgres2.NewPINRepository, services6.NewPINUsecase, postgres4.NewPOIRepo, postgres5.NewPackagePostgresRepository, services4.NewPackageUsecase, controller6.NewParcelClientController, parcel_engine.NewParcelEngine, mapper4.NewParcelMapper, postgres4.NewParcelPostgres, services8.NewParcelUsecase, controller6.NewParcelUserController, client2.NewPaymentClient, postgres3.NewPaymentDB, services4.NewPaymentUsecase, controller2.NewPermissionController, handler.NewPermissionHandler, postgres2.NewPermissionRepo, services6.NewPermissionUsecase, controller7.NewPipelineController, services4.NewPipelineUsecase, accesspostgres.NewPlanAccessStore, providers.NewPlanPublishTransaction, grpc.NewPlanVersionAdminHandler, postgres.NewPlanVersionRepo, controller6.NewPlanningClientController, mapper4.NewPoiCategoryMapper, postgres4.NewPoiCategoryPostgres, services8.NewPoiCategoryUsecase, mapper4.NewPoiMapper, services8.NewPoiUsecase, controller6.NewPoiUserController, postgres5.NewPostgreCustomer, postgres5.NewPostgreOriginProfileRepo, postgres5.NewPostgrePipeline, postgres5.NewPostgreRule, postgres5.NewPostgreStage, handler.NewPriceTableHandler, mapper.NewPriceTableMapper, postgres.NewPriceTableRepo, services3.NewPriceTableUsecase, rule.NewPriorityEngine, postgres4.NewProAIJobRepo, qh_usecase.NewProAIJobUsecase, postgres5.NewProductCarePostgre, controller10.NewProductController, controller3.NewProductController, controller3.NewProductNoteController, repository4.NewProductNotePostgres, repository4.NewProductPostgres, repository4.NewProductPricePostgres, repository4.NewProductUserPostgres, handler.NewProfessionHandler, mapper.NewProfessionMapper, postgres.NewProfessionPostgres, services.NewProfessionUsecase, controller.NewProfileController, user.NewProfileDeleted, postgres.NewProfileDeletedPostgres, mapper.NewProfileMapper, postgres.NewProfileMediaPostgres, postgres.NewProfilePostgres, provider.NewProfileProvider, services.NewProfileUsecase, services3.NewProfileUsecaseInfoService, repository4.NewProjectAdminPostgres, controller3.NewProjectBuildController, repository4.NewProjectBuildPostgres, controller3.NewPropertyController, controller6.NewPropertyController, controller3.NewPropertyHistoryController, repository4.NewPropertyHistoryPostgres, repository4.NewPropertyPostgres, repository4.NewPropertyTypePostgres, controller3.NewPublicController, controller6.NewPublicController, controller6.NewPublicExtendedController, handler.NewPurposeUseHandler, mapper.NewPurposeUseMapper, postgres.NewPurposeUseRepo, controller6.NewQHAdminAuthorityController, controller6.NewQHAdminFamilyController, controller6.NewQHAdminLabelController, controller6.NewQHAdminLandUseController, controller6.NewQHAdminLayerController, controller6.NewQHAdminLegendController, postgres4.NewQHAuditPostgres, postgres4.NewQHAuthorityIssuringRepository, services8.NewQHAuthorityIssuringUsecase, postgres4.NewQHLabelRepository, services8.NewQHLabelUsecase, postgres4.NewQHLayerFamilyRepository, services8.NewQHLayerFamilyUsecase, services8.NewQHLayerLandUseGroupUsecase, postgres4.NewQHLayerLandUseRepository, postgres4.NewQHLayerLegendRepository, services8.NewQHLayerLegendUsecase, postgres4.NewQHLayerLifecyclePostgres, qh_usecase.NewQHPlanningClassifyUsecase, postgres4.NewQHPlanningDocumentRepo, qh_usecase.NewQHPlanningDocumentUsecase, postgres4.NewQHPlanningEventRepo, qh_usecase.NewQHPlanningEventUsecase, qh_usecase.NewQHPlanningFolderUsecase, mapper4.NewQHPlanningMapper, postgres4.NewQHPlanningProjectRepo, qh_usecase.NewQHPlanningProjectUsecase, mapper5.NewRateMapper, postgres5.NewRatePostgres, services4.NewRateUsecase, redis.NewRedisProvider, dto2.NewRefreshResponse, controller6.NewRegionController, postgres4.NewRegionExtendRepository, services8.NewRegionExtendUsecase, mapper4.NewRegionMapper, postgres4.NewRegionRepository, services8.NewRegionUsecase, plan.NewRegistry, postgres5.NewRegistryPostgres, services4.NewRegistryUsecase, controller6.NewReportController, mapper5.NewReportMapper, postgres5.NewReportPostgres, postgres5.NewReportProofPostgres, postgres5.NewReportReasonPostgres, services4.NewReportReasonUsecase, postgres4.NewReportRepository, postgresreport.NewReportStore, services4.NewReportUsecase, mappoint.NewRepository, planningclient.NewRepository, publiccontent.NewRepository, relatedentity.NewRepository, organization.NewRepository, controller4.NewRequestStatsController, rule.NewResolutionPipeline, layer_resolver.NewResolver, engine.NewResolverEngine, layer_resolver.NewResolverWithDB, handler.NewRoleGroupHandler, mapper2.NewRoleGroupMapper, services6.NewRoleGroupRegistry, postgres2.NewRoleGroupRepo, services6.NewRoleGroupUsecase, validator.NewRoleGroupValidator, handler.NewRoleHandler, mapper2.NewRoleMapper, postgres2.NewRoleRepo, services6.NewRoleUsecase, services6.NewRoleUsecasePermissionService, controller7.NewRuleController, services4.NewRuleEventUsecase, services4.NewRuleUsecase, processing.NewRunner, reservationcleanup.NewRunner, usageprojection.NewRunner, properties.NewRuntimeProperties, sms.NewSMSProvider, controller4.NewSearchLatencyController, repository.NewSearchLatencyPostgres, controller8.NewSeoDomainController, repository5.NewSeoDomainPostgres, application2.NewService, admin2.NewService, rendering.NewService, mappoint2.NewService, application.NewService, quota.NewService, reservationcleanup.NewService, usageprojection.NewService, application3.NewService, bootstrapadmin.NewService, commercialprofile.NewService, evaluate.NewService, organization2.NewService, admin.NewService, publish.NewService, cancel.NewService, checkout.NewService, settlement.NewService, mapper2.NewSessionMapper, postgres2.NewSessionRepository, subscriptionpostgres.NewSettlementStore, postgres5.NewSharingAccessPostgre, services4.NewSharingAccessUsecase, controller7.NewSharingController, controller8.NewSitemapController, postgresrender.NewSource, postgresreport.NewSourceStore, controller7.NewStageController, services4.NewStageUsecase, postgres2.NewStatusRepository, requeststats.NewStore, postgresjob.NewStore, postgresusage.NewStore, memoryjob.NewStore, memoryquota.NewStore, memoryusage.NewStore, bootstrapadmin2.NewStore, grpc.NewSubscriptionAdminHandler, grpc.NewSubscriptionCheckoutHandler, controller6.NewSubscriptionController, postgres4.NewSubscriptionRepository, grpc.NewSubscriptionSettlementHandler, accesspostgres.NewSubscriptionStore, services8.NewSubscriptionUsecase, controller7.NewSupportTicketController, postgres5.NewSupportTicketPostgres, services4.NewSupportTicketUsecase, controller3.NewSyncController, controller4.NewSystemConfigController, repository.NewSystemConfigPostgres, controller7.NewTagController, controller.NewTagController, handler.NewTagHandler, mapper5.NewTagMapper, mapper.NewTagMapper, postgres5.NewTagPostgres, postgres.NewTagPostgres, services4.NewTagUsecase, services.NewTagUsecase, rule.NewTimelineEngine, postgres3.NewTqdDB, postgres3.NewTransactionGorm, controller4.NewUpdateDataController, repository.NewUpdateDataPostgres, client2.NewUserClient, job.NewUserDashboardStatsJob, controller4.NewUserGuideController, repository.NewUserGuidePostgres, handler.NewUserInfoHandler, mapper2.NewUserInfoMapper, postgres2.NewUserInfoRepository, services6.NewUserInfoUsecase, user.NewUserProfileEntityWithRequest, services.NewUserUsecase, controller4.NewVersionController, repository.NewVersionPostgres, processing.NewWorker, mapper4.NewWorkspaceMapper, oauth.NewZaloAuthService, zns.NewZnsProvider, scheduler.NewZnsScheduler, crm.ProvideAppointmentStatsJob, tqd.ProvideGeneratedReportService, tqd.ProvideProfileUsageService, tqd.ProvideReportUsecase)

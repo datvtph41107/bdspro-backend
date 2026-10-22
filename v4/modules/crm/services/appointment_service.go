@@ -11,14 +11,14 @@ import (
 
 	sharepb "pb/types/shared"
 
-	"userv4/modules/crm/client"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
-	bdsenums "userv4/modules/bdspro/enums"
-	bdsutils "userv4/modules/bdspro/utils"
+	bdsenums "mdn4/modules/bdspro/enums"
+	bdsutils "mdn4/modules/bdspro/utils"
+	"mdn4/modules/crm/client"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 )
 
 type AppointmentUsecase interface {

@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
+	mapper "mdn4/modules/user/mapper"
+	usecases "mdn4/modules/user/services/user"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	usecases "userv4/modules/user/services/user"
 )
 
 // TagService owns tag HTTP surface migrated into modules/user.
@@ -19,6 +19,7 @@ type TagService interface {
 }
 
 // LocalTagService adapts TagUsecase into modules/user.
+// @bind: mdn4/modules/user/services.TagService
 type LocalTagService struct {
 	usecase *usecases.TagUsecase
 	mapper  *mapper.TagMapper

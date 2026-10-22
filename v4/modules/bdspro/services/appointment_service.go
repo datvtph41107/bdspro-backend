@@ -7,14 +7,15 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
-	"github.com/lib/pq"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/repository"
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/repository"
+
+	"github.com/lib/pq"
 )
 
 type AppointmentService interface {
@@ -25,6 +26,7 @@ type AppointmentService interface {
 	DeleteAppointment(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/bdspro/services.AppointmentService
 type LocalAppointmentService struct {
 	sync     *_utils.SyncUtil
 	repo     repository.AppointmentRepository

@@ -3,9 +3,9 @@ package entity
 import (
 	base_enum "base/enum"
 	_models "common/models"
+	"mdn4/modules/crm/enums"
+	user_entity "mdn4/modules/user/domain"
 	"time"
-	"userv4/modules/crm/enums"
-	user_entity "userv4/modules/user/domain"
 
 	"github.com/lib/pq"
 )

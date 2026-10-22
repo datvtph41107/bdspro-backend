@@ -2,8 +2,8 @@ package mapper
 
 import (
 	_utils "common/utils"
+	domain "mdn4/modules/tqd/entity"
 	tqdpb "pb/types/tqd"
-	domain "userv4/modules/tqd/entity"
 )
 
 // DirectoryCategoryMapper handles mapping between domain and proto

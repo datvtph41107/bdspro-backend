@@ -6,10 +6,10 @@ import (
 
 	_entity "common/domain/entity"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
 	tqdpb "pb/types/tqd"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
 )
 
 type OpenHourMapper struct{}

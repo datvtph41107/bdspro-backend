@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"userv4/modules/user/domain/entitlement"
+	access "mdn4/modules/user/domain/entitlement"
 )
 
 var (

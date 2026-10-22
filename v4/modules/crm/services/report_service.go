@@ -4,10 +4,10 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 )
 
 type ReportUsecase struct {

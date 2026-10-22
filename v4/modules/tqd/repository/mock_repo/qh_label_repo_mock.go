@@ -2,7 +2,7 @@ package mock_repo
 
 import (
 	context "context"
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 
 	mock "github.com/stretchr/testify/mock"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 
 	"gorm.io/gorm"
 )
@@ -16,6 +16,7 @@ type ProductRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entity.Product, error)
 	ListByIDs(ctx context.Context, ids []uint64) ([]*entity.Product, error)
 	Create(ctx context.Context, product *entity.Product) error
+	CreateAttachedToProperty(ctx context.Context, propertyID uint64, product *entity.Product) error
 	SoftDelete(ctx context.Context, id, profileID uint64) error
 }
 
@@ -231,6 +232,73 @@ func (r *productPostgres) Create(ctx context.Context, product *entity.Product) e
 	})
 }
 
+// CreateAttachedToProperty creates a product linked to an existing property lineage (property/new flow).
+func (r *productPostgres) CreateAttachedToProperty(ctx context.Context, propertyID uint64, product *entity.Product) error {
+	if r.db == nil || product == nil || propertyID == 0 {
+		return nil
+	}
+	product.PropertyID = &propertyID
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		mediaItems := product.MediaList
+		product.MediaList = nil
+		houseInfo := product.HouseInfo
+		product.HouseInfo = nil
+		price := product.Price
+		product.Price = nil
+		if price != nil {
+			if err := tx.Create(price).Error; err != nil {
+				return err
+			}
+			product.LastPriceID = &price.ID
+		}
+		if err := tx.Create(product).Error; err != nil {
+			return err
+		}
+		if price != nil {
+			pid := product.ID
+			if err := tx.Model(&entity.ProductPrice{}).Where("id = ?", price.ID).
+				Update("product_id", pid).Error; err != nil {
+				return err
+			}
+			price.ProductID = &pid
+			product.Price = price
+		}
+		if houseInfo != nil {
+			houseInfo.ProductID = product.ID
+			if err := tx.Create(houseInfo).Error; err != nil {
+				return err
+			}
+			product.HouseInfo = houseInfo
+		}
+		pu := &entity.ProductUser{
+			ProfileID:       product.OwnerID,
+			ProductID:       product.ID,
+			IsOwner:         true,
+			OwnerOf:         product.OwnerOf,
+			Version:         1,
+			OriginProfileID: &product.OwnerID,
+		}
+		if err := tx.Create(pu).Error; err != nil {
+			return err
+		}
+
+		relID := product.ID
+		rel := &entity.PropertyRelation{
+			PropertyID:   propertyID,
+			RelationID:   &relID,
+			RelationType: entity.RelationTypeProduct,
+		}
+		if err := tx.Create(rel).Error; err != nil {
+			return err
+		}
+
+		_ = mediaItems // product media rows are not persisted separately on v4 DSN yet
+
+		return tx.Model(&entity.Product{}).Where("id = ?", product.ID).
+			Update("property_id", propertyID).Error
+	})
+}
+
 // createPropertyWithProduct mirrors bdspro CreateWithProduct and fills info/location/
 // land/building/statistic/user/media so product detail & me responses match old shape.
 func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems []entity.ProductMediaInput) (uint64, error) {
@@ -241,7 +309,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 		ProjectID:      product.ProjectID,
 		Scope:          10,
 	}
-	if err := tx.Create(info).Error; err != nil {
+	if err := createSerialEntity(tx, "property_info", info); err != nil {
 		return 0, err
 	}
 
@@ -252,7 +320,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 		MapURL:        product.GoogleMapLink,
 		PositionType:  uint32(enums.EPositionTypeRelative),
 	}
-	if err := tx.Create(loc).Error; err != nil {
+	if err := createSerialEntity(tx, "property_location", loc); err != nil {
 		return 0, err
 	}
 
@@ -271,7 +339,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 			land.DocumentType = product.HouseInfo.CertificateHouse
 		}
 	}
-	if err := tx.Create(land).Error; err != nil {
+	if err := createSerialEntity(tx, "property_land_info", land); err != nil {
 		return 0, err
 	}
 
@@ -298,14 +366,14 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 				bi.Bathrooms = &v
 			}
 		}
-		if err := tx.Create(bi).Error; err != nil {
+		if err := createSerialEntity(tx, "property_building_info", bi); err != nil {
 			return 0, err
 		}
 		buildingID = &bi.ID
 	}
 
 	stat := &entity.PropertyStatistic{ProductCount: 1}
-	if err := tx.Create(stat).Error; err != nil {
+	if err := createSerialEntity(tx, "property_statistic", stat); err != nil {
 		return 0, err
 	}
 
@@ -318,7 +386,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 		BuildingInfoID:  buildingID,
 		StatisticID:     &stat.ID,
 	}
-	if err := tx.Create(lineage).Error; err != nil {
+	if err := createSerialEntity(tx, "property_lineage", lineage); err != nil {
 		return 0, err
 	}
 
@@ -339,7 +407,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 		OriginID:          &product.OwnerID,
 		OwneredAt:         &now,
 	}
-	if err := tx.Create(propUser).Error; err != nil {
+	if err := createSerialEntity(tx, "property_user", propUser); err != nil {
 		return 0, err
 	}
 
@@ -362,7 +430,7 @@ func createPropertyWithProduct(tx *gorm.DB, product *entity.Product, mediaItems 
 			MediaURL:  m.MediaURL,
 			SortOrder: order,
 		}
-		if err := tx.Create(pm).Error; err != nil {
+		if err := createSerialEntity(tx, "property_media", pm); err != nil {
 			return 0, err
 		}
 		if avatarID == nil || m.IsMain {

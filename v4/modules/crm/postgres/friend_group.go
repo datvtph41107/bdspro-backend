@@ -3,13 +3,13 @@ package postgres
 import (
 	_routes "common/routes"
 	"context"
-	domain "userv4/modules/crm/entity"
 	"fmt"
+	domain "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.FriendGroupRepo
+// @bind: mdn4/modules/crm/repository.FriendGroupRepo
 type FriendGroupRepo struct {
 	DB *gorm.DB
 }

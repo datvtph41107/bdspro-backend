@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
-	"userv4/internal/requeststats"
-	"userv4/modules/hub/dto"
+	"mdn4/internal/requeststats"
+	"mdn4/modules/hub/dto"
 )
 
 // RequestStatsService owns request_stats / audit read+track flows for modules/hub.
@@ -19,6 +19,7 @@ type RequestStatsService interface {
 }
 
 // LocalRequestStatsService reads/writes request stats in the local v4 database.
+// @bind: mdn4/modules/hub/services.RequestStatsService
 type LocalRequestStatsService struct {
 	collector *requeststats.Collector
 	store     *requeststats.Store

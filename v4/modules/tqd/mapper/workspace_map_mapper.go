@@ -1,8 +1,8 @@
 package mapper
 
 import (
+	"mdn4/modules/tqd/dto"
 	tqdpb "pb/types/tqd"
-	"userv4/modules/tqd/dto"
 )
 
 type WorkspaceMapper struct{}

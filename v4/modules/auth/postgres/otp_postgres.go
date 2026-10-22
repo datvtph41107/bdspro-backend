@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"mdn4/modules/auth/domain/auth"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/auth"
 )
 
 // OTPPostgres implementation của OTP repository
-// @bind: user/internal/interface/repo.OTPRepository
+// @bind: mdn4/internal/interface/repo.OTPRepository
 type OTPPostgres struct {
 	db *gorm.DB
 }

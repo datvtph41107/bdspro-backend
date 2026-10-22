@@ -3,7 +3,7 @@ package repo
 import (
 	_crud "common/domain/crud"
 	"context"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
 )
 
 type IPurposeUseRepo interface {

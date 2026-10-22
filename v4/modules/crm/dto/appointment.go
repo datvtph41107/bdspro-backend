@@ -5,7 +5,7 @@ import (
 	sharepb "pb/types/shared"
 	"time"
 
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 )
 
 type AppointmentDTO struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_dto "common/domain/dto"
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 type RegionExtendRepository interface {

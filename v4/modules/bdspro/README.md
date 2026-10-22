@@ -13,7 +13,10 @@ enums/        In-process enum catalogs (public/enums)
 
 Phase-1 routes (local, no bdspro/crm/notification TCP for these reads):
 
-- `GET /v2/bdspro/ts` — app sync timestamps (Redis / SyncUtil), includes `bank_all` for `/v2/payment/bank/all`
+- `GET /v2/bdspro/ts` — app sync timestamps (Redis / SyncUtil), includes `property_types` for `/v2/bdspro/v2/list/property-type`, `bank_all` for `/v2/payment/bank/all`
+- `GET /v2/bdspro/v2/list/property-type` — all property types (`timestamp` query for cache skip; envelope `timestamp` on response)
+- `POST /v2/bdspro/property/new` — tạo property; kèm `product` → product, `listing` → listing (cần product), `asset` → asset + `asset_legals` (từ `asset.legalItems` và `legalInfo`) + `property_relation` (type 20), cùng transaction với property
+- `GET /v2/bdspro/v2/listing/me`, `GET /v4/bdspro/listing/me` — listings của user hiện tại (`page`, `size`, `text`, `transactionType`, `productId`, `timestamp`; envelope `timestamp`; `/ts` key `listing_me`)
 - `GET /v4/deals/me` — deals of current user (was `/v2.1/org/deals/user`)
 - `POST /v4/deal`, `PUT /v4/deal/{id}`, `DELETE /v4/deal/{id}` — create / update / delete deal (was `POST|PUT|DELETE /v2.1/org/deal[/{id}]`)
 - `PUT /v4/deal/{id}/setting` — update deal settings (was `PUT /v2.1/org/deal/{dealId}/setting`)
@@ -34,7 +37,8 @@ Phase-1 routes (local, no bdspro/crm/notification TCP for these reads):
 - `GET /v4/appointment/{id}` — appointment detail (was `/v2/appointment/{id}` / `/v2.1/appointment/{id}`)
 - `GET /v2.1/appointment/list/by-product/:id`
 - `GET /v2/notification/property-history/:id`
-- `GET /v2/bdspro/v2/property/me`, detail, `:id/timestamp`
+- `GET /v2/bdspro/v2/property/me`, `GET /v2/bdspro/v2/property/detail/{id}`, `GET /v4/bdspro/property/detail/{id}`, `GET .../property/timestamp/{id}` (v4 + v2; avoids mux clash with detail/{id})
+- `POST /v2/bdspro/property/new` — create property (+ optional nested product)
 - Public catalog: `GET /v2/bdspro/v2/list/project`, `GET /v2/bdspro/v2/list/project-build`, `GET /v2/bdspro/v2/project-build/items`
 - Project build CRUD: `GET/POST /v2/bdspro/v2/project-build`, `GET /v2/bdspro/v2/project-build/me` (tòa nhà do user tạo), `GET /v2/bdspro/v2/project-build/detail/{id}`, `PUT/DELETE /v2/bdspro/v2/project-build/{id}`
 - Admin project CRUD: `GET /v2/bdspro/admin/project/list`, `POST/PUT/DELETE /v2/bdspro/admin/project[/{id}]`

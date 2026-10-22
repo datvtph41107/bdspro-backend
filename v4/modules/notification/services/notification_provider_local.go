@@ -7,11 +7,11 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	_utils "common/utils"
-	sharepb "pb/types/shared"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/notification/entity"
+	"mdn4/modules/notification/repository"
 	shared_enum "pb/enums"
-	"userv4/modules/auth/dto"
-	"userv4/modules/notification/entity"
-	"userv4/modules/notification/repository"
+	sharepb "pb/types/shared"
 
 	"github.com/lib/pq"
 	"gorm.io/datatypes"
@@ -19,6 +19,7 @@ import (
 
 // LocalNotificationProvider writes notification/history/config to the v4 DSN.
 // It replaces remote notification-service calls for in-process producers.
+// @bind: mdn4/internal/interface/providers.NotificationProvider
 type LocalNotificationProvider struct {
 	repo repository.NotificationRepository
 	sync *_utils.SyncUtil

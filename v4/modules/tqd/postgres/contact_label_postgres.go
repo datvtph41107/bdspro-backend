@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 	"strings"
-	domain "userv4/modules/tqd/entity"
-	repo "userv4/modules/tqd/repository"
 
 	_dto "common/domain/dto"
 

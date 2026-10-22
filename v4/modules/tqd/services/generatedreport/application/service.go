@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"time"
 
-	"userv4/modules/tqd/services/generatedreport/processing"
-	"userv4/modules/tqd/services/quota"
-	"userv4/modules/tqd/services/usage"
+	"mdn4/modules/tqd/services/generatedreport/processing"
+	"mdn4/modules/tqd/services/quota"
+	"mdn4/modules/tqd/services/usage"
 )
 
 // Service sở hữu create-report flow.
@@ -37,6 +37,8 @@ type Service struct {
 	now                 func() time.Time
 }
 
+// NewService is not wired on v4 yet; tqd.ProvideGeneratedReportService supplies nil.
+// @wire:skip
 func NewService(
 	source SourceStore,
 	acceptance AcceptanceStore,

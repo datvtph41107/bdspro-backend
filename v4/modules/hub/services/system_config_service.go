@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	_errors "common/errors"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 // SystemConfigService manages system configuration CRUD and query operations.
@@ -20,6 +20,7 @@ type SystemConfigService interface {
 	ResetDefaultByGroup(ctx context.Context, groupKey string) ([]*dto.SystemConfigItem, int, error)
 }
 
+// @bind: mdn4/modules/hub/services.SystemConfigService
 type LocalSystemConfigService struct {
 	repo repository.SystemConfigRepository
 }

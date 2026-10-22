@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_enum "common/domain/enum"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
 )
 
 // ProfileAccountRepository owns post-profile account lock/status on user_profile.

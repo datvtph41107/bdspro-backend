@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/entity"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/entity"
 
 	"gorm.io/gorm"
 )
@@ -70,6 +70,8 @@ type LocationRepository interface {
 
 type locationPostgres struct{ db *gorm.DB }
 
+// NewLocationPostgres is superseded by postgres.NewLocationRepository in the HTTP graph.
+// @wire:skip
 func NewLocationPostgres(db *gorm.DB) LocationRepository {
 	return &locationPostgres{db: db}
 }

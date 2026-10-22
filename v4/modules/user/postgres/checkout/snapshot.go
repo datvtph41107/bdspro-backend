@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	plan "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/subscription/checkout"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	plan "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/subscription/checkout"
 )
 
 type checkoutSnapshotRow struct {

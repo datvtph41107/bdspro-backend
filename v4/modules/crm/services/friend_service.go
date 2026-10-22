@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"time"
 
-	"userv4/modules/crm/data"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/enums"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/data"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 	sharepb "pb/types/shared"
 )
 

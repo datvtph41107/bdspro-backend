@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"userv4/modules/auth/entity"
+	"mdn4/modules/auth/entity"
 )
 
 // AuthMethodRepository is the login-facing credential store.

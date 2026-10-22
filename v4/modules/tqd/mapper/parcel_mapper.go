@@ -7,14 +7,14 @@ import (
 	"strings"
 
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	domain "mdn4/modules/tqd/entity"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 	sharepb "pb/types/shared"
 	tqdpb "pb/types/tqd"
-	domain "userv4/modules/tqd/entity"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 type ParcelMapper struct {
@@ -1072,13 +1072,13 @@ func (m *ParcelMapper) PolygonMapTargetsToProto(resp *dto.PolygonMapTargetsRespo
 
 // landUseKey is the composite key for deduplication within a layer.
 type landUseKey struct {
-	layerID    uint64
-	landUseID  uint64
+	layerID   uint64
+	landUseID uint64
 }
 
 func (m *ParcelMapper) BuildLayerQuickInfoFromRows(rows []dto.ParcelLayerInfo) *tqdpb.LayerQuickInfoResponse {
 	type layerEntry struct {
-		proto      *tqdpb.LayerQuickInfo
+		proto *tqdpb.LayerQuickInfo
 		// landUseID -> index trong LandUses slice
 		landUseIdx map[uint64]int
 	}

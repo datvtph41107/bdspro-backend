@@ -25,6 +25,7 @@ type TileSessionService interface {
 }
 
 // LocalTileSessionService stores short-lived tile decrypt keys in Redis.
+// @bind: mdn4/modules/user/services.TileSessionService
 type LocalTileSessionService struct {
 	redis *_redis.RedisService
 

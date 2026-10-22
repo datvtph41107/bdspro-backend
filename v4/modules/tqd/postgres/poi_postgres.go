@@ -9,9 +9,9 @@ import (
 	_dto "common/domain/dto"
 	_provider "common/provider"
 	_utils "common/utils"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"

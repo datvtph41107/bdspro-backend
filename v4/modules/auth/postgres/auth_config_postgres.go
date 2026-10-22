@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 
+	"mdn4/modules/auth/domain/auth"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/auth"
 )
 
 // AuthConfigPostgres implements the dynamic auth configuration persistence used
 // by integration providers such as ZNS.
-// @bind: user/internal/interface/repo.IAuthConfigRepo
+// @bind: mdn4/internal/interface/repo.IAuthConfigRepo
 type AuthConfigPostgres struct {
 	db *gorm.DB
 }

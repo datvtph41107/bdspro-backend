@@ -3,10 +3,10 @@ package memoryusage
 import (
 	"common/operation"
 	"context"
+	"mdn4/modules/tqd/access"
+	"mdn4/modules/tqd/services/usage"
 	"strings"
 	"testing"
-	"userv4/modules/tqd/access"
-	"userv4/modules/tqd/services/usage"
 )
 
 func TestReadCommandRejectsPayloadReuseAndAcceptsOnlyOnce(t *testing.T) {

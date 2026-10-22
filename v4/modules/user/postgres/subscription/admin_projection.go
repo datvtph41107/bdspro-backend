@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	subscriptionusecase "mdn4/modules/user/services/subscription"
+
 	"gorm.io/gorm"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	subscriptionusecase "userv4/modules/user/services/subscription"
 )
 
-// @bind: user/internal/usecase/subscription.AdminRepository
+// @bind: mdn4/modules/user/services/subscription.AdminRepository
 type AdminProjectionStore struct{ db *gorm.DB }
 
 func NewAdminProjectionStore(db *gorm.DB) *AdminProjectionStore { return &AdminProjectionStore{db: db} }

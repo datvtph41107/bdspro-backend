@@ -3,7 +3,7 @@ package rule
 import (
 	"strings"
 
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // LandUseCodeResolver — Engine chuẩn hóa ngữ nghĩa land use code

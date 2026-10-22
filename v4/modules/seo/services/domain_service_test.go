@@ -3,7 +3,7 @@ package services
 import (
 	"testing"
 
-	"userv4/modules/seo/entity"
+	"mdn4/modules/seo/entity"
 )
 
 func TestSEORefTypeName(t *testing.T) {

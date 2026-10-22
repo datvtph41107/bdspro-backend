@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // MapToResolveResult chuyển đổi UnifiedResult → types.ResolveResult

@@ -11,15 +11,15 @@ import (
 	_errors "common/errors"
 	"common/identity"
 	_utils "common/utils"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/job"
+	"mdn4/modules/user/dto"
+	mapper "mdn4/modules/user/mapper"
+	usecase "mdn4/modules/user/services/user"
+	"mdn4/modules/user/services/useradmin"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	"userv4/modules/user/dto"
-	"userv4/internal/interface/providers"
-	"userv4/internal/job"
-	usecase "userv4/modules/user/services/user"
-	"userv4/modules/user/services/useradmin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -46,6 +46,7 @@ type AdminUserService interface {
 }
 
 // LocalAdminUserService adapts admin usecases into modules/user.
+// @bind: mdn4/modules/user/services.AdminUserService
 type LocalAdminUserService struct {
 	admin       *usecase.AdminUsecase
 	profile     *usecase.ProfileUsecase

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"mdn4/infra/client"
+	"mdn4/modules/notification/dto"
 	notificationpb "pb/types/notification"
-	"userv4/infra/client"
-	"userv4/modules/notification/dto"
 )
 
 // ClientNotificationService adapts remote GatewayNotificationService into modules/notification.

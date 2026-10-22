@@ -4,16 +4,16 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
+	"mdn4/internal/interface/repo"
+	internalenums "mdn4/modules/auth/enums"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	userenums "mdn4/modules/user/enums"
+	"mdn4/modules/user/utils"
 	"time"
-	userenums "userv4/modules/user/enums"
-	"userv4/modules/user/dto"
-	internalenums "userv4/modules/auth/enums"
-	"userv4/internal/interface/repo"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/utils"
 )
 
-// @bind: user/internal/interface/providers.ProfileProvider
+// @bind: mdn4/internal/interface/providers.ProfileProvider
 type ProfileProvider struct {
 	profileRepo        repo.IProfileRepo
 	profileAccountRepo repo.ProfileAccountRepository

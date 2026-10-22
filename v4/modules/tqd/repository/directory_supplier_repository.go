@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
 )
 
 // DirectorySupplierRepository defines the interface for directory supplier repository

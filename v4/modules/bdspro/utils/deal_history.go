@@ -7,10 +7,10 @@ import (
 	"time"
 
 	_utils "common/utils"
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/enums"
-	notifentity "userv4/modules/notification/entity"
-	notifrepo "userv4/modules/notification/repository"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/enums"
+	notifentity "mdn4/modules/notification/entity"
+	notifrepo "mdn4/modules/notification/repository"
 
 	"gorm.io/datatypes"
 )

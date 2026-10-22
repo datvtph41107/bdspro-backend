@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	_utils "common/utils"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	repo "mdn4/modules/tqd/repository"
 )
 
 // PoiCategoryUsecase defines business logic for POI category

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/enums"
-	repo "userv4/modules/crm/repository"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
+	repo "mdn4/modules/crm/repository"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

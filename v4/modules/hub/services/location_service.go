@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"strings"
 
+	_dto "common/domain/dto"
 	_errors "common/errors"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 	hubpb "pb/types/hub"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
 )
 
 // LocationService owns v1 location flows for modules/hub.
@@ -27,9 +28,11 @@ type LocationV2Service interface {
 	GetWardsV2(ctx context.Context, req dto.GetWardsV2Request) (*hubpb.GetWardsV2Response, error)
 	GetWardV2ByCode(ctx context.Context, code int32) (*hubpb.GetWardV2ByCodeResponse, error)
 	SearchLocationV2(ctx context.Context, req dto.SearchLocationV2Request) (*hubpb.SearchLocationV2Response, error)
+	InferAddressFromText(ctx context.Context, text string) (*_dto.AddressV3DTO, error)
 }
 
 // LocalLocationService serves hub v1 provinces/districts/wards from the v4 DSN.
+// @bind: mdn4/modules/hub/services.LocationService
 type LocalLocationService struct {
 	repo repository.LocationRepository
 }
@@ -95,6 +98,7 @@ func (s *LocalLocationService) SearchLocation(ctx context.Context, req dto.Searc
 }
 
 // LocalLocationV2Service serves hub v2 provinces/wards from the v4 DSN.
+// @bind: mdn4/modules/hub/services.LocationV2Service
 type LocalLocationV2Service struct {
 	repo repository.LocationV2Repository
 }
@@ -268,4 +272,32 @@ func mapWardV2(w *entity.WardV2) *hubpb.WardV2 {
 func parseInt32Code(v string) int32 {
 	n, _ := strconv.Atoi(strings.TrimSpace(v))
 	return int32(n)
+}
+
+// InferAddressFromText matches hub-service internal InferAddressFromText (province + ward v2).
+func (s *LocalLocationV2Service) InferAddressFromText(ctx context.Context, text string) (*_dto.AddressV3DTO, error) {
+	if s == nil || s.repo == nil {
+		return &_dto.AddressV3DTO{}, nil
+	}
+	words := strings.ToLower(text)
+	province, _ := s.repo.InferProvinceFromText(ctx, words)
+	ward, provinceName, _ := s.repo.InferWardFromText(ctx, words)
+
+	result := &_dto.AddressV3DTO{}
+	if province != nil {
+		id := province.ID
+		result.ProvinceID = &id
+		result.ProvinceName = province.Name
+	}
+	if ward != nil {
+		id := ward.ID
+		result.WardID = &id
+		result.WardName = ward.Name
+		if provinceName != "" {
+			result.ProvinceName = provinceName
+			pid := ward.ProvinceID
+			result.ProvinceID = &pid
+		}
+	}
+	return result, nil
 }

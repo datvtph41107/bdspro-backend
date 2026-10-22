@@ -2,9 +2,9 @@ package qh
 
 import (
 	_models "common/domain/entity"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
 	"time"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/enums"
 )
 
 type QHPlanningProject struct {

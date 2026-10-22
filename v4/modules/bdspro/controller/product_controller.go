@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -36,7 +36,13 @@ func (c *ProductController) productMe(ctx context.Context, req dto.SyncListReque
 	if err != nil {
 		return nil, err
 	}
-	return searchResponseResult(result)
+	return httpapi.OKResponse(&httpapi.ResultResponse{
+		Data:      result.Data,
+		Total:     result.TotalElements,
+		Page:      result.Page,
+		Size:      result.Size,
+		Timestamp: result.Timestamp,
+	})
 }
 
 func (c *ProductController) getDetail(ctx context.Context, req dto.SyncListByIDRequest) (*httpapi.Result, error) {

@@ -3,9 +3,9 @@ package application
 import (
 	"context"
 
-	"userv4/modules/tqd/enums"
-	planningdomain "userv4/modules/tqd/entity/planningclient"
-	publicdomain "userv4/modules/tqd/entity/publiccontent"
+	planningdomain "mdn4/modules/tqd/entity/planningclient"
+	publicdomain "mdn4/modules/tqd/entity/publiccontent"
+	"mdn4/modules/tqd/enums"
 )
 
 // PlanningRepository contains persistence operations used by client-facing

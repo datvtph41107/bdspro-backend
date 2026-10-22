@@ -3,8 +3,8 @@ package mapper
 import (
 	"testing"
 
+	qh "mdn4/modules/tqd/entity/qh"
 	tqdpb "pb/types/tqd"
-	qh "userv4/modules/tqd/entity/qh"
 )
 
 func TestProjectDetailFieldsRoundTripThroughAdminContract(t *testing.T) {

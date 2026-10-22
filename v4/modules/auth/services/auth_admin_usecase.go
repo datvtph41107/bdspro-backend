@@ -5,13 +5,13 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/enums"
+	userdto "mdn4/modules/user/dto"
+	"mdn4/modules/user/entity"
 	"time"
-	"userv4/modules/auth/domain/auth"
-	userdto "userv4/modules/user/dto"
-	"userv4/modules/auth/enums"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
-	"userv4/modules/user/entity"
 )
 
 // AuthAdminUsecase - Quản lý admin trong auth-service

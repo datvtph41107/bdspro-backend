@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	catalogdomain "mdn4/modules/user/domain/plan"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/subscription/settlement"
+
 	"gorm.io/gorm"
-	catalogdomain "userv4/modules/user/domain/plan"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/subscription/settlement"
 )
 
 type currentRow struct {

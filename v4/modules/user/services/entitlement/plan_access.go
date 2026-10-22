@@ -1,6 +1,6 @@
 package evaluate
 
-import "userv4/modules/user/domain/entitlement"
+import access "mdn4/modules/user/domain/entitlement"
 
 /**
  * PlanAccess là quyền của một operation trong một plan version.

@@ -2,7 +2,7 @@ package dto
 
 import (
 	_enum "common/domain/enum"
-	"userv4/modules/auth/domain/auth"
+	"mdn4/modules/auth/domain/auth"
 )
 
 // Hàm khởi tạo AuthLoginResponse từ UserAuthEntity
@@ -284,11 +284,11 @@ type LoginWithKeyRequest struct {
 // Account Lock DTOs
 // LockAccountRequest đại diện cho yêu cầu khóa tài khoản
 type LockAccountRequest struct {
-	ProfileID uint64             `json:"profileId" binding:"required" validate:"required"`
+	ProfileID uint64            `json:"profileId" binding:"required" validate:"required"`
 	LockType  _enum.EUserStatus `json:"lockType" binding:"required" validate:"required"` // temporary hoặc permanent, 10: active, 40: inactive, 20: temporarily_locked, 30: permanently_locked
-	Duration  int                `json:"duration,omitempty"`                              // Số giờ khóa (chỉ dùng cho temporary)
-	Reason    string             `json:"reason" binding:"required" validate:"required,min=10,max=500"`
-	LockedBy  uint64             `json:"lockedBy" binding:"required" validate:"required"` // ID admin thực hiện khóa
+	Duration  int               `json:"duration,omitempty"`                              // Số giờ khóa (chỉ dùng cho temporary)
+	Reason    string            `json:"reason" binding:"required" validate:"required,min=10,max=500"`
+	LockedBy  uint64            `json:"lockedBy" binding:"required" validate:"required"` // ID admin thực hiện khóa
 }
 
 // UnlockAccountRequest đại diện cho yêu cầu mở khóa tài khoản
@@ -300,12 +300,12 @@ type UnlockAccountRequest struct {
 
 // LockAccountResponse đại diện cho response khóa tài khoản
 type LockAccountResponse struct {
-	Success     bool               `json:"success"`
-	Message     string             `json:"message"`
-	ProfileID   uint64             `json:"profileId"`
+	Success     bool              `json:"success"`
+	Message     string            `json:"message"`
+	ProfileID   uint64            `json:"profileId"`
 	LockType    _enum.EUserStatus `json:"lockType"`
-	LockedAt    string             `json:"lockedAt,omitempty"`
-	LockedUntil string             `json:"lockedUntil,omitempty"` // Chỉ có khi lockType = temporary
+	LockedAt    string            `json:"lockedAt,omitempty"`
+	LockedUntil string            `json:"lockedUntil,omitempty"` // Chỉ có khi lockType = temporary
 }
 
 // UnlockAccountResponse đại diện cho response mở khóa tài khoản
@@ -323,27 +323,27 @@ type GetAccountStatusRequest struct {
 
 // GetAccountStatusResponse đại diện cho response trạng thái tài khoản
 type GetAccountStatusResponse struct {
-	ProfileID   uint64             `json:"profileId"`
-	Status      uint32             `json:"status"`
-	StatusText  string             `json:"statusText"`
-	IsLocked    bool               `json:"isLocked"`
+	ProfileID   uint64            `json:"profileId"`
+	Status      uint32            `json:"status"`
+	StatusText  string            `json:"statusText"`
+	IsLocked    bool              `json:"isLocked"`
 	LockType    _enum.EUserStatus `json:"lockType,omitempty"`
-	LockedAt    string             `json:"lockedAt,omitempty"`
-	LockedUntil string             `json:"lockedUntil,omitempty"`
-	LockReason  string             `json:"lockReason,omitempty"`
-	LockedBy    *uint64            `json:"lockedBy,omitempty"`
-	CanLogin    bool               `json:"canLogin"`
-	IsExpired   bool               `json:"isExpired,omitempty"` // Chỉ có khi lockType = temporary
+	LockedAt    string            `json:"lockedAt,omitempty"`
+	LockedUntil string            `json:"lockedUntil,omitempty"`
+	LockReason  string            `json:"lockReason,omitempty"`
+	LockedBy    *uint64           `json:"lockedBy,omitempty"`
+	CanLogin    bool              `json:"canLogin"`
+	IsExpired   bool              `json:"isExpired,omitempty"` // Chỉ có khi lockType = temporary
 }
 
 // Batch Lock DTOs
 // LockMultipleUsersRequest đại diện cho yêu cầu khóa nhiều user
 type LockMultipleUsersRequest struct {
-	ProfileIDs []uint64           `json:"profileIds" binding:"required" validate:"required,min=1"`
+	ProfileIDs []uint64          `json:"profileIds" binding:"required" validate:"required,min=1"`
 	LockType   _enum.EUserStatus `json:"lockType" binding:"required" validate:"required"`
-	Duration   int                `json:"duration,omitempty"` // Số giờ khóa (chỉ dùng cho temporary)
-	Reason     string             `json:"reason" binding:"required" validate:"required,min=10,max=500"`
-	LockedBy   uint64             `json:"lockedBy" binding:"required" validate:"required"`
+	Duration   int               `json:"duration,omitempty"` // Số giờ khóa (chỉ dùng cho temporary)
+	Reason     string            `json:"reason" binding:"required" validate:"required,min=10,max=500"`
+	LockedBy   uint64            `json:"lockedBy" binding:"required" validate:"required"`
 }
 
 // UnlockMultipleUsersRequest đại diện cho yêu cầu mở khóa nhiều user
@@ -355,12 +355,12 @@ type UnlockMultipleUsersRequest struct {
 
 // LockMultipleUsersResponse đại diện cho response khóa nhiều user
 type LockMultipleUsersResponse struct {
-	Success     bool               `json:"success"`
-	Message     string             `json:"message"`
-	ProfileIDs  []uint64           `json:"profileIds"`
+	Success     bool              `json:"success"`
+	Message     string            `json:"message"`
+	ProfileIDs  []uint64          `json:"profileIds"`
 	LockType    _enum.EUserStatus `json:"lockType"`
-	LockedAt    string             `json:"lockedAt,omitempty"`
-	LockedUntil string             `json:"lockedUntil,omitempty"`
+	LockedAt    string            `json:"lockedAt,omitempty"`
+	LockedUntil string            `json:"lockedUntil,omitempty"`
 }
 
 // UnlockMultipleUsersResponse đại diện cho response mở khóa nhiều user
@@ -385,17 +385,17 @@ type GetAuthUsersByProfileIDsResponse struct {
 
 // AuthUserStatusInfo thông tin status của AuthUser
 type AuthUserStatusInfo struct {
-	ProfileID   uint64             `json:"profileId"`
+	ProfileID   uint64            `json:"profileId"`
 	Status      _enum.EUserStatus `json:"status"`
-	StatusText  string             `json:"statusText"`
-	IsLocked    bool               `json:"isLocked"`
+	StatusText  string            `json:"statusText"`
+	IsLocked    bool              `json:"isLocked"`
 	LockType    _enum.EUserStatus `json:"lockType,omitempty"`
-	LockedAt    string             `json:"lockedAt,omitempty"`
-	LockedUntil string             `json:"lockedUntil,omitempty"`
-	LockReason  string             `json:"lockReason,omitempty"`
-	LockedBy    uint64             `json:"lockedBy,omitempty"`
-	CanLogin    bool               `json:"canLogin"`
-	IsExpired   bool               `json:"isExpired,omitempty"`
+	LockedAt    string            `json:"lockedAt,omitempty"`
+	LockedUntil string            `json:"lockedUntil,omitempty"`
+	LockReason  string            `json:"lockReason,omitempty"`
+	LockedBy    uint64            `json:"lockedBy,omitempty"`
+	CanLogin    bool              `json:"canLogin"`
+	IsExpired   bool              `json:"isExpired,omitempty"`
 }
 
 // CreatePasswordRequest đại diện cho yêu cầu tạo mật khẩu

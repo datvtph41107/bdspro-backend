@@ -6,9 +6,9 @@ import (
 	"time"
 
 	_errors "common/errors"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 // EventQueueService owns event queue CRUD.
@@ -21,6 +21,7 @@ type EventQueueService interface {
 	UpdateStatus(ctx context.Context, req dto.EventQueueStatusRequest) (*dto.EventQueueItem, error)
 }
 
+// @bind: mdn4/modules/hub/services.EventQueueService
 type LocalEventQueueService struct {
 	repo repository.EventQueueRepository
 }

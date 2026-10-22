@@ -5,9 +5,9 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 	"strings"
 
 	"gorm.io/gorm"

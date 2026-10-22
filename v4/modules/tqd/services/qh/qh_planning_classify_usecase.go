@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
 	"path/filepath"
 	"strings"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
 )
 
 // classifyPromptFilenameTemplate — phân loại chỉ dựa tên file / path / đuôi (fallback).

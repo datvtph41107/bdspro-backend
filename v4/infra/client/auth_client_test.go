@@ -1,8 +1,8 @@
 package client
 
 import (
+	domainauth "mdn4/modules/auth/domain/auth"
 	"testing"
-	domainauth "userv4/modules/auth/domain/auth"
 )
 
 func TestAuthMethodToProviderDoesNotExposePasswordHash(t *testing.T) {

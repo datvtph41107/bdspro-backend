@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"userv4/modules/hub/entity"
+	"mdn4/modules/hub/entity"
 
 	"gorm.io/gorm"
 )

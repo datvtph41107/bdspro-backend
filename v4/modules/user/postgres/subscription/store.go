@@ -7,11 +7,12 @@ import (
 	"time"
 
 	_db "common/db"
+	"mdn4/modules/user/services/subscription/settlement"
+
 	"gorm.io/gorm"
-	"userv4/modules/user/services/subscription/settlement"
 )
 
-// @bind: user/internal/usecase/subscription/settlement.Store
+// @bind: mdn4/modules/user/services/subscription/settlement.Store
 type SettlementStore struct {
 	db  *_db.TransactionRepo
 	now func() time.Time

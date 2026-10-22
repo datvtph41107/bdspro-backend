@@ -2,14 +2,13 @@ package mapper
 
 import (
 	_utils "common/utils"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 	crmpb "pb/types/crm"
 )
 
 type ReportMapper struct {
 }
 
-// @bind: crm/infra/mapper.ReportMapper
 func NewReportMapper() *ReportMapper {
 	return &ReportMapper{}
 }

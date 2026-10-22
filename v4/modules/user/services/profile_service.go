@@ -9,13 +9,13 @@ import (
 	_provider "common/domain/provider"
 	_errors "common/errors"
 	_utils "common/utils"
+	"mdn4/infra/client"
+	"mdn4/internal/interface/repo"
+	mapper "mdn4/modules/user/mapper"
+	organizationusecase "mdn4/modules/user/services/organization"
+	usecases "mdn4/modules/user/services/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/infra/client"
-	mapper "userv4/modules/user/mapper"
-	"userv4/internal/interface/repo"
-	organizationusecase "userv4/modules/user/services/organization"
-	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,6 +38,7 @@ type ProfileService interface {
 }
 
 // ProfileUsecaseInfoService adapts legacy ProfileUsecase into modules/user ProfileService.
+// @bind: mdn4/modules/user/services.ProfileService
 type ProfileUsecaseInfoService struct {
 	profile       *usecases.ProfileUsecase
 	profileRepo   repo.IProfileRepo

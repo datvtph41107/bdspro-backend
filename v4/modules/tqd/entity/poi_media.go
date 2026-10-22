@@ -1,8 +1,8 @@
 package entity
 
 import (
+	"mdn4/modules/tqd/enums"
 	"time"
-	"userv4/modules/tqd/enums"
 )
 
 // POIMedia represents media files associated with a Point of Interest

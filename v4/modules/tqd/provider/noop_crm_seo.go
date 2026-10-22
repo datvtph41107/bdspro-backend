@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
 )
 
 // NoopCrmSeoProvider satisfies CrmSeoProvider without a CRM RPC client.
 // Client map reads do not need SEO generation; admin SEO endpoints return a clear error.
 type NoopCrmSeoProvider struct{}
 
+// NewNoopCrmSeoProvider is a fallback; the HTTP graph binds seo.LocalCrmSeoProvider.
+// @wire:skip
 func NewNoopCrmSeoProvider() CrmSeoProvider {
 	return NoopCrmSeoProvider{}
 }

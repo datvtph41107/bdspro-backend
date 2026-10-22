@@ -1,8 +1,8 @@
 package mapper
 
 import (
+	"mdn4/modules/user/entity"
 	pb "pb/types/user"
-	"userv4/modules/user/entity"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

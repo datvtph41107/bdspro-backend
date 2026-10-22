@@ -8,9 +8,9 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/repository"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/repository"
 )
 
 // CostTypeListOutcome is the cost-type catalog response + sync metadata.
@@ -28,6 +28,7 @@ type CostTypeService interface {
 	List(ctx context.Context, req dto.CostTypeSearchRequest) (*CostTypeListOutcome, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.CostTypeService
 type LocalCostTypeService struct {
 	repo repository.CostTypeRepository
 	sync *_utils.SyncUtil

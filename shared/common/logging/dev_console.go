@@ -84,7 +84,11 @@ func formatDevConsoleLine(ts time.Time, level slog.Level, msg string, attrs map[
 
 	lvl := colorLevel(levelString(level))
 	if level >= slog.LevelError {
-		return fmt.Sprintf("%s %-5s %s %s", ts.Format("15:04:05"), lvl, msg, devTailAttrs(attrs))
+		line := fmt.Sprintf("%s %-5s %s %s", ts.Format("15:04:05"), lvl, msg, devTailAttrs(attrs))
+		if stack := strings.TrimSpace(attrs["stack_trace"]); stack != "" {
+			line += "\n        " + strings.ReplaceAll(stack, "\n", "\n        ")
+		}
+		return line
 	}
 	if level >= slog.LevelWarn && attrs["category"] == "database" {
 		return formatDevSQLLine(ts, level, attrs)
@@ -258,6 +262,7 @@ func devTailAttrs(attrs map[string]string) string {
 	skip := map[string]struct{}{
 		"category": {}, "event_name": {}, "service_name": {}, "environment": {}, "run_id": {},
 		"sql": {}, "rows": {}, "duration_ms": {}, "query_source": {}, "db_system": {}, "sql_operation": {},
+		"stack_trace": {},
 	}
 	const maxExtra = 4
 	parts := make([]string, 0, 8)

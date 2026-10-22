@@ -8,12 +8,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	repo "mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	repo "userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services"
 )
 
 // ParcelUserController owns /v2/tqd/parcels/* + map-target + layer history/legal routes.

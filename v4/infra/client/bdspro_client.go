@@ -3,13 +3,13 @@ package client
 import (
 	"context"
 	"errors"
+	"mdn4/modules/user/dto"
 	"pb/clients"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/modules/user/dto"
 )
 
-// @bind: user/internal/interface/providers.BdsproProvider
+// @bind: mdn4/internal/interface/providers.BdsproProvider
 type BdsproClient struct {
 	*clients.BdsproGrpcClient
 }

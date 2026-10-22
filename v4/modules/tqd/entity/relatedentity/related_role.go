@@ -1,6 +1,6 @@
 package relatedentity
 
-import discoverydomain "userv4/modules/tqd/entity/discovery"
+import discoverydomain "mdn4/modules/tqd/entity/discovery"
 
 // RelatedRole explains why a candidate matters to the current primary entity.
 // It is deliberately independent from provider/entity kind so clients can

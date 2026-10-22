@@ -3,15 +3,15 @@ package postgres
 import (
 	_routes "common/routes"
 	"context"
-	"userv4/modules/crm/infra/impl"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/infra/impl"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.StageRepo
+// @bind: mdn4/modules/crm/repository.StageRepo
 type PostgreStage struct {
 	db *gorm.DB
 }

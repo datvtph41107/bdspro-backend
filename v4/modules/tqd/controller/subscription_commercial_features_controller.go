@@ -7,12 +7,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
-	"userv4/modules/tqd/services/quota"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
+	"mdn4/modules/tqd/services/quota"
 )
 
 // SubscriptionController owns /v2/tqd/subscriptions/* and /v2/tqd/notifications/*.

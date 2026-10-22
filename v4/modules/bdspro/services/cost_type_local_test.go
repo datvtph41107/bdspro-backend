@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/repository"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/repository"
 )
 
 type stubCostTypeRepo struct{}

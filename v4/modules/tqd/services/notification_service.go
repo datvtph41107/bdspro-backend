@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	domain "userv4/modules/tqd/entity"
-	repo "userv4/modules/tqd/repository"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 )
 
 type NotificationUsecase interface {

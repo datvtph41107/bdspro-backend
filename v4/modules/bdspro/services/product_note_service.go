@@ -5,16 +5,17 @@ import (
 	"strconv"
 
 	_utils "common/utils"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/repository"
 	bdspropb "pb/types/bdspro"
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/repository"
 )
 
 type ProductNoteService interface {
 	ListByProduct(ctx context.Context, productID uint64, req dto.SyncByIDRequest) (*bdspropb.ListProductNotesResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.ProductNoteService
 type LocalProductNoteService struct {
 	sync    *_utils.SyncUtil
 	repo    repository.ProductNoteRepository

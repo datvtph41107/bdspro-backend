@@ -1,6 +1,6 @@
 package usage
 
-import usagedomain "userv4/modules/tqd/entity/usage"
+import usagedomain "mdn4/modules/tqd/entity/usage"
 
 type Event = usagedomain.Event
 type NewEventInput = usagedomain.NewEventInput

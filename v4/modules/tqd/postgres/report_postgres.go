@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 	"errors"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 	"strconv"
 	"strings"
-	domain "userv4/modules/tqd/entity"
-	repo "userv4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

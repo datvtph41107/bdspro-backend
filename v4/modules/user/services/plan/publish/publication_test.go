@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
+	catalogdomain "mdn4/modules/user/domain/plan"
 )
 
 type fakeTransaction struct {

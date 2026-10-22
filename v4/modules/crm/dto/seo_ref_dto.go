@@ -4,7 +4,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 // GetSeoRefsRequest chứa bộ lọc tham chiếu nguồn của một trang SEO.

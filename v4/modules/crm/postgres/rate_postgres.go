@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +13,6 @@ type RatePostgres struct {
 	db *gorm.DB
 }
 
-// @bind: crm/internal/repo.RateRepo
 func NewRatePostgres(db *gorm.DB) repo.RateRepo {
 	return &RatePostgres{db: db}
 }

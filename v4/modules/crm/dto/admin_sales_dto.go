@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 	"time"
 )
 

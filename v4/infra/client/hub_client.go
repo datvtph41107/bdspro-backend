@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"mdn4/modules/hub/repository"
 	hubpb "pb/types/hub"
-	"userv4/modules/hub/repository"
 )
 
-// @bind: user/internal/interface/providers.HubProvider
 // HubClient serves in-process hub lookups from the v4 DSN (no hub-service TCP).
+// @bind: mdn4/internal/interface/providers.HubProvider
 type HubClient struct {
 	location   repository.LocationRepository
 	locationV2 repository.LocationV2Repository

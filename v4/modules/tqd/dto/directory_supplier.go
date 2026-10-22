@@ -2,8 +2,8 @@ package dto
 
 import (
 	"encoding/json"
+	domain "mdn4/modules/tqd/entity"
 	"time"
-	domain "userv4/modules/tqd/entity"
 
 	_dto "common/domain/dto"
 	_entity "common/domain/entity"

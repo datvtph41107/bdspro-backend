@@ -7,9 +7,9 @@ import (
 
 	_db "common/db"
 	_enum "common/domain/enum"
-	"userv4/modules/auth/domain/access"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/access"
+	"mdn4/modules/user/domain/user"
 
 	"gorm.io/gorm"
 )

@@ -6,10 +6,10 @@ import (
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
 
-	mapper "userv4/modules/auth/mapper"
-	"userv4/modules/auth/domain/access"
-	"userv4/modules/auth/dto"
-	usecase "userv4/modules/auth/services"
+	"mdn4/modules/auth/domain/access"
+	"mdn4/modules/auth/dto"
+	mapper "mdn4/modules/auth/mapper"
+	usecase "mdn4/modules/auth/services"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // ResolutionPipeline — Orchestrator điều phối toàn bộ pipeline 12 bước

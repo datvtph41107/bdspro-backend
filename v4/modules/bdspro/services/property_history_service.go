@@ -5,17 +5,18 @@ import (
 	"strconv"
 
 	_utils "common/utils"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/repository"
 	notificationpb "pb/types/notification"
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/repository"
 )
 
 type PropertyHistoryService interface {
 	ListBySubject(ctx context.Context, subjectID uint64, req dto.SyncByIDRequest) (*notificationpb.GetPropertyHistoryResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.PropertyHistoryService
 type LocalPropertyHistoryService struct {
 	sync    *_utils.SyncUtil
 	repo    repository.PropertyHistoryRepository

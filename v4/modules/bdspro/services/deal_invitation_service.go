@@ -10,11 +10,11 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
 
 	"gorm.io/gorm"
 )
@@ -29,6 +29,7 @@ type DealInvitationService interface {
 	UpdateMemberRole(ctx context.Context, req dto.UpdateDealMemberRoleRequest) (*bdspropb.UpdateDealMemberRoleResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.DealInvitationService
 type LocalDealInvitationService struct {
 	sync    *_utils.SyncUtil
 	deal    repository.DealRepository

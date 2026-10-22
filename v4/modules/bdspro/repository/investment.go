@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 
 	"gorm.io/gorm"
 )

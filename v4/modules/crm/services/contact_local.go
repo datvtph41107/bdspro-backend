@@ -11,15 +11,17 @@ import (
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
-	"userv4/internal/interface/providers"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/entity"
-	"userv4/modules/crm/repository"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/crm/dto"
+	"mdn4/modules/crm/entity"
+	"mdn4/modules/crm/repository"
 )
 
 const contactListUserMaxRecords = 20
 
 // LocalContactService serves contact list/user from the CRM DSN + SyncUtil.
+// @bind: mdn4/internal/interface/providers.OriginIDProvider
+// @bind: mdn4/modules/crm/services.ContactService
 type LocalContactService struct {
 	repo    repository.ContactRepository
 	sync    *_utils.SyncUtil

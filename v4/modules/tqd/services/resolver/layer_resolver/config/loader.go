@@ -3,8 +3,8 @@ package config
 import (
 	_ "embed"
 	"fmt"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 	"sync"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
 
 	"gopkg.in/yaml.v3"
 )

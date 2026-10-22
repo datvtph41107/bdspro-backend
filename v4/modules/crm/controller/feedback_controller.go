@@ -9,11 +9,11 @@ import (
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/dto"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/mapper"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/mapper"
+	"mdn4/modules/crm/services"
 )
 
 // FeedbackController owns /v2/feedback/* (rate, report, report-reason, registry),

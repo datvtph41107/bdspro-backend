@@ -3,7 +3,7 @@ package relatedentity
 import (
 	"testing"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
 )
 
 func TestResolveProjectionPolicyKeepsParcelAsItems(t *testing.T) {

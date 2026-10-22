@@ -8,11 +8,11 @@ import (
 	_util "common/domain/util"
 	_errors "common/errors"
 	_utils "common/utils"
-	iusecase "userv4/internal/interface"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
+	iusecase "mdn4/internal/interface"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
 )
 
 type DistributionService interface {
@@ -25,10 +25,11 @@ type DistributionService interface {
 	RevokeUserFromDistribute(ctx context.Context, distributeID, originProfileID uint64) error
 }
 
+// @bind: mdn4/modules/bdspro/services.DistributionService
 type LocalDistributionService struct {
 	distributionRepo repository.DistributeRepository
 	productPriceRepo repository.ProductPriceRepository
-	transaction iusecase.ITransaction
+	transaction      iusecase.ITransaction
 }
 
 func NewLocalDistributionService(

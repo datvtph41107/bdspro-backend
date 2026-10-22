@@ -9,11 +9,11 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
 )
 
 // DealCostService owns tx_deal_costs (migrated from bdspro DealCostService).
@@ -25,6 +25,7 @@ type DealCostService interface {
 	Delete(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/bdspro/services.DealCostService
 type LocalDealCostService struct {
 	sync     *_utils.SyncUtil
 	repo     repository.DealCostRepository

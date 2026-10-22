@@ -4,9 +4,9 @@ import (
 	commonmetering "common/metering"
 	"context"
 	"errors"
+	"mdn4/modules/tqd/access"
+	"mdn4/modules/tqd/services/quota/reconciliation/usageprojection"
 	"time"
-	"userv4/modules/tqd/access"
-	"userv4/modules/tqd/services/quota/reconciliation/usageprojection"
 )
 
 const runtimeUsageRetention = 48 * time.Hour

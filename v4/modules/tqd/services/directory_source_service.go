@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
 
 	_utils "common/utils"
 )

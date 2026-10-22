@@ -2,7 +2,7 @@ package entity
 
 import (
 	_models "common/models"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 
 	"github.com/lib/pq"
 )

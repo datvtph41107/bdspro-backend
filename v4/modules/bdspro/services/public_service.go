@@ -10,7 +10,7 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/enums"
 )
 
 // PublicService owns public catalog/enum flows for modules/bdspro.
@@ -20,6 +20,7 @@ type PublicService interface {
 }
 
 // LocalPublicService serves public enum catalogs from in-process maps + SyncUtil.
+// @bind: mdn4/modules/bdspro/services.PublicService
 type LocalPublicService struct {
 	sync      *_utils.SyncUtil
 	startTime int64

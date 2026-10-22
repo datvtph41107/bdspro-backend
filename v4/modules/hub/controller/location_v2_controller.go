@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/services"
+	"common/httpapi"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/services"
 )
 
 // LocationV2Controller owns v2 location HTTP routes under /v2/hub/v2.

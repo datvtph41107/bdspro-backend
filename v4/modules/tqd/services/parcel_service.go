@@ -12,17 +12,17 @@ import (
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
-	"userv4/modules/tqd/config"
-	domain "userv4/modules/tqd/entity"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services/resolver/layer_resolver/engine/parcel_engine"
-	"userv4/modules/tqd/services/resolver/layer_resolver/rule"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/config"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	domain "mdn4/modules/tqd/entity"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/engine/parcel_engine"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/rule"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 type ParcelUsecase interface {

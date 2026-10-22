@@ -1,6 +1,6 @@
 package services
 
-import "userv4/modules/bdspro/enums"
+import "mdn4/modules/bdspro/enums"
 
 const DealSettingEnumKey = "deal_setting"
 

@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/services"
+	"common/httpapi"
+	"mdn4/modules/bdspro/services"
 )
 
 func costTypeListResult(out *services.CostTypeListOutcome) (*httpapi.Result, error) {

@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/services"
-	qh_usecase "userv4/modules/tqd/services/qh"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/services"
+	qh_usecase "mdn4/modules/tqd/services/qh"
 )
 
 // InternalSEOController owns /v2/tqd/internal/*/seo-* projection routes.

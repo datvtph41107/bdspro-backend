@@ -16,21 +16,21 @@ import (
 	_jwt "common/jwt"
 	_routes "common/routes"
 	_utils "common/utils"
+	"mdn4/config"
+	"mdn4/internal/interface/factory"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/enums"
+	userdto "mdn4/modules/user/dto"
 	shared_enum "pb/enums"
-	"userv4/config"
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
-	userdto "userv4/modules/user/dto"
-	"userv4/modules/auth/enums"
-	"userv4/internal/interface/factory"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
 
 	"gorm.io/gorm"
 )
 
 // AuthUsecase is User Service's access-token authority.
-// @bind: user/internal/usecase.AccessTokenIssuer
+// @bind: mdn4/modules/auth/services.AccessTokenIssuer
 type AuthUsecase struct {
 	CookieProvider     providers.CookieProvider
 	CacheProvider      providers.CacheProvider
@@ -51,6 +51,7 @@ type AuthUsecase struct {
 	SMSProvider        providers.ISmsProvider
 	properties         dto.PropertiesDTO
 	CrmProvider        _provider.CrmProvider
+	LocalOriginLookup  providers.OriginIDProvider
 }
 
 // organizationMembershipProvider là dependency tối thiểu mà auth flow cần
@@ -89,6 +90,7 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 	smsProvider providers.ISmsProvider,
 	properties factory.IFactory,
 	crmProvider _provider.CrmProvider,
+	localOriginLookup providers.OriginIDProvider,
 ) *AuthUsecase {
 	planId := uint64(1)
 	return &AuthUsecase{
@@ -111,6 +113,7 @@ func NewAuthService(cookieProvider providers.CookieProvider,
 		SMSProvider:        smsProvider,
 		properties:         properties.GetProperties(),
 		CrmProvider:        crmProvider,
+		LocalOriginLookup:  localOriginLookup,
 	}
 }
 
@@ -963,20 +966,14 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		// 	return nil, _errors.ReturnError(401, "Phiên làm việc không hợp lệ. Vui lòng đăng nhập lại")
 		// }
 
-		log.Printf("✅ [RefreshToken] Refresh token thành công cho authID %v", props)
-
 		profile, err := s.ProfileProvider.GetByProfileID(c, props.ProfileID)
-		log.Printf("✅ [RefreshToken] Profile: %v", profile)
 		if err != nil {
 			return nil, err
 		}
 
-		// originID, err := s.CrmProvider.GetOriginID(c, props.ProfileID)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		originID := s.resolveOriginID(c, props.ProfileID, props.OriginID)
 
-		newAccessToken, err := s.GenerateAccessToken(c, props.AuthID, props.SessionID, props.OrganizationID)
+		newAccessToken, err := s.GenerateAccessToken(c, props.AuthID, props.SessionID, props.OrganizationID, originID)
 		if err != nil {
 			return nil, err
 		}
@@ -984,8 +981,8 @@ func (s *AuthUsecase) RefreshToken(c context.Context, refreshToken string) (*dto
 		// Tạo refresh token mới
 		roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(c, props.ProfileID)
 		newRefreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
-			AuthID: props.AuthID,
-			// OriginID:       originID,
+			AuthID:         props.AuthID,
+			OriginID:       originID,
 			ProfileID:      props.ProfileID,
 			Role:           props.Role,
 			RoleIds:        roleIds,
@@ -1660,7 +1657,7 @@ func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *auth.AuthMe
 	// Kiểm tra xem user đã có họ tên chưa
 	requireFullname := profile.FullName == ""
 	var accessToken string
-	accessToken, err := s.GenerateAccessToken(ctx, authEntity.ID, sessionID, nil)
+	accessToken, err := s.GenerateAccessToken(ctx, authEntity.ID, sessionID, nil, 0)
 	if err != nil {
 		return &dto.AuthLoginResponse{
 			AuthID:   authEntity.ID,
@@ -1704,8 +1701,10 @@ func (s *AuthUsecase) ResponseLogin(ctx context.Context, authEntity *auth.AuthMe
 
 func (s *AuthUsecase) GetRefreshToken(ctx context.Context, authEntity *auth.AuthMethod, sessionID uint64) string {
 	roleIds, _ := s.UserInfoRepo.GetRoleIdsByProfileId(ctx, authEntity.UserID)
+	originID := s.resolveOriginID(ctx, authEntity.UserID, 0)
 	refreshToken, _ := _jwt.GenerateToken(_jwt.JwtTokenProperties{
 		AuthID:    authEntity.ID,
+		OriginID:  originID,
 		ProfileID: authEntity.UserID,
 		SessionID: sessionID,
 		Role:      "ROLE_USER",
@@ -2137,7 +2136,7 @@ func (s *AuthUsecase) SwitchOrganization(c context.Context, organizationID uint6
 	// if err != nil {
 	// 	return nil, err
 	// }
-	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &organizationID)
+	newAccessToken, err := s.GenerateAccessToken(c, authId, sessionId, &organizationID, _utils.GetOriginIdFromContext(c))
 	if err != nil {
 		return nil, err
 	}
@@ -3271,21 +3270,37 @@ func (s *AuthUsecase) PhoneCheck(ctx context.Context, phone string) (bool, *uint
 	return true, &auth.ID, nil
 }
 
-func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, sessionId uint64, organizationId *uint64) (string, error) {
+func (s *AuthUsecase) resolveOriginID(ctx context.Context, profileID uint64, hint uint64) uint64 {
+	if hint != 0 {
+		return hint
+	}
+	if profileID == 0 {
+		return 0
+	}
+	originCtx, cancel := context.WithTimeout(ctx, optionalCRMOriginTimeout)
+	defer cancel()
+	if s.LocalOriginLookup != nil {
+		if id, err := s.LocalOriginLookup.GetOriginID(ctx, profileID); err == nil && id != 0 {
+			return id
+		}
+	}
+	if s.CrmProvider != nil {
+		if id, err := s.CrmProvider.GetOriginID(originCtx, profileID); err == nil && id != 0 {
+			return id
+		}
+	}
+	// Member JWT consumers expect a non-zero origin; default to profile when CRM has no row.
+	return profileID
+}
+
+func (s *AuthUsecase) GenerateAccessToken(ctx context.Context, authId uint64, sessionId uint64, organizationId *uint64, originHint uint64) (string, error) {
 	authMethod, err := s.AuthMethodRepo.FindByID(ctx, authId)
 	if err != nil {
 		log.Printf("GenerateAccessToken error - FindByID failed: %v", err)
 		return "", err
 	}
 
-	var originID uint64
-	originCtx, cancelOriginLookup := context.WithTimeout(ctx, optionalCRMOriginTimeout)
-	originID, err = s.CrmProvider.GetOriginID(originCtx, authMethod.UserID)
-	cancelOriginLookup()
-	if err != nil {
-		log.Printf("Warning: Cannot get origin ID from CRM (service may be down), using 0: %v", err)
-		originID = 0
-	}
+	originID := s.resolveOriginID(ctx, authMethod.UserID, originHint)
 
 	profile, err := s.ProfileProvider.GetByProfileID(ctx, authMethod.UserID)
 	if err != nil {

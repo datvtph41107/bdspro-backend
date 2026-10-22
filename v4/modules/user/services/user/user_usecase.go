@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	userpostgres "userv4/modules/user/postgres"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
+	userpostgres "mdn4/modules/user/postgres"
 )
 
 type UserUsecase interface {

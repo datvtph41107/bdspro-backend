@@ -6,10 +6,10 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/services"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/services"
 )
 
 // DirectoryController owns directory sources/suppliers and service categories.

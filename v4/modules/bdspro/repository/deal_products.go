@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"userv4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/entity"
 )
 
 func (r *dealPostgres) AddDealProducts(ctx context.Context, dealID uint64, productIDs []uint64, createdBy uint64) error {

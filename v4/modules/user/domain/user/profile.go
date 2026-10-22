@@ -5,8 +5,8 @@ import (
 	_enum "common/domain/enum"
 	_model "common/models"
 	"fmt"
+	"mdn4/modules/user/enums"
 	"time"
-	"userv4/modules/user/enums"
 
 	"github.com/lib/pq"
 )

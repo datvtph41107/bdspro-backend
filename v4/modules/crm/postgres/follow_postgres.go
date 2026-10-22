@@ -5,13 +5,13 @@ import (
 	_models "common/models"
 	_routes "common/routes"
 	"context"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.FollowRepo
+// @bind: mdn4/modules/crm/repository.FollowRepo
 type FollowPostgre struct {
 	DB *gorm.DB
 }

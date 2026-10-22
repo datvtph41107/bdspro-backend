@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.InvitationInstallRepo
+// @bind: mdn4/modules/crm/repository.InvitationInstallRepo
 type InvitationInstallPostgre struct {
 	db *gorm.DB
 }

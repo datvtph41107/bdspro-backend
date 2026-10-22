@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
 )
 
 type stubCostTypeService struct{}

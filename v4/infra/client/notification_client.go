@@ -4,11 +4,11 @@ import (
 	_enum "common/domain/enum"
 	"context"
 	"errors"
+	"mdn4/modules/auth/dto"
 	"pb/clients"
 	notificationpb "pb/types/notification"
 	sharepb "pb/types/shared"
 	"time"
-	"userv4/modules/auth/dto"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )

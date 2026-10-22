@@ -3,9 +3,9 @@ package services
 import (
 	_crud "common/domain/crud"
 	"context"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	_repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	_repo "mdn4/modules/tqd/repository"
 )
 
 type AmenityUsecase struct {

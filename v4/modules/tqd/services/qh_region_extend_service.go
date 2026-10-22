@@ -8,10 +8,10 @@ import (
 
 	_dto "common/domain/dto"
 
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/geometry"
-	repo "userv4/modules/tqd/repository"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/geometry"
+	repo "mdn4/modules/tqd/repository"
 )
 
 type RegionExtendCreateInput struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"userv4/modules/user/services/useradmin"
+	"mdn4/modules/user/services/useradmin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

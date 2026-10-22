@@ -2,8 +2,8 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	authdto "userv4/modules/auth/dto"
-	"userv4/modules/user/enums"
+	authdto "mdn4/modules/auth/dto"
+	"mdn4/modules/user/enums"
 )
 
 type ProfileSearch struct {

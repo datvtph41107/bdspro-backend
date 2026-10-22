@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/services"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/services"
 )
 
 type fakeRenderService struct {

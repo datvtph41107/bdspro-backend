@@ -1,8 +1,8 @@
 package evaluate
 
 import (
+	access "mdn4/modules/user/domain/entitlement"
 	"time"
-	"userv4/modules/user/domain/entitlement"
 )
 
 /**

@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
 )
 
 // DealContractController owns transaction/contract/deal routes (v2.1 + v4 aliases).

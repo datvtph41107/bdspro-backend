@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
-	domain "userv4/modules/crm/entity"
-	repo "userv4/modules/crm/repository"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 )
 
 type AppointmentReminderUsecase interface {

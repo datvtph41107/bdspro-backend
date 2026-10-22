@@ -7,13 +7,13 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/services"
 )
 
 // QHAdminLabelController owns /v2/tqd/qh/admin/labels*.
@@ -56,29 +56,29 @@ type createLabelAdminReq struct {
 }
 
 type updateLabelAdminReq struct {
-	ID              uint64  `path:"id" json:"-"`
-	Name            *string `json:"name"`
-	DisplayName     *string `json:"displayName"`
-	Description     *string `json:"description"`
-	Color           *string `json:"color"`
+	ID              uint64   `path:"id" json:"-"`
+	Name            *string  `json:"name"`
+	DisplayName     *string  `json:"displayName"`
+	Description     *string  `json:"description"`
+	Color           *string  `json:"color"`
 	FillOpacity     *float32 `json:"fillOpacity"`
-	StrokeColor     *string `json:"strokeColor"`
-	StrokeWidth     *int32  `json:"strokeWidth"`
-	StrokeDashArray *string `json:"strokeDashArray"`
-	DisplayOrder    *int32  `json:"displayOrder"`
-	IsVisible       *bool   `json:"isVisible"`
-	MinZoom         *int32  `json:"minZoom"`
-	MaxZoom         *int32  `json:"maxZoom"`
-	Status          *uint32 `json:"status"`
-	StandardAt      *string `json:"standardAt"`
-	LandUseID       *uint64 `json:"landUseId"`
-	LegendID        *uint64 `json:"legendId"`
-	LayerID         *uint64 `json:"layerId"`
+	StrokeColor     *string  `json:"strokeColor"`
+	StrokeWidth     *int32   `json:"strokeWidth"`
+	StrokeDashArray *string  `json:"strokeDashArray"`
+	DisplayOrder    *int32   `json:"displayOrder"`
+	IsVisible       *bool    `json:"isVisible"`
+	MinZoom         *int32   `json:"minZoom"`
+	MaxZoom         *int32   `json:"maxZoom"`
+	Status          *uint32  `json:"status"`
+	StandardAt      *string  `json:"standardAt"`
+	LandUseID       *uint64  `json:"landUseId"`
+	LegendID        *uint64  `json:"legendId"`
+	LayerID         *uint64  `json:"layerId"`
 }
 
 type batchCreateLabelsReq struct {
-	LayerID uint64                 `json:"layerId"`
-	Items   []createLabelAdminReq  `json:"items"`
+	LayerID uint64                `json:"layerId"`
+	Items   []createLabelAdminReq `json:"items"`
 }
 
 type batchDeleteLabelsReq struct {

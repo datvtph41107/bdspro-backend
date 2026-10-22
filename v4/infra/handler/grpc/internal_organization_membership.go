@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"common/identity"
+	organization "mdn4/modules/user/services/organization"
 	userpb "pb/types/user"
-	organization "userv4/modules/user/services/organization"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -11,13 +11,13 @@ import (
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
-	notifentity "userv4/modules/notification/entity"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
+	notifentity "mdn4/modules/notification/entity"
 )
 
 // DealService owns deal list/detail/timestamps/process flows for modules/bdspro.
@@ -47,6 +47,7 @@ type DealService interface {
 }
 
 // LocalDealService owns deal user-list against the v4 DSN + SyncUtil.
+// @bind: mdn4/modules/bdspro/services.DealService
 type LocalDealService struct {
 	sync     *_utils.SyncUtil
 	repo     repository.DealRepository

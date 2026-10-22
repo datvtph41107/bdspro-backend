@@ -2,9 +2,9 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"mdn4/modules/auth/domain/access"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/modules/auth/domain/access"
 )
 
 type RoleMapper struct {

@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	_utils "common/utils"
-	"userv4/modules/notification/dto"
-	"userv4/modules/notification/entity"
-	"userv4/modules/notification/services"
+	"mdn4/modules/notification/dto"
+	"mdn4/modules/notification/entity"
+	"mdn4/modules/notification/services"
 )
 
 type stubRepo struct {
@@ -34,7 +34,7 @@ func (s *stubRepo) CreateAdminHistory(ctx context.Context, h *entity.AdminHistor
 func (s *stubRepo) SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error) {
 	return nil, 0, nil
 }
-func (s *stubRepo) CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error   { return nil }
+func (s *stubRepo) CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error { return nil }
 func (s *stubRepo) ListPersonConfigs(ctx context.Context, userID uint64) ([]*entity.PersonConfig, error) {
 	return nil, nil
 }

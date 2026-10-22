@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
+	accessdomain "mdn4/modules/auth/domain/access"
 	"time"
-	accessdomain "userv4/modules/auth/domain/access"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.AdminAccessRepository
+// @bind: mdn4/internal/interface/repo.AdminAccessRepository
 type AdminAccessPostgresRepo struct {
 	db *gorm.DB
 }

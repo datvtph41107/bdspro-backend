@@ -10,11 +10,11 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
-	domain "userv4/modules/user/domain/organization"
-	usecase "userv4/modules/user/services/organization"
+	domain "mdn4/modules/user/domain/organization"
+	usecase "mdn4/modules/user/services/organization"
 )
 
-// @bind: user/internal/usecase/organization.Repository
+// @bind: mdn4/modules/user/services/organization.Repository
 type Repository struct{ database *gorm.DB }
 
 func NewRepository(database *gorm.DB) *Repository { return &Repository{database: database} }

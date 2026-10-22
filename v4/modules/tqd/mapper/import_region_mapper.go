@@ -4,9 +4,9 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
 	tqdpb "pb/types/tqd"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
 )
 
 type ImportMapper struct{}

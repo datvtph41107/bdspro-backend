@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 type OneHouseRepo interface {

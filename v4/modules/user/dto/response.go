@@ -5,9 +5,9 @@ import (
 
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/entity"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/enums"
 )
 
 type FollowInfoRes struct {

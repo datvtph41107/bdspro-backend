@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"userv4/modules/payment/entity"
+	"mdn4/modules/payment/entity"
 )
 
 type stubBankRepo struct {

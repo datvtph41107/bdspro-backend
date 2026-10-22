@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/auth/dto"
+	"common/httpapi"
+	"mdn4/modules/auth/dto"
 )
 
 // APIVersionPrefixes mirrors gateway HTTP version mounts (/v2, /v2.1, /v3).

@@ -5,10 +5,10 @@ import (
 	_err "common/domain/err"
 	_utils "common/utils"
 	"context"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
 	"time"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
-	"userv4/internal/interface/repo"
 )
 
 type KYCUsecase struct {

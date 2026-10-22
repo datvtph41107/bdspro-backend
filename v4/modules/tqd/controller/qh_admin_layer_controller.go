@@ -7,15 +7,15 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services"
 
 	"github.com/lib/pq"
 )
@@ -68,30 +68,30 @@ type createLayerAdminReq struct {
 }
 
 type updateLayerAdminReq struct {
-	ID              uint64   `path:"id" json:"-"`
-	Name            *string  `json:"name"`
-	DisplayName     *string  `json:"displayName"`
-	Description     *string  `json:"description"`
-	Type            *uint32  `json:"type"`
-	Status          *uint32  `json:"status"`
-	Visible         *int32   `json:"visible"`
-	DisplayOrder    *int32   `json:"displayOrder"`
-	SourceType      string   `json:"sourceType"`
-	MinZoom         *uint32  `json:"minZoom"`
-	MaxZoom         *uint32  `json:"maxZoom"`
-	Avatar          *string  `json:"avatar"`
-	ImageURL        *string  `json:"imageUrl"`
-	ThumbnailURL    *string  `json:"thumbnailUrl"`
-	EffectiveDate   *string  `json:"effectiveDate"`
-	ExpiryDate      *string  `json:"expiryDate"`
-	LegalStatus     *uint32  `json:"legalStatus"`
-	TrustValue      *float64 `json:"trustValue"`
-	FamilyID        *uint64  `json:"familyId"`
-	LegalDoc        *string  `json:"legalDoc"`
-	PublishScopes   []int32  `json:"publishScopes"`
-	ProvinceID      *string  `json:"provinceId"`
-	WardID          *string  `json:"wardId"`
-	DefaultVisible  *bool    `json:"defaultVisible"`
+	ID             uint64   `path:"id" json:"-"`
+	Name           *string  `json:"name"`
+	DisplayName    *string  `json:"displayName"`
+	Description    *string  `json:"description"`
+	Type           *uint32  `json:"type"`
+	Status         *uint32  `json:"status"`
+	Visible        *int32   `json:"visible"`
+	DisplayOrder   *int32   `json:"displayOrder"`
+	SourceType     string   `json:"sourceType"`
+	MinZoom        *uint32  `json:"minZoom"`
+	MaxZoom        *uint32  `json:"maxZoom"`
+	Avatar         *string  `json:"avatar"`
+	ImageURL       *string  `json:"imageUrl"`
+	ThumbnailURL   *string  `json:"thumbnailUrl"`
+	EffectiveDate  *string  `json:"effectiveDate"`
+	ExpiryDate     *string  `json:"expiryDate"`
+	LegalStatus    *uint32  `json:"legalStatus"`
+	TrustValue     *float64 `json:"trustValue"`
+	FamilyID       *uint64  `json:"familyId"`
+	LegalDoc       *string  `json:"legalDoc"`
+	PublishScopes  []int32  `json:"publishScopes"`
+	ProvinceID     *string  `json:"provinceId"`
+	WardID         *string  `json:"wardId"`
+	DefaultVisible *bool    `json:"defaultVisible"`
 }
 
 type updateLayerStatusReq struct {

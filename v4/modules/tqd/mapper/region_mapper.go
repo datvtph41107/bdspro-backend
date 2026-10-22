@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/structpb"
 
+	qh "mdn4/modules/tqd/entity/qh"
 	tqdpb "pb/types/tqd"
-	qh "userv4/modules/tqd/entity/qh"
 )
 
 type RegionMapper struct{}

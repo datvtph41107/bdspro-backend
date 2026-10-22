@@ -9,11 +9,11 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
 )
 
 // DealInternalNoteService adds internal notes on a deal (migrated from DealInternalNoteService).
@@ -21,6 +21,7 @@ type DealInternalNoteService interface {
 	Add(ctx context.Context, req dto.AddDealInternalNoteRequest) (*bdspropb.AddInternalNoteResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.DealInternalNoteService
 type LocalDealInternalNoteService struct {
 	deal    repository.DealRepository
 	notes   repository.DealInternalNoteRepository
@@ -93,11 +94,11 @@ func (s *LocalDealInternalNoteService) Add(ctx context.Context, req dto.AddDealI
 		s.history.LogDealHistory(ctx, dealID, historyEvent,
 			fmt.Sprintf("%s: %s", actionName, req.Content),
 			map[string]interface{}{
-				"deal_id":      dealID,
-				"deal_name":    deal.Name,
-				"note_id":      created.ID,
-				"action_type":  uint32(actionType),
-				"content":      req.Content,
+				"deal_id":     dealID,
+				"deal_name":   deal.Name,
+				"note_id":     created.ID,
+				"action_type": uint32(actionType),
+				"content":     req.Content,
 			})
 	}
 

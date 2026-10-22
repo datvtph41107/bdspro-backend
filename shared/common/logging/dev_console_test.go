@@ -65,6 +65,30 @@ func TestFormatDevSQLLineIncludesError(t *testing.T) {
 	}
 }
 
+func TestFormatDevConsoleLineErrorPrintsStackTrace(t *testing.T) {
+	line := formatDevConsoleLine(
+		time.Date(2026, 10, 22, 10, 7, 41, 0, time.UTC),
+		slog.LevelError,
+		"userv4 HTTP panic",
+		map[string]string{
+			"category":    "application",
+			"error":       "runtime error: invalid memory address or nil pointer dereference",
+			"http_method": "POST",
+			"http_path":   "/v2/bdspro/property/new",
+			"stack_trace": "goroutine 1 [running]:\nuserv4/modules/bdspro/services.(*LocalPropertyService).CreateProperty(...)\n\t/x/property_service.go:57",
+		},
+	)
+	if !strings.Contains(line, "http_path=/v2/bdspro/property/new") {
+		t.Fatalf("expected request path: %s", line)
+	}
+	if !strings.Contains(line, "property_service.go:57") {
+		t.Fatalf("expected stack frame: %s", line)
+	}
+	if strings.Contains(line, "stack_trace=") {
+		t.Fatalf("stack_trace should not be inlined as attr: %s", line)
+	}
+}
+
 func TestFormatLatencyDisplay(t *testing.T) {
 	if got := formatLatencyDisplay(150 * time.Millisecond); got != "  150.00ms" {
 		t.Fatalf("sub-second latency: %q", got)

@@ -2,9 +2,9 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
 	sharepb "pb/types/shared"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
 )
 
 type KYCMapper struct{}

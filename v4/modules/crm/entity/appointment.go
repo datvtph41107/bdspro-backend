@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 
 	"github.com/lib/pq"
 )

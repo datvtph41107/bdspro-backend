@@ -1,8 +1,8 @@
 package quota_test
 
 import (
+	"mdn4/modules/tqd/services/quota"
 	"testing"
-	"userv4/modules/tqd/services/quota"
 
 	operationpb "pb/types/operation"
 	tqdpb "pb/types/tqd"

@@ -6,12 +6,12 @@ import (
 	"time"
 
 	_utils "common/utils"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/notification/dto"
+	"mdn4/modules/notification/entity"
+	"mdn4/modules/notification/repository"
 	shared_enum "pb/enums"
 	notificationpb "pb/types/notification"
-	"userv4/internal/interface/providers"
-	"userv4/modules/notification/dto"
-	"userv4/modules/notification/entity"
-	"userv4/modules/notification/repository"
 )
 
 // NotificationService owns the user inbox flows migrated into modules/notification.
@@ -26,6 +26,7 @@ type NotificationService interface {
 }
 
 // LocalNotificationService owns inbox flows against the v4 Postgres DSN.
+// @bind: mdn4/modules/notification/services.NotificationService
 type LocalNotificationService struct {
 	repo     repository.NotificationRepository
 	sync     *_utils.SyncUtil
@@ -268,24 +269,24 @@ func mapAdminHistoryPB(h *entity.AdminHistory) *notificationpb.AdminHistoryDTO {
 		return nil
 	}
 	out := &notificationpb.AdminHistoryDTO{
-		Id:         h.ID,
-		TargetId:   h.TargetID,
-		TargetType: int32(h.TargetType),
-		ActionType: int32(h.ActionType),
-		Title:      h.Title,
-		Note:       []string(h.Note),
-		PreStage:   h.PreStage,
-		AfterStage: h.AfterStage,
-		AdminId:    h.AdminID,
-		OwnerId:    h.OwnerID,
-		OwnerType:  int32(h.OwnerOf),
-		IsInternal: h.IsInternal,
-		AdminRole:  h.AdminRole,
-		IpAddress:  h.IPAddress,
-		UserAgent:  h.UserAgent,
-		CreatedAt:  _utils.FormatTimeToString(h.CreatedAt),
-		UpdatedAt:  _utils.FormatTimeToString(h.UpdatedAt),
-		AdminName:  h.AdminName,
+		Id:          h.ID,
+		TargetId:    h.TargetID,
+		TargetType:  int32(h.TargetType),
+		ActionType:  int32(h.ActionType),
+		Title:       h.Title,
+		Note:        []string(h.Note),
+		PreStage:    h.PreStage,
+		AfterStage:  h.AfterStage,
+		AdminId:     h.AdminID,
+		OwnerId:     h.OwnerID,
+		OwnerType:   int32(h.OwnerOf),
+		IsInternal:  h.IsInternal,
+		AdminRole:   h.AdminRole,
+		IpAddress:   h.IPAddress,
+		UserAgent:   h.UserAgent,
+		CreatedAt:   _utils.FormatTimeToString(h.CreatedAt),
+		UpdatedAt:   _utils.FormatTimeToString(h.UpdatedAt),
+		AdminName:   h.AdminName,
 		AdminAvatar: h.AdminAvatar,
 	}
 	return out

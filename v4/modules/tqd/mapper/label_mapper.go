@@ -3,8 +3,8 @@ package mapper
 import (
 	_utils "common/utils"
 
+	qh "mdn4/modules/tqd/entity/qh"
 	tqdpb "pb/types/tqd"
-	qh "userv4/modules/tqd/entity/qh"
 )
 
 type LabelMapper struct{}

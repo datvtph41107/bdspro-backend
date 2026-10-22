@@ -2,7 +2,7 @@ package dto
 
 import (
 	_utils "common/utils"
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 )
 
 type PermissionRequest struct {

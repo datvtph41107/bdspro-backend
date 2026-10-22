@@ -4,10 +4,10 @@ import (
 	"context"
 
 	_errors "common/errors"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/repository"
 	bdspropb "pb/types/bdspro"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/mapper"
-	"userv4/modules/bdspro/repository"
 )
 
 // AdminProjectService owns /v2/bdspro/admin/project/* (migrated from bdspro-service).
@@ -18,6 +18,7 @@ type AdminProjectService interface {
 	Delete(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/bdspro/services.AdminProjectService
 type LocalAdminProjectService struct {
 	repo repository.ProjectAdminRepository
 }

@@ -6,11 +6,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/services"
 )
 
 // QHAdminLegendController owns /v2/tqd/qh/admin/layer-legends* and /v2/tqd/admin/legends*.

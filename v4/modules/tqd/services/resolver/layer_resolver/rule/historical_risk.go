@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // HistoricalRiskRepository — interface cho Historical Risk Engine

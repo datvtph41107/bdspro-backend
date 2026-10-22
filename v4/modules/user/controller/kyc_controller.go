@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/services"
 	userpb "pb/types/user"
-	"userv4/internal/httpapi"
-	"userv4/modules/user/dto"
-	"userv4/modules/user/services"
 )
 
 // KYCController owns KYC HTTP routes under /v2/user.

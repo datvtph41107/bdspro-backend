@@ -8,11 +8,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
-	genreportapp "userv4/modules/tqd/services/generatedreport/application"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
+	genreportapp "mdn4/modules/tqd/services/generatedreport/application"
 )
 
 // MapWorkspaceController owns /v2/tqd/map-workspace/* routes.

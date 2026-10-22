@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 // Province is the TQD administrative province row (table province_v2 on the TQD DSN).

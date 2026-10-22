@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/services"
+	"common/httpapi"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/services"
 )
 
 // UserGuideController owns user-facing user-guide HTTP routes under /v2/hub/user-guides.

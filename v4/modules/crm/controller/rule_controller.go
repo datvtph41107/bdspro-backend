@@ -6,11 +6,11 @@ import (
 
 	base_enum "base/enum"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/services"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/services"
 )
 
 type RuleController struct{ uc *services.RuleUsecase }
@@ -50,7 +50,9 @@ type ruleActiveReq struct {
 }
 
 func (c *RuleController) list(ctx context.Context, req ruleListReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	ownerID := req.OwnerID
 	if ownerID == 0 {
 		ownerID = _utils.GetProfileIdWithContext(ctx)
@@ -60,34 +62,56 @@ func (c *RuleController) list(ctx context.Context, req ruleListReq) (*httpapi.Re
 		ownerOf = base_enum.EOwnerOfMember
 	}
 	items, total, err := c.uc.Search(ctx, ownerID, ownerOf, dto.RuleSearchDTO{})
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(items, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
 }
 func (c *RuleController) detail(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.GetByID(ctx, req.ID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *RuleController) create(ctx context.Context, req ruleBody) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Create(ctx, &req.RuleEntity)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *RuleController) update(ctx context.Context, req ruleBody) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Update(ctx, req.ID, &req.RuleEntity)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *RuleController) delete(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Delete(ctx, req.ID); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Delete(ctx, req.ID); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "deleted")
 }
 func (c *RuleController) active(ctx context.Context, req ruleActiveReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Active(ctx, req.ID, req.Active); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Active(ctx, req.ID, req.Active); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "updated")
 }

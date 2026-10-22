@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 )
 
 // ProductNoteController owns GET /v2/bdspro/product-notes/all/:productId.

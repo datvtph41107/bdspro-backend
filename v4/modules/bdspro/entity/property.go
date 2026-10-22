@@ -5,8 +5,24 @@ import (
 	"encoding/json"
 	"time"
 
+	"mdn4/modules/bdspro/enums"
+
 	"gorm.io/gorm"
 )
+
+// Bất động được sản định danh sẽ có bản ghi này
+// ORM::TABLE
+type PropertyIdentify struct {
+	ID        uint64         `gorm:"primaryKey;autoIncrement"`
+	CreatedAt *time.Time     `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt *time.Time     `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+	PID       uint64         `gorm:"column:p_id;not null"`
+	Version   uint32         `gorm:"column:version;not null"`
+	LineageID *uint64        `gorm:"column:lineage_id"`
+}
+
+func (PropertyIdentify) TableName() string { return "property_identify" }
 
 // PropertyLineage is the property aggregate root (property_lineage).
 // ORM::TABLE
@@ -25,8 +41,10 @@ type PropertyLineage struct {
 	EdvidenceID        *uint64        `gorm:"column:edvidence_id"`
 	StatisticID        *uint64        `gorm:"column:statistic_id"`
 	NationalID         string         `gorm:"column:national_id;size:50"`
+	VerifiedNationalAt *time.Time     `gorm:"column:verified_national_at"`
 
 	Info         *PropertyInfo         `gorm:"foreignKey:PropertyInfoID;references:ID"`
+	Edvidence    *PropertyEdvidence    `gorm:"foreignKey:EdvidenceID;references:ID"`
 	Location     *PropertyLocation     `gorm:"foreignKey:LocationID;references:ID"`
 	LandInfo     *PropertyLandInfo     `gorm:"foreignKey:LandInfoID;references:ID"`
 	BuildingInfo *PropertyBuildingInfo `gorm:"foreignKey:BuildingInfoID;references:ID"`
@@ -57,6 +75,7 @@ type PropertyInfo struct {
 	AvatarID           *uint64        `gorm:"column:avatar_id"`
 
 	PropertyType *PropertyType  `gorm:"foreignKey:PropertyTypeID;references:ID"`
+	Project      *ProjectItem   `gorm:"foreignKey:ProjectID;references:ID"`
 	Avatar       *PropertyMedia `gorm:"foreignKey:AvatarID;references:ID"`
 }
 
@@ -206,18 +225,18 @@ type PropertyUser struct {
 
 func (PropertyUser) TableName() string { return "property_user" }
 
-// PropertyIdentify is the identity root for verified properties.
-type PropertyIdentify struct {
-	ID        uint64         `gorm:"primaryKey;autoIncrement"`
-	CreatedAt *time.Time     `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt *time.Time     `gorm:"column:updated_at;autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
-	PID       uint64         `gorm:"column:p_id;not null"`
-	Version   uint32         `gorm:"column:version;not null"`
-	LineageID *uint64        `gorm:"column:lineage_id"`
+func (p *PropertyUser) ResolveRecordStatus() enums.EPropertyStatus {
+	if p == nil {
+		return enums.EPropertyStatusActive
+	}
+	if p.ArchivedAt != nil {
+		return enums.EPropertyStatusArchived
+	}
+	if p.HiddenAt != nil {
+		return enums.EPropertyStatusHide
+	}
+	return enums.EPropertyStatusActive
 }
-
-func (PropertyIdentify) TableName() string { return "property_identify" }
 
 // PropertyType is the catalog of property kinds.
 type PropertyType struct {

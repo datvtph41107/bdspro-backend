@@ -5,11 +5,11 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"userv4/modules/auth/domain/access"
-	"userv4/modules/auth/dto"
-	userdto "userv4/modules/user/dto"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/access"
+	"mdn4/modules/auth/dto"
+	userdto "mdn4/modules/user/dto"
 )
 
 type AdminAccessUsecase struct {

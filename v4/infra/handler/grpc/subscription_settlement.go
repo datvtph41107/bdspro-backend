@@ -5,8 +5,8 @@ import (
 	"context"
 	userpb "pb/types/user"
 
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/subscription/settlement"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/subscription/settlement"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

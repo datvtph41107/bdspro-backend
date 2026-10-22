@@ -5,7 +5,7 @@ package dto
 import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 // SeoDomainCreateRequest chứa dữ liệu tạo mới một trang SEO.

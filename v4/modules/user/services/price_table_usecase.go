@@ -2,8 +2,8 @@ package services
 
 import (
 	_crud "common/domain/crud"
-	"userv4/internal/interface/repo"
-	"userv4/modules/user/entity"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/entity"
 )
 
 type PriceTableUsecase struct {

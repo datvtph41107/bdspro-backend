@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
 )
 
 type CrmSeoProvider interface {

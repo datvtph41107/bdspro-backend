@@ -1,8 +1,8 @@
 package entity
 
 import (
+	"mdn4/modules/tqd/enums"
 	"time"
-	"userv4/modules/tqd/enums"
 
 	"gorm.io/datatypes"
 )

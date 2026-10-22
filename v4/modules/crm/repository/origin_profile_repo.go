@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	entity "userv4/modules/user/domain"
+	entity "mdn4/modules/user/domain"
 )
 
 type OriginProfileRepo interface {

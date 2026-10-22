@@ -3,8 +3,8 @@ package mock_repo
 import (
 	context "context"
 	"database/sql"
-	qh "userv4/modules/tqd/entity/qh"
-	repo "userv4/modules/tqd/repository"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 
 	mock "github.com/stretchr/testify/mock"
 )

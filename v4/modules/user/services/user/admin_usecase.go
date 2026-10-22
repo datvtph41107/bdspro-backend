@@ -5,14 +5,14 @@ import (
 	_errors "common/errors"
 	"context"
 	"fmt"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	authdto "mdn4/modules/auth/dto"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/useradmin"
 	"time"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
-	authdto "userv4/modules/auth/dto"
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/useradmin"
 )
 
 type AdminUsecase struct {

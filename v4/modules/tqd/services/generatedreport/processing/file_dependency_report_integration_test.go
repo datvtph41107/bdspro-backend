@@ -17,10 +17,10 @@ import (
 
 	"common/operation"
 
+	"mdn4/modules/tqd/services/generatedreport/memoryjob"
+	"mdn4/modules/tqd/services/generatedreport/processing"
 	reportfilehttp "tqd/infra/client/file/generatedreport"
 	"tqd/infra/worker/generatedreport/generator"
-	"userv4/modules/tqd/services/generatedreport/memoryjob"
-	"userv4/modules/tqd/services/generatedreport/processing"
 
 	postgresdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"

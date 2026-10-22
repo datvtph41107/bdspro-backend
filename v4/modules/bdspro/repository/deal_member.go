@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 
 	"gorm.io/gorm"
 )

@@ -9,15 +9,15 @@ import (
 	"strconv"
 
 	_errors "common/errors"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 const (
-	applinkCodeMin    uint64 = 1_000_000
-	applinkCodeMax    uint64 = 10_000_000_000
-	maxCodeRetry             = 5
+	applinkCodeMin uint64 = 1_000_000
+	applinkCodeMax uint64 = 10_000_000_000
+	maxCodeRetry          = 5
 )
 
 var errApplinkNotFound = errors.New("applink: not found")
@@ -30,6 +30,7 @@ type ApplinkService interface {
 	GetApplinkByCode(ctx context.Context, b64Code string) (*dto.ApplinkResponse, error)
 }
 
+// @bind: mdn4/modules/hub/services.ApplinkService
 type LocalApplinkService struct {
 	repo repository.ApplinkRepository
 }

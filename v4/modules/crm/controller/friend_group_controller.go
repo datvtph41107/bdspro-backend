@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/services"
 )
 
 type FriendGroupController struct{ uc *services.FriendGroupUsecase }

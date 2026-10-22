@@ -5,8 +5,8 @@ import (
 	"context"
 	"sync"
 
-	"userv4/modules/auth/domain/access"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/access"
 )
 
 // RoleGroupRegistry keeps the role-group lookup used by role resolution.

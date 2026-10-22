@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	domain "userv4/modules/user/domain/organization"
+	domain "mdn4/modules/user/domain/organization"
 )
 
 type repositoryStub struct {

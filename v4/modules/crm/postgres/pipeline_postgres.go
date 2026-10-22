@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.PipelineRepo
+// @bind: mdn4/modules/crm/repository.PipelineRepo
 type PostgrePipeline struct {
 	db *gorm.DB
 }

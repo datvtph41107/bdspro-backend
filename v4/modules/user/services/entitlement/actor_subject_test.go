@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"userv4/modules/user/domain/entitlement"
+	access "mdn4/modules/user/domain/entitlement"
 )
 
 func TestSubjectFromActorDefaultsToProfilePool(t *testing.T) {

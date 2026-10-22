@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"userv4/modules/hub/entity"
+	"mdn4/modules/hub/entity"
 
 	"gorm.io/gorm"
 )
@@ -18,6 +18,8 @@ type LocationV2Repository interface {
 	GetWardByCode(ctx context.Context, code string) (*entity.WardV2, error)
 	GetWardByID(ctx context.Context, id uint64) (*entity.WardV2, error)
 	Search(ctx context.Context, keyword string, page, size int) ([]entity.LocationSearchResultV2, int64, error)
+	InferProvinceFromText(ctx context.Context, text string) (*entity.ProvinceV2, error)
+	InferWardFromText(ctx context.Context, text string) (*entity.WardV2, string, error)
 }
 
 type locationV2Postgres struct{ db *gorm.DB }
@@ -189,4 +191,51 @@ WHERE w.deleted_at IS NULL AND p.deleted_at IS NULL
 	var total int64
 	_ = r.db.WithContext(ctx).Raw(countQ, pattern, pattern).Scan(&total).Error
 	return results, total, nil
+}
+
+func (r *locationV2Postgres) InferProvinceFromText(ctx context.Context, text string) (*entity.ProvinceV2, error) {
+	if r.db == nil || strings.TrimSpace(text) == "" {
+		return nil, nil
+	}
+	var row entity.ProvinceV2
+	err := r.db.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("LOWER(?) LIKE '%' || LOWER(name) || '%'", text).
+		First(&row).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (r *locationV2Postgres) InferWardFromText(ctx context.Context, text string) (*entity.WardV2, string, error) {
+	if r.db == nil || strings.TrimSpace(text) == "" {
+		return nil, "", nil
+	}
+	var result struct {
+		entity.WardV2
+		ProvinceName string `gorm:"column:province_name"`
+	}
+	const query = `
+SELECT w.*, p.name AS province_name
+FROM ward_v2 w
+INNER JOIN province_v2 p ON w.province_id = p.id
+WHERE w.deleted_at IS NULL
+  AND p.deleted_at IS NULL
+  AND (
+    LOWER(?) LIKE '%' || LOWER(w.name) || '%'
+    OR LOWER(w.name) LIKE '%' || LOWER(?) || '%'
+  )
+LIMIT 1`
+	err := r.db.WithContext(ctx).Raw(query, text, text).Scan(&result).Error
+	if err != nil {
+		return nil, "", err
+	}
+	if result.WardV2.ID == 0 {
+		return nil, "", nil
+	}
+	return &result.WardV2, result.ProvinceName, nil
 }

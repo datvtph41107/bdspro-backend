@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 
-	"userv4/modules/payment/entity"
-	"userv4/modules/payment/repository"
+	"mdn4/modules/payment/entity"
+	"mdn4/modules/payment/repository"
 
 	"gorm.io/gorm"
 )
 
+// @bind: mdn4/modules/payment/repository.BankRepository
 type BankPostgres struct {
 	db *gorm.DB
 }

@@ -1,6 +1,6 @@
 package dto
 
-import "userv4/modules/tqd/enums"
+import "mdn4/modules/tqd/enums"
 
 type CreateReportRequestDTO struct {
 	ReportType      uint32      `json:"reportType"`

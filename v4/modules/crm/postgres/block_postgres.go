@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.BlockRepo
+// @bind: mdn4/modules/crm/repository.BlockRepo
 type BlockRepo struct {
 	DB *gorm.DB
 }

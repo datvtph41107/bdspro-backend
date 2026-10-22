@@ -10,15 +10,15 @@ import (
 	"fmt"
 
 	_db "common/db"
-	"userv4/modules/user/services/subscription/checkout"
+	"mdn4/modules/user/services/subscription/checkout"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/usecase/subscription/checkout.PlanResolver
-// @bind: user/internal/usecase/subscription/checkout.SubscriptionReader
-// @bind: user/internal/usecase/subscription/checkout.CommandStore
-// @bind: user/internal/usecase/subscription/checkout.ContactStore
+// @bind: mdn4/modules/user/services/subscription/checkout.CommandStore
+// @bind: mdn4/modules/user/services/subscription/checkout.ContactStore
+// @bind: mdn4/modules/user/services/subscription/checkout.PlanResolver
+// @bind: mdn4/modules/user/services/subscription/checkout.SubscriptionReader
 type CheckoutStore struct {
 	db *_db.TransactionRepo
 }

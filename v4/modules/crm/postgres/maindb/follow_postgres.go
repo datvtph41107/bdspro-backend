@@ -5,13 +5,13 @@ import (
 	_routes "common/routes"
 	"context"
 	"errors"
+	entity "mdn4/modules/crm/entity"
 	"time"
-	entity "userv4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IFollowRepo
+// @bind: mdn4/internal/interface/repo.IFollowRepo
 type FollowPostgres struct {
 	DB *gorm.DB
 }

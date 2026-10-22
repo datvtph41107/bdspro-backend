@@ -3,24 +3,27 @@ package services
 import (
 	"context"
 
+	_utils "common/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/repository"
 	bdspropb "pb/types/bdspro"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/mapper"
-	"userv4/modules/bdspro/repository"
 )
 
 // CatalogService serves public list catalog routes migrated from bdspro-service ListUsecase.
 type CatalogService interface {
 	ListProjects(ctx context.Context, req dto.CatalogSearchRequest) (*bdspropb.ListItemResponse, error)
 	ListProjectBuildItems(ctx context.Context, req dto.CatalogSearchRequest) (*bdspropb.ListItemResponse, error)
+	// ListPropertyTypes(ctx context.Context, req dto.PropertyTypeListRequest) (*PropertyTypeListOutcome, error)
 }
 
 type LocalCatalogService struct {
 	repo repository.CatalogRepository
+	sync *_utils.SyncUtil
 }
 
-func NewLocalCatalogService(repo repository.CatalogRepository) *LocalCatalogService {
-	return &LocalCatalogService{repo: repo}
+func NewLocalCatalogService(repo repository.CatalogRepository, sync *_utils.SyncUtil) CatalogService {
+	return &LocalCatalogService{repo: repo, sync: sync}
 }
 
 func (s *LocalCatalogService) ListProjects(ctx context.Context, req dto.CatalogSearchRequest) (*bdspropb.ListItemResponse, error) {

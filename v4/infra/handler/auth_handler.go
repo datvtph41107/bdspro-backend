@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	mapper "userv4/modules/auth/mapper"
-	"userv4/modules/auth/dto"
-	userdto "userv4/modules/user/dto"
-	usecase "userv4/modules/auth/services"
-	"userv4/modules/user/services/useradmin"
-	authcontroller "userv4/modules/auth/controller"
+	authcontroller "mdn4/modules/auth/controller"
+	"mdn4/modules/auth/dto"
+	mapper "mdn4/modules/auth/mapper"
+	usecase "mdn4/modules/auth/services"
+	userdto "mdn4/modules/user/dto"
+	"mdn4/modules/user/services/useradmin"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

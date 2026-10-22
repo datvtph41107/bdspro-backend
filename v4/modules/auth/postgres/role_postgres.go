@@ -9,11 +9,11 @@ import (
 	"errors"
 	"time"
 
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
 
 	"gorm.io/gorm"
 )

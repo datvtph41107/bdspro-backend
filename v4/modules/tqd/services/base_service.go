@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
 )
 
 // AuthorizationUsecase provides common functionality for all usecases

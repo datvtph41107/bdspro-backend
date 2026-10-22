@@ -2,7 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 // DirectoryCategoryRequest represents a request to create/update directory category

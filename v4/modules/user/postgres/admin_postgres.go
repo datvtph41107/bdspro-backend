@@ -5,10 +5,10 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
-	"userv4/modules/user/dto"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
-	entity "userv4/modules/user/entity"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/dto"
+	entity "mdn4/modules/user/entity"
 
 	"gorm.io/gorm"
 )

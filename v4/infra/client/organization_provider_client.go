@@ -2,16 +2,16 @@ package client
 
 import (
 	"context"
+	"mdn4/modules/user/dto"
 	"pb/clients"
 	organizationpb "pb/types/organization"
-	"userv4/modules/user/dto"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/providers.OrganizationProvider
+// @bind: mdn4/internal/interface/providers.OrganizationProvider
 type OrganizationProviderClient struct {
 	*clients.OrganizationClient
 	database *gorm.DB

@@ -7,7 +7,11 @@ import (
 )
 
 func newRouteOnlyHandler() *Handler {
-	return NewHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+	return NewHandler(
+		&ContactController{}, &AdminSalesController{}, &FriendController{}, &FriendGroupController{},
+		&FollowController{}, &BlockController{}, &TagController{}, &PipelineController{},
+		&StageController{}, &LeadController{}, &RuleController{}, &SharingController{},
+		&InvitationController{}, &SupportTicketController{},
 		&FeedbackController{}, &AppointmentController{}, &EnumController{})
 }
 

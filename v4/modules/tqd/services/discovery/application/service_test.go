@@ -2,8 +2,8 @@ package application
 
 import (
 	"context"
+	domain "mdn4/modules/tqd/entity/discovery"
 	"testing"
-	domain "userv4/modules/tqd/entity/discovery"
 )
 
 type fakeRepo struct {

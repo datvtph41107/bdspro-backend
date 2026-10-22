@@ -6,10 +6,10 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 	hubpb "pb/types/hub"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
 )
 
 // UserGuideService owns user-facing and admin user-guide flows for modules/hub.
@@ -25,6 +25,7 @@ type UserGuideService interface {
 	AdminList(ctx context.Context, req dto.GetUserGuideSimpleRequest) (*hubpb.GetUserGuideSimpleResponse, error)
 }
 
+// @bind: mdn4/modules/hub/services.UserGuideService
 type LocalUserGuideService struct {
 	repo repository.UserGuideRepository
 	sync *_utils.SyncUtil

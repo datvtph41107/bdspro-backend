@@ -2,8 +2,8 @@ package qh
 
 import (
 	_models "common/domain/entity"
+	"mdn4/modules/tqd/enums"
 	"time"
-	"userv4/modules/tqd/enums"
 )
 
 // ProAIJob — tiến trình AI (upload/classify). Type Đồ án gắn PlanningProjectID.

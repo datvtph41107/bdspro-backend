@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
 
 	_dto "common/domain/dto"
 )

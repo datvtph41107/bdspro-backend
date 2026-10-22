@@ -2,7 +2,7 @@ package providers
 
 import (
 	"context"
-	"userv4/modules/user/dto"
+	"mdn4/modules/user/dto"
 )
 
 type BdsproProvider interface {

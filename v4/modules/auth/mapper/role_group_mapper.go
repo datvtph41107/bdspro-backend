@@ -3,10 +3,10 @@ package mapper
 import (
 	_utils "common/utils"
 	"fmt"
+	"mdn4/modules/auth/domain/access"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/enums"
 	authpb "pb/types/auth"
-	"userv4/modules/auth/domain/access"
-	"userv4/modules/auth/dto"
-	"userv4/modules/auth/enums"
 )
 
 type RoleGroupMapper struct{}

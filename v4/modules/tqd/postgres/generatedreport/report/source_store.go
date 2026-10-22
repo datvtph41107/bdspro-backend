@@ -3,8 +3,8 @@ package postgresreport
 import (
 	"context"
 
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/services/generatedreport/application"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/services/generatedreport/application"
 )
 
 // workspaceReader is the exact Workspace read capability consumed by Report.

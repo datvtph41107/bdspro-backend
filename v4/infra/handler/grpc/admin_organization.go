@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	domain "mdn4/modules/user/domain/organization"
+	organization "mdn4/modules/user/services/organization"
 	userpb "pb/types/user"
-	domain "userv4/modules/user/domain/organization"
-	organization "userv4/modules/user/services/organization"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

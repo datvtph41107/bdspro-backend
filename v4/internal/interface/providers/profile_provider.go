@@ -3,8 +3,8 @@ package providers
 import (
 	_dto "common/domain/dto"
 	"context"
+	"mdn4/modules/user/dto"
 	"time"
-	"userv4/modules/user/dto"
 )
 
 // ProfileProvider interface cho việc xử lý logic liên quan đến profile

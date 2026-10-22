@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
-	relateddomain "userv4/modules/tqd/entity/relatedentity"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
+	relateddomain "mdn4/modules/tqd/entity/relatedentity"
 )
 
 func (r *Repository) FindPlanningEntities(ctx context.Context, query relateddomain.Query) ([]relateddomain.Candidate, error) {

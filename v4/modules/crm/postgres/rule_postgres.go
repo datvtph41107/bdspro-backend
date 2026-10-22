@@ -3,14 +3,14 @@ package postgres
 import (
 	base_enum "base/enum"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.RuleRepo
+// @bind: mdn4/modules/crm/repository.RuleRepo
 type PostgreRule struct {
 	db *gorm.DB
 }

@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 // QHAuthorityIssuringRepository truy cập bảng qh_authority_issuring.

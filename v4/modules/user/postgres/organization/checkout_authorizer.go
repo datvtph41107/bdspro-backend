@@ -13,7 +13,7 @@ import (
 // User-owned membership data. It replaces the User -> Organization RPC on the
 // commercial path while the remaining legacy Organization contracts migrate.
 //
-// @bind: user/infra/handler/grpc.OrganizationCheckoutAuthorizer
+// @bind: mdn4/infra/handler/grpc.OrganizationCheckoutAuthorizer
 type CheckoutAuthorizer struct{ database *gorm.DB }
 
 func NewCheckoutAuthorizer(database *gorm.DB) *CheckoutAuthorizer {

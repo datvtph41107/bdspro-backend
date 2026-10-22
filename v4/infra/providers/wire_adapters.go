@@ -4,8 +4,8 @@ import (
 	"time"
 
 	_db "common/db"
-	"userv4/modules/user/services/plan/publish"
-	"userv4/modules/user/services/subscription/checkout"
+	"mdn4/modules/user/services/plan/publish"
+	"mdn4/modules/user/services/subscription/checkout"
 )
 
 // NewPlanPublishTransaction adapts the shared transaction repo for plan publish.

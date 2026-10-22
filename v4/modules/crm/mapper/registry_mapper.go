@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 )
 
 // ConvertRegistryCreateRequestToDomain converts DTO to domain model

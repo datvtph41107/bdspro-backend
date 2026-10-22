@@ -2,7 +2,7 @@ package main
 
 import (
 	"common/logging"
- logfabric "common/logging/fabric"
+	logfabric "common/logging/fabric"
 	"context"
 	"fmt"
 	"log"
@@ -15,18 +15,18 @@ import (
 	_middleware "common/middleware"
 	"common/process"
 	"common/rpcenv"
+	"mdn4/config"
+	userdb "mdn4/db"
+	"mdn4/wire"
 	authpb "pb/types/auth"
 	userpb "pb/types/user"
-	"userv4/config"
-	userdb "userv4/db"
-	"userv4/wire"
 
 	"google.golang.org/grpc"
 )
 
 func main() {
-	defer logging.MustStart("userv4")()
- logfabric.Bridge()
+	defer logging.MustStart("mdn4")()
+	logfabric.Bridge()
 	if err := runGRPC(); err != nil {
 		log.Fatal(err)
 	}

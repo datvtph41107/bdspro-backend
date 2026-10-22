@@ -2,10 +2,10 @@ package mapper
 
 import (
 	_utils "common/utils"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
 )
 
 // SessionMapper định nghĩa mapper cho session

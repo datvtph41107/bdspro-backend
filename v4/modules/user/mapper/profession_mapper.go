@@ -3,9 +3,9 @@ package mapper
 import (
 	_models "common/models"
 	_utils "common/utils"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/enums"
 	userpb "pb/types/user"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
 )
 
 type ProfessionMapper struct{}

@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
-	domain "userv4/modules/tqd/entity"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/geometry"
-	repo "userv4/modules/tqd/repository"
+	domain "mdn4/modules/tqd/entity"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/geometry"
+	repo "mdn4/modules/tqd/repository"
 )
 
 // ErrRegionNotFound và ErrRegionSyncReferenceNotFound do usecase region sở hữu.

@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 
+	"mdn4/modules/auth/domain/access"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/access"
 )
 
 // PermissionRepo implements the global User IAM permission read model.
-// @bind: user/internal/interface/repo.PermissionRepository
+// @bind: mdn4/internal/interface/repo.PermissionRepository
 type PermissionRepo struct {
 	db *gorm.DB
 }

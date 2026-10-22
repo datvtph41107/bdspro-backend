@@ -3,7 +3,7 @@ package services
 import (
 	"testing"
 
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/enums"
 )
 
 func TestDealSettingEnumPayload(t *testing.T) {

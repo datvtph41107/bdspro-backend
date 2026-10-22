@@ -5,9 +5,9 @@ import (
 	"common/operation"
 	"context"
 	"errors"
+	"mdn4/modules/tqd/access"
+	"mdn4/modules/tqd/services/usage"
 	"time"
-	"userv4/modules/tqd/access"
-	"userv4/modules/tqd/services/usage"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -16,9 +16,6 @@ import (
 /**
  * Store lưu usage events trong PostgreSQL.
  */
-// @bind: tqd/internal/usecase/usage.Store
-// @bind: tqd/internal/usecase/quota.DurableUsageReader
-// @bind: tqd/internal/usecase/quota.ReadActionUsageStore
 type Store struct {
 	db *gorm.DB
 }

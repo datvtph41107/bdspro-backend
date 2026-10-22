@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 
 	_dto "common/domain/dto"
 

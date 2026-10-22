@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	tqdconfig "userv4/modules/tqd/config"
+	tqdconfig "mdn4/modules/tqd/config"
 )
 
 // LoadProperties nạp config theo lớp (YAML là nguồn duy nhất cho topology/secrets app):

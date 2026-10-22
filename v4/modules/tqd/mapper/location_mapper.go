@@ -7,8 +7,8 @@ import (
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
 	tqdpb "pb/types/tqd"
-	"userv4/modules/tqd/dto"
 )
 
 type LocationMapper struct{}

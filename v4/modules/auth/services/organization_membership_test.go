@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	_routes "common/routes"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	userdto "userv4/modules/user/dto"
+	userdto "mdn4/modules/user/dto"
 )
 
 type organizationMembershipProviderStub struct {

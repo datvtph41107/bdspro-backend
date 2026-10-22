@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"userv4/modules/tqd/postgres/generatedreport/job"
-	"userv4/modules/tqd/postgres/usage"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/services/generatedreport/application"
-	"userv4/modules/tqd/services/generatedreport/processing"
+	qh "mdn4/modules/tqd/entity/qh"
+	postgresjob "mdn4/modules/tqd/postgres/generatedreport/job"
+	postgresusage "mdn4/modules/tqd/postgres/usage"
+	"mdn4/modules/tqd/services/generatedreport/application"
+	"mdn4/modules/tqd/services/generatedreport/processing"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -18,7 +18,6 @@ import (
 /**
  * ReportStore giữ durable state của generated report trong PostgreSQL.
  */
-// @bind: tqd/internal/usecase/generatedreport/admin.Repository
 type ReportStore struct {
 	db *gorm.DB
 }

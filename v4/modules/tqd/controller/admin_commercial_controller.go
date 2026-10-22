@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
 )
 
 // AdminCommercialController owns /v2/tqd/admin/commercial/* (stubs until quota wiring).

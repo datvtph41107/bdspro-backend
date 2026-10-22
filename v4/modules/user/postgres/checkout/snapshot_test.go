@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	plan "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/subscription/checkout"
+	plan "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/subscription/checkout"
 )
 
 func TestCheckoutCommandRowRoundTripPreservesFrozenTerms(t *testing.T) {

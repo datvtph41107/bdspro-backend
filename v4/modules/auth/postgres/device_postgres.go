@@ -2,12 +2,13 @@ package postgres
 
 import (
 	"context"
+	"mdn4/modules/auth/domain/auth"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/auth"
 )
 
 // DevicePostgresRepo triển khai DeviceRepository với PostgreSQL
-// @bind: user/internal/interface/repo.DeviceRepository
+// @bind: mdn4/internal/interface/repo.DeviceRepository
 type DevicePostgresRepo struct {
 	db *gorm.DB
 }

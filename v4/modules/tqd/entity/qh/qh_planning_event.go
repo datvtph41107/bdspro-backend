@@ -5,7 +5,7 @@ import (
 	"time"
 
 	_models "common/domain/entity"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 
 	"github.com/lib/pq"
 )

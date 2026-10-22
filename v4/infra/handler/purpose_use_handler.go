@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
+	mapper "mdn4/modules/user/mapper"
+	usecases "mdn4/modules/user/services/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	usecases "userv4/modules/user/services/user"
 )
 
 type PurposeUseHandler struct {

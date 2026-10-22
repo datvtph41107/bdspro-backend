@@ -11,11 +11,11 @@ import (
 	"time"
 
 	_utils "common/utils"
-	"userv4/modules/tqd/dto"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
 )
 
 var (

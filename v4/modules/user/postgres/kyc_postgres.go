@@ -5,16 +5,15 @@ import (
 	_provider "common/provider"
 	"context"
 	"fmt"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/domain/user"
 	"strings"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
 )
 
 type KYCRepo struct {
 	_provider.CrudRepo[user.KYCEntity]
 }
 
-// @bind: internal/interface/repo.IKYCRepo
 func NewKYCRepo(db *_db.TransactionRepo) repo.IKYCRepo {
 	repo := &KYCRepo{}
 	repo.Init(repo, db)

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_dto "common/domain/dto"
-	"userv4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/entity"
 
 	"gorm.io/gorm"
 )

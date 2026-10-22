@@ -3,11 +3,11 @@ package services
 import (
 	_utils "common/utils"
 	"context"
-	"userv4/modules/crm/client"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	repo "userv4/modules/crm/repository"
 	"fmt"
+	"mdn4/modules/crm/client"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 	"time"
 )
 

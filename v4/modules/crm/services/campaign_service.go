@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	"userv4/modules/crm/client"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
 	"fmt"
+	"mdn4/modules/crm/client"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 	"time"
 
 	_dto "common/domain/dto"

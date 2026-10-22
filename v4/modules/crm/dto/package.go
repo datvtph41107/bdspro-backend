@@ -1,7 +1,7 @@
 package dto
 
 import (
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 )
 
 // PackageCreateDTO for creating new packages

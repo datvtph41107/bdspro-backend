@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
 )
 
 // RegionController owns /v2/tqd/client/regions* routes.

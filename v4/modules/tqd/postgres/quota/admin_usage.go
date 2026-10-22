@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	quotadomain "mdn4/modules/tqd/entity/quota"
+	quotausecase "mdn4/modules/tqd/services/quota"
+
 	"gorm.io/gorm"
-	quotadomain "userv4/modules/tqd/entity/quota"
-	quotausecase "userv4/modules/tqd/services/quota"
 )
 
-// @bind: tqd/internal/usecase/quota.AdminUsageRepository
 type AdminUsageStore struct{ db *gorm.DB }
 
 func NewAdminUsageStore(db *gorm.DB) *AdminUsageStore { return &AdminUsageStore{db: db} }

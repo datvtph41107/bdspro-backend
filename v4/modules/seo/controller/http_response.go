@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"userv4/internal/httpapi"
+	"common/httpapi"
 )
 
 func dataResult(v any) (*httpapi.Result, error) {

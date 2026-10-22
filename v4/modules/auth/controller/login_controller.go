@@ -8,8 +8,8 @@ import (
 	_utils "common/utils"
 	authpb "pb/types/auth"
 
-	"userv4/modules/auth/dto"
-	"userv4/modules/auth/services"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/services"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

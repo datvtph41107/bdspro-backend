@@ -3,7 +3,7 @@
 package mapper
 
 import (
-	seo_domain "userv4/modules/crm/entity/seo"
+	seo_domain "mdn4/modules/crm/entity/seo"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +16,6 @@ import (
 
 type SeoDomainMapper struct{}
 
-// @bind: crm/infra/mapper.SeoDomainMapper
 func NewSeoDomainMapper() *SeoDomainMapper {
 	return &SeoDomainMapper{}
 }

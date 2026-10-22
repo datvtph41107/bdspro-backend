@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	plan "userv4/modules/user/domain/plan"
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/subscription/checkout"
+	plan "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/subscription/checkout"
 )
 
 type checkoutTermsRow struct {

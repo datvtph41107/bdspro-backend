@@ -6,9 +6,9 @@ import (
 
 	_db "common/db"
 	_provider "common/provider"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

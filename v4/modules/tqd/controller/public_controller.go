@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/services"
 	sharepb "pb/types/shared"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/services"
 )
 
 // PublicController owns public TQD HTTP routes under /v2/tqd/public.

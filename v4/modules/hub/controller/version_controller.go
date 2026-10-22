@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/services"
 	hubpb "pb/types/hub"
-	"userv4/internal/httpapi"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/services"
 )
 
 // VersionController owns app-bundle version HTTP routes under /v2/hub/app-bundle.

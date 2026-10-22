@@ -1,11 +1,12 @@
 package provider
 
 import (
-	hubsvc "userv4/modules/hub/services"
-	tqdprovider "userv4/modules/tqd/provider"
+	hubsvc "mdn4/modules/hub/services"
+	tqdprovider "mdn4/modules/tqd/provider"
 )
 
 // LocalSearchAnalytics adapts hub keyword/latency services for modules/tqd.
+// @bind: mdn4/modules/tqd/provider.SearchAnalytics
 type LocalSearchAnalytics struct {
 	keywords hubsvc.KeywordSearchService
 	latency  hubsvc.SearchLatencyService

@@ -5,15 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/services"
-	tqddto "userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/services"
+	tqddto "mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
 )
 
 // LocalCrmSeoProvider implements tqdprovider.CrmSeoProvider against modules/seo
 // instead of a remote CRM gRPC client.
+// @bind: mdn4/modules/tqd/provider.CrmSeoProvider
 type LocalCrmSeoProvider struct {
 	svc services.SeoDomainService
 }

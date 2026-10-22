@@ -5,7 +5,7 @@ package repository
 import (
 	"context"
 
-	seo_domain "userv4/modules/crm/entity/seo"
+	seo_domain "mdn4/modules/crm/entity/seo"
 )
 
 type SeoCountRepo interface {

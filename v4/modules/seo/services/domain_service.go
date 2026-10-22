@@ -7,9 +7,9 @@ import (
 	"time"
 
 	_errors "common/errors"
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/repository"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/repository"
 
 	"gorm.io/datatypes"
 )
@@ -71,6 +71,7 @@ type SeoDomainService interface {
 	ListStaticPaths(ctx context.Context, page, size uint32) ([]entity.SeoDomain, int64, error)
 }
 
+// @bind: mdn4/modules/seo/services.SeoDomainService
 type LocalSeoDomainService struct {
 	repo repository.SeoDomainRepository
 }
@@ -368,15 +369,15 @@ func mapSourceConfigs(cfgs []entity.SeoRefTypeConfig) []dto.SeoSourceItem {
 func mapSourceConfig(cfg entity.SeoRefTypeConfig) dto.SeoSourceItem {
 	cfg = entity.NormalizeSeoRefTypeConfig(cfg)
 	return dto.SeoSourceItem{
-		Value:            cfg.Value,
-		Key:              cfg.Key,
-		Label:            cfg.Label,
-		Description:      cfg.Description,
-		Family:           cfg.Family,
-		SourceService:    cfg.SourceService,
-		ResolverKey:      cfg.ResolverKey,
-		Status:           cfg.Status,
-		DisabledReason:   cfg.DisabledReason,
+		Value:          cfg.Value,
+		Key:            cfg.Key,
+		Label:          cfg.Label,
+		Description:    cfg.Description,
+		Family:         cfg.Family,
+		SourceService:  cfg.SourceService,
+		ResolverKey:    cfg.ResolverKey,
+		Status:         cfg.Status,
+		DisabledReason: cfg.DisabledReason,
 		Capabilities: dto.SeoSourceCapabilities{
 			Searchable:       cfg.Capabilities.Searchable,
 			Resolvable:       cfg.Capabilities.Resolvable,

@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	domain "userv4/modules/tqd/entity/publiccontent"
-	"userv4/modules/tqd/enums"
+	domain "mdn4/modules/tqd/entity/publiccontent"
+	"mdn4/modules/tqd/enums"
 
 	"gorm.io/gorm"
 )
 
-// @bind: tqd/internal/usecase/planningclient/application.ProjectionRepository
+// @bind: mdn4/modules/tqd/services/planningclient/application.ProjectionRepository
 type Repository struct {
 	db *gorm.DB
 }

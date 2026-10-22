@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
+	qh "mdn4/modules/tqd/entity/qh"
 	"tqd/infra/postgres"
-	qh "userv4/modules/tqd/entity/qh"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

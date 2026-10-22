@@ -2,8 +2,8 @@ package dto
 
 import (
 	_utils "common/utils"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/enums"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
 
 	_dto "common/domain/dto"
 	_entity "common/domain/entity"

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/enums"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
 )
 
 // ============================================================

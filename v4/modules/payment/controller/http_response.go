@@ -3,8 +3,8 @@ package controller
 import (
 	"encoding/json"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/payment/services"
+	"common/httpapi"
+	"mdn4/modules/payment/services"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

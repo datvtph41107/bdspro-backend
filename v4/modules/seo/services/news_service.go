@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	_errors "common/errors"
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/repository"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/repository"
 
 	"gorm.io/gorm"
 )
@@ -31,6 +31,7 @@ type NewsService interface {
 	SearchContent(ctx context.Context, req dto.ContentSearchRequest) (*dto.ContentSearchResult, error)
 }
 
+// @bind: mdn4/modules/seo/services.NewsService
 type LocalNewsService struct {
 	repo       repository.NewsRepository
 	domainRepo repository.SeoDomainRepository

@@ -3,7 +3,7 @@ package dto
 import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 	"time"
 )
 

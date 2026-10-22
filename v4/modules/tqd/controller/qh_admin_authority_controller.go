@@ -7,12 +7,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/services"
 )
 
 // QHAdminAuthorityController owns /v2/tqd/qh/admin/authority-issuring*.

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	_dto "common/domain/dto"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
 )
 
 type stubCatalogRepo struct {
@@ -22,10 +22,14 @@ func (s stubCatalogRepo) SearchProjectBuilds(_ context.Context, _ _dto.Pagable, 
 	return s.builds, int64(len(s.builds)), nil
 }
 
+func (s stubCatalogRepo) ListPropertyTypes(_ context.Context, _ string) ([]entity.PropertyType, error) {
+	return nil, nil
+}
+
 func TestLocalCatalogService_ListProjects(t *testing.T) {
 	svc := NewLocalCatalogService(stubCatalogRepo{
 		projects: []entity.ProjectItem{{ID: 1, Name: "Dự án A"}},
-	})
+	}, nil)
 	resp, err := svc.ListProjects(context.Background(), dto.CatalogSearchRequest{})
 	if err != nil {
 		t.Fatal(err)

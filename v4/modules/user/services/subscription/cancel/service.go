@@ -7,7 +7,7 @@ import (
 	"time"
 
 	commonrequest "common/request"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
 )
 
 var (

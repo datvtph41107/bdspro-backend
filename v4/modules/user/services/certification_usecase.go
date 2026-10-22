@@ -1,7 +1,7 @@
 package services
 
 import (
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
 )
 
 type CertificationUsecase struct {

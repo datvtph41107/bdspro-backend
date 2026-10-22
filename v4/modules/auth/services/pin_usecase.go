@@ -7,18 +7,18 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/enums"
 	"time"
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
-	"userv4/modules/auth/enums"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AccessTokenIssuer interface {
-	GenerateAccessToken(ctx context.Context, authID uint64, sessionID uint64, organizationID *uint64) (string, error)
+	GenerateAccessToken(ctx context.Context, authID uint64, sessionID uint64, organizationID *uint64, originHint uint64) (string, error)
 }
 
 var _ AccessTokenIssuer = (*AuthUsecase)(nil)
@@ -179,7 +179,7 @@ func (s *PINUsecase) VerifyPIN(c context.Context, request dto.VerifyPINRequest) 
 		return nil, _errors.ReturnError(500, "Token issuer chưa được cấu hình")
 	}
 
-	accessToken, err := s.tokenIssuer.GenerateAccessToken(c, authEntity.ID, newSession.SessionID, nil)
+	accessToken, err := s.tokenIssuer.GenerateAccessToken(c, authEntity.ID, newSession.SessionID, nil, 0)
 	if err != nil {
 		return nil, _errors.ReturnError(500, "Không thể tạo access token")
 	}

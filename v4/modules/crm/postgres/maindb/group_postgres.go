@@ -5,7 +5,7 @@ import (
 	_routes "common/routes"
 	"context"
 	"fmt"
-	entity "userv4/modules/crm/entity"
+	entity "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )

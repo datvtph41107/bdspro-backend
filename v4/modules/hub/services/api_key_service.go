@@ -9,9 +9,9 @@ import (
 	"time"
 
 	_errors "common/errors"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 // APIKeyService manages api_keys CRUD.
@@ -22,6 +22,7 @@ type APIKeyService interface {
 	VerifyAPIKey(ctx context.Context, apiKey string) (*dto.APIKeyItem, error)
 }
 
+// @bind: mdn4/modules/hub/services.APIKeyService
 type LocalAPIKeyService struct {
 	repo repository.APIKeyRepository
 }

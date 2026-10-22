@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 )
 
 // DealInternalNoteController owns POST /v4/deal/{id}/internal-note.

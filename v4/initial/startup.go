@@ -3,22 +3,23 @@ package initial
 import (
 	_provider "common/domain/provider"
 	"context"
+	"mdn4/infra/handler"
+	usergrpc "mdn4/infra/handler/grpc"
+	accessgrpc "mdn4/infra/handler/grpc/entitlement"
+	"mdn4/infra/scheduler"
+	"mdn4/internal/job"
+	assistantcontroller "mdn4/modules/assistant/controller"
+	usecase "mdn4/modules/auth/services"
+	bdsprocontroller "mdn4/modules/bdspro/controller"
+	crmcontroller "mdn4/modules/crm/controller"
+	hubcontroller "mdn4/modules/hub/controller"
+	notificationcontroller "mdn4/modules/notification/controller"
+	paymentcontroller "mdn4/modules/payment/controller"
+	seocontroller "mdn4/modules/seo/controller"
+	tqdcontroller "mdn4/modules/tqd/controller"
+	usercontroller "mdn4/modules/user/controller"
+	usecases "mdn4/modules/user/services/user"
 	"pb/clients"
-	"userv4/infra/handler"
-	usergrpc "userv4/infra/handler/grpc"
-	accessgrpc "userv4/infra/handler/grpc/entitlement"
-	"userv4/infra/scheduler"
-	"userv4/internal/job"
-	usecase "userv4/modules/auth/services"
-	usecases "userv4/modules/user/services/user"
-	bdsprocontroller "userv4/modules/bdspro/controller"
-	crmcontroller "userv4/modules/crm/controller"
-	hubcontroller "userv4/modules/hub/controller"
-	notificationcontroller "userv4/modules/notification/controller"
-	paymentcontroller "userv4/modules/payment/controller"
-	seocontroller "userv4/modules/seo/controller"
-	tqdcontroller "userv4/modules/tqd/controller"
-	usercontroller "userv4/modules/user/controller"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/spf13/viper"
@@ -46,12 +47,12 @@ type InitialApp struct {
 	UserDashboardStatsJob *job.UserDashboardStatsJob
 	OrganizationClient    *clients.OrganizationClient
 
-	AuthHandler       *handler.AuthHandler
-	UserInfoHandler   *handler.AuthUserProfileHandler
-	OAuthHandler      *handler.OAuthHandler
-	PermissionHandler *handler.PermissionHandler
-	RoleGroupHandler  *handler.RoleGroupHandler
-	RoleHandler       *handler.RoleHandler
+	AuthHandler         *handler.AuthHandler
+	UserInfoHandler     *handler.AuthUserProfileHandler
+	OAuthHandler        *handler.OAuthHandler
+	PermissionHandler   *handler.PermissionHandler
+	RoleGroupHandler    *handler.RoleGroupHandler
+	RoleHandler         *handler.RoleHandler
 	BdsproHandler       *bdsprocontroller.Handler
 	HubHandler          *hubcontroller.Handler
 	NotificationHandler *notificationcontroller.Handler
@@ -59,6 +60,7 @@ type InitialApp struct {
 	CrmHandler          *crmcontroller.Handler
 	SeoHandler          *seocontroller.Handler
 	PaymentHandler      *paymentcontroller.Handler
+	AssistantHandler    *assistantcontroller.Handler
 	UserHandler         *usercontroller.Handler
 
 	// Role-group lookup used by role resolution.
@@ -108,6 +110,7 @@ func NewInitialApp(
 	crmHandler *crmcontroller.Handler,
 	seoHandler *seocontroller.Handler,
 	paymentHandler *paymentcontroller.Handler,
+	assistantHandler *assistantcontroller.Handler,
 	userHandler *usercontroller.Handler,
 	roleGroupRegistry *usecase.RoleGroupRegistry,
 	znsScheduler *scheduler.ZnsScheduler,
@@ -136,12 +139,12 @@ func NewInitialApp(
 		UserDashboardStatsJob:   userDashboardStatsJob,
 		OrganizationClient:      organizationClient,
 
-		AuthHandler:       authHandler,
-		UserInfoHandler:   userInfoHandler,
-		OAuthHandler:      oauthHandler,
-		PermissionHandler: permissionHandler,
-		RoleGroupHandler:  roleGroupHandler,
-		RoleHandler:       roleHandler,
+		AuthHandler:         authHandler,
+		UserInfoHandler:     userInfoHandler,
+		OAuthHandler:        oauthHandler,
+		PermissionHandler:   permissionHandler,
+		RoleGroupHandler:    roleGroupHandler,
+		RoleHandler:         roleHandler,
 		BdsproHandler:       bdsproHandler,
 		HubHandler:          hubHandler,
 		NotificationHandler: notificationHandler,
@@ -149,9 +152,10 @@ func NewInitialApp(
 		CrmHandler:          crmHandler,
 		SeoHandler:          seoHandler,
 		PaymentHandler:      paymentHandler,
+		AssistantHandler:    assistantHandler,
 		UserHandler:         userHandler,
 		RoleGroupRegistry:   roleGroupRegistry,
-		ZnsScheduler:      znsScheduler,
+		ZnsScheduler:        znsScheduler,
 
 		InternalAccessHandler:         internalAccessHandler,
 		CommercialProfileHandler:      commercialProfileHandler,

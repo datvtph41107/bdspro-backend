@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 	"strings"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

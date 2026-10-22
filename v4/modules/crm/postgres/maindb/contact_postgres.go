@@ -2,12 +2,12 @@ package maindb
 
 import (
 	_routes "common/routes"
-	entity "userv4/modules/crm/entity"
+	entity "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IContactRepo
+// @bind: mdn4/internal/interface/repo.IContactRepo
 type ContactPostgres struct {
 	DB *gorm.DB
 }

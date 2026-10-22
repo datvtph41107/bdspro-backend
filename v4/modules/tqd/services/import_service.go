@@ -20,12 +20,12 @@ import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
 
-	domain "userv4/modules/tqd/entity"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/geometry"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/geometry"
+	repo "mdn4/modules/tqd/repository"
 )
 
 // ─── tunables ──────────────────────────────────────────────────────────────

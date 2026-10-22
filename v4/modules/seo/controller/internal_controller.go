@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/services"
+	"common/httpapi"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/services"
 )
 
 const seoSecretHeader = "X-Seo-Secret-Key"

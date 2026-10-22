@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"userv4/modules/payment/entity"
+	"mdn4/modules/payment/entity"
 )
 
 // BankRepository reads the bank catalog owned by payment-service schema.

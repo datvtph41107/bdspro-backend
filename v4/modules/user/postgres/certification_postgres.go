@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/enums"
 	"time"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
 
 	"gorm.io/gorm"
 )

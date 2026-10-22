@@ -3,8 +3,8 @@ package repo
 import (
 	_enum "common/domain/enum"
 	"context"
-	"userv4/modules/user/dto"
-	entity "userv4/modules/user/entity"
+	"mdn4/modules/user/dto"
+	entity "mdn4/modules/user/entity"
 )
 
 type IAdminRepo interface {

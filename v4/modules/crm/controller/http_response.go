@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"common/httpapi"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/mapper"
 	crmpb "pb/types/crm"
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/mapper"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

@@ -6,9 +6,9 @@ import (
 
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 )
 
 func TestLocalPublicService_GetEnums(t *testing.T) {
@@ -157,7 +157,7 @@ func (r *stubDealRepoList) ListForUser(context.Context, uint64, uint32, uint32, 
 }
 
 func TestLocalPropertyService_EmptyRepo(t *testing.T) {
-	svc := NewLocalPropertyService(nil, stubPropertyRepo{})
+	svc := NewLocalPropertyService(nil, stubPropertyRepo{}, nil, nil)
 	resp, err := svc.ListMe(context.Background(), dto.PropertyListRequest{Size: 10})
 	if err != nil {
 		t.Fatalf("ListMe: %v", err)
@@ -168,7 +168,7 @@ func TestLocalPropertyService_EmptyRepo(t *testing.T) {
 }
 
 func TestLocalPropertyService_GetTimestamps_NilSync(t *testing.T) {
-	svc := NewLocalPropertyService(nil, nil)
+	svc := NewLocalPropertyService(nil, nil, nil, nil)
 	resp, err := svc.GetTimestamps(context.Background(), 30)
 	if err != nil {
 		t.Fatalf("GetTimestamps: %v", err)
@@ -182,7 +182,7 @@ func TestLocalPropertyService_GetTimestamps_NilSync(t *testing.T) {
 }
 
 func TestLocalPropertyService_GetTimestamps_RequiresID(t *testing.T) {
-	svc := NewLocalPropertyService(nil, nil)
+	svc := NewLocalPropertyService(nil, nil, nil, nil)
 	_, err := svc.GetTimestamps(context.Background(), 0)
 	if err == nil {
 		t.Fatal("expected error for id=0")
@@ -431,6 +431,14 @@ func (stubPropertyRepo) GetByID(context.Context, uint64) (*entity.PropertyLineag
 	return nil, nil
 }
 
+func (stubPropertyRepo) GetDetail(context.Context, uint64, uint64) (*entity.PropertyLineageDetail, error) {
+	return nil, nil
+}
+
+func (stubPropertyRepo) UserCreate(context.Context, uint64, *entity.PropertyCreateBundle) (*entity.PropertyLineage, error) {
+	return nil, nil
+}
+
 type stubProductRepo struct {
 	product *entity.Product
 }
@@ -448,5 +456,9 @@ func (stubProductRepo) ListByIDs(context.Context, []uint64) ([]*entity.Product, 
 }
 
 func (stubProductRepo) Create(context.Context, *entity.Product) error { return nil }
+
+func (stubProductRepo) CreateAttachedToProperty(context.Context, uint64, *entity.Product) error {
+	return nil
+}
 
 func (stubProductRepo) SoftDelete(context.Context, uint64, uint64) error { return nil }

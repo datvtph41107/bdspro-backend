@@ -1,11 +1,11 @@
 package properties
 
 import (
-	"userv4/config"
-	"userv4/modules/auth/dto"
+	"mdn4/config"
+	"mdn4/modules/auth/dto"
 )
 
-// @bind: user/internal/interface/factory.IFactory
+// @bind: mdn4/internal/interface/factory.IFactory
 type RuntimeProperties struct {
 	Properties dto.PropertiesDTO
 }

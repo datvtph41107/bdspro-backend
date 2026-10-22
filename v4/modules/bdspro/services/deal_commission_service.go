@@ -9,10 +9,10 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
 )
 
 // DealCommissionService owns deal member commission updates (migrated from DealCommissionService).
@@ -20,6 +20,7 @@ type DealCommissionService interface {
 	UpdateMembersCommission(ctx context.Context, req dto.UpdateDealMembersCommissionRequest) (*bdspropb.UpdateDealMembersCommissionResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.DealCommissionService
 type LocalDealCommissionService struct {
 	sync    *_utils.SyncUtil
 	deal    repository.DealRepository

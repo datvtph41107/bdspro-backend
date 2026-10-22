@@ -10,10 +10,10 @@ import (
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
 
 	"gorm.io/gorm"
 )
@@ -31,6 +31,7 @@ type ProductService interface {
 const productMeMaxRecords uint32 = 5
 
 // LocalProductService owns product flows against the v4 Postgres DSN + SyncUtil.
+// @bind: mdn4/modules/bdspro/services.ProductService
 type LocalProductService struct {
 	sync *_utils.SyncUtil
 	repo repository.ProductRepository
@@ -207,8 +208,8 @@ func (s *LocalProductService) ProductNew(ctx context.Context, req *bdspropb.Prod
 		SaleVisibility:    saleVis,
 		RentVisibility:    rentVis,
 		TransactionType:   req.GetTransactionType(),
-		SourceType:        req.GetSourceType(),
-		SourceStatus:      sourceStatus,
+		SourceType:        enums.ESourceType(req.GetSourceType()),
+		SourceStatus:      enums.ESourceStatus(sourceStatus),
 		Note:              req.GetNote(),
 		DocTypeNote:       req.GetCertificateHouseNote(),
 		SourceContactNote: req.GetSourceContactNote(),
@@ -351,13 +352,13 @@ func mapProductToPB(p *entity.Product) *bdspropb.ProductResponse {
 		SaleVisibility:       p.SaleVisibility,
 		RentVisibility:       p.RentVisibility,
 		TransactionType:      p.TransactionType,
-		SourceType:           p.SourceType,
+		SourceType:           uint32(p.SourceType),
 		SourceTypeName:       enums.SourceTypeMap[enums.ESourceType(p.SourceType)],
 		Archived:             p.Archived,
 		Note:                 p.Note,
 		CertificateHouseNote: p.DocTypeNote,
 		SourceContactNote:    p.SourceContactNote,
-		Priority:             p.Priority,
+		Priority:             uint32(p.Priority),
 		ShareCount:           p.ShareCount,
 		AssetCount:           p.AssetCount,
 		PostCount:            p.PostCount,
@@ -365,7 +366,7 @@ func mapProductToPB(p *entity.Product) *bdspropb.ProductResponse {
 		ContactCount:         p.ContactCount,
 		AppointmentCount:     p.AppointmentCount,
 		SourceStatus: &sharepb.EnumItem{
-			Value: p.SourceStatus,
+			Value: uint32(p.SourceStatus),
 			Name:  enums.SourceStatusNames[enums.ESourceStatus(p.SourceStatus)],
 		},
 	}
@@ -487,7 +488,7 @@ func mapPropertyLineageToProductPB(p *entity.PropertyLineage) *bdspropb.Property
 	if p == nil {
 		return nil
 	}
-	out := &bdspropb.PropertyResponse{Id: p.ID}
+	out := &bdspropb.PropertyResponse{Id: p.ID, PropertyIdentifyId: p.PropertyIdentifyID}
 	if p.UpdatedAt != nil {
 		out.UpdatedAt = _utils.FormatTimeToString(p.UpdatedAt)
 	}
@@ -629,19 +630,19 @@ func mapHouseInfoToPB(hi *entity.HouseInfo) *bdspropb.HouseInfo {
 		return nil
 	}
 	out := &bdspropb.HouseInfo{
-		NumBedroom:       hi.NumBedroom,
-		NumBathroom:      hi.NumBathroom,
-		NumFloor:         hi.NumFloor,
-		NumFront:         hi.NumFront,
-		NumCarPark:       hi.NumCarPark,
-		NumToilet:        hi.NumToilet,
-		Furniture:        hi.Furniture,
-		Orientation:      hi.Orientation,
-		RoadWidth:        hi.RoadWidth,
-		FrontWidth:       hi.FrontWidth,
-		BackWidth:        hi.BackWidth,
-		Width:            hi.Width,
-		Height:           hi.Height,
+		NumBedroom:  hi.NumBedroom,
+		NumBathroom: hi.NumBathroom,
+		NumFloor:    hi.NumFloor,
+		NumFront:    hi.NumFront,
+		NumCarPark:  hi.NumCarPark,
+		NumToilet:   hi.NumToilet,
+		Furniture:   hi.Furniture,
+		Orientation: hi.Orientation,
+		RoadWidth:   hi.RoadWidth,
+		FrontWidth:  hi.FrontWidth,
+		BackWidth:   hi.BackWidth,
+		Width:       hi.Width,
+		Height:      hi.Height,
 	}
 	if hi.OrientationHouse > 0 {
 		v := hi.OrientationHouse

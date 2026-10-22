@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/dto"
+	"mdn4/modules/crm/services"
 )
 
-type SupportTicketController struct{ uc *services.SupportTicketUsecase }
+type SupportTicketController struct {
+	uc *services.SupportTicketUsecase
+}
 
 func NewSupportTicketController(uc *services.SupportTicketUsecase) *SupportTicketController {
 	return &SupportTicketController{uc: uc}
@@ -75,66 +77,114 @@ type supportTransferReq struct {
 }
 
 func (c *SupportTicketController) list(ctx context.Context, req dto.SupportTicketListRequest) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.List(ctx, &req)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *SupportTicketController) summary(ctx context.Context, _ httpapi.Empty) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Summary(ctx)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *SupportTicketController) detail(ctx context.Context, req supportPath) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.GetByID(ctx, req.ID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *SupportTicketController) create(ctx context.Context, req dto.SupportTicketCreateRequest) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Create(ctx, &req)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *SupportTicketController) update(ctx context.Context, req supportUpdateReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Update(ctx, req.ID, &req.SupportTicketUpdateRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Update(ctx, req.ID, &req.SupportTicketUpdateRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "updated")
 }
 func (c *SupportTicketController) assign(ctx context.Context, req supportAssignReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Assign(ctx, req.ID, &req.SupportTicketAssignRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Assign(ctx, req.ID, &req.SupportTicketAssignRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "assigned")
 }
 func (c *SupportTicketController) priority(ctx context.Context, req supportPriorityReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.UpdatePriority(ctx, req.ID, &req.SupportTicketPriorityRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.UpdatePriority(ctx, req.ID, &req.SupportTicketPriorityRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "updated")
 }
 func (c *SupportTicketController) status(ctx context.Context, req supportStatusReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.UpdateStatus(ctx, req.ID, &req.SupportTicketStatusRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.UpdateStatus(ctx, req.ID, &req.SupportTicketStatusRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "updated")
 }
 func (c *SupportTicketController) note(ctx context.Context, req supportNoteReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.AddNote(ctx, req.ID, &req.SupportTicketNoteRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.AddNote(ctx, req.ID, &req.SupportTicketNoteRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "noted")
 }
 func (c *SupportTicketController) close(ctx context.Context, req supportCloseReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Close(ctx, req.ID, &req.SupportTicketCloseRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Close(ctx, req.ID, &req.SupportTicketCloseRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "closed")
 }
 func (c *SupportTicketController) images(ctx context.Context, req supportImagesReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.UpdateImages(ctx, req.ID, req.Images); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.UpdateImages(ctx, req.ID, req.Images); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "updated")
 }
 func (c *SupportTicketController) transfer(ctx context.Context, req supportTransferReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Transfer(ctx, req.ID, &req.SupportTicketTransferRequest); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Transfer(ctx, req.ID, &req.SupportTicketTransferRequest); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "transferred")
 }

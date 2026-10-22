@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	_errors "common/errors"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 	hubpb "pb/types/hub"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
 )
 
 // VersionService owns app-bundle version flows for modules/hub.
@@ -23,6 +23,7 @@ type VersionService interface {
 	AdminDelete(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/hub/services.VersionService
 type LocalVersionService struct {
 	repo repository.VersionRepository
 }

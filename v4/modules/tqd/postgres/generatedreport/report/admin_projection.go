@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	reportadmin "userv4/modules/tqd/services/generatedreport/admin"
+	reportadmin "mdn4/modules/tqd/services/generatedreport/admin"
 )
 
 type adminReportRow struct {

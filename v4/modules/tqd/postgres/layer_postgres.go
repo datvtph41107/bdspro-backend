@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

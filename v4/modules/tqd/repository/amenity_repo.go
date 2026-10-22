@@ -3,8 +3,8 @@ package repository
 import (
 	_crud "common/domain/crud"
 	"context"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
 )
 
 type IAmenityRepo interface {

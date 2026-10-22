@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"userv4/modules/tqd/dto"
+	"mdn4/modules/tqd/dto"
 )
 
 // UserProvider defines the interface for user-related operations

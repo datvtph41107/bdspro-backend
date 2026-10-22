@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	domain "userv4/modules/tqd/entity"
+	domain "mdn4/modules/tqd/entity"
 
 	_dto "common/domain/dto"
 )

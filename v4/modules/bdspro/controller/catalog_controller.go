@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 )
 
 // CatalogController owns public list routes under /v2/bdspro/v2/list/* (project-build/items is on ProjectBuildController).

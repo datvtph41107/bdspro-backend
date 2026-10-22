@@ -3,29 +3,29 @@ package controller
 import (
 	"net/http"
 
-	"userv4/internal/requeststats"
-	"userv4/modules/hub/services"
+	"mdn4/internal/requeststats"
+	"mdn4/modules/hub/services"
 )
 
 // Handler is the modules/hub HTTP entry for all hub capabilities.
 type Handler struct {
-	location          *LocationController
-	locationV2        *LocationV2Controller
-	userGuide         *UserGuideController
-	faq               *FAQController
-	version           *VersionController
-	requestStats      *RequestStatsController
-	errorLog          *ErrorLogController
-	applink           *ApplinkController
-	systemConfig      *SystemConfigController
-	eventQueue        *EventQueueController
-	interactiveEvent  *InteractiveEventController
-	clickURL          *ClickURLController
-	updateData        *UpdateDataController
-	keywordSearch     *KeywordSearchController
-	searchLatency     *SearchLatencyController
-	apiKey            *APIKeyController
-	statsSvc          services.RequestStatsService
+	location         *LocationController
+	locationV2       *LocationV2Controller
+	userGuide        *UserGuideController
+	faq              *FAQController
+	version          *VersionController
+	requestStats     *RequestStatsController
+	errorLog         *ErrorLogController
+	applink          *ApplinkController
+	systemConfig     *SystemConfigController
+	eventQueue       *EventQueueController
+	interactiveEvent *InteractiveEventController
+	clickURL         *ClickURLController
+	updateData       *UpdateDataController
+	keywordSearch    *KeywordSearchController
+	searchLatency    *SearchLatencyController
+	apiKey           *APIKeyController
+	statsSvc         services.RequestStatsService
 }
 
 func NewHandler(

@@ -6,11 +6,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services"
 )
 
 // AdminReportController owns /v2/tqd/admin/reports*.

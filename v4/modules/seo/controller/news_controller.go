@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
 	_utils "common/utils"
-	"userv4/internal/httpapi"
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/services"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/services"
 )
 
 // NewsController handles planning news public/client/admin routes.

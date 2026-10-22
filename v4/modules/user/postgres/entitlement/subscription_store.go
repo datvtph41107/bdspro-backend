@@ -4,10 +4,10 @@ import (
 	"common/operation"
 	"context"
 	"errors"
+	access "mdn4/modules/user/domain/entitlement"
+	"mdn4/modules/user/entity"
+	useraccess "mdn4/modules/user/services/entitlement"
 	"time"
-	"userv4/modules/user/domain/entitlement"
-	"userv4/modules/user/entity"
-	useraccess "userv4/modules/user/services/entitlement"
 
 	"gorm.io/gorm"
 )
@@ -29,7 +29,7 @@ type subscriptionRow struct {
 /**
  * SubscriptionStore đọc catalog_subscriptions và plan version từ PostgreSQL.
  */
-// @bind: user/internal/usecase/entitlement.SubscriptionStore
+// @bind: mdn4/modules/user/services/entitlement.SubscriptionStore
 type SubscriptionStore struct {
 	db *gorm.DB
 }

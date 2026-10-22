@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	_dto "common/domain/dto"
+	"mdn4/modules/user/entity"
+	mapper "mdn4/modules/user/mapper"
+	userusecase "mdn4/modules/user/services/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	"userv4/modules/user/entity"
-	userusecase "userv4/modules/user/services/user"
 )
 
 // CatalogService owns main-area / purpose-use / profession HTTP surface.
@@ -34,6 +34,7 @@ type CatalogService interface {
 }
 
 // LocalCatalogService adapts catalog usecases into modules/user.
+// @bind: mdn4/modules/user/services.CatalogService
 type LocalCatalogService struct {
 	mainArea   IAdminMainAreaUsecase
 	mainMapper *mapper.MainAreaMapper

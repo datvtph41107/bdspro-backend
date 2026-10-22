@@ -5,10 +5,10 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"mdn4/modules/tqd/services/generatedreport/memoryjob"
+	"mdn4/modules/tqd/services/generatedreport/processing"
 	"testing"
 	"time"
-	"userv4/modules/tqd/services/generatedreport/memoryjob"
-	"userv4/modules/tqd/services/generatedreport/processing"
 )
 
 type fakeGenerator struct {

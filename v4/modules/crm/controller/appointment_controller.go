@@ -14,11 +14,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/mapper"
-	"userv4/modules/crm/services"
-	"userv4/modules/crm/validator"
+	"common/httpapi"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/mapper"
+	"mdn4/modules/crm/services"
+	"mdn4/modules/crm/validator"
 )
 
 // AppointmentController owns /v2.1/appointment/*, ported from crm-service AppointmentHandler.

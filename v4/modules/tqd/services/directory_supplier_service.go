@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
 
 	_utils "common/utils"
 )

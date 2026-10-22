@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
 )
 
 // DisplayMode tells clients how a related projection should be presented.

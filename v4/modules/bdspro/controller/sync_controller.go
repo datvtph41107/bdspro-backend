@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/services"
+	"common/httpapi"
+	"mdn4/modules/bdspro/services"
 )
 
 // SyncController owns GET /v2/bdspro/ts.

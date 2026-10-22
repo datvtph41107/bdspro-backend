@@ -3,7 +3,7 @@ package services
 import (
 	"testing"
 
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 )
 
 func TestIsSystemRootRole(t *testing.T) {

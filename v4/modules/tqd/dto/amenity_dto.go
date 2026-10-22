@@ -2,7 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	domain "userv4/modules/tqd/entity"
+	domain "mdn4/modules/tqd/entity"
 )
 
 // AmenityDTO represents the amenity data transfer object

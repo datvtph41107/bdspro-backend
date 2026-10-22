@@ -3,13 +3,13 @@ package postgres
 import (
 	_dto "common/domain/dto"
 	"context"
-	"userv4/modules/crm/infra/impl"
+	"mdn4/modules/crm/infra/impl"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.ContactProductRepo
+// @bind: mdn4/modules/crm/repository.ContactProductRepo
 type ContactProductPostgre struct {
 	DB *gorm.DB
 }

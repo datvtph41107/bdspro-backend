@@ -2,14 +2,14 @@ package postgres
 
 import (
 	"context"
-	"userv4/modules/crm/infra/impl"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/infra/impl"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.DocumentRepo
+// @bind: mdn4/modules/crm/repository.DocumentRepo
 type DocumentPostgre struct {
 	DB *gorm.DB
 }

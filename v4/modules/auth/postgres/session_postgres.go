@@ -6,14 +6,15 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
+	"mdn4/modules/auth/domain/auth"
+	userentity "mdn4/modules/user/entity"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"userv4/modules/auth/domain/auth"
-	userentity "userv4/modules/user/entity"
 )
 
 // SessionPostgres implementation của Session repository
-// @bind: user/internal/interface/repo.SessionRepository
+// @bind: mdn4/internal/interface/repo.SessionRepository
 type SessionPostgres struct {
 	db *gorm.DB
 }

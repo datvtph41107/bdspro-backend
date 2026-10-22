@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	repo "userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services/resolver/layer_resolver/config"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	repo "mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/config"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 type ConfigLoader struct {

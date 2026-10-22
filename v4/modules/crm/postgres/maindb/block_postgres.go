@@ -1,12 +1,12 @@
 package maindb
 
 import (
-	entity "userv4/modules/crm/entity"
+	entity "mdn4/modules/crm/entity"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IBlockRepo
+// @bind: mdn4/internal/interface/repo.IBlockRepo
 type BlockPostgres struct {
 	DB *gorm.DB
 }

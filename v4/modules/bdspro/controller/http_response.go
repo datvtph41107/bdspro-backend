@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"common/httpapi"
 	bdspropb "pb/types/bdspro"
 	crmpb "pb/types/crm"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/services"
+	"mdn4/modules/bdspro/services"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

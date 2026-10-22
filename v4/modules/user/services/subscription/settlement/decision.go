@@ -3,8 +3,8 @@ package settlement
 import (
 	"time"
 
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	"userv4/modules/user/entity"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	"mdn4/modules/user/entity"
 )
 
 func Decide(effect Effect, target Target, current Current, now time.Time) (Decision, error) {

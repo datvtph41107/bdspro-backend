@@ -7,10 +7,10 @@ import (
 
 	_utils "common/utils"
 	tqdpb "pb/types/tqd"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/entity"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/repository"
 )
 
 const pageSizeMax = 500
@@ -22,6 +22,7 @@ type LocationService interface {
 }
 
 // LocalLocationService serves TQD province/ward catalogs from the TQD DSN + SyncUtil.
+// @bind: mdn4/modules/tqd/services.LocationService
 type LocalLocationService struct {
 	repo repository.LocationRepository
 	sync *_utils.SyncUtil
@@ -114,7 +115,6 @@ func mapProvince(p *entity.Province) *tqdpb.Province {
 		Id:                    p.ID,
 		Code:                  p.Code,
 		FullName:              p.FullName,
-		ShortName:             p.ShortName,
 		Latitude:              p.Lat,
 		Longitude:             p.Lng,
 		DivisionType:          p.DivisionType,
@@ -156,7 +156,9 @@ func mapWardListItem(w *entity.Ward) *tqdpb.Ward {
 	}
 	resp := &tqdpb.Ward{
 		Id:           w.ID,
-		ShortName:    w.ShortName,
+		Code:         w.Code,
+		FullName:     w.FullName,
+		OfficialName: w.OfficialName,
 		Latitude:     w.Lat,
 		Longitude:    w.Lng,
 		ProvinceId:   w.ProvinceID,

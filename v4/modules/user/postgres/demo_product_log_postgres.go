@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"context"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
 
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IDemoProductLogRepo
+// @bind: mdn4/internal/interface/repo.IDemoProductLogRepo
 type DemoProductLogPostgres struct {
 	DB *gorm.DB
 }

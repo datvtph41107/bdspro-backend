@@ -1,5 +1,5 @@
 SHELL := /bin/sh
-BINARY_NAME := userv4
+BINARY_NAME := mdn4
 BUILD_PACKAGE := ./cmd/grpc
 RUN_PACKAGE := ./cmd/grpc
 # Alternate entry: make http  (HTTP_ADDRESS / server.port, default :8288)
@@ -34,8 +34,9 @@ endef
 buf:
 	$(MAKE) -C ../shared/code buf-user-service
 
+# Rewrites wire/wire.go from New* constructors + @bind annotations, then runs `wire gen`.
 wire:
-	(cd wire && wire gen)
+	go run ../shared/code/script/gen_wire.go v4
 
 generate: buf wire
 
@@ -45,7 +46,7 @@ bootstrap-admin:
 	@$(call with_env,go run ./cmd/bootstrap-admin)
 
 docker-build:
-	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/userv4:$${QHPRO_IMAGE_TAG:-local}" ..
+	docker build -f Dockerfile -t "$${QHPRO_IMAGE_NAMESPACE:-bdspro}/mdn4:$${QHPRO_IMAGE_TAG:-local}" ..
 
 # Ship linux binary + config to production (see ./deploy.sh).
 deploy:

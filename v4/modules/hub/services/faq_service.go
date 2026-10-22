@@ -5,10 +5,10 @@ import (
 	"strconv"
 
 	_errors "common/errors"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 	hubpb "pb/types/hub"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
 )
 
 // FAQService owns user-facing and admin FAQ flows for modules/hub.
@@ -20,6 +20,7 @@ type FAQService interface {
 	AdminDelete(ctx context.Context, id uint64) error
 }
 
+// @bind: mdn4/modules/hub/services.FAQService
 type LocalFAQService struct {
 	repo repository.FAQRepository
 }

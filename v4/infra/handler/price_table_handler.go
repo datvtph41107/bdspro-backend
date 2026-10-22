@@ -5,9 +5,9 @@ import (
 	_err "common/domain/err"
 	_errors "common/errors"
 	"context"
+	mapper "mdn4/modules/user/mapper"
+	userservices "mdn4/modules/user/services"
 	pb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	userservices "userv4/modules/user/services"
 
 	"google.golang.org/grpc/status"
 )
@@ -18,8 +18,6 @@ type PriceTableHandler struct {
 	mapper            *mapper.PriceTableMapper
 }
 
-// @bind: internal/userservices.IPriceTableUsecase
-// @bind: infra/mapper.PriceTableMapper
 func NewPriceTableHandler(
 	priceTableUsecase userservices.IPriceTableUsecase,
 	mapper *mapper.PriceTableMapper,

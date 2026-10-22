@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
 
 	"gorm.io/gorm"
 )

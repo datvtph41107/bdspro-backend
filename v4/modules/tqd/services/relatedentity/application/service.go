@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
-	relateddomain "userv4/modules/tqd/entity/relatedentity"
-	relatedports "userv4/modules/tqd/services/relatedentity/ports"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
+	relateddomain "mdn4/modules/tqd/entity/relatedentity"
+	relatedports "mdn4/modules/tqd/services/relatedentity/ports"
 )
 
 type Service struct {

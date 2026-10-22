@@ -4,7 +4,7 @@ import (
 	"time"
 
 	_enum "common/domain/enum"
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 //	type ParcelDTO struct {

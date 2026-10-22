@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mdn4/config"
+	"mdn4/internal/interface/providers"
 	"net/http"
 	"strings"
 	"time"
-	"userv4/config"
-	"userv4/internal/interface/providers"
 )
 
 type SMSProvider struct {

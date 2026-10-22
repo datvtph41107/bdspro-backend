@@ -3,9 +3,9 @@ package mock_repo
 
 import (
 	context "context"
-	qh "userv4/modules/tqd/entity/qh"
-	enums "userv4/modules/tqd/enums"
-	repo "userv4/modules/tqd/repository"
+	qh "mdn4/modules/tqd/entity/qh"
+	enums "mdn4/modules/tqd/enums"
+	repo "mdn4/modules/tqd/repository"
 
 	mock "github.com/stretchr/testify/mock"
 )

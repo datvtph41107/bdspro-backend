@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+func TestParseModuleName(t *testing.T) {
+	cases := map[string]string{
+		"module userv4\n\ngo 1.25\n":     "userv4",
+		"// c\nmodule   \"tx\"\n":         "tx",
+		"go 1.25\nrequire x v1.0.0\n": "",
+	}
+	for in, want := range cases {
+		if got := parseModuleName(in); got != want {
+			t.Fatalf("parseModuleName(%q)=%q want %q", in, got, want)
+		}
+	}
+}
+
 func TestNormalizeScanExclude(t *testing.T) {
 	got := normalizeScanExclude([]string{
 		" internal/modules/catalog/ ",

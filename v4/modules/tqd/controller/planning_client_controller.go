@@ -9,15 +9,15 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	planningdomain "userv4/modules/tqd/entity/planningclient"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/provider"
-	planningapp "userv4/modules/tqd/services/planningclient/application"
-	qh_usecase "userv4/modules/tqd/services/qh"
+	"mdn4/modules/tqd/dto"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	planningdomain "mdn4/modules/tqd/entity/planningclient"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/provider"
+	planningapp "mdn4/modules/tqd/services/planningclient/application"
+	qh_usecase "mdn4/modules/tqd/services/qh"
 )
 
 // PlanningClientController owns /v2/tqd/client planning-project and planning-document routes.

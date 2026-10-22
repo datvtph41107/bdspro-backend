@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domain "userv4/modules/tqd/entity"
-	repo "userv4/modules/tqd/repository"
+	domain "mdn4/modules/tqd/entity"
+	repo "mdn4/modules/tqd/repository"
 )
 
 type FeatureUsecase struct {

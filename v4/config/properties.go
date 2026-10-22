@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	tqdconfig "userv4/modules/tqd/config"
+	tqdconfig "mdn4/modules/tqd/config"
 )
 
 // AppProperties cấu hình tổng thể của ứng dụng

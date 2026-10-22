@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"userv4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/entity"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +12,8 @@ import (
 type PropertyRepository interface {
 	ListMine(ctx context.Context, originID uint64, page, size uint32) ([]*entity.PropertyLineage, int64, error)
 	GetByID(ctx context.Context, id uint64) (*entity.PropertyLineage, error)
+	GetDetail(ctx context.Context, id, ownerOriginID uint64) (*entity.PropertyLineageDetail, error)
+	UserCreate(ctx context.Context, originID uint64, bundle *entity.PropertyCreateBundle) (*entity.PropertyLineage, error)
 }
 
 type propertyPostgres struct {

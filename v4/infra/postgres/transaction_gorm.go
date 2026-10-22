@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface.ITransaction
+// @bind: mdn4/internal/interface.ITransaction
 type TransactionGorm struct {
 	DB *gorm.DB
 }

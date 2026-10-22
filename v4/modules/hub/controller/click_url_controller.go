@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	_enums "common/domain/enum"
-	"userv4/internal/httpapi"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/services"
+	"common/httpapi"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/services"
 )
 
 // ClickURLController handles POST /v2/hub/v2/click-url.

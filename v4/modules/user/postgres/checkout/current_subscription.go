@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/subscription/checkout"
+
 	"gorm.io/gorm"
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/subscription/checkout"
 )
 
 type currentSubscriptionRow struct {

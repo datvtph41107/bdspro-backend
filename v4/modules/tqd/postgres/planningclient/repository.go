@@ -10,16 +10,16 @@ import (
 	"time"
 
 	_utils "common/utils"
-	planningdomain "userv4/modules/tqd/entity/planningclient"
-	"userv4/modules/tqd/enums"
-	tqdutils "userv4/modules/tqd/utils"
+	planningdomain "mdn4/modules/tqd/entity/planningclient"
+	"mdn4/modules/tqd/enums"
+	tqdutils "mdn4/modules/tqd/utils"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-// @bind: tqd/internal/usecase/planningclient/application.PlanningRepository
+// @bind: mdn4/modules/tqd/services/planningclient/application.PlanningRepository
 type Repository struct {
 	db *gorm.DB
 }
@@ -730,7 +730,7 @@ func (r *Repository) GetDocument(ctx context.Context, documentID uint64) (*plann
 	err := r.db.WithContext(ctx).Table("qh_planning_documents d").
 		Joins("LEFT JOIN qh_planning_projects p ON p.id = d.planning_project_id AND p.deleted_at IS NULL AND p.client_view = ?", true).
 		Where("d.id = ? AND d.deleted_at IS NULL", documentID).
-		Select(documentSelect+`, p.id AS project_ref_id, COALESCE(p.name, '') AS project_ref_name`).
+		Select(documentSelect + `, p.id AS project_ref_id, COALESCE(p.name, '') AS project_ref_name`).
 		Take(&row).Error
 	if err != nil {
 		return nil, err

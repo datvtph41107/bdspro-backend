@@ -9,10 +9,10 @@ import (
 	_utils "common/utils"
 	bdspropb "pb/types/bdspro"
 
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
 )
 
 // ContractDealService owns contract-deal writes (reads delegate to DealService in the controller).
@@ -24,6 +24,7 @@ type ContractDealService interface {
 	GetMyContracts(ctx context.Context, page, size uint32) (*bdspropb.DealContractListResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.ContractDealService
 type LocalContractDealService struct {
 	sync *_utils.SyncUtil
 	repo repository.ContractDealRepository

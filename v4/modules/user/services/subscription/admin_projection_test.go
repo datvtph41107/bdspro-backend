@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	commonidentity "common/identity"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
 )
 
 type adminRepositoryStub struct {

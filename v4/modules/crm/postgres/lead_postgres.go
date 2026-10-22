@@ -5,16 +5,16 @@ import (
 	_db "common/db"
 	_routes "common/routes"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
 	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/repo.LeadRepo
+// @bind: mdn4/modules/crm/repository.LeadRepo
 type LeadPostgre struct {
 	*_db.BaseRepo
 }
@@ -351,7 +351,7 @@ func (r *LeadPostgre) Update(ctx context.Context, id uint64, entity *domain.Lead
 			"customer_type":       entity.CustomerType,
 			"need_summary":        entity.NeedSummary,
 			"interested_plan":     entity.InterestedPlan,
-			"opportunity_status":   entity.OpportunityStatus,
+			"opportunity_status":  entity.OpportunityStatus,
 			"admin_source":        entity.AdminSource,
 			"expected_value":      entity.ExpectedValue,
 			"probability":         entity.Probability,

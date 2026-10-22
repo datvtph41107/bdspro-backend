@@ -2,7 +2,7 @@ package entity
 
 import (
 	_models "common/domain/entity"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 // ORM::TABLE

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"common/httpapi"
 	notificationpb "pb/types/notification"
-	"userv4/internal/httpapi"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

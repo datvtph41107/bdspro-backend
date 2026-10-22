@@ -5,16 +5,16 @@ import (
 	"errors"
 	"strings"
 
-	sharepb "pb/types/shared"
 	"pb/clients"
+	sharepb "pb/types/shared"
 
 	"google.golang.org/grpc/status"
 )
 
 // CatalogAuthorizer evaluates catalog-plan / user-admin IAM through Auth PermissionService.
 // User does not read role_permissions for these boundaries.
-// @bind: user/internal/usecase/plan/admin.PermissionAuthorizer
-// @bind: user/internal/usecase/useradmin.PermissionAuthorizer
+// @bind: mdn4/modules/user/services/plan/admin.PermissionAuthorizer
+// @bind: mdn4/modules/user/services/useradmin.PermissionAuthorizer
 type CatalogAuthorizer struct {
 	auth *clients.AuthGrpcClient
 }

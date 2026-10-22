@@ -4,8 +4,8 @@ import (
 	"time"
 
 	_dto "common/domain/dto"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/enums"
 
 	"github.com/go-playground/validator/v10"
 )

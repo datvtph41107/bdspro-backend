@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"common/httpapi"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/services"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/internal/httpapi"
-	"userv4/modules/user/dto"
-	"userv4/modules/user/services"
 )
 
 // AdminUserController owns admin-users + admin-profile HTTP routes.

@@ -7,12 +7,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
 )
 
 // ParcelClientController owns parcel client routes under /v2/tqd/client.

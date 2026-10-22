@@ -5,7 +5,7 @@ import (
 	_model "common/models"
 	"time"
 
-	authdto "userv4/modules/auth/dto"
+	authdto "mdn4/modules/auth/dto"
 )
 
 // AdminProfile chứa thông tin tài khoản admin

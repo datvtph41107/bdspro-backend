@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	domain "userv4/modules/tqd/entity/publiccontent"
+	domain "mdn4/modules/tqd/entity/publiccontent"
 )
 
 func TestBuildRelatedPlanningProjectKeepsUpdateAndDossierPath(t *testing.T) {

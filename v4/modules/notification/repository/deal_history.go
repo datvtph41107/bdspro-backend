@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"userv4/modules/notification/entity"
+	"mdn4/modules/notification/entity"
 
 	"gorm.io/gorm"
 )

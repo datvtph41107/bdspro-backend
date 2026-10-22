@@ -25,6 +25,8 @@ const (
 	SyncKeyPropertyHistories   = "ppt:his"
 	SyncKeyPropertyDetail      = "ppt:id"
 	SyncKeyPropertyMe          = "ppt:me"
+	// SyncKeyListingMe: ds listing của user GET /v4/bdspro/listing/me.
+	SyncKeyListingMe = "lst:me"
 	SyncKeyContactMe           = "ct:me"
 	SyncKeyContactDetail       = "ct:id"
 	// SyncKeyAppointmentMe: ds lịch hẹn của user (ListAppointments).
@@ -61,6 +63,8 @@ const (
 	SyncKeyPaymentBankAll = "pay:bank:all"
 	// SyncKeyTxCostTypes: danh mục loại chi phí GET /v4/transaction/cost-type (global, mọi costType).
 	SyncKeyTxCostTypes = "tx:cost:types"
+	// SyncKeyPropertyTypes: danh mục loại tài sản GET /v2/bdspro/v2/list/property-type (global).
+	SyncKeyPropertyTypes = "bds:property:types"
 	// SyncKeyPoiCategoryIcons: icon POI categories (global).
 	SyncKeyPoiCategoryIcons = "tqd:poi:icons"
 	// SyncKeyUserGuideByKey: 1 key chung cho toàn bộ user guides có key (timestamp = max updatedAt).

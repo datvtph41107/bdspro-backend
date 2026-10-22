@@ -4,8 +4,8 @@ import (
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
 	"context"
-	"userv4/internal/interface/repo"
-	"userv4/modules/user/entity"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/entity"
 )
 
 type IAdminMainAreaUsecase interface {

@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	infpostgres "userv4/infra/postgres"
-	"userv4/modules/bdspro/entity"
+	infpostgres "mdn4/infra/postgres"
+	"mdn4/modules/bdspro/entity"
 
 	"gorm.io/gorm"
 )

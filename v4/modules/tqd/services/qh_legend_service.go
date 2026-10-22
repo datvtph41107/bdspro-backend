@@ -9,8 +9,8 @@ import (
 
 	_dto "common/domain/dto"
 
-	qh "userv4/modules/tqd/entity/qh"
-	repo "userv4/modules/tqd/repository"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 )
 
 // Lỗi nghiệp vụ ổn định để adapter phân loại bằng errors.Is.

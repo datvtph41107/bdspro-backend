@@ -3,8 +3,8 @@ package providers
 import (
 	_dto "common/domain/dto"
 	"context"
+	"mdn4/modules/auth/dto"
 	"time"
-	"userv4/modules/auth/dto"
 )
 
 // UserStatusInfo chứa thông tin trạng thái của user

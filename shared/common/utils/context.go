@@ -37,11 +37,18 @@ func GetProfileIdWithContext(ctx context.Context) uint64 {
 }
 
 func GetOriginIdFromContext(ctx context.Context) uint64 {
-	profileId := ctx.Value(_enums.OriginIDKey)
-	if profileId == nil {
+	if ctx == nil {
 		return 0
 	}
-	return profileId.(uint64)
+	if originID := ctx.Value(_enums.OriginIDKey); originID != nil {
+		if id, ok := originID.(uint64); ok {
+			return id
+		}
+	}
+	if actor, ok := identity.ActorFromContext(ctx); ok && actor.OriginID > 0 {
+		return actor.OriginID
+	}
+	return 0
 }
 
 func GetrRoleWithContext(ctx context.Context) uint64 {

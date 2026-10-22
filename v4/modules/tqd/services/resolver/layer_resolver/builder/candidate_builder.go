@@ -2,8 +2,8 @@ package builder
 
 import (
 	_utils "common/utils"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // CandidateBuilder chuyển ParcelLayerRowV2 → types.LayerCandidate

@@ -1,11 +1,11 @@
 package config_test
 
 import (
+	"mdn4/config"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"userv4/config"
 
 	"github.com/spf13/viper"
 )

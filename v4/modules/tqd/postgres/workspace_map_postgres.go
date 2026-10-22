@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mdn4/modules/tqd/services"
 	"time"
-	"userv4/modules/tqd/services"
 
-	postgresjob "userv4/modules/tqd/postgres/generatedreport/job"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	postgresjob "mdn4/modules/tqd/postgres/generatedreport/job"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

@@ -1,8 +1,8 @@
 package dto
 
 import (
+	"mdn4/modules/auth/enums"
 	"time"
-	"userv4/modules/auth/enums"
 )
 
 type ProfileDTO struct {

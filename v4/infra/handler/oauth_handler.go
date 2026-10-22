@@ -1,15 +1,15 @@
 package handler
 
 import (
+	"common/httpapi"
 	"context"
 	"log"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/oauth"
+	usecase "mdn4/modules/auth/services"
 	"net/http"
-	"strings"
 	authpb "pb/types/auth"
-	"userv4/modules/auth/oauth"
-	"userv4/modules/auth/dto"
-	"userv4/internal/httpapi"
-	usecase "userv4/modules/auth/services"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

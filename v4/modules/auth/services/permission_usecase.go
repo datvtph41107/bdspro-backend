@@ -5,10 +5,10 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/access"
 	"sort"
-	"userv4/modules/auth/domain/access"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
 )
 
 type PermissionUsecase struct {

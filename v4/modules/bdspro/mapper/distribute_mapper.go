@@ -6,11 +6,11 @@ import (
 
 	_provider "common/domain/provider"
 	_utils "common/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
 )
 
 type DistributionMapper struct {

@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"userv4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/enums"
 )
 
 // DealSetting is PUT deal setting payload (parity with bdspro-service dto.DealSetting).
@@ -28,11 +28,11 @@ type DealSetting struct {
 
 // DealSearchRequest mirrors bdspropb.DealSearchRequest query params.
 type DealSearchRequest struct {
-	Page           uint32  `form:"page"`
-	Size           uint32  `form:"size"`
-	Text           string  `form:"text"`
-	OrganizationID *uint64 `form:"organizationId"`
-	GroupID        *uint64 `form:"groupId"`
+	Page             uint32  `form:"page"`
+	Size             uint32  `form:"size"`
+	Text             string  `form:"text"`
+	OrganizationID   *uint64 `form:"organizationId"`
+	GroupID          *uint64 `form:"groupId"`
 	OwnerID          *uint64 `form:"ownerId"`
 	OwnerOf          uint32  `form:"ownerOf"`
 	InvitedProfileID *uint64 `form:"invitedProfileId"`

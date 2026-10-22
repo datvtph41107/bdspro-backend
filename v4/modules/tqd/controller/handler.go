@@ -3,15 +3,15 @@ package controller
 import (
 	"net/http"
 
-	"userv4/modules/tqd/provider"
-	"userv4/modules/tqd/services"
-	discoveryapp "userv4/modules/tqd/services/discovery/application"
-	genreportapp "userv4/modules/tqd/services/generatedreport/application"
-	planningapp "userv4/modules/tqd/services/planningclient/application"
-	qh_usecase "userv4/modules/tqd/services/qh"
-	"userv4/modules/tqd/services/quota"
-	relatedapp "userv4/modules/tqd/services/relatedentity/application"
-	publiccontentpg "userv4/modules/tqd/postgres/publiccontent"
+	publiccontentpg "mdn4/modules/tqd/postgres/publiccontent"
+	"mdn4/modules/tqd/provider"
+	"mdn4/modules/tqd/services"
+	discoveryapp "mdn4/modules/tqd/services/discovery/application"
+	genreportapp "mdn4/modules/tqd/services/generatedreport/application"
+	planningapp "mdn4/modules/tqd/services/planningclient/application"
+	qh_usecase "mdn4/modules/tqd/services/qh"
+	"mdn4/modules/tqd/services/quota"
+	relatedapp "mdn4/modules/tqd/services/relatedentity/application"
 )
 
 // Handler is the modules/tqd HTTP entry for client, public, admin, and internal routes.
@@ -49,13 +49,13 @@ type Handler struct {
 	poiUser      *PoiUserController
 	directory    *DirectoryController
 
-	adminLocation    *AdminLocationController
+	adminLocation     *AdminLocationController
 	adminRegionImport *AdminRegionImportController
 	adminParcelPoiSub *AdminParcelPoiSubController
-	adminReport      *AdminReportController
-	adminPlanning    *AdminPlanningController
-	adminCommercial  *AdminCommercialController
-	internalSEO      *InternalSEOController
+	adminReport       *AdminReportController
+	adminPlanning     *AdminPlanningController
+	adminCommercial   *AdminCommercialController
+	internalSEO       *InternalSEOController
 }
 
 func NewHandler(

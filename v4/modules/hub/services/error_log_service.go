@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 
 	_errors "common/errors"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
+
 	"gorm.io/datatypes"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
 )
 
 // ErrorLogService handles mobile/app error log ingestion.
@@ -16,6 +17,7 @@ type ErrorLogService interface {
 	LogError(ctx context.Context, req dto.LogErrorRequest) error
 }
 
+// @bind: mdn4/modules/hub/services.ErrorLogService
 type LocalErrorLogService struct {
 	repo repository.ErrorLogRepository
 }

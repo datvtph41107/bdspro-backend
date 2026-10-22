@@ -5,10 +5,10 @@ import (
 	_dto "common/domain/dto"
 	_provider "common/provider"
 	"context"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/enums"
 	"strings"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
 )
 
 type TagPostgres struct {

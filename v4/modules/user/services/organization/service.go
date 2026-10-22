@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	domain "userv4/modules/user/domain/organization"
+	domain "mdn4/modules/user/domain/organization"
 )
 
 const (

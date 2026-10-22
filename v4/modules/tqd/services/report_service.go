@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/provider"
+	repo "mdn4/modules/tqd/repository"
 	"strconv"
 	"strings"
 	"time"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/provider"
-	repo "userv4/modules/tqd/repository"
 
 	_utils "common/utils"
 	"pb/clients"
@@ -53,6 +53,8 @@ type reportUsecase struct {
 	userClient   *clients.UserGrpcClient
 }
 
+// NewReportUsecase is composed via tqd.ProvideReportUsecase (no RPC enrichment on v4).
+// @wire:skip
 func NewReportUsecase(
 	repo repo.ReportRepository,
 	userProvider provider.UserProvider,

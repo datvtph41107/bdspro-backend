@@ -7,7 +7,7 @@ import (
 	_utils "common/utils"
 	sharepb "pb/types/shared"
 
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 const syncKeyTqdEnums = "tqd:enums"
@@ -18,6 +18,7 @@ type PublicService interface {
 }
 
 // LocalPublicService serves TQD public enum catalogs from in-process maps.
+// @bind: mdn4/modules/tqd/services.PublicService
 type LocalPublicService struct {
 	sync      *_utils.SyncUtil
 	startTime int64

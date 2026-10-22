@@ -11,10 +11,10 @@ import (
 	"runtime"
 	"time"
 
+	plan "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/plan/admin"
+	"mdn4/modules/user/services/plan/publish"
 	userpb "pb/types/user"
-	plan "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/plan/admin"
-	"userv4/modules/user/services/plan/publish"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

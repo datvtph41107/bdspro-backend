@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
 )
 
 const (

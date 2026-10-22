@@ -7,11 +7,11 @@ import (
 	"strconv"
 
 	_errors "common/errors"
+	"common/httpapi"
 	bdspropb "pb/types/bdspro"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/services"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/services"
 
 	"google.golang.org/protobuf/proto"
 )

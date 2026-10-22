@@ -7,20 +7,20 @@ import (
 	_utils "common/utils"
 	"context"
 	"fmt"
+	"mdn4/infra/client"
+	crmentity "mdn4/modules/crm/entity"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/enums"
 	hubpb "pb/types/hub"
 	"strings"
 	"time"
-	"userv4/modules/user/enums"
-	"userv4/infra/client"
-	"userv4/modules/user/domain/user"
-	"userv4/modules/user/dto"
-	crmentity "userv4/modules/crm/entity"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
-// @bind: user/internal/interface/repo.IProfileRepo
+// @bind: mdn4/internal/interface/repo.IProfileRepo
 type ProfilePostgres struct {
 	DB        *gorm.DB
 	HubClient *client.HubClient

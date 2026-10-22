@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 )
 
 type LayerLegalUsecase struct {

@@ -3,7 +3,7 @@ package repository
 import (
 	_dto "common/domain/dto"
 	"context"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 )
 
 type TagRepo interface {

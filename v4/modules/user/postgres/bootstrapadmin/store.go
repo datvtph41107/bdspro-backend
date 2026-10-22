@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"userv4/modules/user/services/bootstrapadmin"
+	"mdn4/modules/user/services/bootstrapadmin"
 
 	"gorm.io/gorm"
 )

@@ -3,8 +3,8 @@ package repository
 import (
 	base_enum "base/enum"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 )
 
 type RuleRepo interface {

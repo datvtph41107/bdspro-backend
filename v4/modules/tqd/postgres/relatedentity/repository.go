@@ -5,11 +5,11 @@ import (
 	"math"
 	"strings"
 
-	"userv4/modules/tqd/postgres/entitycandidate"
-	discoverydomain "userv4/modules/tqd/entity/discovery"
-	relateddomain "userv4/modules/tqd/entity/relatedentity"
-	discoveryports "userv4/modules/tqd/services/discovery/ports"
-	relatedports "userv4/modules/tqd/services/relatedentity/ports"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
+	relateddomain "mdn4/modules/tqd/entity/relatedentity"
+	"mdn4/modules/tqd/postgres/entitycandidate"
+	discoveryports "mdn4/modules/tqd/services/discovery/ports"
+	relatedports "mdn4/modules/tqd/services/relatedentity/ports"
 
 	"gorm.io/gorm"
 )

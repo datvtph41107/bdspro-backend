@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
-	relateddomain "userv4/modules/tqd/entity/relatedentity"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
+	relateddomain "mdn4/modules/tqd/entity/relatedentity"
 )
 
 func TestRelationshipKindPreservesSupportedValues(t *testing.T) {

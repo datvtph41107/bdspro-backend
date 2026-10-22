@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	"userv4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/dto"
 )
 
 func TestCatalogSearchRequest_Pagable(t *testing.T) {

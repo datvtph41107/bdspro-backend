@@ -7,15 +7,17 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/data"
-	"userv4/modules/crm/enums"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/data"
+	"mdn4/modules/crm/enums"
+	"mdn4/modules/crm/services"
 )
 
 type FriendController struct{ uc *services.FriendUsecase }
 
-func NewFriendController(uc *services.FriendUsecase) *FriendController { return &FriendController{uc: uc} }
+func NewFriendController(uc *services.FriendUsecase) *FriendController {
+	return &FriendController{uc: uc}
+}
 
 func (c *FriendController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v2/crm/friend/list", c.list)
@@ -56,7 +58,7 @@ func (c *FriendController) list(ctx context.Context, req friendListReq) (*httpap
 		return nil, err
 	}
 	items, total, err := c.uc.FriendList(ctx, data.FriendRequest{
-		Text: strings.TrimSpace(strings.ToLower(req.Text)),
+		Text:    strings.TrimSpace(strings.ToLower(req.Text)),
 		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size},
 	})
 	if err != nil {

@@ -7,14 +7,14 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
+	"mdn4/internal/interface/providers"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/entity"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/repository"
+	bdsutils "mdn4/modules/bdspro/utils"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/interface/providers"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/entity"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/repository"
-	bdsutils "userv4/modules/bdspro/utils"
 )
 
 // InvestmentService owns deal investment flows (migrated from /v2.1/org/investment).
@@ -30,6 +30,7 @@ type InvestmentService interface {
 	MemberHistories(ctx context.Context, dealID, memberID uint64) (*bdspropb.GetInvestmentHistoriesResponse, error)
 }
 
+// @bind: mdn4/modules/bdspro/services.InvestmentService
 type LocalInvestmentService struct {
 	sync     *_utils.SyncUtil
 	repo     repository.InvestmentRepository

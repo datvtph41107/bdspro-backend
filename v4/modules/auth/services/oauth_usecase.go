@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"log"
-	"userv4/modules/auth/dto"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/dto"
 
 	_utils "common/utils"
 )

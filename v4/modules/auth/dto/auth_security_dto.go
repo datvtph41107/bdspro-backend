@@ -3,7 +3,7 @@ package dto
 import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	"userv4/modules/auth/domain/auth"
+	"mdn4/modules/auth/domain/auth"
 )
 
 // AuthSecurityDataDTO gom nhóm dữ liệu status, pin và thiết bị cho 1 authId

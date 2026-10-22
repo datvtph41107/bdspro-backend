@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	_dto "common/domain/dto"
-	"userv4/modules/notification/dto"
-	"userv4/modules/notification/entity"
+	"mdn4/modules/notification/dto"
+	"mdn4/modules/notification/entity"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

@@ -5,9 +5,9 @@ import (
 	_dto "common/domain/dto"
 	_provider "common/provider"
 	"context"
+	"mdn4/internal/interface/repo"
+	entity "mdn4/modules/user/entity"
 	"strings"
-	"userv4/internal/interface/repo"
-	entity "userv4/modules/user/entity"
 )
 
 type MainAreaPostgres struct {

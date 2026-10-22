@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy userv4 (HTTP by default) to the production host.
+# Deploy mdn4 (HTTP by default) to the production host.
 # Usage:
 #   ./deploy.sh              # build cmd/http → remote compose service `v4`
 #   ./deploy.sh http         # same as default

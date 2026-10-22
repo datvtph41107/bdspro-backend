@@ -5,10 +5,10 @@ package postgres
 import (
 	"context"
 	"crm/infra/impl"
-	seo_domain "userv4/modules/crm/entity/seo"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	seo_domain "mdn4/modules/crm/entity/seo"
+	"mdn4/modules/crm/enums"
+	repo "mdn4/modules/crm/repository"
 	"strings"
 	"time"
 

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	domain "mdn4/modules/tqd/entity/discovery"
 	tqdpb "pb/types/tqd"
-	domain "userv4/modules/tqd/entity/discovery"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )

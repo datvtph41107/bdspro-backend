@@ -1,10 +1,10 @@
 package engine
 
 import (
+	"mdn4/modules/tqd/services/resolver/layer_resolver/rule"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 	"sort"
 	"time"
-	"userv4/modules/tqd/services/resolver/layer_resolver/rule"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 type ResolverEngine struct {

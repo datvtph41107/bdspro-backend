@@ -7,7 +7,7 @@ import (
 	_utils "common/utils"
 	paymentpb "pb/types/payment"
 
-	"userv4/modules/payment/repository"
+	"mdn4/modules/payment/repository"
 )
 
 // BankListOutcome is the bank catalog response + sync metadata.
@@ -22,6 +22,7 @@ type BankService interface {
 	ListAll(ctx context.Context, clientTimestamp int64) (*BankListOutcome, error)
 }
 
+// @bind: mdn4/modules/payment/services.BankService
 type LocalBankService struct {
 	banks repository.BankRepository
 	sync  *_utils.SyncUtil

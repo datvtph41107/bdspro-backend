@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/services"
 )
 
 // InvestmentController owns org investment routes (migrated from /v2.1/org/investment).

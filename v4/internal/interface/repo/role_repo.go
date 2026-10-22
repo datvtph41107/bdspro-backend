@@ -4,9 +4,9 @@ import (
 	"common/case/crud"
 	"context"
 
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 
-	"userv4/modules/auth/domain/auth"
+	"mdn4/modules/auth/domain/auth"
 )
 
 type RoleRepository interface {

@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
-	repo "userv4/modules/crm/repository"
 	"encoding/json"
 	"fmt"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
+	repo "mdn4/modules/crm/repository"
 	"strings"
 	"time"
 

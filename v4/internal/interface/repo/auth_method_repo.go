@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/modules/auth/domain/auth"
+	"mdn4/modules/auth/domain/auth"
 )
 
 type AuthMethodRepository interface {

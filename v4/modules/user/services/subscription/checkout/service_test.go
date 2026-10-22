@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	plan "userv4/modules/user/domain/plan"
+	plan "mdn4/modules/user/domain/plan"
 )
 
 type noopAttemptPort struct{}

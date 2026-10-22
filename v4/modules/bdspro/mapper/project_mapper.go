@@ -3,8 +3,8 @@ package mapper
 import (
 	_models "common/models"
 	_utils "common/utils"
+	"mdn4/modules/bdspro/entity"
 	bdspropb "pb/types/bdspro"
-	"userv4/modules/bdspro/entity"
 )
 
 // ProjectBuildToPb maps a project_build row to the gateway contract.
@@ -30,7 +30,7 @@ func ProjectBuildFromPb(pb *bdspropb.ProjectBuild) *entity.ProjectBuild {
 		return nil
 	}
 	return &entity.ProjectBuild{
-		BaseEntity: _models.BaseEntity{ID: pb.GetId()},
+		BaseEntity:   _models.BaseEntity{ID: pb.GetId()},
 		Name:         pb.GetName(),
 		NumFloor:     uint(pb.GetNumFloor()),
 		NumApartment: uint(pb.GetNumApartment()),

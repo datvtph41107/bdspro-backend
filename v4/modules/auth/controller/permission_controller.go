@@ -6,9 +6,9 @@ import (
 
 	authpb "pb/types/auth"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/auth/dto"
-	"userv4/modules/auth/services"
+	"common/httpapi"
+	"mdn4/modules/auth/dto"
+	"mdn4/modules/auth/services"
 )
 
 // PermissionController is the modules/auth entry for permission RPCs/HTTP.

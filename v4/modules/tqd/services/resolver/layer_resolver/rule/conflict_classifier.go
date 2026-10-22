@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 // ConflictClassifier — Engine phân loại conflict 6 loại × 3 mức với confidence score

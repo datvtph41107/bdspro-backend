@@ -5,7 +5,7 @@ import (
 
 	_errors "common/errors"
 	_utils "common/utils"
-	"userv4/modules/auth/dto"
+	"mdn4/modules/auth/dto"
 )
 
 // LoginService owns the authentication entry flows migrated into modules/auth.
@@ -21,6 +21,7 @@ type LoginService interface {
 }
 
 // AuthUsecaseLoginService adapts AuthUsecase into modules/auth LoginService.
+// @bind: mdn4/modules/auth/services.LoginService
 type AuthUsecaseLoginService struct {
 	auth *AuthUsecase
 }

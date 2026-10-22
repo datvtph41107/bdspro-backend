@@ -5,9 +5,9 @@ import (
 
 	_dto "common/domain/dto"
 	_utils "common/utils"
+	"mdn4/modules/user/dto"
+	usecases "mdn4/modules/user/services/user"
 	userpb "pb/types/user"
-	"userv4/modules/user/dto"
-	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,6 +20,7 @@ type BookmarkService interface {
 }
 
 // LocalBookmarkService adapts BookmarkUserUsecase into modules/user.
+// @bind: mdn4/modules/user/services.BookmarkService
 type LocalBookmarkService struct {
 	usecase *usecases.BookmarkUserUsecase
 }

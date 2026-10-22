@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	domain "userv4/modules/tqd/entity/discovery"
+	domain "mdn4/modules/tqd/entity/discovery"
 )
 
 type Repository interface {

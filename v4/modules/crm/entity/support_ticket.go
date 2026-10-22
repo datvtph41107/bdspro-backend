@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 	"time"
 
 	_models "common/models"
@@ -11,20 +11,20 @@ import (
 
 type SupportTicket struct {
 	_models.BaseEntity
-	Code            string                       `gorm:"type:varchar(32);uniqueIndex;not null" json:"code"`
-	Title           string                       `gorm:"type:varchar(255);not null" json:"title"`
-	Description     string                       `gorm:"type:text" json:"description"`
-	IssueType       enums.SupportTicketIssueType `gorm:"not null;default:70" json:"issueType"`
-	Status          enums.SupportTicketStatus    `gorm:"not null;default:10;index" json:"status"`
-	Priority        enums.SupportTicketPriority  `gorm:"not null;default:20;index" json:"priority"`
-	Product         enums.SupportTicketProduct   `gorm:"not null;default:10" json:"product"`
-	Source          enums.SupportTicketSource       `gorm:"not null;default:10" json:"source"`
+	Code            string                           `gorm:"type:varchar(32);uniqueIndex;not null" json:"code"`
+	Title           string                           `gorm:"type:varchar(255);not null" json:"title"`
+	Description     string                           `gorm:"type:text" json:"description"`
+	IssueType       enums.SupportTicketIssueType     `gorm:"not null;default:70" json:"issueType"`
+	Status          enums.SupportTicketStatus        `gorm:"not null;default:10;index" json:"status"`
+	Priority        enums.SupportTicketPriority      `gorm:"not null;default:20;index" json:"priority"`
+	Product         enums.SupportTicketProduct       `gorm:"not null;default:10" json:"product"`
+	Source          enums.SupportTicketSource        `gorm:"not null;default:10" json:"source"`
 	HandlingTeam    *enums.SupportTicketHandlingTeam `gorm:"column:handling_team;index" json:"handlingTeam"`
-	AssigneeID      *uint64                         `gorm:"index" json:"assigneeId"`
-	RelatedUserID   *uint64                         `gorm:"index" json:"relatedUserId"`
-	RelatedReportID *uint64                         `gorm:"index" json:"relatedReportId"`
-	Images          datatypes.JSON                  `gorm:"type:jsonb;default:'[]'" json:"images"`
-	ClosedAt        *time.Time                      `json:"closedAt"`
+	AssigneeID      *uint64                          `gorm:"index" json:"assigneeId"`
+	RelatedUserID   *uint64                          `gorm:"index" json:"relatedUserId"`
+	RelatedReportID *uint64                          `gorm:"index" json:"relatedReportId"`
+	Images          datatypes.JSON                   `gorm:"type:jsonb;default:'[]'" json:"images"`
+	ClosedAt        *time.Time                       `json:"closedAt"`
 }
 
 func (SupportTicket) TableName() string { return "support_tickets" }

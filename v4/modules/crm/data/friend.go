@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"time"
 
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 type FriendDTO struct {

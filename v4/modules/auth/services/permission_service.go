@@ -5,7 +5,7 @@ import (
 	"time"
 
 	_utils "common/utils"
-	"userv4/modules/auth/dto"
+	"mdn4/modules/auth/dto"
 )
 
 // PermissionService owns caller permission-key reads migrated into modules/auth.
@@ -16,6 +16,7 @@ type PermissionService interface {
 // RoleUsecasePermissionService adapts legacy RoleUsecase into modules/auth PermissionService.
 // Permission ownership lives here; RoleUsecase remains the lookup backend until
 // role_profiles / org-member resolution moves into this package.
+// @bind: mdn4/modules/auth/services.PermissionService
 type RoleUsecasePermissionService struct {
 	role *RoleUsecase
 	sync *_utils.SyncUtil

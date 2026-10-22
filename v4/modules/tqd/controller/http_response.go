@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"userv4/internal/httpapi"
+	"common/httpapi"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

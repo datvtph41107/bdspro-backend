@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	"userv4/modules/user/entity"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	"mdn4/modules/user/entity"
 )
 
 type Effect struct {

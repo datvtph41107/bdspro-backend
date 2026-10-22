@@ -2,8 +2,8 @@ package mapper
 
 import (
 	_utils "common/utils"
-	"userv4/modules/crm/data"
-	domain "userv4/modules/crm/entity"
+	"mdn4/modules/crm/data"
+	domain "mdn4/modules/crm/entity"
 
 	crmpb "pb/types/crm"
 	sharepb "pb/types/shared"

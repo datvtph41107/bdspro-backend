@@ -7,8 +7,8 @@ import (
 	userpb "pb/types/user"
 
 	_dto "common/domain/dto"
-	"userv4/modules/user/dto"
-	entity "userv4/modules/user/entity"
+	"mdn4/modules/user/dto"
+	entity "mdn4/modules/user/entity"
 )
 
 type AdminMapper struct{}

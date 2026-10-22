@@ -5,8 +5,8 @@ import (
 	_provider "common/provider"
 	"context"
 	"fmt"
-	"userv4/modules/user/domain/user"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/user/domain/user"
 )
 
 type PurposeUseRepo struct {

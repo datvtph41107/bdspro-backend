@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 )
 
 // PermissionRepository exposes the permission reads owned by User IAM.

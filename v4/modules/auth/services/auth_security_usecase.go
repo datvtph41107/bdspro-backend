@@ -4,9 +4,9 @@ import (
 	_errors "common/errors"
 	"context"
 	"errors"
-	"userv4/modules/auth/dto"
-	"userv4/internal/interface/providers"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/providers"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/dto"
 
 	"gorm.io/gorm"
 )

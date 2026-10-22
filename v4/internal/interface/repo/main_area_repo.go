@@ -4,7 +4,7 @@ import (
 	_crud "common/domain/crud"
 	_dto "common/domain/dto"
 	"context"
-	"userv4/modules/user/entity"
+	"mdn4/modules/user/entity"
 )
 
 type IMainAreaRepo interface {

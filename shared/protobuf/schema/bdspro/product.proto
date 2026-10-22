@@ -574,10 +574,10 @@ message PostSaveWithProduct {
   double postPrice = 4;
   int32 transactionType = 5;
   int32 visibility = 6;
-  int32 packageVisible = 7;
   int32 expiredAt = 8;
   int32 numDate = 9;
   bool hidden = 10;
+  int32 packageVisible = 7;
   repeated MediaItem metadatas = 11;
 }
 

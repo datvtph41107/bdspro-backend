@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	_dto "common/domain/dto"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/bdspro/dto"
+	"mdn4/modules/bdspro/enums"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/services"
 	bdspropb "pb/types/bdspro"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
-	"userv4/modules/bdspro/enums"
-	"userv4/modules/bdspro/mapper"
-	"userv4/modules/bdspro/services"
 )
 
 // DistributeController owns /v2/bdspro/distributions/* (migrated from bdspro-service).

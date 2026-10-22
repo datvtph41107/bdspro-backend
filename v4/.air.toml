@@ -3,8 +3,8 @@ testdata_dir = "testdata"
 tmp_dir = ".tmp/air"
 
 [build]
-  bin = "./.tmp/air/userv4-grpc"
-  cmd = "go build -o ./.tmp/air/userv4-grpc ./cmd/grpc"
+  bin = "./.tmp/air/mdn4-grpc"
+  cmd = "go build -o ./.tmp/air/mdn4-grpc ./cmd/grpc"
   delay = 1000
   exclude_dir = [".tmp", "bin", "assets", "vendor", "testdata", "docs"]
   exclude_regex = ["_test.go"]

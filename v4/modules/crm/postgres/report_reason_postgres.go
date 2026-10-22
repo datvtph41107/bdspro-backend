@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	repo "userv4/modules/crm/repository"
 	"errors"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 
 	"gorm.io/gorm"
 )
@@ -13,7 +13,6 @@ type ReportReasonPostgres struct {
 	db *gorm.DB
 }
 
-// @bind: crm/internal/repo.ReportReasonRepo
 func NewReportReasonPostgres(db *gorm.DB) repo.ReportReasonRepo {
 	return &ReportReasonPostgres{db: db}
 }

@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	repo "userv4/modules/crm/repository"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	repo "mdn4/modules/crm/repository"
 )
 
 type ReportReasonUsecase struct {

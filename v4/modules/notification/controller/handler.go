@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"common/httpapi"
 	_utils "common/utils"
-	"userv4/internal/httpapi"
-	"userv4/modules/notification/dto"
-	"userv4/modules/notification/services"
+	"mdn4/modules/notification/dto"
+	"mdn4/modules/notification/services"
 )
 
 // Handler is the modules/notification HTTP entry for the user inbox.

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 )
 
 // ReportReasonRepo defines the interface for report reason repository operations

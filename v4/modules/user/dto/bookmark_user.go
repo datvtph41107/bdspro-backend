@@ -2,7 +2,7 @@ package dto
 
 import (
 	_dto "common/domain/dto"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
 )
 
 // BookmarkUserListRequest request để lấy danh sách bookmark user

@@ -6,12 +6,13 @@ import (
 	base_enum "base/enum"
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/enums"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
 )
 
+// @bind: mdn4/modules/crm/provider.ITransaction
 type NoopTransaction struct{}
 
 func NewNoopTransaction() *NoopTransaction { return &NoopTransaction{} }
@@ -20,6 +21,7 @@ func (NoopTransaction) WithTransaction(ctx context.Context, fn func(ctx context.
 	return fn(ctx)
 }
 
+// @bind: mdn4/modules/crm/provider.NotificationProvider
 type NoopNotification struct{}
 
 func NewNoopNotification() *NoopNotification { return &NoopNotification{} }
@@ -50,6 +52,7 @@ func (NoopUserClient) GetProfileByIds(context.Context, []uint64) ([]*sharepb.Pro
 	return nil, nil
 }
 
+// @bind: mdn4/modules/crm/provider.BdsproProvider
 type NoopBdspro struct{}
 
 func NewNoopBdspro() *NoopBdspro { return &NoopBdspro{} }
@@ -78,6 +81,7 @@ func (NoopBdspro) GetAreaRegionByID(context.Context, uint64) (*bdspropb.AreaRegi
 	return nil, nil
 }
 
+// @bind: mdn4/modules/crm/services.PermissionUsecase
 type AllowAllPermission struct{}
 
 func NewAllowAllPermission() *AllowAllPermission { return &AllowAllPermission{} }

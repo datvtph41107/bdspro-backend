@@ -7,12 +7,12 @@ import (
 	"time"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	domain "userv4/modules/tqd/entity/discovery"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/provider"
-	discoveryapp "userv4/modules/tqd/services/discovery/application"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity/discovery"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/provider"
+	discoveryapp "mdn4/modules/tqd/services/discovery/application"
 )
 
 // DiscoveryController owns /v2/tqd/discovery/* routes.

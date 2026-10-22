@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"userv4/modules/hub/entity"
+	"mdn4/modules/hub/entity"
 
 	"gorm.io/gorm"
 )

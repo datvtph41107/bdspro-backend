@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	_dto "common/domain/dto"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/services"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/services"
 )
 
 // PoiUserController owns /v2/tqd/pois* (non-admin) and /v2/tqd/poi/categories*.
@@ -170,4 +170,3 @@ func (c *PoiUserController) listIcons(ctx context.Context, _ dto.EmptyJSON) (*ht
 	}
 	return jsonListResult(out.Data, int64(len(out.Data)), 1, uint32(len(out.Data)))
 }
-

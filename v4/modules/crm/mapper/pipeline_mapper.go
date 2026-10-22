@@ -3,8 +3,8 @@ package mapper
 import (
 	base_enum "base/enum"
 	_models "common/models"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 	crmpb "pb/types/crm"
 )
 

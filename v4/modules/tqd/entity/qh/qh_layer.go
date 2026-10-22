@@ -2,9 +2,9 @@ package qh
 
 import (
 	"encoding/json"
+	"mdn4/modules/tqd/entity/jsonb"
+	"mdn4/modules/tqd/enums"
 	"time"
-	"userv4/modules/tqd/entity/jsonb"
-	"userv4/modules/tqd/enums"
 
 	"github.com/lib/pq"
 )

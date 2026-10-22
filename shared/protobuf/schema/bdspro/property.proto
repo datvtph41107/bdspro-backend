@@ -561,6 +561,7 @@ message PropertyDetailResponse {
   optional PropertyPersonalization personalization = 17;
   optional PropertyIdentify identifier = 18;
   repeated sharepb.TagItem areaRegions = 19;
+  optional uint64 propertyIdentifyId = 20;
 }
 
 message PropertyStatistic {
@@ -714,7 +715,7 @@ message CreatePropertyRequest {
   repeated AssetLegalItem legalInfo = 9;
   repeated uint64 amenityIds = 10;
   repeated uint64 tagIds = 11;
-  PostSaveWithProduct post = 12;
+  PostSaveWithProduct listing = 12;
   ProductSaveRequest product = 13;
   AssetCreateWithProduct asset = 14;
   string note = 15;

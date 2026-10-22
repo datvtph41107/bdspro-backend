@@ -4,9 +4,9 @@ import (
 	"common/case/crud"
 	_errors "common/errors"
 	"context"
-	"userv4/modules/auth/domain/access"
-	"userv4/modules/auth/enums"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/access"
+	"mdn4/modules/auth/enums"
 )
 
 type RoleGroupUsecase struct {

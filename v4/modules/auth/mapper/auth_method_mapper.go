@@ -1,8 +1,8 @@
 package mapper
 
 import (
+	"mdn4/modules/auth/domain/auth"
 	authpb "pb/types/auth"
-	"userv4/modules/auth/domain/auth"
 )
 
 type AuthMethodMapper struct {

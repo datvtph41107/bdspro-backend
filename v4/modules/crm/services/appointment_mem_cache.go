@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
 )
 
 type appointmentListMemCacheKey struct {

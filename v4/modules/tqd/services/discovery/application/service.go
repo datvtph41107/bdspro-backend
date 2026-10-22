@@ -13,9 +13,9 @@ import (
 	"strings"
 	"sync"
 
-	"userv4/modules/tqd/config"
-	domain "userv4/modules/tqd/entity/discovery"
-	"userv4/modules/tqd/services/discovery/ports"
+	"mdn4/modules/tqd/config"
+	domain "mdn4/modules/tqd/entity/discovery"
+	"mdn4/modules/tqd/services/discovery/ports"
 )
 
 func newRequestID() string {

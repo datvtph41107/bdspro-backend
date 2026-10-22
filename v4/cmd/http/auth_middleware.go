@@ -126,18 +126,25 @@ var publicHTTPRoutes = []string{
 }
 
 // bridgeTrustedHTTPIdentity copies JWT Actor onto legacy ProfileIDKey and binds
-// a local ServiceCaller for the userv4 HTTP edge. Admin authorization requires
+// a local ServiceCaller for the mdn4 HTTP edge. Admin authorization requires
 // a verified service hop + access-token actor; gateway→gRPC used to supply the
 // hop, but monorepo HTTP has no separate caller service.
 func bridgeTrustedHTTPIdentity() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			if id := profileIDFromRequest(ctx); id > 0 {
+			if actor, ok := identity.ActorFromContext(ctx); ok {
+				if actor.ProfileID > 0 {
+					ctx = context.WithValue(ctx, _enums.ProfileIDKey, actor.ProfileID)
+				}
+				if actor.OriginID > 0 {
+					ctx = context.WithValue(ctx, _enums.OriginIDKey, actor.OriginID)
+				}
+			} else if id := profileIDFromRequest(ctx); id > 0 {
 				ctx = context.WithValue(ctx, _enums.ProfileIDKey, id)
 			}
 			if _, ok := identity.ServiceCallerFromContext(ctx); !ok {
-				if bound, err := identity.BindServiceCaller(ctx, identity.ServiceCaller{ServiceID: "userv4-http"}); err == nil {
+				if bound, err := identity.BindServiceCaller(ctx, identity.ServiceCaller{ServiceID: "mdn4-http"}); err == nil {
 					ctx = bound
 				}
 			}

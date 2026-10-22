@@ -5,10 +5,10 @@ import (
 	"common/operation"
 	"context"
 	"errors"
+	"mdn4/modules/tqd/access"
+	internalaccess "mdn4/modules/user/services/entitlement"
 	"strings"
 	"time"
-	"userv4/modules/user/domain/entitlement"
-	internalaccess "userv4/modules/user/services/entitlement"
 
 	userpb "pb/types/user"
 

@@ -7,15 +7,15 @@ import (
 
 	base_enum "base/enum"
 	_enums "common/domain/enum"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/entity"
+	"mdn4/modules/crm/dto"
+	"mdn4/modules/crm/entity"
 )
 
 type stubContactRepo struct {
-	items   []entity.ContactListItem
-	total   int64
-	byID    map[uint64]*entity.Contact
-	friends map[[2]uint64]*entity.FriendRelation
+	items    []entity.ContactListItem
+	total    int64
+	byID     map[uint64]*entity.Contact
+	friends  map[[2]uint64]*entity.FriendRelation
 	products map[uint64][]uint64
 }
 

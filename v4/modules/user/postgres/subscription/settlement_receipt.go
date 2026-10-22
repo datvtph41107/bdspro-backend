@@ -3,8 +3,9 @@ package subscriptionpostgres
 import (
 	"fmt"
 
+	"mdn4/modules/user/services/subscription/settlement"
+
 	"gorm.io/gorm"
-	"userv4/modules/user/services/subscription/settlement"
 )
 
 type settlementReceiptRow struct {

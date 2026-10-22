@@ -9,16 +9,16 @@ import (
 	"common/configloader"
 	qhprorpc "common/rpc"
 	"common/rpcenv"
+	"mdn4/modules/user/services/subscription/checkout"
 	paymentpb "pb/types/payment"
-	"userv4/modules/user/services/subscription/checkout"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// @bind: user/internal/usecase/subscription/checkout.PaymentOrderPort
-// @bind: user/internal/usecase/subscription/checkout.PaymentAttemptPort
-// @bind: user/internal/usecase/subscription/checkout.PaymentMethodReader
+// @bind: mdn4/modules/user/services/subscription/checkout.PaymentAttemptPort
+// @bind: mdn4/modules/user/services/subscription/checkout.PaymentMethodReader
+// @bind: mdn4/modules/user/services/subscription/checkout.PaymentOrderPort
 type Commands struct {
 	client  paymentpb.InternalCommerceServiceClient
 	timeout time.Duration

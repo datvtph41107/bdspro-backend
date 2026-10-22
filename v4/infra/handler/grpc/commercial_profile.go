@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"common/identity"
+	"mdn4/modules/user/services/commercialprofile"
+	cancelapp "mdn4/modules/user/services/subscription/cancel"
 	userpb "pb/types/user"
-	"userv4/modules/user/services/commercialprofile"
-	cancelapp "userv4/modules/user/services/subscription/cancel"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

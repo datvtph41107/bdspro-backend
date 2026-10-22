@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	domain "userv4/modules/tqd/entity"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

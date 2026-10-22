@@ -8,9 +8,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 const keywordSearchFlushDelay = 20 * time.Second
@@ -24,6 +24,7 @@ type KeywordSearchService interface {
 	GetStats(ctx context.Context, req dto.GetKeywordSearchStatsQuery) (*dto.GetKeywordSearchStatsResponse, error)
 }
 
+// @bind: mdn4/modules/hub/services.KeywordSearchService
 type LocalKeywordSearchService struct {
 	repo       repository.KeywordSearchRepository
 	mu         sync.Mutex
@@ -117,7 +118,7 @@ func (s *LocalKeywordSearchService) GetStats(ctx context.Context, req dto.GetKey
 	if limit > 100 {
 		limit = 100
 	}
-	fromTime := time.Now().UTC().Truncate(24 * time.Hour).AddDate(0, 0, -int(lastDates))
+	fromTime := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, -int(lastDates))
 
 	total, err := s.repo.CountFromTime(ctx, fromTime, req.Source)
 	if err != nil {

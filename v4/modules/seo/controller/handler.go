@@ -5,7 +5,7 @@ package controller
 import (
 	"net/http"
 
-	"userv4/modules/seo/services"
+	"mdn4/modules/seo/services"
 )
 
 // Handler is the modules/seo HTTP entry for all SEO capabilities.

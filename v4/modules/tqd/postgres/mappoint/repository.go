@@ -8,11 +8,10 @@ import (
 
 	"gorm.io/gorm"
 
-	domain "userv4/modules/tqd/entity/mappoint"
-	usecase "userv4/modules/tqd/services/mappoint"
+	domain "mdn4/modules/tqd/entity/mappoint"
+	usecase "mdn4/modules/tqd/services/mappoint"
 )
 
-// @bind: tqd/internal/usecase/mappoint.Repository
 type Repository struct{ database *gorm.DB }
 
 func NewRepository(database *gorm.DB) *Repository { return &Repository{database: database} }

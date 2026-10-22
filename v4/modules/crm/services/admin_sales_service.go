@@ -6,13 +6,13 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/enums"
-	"userv4/modules/crm/provider"
-	repo "userv4/modules/crm/repository"
 	"encoding/json"
 	"fmt"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/enums"
+	"mdn4/modules/crm/provider"
+	repo "mdn4/modules/crm/repository"
 	"strings"
 	"time"
 )
@@ -200,34 +200,34 @@ func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunity
 		}
 
 		entity := &domain.LeadEntity{
-			ContactID:          contact.ID,
-			Source:             in.Source,
-			AssignNote:         in.AssignNote,
-			Priority:           priority,
-			ChargePersonID:     in.ChargePersonID,
-			ChargePersonType:   enums.EOwnerOfAdmin,
-			Note:               in.Note,
-			Title:              adminSalesFirstNonEmpty(in.Title, contact.FullName),
-			CustomerType:       customerType,
-			NeedSummary:        in.NeedSummary,
-			InterestedPlan:     in.InterestedPlan,
-			OpportunityStatus:  status,
-			AdminSource:        adminSource,
-			ExpectedValue:      in.ExpectedValue,
-			Probability:        in.Probability,
-			ExpectedCloseDate:  in.ExpectedCloseDate,
-			NextFollowUpAt:     in.NextFollowUpAt,
-			ChurnRisk:          in.ChurnRisk,
-			UpgradeSignal:      in.UpgradeSignal,
-			RenewalSignal:      in.RenewalSignal,
-			OwnerTeam:          in.OwnerTeam,
-			Segment:            in.Segment,
-			Region:             in.Region,
-			Tags:               in.Tags,
-			ProposalRef:        in.ProposalRef,
-			PaymentRequestRef:  in.PaymentRequestRef,
-			SubscriptionRef:    in.SubscriptionRef,
-			TicketRef:          in.TicketRef,
+			ContactID:         contact.ID,
+			Source:            in.Source,
+			AssignNote:        in.AssignNote,
+			Priority:          priority,
+			ChargePersonID:    in.ChargePersonID,
+			ChargePersonType:  enums.EOwnerOfAdmin,
+			Note:              in.Note,
+			Title:             adminSalesFirstNonEmpty(in.Title, contact.FullName),
+			CustomerType:      customerType,
+			NeedSummary:       in.NeedSummary,
+			InterestedPlan:    in.InterestedPlan,
+			OpportunityStatus: status,
+			AdminSource:       adminSource,
+			ExpectedValue:     in.ExpectedValue,
+			Probability:       in.Probability,
+			ExpectedCloseDate: in.ExpectedCloseDate,
+			NextFollowUpAt:    in.NextFollowUpAt,
+			ChurnRisk:         in.ChurnRisk,
+			UpgradeSignal:     in.UpgradeSignal,
+			RenewalSignal:     in.RenewalSignal,
+			OwnerTeam:         in.OwnerTeam,
+			Segment:           in.Segment,
+			Region:            in.Region,
+			Tags:              in.Tags,
+			ProposalRef:       in.ProposalRef,
+			PaymentRequestRef: in.PaymentRequestRef,
+			SubscriptionRef:   in.SubscriptionRef,
+			TicketRef:         in.TicketRef,
 		}
 		if stage != nil {
 			entity.StageID = &stage.ID
@@ -645,20 +645,20 @@ func BuildAdminLeadSearch(
 			Page: uint32(page),
 			Size: uint32(size),
 		},
-		FullName:        strings.TrimSpace(q),
-		StageIDs:        stageIDs,
-		ChargePersonIds: chargeIDs,
-		PipelineID:      pipelineID,
-		UnassignedOnly:  unassignedOnly,
-		Queue:           queue,
-		FollowUpFrom:    followUpFrom,
-		FollowUpTo:      followUpTo,
+		FullName:         strings.TrimSpace(q),
+		StageIDs:         stageIDs,
+		ChargePersonIds:  chargeIDs,
+		PipelineID:       pipelineID,
+		UnassignedOnly:   unassignedOnly,
+		Queue:            queue,
+		FollowUpFrom:     followUpFrom,
+		FollowUpTo:       followUpTo,
 		MinExpectedValue: minEV,
 		MaxExpectedValue: maxEV,
-		UpgradeOnly:     upgradeOnly,
-		RenewalOnly:     renewalOnly,
-		InterestedPlan:  interestedPlan,
-		OwnerOf:         base_enum.EOwnerOfAdmin,
+		UpgradeOnly:      upgradeOnly,
+		RenewalOnly:      renewalOnly,
+		InterestedPlan:   interestedPlan,
+		OwnerOf:          base_enum.EOwnerOfAdmin,
 	}
 	for _, s := range sources {
 		search.Sources = append(search.Sources, enums.ESourceLead(s))

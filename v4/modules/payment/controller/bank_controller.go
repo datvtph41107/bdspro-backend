@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/payment/dto"
-	"userv4/modules/payment/services"
+	"common/httpapi"
+	"mdn4/modules/payment/dto"
+	"mdn4/modules/payment/services"
 )
 
 // BankController owns GET /v2/payment/bank/all (gateway parity).

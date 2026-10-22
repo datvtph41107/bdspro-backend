@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
+	"mdn4/modules/crm/dto"
 	crmpb "pb/types/crm"
-	"userv4/modules/crm/dto"
 )
 
 // ContactService is the local CRM contact surface used by HTTP controllers and

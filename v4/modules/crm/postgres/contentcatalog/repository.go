@@ -10,13 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"userv4/modules/crm/enums"
 	"crm/internal/modules/contentcatalog/domain"
+	"mdn4/modules/crm/enums"
 
 	"gorm.io/gorm"
 )
 
-// @bind: crm/internal/modules/contentcatalog/application.Repository
 type Repository struct{ db *gorm.DB }
 
 func NewContentRepository(db *gorm.DB) *Repository { return &Repository{db: db} }

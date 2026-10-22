@@ -6,13 +6,13 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/enums"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services"
 )
 
 // LayerController owns /v2/tqd/client/layers* routes.

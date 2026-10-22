@@ -5,11 +5,11 @@ import (
 	"context"
 	"time"
 
+	authcontroller "mdn4/modules/auth/controller"
+	mapper "mdn4/modules/auth/mapper"
+	usecase "mdn4/modules/auth/services"
 	authpb "pb/types/auth"
 	sharepb "pb/types/shared"
-	mapper "userv4/modules/auth/mapper"
-	usecase "userv4/modules/auth/services"
-	authcontroller "userv4/modules/auth/controller"
 )
 
 type PermissionHandler struct {

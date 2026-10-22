@@ -6,8 +6,8 @@ import (
 	"time"
 
 	_db "common/db"
-	"userv4/modules/auth/domain/auth"
-	"userv4/internal/interface/repo"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
 
 	"gorm.io/gorm"
 )

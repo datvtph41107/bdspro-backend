@@ -8,13 +8,14 @@ import (
 	"strconv"
 	"time"
 
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
+	cancelapp "mdn4/modules/user/services/subscription/cancel"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
-	cancelapp "userv4/modules/user/services/subscription/cancel"
 )
 
-// @bind: user/internal/usecase/subscription/cancel.Store
+// @bind: mdn4/modules/user/services/subscription/cancel.Store
 type CancellationStore struct{ db *gorm.DB }
 
 func NewCancellationStore(db *gorm.DB) *CancellationStore { return &CancellationStore{db: db} }

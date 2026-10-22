@@ -1,8 +1,8 @@
 package entity
 
 import (
+	"mdn4/modules/tqd/entity/jsonb"
 	"time"
-	"userv4/modules/tqd/entity/jsonb"
 )
 
 type Feature struct {

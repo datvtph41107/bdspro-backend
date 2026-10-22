@@ -1,8 +1,8 @@
 package application
 
 import (
-	"userv4/modules/tqd/services/generatedreport/processing"
-	"userv4/modules/tqd/services/usage"
+	"mdn4/modules/tqd/services/generatedreport/processing"
+	"mdn4/modules/tqd/services/usage"
 )
 
 // Acceptance là yêu cầu ghi Report + Job và Usage (khi có quota) trong cùng

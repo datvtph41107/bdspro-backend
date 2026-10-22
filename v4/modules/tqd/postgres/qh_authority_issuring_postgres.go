@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services"
+
 	"github.com/jackc/pgx/v5/pgconn"
-	qh "userv4/modules/tqd/entity/qh"
-	repo "userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services"
 
 	"gorm.io/gorm"
 )

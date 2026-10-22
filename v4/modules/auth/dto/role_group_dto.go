@@ -3,7 +3,7 @@ package dto
 import (
 	_dto "common/domain/dto"
 	_utils "common/utils"
-	"userv4/modules/auth/domain/access"
+	"mdn4/modules/auth/domain/access"
 )
 
 // RoleGroupRequest DTO cho request tạo/sửa role group

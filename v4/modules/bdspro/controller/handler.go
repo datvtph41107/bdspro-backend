@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	_utils "common/utils"
-	"userv4/modules/bdspro/mapper"
-	"userv4/modules/bdspro/services"
+	"mdn4/modules/bdspro/mapper"
+	"mdn4/modules/bdspro/services"
 )
 
 // Handler is the modules/bdspro HTTP entry for product-tab and related routes.
@@ -28,6 +28,7 @@ type Handler struct {
 	projectBuild    *ProjectBuildController
 	adminProject    *AdminProjectController
 	distribute      *DistributeController
+	listing         *ListingController
 }
 
 func NewHandler(
@@ -42,6 +43,7 @@ func NewHandler(
 	costTypeSvc services.CostTypeService,
 	productSvc services.ProductService,
 	propertySvc services.PropertyService,
+	propertyTypeSvc services.PropertyTypeService,
 	publicSvc services.PublicService,
 	noteSvc services.ProductNoteService,
 	appointmentSvc services.AppointmentService,
@@ -50,6 +52,7 @@ func NewHandler(
 	projectBuildSvc services.ProjectBuildService,
 	adminProjectSvc services.AdminProjectService,
 	distributionSvc services.DistributionService,
+	listingSvc services.ListingService,
 	distributionMapper *mapper.DistributionMapper,
 	syncUtil *_utils.SyncUtil,
 ) *Handler {
@@ -63,7 +66,7 @@ func NewHandler(
 		investment:      NewInvestmentController(investmentSvc),
 		costType:        NewCostTypeController(costTypeSvc),
 		product:         NewProductController(productSvc, dealSvc),
-		property:        NewPropertyController(propertySvc),
+		property:        NewPropertyController(propertySvc, propertyTypeSvc),
 		public:          NewPublicController(publicSvc),
 		productNote:     NewProductNoteController(noteSvc),
 		appointment:     NewAppointmentController(appointmentSvc),
@@ -72,6 +75,7 @@ func NewHandler(
 		projectBuild:    NewProjectBuildController(projectBuildSvc),
 		adminProject:    NewAdminProjectController(adminProjectSvc),
 		distribute:      NewDistributeController(distributionSvc, distributionMapper, syncUtil),
+		listing:         NewListingController(listingSvc),
 	}
 }
 
@@ -95,4 +99,5 @@ func (h *Handler) RegisterHTTP(mux *http.ServeMux) {
 	h.projectBuild.RegisterHTTP(mux)
 	h.adminProject.RegisterHTTP(mux)
 	h.distribute.RegisterHTTP(mux)
+	h.listing.RegisterHTTP(mux)
 }

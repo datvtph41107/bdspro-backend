@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"userv4/modules/auth/controller"
-	"userv4/modules/auth/dto"
+	"mdn4/modules/auth/controller"
+	"mdn4/modules/auth/dto"
 )
 
 type stubPermissionService struct {

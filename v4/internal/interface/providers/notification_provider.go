@@ -4,8 +4,8 @@ import (
 	_dto "common/domain/dto"
 	_enum "common/domain/enum"
 	"context"
+	authdto "mdn4/modules/auth/dto"
 	sharepb "pb/types/shared"
-	authdto "userv4/modules/auth/dto"
 )
 
 // NotificationProvider định nghĩa interface cho việc tương tác với notification-service

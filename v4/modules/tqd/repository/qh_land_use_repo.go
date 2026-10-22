@@ -4,7 +4,7 @@ import (
 	_dto "common/domain/dto"
 	"context"
 
-	qh "userv4/modules/tqd/entity/qh"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 type QHLandUseRepository interface {

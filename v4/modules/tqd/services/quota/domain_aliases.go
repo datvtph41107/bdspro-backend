@@ -1,6 +1,6 @@
 package quota
 
-import quotadomain "userv4/modules/tqd/entity/quota"
+import quotadomain "mdn4/modules/tqd/entity/quota"
 
 type Reservation = quotadomain.Reservation
 type Usage = quotadomain.Usage

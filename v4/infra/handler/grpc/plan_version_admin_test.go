@@ -3,16 +3,17 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"strings"
 	"testing"
 	"time"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
 	"common/identity"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/services/plan/admin"
+	"mdn4/modules/user/services/plan/publish"
 	userpb "pb/types/user"
-	catalogdomain "userv4/modules/user/domain/plan"
-	"userv4/modules/user/services/plan/admin"
-	"userv4/modules/user/services/plan/publish"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,9 +56,9 @@ func (r *planHandlerRepository) RetirePlanVersion(_ context.Context, _ uint64, _
 }
 
 type fakePermissionAuthorizer struct {
-	allowed map[uint32]bool
-	err     error
-	actorID uint64
+	allowed      map[uint32]bool
+	err          error
+	actorID      uint64
 	permissionID uint32
 }
 

@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"userv4/modules/payment/services"
+	"mdn4/modules/payment/services"
 )
 
 // Handler is the modules/payment HTTP entry.

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	_utils "common/utils"
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
 
 	"gorm.io/gorm"
 )

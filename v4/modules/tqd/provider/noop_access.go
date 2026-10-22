@@ -3,8 +3,8 @@ package provider
 import (
 	"context"
 
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/enums"
 )
 
 // NoopUserProvider satisfies UserProvider without a remote user service.

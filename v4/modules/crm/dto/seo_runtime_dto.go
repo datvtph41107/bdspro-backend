@@ -2,7 +2,7 @@
 
 package dto
 
-import seo_domain "userv4/modules/crm/entity/seo"
+import seo_domain "mdn4/modules/crm/entity/seo"
 
 // InternalSeoRenderDataResponse gom dữ liệu cần thiết để renderer tạo HTML.
 type InternalSeoRenderDataResponse struct {

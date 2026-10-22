@@ -4,11 +4,11 @@ import (
 	_dto "common/domain/dto"
 	_errors "common/errors"
 	"context"
+	"mdn4/modules/user/dto"
+	mapper "mdn4/modules/user/mapper"
+	usecases "mdn4/modules/user/services/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	mapper "userv4/modules/user/mapper"
-	"userv4/modules/user/dto"
-	usecases "userv4/modules/user/services/user"
 
 	"google.golang.org/grpc/status"
 )
@@ -20,8 +20,6 @@ type KYCHandler struct {
 	mapper          *mapper.KYCMapper
 }
 
-// @bind: internal/usecases.IKYCUsecase
-// @bind: internal/usecases.IAdminKYCUsecase
 func NewKYCHandler(
 	kycUsecase usecases.IKYCUsecase,
 	adminKYCUsecase usecases.IAdminKYCUsecase,

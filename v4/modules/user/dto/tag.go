@@ -1,6 +1,6 @@
 package dto
 
-import "userv4/modules/user/enums"
+import "mdn4/modules/user/enums"
 
 type AdminTagRequest struct {
 	ID        uint64

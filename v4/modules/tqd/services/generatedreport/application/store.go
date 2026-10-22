@@ -3,9 +3,9 @@ package application
 import (
 	commonoperation "common/operation"
 	"context"
-	"userv4/modules/tqd/access"
+	"mdn4/modules/tqd/access"
 
-	"userv4/modules/tqd/services/quota"
+	"mdn4/modules/tqd/services/quota"
 )
 
 // SourceStore đọc dữ liệu cần để dựng Report.

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	catalogdomain "userv4/modules/user/domain/plan"
-	"userv4/modules/user/entity"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/entity"
 )
 
 /** Aggregate is one durable subscription with its plan identity. */

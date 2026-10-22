@@ -14,10 +14,10 @@ import (
 	_models "common/domain/entity"
 	_enum "common/domain/enum"
 	_utils "common/utils"
-	"userv4/modules/tqd/config"
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
-	repo "userv4/modules/tqd/repository"
+	"mdn4/modules/tqd/config"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
+	repo "mdn4/modules/tqd/repository"
 
 	"gorm.io/gorm"
 )

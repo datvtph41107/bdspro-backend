@@ -21,7 +21,7 @@ rpc:
     address: "localhost:8219"
 
 server:
-  name: userv4
+  name: mdn4
   port: 8288
   tcp_port: 8211
 
@@ -130,6 +130,13 @@ cskh:
   # Danh sách profile ID của đội chăm sóc khách hàng BDSPro
   # Những user này sẽ được thêm vào nhóm chat "Hỗ trợ khách hàng" khi user mới đăng ký
   team_ids: [] # Ví dụ: [1, 2, 3] - cần cập nhật với ID thực tế của đội CSKH
+
+gemini:
+  api_key: "AQ.Ab8RN6LGoQUVOTCmm1WJGHeq-h_3nUobyJGMpMkAoZikxjvzlA"
+  base_url: "https://generativelanguage.googleapis.com/v1beta"
+  model: "gemini-2.5-flash-lite"
+  timeout_seconds: 60
+  max_tokens: 4000
 
 http:
   allowed_origins:

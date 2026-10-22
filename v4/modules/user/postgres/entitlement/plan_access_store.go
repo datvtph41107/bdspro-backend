@@ -4,10 +4,10 @@ import (
 	"common/operation"
 	"context"
 	"errors"
-	"userv4/modules/user/domain/entitlement"
-	catalogdomain "userv4/modules/user/domain/plan"
-	"userv4/modules/user/entity"
-	useraccess "userv4/modules/user/services/entitlement"
+	access "mdn4/modules/user/domain/entitlement"
+	catalogdomain "mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/entity"
+	useraccess "mdn4/modules/user/services/entitlement"
 
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ import (
 /**
  * PlanAccessStore đọc feature access và usage allowance của một operation.
  */
-// @bind: user/internal/usecase/entitlement.PlanAccessStore
+// @bind: mdn4/modules/user/services/entitlement.PlanAccessStore
 type PlanAccessStore struct {
 	db *gorm.DB
 }

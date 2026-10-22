@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 )
 
 func TestContactDetailResult_IncludesProductIds(t *testing.T) {

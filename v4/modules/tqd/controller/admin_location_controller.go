@@ -6,11 +6,11 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
 )
 
 // AdminLocationController owns /v2/tqd/admin provinces/wards/administrative-units.

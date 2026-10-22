@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 	sharepb "pb/types/shared"
 )
 

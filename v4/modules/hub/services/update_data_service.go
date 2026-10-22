@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 // UpdateDataService tracks per-owner resource change versions for client sync.
@@ -16,6 +16,7 @@ type UpdateDataService interface {
 	FlushSyncIDs(ctx context.Context, ownerID uint64, resource string, limit int64) error
 }
 
+// @bind: mdn4/modules/hub/services.UpdateDataService
 type LocalUpdateDataService struct {
 	repo repository.UpdateDataRepository
 }

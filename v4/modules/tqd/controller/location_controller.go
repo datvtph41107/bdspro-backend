@@ -6,12 +6,12 @@ import (
 
 	_dto "common/domain/dto"
 	_errors "common/errors"
+	"common/httpapi"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	"mdn4/modules/tqd/mapper"
+	"mdn4/modules/tqd/services"
 	tqdpb "pb/types/tqd"
-	"userv4/internal/httpapi"
-	"userv4/modules/tqd/dto"
-	"userv4/modules/tqd/mapper"
-	"userv4/modules/tqd/services"
 )
 
 // LocationController owns TQD client location + administrative-unit HTTP routes under /v2/tqd/client.
@@ -202,6 +202,7 @@ func listProvincesResult(resp *tqdpb.ListProvincesResponse) (*httpapi.Result, er
 	if err != nil {
 		return nil, err
 	}
+	data = normalizeClientLocationCatalogJSON(data)
 	var opts []httpapi.OKOption
 	if resp.GetTimestamp() > 0 {
 		opts = append(opts, httpapi.WithTimestamp(resp.GetTimestamp()))
@@ -217,6 +218,7 @@ func listWardsResult(resp *tqdpb.ClientListWardsResponse) (*httpapi.Result, erro
 	if err != nil {
 		return nil, err
 	}
+	data = normalizeClientLocationCatalogJSON(data)
 	var opts []httpapi.OKOption
 	if p := resp.GetPagination(); p != nil {
 		opts = append(opts, httpapi.WithPagination(&httpapi.Pagination{

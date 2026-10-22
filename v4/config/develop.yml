@@ -21,7 +21,7 @@ rpc:
     address: "tqd:8219"
 
 server:
-  name: userv4
+  name: mdn4
   port: 8288
   tcp_port: 8211
 

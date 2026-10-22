@@ -22,6 +22,8 @@ type Tracker struct {
 }
 
 // New builds a tracker that writes into the process-owned database via collector.
+// Composed in cmd/http with runtime config, not by Wire.
+// @wire:skip
 func New(collector *Collector, specURLs, ignorePrefixes []string) *Tracker {
 	set := make(map[string]struct{}, len(specURLs))
 	for _, raw := range specURLs {

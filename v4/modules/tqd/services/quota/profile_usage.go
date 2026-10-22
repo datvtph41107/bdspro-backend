@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"time"
-	"userv4/modules/tqd/access"
+	"mdn4/modules/tqd/access"
 )
 
 type ProfileAccessReader interface {
@@ -33,6 +33,8 @@ type ProfileUsageService struct {
 	runtime RuntimeUsageReader
 }
 
+// NewProfileUsageService is not wired on v4 yet; tqd.ProvideProfileUsageService supplies nil.
+// @wire:skip
 func NewProfileUsageService(accessReader ProfileAccessReader, durable DurableUsageReader, runtime RuntimeUsageReader) *ProfileUsageService {
 	return &ProfileUsageService{access: accessReader, durable: durable, runtime: runtime}
 }

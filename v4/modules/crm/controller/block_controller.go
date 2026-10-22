@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/services"
 )
 
 type BlockController struct{ uc *services.BlockUsecase }

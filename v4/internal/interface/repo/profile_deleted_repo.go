@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"userv4/modules/user/domain/user"
+	"mdn4/modules/user/domain/user"
 )
 
 // IProfileDeletedRepo interface cho repository profile đã xóa

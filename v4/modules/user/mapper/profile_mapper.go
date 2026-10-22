@@ -5,12 +5,12 @@ import (
 	_enum "common/domain/enum"
 	_models "common/models"
 	_utils "common/utils"
+	authdto "mdn4/modules/auth/dto"
+	"mdn4/modules/user/domain/user"
+	"mdn4/modules/user/dto"
+	"mdn4/modules/user/enums"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/modules/user/enums"
-	"userv4/modules/user/domain/user"
-	authdto "userv4/modules/auth/dto"
-	"userv4/modules/user/dto"
 )
 
 type ProfileMapper struct {

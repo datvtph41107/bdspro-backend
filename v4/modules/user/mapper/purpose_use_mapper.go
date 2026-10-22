@@ -3,9 +3,9 @@ package mapper
 import (
 	_models "common/domain/entity"
 	_utils "common/utils"
+	"mdn4/modules/user/domain/user"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
-	"userv4/modules/user/domain/user"
 )
 
 type PurposeUseMapper struct{}

@@ -4,13 +4,14 @@ import (
 	"context"
 	"strings"
 
+	repo "mdn4/internal/interface/repo"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/user/domain/user"
 	sharepb "pb/types/shared"
-	"userv4/modules/user/domain/user"
-	repo "userv4/internal/interface/repo"
-	domain "userv4/modules/crm/entity"
 )
 
 // LocalUserClient resolves profiles from the v4 user DB (in-process, no gRPC).
+// @bind: mdn4/modules/crm/provider.UserClient
 type LocalUserClient struct {
 	profiles repo.IProfileRepo
 }

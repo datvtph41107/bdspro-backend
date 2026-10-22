@@ -2,9 +2,9 @@ package accessgrpc
 
 import (
 	"common/operation"
+	"mdn4/modules/tqd/access"
 	"testing"
 	"time"
-	"userv4/modules/user/domain/entitlement"
 )
 
 func TestToProtoCarriesMeteringEvidence(t *testing.T) {

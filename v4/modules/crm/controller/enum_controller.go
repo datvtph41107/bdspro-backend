@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/services"
 )
 
 // EnumController serves CRM enum lookups (crm/enum.proto).

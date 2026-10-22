@@ -2,7 +2,7 @@ package qh
 
 import (
 	_models "common/domain/entity"
-	domain "userv4/modules/tqd/entity"
+	domain "mdn4/modules/tqd/entity"
 )
 
 type Parcel struct {

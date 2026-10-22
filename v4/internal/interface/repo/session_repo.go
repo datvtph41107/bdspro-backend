@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_dto "common/domain/dto"
-	"userv4/modules/auth/domain/auth"
+	"mdn4/modules/auth/domain/auth"
 )
 
 // SessionRepository contains only session operations consumed by serving usecases.

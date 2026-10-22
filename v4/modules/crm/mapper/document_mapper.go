@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	domain "userv4/modules/crm/entity"
+	domain "mdn4/modules/crm/entity"
 	crmpb "pb/types/crm"
 )
 

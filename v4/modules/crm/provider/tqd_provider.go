@@ -4,7 +4,7 @@ package provider
 
 import (
 	"context"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
 )
 
 type TqdProvider interface {

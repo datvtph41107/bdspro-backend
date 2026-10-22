@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"context"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-// @bind: crm/internal/repo.SharingAccessRepo
+// @bind: mdn4/modules/crm/repository.SharingAccessRepo
 type SharingAccessPostgre struct {
 	db *gorm.DB
 }

@@ -3,9 +3,9 @@ package mapper
 import (
 	_utils "common/utils"
 	"context"
-	"userv4/modules/crm/client"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/client"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
 	crmpb "pb/types/crm"
 )
 
@@ -13,7 +13,6 @@ type RateMapper struct {
 	userClient *client.UserClient
 }
 
-// @bind: crm/infra/mapper.RateMapper
 func NewRateMapper(userClient *client.UserClient) *RateMapper {
 	return &RateMapper{
 		userClient: userClient,

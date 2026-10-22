@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	entity "userv4/modules/crm/entity"
+	entity "mdn4/modules/crm/entity"
 )
 
 type IFollowRepo interface {

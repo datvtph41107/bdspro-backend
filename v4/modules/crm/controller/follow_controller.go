@@ -5,13 +5,15 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/services"
 )
 
 type FollowController struct{ uc *services.FollowUsecase }
 
-func NewFollowController(uc *services.FollowUsecase) *FollowController { return &FollowController{uc: uc} }
+func NewFollowController(uc *services.FollowUsecase) *FollowController {
+	return &FollowController{uc: uc}
+}
 
 func (c *FollowController) RegisterHTTP(mux *http.ServeMux) {
 	httpapi.GET(mux, "/v2/crm/follow/followers", c.followers)

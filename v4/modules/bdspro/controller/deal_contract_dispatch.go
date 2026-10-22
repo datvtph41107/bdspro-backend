@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"common/httpapi"
+	"mdn4/modules/bdspro/dto"
 	bdspropb "pb/types/bdspro"
 	sharepb "pb/types/shared"
-	"userv4/internal/httpapi"
-	"userv4/modules/bdspro/dto"
 
 	"google.golang.org/protobuf/proto"
 )

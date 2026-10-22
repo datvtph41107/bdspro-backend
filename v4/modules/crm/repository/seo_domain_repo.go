@@ -4,8 +4,8 @@ package repository
 
 import (
 	"context"
-	seo_domain "userv4/modules/crm/entity/seo"
-	"userv4/modules/crm/dto"
+	"mdn4/modules/crm/dto"
+	seo_domain "mdn4/modules/crm/entity/seo"
 	"time"
 )
 

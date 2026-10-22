@@ -3,12 +3,12 @@ package handler
 import (
 	_dto "common/domain/dto"
 	"context"
+	"mdn4/modules/user/entity"
+	mapper "mdn4/modules/user/mapper"
+	userservices "mdn4/modules/user/services"
 	sharepb "pb/types/shared"
 	userpb "pb/types/user"
 	"strings"
-	mapper "userv4/modules/user/mapper"
-	"userv4/modules/user/entity"
-	userservices "userv4/modules/user/services"
 )
 
 type MainAreaHandler struct {

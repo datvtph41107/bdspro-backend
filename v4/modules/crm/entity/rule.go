@@ -3,7 +3,7 @@ package entity
 import (
 	base_enum "base/enum"
 	_models "common/models"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 type RuleEntity struct {

@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	"userv4/modules/tqd/entity"
+	"mdn4/modules/tqd/entity"
 )
 
 type stubLocationRepo struct {

@@ -10,7 +10,7 @@ import (
 
 // Checker evaluates durable User IAM role assignments by permission code.
 // It intentionally bypasses role-name shortcuts and hardcoded numeric permission IDs.
-// @bind: user/internal/usecase/subscription.PermissionAuthorizer
+// @bind: mdn4/modules/user/services/subscription.PermissionAuthorizer
 type Checker struct {
 	db *gorm.DB
 }

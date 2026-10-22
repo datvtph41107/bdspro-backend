@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"userv4/modules/hub/dto"
-	"userv4/modules/hub/entity"
-	"userv4/modules/hub/repository"
+	"mdn4/modules/hub/dto"
+	"mdn4/modules/hub/entity"
+	"mdn4/modules/hub/repository"
 )
 
 const (
@@ -41,6 +41,7 @@ type searchLatencyAgg struct {
 	Samples       []int64
 }
 
+// @bind: mdn4/modules/hub/services.SearchLatencyService
 type LocalSearchLatencyService struct {
 	repo repository.SearchLatencyRepository
 
@@ -267,6 +268,6 @@ func normalizeLatencyQuery(lastDates int32, path string, maxDays int32) (int32, 
 	if strings.TrimSpace(path) == "" {
 		path = defaultSearchPath
 	}
-	fromTime := time.Now().UTC().Truncate(24 * time.Hour).AddDate(0, 0, -int(lastDates))
+	fromTime := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, -int(lastDates))
 	return lastDates, fromTime, path
 }

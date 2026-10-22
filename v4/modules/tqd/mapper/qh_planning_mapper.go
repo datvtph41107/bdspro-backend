@@ -6,10 +6,10 @@ import (
 	"time"
 
 	_utils "common/utils"
+	qh_dto "mdn4/modules/tqd/dto/qh"
+	qh "mdn4/modules/tqd/entity/qh"
+	"mdn4/modules/tqd/enums"
 	tqdpb "pb/types/tqd"
-	qh "userv4/modules/tqd/entity/qh"
-	qh_dto "userv4/modules/tqd/dto/qh"
-	"userv4/modules/tqd/enums"
 
 	"github.com/lib/pq"
 )

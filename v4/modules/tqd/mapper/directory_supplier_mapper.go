@@ -2,9 +2,9 @@ package mapper
 
 import (
 	"encoding/json"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
 	"time"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
 
 	_entity "common/domain/entity"
 	_utils "common/utils"

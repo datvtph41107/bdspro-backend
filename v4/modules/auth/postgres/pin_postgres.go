@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"mdn4/modules/auth/domain/auth"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/auth"
 )
 
 // PINPostgres implementation của PIN repository
-// @bind: user/internal/interface/repo.PINRepository
+// @bind: mdn4/internal/interface/repo.PINRepository
 type PINPostgres struct {
 	db *gorm.DB
 }

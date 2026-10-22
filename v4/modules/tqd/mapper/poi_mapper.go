@@ -7,9 +7,9 @@ import (
 
 	_entity "common/domain/entity"
 	_utils "common/utils"
+	"mdn4/modules/tqd/dto"
+	domain "mdn4/modules/tqd/entity"
 	tqdpb "pb/types/tqd"
-	domain "userv4/modules/tqd/entity"
-	"userv4/modules/tqd/dto"
 )
 
 // PoiMapper handles mapping between domain, DTO and proto

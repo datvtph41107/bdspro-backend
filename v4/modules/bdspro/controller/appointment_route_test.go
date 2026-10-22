@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"mdn4/modules/bdspro/dto"
 	crmpb "pb/types/crm"
-	"userv4/modules/bdspro/dto"
 )
 
 type routeStubAppointment struct{}

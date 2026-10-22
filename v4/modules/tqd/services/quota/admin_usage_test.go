@@ -6,9 +6,10 @@ import (
 	"time"
 
 	commonmetering "common/metering"
+	"mdn4/modules/tqd/access"
+	quotadomain "mdn4/modules/tqd/entity/quota"
+
 	"github.com/stretchr/testify/require"
-	"userv4/modules/tqd/access"
-	quotadomain "userv4/modules/tqd/entity/quota"
 )
 
 type adminUsageRepositoryStub struct{ page AdminUsagePage }

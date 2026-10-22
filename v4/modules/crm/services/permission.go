@@ -3,7 +3,7 @@ package services
 import (
 	base_enum "base/enum"
 	"context"
-	"userv4/modules/crm/enums"
+	"mdn4/modules/crm/enums"
 )
 
 type PermissionUsecase interface {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	domain "userv4/modules/tqd/entity/mappoint"
+	domain "mdn4/modules/tqd/entity/mappoint"
 )
 
 var (

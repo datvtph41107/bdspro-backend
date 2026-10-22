@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	domain "userv4/modules/tqd/entity/mappoint"
+	domain "mdn4/modules/tqd/entity/mappoint"
 )
 
 type stubRepository struct{}

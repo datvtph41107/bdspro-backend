@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	qh "userv4/modules/tqd/entity/qh"
-	"userv4/modules/tqd/dto"
+	"mdn4/modules/tqd/dto"
+	qh "mdn4/modules/tqd/entity/qh"
 )
 
 type IMapWorkspaceRepo interface {

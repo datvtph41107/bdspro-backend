@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	repo "userv4/modules/tqd/repository"
-	"userv4/modules/tqd/services/resolver/layer_resolver/db"
-	"userv4/modules/tqd/services/resolver/layer_resolver/engine"
-	"userv4/modules/tqd/services/resolver/layer_resolver/types"
+	repo "mdn4/modules/tqd/repository"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/db"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/engine"
+	"mdn4/modules/tqd/services/resolver/layer_resolver/types"
 )
 
 type ILayerResolver interface {

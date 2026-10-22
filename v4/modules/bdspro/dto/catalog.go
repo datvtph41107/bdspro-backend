@@ -12,3 +12,9 @@ type CatalogSearchRequest struct {
 func (r CatalogSearchRequest) Pagable() _dto.Pagable {
 	return _dto.Pagable{Page: r.Page, Size: r.Size, Text: r.Text}
 }
+
+// PropertyTypeListRequest mirrors bdspropb.SearchQueryRequest + client sync timestamp.
+type PropertyTypeListRequest struct {
+	CatalogSearchRequest
+	Timestamp int64 `form:"timestamp"`
+}

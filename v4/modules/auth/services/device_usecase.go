@@ -4,11 +4,11 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"mdn4/internal/interface/repo"
+	"mdn4/modules/auth/domain/auth"
+	"mdn4/modules/auth/dto"
 	"strconv"
 	"strings"
-	"userv4/modules/auth/domain/auth"
-	"userv4/modules/auth/dto"
-	"userv4/internal/interface/repo"
 )
 
 // DeviceUsecase xử lý logic nghiệp vụ liên quan đến thiết bị

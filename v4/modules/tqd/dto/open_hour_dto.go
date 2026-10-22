@@ -2,8 +2,8 @@ package dto
 
 import (
 	"fmt"
+	domain "mdn4/modules/tqd/entity"
 	"time"
-	domain "userv4/modules/tqd/entity"
 
 	_dto "common/domain/dto"
 )

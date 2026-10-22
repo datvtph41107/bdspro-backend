@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"mdn4/modules/auth/domain/auth"
+
 	"gorm.io/gorm"
-	"userv4/modules/auth/domain/auth"
 )
 
-// @bind: user/internal/interface/repo.AuthStatusRepository
+// @bind: mdn4/internal/interface/repo.AuthStatusRepository
 type StatusPostgres struct {
 	db *gorm.DB
 }

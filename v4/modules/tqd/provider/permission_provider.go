@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"userv4/modules/tqd/enums"
+	"mdn4/modules/tqd/enums"
 )
 
 // PermissionProvider defines the interface for permission operations

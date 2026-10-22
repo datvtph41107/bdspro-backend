@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	domain "userv4/modules/tqd/entity/publiccontent"
+	domain "mdn4/modules/tqd/entity/publiccontent"
 
 	"gorm.io/gorm"
 )

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	commonidentity "common/identity"
-	subscriptiondomain "userv4/modules/user/domain/subscription"
+	subscriptiondomain "mdn4/modules/user/domain/subscription"
 )
 
 const PermissionView = "COMMERCIAL_SUBSCRIPTION_VIEW"
@@ -68,7 +68,7 @@ type AdminRepository interface {
 	ListEffectiveByProfiles(context.Context, []uint64) ([]subscriptiondomain.AdminUserProjection, error)
 }
 
-// @bind: user/internal/usecase/commercialprofile.SubscriptionReader
+// @bind: mdn4/modules/user/services/commercialprofile.SubscriptionReader
 type AdminService struct{ repository AdminRepository }
 
 func NewAdminService(repository AdminRepository) *AdminService {

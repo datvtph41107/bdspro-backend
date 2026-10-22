@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"userv4/internal/httpapi"
-	"userv4/modules/seo/dto"
-	"userv4/modules/seo/entity"
-	"userv4/modules/seo/services"
+	"common/httpapi"
+	"mdn4/modules/seo/dto"
+	"mdn4/modules/seo/entity"
+	"mdn4/modules/seo/services"
 )
 
 // SeoDomainController handles admin SEO domain CRUD/lifecycle and public document endpoints.

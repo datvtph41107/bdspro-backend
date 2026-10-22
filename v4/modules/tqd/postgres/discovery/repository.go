@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	_utils "common/utils"
-	domain "userv4/modules/tqd/entity/discovery"
-	"userv4/modules/tqd/postgres/entitycandidate"
-	"userv4/modules/tqd/services/discovery/ports"
+	domain "mdn4/modules/tqd/entity/discovery"
+	"mdn4/modules/tqd/postgres/entitycandidate"
+	"mdn4/modules/tqd/services/discovery/ports"
 
 	"gorm.io/gorm"
 )

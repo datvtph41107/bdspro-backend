@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	_errors "common/errors"
-	"userv4/internal/httpapi"
-	domain "userv4/modules/crm/entity"
-	"userv4/modules/crm/dto"
-	"userv4/modules/crm/services"
+	"common/httpapi"
+	"mdn4/modules/crm/dto"
+	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/services"
 )
 
 type StageController struct{ uc *services.StageUsecase }
@@ -46,34 +46,52 @@ type stageBody struct {
 }
 
 func (c *StageController) list(ctx context.Context, req stageListReq) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	items, total, err := c.uc.Search(ctx, req.PipelineID, dto.StageSearchDTO{StageName: req.StageName})
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(items, httpapi.WithPagination(&httpapi.Pagination{Total: total})), nil
 }
 func (c *StageController) detail(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	// StageUsecase has no GetByID; return id echo until repo helper is wired.
 	return httpapi.OK(map[string]any{"id": req.ID}), nil
 }
 func (c *StageController) create(ctx context.Context, req stageBody) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Create(ctx, &domain.StageEntity{
 		StageName: req.StageName, OrderNumber: req.OrderNumber, PipelineID: req.PipelineID, Active: req.Active, Color: req.Color,
 	})
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *StageController) update(ctx context.Context, req stageBody) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
 	out, err := c.uc.Update(ctx, req.ID, &domain.StageEntity{
 		StageName: req.StageName, OrderNumber: req.OrderNumber, PipelineID: req.PipelineID, Active: req.Active, Color: req.Color,
 	})
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return httpapi.OK(out), nil
 }
 func (c *StageController) delete(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {
-	if err := c.require(); err != nil { return nil, err }
-	if err := c.uc.Delete(ctx, req.ID); err != nil { return nil, err }
+	if err := c.require(); err != nil {
+		return nil, err
+	}
+	if err := c.uc.Delete(ctx, req.ID); err != nil {
+		return nil, err
+	}
 	return submitResult(req.ID, "deleted")
 }

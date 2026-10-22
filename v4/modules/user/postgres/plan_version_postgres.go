@@ -7,20 +7,21 @@ import (
 	"time"
 
 	_db "common/db"
+	"mdn4/modules/user/domain/plan"
+	"mdn4/modules/user/entity"
+	"mdn4/modules/user/services/plan/admin"
+	"mdn4/modules/user/services/plan/publish"
+
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"userv4/modules/user/domain/plan"
-	"userv4/modules/user/entity"
-	"userv4/modules/user/services/plan/admin"
-	"userv4/modules/user/services/plan/publish"
 )
 
 // PlanVersionRepo persists serving Product/PlanVersion state. It intentionally does
 // not implement transition/shadow contracts.
-// @bind: user/internal/usecase/plan/admin.Repository
-// @bind: user/internal/usecase/plan/publish.Repository
+// @bind: mdn4/modules/user/services/plan/admin.Repository
+// @bind: mdn4/modules/user/services/plan/publish.Repository
 type PlanVersionRepo struct {
 	transactionRepo *_db.TransactionRepo
 }

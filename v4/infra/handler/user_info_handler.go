@@ -5,8 +5,8 @@ import (
 	authpb "pb/types/auth"
 
 	_enum "common/domain/enum"
-	"userv4/modules/auth/dto"
-	usecase "userv4/modules/auth/services"
+	"mdn4/modules/auth/dto"
+	usecase "mdn4/modules/auth/services"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

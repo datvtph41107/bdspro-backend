@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	discoverydomain "userv4/modules/tqd/entity/discovery"
-	relateddomain "userv4/modules/tqd/entity/relatedentity"
+	discoverydomain "mdn4/modules/tqd/entity/discovery"
+	relateddomain "mdn4/modules/tqd/entity/relatedentity"
 )
 
 // EntityReader is intentionally narrow. Related Entity only needs canonical
