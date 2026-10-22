@@ -5,7 +5,7 @@ import (
 	"common/operation"
 	"context"
 	"errors"
-	"mdn4/modules/tqd/access"
+	useraccess "mdn4/modules/user/domain/entitlement"
 	internalaccess "mdn4/modules/user/services/entitlement"
 	"strings"
 	"time"
@@ -83,7 +83,7 @@ func (h *Handler) GetAccess(
 	return toProto(result), nil
 }
 
-func toProto(result access.Result) *userpb.GetAccessResponse {
+func toProto(result useraccess.Result) *userpb.GetAccessResponse {
 	response := &userpb.GetAccessResponse{
 		SubjectType:    string(result.Subject.Type),
 		SubjectId:      result.Subject.ID,
