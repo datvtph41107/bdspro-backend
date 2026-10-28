@@ -90,7 +90,7 @@ func (u *AdminSalesUsecase) ListEvents(ctx context.Context, opportunityID uint64
 	return out, nil
 }
 
-func (u *AdminSalesUsecase) ListContacts(ctx context.Context, page, size int32, q string) ([]domain.ContactEntity, int64, error) {
+func (u *AdminSalesUsecase) ListContacts(ctx context.Context, page, size int32, q string) ([]domain.Contact, int64, error) {
 	search := dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{Page: uint32(page), Size: uint32(size)},
 		Text:    strings.TrimSpace(q),
@@ -99,7 +99,7 @@ func (u *AdminSalesUsecase) ListContacts(ctx context.Context, page, size int32, 
 	return u.contactRepo.SearchByOwnerOf(ctx, base_enum.EOwnerOfAdmin, search)
 }
 
-func (u *AdminSalesUsecase) CreateContact(ctx context.Context, in *dto.AdminContactSaveDTO) (*domain.ContactEntity, error) {
+func (u *AdminSalesUsecase) CreateContact(ctx context.Context, in *dto.AdminContactSaveDTO) (*domain.Contact, error) {
 	if strings.TrimSpace(in.FullName) == "" {
 		return nil, _errors.ReturnError(400, "Tên liên hệ là bắt buộc")
 	}
@@ -107,7 +107,7 @@ func (u *AdminSalesUsecase) CreateContact(ctx context.Context, in *dto.AdminCont
 	if err != nil {
 		return nil, err
 	}
-	contact := &domain.ContactEntity{
+	contact := &domain.Contact{
 		FullName: strings.TrimSpace(in.FullName),
 		Phone:    strings.TrimSpace(in.Phone),
 		Email:    strings.TrimSpace(in.Email),
@@ -170,7 +170,7 @@ func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunity
 
 	var lead *domain.LeadEntity
 	err = u.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
-		var contact *domain.ContactEntity
+		var contact *domain.Contact
 		if in.ContactID != nil && *in.ContactID > 0 {
 			existing, err := u.contactRepo.GetByID(txCtx, *in.ContactID)
 			if err != nil || existing == nil {
@@ -181,7 +181,7 @@ func (u *AdminSalesUsecase) Create(ctx context.Context, in *dto.AdminOpportunity
 			}
 			contact = existing
 		} else {
-			createdContact, err := u.contactRepo.Create(txCtx, &domain.ContactEntity{
+			createdContact, err := u.contactRepo.Create(txCtx, &domain.Contact{
 				FullName: strings.TrimSpace(in.FullName),
 				Phone:    strings.TrimSpace(in.Phone),
 				Email:    strings.TrimSpace(in.Email),

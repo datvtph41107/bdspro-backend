@@ -20,12 +20,16 @@ func TestRegisterHTTP_ProtoPathsResolve(t *testing.T) {
 	newRouteOnlyHandler().RegisterHTTP(mux)
 
 	cases := []struct{ method, path, pattern string }{
-		{http.MethodGet, "/v2/crm/contact/by-product/638?size=999", "GET /v2/crm/contact/by-product/{id}"},
-		{http.MethodGet, "/v2/crm/contact/detail/5", "GET /v2/crm/contact/detail/{id}"},
-		{http.MethodGet, "/v2/crm/contact/detail/5/products", "GET /v2/crm/contact/detail/{id}/products"},
-		{http.MethodGet, "/v2/crm/contact/relation-ship/5", "GET /v2/crm/contact/relation-ship/{id}"},
-		{http.MethodPut, "/v2/crm/contact/edit/5", "PUT /v2/crm/contact/{first}/{second}"},
-		{http.MethodPut, "/v2/crm/contact/5/products", "PUT /v2/crm/contact/{first}/{second}"},
+		{http.MethodGet, "/v2/crm/contact/list/me", "GET /v2/crm/contact/list/me"},
+		{http.MethodGet, "/v2/crm/contact/638/by-product?size=999", "GET /v2/crm/contact/{id}/by-product"},
+		{http.MethodGet, "/v2/crm/contact/5/detail", "GET /v2/crm/contact/{id}/detail"},
+		{http.MethodGet, "/v2/crm/contact/5/products", "GET /v2/crm/contact/{id}/products"},
+		{http.MethodGet, "/v2/crm/contact/5/history", "GET /v2/crm/contact/{id}/history"},
+		{http.MethodGet, "/v2/crm/contact/5/relation-ship", "GET /v2/crm/contact/{id}/relation-ship"},
+		{http.MethodPut, "/v2/crm/contact/5/edit", "PUT /v2/crm/contact/{id}/edit"},
+		{http.MethodPut, "/v2/crm/contact/5/note", "PUT /v2/crm/contact/{id}/note"},
+		{http.MethodPut, "/v2/crm/contact/5/products", "PUT /v2/crm/contact/{id}/products"},
+		{http.MethodDelete, "/v2/crm/contact/5", "DELETE /v2/crm/contact/{id}"},
 		{http.MethodGet, "/v2/feedback/report/reasons", "GET /v2/feedback/report/reasons"},
 		{http.MethodGet, "/v2/feedback/rate/detail/3", "GET /v2/feedback/rate/detail/{id}"},
 		{http.MethodGet, "/v2/feedback/rate/product/stats/42", "GET /v2/feedback/rate/{registry}/stats/{ownerId}"},
@@ -43,36 +47,5 @@ func TestRegisterHTTP_ProtoPathsResolve(t *testing.T) {
 		if pattern != tc.pattern {
 			t.Errorf("%s %s matched %q, want %q", tc.method, tc.path, pattern, tc.pattern)
 		}
-	}
-}
-
-func TestContactPutDispatch(t *testing.T) {
-	var hit, id string
-	record := func(name string) http.Handler {
-		return http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-			hit, id = name, r.PathValue("id")
-		})
-	}
-	mux := http.NewServeMux()
-	mux.HandleFunc("PUT /v2/crm/contact/{first}/{second}",
-		(&ContactController{}).putDispatch(record("edit"), record("note"), record("products")))
-
-	cases := []struct{ path, hit, id string }{
-		{"/v2/crm/contact/edit/5", "edit", "5"},
-		{"/v2/crm/contact/note/6", "note", "6"},
-		{"/v2/crm/contact/7/products", "products", "7"},
-	}
-	for _, tc := range cases {
-		hit, id = "", ""
-		mux.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPut, tc.path, nil))
-		if hit != tc.hit || id != tc.id {
-			t.Errorf("%s → %s(id=%s), want %s(id=%s)", tc.path, hit, id, tc.hit, tc.id)
-		}
-	}
-
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, httptest.NewRequest(http.MethodPut, "/v2/crm/contact/foo/bar", nil))
-	if w.Code != http.StatusNotFound {
-		t.Fatalf("unknown PUT status=%d", w.Code)
 	}
 }

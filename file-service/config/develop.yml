@@ -21,7 +21,7 @@ file:
     - "https://bdspro.com"
     - "https://qhpro.vn"
   signature_key: qhpro-development-local-file-signature-key
-  xor_crypt_key: qhpro-development-local-file-xor-crypt-key
+  xor_crypt_key: key-encode-decode
   signature_expire: 5m
 
 service:

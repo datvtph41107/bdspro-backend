@@ -7,27 +7,27 @@ import (
 )
 
 // Contact is a CRM-owned contact row (table: tb_contact on database.crm.dsn).
-type Contact struct {
-	ID              uint64             `gorm:"column:id;primaryKey"`
-	FullName        string             `gorm:"column:full_name"`
-	Phone           string             `gorm:"column:phone"`
-	Avatar          string             `gorm:"column:avatar"`
-	Email           string             `gorm:"column:email"`
-	Zalo            string             `gorm:"column:zalo"`
-	Company         string             `gorm:"column:company"`
-	Note            string             `gorm:"column:note"`
-	Birthday        *time.Time         `gorm:"column:birthday"`
-	OwnerID         uint64             `gorm:"column:owner_id"`
-	OwnerOf         base_enum.EOwnerOf `gorm:"column:owner_of"`
-	ProfileID       *uint64            `gorm:"column:profile_id"`
-	FriendID        *uint64            `gorm:"column:friend_id"`
-	OriginProfileID *uint64            `gorm:"column:origin_profile_id"`
-	CreatedBy       *uint64            `gorm:"column:created_by"`
-	CreatedAt       *time.Time         `gorm:"column:created_at"`
-	UpdatedAt       *time.Time         `gorm:"column:updated_at"`
-}
+// type Contact struct {
+// 	ID              uint64             `gorm:"column:id;primaryKey"`
+// 	FullName        string             `gorm:"column:full_name"`
+// 	Phone           string             `gorm:"column:phone"`
+// 	Avatar          string             `gorm:"column:avatar"`
+// 	Email           string             `gorm:"column:email"`
+// 	Zalo            string             `gorm:"column:zalo"`
+// 	Company         string             `gorm:"column:company"`
+// 	Note            string             `gorm:"column:note"`
+// 	Birthday        *time.Time         `gorm:"column:birthday"`
+// 	OwnerID         uint64             `gorm:"column:owner_id"`
+// 	OwnerOf         base_enum.EOwnerOf `gorm:"column:owner_of"`
+// 	ProfileID       *uint64            `gorm:"column:profile_id"`
+// 	FriendID        *uint64            `gorm:"column:friend_id"`
+// 	OriginProfileID *uint64            `gorm:"column:origin_profile_id"`
+// 	CreatedBy       *uint64            `gorm:"column:created_by"`
+// 	CreatedAt       *time.Time         `gorm:"column:created_at"`
+// 	UpdatedAt       *time.Time         `gorm:"column:updated_at"`
+// }
 
-func (Contact) TableName() string { return "tb_contact" }
+// func (Contact) TableName() string { return "tb_contact" }
 
 // ContactListItem is a contact row enriched with friend/follow join fields for list.
 type ContactListItem struct {

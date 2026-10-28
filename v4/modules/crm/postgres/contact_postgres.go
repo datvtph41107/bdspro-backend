@@ -209,8 +209,8 @@ func (r *PostgreContact) Search(c context.Context, ownerId uint64, ownerType bas
 	return contacts, total, nil
 }
 
-func (r *PostgreContact) SearchByOwnerOf(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.ContactEntity, int64, error) {
-	query := r.GetDB(c).Model(&domain.ContactEntity{}).
+func (r *PostgreContact) SearchByOwnerOf(c context.Context, ownerType base_enum.EOwnerOf, dto dto.ContactSearchDTO) ([]domain.Contact, int64, error) {
+	query := r.GetDB(c).Model(&domain.Contact{}).
 		Where("deleted_at is null and owner_of = ?", ownerType)
 	if strings.TrimSpace(dto.Text) != "" {
 		q := "%" + strings.TrimSpace(dto.Text) + "%"
@@ -220,7 +220,7 @@ func (r *PostgreContact) SearchByOwnerOf(c context.Context, ownerType base_enum.
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	var contacts []domain.ContactEntity
+	var contacts []domain.Contact
 	err := query.Order("updated_at desc, id desc").
 		Offset(dto.GetOffset()).
 		Limit(dto.GetLimit()).
@@ -330,7 +330,7 @@ func (r *PostgreContact) GetListContactByProductId(
 	return contacts, total, nil
 }
 
-func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+func (r *PostgreContact) Create(c context.Context, entity *domain.Contact) (*domain.Contact, error) {
 	r.fillOriginProfileID(c, entity)
 	result := r.GetDB(c).Create(entity)
 	if result.Error != nil {
@@ -340,7 +340,7 @@ func (r *PostgreContact) Create(c context.Context, entity *domain.ContactEntity)
 }
 
 // fillOriginProfileID gắn origin_profile_id theo profile_id nếu chưa có (dùng cho sourceContactId).
-func (r *PostgreContact) fillOriginProfileID(c context.Context, entity *domain.ContactEntity) {
+func (r *PostgreContact) fillOriginProfileID(c context.Context, entity *domain.Contact) {
 	if entity == nil || entity.OriginProfileID != nil || entity.ProfileID == nil || *entity.ProfileID == 0 {
 		return
 	}
@@ -357,9 +357,9 @@ func (r *PostgreContact) fillOriginProfileID(c context.Context, entity *domain.C
 	entity.OriginProfileID = &originID
 }
 
-func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.Contact) (*domain.Contact, error) {
 	result := r.GetDB(c).
-		Model(&domain.ContactEntity{}).
+		Model(&domain.Contact{}).
 		Where("id = ?", id).
 		Update("full_name", entity.FullName).
 		Update("phone", entity.Phone).
@@ -378,7 +378,7 @@ func (r *PostgreContact) Update(c context.Context, id uint64, entity *domain.Con
 
 func (r *PostgreContact) Delete(c context.Context, id uint64) error {
 	result := r.GetDB(c).
-		Model(&domain.ContactEntity{}).
+		Model(&domain.Contact{}).
 		Where("id = ?", id).
 		Update("deleted_at", time.Now())
 	if result.Error != nil {
@@ -390,11 +390,11 @@ func (r *PostgreContact) Delete(c context.Context, id uint64) error {
 func (r *PostgreContact) GetByID(
 	c context.Context,
 	id uint64,
-) (*domain.ContactEntity, error) {
+) (*domain.Contact, error) {
 
-	var contact domain.ContactEntity
+	var contact domain.Contact
 	result := r.GetDB(c).
-		Model(&domain.ContactEntity{}).
+		Model(&domain.Contact{}).
 		Preload("OriginProfile").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&contact)
@@ -465,8 +465,8 @@ func (r *PostgreContact) Existed(c context.Context, followId uint64) error {
 // Bulk inserts all contacts.
 func (r *PostgreContact) Bulk(
 	ctx context.Context,
-	entities []domain.ContactEntity,
-) ([]domain.ContactEntity, error) {
+	entities []domain.Contact,
+) ([]domain.Contact, error) {
 
 	if len(entities) == 0 {
 		return entities, nil
@@ -492,9 +492,9 @@ func (r *PostgreContact) Bulk(
 	return entities, nil
 }
 
-func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, currentUserId uint64, ownerType base_enum.EOwnerOf) (*domain.ContactEntity, error) {
-	var contact domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, currentUserId uint64, ownerType base_enum.EOwnerOf) (*domain.Contact, error) {
+	var contact domain.Contact
+	result := r.GetDB(c).Model(&domain.Contact{}).
 		Where("profile_id = ? and deleted_at is null and owner_id = ? and owner_of = ?",
 			profileId, currentUserId, ownerType).
 		First(&contact)
@@ -508,7 +508,7 @@ func (r *PostgreContact) GetByProfileID(c context.Context, profileId uint64, cur
 }
 
 // restoreAndUpdateContact khôi phục và cập nhật thông tin contact nếu cần
-func (r *PostgreContact) restoreAndUpdateContact(c context.Context, contact *domain.ContactEntity, fullName, phone, avatar string) (*domain.ContactEntity, error) {
+func (r *PostgreContact) restoreAndUpdateContact(c context.Context, contact *domain.Contact, fullName, phone, avatar string) (*domain.Contact, error) {
 	// Khôi phục nếu đã bị xóa
 	if contact.DeletedAt != nil {
 		if err := r.Restore(c, contact.ID); err != nil {
@@ -539,9 +539,9 @@ func (r *PostgreContact) restoreAndUpdateContact(c context.Context, contact *dom
 }
 
 // getContactByOwnerAndIdentifier lấy contact theo ownerId, ownerOf và (phone hoặc profileId) (bao gồm cả đã bị xóa)
-func (r *PostgreContact) getContactByOwnerAndIdentifier(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, phone string, profileId *uint64) (*domain.ContactEntity, error) {
-	var contact domain.ContactEntity
-	query := r.GetDB(c).Model(&domain.ContactEntity{}).
+func (r *PostgreContact) getContactByOwnerAndIdentifier(c context.Context, ownerId uint64, ownerType base_enum.EOwnerOf, phone string, profileId *uint64) (*domain.Contact, error) {
+	var contact domain.Contact
+	query := r.GetDB(c).Model(&domain.Contact{}).
 		Where("owner_id = ? and owner_of = ?", ownerId, ownerType)
 
 	// Query theo phone hoặc profileId
@@ -576,7 +576,7 @@ func (r *PostgreContact) getContactByOwnerAndIdentifier(c context.Context, owner
 	return &contact, nil
 }
 
-func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.ContactEntity, error) {
+func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uint64, ownerId uint64, ownerType base_enum.EOwnerOf, fullName string, phone string, avatar string) (*domain.Contact, error) {
 	// Kiểm tra contact đã tồn tại chưa theo ownerId, ownerOf và (phone hoặc profileId)
 	profileIdPtr := &profileId
 	contact, err := r.getContactByOwnerAndIdentifier(c, ownerId, ownerType, phone, profileIdPtr)
@@ -588,7 +588,7 @@ func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uin
 	}
 
 	// Nếu không tồn tại, tạo mới
-	newContact := &domain.ContactEntity{
+	newContact := &domain.Contact{
 		FullName:  fullName,
 		Phone:     phone,
 		Avatar:    avatar,
@@ -607,7 +607,7 @@ func (r *PostgreContact) GetOrCreateByProfileID(c context.Context, profileId uin
 }
 
 func (r *PostgreContact) UpdateNote(c context.Context, id uint64, note string) error {
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+	result := r.GetDB(c).Model(&domain.Contact{}).
 		Where("id = ? and deleted_at is null", id).
 		Update("note", note)
 	if result.Error != nil {
@@ -616,10 +616,10 @@ func (r *PostgreContact) UpdateNote(c context.Context, id uint64, note string) e
 	return nil
 }
 
-func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.ContactEntity, error) {
+func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.Contact, error) {
 	clearPhone := base_util.ClearPhone(phone)
-	var contact domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+	var contact domain.Contact
+	result := r.GetDB(c).Model(&domain.Contact{}).
 		Where("phone = ? and deleted_at is null and owner_id = ? and owner_of = ?", clearPhone, profileId, ownerType).
 		First(&contact)
 	if result.Error != nil {
@@ -631,10 +631,10 @@ func (r *PostgreContact) GetByPhone(c context.Context, profileId uint64, ownerTy
 	return &contact, nil
 }
 
-func (r *PostgreContact) GetByPhoneIncludingDeleted(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.ContactEntity, error) {
+func (r *PostgreContact) GetByPhoneIncludingDeleted(c context.Context, profileId uint64, ownerType base_enum.EOwnerOf, phone string) (*domain.Contact, error) {
 	clearPhone := base_util.ClearPhone(phone)
-	var contact domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+	var contact domain.Contact
+	result := r.GetDB(c).Model(&domain.Contact{}).
 		Where("phone = ? and owner_id = ? and owner_of = ?", clearPhone, profileId, ownerType).
 		First(&contact)
 	if result.Error != nil {
@@ -648,7 +648,7 @@ func (r *PostgreContact) GetByPhoneIncludingDeleted(c context.Context, profileId
 
 func (r *PostgreContact) Restore(c context.Context, id uint64) error {
 	result := r.GetDB(c).
-		Model(&domain.ContactEntity{}).
+		Model(&domain.Contact{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"deleted_at": nil,
@@ -659,9 +659,9 @@ func (r *PostgreContact) Restore(c context.Context, id uint64) error {
 	return nil
 }
 
-func (r *PostgreContact) UpdateContactID(c context.Context, contactId uint64, leadId uint64) (*domain.ContactEntity, error) {
+func (r *PostgreContact) UpdateContactID(c context.Context, contactId uint64, leadId uint64) (*domain.Contact, error) {
 	result := r.GetDB(c).
-		Model(&domain.ContactEntity{}).
+		Model(&domain.Contact{}).
 		Where("id = ? and deleted_at is null", contactId).
 		Update("lead_id", leadId)
 	if result.Error != nil {
@@ -670,18 +670,18 @@ func (r *PostgreContact) UpdateContactID(c context.Context, contactId uint64, le
 	return nil, nil
 }
 
-func (r *PostgreContact) GetByIDs(c context.Context, ids []uint64) ([]domain.ContactEntity, error) {
-	var contacts []domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).Where("id IN (?) and deleted_at is null", ids).Find(&contacts)
+func (r *PostgreContact) GetByIDs(c context.Context, ids []uint64) ([]domain.Contact, error) {
+	var contacts []domain.Contact
+	result := r.GetDB(c).Model(&domain.Contact{}).Where("id IN (?) and deleted_at is null", ids).Find(&contacts)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return contacts, nil
 }
 
-func (r *PostgreContact) GetByProfileIDAndOwnerIdNull(c context.Context, profileId uint64) (*domain.ContactEntity, error) {
-	var contact domain.ContactEntity
-	result := r.GetDB(c).Model(&domain.ContactEntity{}).
+func (r *PostgreContact) GetByProfileIDAndOwnerIdNull(c context.Context, profileId uint64) (*domain.Contact, error) {
+	var contact domain.Contact
+	result := r.GetDB(c).Model(&domain.Contact{}).
 		Where("profile_id = ? and deleted_at is null and owner_id = 0", profileId).
 		First(&contact)
 	if result.Error != nil {
@@ -693,8 +693,8 @@ func (r *PostgreContact) GetByProfileIDAndOwnerIdNull(c context.Context, profile
 	return &contact, nil
 }
 
-func (r *PostgreContact) GetByOriginProfileId(c context.Context, ownerId uint64, originProfileId uint64) (*domain.ContactEntity, error) {
-	var contact domain.ContactEntity
+func (r *PostgreContact) GetByOriginProfileId(c context.Context, ownerId uint64, originProfileId uint64) (*domain.Contact, error) {
+	var contact domain.Contact
 	result := r.GetDB(c).
 		Preload("OriginProfile").
 		Where("owner_id = ? AND origin_profile_id = ? AND deleted_at IS NULL", ownerId, originProfileId).

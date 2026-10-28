@@ -20,6 +20,7 @@ import (
 // LocalNotificationProvider writes notification/history/config to the v4 DSN.
 // It replaces remote notification-service calls for in-process producers.
 // @bind: mdn4/internal/interface/providers.NotificationProvider
+// @bind: mdn4/modules/crm/provider.HistoryWriter
 type LocalNotificationProvider struct {
 	repo repository.NotificationRepository
 	sync *_utils.SyncUtil

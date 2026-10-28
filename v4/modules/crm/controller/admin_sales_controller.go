@@ -311,7 +311,7 @@ func toPBTimestamp(t *time.Time) *timestamppb.Timestamp {
 	return timestamppb.New(*t)
 }
 
-func mapAdminContactToItem(c *domain.ContactEntity) *crmpb.AdminContactItem {
+func mapAdminContactToItem(c *domain.Contact) *crmpb.AdminContactItem {
 	if c == nil {
 		return nil
 	}

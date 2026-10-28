@@ -32,6 +32,7 @@ type ContactUsecase struct {
 	tagUsecase         *TagUsecase
 
 	notificationClient provider.NotificationProvider
+	historyWriter      provider.HistoryWriter
 	transaction        provider.ITransaction
 }
 
@@ -46,6 +47,7 @@ func NewContactUsecase(
 	tagUsecase *TagUsecase,
 
 	notificationClient provider.NotificationProvider,
+	historyWriter provider.HistoryWriter,
 	transaction provider.ITransaction,
 ) *ContactUsecase {
 	return &ContactUsecase{
@@ -58,6 +60,7 @@ func NewContactUsecase(
 		ownerUsecase:       ownerUsecase,
 		tagUsecase:         tagUsecase,
 		notificationClient: notificationClient,
+		historyWriter:      historyWriter,
 		transaction:        transaction,
 	}
 }
@@ -128,7 +131,7 @@ func (s *ContactUsecase) updateContactCountForProducts(c context.Context, produc
 	}()
 }
 
-func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*domain.ContactEntity, error) {
+func (s *ContactUsecase) CheckPermission(c context.Context, contactId uint64) (*domain.Contact, error) {
 	entity, err := s.repo.GetByID(c, contactId)
 	if err != nil {
 		return nil, err
@@ -182,11 +185,16 @@ func (s *ContactUsecase) UpdateProductIds(c context.Context, contactId uint64, p
 	}
 
 	// Sync products vào bảng tb_contact_product
-	return s.contactProductRepo.Bulk(c, productIds, contactId)
+	if err := s.contactProductRepo.Bulk(c, productIds, contactId); err != nil {
+		return err
+	}
+	s.recordContactHistory(c, contactId, _enum.HistoryContactUpdate,
+		[]string{fmt.Sprintf("Cập nhật sản phẩm quan tâm: %d sản phẩm", len(productIds))})
+	return nil
 }
 
-func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	var result *domain.ContactEntity
+func (s *ContactUsecase) Create(ctx context.Context, entity *domain.Contact) (*domain.Contact, error) {
+	var result *domain.Contact
 	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		entity.Phone = strings.TrimSpace(entity.Phone)
 		entity.FullName = strings.TrimSpace(entity.FullName)
@@ -275,8 +283,8 @@ func (s *ContactUsecase) Create(ctx context.Context, entity *domain.ContactEntit
 	return result, nil
 }
 
-func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
-	_, err := s.CheckPermission(c, id)
+func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Contact) (*domain.Contact, error) {
+	before, err := s.CheckPermission(c, id)
 	if err != nil {
 		return nil, err
 	}
@@ -284,6 +292,13 @@ func (s *ContactUsecase) Update(c context.Context, id uint64, entity *domain.Con
 	result, err := s.repo.Update(c, id, entity)
 	if err != nil {
 		return nil, err
+	}
+	notes := contactChangeNotes(before, entity)
+	if len(entity.ProductIDs) > 0 {
+		notes = append(notes, fmt.Sprintf("Cập nhật sản phẩm quan tâm: %d sản phẩm", len(entity.ProductIDs)))
+	}
+	if len(notes) > 0 {
+		s.recordContactHistory(c, id, _enum.HistoryContactUpdate, notes)
 	}
 
 	// Xử lý tags nếu có
@@ -338,7 +353,7 @@ func (s *ContactUsecase) Delete(c context.Context, id uint64) error {
 	return nil
 }
 
-func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, contacts []domain.ContactEntity) ([]domain.ContactEntity, error) {
+func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, contacts []domain.Contact) ([]domain.Contact, error) {
 	phones := make([]string, len(contacts))
 	for i := 0; i < len(contacts); i++ {
 		phones[i] = contacts[i].Phone
@@ -367,7 +382,7 @@ func (s *ContactUsecase) Sync(c context.Context, ownerType base_enum.EOwnerOf, c
 	return contacts, nil
 }
 
-func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.ContactEntity, error) {
+func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.Contact, error) {
 	entity, err := s.CheckPermission(c, id)
 	if err != nil {
 		return nil, err
@@ -434,16 +449,23 @@ func (s *ContactUsecase) RelationShip(c context.Context, profileId uint64) *_dto
 }
 
 func (s *ContactUsecase) Note(c context.Context, id uint64, note string) error {
-	_, err := s.CheckPermission(c, id)
+	before, err := s.CheckPermission(c, id)
 	if err != nil {
 		return err
 	}
-	return s.repo.UpdateNote(c, id, note)
+	if err := s.repo.UpdateNote(c, id, note); err != nil {
+		return err
+	}
+	if before.Note != note {
+		s.recordContactHistory(c, id, _enum.HistoryUpdateNote,
+			[]string{fmt.Sprintf("Ghi chú: %s → %s", orEmpty(before.Note), orEmpty(note))})
+	}
+	return nil
 }
 
 // SearchByPhone tìm kiếm liên hệ theo số điện thoại
 // Trả về contact và existed=true nếu tìm thấy, existed=false nếu không tìm thấy
-func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EOwnerOf, ownerId uint64, phone string) (*domain.ContactEntity, bool, error) {
+func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EOwnerOf, ownerId uint64, phone string) (*domain.Contact, bool, error) {
 	realOwnerId, err := s.ownerUsecase.GetOwnerInfo(c, ownerType, ownerId)
 	if err != nil {
 		return nil, false, err
@@ -463,7 +485,7 @@ func (s *ContactUsecase) SearchByPhone(c context.Context, ownerType base_enum.EO
 
 // CreateOrRestore tạo contact mới hoặc khôi phục contact đã bị xóa
 // Nếu contact đã tồn tại và đang bị xóa (deleted_at IS NOT NULL), sẽ khôi phục và cập nhật thông tin
-func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.ContactEntity) (*domain.ContactEntity, error) {
+func (s *ContactUsecase) CreateOrRestore(c context.Context, entity *domain.Contact) (*domain.Contact, error) {
 	ownerId, err := s.ownerUsecase.GetOwnerInfo(c, entity.OwnerOf, entity.OwnerID)
 	if err != nil {
 		return nil, err

@@ -46,6 +46,8 @@ func TestPublicHTTPRoutes_FeedbackGuestAccess(t *testing.T) {
 		{http.MethodGet, "/v2/enums/crm/priority", http.StatusUnauthorized},
 		{http.MethodGet, "/v2.1/appointment", http.StatusUnauthorized},
 		{http.MethodGet, "/v2/internal/seo/static-paths", http.StatusUnauthorized},
+		{http.MethodGet, "/v2/crm/contact/42/relation-ship", http.StatusOK},
+		{http.MethodGet, "/v2/crm/contact/42/detail", http.StatusUnauthorized},
 	}
 	for _, tc := range cases {
 		rec := httptest.NewRecorder()

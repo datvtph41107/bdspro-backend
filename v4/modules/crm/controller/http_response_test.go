@@ -7,7 +7,7 @@ import (
 )
 
 func TestContactDetailResult_IncludesProductIds(t *testing.T) {
-	entity := &domain.ContactEntity{
+	entity := &domain.Contact{
 		ProductIDs: []uint64{10, 20},
 	}
 	entity.ID = 1
@@ -41,7 +41,7 @@ func TestContactDetailResult_IncludesProductIds(t *testing.T) {
 
 func TestContactDetailResult_IncludesProfileId(t *testing.T) {
 	pid := uint64(267)
-	entity := &domain.ContactEntity{ProfileID: &pid, ProductIDs: []uint64{}}
+	entity := &domain.Contact{ProfileID: &pid, ProductIDs: []uint64{}}
 	entity.ID = 1
 	entity.FullName = "Test"
 	entity.Phone = "0961745160"
@@ -57,7 +57,7 @@ func TestContactDetailResult_IncludesProfileId(t *testing.T) {
 }
 
 func TestContactDetailResult_EmptyProductIds(t *testing.T) {
-	entity := &domain.ContactEntity{ProductIDs: nil}
+	entity := &domain.Contact{ProductIDs: nil}
 	entity.ID = 1
 	entity.FullName = "Test"
 	entity.Phone = "0900000000"

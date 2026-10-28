@@ -260,6 +260,7 @@ func mapContactToSharePB(contact *entity.Contact) *sharepb.ContactDTO {
 		Zalo:          contact.Zalo,
 		Company:       contact.Company,
 		Note:          contact.Note,
+		LeadId:        contact.LeadID,
 	}
 	return out
 }

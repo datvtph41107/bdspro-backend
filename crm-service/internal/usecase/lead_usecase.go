@@ -11,6 +11,7 @@ import (
 	"crm/internal/enums"
 	"crm/internal/interface/provider"
 	"crm/internal/repo"
+	"fmt"
 	"strconv"
 )
 
@@ -188,6 +189,13 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 	if err != nil {
 		return nil, err
 	}
+	if lead.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+	}
+	contactBefore := *lead.Contact
+	stageBefore := lead.Stage
+	originalSource := lead.Source
+	originalPriority := lead.Priority
 
 	lead.Source = enums.ESourceLead(dto.Source)
 	lead.ChargePersonID = dto.ChargePersonID
@@ -228,6 +236,37 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 		if err != nil {
 			return err
 		}
+		contactAfter := &domain.ContactEntity{
+			FullName: dto.FullName,
+			Phone:    dto.Phone,
+			Avatar:   dto.Avatar,
+			Email:    dto.Email,
+			Zalo:     dto.Zalo,
+			Company:  dto.Company,
+			Address:  dto.Address,
+			Birthday: dto.Birthday,
+			Note:     dto.Note,
+		}
+		historyNotes := contactUpdateNotes(&contactBefore, contactAfter)
+		// Compare lead metadata against the snapshot loaded before applying the request.
+		if originalSource != enums.ESourceLead(dto.Source) {
+			historyNotes = append(historyNotes, fmt.Sprintf("Nguồn: %d → %d", originalSource, dto.Source))
+		}
+		if dto.Priority.IsValid() && originalPriority != dto.Priority {
+			historyNotes = append(historyNotes, fmt.Sprintf("Độ ưu tiên: %d → %d", originalPriority, dto.Priority))
+		}
+		if dto.StageID != nil && (stageBefore == nil || stageBefore.ID != *dto.StageID) {
+			stageAfter, stageErr := u.stageRepo.GetByID(ctx, *dto.StageID)
+			if stageErr != nil {
+				return stageErr
+			}
+			beforeName := "(trống)"
+			if stageBefore != nil {
+				beforeName = stageBefore.StageName
+			}
+			historyNotes = append(historyNotes, fmt.Sprintf("Giai đoạn: %s → %s", beforeName, stageAfter.StageName))
+		}
+		u.recordContactHistory(ctx, lead.ContactID, _enum.HistoryContactUpdate, historyNotes)
 
 		// update documents
 		if len(dto.Documents) > 0 {
@@ -401,19 +440,31 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 		return nil, err
 	}
 
+	if customer.Contact == nil {
+		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
+	}
 	err = u.permissionUC.HasRoleWithOwner(ctx, customer.Contact.OwnerID, customer.Contact.OwnerOf, enums.AuthCustomerSwitchStage)
 	if err != nil {
 		return nil, err
-	}
-
-	if customer.Contact == nil {
-		return nil, _errors.ReturnError(400, "Khách hàng không tồn tại")
 	}
 
 	customer, err = u.leadRepo.SwitchStage(ctx, id, stageID, note)
 	if err != nil {
 		return nil, err
 	}
+	stageName := "(trống)"
+	if customer.Stage != nil {
+		stageName = customer.Stage.StageName
+	}
+	stageAfter, stageErr := u.stageRepo.GetByID(ctx, *stageID)
+	if stageErr != nil {
+		return customer, nil
+	}
+	notes := []string{fmt.Sprintf("Giai đoạn: %s → %s", stageName, stageAfter.StageName)}
+	if note != "" {
+		notes = append(notes, "Ghi chú chuyển giai đoạn: "+note)
+	}
+	u.recordContactHistory(ctx, customer.ContactID, _enum.HistorySwitchStage, notes)
 
 	go (func() {
 		if customer.Contact == nil {
@@ -430,6 +481,59 @@ func (u *LeadUsecase) SwitchStage(ctx context.Context, id uint64, stageID *uint6
 	})()
 
 	return customer, nil
+}
+
+func (u *LeadUsecase) recordContactHistory(ctx context.Context, contactID uint64, action _enum.EHistory, notes []string) {
+	if u.notificationClient == nil || contactID == 0 || len(notes) == 0 {
+		return
+	}
+	profileID := _utils.GetProfileIdWithContext(ctx)
+	history := &_dto.HistoryDTO{
+		Title:      _enum.HistoryMap[action],
+		Note:       notes,
+		TargetId:   contactID,
+		TargetType: _enum.TargetHistoryContact,
+		ActionType: action,
+		OwnerOf:    _enum.EOwnerOfMember,
+	}
+	if profileID > 0 {
+		history.OwnerID = &profileID
+	}
+	if err := u.notificationClient.CreateHistory(ctx, history); err != nil {
+		// Activity history must not fail a successful lead update.
+	}
+}
+
+func contactUpdateNotes(before, after *domain.ContactEntity) []string {
+	if before == nil || after == nil {
+		return nil
+	}
+	fields := []struct{ label, old, new string }{
+		{"Họ tên", before.FullName, after.FullName},
+		{"Số điện thoại", before.Phone, after.Phone},
+		{"Email", before.Email, after.Email},
+		{"Zalo", before.Zalo, after.Zalo},
+		{"Công ty", before.Company, after.Company},
+		{"Địa chỉ", before.Address, after.Address},
+		{"Ghi chú", before.Note, after.Note},
+	}
+	notes := make([]string, 0, len(fields)+1)
+	for _, field := range fields {
+		if field.old != field.new {
+			notes = append(notes, fmt.Sprintf("%s: %s → %s", field.label, historyValue(field.old), historyValue(field.new)))
+		}
+	}
+	if before.Avatar != after.Avatar {
+		notes = append(notes, "Cập nhật ảnh đại diện")
+	}
+	return notes
+}
+
+func historyValue(value string) string {
+	if value == "" {
+		return "(trống)"
+	}
+	return value
 }
 
 func (u *LeadUsecase) GetByID(ctx context.Context, id uint64) (*domain.LeadEntity, error) {

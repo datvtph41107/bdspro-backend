@@ -24,15 +24,18 @@ func StagePbToDomain(pb *crmpb.StageDTO) *domain.StageEntity {
 }
 
 func StageDomainToPb(domain *domain.StageEntity) *crmpb.StageDTO {
-	return &crmpb.StageDTO{
+	out := &crmpb.StageDTO{
 		Id:          domain.ID,
 		StageName:   domain.StageName,
 		OrderNumber: int32(domain.OrderNumber),
 		PipelineId:  domain.PipelineID,
-		RuleId:      *domain.RuleID,
 		Step:        uint32(domain.Step),
 		Active:      domain.Active,
 		Color:       domain.Color,
 		ColorRGB:    domain.ColorRGB,
 	}
+	if domain.RuleID != nil {
+		out.RuleId = *domain.RuleID
+	}
+	return out
 }

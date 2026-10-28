@@ -4,14 +4,33 @@ import (
 	"context"
 	"testing"
 
+	_dto "common/domain/dto"
 	_utils "common/utils"
 	"mdn4/modules/notification/dto"
 	"mdn4/modules/notification/entity"
 	"mdn4/modules/notification/services"
+	shared_enum "pb/enums"
 )
 
+func TestLocalHistoryReaderContactHistory(t *testing.T) {
+	repo := &stubRepo{histories: []*entity.ActivityHistory{{TargetID: 7, Title: "Chuyển giai đoạn"}}}
+	items, total, err := services.NewLocalHistoryReader(repo).ContactHistory(context.Background(), 7, _dto.Pagable{})
+	if err != nil {
+		t.Fatalf("ContactHistory: %v", err)
+	}
+	if repo.gotTarget != 7 || len(repo.gotActions) != len(shared_enum.HistoryContactAction) {
+		t.Fatalf("target=%d actions=%v", repo.gotTarget, repo.gotActions)
+	}
+	if total != 1 || len(items) != 1 || items[0].GetTitle() != "Chuyển giai đoạn" || items[0].GetActionUser() != "Hệ thống" {
+		t.Fatalf("unexpected items=%v total=%d", items, total)
+	}
+}
+
 type stubRepo struct {
-	unread int32
+	unread     int32
+	histories  []*entity.ActivityHistory
+	gotTarget  uint64
+	gotActions []shared_enum.EHistory
 }
 
 func (s *stubRepo) CountUnread(ctx context.Context, userID uint64) (int32, error) {
@@ -29,6 +48,10 @@ func (s *stubRepo) Remove(ctx context.Context, userID, id uint64) error         
 func (s *stubRepo) Create(ctx context.Context, n *entity.Notification) error      { return nil }
 func (s *stubRepo) CreateActivityHistory(ctx context.Context, h *entity.ActivityHistory) error {
 	return nil
+}
+func (s *stubRepo) ListActivityHistory(ctx context.Context, targetID uint64, actionTypes []shared_enum.EHistory, page _dto.Pagable) ([]*entity.ActivityHistory, int64, error) {
+	s.gotTarget, s.gotActions = targetID, actionTypes
+	return s.histories, int64(len(s.histories)), nil
 }
 func (s *stubRepo) CreateAdminHistory(ctx context.Context, h *entity.AdminHistory) error { return nil }
 func (s *stubRepo) SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error) {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	base_enum "base/enum"
 	_errors "common/errors"
 	"common/httpapi"
 	"mdn4/modules/crm/dto"
+	"mdn4/modules/crm/enums"
 	"mdn4/modules/crm/services"
 )
 
@@ -36,21 +36,25 @@ func (c *LeadController) require() error {
 }
 
 type leadCreateReq struct {
-	OwnerOf int32  `path:"ownerOf"`
+	OwnerOf string `path:"ownerOf"`
 	OwnerID uint64 `path:"ownerId"`
 	dto.LeadSaveDTO
 }
 type leadManageReq struct {
-	OwnerOf    int32  `path:"ownerOf"`
+	OwnerOf    string `path:"ownerOf"`
 	OwnerID    uint64 `path:"ownerId"`
 	PipelineID uint64 `path:"pipelineId"`
 	Page       uint32 `form:"page"`
 	Size       uint32 `form:"size"`
 }
+// leadAssignPersonReq mirrors crmpb.LeadAssignPersonRequest.
 type leadAssignPersonReq struct {
-	ID             uint64 `json:"id"`
-	ChargePersonID uint64 `json:"chargePersonId"`
-	AssignNote     string `json:"assignNote"`
+	LeadID           uint64 `json:"leadId"`
+	OwnerID          uint64 `json:"ownerId"`
+	OwnerType        int32  `json:"ownerType"`
+	ChargePersonID   uint64 `json:"chargePersonId"`
+	ChargePersonType int32  `json:"chargePersonType"`
+	NoteAssign       string `json:"noteAssign"`
 }
 type leadAssignCRMReq struct {
 	ContactID      uint64 `json:"contactId"`
@@ -58,10 +62,11 @@ type leadAssignCRMReq struct {
 	StageID        uint64 `json:"stageId"`
 	Note           string `json:"note"`
 }
+// leadSwitchStageReq mirrors crmpb.LeadStageRequest.
 type leadSwitchStageReq struct {
-	ID      uint64  `json:"id"`
-	StageID *uint64 `json:"stageId"`
-	Note    string  `json:"note"`
+	LeadID    uint64 `json:"leadId"`
+	StageID   uint64 `json:"stageId"`
+	StageNote string `json:"stageNote"`
 }
 type leadUpdateReq struct {
 	ID uint64 `path:"id" json:"id"`
@@ -92,9 +97,13 @@ func (c *LeadController) create(ctx context.Context, req leadCreateReq) (*httpap
 	if err := c.require(); err != nil {
 		return nil, err
 	}
+	ownerOf, err := dto.ParseOwnerOf(req.OwnerOf)
+	if err != nil {
+		return nil, err
+	}
 	in := req.LeadSaveDTO
 	in.OwnerID = req.OwnerID
-	in.OwnerOf = base_enum.EOwnerOf(req.OwnerOf)
+	in.OwnerOf = ownerOf
 	out, err := c.uc.Create(ctx, &in)
 	if err != nil {
 		return nil, err
@@ -124,7 +133,13 @@ func (c *LeadController) assignPerson(ctx context.Context, req leadAssignPersonR
 	if err := c.require(); err != nil {
 		return nil, err
 	}
-	out, err := c.uc.Assign(ctx, req.ID, &dto.LeadDTO{ChargePersonId: &req.ChargePersonID, AssignNote: req.AssignNote})
+	out, err := c.uc.Assign(ctx, req.LeadID, &dto.LeadDTO{
+		OwnerID:        &req.OwnerID,
+		OwnerType:      enums.EOwnerOf(req.OwnerType),
+		ChargePersonId: &req.ChargePersonID,
+		ChargeType:     enums.EOwnerOf(req.ChargePersonType),
+		AssignNote:     req.NoteAssign,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +159,12 @@ func (c *LeadController) manage(ctx context.Context, req leadManageReq) (*httpap
 	if err := c.require(); err != nil {
 		return nil, err
 	}
+	ownerOf, err := dto.ParseOwnerOf(req.OwnerOf)
+	if err != nil {
+		return nil, err
+	}
 	items, total, err := c.uc.GetManager(ctx, dto.LeadSearchDTO{
-		OwnerOf: base_enum.EOwnerOf(req.OwnerOf), OwnerID: req.OwnerID, PipelineID: &req.PipelineID,
+		OwnerOf: ownerOf, OwnerID: req.OwnerID, PipelineID: &req.PipelineID,
 	})
 	if err != nil {
 		return nil, err
@@ -168,7 +187,10 @@ func (c *LeadController) switchStage(ctx context.Context, req leadSwitchStageReq
 	if err := c.require(); err != nil {
 		return nil, err
 	}
-	out, err := c.uc.SwitchStage(ctx, req.ID, req.StageID, req.Note)
+	if req.LeadID == 0 || req.StageID == 0 {
+		return nil, _errors.BadRequestException("leadId and stageId is required")
+	}
+	out, err := c.uc.SwitchStage(ctx, req.LeadID, &req.StageID, req.StageNote)
 	if err != nil {
 		return nil, err
 	}

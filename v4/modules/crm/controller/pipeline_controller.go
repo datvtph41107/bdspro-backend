@@ -9,6 +9,7 @@ import (
 	"common/httpapi"
 	"mdn4/modules/crm/dto"
 	domain "mdn4/modules/crm/entity"
+	"mdn4/modules/crm/mapper"
 	"mdn4/modules/crm/services"
 )
 
@@ -83,7 +84,14 @@ func (c *PipelineController) defaultPipeline(ctx context.Context, _ httpapi.Empt
 	if err != nil {
 		return nil, err
 	}
-	return httpapi.OK(map[string]any{"pipeline": p, "stage": s}), nil
+	out := mapper.PipelineDomainToPb(p)
+	if s != nil {
+		out.DefaultStage = mapper.StageDomainToPb(s)
+	}
+	return httpapi.OKResponse(&httpapi.ResultResponse{
+		Data:  out,
+		Total: 1,
+	})
 }
 
 func (c *PipelineController) detail(ctx context.Context, req httpapi.PathUint64) (*httpapi.Result, error) {

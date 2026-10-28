@@ -70,7 +70,7 @@ func (m *ContactMapper) PinReqPbToDTO(req *crmpb.PinRequest) *dto.PinRequestDTO 
 	}
 }
 
-func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.ContactDTO {
+func (m *ContactMapper) ContactToPb(contact *domain.Contact) *crmpb.ContactDTO {
 	result := &crmpb.ContactDTO{
 		Id:            contact.ID,
 		FullName:      contact.FullName,
@@ -110,7 +110,7 @@ func (m *ContactMapper) ContactToPb(contact *domain.ContactEntity) *crmpb.Contac
 }
 
 // ContactEntityToSharePb maps full contact detail into list response item (sharepb.ContactDTO).
-func (m *ContactMapper) ContactEntityToSharePb(contact *domain.ContactEntity) *sharepb.ContactDTO {
+func (m *ContactMapper) ContactEntityToSharePb(contact *domain.Contact) *sharepb.ContactDTO {
 	if contact == nil {
 		return nil
 	}
@@ -147,8 +147,8 @@ func (m *ContactMapper) ContactEntityToSharePb(contact *domain.ContactEntity) *s
 	return result
 }
 
-func (m *ContactMapper) PbToContact(pb *crmpb.ContactDTO) *domain.ContactEntity {
-	return &domain.ContactEntity{
+func (m *ContactMapper) PbToContact(pb *crmpb.ContactDTO) *domain.Contact {
+	return &domain.Contact{
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
@@ -159,7 +159,7 @@ func (m *ContactMapper) PbToContact(pb *crmpb.ContactDTO) *domain.ContactEntity 
 	}
 }
 
-func (m *ContactMapper) ListContactToPb(contacts []domain.ContactEntity) []*crmpb.ContactDTO {
+func (m *ContactMapper) ListContactToPb(contacts []domain.Contact) []*crmpb.ContactDTO {
 	contactsPb := make([]*crmpb.ContactDTO, len(contacts))
 	for i, contact := range contacts {
 		contactsPb[i] = m.ContactToPb(&contact)
@@ -246,7 +246,7 @@ func (m *ContactMapper) ListContactItemToPb(contacts []domain.ContactItem) []*sh
 	return contactsPb
 }
 
-func (m *ContactMapper) ContactSaveToPb(contact *domain.ContactEntity) *crmpb.ContactSaveDTO {
+func (m *ContactMapper) ContactSaveToPb(contact *domain.Contact) *crmpb.ContactSaveDTO {
 	return &crmpb.ContactSaveDTO{
 		Id:       contact.ID,
 		FullName: contact.FullName,
@@ -255,8 +255,8 @@ func (m *ContactMapper) ContactSaveToPb(contact *domain.ContactEntity) *crmpb.Co
 	}
 }
 
-func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.ContactEntity {
-	entity := &domain.ContactEntity{
+func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contact {
+	entity := &domain.Contact{
 		BaseEntity: _models.BaseEntity{
 			ID: pb.Id,
 		},
@@ -287,8 +287,8 @@ func (m *ContactMapper) PbToContactSave(pb *crmpb.ContactSaveDTO) *domain.Contac
 	return entity
 }
 
-func (m *ContactMapper) ListContactToDomain(contacts []*crmpb.ContactSaveDTO) []domain.ContactEntity {
-	domains := make([]domain.ContactEntity, len(contacts))
+func (m *ContactMapper) ListContactToDomain(contacts []*crmpb.ContactSaveDTO) []domain.Contact {
+	domains := make([]domain.Contact, len(contacts))
 	for i, contact := range contacts {
 		domains[i] = *m.PbToContactSave(contact)
 	}

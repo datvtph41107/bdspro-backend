@@ -11,62 +11,62 @@ import (
 	"mdn4/modules/crm/dto"
 	domain "mdn4/modules/crm/entity"
 	"mdn4/modules/crm/enums"
+	"mdn4/modules/crm/provider"
 	"mdn4/modules/crm/services"
 )
 
 // ContactController owns /v2/crm/contact/* routes.
 type ContactController struct {
-	local services.ContactService
-	uc    *services.ContactUsecase
+	local     services.ContactService
+	uc        *services.ContactUsecase
+	histories provider.ContactHistoryReader
 }
 
-func NewContactController(local services.ContactService, uc *services.ContactUsecase) *ContactController {
-	return &ContactController{local: local, uc: uc}
+func NewContactController(local services.ContactService, uc *services.ContactUsecase, histories provider.ContactHistoryReader) *ContactController {
+	return &ContactController{local: local, uc: uc, histories: histories}
+}
+
+// contactHistoryReq is GET /v2/crm/contact/{id}/history (was /v2/notification/history/contact/{id}).
+type contactHistoryReq struct {
+	ID   uint64 `path:"id"`
+	Page uint32 `form:"page"`
+	Size uint32 `form:"size"`
+}
+
+func (c *ContactController) history(ctx context.Context, req contactHistoryReq) (*httpapi.Result, error) {
+	if c.histories == nil {
+		return nil, _errors.ReturnError(501, "contact history not configured")
+	}
+	items, total, err := c.histories.ContactHistory(ctx, req.ID, _dto.Pagable{Page: req.Page, Size: req.Size})
+	if err != nil {
+		return nil, err
+	}
+	return protoListWithTotalResult(items, total)
 }
 
 func (c *ContactController) RegisterHTTP(mux *http.ServeMux) {
-	// Paths follow shared/protobuf/schema/crm/contact.proto (frontend contract).
 	httpapi.GET(mux, "/v2/crm/contact/list/me", c.listMe)
 	httpapi.GET(mux, "/v2/crm/contact/list/user/{ownerId}", c.listUser)
 	httpapi.GET(mux, "/v2/crm/contact/list/{ownerOf}/{ownerId}", c.search)
-	httpapi.GET(mux, "/v2/crm/contact/detail/{id}/products", c.products)
-	httpapi.GET(mux, "/v2/crm/contact/detail/{id}", c.detail)
-	httpapi.POST(mux, "/v2/crm/contact", c.create)
-	// PUT edit/{id}, note/{id} and {contactId}/products overlap (e.g. /edit/products),
-	// which ServeMux rejects, so a single pattern dispatches them.
-	mux.HandleFunc("PUT /v2/crm/contact/{first}/{second}", c.putDispatch(
-		httpapi.BindJSON(c.update),
-		httpapi.BindJSON(c.note),
-		httpapi.BindJSON(c.updateProducts),
-	))
-	httpapi.DELETE(mux, "/v2/crm/contact/{id}", c.delete)
-	httpapi.POST(mux, "/v2/crm/contact/sync", c.sync)
-	httpapi.GET(mux, "/v2/crm/contact/relation-ship/{id}", c.relationShip)
 	httpapi.GET(mux, "/v2/crm/contact/phone/{ownerOf}/{ownerId}/{phone}", c.checkPhone)
-	httpapi.GET(mux, "/v2/crm/contact/by-product/{id}", c.byProduct)
 	httpapi.GET(mux, "/v2/crm/contact/with-member", c.withMember)
 	httpapi.GET(mux, "/v2/crm/contact/friends", c.friends)
 	httpapi.GET(mux, "/v2/crm/contact/interested/product/{productId}", c.interested)
+	httpapi.POST(mux, "/v2/crm/contact", c.create)
+	httpapi.POST(mux, "/v2/crm/contact/sync", c.sync)
 	httpapi.POST(mux, "/v2/crm/contact/pin", c.pin)
-}
 
-func (c *ContactController) putDispatch(edit, note, products http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		first, second := r.PathValue("first"), r.PathValue("second")
-		switch {
-		case first == "edit":
-			r.SetPathValue("id", second)
-			edit.ServeHTTP(w, r)
-		case first == "note":
-			r.SetPathValue("id", second)
-			note.ServeHTTP(w, r)
-		case second == "products":
-			r.SetPathValue("id", first)
-			products.ServeHTTP(w, r)
-		default:
-			httpapi.WriteError(w, http.StatusNotFound, "route not found")
-		}
-	}
+	// Two-segment routes must all be {id}/<action>: ServeMux panics on
+	// overlapping patterns such as <action>/{id} vs {id}/<action>.
+	httpapi.GET(mux, "/v2/crm/contact/{id}/detail", c.detail)
+	httpapi.GET(mux, "/v2/crm/contact/{id}/products", c.products)
+	httpapi.GET(mux, "/v2/crm/contact/{id}/history", c.history)
+	httpapi.GET(mux, "/v2/crm/contact/{id}/relation-ship", c.relationShip)
+	httpapi.GET(mux, "/v2/crm/contact/{id}/by-product", c.byProduct)
+	httpapi.PUT(mux, "/v2/crm/contact/{id}/edit", c.update)
+	httpapi.PUT(mux, "/v2/crm/contact/{id}/note", c.note)
+	httpapi.PUT(mux, "/v2/crm/contact/{id}/products", c.updateProducts)
+	httpapi.DELETE(mux, "/v2/crm/contact/{id}", c.delete)
 }
 
 func (c *ContactController) requireLocal() error {
@@ -92,7 +92,10 @@ func (c *ContactController) listUser(ctx context.Context, req dto.ContactListUse
 	if err != nil {
 		return nil, err
 	}
-	return contactListResult(result)
+	return httpapi.OKResponse(&httpapi.ResultResponse{
+		Data:  result.Data,
+		Total: int64(result.Total),
+	})
 }
 
 func (c *ContactController) listMe(ctx context.Context, req dto.ContactListMeRequest) (*httpapi.Result, error) {
@@ -112,7 +115,11 @@ func (c *ContactController) search(ctx context.Context, req dto.ContactSearchHTT
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
-	items, total, err := c.uc.Search(ctx, base_enum.EOwnerOf(req.OwnerOf), dto.ContactSearchDTO{
+	ownerOf, err := dto.ParseOwnerOf(req.OwnerOf)
+	if err != nil {
+		return nil, err
+	}
+	items, total, err := c.uc.Search(ctx, ownerOf, dto.ContactSearchDTO{
 		Pagable: _dto.Pagable{Page: req.Page, Size: req.Size},
 		Text:    req.Text,
 	})
@@ -137,7 +144,7 @@ func (c *ContactController) create(ctx context.Context, req dto.ContactCreateHTT
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
-	out, err := c.uc.Create(ctx, &domain.ContactEntity{
+	out, err := c.uc.Create(ctx, &domain.Contact{
 		Phone: req.Phone, FullName: req.FullName, Email: req.Email, Zalo: req.Zalo,
 		Company: req.Company, Note: req.Note, Avatar: req.Avatar,
 		OwnerOf: base_enum.EOwnerOf(req.OwnerOf), OwnerID: req.OwnerID,
@@ -157,7 +164,7 @@ func (c *ContactController) update(ctx context.Context, req dto.ContactSaveHTTPR
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
-	out, err := c.uc.Update(ctx, req.ID, &domain.ContactEntity{
+	out, err := c.uc.Update(ctx, req.ID, &domain.Contact{
 		Phone: req.Phone, FullName: req.FullName, Email: req.Email, Zalo: req.Zalo,
 		Company: req.Company, Note: req.Note, Avatar: req.Avatar,
 		ProductIDs: req.ProductIds,
@@ -186,9 +193,9 @@ func (c *ContactController) sync(ctx context.Context, req dto.ContactSyncHTTPReq
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
-	entities := make([]domain.ContactEntity, 0, len(req.Contacts))
+	entities := make([]domain.Contact, 0, len(req.Contacts))
 	for _, item := range req.Contacts {
-		entities = append(entities, domain.ContactEntity{
+		entities = append(entities, domain.Contact{
 			Phone: item.Phone, FullName: item.FullName, Email: item.Email, Avatar: item.Avatar,
 		})
 	}
@@ -221,7 +228,11 @@ func (c *ContactController) checkPhone(ctx context.Context, req dto.ContactCheck
 	if err := c.requireUC(); err != nil {
 		return nil, err
 	}
-	out, _, err := c.uc.SearchByPhone(ctx, base_enum.EOwnerOf(req.OwnerOf), req.OwnerID, req.Phone)
+	ownerOf, err := dto.ParseOwnerOf(req.OwnerOf)
+	if err != nil {
+		return nil, err
+	}
+	out, _, err := c.uc.SearchByPhone(ctx, ownerOf, req.OwnerID, req.Phone)
 	if err != nil {
 		return nil, err
 	}

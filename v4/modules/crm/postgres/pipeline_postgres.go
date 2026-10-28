@@ -91,10 +91,14 @@ func (r *PostgrePipeline) GetByID(c context.Context, id uint64) (*domain.Pipelin
 
 func (r *PostgrePipeline) GetDefault(c context.Context, organizationId uint64) (*domain.PipelineEntity, error) {
 	var entity domain.PipelineEntity
-	if err := r.db.WithContext(c).
-		Model(&domain.PipelineEntity{}).
-		Where("(owner_id = ? AND owner_type = ?) OR is_custom = ?",
-			organizationId, enums.EOwnerOfOrgnization, false).
+	q := r.db.WithContext(c).Model(&domain.PipelineEntity{})
+	if organizationId > 0 {
+		q = q.Where("(owner_id = ? AND owner_type = ?) OR is_custom = ?",
+			organizationId, enums.EOwnerOfOrgnization, false)
+	} else {
+		q = q.Where("is_custom = ?", false)
+	}
+	if err := q.
 		Order("is_default DESC").
 		Preload("DefaultStage").
 		First(&entity).Error; err != nil {

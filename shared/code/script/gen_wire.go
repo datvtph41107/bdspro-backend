@@ -188,7 +188,8 @@ func findNewFunctions(rootPackage, root string, excluded []string) ([]NewFunc, e
 			return fmt.Errorf("parse %s: %w", path, err)
 		}
 		fullPackage := getFullPackagePath(rootPackage, path)
-		if fullPackage == "" || strings.HasPrefix(fullPackage, rootPackage+"/cmd") {
+		// package main is not importable, so its constructors can never be Wire providers.
+		if fullPackage == "" || strings.HasPrefix(fullPackage, rootPackage+"/cmd") || file.Name.Name == "main" {
 			return nil
 		}
 
@@ -303,6 +304,9 @@ func findBinds(root, rootPackage string, excluded []string) ([]BindEntry, error)
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments|parser.SkipObjectResolution)
 		if err != nil {
 			return fmt.Errorf("parse %s: %w", path, err)
+		}
+		if file.Name.Name == "main" {
+			return nil
 		}
 		structPackage := getFullPackagePath(rootPackage, path)
 		structAlias := generateAlias(structPackage)

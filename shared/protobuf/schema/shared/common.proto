@@ -349,6 +349,7 @@ message ContactDTO {
   optional ProductUser productUser = 29;
   optional uint64 friendId = 30;
   string updatedAt = 31;
+  optional uint64 leadId = 32;
 }
 
 message OriginProfile {

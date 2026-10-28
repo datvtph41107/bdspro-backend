@@ -248,6 +248,29 @@ func (r *RedisService) SetWithTime(key string, value int64, expiration time.Dura
 	return err
 }
 
+// SetManyIfAbsent ghi value cho các key chưa tồn tại (SET NX + TTL) trong một pipeline round-trip.
+// Key đã có giá trị được giữ nguyên.
+func (r *RedisService) SetManyIfAbsent(ctx context.Context, keys []string, value int64, expiration time.Duration) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	client, err := r.readyClient()
+	if err != nil {
+		return errRedisUnavailable
+	}
+	_, err = client.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for _, key := range keys {
+			p.SetNX(ctx, key, value, expiration)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("Redis setnx pipeline failed: %v\n", err)
+		r.markDisconnected()
+	}
+	return err
+}
+
 // Get lấy giá trị từ Redis. Khi Redis down → lỗi ngay (fallback DB), không dial timeout.
 func (r *RedisService) Get(key string) (string, error) {
 	client, err := r.readyClient()

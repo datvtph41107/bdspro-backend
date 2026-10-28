@@ -95,11 +95,11 @@ func (u *LeadUsecase) Create(ctx context.Context, dto *dto.LeadSaveDTO) (*domain
 		return nil, err
 	}
 
-	var contact *domain.ContactEntity
+	var contact *domain.Contact
 	var lead *domain.LeadEntity
 	err = u.transaction.WithTransaction(ctx, func(ctx context.Context) error {
 		if existed == nil {
-			contact, err = u.contactUsecase.Create(ctx, &domain.ContactEntity{
+			contact, err = u.contactUsecase.Create(ctx, &domain.Contact{
 				Avatar:   dto.Avatar,
 				FullName: dto.FullName,
 				Birthday: dto.Birthday,
@@ -192,6 +192,7 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 	lead.Source = enums.ESourceLead(dto.Source)
 	lead.ChargePersonID = dto.ChargePersonID
 	lead.ChargePersonType = enums.EOwnerOfMember
+	lead.Note = dto.Note
 
 	if dto.Priority.IsValid() {
 		lead.Priority = dto.Priority
@@ -214,7 +215,7 @@ func (u *LeadUsecase) Update(ctx context.Context, id uint64, dto *dto.LeadSaveDT
 		}
 
 		// update contact
-		_, err = u.contactRepo.Update(ctx, lead.ContactID, &domain.ContactEntity{
+		_, err = u.contactRepo.Update(ctx, lead.ContactID, &domain.Contact{
 			FullName: dto.FullName,
 			Phone:    dto.Phone,
 			Avatar:   dto.Avatar,

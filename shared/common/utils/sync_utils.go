@@ -168,8 +168,10 @@ func (s *SyncUtil) PutTimestamp(ctx context.Context, key string, timestamp int64
 	if timestamp <= 0 {
 		timestamp = time.Now().UnixMilli()
 	}
-	return s.redis.SetWithTime(key, timestamp, 48*time.Hour)
+	return s.redis.SetWithTime(key, timestamp, syncTimestampTTL)
 }
+
+const syncTimestampTTL = 48 * time.Hour
 
 func (s *SyncUtil) PutTimeRequest(ctx context.Context, key string, timestamp int64) {
 	ts := time.Now().UnixMilli() - 5000
@@ -212,6 +214,52 @@ func (s *SyncUtil) EnsureTimestamp(ctx context.Context, key string) int64 {
 		return ts
 	}
 	return 0
+}
+
+// SeedTimestamps ghi now (ms) cho các key chưa tồn tại (một pipeline SET NX) rồi đọc lại bằng
+// một MGET, nên các request seed đồng thời nhận cùng giá trị. Key tồn tại nhưng không parse được
+// (= 0) được ghi đè như EnsureTimestamp. Kết quả cùng thứ tự với keys; 0 khi Redis không dùng được.
+func (s *SyncUtil) SeedTimestamps(ctx context.Context, keys []string) []int64 {
+	out := make([]int64, len(keys))
+	if len(keys) == 0 || s.redis == nil {
+		return out
+	}
+	now := time.Now().UnixMilli()
+	if err := s.redis.SetManyIfAbsent(ctx, keys, now, syncTimestampTTL); err != nil {
+		return out
+	}
+	vals, _ := s.MGet(ctx, keys)
+	for i, v := range vals {
+		if out[i] = ParseTimestamp(v); out[i] > 0 {
+			continue
+		}
+		if err := s.PutTimestamp(ctx, keys[i], now); err == nil {
+			out[i] = now
+		}
+	}
+	return out
+}
+
+// ParseTimestamp đọc một giá trị timestamp trả về từ Redis (MGET/GET); 0 khi trống hoặc sai định dạng.
+func ParseTimestamp(v any) int64 {
+	switch x := v.(type) {
+	case string:
+		ts, _ := strconv.ParseInt(x, 10, 64)
+		return ts
+	case []byte:
+		ts, _ := strconv.ParseInt(string(x), 10, 64)
+		return ts
+	case int64:
+		return x
+	case int:
+		return int64(x)
+	case uint64:
+		return int64(x)
+	case float64:
+		return int64(x)
+	default:
+		return 0
+	}
 }
 
 // MGet đọc nhiều timestamp. Redis down/unavailable → trả về slice nil (timestamp=0),

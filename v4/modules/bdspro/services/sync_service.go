@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"strconv"
 
 	_errors "common/errors"
 	_utils "common/utils"
@@ -77,54 +76,52 @@ func (s *LocalSyncService) GetAppTimestamps(ctx context.Context) (*dto.AppTimest
 		_utils.SyncKeyTQDProvincesWards: true,
 	}
 
-	vals, err := s.sync.MGet(ctx, redisKeys)
+	values, err := s.readyTimestamps(ctx, redisKeys, func(key string) bool {
+		// Seed profile-scoped keys only with a real profile, so we write
+		// `{profileId}:0:nt:me` instead of polluting `0:0:nt:me`.
+		return globalKey[key] || profileID != 0
+	})
 	if err != nil {
-		return nil, _errors.InternalServerException(err.Error())
+		return nil, err
 	}
 
 	timestamps := make(map[string]int64, len(names))
-	for i, v := range vals {
-		ts := parseSyncTimestamp(v)
-		if ts == 0 {
-			// MGet can miss while GET still works (e.g. transient pool / nil slot).
-			ts = s.sync.GetTimestamp(ctx, redisKeys[i])
-		}
-		if ts > 0 {
-			timestamps[names[i]] = ts
-			continue
-		}
-		// Missing/zero: seed only when key is global, or we have a real profile
-		// so we write `{profileId}:0:nt:me` instead of polluting `0:0:nt:me`.
-		if !globalKey[redisKeys[i]] && profileID == 0 {
-			timestamps[names[i]] = 0
-			continue
-		}
-		timestamps[names[i]] = s.sync.EnsureTimestamp(ctx, redisKeys[i])
+	for i, name := range names {
+		timestamps[name] = values[i]
 	}
 
 	return &dto.AppTimestampsResponse{Timestamps: timestamps}, nil
 }
 
+// readyTimestamps reads every key in one MGET and seeds the missing seedable ones in one batch,
+// returning timestamps in key order (0 for keys that are missing and not seedable).
+func (s *LocalSyncService) readyTimestamps(ctx context.Context, keys []string, seedable func(key string) bool) ([]int64, error) {
+	vals, err := s.sync.MGet(ctx, keys)
+	if err != nil {
+		return nil, _errors.InternalServerException(err.Error())
+	}
+
+	values := make([]int64, len(keys))
+	var missing []int
+	for i, v := range vals {
+		if values[i] = parseSyncTimestamp(v); values[i] == 0 && seedable(keys[i]) {
+			missing = append(missing, i)
+		}
+	}
+	if len(missing) == 0 {
+		return values, nil
+	}
+
+	missingKeys := make([]string, len(missing))
+	for j, i := range missing {
+		missingKeys[j] = keys[i]
+	}
+	for j, ts := range s.sync.SeedTimestamps(ctx, missingKeys) {
+		values[missing[j]] = ts
+	}
+	return values, nil
+}
+
 func parseSyncTimestamp(v any) int64 {
-	if v == nil {
-		return 0
-	}
-	switch x := v.(type) {
-	case string:
-		ts, _ := strconv.ParseInt(x, 10, 64)
-		return ts
-	case []byte:
-		ts, _ := strconv.ParseInt(string(x), 10, 64)
-		return ts
-	case int64:
-		return x
-	case int:
-		return int64(x)
-	case uint64:
-		return int64(x)
-	case float64:
-		return int64(x)
-	default:
-		return 0
-	}
+	return _utils.ParseTimestamp(v)
 }

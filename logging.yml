@@ -36,3 +36,14 @@ services:
             database: debug
         sql:
             enabled: true
+    # v4 process names passed to logging.MustStart (cmd/http, cmd/grpc).
+    mdn4-http:
+        categories:
+            database: debug
+        sql:
+            enabled: true
+    mdn4:
+        categories:
+            database: debug
+        sql:
+            enabled: true

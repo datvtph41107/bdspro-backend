@@ -2,9 +2,14 @@ package services
 
 import (
 	base_enum "base/enum"
+	_errors "common/errors"
 	_routes "common/routes"
 	_utils "common/utils"
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
+
 	"mdn4/modules/crm/dto"
 	domain "mdn4/modules/crm/entity"
 	"mdn4/modules/crm/enums"
@@ -217,25 +222,19 @@ func (u *PipelineUsecase) GetByID(c context.Context, id uint64) (*domain.Pipelin
 	return pipeline, nil
 }
 
+// GetDefault is available to every authenticated profile: members of an organization get
+// the organization's default pipeline, everyone else gets the system (non-custom) default.
 func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity, *domain.StageEntity, error) {
+	if _utils.GetProfileIdWithContext(c) == 0 {
+		return nil, nil, _errors.UnauthorizedException()
+	}
 	organizationId := _utils.GetOrganizationIdFromContext(c)
-	if organizationId == 0 {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình mặc định",
-		}
-	}
-
-	profileId := _utils.GetProfileIdWithContext(c)
-	if profileId == 0 {
-		return nil, nil, &_routes.Except{
-			Code:    400,
-			Message: "Bạn không có quyền truy cập quy trình mặc định",
-		}
-	}
 
 	pipeline, err := u.pipelineRepo.GetDefault(c, organizationId)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, _errors.NotFoundException("Chưa có quy trình mặc định")
+		}
 		return nil, nil, err
 	}
 
@@ -245,15 +244,11 @@ func (u *PipelineUsecase) GetDefault(c context.Context) (*domain.PipelineEntity,
 	}
 
 	var stage *domain.StageEntity
-	if pipeline.StageDefaultID != nil {
-		for _, s := range stages {
-			if s.ID == *pipeline.StageDefaultID {
-				stage = &s
-				break
-			}
+	for i := range stages {
+		if pipeline.StageDefaultID == nil || stages[i].ID == *pipeline.StageDefaultID {
+			stage = &stages[i]
+			break
 		}
-	} else {
-		stage = &stages[0]
 	}
 
 	pipeline.Stages = stages

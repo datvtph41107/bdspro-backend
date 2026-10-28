@@ -24,7 +24,7 @@ type AppointmentParticipant struct {
 	UserId        uint32  `gorm:"index:idx_appointment_user;uniqueIndex:idx_appointment_user_unique"`
 	ContactID     *uint32 `gorm:"index:idx_appointment_contact"`
 
-	Contact  *ContactEntity               `gorm:"foreignKey:ContactID"`
+	Contact  *Contact                     `gorm:"foreignKey:ContactID"`
 	Role     AppointmentParticipantRole   `gorm:"type:varchar(255);not null"`
 	Status   AppointmentParticipantStatus `gorm:"type:varchar(255);not null"`
 	JoinedAt time.Time

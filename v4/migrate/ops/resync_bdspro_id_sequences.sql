@@ -1,9 +1,9 @@
--- Resync BIGSERIAL/identity sequences for bdspro tables after seed, import, or copy with explicit ids.
+-- Resync BIGSERIAL/identity sequences for bdspro + CRM tables after seed, import, or copy with explicit ids.
 -- Run on the v4 user/bdspro DSN (public schema or after domain split — adjust search_path if needed).
 --
 --   psql "$DATABASE_DSN" -v ON_ERROR_STOP=1 -f v4/migrate/ops/resync_bdspro_id_sequences.sql
 --
--- Safe to re-run. Skips missing tables and tables without an id serial.
+-- Safe to re-run. Skips missing tables (to_regclass → NULL) and tables without an id serial.
 
 BEGIN;
 
@@ -31,56 +31,61 @@ END;
 $$;
 
 -- Property graph (create / property/new)
-SELECT pg_temp.resync_table_id_serial('property_info'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_location'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_land_info'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_building_info'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_statistic'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_lineage'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_user'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_media'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_edvidence'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_external_ref'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_identify'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_type'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_product'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_report'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_histories'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_audit_logs'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_impact_versions'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_lineage_history'::regclass);
-SELECT pg_temp.resync_table_id_serial('property_identifiers'::regclass);
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_info'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_location'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_land_info'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_building_info'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_statistic'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_lineage'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_user'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_media'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_edvidence'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_external_ref'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_identify'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_type'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_product'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_report'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_histories'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_audit_logs'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_impact_versions'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_lineage_history'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('property_identifiers'));
 
 -- Products
-SELECT pg_temp.resync_table_id_serial('products'::regclass);
-SELECT pg_temp.resync_table_id_serial('product_price'::regclass);
-SELECT pg_temp.resync_table_id_serial('product_user'::regclass);
-SELECT pg_temp.resync_table_id_serial('product_notes'::regclass);
-SELECT pg_temp.resync_table_id_serial('product_note_mentions'::regclass);
-SELECT pg_temp.resync_table_id_serial('product_note_files'::regclass);
-SELECT pg_temp.resync_table_id_serial('house_info'::regclass);
-SELECT pg_temp.resync_table_id_serial('listings'::regclass);
+SELECT pg_temp.resync_table_id_serial(to_regclass('products'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('product_price'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('product_user'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('product_notes'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('product_note_mentions'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('product_note_files'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('house_info'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('listings'));
 
 -- Assets
-SELECT pg_temp.resync_table_id_serial('assets'::regclass);
-SELECT pg_temp.resync_table_id_serial('asset_legals'::regclass);
+SELECT pg_temp.resync_table_id_serial(to_regclass('assets'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('asset_legals'));
 
 -- Deals & transactions
-SELECT pg_temp.resync_table_id_serial('deals'::regclass);
-SELECT pg_temp.resync_table_id_serial('deal_members'::regclass);
-SELECT pg_temp.resync_table_id_serial('deal_products'::regclass);
-SELECT pg_temp.resync_table_id_serial('deal_investments'::regclass);
-SELECT pg_temp.resync_table_id_serial('deal_internal_notes'::regclass);
-SELECT pg_temp.resync_table_id_serial('tx_transaction'::regclass);
-SELECT pg_temp.resync_table_id_serial('tx_transaction_action'::regclass);
-SELECT pg_temp.resync_table_id_serial('tx_contract_deals'::regclass);
-SELECT pg_temp.resync_table_id_serial('tx_cost_types'::regclass);
-SELECT pg_temp.resync_table_id_serial('tx_deal_costs'::regclass);
+SELECT pg_temp.resync_table_id_serial(to_regclass('deals'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('deal_members'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('deal_products'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('deal_investments'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('deal_internal_notes'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('tx_transaction'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('tx_transaction_action'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('tx_contract_deals'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('tx_cost_types'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('tx_deal_costs'));
 
 -- Appointments & banking
-SELECT pg_temp.resync_table_id_serial('appointments'::regclass);
-SELECT pg_temp.resync_table_id_serial('appointment_participants'::regclass);
-SELECT pg_temp.resync_table_id_serial('bank_accounts'::regclass);
+SELECT pg_temp.resync_table_id_serial(to_regclass('appointments'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('appointment_participants'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('bank_accounts'));
+
+-- CRM pipeline (modules/crm: PipelineEntity, StageEntity, LeadEntity)
+SELECT pg_temp.resync_table_id_serial(to_regclass('pipeline'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('stage'));
+SELECT pg_temp.resync_table_id_serial(to_regclass('customers'));
 
 COMMIT;
 

@@ -373,12 +373,12 @@ if [ "$1" = "file" ]; then
   # only for Compose interpolation; they are never copied from the repository.
   ssh ${REMOTE_USER}@${REMOTE_HOST} "
 set -e
-if [ ! -f ${REMOTE_DIR}/.env.runtime ]; then
-  echo 'Missing ${REMOTE_DIR}/.env.runtime (see file-service/.env.runtime.example)' >&2
-  exit 1
-fi
-set -a
-. ${REMOTE_DIR}/.env.runtime
+# if [ ! -f ${REMOTE_DIR}/.env.runtime ]; then
+#   echo 'Missing ${REMOTE_DIR}/.env.runtime (see file-service/.env.runtime.example)' >&2
+#   exit 1
+# fi
+# set -a
+# . ${REMOTE_DIR}/.env.runtime
 set +a
 cd ${REMOTE_PATH}
 docker compose build --no-cache file

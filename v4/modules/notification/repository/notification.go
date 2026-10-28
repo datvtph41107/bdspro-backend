@@ -7,6 +7,7 @@ import (
 	_dto "common/domain/dto"
 	"mdn4/modules/notification/dto"
 	"mdn4/modules/notification/entity"
+	shared_enum "pb/enums"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -23,6 +24,7 @@ type NotificationRepository interface {
 	Create(ctx context.Context, n *entity.Notification) error
 
 	CreateActivityHistory(ctx context.Context, h *entity.ActivityHistory) error
+	ListActivityHistory(ctx context.Context, targetID uint64, actionTypes []shared_enum.EHistory, page _dto.Pagable) ([]*entity.ActivityHistory, int64, error)
 	CreateAdminHistory(ctx context.Context, h *entity.AdminHistory) error
 	SearchAdminHistory(ctx context.Context, filter dto.AdminHistoryFilter) ([]*entity.AdminHistory, int64, error)
 	CreateHistoryAuth(ctx context.Context, h *entity.HistoryAuth) error
@@ -131,6 +133,26 @@ func (r *notificationPostgres) CreateActivityHistory(ctx context.Context, h *ent
 		return nil
 	}
 	return r.db.WithContext(ctx).Create(h).Error
+}
+
+// ListActivityHistory pages noti_histories rows of one target limited to an action-type group, newest first.
+func (r *notificationPostgres) ListActivityHistory(ctx context.Context, targetID uint64, actionTypes []shared_enum.EHistory, page _dto.Pagable) ([]*entity.ActivityHistory, int64, error) {
+	if r.db == nil || targetID == 0 || len(actionTypes) == 0 {
+		return []*entity.ActivityHistory{}, 0, nil
+	}
+	q := r.db.WithContext(ctx).Model(&entity.ActivityHistory{}).
+		Where("target_id = ? AND action_type IN ?", targetID, actionTypes)
+
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []*entity.ActivityHistory
+	err := q.Order("created_at DESC").
+		Offset(page.GetOffset()).
+		Limit(page.GetLimit()).
+		Find(&rows).Error
+	return rows, total, err
 }
 
 func (r *notificationPostgres) CreateAdminHistory(ctx context.Context, h *entity.AdminHistory) error {

@@ -48,6 +48,7 @@ func NewRouter(deps RouterDependencies, cfg RouterConfig) *gin.Engine {
 			"X-API-Key",
 			"X-Service-Auth",
 			"X-Service-Name",
+			"If-None-Match",
 		},
 		ExposeHeaders: []string{
 			"Content-Length",

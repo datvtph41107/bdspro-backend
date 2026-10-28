@@ -177,7 +177,7 @@ func (s *FollowUsecase) hasContact(ctx context.Context, ownerID, profileID uint6
 	}
 
 	// Tạo contact mới
-	_, err = s.contactRepo.Create(ctx, &domain.ContactEntity{
+	_, err = s.contactRepo.Create(ctx, &domain.Contact{
 		ProfileID: &profileID,
 		OwnerID:   ownerID,
 		OwnerOf:   base_enum.EOwnerOfMember,

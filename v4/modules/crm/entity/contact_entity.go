@@ -11,7 +11,7 @@ import (
 )
 
 // ORM::TABLE
-type ContactEntity struct {
+type Contact struct {
 	_models.BaseEntity
 	// người dùng tạo ra liên hệ
 	// foreign key origin_profile.OriginID
@@ -32,7 +32,7 @@ type ContactEntity struct {
 	Birthday   *time.Time         `gorm:"column:birthday" json:"birthday"`
 	Note       string             `gorm:"column:note" json:"note"`
 	Visibility enums.EVisibility  `gorm:"column:visibility;default:30" json:"visibility"`
-	LeadID     uint64             `gorm:"column:lead_id" json:"leadId"`
+	LeadID     *uint64            `gorm:"column:lead_id" json:"leadId"`
 	OwnerOf    base_enum.EOwnerOf `gorm:"column:owner_of;default:30;" json:"ownerOf" binding:"required"`
 
 	ProfileID    *uint64              `gorm:"column:profile_id;" json:"profileId"`
@@ -53,7 +53,7 @@ type ContactEntity struct {
 	LastInteractionAt *time.Time `gorm:"column:last_interaction_at;index"`
 }
 
-func (ContactEntity) TableName() string {
+func (Contact) TableName() string {
 	return "tb_contact"
 }
 

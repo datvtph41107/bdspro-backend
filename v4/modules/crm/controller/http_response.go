@@ -67,7 +67,7 @@ func protoDataResult(msg proto.Message) (*httpapi.Result, error) {
 
 // contactDetailResult maps ContactEntity to crmpb.ContactDTO JSON (gateway contract)
 // and always includes productIds (protojson omits empty repeated fields).
-func contactDetailResult(entity *domain.ContactEntity) (*httpapi.Result, error) {
+func contactDetailResult(entity *domain.Contact) (*httpapi.Result, error) {
 	if entity == nil {
 		return httpapi.OK(nil), nil
 	}

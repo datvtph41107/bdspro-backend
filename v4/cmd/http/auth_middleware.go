@@ -69,8 +69,8 @@ var publicHTTPRoutes = []string{
 	"/v2/crm/public",
 	"/v2/crm/sitemap.xml",
 	"/v2/seo/sitemap.xml",
-	// CRM guest (gateway Prefix("/v2/crm/contact/relation-ship"))
-	"/v2/crm/contact/relation-ship",
+	// CRM guest relationship lookup ({id} is a profile id)
+	"/v2/crm/contact/:id/relation-ship",
 	// Feedback guest (gateway Prefix rate/report). GET /v2/feedback/report-reason stays
 	// authenticated: this matcher is method-agnostic and POST on that path is admin-only.
 	"/v2/feedback/rate",
