@@ -130,20 +130,30 @@ func NewWebSocketHandler(chatClient ChatClient, userClient UserClient, notificat
 // }
 
 func (h *WebSocketHandler) HandleConnect(w http.ResponseWriter, r *http.Request) {
+	sessionKey := strings.TrimSpace(r.URL.Query().Get("k"))
+	if sessionKey == "" {
+		http.Error(w, "missing session key", http.StatusUnauthorized)
+		return
+	}
+	userIDValue, err := h.redisClient.ConsumeSessionKey(r.Context(), "chat:ss:"+sessionKey)
+	if err != nil {
+		wsLogger.Errorf("Failed to validate WebSocket session key: %v", err)
+		http.Error(w, "session service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	userID, err := strconv.ParseUint(userIDValue, 10, 64)
+	if err != nil || userID == 0 {
+		http.Error(w, "invalid or expired session key", http.StatusUnauthorized)
+		return
+	}
+
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		wsLogger.Errorf("Failed to upgrade to WebSocket: %v", err)
 		return
 	}
 
-	userId := utils.GetCurrentUserID(r.Context())
-	print("userId: %d request: %s", userId, r.RequestURI)
-
-	if userId == 0 {
-		conn.Close()
-		wsLogger.Error("Missing user_id")
-		return
-	}
+	userId := userID
 
 	// userIdStr := strconv.FormatUint(userId, 10)
 

@@ -10,6 +10,7 @@ type redisClient interface {
 	Subscribe(ctx context.Context, channel string) *redis.PubSub
 	Set(ctx context.Context, key string, value string) error
 	Get(ctx context.Context, key string) (string, error)
+	ConsumeSessionKey(ctx context.Context, key string) (string, error)
 }
 
 type ChatClient interface {

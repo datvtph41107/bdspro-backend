@@ -101,6 +101,10 @@ func (r *RedisClient) Subscribe(ctx context.Context, channel string) *redis.PubS
 	return r.client.Subscribe(ctx, channel)
 }
 
+func (r *RedisClient) CreateSession(ctx context.Context, key, userID string, expiration time.Duration) error {
+	return r.client.Set(ctx, key, userID, expiration).Err()
+}
+
 // Add message to Redis Stream
 func (r *RedisClient) AddToStream(ctx context.Context, stream string, values map[string]interface{}) error {
 	_, err := r.client.XAdd(ctx, &redis.XAddArgs{

@@ -464,7 +464,7 @@
     {
       "label": "📡 Relay WS (8308)",
       "type": "shell",
-      "command": "cd shared/code && make run-dev relay",
+      "command": "cd relay-service && go run main.go",
       "args": [],
       "problemMatcher": ["$go"],
       "presentation": {

@@ -136,3 +136,15 @@ func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
 	}
 	return val, nil
 }
+
+// ConsumeSessionKey atomically validates and deletes a short-lived WebSocket key.
+func (r *RedisClient) ConsumeSessionKey(ctx context.Context, key string) (string, error) {
+	value, err := r.client.GetDel(ctx, key).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return value, nil
+}

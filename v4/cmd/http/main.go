@@ -20,6 +20,7 @@ import (
 	"mdn4/config"
 	userdb "mdn4/db"
 	"mdn4/internal/requeststats"
+	chatmodule "mdn4/modules/chat"
 	"mdn4/wire"
 )
 
@@ -160,6 +161,12 @@ func runHTTP() error {
 	}
 
 	mux := http.NewServeMux()
+	chatHandler, chatCleanup, err := chatmodule.NewHTTPHandler(app.DB, app.ProfileUsecase)
+	if err != nil {
+		return fmt.Errorf("initialize chat module: %w", err)
+	}
+	defer chatCleanup()
+	mux.Handle("/v2/chat/", chatHandler)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)

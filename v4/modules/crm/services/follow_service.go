@@ -94,6 +94,7 @@ func (s *FollowUsecase) ValidateFollowId(ctx context.Context, followId uint64) (
 func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domain.FollowEntity, error) {
 	var result *domain.FollowEntity
 	var profileId uint64
+	shouldNotify := false
 
 	err := s.transaction.WithTransaction(ctx, func(txCtx context.Context) error {
 		// Lấy profileId của người follow từ context
@@ -131,6 +132,7 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 				return _errors.InternalServerException("failed to update follow: " + err.Error())
 			}
 			result = existingFollow
+			shouldNotify = true
 			return nil
 		}
 
@@ -140,6 +142,7 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 			return _errors.InternalServerException("failed to create follow: " + err.Error())
 		}
 		result = newFollow
+		shouldNotify = true
 
 		if err := s.hasContact(txCtx, profileId, followId); err != nil {
 			return err
@@ -153,7 +156,9 @@ func (s *FollowUsecase) FollowUser(ctx context.Context, followId uint64) (*domai
 	}
 
 	// Sau khi commit thành công, chạy async tasks
-	s.sendNotificationAsync(ctx, profileId, followId)
+	if shouldNotify {
+		s.sendNotificationAsync(ctx, profileId, followId)
+	}
 
 	return result, nil
 }
@@ -218,10 +223,10 @@ func (s *FollowUsecase) sendNotificationAsync(ctx context.Context, profileId, fo
 			"Theo dõi mới",
 			[]string{"", currentUser.FullName, " đã theo dõi bạn"},
 			_enum.NotificationContactFollow,
-			&profileId,
-			followId,
+			&followId,
+			profileId,
 			_enum.EOwnerOfMember,
-			[]string{strconv.FormatUint(followId, 10)},
+			[]string{strconv.FormatUint(profileId, 10)},
 		)
 		if err != nil {
 			log.Printf("follow notification: create failed profile_id=%d follow_id=%d: %v", profileId, followId, err)

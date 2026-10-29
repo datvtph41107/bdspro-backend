@@ -4,7 +4,10 @@ import (
 	_errors "common/errors"
 	_utils "common/utils"
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -165,6 +168,30 @@ func (s *chatHandler) GetConversations(ctx context.Context, req *chatpb.GetConve
 	return &chatpb.GetConversationsResponse{
 		Conversations: pbConversations,
 	}, nil
+}
+
+// CreateSession issues a short-lived, single-use key for the WebSocket relay.
+func (s *chatHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
+	userID := utils.GetCurrentUserID(r.Context())
+	if userID == 0 {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var randomBytes [32]byte
+	if _, err := rand.Read(randomBytes[:]); err != nil {
+		s.logger.Errorf("Failed to generate WebSocket session key: %v", err)
+		http.Error(w, "failed to create session", http.StatusInternalServerError)
+		return
+	}
+	key := base64.RawURLEncoding.EncodeToString(randomBytes[:])
+	redisKey := fmt.Sprintf("chat:ss:%s", key)
+	if err := s.redisClient.CreateSession(r.Context(), redisKey, strconv.FormatUint(userID, 10), 5*time.Second); err != nil {
+		s.logger.Errorf("Failed to save WebSocket session: %v", err)
+		http.Error(w, "failed to create session", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = fmt.Fprintf(w, `{"key":%q}`, key)
 }
 
 // @Summary Gửi tin nhắn

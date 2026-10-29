@@ -16,6 +16,10 @@ import (
 
 func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/connect" && r.Method == http.MethodGet {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if isWhitelisted(r.URL.Path, r.Method) {
 			next.ServeHTTP(w, r)
 			return

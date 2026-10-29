@@ -17,6 +17,7 @@ import (
 	"common/rpcenv"
 	"mdn4/config"
 	userdb "mdn4/db"
+	chatmodule "mdn4/modules/chat"
 	"mdn4/wire"
 	authpb "pb/types/auth"
 	userpb "pb/types/user"
@@ -67,6 +68,11 @@ func runGRPC() error {
 	if err := _db.EnsureSchema(app.DB, "user", userdb.AutoMigrate); err != nil {
 		return err
 	}
+	chatDelivery, chatCleanup, err := chatmodule.NewDelivery(app.DB, app.ProfileUsecase)
+	if err != nil {
+		return fmt.Errorf("initialize chat module: %w", err)
+	}
+	defer chatCleanup()
 
 	lis, err := net.Listen("tcp", runtimeConfig.GRPCAddress)
 	if err != nil {
@@ -101,6 +107,7 @@ func runGRPC() error {
 	userpb.RegisterTagServiceServer(server, app.TagHandler)
 	userpb.RegisterKYCServiceServer(server, app.KYCHandler)
 	userpb.RegisterPriceTableServiceServer(server, app.PriceTableHandler)
+	chatDelivery.RegisterGRPCServer(server)
 
 	authpb.RegisterAuthServiceServer(server, app.AuthHandler)
 	authpb.RegisterOAuthServiceServer(server, app.OAuthHandler)

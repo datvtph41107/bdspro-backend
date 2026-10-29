@@ -122,9 +122,14 @@ func NewInitialApp(
 	subscriptionAdminHandler *usergrpc.SubscriptionAdminHandler,
 	planVersionAdminHandler *usergrpc.PlanVersionAdminHandler,
 ) *InitialApp {
+	var profileUsecase *usecases.ProfileUsecase
+	if profileService != nil {
+		profileUsecase = profileService.ProfileUsecase
+	}
 	app := &InitialApp{
 		DB:                      db,
 		ProfileService:          profileService,
+		ProfileUsecase:          profileUsecase,
 		AdminHandler:            adminHandler,
 		AdminUserProfileHandler: adminUserProfileHandler,
 		BookmarkUserHandler:     bookmarkUserHandler,
