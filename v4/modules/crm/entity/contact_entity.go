@@ -51,6 +51,8 @@ type Contact struct {
 	PriorityPinAt *time.Time `gorm:"column:priority_pin_at;index"`
 	// Tác động cuối như gọi trường này sinh ra dể reorder lại list
 	LastInteractionAt *time.Time `gorm:"column:last_interaction_at;index"`
+
+	Following bool `gorm:"-" json:"following"`
 }
 
 func (Contact) TableName() string {

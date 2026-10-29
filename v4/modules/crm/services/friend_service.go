@@ -524,20 +524,20 @@ func (s *FriendUsecase) CancelRequest(ctx context.Context, receiverId uint64) er
 		}
 
 		// Xóa contact của current user về receiver
-		contact1, err := s.contact.GetByProfileID(txCtx, receiverId, profileId, base_enum.EOwnerOfMember)
-		if err == nil && contact1 != nil {
-			if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for sender: " + err.Error())
-			}
-		}
+		// contact1, err := s.contact.GetByProfileID(txCtx, receiverId, profileId, base_enum.EOwnerOfMember)
+		// if err == nil && contact1 != nil {
+		// 	if err := s.contact.Delete(txCtx, contact1.ID); err != nil {
+		// 		return _errors.InternalServerException("failed to delete contact for sender: " + err.Error())
+		// 	}
+		// }
 
 		// Xóa contact của receiver về current user
-		contact2, err := s.contact.GetByProfileID(txCtx, profileId, receiverId, base_enum.EOwnerOfMember)
-		if err == nil && contact2 != nil {
-			if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
-				return _errors.InternalServerException("failed to delete contact for receiver: " + err.Error())
-			}
-		}
+		// contact2, err := s.contact.GetByProfileID(txCtx, profileId, receiverId, base_enum.EOwnerOfMember)
+		// if err == nil && contact2 != nil {
+		// 	if err := s.contact.Delete(txCtx, contact2.ID); err != nil {
+		// 		return _errors.InternalServerException("failed to delete contact for receiver: " + err.Error())
+		// 	}
+		// }
 
 		return nil
 	})

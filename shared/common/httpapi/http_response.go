@@ -42,6 +42,7 @@ func protoMessages[T proto.Message](items []T) ([]any, error) {
 type ResultResponse struct {
 	Data      any
 	Total     int64
+	Message   string
 	Page      int32
 	Size      int32
 	Timestamp int64

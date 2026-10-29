@@ -404,6 +404,9 @@ func (s *ContactUsecase) Detail(c context.Context, id uint64) (*domain.Contact, 
 	}
 	entity.ProductIDs = productIds
 
+	follow, _ := s.followRepo.GetFollowing(c, _utils.GetProfileIdWithContext(c), *entity.ProfileID)
+	entity.Following = follow
+
 	return entity, nil
 }
 

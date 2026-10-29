@@ -137,7 +137,10 @@ func (c *ContactController) detail(ctx context.Context, req dto.ContactDetailHTT
 	if err != nil {
 		return nil, err
 	}
-	return contactDetailResult(out)
+	// return contactDetailResult(out)
+	return httpapi.OKResponse(&httpapi.ResultResponse{
+		Data: out,
+	})
 }
 
 func (c *ContactController) create(ctx context.Context, req dto.ContactCreateHTTPRequest) (*httpapi.Result, error) {

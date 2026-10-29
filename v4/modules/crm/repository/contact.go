@@ -92,13 +92,15 @@ func (r *contactPostgres) SearchByOwner(
 }
 
 func (r *contactPostgres) GetByID(ctx context.Context, id uint64) (*entity.Contact, error) {
+	profileID := _utils.GetProfileIdWithContext(ctx)
 	if r.db == nil || id == 0 {
 		return nil, nil
 	}
 	var contact entity.Contact
 	err := r.db.WithContext(ctx).
 		Table("tb_contact").
-		Where("id = ? AND deleted_at IS NULL", id).
+		Joins("LEFT JOIN follow fl ON fl.following_id = tb_contact.profile_id and fl.created_by = ? and fl.deleted_at is null", profileID).
+		Where("tb_contact.id = ? AND tb_contact.deleted_at IS NULL", id).
 		First(&contact).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
